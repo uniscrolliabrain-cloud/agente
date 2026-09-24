@@ -61,7 +61,11 @@ export class ActionService {
         ? `Send “${input.data.subject}”`
         : input.kind === "calendar.delete"
           ? `Delete ${input.data.title}`
-          : `${input.kind === "calendar.create" ? "Create" : "Update"} ${input.data.title}`;
+          : input.kind === "drive.trash"
+            ? `Move “${input.data.name}” to trash`
+            : input.kind === "drive.rename"
+              ? `Rename file to “${input.data.name}”`
+              : `${input.kind === "calendar.create" ? "Create" : "Update"} ${input.data.title}`;
     const createdAt = new Date(this.now()).toISOString();
     const proposal: ActionProposal = {
       id,

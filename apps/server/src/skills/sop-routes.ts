@@ -19,10 +19,14 @@ export function sopRoutes(db: Store) {
     return c.json(sop, 201);
   });
   app.put("/:id", async (c) => {
-    const ex = await db.get(c.get("owner"), "sops", c.req.param("id"));
+    const id = c.req.param("id");
+    const ex = await db.get(c.get("owner"), "sops", id);
     if (!ex) throw new AppError("SOP not found", 404);
     const { sopSchema } = await import("../../../../packages/domain/src/sop.ts");
-    const up = { ...ex, ...sopSchema.partial().parse(await c.req.json()), updatedAt: new Date().toISOString() };
+    // The record id is owned by the path: the patch schema omits it so an update can never
+    // re-key a stored SOP nor overwrite its identity with a client-supplied value.
+    const patch = sopSchema.partial().omit({ id: true }).parse(await c.req.json());
+    const up = { ...ex, ...patch, id, updatedAt: new Date().toISOString() };
     await db.put(c.get("owner"), "sops", up);
     return c.json(up);
   });

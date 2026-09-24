@@ -142,7 +142,7 @@ export class SOPExecutor {
       }
       case "save_artifact": {
         const data = (params.data && typeof params.data === "object" ? params.data : { result: results }) as Record<string, unknown>;
-        return this.service.artifact(owner, task, "report", String(params.title ?? step.title), String(params.summary ?? prompt || step.title), data, `sop:${step.id}`);
+        return this.service.artifact(owner, task, "report", String(params.title ?? step.title), String(params.summary ?? (prompt || step.title)), data, `sop:${step.id}`);
       }
       case "prepare_email": {
         const data = emailDraftSchema.parse(params.data ?? {

@@ -136,7 +136,7 @@ export const createTaskSchema = z.object({
   prompt: z.string().trim().min(1).max(12000),
   kind: z.enum(["agent", "document", "monitor", "finance", "plan", "sop"]).default("agent"),
   goalId: z.string().optional(),
-  input: z.record(z.string(), z.unknown()).default({}),
+  input: z.record(z.string(), z.unknown()).default(() => ({})),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export const monitorInputSchema = z

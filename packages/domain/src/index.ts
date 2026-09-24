@@ -125,6 +125,14 @@ export const proposalSchema = z.discriminatedUnion("kind", [
     kind: z.literal("calendar.delete"),
     data: z.object({ calendarId: z.string(), eventId: z.string().min(1), title: z.string() }),
   }),
+  z.object({
+    kind: z.literal("drive.trash"),
+    data: z.object({ fileId: z.string().min(1).max(500), name: z.string().min(1).max(400) }),
+  }),
+  z.object({
+    kind: z.literal("drive.rename"),
+    data: z.object({ fileId: z.string().min(1).max(500), name: z.string().min(1).max(400) }),
+  }),
 ]);
 export type EmailDraft = z.infer<typeof emailDraftSchema>;
 export type EventDraft = z.infer<typeof eventDraftSchema>;
