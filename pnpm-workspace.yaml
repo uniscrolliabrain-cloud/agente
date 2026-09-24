@@ -1,0 +1,6 @@
+packages:
+  - apps/worker
+allowBuilds:
+  esbuild: true
+  "@biomejs/biome": true
+  "@scarf/scarf": false

@@ -1,0 +1,17 @@
+{
+  "id": "pipeline-alta-completa",
+  "name": "Pipeline Alta Cliente Completa",
+  "description": "Usa skill python + validación + email",
+  "category": "Ventas",
+  "pythonRequirements": ["pydantic"],
+  "skillId": "alta-cliente",
+  "steps": [
+    {"id":"1","title":"Cargar skill alta-cliente","tool":"computer_command","prompt":"cat /workspace/skills/alta-cliente/SKILL.md"},
+    {"id":"2","title":"Ejecutar boilerplate python","tool":"computer_command","prompt":"python /workspace/skills/alta-cliente/main.py '{\"email\":\"cliente@empresa.com\",\"cif\":\"B12345678\"}'"},
+    {"id":"3","title":"Validar datos si falla","tool":"ask_user","prompt":"Revisa datos cliente, falta CIF?"},
+    {"id":"4","title":"Query business para duplicados","tool":"query_business","prompt":"SELECT * FROM clients WHERE cif = {{cif}}"},
+    {"id":"5","title":"Email bienvenida","tool":"prepare_email","prompt":"Prepara bienvenida con datos validados"}
+  ],
+  "allowedTools": ["computer_command","ask_user","query_business","prepare_email","save_artifact"],
+  "active": true
+}

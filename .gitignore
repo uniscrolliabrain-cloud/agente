@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.openmuse/
+.env
+.env.*
+!.env.example
+artifacts/
+coverage/
+.DS_Store
