@@ -12,6 +12,8 @@ import {
 
 const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
 const CALENDAR = "https://www.googleapis.com/calendar/v3";
+const DRIVE = "https://www.googleapis.com/drive/v3";
+const MAX_DRIVE_TEXT_BYTES = 2 * 1024 * 1024;
 export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 export const MAX_TOTAL_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_JSON_BYTES = Math.ceil((MAX_ATTACHMENT_BYTES * 4) / 3) + 1024 * 1024;
@@ -108,6 +110,37 @@ export interface MailAttachment {
   name: string;
   mimeType: string;
   bytes: Uint8Array;
+}
+
+const driveFileSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().default(""),
+  mimeType: z.string().default("application/octet-stream"),
+  size: z.string().regex(/^\d+$/).optional(),
+  modifiedTime: z.string().optional(),
+  createdTime: z.string().optional(),
+  webViewLink: z.string().optional(),
+  trashed: z.boolean().optional(),
+});
+export interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: number;
+  modifiedTime?: string;
+  createdTime?: string;
+  webViewLink?: string;
+}
+function mapDriveFile(file: z.infer<typeof driveFileSchema>): DriveFile {
+  return {
+    id: file.id,
+    name: file.name || "(Untitled file)",
+    mimeType: file.mimeType,
+    ...(file.size !== undefined ? { size: Number(file.size) } : {}),
+    ...(file.modifiedTime !== undefined ? { modifiedTime: file.modifiedTime } : {}),
+    ...(file.createdTime !== undefined ? { createdTime: file.createdTime } : {}),
+    ...(file.webViewLink !== undefined ? { webViewLink: file.webViewLink } : {}),
+  };
 }
 
 function idPath(id: string): string {
@@ -606,6 +639,55 @@ export class GoogleClient {
     }
   }
 
+  /** Reads one binary/text body with a hard cap. GET-only: the credential failure is definite. */
+  private async requestBytes(url: string, limit = MAX_DRIVE_TEXT_BYTES): Promise<Uint8Array> {
+    const token = await this.getAccessToken();
+    if (!token || /[\r\n]/.test(token))
+      throw new Error("Google access token is missing or invalid; reconnect Google");
+    let response: Response;
+    try {
+      response = await this.fetcher(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}`, Accept: "*/*" },
+        signal: AbortSignal.timeout(30000),
+        redirect: "error",
+      });
+    } catch {
+      throw new Error("Could not reach Google; check the connection and try again");
+    }
+    if (!response.ok) {
+      let detail = response.statusText || "Request failed";
+      try {
+        const result = z
+          .object({ error: z.object({ message: z.string() }) })
+          .safeParse(await readJson(response));
+        if (result.success) detail = result.data.error.message.slice(0, 500);
+      } catch {
+        /* Preserve the definite HTTP rejection even if its body is not JSON. */
+      }
+      throw new GoogleApiError(response.status, detail);
+    }
+    if (!response.body) throw new Error("Google returned an empty response");
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let length = 0;
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        length += value.length;
+        if (length > limit) {
+          await reader.cancel();
+          throw new Error("This file is larger than the 2 MiB read limit");
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    return Buffer.concat(chunks);
+  }
+
   /** The latest 30 matching messages. Permission/read failures propagate visibly. */
   async listMail(query = "in:inbox"): Promise<Mail[]> {
     const params = new URLSearchParams({ maxResults: "30", q: query });
@@ -812,6 +894,108 @@ export class GoogleClient {
       undefined,
       { "If-Match": this.eventVersion(current, expectedVersion) },
     );
+  }
+
+  /**
+   * The owner's Drive files, newest first. Search terms are escaped for Drive's query syntax and
+   * results never include trashed files.
+   */
+  async listDriveFiles(query?: string, pageSize = 50): Promise<DriveFile[]> {
+    const term = query?.trim().slice(0, 500) ?? "";
+    const escaped = term.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    const q = escaped
+      ? `(name contains '${escaped}' or fullText contains '${escaped}') and trashed = false`
+      : "trashed = false";
+    const params = new URLSearchParams({
+      q,
+      pageSize: String(Math.min(Math.max(pageSize, 1), 100)),
+      spaces: "drive",
+      orderBy: "modifiedTime desc",
+      fields:
+        "nextPageToken,files(id,name,mimeType,size,modifiedTime,createdTime,webViewLink,trashed)",
+    });
+    const list = z
+      .object({
+        files: z.array(driveFileSchema).default([]),
+        nextPageToken: z.string().optional(),
+      })
+      .parse(await this.request(`${DRIVE}/files?${params}`));
+    return list.files.map(mapDriveFile);
+  }
+
+  /** One file's metadata from Drive. Permission/read failures propagate visibly. */
+  async getDriveFile(fileId: string): Promise<DriveFile> {
+    const params = new URLSearchParams({
+      fields: "id,name,mimeType,size,modifiedTime,createdTime,webViewLink,trashed",
+    });
+    const file = driveFileSchema.parse(
+      await this.request(`${DRIVE}/files/${idPath(fileId)}?${params}`),
+    );
+    if (file.id !== fileId) throw new Error("Google returned a different file");
+    return mapDriveFile(file);
+  }
+
+  /**
+   * Reads bounded text for a Drive file: Google Docs/Sheets/Slides are exported as text, plain-text
+   * files are downloaded up to 2 MiB. Binaries return a note instead of content. Read-only.
+   */
+  async readDriveFile(
+    fileId: string,
+  ): Promise<{ file: DriveFile; text?: string; note?: string }> {
+    const file = await this.getDriveFile(fileId);
+    const isGoogleDoc =
+      file.mimeType === "application/vnd.google-apps.document" ||
+      file.mimeType === "application/vnd.google-apps.spreadsheet" ||
+      file.mimeType === "application/vnd.google-apps.presentation";
+    let bytes: Uint8Array;
+    if (isGoogleDoc) {
+      const exportType =
+        file.mimeType === "application/vnd.google-apps.spreadsheet" ? "text/csv" : "text/plain";
+      bytes = await this.requestBytes(
+        `${DRIVE}/files/${idPath(fileId)}/export?mimeType=${encodeURIComponent(exportType)}`,
+      );
+    } else {
+      const readable =
+        file.mimeType.startsWith("text/") ||
+        /^(application\/(json|xml|yaml|x-yaml|javascript|csv|markdown|log)|.*\+(json|xml))$/.test(
+          file.mimeType,
+        );
+      if (!readable)
+        return {
+          file,
+          note: `A ${file.mimeType} file cannot be read as text here; open or download it in Google Drive.`,
+        };
+      if (file.size !== undefined && file.size > MAX_DRIVE_TEXT_BYTES)
+        return { file, note: "This file is larger than the 2 MiB text-read limit." };
+      bytes = await this.requestBytes(`${DRIVE}/files/${idPath(fileId)}?alt=media`);
+    }
+    const text = new TextDecoder("utf-8").decode(bytes);
+    if (text.includes("\u0000"))
+      return { file, note: "This file is binary and has no readable text." };
+    return { file, text };
+  }
+
+  /** Moves a Drive file to the trash. Requires the write `drive` scope; outcome rules apply. */
+  async trashDriveFile(fileId: string): Promise<void> {
+    const result = await this.request(`${DRIVE}/files/${idPath(fileId)}`, "PATCH", {
+      trashed: true,
+    });
+    const parsed = z.object({ id: z.string().min(1), trashed: z.boolean() }).safeParse(result);
+    if (!parsed.success || parsed.data.id !== fileId || !parsed.data.trashed)
+      throw new OutcomeUnknownError();
+  }
+
+  /** Renames a Drive file. Requires the write `drive` scope; outcome rules apply. */
+  async renameDriveFile(fileId: string, name: string): Promise<DriveFile> {
+    singleLine(name, "file name");
+    const trimmed = name.trim();
+    if (!trimmed) throw new Error("File name cannot be empty");
+    const result = await this.request(`${DRIVE}/files/${idPath(fileId)}`, "PATCH", {
+      name: trimmed,
+    });
+    const parsed = driveFileSchema.safeParse(result);
+    if (!parsed.success || parsed.data.id !== fileId) throw new OutcomeUnknownError();
+    return mapDriveFile(parsed.data);
   }
 }
 

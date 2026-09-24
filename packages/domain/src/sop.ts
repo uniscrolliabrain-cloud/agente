@@ -5,7 +5,7 @@ export const sopStepSchema = z.object({
   title: z.string().min(1).max(200),
   tool: z.enum(["read_mail_thread","read_workspace","import_pdf","inspect_pdf","fill_pdf","prepare_email","prepare_event","read_web","save_artifact","ask_user","computer_command","run_sop","query_business","install_python_lib"]).default("ask_user"),
   prompt: z.string().max(5000).default(""),
-  params: z.record(z.string(), z.unknown()).default({}),
+  params: z.record(z.string(), z.unknown()).default(() => ({ type: "manual" as const, value: "" })),
   required: z.boolean().default(true),
 });
 
@@ -14,7 +14,7 @@ export const sopSchema = z.object({
   name: z.string().min(1).max(160),
   description: z.string().max(4000).default(""),
   category: z.string().max(100).default("General"),
-  trigger: z.object({ type: z.enum(["manual","email_subject","cron","api","skill"]).default("manual"), value: z.string().max(500).default("") }).default({}),
+  trigger: z.object({ type: z.enum(["manual","email_subject","cron","api","skill"]).default("manual"), value: z.string().max(500).default("") }).default(() => ({ type: "manual" as const, value: "" })),
   steps: z.array(sopStepSchema).min(1).max(12).superRefine((steps, ctx) => {
     const ids = new Set<string>();
     steps.forEach((step, index) => {

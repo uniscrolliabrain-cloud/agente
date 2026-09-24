@@ -164,6 +164,13 @@ export async function createApp(
       throw new AppError("Choose a calendar range between one moment and 366 days", 422);
     return c.json(await workspace.events(c.get("owner"), query));
   });
+  app.get("/api/drive/files", async (c) => {
+    const query = z.object({ q: z.string().trim().max(500).optional() }).parse(c.req.query());
+    return c.json(await workspace.driveFiles(c.get("owner"), query.q));
+  });
+  app.get("/api/drive/files/:id/content", async (c) =>
+    c.json(await workspace.readDriveFile(c.get("owner"), c.req.param("id"))),
+  );
   app.get("/api/mail/threads/:id", async (c) =>
     c.json(await workspace.thread(c.get("owner"), c.req.param("id"))),
   );

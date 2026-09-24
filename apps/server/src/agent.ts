@@ -49,15 +49,21 @@ export function makeRuntime(
               await auth.owner(request.headers.get("authorization") ?? undefined),
             ),
   });
-  const runtime = new CopilotRuntime({
-    agents,
-    ...(intelligence ? { intelligence } : {}),
-    identifyUser: async (request) => ({
-      id: await auth.owner(request.headers.get("authorization") ?? undefined),
-      name: "OpenMuse user",
-    }),
-    generateThreadNames: false,
-  });
+  // Runtime 1.70 types Intelligence and SSE as two disjoint option shapes: Intelligence mode
+  // requires `intelligence`, while SSE mode rejects `identifyUser` and `generateThreadNames`.
+  // The SSE runtime ignores web identity entirely, so the callback only belongs to the
+  // Intelligence branch.
+  const runtime = intelligence
+    ? new CopilotRuntime({
+        agents,
+        intelligence,
+        identifyUser: async (request) => ({
+          id: await auth.owner(request.headers.get("authorization") ?? undefined),
+          name: "OpenMuse user",
+        }),
+        generateThreadNames: false,
+      })
+    : new CopilotRuntime({ agents });
   return createCopilotHonoHandler({ runtime, basePath: "/api/copilotkit" });
 }
 

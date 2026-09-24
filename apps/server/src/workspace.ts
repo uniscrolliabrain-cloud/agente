@@ -9,7 +9,7 @@ import type {
   ProposalInput,
   Workspace,
 } from "../../../packages/domain/src/index.ts";
-import { GoogleClient } from "../../../packages/integrations/src/google.ts";
+import { type DriveFile, GoogleClient } from "../../../packages/integrations/src/google.ts";
 import { createSamplePdf } from "../../../packages/integrations/src/pdf.ts";
 import type { ActionService } from "./actions.ts";
 import { agentConfigured } from "./agent.ts";
@@ -327,10 +327,68 @@ export class WorkspaceService {
       },
     };
   }
+  /** The owner's Drive files: local artifacts in sample mode, live Google Drive otherwise. */
+  async driveFiles(owner: string, query?: string): Promise<DriveFile[]> {
+    const connection = await this.connection(owner);
+    if (!connection) throw new AppError("Google is disconnected", 409);
+    if (this.config.mode === "sample") {
+      const needle = query?.trim().toLowerCase();
+      const files = await this.db.list<Artifact>(owner, "files");
+      return files
+        .filter((file) => !needle || file.name.toLowerCase().includes(needle))
+        .slice(0, 50)
+        .map((file) => ({
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType,
+          size: file.size,
+          modifiedTime: file.createdAt,
+        }));
+    }
+    return this.google(owner, connection.id).listDriveFiles(query);
+  }
+  /** Bounded text for one Drive file. Sample files report a note instead of content. */
+  async readDriveFile(
+    owner: string,
+    fileId: string,
+  ): Promise<{ file: DriveFile; text?: string; note?: string }> {
+    const connection = await this.connection(owner);
+    if (!connection) throw new AppError("Google is disconnected", 409);
+    if (this.config.mode === "sample") {
+      const file = await this.files.get(owner, fileId);
+      return {
+        file: {
+          id: file.id,
+          name: file.name,
+          mimeType: file.mimeType,
+          size: file.size,
+          modifiedTime: file.createdAt,
+        },
+        note: "Sample workspace files have no readable text. Connect Google in live mode to read Drive files.",
+      };
+    }
+    return this.google(owner, connection.id).readDriveFile(fileId);
+  }
   async prepare(owner: string, input: ProposalInput, connectionId?: string) {
     if (input.kind === "email.send") {
       for (const id of input.data.attachmentIds) await this.files.get(owner, id);
       return { input };
+    }
+    if (input.kind === "drive.trash" || input.kind === "drive.rename") {
+      if (this.config.mode === "sample")
+        throw new AppError(
+          "Google Drive actions require live mode with a connected Google account",
+          409,
+        );
+      // Refresh the display name from Drive so the review shows the file's current name.
+      const file = await this.google(owner, connectionId).getDriveFile(input.data.fileId);
+      const data = { fileId: input.data.fileId, name: file.name };
+      return {
+        input:
+          input.kind === "drive.trash"
+            ? ({ kind: "drive.trash", data } as const)
+            : ({ kind: "drive.rename", data } as const),
+      };
     }
     if (input.kind === "calendar.create" || this.config.mode === "sample") return { input };
     const reviewed = await this.google(owner, connectionId).reviewEvent(
@@ -353,6 +411,11 @@ export class WorkspaceService {
     targetVersion?: string,
   ): Promise<string> {
     if (this.config.mode === "sample") {
+      if (input.kind === "drive.trash" || input.kind === "drive.rename")
+        throw new AppError(
+          "Google Drive actions require live mode with a connected Google account",
+          409,
+        );
       if (input.kind === "email.send") {
         const id = randomUUID();
         await this.db.put(owner, "mail", {
@@ -380,7 +443,12 @@ export class WorkspaceService {
     }
     const tokens = await this.googleAuth.tokens(owner);
     if (!tokens) throw new AppError("Google is disconnected", 409);
-    const capability = input.kind === "email.send" ? "gmail.send" : "calendar.events";
+    const capability =
+      input.kind === "email.send"
+        ? "gmail.send"
+        : input.kind.startsWith("drive.")
+          ? "drive"
+          : "calendar.events";
     if (!tokens.scopes.includes(`https://www.googleapis.com/auth/${capability}`))
       throw new AppError("Enable Google write access in Connections before approving", 403);
     if (tokens.connectionId !== connectionId)
@@ -404,6 +472,14 @@ export class WorkspaceService {
       );
       const receipt = await google.sendEmail(input.data, attachments);
       return `Gmail sent message · ${receipt.id}`;
+    }
+    if (input.kind === "drive.trash") {
+      await google.trashDriveFile(input.data.fileId);
+      return `Moved Google Drive file to trash · ${input.data.name}`;
+    }
+    if (input.kind === "drive.rename") {
+      const file = await google.renameDriveFile(input.data.fileId, input.data.name);
+      return `Renamed Google Drive file · ${file.name}`;
     }
     if (input.kind === "calendar.delete") {
       await google.deleteEvent(input.data.calendarId, input.data.eventId, targetVersion);

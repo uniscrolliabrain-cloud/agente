@@ -5,6 +5,18 @@ if (existsSync(".env")) process.loadEnvFile(".env");
 process.env.DO_NOT_TRACK ??= "1";
 process.env.COPILOTKIT_TELEMETRY_DISABLED ??= "true";
 
+// The CopilotKit runtime resolves "google/…" models from GOOGLE_API_KEY and every
+// OpenAI-compatible endpoint from OPENAI_API_KEY plus OPENAI_BASE_URL. Aliasing here keeps a
+// single source of truth for the provider keys, so GEMINI_API_KEY and OPENROUTER_API_KEY are
+// enough on their own and existing OPENAI_*/GOOGLE_* values always win.
+const blank = (value?: string) => !value?.trim();
+if (blank(process.env.GOOGLE_API_KEY) && !blank(process.env.GEMINI_API_KEY))
+  process.env.GOOGLE_API_KEY = process.env.GEMINI_API_KEY?.trim();
+if (blank(process.env.OPENAI_API_KEY) && !blank(process.env.OPENROUTER_API_KEY)) {
+  process.env.OPENAI_API_KEY = process.env.OPENROUTER_API_KEY?.trim();
+  process.env.OPENAI_BASE_URL ??= "https://openrouter.ai/api/v1";
+}
+
 export interface Config {
   mode: "sample" | "live";
   port: number;
@@ -15,6 +27,7 @@ export interface Config {
   accessKey?: string;
   encryptionKey?: string;
   model?: string;
+  modelFallback?: string;
   agentBackend: "sample" | "model" | "agui";
   agentUrl?: string;
   agentToken?: string;
@@ -44,6 +57,26 @@ export function required(name: string, message: string, value = process.env[name
 
 export function assertApiDeploymentConfig(config: Config): void { return; }
 
+/** Primary model specifier: explicit MODEL, else GEMINI_MODEL served as "google/<model>". */
+function readModel(): string | undefined {
+  const explicit = process.env.MODEL?.trim();
+  if (explicit) return explicit;
+  const gemini = process.env.GEMINI_MODEL?.trim();
+  return gemini ? `google/${gemini.replace(/^google\//, "")}` : undefined;
+}
+
+/**
+ * Fallback model specifier: explicit MODEL_FALLBACK, else OPENROUTER_MODEL reached through the
+ * OpenAI-compatible OpenRouter endpoint that the runtime builds from OPENAI_BASE_URL.
+ */
+function readModelFallback(): string | undefined {
+  const explicit = process.env.MODEL_FALLBACK?.trim();
+  if (explicit) return explicit;
+  if (!process.env.OPENROUTER_API_KEY?.trim()) return undefined;
+  const model = process.env.OPENROUTER_MODEL?.trim() || "google/gemini-3.6-flash";
+  return `openai/${model}`;
+}
+
 export function readConfig(): Config {
   const mode = process.env.WORKSPACE_MODE ?? "sample";
   if (mode !== "sample" && mode !== "live")
@@ -64,7 +97,8 @@ export function readConfig(): Config {
     databaseUrl: process.env.DATABASE_URL,
     accessKey: process.env.OPENMUSE_ACCESS_KEY,
     encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
-    model: process.env.MODEL,
+    model: readModel(),
+    modelFallback: readModelFallback(),
     agentBackend: backend,
     agentUrl: process.env.AGENT_URL,
     agentToken: process.env.AGENT_TOKEN,
