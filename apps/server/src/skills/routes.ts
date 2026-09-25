@@ -30,9 +30,13 @@ export function skillsRoutes(db: Store) {
     return c.json(skill, 201);
   });
   app.put("/:id", async (c) => {
-    const ex = await db.get(c.get("owner"), "skills", c.req.param("id"));
+    const id = c.req.param("id");
+    const ex = await db.get(c.get("owner"), "skills", id);
     if (!ex) throw new AppError("Skill not found", 404);
-    const up = { ...ex, ...(await c.req.json()), updatedAt: new Date().toISOString() };
+    // The id is owned by the path: the patch schema omits it so a client can never re-key
+    // a stored skill nor overwrite its identity with an arbitrary value.
+    const patch = skillSchema.partial().omit({ id: true }).parse(await c.req.json());
+    const up = { ...ex, ...patch, id, updatedAt: new Date().toISOString() };
     await db.put(c.get("owner"), "skills", up);
     return c.json(up);
   });

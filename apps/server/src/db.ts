@@ -10,6 +10,12 @@ interface Database {
   close: () => Promise<void>;
 }
 
+export interface ListOptions {
+  limit?: number;
+  cursorUpdatedAt?: string;
+  cursorId?: string;
+}
+
 export class Store {
   constructor(private readonly db: Database) {}
   async get<T = Record<string, unknown>>(
@@ -23,11 +29,31 @@ export class Store {
     );
     return (result.rows[0]?.data as T | undefined) ?? null;
   }
-  async list<T = Record<string, unknown>>(owner: string, kind: string): Promise<T[]> {
-    const result = await this.db.query(
-      "SELECT data FROM records WHERE owner=$1 AND kind=$2 ORDER BY updated_at DESC,id",
-      [owner, kind],
-    );
+  /**
+   * Backward compatible: without options, returns every record for the owner/kind.
+   * With options.limit, caps results. With cursorUpdatedAt + cursorId, pages by
+   * keyset (updated_at, id) descending. Callers can request a next page by passing
+   * the last record's updated_at / id pair. `updated_at` is not returned to the
+   * caller here to keep the existing shape; page callers must read it themselves
+   * if they need a cursor.
+   */
+  async list<T = Record<string, unknown>>(
+    owner: string,
+    kind: string,
+    options: ListOptions = {},
+  ): Promise<T[]> {
+    const params: unknown[] = [owner, kind];
+    let sql = "SELECT data FROM records WHERE owner=$1 AND kind=$2";
+    if (options.cursorUpdatedAt !== undefined && options.cursorId !== undefined) {
+      params.push(options.cursorUpdatedAt, options.cursorId);
+      sql += ` AND (updated_at, id) < ($3::timestamptz, $4)`;
+    }
+    sql += " ORDER BY updated_at DESC, id";
+    if (options.limit !== undefined) {
+      params.push(options.limit);
+      sql += ` LIMIT $${params.length}`;
+    }
+    const result = await this.db.query(sql, params);
     return result.rows.map((row) => row.data as T);
   }
   async put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T> {
@@ -74,6 +100,33 @@ export class Store {
       [kind],
     );
     return result.rows.map((row) => row.data as { owner: string; value: T });
+  }
+  /**
+   * Filter scan by one or more statuses. Backed by an index-friendly query.
+   * Intended for maintenance loops that must not scan the whole table.
+   */
+  async scanByStatus<T>(
+    kind: string,
+    statuses: string[],
+    limit = 1000,
+  ): Promise<{ owner: string; value: T }[]> {
+    if (!statuses.length) return [];
+    const result = await this.db.query(
+      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND data->>'status' = ANY($2::text[]) ORDER BY updated_at ASC LIMIT $3",
+      [kind, statuses, limit],
+    );
+    return result.rows.map((row) => row.data as { owner: string; value: T });
+  }
+  /**
+   * Delete records of the given kind whose updated_at is older than `days`.
+   * Returns the number of deleted rows. Safe to call from a periodic maintenance loop.
+   */
+  async purgeOlderThan(kind: string, days: number): Promise<number> {
+    const result = await this.db.query(
+      "DELETE FROM records WHERE kind=$1 AND updated_at < now() - ($2 || ' days')::interval RETURNING id",
+      [kind, String(days)],
+    );
+    return result.rows.length;
   }
   async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
     const result = await this.db.query(
@@ -140,4 +193,3 @@ export async function createStore(
   );
   return new Store(database);
 }
-

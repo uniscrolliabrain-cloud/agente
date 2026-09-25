@@ -1,6 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { MessageSchema } from "@ag-ui/core";
-import { CopilotKitIntelligence } from "@copilotkit/runtime/v2";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -12,7 +11,7 @@ import { createAuth } from "./auth.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
-import { assertApiDeploymentConfig, type Config } from "./config.ts";
+import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { agentRoutes } from "./engine/routes.ts";
 import { skillsRoutes } from "./skills/routes.ts";
@@ -28,7 +27,6 @@ export async function createApp(
   config: Config,
   options: { docker?: DockerRunner } = {},
 ) {
-  assertApiDeploymentConfig(config);
   const auth = await createAuth(db, config),
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
@@ -43,8 +41,7 @@ export async function createApp(
   const browser = new BrowserService(db, config, auth, files);
   const computer = new ComputerService(db, config, options.docker);
   const agent = new AgentService(db, config, workspace, files, actions, browser, computer);
-  const intelligence = config.intelligenceApiKey ? new CopilotKitIntelligence({ apiKey: config.intelligenceApiKey }) : undefined;
-  const runtime = makeRuntime(config, agent, auth, intelligence);
+  const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
   app.use("*", async (c, next) => {
@@ -204,23 +201,30 @@ export async function createApp(
       201,
     );
   });
-  app.get("/api/main-thread", async (c) => {
-    const owner = c.get("owner");
+  const ensureMainThreadId = async (owner: string) => {
     await db.insertIfAbsent(owner, "conversation-settings", { id: "main", threadId: randomUUID(), existing: false });
     const main = await db.get<{ threadId: string }>(owner, "conversation-settings", "main");
     if (!main) throw new AppError("Main conversation could not be loaded", 503);
-    if (intelligence) { try { await (intelligence as any).getOrCreateThread({ threadId: main.threadId, userId: owner, agentId: "default" }); } catch {} }
-    await db.insertIfAbsent(owner, "conversations", { id: main.threadId, messages: [], createdAt: new Date().toISOString() } as any);
-    return c.json({ threadId: main.threadId, existing: true });
+    return main.threadId;
+  };
+  app.get("/api/main-thread", async (c) => {
+    const owner = c.get("owner");
+    const threadId = await ensureMainThreadId(owner);
+    await db.insertIfAbsent(owner, "conversations", { id: threadId, messages: [], createdAt: new Date().toISOString() } as any);
+    return c.json({ threadId, existing: true });
   });
-  app.get("/api/conversation", async (c) =>
-    c.json((await db.get(c.get("owner"), "conversations", "default")) ?? { messages: [] }),
-  );
+  app.get("/api/conversation", async (c) => {
+    const owner = c.get("owner");
+    const threadId = await ensureMainThreadId(owner);
+    return c.json((await db.get(owner, "conversations", threadId)) ?? { id: threadId, messages: [] });
+  });
   app.put("/api/conversation", async (c) => {
+    const owner = c.get("owner");
+    const threadId = await ensureMainThreadId(owner);
     const body = await c.req.json();
     const messages = z.array(z.unknown()).max(1000).parse(body.messages);
     for (const message of messages) MessageSchema.parse(message);
-    await db.put(c.get("owner"), "conversations", { id: "default", messages });
+    await db.put(owner, "conversations", { id: threadId, messages });
     return c.json({ ok: true });
   });
   app.post("/api/files", async (c) => {
@@ -337,4 +341,3 @@ export async function createApp(
   );
   return { app, auth, files, actions, workspace, agent, computer };
 }
-

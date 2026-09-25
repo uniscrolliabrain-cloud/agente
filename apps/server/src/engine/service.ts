@@ -84,10 +84,21 @@ export class AgentService {
     this.refreshing = true;
     try {
       // Recover publications if the process exited after committing an outcome.
-      for (const { owner, value } of await this.db.scan<AgentTask>("tasks"))
+      // Use scanByStatus for bounded passes: only non-terminal tasks need recovery.
+      for (const { owner, value } of await this.db.scanByStatus<AgentTask>("tasks", [
+        "succeeded",
+        "failed",
+        "waiting_input",
+        "waiting_approval",
+        "scheduled",
+      ]))
         await this.publishOutcome(owner, value);
-      for (const { owner, value } of await this.db.scan<Monitor>("monitors"))
+      for (const { owner, value } of await this.db.scanByStatus<Monitor>("monitors", ["active"]))
         await this.activateMonitor(owner, value);
+      // Retention: 90-day purge of ephemeral records. Safe to repeat every minute.
+      await this.db.purgeOlderThan("run-events", 90);
+      await this.db.purgeOlderThan("activity", 90);
+      await this.db.purgeOlderThan("notifications", 90);
       for (const { owner, value } of await this.db.scan<Idea>("ideas"))
         if (
           value.status === "accepted" &&
@@ -201,8 +212,8 @@ export class AgentService {
     )
       throw new AppError("Finish or cancel some tasks before adding more", 409);
     const titles =
-      (input.kind as any) === "sop"
-        ? ["Load SOP/Skill", "Execute pipeline", "Validate", "Save learning"]
+      input.kind === "sop"
+        ? []
         : input.kind === "document"
         ? [
             "Find the source document",
@@ -302,10 +313,21 @@ export class AgentService {
           nextCheckAt: date(),
         },
       );
+    let finalTask = updated;
     if (action === "cancel" && task.actionId) {
       const proposal = await this.db.get<ActionProposal>(owner, "actions", task.actionId);
       if (proposal?.status === "awaiting_review")
         await this.actions.decide(owner, proposal.id, proposal.hash, "deny");
+      if (proposal?.status === "executing" || proposal?.status === "outcome_unknown") {
+        const withWarning = await this.db.compareAndSwap<AgentTask>(
+          owner,
+          "tasks",
+          id,
+          { status },
+          { state: { ...updated.state, externalActionMayComplete: true } },
+        );
+        if (withWarning) finalTask = withWarning;
+      }
     }
     await this.db.put(owner, "run-events", {
       id: randomUUID(),
@@ -315,7 +337,7 @@ export class AgentService {
       title: `Task ${status}`,
       detail: "Changed by you",
     });
-    return updated;
+    return finalTask;
   }
   async answer(
     owner: string,
@@ -757,6 +779,8 @@ export class AgentService {
   }
   async finish(task: AgentTask, context: TaskContext, result: string) {
     await context.guard();
+    if (task.artifactIds.length === 0 && task.evidence.length === 0)
+      throw new Error("Cannot mark a task succeeded without an artifact or evidence");
     await context.event("result", "Work completed", result);
     return {
       status: "succeeded" as const,

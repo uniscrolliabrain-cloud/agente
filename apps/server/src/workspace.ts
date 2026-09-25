@@ -323,7 +323,7 @@ export class WorkspaceService {
         provider: this.config.agentBackend === "sample" ? "sample" : "model",
         configured: agentConfigured(this.config),
         openbotConfigured: false,
-        richThreads: true,
+        richThreads: false,
       },
     };
   }
@@ -380,14 +380,23 @@ export class WorkspaceService {
           "Google Drive actions require live mode with a connected Google account",
           409,
         );
-      // Refresh the display name from Drive so the review shows the file's current name.
       const file = await this.google(owner, connectionId).getDriveFile(input.data.fileId);
-      const data = { fileId: input.data.fileId, name: file.name };
+      if (input.kind === "drive.trash") {
+        // Trash shows the file's current name from Drive so the review is accurate.
+        return {
+          input: {
+            kind: "drive.trash",
+            data: { fileId: input.data.fileId, name: file.name },
+          } as const,
+        };
+      }
+      // Rename must keep the *requested* name; refreshing it from Drive would silently
+      // discard the user's intent and execute a no-op.
       return {
-        input:
-          input.kind === "drive.trash"
-            ? ({ kind: "drive.trash", data } as const)
-            : ({ kind: "drive.rename", data } as const),
+        input: {
+          kind: "drive.rename",
+          data: { fileId: input.data.fileId, name: input.data.name },
+        } as const,
       };
     }
     if (input.kind === "calendar.create" || this.config.mode === "sample") return { input };
@@ -523,4 +532,3 @@ export class WorkspaceService {
     return file;
   }
 }
-
