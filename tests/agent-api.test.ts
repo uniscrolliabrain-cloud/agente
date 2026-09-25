@@ -3,7 +3,6 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
-import { CopilotKitIntelligence } from "@copilotkit/runtime/v2";
 import { createApp } from "../apps/server/src/app.ts";
 import type { Config } from "../apps/server/src/config.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
@@ -78,14 +77,7 @@ test("agent API requires a session and reports the actual worker state", async (
   assert.equal(workspace.identity.tone, "warm");
 });
 
-test("the main Rich Thread survives reopening and concurrent initialization", async (t) => {
-  t.mock.method(
-    CopilotKitIntelligence.prototype,
-    "getOrCreateThread",
-    async (input: Parameters<CopilotKitIntelligence["getOrCreateThread"]>[0]) => ({
-      id: input.threadId,
-    }),
-  );
+test("the main conversation thread survives reopening and concurrent initialization", async () => {
   assert.equal((await server.app.request("/api/main-thread")).status, 401);
   const responses = await Promise.all(
     Array.from({ length: 3 }, () => server.app.request("/api/main-thread", { headers: headers() })),
@@ -98,6 +90,11 @@ test("the main Rich Thread survives reopening and concurrent initialization", as
   ).json();
   assert.equal(reopened.threadId, threads[0].threadId);
   assert.equal(reopened.existing, true);
+  // The unified /api/conversation must read the same underlying record.
+  const conversation = await (
+    await server.app.request("/api/conversation", { headers: headers() })
+  ).json();
+  assert.equal(conversation.id, threads[0].threadId);
   assert.equal(await db.get("other-user", "conversation-settings", "main"), null);
 });
 
@@ -343,4 +340,3 @@ test("live mode rejects sample sources and hides the fixture mutation endpoint",
     await live.agent.stop();
   }
 });
-
