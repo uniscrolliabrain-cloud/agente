@@ -1,17 +1,46 @@
 {
   "id": "pipeline-alta-completa",
   "name": "Pipeline Alta Cliente Completa",
-  "description": "Usa skill python + validación + email",
+  "description": "Ejecuta la skill Python, valida los datos del cliente y prepara el correo de bienvenida para revisión.",
   "category": "Ventas",
-  "pythonRequirements": ["pydantic"],
+  "trigger": { "type": "manual", "value": "" },
   "skillId": "alta-cliente",
+  "active": true,
   "steps": [
-    {"id":"1","title":"Cargar skill alta-cliente","tool":"computer_command","prompt":"cat /workspace/skills/alta-cliente/SKILL.md"},
-    {"id":"2","title":"Ejecutar boilerplate python","tool":"computer_command","prompt":"python /workspace/skills/alta-cliente/main.py '{\"email\":\"cliente@empresa.com\",\"cif\":\"B12345678\"}'"},
-    {"id":"3","title":"Validar datos si falla","tool":"ask_user","prompt":"Revisa datos cliente, falta CIF?"},
-    {"id":"4","title":"Query business para duplicados","tool":"query_business","prompt":"SELECT * FROM clients WHERE cif = {{cif}}"},
-    {"id":"5","title":"Email bienvenida","tool":"prepare_email","prompt":"Prepara bienvenida con datos validados"}
+    {
+      "id": "skill",
+      "title": "Ejecutar skill alta-cliente en el sandbox",
+      "tool": "computer_command",
+      "required": true,
+      "prompt": "Ejecuta el pipeline Python del skill alta-cliente con los datos de entrada.",
+      "params": {
+        "command": "python3 /workspace/skills/alta-cliente/main.py '{\"name\":\"{{input.name}}\",\"company\":\"{{input.company}}\",\"cif\":\"{{input.cif}}\",\"email\":\"{{input.email}}\",\"need\":\"{{input.need}}\",\"budget\":\"{{input.budget}}\"}'",
+        "operationId": "alta-cliente-run",
+        "cwd": "/workspace"
+      }
+    },
+    {
+      "id": "duplicates",
+      "title": "Buscar duplicados por CIF",
+      "tool": "query_business",
+      "required": true,
+      "prompt": "Comprueba si ya existe un cliente con este CIF.",
+      "params": {
+        "source": "postgres",
+        "query": "SELECT id, name FROM clients WHERE cif = '{{input.cif}}'"
+      }
+    },
+    {
+      "id": "welcome",
+      "title": "Preparar correo de bienvenida para revisión",
+      "tool": "prepare_email",
+      "required": true,
+      "prompt": "Redacta el correo de bienvenida con los datos validados del cliente.",
+      "params": {
+        "subject": "Bienvenido a bordo, {{input.company}}",
+        "body": "Hola {{input.name}},\n\nGracias por confiar en nosotros. En breve agendaremos la reunión de kickoff.\n\nUn saludo."
+      }
+    }
   ],
-  "allowedTools": ["computer_command","ask_user","query_business","prepare_email","save_artifact"],
-  "active": true
+  "allowedTools": ["computer_command", "query_business", "prepare_email"]
 }

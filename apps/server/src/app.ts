@@ -141,7 +141,7 @@ export async function createApp(
   });
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/skills", skillsRoutes(db));
-  app.route("/api/sops", sopRoutes(db));
+  app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {

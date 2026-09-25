@@ -12,7 +12,24 @@ export interface BusinessQuery {
 
 const READ_ONLY_SQL = /^\s*(select|with)\b/i;
 const FORBIDDEN_SQL =
-  /\b(insert|update|delete|drop|alter|create|grant|revoke|truncate|merge|copy|reindex|vacuum|analyze|refresh|listen|notify|do|call|execute|prepare|set|reset)\b/i;
+  /\b(insert|update|delete|drop|alter|create|grant|revoke|truncate|merge|copy|reindex|vacuum|analyze|refresh|listen|notify|do|call|execute|prepare|set|reset|pg_sleep|pg_read_file|pg_ls_dir|lo_import|lo_export|dblink)\b/i;
+
+/**
+ * The SOP executor interpolates values into the query string before it reaches this
+ * service, so the executor cannot help us protect the DB. We do best-effort defense
+ * here: reject comments (`--`, `/*`) and any odd quote counts, which are the classic
+ * vectors for a value like `' OR 1=1 --`. For defense-in-depth, configure a
+ * dedicated PostgreSQL role with GRANT SELECT only.
+ */
+function rejectUnsafeSql(sql: string): void {
+  if (sql.includes(";")) throw new AppError("Business query must be a single statement", 422);
+  if (sql.includes("--") || sql.includes("/*") || sql.includes("*/"))
+    throw new AppError("Business query must not contain SQL comments", 422);
+  const singleQuotes = (sql.match(/'/g) ?? []).length;
+  const doubleQuotes = (sql.match(/"/g) ?? []).length;
+  if (singleQuotes % 2 !== 0 || doubleQuotes % 2 !== 0)
+    throw new AppError("Business query has an unbalanced quote", 422);
+}
 
 function isPrivateIp(address: string): boolean {
   const family = isIP(address);
@@ -124,16 +141,19 @@ export class BusinessDataService {
   private async queryPostgres(owner: string, q: BusinessQuery) {
     const sql = q.query.trim();
     if (!sql) throw new AppError("Business query is empty", 422);
-    if (sql.includes(";")) throw new AppError("Business query must be a single statement", 422);
     if (!READ_ONLY_SQL.test(sql))
       throw new AppError("Business query must be a SELECT or WITH", 422);
     if (FORBIDDEN_SQL.test(sql))
       throw new AppError("Business query contains a forbidden keyword", 422);
+    rejectUnsafeSql(sql);
 
     if (this.databaseUrl) {
       const pool = new pg.Pool({ connectionString: this.databaseUrl, max: 1 });
       try {
-        const result = await pool.query(sql, Object.values(q.params ?? {}));
+        // The query is already a fully interpolated string; parameters are not usable here
+        // without changing how the SOP executor builds the query. The role used must have
+        // GRANT SELECT only for real defense-in-depth.
+        const result = await pool.query(sql);
         return {
           rows: result.rows,
           summary: `PostgreSQL returned ${result.rowCount ?? result.rows.length} row(s)`,

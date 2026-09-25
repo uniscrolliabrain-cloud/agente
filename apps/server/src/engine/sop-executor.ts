@@ -432,6 +432,48 @@ export class SOPExecutor {
       `Skill installed: ${skill.name}`,
       `${files.length} file(s) copied into /workspace/skills/${skillId}`,
     );
+
+    // Offline dependency install: the sandbox has no network by design. If a
+    // required wheel is not bundled in the image, the task fails honestly
+    // instead of silently importing a missing module later.
+    const rawRequirements: unknown[] = Array.isArray(skill.requirements)
+      ? (skill.requirements as unknown[])
+      : [];
+    const requirements: string[] = rawRequirements.filter(
+      (r: unknown): r is string => typeof r === "string" && r.trim().length > 0,
+    );
+    if (requirements.length > 0) {
+      const SAFE = /^[a-zA-Z0-9._\-\[\]=<>!~,]+$/;
+      const unsafe = requirements.filter((r: string) => !SAFE.test(r));
+      if (unsafe.length > 0)
+        throw new AppError(
+          `Skill ${skillId} has an invalid requirement name: ${unsafe[0]}`,
+          422,
+        );
+      const quoted = requirements.map((r: string) => `'${r}'`).join(" ");
+      const install = await this.service.computer.execute(
+        owner,
+        { command: `python3 -m pip install --user --no-input ${quoted}` },
+        {
+          idempotencyKey: `skill-pip:${skillId}:${requirements.join(",")}`,
+          signal: ctx.signal,
+        },
+      );
+      if (install.status !== "succeeded") {
+        const missing = requirements.join(", ");
+        throw new AppError(
+          `Skill ${skillId} requires packages that are not bundled in the sandbox image ` +
+            `(${missing}). Add the matching .whl files to apps/computer/wheels/ and rebuild. ` +
+            `stderr: ${install.stderr.slice(0, 400)}`,
+          422,
+        );
+      }
+      await ctx.event(
+        "observation",
+        `Skill dependencies installed: ${skill.name}`,
+        `${requirements.length} package(s) installed from offline wheels`,
+      );
+    }
   }
 
   private async walk(

@@ -37,7 +37,9 @@ import { executeModelTask } from "./model.ts";
 import { BusinessDataService } from "./business.ts";
 import { LearningService } from "./learning.ts";
 import { SOPExecutor } from "./sop-executor.ts";
+import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
+import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const date = () => new Date().toISOString();
@@ -129,6 +131,15 @@ export class AgentService {
               `source-error:${Math.floor(Date.now() / 3600000)}`,
             );
           });
+      }      // Evaluate declarative SOP triggers (cron + email_subject). Manual and api triggers
+      // are driven by their callers and never scanned here.
+      const sopEvaluator = new SOPTriggerEvaluator(this);
+      for (const { owner, value } of await this.db.scan<SOP>("sops")) {
+        try {
+          await sopEvaluator.evaluate(owner, value);
+        } catch (error) {
+          backgroundFailure(`sop trigger ${value.id}`, error);
+        }
       }
     } finally {
       this.refreshing = false;

@@ -319,11 +319,13 @@ export async function executeModelTask(
     ),
   ];
   const identity = await service.db.get<{ name: string; tone: string }>(owner,"agent-settings","identity");
-  const memories = await service.db.list<{ text: string; source: string }>(owner, "memories");
+  const MEMORY_PROMPT_LIMIT = 40;
+  const SOP_PROMPT_LIMIT = 20;
+  const SKILL_PROMPT_LIMIT = 30;
+  const memories = (await service.db.list<{ text: string; source: string }>(owner, "memories")).slice(0, MEMORY_PROMPT_LIMIT);
   const sops = await service.db.list<any>(owner,"sops").catch(()=>[] as any[]);
-  const activeSops = (sops as any[]).filter((s:any)=>s.active!==false);
-  const skills = await service.db.list<any>(owner,"skills").catch(()=>[] as any[]);
-  const sopCtx = (()=>{ const cur = activeSops.find((s:any)=>s.id===(task.state as any)?.sopId); return cur ? ` SOP LOCKED: ${cur.name} - ${cur.description} Steps:${JSON.stringify(cur.steps)}` : ""; })();
+  const activeSops = (sops as any[]).filter((s:any)=>s.active!==false).slice(0, SOP_PROMPT_LIMIT);
+  const skills = (await service.db.list<any>(owner,"skills").catch(()=>[] as any[])).slice(0, SKILL_PROMPT_LIMIT);
   const skillsCtx = skills.length ? `Skills: ${JSON.stringify(skills.map((s:any)=>({id:s.id,name:s.name})))}` : "";
   const enterprisePrompt = `You are ${identity?.name ?? "OpenMuse Enterprise"} enterprise operator. Manual empresa: ${JSON.stringify(memories.slice(0,40))} SOPs:${JSON.stringify(activeSops.map((s:any)=>({id:s.id,name:s.name})))} ${skillsCtx} ${computerInstructions}`;
   const createAgent = (model: string) =>

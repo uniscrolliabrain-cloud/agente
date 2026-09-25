@@ -14,7 +14,7 @@ export const sopSchema = z.object({
   name: z.string().min(1).max(160),
   description: z.string().max(4000).default(""),
   category: z.string().max(100).default("General"),
-  trigger: z.object({ type: z.enum(["manual","email_subject","cron","api","skill"]).default("manual"), value: z.string().max(500).default("") }).default(() => ({ type: "manual" as const, value: "" })),
+  trigger: z.object({ type: z.enum(["manual","api","cron","email_subject"]).default("manual"), value: z.string().max(500).default("") }).default(() => ({ type: "manual" as const, value: "" })),
   steps: z.array(sopStepSchema).min(1).max(12).superRefine((steps, ctx) => {
     const ids = new Set<string>();
     steps.forEach((step, index) => {
@@ -23,7 +23,6 @@ export const sopSchema = z.object({
     });
   }),
   allowedTools: z.array(z.string()).min(1),
-  pythonRequirements: z.array(z.string().min(1).max(200)).max(50).default([]),
   skillId: z.string().min(1).max(100).optional(),
   active: z.boolean().default(true),
   createdAt: z.string().default(() => new Date().toISOString()),
