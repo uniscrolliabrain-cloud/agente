@@ -25,6 +25,43 @@ const goalPatchSchema = z.object({
     .optional(),
 });
 
+/** Minimal RFC 4180-style CSV parser: quoted fields with "" escapes, commas, CR/LF. */
+const parseCsv = (csv: string): string[][] => {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let quoted = false;
+  const source = csv.replace(/^\uFEFF/, "");
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+    if (quoted) {
+      if (char === '"') {
+        if (source[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else quoted = false;
+      } else field += char;
+      continue;
+    }
+    if (char === '"') quoted = true;
+    else if (char === ",") {
+      row.push(field);
+      field = "";
+    } else if (char === "\r") continue;
+    else if (char === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else field += char;
+  }
+  if (field.length > 0 || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+};
+
 export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: string } }> {
   const app = new Hono<{ Variables: { owner: string } }>();
   app.get("/", async (c) => c.json(await service.snapshot(c.get("owner"))));
@@ -178,6 +215,33 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       throw new AppError("Business record not found", 404);
     await service.db.remove(owner, "business-records", id);
     return c.json({ ok: true });
+  });
+  // CSV import: the first row is the header; every record gets a fresh uuid id and the body kind.
+  app.post("/business-records/import", async (c) => {
+    const body = z
+      .object({
+        csv: z.string().min(1).max(4_000_000),
+        kind: z.string().trim().min(1).max(100),
+      })
+      .parse(await c.req.json());
+    const [header, ...data] = parseCsv(body.csv);
+    const columns = header?.map((name) => name.trim()).filter((name) => name.length > 0) ?? [];
+    if (!columns.length)
+      throw new AppError("CSV must start with a header row of column names", 422);
+    if (data.length > 1000) throw new AppError("CSV import accepts at most 1000 rows", 422);
+    const owner = c.get("owner");
+    let count = 0;
+    for (const cells of data) {
+      if (!cells.some((value) => value.trim() !== "")) continue;
+      const values: Record<string, unknown> = {};
+      columns.forEach((name, index) => {
+        values[name] = cells[index] ?? "";
+      });
+      const record = { ...values, id: randomUUID(), kind: body.kind };
+      await service.db.put(owner, "business-records", record);
+      count++;
+    }
+    return c.json({ ok: true, count, kind: body.kind }, 201);
   });
   return app;
 }
