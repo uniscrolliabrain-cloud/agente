@@ -155,6 +155,30 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     for (const row of rows) await service.db.put(c.get("owner"), "business-records", { id: String(row.id ?? randomUUID()), ...row });
     return c.json({ ok: true, count: rows.length });
   });
+  // Owner-scoped business records, available in sample AND live modes.
+  const businessRecordSchema = z.looseObject({
+    id: z.string().trim().min(1).max(200),
+  });
+  app.get("/business-records", async (c) =>
+    c.json(await service.db.list(c.get("owner"), "business-records")),
+  );
+  app.post("/business-records", async (c) => {
+    const body = z
+      .union([businessRecordSchema, z.array(businessRecordSchema).max(500)])
+      .parse(await c.req.json());
+    const rows = Array.isArray(body) ? body : [body];
+    for (const row of rows)
+      await service.db.put(c.get("owner"), "business-records", { ...row, id: row.id });
+    return c.json({ ok: true, count: rows.length }, 201);
+  });
+  app.delete("/business-records/:id", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    if (!(await service.db.get(owner, "business-records", id)))
+      throw new AppError("Business record not found", 404);
+    await service.db.remove(owner, "business-records", id);
+    return c.json({ ok: true });
+  });
   return app;
 }
 
