@@ -37,7 +37,9 @@ export function isPublicIp(address: string): boolean {
     first <= 0x3fff &&
     !(first === 0x2001 && (second < 0x200 || second === 0xdb8)) &&
     first !== 0x2002 &&
-    !(first === 0x3fff && second < 0x1000)
+    !(first === 0x3fff && second < 0x1000) &&
+    !(first === 0x2001 && second >= 0x0020 && second <= 0x002f) &&
+    !(first === 0x2001 && second >= 0x0030 && second <= 0x003f)
   );
 }
 
@@ -94,4 +96,3 @@ export async function validatePublicUrl(
   if (!selected) throw blocked();
   return { url, address: selected.address, family: selected.family };
 }
-

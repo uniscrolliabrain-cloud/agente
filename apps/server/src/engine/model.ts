@@ -325,7 +325,7 @@ export async function executeModelTask(
   const skills = await service.db.list<any>(owner,"skills").catch(()=>[] as any[]);
   const sopCtx = (()=>{ const cur = activeSops.find((s:any)=>s.id===(task.state as any)?.sopId); return cur ? ` SOP LOCKED: ${cur.name} - ${cur.description} Steps:${JSON.stringify(cur.steps)}` : ""; })();
   const skillsCtx = skills.length ? `Skills: ${JSON.stringify(skills.map((s:any)=>({id:s.id,name:s.name})))}` : "";
-  const enterprisePrompt = `You are ${identity?.name ?? "OpenMuse Enterprise"} enterprise operator. Manual empresa: ${JSON.stringify(memories.slice(0,40))} SOPs:${JSON.stringify(activeSops.map((s:any)=>({id:s.id,name:s.name})))} ${skillsCtx} ${sopCtx} ${computerInstructions}`;
+  const enterprisePrompt = `You are ${identity?.name ?? "OpenMuse Enterprise"} enterprise operator. Manual empresa: ${JSON.stringify(memories.slice(0,40))} SOPs:${JSON.stringify(activeSops.map((s:any)=>({id:s.id,name:s.name})))} ${skillsCtx} ${computerInstructions}`;
   const createAgent = (model: string) =>
     new BuiltInAgent({
       model,

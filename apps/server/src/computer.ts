@@ -91,11 +91,21 @@ export const runDocker: DockerRunner = (args, options) =>
     }, options.timeoutMs);
     child.stdout.on("data", (chunk: Buffer) => capture(stdout, chunk));
     child.stderr.on("data", (chunk: Buffer) => capture(stderr, chunk));
-    child.on("error", () => {
-      capture(
-        stderr,
-        Buffer.from("Docker CLI could not be started. Install Docker and start its engine."),
-      );
+    child.on("error", (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        result.exitCode = 127;
+        capture(
+          stderr,
+          Buffer.from(
+            "E_DOCKER_MISSING: Docker CLI was not found on PATH. Install Docker and start its engine.",
+          ),
+        );
+      } else {
+        capture(
+          stderr,
+          Buffer.from("Docker CLI could not be started. Install Docker and start its engine."),
+        );
+      }
       finish();
     });
     child.on("close", (code) => {
