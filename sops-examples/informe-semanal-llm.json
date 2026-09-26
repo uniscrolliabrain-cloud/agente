@@ -1,0 +1,37 @@
+{
+  "id": "informe-semanal-llm",
+  "name": "Informe semanal con modelo",
+  "description": "Resume los datos de negocio de la semana con el modelo configurado y guarda el informe como artefacto. Paso de ejemplo para el tool llm_generate.",
+  "category": "Reporting",
+  "trigger": { "type": "manual", "value": "" },
+  "active": true,
+  "steps": [
+    {
+      "id": "datos",
+      "title": "Leer los records de negocio del owner",
+      "tool": "query_business",
+      "required": true,
+      "prompt": "Recupera los registros de negocio relevantes para el informe semanal.",
+      "params": { "source": "postgres", "query": "SELECT id, name FROM business_records ORDER BY id LIMIT 200" }
+    },
+    {
+      "id": "borrador",
+      "title": "Redactar el informe semanal",
+      "tool": "llm_generate",
+      "required": true,
+      "prompt": "Redacta un informe semanal breve en español a partir de los resultados del paso anterior: altas, cambios relevantes y riesgos. No inventes cifras que no aparezcan en el contexto.",
+      "params": {
+        "instruction": "Redacta un informe semanal en markdown con los apartados Resumen, Cambios y Riesgos, usando solo los datos del contexto."
+      }
+    },
+    {
+      "id": "guardar",
+      "title": "Guardar el informe como artefacto",
+      "tool": "save_artifact",
+      "required": true,
+      "prompt": "Guarda el informe generado para su consulta posterior.",
+      "params": { "kind": "report", "title": "Informe semanal" }
+    }
+  ],
+  "allowedTools": ["query_business", "llm_generate", "save_artifact"]
+}
