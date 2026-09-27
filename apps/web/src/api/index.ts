@@ -4,3 +4,5 @@ export * from "./conversation";
 export * from "./chat";
 export * from "./tasks";
 export * from "./actions";
+export * from "./files";
+export type { ChatMessage, AgentTask, ActionProposal, TaskDetail, TaskStatus, TaskKind, TaskStep, RunEvent, AgentArtifact, AgentWorkspace, WorkspaceSnapshot } from "../types/api";

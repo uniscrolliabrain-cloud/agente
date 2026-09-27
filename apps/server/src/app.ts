@@ -247,8 +247,11 @@ export async function createApp(
   });
   app.get("/api/files/:id/content", async (c) => {
     const file = await files.get(c.get("owner"), c.req.param("id"));
-    c.header("Content-Type", "application/pdf");
-    c.header("Content-Disposition", `inline; filename*=UTF-8''${encodeURIComponent(file.name)}`);
+    c.header("Content-Type", file.mimeType);
+    const disposition = file.mimeType.startsWith("image/") || file.mimeType === "application/pdf"
+      ? "inline"
+      : "attachment";
+    c.header("Content-Disposition", `${disposition}; filename*=UTF-8''${encodeURIComponent(file.name)}`);
     return c.body(await files.bytes(c.get("owner"), file.id));
   });
   app.post("/api/files/:id/fill", async (c) => {

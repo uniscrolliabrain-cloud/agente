@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
+import { useWorkspaceData } from "./hooks/useWorkspaceData";
 import Header from "./components/Header";
-import ConversationsPanel from "./components/ConversationsPanel";
+import ConversationsPanel, { type AppView } from "./components/ConversationsPanel";
 import ChatPanel from "./components/ChatPanel";
 import KanbanPanel from "./components/KanbanPanel";
+import TasksView from "./components/TasksView";
+import DocumentsView from "./components/DocumentsView";
+import MemoryView from "./components/MemoryView";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import type { AgentTask } from "./types/api";
@@ -30,8 +34,10 @@ export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const chat = useChat(auth.isAuthenticated);
+  const { memories, files } = useWorkspaceData(auth.isAuthenticated);
   const theme = useTheme();
 
+  const [view, setView] = useState<AppView>("chat");
   const [convCollapsed, setConvCollapsed] = useState(false);
   const [kanbanCollapsed, setKanbanCollapsed] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -61,6 +67,9 @@ export default function App() {
     );
   }
 
+  const openTask = (t: AgentTask) => setOpenTaskId(t.id);
+  const reviewTask = (t: AgentTask) => setReviewTaskId(t.id);
+
   return (
     <div className="app-root">
       <Header
@@ -79,21 +88,29 @@ export default function App() {
       <div className="main">
         <ConversationsPanel
           collapsed={convCollapsed}
+          activeView={view}
+          onSelectView={setView}
           activeThreadId={chat.threadId}
           onNewChat={() => { /* multi-thread próximamente */ }}
-          onSelectThread={() => { /* multi-thread próximamente */ }}
         />
 
-        <ChatPanel chat={chat} />
+        {view === "chat" && <ChatPanel chat={chat} />}
+        {view === "tasks" && <TasksView tasks={tasks.tasks} onOpenTask={openTask} onReviewTask={reviewTask} />}
+        {view === "documents" && <DocumentsView files={files} />}
+        {view === "memory" && <MemoryView memories={memories} />}
 
-        <KanbanPanel
-          collapsed={kanbanCollapsed}
-          mobileOpen={false}
-          onCloseMobile={() => setKanbanCollapsed(true)}
-          tasks={tasks.tasks}
-          onOpenTask={(t: AgentTask) => setOpenTaskId(t.id)}
-          onReviewTask={(t: AgentTask) => setReviewTaskId(t.id)}
-        />
+        {view === "chat" && (
+          <KanbanPanel
+            collapsed={kanbanCollapsed}
+            mobileOpen={false}
+            onCloseMobile={() => setKanbanCollapsed(true)}
+            tasks={tasks.tasks}
+            memories={memories}
+            files={files}
+            onOpenTask={openTask}
+            onReviewTask={reviewTask}
+          />
+        )}
       </div>
 
       {openTaskId && (

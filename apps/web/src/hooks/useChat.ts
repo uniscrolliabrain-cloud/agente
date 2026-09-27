@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
 import { getConversation, getOrCreateMainThread, saveConversation } from "../api/conversation";
-import type { ChatMessage } from "../types/api";
+import type { ChatAttachment, ChatMessage } from "../types/api";
 
 function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -38,82 +38,101 @@ export function useChat(enabled: boolean) {
     })();
   }, [enabled]);
 
-  const send = useCallback(async (text: string) => {
-    if (!text.trim() || streaming || !threadId) return;
-    const userMsg: ChatMessage = { id: uid(), role: "user", content: text.trim(), timestamp: now() };
-    const history = [...messages, userMsg];
-    setMessages(history);
-    setStreaming(true);
-    setStreamBuf("");
-    setActiveTool(null);
-    setError(null);
-
-    const controller = new AbortController();
-    abortRef.current = controller;
-
-    let assistantText = "";
-    let toolCall: ActiveTool | null = null;
-    let runErrorMessage: string | null = null;
-
-    try {
-      await streamChat(
-        {
-          threadId,
-          runId: uid(),
-          messages: history.map((m) => ({ id: m.id, role: m.role, content: m.content })),
-        },
-        (event: AgUiEvent) => {
-          if (event.type === "TEXT_MESSAGE_CONTENT" && typeof event.delta === "string") {
-            assistantText += event.delta;
-            setStreamBuf(assistantText);
-          } else if (event.type === "TOOL_CALL_START" && typeof event.toolCallName === "string") {
-            toolCall = { id: String(event.toolCallId ?? uid()), name: event.toolCallName, status: "running", args: {} };
-            setActiveTool({ ...toolCall });
-          } else if (event.type === "TOOL_CALL_ARGS" && typeof event.delta === "string" && toolCall) {
-            try { toolCall.args = JSON.parse(event.delta); } catch { toolCall.args = event.delta; }
-            setActiveTool({ ...toolCall });
-          } else if (event.type === "TOOL_CALL_END" && toolCall) {
-            toolCall.status = "done";
-            setActiveTool({ ...toolCall });
-          } else if (event.type === "TOOL_CALL_RESULT" && toolCall) {
-            try {
-              const parsed = JSON.parse(String(event.content ?? ""));
-              if (parsed && typeof parsed.id === "string") {
-                toolCall.args = { ...(toolCall.args as object), taskId: parsed.id };
-              }
-            } catch { /* contenido no JSON */ }
-          } else if (event.type === "RUN_ERROR") {
-            runErrorMessage = String(event.message ?? "Error del modelo");
-          }
-        },
-        controller.signal,
-      );
-
-      if (runErrorMessage && !assistantText.trim()) {
-        setError(runErrorMessage);
-        return;
-      }
-
-      const finalAssistant: ChatMessage = {
+  const send = useCallback(
+    async (text: string, attachment?: ChatAttachment) => {
+      if ((!text.trim() && !attachment) || streaming || !threadId) return;
+      const trimmed = text.trim();
+      const userMsg: ChatMessage = {
         id: uid(),
-        role: "assistant",
-        content: assistantText.trim() || "(sin respuesta)",
+        role: "user",
+        content: trimmed || `Adjunto: ${attachment?.name ?? "archivo"}`,
         timestamp: now(),
-        toolCall: toolCall ?? undefined,
+        attachment,
       };
-      const finalHistory = [...history, finalAssistant];
-      setMessages(finalHistory);
+      const history = [...messages, userMsg];
+      setMessages(history);
+      setStreaming(true);
       setStreamBuf("");
       setActiveTool(null);
-      try { await saveConversation(finalHistory); } catch { /* se persiste en el próximo turno */ }
-    } catch (err) {
-      if (controller.signal.aborted) setError("Cancelado por el usuario");
-      else setError(err instanceof Error ? err.message : "Error en el stream");
-    } finally {
-      setStreaming(false);
-      abortRef.current = null;
-    }
-  }, [messages, streaming, threadId]);
+      setError(null);
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      // El modelo ve el id del artifact y puede llamar a inspect_pdf con él.
+      const llmContent = attachment
+        ? `${trimmed || "(sin texto)"}\\n\\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
+        : trimmed;
+
+      let assistantText = "";
+      let toolCall: ActiveTool | null = null;
+      let runErrorMessage: string | null = null;
+
+      try {
+        await streamChat(
+          {
+            threadId,
+            runId: uid(),
+            messages: history.map((m, i) =>
+              i === history.length - 1
+                ? { id: m.id, role: m.role, content: llmContent }
+                : { id: m.id, role: m.role, content: m.content },
+            ),
+          },
+          (event: AgUiEvent) => {
+            if (event.type === "TEXT_MESSAGE_CONTENT" && typeof event.delta === "string") {
+              assistantText += event.delta;
+              setStreamBuf(assistantText);
+            } else if (event.type === "TOOL_CALL_START" && typeof event.toolCallName === "string") {
+              toolCall = { id: String(event.toolCallId ?? uid()), name: event.toolCallName, status: "running", args: {} };
+              setActiveTool({ ...toolCall });
+            } else if (event.type === "TOOL_CALL_ARGS" && typeof event.delta === "string" && toolCall) {
+              try { toolCall.args = JSON.parse(event.delta); } catch { toolCall.args = event.delta; }
+              setActiveTool({ ...toolCall });
+            } else if (event.type === "TOOL_CALL_END" && toolCall) {
+              toolCall.status = "done";
+              setActiveTool({ ...toolCall });
+            } else if (event.type === "TOOL_CALL_RESULT" && toolCall) {
+              try {
+                const parsed = JSON.parse(String(event.content ?? ""));
+                if (parsed && typeof parsed.id === "string") {
+                  toolCall.args = { ...(toolCall.args as object), taskId: parsed.id };
+                }
+              } catch { /* contenido no JSON */ }
+            } else if (event.type === "RUN_ERROR") {
+              runErrorMessage = String(event.message ?? "Error del modelo");
+            }
+          },
+          controller.signal,
+        );
+
+        if (runErrorMessage && !assistantText.trim()) {
+          setError(runErrorMessage);
+          return;
+        }
+
+        const finalAssistant: ChatMessage = {
+          id: uid(),
+          role: "assistant",
+          content: assistantText.trim() || "(sin respuesta)",
+          timestamp: now(),
+          toolCall: toolCall ?? undefined,
+        };
+        const finalHistory = [...history, finalAssistant];
+        setMessages(finalHistory);
+        setStreamBuf("");
+        setActiveTool(null);
+        try { await saveConversation(finalHistory); } catch { /* se persiste en el próximo turno */ }
+      } catch (err) {
+        if (controller.signal.aborted) setError("Cancelado por el usuario");
+        else setError(err instanceof Error ? err.message : "Error en el stream");
+      } finally {
+        setStreaming(false);
+        abortRef.current = null;
+      }
+    },
+    [messages, streaming, threadId],
+  );
 
   const cancel = useCallback(() => { abortRef.current?.abort(); }, []);
 
