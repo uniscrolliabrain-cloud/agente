@@ -111,3 +111,10 @@ export async function userTasks(
 ): Promise<{ userId: string; total: number; tasks: UserTaskSummary[] }> {
   return apiFetch(`/api/auth/users/${encodeURIComponent(id)}/tasks?limit=${limit}`);
 }
+export async function updateMe(input: {
+  name?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}): Promise<AuthUser> {
+  return apiFetch<AuthUser>("/api/auth/me", { method: "PATCH", body: input });
+}

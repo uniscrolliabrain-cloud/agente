@@ -27,6 +27,8 @@ import { GoogleAuth } from "./google-auth.ts";
 import { WorkspaceService } from "./workspace.ts";
 import { UserService } from "./users.ts";
 import { authRoutes } from "./auth-routes.ts";
+import { RagService } from "./engine/rag.ts";
+import { ragRoutes } from "./rag-routes.ts";
 
 export async function createApp(
   db: Store,
@@ -37,7 +39,8 @@ export async function createApp(
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
     workspace = new WorkspaceService(db, config, files, google),
-    users = new UserService(db);
+    users = new UserService(db),
+    rag = new RagService(db);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       workspace.execute(owner, input, connectionId, targetVersion),
@@ -47,7 +50,7 @@ export async function createApp(
   });
   const browser = new BrowserService(db, config, auth, files);
   const computer = new ComputerService(db, config, options.docker);
-  const agent = new AgentService(db, config, workspace, files, actions, browser, computer);
+  const agent = new AgentService(db, config, workspace, files, actions, browser, computer, rag);
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
@@ -76,9 +79,23 @@ export async function createApp(
     }),
   );
   app.onError((error, c) => {
-    if (error instanceof z.ZodError)
-      return c.json({ error: error.issues.map((i) => i.message).join("; ") }, 422);
-    if (error instanceof AppError) return c.json({ error: error.message }, error.status);
+    if (error instanceof z.ZodError) {
+      const fields: Record<string, string> = {};
+      for (const issue of error.issues) {
+        const path = issue.path.map((p) => String(p)).join(".");
+        if (path) {
+          if (!fields[path]) fields[path] = issue.message;
+        } else if (!fields._error) {
+          fields._error = issue.message;
+        }
+      }
+      return c.json({ error: "Revisa los campos marcados", fields }, 422);
+    }
+    if (error instanceof AppError)
+      return c.json(
+        { error: error.message, ...(error.fields ? { fields: error.fields } : {}) },
+        error.status,
+      );
     if (error.name === "PdfError" || error.name === "RecurringEventError")
       return c.json({ error: error.message }, 422);
     if (error instanceof SyntaxError) return c.json({ error: "Invalid request data" }, 400);
@@ -154,6 +171,7 @@ export async function createApp(
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/auth", authRoutes(db, users));
+  app.route("/api/rag", ragRoutes(rag));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {

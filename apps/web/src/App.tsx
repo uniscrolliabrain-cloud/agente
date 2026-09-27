@@ -12,6 +12,7 @@ import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
 import UsersView from "./components/UsersView";
+import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import type { AgentTask } from "./types/api";
@@ -43,6 +44,7 @@ export default function App() {
   const [convCollapsed, setConvCollapsed] = useState(false);
   const [kanbanCollapsed, setKanbanCollapsed] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
 
   if (auth.booting) {
@@ -76,6 +78,9 @@ export default function App() {
         onToggleTheme={theme.toggle}
         onToggleConv={() => setConvCollapsed((v) => !v)}
         onToggleKanban={() => setKanbanCollapsed((v) => !v)}
+        userName={auth.user?.name ?? "Usuario"}
+        userRole={auth.user?.role ?? "user"}
+        onOpenProfile={() => setProfileOpen(true)}
         onLogout={auth.logout}
       />
 
@@ -114,6 +119,14 @@ export default function App() {
           taskId={openTaskId}
           onClose={() => setOpenTaskId(null)}
           onChanged={tasks.refresh}
+        />
+      )}
+
+      {profileOpen && auth.user && (
+        <ProfileModal
+          user={auth.user}
+          onClose={() => setProfileOpen(false)}
+          onSaved={(u) => { localStorage.setItem("openmuse_user", JSON.stringify(u)); }}
         />
       )}
 

@@ -8,19 +8,35 @@ import { userRoleSchema, userSetupSchema, type User, type UserService } from "./
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 
 const createUserSchema = z.object({
-  email: z.email(),
-  name: z.string().trim().min(1).max(120),
-  password: z.string().min(8).max(200),
+  email: z.email({ message: "El email no tiene un formato valido" }),
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre es obligatorio")
+    .max(120, "El nombre no puede superar 120 caracteres"),
+  password: z
+    .string()
+    .min(8, "La contrasena debe tener al menos 8 caracteres")
+    .max(200, "La contrasena no puede superar 200 caracteres"),
   role: userRoleSchema.default("user"),
   setup: userSetupSchema.partial().optional(),
 });
 
 const updateUserSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(),
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre es obligatorio")
+    .max(120, "El nombre no puede superar 120 caracteres")
+    .optional(),
   role: userRoleSchema.optional(),
   active: z.boolean().optional(),
   setup: userSetupSchema.partial().optional(),
-  password: z.string().min(8).max(200).optional(),
+  password: z
+    .string()
+    .min(8, "La contrasena debe tener al menos 8 caracteres")
+    .max(200, "La contrasena no puede superar 200 caracteres")
+    .optional(),
 });
 
 export function authRoutes(db: Store, users: UserService) {
@@ -75,6 +91,51 @@ export function authRoutes(db: Store, users: UserService) {
     });
   });
 
+  // PATCH /api/auth/me -> cambiar nombre y/o contrasena del propio usuario
+  app.patch("/me", async (c) => {
+    const me = await users.getById(c.get("owner"));
+    if (!me) throw new AppError("Usuario no encontrado", 404);
+    const body = z
+      .object({
+        name: z
+          .string()
+          .trim()
+          .min(1, "El nombre es obligatorio")
+          .max(120, "El nombre no puede superar 120 caracteres")
+          .optional(),
+        currentPassword: z.string().min(1).max(200).optional(),
+        newPassword: z
+          .string()
+          .min(8, "La contrasena debe tener al menos 8 caracteres")
+          .max(200, "La contrasena no puede superar 200 caracteres")
+          .optional(),
+      })
+      .parse(await c.req.json());
+
+    if (body.newPassword) {
+      if (!body.currentPassword)
+        throw new AppError("Falta la contrasena actual", 422, {
+          currentPassword: "Introduce tu contrasena actual",
+        });
+      const ok = await users.verifyCredentials(me.email, body.currentPassword);
+      if (!ok)
+        throw new AppError("Contrasena actual incorrecta", 403, {
+          currentPassword: "Contrasena actual incorrecta",
+        });
+    }
+
+    const updated = await users.update(me.id, {
+      ...(body.name ? { name: body.name } : {}),
+      ...(body.newPassword ? { password: body.newPassword } : {}),
+    });
+    return c.json({
+      id: updated.id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      setup: updated.setup,
+    });
+  });
   // GET /api/auth/users -> solo admin
   app.get("/users", async (c) => {
     const me = await users.getById(c.get("owner"));
