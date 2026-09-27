@@ -1,5 +1,7 @@
-import { FileText } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, Search } from "lucide-react";
 import type { FileEntry } from "../hooks/useWorkspaceData";
+import { ragSearch, ragStatus, type RagHit, type RagStatus } from "../api/rag";
 
 interface Props {
   files: FileEntry[];
@@ -22,11 +24,96 @@ function relativeTime(iso?: string): string {
 }
 
 export default function DocumentsView({ files }: Props) {
+  const [status, setStatus] = useState<RagStatus | null>(null);
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<RagHit[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const s = await ragStatus();
+        if (!cancelled) setStatus(s);
+      } catch {
+        if (!cancelled) setStatus({ configured: false, chunks: 0, sources: 0 });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [files.length]);
+
+  const runSearch = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      const result = await ragSearch(q, 8);
+      setHits(result);
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Error en la búsqueda");
+      setHits(null);
+    } finally {
+      setSearching(false);
+    }
+  };
+
   return (
     <main className="view-shell">
       <div className="view-header">
         <h2>Documentos</h2>
-        <span className="view-header-meta">{files.length} archivos</span>
+        <span className="view-header-meta">
+          {files.length} archivos
+          {status?.configured ? ` · ${status.chunks} chunks indexados` : " · RAG inactivo"}
+        </span>
+      </div>
+
+      <div className="rag-search">
+        <div className="rag-search-row">
+          <Search size={15} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void runSearch();
+            }}
+            placeholder="Buscar en tus documentos (búsqueda semántica)"
+            disabled={!status?.configured || searching}
+          />
+          <button
+            className="primary-btn"
+            onClick={() => void runSearch()}
+            disabled={!status?.configured || searching || !query.trim()}
+          >
+            {searching ? "Buscando..." : "Buscar"}
+          </button>
+        </div>
+        {!status?.configured && (
+          <div className="rag-search-hint">
+            Falta GEMINI_API_KEY en el servidor para activar la búsqueda semántica.
+          </div>
+        )}
+        {searchError && <div className="chat-error">{searchError}</div>}
+        {hits && hits.length > 0 && (
+          <div className="rag-results">
+            {hits.map((hit) => (
+              <div key={hit.id} className="rag-result">
+                <div className="rag-result-meta">
+                  <span className="rag-result-source">{hit.sourceName}</span>
+                  <span className="rag-result-score">{(hit.score * 100).toFixed(0)}%</span>
+                </div>
+                <div className="rag-result-text">{hit.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {hits && hits.length === 0 && (
+          <div className="rag-search-hint">Sin resultados.</div>
+        )}
       </div>
 
       {files.length === 0 ? (

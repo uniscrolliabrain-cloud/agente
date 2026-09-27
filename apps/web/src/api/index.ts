@@ -6,4 +6,5 @@ export * from "./tasks";
 export * from "./actions";
 export * from "./files";
 export * from "./auth";
+export * from "./rag";
 export type { ChatMessage, AgentTask, ActionProposal, TaskDetail, TaskStatus, TaskKind, TaskStep, RunEvent, AgentArtifact, AgentWorkspace, WorkspaceSnapshot } from "../types/api";

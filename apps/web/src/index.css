@@ -1336,3 +1336,80 @@ html[data-theme="dark"] .user-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,.5), 
 .user-dropdown-item.danger:hover { background: color-mix(in srgb, var(--red) 8%, var(--surface)); }
 .modal-success { margin-bottom: 16px; padding: 10px 13px; border: 1px solid #bbf7d0; border-radius: 9px; background: #f0fdf4; color: #15803d; font-size: 12px; }
 html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 15%, var(--surface)); border-color: color-mix(in srgb, #16a36a 35%, var(--border)); color: #86efac; }
+
+/* --------------------------------------------------
+   RAG SEARCH (Documents)
+-------------------------------------------------- */
+.rag-search {
+  padding: 14px 22px 6px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--surface);
+}
+.rag-search-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rag-search-row svg { color: var(--text-3); flex-shrink: 0; }
+.rag-search-row input {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12.5px;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.rag-search-row input:focus {
+  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.rag-search-row input:disabled { opacity: 0.55; cursor: not-allowed; }
+.rag-search-hint {
+  margin-top: 8px;
+  color: var(--text-3);
+  font-size: 11px;
+}
+.rag-results {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.rag-result {
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 9px;
+}
+.rag-result-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  font-size: 10px;
+}
+.rag-result-source {
+  color: var(--text-2);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rag-result-score {
+  color: var(--accent);
+  font-weight: 600;
+}
+.rag-result-text {
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}

@@ -56,6 +56,20 @@ export class SOPExecutor {
     const raw = await this.service.db.get(owner, "sops", sopId);
     if (!raw) throw new AppError(`SOP not found: ${sopId}`, 404);
     const sop = sopSchema.parse(raw);
+    // Enforcement: un usuario solo puede ejecutar SOPs asignados en su setup.sopIds.
+    // Admin bypassa. Lista vacia = sin restriccion (compat con sample y system).
+    const __userRecord = await this.service.db.get<{
+      data?: { role?: string; setup?: { sopIds?: string[] } };
+    }>("system", "users", owner);
+    if (__userRecord && __userRecord.data?.role !== "admin") {
+      const __allowed = __userRecord.data?.setup?.sopIds ?? [];
+      if (__allowed.length > 0 && !__allowed.includes(sop.id)) {
+        throw new AppError(
+          "Tu cuenta no tiene acceso a este SOP. Pidele al admin que te lo asigne.",
+          403,
+        );
+      }
+    }
     if (!sop.active) throw new AppError(`SOP is inactive: ${sop.name}`, 409);
 
     // SOP version pinning: once a task starts against a version, later resumes must match it.
@@ -374,6 +388,28 @@ export class SOPExecutor {
         );
         return { id: file.id, name: file.name, fields: file.fields };
       }
+      case "recall_memory": {
+        const query = String(params.query ?? step.prompt ?? "");
+        const result = await this.service.memory.recall(owner, query, {
+          ragLimit: Number(params.ragLimit ?? 5),
+          memoryLimit: Number(params.memoryLimit ?? 8),
+        });
+        return {
+          query: result.query,
+          explanation: result.explanation,
+          ragHits: result.ragHits.map((h) => ({
+            sourceName: h.sourceName,
+            text: h.text.slice(0, 800),
+            score: h.score,
+          })),
+          memories: result.memories.map((m) => ({
+            text: m.text,
+            category: m.category ?? null,
+            tags: m.tags ?? [],
+          })),
+        };
+      }
+
       default:
         throw new AppError(`Unsupported SOP tool: ${step.tool}`, 422);
     }
