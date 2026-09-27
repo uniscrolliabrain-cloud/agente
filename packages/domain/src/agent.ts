@@ -45,6 +45,7 @@ export interface AgentTask {
   error?: string | null;
   question?: string;
   artifactIds: string[];
+  assignedTo?: string;
 }
 export interface RunEvent {
   id: string;
@@ -136,6 +137,7 @@ export const createTaskSchema = z.object({
   prompt: z.string().trim().min(1).max(12000),
   kind: z.enum(["agent", "document", "monitor", "finance", "plan", "sop"]).default("agent"),
   goalId: z.string().optional(),
+  assignedTo: z.string().optional(),
   input: z.record(z.string(), z.unknown()).default(() => ({})),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;

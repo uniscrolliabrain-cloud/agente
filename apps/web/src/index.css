@@ -1306,3 +1306,33 @@ html[data-theme="dark"] .login-error {
   background: color-mix(in srgb, var(--red) 8%, var(--surface));
   border-color: var(--red);
 }
+
+/* Field error inline */
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  margin-bottom: 8px;
+  color: var(--red);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.field-error svg { flex-shrink: 0; }
+
+.user-menu-wrap { position: relative; }
+.user-menu-trigger { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 4px; border: 0; background: transparent; border-radius: 20px; cursor: pointer; color: inherit; transition: background 150ms ease; }
+.user-menu-trigger:hover { background: var(--surface-2); }
+.user-chevron { color: var(--text-3); }
+.user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 220px; padding: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04); z-index: 100; animation: modal-in 120ms ease; }
+html[data-theme="dark"] .user-dropdown { box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.3); }
+.user-dropdown-header { padding: 10px 12px; }
+.user-dropdown-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.user-dropdown-role { font-size: 10.5px; color: var(--text-3); margin-top: 2px; }
+.user-dropdown-divider { height: 1px; background: var(--border-soft); margin: 4px 0; }
+.user-dropdown-item { width: 100%; display: flex; align-items: center; gap: 9px; padding: 9px 12px; border: 0; background: transparent; border-radius: 8px; color: var(--text-2); font-size: 12.5px; cursor: pointer; text-align: left; transition: background 120ms ease; }
+.user-dropdown-item:hover { background: var(--surface-2); color: var(--text); }
+.user-dropdown-item.danger { color: var(--red); }
+.user-dropdown-item.danger:hover { background: color-mix(in srgb, var(--red) 8%, var(--surface)); }
+.modal-success { margin-bottom: 16px; padding: 10px 13px; border: 1px solid #bbf7d0; border-radius: 9px; background: #f0fdf4; color: #15803d; font-size: 12px; }
+html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 15%, var(--surface)); border-color: color-mix(in srgb, #16a36a 35%, var(--border)); color: #86efac; }

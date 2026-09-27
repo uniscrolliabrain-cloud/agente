@@ -125,6 +125,33 @@ export class Files {
     await mkdir(directory, { recursive: true, mode: 0o700 });
     await writeFile(join(directory, `${id}.bin`), bytes, { mode: 0o600, flag: "wx" });
     await this.db.put(owner, "files", artifact);
+
+    // Ingesta automatica en RAG para archivos de texto plano.
+    if (
+      artifact.mimeType.startsWith("text/") ||
+      artifact.mimeType === "application/json" ||
+      artifact.mimeType === "application/xml"
+    ) {
+      try {
+        const text = new TextDecoder("utf-8").decode(bytes);
+        const { embed: embedFn } = await import("./engine/embeddings.ts");
+        const { chunkText } = await import("./engine/rag.ts");
+        const chunks = chunkText(text);
+        for (let i = 0; i < chunks.length; i += 1) {
+          const vec = await embedFn(chunks[i]);
+          await this.db.put(owner, "rag-chunks", {
+            id: `${id}-${i}`,
+            sourceId: id,
+            sourceName: artifact.name,
+            chunkIndex: i,
+            text: chunks[i],
+            embedding: vec,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      } catch { /* ingesta opcional, no rompe la subida */ }
+    }
+
     return this.signed(owner, artifact);
   }
 

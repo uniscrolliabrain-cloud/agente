@@ -38,7 +38,7 @@ interface UserRecord {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  if (password.length < 8) throw new AppError("Password must be at least 8 characters", 422);
+  if (password.length < 8) throw new AppError("Contrasena demasiado corta", 422, { password: "La contrasena debe tener al menos 8 caracteres" });
   const salt = randomBytes(16);
   const key = await scryptAsync(password, salt, 64);
   return `scrypt$${salt.toString("base64")}$${key.toString("base64")}`;
@@ -97,7 +97,7 @@ export class UserService {
   }): Promise<User> {
     const email = input.email.toLowerCase().trim();
     if (await this.getByEmail(email))
-      throw new AppError("Ya existe un usuario con ese email", 409);
+      throw new AppError("Email ya registrado", 409, { email: "Ya existe un usuario con ese email" });
 
     const now = new Date().toISOString();
     const user = userSchema.parse({

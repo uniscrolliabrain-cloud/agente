@@ -37,6 +37,7 @@ import { executeModelTask } from "./model.ts";
 import { BusinessDataService } from "./business.ts";
 import { LearningService } from "./learning.ts";
 import { SOPExecutor } from "./sop-executor.ts";
+import { RagService } from "./rag.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
@@ -59,6 +60,7 @@ export class AgentService {
     readonly actions: ActionService,
     readonly browser: BrowserService,
     readonly computer: ComputerService = new ComputerService(db, config),
+    readonly rag: RagService = new RagService(db),
   ) {
     this.business = new BusinessDataService(db, config.databaseUrl);
     this.learning = new LearningService(db);
@@ -244,6 +246,7 @@ export class AgentService {
       prompt: input.prompt,
       kind: input.kind,
       goalId: input.goalId,
+      assignedTo: input.assignedTo ?? owner,
       status: held ? "paused" : "queued",
       plan: titles.map((title, i) => ({ id: String(i), title, status: "pending" })),
       evidence: [],
