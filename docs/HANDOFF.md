@@ -3,10 +3,9 @@
 > Este documento existe para sobrevivir a cambios de chat, de agente o de dev.
 > Cualquiera (humano o IA) que lea esto debería poder continuar el trabajo sin contexto previo.
 
-Última actualización: 26 de septiembre de 2026.
-Rama activa: `main`.
-Estado: **beta operativa en local. Chat con streaming verificado en navegador. Pendiente: RAG,
-multi-hilo y deploy para vender.**
+Última actualización: 27 de septiembre de 2026.
+Rama activa de trabajo: `feat/connect-backend` (mergeada a `main`).
+Estado: **beta interna funcional. Frontend rediseñado a nivel pro. Pendiente: multi-usuario y RAG para vender.**
 
 ---
 
@@ -14,101 +13,124 @@ multi-hilo y deploy para vender.**
 
 Runtime de agentes durables alrededor de **Tasks → SOPs → Skills → Tools → Validation → Learning**.
 
-Es un motor que ejecuta procesos de empresa con:
+En la practica: **un ChatGPT que sabe cosas de tu empresa y hace cosas de verdad**.
 
-- Persistencia durable (CAS + leases + checkpoints).
-- Aprobaciones humanas obligatorias antes de acciones externas.
-- Sandbox Docker aislado para código no confiable.
-- SOPs declarativos (JSON) que se ejecutan paso a paso.
-- Skills Python que corren dentro del sandbox.
-- Chat con LLM conectado a datos del cliente.
+Piensa en: ChatGPT + CRM + SOPs + kanban + memoria de empresa + agentes a medida, todo en una interfaz que un empleado ya sabe usar porque se parece a GPT.
+
+Componentes del motor:
+
+- Persistencia durable (CAS + leases + checkpoints). Sobrevive a reinicios.
+- Aprobaciones humanas obligatorias antes de acciones externas (emails, calendario).
+- Sandbox Docker aislado para codigo no confiable (opcional, ver section 4).
+- SOPs declarativos (JSON) que se ejecutan paso a paso con recuperacion.
+- Skills Python dentro del sandbox.
+- Chat con LLM conectado a datos reales del cliente.
+- Memoria persistente + artifacts.
+- Kanban durable con estados (queued, running, waiting_approval, waiting_input, succeeded, failed, cancelled).
 
 ## 2. Modelo de negocio
 
-- **Un deployment por cliente.** Sin multitenancy. Un cliente = un repo clonado + un VPS.
+- **Un deployment por cliente.** Sin multitenancy. Un cliente = un repo clonado + un servidor.
+- **Multiples usuarios dentro de un mismo deployment** (mismo cliente). Cada usuario ve solo sus tareas.
 - **Setup:** 1000-3000 EUR por compilar la empresa (SOPs, skills, datos, docs, canales).
 - **Recurrente:** 200-400 EUR/mes por mantenimiento.
-- **Cliente objetivo:** PYME o agencia pequeña (5-50 personas).
+- **Cliente objetivo:** PYME o agencia pequena (5-50 personas).
 - **Propuesta:** "tu propio ChatGPT que sabe cosas de tu empresa y hace cosas".
+- **Diferenciacion:** soportamos SOPs deterministas con aprobaciones + memoria de empresa + tareas durables. No es otro wrapper de ChatGPT.
 
-## 3. Estado actual
+## 3. Estado actual (27 sep 2026)
 
 ### Lo que YA funciona
 
+**Backend:**
 - Motor durable completo (checkpoints, leases, resumes).
 - 12 SOPs de agencia en `sops-examples/agency/`.
-- 6 skills Python: factura, propuesta, audit-web, gmb-post-prepare, social-post-prepare, whatsapp-reply-prepare.
-- Trigger types reales: manual, api, cron, email_subject.
-- Chat LLM (`/api/copilotkit/run`) conectado a Gemini u OpenRouter, con streaming SSE verificado
-  end-to-end en navegador real (`apps/worker/om-chat-acceptance.mjs`: Vite → backend → Gemini →
-  DOM, con snapshots parciales de los deltas).
+- 6 skills Python en `apps/computer/workspace-template/skills/`: factura, propuesta, audit-web, gmb-post-prepare, social-post-prepare, whatsapp-reply-prepare.
+- Trigger types reales: `manual`, `api`, `cron`, `email_subject`.
+- Chat LLM via SSE en `/api/copilotkit/run` (bug del parser SSE resuelto por Cline).
 - Google OAuth (Gmail, Calendar, Drive).
-- Sandbox Docker verificado (files.py con validaciones de path, symlinks, tamaño).
-- Suite de tests verde (137 pass, 1 skip en Windows por shebang).
-- Endpoint de business-records (seed directo a la DB).
-- Scripts de seed: `scripts/seed-agency.ts`, `scripts/seed-sops-agency.ts`.
-- **Frontend conectado de verdad**: `apps/web/src/components/*` (Header, ConversationsPanel,
-  ChatPanel, KanbanPanel, TaskDetailModal, ApprovalModal) y hooks (`useAuth`, `useChat`,
-  `useTasks`). El chat pinta los deltas del SSE en vivo.
-- **Static serving**: `apps/server/src/app.ts` sirve `apps/web/dist` con `serveStatic` cuando el
-  build existe (en dev sigue mandando Vite en el 5173).
-- **Parser SSE del frontend arreglado**: `apps/web/src/api/chat.ts` buscaba el separador de eventos
-  como la cadena literal `"\\n\\n"` (backslash + n), así que nunca partía los bloques, descartaba
-  todos los eventos y el chat terminaba siempre en "(respuesta vacía)". Ahora parte por
-  `/\r?\n\r?\n/` (acepta LF y CRLF).
+- Sandbox Docker verificado (files.py con validaciones de path, symlinks, tamano).
+- Suite de tests: 137 pass, 0 fail, 1 skip en Windows por shebang.
+- `POST /api/files` acepta PDF, imagenes, texto, Office, zip. Guarda con extension `.bin` y MIME correcto.
+- `GET /api/files/:id/content` sirve con el Content-Type real.
 
-### Lo que está a medias
+**Frontend (`apps/web/`):**
+- Vite + React + TypeScript. Sin Tailwind. Sin router. Lucide React para iconos.
+- Layout de 3 columnas: sidebar, chat, panel derecho.
+- Dark mode real con persistencia en `localStorage` (`data-theme` en `<html>`).
+- Chat con streaming SSE, tool calls visibles, cancelacion.
+- Kanban con 4 columnas (Por hacer / En curso / Necesita tu accion / Completado).
+- Modal de detalle de tarea: plan, eventos, artifacts, controles (pausar, reanudar, cancelar, reintentar, responder).
+- Modal de aprobacion: aprobar/denegar acciones propuestas.
+- Adjuntos: subida real al backend, chip con spinner/check/error.
+- Composer tipo ChatGPT: textarea autoexpandible, boton adjuntar, boton voz (SpeechRecognition del navegador), boton enviar/parar.
+- Sidebar con vistas: Chat / Tareas / Documentos / Memoria.
+- Panel derecho con tabs: Tareas / Contexto / Memoria.
 
-- **Frontend web** (`apps/web/`): los componentes existen y el chat ya hace streaming; queda
-  pulir multi-hilo real en `ConversationsPanel` (hoy son stubs en `App.tsx`), CSS del mockup
-  completo y estados vacíos finos.
-- **Persistencia PGlite en dev**: `tsx watch` mata el proceso en cada recarga y el data dir
-  puede quedar corrupto (`RuntimeError: Aborted()`). Ver §11.
+### Lo que es stub honesto (visual, sin backend)
 
-### Lo que FALTA para vender
+Aparecen en la UI pero no hacen nada todavia. Marcados con disabled o sin accion:
 
-1. **Frontend: multi-hilo real + CSS.** El chat ya funciona de punta a punta; quedan
-   `ConversationsPanel` (hoy stubs en `App.tsx`), el CSS del mockup y los estados vacíos.
-2. **RAG de documentos.** pgvector + ingesta PDF/DOCX + búsqueda semántica. Sin esto "ChatGPT de tu empresa" no se sostiene.
-3. **WhatsApp vía Evolution API.** Webhook + envío. Número virtual o SIM prepago.
-4. **`provision-client.ts`.** Comando que monta un cliente nuevo desde un directorio (`clientes/empresa-x/`).
-5. **Google OAuth verificado E2E.** El código existe; falta probar el ciclo completo.
-6. **Stubs TypeScript.** `gmb.ts`, `social.ts`, `stripe.ts`, `whatsapp.ts` (existen, revisar).
-7. **Deploy.** Vercel (frontend) + Render o Hetzner+Coolify (backend).
+- **Nuevo chat** y boton `+` de conversaciones -> requiere multi-thread (no implementado).
+- **Buscar** -> requiere indice de busqueda.
+- **Agentes** y **Configuracion** en el nav -> deshabilitados con tooltip.
+- **Selector de modelo** en el header -> no existe. Se muestra el real del `.env`.
+- **Boton mas opciones** (3 puntos del chat) -> sin accion.
+- **User menu** (avatar) -> solo hace logout, no hay dropdown de settings.
+- **Environment pill** (LIVE) -> informativo, no clickable.
 
-## 4. Decisiones arquitectónicas tomadas
+### Lo que esta a medias
+
+- **Multi-usuario dentro del tenant**: hoy es un solo owner (`local-user` hardcodeado).
+- **Multi-thread de conversaciones**: hoy es un solo thread (`/api/main-thread`).
+- **Memoria taxonomizada**: hoy es una lista plana. Falta categorizar (empresa, cliente, proceso, preferencia).
+- **RAG de documentos**: el LLM no puede leer PDFs/DOCX/XLSX subidos. Falta pgvector + embeddings.
+- **Asignacion de tareas a personas**: hoy todas las tareas son del owner.
+- **`provision-client.ts`**: el setup de un cliente hoy es manual.
+- **Backups automaticos**: no hay. La DB PGlite y los archivos se pueden perder.
+- **WhatsApp via Evolution API**: pendiente. Requiere Docker local.
+
+## 4. Decisiones arquitectonicas tomadas
 
 ### D1 — Eliminado CopilotKit Intelligence
-Razón: no se paga la plataforma. `richThreads: false` en workspace.
+Razon: no se paga la plataforma. `richThreads: false` en workspace.
 
 ### D2 — SOPs anidados deshabilitados
-Razón: `run_sop` fuera del enum de tools. El campo `sopStack` existe pero no crece. Reservado para futuro.
+Razon: `run_sop` fuera del enum de tools. El campo `sopStack` existe pero no crece. Reservado para futuro.
 
 ### D3 — `query_business` read-only
-Razón: bloqueo de comentarios SQL, comillas impares y keywords peligrosas.
-Para defensa real, usar un rol Postgres con `GRANT SELECT` (configuración externa).
+Razon: bloqueo de comentarios SQL, comillas impares y keywords peligrosas.
+Para defensa real, usar un rol Postgres con `GRANT SELECT` (configuracion externa).
 
 ### D4 — Sin multitenancy
-Razón: un deployment por cliente es la ventaja competitiva. Cada cliente = repo + VPS.
+Razon: un deployment por cliente es la ventaja competitiva. Cada cliente = repo + servidor.
+Multi-usuario dentro de una misma empresa, si.
 
 ### D5 — Sandbox sin red
-Razón: seguridad > comodidad. Los skills no descargan paquetes.
+Razon: seguridad > comodidad. Los skills no descargan paquetes.
 Wheels offline en `apps/computer/wheels/`.
 
-### D6 — Soporte `llm_generate` en SOPs (pendiente)
-Razón: los SOPs deterministas son fiables pero no escriben texto único.
-`llm_generate` combinará determinismo + LLM donde aporte.
+### D6 — Deploy pospuesto
+No desplegar hasta que este listo para prod. Durante desarrollo, localhost + proxy de Vite.
+Plan cuando toque: backend en Fly.io (free tier, 3 GB persistente), frontend en Cloudflare Pages (free, sin tarjeta).
+El backend NO puede ir en Vercel (necesita procesos persistentes, SSE, PGlite en disco).
 
-## 5. Cómo arrancarlo (dev)
+### D7 — Frontend sin dependencias innecesarias
+Solo React, React DOM, Vite, Lucide React. Sin Tailwind, sin router, sin state managers.
+CSS plano con variables. Funciona bien y es mantenible.
 
-### Requisitos
+### D8 — Access key hardcodeada en frontend (temporal)
+`HARDCODED_ACCESS_KEY` en `apps/web/src/hooks/useAuth.ts`. Aceptable para demo privada.
+ANTES de venderlo: login real por usuario (ver pendientes).
 
+## 5. Como arrancarlo en dev
+
+Requisitos:
 - Node 22+ (con corepack)
 - pnpm 11+
-- Docker Desktop (para skills con `computer_command`)
+- Docker Desktop (solo para skills con `computer_command`)
 
-### Pasos
-
+Pasos:
 1. Instalar: `corepack pnpm install --frozen-lockfile`
 
 2. Configurar `.env` (copia de `.env.example`):
@@ -124,22 +146,25 @@ Razón: los SOPs deterministas son fiables pero no escriben texto único.
 4. Terminal B — frontend: `pnpm --filter @openmuse/web dev`
    Esperado: `VITE ready at http://localhost:5173`.
 
-5. Poblar datos (en terminal C):
+5. Poblar datos (una sola vez, en terminal C):
    ```
    pnpm exec tsx scripts/seed-agency.ts
    $env:OPENMUSE_ACCESS_KEY = "<tu key>"
    pnpm exec tsx scripts/seed-sops-agency.ts
    ```
 
-6. Registrar skills vía `POST /api/skills` (ver scripts o hacerlo a mano).
+6. Abrir `http://localhost:5173`. Auto-login entra directo.
 
-## 6. Cómo continuar en un chat nuevo
+IMPORTANTE: nunca pulsar Ctrl+C en las terminales A y B sin esperar al prompt. PGlite necesita cerrar limpio.
+Si Windows pregunta "Desea terminar el trabajo por lotes (S/N)", responder N.
+Si el backend crashea con `RuntimeError: Aborted()`, es PGlite corrupto. Renombrar `.openmuse/postgres` y re-sembrar.
+
+## 6. Como continuar en un chat nuevo
 
 1. Pega este fichero entero (`docs/HANDOFF.md`).
-2. Di qué punto de "Lo que FALTA" quieres atacar.
-3. Si es frontend, pega el contenido de `apps/web/src/`.
-4. Si es backend, pega el fichero relevante (`apps/server/src/...`).
-5. No pegues todo el repo. Solo lo que se va a tocar.
+2. Di que punto del apartado 9 (pendientes) quieres atacar.
+3. Pega solo los ficheros que se van a tocar.
+4. No pegues todo el repo. Solo lo que se va a tocar.
 
 ## 7. Ficheros clave
 
@@ -152,6 +177,7 @@ Razón: los SOPs deterministas son fiables pero no escriben texto único.
 - `apps/server/src/app.ts` — bootstrap Hono, rutas, static serving.
 - `apps/server/src/config.ts` — variables de entorno.
 - `apps/server/src/db.ts` — Store con PGlite/Postgres.
+- `apps/server/src/files.ts` — gestion de archivos (PDF, imagenes, docs, zip).
 - `apps/server/src/engine/service.ts` — AgentService, orquesta todo.
 - `apps/server/src/engine/sop-executor.ts` — ejecuta SOPs paso a paso.
 - `apps/server/src/engine/worker.ts` — worker durable con leases.
@@ -159,29 +185,38 @@ Razón: los SOPs deterministas son fiables pero no escriben texto único.
 - `apps/server/src/engine/model.ts` — task abierta con LLM.
 - `apps/server/src/engine/conversation.ts` — chat con LLM.
 - `apps/server/src/actions.ts` — aprobaciones con idempotencia.
-- `apps/server/src/workspace.ts` — integración Google.
+- `apps/server/src/workspace.ts` — integracion Google.
 
-### Frontend (`apps/web/`)
-- `src/api/*.ts` — capa de datos contra la API.
-- `src/components/*` — Header, ConversationsPanel, ChatPanel, MessageList, ChatInput, KanbanPanel,
-  TaskDetailModal, ApprovalModal.
-- `src/hooks/*` — useAuth, useChat (streaming SSE), useTasks.
+### Frontend (`apps/web/src/`)
+- `App.tsx` — composicion principal, theme, view switching.
+- `api/*.ts` — capa de datos contra la API (client, session, chat, conversation, tasks, actions, files).
+- `hooks/useAuth.ts` — auth con auto-login y access key hardcodeada.
+- `hooks/useChat.ts` — chat con SSE y adjuntos.
+- `hooks/useTasks.ts` — polling de tareas + worker status.
+- `hooks/useWorkspaceData.ts` — memories y files.
+- `components/Header.tsx` — barra superior con worker chip, theme toggle, user menu.
+- `components/ConversationsPanel.tsx` — sidebar con nav y conversaciones.
+- `components/ChatPanel.tsx`, `ChatInput.tsx`, `MessageList.tsx`, `MessageBubble.tsx`, `ToolCallCard.tsx` — chat.
+- `components/KanbanPanel.tsx`, `TaskCard.tsx` — kanban del panel derecho.
+- `components/TasksView.tsx`, `DocumentsView.tsx`, `MemoryView.tsx` — vistas a pantalla completa.
+- `components/TaskDetailModal.tsx`, `ApprovalModal.tsx` — modales.
+- `index.css` — todo el CSS (design system con variables, dark mode).
 
 ### Datos y contenido
 - `sops-examples/agency/*.json` — 12 SOPs.
 - `apps/computer/workspace-template/skills/*` — 9 skills (3 originales + 6 nuevos).
-- `scripts/seed-*.ts` — scripts de seed.
+- `scripts/seed-agency.ts`, `scripts/seed-sops-agency.ts` — scripts de seed.
 - `apps/computer/wheels/` — wheels offline para pip.
 
 ### Docs
 - `README.md` — general.
-- `BETA.md` — límites de la beta.
+- `BETA.md` — limites de la beta.
 - `SECURITY.md` — modelo de amenaza.
 - `ROADMAP.md` — features futuras.
 - `docs/COMPUTER.md` — sandbox Docker.
-- `docs/HANDOFF.md` — **este fichero**.
+- `docs/HANDOFF.md` — este fichero.
 
-## 8. Comandos útiles
+## 8. Comandos utiles
 
 ```powershell
 # Backend
@@ -196,9 +231,6 @@ pnpm --filter @openmuse/web dev
 pnpm --filter @openmuse/web build
 pnpm --filter @openmuse/web typecheck
 
-# Aceptación del chat en navegador real (con backend 8787 y Vite 5173 arriba)
-node apps/worker/om-chat-acceptance.mjs
-
 # Seed
 pnpm exec tsx scripts/seed-agency.ts
 $env:OPENMUSE_ACCESS_KEY = "..."
@@ -211,67 +243,145 @@ $headers = @{Authorization="Bearer $($s.token)"; "Content-Type"="application/jso
 Invoke-RestMethod -Uri "http://localhost:8787/api/sops" -Headers $headers
 ```
 
-## 9. Preguntas frecuentes
+## 9. Pendientes para produccion
 
-**¿Puedo desplegar en Vercel?**
-El frontend sí (Vercel, gratis). El backend no: necesita procesos persistentes (SSE + worker), Docker y PGlite. Backend va en Hetzner + Coolify, Render o similar.
+Ordenado por lo que mas se usa y lo que mas valor anade.
 
-**¿Cómo se añade un SOP nuevo?**
-Se escribe un JSON con el schema `sopSchema` y se POSTea a `/api/sops`. No toca código.
+### Bloqueantes antes de vender al primer cliente
 
-**¿Cómo se añade un skill nuevo?**
+1. **Multi-usuario dentro del tenant** (1 dia)
+   - Tabla de usuarios con email + password hash + rol (admin/user).
+   - Login real (email + contrasena, no access key compartida).
+   - Reemplazar `local-user` por el userId real en todo el backend.
+   - Cada usuario ve solo sus tareas, memorias, conversaciones.
+   - Admin puede crear/desactivar usuarios.
+   - Setup por usuario: que SOPs ve, que memorias iniciales tiene.
+   - Pantalla de Login en el frontend.
+   - Pantalla de Admin Usuarios (solo admin).
+
+2. **Memoria taxonomizada** (1 dia)
+   - Categorizar memorias: empresa, cliente, proceso, preferencia, RRHH, producto.
+   - Tags + filtros.
+   - Permisos por rol (RRHH solo admin).
+   - Vista de memoria con filtros.
+
+3. **Asignacion de tareas a personas** (medio dia)
+   - Campo `assignedTo` en AgentTask.
+   - Vista "mis tareas" en el kanban.
+   - Filtro por persona.
+
+4. **`provision-client.ts`** (1 dia)
+   - Comando `pnpm provision-client empresa-x` que lee un directorio con docs, SOPs, datos y crea todo.
+   - Format del directorio: `client/empresa-x/` con `sops/`, `skills/`, `docs/`, `users.json`.
+
+5. **Backups automaticos** (medio dia)
+   - `pg_dump` diario de PGlite.
+   - Copia a S3 o Backblaze.
+   - Script de restore probado.
+
+### Alto valor (segundo o tercer cliente)
+
+6. **RAG de documentos** (1-2 dias)
+   - pgvector en PGlite.
+   - Ingesta: PDF, DOCX, XLSX -> chunks -> embeddings.
+   - Retrieval integrado en el prompt del LLM.
+   - Sin esto, "ChatGPT de tu empresa" no se sostiene.
+
+7. **Multi-thread de conversaciones** (1 dia)
+   - Tabla `threads` por owner.
+   - Endpoints `/api/threads` (list, create, delete).
+   - Sidebar lista threads y permite cambiar.
+   - Boton "Nuevo chat" funcional.
+
+8. **WhatsApp via Evolution API** (1 dia)
+   - Requiere Docker local para Evolution API.
+   - Webhook receptor.
+   - Tool `prepare_whatsapp`.
+   - SOP `responder-whatsapp` con envio real.
+
+### Admin y operacion (para ti)
+
+9. **Panel de admin** (1 dia)
+   - Ver todos los clientes que gestionas.
+   - Estado de cada deployment.
+   - Uso, errores, coste del LLM.
+   - Anadir/quitar usuarios.
+
+10. **Analytics por cliente** (medio dia)
+    - Cuantos mensajes, cuantas tareas, que usa mas.
+    - Cost tracking del LLM por cliente.
+
+11. **Billing** (1 dia)
+    - Como le cobras la cuota mensual.
+    - Stripe o similar.
+
+### Mejoras de UI/UX
+
+12. **RAG en el composer**: al adjuntar un PDF, poder decir "busca en mis documentos X".
+13. **Vista de conversaciones por usuario**: cada uno ve solo las suyas.
+14. **Notificaciones en vivo** (badge en el header cuando llega una tarea).
+15. **Atajos de teclado**: Cmd+K para buscar, Cmd+N para nuevo chat.
+16. **Microinteracciones**: animacion de las task cards al cambiar de estado.
+
+## 10. Lo que NO hacer
+
+- **No multitenancy** (un solo deployment por cliente).
+- **No Tailwind** (mantener CSS plano con variables).
+- **No MUI/Ant/Chakra** (Lucide es suficiente).
+- **No router** (React Router no es necesario).
+- **No state manager global** (Redux, Zustand). Context + useState basta.
+- **No Kubernetes/Helm** (Docker Compose en un VPS basta).
+- **No refactor del sandbox Docker** (esta bien como esta).
+- **No tocar el browser worker** (funciona).
+- **No cablear features al backend sin un cliente que las pida**.
+
+## 11. Preguntas frecuentes
+
+**Puedo desplegar en Vercel?**
+El frontend si. El backend no: necesita procesos persistentes (SSE + worker), Docker para el sandbox, y PGlite en disco. Backend va en Fly.io, Render, Hetzner+Coolify o similar.
+
+**Como se anade un SOP nuevo?**
+Se escribe un JSON con el schema `sopSchema` y se POSTea a `/api/sops`. No toca codigo.
+
+**Como se anade un skill nuevo?**
 1) `main.py` + `SKILL.md` en `apps/computer/workspace-template/skills/<id>/`.
 2) Rebuild de la imagen Docker.
 3) `POST /api/skills` con la metadata.
 
-**¿Cuántos SOPs puedo tener?**
-Sin límite. Cada SOP tiene máximo 12 pasos.
+**Cuantos SOPs puedo tener?**
+Sin limite. Cada SOP tiene maximo 12 pasos.
 
-**¿Cómo se añaden canales (WhatsApp, Slack, voz)?**
-Conviene primero abstraer `Channel`. Sin abstracción, cada canal es un módulo ad-hoc. Con abstracción, cada canal son ~100 líneas.
+**Como se anaden canales (WhatsApp, Slack, voz)?**
+Conviene primero abstraer `Channel`. Sin abstraccion, cada canal es un modulo ad-hoc. Con abstraccion, cada canal son ~100 lineas.
 
-**¿Cómo se hace RAG?**
+**Como se hace RAG?**
 PGlite soporta pgvector. Pendiente de implementar.
 
-**¿Por qué no multitenancy?**
-Porque el modelo es un deployment por cliente. Sin RBAC fino, sin K8s, sin SOC2. Cada cliente tiene su VPS.
+**Por que no multitenancy?**
+Porque el modelo es un deployment por cliente. Sin RBAC fino, sin K8s, sin SOC2. Cada cliente tiene su servidor. Multi-usuario dentro de un cliente, si.
 
-**El chat responde 200 pero el mensaje se queda en "(respuesta vacía)".**
-Revisa el parser SSE de `apps/web/src/api/chat.ts`: debe partir los bloques por salto de línea
-real (`/\r?\n\r?\n/`). Si busca la secuencia escapada `"\\n\\n"` nunca encuentra separadores y
-todos los eventos se descartan. `@copilotkit/runtime` envía LF.
+**Los archivos se pierden al reiniciar?**
+En local, no: estan en `.openmuse/files/`. En deploy, depende del hosting. Fly.io con volumen persistente si. Render free no.
 
-**¿Por qué hay 401 en consola al cargar la app?**
-`useChat` y `useTasks` lanzan su efecto de arranque en el primer render, en paralelo con el login
-de `useAuth`, así que las primeras llamadas van sin token. Se recuperan solas, pero conviene
-pasarles un flag `enabled` ligado a `auth.isAuthenticated`.
+## 12. Ultima sesion
 
-## 10. Última sesión — resumen
+27 septiembre 2026.
 
-En la sesión de streaming del chat (26 septiembre 2026, tarde):
+Se completo:
+- Bug del parser SSE resuelto por Cline (el bug que causaba "respuesta vacia").
+- Rediseno completo del frontend: sidebar, dark mode, Lucide icons, panel derecho con tabs, composer tipo ChatGPT.
+- Refactor a componentes reutilizables en `apps/web/src/components/` y `hooks/`.
+- Adjuntos multi-formato: `POST /api/files` acepta PDF, imagenes, texto, Office, zip.
+- Vistas de sidebar: Chat, Tareas, Documentos, Memoria.
+- Renombrado de `.openmuse/postgres` corrupto y re-seed (dos veces por cierres sucios de PGlite).
+- Documentacion actualizada.
 
-- Se detectó que `@copilotkit/runtime` 1.70 solo publica el run en
-  `/api/copilotkit/agent/{agentId}/run`; `app.ts` reescribe `/api/copilotkit/run` a
-  `/api/copilotkit/agent/default/run` reutilizando `c.req.raw` en un `Request` nuevo.
-- Se añadió static serving de `apps/web/dist` (guardado por `existsSync`, así que el build debe
-  existir antes de arrancar el backend para que `/` sirva `index.html`).
-- PGlite quedó corrupto por un cierre sucio de `tsx watch` (`RuntimeError: Aborted()`); los data
-  dirs corruptos se pusieron en cuarentena (no se borraron) y el store se recreó limpio.
-- Se arregló el parser SSE del frontend (bug de `"\\n\\n"`; ver §9) y se verificó el streaming en
-  navegador real con `apps/worker/om-chat-acceptance.mjs` (snapshots parciales + respuesta final
-  completa, `RUN_FINISHED`, 0 errores de consola salvo los 401 del arranque y el 404 de
-  `/favicon.ico`).
-
-En la sesión de auditoría (26 septiembre 2026, mañana):
-
-- Se arreglaron los 54 items de la auditoría inicial (Fases 0-4).
-- Se añadió `SOP.trigger` real (cron/api/email_subject) en `sop-triggers.ts`.
-- Se añadió `Skill.requirements` con pip offline en `sop-executor.ts`.
-- Se crearon 12 SOPs de agencia en `sops-examples/agency/`.
-- Se crearon 6 skills Python en `apps/computer/workspace-template/skills/`.
-- Se creó la estructura del frontend en `apps/web/` con Vite + React + TS y la capa de API.
-- Se documentó todo en este fichero.
+Decisiones tomadas:
+- Deploy pospuesto hasta que este listo para prod (D6).
+- Multi-usuario dentro del tenant es la siguiente fase critica.
+- Memoria taxonomizada es la siguiente despues de multi-usuario.
+- Backend en Fly.io + frontend en Cloudflare Pages cuando toque.
 
 ---
 
-Fin del handoff. Si algo de este documento está desactualizado cuando lo leas, actualízalo antes de continuar.
+Fin del handoff. Si algo de este documento esta desactualizado cuando lo leas, actualizalo antes de continuar.
