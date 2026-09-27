@@ -12,7 +12,7 @@ function now(): string {
 
 interface ActiveTool { id: string; name: string; status: "running" | "done"; args: unknown; }
 
-export function useChat(enabled = true) {
+export function useChat(enabled: boolean) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -22,10 +22,9 @@ export function useChat(enabled = true) {
   const abortRef = useRef<AbortController | null>(null);
   const initRef = useRef(false);
 
-  // Sin sesión no hay token: esperar a `enabled` evita los 401 de arranque y que el hilo quede sin
-  // crear.
   useEffect(() => {
-    if (!enabled || initRef.current) return;
+    if (!enabled) return;
+    if (initRef.current) return;
     initRef.current = true;
     void (async () => {
       try {
@@ -54,7 +53,7 @@ export function useChat(enabled = true) {
 
     let assistantText = "";
     let toolCall: ActiveTool | null = null;
-    let runError: string | null = null;
+    let runErrorMessage: string | null = null;
 
     try {
       await streamChat(
@@ -82,26 +81,23 @@ export function useChat(enabled = true) {
               if (parsed && typeof parsed.id === "string") {
                 toolCall.args = { ...(toolCall.args as object), taskId: parsed.id };
               }
-            } catch { /* ignore */ }
+            } catch { /* contenido no JSON */ }
           } else if (event.type === "RUN_ERROR") {
-            // El runtime avisa por SSE cuando el proveedor falla: sin esto la app guardaba un
-            // "(respuesta vacía)" silencioso.
-            runError = typeof event.message === "string" ? event.message : "El agente falló";
-            setError(runError);
+            runErrorMessage = String(event.message ?? "Error del modelo");
           }
         },
         controller.signal,
       );
 
-      if (runError) {
-        setStreamBuf("");
+      if (runErrorMessage && !assistantText.trim()) {
+        setError(runErrorMessage);
         return;
       }
 
       const finalAssistant: ChatMessage = {
         id: uid(),
         role: "assistant",
-        content: assistantText.trim() || "(respuesta vacía)",
+        content: assistantText.trim() || "(sin respuesta)",
         timestamp: now(),
         toolCall: toolCall ?? undefined,
       };

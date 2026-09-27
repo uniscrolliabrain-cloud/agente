@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { listTasks } from "../api/tasks";
 import type { AgentTask } from "../types/api";
 
-export function useTasks(intervalMs = 3000, enabled = true) {
+export function useTasks(intervalMs: number, enabled: boolean) {
   const [tasks, setTasks] = useState<AgentTask[]>([]);
   const [workerRunning, setWorkerRunning] = useState(false);
   const [workerLastTickAt, setWorkerLastTickAt] = useState<string | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     try {
       const ws = await listTasks();
       setTasks(ws.tasks);
@@ -19,7 +19,7 @@ export function useTasks(intervalMs = 3000, enabled = true) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error cargando tareas");
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
@@ -28,7 +28,7 @@ export function useTasks(intervalMs = 3000, enabled = true) {
     return () => {
       if (intervalRef.current !== null) window.clearInterval(intervalRef.current);
     };
-  }, [intervalMs, enabled]);
+  }, [enabled, intervalMs, refresh]);
 
   return { tasks, workerRunning, workerLastTickAt, error, refresh };
 }

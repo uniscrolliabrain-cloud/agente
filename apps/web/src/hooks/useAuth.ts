@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { currentSession, login as apiLogin, logout as apiLogout } from "../api/session";
 
 const HARDCODED_ACCESS_KEY = "uniscroll_admin_dev_key_2026";
@@ -42,10 +42,20 @@ export function useAuth() {
     };
   }, []);
 
-  const logout = () => {
+  const login = useCallback(async (accessKey: string) => {
+    setError(null);
+    try {
+      const s = await apiLogin(accessKey);
+      setState({ isAuthenticated: true, mode: s.mode });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado");
+    }
+  }, []);
+
+  const logout = useCallback(() => {
     apiLogout();
     setState({ isAuthenticated: false, mode: null });
-  };
+  }, []);
 
-  return { ...state, error, booting, logout };
+  return { ...state, error, booting, login, logout };
 }
