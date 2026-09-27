@@ -1,16 +1,17 @@
-import { Bot, Brain, Files, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles } from "lucide-react";
+import { Bot, Brain, Files, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles, UserCog } from "lucide-react";
 
-export type AppView = "chat" | "tasks" | "documents" | "memory";
+export type AppView = "chat" | "tasks" | "documents" | "memory" | "users";
 
 interface Props {
   collapsed: boolean;
   activeView: AppView;
   onSelectView: (view: AppView) => void;
+  isAdmin: boolean;
   onNewChat: () => void;
   activeThreadId: string | null;
 }
 
-export default function ConversationsPanel({ collapsed, activeView, onSelectView, onNewChat, activeThreadId }: Props) {
+export default function ConversationsPanel({ collapsed, activeView, onSelectView, isAdmin, onNewChat, activeThreadId }: Props) {
   const items = activeThreadId ? [{ id: activeThreadId, title: "Conversación principal" }] : [];
 
   const item = (view: AppView, Icon: typeof MessageSquare, label: string) => (
@@ -40,6 +41,7 @@ export default function ConversationsPanel({ collapsed, activeView, onSelectView
           {item("tasks", LayoutDashboard, "Tareas")}
           {item("documents", Files, "Documentos")}
           {item("memory", Brain, "Memoria")}
+          {isAdmin && item("users", UserCog, "Usuarios")}
           <button className="nav-item" disabled title="Próximamente">
             <Bot size={16} />
             <span>Agentes</span>

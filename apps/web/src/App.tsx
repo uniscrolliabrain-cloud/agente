@@ -11,6 +11,7 @@ import Login from "./components/Login";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
+import UsersView from "./components/UsersView";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import type { AgentTask } from "./types/api";
@@ -84,6 +85,7 @@ export default function App() {
           activeView={view}
           onSelectView={setView}
           activeThreadId={chat.threadId}
+          isAdmin={auth.user?.role === "admin"}
           onNewChat={() => { /* multi-thread próximamente */ }}
         />
 
@@ -91,6 +93,7 @@ export default function App() {
         {view === "tasks" && <TasksView tasks={tasks.tasks} onOpenTask={openTask} onReviewTask={reviewTask} />}
         {view === "documents" && <DocumentsView files={files} />}
         {view === "memory" && <MemoryView memories={memories} />}
+        {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
 
         {view === "chat" && (
           <KanbanPanel
