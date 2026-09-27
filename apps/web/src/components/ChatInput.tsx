@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Mic, Paperclip, Square, X } from "lucide-react";
+import { ArrowUp, Check, LoaderCircle, Mic, Paperclip, Square, X } from "lucide-react";
+import { uploadFile } from "../api/files";
+import type { ChatAttachment } from "../types/api";
 
 interface Props {
-  onSend: (text: string) => void;
+  onSend: (text: string, attachment?: ChatAttachment) => void;
   onCancel: () => void;
   streaming: boolean;
 }
@@ -23,10 +25,15 @@ interface SpeechWindow extends Window {
   webkitSpeechRecognition?: new () => SpeechRecognitionLike;
 }
 
+type AttachState =
+  | { kind: "uploading"; file: File }
+  | { kind: "ready"; file: File; attachment: ChatAttachment }
+  | { kind: "error"; file: File; message: string };
+
 export default function ChatInput({ onSend, onCancel, streaming }: Props) {
   const [value, setValue] = useState("");
   const [listening, setListening] = useState(false);
-  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attach, setAttach] = useState<AttachState | null>(null);
 
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -39,11 +46,31 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [value]);
 
+  const pickFile = async (file: File) => {
+    setAttach({ kind: "uploading", file });
+    try {
+      const uploaded = await uploadFile(file);
+      setAttach({
+        kind: "ready",
+        file,
+        attachment: { id: uploaded.id, name: uploaded.name, size: uploaded.size },
+      });
+    } catch (err) {
+      setAttach({
+        kind: "error",
+        file,
+        message: err instanceof Error ? err.message : "Error al subir",
+      });
+    }
+  };
+
   const submit = () => {
-    if (!value.trim() || streaming) return;
-    onSend(value.trim());
+    if (streaming) return;
+    if (!value.trim() && attach?.kind !== "ready") return;
+    const attachment = attach?.kind === "ready" ? attach.attachment : undefined;
+    onSend(value.trim(), attachment);
     setValue("");
-    setAttachment(null);
+    setAttach(null);
     if (ref.current) ref.current.style.height = "auto";
   };
 
@@ -65,7 +92,7 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
       let transcript = "";
       for (let i = 0; i < event.results.length; i += 1) transcript += event.results[i][0].transcript;
       setValue((current) => {
-        const base = current.replace(/\s+$/, "");
+        const base = current.replace(/\\s+$/, "");
         return base ? `${base} ${transcript}` : transcript;
       });
     };
@@ -76,6 +103,8 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
     setListening(true);
     recognition.start();
   };
+
+  const canSend = Boolean(value.trim()) || attach?.kind === "ready";
 
   return (
     <div className="composer-area">
@@ -95,11 +124,15 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
           disabled={streaming}
         />
 
-        {attachment && (
+        {attach && (
           <div className="attachment-chip">
-            <Paperclip size={13} />
-            <span>{attachment.name}</span>
-            <button type="button" onClick={() => setAttachment(null)} title="Quitar archivo">
+            {attach.kind === "uploading" && <LoaderCircle size={13} className="spin" />}
+            {attach.kind === "ready" && <Check size={13} />}
+            {attach.kind === "error" && <X size={13} />}
+            <span title={attach.kind === "error" ? attach.message : attach.file.name}>
+              {attach.file.name}
+            </span>
+            <button type="button" onClick={() => setAttach(null)} title="Quitar archivo">
               <X size={12} />
             </button>
           </div>
@@ -113,15 +146,16 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
               hidden
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) setAttachment(file);
+                if (file) void pickFile(file);
+                e.target.value = "";
               }}
             />
             <button
               className="composer-tool"
               type="button"
               onClick={() => fileRef.current?.click()}
-              disabled={streaming}
-              title="Adjuntar documento (próximamente)"
+              disabled={streaming || attach?.kind === "uploading"}
+              title="Adjuntar archivo"
             >
               <Paperclip size={16} />
               <span>Adjuntar</span>
@@ -146,7 +180,7 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
             <button
               className="send-button"
               type="button"
-              disabled={!value.trim()}
+              disabled={!canSend}
               onClick={submit}
               title="Enviar"
             >

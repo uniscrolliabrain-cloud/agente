@@ -1,14 +1,24 @@
 import { Bot, Brain, Files, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles } from "lucide-react";
 
+export type AppView = "chat" | "tasks" | "documents" | "memory";
+
 interface Props {
   collapsed: boolean;
+  activeView: AppView;
+  onSelectView: (view: AppView) => void;
   onNewChat: () => void;
-  onSelectThread: (id: string) => void;
   activeThreadId: string | null;
 }
 
-export default function ConversationsPanel({ collapsed, onNewChat, onSelectThread, activeThreadId }: Props) {
+export default function ConversationsPanel({ collapsed, activeView, onSelectView, onNewChat, activeThreadId }: Props) {
   const items = activeThreadId ? [{ id: activeThreadId, title: "Conversación principal" }] : [];
+
+  const item = (view: AppView, Icon: typeof MessageSquare, label: string) => (
+    <button className={`nav-item ${activeView === view ? "active" : ""}`} onClick={() => onSelectView(view)}>
+      <Icon size={16} />
+      <span>{label}</span>
+    </button>
+  );
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -17,7 +27,7 @@ export default function ConversationsPanel({ collapsed, onNewChat, onSelectThrea
           <Plus size={16} />
           <span>Nuevo chat</span>
         </button>
-        <button className="sidebar-search">
+        <button className="sidebar-search" disabled>
           <Search size={15} />
           <span>Buscar</span>
         </button>
@@ -26,55 +36,41 @@ export default function ConversationsPanel({ collapsed, onNewChat, onSelectThrea
       <nav className="sidebar-nav">
         <div className="nav-section">
           <span className="nav-label">Workspace</span>
-          <button className="nav-item active">
-            <MessageSquare size={16} />
-            <span>Chat</span>
-          </button>
-          <button className="nav-item">
-            <LayoutDashboard size={16} />
-            <span>Tareas</span>
-          </button>
-          <button className="nav-item">
-            <Files size={16} />
-            <span>Documentos</span>
-          </button>
-          <button className="nav-item">
-            <Brain size={16} />
-            <span>Memoria</span>
-          </button>
-          <button className="nav-item">
+          {item("chat", MessageSquare, "Chat")}
+          {item("tasks", LayoutDashboard, "Tareas")}
+          {item("documents", Files, "Documentos")}
+          {item("memory", Brain, "Memoria")}
+          <button className="nav-item" disabled title="Próximamente">
             <Bot size={16} />
             <span>Agentes</span>
           </button>
         </div>
 
-        <div className="nav-section conversations-section">
-          <div className="nav-section-header">
-            <span className="nav-label">Conversaciones</span>
-            <button className="mini-action" onClick={onNewChat} title="Nueva conversación">
-              <Plus size={14} />
-            </button>
+        {activeView === "chat" && (
+          <div className="nav-section conversations-section">
+            <div className="nav-section-header">
+              <span className="nav-label">Conversaciones</span>
+              <button className="mini-action" onClick={onNewChat} title="Nueva conversación (próximamente)">
+                <Plus size={14} />
+              </button>
+            </div>
+            <div className="conversation-list">
+              {items.length === 0 ? (
+                <div className="sidebar-empty">
+                  <MessageSquare size={16} />
+                  <span>Sin conversaciones</span>
+                </div>
+              ) : (
+                items.map((c) => (
+                  <button key={c.id} className="conversation-item active">
+                    <MessageSquare size={15} />
+                    <span>{c.title}</span>
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-          <div className="conversation-list">
-            {items.length === 0 ? (
-              <div className="sidebar-empty">
-                <MessageSquare size={16} />
-                <span>Sin conversaciones</span>
-              </div>
-            ) : (
-              items.map((c) => (
-                <button
-                  key={c.id}
-                  className={`conversation-item ${c.id === activeThreadId ? "active" : ""}`}
-                  onClick={() => onSelectThread(c.id)}
-                >
-                  <MessageSquare size={15} />
-                  <span>{c.title}</span>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
+        )}
       </nav>
 
       <div className="sidebar-bottom">
@@ -87,7 +83,7 @@ export default function ConversationsPanel({ collapsed, onNewChat, onSelectThrea
             <span>Workspace activo</span>
           </div>
         </div>
-        <button className="nav-item">
+        <button className="nav-item" disabled title="Próximamente">
           <Settings size={16} />
           <span>Configuración</span>
         </button>

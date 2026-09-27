@@ -133,6 +133,12 @@ export interface WorkspaceSnapshot {
 
 export type MessageRole = "user" | "assistant" | "system";
 
+export interface ChatAttachment {
+  id: string;
+  name: string;
+  size?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -140,4 +146,5 @@ export interface ChatMessage {
   timestamp?: string;
   toolCall?: { id: string; name: string; status: "running" | "done"; args: unknown };
   taskIdRef?: string;
+  attachment?: ChatAttachment;
 }

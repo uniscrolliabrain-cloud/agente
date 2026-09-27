@@ -1,5 +1,7 @@
-import { CheckCircle2, Circle, CircleAlert, Play, X } from "lucide-react";
+import { useState } from "react";
+import { Brain, CheckCircle2, Circle, CircleAlert, Files, Play, X } from "lucide-react";
 import type { AgentTask } from "../types/api";
+import type { FileEntry, MemoryEntry } from "../hooks/useWorkspaceData";
 import TaskCard from "./TaskCard";
 
 interface Props {
@@ -7,13 +9,43 @@ interface Props {
   mobileOpen: boolean;
   onCloseMobile: () => void;
   tasks: AgentTask[];
+  memories: MemoryEntry[];
+  files: FileEntry[];
   onOpenTask: (task: AgentTask) => void;
   onReviewTask: (task: AgentTask) => void;
 }
 
 type ColumnType = "todo" | "running" | "action" | "done";
+type TabId = "tasks" | "context" | "memory";
 
-export default function KanbanPanel({ collapsed, mobileOpen, onCloseMobile, tasks, onOpenTask, onReviewTask }: Props) {
+function formatBytes(bytes?: number): string {
+  if (bytes === undefined) return "";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function relativeTime(iso?: string): string {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60000) return "ahora";
+  if (ms < 3600000) return `${Math.floor(ms / 60000)}m`;
+  if (ms < 86400000) return `${Math.floor(ms / 3600000)}h`;
+  return `${Math.floor(ms / 86400000)}d`;
+}
+
+export default function KanbanPanel({
+  collapsed,
+  mobileOpen,
+  onCloseMobile,
+  tasks,
+  memories,
+  files,
+  onOpenTask,
+  onReviewTask,
+}: Props) {
+  const [tab, setTab] = useState<TabId>("tasks");
+
   const todo = tasks.filter((t) => ["queued", "scheduled", "paused"].includes(t.status));
   const running = tasks.filter((t) => t.status === "running");
   const action = tasks.filter((t) => t.status === "waiting_approval" || t.status === "waiting_input");
@@ -30,7 +62,6 @@ export default function KanbanPanel({ collapsed, mobileOpen, onCloseMobile, task
           </div>
           <span className="task-count">{items.length}</span>
         </div>
-
         {items.length === 0 ? (
           <div className="task-empty"><span>{empty}</span></div>
         ) : (
@@ -44,12 +75,14 @@ export default function KanbanPanel({ collapsed, mobileOpen, onCloseMobile, task
     );
   };
 
+  const headerLabel = tab === "tasks" ? `${tasks.length} total` : tab === "context" ? `${files.length} archivos` : `${memories.length} memorias`;
+
   return (
     <aside className={`right-panel ${collapsed ? "collapsed" : ""} ${mobileOpen ? "mobile-open" : ""}`}>
       <div className="right-panel-header">
         <div>
-          <strong>Tareas</strong>
-          <span>{tasks.length} total</span>
+          <strong>{tab === "tasks" ? "Tareas" : tab === "context" ? "Contexto" : "Memoria"}</strong>
+          <span>{headerLabel}</span>
         </div>
         <button className="ghost-icon-button mobile-close" onClick={onCloseMobile}>
           <X size={17} />
@@ -57,16 +90,73 @@ export default function KanbanPanel({ collapsed, mobileOpen, onCloseMobile, task
       </div>
 
       <div className="right-panel-tabs">
-        <button className="active">Tareas</button>
-        <button>Contexto</button>
-        <button>Memoria</button>
+        <button className={tab === "tasks" ? "active" : ""} onClick={() => setTab("tasks")}>Tareas</button>
+        <button className={tab === "context" ? "active" : ""} onClick={() => setTab("context")}>Contexto</button>
+        <button className={tab === "memory" ? "active" : ""} onClick={() => setTab("memory")}>Memoria</button>
       </div>
 
       <div className="right-panel-content">
-        <Column title="Por hacer" items={todo} type="todo" empty="Sin tareas pendientes" />
-        <Column title="En curso" items={running} type="running" empty="Nada corriendo ahora" />
-        <Column title="Necesita tu acción" items={action} type="action" empty="Todo al día" />
-        <Column title="Completado" items={done} type="done" empty="Sin historial" />
+        {tab === "tasks" && (
+          <>
+            <Column title="Por hacer" items={todo} type="todo" empty="Sin tareas pendientes" />
+            <Column title="En curso" items={running} type="running" empty="Nada corriendo ahora" />
+            <Column title="Necesita tu acción" items={action} type="action" empty="Todo al día" />
+            <Column title="Completado" items={done} type="done" empty="Sin historial" />
+          </>
+        )}
+
+        {tab === "context" && (
+          <section className="task-column">
+            <div className="task-column-header">
+              <div className="task-column-title">
+                <Files size={14} />
+                <span>Archivos recientes</span>
+              </div>
+              <span className="task-count">{files.length}</span>
+            </div>
+            {files.length === 0 ? (
+              <div className="task-empty"><span>Sin archivos todavía</span></div>
+            ) : (
+              <div className="task-list">
+                {files.slice(0, 30).map((f) => (
+                  <div key={f.id} className="context-item">
+                    <div className="context-item-icon">📄</div>
+                    <div className="context-item-body">
+                      <div className="context-item-title" title={f.name}>{f.name}</div>
+                      <div className="context-item-sub">
+                        {formatBytes(f.size)}{f.size && f.createdAt ? " · " : ""}{relativeTime(f.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {tab === "memory" && (
+          <section className="task-column">
+            <div className="task-column-header">
+              <div className="task-column-title">
+                <Brain size={14} />
+                <span>Memoria del agente</span>
+              </div>
+              <span className="task-count">{memories.length}</span>
+            </div>
+            {memories.length === 0 ? (
+              <div className="task-empty"><span>El agente aún no recuerda nada</span></div>
+            ) : (
+              <div className="task-list">
+                {memories.slice(0, 40).map((m) => (
+                  <div key={m.id} className="memory-item">
+                    <div className="memory-text">{m.text}</div>
+                    {m.source && <div className="memory-source">{m.source} · {relativeTime(m.createdAt)}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </aside>
   );
