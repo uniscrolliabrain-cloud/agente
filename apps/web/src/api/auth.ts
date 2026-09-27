@@ -91,3 +91,23 @@ export async function updateUser(
 export async function deleteUser(id: string): Promise<void> {
   await apiFetch(`/api/auth/users/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
+
+
+export interface UserTaskSummary {
+  id: string;
+  title: string;
+  kind: string;
+  status: string;
+  updatedAt: string;
+  createdAt: string;
+  attempts: number;
+  result?: string;
+  error?: string;
+}
+
+export async function userTasks(
+  id: string,
+  limit = 20,
+): Promise<{ userId: string; total: number; tasks: UserTaskSummary[] }> {
+  return apiFetch(`/api/auth/users/${encodeURIComponent(id)}/tasks?limit=${limit}`);
+}

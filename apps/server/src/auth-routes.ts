@@ -140,5 +140,32 @@ export function authRoutes(db: Store, users: UserService) {
     return c.json({ ok: true });
   });
 
+  // GET /api/auth/users/:id/tasks -> ultimas tareas del usuario (solo admin)
+  app.get("/users/:id/tasks", async (c) => {
+    const me = await users.getById(c.get("owner"));
+    if (!me || me.role !== "admin") throw new AppError("Solo admin", 403);
+    const target = await users.getById(c.req.param("id"));
+    if (!target) throw new AppError("Usuario no encontrado", 404);
+    const limit = Math.min(Number(c.req.query("limit") ?? "20") || 20, 100);
+    const all = await db.list<Record<string, unknown>>(target.id, "tasks");
+    const tasks = all
+      .sort((a: any, b: any) =>
+        String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")),
+      )
+      .slice(0, limit)
+      .map((t: any) => ({
+        id: t.id,
+        title: t.title,
+        kind: t.kind,
+        status: t.status,
+        updatedAt: t.updatedAt,
+        createdAt: t.createdAt,
+        attempts: t.attempts,
+        result: t.result,
+        error: t.error,
+      }));
+    return c.json({ userId: target.id, total: all.length, tasks });
+  });
+
   return app;
 }
