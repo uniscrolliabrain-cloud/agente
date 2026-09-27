@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Bot, Sparkles } from "lucide-react";
 import type { ChatMessage } from "../types/api";
 import MessageBubble from "./MessageBubble";
 import ToolCallCard from "./ToolCallCard";
@@ -8,16 +9,17 @@ interface Props {
   streaming: boolean;
   streamBuf: string;
   activeTool: { id: string; name: string; status: "running" | "done"; args: unknown } | null;
+  onExample?: (text: string) => void;
 }
 
 const EXAMPLES = [
   "¿Cuántos leads tengo?",
   "Revisa mi pipeline de ventas",
   "Prepara un email para Acme",
-  "Resumen del negocio",
+  "Dame un resumen del negocio",
 ];
 
-export default function MessageList({ messages, streaming, streamBuf, activeTool }: Props) {
+export default function MessageList({ messages, streaming, streamBuf, activeTool, onExample }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -31,20 +33,20 @@ export default function MessageList({ messages, streaming, streamBuf, activeTool
       ))}
 
       {streaming && (
-        <div className="msg-row assistant streaming">
-          <div className="ai-avatar">✦</div>
-          <div className="bubble-wrap">
+        <div className="message-row assistant streaming">
+          <div className="assistant-avatar">
+            <Bot size={15} />
+          </div>
+          <div className="message-content">
             {streamBuf ? (
-              <div className="bubble assistant-b">
-                <div className="bubble-content">
-                  {streamBuf}
-                  <span className="cursor">▌</span>
-                </div>
+              <div className="message-bubble assistant streaming-bubble">
+                {streamBuf}
+                <span className="stream-cursor">▌</span>
               </div>
             ) : (
               <div className="thinking">
-                <span>Pensando</span>
-                <span className="dots"><i /><i /><i /></span>
+                <span>Trabajando</span>
+                <span className="thinking-dots"><i /><i /><i /></span>
               </div>
             )}
             {activeTool && (
@@ -55,16 +57,16 @@ export default function MessageList({ messages, streaming, streamBuf, activeTool
       )}
 
       {messages.length === 0 && !streaming && (
-        <div className="chat-empty">
-          <div className="chat-empty-logo">✦</div>
-          <h2 className="chat-empty-title">¿En qué te ayudo hoy?</h2>
-          <p className="chat-empty-sub">
-            Pregúntame sobre tus leads, clientes, facturación o pídeme que prepare cualquier cosa.
-          </p>
-          <div className="chat-empty-examples">
+        <div className="empty-chat">
+          <div className="empty-chat-icon">
+            <Sparkles size={21} />
+          </div>
+          <h1>¿En qué te ayudo?</h1>
+          <p>Trabaja con tu agente para analizar información, ejecutar tareas y preparar resultados.</p>
+          <div className="example-grid">
             {EXAMPLES.map((ex) => (
-              <button key={ex} className="example-chip" type="button">
-                {ex}
+              <button key={ex} className="example-card" onClick={() => onExample?.(ex)}>
+                <span>{ex}</span>
               </button>
             ))}
           </div>

@@ -11,3 +11,6 @@ coverage/
 dump-web.txt
 om-pglite-probe.ts
 om-chat-acceptance.png
+
+# npm lockfile en apps/web (usamos pnpm)
+apps/web/package-lock.json

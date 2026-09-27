@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { controlTask, getTaskDetail } from "../api/tasks";
+import { X } from "lucide-react";
+import { controlTask, getTaskDetail, answerTask } from "../api/tasks";
 import type { AgentTask, TaskDetail } from "../types/api";
 
 interface Props {
@@ -19,8 +20,7 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
   useEffect(() => {
     void (async () => {
       try {
-        const d = await getTaskDetail(taskId);
-        setDetail(d);
+        setDetail(await getTaskDetail(taskId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error cargando detalle");
       }
@@ -37,6 +37,16 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
     }
   };
 
+  const submitAnswer = async () => {
+    try {
+      await answerTask(taskId, answer);
+      onChanged();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al responder");
+    }
+  };
+
   const task: AgentTask | null = detail?.task ?? null;
 
   return (
@@ -47,13 +57,15 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
             <div className="modal-title">{task?.title ?? "Cargando…"}</div>
             <div className="modal-sub">{task?.id.slice(0, 12)} · {task?.status}</div>
           </div>
-          <button className="icon-btn sm" onClick={onClose}>✕</button>
+          <button className="ghost-icon-button" onClick={onClose}><X size={17} /></button>
         </div>
+
         <div className="tabs">
           <button className={tab === "plan" ? "active" : ""} onClick={() => setTab("plan")}>Plan</button>
           <button className={tab === "events" ? "active" : ""} onClick={() => setTab("events")}>Eventos</button>
           <button className={tab === "artifacts" ? "active" : ""} onClick={() => setTab("artifacts")}>Artifacts</button>
         </div>
+
         <div className="modal-body">
           {error && <div className="chat-error">{error}</div>}
           {!detail && !error && <div className="muted">Cargando…</div>}
@@ -77,19 +89,7 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
                 <div className="answer-box">
                   <label>Respuesta</label>
                   <textarea value={answer} onChange={(e) => setAnswer(e.target.value)} rows={3} />
-                  <button
-                    className="primary-btn sm"
-                    onClick={async () => {
-                      try {
-                        const { answerTask } = await import("../api/tasks");
-                        await answerTask(taskId, answer);
-                        onChanged();
-                        onClose();
-                      } catch (err) {
-                        setError(err instanceof Error ? err.message : "Error al responder");
-                      }
-                    }}
-                  >
+                  <button className="primary-btn" style={{ marginTop: 8 }} onClick={submitAnswer}>
                     Enviar respuesta
                   </button>
                 </div>
@@ -98,11 +98,10 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
           )}
 
           {detail && tab === "events" && (
-            <div className="events-list">
+            <div className="plan-list">
               {detail.events.map((ev) => (
-                <div key={ev.id} className={`event-item ${ev.kind === "error" ? "warn" : "info"}`}>
-                  <span className="ev-time">{new Date(ev.date).toLocaleTimeString().slice(0, 5)}</span>
-                  <span className="ev-dot" />
+                <div key={ev.id} className="plan-item">
+                  <span className="plan-num" style={{ fontSize: 8 }}>{new Date(ev.date).toLocaleTimeString().slice(0, 5)}</span>
                   <span><b>{ev.title}</b>{ev.detail ? ` — ${ev.detail}` : ""}</span>
                 </div>
               ))}
@@ -111,12 +110,12 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
           )}
 
           {detail && tab === "artifacts" && (
-            <div className="artifacts-list">
+            <div className="plan-list">
               {detail.artifacts.map((a) => (
-                <div key={a.id} className="artifact-item">
-                  <span className="art-icon">📄</span>
+                <div key={a.id} className="plan-item">
+                  <span className="plan-num" style={{ fontSize: 10 }}>📄</span>
                   <span>{a.title}</span>
-                  <span className="art-type">{a.kind}</span>
+                  <span className="plan-check">{a.kind}</span>
                 </div>
               ))}
               {detail.artifacts.length === 0 && <div className="muted">Sin artifacts</div>}

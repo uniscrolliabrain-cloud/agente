@@ -1,3 +1,5 @@
+import { Check, LoaderCircle, Wrench } from "lucide-react";
+
 export default function ToolCallCard({
   name,
   status,
@@ -9,16 +11,20 @@ export default function ToolCallCard({
 }) {
   return (
     <div className={`tool-card ${status}`}>
-      <div className="tool-head">
-        <div className="tool-icon">◧</div>
-        <span className="tool-name">{name}</span>
-        <span className={`tool-status ${status}`}>{status === "running" ? "ejecutando…" : "hecho"}</span>
-        {status === "running" && <span className="spin">◍</span>}
+      <div className="tool-card-header">
+        <div className="tool-card-icon">
+          <Wrench size={13} />
+        </div>
+        <div className="tool-card-name">
+          <span>{name}</span>
+          <small>{status === "running" ? "Ejecutando" : "Completado"}</small>
+        </div>
+        <div className={`tool-card-status ${status}`}>
+          {status === "running" ? <LoaderCircle size={14} className="spin" /> : <Check size={14} />}
+        </div>
       </div>
       {args !== undefined && args !== null && (
-        <pre className="tool-args">
-          {typeof args === "string" ? args : JSON.stringify(args, null, 2)}
-        </pre>
+        <pre>{typeof args === "string" ? args : JSON.stringify(args, null, 2)}</pre>
       )}
     </div>
   );

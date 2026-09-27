@@ -1,7 +1,8 @@
+import { ArrowUpRight, CircleAlert, LoaderCircle } from "lucide-react";
 import type { AgentTask, TaskStatus } from "../types/api";
 
-function statusLabel(s: TaskStatus): string {
-  const m: Record<TaskStatus, string> = {
+function statusLabel(status: TaskStatus): string {
+  const labels: Record<TaskStatus, string> = {
     queued: "En cola",
     scheduled: "Programada",
     paused: "Pausada",
@@ -12,15 +13,7 @@ function statusLabel(s: TaskStatus): string {
     failed: "Fallida",
     cancelled: "Cancelada",
   };
-  return m[s];
-}
-
-function statusColor(s: TaskStatus): string {
-  if (s === "succeeded") return "var(--green)";
-  if (s === "failed") return "var(--red)";
-  if (s === "running") return "var(--blue)";
-  if (s.startsWith("waiting")) return "var(--amber)";
-  return "var(--gray)";
+  return labels[status];
 }
 
 function relativeTime(iso: string): string {
@@ -38,45 +31,52 @@ interface Props {
 }
 
 export default function TaskCard({ task, onOpen, onReview }: Props) {
-  const sopId = typeof task.state.sopId === "string" ? task.state.sopId : undefined;
-  const succeeded = task.plan.filter((p) => p.status === "succeeded").length;
-  const progress = task.plan.length > 0 ? Math.round((succeeded / task.plan.length) * 100) : 0;
   const needsAction = task.status === "waiting_approval" || task.status === "waiting_input";
+  const succeeded = task.plan.filter((s) => s.status === "succeeded").length;
+  const progress = task.plan.length > 0 ? Math.round((succeeded / task.plan.length) * 100) : 0;
 
   return (
-    <div
-      className={`task-card ${task.status === "running" ? "running" : ""} ${needsAction ? "action-needed" : ""}`}
+    <article
+      className={`task-card ${task.status === "running" ? "running" : ""} ${needsAction ? "needs-action" : ""}`}
       onClick={onOpen}
     >
-      <div className="tc-top">
-        <span className="kind-chip">{task.kind}</span>
-        {sopId && <span className="sop-chip">SOP: {sopId}</span>}
-        {!needsAction && <span className="status-dot" style={{ background: statusColor(task.status) }} />}
-        {needsAction && <span className="status-pill amber">{statusLabel(task.status)}</span>}
+      <div className="task-card-top">
+        <span className="task-kind">{task.kind}</span>
+        {typeof task.state.sopId === "string" && <span className="task-sop">{task.state.sopId}</span>}
+        {task.status === "running" && <LoaderCircle size={13} className="task-loader spin" />}
+        {needsAction && <CircleAlert size={14} className="task-alert" />}
       </div>
-      <div className="tc-title">{task.title}</div>
+
+      <h3>{task.title}</h3>
 
       {task.status === "running" && task.plan.length > 0 && (
-        <div className="tc-progress">
-          <div className="tc-bar"><div style={{ width: `${progress}%` }} /></div>
-          <span>{progress}%</span>
+        <div className="task-progress">
+          <div><span style={{ width: `${progress}%` }} /></div>
+          <small>{progress}%</small>
         </div>
       )}
 
-      {task.question && <div className="tc-question amber">💬 {task.question}</div>}
+      {task.question && (
+        <div className="task-question">
+          <CircleAlert size={13} />
+          <span>{task.question}</span>
+        </div>
+      )}
 
       {task.actionId && (
-        <div className="tc-actions">
-          <button className="open-review-btn" onClick={(e) => { e.stopPropagation(); onReview(); }}>
-            Abrir revisión
-          </button>
-        </div>
+        <button
+          className="review-button"
+          onClick={(e) => { e.stopPropagation(); onReview(); }}
+        >
+          Abrir revisión
+          <ArrowUpRight size={13} />
+        </button>
       )}
 
-      <div className="tc-foot">
-        <span className="tc-id">{task.id.slice(0, 8)}</span>
-        <span className={`tc-status-text ${task.status}`}>{statusLabel(task.status)} · {relativeTime(task.updatedAt)}</span>
-      </div>
-    </div>
+      <footer>
+        <span>{task.id.slice(0, 8)}</span>
+        <span>{statusLabel(task.status)} · {relativeTime(task.updatedAt)}</span>
+      </footer>
+    </article>
   );
 }

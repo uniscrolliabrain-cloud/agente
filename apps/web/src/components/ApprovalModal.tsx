@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { decideAction, getWorkspace } from "../api/actions";
 import type { ActionProposal } from "../types/api";
 
@@ -48,24 +49,24 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
             <div className="modal-title">Revisión requerida</div>
             {action && <div className="modal-sub">Action {action.id.slice(0, 10)}</div>}
           </div>
-          <button className="icon-btn sm" onClick={onClose}>✕</button>
+          <button className="ghost-icon-button" onClick={onClose}><X size={17} /></button>
         </div>
         <div className="modal-body">
           {error && <div className="chat-error">{error}</div>}
           {!action && !error && <div className="muted">Cargando…</div>}
           {action && (
             <>
-              <div className="approval-card">
-                <div className="approval-q">{action.title}</div>
-                <div className="approval-meta">
-                  <span>Task {taskId.slice(0, 8)}</span>
-                  <span className="hash-chip">{action.hash.slice(0, 8)}</span>
+              <div className="tool-card">
+                <div className="tool-card-header">
+                  <div className="tool-card-icon">!</div>
+                  <div className="tool-card-name">
+                    <span>{action.title}</span>
+                    <small>{action.kind}</small>
+                  </div>
                 </div>
-                <pre className="tool-args small">
-                  {JSON.stringify(action.data, null, 2)}
-                </pre>
+                <pre>{JSON.stringify(action.data, null, 2)}</pre>
               </div>
-              <div className="approval-actions">
+              <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 12 }}>
                 <button className="ctrl-btn danger" disabled={busy} onClick={() => decide("deny")}>Denegar</button>
                 <button className="primary-btn" disabled={busy} onClick={() => decide("approve")}>Aprobar</button>
               </div>

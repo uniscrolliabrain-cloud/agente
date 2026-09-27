@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -10,10 +10,28 @@ import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import type { AgentTask } from "./types/api";
 
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("openmuse_theme");
+    if (saved === "dark") return true;
+    if (saved === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+    localStorage.setItem("openmuse_theme", dark ? "dark" : "light");
+  }, [dark]);
+
+  return { dark, toggle: () => setDark((v) => !v) };
+}
+
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const chat = useChat(auth.isAuthenticated);
+  const theme = useTheme();
+
   const [convCollapsed, setConvCollapsed] = useState(false);
   const [kanbanCollapsed, setKanbanCollapsed] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
@@ -21,17 +39,23 @@ export default function App() {
 
   if (auth.booting) {
     return (
-      <div style={{ display: "grid", placeItems: "center", height: "100vh", color: "#6b6b76", fontFamily: "system-ui" }}>
-        Conectando con el backend…
+      <div className="boot-screen">
+        <div className="boot-card">
+          <div className="brand-mark">AI</div>
+          <div className="boot-spinner" />
+          <span>Conectando con el agente…</span>
+        </div>
       </div>
     );
   }
+
   if (!auth.isAuthenticated) {
     return (
-      <div style={{ display: "grid", placeItems: "center", height: "100vh", padding: 24, textAlign: "center", fontFamily: "system-ui" }}>
-        <div>
-          <h2 style={{ color: "#b91c1c", marginBottom: 12 }}>No se pudo conectar al backend</h2>
-          <p style={{ color: "#6b6b76", maxWidth: 480 }}>{auth.error ?? "Error desconocido"}</p>
+      <div className="boot-screen">
+        <div className="connection-error">
+          <div className="connection-error-icon">!</div>
+          <h2>No se pudo conectar</h2>
+          <p>{auth.error ?? "Error desconocido"}</p>
         </div>
       </div>
     );
@@ -45,10 +69,13 @@ export default function App() {
         workerLastTickAt={tasks.workerLastTickAt}
         convCollapsed={convCollapsed}
         kanbanCollapsed={kanbanCollapsed}
+        dark={theme.dark}
+        onToggleTheme={theme.toggle}
         onToggleConv={() => setConvCollapsed((v) => !v)}
         onToggleKanban={() => setKanbanCollapsed((v) => !v)}
         onLogout={auth.logout}
       />
+
       <div className="main">
         <ConversationsPanel
           collapsed={convCollapsed}
@@ -56,21 +83,33 @@ export default function App() {
           onNewChat={() => { /* multi-thread próximamente */ }}
           onSelectThread={() => { /* multi-thread próximamente */ }}
         />
-        <ChatPanel />
+
+        <ChatPanel chat={chat} />
+
         <KanbanPanel
           collapsed={kanbanCollapsed}
           mobileOpen={false}
-          onCloseMobile={() => {}}
+          onCloseMobile={() => setKanbanCollapsed(true)}
           tasks={tasks.tasks}
           onOpenTask={(t: AgentTask) => setOpenTaskId(t.id)}
           onReviewTask={(t: AgentTask) => setReviewTaskId(t.id)}
         />
       </div>
+
       {openTaskId && (
-        <TaskDetailModal taskId={openTaskId} onClose={() => setOpenTaskId(null)} onChanged={tasks.refresh} />
+        <TaskDetailModal
+          taskId={openTaskId}
+          onClose={() => setOpenTaskId(null)}
+          onChanged={tasks.refresh}
+        />
       )}
+
       {reviewTaskId && (
-        <ApprovalModal taskId={reviewTaskId} onClose={() => setReviewTaskId(null)} onChanged={tasks.refresh} />
+        <ApprovalModal
+          taskId={reviewTaskId}
+          onClose={() => setReviewTaskId(null)}
+          onChanged={tasks.refresh}
+        />
       )}
     </div>
   );
