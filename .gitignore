@@ -7,3 +7,7 @@ dist/
 artifacts/
 coverage/
 .DS_Store
+# Dumps y probes locales
+dump-web.txt
+om-pglite-probe.ts
+om-chat-acceptance.png

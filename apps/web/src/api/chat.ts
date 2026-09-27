@@ -62,12 +62,12 @@ export async function streamChat(
       if (done) break;
       buf += decoder.decode(value, { stream: true });
 
-      // SSE: los eventos se separan por doble salto de línea.
-      let sep = buf.indexOf("\\n\\n");
-      while (sep !== -1) {
-        const block = buf.slice(0, sep);
-        buf = buf.slice(sep + 2);
-        for (const line of block.split("\\n")) {
+      // SSE: los eventos se separan por una línea en blanco. El encoder del runtime usa
+      // CRLF, así que se aceptan ambos finales de línea.
+      const blocks = buf.split(/\r?\n\r?\n/);
+      buf = blocks.pop() ?? "";
+      for (const block of blocks) {
+        for (const line of block.split(/\r?\n/)) {
           if (!line.startsWith("data:")) continue;
           const payload = line.slice(5).trim();
           if (!payload || payload === "[DONE]") continue;
@@ -77,7 +77,6 @@ export async function streamChat(
             /* ignorar payloads no-JSON */
           }
         }
-        sep = buf.indexOf("\\n\\n");
       }
     }
   } finally {

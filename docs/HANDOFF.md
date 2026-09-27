@@ -5,7 +5,8 @@
 
 Última actualización: 26 de septiembre de 2026.
 Rama activa: `main`.
-Estado: **beta operativa en local. Pendiente: frontend + RAG para vender.**
+Estado: **beta operativa en local. Chat con streaming verificado en navegador. Pendiente: RAG,
+multi-hilo y deploy para vender.**
 
 ---
 
@@ -38,25 +39,36 @@ Es un motor que ejecuta procesos de empresa con:
 - 12 SOPs de agencia en `sops-examples/agency/`.
 - 6 skills Python: factura, propuesta, audit-web, gmb-post-prepare, social-post-prepare, whatsapp-reply-prepare.
 - Trigger types reales: manual, api, cron, email_subject.
-- Chat LLM (`/api/copilotkit/*`) conectado a Gemini u OpenRouter.
+- Chat LLM (`/api/copilotkit/run`) conectado a Gemini u OpenRouter, con streaming SSE verificado
+  end-to-end en navegador real (`apps/worker/om-chat-acceptance.mjs`: Vite → backend → Gemini →
+  DOM, con snapshots parciales de los deltas).
 - Google OAuth (Gmail, Calendar, Drive).
 - Sandbox Docker verificado (files.py con validaciones de path, symlinks, tamaño).
 - Suite de tests verde (137 pass, 1 skip en Windows por shebang).
 - Endpoint de business-records (seed directo a la DB).
 - Scripts de seed: `scripts/seed-agency.ts`, `scripts/seed-sops-agency.ts`.
+- **Frontend conectado de verdad**: `apps/web/src/components/*` (Header, ConversationsPanel,
+  ChatPanel, KanbanPanel, TaskDetailModal, ApprovalModal) y hooks (`useAuth`, `useChat`,
+  `useTasks`). El chat pinta los deltas del SSE en vivo.
+- **Static serving**: `apps/server/src/app.ts` sirve `apps/web/dist` con `serveStatic` cuando el
+  build existe (en dev sigue mandando Vite en el 5173).
+- **Parser SSE del frontend arreglado**: `apps/web/src/api/chat.ts` buscaba el separador de eventos
+  como la cadena literal `"\\n\\n"` (backslash + n), así que nunca partía los bloques, descartaba
+  todos los eventos y el chat terminaba siempre en "(respuesta vacía)". Ahora parte por
+  `/\r?\n\r?\n/` (acepta LF y CRLF).
 
 ### Lo que está a medias
 
-- **Frontend web** (`apps/web/`):
-  - Estructura Vite + React + TS creada.
-  - Capa de API escrita (`src/api/*.ts`): client, session, chat, conversation, tasks, actions.
-  - Componentes visuales pendientes (Login, Chat, Kanban, Modales).
-  - CSS del mockup pendiente de migrar a `src/index.css`.
-- **Static serving en el backend**: falta añadir `serveStatic` de `@hono/node-server` para servir `apps/web/dist` en producción.
+- **Frontend web** (`apps/web/`): los componentes existen y el chat ya hace streaming; queda
+  pulir multi-hilo real en `ConversationsPanel` (hoy son stubs en `App.tsx`), CSS del mockup
+  completo y estados vacíos finos.
+- **Persistencia PGlite en dev**: `tsx watch` mata el proceso en cada recarga y el data dir
+  puede quedar corrupto (`RuntimeError: Aborted()`). Ver §11.
 
 ### Lo que FALTA para vender
 
-1. **Frontend conectado de verdad.** Los componentes están pendientes.
+1. **Frontend: multi-hilo real + CSS.** El chat ya funciona de punta a punta; quedan
+   `ConversationsPanel` (hoy stubs en `App.tsx`), el CSS del mockup y los estados vacíos.
 2. **RAG de documentos.** pgvector + ingesta PDF/DOCX + búsqueda semántica. Sin esto "ChatGPT de tu empresa" no se sostiene.
 3. **WhatsApp vía Evolution API.** Webhook + envío. Número virtual o SIM prepago.
 4. **`provision-client.ts`.** Comando que monta un cliente nuevo desde un directorio (`clientes/empresa-x/`).
@@ -151,8 +163,9 @@ Razón: los SOPs deterministas son fiables pero no escriben texto único.
 
 ### Frontend (`apps/web/`)
 - `src/api/*.ts` — capa de datos contra la API.
-- `src/components/*` — pendientes (Login, Chat, Kanban, Modales).
-- `src/hooks/*` — pendientes (useAuth, useChat, useTasks).
+- `src/components/*` — Header, ConversationsPanel, ChatPanel, MessageList, ChatInput, KanbanPanel,
+  TaskDetailModal, ApprovalModal.
+- `src/hooks/*` — useAuth, useChat (streaming SSE), useTasks.
 
 ### Datos y contenido
 - `sops-examples/agency/*.json` — 12 SOPs.
@@ -182,6 +195,9 @@ docker build -t openmuse-computer:local apps/computer
 pnpm --filter @openmuse/web dev
 pnpm --filter @openmuse/web build
 pnpm --filter @openmuse/web typecheck
+
+# Aceptación del chat en navegador real (con backend 8787 y Vite 5173 arriba)
+node apps/worker/om-chat-acceptance.mjs
 
 # Seed
 pnpm exec tsx scripts/seed-agency.ts
@@ -220,9 +236,33 @@ PGlite soporta pgvector. Pendiente de implementar.
 **¿Por qué no multitenancy?**
 Porque el modelo es un deployment por cliente. Sin RBAC fino, sin K8s, sin SOC2. Cada cliente tiene su VPS.
 
+**El chat responde 200 pero el mensaje se queda en "(respuesta vacía)".**
+Revisa el parser SSE de `apps/web/src/api/chat.ts`: debe partir los bloques por salto de línea
+real (`/\r?\n\r?\n/`). Si busca la secuencia escapada `"\\n\\n"` nunca encuentra separadores y
+todos los eventos se descartan. `@copilotkit/runtime` envía LF.
+
+**¿Por qué hay 401 en consola al cargar la app?**
+`useChat` y `useTasks` lanzan su efecto de arranque en el primer render, en paralelo con el login
+de `useAuth`, así que las primeras llamadas van sin token. Se recuperan solas, pero conviene
+pasarles un flag `enabled` ligado a `auth.isAuthenticated`.
+
 ## 10. Última sesión — resumen
 
-En la última sesión (26 septiembre 2026):
+En la sesión de streaming del chat (26 septiembre 2026, tarde):
+
+- Se detectó que `@copilotkit/runtime` 1.70 solo publica el run en
+  `/api/copilotkit/agent/{agentId}/run`; `app.ts` reescribe `/api/copilotkit/run` a
+  `/api/copilotkit/agent/default/run` reutilizando `c.req.raw` en un `Request` nuevo.
+- Se añadió static serving de `apps/web/dist` (guardado por `existsSync`, así que el build debe
+  existir antes de arrancar el backend para que `/` sirva `index.html`).
+- PGlite quedó corrupto por un cierre sucio de `tsx watch` (`RuntimeError: Aborted()`); los data
+  dirs corruptos se pusieron en cuarentena (no se borraron) y el store se recreó limpio.
+- Se arregló el parser SSE del frontend (bug de `"\\n\\n"`; ver §9) y se verificó el streaming en
+  navegador real con `apps/worker/om-chat-acceptance.mjs` (snapshots parciales + respuesta final
+  completa, `RUN_FINISHED`, 0 errores de consola salvo los 401 del arranque y el 404 de
+  `/favicon.ico`).
+
+En la sesión de auditoría (26 septiembre 2026, mañana):
 
 - Se arreglaron los 54 items de la auditoría inicial (Fases 0-4).
 - Se añadió `SOP.trigger` real (cron/api/email_subject) en `sop-triggers.ts`.
