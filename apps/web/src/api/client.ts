@@ -56,7 +56,10 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOptions 
   });
 
   if (res.status === 401) {
-    clearSession();
+    // Un 401 sin Authorization no es una sesión caducada: es una llamada que se adelantó al
+    // login (los hooks de arranque corren en paralelo con useAuth). Borrar el token ahí dejaba
+    // la app rota hasta recargar.
+    if (session?.token) clearSession();
     throw new ApiError(401, "Sesión expirada");
   }
 

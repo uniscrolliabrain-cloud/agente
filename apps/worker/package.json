@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node --experimental-strip-types src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test:docker": "node tests/run-docker.mjs"
+    "test:docker": "node tests/run-docker.mjs",
+    "test:chat": "node om-chat-acceptance.mjs"
   },
   "dependencies": {
     "playwright": "1.62.1"

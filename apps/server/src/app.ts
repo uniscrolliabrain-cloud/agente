@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { MessageSchema } from "@ag-ui/core";
+import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
@@ -324,7 +328,14 @@ export async function createApp(
         "Configure a model and provider API key, or a valid AG-UI endpoint, to start chat",
         503,
       );
-    const response = await runtime.fetch(c.req.raw);
+    // Runtime 1.70 only routes runs at "/api/copilotkit/agent/{agentId}/run". The published
+    // contract posts the raw AG-UI payload to "/api/copilotkit/run", so rewrite that one path
+    // onto the default agent instead of asking every client to know the runtime layout.
+    const target = new URL(c.req.url);
+    if (target.pathname.replace(/\/$/, "") === "/api/copilotkit/run")
+      target.pathname = "/api/copilotkit/agent/default/run";
+    const request = target.href === c.req.url ? c.req.raw : new Request(target, c.req.raw);
+    const response = await runtime.fetch(request);
     // Runtime 1.70 emits SSE strings; a WHATWG Response body requires byte chunks.
     const encoder = new TextEncoder();
     const body = response.body?.pipeThrough(
@@ -336,6 +347,15 @@ export async function createApp(
     );
     return new Response(body, { status: response.status, headers: response.headers });
   });
+  // Serve the built web app (apps/web/dist) when it exists. Registered before the bootstrap
+  // route so "/" resolves to dist/index.html once the frontend is built, and falls through to
+  // the JSON payload when it is not.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const webDist = [
+    join(here, "../../../apps/web/dist"),
+    join(here, "../../../../apps/web/dist"),
+  ].find((dir) => existsSync(dir));
+  if (webDist) app.use("/*", serveStatic({ root: webDist }));
   app.get("/", (c) =>
     c.json({ name: "OpenMuse", app: "http://localhost:8081", health: "/api/health" }),
   );
