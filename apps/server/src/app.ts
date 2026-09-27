@@ -25,6 +25,8 @@ import { AppError } from "./errors.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
 import { WorkspaceService } from "./workspace.ts";
+import { UserService } from "./users.ts";
+import { authRoutes } from "./auth-routes.ts";
 
 export async function createApp(
   db: Store,
@@ -34,7 +36,8 @@ export async function createApp(
   const auth = await createAuth(db, config),
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
-    workspace = new WorkspaceService(db, config, files, google);
+    workspace = new WorkspaceService(db, config, files, google),
+    users = new UserService(db);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       workspace.execute(owner, input, connectionId, targetVersion),
@@ -127,6 +130,10 @@ export async function createApp(
     );
   });
   app.use("/api/*", async (c, next) => {
+    if (c.req.path === "/api/auth/login" || c.req.path === "/api/auth/logout") {
+      await next();
+      return;
+    }
     const signedRoute =
       /^\/api\/files\/[^/]+\/content$|^\/api\/browsers\/[^/]+\/(?:preview|console)$/.test(
         c.req.path,
@@ -146,6 +153,7 @@ export async function createApp(
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
+  app.route("/api/auth", authRoutes(db, users));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {
@@ -362,5 +370,16 @@ export async function createApp(
   app.get("/", (c) =>
     c.json({ name: "OpenMuse", app: "http://localhost:8081", health: "/api/health" }),
   );
-  return { app, auth, files, actions, workspace, agent, computer };
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+  const adminName = process.env.ADMIN_NAME?.trim() || "Admin";
+  if (adminEmail && adminPassword) {
+    await users.ensureAdmin(adminEmail, adminPassword, adminName);
+  } else if ((await users.list()).length === 0) {
+    console.warn(
+      "[OpenMuse] No hay usuarios en la DB. Define ADMIN_EMAIL y ADMIN_PASSWORD en .env para crear el primer admin.",
+    );
+  }
+
+  return { app, auth, files, actions, workspace, agent, computer, users };
 }

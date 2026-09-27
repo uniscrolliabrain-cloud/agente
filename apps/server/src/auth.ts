@@ -6,13 +6,15 @@ import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 
 const digest = (value: string) => createHash("sha256").update(value).digest();
+
 export class Auth {
   constructor(
     private readonly db: Store,
     private readonly config: Config,
     private readonly signingKey: string,
   ) {}
-  async session(accessKey?: string) {
+
+  validateAccessKey(accessKey?: string): void {
     if (
       this.config.mode === "live" &&
       (!accessKey ||
@@ -20,14 +22,19 @@ export class Auth {
         !timingSafeEqual(digest(accessKey), digest(this.config.accessKey)))
     )
       throw new AppError("Access key is incorrect", 401);
+  }
+
+  async session(accessKey?: string, ownerId: string = "local-user") {
+    this.validateAccessKey(accessKey);
     const token = randomBytes(32).toString("base64url");
     await this.db.put("system", "sessions", {
       id: digest(token).toString("hex"),
-      owner: "local-user",
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      owner: ownerId,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
     });
-    return { token, mode: this.config.mode };
+    return { token, mode: this.config.mode, ownerId };
   }
+
   async owner(authorization?: string) {
     if (!authorization?.startsWith("Bearer ")) throw new AppError("Sign in to OpenMuse", 401);
     const session = await this.db.get<{ owner: string; expiresAt: number }>(
@@ -39,6 +46,7 @@ export class Auth {
       throw new AppError("Session expired. Sign in again.", 401);
     return session.owner;
   }
+
   sign(owner: string, path: string) {
     const expires = String(Date.now() + 15 * 60 * 1000);
     const signature = createHmac("sha256", this.signingKey)
@@ -46,6 +54,7 @@ export class Auth {
       .digest("hex");
     return `${this.config.publicUrl}${path}?owner=${encodeURIComponent(owner)}&expires=${expires}&signature=${signature}`;
   }
+
   verify(url: URL) {
     const owner = url.searchParams.get("owner") ?? "";
     const expires = url.searchParams.get("expires") ?? "";
@@ -65,6 +74,7 @@ export class Auth {
     return owner;
   }
 }
+
 export async function createAuth(db: Store, config: Config) {
   await mkdir(config.dataDir, { recursive: true, mode: 0o700 });
   const path = join(config.dataDir, "session-signing-key");
@@ -78,4 +88,3 @@ export async function createAuth(db: Store, config: Config) {
   }
   return new Auth(db, config, key);
 }
-

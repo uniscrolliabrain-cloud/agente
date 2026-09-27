@@ -7,6 +7,7 @@ import Header from "./components/Header";
 import ConversationsPanel, { type AppView } from "./components/ConversationsPanel";
 import ChatPanel from "./components/ChatPanel";
 import KanbanPanel from "./components/KanbanPanel";
+import Login from "./components/Login";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
@@ -56,15 +57,7 @@ export default function App() {
   }
 
   if (!auth.isAuthenticated) {
-    return (
-      <div className="boot-screen">
-        <div className="connection-error">
-          <div className="connection-error-icon">!</div>
-          <h2>No se pudo conectar</h2>
-          <p>{auth.error ?? "Error desconocido"}</p>
-        </div>
-      </div>
-    );
+    return <Login onLogin={auth.login} error={auth.error} />;
   }
 
   const openTask = (t: AgentTask) => setOpenTaskId(t.id);

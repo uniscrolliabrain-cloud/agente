@@ -1,60 +1,71 @@
 import { useCallback, useEffect, useState } from "react";
-import { currentSession, login as apiLogin, logout as apiLogout } from "../api/session";
-
-const HARDCODED_ACCESS_KEY = "uniscroll_admin_dev_key_2026";
+import {
+  cachedUser,
+  loginWithCredentials,
+  logoutServer,
+  me,
+  type AuthUser,
+} from "../api/auth";
+import { currentSession } from "../api/session";
 
 export interface AuthState {
   isAuthenticated: boolean;
   mode: "sample" | "live" | null;
+  user: AuthUser | null;
 }
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>(() => {
     const session = currentSession();
-    return { isAuthenticated: Boolean(session), mode: session?.mode ?? null };
+    const user = cachedUser();
+    return {
+      isAuthenticated: Boolean(session && user),
+      mode: session?.mode ?? null,
+      user,
+    };
   });
   const [error, setError] = useState<string | null>(null);
   const [booting, setBooting] = useState(true);
 
   useEffect(() => {
     const session = currentSession();
-    if (session) {
-      setState({ isAuthenticated: true, mode: session.mode });
+    const user = cachedUser();
+    if (!session || !user) {
       setBooting(false);
+      setState({ isAuthenticated: false, mode: null, user: null });
       return;
     }
     let cancelled = false;
-    apiLogin(HARDCODED_ACCESS_KEY)
-      .then((s) => {
+    me()
+      .then((fresh) => {
         if (cancelled) return;
-        setState({ isAuthenticated: true, mode: s.mode });
+        localStorage.setItem("openmuse_user", JSON.stringify(fresh));
+        setState({ isAuthenticated: true, mode: session.mode, user: fresh });
       })
-      .catch((err) => {
+      .catch(() => {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Error inesperado");
-        setState({ isAuthenticated: false, mode: null });
+        setState({ isAuthenticated: false, mode: null, user: null });
       })
       .finally(() => {
         if (!cancelled) setBooting(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  const login = useCallback(async (accessKey: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
-      const s = await apiLogin(accessKey);
-      setState({ isAuthenticated: true, mode: s.mode });
+      const res = await loginWithCredentials(email, password);
+      setState({ isAuthenticated: true, mode: "live", user: res.user });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
+      throw err;
     }
   }, []);
 
-  const logout = useCallback(() => {
-    apiLogout();
-    setState({ isAuthenticated: false, mode: null });
+  const logout = useCallback(async () => {
+    await logoutServer();
+    setState({ isAuthenticated: false, mode: null, user: null });
   }, []);
 
   return { ...state, error, booting, login, logout };
