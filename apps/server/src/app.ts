@@ -29,6 +29,8 @@ import { UserService } from "./users.ts";
 import { authRoutes } from "./auth-routes.ts";
 import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
+import { threadRoutes } from "./threads-routes.ts";
+import { projectRoutes } from "./projects-routes.ts";
 
 export async function createApp(
   db: Store,
@@ -172,6 +174,8 @@ export async function createApp(
   app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/auth", authRoutes(db, users));
   app.route("/api/rag", ragRoutes(rag));
+  app.route("/api/threads", threadRoutes(db));
+  app.route("/api/projects", projectRoutes(db));
   app.route("/api/computer", computerRoutes(computer, files));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {

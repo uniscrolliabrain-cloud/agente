@@ -92,10 +92,21 @@ export interface Idea {
   taskId?: string;
   createdAt: string;
 }
+export type MemoryCategory =
+  | "empresa"
+  | "cliente"
+  | "proceso"
+  | "preferencia"
+  | "rrhh"
+  | "producto"
+  | "otro";
+
 export interface AgentMemory {
   id: string;
   text: string;
   source: string;
+  category?: MemoryCategory;
+  tags?: string[];
   createdAt: string;
 }
 export interface AgentArtifact {

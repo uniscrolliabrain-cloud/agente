@@ -38,6 +38,7 @@ import { BusinessDataService } from "./business.ts";
 import { LearningService } from "./learning.ts";
 import { SOPExecutor } from "./sop-executor.ts";
 import { RagService } from "./rag.ts";
+import { MemoryService } from "./memory.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
@@ -49,7 +50,9 @@ export class AgentService {
   readonly worker: TaskWorker;
   readonly business: BusinessDataService;
   readonly learning: LearningService;
+  readonly memory: MemoryService;
   private readonly sopExecutor: SOPExecutor;
+  private lastDedupAt?: number;
   private maintenance?: ReturnType<typeof setInterval>;
   private refreshing = false;
   constructor(
@@ -63,7 +66,8 @@ export class AgentService {
     readonly rag: RagService = new RagService(db),
   ) {
     this.business = new BusinessDataService(db, config.databaseUrl);
-    this.learning = new LearningService(db);
+    this.memory = new MemoryService(db, this.rag);
+    this.learning = new LearningService(this.memory);
     this.sopExecutor = new SOPExecutor(this);
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
       settled: (owner, task) => this.publishOutcome(owner, task),
@@ -103,6 +107,29 @@ export class AgentService {
       await this.db.purgeOlderThan("run-events", 90);
       await this.db.purgeOlderThan("activity", 90);
       await this.db.purgeOlderThan("notifications", 90);
+
+      // Retry de embeddings que fallaron por rate limits del proveedor. Max 50 por owner.
+      const missingOwners = new Set<string>();
+      for (const { owner, value } of await this.db.scan<{ embedding: number[] | null }>("rag-chunks")) {
+        if (!value.embedding || value.embedding.length === 0) missingOwners.add(owner);
+      }
+      for (const owner of missingOwners) {
+        await this.memory
+          .retryMissingEmbeddings(owner)
+          .catch((error) => backgroundFailure("retry embeddings", error));
+      }
+
+      // Dedupe de memorias cada 5 minutos.
+      if (!this.lastDedupAt || Date.now() - this.lastDedupAt > 5 * 60 * 1000) {
+        this.lastDedupAt = Date.now();
+        const memoryOwners = new Set<string>();
+        for (const { owner } of await this.db.scan<{ id: string }>("memories")) memoryOwners.add(owner);
+        for (const owner of memoryOwners) {
+          await this.memory
+            .dedupMemories(owner)
+            .catch((error) => backgroundFailure("dedup memories", error));
+        }
+      }
       for (const { owner, value } of await this.db.scan<Idea>("ideas"))
         if (
           value.status === "accepted" &&
@@ -651,6 +678,32 @@ export class AgentService {
     const value: AgentArtifact = {
       id: hash(`${task.id}:${key}`),
       taskId: task.id,
+      kind,
+      title,
+      summary,
+      data,
+      createdAt: date(),
+    };
+    await this.db.put(owner, "agent-artifacts", value);
+    return value;
+  }
+  /**
+   * Crea un artefacto sin depender de un AgentTask. Util para briefings
+   * generados desde el chat o desde proyectos. El sourceId define la clave
+   * de deduplicacion (id = hash(sourceId + ":" + key)).
+   */
+  async artifactFromSource(
+    owner: string,
+    sourceId: string,
+    kind: AgentArtifact["kind"],
+    title: string,
+    summary: string,
+    data: Record<string, unknown>,
+    key: string = kind,
+  ): Promise<AgentArtifact> {
+    const value: AgentArtifact = {
+      id: hash(`${sourceId}:${key}`),
+      taskId: sourceId,
       kind,
       title,
       summary,

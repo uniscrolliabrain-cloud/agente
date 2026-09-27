@@ -1,16 +1,13 @@
-import { createHash } from "node:crypto";
-import type { AgentMemory, AgentTask } from "../../../../packages/domain/src/agent.ts";
-import type { Store } from "../db.ts";
+import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
+import type { MemoryService } from "./memory.ts";
 
 /**
- * LearningService accepts ONLY curated, structural facts.
- *
- * Callers must never pass raw step outputs (read_web text, mail bodies, SQL rows,
- * API responses) — those are attacker-controlled content, not facts. The caller
- * (SOPExecutor) is responsible for sending only SOP name / step titles / tool names.
+ * LearningService acepta SOLO hechos estructurales curados.
+ * Delega en MemoryService, que deduplica por hash de texto normalizado (sin
+ * task.id), asi que dos ejecuciones de la misma SOP no ensucian la memoria.
  */
 export class LearningService {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly memory: MemoryService) {}
 
   async learn(owner: string, task: AgentTask, facts: string[]) {
     const clean = [...new Set(facts.map((x) => x.trim()).filter(Boolean))]
@@ -18,14 +15,11 @@ export class LearningService {
       .slice(0, 20);
     let saved = 0;
     for (const text of clean) {
-      const id = `learn-${createHash("sha256").update(`${task.id}:${text}`).digest("hex").slice(0, 32)}`;
-      const memory: AgentMemory = {
-        id,
-        text,
+      const result = await this.memory.remember(owner, text, {
         source: `sop:${task.id}`,
-        createdAt: new Date().toISOString(),
-      };
-      if (await this.db.insertIfAbsent(owner, "memories", memory)) saved++;
+        category: "proceso",
+      });
+      if (result.created) saved++;
     }
     return saved;
   }
