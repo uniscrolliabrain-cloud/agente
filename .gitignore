@@ -14,3 +14,5 @@ om-chat-acceptance.png
 
 # npm lockfile en apps/web (usamos pnpm)
 apps/web/package-lock.json
+repodump-actual.txt
+repodump-*.txt
