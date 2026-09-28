@@ -1606,3 +1606,39 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
   transition: background var(--t), color var(--t);
 }
 .chip:hover { background: var(--bg-hover); color: var(--text); }
+
+/* --------------------------------------------------
+   Stage / hero / dock / skeleton (chat v2)
+-------------------------------------------------- */
+.stage {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 0 24px 48px;
+  overflow-y: auto;
+}
+.hero {
+  margin: 0 0 24px;
+  font-size: var(--fs-xl); font-weight: 500; letter-spacing: -0.02em;
+  text-align: center; color: var(--text);
+  font-family: var(--font);
+}
+.dock {
+  flex-shrink: 0; display: flex; justify-content: center;
+  padding: 0 24px 20px;
+  background: linear-gradient(to top, var(--bg) 70%, transparent);
+}
+.skeleton {
+  height: 12px; border-radius: 6px; margin-top: 8px;
+  background: linear-gradient(90deg, var(--bg-active), var(--bg-hover), var(--bg-active));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+.stream-cursor { opacity: 0.6; animation: blink 900ms infinite; margin-left: 2px; }
+
+@media (max-width: 720px) {
+  .stage { padding: 0 16px 24px; }
+  .hero { font-size: 24px; }
+  .dock { padding: 0 12px 12px; }
+}

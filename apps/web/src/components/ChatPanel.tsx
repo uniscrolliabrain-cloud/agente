@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { MessageSquare, MoreHorizontal } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
+import SuggestionChips from "./SuggestionChips";
 import type { ChatMessage } from "../types/api";
 
 interface ChatState {
@@ -18,7 +20,16 @@ interface Props {
   chat: ChatState;
 }
 
+const CHIPS = [
+  { id: "resumen", label: "Resumen de mi negocio", prompt: "Dame un resumen de mi negocio." },
+  { id: "email", label: "Redactar un email", prompt: "Redacta un email profesional." },
+  { id: "doc", label: "Analizar un documento", prompt: "Analiza el ultimo documento que he subido." },
+];
+
 export default function ChatPanel({ chat }: Props) {
+  const [seed, setSeed] = useState("");
+  const isEmpty = chat.messages.length === 0 && !chat.streaming;
+
   return (
     <main className="chat-panel">
       <div className="chat-toolbar">
@@ -31,22 +42,46 @@ export default function ChatPanel({ chat }: Props) {
             <span>{chat.streaming ? "Generando respuesta..." : `${chat.messages.length} mensajes`}</span>
           </div>
         </div>
-        <button className="ghost-icon-button" title="Más opciones">
+        <button className="ghost-icon-button" title="Mas opciones">
           <MoreHorizontal size={18} />
         </button>
       </div>
 
-      <MessageList
-        messages={chat.messages}
-        streaming={chat.streaming}
-        streamBuf={chat.streamBuf}
-        activeTool={chat.activeTool}
-        onExample={chat.send}
-      />
-
-      {chat.error && <div className="chat-error">{chat.error}</div>}
-
-      <ChatInput onSend={chat.send} onCancel={chat.cancel} streaming={chat.streaming} />
+      {isEmpty ? (
+        <div className="stage">
+          <h1 className="hero">En que te ayudo hoy?</h1>
+          <ChatInput
+            onSend={chat.send}
+            onCancel={chat.cancel}
+            streaming={chat.streaming}
+            seed={seed}
+            onSeedConsumed={() => setSeed("")}
+          />
+          <SuggestionChips
+            chips={CHIPS}
+            onSelect={(prompt) => setSeed(prompt)}
+          />
+        </div>
+      ) : (
+        <>
+          <MessageList
+            messages={chat.messages}
+            streaming={chat.streaming}
+            streamBuf={chat.streamBuf}
+            activeTool={chat.activeTool}
+          />
+          {chat.error && <div className="chat-error">{chat.error}</div>}
+          <div className="dock">
+            <ChatInput
+              onSend={chat.send}
+              onCancel={chat.cancel}
+              streaming={chat.streaming}
+              seed=""
+              onSeedConsumed={() => {}}
+            />
+          </div>
+        </>
+      )}
     </main>
   );
 }
