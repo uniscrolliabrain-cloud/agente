@@ -7,7 +7,7 @@ import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import { backgroundFailure } from "./log.ts";
 import { RateLimiter } from "./rate-limit.ts";
-import { userRoleSchema, userSetupSchema, type User, type UserService } from "./users.ts";
+import { type User, type UserService, userRoleSchema, userSetupSchema } from "./users.ts";
 
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
 
