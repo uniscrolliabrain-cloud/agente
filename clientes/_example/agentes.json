@@ -1,0 +1,10 @@
+{
+  "agentes": [
+    { "id": "comercial",     "name": "Agente comercial",     "objetivo": "Buscar, investigar y clasificar oportunidades; preparar seguimiento y propuestas.", "sops": ["revisar-pipeline", "primer-contacto", "propuesta-comercial"] },
+    { "id": "atencion",      "name": "Agente de atencion",   "objetivo": "Responder consultas por los canales disponibles; escalar cuando requiera decision humana.", "sops": ["responder-whatsapp"] },
+    { "id": "administrativo","name": "Agente administrativo","objetivo": "Gestionar facturacion, cobros y documentacion.", "sops": ["emitir-factura-mensual", "recordar-pago-vencido", "conciliacion-mensual"] },
+    { "id": "marketing",     "name": "Agente de marketing",  "objetivo": "Preparar contenido, publicaciones y campanas.", "sops": ["publicar-gmb", "publicar-social"] },
+    { "id": "operaciones",   "name": "Agente de operaciones","objetivo": "Coordinar procesos internos y detectar bloqueos.", "sops": ["resumen-negocio"] },
+    { "id": "investigacion", "name": "Agente de investigacion","objetivo": "Investigar empresas, mercados y proveedores.", "sops": ["auditar-lead-web"] }
+  ]
+}

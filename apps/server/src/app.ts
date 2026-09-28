@@ -172,7 +172,21 @@ export async function createApp(
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
-  app.route("/api/auth", authRoutes(db, users));
+  app.route(
+    "/api/auth",
+    authRoutes(db, users, {
+      ensureSample: async (owner) => {
+        if (config.mode === "sample") {
+          await workspace.ensureSample(owner, actions);
+          await agent.ensure(owner);
+          await agent.refreshIdeas(owner);
+        } else {
+          await agent.ensure(owner);
+          await agent.refreshIdeas(owner);
+        }
+      },
+    }),
+  );
   app.route("/api/rag", ragRoutes(rag));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
