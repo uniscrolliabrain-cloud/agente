@@ -40,9 +40,9 @@ export async function createApp(
   const auth = await createAuth(db, config),
     files = new Files(db, config, auth),
     google = new GoogleAuth(db, config),
-    workspace = new WorkspaceService(db, config, files, google),
     users = new UserService(db),
-    rag = new RagService(db);
+    rag = new RagService(db),
+    workspace = new WorkspaceService(db, config, files, google, rag);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       workspace.execute(owner, input, connectionId, targetVersion),
@@ -113,7 +113,6 @@ export async function createApp(
     if (error.name === "PdfError" || error.name === "RecurringEventError")
       return c.json({ error: error.message }, 422);
     if (error instanceof SyntaxError) return c.json({ error: "Invalid request data" }, 400);
-    // Provider and document errors are useful, but raw stack traces and token-bearing responses are not.
     console.error(`[OpenMuse] ${error.name}`);
     return c.json(
       {
@@ -125,18 +124,9 @@ export async function createApp(
       502,
     );
   });
-  /**
-   * Webhook entrante de Evolution API. Autenticado con WHATSAPP_WEBHOOK_TOKEN por
-   * header `apikey`. Guarda el mensaje como record (kind = "whatsapp-incoming") para
-   * que el SOP `responder-whatsapp` lo procese. No responde nada por WhatsApp.
-   */
-  /**
-   * Billing: crear customer, generar payment link, listar invoices. Todo mediado por
-   * StripeClient, que devuelve 503 si no hay STRIPE_API_KEY.
-   */
   app.post("/api/billing/customer", async (c) => {
     const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
-    const { StripeClient } = await import("../../../packages/integrations/src/stripe.ts");
+    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
     const client = new StripeClient({ apiKey: config.stripeApiKey });
     return c.json(await client.createCustomer(body.email, body.name));
   });
@@ -148,13 +138,13 @@ export async function createApp(
         description: z.string().min(1).max(200),
       })
       .parse(await c.req.json());
-    const { StripeClient } = await import("../../../packages/integrations/src/stripe.ts");
+    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
     const client = new StripeClient({ apiKey: config.stripeApiKey });
     return c.json(await client.createPaymentLink(body.amountCents, body.currency, body.description));
   });
   app.get("/api/billing/invoices", async (c) => {
     const customerId = z.string().regex(/^cus_[A-Za-z0-9]+$/).parse(c.req.query("customerId"));
-    const { StripeClient } = await import("../../../packages/integrations/src/stripe.ts");
+    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
     const client = new StripeClient({ apiKey: config.stripeApiKey });
     return c.json(await client.listInvoices(customerId));
   });
@@ -307,8 +297,6 @@ export async function createApp(
   app.get("/api/main-thread", async (c) => {
     const owner = c.get("owner");
     const threadId = await ensureMainThreadId(owner);
-    // `existing` refleja la DB: solo la creacion real del registro lo devuelve en false, asi
-    // que un cliente puede distinguir "ya tenia conversacion" de "acabo de nacer".
     const created = await db.insertIfAbsent(owner, "conversations", {
       id: threadId,
       messages: [],
@@ -350,7 +338,7 @@ export async function createApp(
     const disposition = file.mimeType.startsWith("image/") || file.mimeType === "application/pdf"
       ? "inline"
       : "attachment";
-    c.header("Content-Disposition", `${disposition}; filename*=UTF-8''${encodeURIComponent(file.name)}`);
+    c.header("Content-Disposition", `${disposition}; filename*=UTF-8'${encodeURIComponent(file.name)}`);
     return c.body(await files.bytes(c.get("owner"), file.id));
   });
   app.post("/api/files/:id/fill", async (c) => {
@@ -381,10 +369,6 @@ export async function createApp(
     else await google.disconnect(c.get("owner"));
     return c.json({ ok: true });
   });
-  /**
-   * Estado de la conexion, para que la UI pueda pintar el boton correcto. En sample la
-   * conexion es simulada (settings.google), en live viene del token de OAuth guardado.
-   */
   app.get("/api/google/status", async (c) => {
     const owner = c.get("owner");
     const connection = await workspace.connection(owner);
@@ -444,15 +428,11 @@ export async function createApp(
         "Configure a model and provider API key, or a valid AG-UI endpoint, to start chat",
         503,
       );
-    // Runtime 1.70 only routes runs at "/api/copilotkit/agent/{agentId}/run". The published
-    // contract posts the raw AG-UI payload to "/api/copilotkit/run", so rewrite that one path
-    // onto the default agent instead of asking every client to know the runtime layout.
     const target = new URL(c.req.url);
     if (target.pathname.replace(/\/$/, "") === "/api/copilotkit/run")
       target.pathname = "/api/copilotkit/agent/default/run";
     const request = target.href === c.req.url ? c.req.raw : new Request(target, c.req.raw);
     const response = await runtime.fetch(request);
-    // Runtime 1.70 emits SSE strings; a WHATWG Response body requires byte chunks.
     const encoder = new TextEncoder();
     const body = response.body?.pipeThrough(
       new TransformStream({
@@ -463,9 +443,6 @@ export async function createApp(
     );
     return new Response(body, { status: response.status, headers: response.headers });
   });
-  // Serve the built web app (apps/web/dist) when it exists. Registered before the bootstrap
-  // route so "/" resolves to dist/index.html once the frontend is built, and falls through to
-  // the JSON payload when it is not.
   const here = dirname(fileURLToPath(import.meta.url));
   const webDist = [
     join(here, "../../../apps/web/dist"),

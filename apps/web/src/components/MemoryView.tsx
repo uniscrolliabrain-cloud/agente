@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Brain, Pencil, Search, Trash2, X } from "lucide-react";
 import { apiFetch } from "../api/client";
 import type { MemoryEntry } from "../hooks/useWorkspaceData";
@@ -57,16 +57,10 @@ export default function MemoryView({ memories }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const tags = editTags.split(",").map((t) => t.trim()).filter(Boolean);
-      const body: Record<string, unknown> = { text: editText.trim(), source: editing.source ?? "You" };
       await apiFetch(`/api/agent/memories/${encodeURIComponent(editing.id)}`, {
         method: "POST",
-        body,
+        body: { text: editText.trim(), source: editing.source ?? "You" },
       });
-      // La categoria y los tags viven en el objeto AgentMemory; el backend actual no los
-      // acepta por separado, pero los pasamos por si el schema se amplia. Si no, queda el texto.
-      void tags;
-      void editCategory;
       setEditing(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
