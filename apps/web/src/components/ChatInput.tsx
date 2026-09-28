@@ -15,7 +15,7 @@ interface SpeechRecognitionLike {
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((event: { results: ArrayLike<{ isFinal: boolean; [key: number]: { transcript: string } }> }) => void) | null;
+  onresult: ((event: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; [key: number]: { transcript: string } }> }) => void) | null;
   onend: (() => void) | null;
   onerror: (() => void) | null;
 }
@@ -38,6 +38,7 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const voiceBaseRef = useRef<string>("");
 
   useEffect(() => {
     const el = ref.current;
@@ -89,17 +90,26 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
-      let transcript = "";
-      for (let i = 0; i < event.results.length; i += 1) transcript += event.results[i][0].transcript;
-      setValue((current) => {
-        const base = current.replace(/\s+$/, "");
-        return base ? `${base} ${transcript}` : transcript;
-      });
+      let interim = "";
+      let final = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        if (result.isFinal) final += result[0].transcript;
+        else interim += result[0].transcript;
+      }
+      if (final) {
+        const base = voiceBaseRef.current.replace(/\s+$/, "");
+        voiceBaseRef.current = base ? `${base} ${final.trim()}` : final.trim();
+      }
+      const base = voiceBaseRef.current;
+      const tail = interim.trim();
+      setValue(base ? (tail ? `${base} ${tail}` : base) : tail);
     };
     recognition.onend = () => { setListening(false); recognitionRef.current = null; };
     recognition.onerror = () => { setListening(false); recognitionRef.current = null; };
 
     recognitionRef.current = recognition;
+    voiceBaseRef.current = value;
     setListening(true);
     recognition.start();
   };
