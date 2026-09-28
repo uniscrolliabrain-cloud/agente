@@ -40,6 +40,8 @@ export interface Config {
   computerEnabled?: boolean;
   computerImage?: string;
   computerDeploymentId?: string;
+  backupIntervalHours?: number;
+  backupRetentionDays?: number;
   allowedOrigins: string[];
 }
 
@@ -102,6 +104,8 @@ export function readConfig(): Config {
     computerEnabled: process.env.COMPUTER_ENABLED === "true",
     computerImage: process.env.COMPUTER_IMAGE ?? "openmuse-computer:local",
     computerDeploymentId: process.env.COMPUTER_DEPLOYMENT_ID,
+    backupIntervalHours: Number(process.env.BACKUP_INTERVAL_HOURS ?? "24") || 0,
+    backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS ?? "7") || 0,
     allowedOrigins: (
       process.env.ALLOWED_ORIGINS ?? "http://localhost:8081,http://127.0.0.1:8081"
     ).split(","),

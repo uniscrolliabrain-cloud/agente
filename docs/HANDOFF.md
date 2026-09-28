@@ -4,6 +4,167 @@
 > Verdad: este fichero + TODO.md + el repo actualizado del usuario.
 > Ultima actualizacion: 27 sep 2026.
 
+## PROTOCOLO OBLIGATORIO
+
+> Lee esto entero antes de tocar un solo fichero. No es opcional. No es un resumen. Es la ley.
+
+### 0.1. La verdad
+
+Tres niveles, en este orden:
+
+1. **Lo que el usuario dice en el chat ahora.** Manda sobre todo lo demás.
+2. **El repodump.** Foto del código en un momento dado. Puede estar desactualizado.
+3. **Los docs** (este HANDOFF, TODO.md, README.md, UI-REDESIGN.md). Pueden estar desactualizados.
+
+Si hay conflicto, gana el chat. Y se actualiza el doc que no cuadre.
+
+### 0.2. El ledger
+
+Antes de tocar nada en una sesión nueva, escribe en papel (o en un fichero temporal) qué ficheros has modificado en ESTA sesión. Cada vez que modifiques uno, apúntalo. Cuando vuelvas a tocarlo, usa la versión que tú dejaste, no la del repodump.
+
+Ejemplo de ledger:
+
+    NEW apps/web/src/api/threads.ts
+    MOD apps/web/src/api/index.ts (export threads)
+    NEW apps/web/src/hooks/useThreads.ts
+    REWRITE apps/web/src/hooks/useChat.ts (acepta threadId)
+    REWRITE apps/web/src/App.tsx (multi-thread)
+    REWRITE apps/web/src/components/ConversationsPanel.tsx (multi-thread)
+
+Si vas a tocar App.tsx otra vez, NO lees el repodump. Lees el App.tsx que TÚ dejaste. Si no lo recuerdas, lo pides con Get-Content.
+
+### 0.3. Antes de escribir
+
+Para CADA fichero que vayas a tocar:
+
+1. ¿Lo modifiqué ya en esta sesión? → Uso esa versión (del ledger).
+2. ¿No lo modifiqué? → Leo su contenido del repodump, la parte que importa.
+3. ¿No está en el repodump o tengo dudas? → Pido `Get-Content -Raw <fichero>` al usuario.
+
+Nunca escribo sin haber leído.
+
+### 0.4. Cómo se escribe
+
+- **Fichero nuevo** → WriteAllText con el contenido completo. Cero anchors. Cero reproducción de "antes".
+- **Fichero existente, cambio grande o varias zonas** → Leo el fichero entero, lo reescribo completo con WriteAllText. Nunca Replace() de bloques largos.
+- **Fichero existente, cambio quirúrgico** (una línea, un import, un string corto) → IndexOf sobre una cadena corta única del fichero real. Substring + concatenar. Nunca Replace() de bloques de más de 2-3 líneas.
+- **CSS/HTML puro** → mismo tratamiento. Cero verificación si no rompe nada.
+
+### 0.5. Idempotencia
+
+Todo bloque empieza comprobando si ya está aplicado:
+
+    if ($t.Contains("<marca de que ya esta aplicado>")) {
+      Write-Host "SKIP: ya aplicado"
+    } else {
+      ... aplicar ...
+    }
+
+Si lo ejecutas dos veces, la segunda no hace nada.
+
+### 0.6. Line endings
+
+Antes de escribir un fichero existente:
+
+    $hadCRLF = $t.Contains("`r`n")
+    if ($hadCRLF) { $t = $t.Replace("`r`n", "`n") }
+    ... modificar en LF ...
+    if ($hadCRLF) { $t = $t.Replace("`n", "`r`n") }
+    [System.IO.File]::WriteAllText($path, $t, (New-Object System.Text.UTF8Encoding $false))
+
+Siempre UTF-8 sin BOM.
+
+### 0.7. PowerShell seguro
+
+- `$ErrorActionPreference = "Continue"` al principio de cada bloque.
+- NUNCA `exit` en un bloque pegado en la terminal. Cierra la ventana y el usuario pierde el contexto. Si hay que parar, se imprime `FALLO: ...` y se sigue.
+- Nunca `Remove-Item` sin `-LiteralPath` y sin comprobar que el path es el correcto.
+- Nunca `Select-String -Recurse` (no existe en PowerShell 5.1). Usar `Get-ChildItem -Recurse | Select-String`.
+- Nunca anchors con `$` final en regex. En .NET `$` matchea antes de `\n` y con CRLF el `\r` queda entre el carácter y el `$`, y el match falla sin avisar.
+
+### 0.8. Verificación
+
+- **Typecheck**: al cerrar cada wave, no después de cada fichero. `pnpm typecheck` + `pnpm --filter @openmuse/web typecheck`.
+- **Tests**: solo antes de PR a main. `pnpm test`.
+- **Manual**: probar el flujo afectado si es UI.
+
+### 0.9. Comunicación
+
+- **No explicar código.** El usuario no lo lee. Solo comandos que funcionen.
+- **No pedir disculpas.** Si algo falló, se arregla.
+- **No sugerir alternativas** si el usuario ya ha decidido. Se ejecuta.
+- **Un bloque = una tarea.** No mezclar.
+- **Si falla un bloque, no apilar parches.** Para, lee el fichero real, reescribe el bloque entero.
+
+### 0.10. Errores ya cometidos (no repetir)
+
+- Add-Content con arrays de strings → corrupción silenciosa.
+- Anchors con `$` final y CRLF → fallos silenciosos.
+- Suponer que un bloque se aplicó sin ver el output.
+- Apilar parches sobre parches cuando algo falla.
+- Trabajar contra el repodump cuando ya modificamos el fichero en esta sesión.
+- Reproducir "antes" largos de memoria en lugar de leer el fichero real.
+- Proponer comandos git que el usuario no usa.
+- `exit` en bloques de terminal.
+
+### 0.11. Al terminar una wave
+
+1. Typecheck.
+2. Commit con mensaje claro.
+3. Actualizar los docs afectados (HANDOFF si cambia arquitectura, TODO si se cierra algo, UI-REDESIGN si es un paso de UI).
+4. Avisar al usuario.
+
+---
+### 0.12. Formato de respuesta al usuario
+
+Al responder en el chat:
+
+1. PRIMERO el bloque PowerShell que el usuario va a ejecutar.
+2. AL FINAL el ledger, despues del comando.
+
+El ledger sigue siendo obligatorio y se calcula ANTES de escribir el comando. Solo cambia el orden en el mensaje, no el orden mental.
+
+Estructura de cada mensaje:
+
+    ```powershell
+    # bloque que el usuario ejecuta
+    ```
+
+    Ledger:
+      NEW <fichero>
+      MOD <fichero ya tocado antes en esta sesion>
+      Dependencias: <verificadas antes de tocar>
+      Verificacion al final: <como se comprueba>
+
+### 0.13. Editar CSS con bloques { ... }
+
+Para ficheros CSS con bloques selector { ... }, usar escaneo por lineas, no brace-matching:
+
+    $lines = [System.IO.File]::ReadAllLines($p)
+    # start = linea cuyo .Trim() == "selector {"
+    # end   = siguiente linea cuyo .Trim() == "}"
+    # reemplazar rango [start, end]
+
+Nunca contar { y } caracter a caracter (falla con content: "{", url(data:...), etc.).
+Nunca regex sobre el fichero completo (falla con CRLF).
+
+### 0.14. Añadir al final de CSS es seguro
+
+Para CSS, += de un bloque nuevo al final es idempotente y no rompe el orden. Preferir añadir al final antes que insertar en medio, salvo que el bloque tenga que ir dentro de un @media o un selector concreto.
+
+### 0.15. Here-strings grandes se cortan al pegar
+
+Un here-string @'...'@ de mas de ~40 lineas puede cortarse al pegar en PowerShell interactivo. Para bloques grandes, usar array de strings:
+
+    $lines = @(
+      "linea 1"
+      "linea 2"
+    )
+    $content = ($lines -join "`n")
+
+El array no se corta aunque sean 200 lineas.
+
+---
 ## 1. Que es OpenMuse
 
 Runtime de agentes durables alrededor de Tasks → SOPs → Skills → Tools →
