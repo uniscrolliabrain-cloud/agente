@@ -4,6 +4,11 @@ export interface RunInput {
   threadId: string;
   runId: string;
   messages: { id: string; role: string; content: string }[];
+  /**
+   * Rol activo del run. El backend (ConversationAgent) lo lee de state y antepone el
+   * `objetivo` del rol al prompt. Omitirlo deja el comportamiento de siempre.
+   */
+  roleId?: string;
 }
 
 export interface AgUiEvent {
@@ -38,7 +43,9 @@ export async function streamChat(
       messages: input.messages,
       tools: [],
       context: [],
-      state: {},
+      // El rol viaja en state: es lo que lee ConversationAgent para anteponer el objetivo
+      // del rol al prompt. Sin roleId, state va vacio como antes.
+      state: input.roleId ? { roleId: input.roleId } : {},
     }),
     signal,
   });
