@@ -1,7 +1,7 @@
-import { Bot, Brain, Files, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles, UserCog } from "lucide-react";
+import { Bot, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles, UserCog } from "lucide-react";
 import type { Thread } from "../api/threads";
 
-export type AppView = "chat" | "tasks" | "documents" | "memory" | "users";
+export type AppView = "chat" | "tasks" | "documents" | "memory" | "projects" | "users";
 
 interface Props {
   collapsed: boolean;
@@ -73,6 +73,7 @@ export default function ConversationsPanel({
           {item("chat", MessageSquare, "Chat")}
           {item("tasks", LayoutDashboard, "Tareas")}
           {item("documents", Files, "Documentos")}
+          {item("projects", FolderKanban, "Proyectos")}
           {item("memory", Brain, "Memoria")}
           {isAdmin && item("users", UserCog, "Usuarios")}
           <button className="nav-item" disabled title="Próximamente">

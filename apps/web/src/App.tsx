@@ -12,6 +12,7 @@ import Login from "./components/Login";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
+import ProjectsView from "./components/ProjectsView";
 import UsersView from "./components/UsersView";
 import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
@@ -114,6 +115,7 @@ export default function App() {
         {view === "tasks" && <TasksView tasks={tasks.tasks} onOpenTask={openTask} onReviewTask={reviewTask} />}
         {view === "documents" && <DocumentsView files={files} />}
         {view === "memory" && <MemoryView memories={memories} />}
+        {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
         {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
 
         {view === "chat" && (
