@@ -126,6 +126,14 @@ export interface AgentNotification {
   createdAt: string;
   read: boolean;
 }
+export interface AgentRole {
+  id: string;
+  name: string;
+  objetivo: string;
+  sops: string[];
+  active: boolean;
+}
+
 export interface AgentIdentity {
   name: string;
   tone: "warm" | "concise" | "thoughtful";

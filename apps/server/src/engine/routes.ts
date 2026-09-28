@@ -108,6 +108,25 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       throw new AppError("Memory not found", 404);
     return c.json({ ok: true });
   });
+  app.get("/roles", async (c) => c.json(await service.listAgents(c.get("owner"))));
+
+  app.post("/roles", async (c) => {
+    const body = z
+      .object({
+        id: z.string().min(1).max(100),
+        name: z.string().trim().min(1).max(120),
+        objetivo: z.string().max(2000).default(""),
+        sops: z.array(z.string().max(200)).max(50).default([]),
+        active: z.boolean().default(true),
+      })
+      .parse(await c.req.json());
+    const owner = c.get("owner");
+    const existing = await service.db.get(owner, "agent-roles", body.id);
+    if (existing) throw new AppError("Agent role ya existe", 409);
+    await service.db.put(owner, "agent-roles", body);
+    return c.json(body, 201);
+  });
+
   app.post("/identity", async (c) => {
     const body = z
       .object({
