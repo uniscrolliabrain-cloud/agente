@@ -277,4 +277,60 @@ top-K, tope de ingesta).
 - **pgvector** no se ha toca aqui: D10 acota la memoria, pero la solucion de escalado sigue siendo
   un indice vectorial en la base de datos.
 
+## 8. Memo de ejecucion (28 sep 2026)
+
+Que se ha hecho en `fix/cleanup-and-bugs` tras leer este audit y el feedback. Todo verificado
+en el worktree `%TEMP%\om-audit-wt` antes de commitear.
+
+### Commits
+
+| Commit | Que trae |
+| --- | --- |
+| `e500a7b` | fix(audit): B1-B4, D1-D11 y P2 (36 ficheros) |
+| `f978c68` | test(audit): tests nuevos + `agent-api` actualizado |
+| `6a8dd24` | docs(audit): D9-D11 + seccion 7 |
+| `0c1e121` | fix(config): `BUSINESS_DATABASE_URL` vacio cae a `DATABASE_URL` |
+| `a0b1577` | chore(lint): ordenar imports en `auth-routes.ts` |
+
+### Verificacion
+
+| Comprobacion | Resultado |
+| --- | --- |
+| `pnpm typecheck` (raiz + worker) | OK (exit 0) |
+| `pnpm --prefix apps/web run typecheck` | OK (exit 0) |
+| `pnpm test` (ALLOW_NETWORK=0) | 153 tests, 152 pass, 0 fail, 1 skip (200 s) |
+| `pnpm --prefix apps/web run build` | OK (216.87 kB js, 36.00 kB css) |
+| `pnpm lint` | sigue FALLANDO (258+ errores, como en la seccion 0) pero **los 3 de D2 son 0** (`noUnreachable`, `useDefaultSwitchClauseLast`, `noUselessSwitchCase`) y en los ficheros tocados solo quedan 2 `useOptionalChain` preexistentes. El bloque de a11y (~81 hallazgos) NO se ha tocado: es volumen suficiente para su propia fase |
+
+### Metodo y correcciones de rumbo
+
+- **Se empezo por reimplementar el multi-thread y se revertio.** `feat/ui-and-features` ya
+  traia `api/threads.ts`, `hooks/useThreads.ts`, `useChat.ts` y `ConversationsPanel.tsx`
+  reescritos; rehacerlo aqui era trabajo duplicado que se pierde al mergear (y con clases CSS
+  que no existen). Por eso esta rama **no toca** `App.tsx`, `ConversationsPanel.tsx`,
+  `useChat.ts` ni `api/index.ts`, y el boton de Google va dentro de "Mi perfil" en vez de una
+  vista nueva en el sidebar.
+- El sembrado de sample se hace **tras el login**, no en cada `GET /api/workspace`: esa ruta la
+  consulta la UI cada 5 s y `refreshIdeas` escribe en base de datos.
+- D1 se arreglo quitando el filtro de segundos, como dice el audit, en vez de rediseñar el
+  matcher: la deduplicacion ya la dan el bucket de `sop-trigger-state` y la `idempotencyKey`.
+- Un test propio tardaba 20 minutos (1.000 chunks contra PGlite) y lastraba la suite entera;
+  `ingestText` admite ahora `maxChunks` y el test usa un tope de 3 (8 s en total).
+
+### Nota de entorno (no es de este trabajo)
+
+`@standard-schema/spec@1.1.0` se publica en npm con **`dist/index.js` de 0 bytes** (comprobado
+con `npm pack`: el tarball upstream viene asi). pnpm no materializa ficheros vacios, asi que en
+una instalacion incompleta el import de `@ai-sdk/provider-utils` falla con
+`ERR_MODULE_NOT_FOUND` y se caen los tests que importan el runtime (agent-api,
+conversation-browser, demo-model, model-worker). `pnpm install` no lo arregla porque el store se
+cree integro. Workaround: crear ese `index.js` vacio a mano. Valor pendiente: reportarlo
+upstream o fijar la version con un override de pnpm.
+
+### Lo que queda fuera de esta rama
+
+Multi-thread y UI de Projects (ya estan en `feat/ui-and-features`), los botones muertos del
+sidebar, el bloque de a11y del lint, `store.list` como envoltorio de `listPaged`, pgvector y
+`skill.entrypoint` como parte efectiva del bootstrap.
+
 
