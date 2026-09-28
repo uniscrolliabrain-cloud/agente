@@ -27,7 +27,8 @@
     "backup:restore": "tsx scripts/restore.ts",
     "beta:smoke": "tsx scripts/beta-smoke.ts",
     "beta:vertical": "tsx scripts/beta-vertical.ts",
-    "admin:create": "tsx scripts/admin-create.ts"
+    "admin:create": "tsx scripts/admin-create.ts",
+    "seed-agents": "tsx scripts/seed-agents.ts"
   },
   "dependencies": {
     "@ag-ui/client": "0.0.59",
