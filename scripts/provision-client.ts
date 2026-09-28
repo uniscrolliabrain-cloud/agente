@@ -30,87 +30,6 @@ async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
-async function provisionMemorias(
-  baseDir: string,
-  auth: Record<string, string>,
-): Promise<number> {
-  const file = join(baseDir, "memorias.json");
-  if (!existsSync(file)) return 0;
-  const parsed = JSON.parse(await readFile(file, "utf8")) as {
-    memorias: Array<{ text: string; category?: string; tags?: string[] }>;
-  };
-  if (!Array.isArray(parsed.memorias)) return 0;
-  let created = 0;
-  for (const m of parsed.memorias) {
-    try {
-      await http("/api/agent/memories", {
-        method: "POST",
-        headers: auth,
-        body: JSON.stringify({ text: m.text, source: "Provision inicial" }),
-      });
-      created++;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "desconocido";
-      console.log(`  aviso memoria: ${msg.slice(0, 120)}`);
-    }
-  }
-  return created;
-}
-
-async function provisionAgentes(baseDir: string, auth: Record<string, string>): Promise<number> {
-  const file = join(baseDir, "agentes.json");
-  if (!existsSync(file)) return 0;
-  const parsed = JSON.parse(await readFile(file, "utf8")) as {
-    agentes: Array<{ id: string; name: string; objetivo: string; sops?: string[] }>;
-  };
-  if (!Array.isArray(parsed.agentes)) return 0;
-  let created = 0;
-  for (const a of parsed.agentes) {
-    try {
-      await http("/api/agent/identity", {
-        method: "POST",
-        headers: auth,
-        body: JSON.stringify({ name: a.name, tone: "warm" }),
-      });
-      created++;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "desconocido";
-      console.log(`  aviso agente ${a.id}: ${msg.slice(0, 120)}`);
-    }
-  }
-  return created;
-}
-
-async function provisionDocs(baseDir: string, auth: Record<string, string>): Promise<number> {
-  const docsDir = join(baseDir, "docs");
-  if (!existsSync(docsDir)) return 0;
-  const entries = await readdir(docsDir);
-  let created = 0;
-  for (const name of entries) {
-    if (name === "README.md") continue;
-    const full = join(docsDir, name);
-    const ext = name.toLowerCase().split(".").pop() ?? "";
-    const textExt = ["txt", "md", "csv", "json", "xml", "yml", "yaml"];
-    if (!textExt.includes(ext)) {
-      console.log(`  skip doc ${name} (no es texto plano, subir por la app)`);
-      continue;
-    }
-    try {
-      const text = await readFile(full, "utf8");
-      await http("/api/rag/ingest", {
-        method: "POST",
-        headers: auth,
-        body: JSON.stringify({ sourceId: `provision:${name}`, sourceName: name, text }),
-      });
-      created++;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "desconocido";
-      console.log(`  aviso doc ${name}: ${msg.slice(0, 120)}`);
-    }
-  }
-  return created;
-}
-
 async function main() {
   const dir = process.argv[2];
   if (!dir) {
@@ -134,11 +53,11 @@ async function main() {
     token = session.token;
     console.log(`  Admin existente: ${cfg.adminEmail}`);
   } catch (err) {
-    const detail = err instanceof Error ? err.message : "desconocido";
     throw new Error(
-      `Login del admin fallo: ${detail}. ` +
-      `Si la DB esta vacia, define ADMIN_EMAIL/ADMIN_PASSWORD en .env y arranca el servidor una vez, ` +
-      `o ejecuta pnpm admin:create. Despues vuelve a lanzar este script.`
+      `El login fallo (${err instanceof Error ? err.message : "desconocido"}). ` +
+        `El script no crea admins: solo provisiona SOPs, skills y usuarios con un admin que ya exista. ` +
+        `Crea el primero con "pnpm admin:create -- --email ${cfg.adminEmail} --password \\"...\\"" ` +
+        `o define ADMIN_EMAIL/ADMIN_PASSWORD en .env y arranca el API.`,
     );
   }
   const auth = { Authorization: `Bearer ${token}` };
@@ -199,15 +118,6 @@ async function main() {
       }
     }
   }
-
-  const memorias = await provisionMemorias(baseDir, auth);
-  if (memorias > 0) console.log(`  + ${memorias} memorias`);
-
-  const agentes = await provisionAgentes(baseDir, auth);
-  if (agentes > 0) console.log(`  + ${agentes} agentes`);
-
-  const docs = await provisionDocs(baseDir, auth);
-  if (docs > 0) console.log(`  + ${docs} documentos indexados en RAG`);
 
   console.log(`Provision completo: ${cfg.name}`);
 }

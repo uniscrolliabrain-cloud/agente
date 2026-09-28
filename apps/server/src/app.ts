@@ -56,6 +56,18 @@ export async function createApp(
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
+  /**
+   * Prepara el workspace de un usuario ya autenticado. El sembrado de ejemplo vivia solo en
+   * POST /api/session con el owner "local-user", asi que quien entraba por /api/auth/login
+   * (owner = user.id) veia correo, calendario y acciones vacios. Es idempotente y memoizado
+   * por owner dentro de WorkspaceService, asi que se puede llamar en cada login y en cada
+   * carga del workspace sin coste repetido.
+   */
+  const ensureOwnerWorkspace = async (owner: string) => {
+    await workspace.ensureSample(owner, actions);
+    await agent.ensure(owner);
+    if (config.mode === "sample") await agent.refreshIdeas(owner);
+  };
   app.use("*", async (c, next) => {
     const origin = c.req.header("origin");
     if (origin && !origins.has(origin)) return c.json({ error: "Origin is not allowed" }, 403);
@@ -132,9 +144,7 @@ export async function createApp(
       throw new AppError("Too many sign-in attempts. Try again in a minute.", 429);
     const body = z.object({ accessKey: z.string().optional() }).parse(await c.req.json());
     const session = await auth.session(body.accessKey);
-    await workspace.ensureSample("local-user", actions);
-    await agent.ensure("local-user");
-    if (config.mode === "sample") await agent.refreshIdeas("local-user");
+    await ensureOwnerWorkspace("local-user");
     return c.json(session);
   });
   app.get("/api/google/callback", async (c) => {
@@ -165,28 +175,15 @@ export async function createApp(
     await next();
   });
   app.get("/api/workspace", async (c) => {
-    const snapshot = await workspace.snapshot(c.get("owner"), c.req.query("q"));
-    snapshot.browsers = snapshot.browsers.map((s) => browser.decorate(c.get("owner"), s));
+    const owner = c.get("owner");
+    const snapshot = await workspace.snapshot(owner, c.req.query("q"));
+    snapshot.browsers = snapshot.browsers.map((s) => browser.decorate(owner, s));
     return c.json(snapshot);
   });
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
-  app.route(
-    "/api/auth",
-    authRoutes(db, users, {
-      ensureSample: async (owner) => {
-        if (config.mode === "sample") {
-          await workspace.ensureSample(owner, actions);
-          await agent.ensure(owner);
-          await agent.refreshIdeas(owner);
-        } else {
-          await agent.ensure(owner);
-          await agent.refreshIdeas(owner);
-        }
-      },
-    }),
-  );
+  app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }));
   app.route("/api/rag", ragRoutes(rag));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
@@ -258,8 +255,14 @@ export async function createApp(
   app.get("/api/main-thread", async (c) => {
     const owner = c.get("owner");
     const threadId = await ensureMainThreadId(owner);
-    await db.insertIfAbsent(owner, "conversations", { id: threadId, messages: [], createdAt: new Date().toISOString() } as any);
-    return c.json({ threadId, existing: true });
+    // `existing` refleja la DB: solo la creacion real del registro lo devuelve en false, asi
+    // que un cliente puede distinguir "ya tenia conversacion" de "acabo de nacer".
+    const created = await db.insertIfAbsent(owner, "conversations", {
+      id: threadId,
+      messages: [],
+      createdAt: new Date().toISOString(),
+    } as any);
+    return c.json({ threadId, existing: !created });
   });
   app.get("/api/conversation", async (c) => {
     const owner = c.get("owner");
@@ -325,6 +328,20 @@ export async function createApp(
       await db.put(c.get("owner"), "settings", { id: "google", enabled: false });
     else await google.disconnect(c.get("owner"));
     return c.json({ ok: true });
+  });
+  /**
+   * Estado de la conexion, para que la UI pueda pintar el boton correcto. En sample la
+   * conexion es simulada (settings.google), en live viene del token de OAuth guardado.
+   */
+  app.get("/api/google/status", async (c) => {
+    const owner = c.get("owner");
+    const connection = await workspace.connection(owner);
+    return c.json({
+      connected: Boolean(connection),
+      account: connection?.account ?? null,
+      sample: config.mode === "sample",
+      configured: config.mode === "sample" ? true : google.configured(),
+    });
   });
   app.post("/api/browsers", async (c) => {
     const body = z.object({ url: z.url().max(4096) }).parse(await c.req.json());
@@ -413,9 +430,13 @@ export async function createApp(
     await users.ensureAdmin(adminEmail, adminPassword, adminName);
   } else if ((await users.list()).length === 0) {
     console.warn(
-      "[OpenMuse] No hay usuarios en la DB. Define ADMIN_EMAIL y ADMIN_PASSWORD en .env para crear el primer admin.",
+      "[OpenMuse] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password \"...\"`.",
     );
   }
+  if (config.databaseUrl && !process.env.BUSINESS_DATABASE_URL?.trim())
+    console.warn(
+      "[OpenMuse] BUSINESS_DATABASE_URL no esta definido: los SOPs con la tool query_business ejecutan su SQL contra DATABASE_URL, que es la misma base de datos donde viven los datos de todos los owners. Apunta BUSINESS_DATABASE_URL a un rol de solo lectura (GRANT SELECT) en otra base de datos.",
+    );
 
   return { app, auth, files, actions, workspace, agent, computer, users };
 }

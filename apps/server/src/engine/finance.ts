@@ -1,8 +1,12 @@
 import { z } from "zod";
+import { AppError } from "../errors.ts";
 
 /** CSV amounts use positive expenses and negative income. No currency conversion is inferred. */
 export function analyzeSpending(csv: string) {
-  if (csv.length > 500000) throw new Error("Import at most 500 KB of transaction CSV");
+  // Todo lo que puede fallar por el contenido del fichero es un 422 con mensaje util, no un
+  // 500: el front ya sabe pintar {error, fields} de un AppError (api/client.ts) y con Error
+  // plano todo acababa en el 502 generico de onError.
+  if (csv.length > 500000) throw new AppError("Import at most 500 KB of transaction CSV", 422);
   const rows: string[][] = [];
   let row: string[] = [],
     cell = "",
@@ -13,7 +17,7 @@ export function analyzeSpending(csv: string) {
       if (quoted && csv[i + 1] === '"') {
         cell += '"';
         i++;
-      } else if (!quoted && cell.length) throw new Error("Invalid quoted CSV field");
+      } else if (!quoted && cell.length) throw new AppError("Invalid quoted CSV field", 422);
       else quoted = !quoted;
     } else if (!quoted && (c === "," || c === "\n" || c === undefined)) {
       row.push(cell.replace(/\r$/, ""));
@@ -24,25 +28,26 @@ export function analyzeSpending(csv: string) {
       }
     } else if (c !== undefined) cell += c;
   }
-  if (quoted) throw new Error("CSV has an unclosed quoted field");
+  if (quoted) throw new AppError("CSV has an unclosed quoted field", 422);
   const header = rows.shift()?.map((v) => v.trim().toLowerCase());
   if (!header || !["date", "description", "amount", "category"].every((v) => header.includes(v)))
-    throw new Error("CSV needs date,description,amount,category columns");
+    throw new AppError("CSV needs date,description,amount,category columns", 422);
   if (!rows.length || rows.length > 5000)
-    throw new Error("Import between 1 and 5,000 transactions");
+    throw new AppError("Import between 1 and 5,000 transactions", 422);
   const transactions = rows.map((r, index) => {
     const get = (name: string) => r[header.indexOf(name)]?.trim() ?? "";
     if (r.length !== header.length)
-      throw new Error(`Row ${index + 2} has the wrong number of columns`);
+      throw new AppError(`Row ${index + 2} has the wrong number of columns`, 422);
     const date = get("date"),
       amount = get("amount");
     if (!z.iso.date().safeParse(date).success || !/^[-+]?\d+(?:\.\d{1,2})?$/.test(amount))
-      throw new Error(
+      throw new AppError(
         `Row ${index + 2} needs an ISO date and a plain amount with at most two decimal places`,
+        422,
       );
     const cents = Math.round(Number(amount) * 100);
     if (!Number.isSafeInteger(cents) || Math.abs(cents) > 1e12)
-      throw new Error("Transaction amount is out of range");
+      throw new AppError("Transaction amount is out of range", 422);
     return {
       id: `row-${index + 2}`,
       date,

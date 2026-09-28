@@ -7,6 +7,7 @@ import type { Auth } from "./auth.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { chunkText, embedTexts, RAG_MAX_CHUNKS_PER_SOURCE } from "./engine/rag.ts";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -126,7 +127,9 @@ export class Files {
     await writeFile(join(directory, `${id}.bin`), bytes, { mode: 0o600, flag: "wx" });
     await this.db.put(owner, "files", artifact);
 
-    // Ingesta automatica en RAG para archivos de texto plano.
+    // Ingesta automatica en RAG para archivos de texto plano. Los embeddings van con
+    // concurrencia acotada (embedTexts) y el numero de chunks tiene tope: antes era un bucle
+    // serial, asi que un .txt de 500 KB (~600 chunks) bloqueaba la subida durante minutos.
     if (
       artifact.mimeType.startsWith("text/") ||
       artifact.mimeType === "application/json" ||
@@ -134,19 +137,18 @@ export class Files {
     ) {
       try {
         const text = new TextDecoder("utf-8").decode(bytes);
-        const { embed: embedFn } = await import("./engine/embeddings.ts");
-        const { chunkText } = await import("./engine/rag.ts");
-        const chunks = chunkText(text);
+        const chunks = chunkText(text).slice(0, RAG_MAX_CHUNKS_PER_SOURCE);
+        const vectors = await embedTexts(chunks);
+        const createdAt = new Date().toISOString();
         for (let i = 0; i < chunks.length; i += 1) {
-          const vec = await embedFn(chunks[i]);
           await this.db.put(owner, "rag-chunks", {
             id: `${id}-${i}`,
             sourceId: id,
             sourceName: artifact.name,
             chunkIndex: i,
             text: chunks[i],
-            embedding: vec,
-            createdAt: new Date().toISOString(),
+            embedding: vectors[i],
+            createdAt,
           });
         }
       } catch { /* ingesta opcional, no rompe la subida */ }

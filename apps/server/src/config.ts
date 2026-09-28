@@ -24,6 +24,12 @@ export interface Config {
   publicUrl: string;
   dataDir: string;
   databaseUrl?: string;
+  /**
+   * DSN separado y de solo lectura para las consultas `query_business` de los SOPs. Si no se
+   * define, se usa DATABASE_URL, que tambien guarda los datos de la propia app: por eso el
+   * requisito de GRANT SELECT con un rol propio esta documentado en README/.env.example.
+   */
+  businessDatabaseUrl?: string;
   accessKey?: string;
   encryptionKey?: string;
   model?: string;
@@ -88,6 +94,9 @@ export function readConfig(): Config {
     publicUrl,
     dataDir: resolve(process.env.DATA_DIR ?? ".openmuse"),
     databaseUrl: process.env.DATABASE_URL,
+    // `||` y no `??`: al copiar .env.example la variable viene vacia y debe caer a
+    // DATABASE_URL igual que si no estuviera.
+    businessDatabaseUrl: process.env.BUSINESS_DATABASE_URL?.trim() || process.env.DATABASE_URL,
     accessKey: process.env.OPENMUSE_ACCESS_KEY,
     encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
     model: readModel(),
