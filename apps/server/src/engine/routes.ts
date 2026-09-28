@@ -40,6 +40,22 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       .parse(await c.req.json());
     return c.json(await service.control(c.get("owner"), c.req.param("id"), action));
   });
+  app.post("/tasks/:id/escalate", async (c) => {
+    const body = z
+      .object({
+        toUserId: z.string().min(1).max(200),
+        reason: z.string().trim().min(1).max(2000),
+      })
+      .parse(await c.req.json());
+    return c.json(
+      await service.escalateTask(
+        c.get("owner"),
+        c.req.param("id"),
+        body.toUserId,
+        body.reason,
+      ),
+    );
+  });
   app.post("/tasks/:id/input", async (c) => {
     const body = z
       .object({

@@ -123,6 +123,25 @@ export class SOPExecutor {
       task = await ctx.checkpoint({ plan: planRunning, state: { ...task.state, sopStepIndex: index } });
       await ctx.event("step", `SOP ${index + 1}/${sop.steps.length}: ${step.title}`);
 
+      // OpenMuse when: skip step if condition is falsy
+      if (typeof step.when === "string" && step.when.trim() !== "") {
+        const raw = interpolate(step.when, task, results);
+        const condition = (typeof raw === "string" ? raw : String(raw ?? "")).trim().toLowerCase();
+        const falsy = condition === "" || condition === "0" || condition === "false";
+        if (falsy) {
+          results[step.id] = { skipped: true, reason: `when: ${step.when}` };
+          task = await ctx.checkpoint({
+            plan: task.plan.map((p, i) =>
+              i === index
+                ? { ...p, status: "succeeded" as const, detail: `Skipped (when: ${step.when})` }
+                : p,
+            ),
+            state: { ...task.state, sopStepIndex: index + 1, sopResults: results },
+          });
+          index++;
+          continue;
+        }
+      }
       const pendingApprovalId = task.state.pendingApprovalStepId;
       const approvalResult = task.state.approvalResult;
       const consumingApproval =
@@ -252,6 +271,7 @@ export class SOPExecutor {
       ...sop.steps.map((step, i) => `Step ${i + 1} "${step.title}" (tool: ${step.tool}).`),
     ];
     await this.service.learn(owner, task, facts);
+    await this.service.ingestTaskArtifacts(owner, task.id).catch(() => {});
     return this.service.finish(task, ctx, `SOP “${sop.name}” completed ${sop.steps.length} step(s).`);
   }
 

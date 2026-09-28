@@ -30,6 +30,7 @@ import { ComputerService } from "../computer.ts";
 import type { Config } from "../config.ts";
 import type { Store } from "../db.ts";
 import { AppError } from "../errors.ts";
+import { UserService } from "../users.ts";
 import type { Files } from "../files.ts";
 import { backgroundFailure } from "../log.ts";
 import type { WorkspaceService } from "../workspace.ts";
@@ -313,6 +314,57 @@ export class AgentService {
     await this.ensure(owner);
     await this.db.insertIfAbsent(owner, "tasks", task);
     return (await this.db.get<AgentTask>(owner, "tasks", id)) ?? task;
+  }
+  /**
+   * Escala una tarea a otro usuario del deployment. La tarea pasa a waiting_input,
+   * assignedTo cambia, y la notificacion va al usuario escalado (no al owner).
+   */
+  async escalateTask(owner: string, taskId: string, toUserId: string, reason: string) {
+    const task = await this.getTask(owner, taskId);
+    if (terminal.has(task.status))
+      throw new AppError("No se puede escalar una tarea cerrada", 409);
+    const target = await new UserService(this.db).getById(toUserId);
+    if (!target || !target.active)
+      throw new AppError("El usuario destino no existe o esta inactivo", 422);
+    const trimmed = reason.trim().slice(0, 2000);
+    if (!trimmed) throw new AppError("Falta el motivo del escalado", 422);
+    const updated = await this.db.compareAndSwap<AgentTask>(
+      owner,
+      "tasks",
+      taskId,
+      { status: task.status, leaseId: task.leaseId ?? null },
+      {
+        assignedTo: toUserId,
+        status: "waiting_input",
+        question: trimmed,
+        state: {
+          ...task.state,
+          escalatedTo: toUserId,
+          escalatedAt: new Date().toISOString(),
+        },
+        leaseId: null,
+        leaseUntil: null,
+        updatedAt: new Date().toISOString(),
+      },
+    );
+    if (!updated) throw new AppError("La tarea cambio; refresca e intentalo de nuevo", 409);
+    this.worker.abort(taskId);
+    await this.db.put(owner, "run-events", {
+      id: randomUUID(),
+      taskId,
+      kind: "status",
+      date: new Date().toISOString(),
+      title: "Tarea escalada",
+      detail: `Asignada a ${target.name}: ${trimmed.slice(0, 200)}`,
+    });
+    await this.notify(
+      toUserId,
+      "Te han asignado una tarea",
+      `${task.title}: ${trimmed}`,
+      taskId,
+      `escalate:${taskId}:${toUserId}`,
+    );
+    return updated;
   }
   async control(owner: string, id: string, action: "pause" | "resume" | "cancel" | "retry") {
     const task = await this.getTask(owner, id);
@@ -860,6 +912,28 @@ export class AgentService {
       return this.finish(task, context, artifact.summary);
     }
     return executeModelTask(this, owner, task, context);
+  }
+  /**
+   * Ingesta al RAG los artefactos de una tarea cuando esta termina. Idempotente por
+   * sourceId = `task:<id>:<artifactId>`, asi que reintentos no duplican chunks.
+   */
+  async ingestTaskArtifacts(owner: string, taskId: string) {
+    const artifacts = await this.db.list<AgentArtifact>(owner, "agent-artifacts");
+    const mine = artifacts.filter((a) => a.taskId === taskId);
+    for (const artifact of mine) {
+      const sourceId = `task:${taskId}:${artifact.id}`;
+      const text = [artifact.title, artifact.summary, JSON.stringify(artifact.data)]
+        .filter((x) => typeof x === "string" && x.trim())
+        .join("\n\n")
+        .slice(0, 200_000);
+      if (!text.trim()) continue;
+      try {
+        await this.rag.ingestText(owner, sourceId, artifact.title, text);
+      } catch (error) {
+        backgroundFailure(`rag ingest ${sourceId}`, error);
+      }
+    }
+    return mine.length;
   }
   async learn(owner: string, task: AgentTask, facts: string[]) {
     return this.learning.learn(owner, task, facts);

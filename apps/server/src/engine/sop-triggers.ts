@@ -66,6 +66,8 @@ export class SOPTriggerEvaluator {
     if (!sop.active) return 0;
     if (sop.trigger.type === "cron") return this.evaluateCron(owner, sop);
     if (sop.trigger.type === "email_subject") return this.evaluateEmail(owner, sop);
+    if (sop.trigger.type === "email_body_match")
+      return this.evaluateEmail(owner, sop, "body");
     return 0;
   }
 
@@ -102,7 +104,7 @@ export class SOPTriggerEvaluator {
     return 1;
   }
 
-  private async evaluateEmail(owner: string, sop: SOP): Promise<number> {
+  private async evaluateEmail(owner: string, sop: SOP, matchField: "subject" | "body" = "subject"): Promise<number> {
     const pattern = sop.trigger.value.trim();
     if (!pattern) return 0;
     let regex: RegExp;
@@ -114,10 +116,10 @@ export class SOPTriggerEvaluator {
     }
     const state = await this.state(owner, sop.id);
     const seen = new Set(state.seenMessageIds ?? []);
-    let mail: { id: string; subject: string; threadId: string }[];
+    let mail: { id: string; subject: string; body: string; threadId: string }[];
     try {
       const workspace = await this.service.workspace.snapshot(owner);
-      mail = workspace.mail.map((m) => ({ id: m.id, subject: m.subject, threadId: m.threadId }));
+      mail = workspace.mail.map((m) => ({ id: m.id, subject: m.subject, body: m.body, threadId: m.threadId }));
     } catch {
       return 0;
     }
@@ -125,7 +127,8 @@ export class SOPTriggerEvaluator {
     const newlySeen: string[] = [];
     for (const message of mail) {
       if (seen.has(message.id)) continue;
-      if (!regex.test(message.subject)) continue;
+      const haystack = matchField === "body" ? message.body : message.subject;
+      if (!regex.test(haystack)) continue;
       seen.add(message.id);
       newlySeen.push(message.id);
       await this.service.createTask(
