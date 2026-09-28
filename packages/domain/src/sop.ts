@@ -3,7 +3,7 @@ import { z } from "zod";
 export const sopStepSchema = z.object({
   id: z.string().min(1).max(100),
   title: z.string().min(1).max(200),
-  tool: z.enum(["read_mail_thread","read_workspace","import_pdf","inspect_pdf","fill_pdf","prepare_email","prepare_event","read_web","save_artifact","ask_user","computer_command","query_business","recall_memory"]).default("ask_user"),
+  tool: z.enum(["read_mail_thread","read_workspace","import_pdf","inspect_pdf","fill_pdf","prepare_email","prepare_event","read_web","save_artifact","ask_user","computer_command","query_business","recall_memory","llm_generate"]).default("ask_user"),
   prompt: z.string().max(5000).default(""),
   params: z.record(z.string(), z.unknown()).default(() => ({ type: "manual" as const, value: "" })),
   required: z.boolean().default(true),

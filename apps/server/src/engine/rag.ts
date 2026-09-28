@@ -1,4 +1,4 @@
-﻿
+
 import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../db.ts";
 import { embed } from "./embeddings.ts";

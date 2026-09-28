@@ -70,7 +70,7 @@ export default function Login({ onLogin, error }: Props) {
           {busy ? "Entrando..." : "Entrar"}
         </button>
 
-        <div className="login-footer">OpenMuse - v0.2.0</div>
+        <div className="login-footer">OpenMuse - v0.2.0-beta.1</div>
       </div>
     </div>
   );

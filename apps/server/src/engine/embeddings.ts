@@ -1,4 +1,4 @@
-﻿
+
 // Cliente de embeddings. Usa la API de Google (Gemini).
 // Devuelve null si no hay API key o si falla la llamada.
 
