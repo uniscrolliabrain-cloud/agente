@@ -5,7 +5,7 @@
  * credential exists and the server wires this client in. Deliberately NOT imported by the runtime
  * yet, so no money movement can ever be attempted through an unconfigured connector.
  */
-import { AppError } from "../../domain/src/errors.ts";
+import { AppError } from "../../../domain/src/errors.ts";
 
 /** Message contract for a connector whose credential is absent: honest 503, never a fake success. */
 export const STRIPE_API_KEY_MISSING =
