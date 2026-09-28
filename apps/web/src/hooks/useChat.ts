@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
-import { getConversation, getOrCreateMainThread, saveConversation } from "../api/conversation";
+import { getThread, saveThreadMessages } from "../api/threads";
 import type { ChatAttachment, ChatMessage } from "../types/api";
 
 function uid(): string {
@@ -10,33 +10,51 @@ function now(): string {
   return new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-interface ActiveTool { id: string; name: string; status: "running" | "done"; args: unknown; }
+interface ActiveTool {
+  id: string;
+  name: string;
+  status: "running" | "done";
+  args: unknown;
+}
 
-export function useChat(enabled: boolean) {
+export function useChat(
+  enabled: boolean,
+  threadId: string | null,
+  onSaved?: (id: string) => void,
+) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [threadId, setThreadId] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [streamBuf, setStreamBuf] = useState("");
   const [activeTool, setActiveTool] = useState<ActiveTool | null>(null);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const initRef = useRef(false);
+  const loadedThreadRef = useRef<string | null>(null);
 
+  // Cargar mensajes al cambiar de thread.
   useEffect(() => {
-    if (!enabled) return;
-    if (initRef.current) return;
-    initRef.current = true;
+    if (!enabled || !threadId) {
+      setMessages([]);
+      loadedThreadRef.current = null;
+      return;
+    }
+    if (loadedThreadRef.current === threadId) return;
+    loadedThreadRef.current = threadId;
+    let cancelled = false;
     void (async () => {
       try {
-        const thread = await getOrCreateMainThread();
-        setThreadId(thread.threadId);
-        const conv = await getConversation();
-        if (conv.messages.length > 0) setMessages(conv.messages);
+        const thread = await getThread(threadId);
+        if (cancelled) return;
+        setMessages(thread.messages ?? []);
+        setError(null);
       } catch (err) {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : "No se pudo cargar la conversación");
       }
     })();
-  }, [enabled]);
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, threadId]);
 
   const send = useCallback(
     async (text: string, attachment?: ChatAttachment) => {
@@ -59,7 +77,6 @@ export function useChat(enabled: boolean) {
       const controller = new AbortController();
       abortRef.current = controller;
 
-      // El modelo ve el id del artifact y puede llamar a inspect_pdf con él.
       const llmContent = attachment
         ? `${trimmed || "(sin texto)"}\n\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
         : trimmed;
@@ -84,10 +101,23 @@ export function useChat(enabled: boolean) {
               assistantText += event.delta;
               setStreamBuf(assistantText);
             } else if (event.type === "TOOL_CALL_START" && typeof event.toolCallName === "string") {
-              toolCall = { id: String(event.toolCallId ?? uid()), name: event.toolCallName, status: "running", args: {} };
+              toolCall = {
+                id: String(event.toolCallId ?? uid()),
+                name: event.toolCallName,
+                status: "running",
+                args: {},
+              };
               setActiveTool({ ...toolCall });
-            } else if (event.type === "TOOL_CALL_ARGS" && typeof event.delta === "string" && toolCall) {
-              try { toolCall.args = JSON.parse(event.delta); } catch { toolCall.args = event.delta; }
+            } else if (
+              event.type === "TOOL_CALL_ARGS" &&
+              typeof event.delta === "string" &&
+              toolCall
+            ) {
+              try {
+                toolCall.args = JSON.parse(event.delta);
+              } catch {
+                toolCall.args = event.delta;
+              }
               setActiveTool({ ...toolCall });
             } else if (event.type === "TOOL_CALL_END" && toolCall) {
               toolCall.status = "done";
@@ -98,7 +128,9 @@ export function useChat(enabled: boolean) {
                 if (parsed && typeof parsed.id === "string") {
                   toolCall.args = { ...(toolCall.args as object), taskId: parsed.id };
                 }
-              } catch { /* contenido no JSON */ }
+              } catch {
+                /* contenido no JSON */
+              }
             } else if (event.type === "RUN_ERROR") {
               runErrorMessage = String(event.message ?? "Error del modelo");
             }
@@ -122,7 +154,12 @@ export function useChat(enabled: boolean) {
         setMessages(finalHistory);
         setStreamBuf("");
         setActiveTool(null);
-        try { await saveConversation(finalHistory); } catch { /* se persiste en el próximo turno */ }
+        try {
+          await saveThreadMessages(threadId, finalHistory);
+          onSaved?.(threadId);
+        } catch {
+          /* se persiste en el próximo turno */
+        }
       } catch (err) {
         if (controller.signal.aborted) setError("Cancelado por el usuario");
         else setError(err instanceof Error ? err.message : "Error en el stream");
@@ -131,10 +168,12 @@ export function useChat(enabled: boolean) {
         abortRef.current = null;
       }
     },
-    [messages, streaming, threadId],
+    [messages, streaming, threadId, onSaved],
   );
 
-  const cancel = useCallback(() => { abortRef.current?.abort(); }, []);
+  const cancel = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
 
   return { messages, streaming, streamBuf, activeTool, error, send, cancel, threadId };
 }
