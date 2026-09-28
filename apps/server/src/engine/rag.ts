@@ -5,6 +5,12 @@ import { embed } from "./embeddings.ts";
 
 const CHUNK_SIZE = 900;
 const CHUNK_OVERLAP = 120;
+/** Peticiones de embedding simultaneas durante la ingesta. */
+export const RAG_INGEST_CONCURRENCY = 4;
+/** Techo de chunks por fuente, para que un fichero enorme no dispare la ingesta sin fin. */
+export const RAG_MAX_CHUNKS_PER_SOURCE = 1000;
+/** Paginas de busqueda: acota la memoria a SEARCH_PAGE_SIZE filas en vez de todo el indice. */
+const SEARCH_PAGE_SIZE = 500;
 
 export interface RagChunk {
   id: string;
@@ -59,15 +65,57 @@ function cosine(a: number[], b: number[]): number {
   return dot / (Math.sqrt(na) * Math.sqrt(nb));
 }
 
+/** Inserta un hit en una lista acotada y ordenada por score descendente. */
+function keepTop(top: RagHit[], hit: RagHit, limit: number): void {
+  if (top.length >= limit && hit.score <= top[top.length - 1].score) return;
+  top.push(hit);
+  top.sort((a, b) => b.score - a.score);
+  if (top.length > limit) top.length = limit;
+}
+
+/**
+ * Embebe varios textos con concurrencia acotada. La ingesta era un bucle serial: cada
+ * chunk es una llamada HTTP a la API de embeddings, asi que un .txt de 500 KB (~600 chunks)
+ * bloqueaba la subida durante minutos. El techo evita lanzar 600 peticiones a la vez.
+ */
+export async function embedTexts(
+  texts: string[],
+  concurrency = RAG_INGEST_CONCURRENCY,
+): Promise<(number[] | null)[]> {
+  const vectors: (number[] | null)[] = new Array(texts.length).fill(null);
+  let cursor = 0;
+  const workers = Array.from(
+    { length: Math.max(1, Math.min(concurrency, texts.length)) },
+    async () => {
+      for (;;) {
+        const index = cursor++;
+        if (index >= texts.length) return;
+        vectors[index] = await embed(texts[index]);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return vectors;
+}
+
 export class RagService {
   constructor(private readonly db: Store) {}
 
-  async ingestText(owner: string, sourceId: string, sourceName: string, text: string) {
-    const chunks = chunkText(text);
-    if (chunks.length === 0) return { chunks: 0, embedded: 0 };
+  async ingestText(
+    owner: string,
+    sourceId: string,
+    sourceName: string,
+    text: string,
+    maxChunks = RAG_MAX_CHUNKS_PER_SOURCE,
+  ) {
+    const all = chunkText(text);
+    if (all.length === 0) return { chunks: 0, embedded: 0 };
+    const chunks = all.slice(0, maxChunks);
+    const vectors = await embedTexts(chunks);
     let embedded = 0;
+    const now = new Date().toISOString();
     for (let i = 0; i < chunks.length; i += 1) {
-      const vec = await embed(chunks[i]);
+      const vec = vectors[i];
       if (vec) embedded += 1;
       const chunk: RagChunk = {
         id: `${sourceId}-${i}`,
@@ -76,7 +124,7 @@ export class RagService {
         chunkIndex: i,
         text: chunks[i],
         embedding: vec,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
       };
       await this.db.put(owner, "rag-chunks", chunk);
     }
@@ -95,14 +143,29 @@ export class RagService {
   async search(owner: string, query: string, limit = 5): Promise<RagHit[]> {
     const queryVec = await embed(query);
     if (!queryVec) return [];
-    const all = await this.db.list<RagChunk>(owner, "rag-chunks");
-    const hits: RagHit[] = [];
-    for (const chunk of all) {
-      if (!Array.isArray(chunk.embedding) || chunk.embedding.length !== queryVec.length) continue;
-      hits.push({ ...chunk, score: cosine(queryVec, chunk.embedding) });
+    // Antes esto hacia db.list() -> todos los chunks del owner en memoria y calculaba el
+    // coseno de cada vector. Ahora se recorre por keyset (updated_at, id) pagina a pagina y
+    // solo se conservan los mejores `limit`: la memoria no crece con el tamano del indice.
+    const top: RagHit[] = [];
+    let cursorUpdatedAt: string | undefined;
+    let cursorId: string | undefined;
+    for (;;) {
+      const page = await this.db.listPaged<RagChunk>(owner, "rag-chunks", {
+        limit: SEARCH_PAGE_SIZE,
+        cursorUpdatedAt,
+        cursorId,
+      });
+      if (page.length === 0) break;
+      for (const { data: chunk, updatedAt } of page) {
+        if (Array.isArray(chunk.embedding) && chunk.embedding.length === queryVec.length)
+          keepTop(top, { ...chunk, score: cosine(queryVec, chunk.embedding) }, limit);
+      }
+      const last = page[page.length - 1];
+      cursorUpdatedAt = last.updatedAt;
+      cursorId = last.data.id;
+      if (page.length < SEARCH_PAGE_SIZE) break;
     }
-    hits.sort((a, b) => b.score - a.score);
-    return hits.slice(0, limit);
+    return top;
   }
 
   async stats(owner: string) {

@@ -53,9 +53,12 @@ async function main() {
     token = session.token;
     console.log(`  Admin existente: ${cfg.adminEmail}`);
   } catch (err) {
-    console.log(`  Creando admin nuevo con ${cfg.adminEmail}...`);
-    throw new Error(`Login fallo: ${err instanceof Error ? err.message : "desconocido"}. ` +
-      `Configura ADMIN_EMAIL/ADMIN_PASSWORD en .env o crea el admin manualmente.`);
+    throw new Error(
+      `El login fallo (${err instanceof Error ? err.message : "desconocido"}). ` +
+        `El script no crea admins: solo provisiona SOPs, skills y usuarios con un admin que ya exista. ` +
+        `Crea el primero con "pnpm admin:create -- --email ${cfg.adminEmail} --password \\"...\\"" ` +
+        `o define ADMIN_EMAIL/ADMIN_PASSWORD en .env y arranca el API.`,
+    );
   }
   const auth = { Authorization: `Bearer ${token}` };
 

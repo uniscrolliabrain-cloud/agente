@@ -1,4 +1,4 @@
-import { getSession } from "./client";
+import { getSession, handleUnauthorized } from "./client";
 
 export interface RunInput {
   threadId: string;
@@ -44,6 +44,7 @@ export async function streamChat(
   });
 
   if (res.status === 401) {
+    handleUnauthorized();
     throw new Error("Sesión expirada");
   }
   if (!res.ok) {

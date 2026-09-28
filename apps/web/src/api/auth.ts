@@ -12,6 +12,7 @@ export interface AuthUser {
 
 export interface LoginResponse {
   token: string;
+  mode: "sample" | "live";
   user: AuthUser;
 }
 
@@ -33,7 +34,9 @@ export async function loginWithCredentials(
     );
   }
   const data = (await res.json()) as LoginResponse;
-  setSession({ token: data.token, mode: "live" });
+  // El modo lo manda el servidor: forzarlo a "live" hacia que el badge del header mintiera
+  // en un deployment sample.
+  setSession({ token: data.token, mode: data.mode ?? "live" });
   localStorage.setItem(USER_KEY, JSON.stringify(data.user));
   return data;
 }
