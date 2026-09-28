@@ -71,6 +71,9 @@ html[data-theme="dark"] {
   --danger-bg: #2a1616;
   --danger-border: #5c2323;
   --shadow-composer: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+  --accent-fg: #0f0c29;
+  --accent-soft: #1d1a35;
+  --accent-border: #393568;
 }
 
 * { box-sizing: border-box; }
@@ -1642,3 +1645,15 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
   .hero { font-size: 24px; }
   .dock { padding: 0 12px 12px; }
 }
+
+.pane-empty {
+  padding: 32px 16px; text-align: center;
+  color: var(--text-2);
+}
+.pane-empty svg { color: var(--text-3); margin-bottom: 8px; }
+.pane-empty__title { font-weight: 500; margin: 0; font-size: var(--fs-sm); color: var(--text); }
+.pane-empty__sub { margin-top: 4px; font-size: var(--fs-xs); color: var(--text-3); }
+
+.msg__actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+.msg__actions .icon-btn { opacity: 0; transition: opacity var(--t); }
+.message-row:hover .msg__actions .icon-btn { opacity: 1; }
