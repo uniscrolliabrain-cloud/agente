@@ -1,0 +1,5 @@
+[
+  { "email": "ventas@ejemplo.local",        "name": "Ventas",         "role": "user", "password": "cambiar-2026" },
+  { "email": "administracion@ejemplo.local","name": "Administracion", "role": "user", "password": "cambiar-2026" },
+  { "email": "atencion@ejemplo.local",      "name": "Atencion",       "role": "user", "password": "cambiar-2026" }
+]

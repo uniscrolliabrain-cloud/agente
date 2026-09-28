@@ -48,6 +48,11 @@
   --shadow-composer: 0 1px 2px rgba(28,25,23,.04), 0 8px 24px rgba(28,25,23,.04);
   --transition: 150ms ease;
   --t: 150ms ease-out;
+
+  /* ---- surface aliases ---- */
+  --surface: var(--bg);
+  --surface-2: var(--bg-hover);
+  --surface-3: var(--bg-active);
 }
 
 html[data-theme="dark"] {
@@ -71,9 +76,6 @@ html[data-theme="dark"] {
   --danger-bg: #2a1616;
   --danger-border: #5c2323;
   --shadow-composer: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
-  --accent-fg: #0f0c29;
-  --accent-soft: #1d1a35;
-  --accent-border: #393568;
 }
 
 * { box-sizing: border-box; }

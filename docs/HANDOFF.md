@@ -115,6 +115,17 @@ Siempre UTF-8 sin BOM.
 4. Avisar al usuario.
 
 ---
+### 0.12b. Reglas duras de comportamiento
+
+Estas reglas estan por encima del resto. Si se incumplen, la sesion se rompe.
+
+1. Nunca pedir al usuario un fichero que ya esta en el repodump. El repodump es la fuente del contenido. Si un fichero aparece en el arbol del repodump, se lee de ahi, no se pide.
+2. Nunca preguntar una decision que ya esta resuelta por el mockup, el TODO, el HANDOFF o el propio repodump. Si hay conflicto entre fuentes, gana el chat, y se resuelve sin preguntar cuando el resto de fuentes ya coinciden.
+3. Si un bloque toca TypeScript, el propio bloque ejecuta `pnpm typecheck` al final y reporta FALLO si sale != 0. El usuario no copia un comando de typecheck aparte.
+4. Los tests no se lanzan como verificacion de bloque. Solo antes de PR a main o cuando el usuario lo pida expresamente.
+5. `$PSScriptRoot` no se usa en terminal interactiva (queda vacio). Rutas relativas al cwd o `(Get-Location).Path`.
+6. El ledger se calcula en la cadena de razonamiento antes de escribir el comando, aunque en la respuesta vaya despues (ver 0.12).
+
 ### 0.12. Formato de respuesta al usuario
 
 Al responder en el chat:

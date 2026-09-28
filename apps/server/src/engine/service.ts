@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   type AgentArtifact,
   type AgentIdentity,
+  type AgentRole,
   type AgentMemory,
   type AgentNotification,
   type AgentTask,
@@ -176,6 +177,22 @@ export class AgentService {
       this.refreshing = false;
     }
   }
+  async seedAgents(owner: string, roles: AgentRole[]): Promise<number> {
+    await this.ensure(owner);
+    let created = 0;
+    for (const role of roles) {
+      const existing = await this.db.get<AgentRole>(owner, "agent-roles", role.id);
+      if (existing) continue;
+      await this.db.put(owner, "agent-roles", { ...role, active: role.active ?? true });
+      created++;
+    }
+    return created;
+  }
+
+  async listAgents(owner: string): Promise<AgentRole[]> {
+    return this.db.list<AgentRole>(owner, "agent-roles");
+  }
+
   async ensure(owner: string) {
     await this.db.insertIfAbsent(owner, "agent-settings", {
       id: "identity",
@@ -282,6 +299,7 @@ export class AgentService {
       input: input.input,
       state: {
         connectionId: (await this.workspace.connection(owner))?.id ?? null,
+        ...(input.roleId ? { roleId: input.roleId } : {}),
         ...(input.kind === "sop" ? { sopId: input.input.sopId, sopStepIndex: 0, sopResults: {}, sopStack: [input.input.sopId] } : {}),
         ...(held && input.kind === "monitor" ? { initializingMonitor: true } : {}),
       },
