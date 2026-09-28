@@ -8,6 +8,7 @@ import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/
 import { sopSchema, type SOP, type SOPStep } from "../../../../packages/domain/src/sop.ts";
 import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
+import { generateText } from "./model.ts";
 import { LostLeaseError, type TaskContext } from "./worker.ts";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -411,6 +412,12 @@ export class SOPExecutor {
       }
 
       default:
+      case "llm_generate": {
+        const instruction = String(params.instruction ?? prompt ?? step.title);
+        const text = await generateText(this.service.config, instruction, results);
+        return { text };
+      }
+
         throw new AppError(`Unsupported SOP tool: ${step.tool}`, 422);
     }
   }

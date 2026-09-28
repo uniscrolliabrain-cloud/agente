@@ -61,7 +61,7 @@ export function useChat(enabled: boolean) {
 
       // El modelo ve el id del artifact y puede llamar a inspect_pdf con él.
       const llmContent = attachment
-        ? `${trimmed || "(sin texto)"}\\n\\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
+        ? `${trimmed || "(sin texto)"}\n\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
         : trimmed;
 
       let assistantText = "";

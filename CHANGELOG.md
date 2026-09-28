@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0-beta — 2026-09-24
+## 0.2.0-beta.1 — 2026-09-24
 
 Enterprise runtime wiring release.
 

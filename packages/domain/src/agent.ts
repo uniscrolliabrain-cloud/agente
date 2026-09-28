@@ -176,3 +176,26 @@ export const goalInputSchema = z.object({
   milestones: z.array(z.string().min(1).max(200)).max(20).default([]),
 });
 
+export type ProjectStatus = "active" | "paused" | "completed" | "archived";
+
+export interface ProjectBlock {
+  id: string;
+  type: "text" | "heading" | "checklist" | "timeline" | "note";
+  text: string;
+  checked?: boolean;
+  date?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  clientId?: string;
+  description: string;
+  status: ProjectStatus;
+  tags: string[];
+  blocks: ProjectBlock[];
+  linkedMemoryIds: string[];
+  linkedArtifactIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
