@@ -131,6 +131,29 @@ columnas, filtros y helpers (formatBytes, relativeTime, Column).
 ConversationsPanel.tsx:15 pinta una conversacion fake "Conversacion principal"
 como si fuera una lista real. En fix/cleanup-and-bugs no existe
 apps/web/src/api/threads.ts (en feat/ui-and-features ya hay multi-thread real).
+
+### D9. Ingesta RAG en serie al subir un fichero
+
+files.ts:135-153 recorría los chunks con `for (let i = 0; i < chunks.length; i += 1) await embed(...)`.
+Cada chunk es una llamada HTTP a la API de embeddings, asi que un .txt de 500 KB (~600 chunks)
+bloquea la subida varios minutos. El mismo bucle serial estaba en RagService.ingestText.
+Igual que ya avisaba el TODO.md original.
+
+### D10. RagService.search se baja el indice entero
+
+rag.ts:98 hacía `db.list(owner, "rag-chunks")` y calculaba el coseno de cada vector en JS:
+todos los chunks del owner en memoria a la vez. Correcto hasta ~10k chunks; a partir de ahi la
+memoria y el tiempo crecen sin limite. pgvector es la solucion de verdad (ya aparece en el
+TODO como deuda de escalado), pero el recorrido no hace falta que traiga el indice entero.
+
+### D11. Doble identidad en el prompt
+
+model.ts:331 decía "You are OpenMuse Enterprise enterprise operator" y model.ts:338 concatenaba
+encima "You are OpenMuse, a thoughtful personal agent executing a delegated task". Dos
+personalidades contradictorias en el mismo prompt (la primera incluso duplica la palabra
+"enterprise"). No es un bug funcional, pero el modelo recibe un prompt incoherente y el nombre
+por defecto de la identidad no coincide con el que devuelve /api/agent (que es "OpenMuse").
+
 ## 3. "MUSCULO FALSO": declarado y no cableado (P2)
 
 1. Cuatro conectores que siempre fallan con 503 y que NO se importan en ningun
@@ -207,4 +230,51 @@ apps/web/src/api/threads.ts (en feat/ui-and-features ya hay multi-thread real).
   o borrarlos); /api/skills/:id/install -> 501 o eliminarlo; entrypoint real o
   fuera del schema; SKILL.md de business-intel; documentar GRANT SELECT / DSN
   separado para query_business; deduplicar KanbanPanel y TasksView.
+
+## 7. Estado tras aplicar el plan (rama fix/cleanup-and-bugs)
+
+| # | Arreglo | Donde |
+| --- | --- | --- |
+| B1 | ADMIN_* documentados en .env.example y README, script `pnpm admin:create` que crea o repara el primer admin contra el Store, y aviso claro al arrancar sin usuarios | .env.example, README.md, scripts/admin-create.ts, app.ts, package.json |
+| B2 | El login siembra el workspace del owner autenticado (ensureSample + agent.ensure + refreshIdeas en sample); el login devuelve el `mode` real del servidor y el front lo respeta | auth-routes.ts, app.ts, api/auth.ts, useAuth.ts |
+| B3 | Conectar/desconectar Google en "Mi perfil" + `GET /api/google/status` (antes ningun componente llamaba a /api/google/connect) | api/google.ts, ProfileModal.tsx, app.ts |
+| B4 | Rate limit en POST /api/auth/login: 20 intentos por IP y 5 por email cada 5 min, con Retry-After | rate-limit.ts, auth-routes.ts |
+| D1 | Fuera el filtro `getUTCSeconds() < 30`; la deduplicacion la dan el bucket de estado y la idempotencyKey | sop-triggers.ts |
+| D2 | `llm_generate` pasa a ser un case mas y el `default` lanza 422 en vez de generar en silencio | sop-executor.ts |
+| D3 | `BUSINESS_DATABASE_URL` (rol de solo lectura, otra base de datos) + aviso al arrancar si no esta definido + receta GRANT SELECT en README | config.ts, service.ts, .env.example, README.md, app.ts |
+| D4 | analyzeSpending devuelve AppError 422 en vez de Error plano (ya no cae en el 502 generico) | finance.ts |
+| D5 | handleUnauthorized() centralizado: un 401 en chat, subida o cualquier apiFetch limpia la sesion y devuelve al login | client.ts, chat.ts, files.ts, useAuth.ts |
+| D6 | `/api/auth/users/:id/tasks` pagina en SQL con listPaged y el total con count (ya no carga y ordena todo en JS) | auth-routes.ts, db.ts |
+| D7 | `existing` refleja el insertIfAbsent real (test actualizado) | app.ts, tests/agent-api.test.ts |
+| D8 | Columnas y helpers de formato en un modulo comun | lib/taskColumns.ts, lib/format.ts, KanbanPanel.tsx, TasksView.tsx, DocumentsView.tsx, UsersView.tsx |
+| D9 | Ingesta RAG con concurrencia acotada y tope de chunks por fuente | rag.ts, files.ts |
+| D10 | search recorre por keyset y solo conserva el top-K, sin bajar el indice entero | rag.ts, db.ts |
+| D11 | Una sola identidad en el prompt (nombre y tono de agent-settings) | model.ts |
+| P2 | install responde 501; SKILL.md con el nombre real de la tool; provision-client sin el log que miente; OpenBot anunciado como no disponible | skills/routes.ts, business-intel/SKILL.md, facturacion/SKILL.md, provision-client.ts, workspace.ts, index.ts |
+
+Tests nuevos: tests/auth.test.ts (login, modo, siembra del owner, 429, estado de Google),
+tests/sop-triggers.test.ts (cron, enum cerrado, finance 422), tests/rag.test.ts (concurrencia,
+top-K, tope de ingesta).
+
+### Decisiones tomadas (y lo que NO se toca aqui)
+
+- **Multi-thread: no se implementa en esta rama.** feat/ui-and-features ya tiene
+  `api/threads.ts`, `hooks/useThreads.ts`, `useChat.ts` y `ConversationsPanel.tsx` reescritos
+  (mas ProjectsView, CommandPalette, Onboarding, TopBar, WorkspaceSwitcher). Crear aqui una
+  version propia seria trabajo duplicado que se pierde al mergear. Por la misma razon el boton
+  de Google va dentro de "Mi perfil" en vez de anadir una vista nueva al sidebar, y no se tocan
+  App.tsx ni ConversationsPanel.tsx.
+- **La conversacion fake "Conversacion principal" y los botones muertos** (Agentes, Buscar,
+  Configuracion, "Nuevo chat" sin accion) quedan para feat/ui-and-features, que sustituye esos
+  ficheros enteros. Anotado aqui para que no se pierda de vista.
+- **Los cuatro conectores stub** (stripe, whatsapp, gmb, social) se quedan donde estan: sus
+  cabeceras ya declaran que no estan cableados y cada llamada falla con un 503 honesto, nunca
+  con un exito falso. Moverlos a un directorio stubs/ seria churn sin cambio de comportamiento.
+- **`store.list` sigue sin ser envoltorio de `listPaged`** (deuda que ya estaba en el TODO): se
+  usa listPaged donde aporta y se deja la API compatible para no tocar 20 llamadas.
+- **`skill.entrypoint` sigue sin usarse en el bootstrap**: se mantiene en el schema porque forma
+  parte del contrato de skills, pero el ejecutor copia el directorio entero de la skill.
+- **pgvector** no se ha toca aqui: D10 acota la memoria, pero la solucion de escalado sigue siendo
+  un indice vectorial en la base de datos.
+
 
