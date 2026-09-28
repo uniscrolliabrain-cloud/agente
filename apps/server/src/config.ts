@@ -92,7 +92,9 @@ export function readConfig(): Config {
     publicUrl,
     dataDir: resolve(process.env.DATA_DIR ?? ".openmuse"),
     databaseUrl: process.env.DATABASE_URL,
-    businessDatabaseUrl: process.env.BUSINESS_DATABASE_URL ?? process.env.DATABASE_URL,
+    // `||` y no `??`: al copiar .env.example la variable viene vacia y debe caer a
+    // DATABASE_URL igual que si no estuviera.
+    businessDatabaseUrl: process.env.BUSINESS_DATABASE_URL?.trim() || process.env.DATABASE_URL,
     accessKey: process.env.OPENMUSE_ACCESS_KEY,
     encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
     model: readModel(),
