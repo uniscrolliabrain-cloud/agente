@@ -24,14 +24,18 @@ export function parseCron(value: string): (now: Date) => boolean {
   if (everyMin) {
     const n = Number(everyMin[1]);
     if (n < 1 || n > 59) throw new AppError("Cron 'every:Nm' requires N between 1 and 59", 422);
-    return (now) => now.getUTCMinutes() % n === 0 && now.getUTCSeconds() < 30;
+    // El mantenimiento corre cada 60 s, asi que solo se evalua el minuto UTC actual. El
+    // filtro `getUTCSeconds() < 30` que habia aqui moria: si la fase del interval caia en
+    // >= 30 s la comprobacion nunca pasaba y el SOP programado no disparaba nunca. La
+    // deduplicacion por minuto la da el bucket de sop-trigger-state y la idempotencyKey
+    // `sop-cron:<id>:<bucket>`.
+    return (now) => now.getUTCMinutes() % n === 0;
   }
   const everyHour = /^every:(\d{1,2})h$/.exec(trimmed);
   if (everyHour) {
     const n = Number(everyHour[1]);
     if (n < 1 || n > 23) throw new AppError("Cron 'every:Nh' requires N between 1 and 23", 422);
-    return (now) =>
-      now.getUTCHours() % n === 0 && now.getUTCMinutes() === 0 && now.getUTCSeconds() < 30;
+    return (now) => now.getUTCHours() % n === 0 && now.getUTCMinutes() === 0;
   }
   const daily = /^daily:(\d{2}):(\d{2})$/.exec(trimmed);
   if (daily) {

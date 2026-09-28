@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Brain, CheckCircle2, Circle, CircleAlert, Files, Play, X } from "lucide-react";
 import type { AgentTask } from "../types/api";
+import { formatBytes, relativeTime } from "../lib/format";
+import { groupTasks, type TaskColumnType } from "../lib/taskColumns";
 import type { FileEntry, MemoryEntry } from "../hooks/useWorkspaceData";
 import TaskCard from "./TaskCard";
 
@@ -15,24 +17,7 @@ interface Props {
   onReviewTask: (task: AgentTask) => void;
 }
 
-type ColumnType = "todo" | "running" | "action" | "done";
 type TabId = "tasks" | "context" | "memory";
-
-function formatBytes(bytes?: number): string {
-  if (bytes === undefined) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function relativeTime(iso?: string): string {
-  if (!iso) return "";
-  const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60000) return "ahora";
-  if (ms < 3600000) return `${Math.floor(ms / 60000)}m`;
-  if (ms < 86400000) return `${Math.floor(ms / 3600000)}h`;
-  return `${Math.floor(ms / 86400000)}d`;
-}
 
 export default function KanbanPanel({
   collapsed,
@@ -45,13 +30,9 @@ export default function KanbanPanel({
   onReviewTask,
 }: Props) {
   const [tab, setTab] = useState<TabId>("tasks");
+  const columns = groupTasks(tasks);
 
-  const todo = tasks.filter((t) => ["queued", "scheduled", "paused"].includes(t.status));
-  const running = tasks.filter((t) => t.status === "running");
-  const action = tasks.filter((t) => t.status === "waiting_approval" || t.status === "waiting_input");
-  const done = tasks.filter((t) => ["succeeded", "failed", "cancelled"].includes(t.status));
-
-  const Column = ({ title, items, type, empty }: { title: string; items: AgentTask[]; type: ColumnType; empty: string }) => {
+  const Column = ({ title, items, type, empty }: { title: string; items: AgentTask[]; type: TaskColumnType; empty: string }) => {
     const Icon = type === "todo" ? Circle : type === "running" ? Play : type === "action" ? CircleAlert : CheckCircle2;
     return (
       <section className={`task-column ${type}`}>
@@ -96,14 +77,16 @@ export default function KanbanPanel({
       </div>
 
       <div className="right-panel-content">
-        {tab === "tasks" && (
-          <>
-            <Column title="Por hacer" items={todo} type="todo" empty="Sin tareas pendientes" />
-            <Column title="En curso" items={running} type="running" empty="Nada corriendo ahora" />
-            <Column title="Necesita tu acción" items={action} type="action" empty="Todo al día" />
-            <Column title="Completado" items={done} type="done" empty="Sin historial" />
-          </>
-        )}
+        {tab === "tasks" &&
+          columns.map((column) => (
+            <Column
+              key={column.type}
+              title={column.title}
+              items={column.tasks}
+              type={column.type}
+              empty="Sin tareas"
+            />
+          ))}
 
         {tab === "context" && (
           <section className="task-column">

@@ -315,13 +315,17 @@ export class WorkspaceService {
         {
           id: "openbot",
           name: "OpenBot",
-          status: "unconfigured",
-          capabilities: ["Integration adapter available"],
+          // El adaptador existe (packages/backends/src/openbot.ts) pero este build no lo
+          // cablea: se anuncia como no disponible en vez de fingir un runtime.
+          status: "unavailable",
+          capabilities: ["Adaptador OpenBot en packages/backends, no habilitado en este build"],
         },
       ],
       runtime: {
         provider: this.config.agentBackend === "sample" ? "sample" : "model",
         configured: agentConfigured(this.config),
+        // Siempre false: no hay runtime OpenBot cableado. El campo sigue por compatibilidad
+        // con clientes que ya lo leen.
         openbotConfigured: false,
         richThreads: false,
       },
