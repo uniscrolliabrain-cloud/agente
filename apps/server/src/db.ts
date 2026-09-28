@@ -17,7 +17,21 @@ export interface ListOptions {
 }
 
 export class Store {
-  constructor(private readonly db: Database) {}
+  /** Que motor hay debajo: PGlite embebido o Postgres real via pg. Decide rutas de codigo. */
+  readonly backend: "pglite" | "postgres";
+  constructor(private readonly db: Database, backend: "pglite" | "postgres" = "pglite") {
+    this.backend = backend;
+  }
+  /**
+   * SELECT arbitrario de solo lectura. Existe para lo que no cabe en get/list: detectar
+   * extensiones de Postgres (pgvector) y ejecutar la busqueda vectorial en SQL. No usar
+   * para escribir: el motor durable (leases, CAS, claim) sigue pasando por
+   * put/compareAndSwap/take/claim para no saltarse sus invariantes.
+   */
+  async select<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+    const result = await this.db.query(sql, params);
+    return result.rows as unknown as T[];
+  }
   async get<T = Record<string, unknown>>(
     owner: string,
     kind: string,
@@ -234,5 +248,5 @@ export async function createStore(
   await database.query(
     "CREATE TABLE IF NOT EXISTS records(owner text NOT NULL,kind text NOT NULL,id text NOT NULL,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(owner,kind,id))",
   );
-  return new Store(database);
+  return new Store(database, options.databaseUrl ? "postgres" : "pglite");
 }
