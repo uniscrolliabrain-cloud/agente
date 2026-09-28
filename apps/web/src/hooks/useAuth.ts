@@ -6,6 +6,7 @@ import {
   me,
   type AuthUser,
 } from "../api/auth";
+import { setUnauthorizedHandler } from "../api/client";
 import { currentSession } from "../api/session";
 
 export interface AuthState {
@@ -52,11 +53,17 @@ export function useAuth() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    // Cualquier 401 (token caducado o sesion revocada) devuelve la app al login.
+    setUnauthorizedHandler(() => setState({ isAuthenticated: false, mode: null, user: null }));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
   const login = useCallback(async (email: string, password: string) => {
     setError(null);
     try {
       const res = await loginWithCredentials(email, password);
-      setState({ isAuthenticated: true, mode: "live", user: res.user });
+      setState({ isAuthenticated: true, mode: res.mode, user: res.user });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
       throw err;

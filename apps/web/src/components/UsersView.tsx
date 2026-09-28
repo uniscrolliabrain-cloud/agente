@@ -1,19 +1,11 @@
 import { useEffect, useState } from "react";
 import { Check, Plus, Trash2, UserCog, UserX, X } from "lucide-react";
 import { deleteUser, listUsers, userTasks, type AuthUser, type UserTaskSummary } from "../api/auth";
+import { relativeTime } from "../lib/format";
 import UserModal from "./UserModal";
 
 interface Props {
   currentUserId: string;
-}
-
-function relativeTime(iso?: string): string {
-  if (!iso) return "—";
-  const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60000) return "ahora";
-  if (ms < 3600000) return `${Math.floor(ms / 60000)}m`;
-  if (ms < 86400000) return `${Math.floor(ms / 3600000)}h`;
-  return `${Math.floor(ms / 86400000)}d`;
 }
 
 export default function UsersView({ currentUserId }: Props) {
@@ -161,7 +153,7 @@ export default function UsersView({ currentUserId }: Props) {
                       <span className="plan-num">{t.kind.slice(0, 2).toUpperCase()}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
-                        <div style={{ fontSize: 10, color: "var(--text-3)", marginTop: 2 }}>{t.status} · {relativeTime(t.updatedAt)}</div>
+                        <div style={{ fontSize: 10, color: "var(--text-3)", marginTop: 2 }}>{t.status} · {relativeTime(t.updatedAt) || "sin fecha"}</div>
                       </div>
                     </div>
                   ))}

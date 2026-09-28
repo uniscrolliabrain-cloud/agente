@@ -66,7 +66,9 @@ export class AgentService {
     readonly computer: ComputerService = new ComputerService(db, config),
     readonly rag: RagService = new RagService(db),
   ) {
-    this.business = new BusinessDataService(db, config.databaseUrl);
+    // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
+    // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
+    this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
     this.learning = new LearningService(this.memory);
     this.sopExecutor = new SOPExecutor(this);

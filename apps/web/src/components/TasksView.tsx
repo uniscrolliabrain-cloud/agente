@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, CircleAlert, Play } from "lucide-react";
 import type { AgentTask } from "../types/api";
+import { groupTasks, type TaskColumnType } from "../lib/taskColumns";
 import TaskCard from "./TaskCard";
 
 interface Props {
@@ -8,15 +9,10 @@ interface Props {
   onReviewTask: (task: AgentTask) => void;
 }
 
-type ColumnType = "todo" | "running" | "action" | "done";
-
 export default function TasksView({ tasks, onOpenTask, onReviewTask }: Props) {
-  const todo = tasks.filter((t) => ["queued", "scheduled", "paused"].includes(t.status));
-  const running = tasks.filter((t) => t.status === "running");
-  const action = tasks.filter((t) => t.status === "waiting_approval" || t.status === "waiting_input");
-  const done = tasks.filter((t) => ["succeeded", "failed", "cancelled"].includes(t.status));
+  const columns = groupTasks(tasks);
 
-  const Column = ({ title, items, type }: { title: string; items: AgentTask[]; type: ColumnType }) => {
+  const Column = ({ title, items, type }: { title: string; items: AgentTask[]; type: TaskColumnType }) => {
     const Icon = type === "todo" ? Circle : type === "running" ? Play : type === "action" ? CircleAlert : CheckCircle2;
     return (
       <div className="view-tasks-column">
@@ -47,10 +43,9 @@ export default function TasksView({ tasks, onOpenTask, onReviewTask }: Props) {
         <span className="view-header-meta">{tasks.length} en total</span>
       </div>
       <div className="view-tasks-grid">
-        <Column title="Por hacer" items={todo} type="todo" />
-        <Column title="En curso" items={running} type="running" />
-        <Column title="Necesita tu acción" items={action} type="action" />
-        <Column title="Completado" items={done} type="done" />
+        {columns.map((column) => (
+          <Column key={column.type} title={column.title} items={column.tasks} type={column.type} />
+        ))}
       </div>
     </main>
   );
