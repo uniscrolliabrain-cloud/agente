@@ -5,7 +5,7 @@
  * credential exists and the server wires this client in. Deliberately NOT imported by the runtime
  * yet, so nothing is ever published to a network the server cannot actually reach.
  */
-import { AppError } from "../../domain/src/errors.ts";
+import { AppError } from "../../../domain/src/errors.ts";
 
 /** Message contract for a connector whose credential is absent: honest 503, never a fake success. */
 export const SOCIAL_API_KEY_MISSING =

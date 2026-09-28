@@ -33,6 +33,8 @@ export interface AgentTask {
   kind: TaskKind;
   status: TaskStatus;
   goalId?: string;
+  /** Id del rol de agente al que se asigno la tarea (AgentRole.id). */
+  assignedTo?: string;
   plan: TaskStep[];
   evidence: Evidence[];
   input: Record<string, unknown>;

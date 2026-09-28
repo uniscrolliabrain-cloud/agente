@@ -2,7 +2,7 @@
  * Stripe billing. Si no hay STRIPE_API_KEY, cada metodo lanza AppError 503 honesto.
  * No implementa webhooks (eso necesita firma y endpoint propio, queda pendiente).
  */
-import { AppError } from "../../domain/src/errors.ts";
+import { AppError } from "../../../domain/src/errors.ts";
 
 export const STRIPE_NOT_CONFIGURED =
   "Falta STRIPE_API_KEY. Configura la credencial en el servidor para usar billing.";

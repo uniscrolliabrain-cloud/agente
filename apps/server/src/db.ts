@@ -17,11 +17,26 @@ export interface ListOptions {
 }
 
 export class Store {
-  constructor(private readonly db: Database) {}
+  /** Que motor hay debajo: PGlite embebido o Postgres real via pg. Decide rutas de codigo. */
+  readonly backend: "pglite" | "postgres";
+  constructor(private readonly db: Database, backend: "pglite" | "postgres" = "pglite") {
+    this.backend = backend;
+  }
 
   /** true cuando el motor soporta pgvector (Postgres real, no PGlite). */
   get pgvectorReady(): boolean {
-    return Boolean((this.db as { pgvectorReady?: boolean }).pgvectorReady);
+    return this.backend === "postgres" && Boolean((this.db as { pgvectorReady?: boolean }).pgvectorReady);
+  }
+  /**
+   * SELECT arbitrario de solo lectura. Existe para lo que no cabe en get/list: detectar
+   * extensiones de Postgres (pgvector) y ejecutar la busqueda vectorial en SQL. No usar
+   * para escribir: el motor durable (leases, CAS, claim) sigue pasando por
+   * put/compareAndSwap/take/claim para no saltarse sus invariantes.
+   */
+  async select<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+    const result = await this.db.query(sql, params);
+    return result.rows as unknown as T[];
+  }
   }
   async get<T = Record<string, unknown>>(
     owner: string,
@@ -258,6 +273,7 @@ export async function createStore(
   );
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
+  );
   // pgvector: solo en Postgres real. En PGlite no hay extension vectorial y el RAG
   // sigue usando coseno en JS. La deteccion es por DATABASE_URL, no por intento/error,
   // para no ensuciar el log en local.
@@ -276,5 +292,5 @@ export async function createStore(
     }
   }
   (database as { pgvectorReady?: boolean }).pgvectorReady = pgvectorReady;
-  return new Store(database);
+  return new Store(database, options.databaseUrl ? "postgres" : "pglite");
 }

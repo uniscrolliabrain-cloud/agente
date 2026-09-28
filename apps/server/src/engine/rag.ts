@@ -1,10 +1,13 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../db.ts";
+import { backgroundFailure } from "../log.ts";
 import { embed } from "./embeddings.ts";
 
 const CHUNK_SIZE = 900;
 const CHUNK_OVERLAP = 120;
+/** Dimension de text-embedding-004. Fija el cast a vector() de la ruta pgvector. */
+const VECTOR_DIMENSIONS = 768;
 /** Peticiones de embedding simultaneas durante la ingesta. */
 export const RAG_INGEST_CONCURRENCY = 4;
 /** Techo de chunks por fuente, para que un fichero enorme no dispare la ingesta sin fin. */
@@ -121,7 +124,64 @@ export async function embedTexts(
 }
 
 export class RagService {
+  private vectorReady: Promise<boolean> | null = null;
   constructor(private readonly db: Store) {}
+
+  /**
+   * Postgres real **y** extension pgvector instalada. PGlite nunca llega aqui: su motor no
+   * tiene la extension, y tampoco un deployment con la extension puesta en otro esquema.
+   * El resultado se cachea: la extension no aparece ni desaparece en caliente.
+   */
+  private async canUseVector(): Promise<boolean> {
+    if (this.db.backend !== "postgres") return false;
+    this.vectorReady ??= this.db
+      .select<{ extversion: string }>("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
+      .then((rows) => rows.length > 0)
+      .catch(() => false);
+    return this.vectorReady;
+  }
+
+  /**
+   * Busqueda en SQL con el operador de distancia de pgvector.
+   *
+   * Los embeddings no viven en una columna `embedding`: `records` es una tabla clave/valor
+   * (`data jsonb`) que comparte motor, leases y CAS. Por eso el indice va por expresion y no
+   * por columna, y por eso este bloque no migra el esquema:
+   *
+   *   CREATE EXTENSION IF NOT EXISTS vector;
+   *   CREATE INDEX rag_chunks_embedding_ivf ON records
+   *     USING ivfflat ((data->'embedding')::vector) WITH (lists = 100);
+   *   ANALYZE records;
+   *
+   * Sin ese indice la consulta sigue siendo correcta (el planner cae a seq-scan) y sin la
+   * extension `canUseVector()` devuelve false. Si la consulta falla por cualquier motivo
+   * se registra y el llamante vuelve al recorrido en JS: la busqueda nunca se cae.
+   */
+  private async searchVector(
+    owner: string,
+    queryVec: number[],
+    limit: number,
+  ): Promise<RagHit[] | null> {
+    // Cast a vector(768) fallaria con otra dimension: mejor caer al bucle que a un error.
+    if (queryVec.length !== VECTOR_DIMENSIONS) return null;
+    try {
+      const rows = await this.db.select<{ data: RagChunk; distance: number }>(
+        `SELECT data, (data->'embedding')::vector <=> $2::vector AS distance
+           FROM records
+          WHERE owner = $1
+            AND kind = 'rag-chunks'
+            AND jsonb_typeof(data->'embedding') = 'array'
+          ORDER BY (data->'embedding')::vector <=> $2::vector
+          LIMIT $3`,
+        [owner, JSON.stringify(queryVec), limit],
+      );
+      // pgvector devuelve distancia coseno (0 = identico, 2 = opuesto).
+      return rows.map((row) => ({ ...row.data, score: 1 - row.distance }));
+    } catch (error) {
+      backgroundFailure("rag vector search", error);
+      return null;
+    }
+  }
 
   async ingestText(
     owner: string,
@@ -177,6 +237,12 @@ export class RagService {
       .split(/\\W+/)
       .filter((w) => w.length > 2);
     if (!queryVec && !queryWords.length) return [];
+    // Postgres con pgvector resuelve la busqueda en SQL; si no, el recorrido de abajo.
+    if (queryVec && (await this.canUseVector())) {
+      const hits = await this.searchVector(owner, queryVec, limit);
+      if (hits) return hits;
+    }
+    // Fallback (PGlite o Postgres sin pgvector): coseno + BM25 recorriendo por keyset.
     const top: RagHit[] = [];
     let cursorUpdatedAt: string | undefined;
     let cursorId: string | undefined;

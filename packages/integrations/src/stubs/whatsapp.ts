@@ -2,7 +2,7 @@
  * WhatsApp Business via Evolution API. Si no hay WHATSAPP_API_KEY + WHATSAPP_BASE_URL,
  * cada metodo lanza AppError 503 honesto. Nunca devuelve exito falso.
  */
-import { AppError } from "../../domain/src/errors.ts";
+import { AppError } from "../../../domain/src/errors.ts";
 
 export const WHATSAPP_NOT_CONFIGURED =
   "Falta WHATSAPP_API_KEY o WHATSAPP_BASE_URL. Configura la credencial y la URL de Evolution API en el servidor.";
