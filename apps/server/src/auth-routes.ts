@@ -178,9 +178,12 @@ export function authRoutes(db: Store, users: UserService) {
     const me = await users.getById(c.get("owner"));
     if (!me || me.role !== "admin") throw new AppError("Solo admin", 403);
     const id = c.req.param("id");
-    if (id === me.id && (await c.req.json<{ role?: string }>()).role === "user")
+    const raw = await c.req.json<{ role?: string; active?: boolean }>();
+    if (id === me.id && raw.role === "user")
       throw new AppError("No puedes quitarte el rol admin a ti mismo", 409);
-    const body = updateUserSchema.parse(await c.req.json());
+    if (id === me.id && raw.active === false)
+      throw new AppError("No puedes desactivar tu propia cuenta", 409);
+    const body = updateUserSchema.parse(raw);
     const updated = await users.update(id, body);
     return c.json({
       id: updated.id,

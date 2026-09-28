@@ -115,7 +115,12 @@
 - Ficheros basura en la raiz: $path, $t, if, pnpm, Select-String, tsc,
   Write-Host, {', } . Borrar.
 - BOM UTF-8 en conversation.ts, embeddings.ts, rag.ts, provision-client.ts.
-  Normalizar.
+  RESUELTO (rama fix/cleanup-and-bugs): los 4 ficheros verificados byte a byte,
+  ninguno empieza por EF BB BF.
+- store.listPaged sin llamadores y store.list duplicando su SQL. PENDIENTE:
+  dejar list como envoltorio que llama a listPaged (que ya devuelve data +
+  updated_at) y devolver solo los data, para que la paginacion por cursor viva
+  en un unico sitio. Fichero: apps/server/src/db.ts.
 - Doble persona en model.ts ("enterprise operator" + "personal agent"). Unificar.
 - Ingesta RAG serial en files.ts. Paralelizar o hacer asincrona.
 - RagService.search escanea todos los chunks. Migrar a pgvector cuando escale.

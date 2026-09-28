@@ -207,3 +207,4 @@ export type { ComputerCommand, ComputerDirectory, ComputerSnapshot } from "./com
 
 
 export * from "./sop.ts";
+export * from "./errors.ts";
