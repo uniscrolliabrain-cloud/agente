@@ -115,6 +115,56 @@ Siempre UTF-8 sin BOM.
 4. Avisar al usuario.
 
 ---
+### 0.12. Formato de respuesta al usuario
+
+Al responder en el chat:
+
+1. PRIMERO el bloque PowerShell que el usuario va a ejecutar.
+2. AL FINAL el ledger, despues del comando.
+
+El ledger sigue siendo obligatorio y se calcula ANTES de escribir el comando. Solo cambia el orden en el mensaje, no el orden mental.
+
+Estructura de cada mensaje:
+
+    ```powershell
+    # bloque que el usuario ejecuta
+    ```
+
+    Ledger:
+      NEW <fichero>
+      MOD <fichero ya tocado antes en esta sesion>
+      Dependencias: <verificadas antes de tocar>
+      Verificacion al final: <como se comprueba>
+
+### 0.13. Editar CSS con bloques { ... }
+
+Para ficheros CSS con bloques selector { ... }, usar escaneo por lineas, no brace-matching:
+
+    $lines = [System.IO.File]::ReadAllLines($p)
+    # start = linea cuyo .Trim() == "selector {"
+    # end   = siguiente linea cuyo .Trim() == "}"
+    # reemplazar rango [start, end]
+
+Nunca contar { y } caracter a caracter (falla con content: "{", url(data:...), etc.).
+Nunca regex sobre el fichero completo (falla con CRLF).
+
+### 0.14. Añadir al final de CSS es seguro
+
+Para CSS, += de un bloque nuevo al final es idempotente y no rompe el orden. Preferir añadir al final antes que insertar en medio, salvo que el bloque tenga que ir dentro de un @media o un selector concreto.
+
+### 0.15. Here-strings grandes se cortan al pegar
+
+Un here-string @'...'@ de mas de ~40 lineas puede cortarse al pegar en PowerShell interactivo. Para bloques grandes, usar array de strings:
+
+    $lines = @(
+      "linea 1"
+      "linea 2"
+    )
+    $content = ($lines -join "`n")
+
+El array no se corta aunque sean 200 lineas.
+
+---
 ## 1. Que es OpenMuse
 
 Runtime de agentes durables alrededor de Tasks → SOPs → Skills → Tools →
