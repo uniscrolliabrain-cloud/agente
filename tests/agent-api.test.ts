@@ -84,7 +84,9 @@ test("the main conversation thread survives reopening and concurrent initializat
   );
   const threads = await Promise.all(responses.map((response) => response.json()));
   assert.ok(threads.every((thread) => thread.threadId === threads[0].threadId));
-  assert.equal(threads[0].existing, true);
+  // `existing` refleja la DB: solo la peticion que gano el insertIfAbsent devuelve false.
+  assert.equal(threads.filter((thread) => thread.existing === false).length, 1);
+  assert.ok(threads.filter((thread) => thread.existing === true).length >= 1);
   const reopened = await (
     await server.app.request("/api/main-thread", { headers: headers() })
   ).json();
