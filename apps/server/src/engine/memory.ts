@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { AgentMemory, MemoryCategory } from "../../../../packages/domain/src/agent.ts";
+import type { AgentMemory, MemoryCategory, Project } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import { embed } from "./embeddings.ts";
 import type { RagHit, RagService } from "./rag.ts";

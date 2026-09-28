@@ -405,6 +405,10 @@ export async function executeModelTask(
     });
   });
   if (runError) throw new Error(runError);
+  try {
+    const promptChars = JSON.stringify(input.messages).length;
+    await service.recordUsage(owner, "task", config.model, promptChars, text.length);
+  } catch { /* best-effort */ }
   if (text) await ctx.event("step", "Agent update", text.slice(0, 12000));
   return (
     outcome ?? {

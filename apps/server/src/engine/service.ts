@@ -40,6 +40,7 @@ import { BusinessDataService } from "./business.ts";
 import { LearningService } from "./learning.ts";
 import { SOPExecutor } from "./sop-executor.ts";
 import { RagService } from "./rag.ts";
+import { WhatsAppClient } from "../../../packages/integrations/src/whatsapp.ts";
 import { MemoryService } from "./memory.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
@@ -66,6 +67,7 @@ export class AgentService {
     readonly browser: BrowserService,
     readonly computer: ComputerService = new ComputerService(db, config),
     readonly rag: RagService = new RagService(db),
+    readonly whatsapp: WhatsAppClient = new WhatsAppClient({       apiKey: config.whatsappApiKey,       baseUrl: config.whatsappBaseUrl,       instance: config.whatsappInstance,     }),
   ) {
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
@@ -917,6 +919,127 @@ export class AgentService {
    * Ingesta al RAG los artefactos de una tarea cuando esta termina. Idempotente por
    * sourceId = `task:<id>:<artifactId>`, asi que reintentos no duplican chunks.
    */
+  /**
+   * Registra uso aproximado del LLM. Cuando el runtime exponga tokens reales, se
+   * sustituyen los proxies. Coste estimado en EUR con una tarifa configurable.
+   */
+  async recordUsage(
+    owner: string,
+    source: "chat" | "task" | "sop",
+    model: string | undefined,
+    inputChars: number,
+    outputChars: number,
+  ) {
+    const id = randomUUID();
+    const inputTokens = Math.ceil(inputChars / 4);
+    const outputTokens = Math.ceil(outputChars / 4);
+    const rate = Number(process.env.LLM_COST_EUR_PER_1K_TOKENS ?? "0.0005");
+    const costEur = Number.isFinite(rate) ? ((inputTokens + outputTokens) / 1000) * rate : 0;
+    const value = {
+      id,
+      source,
+      model: model ?? "unknown",
+      inputChars,
+      outputChars,
+      inputTokens,
+      outputTokens,
+      costEur: Number(costEur.toFixed(6)),
+      date: new Date().toISOString(),
+    };
+    await this.db.put(owner, "llm-usage", value);
+    return value;
+  }
+
+  /**
+   * Busqueda global: recorre tasks, memories, artifacts, threads y projects del owner
+   * en paralelo y devuelve resultados unificados con kind, id, title, excerpt y score.
+   * Score = coincidencias de palabras en title+body, normalizado por longitud.
+   */
+  async globalSearch(owner: string, query: string, limit = 30) {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return { hits: [] };
+    const words = q.split(/\\s+/).filter((w) => w.length > 1);
+    const score = (text: string): number => {
+      if (!text) return 0;
+      const hay = text.toLowerCase();
+      let hits = 0;
+      for (const w of words) if (hay.includes(w)) hits += 1;
+      return words.length ? hits / words.length : 0;
+    };
+    const [tasks, memories, artifacts, threads, projects] = await Promise.all([
+      this.db.list<AgentTask>(owner, "tasks"),
+      this.db.list<AgentMemory>(owner, "memories"),
+      this.db.list<AgentArtifact>(owner, "agent-artifacts"),
+      this.db.list<{ id: string; title: string; updatedAt: string }>(owner, "threads"),
+      this.db.list<{ id: string; name: string; description: string; updatedAt: string }>(owner, "projects"),
+    ]);
+    const hits: Array<{ kind: string; id: string; title: string; excerpt: string; score: number; date: string }> = [];
+    for (const t of tasks) {
+      const s = Math.max(score(t.title), score(t.prompt));
+      if (s > 0) hits.push({ kind: "task", id: t.id, title: t.title, excerpt: t.prompt.slice(0, 200), score: s, date: t.updatedAt });
+    }
+    for (const m of memories) {
+      const s = score(m.text);
+      if (s > 0) hits.push({ kind: "memory", id: m.id, title: m.text.slice(0, 80), excerpt: m.text.slice(0, 200), score: s, date: m.createdAt });
+    }
+    for (const a of artifacts) {
+      const s = Math.max(score(a.title), score(a.summary));
+      if (s > 0) hits.push({ kind: "artifact", id: a.id, title: a.title, excerpt: a.summary.slice(0, 200), score: s, date: a.createdAt });
+    }
+    for (const t of threads) {
+      const s = score(t.title);
+      if (s > 0) hits.push({ kind: "thread", id: t.id, title: t.title, excerpt: "", score: s, date: t.updatedAt });
+    }
+    for (const p of projects) {
+      const s = Math.max(score(p.name), score(p.description));
+      if (s > 0) hits.push({ kind: "project", id: p.id, title: p.name, excerpt: p.description.slice(0, 200), score: s, date: p.updatedAt });
+    }
+    hits.sort((a, b) => b.score - a.score || b.date.localeCompare(a.date));
+    return { hits: hits.slice(0, limit) };
+  }
+  async usageSummary(owner: string) {
+    const rows = await this.db.list<{
+      source: string;
+      model: string;
+      inputTokens: number;
+      outputTokens: number;
+      costEur: number;
+      date: string;
+    }>(owner, "llm-usage");
+    const bySource = new Map<string, { input: number; output: number; cost: number; calls: number }>();
+    const byModel = new Map<string, { input: number; output: number; cost: number; calls: number }>();
+    let totalCost = 0,
+      totalInput = 0,
+      totalOutput = 0;
+    const since = new Date(Date.now() - 30 * 86400000).toISOString();
+    for (const row of rows) {
+      if (row.date < since) continue;
+      totalCost += row.costEur;
+      totalInput += row.inputTokens;
+      totalOutput += row.outputTokens;
+      const s = bySource.get(row.source) ?? { input: 0, output: 0, cost: 0, calls: 0 };
+      s.input += row.inputTokens;
+      s.output += row.outputTokens;
+      s.cost += row.costEur;
+      s.calls += 1;
+      bySource.set(row.source, s);
+      const m = byModel.get(row.model) ?? { input: 0, output: 0, cost: 0, calls: 0 };
+      m.input += row.inputTokens;
+      m.output += row.outputTokens;
+      m.cost += row.costEur;
+      m.calls += 1;
+      byModel.set(row.model, m);
+    }
+    return {
+      windowDays: 30,
+      totalCalls: rows.filter((r) => r.date >= since).length,
+      totalInputTokens: totalInput,
+      totalOutputTokens: totalOutput,
+      totalCostEur: Number(totalCost.toFixed(4)),
+      bySource: [...bySource].map(([k, v]) => ({ source: k, ...v, costEur: Number(v.cost.toFixed(4)) })),
+      byModel: [...byModel].map(([k, v]) => ({ model: k, ...v, costEur: Number(v.cost.toFixed(4)) })),
+    };
+  }
   async ingestTaskArtifacts(owner: string, taskId: string) {
     const artifacts = await this.db.list<AgentArtifact>(owner, "agent-artifacts");
     const mine = artifacts.filter((a) => a.taskId === taskId);

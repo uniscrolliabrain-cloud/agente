@@ -178,6 +178,68 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (!notification) throw new AppError("Notification not found", 404);
     return c.json(notification);
   });
+  /**
+   * Panel maestro de clientes: lista los directorios en `clientes/` con un resumen de
+   * lo que provisionaria (SOPs, skills, memorias, usuarios). Solo lectura: los clientes
+   * viven en el repo, no en la DB. No ejecuta provisioning ni toca la API.
+   */
+  app.get("/admin/clients", async (c) => {
+    const { readdir, readFile, stat } = await import("node:fs/promises");
+    const { join } = await import("node:path");
+    const root = join(process.cwd(), "clientes");
+    let entries: string[] = [];
+    try {
+      const dirents = await readdir(root, { withFileTypes: true });
+      entries = dirents.filter((d) => d.isDirectory() && !d.name.startsWith("_")).map((d) => d.name);
+    } catch {
+      return c.json({ clients: [] });
+    }
+    const clients = [];
+    for (const name of entries) {
+      const dir = join(root, name);
+      const summary: Record<string, unknown> = { name };
+      try {
+        const config = JSON.parse(await readFile(join(dir, "config.json"), "utf8"));
+        summary.displayName = config.name ?? name;
+        summary.adminEmail = config.adminEmail ?? null;
+      } catch {
+        summary.configMissing = true;
+      }
+      for (const [folder, kind] of [
+        ["sops", "sops"],
+        ["skills", "skills"],
+        ["docs", "docs"],
+      ] as const) {
+        try {
+          const files = await readdir(join(dir, folder));
+          summary[kind] = files.length;
+        } catch {
+          summary[kind] = 0;
+        }
+      }
+      for (const file of ["memorias.json", "agentes.json", "users.json"]) {
+        try {
+          const value = JSON.parse(await readFile(join(dir, file), "utf8"));
+          const key = file.replace(".json", "");
+          summary[key] = Array.isArray(value) ? value.length : 0;
+        } catch {
+          summary[file.replace(".json", "")] = 0;
+        }
+      }
+      try {
+        const s = await stat(dir);
+        summary.updatedAt = s.mtime.toISOString();
+      } catch {}
+      clients.push(summary);
+    }
+    return c.json({ clients });
+  });
+  app.get("/usage", async (c) => c.json(await service.usageSummary(c.get("owner"))));
+  app.get("/search", async (c) => {
+    const q = z.string().min(2).max(200).parse(c.req.query("q"));
+    const limit = Math.min(Number(c.req.query("limit") ?? "30") || 30, 100);
+    return c.json(await service.globalSearch(c.get("owner"), q, limit));
+  });
   app.post("/sample-page", async (c) => {
     if (service.config.mode !== "sample") throw new AppError("Not found", 404);
     const body = z.object({ text: z.string().max(100000) }).parse(await c.req.json());

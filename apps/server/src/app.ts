@@ -125,6 +125,58 @@ export async function createApp(
       502,
     );
   });
+  /**
+   * Webhook entrante de Evolution API. Autenticado con WHATSAPP_WEBHOOK_TOKEN por
+   * header `apikey`. Guarda el mensaje como record (kind = "whatsapp-incoming") para
+   * que el SOP `responder-whatsapp` lo procese. No responde nada por WhatsApp.
+   */
+  /**
+   * Billing: crear customer, generar payment link, listar invoices. Todo mediado por
+   * StripeClient, que devuelve 503 si no hay STRIPE_API_KEY.
+   */
+  app.post("/api/billing/customer", async (c) => {
+    const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
+    const { StripeClient } = await import("../../../packages/integrations/src/stripe.ts");
+    const client = new StripeClient({ apiKey: config.stripeApiKey });
+    return c.json(await client.createCustomer(body.email, body.name));
+  });
+  app.post("/api/billing/payment-link", async (c) => {
+    const body = z
+      .object({
+        amountCents: z.number().int().positive().max(100_000_000),
+        currency: z.string().regex(/^[a-z]{3}$/),
+        description: z.string().min(1).max(200),
+      })
+      .parse(await c.req.json());
+    const { StripeClient } = await import("../../../packages/integrations/src/stripe.ts");
+    const client = new StripeClient({ apiKey: config.stripeApiKey });
+    return c.json(await client.createPaymentLink(body.amountCents, body.currency, body.description));
+  });
+  app.get("/api/billing/invoices", async (c) => {
+    const customerId = z.string().regex(/^cus_[A-Za-z0-9]+$/).parse(c.req.query("customerId"));
+    const { StripeClient } = await import("../../../packages/integrations/src/stripe.ts");
+    const client = new StripeClient({ apiKey: config.stripeApiKey });
+    return c.json(await client.listInvoices(customerId));
+  });
+  app.post("/api/whatsapp/incoming", async (c) => {
+    const expected = process.env.WHATSAPP_WEBHOOK_TOKEN;
+    if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
+    const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
+    if (provided !== expected) throw new AppError("Unauthorized", 401);
+    const body = await c.req.json().catch(() => ({}));
+    const data = (body as { data?: { key?: { id?: string; remoteJid?: string }; message?: { conversation?: string } } }).data;
+    const id = data?.key?.id;
+    const from = data?.key?.remoteJid;
+    const text = data?.message?.conversation;
+    if (!id || !from || !text) return c.json({ ok: true, ignored: true });
+    await db.put("system", "whatsapp-incoming", {
+      id,
+      from,
+      text: text.slice(0, 4000),
+      receivedAt: new Date().toISOString(),
+    });
+    return c.json({ ok: true });
+  });
   app.get("/api/health", (c) =>
     c.json({
       ok: true,

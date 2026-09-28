@@ -9,9 +9,10 @@ interface Props {
   streaming: boolean;
   streamBuf: string;
   activeTool: { id: string; name: string; status: "running" | "done"; args: unknown } | null;
+  onQuickAction?: (kind: "responder" | "resumir" | "traducir", text: string) => void;
 }
 
-export default function MessageList({ messages, streaming, streamBuf, activeTool }: Props) {
+export default function MessageList({ messages, streaming, streamBuf, activeTool, onQuickAction }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function MessageList({ messages, streaming, streamBuf, activeTool
   return (
     <div className="message-list scroll" ref={ref}>
       {messages.map((m) => (
-        <MessageBubble key={m.id} message={m} />
+        <MessageBubble key={m.id} message={m} onQuickAction={onQuickAction} />
       ))}
 
       {streaming && (
