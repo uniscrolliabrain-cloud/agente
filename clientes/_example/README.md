@@ -16,14 +16,20 @@ Estructura para provisionar un cliente nuevo.
 
 ## Formato de config.json
 
+Los valores de este ejemplo son **placeholders, no credenciales**: sustituye
+`adminPassword` por una clave real antes de provisionar nada.
+
     {
       "name": "Agencia Ejemplo",
       "adminEmail": "admin@ejemplo.local",
-      "adminPassword": "cambiar-esta-clave-2026",
+      "adminPassword": "CAMBIAR-ESTA-POR-UNA-CLAVE-REAL",
       "adminName": "Administrador"
     }
 
 ## Formato de users.json
+
+Los `password` tambien son placeholders: el provisionador los sube tal cual a
+`POST /api/auth/users` y no avisa si alguien se deja la clave de ejemplo puesta.
 
     [
       { "email": "maria@ejemplo.local", "name": "Maria", "role": "user", "password": "12345678" },

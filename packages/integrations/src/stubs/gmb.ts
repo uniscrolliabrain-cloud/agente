@@ -6,7 +6,7 @@
  * yet, so it follows the existing integration convention (see google.ts) instead of pretending the
  * connector works.
  */
-import { AppError } from "../../domain/src/errors.ts";
+import { AppError } from "../../../domain/src/errors.ts";
 
 /** Message contract for a connector whose credential is absent: honest 503, never a fake success. */
 export const GMB_API_KEY_MISSING =

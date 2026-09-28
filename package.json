@@ -22,7 +22,6 @@
     "start:worker": "node dist/apps/server/src/worker-entry.js",
     "dev:browser": "node --env-file=.env --import tsx apps/worker/src/index.ts",
     "test:computer": "tsx --test apps/computer/smoke.test.ts",
-    "admin:create": "tsx scripts/admin-create.ts",
     "provision-client": "tsx scripts/provision-client.ts",
     "backup:create": "tsx scripts/backup.ts",
     "backup:restore": "tsx scripts/restore.ts",
