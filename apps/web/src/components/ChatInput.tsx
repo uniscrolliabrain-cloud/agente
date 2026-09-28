@@ -4,6 +4,8 @@ import { uploadFile } from "../api/files";
 import type { ChatAttachment } from "../types/api";
 
 interface Props {
+  seed?: string;
+  onSeedConsumed?: () => void;
   onSend: (text: string, attachment?: ChatAttachment) => void;
   onCancel: () => void;
   streaming: boolean;
@@ -30,7 +32,7 @@ type AttachState =
   | { kind: "ready"; file: File; attachment: ChatAttachment }
   | { kind: "error"; file: File; message: string };
 
-export default function ChatInput({ onSend, onCancel, streaming }: Props) {
+export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedConsumed }: Props) {
   const [value, setValue] = useState("");
   const [listening, setListening] = useState(false);
   const [attach, setAttach] = useState<AttachState | null>(null);
@@ -46,6 +48,12 @@ export default function ChatInput({ onSend, onCancel, streaming }: Props) {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [value]);
+  useEffect(() => {
+    if (seed) {
+      setValue(seed);
+      onSeedConsumed?.();
+    }
+  }, [seed, onSeedConsumed]);
 
   const pickFile = async (file: File) => {
     setAttach({ kind: "uploading", file });

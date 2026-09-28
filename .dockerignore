@@ -1,0 +1,17 @@
+.git
+.github
+node_modules
+**/node_modules
+dist
+**/dist
+.openmuse
+artifacts
+backups
+clientes
+sops-examples
+docs
+tests
+*.log
+.env
+.env.*
+!.env.example
