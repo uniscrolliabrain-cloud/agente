@@ -297,6 +297,7 @@ export class AgentService {
       input: input.input,
       state: {
         connectionId: (await this.workspace.connection(owner))?.id ?? null,
+        ...(input.roleId ? { roleId: input.roleId } : {}),
         ...(input.kind === "sop" ? { sopId: input.input.sopId, sopStepIndex: 0, sopResults: {}, sopStack: [input.input.sopId] } : {}),
         ...(held && input.kind === "monitor" ? { initializingMonitor: true } : {}),
       },
