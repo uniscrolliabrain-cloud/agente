@@ -106,7 +106,7 @@ export async function createApp(
     return c.json(
       {
         error:
-          error.name === "PdfError" || error.name === "GoogleApiError"
+          error.name === "GoogleApiError"
             ? error.message
             : "Request failed. Check the server setup and try again.",
       },

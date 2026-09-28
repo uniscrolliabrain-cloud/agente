@@ -4,7 +4,7 @@ import { PGlite } from "@electric-sql/pglite";
 import pg from "pg";
 import { backgroundFailure } from "./log.ts";
 
-type Row = { data: Record<string, unknown> };
+type Row = { data: Record<string, unknown>; updated_at?: unknown };
 interface Database {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: Row[] }>;
   close: () => Promise<void>;
@@ -55,6 +55,38 @@ export class Store {
     }
     const result = await this.db.query(sql, params);
     return result.rows.map((row) => row.data as T);
+  }
+  /**
+   * Paged list that returns data plus its `updated_at`. Callers that need to build
+   * a cursor for the next page should use this: pass the last row's `updatedAt` as
+   * `cursorUpdatedAt` and its data's `id` as `cursorId` on the next call.
+   */
+  async listPaged<T = Record<string, unknown>>(
+    owner: string,
+    kind: string,
+    options: ListOptions = {},
+  ): Promise<{ data: T; updatedAt: string }[]> {
+    const params: unknown[] = [owner, kind];
+    let sql = "SELECT data, updated_at FROM records WHERE owner=$1 AND kind=$2";
+    if (options.cursorUpdatedAt !== undefined && options.cursorId !== undefined) {
+      params.push(options.cursorUpdatedAt, options.cursorId);
+      sql += ` AND (updated_at, id) < ($3::timestamptz, $4)`;
+    }
+    sql += " ORDER BY updated_at DESC, id";
+    if (options.limit !== undefined) {
+      params.push(options.limit);
+      sql += ` LIMIT $${params.length}`;
+    }
+    const result = await this.db.query(sql, params);
+    return result.rows.map((row) => ({
+      data: row.data as T,
+      updatedAt:
+        row.updated_at instanceof Date
+          ? row.updated_at.toISOString()
+          : typeof row.updated_at === "string"
+            ? row.updated_at
+            : "",
+    }));
   }
   async put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T> {
     await this.db.query(
