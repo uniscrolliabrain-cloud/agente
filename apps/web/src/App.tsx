@@ -17,7 +17,23 @@ import UsersView from "./components/UsersView";
 import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
+import CommandPalette from "./components/CommandPalette";
 import type { AgentTask } from "./types/api";
+
+function usePanel(key: string, defaultCollapsed: boolean) {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved === "1") return true;
+      if (saved === "0") return false;
+    } catch { /* modo privado */ }
+    return defaultCollapsed;
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch { /* noop */ }
+  }, [key, collapsed]);
+  return [collapsed, setCollapsed] as const;
+}
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -35,20 +51,6 @@ function useTheme() {
   return { dark, toggle: () => setDark((v) => !v) };
 }
 
-function usePanel(key: string, defaultCollapsed: boolean) {
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved === "1") return true;
-      if (saved === "0") return false;
-    } catch { /* modo privado */ }
-    return defaultCollapsed;
-  });
-  useEffect(() => {
-    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch { /* noop */ }
-  }, [key, collapsed]);
-  return [collapsed, setCollapsed] as const;
-}
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
@@ -63,13 +65,15 @@ export default function App() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
       const k = e.key.toLowerCase();
-      if (k === "b") { e.preventDefault(); setConvCollapsed((v: boolean) => !v); }
-      if (k === "j") { e.preventDefault(); setKanbanCollapsed((v: boolean) => !v); }
+      if (k === "b") { e.preventDefault(); setConvCollapsed((v) => !v); }
+      if (k === "j") { e.preventDefault(); setKanbanCollapsed((v) => !v); }
+      if (k === "k") { e.preventDefault(); setPaletteOpen((v) => !v); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -89,7 +93,7 @@ export default function App() {
         <div className="boot-card">
           <div className="brand-mark">AI</div>
           <div className="boot-spinner" />
-          <span>Conectando con el agente…</span>
+          <span>Conectando con el agente...</span>
         </div>
       </div>
     );
@@ -106,11 +110,22 @@ export default function App() {
     void threads.createNew();
   };
 
+  const status: "ok" | "working" | "offline" | "error" = chat.streaming
+    ? "working"
+    : tasks.workerRunning
+      ? "ok"
+      : "offline";
+  const statusLabel = chat.streaming
+    ? "Trabajando..."
+    : tasks.workerRunning
+      ? "Agente activo"
+      : "Desconectado";
+
   return (
     <div className="app-root">
       <Header
-        status={!auth.isAuthenticated ? "error" : chat.streaming ? "working" : tasks.workerRunning ? "ok" : "offline"}
-        statusLabel={!auth.isAuthenticated ? "Sesion caducada" : chat.streaming ? "Trabajando..." : tasks.workerRunning ? "Agente activo" : "Desconectado"}
+        status={status}
+        statusLabel={statusLabel}
         convCollapsed={convCollapsed}
         kanbanCollapsed={kanbanCollapsed}
         dark={theme.dark}
@@ -133,6 +148,10 @@ export default function App() {
           onSelectThread={(id) => { setView("chat"); threads.select(id); }}
           isAdmin={auth.user?.role === "admin"}
           onNewChat={handleNewChat}
+          onOpenPalette={() => setPaletteOpen(true)}
+          userName={auth.user?.name ?? "Usuario"}
+          userRole={auth.user?.role ?? "user"}
+          onOpenProfile={() => setProfileOpen(true)}
         />
 
         {view === "chat" && <ChatPanel chat={chat} />}
@@ -155,6 +174,13 @@ export default function App() {
           />
         )}
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onSelectView={setView}
+        onNewChat={handleNewChat}
+      />
 
       {openTaskId && (
         <TaskDetailModal

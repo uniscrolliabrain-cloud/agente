@@ -1,7 +1,8 @@
-import { Bot, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles, UserCog } from "lucide-react";
+import { Bot, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Plus, Search, Settings, UserCog } from "lucide-react";
 import type { Thread } from "../api/threads";
+import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
-export type AppView = "chat" | "tasks" | "documents" | "memory" | "projects" | "users";
+export type AppView = "chat" | "tasks" | "documents" | "projects" | "memory" | "users";
 
 interface Props {
   collapsed: boolean;
@@ -9,9 +10,13 @@ interface Props {
   onSelectView: (view: AppView) => void;
   isAdmin: boolean;
   onNewChat: () => void;
+  onOpenPalette: () => void;
   activeThreadId: string | null;
   threads: Thread[];
   onSelectThread: (id: string) => void;
+  userName: string;
+  userRole: string;
+  onOpenProfile: () => void;
 }
 
 function groupThreads(threads: Thread[]): Array<{ label: string; items: Thread[] }> {
@@ -41,9 +46,13 @@ export default function ConversationsPanel({
   onSelectView,
   isAdmin,
   onNewChat,
+  onOpenPalette,
   activeThreadId,
   threads,
   onSelectThread,
+  userName,
+  userRole,
+  onOpenProfile,
 }: Props) {
   const item = (view: AppView, Icon: typeof MessageSquare, label: string) => (
     <button className={`nav-item ${activeView === view ? "active" : ""}`} onClick={() => onSelectView(view)}>
@@ -53,30 +62,37 @@ export default function ConversationsPanel({
   );
 
   const groups = groupThreads(threads);
+  const initials = userName
+    .split(" ")
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+      <WorkspaceSwitcher name="Mi empresa" subtitle="Agente IA Pro" />
       <div className="sidebar-top">
         <button className="new-chat-button" onClick={onNewChat}>
           <Plus size={16} />
           <span>Nuevo chat</span>
         </button>
-        <button className="sidebar-search" disabled>
+        <button className="sidebar-search" onClick={onOpenPalette}>
           <Search size={15} />
           <span>Buscar</span>
         </button>
       </div>
 
-      <nav className="sidebar-nav">
+      <nav className="sidebar-nav scroll">
         <div className="nav-section">
           <span className="nav-label">Workspace</span>
           {item("chat", MessageSquare, "Chat")}
           {item("tasks", LayoutDashboard, "Tareas")}
           {item("documents", Files, "Documentos")}
           {item("projects", FolderKanban, "Proyectos")}
-          {item("memory", Brain, "Memoria")}
-          {isAdmin && item("users", UserCog, "Usuarios")}
-          <button className="nav-item" disabled title="Próximamente">
+          {item("memory", Brain, "Lo que sabe de tu negocio")}
+          {isAdmin && item("users", UserCog, "Equipo")}
+          <button className="nav-item" disabled title="Proximamente">
             <Bot size={16} />
             <span>Agentes</span>
           </button>
@@ -86,7 +102,7 @@ export default function ConversationsPanel({
           <div className="nav-section conversations-section">
             <div className="nav-section-header">
               <span className="nav-label">Conversaciones</span>
-              <button className="mini-action" onClick={onNewChat} title="Nueva conversación">
+              <button className="mini-action" onClick={onNewChat} title="Nueva conversacion">
                 <Plus size={14} />
               </button>
             </div>
@@ -120,19 +136,16 @@ export default function ConversationsPanel({
       </nav>
 
       <div className="sidebar-bottom">
-        <div className="sidebar-upgrade">
-          <div className="upgrade-icon">
-            <Sparkles size={15} />
-          </div>
-          <div>
-            <strong>Agente IA Pro</strong>
-            <span>Workspace activo</span>
-          </div>
+        <div className="user">
+          <span className="user__avatar" aria-hidden="true">{initials || "?"}</span>
+          <span className="user__text">
+            <span className="user__name">{userName}</span>
+            <span className="user__role">{userRole === "admin" ? "Admin" : "Usuario"}</span>
+          </span>
+          <button className="icon-btn" aria-label="Configuracion" onClick={onOpenProfile}>
+            <Settings size={16} />
+          </button>
         </div>
-        <button className="nav-item" disabled title="Próximamente">
-          <Settings size={16} />
-          <span>Configuración</span>
-        </button>
       </div>
     </aside>
   );
