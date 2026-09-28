@@ -1,4 +1,5 @@
 import { Bot, Brain, Files, LayoutDashboard, MessageSquare, Plus, Search, Settings, Sparkles, UserCog } from "lucide-react";
+import type { Thread } from "../api/threads";
 
 export type AppView = "chat" | "tasks" | "documents" | "memory" | "users";
 
@@ -9,17 +10,49 @@ interface Props {
   isAdmin: boolean;
   onNewChat: () => void;
   activeThreadId: string | null;
+  threads: Thread[];
+  onSelectThread: (id: string) => void;
 }
 
-export default function ConversationsPanel({ collapsed, activeView, onSelectView, isAdmin, onNewChat, activeThreadId }: Props) {
-  const items = activeThreadId ? [{ id: activeThreadId, title: "Conversación principal" }] : [];
+function groupThreads(threads: Thread[]): Array<{ label: string; items: Thread[] }> {
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  const today: Thread[] = [];
+  const yesterday: Thread[] = [];
+  const older: Thread[] = [];
+  for (const t of threads) {
+    const t0 = Date.parse(t.updatedAt);
+    if (!Number.isFinite(t0)) { older.push(t); continue; }
+    const age = now - t0;
+    if (age < oneDay) today.push(t);
+    else if (age < 2 * oneDay) yesterday.push(t);
+    else older.push(t);
+  }
+  const groups: Array<{ label: string; items: Thread[] }> = [];
+  if (today.length) groups.push({ label: "Hoy", items: today });
+  if (yesterday.length) groups.push({ label: "Ayer", items: yesterday });
+  if (older.length) groups.push({ label: "Anteriores", items: older });
+  return groups;
+}
 
+export default function ConversationsPanel({
+  collapsed,
+  activeView,
+  onSelectView,
+  isAdmin,
+  onNewChat,
+  activeThreadId,
+  threads,
+  onSelectThread,
+}: Props) {
   const item = (view: AppView, Icon: typeof MessageSquare, label: string) => (
     <button className={`nav-item ${activeView === view ? "active" : ""}`} onClick={() => onSelectView(view)}>
       <Icon size={16} />
       <span>{label}</span>
     </button>
   );
+
+  const groups = groupThreads(threads);
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -52,22 +85,32 @@ export default function ConversationsPanel({ collapsed, activeView, onSelectView
           <div className="nav-section conversations-section">
             <div className="nav-section-header">
               <span className="nav-label">Conversaciones</span>
-              <button className="mini-action" onClick={onNewChat} title="Nueva conversación (próximamente)">
+              <button className="mini-action" onClick={onNewChat} title="Nueva conversación">
                 <Plus size={14} />
               </button>
             </div>
             <div className="conversation-list">
-              {items.length === 0 ? (
+              {groups.length === 0 ? (
                 <div className="sidebar-empty">
                   <MessageSquare size={16} />
                   <span>Sin conversaciones</span>
                 </div>
               ) : (
-                items.map((c) => (
-                  <button key={c.id} className="conversation-item active">
-                    <MessageSquare size={15} />
-                    <span>{c.title}</span>
-                  </button>
+                groups.map((group) => (
+                  <div key={group.label}>
+                    <div className="nav-label" style={{ padding: "6px 9px 4px" }}>{group.label}</div>
+                    {group.items.map((t) => (
+                      <button
+                        key={t.id}
+                        className={`conversation-item ${t.id === activeThreadId ? "active" : ""}`}
+                        onClick={() => onSelectThread(t.id)}
+                        title={t.title}
+                      >
+                        <MessageSquare size={15} />
+                        <span>{t.title}</span>
+                      </button>
+                    ))}
+                  </div>
                 ))
               )}
             </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
+import { useThreads } from "./hooks/useThreads";
 import { useWorkspaceData } from "./hooks/useWorkspaceData";
 import Header from "./components/Header";
 import ConversationsPanel, { type AppView } from "./components/ConversationsPanel";
@@ -36,7 +37,8 @@ function useTheme() {
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
-  const chat = useChat(auth.isAuthenticated);
+  const threads = useThreads(auth.isAuthenticated);
+  const chat = useChat(auth.isAuthenticated, threads.activeId, threads.touch);
   const { memories, files } = useWorkspaceData(auth.isAuthenticated);
   const theme = useTheme();
 
@@ -46,6 +48,14 @@ export default function App() {
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!auth.isAuthenticated) return;
+    if (threads.activeId) return;
+    if (threads.loading) return;
+    if (threads.threads.length > 0) threads.select(threads.threads[0].id);
+    else void threads.createNew();
+  }, [auth.isAuthenticated, threads]);
 
   if (auth.booting) {
     return (
@@ -65,6 +75,10 @@ export default function App() {
 
   const openTask = (t: AgentTask) => setOpenTaskId(t.id);
   const reviewTask = (t: AgentTask) => setReviewTaskId(t.id);
+  const handleNewChat = () => {
+    setView("chat");
+    void threads.createNew();
+  };
 
   return (
     <div className="app-root">
@@ -89,9 +103,11 @@ export default function App() {
           collapsed={convCollapsed}
           activeView={view}
           onSelectView={setView}
-          activeThreadId={chat.threadId}
+          activeThreadId={threads.activeId}
+          threads={threads.threads}
+          onSelectThread={(id) => { setView("chat"); threads.select(id); }}
           isAdmin={auth.user?.role === "admin"}
-          onNewChat={() => { /* multi-thread próximamente */ }}
+          onNewChat={handleNewChat}
         />
 
         {view === "chat" && <ChatPanel chat={chat} />}
