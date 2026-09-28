@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, CircleDot, LogOut, Moon, PanelLeft, PanelRight, Sun, User } from "lucide-react";
+import { ChevronDown, LogOut, Moon, PanelLeft, PanelRight, Sun, User } from "lucide-react";
 
 interface HeaderProps {
-  mode: "sample" | "live";
-  workerRunning: boolean;
-  workerLastTickAt?: string;
+  status: "ok" | "working" | "offline" | "error";
+  statusLabel: string;
   convCollapsed: boolean;
   kanbanCollapsed: boolean;
   dark: boolean;
@@ -15,14 +14,6 @@ interface HeaderProps {
   onToggleKanban: () => void;
   onOpenProfile: () => void;
   onLogout: () => void;
-}
-
-function formatTick(iso?: string): string {
-  if (!iso) return "—";
-  const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 2000) return "ahora";
-  if (ms < 60000) return `${Math.floor(ms / 1000)}s`;
-  return `${Math.floor(ms / 60000)}m`;
 }
 
 export default function Header(props: HeaderProps) {
@@ -58,26 +49,15 @@ export default function Header(props: HeaderProps) {
             <span className="brand-subtitle">Workspace</span>
           </div>
         </div>
-        <div className="header-divider" />
-        <div className="worker-status">
-          <span className={`worker-indicator ${props.workerRunning ? "active" : ""}`}>
-            <CircleDot size={11} />
-          </span>
-          <span className="worker-label">Worker</span>
-          <span className={props.workerRunning ? "worker-running" : "worker-stopped"}>
-            {props.workerRunning ? "Running" : "Stopped"}
-          </span>
-          <span className="worker-time">· {formatTick(props.workerLastTickAt)}</span>
-        </div>
-        <div className={`environment-pill ${props.mode}`}>
-          <span className="environment-dot" />
-          {props.mode === "live" ? "Live" : "Sample"}
-        </div>
       </div>
       <div className="header-right">
         <button className="ghost-icon-button desktop-only" onClick={props.onToggleKanban}>
           <PanelRight size={17} strokeWidth={1.8} />
         </button>
+        <span className="status" role="status" data-state={props.status}>
+          <span className="status__dot" aria-hidden="true" />
+          {props.statusLabel}
+        </span>
         <button className="ghost-icon-button" onClick={props.onToggleTheme}>
           {props.dark ? <Sun size={17} strokeWidth={1.8} /> : <Moon size={17} strokeWidth={1.8} />}
         </button>
