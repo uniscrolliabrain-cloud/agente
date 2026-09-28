@@ -27,6 +27,23 @@ export function clearSession(): void {
   localStorage.removeItem(AUTH_KEY);
 }
 
+let unauthorizedHandler: (() => void) | null = null;
+
+/** La app registra aqui como reaccionar a un 401 (cerrar sesion y volver al login). */
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  unauthorizedHandler = handler;
+}
+
+/**
+ * Invalida la sesion local y avisa a la app. Todo 401 deberia pasar por aqui: antes solo
+ * apiFetch limpiaba el token, asi que un 401 en el stream de chat o en la subida de ficheros
+ * dejaba la sesion muerta en localStorage sin que la UI lo supiera.
+ */
+export function handleUnauthorized(): void {
+  clearSession();
+  unauthorizedHandler?.();
+}
+
 export class ApiError extends Error {
   constructor(
     public readonly status: number,
@@ -60,7 +77,7 @@ export async function apiFetch<T = unknown>(path: string, options: FetchOptions 
     // Un 401 sin Authorization no es una sesión caducada: es una llamada que se adelantó al
     // login (los hooks de arranque corren en paralelo con useAuth). Borrar el token ahí dejaba
     // la app rota hasta recargar.
-    if (session?.token) clearSession();
+    if (session?.token) handleUnauthorized();
     throw new ApiError(401, "Sesión expirada");
   }
 

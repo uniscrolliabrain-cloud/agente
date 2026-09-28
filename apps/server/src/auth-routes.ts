@@ -1,11 +1,31 @@
-import { randomBytes, createHash } from "node:crypto";
-import { Hono } from "hono";
+import { createHash, randomBytes } from "node:crypto";
+import { getConnInfo } from "@hono/node-server/conninfo";
+import { type Context, Hono } from "hono";
 import { z } from "zod";
+import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
-import { userRoleSchema, userSetupSchema, type User, type UserService } from "./users.ts";
+import { backgroundFailure } from "./log.ts";
+import { RateLimiter } from "./rate-limit.ts";
+import { type User, type UserService, userRoleSchema, userSetupSchema } from "./users.ts";
 
 const digest = (value: string) => createHash("sha256").update(value).digest("hex");
+
+/** Ventanas anti fuerza bruta del login: 20 intentos por IP y 5 por email cada 5 minutos. */
+const LOGIN_ATTEMPTS_PER_IP = 20;
+const LOGIN_ATTEMPTS_PER_EMAIL = 5;
+const LOGIN_WINDOW_MS = 5 * 60 * 1000;
+
+function clientAddress(c: Context): string {
+  const forwarded = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+  if (forwarded) return forwarded;
+  try {
+    return getConnInfo(c as unknown as Context).remote.address ?? "local";
+  } catch {
+    // app.request() en los tests no pasa por el servidor de Node: no hay direccion remota.
+    return "local";
+  }
+}
 
 const createUserSchema = z.object({
   email: z.email({ message: "El email no tiene un formato valido" }),
@@ -39,16 +59,40 @@ const updateUserSchema = z.object({
     .optional(),
 });
 
-export function authRoutes(db: Store, users: UserService) {
-  const app = new Hono<{ Variables: { owner: string } }>();
+export interface AuthRouteOptions {
+  config?: Config;
+  /**
+   * Se ejecuta despues de un login correcto para preparar el workspace del usuario
+   * (en modo sample siembra sus datos de ejemplo). Nunca puede tumbar el login.
+   */
+  afterLogin?: (owner: string) => Promise<void>;
+}
 
-  // POST /api/auth/login -> { token, user }
+export function authRoutes(db: Store, users: UserService, options: AuthRouteOptions = {}) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+  const ipLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_IP, LOGIN_WINDOW_MS);
+  const emailLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_EMAIL, LOGIN_WINDOW_MS);
+
+  // POST /api/auth/login -> { token, user, mode }
   app.post("/login", async (c) => {
     const body = z
       .object({ email: z.email(), password: z.string().min(1).max(200) })
       .parse(await c.req.json());
+    const emailKey = `email:${body.email.toLowerCase().trim()}`;
+    const keys = [`ip:${clientAddress(c)}`, emailKey];
+    const limiters = [ipLimiter, emailLimiter];
+    for (let i = 0; i < keys.length; i += 1) {
+      const verdict = limiters[i].take(keys[i]);
+      if (!verdict.allowed) {
+        c.header("Retry-After", String(Math.max(1, Math.ceil(verdict.retryAfterMs / 1000))));
+        throw new AppError("Demasiados intentos de acceso. Prueba otra vez en unos minutos.", 429);
+      }
+    }
+
     const user = await users.verifyCredentials(body.email, body.password);
     if (!user) throw new AppError("Email o contrasena incorrectos", 401);
+    ipLimiter.reset(keys[0]);
+    emailLimiter.reset(emailKey);
 
     const token = randomBytes(32).toString("base64url");
     await db.put("system", "sessions", {
@@ -57,8 +101,18 @@ export function authRoutes(db: Store, users: UserService) {
       expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
     });
 
+    if (options.afterLogin) {
+      try {
+        await options.afterLogin(user.id);
+      } catch (error) {
+        // Un workspace de ejemplo que falla no puede impedir entrar.
+        backgroundFailure(`login bootstrap for ${user.id}`, error);
+      }
+    }
+
     return c.json({
       token,
+      mode: options.config?.mode ?? "live",
       user: {
         id: user.id,
         email: user.email,
@@ -211,24 +265,23 @@ export function authRoutes(db: Store, users: UserService) {
     const target = await users.getById(c.req.param("id"));
     if (!target) throw new AppError("Usuario no encontrado", 404);
     const limit = Math.min(Number(c.req.query("limit") ?? "20") || 20, 100);
-    const all = await db.list<Record<string, unknown>>(target.id, "tasks");
-    const tasks = all
-      .sort((a: any, b: any) =>
-        String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")),
-      )
-      .slice(0, limit)
-      .map((t: any) => ({
-        id: t.id,
-        title: t.title,
-        kind: t.kind,
-        status: t.status,
-        updatedAt: t.updatedAt,
-        createdAt: t.createdAt,
-        attempts: t.attempts,
-        result: t.result,
-        error: t.error,
-      }));
-    return c.json({ userId: target.id, total: all.length, tasks });
+    // Keyset pagination in SQL: nothing is loaded or sorted in JS.
+    const [page, total] = await Promise.all([
+      db.listPaged<Record<string, unknown>>(target.id, "tasks", { limit }),
+      db.count(target.id, "tasks"),
+    ]);
+    const tasks = page.map(({ data: t }) => ({
+      id: t.id,
+      title: t.title,
+      kind: t.kind,
+      status: t.status,
+      updatedAt: t.updatedAt,
+      createdAt: t.createdAt,
+      attempts: t.attempts,
+      result: t.result,
+      error: t.error,
+    }));
+    return c.json({ userId: target.id, total, tasks });
   });
 
   return app;

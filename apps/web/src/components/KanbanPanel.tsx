@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Brain, CheckCircle2, Circle, CircleAlert, Files, Inbox, Play, X } from "lucide-react";
 import type { AgentTask } from "../types/api";
+import { formatBytes, relativeTime } from "../lib/format";
+import { groupTasks, type TaskColumn, type TaskColumnType } from "../lib/taskColumns";
 import type { FileEntry, MemoryEntry } from "../hooks/useWorkspaceData";
 import TaskCard from "./TaskCard";
 
@@ -15,23 +17,14 @@ interface Props {
   onReviewTask: (task: AgentTask) => void;
 }
 
+function ColumnIcon({ type }: { type: TaskColumnType }) {
+  if (type === "running") return <Play size={14} />;
+  if (type === "action") return <CircleAlert size={14} />;
+  if (type === "todo") return <Circle size={14} />;
+  return <CheckCircle2 size={14} />;
+}
+
 type TabId = "tasks" | "context" | "business";
-
-function formatBytes(bytes?: number): string {
-  if (bytes === undefined) return "";
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function relativeTime(iso?: string): string {
-  if (!iso) return "";
-  const ms = Date.now() - new Date(iso).getTime();
-  if (ms < 60000) return "ahora";
-  if (ms < 3600000) return `${Math.floor(ms / 60000)}m`;
-  if (ms < 86400000) return `${Math.floor(ms / 3600000)}h`;
-  return `${Math.floor(ms / 86400000)}d`;
-}
 
 export default function KanbanPanel({
   collapsed,
@@ -44,11 +37,12 @@ export default function KanbanPanel({
   onReviewTask,
 }: Props) {
   const [tab, setTab] = useState<TabId>("tasks");
-
-  const todo = tasks.filter((t) => ["queued", "scheduled", "paused"].includes(t.status));
-  const running = tasks.filter((t) => t.status === "running");
-  const action = tasks.filter((t) => t.status === "waiting_approval" || t.status === "waiting_input");
-  const done = tasks.filter((t) => ["succeeded", "failed", "cancelled"].includes(t.status));
+  // El reparto por estado vive en lib/taskColumns para no duplicarlo con TasksView; aqui solo
+  // se decide el orden de lectura del panel (primero lo que hay que atender).
+  const groups = groupTasks(tasks);
+  const columns = (["running", "action", "todo", "done"] as TaskColumnType[])
+    .map((type) => groups.find((column) => column.type === type))
+    .filter((column): column is TaskColumn => Boolean(column));
   const tasksEmpty = tasks.length === 0;
 
   const headerLabel = tab === "tasks"
@@ -65,7 +59,7 @@ export default function KanbanPanel({
   }: {
     title: string;
     items: AgentTask[];
-    type: "todo" | "running" | "action" | "done";
+    type: TaskColumnType;
     icon: React.ReactNode;
   }) => {
     if (items.length === 0) return null;
@@ -114,12 +108,15 @@ export default function KanbanPanel({
               <p className="pane-empty__sub">Cuando el agente prepare algo o necesite tu aprobacion, aparecera aqui.</p>
             </div>
           ) : (
-            <>
-              <Section title="En curso" items={running} type="running" icon={<Play size={14} />} />
-              <Section title="Necesita tu accion" items={action} type="action" icon={<CircleAlert size={14} />} />
-              <Section title="Por hacer" items={todo} type="todo" icon={<Circle size={14} />} />
-              <Section title="Completado" items={done} type="done" icon={<CheckCircle2 size={14} />} />
-            </>
+            columns.map((column) => (
+              <Section
+                key={column.type}
+                title={column.title}
+                items={column.tasks}
+                type={column.type}
+                icon={<ColumnIcon type={column.type} />}
+              />
+            ))
           )
         )}
 

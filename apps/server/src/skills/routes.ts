@@ -44,10 +44,16 @@ export function skillsRoutes(db: Store) {
     await db.remove(c.get("owner"), "skills", c.req.param("id"));
     return c.json({ ok: true });
   });
+  // No hay endpoint de instalacion manual: la skill se copia al sandbox la primera vez que un
+  // SOP la usa (SOPExecutor.ensureSkill). Este handler devolvia { ok: true } sin hacer nada,
+  // o sea un exito falso; 501 es la respuesta honesta.
   app.post("/:id/install", async (c) => {
-    const s = await db.get(c.get("owner"), "skills", c.req.param("id"));
+    const s = await db.get<{ id: string; name: string }>(c.get("owner"), "skills", c.req.param("id"));
     if (!s) throw new AppError("Skill not found", 404);
-    return c.json({ ok: true, skillId: s.id, mode: "runtime-bootstrap", requirements: s.requirements, message: "The SOP runtime installs the built-in skill into the private workspace when the skill is first used." });
+    throw new AppError(
+      `La skill "${s.name}" se instala sola en el sandbox la primera vez que un SOP la usa. No hay instalacion manual.`,
+      501,
+    );
   });
   return app;
 }
