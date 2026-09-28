@@ -126,6 +126,14 @@ export interface AgentNotification {
   createdAt: string;
   read: boolean;
 }
+export interface AgentRole {
+  id: string;
+  name: string;
+  objetivo: string;
+  sops: string[];
+  active: boolean;
+}
+
 export interface AgentIdentity {
   name: string;
   tone: "warm" | "concise" | "thoughtful";
@@ -149,6 +157,7 @@ export const createTaskSchema = z.object({
   kind: z.enum(["agent", "document", "monitor", "finance", "plan", "sop"]).default("agent"),
   goalId: z.string().optional(),
   assignedTo: z.string().optional(),
+  roleId: z.string().max(100).optional(),
   input: z.record(z.string(), z.unknown()).default(() => ({})),
 });
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;

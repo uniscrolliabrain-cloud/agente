@@ -320,6 +320,12 @@ export async function executeModelTask(
     ),
   ];
   const identity = await service.db.get<{ name: string; tone: string }>(owner,"agent-settings","identity");
+  const roleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
+  const roleContext = roleId
+    ? await service.db
+        .get<{ name: string; objetivo: string; sops: string[] }>(owner, "agent-roles", roleId)
+        .catch(() => null)
+    : null;
   const MEMORY_PROMPT_LIMIT = 40;
   const SOP_PROMPT_LIMIT = 20;
   const SKILL_PROMPT_LIMIT = 30;
@@ -328,9 +334,11 @@ export async function executeModelTask(
   const activeSops = (sops as any[]).filter((s:any)=>s.active!==false).slice(0, SOP_PROMPT_LIMIT);
   const skills = (await service.db.list<any>(owner,"skills").catch(()=>[] as any[])).slice(0, SKILL_PROMPT_LIMIT);
   const skillsCtx = skills.length ? `Skills: ${JSON.stringify(skills.map((s:any)=>({id:s.id,name:s.name})))}` : "";
-  // Una sola identidad en el prompt. Antes se concatenaban dos frases que se contradecian:
-  // "You are OpenMuse Enterprise enterprise operator" y "You are OpenMuse, a thoughtful
-  // personal agent". El nombre y el tono salen de agent-settings/identity.
+  const rolePrompt = roleContext
+    ? `Rol activo: ${roleContext.name}. Objetivo: ${roleContext.objetivo}. SOPs preferidos: ${roleContext.sops.join(", ") || "ninguno"}. `
+    : "";
+  // Una sola identidad en el prompt. El rolePrompt (si hay) va primero; despues la
+  // identidad y el contexto de empresa. Antes se concatenaban dos frases que se contradecian.
   const agentName = identity?.name ?? "OpenMuse";
   const agentTone = identity?.tone ?? "thoughtful";
   const workspaceContext = `Manual de la empresa: ${JSON.stringify(memories.slice(0, MEMORY_PROMPT_LIMIT))} SOPs: ${JSON.stringify(activeSops.map((s:any)=>({id:s.id,name:s.name})))} ${skillsCtx}`;
