@@ -113,3 +113,32 @@ test("ingestion caps the number of chunks per source", async () => {
     await db.close();
   }
 });
+
+test("the pgvector path is never attempted on PGlite", async () => {
+  const db = await createStore();
+  const stub = stubEmbeddings([1, 0]);
+  const owner = "rag-pglite-owner";
+  try {
+    assert.equal(db.backend, "pglite");
+    // Si la ruta vectorial se intentara, este select reventaria y la busqueda caeria.
+    db.select = async () => {
+      throw new Error("la busqueda vectorial no debe tocar el motor embebido");
+    };
+    await db.put(owner, "rag-chunks", {
+      id: "c-0",
+      sourceId: "src",
+      sourceName: "doc.txt",
+      chunkIndex: 0,
+      text: "chunk 0",
+      embedding: [1, 0],
+      createdAt: new Date().toISOString(),
+    });
+    const hits = await new RagService(db).search(owner, "consulta", 3);
+    // El fallback en JS responde igual que antes: PGlite no se rompe.
+    assert.equal(hits.length, 1);
+    assert.equal(hits[0].id, "c-0");
+  } finally {
+    stub.restore();
+    await db.close();
+  }
+});
