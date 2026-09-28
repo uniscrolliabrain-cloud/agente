@@ -51,6 +51,18 @@ pnpm dev
 
 The deterministic SOP runtime does **not** require `CPK_INTELLIGENCE_API_KEY`. Open-ended model tasks still require their configured model/provider credentials.
 
+### Primer arranque
+
+En una instalacion nueva, la DB no tiene usuarios. El servidor crea el primer admin
+solo si ADMIN_EMAIL y ADMIN_PASSWORD estan definidos en .env:
+
+    ADMIN_EMAIL=admin@tu-dominio.com
+    ADMIN_PASSWORD=una-clave-de-8-o-mas
+    ADMIN_NAME=Admin
+
+Entra con esas credenciales en la pantalla de login. Si faltan, el servidor avisa por
+consola y el login devuelve 401.
+
 ## Smoke test
 
 With the API running:

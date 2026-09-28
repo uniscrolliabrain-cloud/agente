@@ -39,16 +39,42 @@ const updateUserSchema = z.object({
     .optional(),
 });
 
-export function authRoutes(db: Store, users: UserService) {
+export function authRoutes(
+  db: Store,
+  users: UserService,
+  options: { ensureSample?: (owner: string) => Promise<void> } = {},
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
+
+  const loginAttempts = new Map<string, number[]>();
+  const LOGIN_WINDOW_MS = 60_000;
+  const LOGIN_MAX_ATTEMPTS = 10;
+  const loginKey = (ip: string, email: string) => `${ip}|${email.toLowerCase().trim()}`;
+  const checkLoginLimit = (ip: string, email: string) => {
+    const key = loginKey(ip, email);
+    const now = Date.now();
+    const recent = (loginAttempts.get(key) ?? []).filter((t) => now - t < LOGIN_WINDOW_MS);
+    if (recent.length >= LOGIN_MAX_ATTEMPTS) {
+      loginAttempts.set(key, recent);
+      throw new AppError("Demasiados intentos. Espera un minuto e intentalo de nuevo.", 429);
+    }
+    recent.push(now);
+    loginAttempts.set(key, recent);
+  };
 
   // POST /api/auth/login -> { token, user }
   app.post("/login", async (c) => {
     const body = z
       .object({ email: z.email(), password: z.string().min(1).max(200) })
       .parse(await c.req.json());
+    const ip =
+      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ??
+      c.req.header("x-real-ip") ??
+      "unknown";
+    checkLoginLimit(ip, body.email);
     const user = await users.verifyCredentials(body.email, body.password);
     if (!user) throw new AppError("Email o contrasena incorrectos", 401);
+    if (options.ensureSample) await options.ensureSample(user.id);
 
     const token = randomBytes(32).toString("base64url");
     await db.put("system", "sessions", {

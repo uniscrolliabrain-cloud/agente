@@ -29,3 +29,22 @@ Estructura para provisionar un cliente nuevo.
       { "email": "maria@ejemplo.local", "name": "Maria", "role": "user", "password": "12345678" },
       { "email": "juan@ejemplo.local", "name": "Juan", "role": "user", "password": "12345678" }
     ]
+
+## Provision
+
+Desde la raiz del repo, con el backend corriendo y `ADMIN_EMAIL`/`ADMIN_PASSWORD` en `.env`:
+
+    pnpm provision-client clientes/_example
+
+Esto crea usuario admin (si no existe), carga SOPs, registra skills, siembra memorias,
+crea agentes y sube los documentos de `docs/` al RAG del owner.
+
+## Estructura
+
+- `config.json`   — nombre y admin inicial del cliente.
+- `users.json`    — cuentas adicionales.
+- `memorias.json` — conocimiento base (tono, condiciones, politicas).
+- `agentes.json`  — roles de agente y SOPs asociados.
+- `sops/`         — procedimientos del cliente (.json).
+- `skills/`       — skills Python del cliente.
+- `docs/`         — documentos a indexar en RAG.
