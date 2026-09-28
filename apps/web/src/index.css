@@ -1446,3 +1446,43 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
 .scroll:hover::-webkit-scrollbar-thumb { background: var(--border-strong); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* --------------------------------------------------
+   Estado unico + banner de sesion
+-------------------------------------------------- */
+.status {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 26px; padding: 0 10px;
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  font-size: var(--fs-xs); color: var(--text-2);
+  background: var(--surface);
+}
+.status__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.status[data-state="error"] .status__dot   { background: var(--red); }
+.status[data-state="working"] .status__dot { background: var(--accent); }
+.status[data-state="offline"] .status__dot { background: var(--text-3); }
+
+.banner {
+  display: flex; align-items: center; gap: 10px;
+  width: min(var(--content-w), 100%);
+  margin: 0 auto 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+}
+.banner__text { flex: 1; }
+.banner--error {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--danger);
+}
+.banner--error .btn-sm { color: var(--text); }
+
+.btn-sm {
+  height: 28px; padding: 0 12px;
+  border: 1px solid var(--border-strong); background: var(--bg);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-xs); font-weight: 500; color: var(--text);
+  cursor: pointer;
+  transition: background var(--t);
+}
+.btn-sm:hover { background: var(--bg-hover); }

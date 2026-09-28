@@ -35,6 +35,20 @@ function useTheme() {
   return { dark, toggle: () => setDark((v) => !v) };
 }
 
+function usePanel(key: string, defaultCollapsed: boolean) {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved === "1") return true;
+      if (saved === "0") return false;
+    } catch { /* modo privado */ }
+    return defaultCollapsed;
+  });
+  useEffect(() => {
+    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch { /* noop */ }
+  }, [key, collapsed]);
+  return [collapsed, setCollapsed] as const;
+}
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
@@ -44,11 +58,22 @@ export default function App() {
   const theme = useTheme();
 
   const [view, setView] = useState<AppView>("chat");
-  const [convCollapsed, setConvCollapsed] = useState(false);
-  const [kanbanCollapsed, setKanbanCollapsed] = useState(false);
+  const [convCollapsed, setConvCollapsed] = usePanel("openmuse_conv_collapsed", false);
+  const [kanbanCollapsed, setKanbanCollapsed] = usePanel("openmuse_kanban_collapsed", false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const k = e.key.toLowerCase();
+      if (k === "b") { e.preventDefault(); setConvCollapsed((v: boolean) => !v); }
+      if (k === "j") { e.preventDefault(); setKanbanCollapsed((v: boolean) => !v); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [setConvCollapsed, setKanbanCollapsed]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) return;
@@ -84,9 +109,8 @@ export default function App() {
   return (
     <div className="app-root">
       <Header
-        mode={auth.mode ?? "live"}
-        workerRunning={tasks.workerRunning}
-        workerLastTickAt={tasks.workerLastTickAt}
+        status={!auth.isAuthenticated ? "error" : chat.streaming ? "working" : tasks.workerRunning ? "ok" : "offline"}
+        statusLabel={!auth.isAuthenticated ? "Sesion caducada" : chat.streaming ? "Trabajando..." : tasks.workerRunning ? "Agente activo" : "Desconectado"}
         convCollapsed={convCollapsed}
         kanbanCollapsed={kanbanCollapsed}
         dark={theme.dark}
