@@ -1,4 +1,4 @@
-import { getSession } from "./client";
+import { getSession, handleUnauthorized } from "./client";
 
 export interface UploadedFile {
   id: string;
@@ -19,7 +19,10 @@ export async function uploadFile(file: File): Promise<UploadedFile> {
     headers: { Authorization: `Bearer ${session.token}` },
     body: form,
   });
-  if (res.status === 401) throw new Error("Sesión expirada");
+  if (res.status === 401) {
+    handleUnauthorized();
+    throw new Error("Sesión expirada");
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(typeof body?.error === "string" ? body.error : `Error ${res.status}`);
