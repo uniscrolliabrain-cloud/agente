@@ -18,6 +18,7 @@ import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import type { Files } from "./files.ts";
 import type { GoogleAuth } from "./google-auth.ts";
+import type { RagService } from "./engine/rag.ts";
 
 export class WorkspaceService {
   private seeding = new Map<string, Promise<void>>();
@@ -26,6 +27,7 @@ export class WorkspaceService {
     private readonly config: Config,
     private readonly files: Files,
     private readonly googleAuth: GoogleAuth,
+    private readonly rag: RagService,
   ) {}
   google(owner: string, connectionId?: string) {
     return new GoogleClient({
@@ -371,7 +373,14 @@ export class WorkspaceService {
         note: "Sample workspace files have no readable text. Connect Google in live mode to read Drive files.",
       };
     }
-    return this.google(owner, connection.id).readDriveFile(fileId);
+    const result = await this.google(owner, connection.id).readDriveFile(fileId);
+    if (result.text && result.text.length > 20000) {
+      const sourceId = `drive:${fileId}`;
+      this.rag
+        .ingestText(owner, sourceId, result.file.name, result.text.slice(0, 200_000))
+        .catch(() => {});
+    }
+    return result;
   }
   async prepare(owner: string, input: ProposalInput, connectionId?: string) {
     if (input.kind === "email.send") {

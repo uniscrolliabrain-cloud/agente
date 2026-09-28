@@ -18,6 +18,11 @@ export interface ListOptions {
 
 export class Store {
   constructor(private readonly db: Database) {}
+
+  /** true cuando el motor soporta pgvector (Postgres real, no PGlite). */
+  get pgvectorReady(): boolean {
+    return Boolean((this.db as { pgvectorReady?: boolean }).pgvectorReady);
+  }
   async get<T = Record<string, unknown>>(
     owner: string,
     kind: string,
@@ -89,6 +94,14 @@ export class Store {
     }));
   }
   /** Cuenta las filas de un owner/kind sin traerlas a memoria. */
+  /**
+   * Query cruda para casos donde el RAG necesita columnas fuera de `data`
+   * (como el vector `embedding` con distancia). Solo SQL parametrizado.
+   */
+  async rawQuery<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+    const result = await this.db.query(sql, params);
+    return result.rows.map((row) => (row as { data?: T }).data ?? (row as unknown as T));
+  }
   async count(owner: string, kind: string): Promise<number> {
     const result = await this.db.query(
       "SELECT count(*)::int AS total FROM records WHERE owner=$1 AND kind=$2",
@@ -234,5 +247,34 @@ export async function createStore(
   await database.query(
     "CREATE TABLE IF NOT EXISTS records(owner text NOT NULL,kind text NOT NULL,id text NOT NULL,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(owner,kind,id))",
   );
+
+  // Indices para las consultas calientes: list/listPaged por owner+kind, scanByStatus,
+  // purga por updated_at y el listado de admin por kind.
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_owner_kind_updated_idx ON records(owner, kind, updated_at DESC, id DESC)"
+  );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_kind_status_idx ON records(kind, (data->>'status'))"
+  );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
+  // pgvector: solo en Postgres real. En PGlite no hay extension vectorial y el RAG
+  // sigue usando coseno en JS. La deteccion es por DATABASE_URL, no por intento/error,
+  // para no ensuciar el log en local.
+  let pgvectorReady = false;
+  if (options.databaseUrl) {
+    try {
+      await database.query("CREATE EXTENSION IF NOT EXISTS vector");
+      await database.query("ALTER TABLE records ADD COLUMN IF NOT EXISTS embedding vector(768)");
+      await database.query(
+        "CREATE INDEX IF NOT EXISTS records_embedding_idx ON records USING hnsw (embedding vector_cosine_ops)"
+      );
+      pgvectorReady = true;
+    } catch {
+      // Postgres sin permiso de CREATE EXTENSION: caemos a coseno en JS sin romper.
+      pgvectorReady = false;
+    }
+  }
+  (database as { pgvectorReady?: boolean }).pgvectorReady = pgvectorReady;
   return new Store(database);
 }

@@ -4,6 +4,7 @@ import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
 import { useThreads } from "./hooks/useThreads";
 import { useWorkspaceData } from "./hooks/useWorkspaceData";
+import { useNotifications } from "./hooks/useNotifications";
 import Header from "./components/Header";
 import ConversationsPanel, { type AppView } from "./components/ConversationsPanel";
 import ChatPanel from "./components/ChatPanel";
@@ -57,6 +58,7 @@ export default function App() {
   const threads = useThreads(auth.isAuthenticated);
   const chat = useChat(auth.isAuthenticated, threads.activeId, threads.touch);
   const { memories, files } = useWorkspaceData(auth.isAuthenticated);
+  const notifications = useNotifications(auth.isAuthenticated);
   const theme = useTheme();
 
   const [view, setView] = useState<AppView>("chat");
@@ -74,10 +76,11 @@ export default function App() {
       if (k === "b") { e.preventDefault(); setConvCollapsed((v) => !v); }
       if (k === "j") { e.preventDefault(); setKanbanCollapsed((v) => !v); }
       if (k === "k") { e.preventDefault(); setPaletteOpen((v) => !v); }
+      if (k === "n") { e.preventDefault(); setView("chat"); void threads.createNew(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [setConvCollapsed, setKanbanCollapsed]);
+  }, [setConvCollapsed, setKanbanCollapsed, threads.createNew]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) return;
@@ -135,6 +138,8 @@ export default function App() {
         userName={auth.user?.name ?? "Usuario"}
         userRole={auth.user?.role ?? "user"}
         onOpenProfile={() => setProfileOpen(true)}
+        notifications={notifications.unread}
+        onOpenNotifications={() => { void notifications.markAllRead(); setView("tasks"); }}
         onLogout={auth.logout}
       />
 
@@ -155,7 +160,7 @@ export default function App() {
         />
 
         {view === "chat" && <ChatPanel chat={chat} />}
-        {view === "tasks" && <TasksView tasks={tasks.tasks} onOpenTask={openTask} onReviewTask={reviewTask} />}
+        {view === "tasks" && <TasksView tasks={tasks.tasks} currentUserId={auth.user?.id ?? null} onOpenTask={openTask} onReviewTask={reviewTask} />}
         {view === "documents" && <DocumentsView files={files} />}
         {view === "memory" && <MemoryView memories={memories} />}
         {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}

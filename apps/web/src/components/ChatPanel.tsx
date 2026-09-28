@@ -69,6 +69,11 @@ export default function ChatPanel({ chat }: Props) {
             streaming={chat.streaming}
             streamBuf={chat.streamBuf}
             activeTool={chat.activeTool}
+            onQuickAction={(kind, text) => {
+              if (kind === "responder") return;
+              const prefix = kind === "resumir" ? "Resume lo siguiente en espanol:\\n\\n" : "Traduce al ingles lo siguiente:\\n\\n";
+              chat.send(prefix + text);
+            }}
           />
           {chat.error && <div className="chat-error">{chat.error}</div>}
           <div className="dock">

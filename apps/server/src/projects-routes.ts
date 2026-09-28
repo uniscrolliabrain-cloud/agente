@@ -60,6 +60,23 @@ export function projectRoutes(db: Store) {
       updatedAt: now,
     };
     await db.put(owner, "projects", project);
+    // Vincula memorias existentes cuyo texto/tags contengan el name del proyecto.
+    const memories = await db.list<AgentMemory>(owner, "memories");
+    const needle = project.name.trim().toLowerCase();
+    if (needle.length >= 3) {
+      const matched = memories.filter((m) =>
+        `${m.text} ${(m.tags ?? []).join(" ")}`.toLowerCase().includes(needle),
+      );
+      if (matched.length) {
+        const linked: Project = {
+          ...project,
+          linkedMemoryIds: matched.map((m) => m.id),
+          updatedAt: new Date().toISOString(),
+        };
+        await db.put(owner, "projects", linked);
+        return c.json(linked, 201);
+      }
+    }
     return c.json(project, 201);
   });
 

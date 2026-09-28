@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, Moon, PanelLeft, PanelRight, Sun, User } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Moon, PanelLeft, PanelRight, Sun, User } from "lucide-react";
 
 interface HeaderProps {
   status: "ok" | "working" | "offline" | "error";
@@ -13,6 +13,8 @@ interface HeaderProps {
   onToggleConv: () => void;
   onToggleKanban: () => void;
   onOpenProfile: () => void;
+  notifications?: number;
+  onOpenNotifications?: () => void;
   onLogout: () => void;
 }
 
@@ -58,6 +60,16 @@ export default function Header(props: HeaderProps) {
           <span className="status__dot" aria-hidden="true" />
           {props.statusLabel}
         </span>
+        <button
+          className="ghost-icon-button notification-button"
+          onClick={props.onOpenNotifications}
+          title={props.notifications ? `${props.notifications} notificaciones` : "Notificaciones"}
+        >
+          <Bell size={17} strokeWidth={1.8} />
+          {props.notifications && props.notifications > 0 ? (
+            <span className="notification-badge">{props.notifications > 99 ? "99+" : props.notifications}</span>
+          ) : null}
+        </button>
         <button className="ghost-icon-button" onClick={props.onToggleTheme}>
           {props.dark ? <Sun size={17} strokeWidth={1.8} /> : <Moon size={17} strokeWidth={1.8} />}
         </button>

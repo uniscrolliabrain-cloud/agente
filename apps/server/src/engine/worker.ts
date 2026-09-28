@@ -151,12 +151,33 @@ export class TaskWorker {
       task = next;
       return next;
     };
+    // Dedupe temporal: si el mismo titulo se repite en menos de 60s para esta tarea,
+    // no se escribe otro run-event; se incrementa el contador del ultimo. Evita
+    // ruido cuando un bucle de reintentos emite el mismo "step" varias veces.
+    const recentEvents = new Map<string, { id: string; date: number; count: number }>();
     const event = async (kind: RunEvent["kind"], title: string, detail = "") => {
       await guard();
+      const key = `${kind}:${title}`;
+      const now = this.now();
+      const previous = recentEvents.get(key);
+      if (previous && now - previous.date < 60_000) {
+        previous.count += 1;
+        previous.date = now;
+        await this.db.compareAndSwap(
+          owner,
+          "run-events",
+          previous.id,
+          { id: previous.id },
+          { detail: detail ? detail : `${previous.count} ocurrencias` },
+        );
+        return;
+      }
+      const id = randomUUID();
+      recentEvents.set(key, { id, date: now, count: 1 });
       await this.db.put(owner, "run-events", {
-        id: randomUUID(),
+        id,
         taskId,
-        date: new Date(this.now()).toISOString(),
+        date: new Date(now).toISOString(),
         kind,
         title,
         detail,

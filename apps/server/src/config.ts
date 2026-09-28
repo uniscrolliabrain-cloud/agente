@@ -46,6 +46,10 @@ export interface Config {
   computerEnabled?: boolean;
   computerImage?: string;
   computerDeploymentId?: string;
+  whatsappApiKey?: string;
+  whatsappBaseUrl?: string;
+  whatsappInstance?: string;
+  stripeApiKey?: string;
   backupIntervalHours?: number;
   backupRetentionDays?: number;
   allowedOrigins: string[];
@@ -113,6 +117,10 @@ export function readConfig(): Config {
     computerEnabled: process.env.COMPUTER_ENABLED === "true",
     computerImage: process.env.COMPUTER_IMAGE ?? "openmuse-computer:local",
     computerDeploymentId: process.env.COMPUTER_DEPLOYMENT_ID,
+    whatsappApiKey: process.env.WHATSAPP_API_KEY, // o EVOLUTION_API_KEY
+    whatsappBaseUrl: process.env.WHATSAPP_BASE_URL, // ej: http://evolution:8080
+    whatsappInstance: process.env.WHATSAPP_INSTANCE, // nombre de la instancia Evolution
+    stripeApiKey: process.env.STRIPE_API_KEY,
     backupIntervalHours: Number(process.env.BACKUP_INTERVAL_HOURS ?? "24") || 0,
     backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS ?? "7") || 0,
     allowedOrigins: (

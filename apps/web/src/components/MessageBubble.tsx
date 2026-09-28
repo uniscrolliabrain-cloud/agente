@@ -3,7 +3,13 @@ import { Bot, Check, Copy, UserRound } from "lucide-react";
 import type { ChatMessage } from "../types/api";
 import ToolCallCard from "./ToolCallCard";
 
-export default function MessageBubble({ message }: { message: ChatMessage }) {
+export default function MessageBubble({
+  message,
+  onQuickAction,
+}: {
+  message: ChatMessage;
+  onQuickAction?: (kind: "responder" | "resumir" | "traducir", text: string) => void;
+}) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
 
@@ -45,6 +51,13 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
             >
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
+          </div>
+        )}
+        {!isUser && message.content && onQuickAction && (
+          <div className="quick-actions">
+            <button className="ctrl-btn" onClick={() => onQuickAction("responder", message.content)}>Responder</button>
+            <button className="ctrl-btn" onClick={() => onQuickAction("resumir", message.content)}>Resumir</button>
+            <button className="ctrl-btn" onClick={() => onQuickAction("traducir", message.content)}>Traducir</button>
           </div>
         )}
 

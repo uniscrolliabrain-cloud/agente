@@ -240,6 +240,27 @@ export class ConversationAgent extends AbstractAgent {
           return value;
         },
       }),
+      defineTool({
+        name: "prepare_whatsapp",
+        description:
+          "Prepara un mensaje de WhatsApp para revision del usuario. NO lo envia: crea una accion pendiente con el numero y el texto. Usar solo cuando el usuario pida escribir o responder por WhatsApp.",
+        parameters: z.object({
+          to: z.string().regex(/^\\+?[0-9]{6,20}$/).describe("Numero E.164 del destinatario"),
+          text: z.string().min(1).max(4000).describe("Texto del mensaje"),
+        }),
+        execute: async ({ to, text }) => {
+          if (!this.service.whatsapp.configured)
+            return { error: "WhatsApp no esta configurado en el servidor (WHATSAPP_API_KEY / WHATSAPP_BASE_URL / WHATSAPP_INSTANCE)." };
+          await this.service.db.put(this.owner, "whatsapp-drafts", {
+            id: createHash("sha256").update(`${this.owner}:${to}:${text}`).digest("hex").slice(0, 32),
+            to,
+            text,
+            status: "awaiting_review",
+            createdAt: new Date().toISOString(),
+          });
+          return { status: "awaiting_review", to, length: text.length };
+        },
+      }),
       defineTool({         name: "create_briefing",         description:           "Crea un briefing o artifact persistente a partir de lo hablado en esta conversacion. Usa el resumen real, no inventes. Devuelve el artifact creado.",         parameters: z.object({           title: z.string().min(1).max(160),           summary: z.string().min(1).max(4000),           data: z.record(z.string(), z.unknown()).default({}),           category: z             .enum(["empresa", "cliente", "proceso", "preferencia", "rrhh", "producto", "otro"])             .optional(),           tags: z.array(z.string().max(60)).max(20).default([]),         }),         execute: async ({ title, summary, data, category, tags }) => {           const artifact = await this.service.artifactFromSource(             this.owner,             `chat:${input.threadId}`,             "report",             title,             summary,             data,             title,           );           await this.service.memory.remember(this.owner, `${title}: ${summary}`, {             source: `chat:${input.threadId}`,             ...(category ? { category } : {}),             tags: ["briefing", ...tags],           });           return artifact;         },       }),
     ];
 
