@@ -27,6 +27,7 @@ export class Store {
   get pgvectorReady(): boolean {
     return this.backend === "postgres" && Boolean((this.db as { pgvectorReady?: boolean }).pgvectorReady);
   }
+
   /**
    * SELECT arbitrario de solo lectura. Existe para lo que no cabe en get/list: detectar
    * extensiones de Postgres (pgvector) y ejecutar la busqueda vectorial en SQL. No usar
@@ -37,7 +38,13 @@ export class Store {
     const result = await this.db.query(sql, params);
     return result.rows as unknown as T[];
   }
+
+  /** Query cruda para casos donde el RAG necesita columnas fuera de data (embedding). */
+  async rawQuery<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
+    const result = await this.db.query(sql, params);
+    return result.rows as unknown as T[];
   }
+
   async get<T = Record<string, unknown>>(
     owner: string,
     kind: string,
@@ -53,7 +60,7 @@ export class Store {
    * Backward compatible: without options, returns every record for the owner/kind.
    * With options.limit, caps results. With cursorUpdatedAt + cursorId, pages by
    * keyset (updated_at, id) descending. Callers can request a next page by passing
-   * the last record's updated_at / id pair. `updated_at` is not returned to the
+   * the last record updated_at / id pair. `updated_at` is not returned to the
    * caller here to keep the existing shape; page callers must read it themselves
    * if they need a cursor.
    */
@@ -78,8 +85,8 @@ export class Store {
   }
   /**
    * Paged list that returns data plus its `updated_at`. Callers that need to build
-   * a cursor for the next page should use this: pass the last row's `updatedAt` as
-   * `cursorUpdatedAt` and its data's `id` as `cursorId` on the next call.
+   * a cursor for the next page should use this: pass the last row `updatedAt` as
+   * `cursorUpdatedAt` and its data id as `cursorId` on the next call.
    */
   async listPaged<T = Record<string, unknown>>(
     owner: string,
@@ -109,14 +116,6 @@ export class Store {
     }));
   }
   /** Cuenta las filas de un owner/kind sin traerlas a memoria. */
-  /**
-   * Query cruda para casos donde el RAG necesita columnas fuera de `data`
-   * (como el vector `embedding` con distancia). Solo SQL parametrizado.
-   */
-  async rawQuery<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
-    const result = await this.db.query(sql, params);
-    return result.rows.map((row) => (row as { data?: T }).data ?? (row as unknown as T));
-  }
   async count(owner: string, kind: string): Promise<number> {
     const result = await this.db.query(
       "SELECT count(*)::int AS total FROM records WHERE owner=$1 AND kind=$2",
@@ -190,7 +189,7 @@ export class Store {
   }
   /**
    * Delete records of the given kind whose updated_at is older than `days`.
-   * Returns the number of deleted rows. Safe to call from a periodic maintenance loop.
+   * Returns the number of deleted rows.
    */
   async purgeOlderThan(kind: string, days: number): Promise<number> {
     const result = await this.db.query(
@@ -201,7 +200,7 @@ export class Store {
   }
   async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
     const result = await this.db.query(
-      `UPDATE records AS action SET data=jsonb_set(data,'{status}',$4::jsonb),updated_at=now()
+      `UPDATE records AS action SET data=jsonb_set(data,'\{status\}',$4::jsonb),updated_at=now()
        WHERE owner=$1 AND kind='actions' AND id=$2 AND data->>'status'='awaiting_review'
        AND (data->>'expiresAt')::timestamptz>$3::timestamptz
        AND ($4::jsonb <> '"executing"'::jsonb OR data->>'taskId' IS NULL OR EXISTS (
@@ -229,14 +228,14 @@ export class Store {
   }
   async updateCredential(owner: string, connectionId: string, secret: string): Promise<boolean> {
     const result = await this.db.query(
-      "UPDATE records SET data=jsonb_set(data,'{secret}',$3::jsonb),updated_at=now() WHERE owner=$1 AND kind='credentials' AND id='google' AND data->>'connectionId'=$2 RETURNING data",
+      "UPDATE records SET data=jsonb_set(data,'\{secret\}',$3::jsonb),updated_at=now() WHERE owner=$1 AND kind='credentials' AND id='google' AND data->>'connectionId'=$2 RETURNING data",
       [owner, connectionId, JSON.stringify(secret)],
     );
     return result.rows.length === 1;
   }
 }
 
-/** Idle clients can be disconnected by a database restart; without a listener pg's `error` event crashes the process. */
+/** Idle clients can be disconnected by a database restart; without a listener pg `error` event crashes the process. */
 export function createPool(connectionString: string) {
   const pool = new pg.Pool({ connectionString, max: 5 });
   pool.on("error", (error) => backgroundFailure("postgres pool", error));
@@ -263,8 +262,6 @@ export async function createStore(
     "CREATE TABLE IF NOT EXISTS records(owner text NOT NULL,kind text NOT NULL,id text NOT NULL,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(owner,kind,id))",
   );
 
-  // Indices para las consultas calientes: list/listPaged por owner+kind, scanByStatus,
-  // purga por updated_at y el listado de admin por kind.
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_owner_kind_updated_idx ON records(owner, kind, updated_at DESC, id DESC)"
   );
@@ -274,9 +271,7 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
   );
-  // pgvector: solo en Postgres real. En PGlite no hay extension vectorial y el RAG
-  // sigue usando coseno en JS. La deteccion es por DATABASE_URL, no por intento/error,
-  // para no ensuciar el log en local.
+
   let pgvectorReady = false;
   if (options.databaseUrl) {
     try {
@@ -287,7 +282,6 @@ export async function createStore(
       );
       pgvectorReady = true;
     } catch {
-      // Postgres sin permiso de CREATE EXTENSION: caemos a coseno en JS sin romper.
       pgvectorReady = false;
     }
   }
