@@ -84,12 +84,18 @@ test("RagService.search ranks the best hits across pages of the index", async ()
       );
     }
     const hits = await new RagService(db).search(owner, "consulta", 3);
-    assert.equal(hits.length, 3);
+    // El indice se recorre por keyset, no entero: 620 chunks, dos paginas de 500.
+    assert.ok(hits.length <= 3, `la busqueda no debe superar el limite, devolvio ${hits.length}`);
+    // Solo sobrevive el chunk alineado con la consulta. Los demas tienen coseno 0 y
+    // BM25 0 ("chunk N" no contiene "consulta"), asi que la busqueda hibrida los descarta
+    // antes de ordenar. No hay hits de relleno con score 0.
+    assert.equal(hits.length, 1);
     assert.equal(hits[0].id, `c-${total - 1}`);
-    assert.equal(Math.round(hits[0].score), 1);
-    for (const hit of hits.slice(1)) assert.equal(hit.score, 0);
-    // El indice no se ha descargado entero: la busquuda devuelve como mucho `limit`.
-    assert.ok(hits.length <= 3);
+    // Score hibrido: 0.7 * coseno(1) + 0.3 * bm25Norm(0) = 0.7.
+    assert.ok(
+      Math.abs(hits[0].score - 0.7) < 0.01,
+      `esperaba score ~0.7, obtuve ${hits[0].score}`,
+    );
   } finally {
     stub.restore();
     await db.close();
