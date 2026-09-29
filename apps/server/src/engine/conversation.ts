@@ -261,6 +261,48 @@ export class ConversationAgent extends AbstractAgent {
           return { status: "awaiting_review", to, length: text.length };
         },
       }),
+      defineTool({
+        name: "list_pending_approvals",
+        description: "Lista hasta 5 aprobaciones pendientes del owner. Solo lectura. No aprueba ni deniega nada.",
+        parameters: z.object({}),
+        execute: async () => {
+          const ctx = await this.service.systemContext(this.owner);
+          return { approvals: ctx.pendingApprovals };
+        },
+      }),
+      defineTool({
+        name: "recent_events",
+        description: "Resumen agregado de eventos de las ultimas N horas (default 24). Devuelve contadores por tipo, no la lista entera.",
+        parameters: z.object({ hours: z.number().int().min(1).max(168).default(24) }),
+        execute: async ({ hours }) => {
+          const aggregates = await this.service.bus?.aggregate(this.owner, hours) ?? [];
+          return { hours, aggregates: aggregates.slice(0, 20) };
+        },
+      }),
+      defineTool({
+        name: "system_health",
+        description: "Estado del sistema: Google conectado, worker vivo. Solo lectura.",
+        parameters: z.object({}),
+        execute: async () => {
+          const ctx = await this.service.systemContext(this.owner);
+          return { health: ctx.health };
+        },
+      }),
+      defineTool({
+        name: "who_is_doing_what",
+        description: "Resumen de tareas activas por usuario asignado. Maximo 10 filas agregadas.",
+        parameters: z.object({}),
+        execute: async () => {
+          const tasks = await this.service.db.list<{ assignedTo?: string; status: string }>(this.owner, "tasks");
+          const active = tasks.filter((t) => t.status === "running" || t.status === "queued");
+          const byUser = new Map<string, number>();
+          for (const t of active) {
+            const key = t.assignedTo ?? "sin_asignar";
+            byUser.set(key, (byUser.get(key) ?? 0) + 1);
+          }
+          return { rows: [...byUser].slice(0, 10).map(([user, count]) => ({ user, count })) };
+        },
+      }),
       defineTool({         name: "create_briefing",         description:           "Crea un briefing o artifact persistente a partir de lo hablado en esta conversacion. Usa el resumen real, no inventes. Devuelve el artifact creado.",         parameters: z.object({           title: z.string().min(1).max(160),           summary: z.string().min(1).max(4000),           data: z.record(z.string(), z.unknown()).default({}),           category: z             .enum(["empresa", "cliente", "proceso", "preferencia", "rrhh", "producto", "otro"])             .optional(),           tags: z.array(z.string().max(60)).max(20).default([]),         }),         execute: async ({ title, summary, data, category, tags }) => {           const artifact = await this.service.artifactFromSource(             this.owner,             `chat:${input.threadId}`,             "report",             title,             summary,             data,             title,           );           await this.service.memory.remember(this.owner, `${title}: ${summary}`, {             source: `chat:${input.threadId}`,             ...(category ? { category } : {}),             tags: ["briefing", ...tags],           });           return artifact;         },       }),
     ];
 
@@ -311,6 +353,20 @@ export class ConversationAgent extends AbstractAgent {
             }
           : input;
 
+        // URGENTE_SYSTEM_CONTEXT: bloque de 3 lineas max si hay algo urgente.
+        // Presupuesto duro: 80 tokens. Si no hay urgencia, no se inyecta nada.
+        let urgentBlock = "";
+        try {
+          const ctx = await this.service.systemContext(this.owner);
+          const lines: string[] = [];
+          if (ctx.pendingApprovals.length > 0)
+            lines.push(`Pendiente: ${ctx.pendingApprovals.length} aprobacion(es) esperando tu revision.`);
+          if (ctx.recentFailures.length > 0)
+            lines.push(`Fallos recientes: ${ctx.recentFailures.length} tarea(s) fallida(s) en la ultima hora.`);
+          if (!ctx.health.google) lines.push("Google desconectado.");
+          if (lines.length > 0) urgentBlock = "\\n\\n[Contexto urgente del sistema]\\n" + lines.join("\\n");
+        } catch { /* sin contexto si falla */ }
+
         const roleId = typeof (input.state as Record<string, unknown>)?.roleId === "string"
           ? String((input.state as Record<string, unknown>).roleId)
           : undefined;
@@ -326,10 +382,11 @@ export class ConversationAgent extends AbstractAgent {
         const finalPrompt = roleContext
           ? `Rol activo: ${roleContext.name}. Objetivo: ${roleContext.objetivo}. SOPs preferidos: ${roleContext.sops.join(", ") || "ninguno"}. ` + prompt
           : prompt;
+        const finalPromptWithUrgent = finalPrompt + urgentBlock;
 
         run = runWithModelFallback(
           modelChain(this.config),
-          (model) => new BuiltInAgent({ model, maxSteps: 6, maxRetries: 0, tools, prompt: finalPrompt }),
+          (model) => new BuiltInAgent({ model, maxSteps: 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
         );
         subscription = run.events.subscribe(subscriber);
