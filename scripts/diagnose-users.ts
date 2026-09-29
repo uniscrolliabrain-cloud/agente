@@ -11,12 +11,16 @@ const say = (s: string) => {
 };
 
 try {
+  say("[1] antes de loadEnvFile");
   if (existsSync(".env")) process.loadEnvFile(".env");
+  say("[2] .env cargado");
 
+  say("[3] antes de createStore");
   const db = await createStore({
     dataDir: process.env.DATA_DIR ?? ".openmuse",
     databaseUrl: process.env.DATABASE_URL,
   });
+  say("[4] createStore OK");
 
   say("DATA_DIR     : " + (process.env.DATA_DIR ?? ".openmuse"));
   say("DATABASE_URL : " + (process.env.DATABASE_URL ? "(definida -> Postgres remoto)" : "(vacia -> PGlite embebido)"));
