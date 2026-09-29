@@ -10,6 +10,7 @@ import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
 import { generateText } from "./model.ts";
 import { LostLeaseError, type TaskContext } from "./worker.ts";
+import type { EventBus } from "./events/index.ts";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const interpolate = (value: unknown, task: AgentTask, results: Record<string, unknown>) => {
@@ -48,7 +49,10 @@ const deepInterpolate = (value: unknown, task: AgentTask, results: Record<string
 };
 
 export class SOPExecutor {
-  constructor(private readonly service: AgentService) {}
+  constructor(
+    private readonly service: AgentService,
+    private readonly bus?: EventBus,
+  ) {}
 
   async execute(owner: string, initial: AgentTask, ctx: TaskContext): Promise<Partial<AgentTask>> {
     let task = initial;
@@ -122,6 +126,12 @@ export class SOPExecutor {
       );
       task = await ctx.checkpoint({ plan: planRunning, state: { ...task.state, sopStepIndex: index } });
       await ctx.event("step", `SOP ${index + 1}/${sop.steps.length}: ${step.title}`);
+      await this.bus?.emit(owner, "sop.step_started", { kind: "sop", id: sop.id }, {
+        sopId: sop.id,
+        stepId: step.id,
+        index,
+        title: step.title.slice(0, 200),
+      });
 
       // OpenMuse when: skip step if condition is falsy
       if (typeof step.when === "string" && step.when.trim() !== "") {

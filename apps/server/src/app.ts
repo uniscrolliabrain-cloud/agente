@@ -21,6 +21,8 @@ import { agentRoutes } from "./engine/routes.ts";
 import { skillsRoutes } from "./skills/routes.ts";
 import { sopRoutes } from "./skills/sop-routes.ts";
 import { AgentService } from "./engine/service.ts";
+import { EventBus } from "./engine/events/index.ts";
+import { eventsRoutes } from "./events-routes.ts";
 import { AppError } from "./errors.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
@@ -52,7 +54,8 @@ export async function createApp(
   });
   const browser = new BrowserService(db, config, auth, files);
   const computer = new ComputerService(db, config, options.docker);
-  const agent = new AgentService(db, config, workspace, files, actions, browser, computer, rag);
+  const bus = new EventBus(db);
+const agent = new AgentService(db, config, workspace, files, actions, browser, computer, rag, undefined, bus);
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
@@ -223,6 +226,7 @@ export async function createApp(
     return c.json(snapshot);
   });
   app.route("/api/agent", agentRoutes(agent));
+  app.route("/api/events", eventsRoutes(bus));
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }));
