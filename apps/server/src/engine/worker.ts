@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import { backgroundFailure } from "../log.ts";
+import type { EventBus, SystemEventSource, SystemEventType } from "./events/index.ts";
 
 export class LostLeaseError extends Error {
   constructor() {
@@ -34,6 +35,7 @@ export class TaskWorker {
       leaseMs?: number;
       pollMs?: number;
       settled?: (owner: string, task: AgentTask) => Promise<void>;
+      bus?: EventBus;
     } = {},
   ) {}
   private now() {
@@ -182,6 +184,18 @@ export class TaskWorker {
         title,
         detail,
       });
+      const bus = this.options.bus;
+      if (bus) {
+        const mapped = mapRunEventToBusKind(kind);
+        if (mapped) {
+          const source: SystemEventSource = { kind: "task", id: taskId };
+          await bus.emit(owner, mapped, source, {
+            taskId,
+            title: title.slice(0, 200),
+            ...(detail ? { detail: detail.slice(0, 2000) } : {}),
+          });
+        }
+      }
     };
     await this.db.put(owner, "runs", {
       id: leaseId,
@@ -268,3 +282,9 @@ export class TaskWorker {
   }
 }
 
+function mapRunEventToBusKind(kind: string): SystemEventType | null {
+  if (kind === "status") return "task.status_changed";
+  if (kind === "error") return "task.failed";
+  if (kind === "result") return "task.completed";
+  return null;
+}
