@@ -44,6 +44,7 @@ import { WhatsAppClient } from "../../../../packages/integrations/src/stubs/what
 import { MemoryService } from "./memory.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
+import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
@@ -68,15 +69,17 @@ export class AgentService {
     readonly computer: ComputerService = new ComputerService(db, config),
     readonly rag: RagService = new RagService(db),
     readonly whatsapp: WhatsAppClient = new WhatsAppClient({       apiKey: config.whatsappApiKey,       baseUrl: config.whatsappBaseUrl,       instance: config.whatsappInstance,     }),
+    readonly bus?: EventBus,
   ) {
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
     this.learning = new LearningService(this.memory);
-    this.sopExecutor = new SOPExecutor(this);
+    this.sopExecutor = new SOPExecutor(this, this.bus);
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
       settled: (owner, task) => this.publishOutcome(owner, task),
+      bus: this.bus,
     });
   }
   start() {
@@ -176,6 +179,10 @@ export class AgentService {
           backgroundFailure(`sop trigger ${value.id}`, error);
         }
       }
+      await this.bus?.emit("system", "system.maintenance", { kind: "system", id: "maintain" }, {
+        tasks: 0,
+        monitors: 0,
+      });
     } finally {
       this.refreshing = false;
     }
@@ -315,6 +322,11 @@ export class AgentService {
     };
     await this.ensure(owner);
     await this.db.insertIfAbsent(owner, "tasks", task);
+    await this.bus?.emit(owner, "task.created", { kind: "task", id }, {
+      taskId: id,
+      title: task.title.slice(0, 200),
+      kind: task.kind,
+    });
     return (await this.db.get<AgentTask>(owner, "tasks", id)) ?? task;
   }
   /**
@@ -452,6 +464,10 @@ export class AgentService {
       title: `Task ${status}`,
       detail: "Changed by you",
     });
+    await this.bus?.emit(owner, "task.controlled", { kind: "task", id }, {
+      taskId: id,
+      action,
+    });
     return finalTask;
   }
   async answer(
@@ -477,6 +493,11 @@ export class AgentService {
       },
     );
     if (!next) throw new AppError("Task changed; refresh and try again", 409);
+    await this.bus?.emit(owner, "task.status_changed", { kind: "task", id }, {
+      taskId: id,
+      from: "waiting_input",
+      to: "queued",
+    });
     return next;
   }
   async createGoal(owner: string, raw: unknown, id?: string) {

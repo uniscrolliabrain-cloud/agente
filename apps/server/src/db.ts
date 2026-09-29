@@ -271,6 +271,9 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
   );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_system_events_idx ON records(owner, kind, (data->>'type'), updated_at DESC)"
+  );
 
   let pgvectorReady = false;
   if (options.databaseUrl) {
