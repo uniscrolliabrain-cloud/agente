@@ -3,9 +3,10 @@ import { FileText, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { FileEntry } from "../hooks/useWorkspaceData";
 import AttachmentPreview from "./AttachmentPreview";
 import { formatBytes, relativeTime } from "../lib/format";
+// REINGEST_IMPORT_FIXED
 import {
   ragDeleteSource,
-  ragIngest,
+  ragReingest,
   ragSearch,
   ragStatus,
   type RagHit,
@@ -60,11 +61,9 @@ export default function DocumentsView({ files }: Props) {
     setBusySource(file.id);
     setSearchError(null);
     try {
-      const res = await fetch(file.url);
-      if (!res.ok) throw new Error(`No se pudo leer el archivo (${res.status})`);
-      const text = await res.text();
-      if (!text.trim()) throw new Error("El archivo no tiene texto");
-      await ragIngest({ sourceId: file.id, sourceName: file.name, text });
+      // REINGEST_SERVER_SIDE — el servidor ya tiene el fichero. Le pedimos que lo
+      // reingeste el mismo, sin descargarlo al navegador.
+      await ragReingest(file.id);
       await refreshStatus();
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : "Error al reingestar");
