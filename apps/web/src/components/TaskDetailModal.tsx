@@ -126,3 +126,5 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
     </div>
   );
 }
+
+// ESCALATE_UI_REVERTED
