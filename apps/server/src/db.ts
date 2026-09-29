@@ -1,5 +1,4 @@
 import { mkdir } from "node:fs/promises";
-import { dirname } from "node:path";
 import { PGlite } from "@electric-sql/pglite";
 import pg from "pg";
 import { backgroundFailure } from "./log.ts";
@@ -250,7 +249,10 @@ export async function createStore(
     const pool = createPool(options.databaseUrl);
     database = { query: async (sql, params) => pool.query(sql, params), close: () => pool.end() };
   } else {
-    if (options.dataDir) await mkdir(dirname(options.dataDir), { recursive: true, mode: 0o700 });
+    // El directorio que guarda los datos es options.dataDir, no su padre: con
+    // dataDir=".openmuse/postgres" un dirname() creaba ".openmuse" y dejaba el
+    // PGDATA sin restringir. Ahi viven los hashes de contrasena.
+    if (options.dataDir) await mkdir(options.dataDir, { recursive: true, mode: 0o700 });
     const embedded = new PGlite(options.dataDir);
     await embedded.waitReady;
     database = {
@@ -270,6 +272,9 @@ export async function createStore(
   );
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
+  );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_system_events_idx ON records(owner, kind, ((data->>'type')), updated_at DESC)"
   );
 
   let pgvectorReady = false;

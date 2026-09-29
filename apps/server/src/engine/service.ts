@@ -44,6 +44,7 @@ import { WhatsAppClient } from "../../../../packages/integrations/src/stubs/what
 import { MemoryService } from "./memory.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
+import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
@@ -68,15 +69,17 @@ export class AgentService {
     readonly computer: ComputerService = new ComputerService(db, config),
     readonly rag: RagService = new RagService(db),
     readonly whatsapp: WhatsAppClient = new WhatsAppClient({       apiKey: config.whatsappApiKey,       baseUrl: config.whatsappBaseUrl,       instance: config.whatsappInstance,     }),
+    readonly bus?: EventBus,
   ) {
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
     this.learning = new LearningService(this.memory);
-    this.sopExecutor = new SOPExecutor(this);
+    this.sopExecutor = new SOPExecutor(this, this.bus);
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
       settled: (owner, task) => this.publishOutcome(owner, task),
+      bus: this.bus,
     });
   }
   start() {
@@ -176,6 +179,10 @@ export class AgentService {
           backgroundFailure(`sop trigger ${value.id}`, error);
         }
       }
+      await this.bus?.emit("system", "system.maintenance", { kind: "system", id: "maintain" }, {
+        tasks: 0,
+        monitors: 0,
+      });
     } finally {
       this.refreshing = false;
     }
@@ -203,6 +210,35 @@ export class AgentService {
       tone: "warm",
     });
   }
+  /**
+   * Contexto de sistema para el chat. Presupuesto duro: cada campo tiene su tope,
+   * asi que el bloque serializado nunca crece con el tamano del workspace.
+   * No se inyecta en cada turno: se calcula solo si hay algo urgente o si el
+   * usuario lo pide explicitamente.
+   */
+  async systemContext(owner: string) {
+    const now = Date.now();
+    const actions = await this.db.list<ActionProposal>(owner, "actions");
+    const pending = actions
+      .filter((action) => action.status === "awaiting_review")
+      .slice(0, 5)
+      .map((action) => ({ id: action.id, title: action.title.slice(0, 120), hash: action.hash }));
+    const tasks = await this.db.list<AgentTask>(owner, "tasks");
+    const recentFailures = tasks
+      .filter((task) => task.status === "failed" && now - Date.parse(task.updatedAt) < 3600000)
+      .slice(0, 5)
+      .map((task) => ({ id: task.id, title: task.title.slice(0, 120) }));
+    const google = await this.workspace.connected(owner).catch(() => false);
+    return {
+      pendingApprovals: pending,
+      recentFailures,
+      health: {
+        google,
+        worker: this.worker.running,
+      },
+    };
+  }
+
   async snapshot(owner: string): Promise<AgentWorkspace> {
     await this.ensure(owner);
     const [tasks, goals, monitors, ideas, memories, artifacts, notifications, identity] =
@@ -315,6 +351,17 @@ export class AgentService {
     };
     await this.ensure(owner);
     await this.db.insertIfAbsent(owner, "tasks", task);
+    // FASE6_TAXONOMY: los campos opcionales vienen de task.state, nunca por heuristica.
+    const taxonomy: Record<string, string> = {};
+    if (typeof task.state.projectId === "string") taxonomy.projectId = task.state.projectId;
+    if (typeof task.state.clientId === "string") taxonomy.clientId = task.state.clientId;
+    if (typeof task.state.roleId === "string") taxonomy.roleId = task.state.roleId;
+    await this.bus?.emit(owner, "task.created", { kind: "task", id }, {
+      taskId: id,
+      title: task.title.slice(0, 200),
+      kind: task.kind,
+      ...taxonomy,
+    });
     return (await this.db.get<AgentTask>(owner, "tasks", id)) ?? task;
   }
   /**
@@ -452,6 +499,10 @@ export class AgentService {
       title: `Task ${status}`,
       detail: "Changed by you",
     });
+    await this.bus?.emit(owner, "task.controlled", { kind: "task", id }, {
+      taskId: id,
+      action,
+    });
     return finalTask;
   }
   async answer(
@@ -477,6 +528,11 @@ export class AgentService {
       },
     );
     if (!next) throw new AppError("Task changed; refresh and try again", 409);
+    await this.bus?.emit(owner, "task.status_changed", { kind: "task", id }, {
+      taskId: id,
+      from: "waiting_input",
+      to: "queued",
+    });
     return next;
   }
   async createGoal(owner: string, raw: unknown, id?: string) {
