@@ -210,6 +210,35 @@ export class AgentService {
       tone: "warm",
     });
   }
+  /**
+   * Contexto de sistema para el chat. Presupuesto duro: cada campo tiene su tope,
+   * asi que el bloque serializado nunca crece con el tamano del workspace.
+   * No se inyecta en cada turno: se calcula solo si hay algo urgente o si el
+   * usuario lo pide explicitamente.
+   */
+  async systemContext(owner: string) {
+    const now = Date.now();
+    const actions = await this.db.list<ActionProposal>(owner, "actions");
+    const pending = actions
+      .filter((action) => action.status === "awaiting_review")
+      .slice(0, 5)
+      .map((action) => ({ id: action.id, title: action.title.slice(0, 120), hash: action.hash }));
+    const tasks = await this.db.list<AgentTask>(owner, "tasks");
+    const recentFailures = tasks
+      .filter((task) => task.status === "failed" && now - Date.parse(task.updatedAt) < 3600000)
+      .slice(0, 5)
+      .map((task) => ({ id: task.id, title: task.title.slice(0, 120) }));
+    const google = await this.workspace.connected(owner).catch(() => false);
+    return {
+      pendingApprovals: pending,
+      recentFailures,
+      health: {
+        google,
+        worker: this.worker.running,
+      },
+    };
+  }
+
   async snapshot(owner: string): Promise<AgentWorkspace> {
     await this.ensure(owner);
     const [tasks, goals, monitors, ideas, memories, artifacts, notifications, identity] =
@@ -322,10 +351,16 @@ export class AgentService {
     };
     await this.ensure(owner);
     await this.db.insertIfAbsent(owner, "tasks", task);
+    // FASE6_TAXONOMY: los campos opcionales vienen de task.state, nunca por heuristica.
+    const taxonomy: Record<string, string> = {};
+    if (typeof task.state.projectId === "string") taxonomy.projectId = task.state.projectId;
+    if (typeof task.state.clientId === "string") taxonomy.clientId = task.state.clientId;
+    if (typeof task.state.roleId === "string") taxonomy.roleId = task.state.roleId;
     await this.bus?.emit(owner, "task.created", { kind: "task", id }, {
       taskId: id,
       title: task.title.slice(0, 200),
       kind: task.kind,
+      ...taxonomy,
     });
     return (await this.db.get<AgentTask>(owner, "tasks", id)) ?? task;
   }

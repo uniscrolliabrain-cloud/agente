@@ -1,8 +1,8 @@
-import { Bot, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Plus, Search, Settings, UserCog } from "lucide-react";
+import { Activity, Bot, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Plus, Search, Settings, UserCog } from "lucide-react";
 import type { Thread } from "../api/threads";
 import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
-export type AppView = "chat" | "tasks" | "documents" | "projects" | "memory" | "users";
+export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users";
 
 interface Props {
   collapsed: boolean;
@@ -90,6 +90,7 @@ export default function ConversationsPanel({
           {item("tasks", LayoutDashboard, "Tareas")}
           {item("documents", Files, "Documentos")}
           {item("projects", FolderKanban, "Proyectos")}
+          {item("control-center", Activity, "Centro de control")}
           {item("memory", Brain, "Lo que sabe de tu negocio")}
           {isAdmin && item("users", UserCog, "Equipo")}
           <button className="nav-item" disabled title="Proximamente">
