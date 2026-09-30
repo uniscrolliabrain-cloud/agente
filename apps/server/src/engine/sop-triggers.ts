@@ -127,10 +127,12 @@ export class SOPTriggerEvaluator {
     const newlySeen: string[] = [];
     for (const message of mail) {
       if (seen.has(message.id)) continue;
-      const haystack = matchField === "body" ? message.body : message.subject;
-      if (!regex.test(haystack)) continue;
+      // SEEN_ALL_MESSAGES — marcamos como vista TODA la bandeja revisada, no solo
+      // las que matchean. Sin esto el inbox se recorre entero cada tick.
       seen.add(message.id);
       newlySeen.push(message.id);
+      const haystack = matchField === "body" ? message.body : message.subject;
+      if (!regex.test(haystack)) continue;
       await this.service.createTask(
         owner,
         {

@@ -265,11 +265,21 @@ export function authRoutes(db: Store, users: UserService, options: AuthRouteOpti
     const target = await users.getById(c.req.param("id"));
     if (!target) throw new AppError("Usuario no encontrado", 404);
     const limit = Math.min(Number(c.req.query("limit") ?? "20") || 20, 100);
-    // Keyset pagination in SQL: nothing is loaded or sorted in JS.
+    // KEYSET_CURSOR — paginacion real. El cliente pasa el updatedAt + id de la ultima
+    // fila recibida para pedir la siguiente pagina.
+    const cursorUpdatedAt = c.req.query("cursorUpdatedAt") || undefined;
+    const cursorId = c.req.query("cursorId") || undefined;
     const [page, total] = await Promise.all([
-      db.listPaged<Record<string, unknown>>(target.id, "tasks", { limit }),
+      db.listPaged<Record<string, unknown>>(target.id, "tasks", {
+        limit,
+        ...(cursorUpdatedAt && cursorId ? { cursorUpdatedAt, cursorId } : {}),
+      }),
       db.count(target.id, "tasks"),
     ]);
+    const last = page[page.length - 1];
+    const nextCursor = page.length === limit && last
+      ? { updatedAt: last.updatedAt, id: (last.data as { id: string }).id }
+      : null;
     const tasks = page.map(({ data: t }) => ({
       id: t.id,
       title: t.title,
@@ -281,7 +291,7 @@ export function authRoutes(db: Store, users: UserService, options: AuthRouteOpti
       result: t.result,
       error: t.error,
     }));
-    return c.json({ userId: target.id, total, tasks });
+    return c.json({ userId: target.id, total, tasks, nextCursor });
   });
 
   return app;

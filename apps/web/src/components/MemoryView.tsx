@@ -57,9 +57,17 @@ export default function MemoryView({ memories }: Props) {
     setBusy(true);
     setError(null);
     try {
+      // PERSIST_CATEGORY — el backend acepta category y tags en el update.
       await apiFetch(`/api/agent/memories/${encodeURIComponent(editing.id)}`, {
         method: "POST",
-        body: { text: editText.trim(), source: editing.source ?? "You" },
+        body: {
+          text: editText.trim(),
+          source: editing.source ?? "You",
+          ...(editCategory ? { category: editCategory } : {}),
+          ...(editTags.trim()
+            ? { tags: editTags.split(",").map((t) => t.trim()).filter(Boolean) }
+            : {}),
+        },
       });
       setEditing(null);
     } catch (err) {

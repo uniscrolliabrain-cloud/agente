@@ -268,8 +268,10 @@ export class ComputerService {
       !h.Privileged &&
       h.CapDrop?.includes("ALL") &&
       empty(h.CapAdd) &&
+      // SECOPT_FLEXIBLE — Docker puede devolver "no-new-privileges" o
+      // "no-new-privileges:true" segun version. Aceptamos ambos.
       h.SecurityOpt?.length === 1 &&
-      h.SecurityOpt.includes("no-new-privileges") &&
+      h.SecurityOpt.some((opt) => opt === "no-new-privileges" || opt === "no-new-privileges:true") &&
       h.NetworkMode === "none" &&
       h.Memory > 0 &&
       h.Memory <= 536870912 &&
@@ -528,6 +530,8 @@ export class ComputerService {
     else if ((lease.operation !== "command" && !lease.stopping) || lease.stopInFlight)
       throw new AppError("Computer is busy with another operation. Try Stop again shortly.", 409);
     const attempt = randomUUID();
+    // STOP_ATTEMPT_ALWAYS — el expected debe reflejar el lease real. Si stopAttempt
+    // era undefined, el CAS de rollback posterior fallaba en silencio.
     const stopping = await this.db.compareAndSwap<Lease>(
       owner,
       "computer-state",
@@ -535,7 +539,7 @@ export class ComputerService {
       {
         token: lease.token,
         stopping: lease.stopping,
-        ...(lease.stopAttempt !== undefined ? { stopAttempt: lease.stopAttempt } : {}),
+        ...(lease.stopAttempt !== undefined ? { stopAttempt: lease.stopAttempt } : { stopAttempt: null }),
       },
       {
         stopping: true,

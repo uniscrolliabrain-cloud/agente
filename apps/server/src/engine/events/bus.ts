@@ -92,12 +92,18 @@ export class EventBus {
 
   private async isDuplicate(owner: string, key: string): Promise<boolean> {
     const now = Date.now();
-    const cached = this.inMemory.get(key);
-    if (cached && now - cached < DEDUPE_TTL_MS) return true;
+    // DEDUPE_DB_FIRST — consultamos la DB ANTES que el Map en memoria para que
+    // multiples procesos compartan el dedupe. El Map es solo cache de lectura.
     const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
-    if (!state) return false;
-    const hit = state.seen.find((entry) => entry.key === key && now - entry.at < DEDUPE_TTL_MS);
-    return Boolean(hit);
+    if (state) {
+      const hit = state.seen.find((entry) => entry.key === key && now - entry.at < DEDUPE_TTL_MS);
+      if (hit) {
+        this.inMemory.set(key, now);
+        return true;
+      }
+    }
+    const cached = this.inMemory.get(key);
+    return Boolean(cached && now - cached < DEDUPE_TTL_MS);
   }
 
   private async recordDedupe(owner: string, key: string): Promise<void> {

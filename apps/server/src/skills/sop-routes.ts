@@ -61,7 +61,8 @@ export function sopRoutes(db: Store, agent: AgentService) {
         kind: "sop",
         title: sop.name,
         prompt: `API trigger for ${sop.name}`,
-        input: { sopId: sop.id, ...userInput, trigger: { type: "api" } },
+        // SOP_ID_LAST_WINS — el sopId del path gana siempre sobre userInput.
+        input: { ...userInput, sopId: sop.id, trigger: { type: "api" } },
       },
       idempotencyKey ? `sop-api:${sop.id}:${idempotencyKey}` : undefined,
     );

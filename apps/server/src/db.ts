@@ -75,10 +75,11 @@ export class Store {
       sql += ` AND (updated_at, id) < ($3::timestamptz, $4)`;
     }
     sql += " ORDER BY updated_at DESC, id";
-    if (options.limit !== undefined) {
-      params.push(options.limit);
-      sql += ` LIMIT $${params.length}`;
-    }
+    // LIST_HARD_LIMIT — sin options.limit, aplicamos 1000 filas como techo de seguridad.
+    // Los callers que necesiten mas deben usar listPaged con cursor.
+    const effectiveLimit = options.limit ?? 1000;
+    params.push(effectiveLimit);
+    sql += ` LIMIT $${params.length}`;
     const result = await this.db.query(sql, params);
     return result.rows.map((row) => row.data as T);
   }
@@ -180,9 +181,11 @@ export class Store {
     limit = 1000,
   ): Promise<{ owner: string; value: T }[]> {
     if (!statuses.length) return [];
+    // SCAN_STATUS_IN — IN con lista literal usa el indice de expresion mejor que ANY.
+    const placeholders = statuses.map((_, i) => `$${i + 2}`).join(",");
     const result = await this.db.query(
-      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND data->>'status' = ANY($2::text[]) ORDER BY updated_at ASC LIMIT $3",
-      [kind, statuses, limit],
+      `SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND data->>'status' IN (${placeholders}) ORDER BY updated_at ASC LIMIT $${statuses.length + 2}`,
+      [kind, ...statuses, limit],
     );
     return result.rows.map((row) => row.data as { owner: string; value: T });
   }
@@ -270,9 +273,20 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_kind_status_idx ON records(kind, (data->>'status'))"
   );
-  await database.query(
-    "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
-  );
+  // INDEX_CONCURRENTLY — Postgres real: fuera de transaccion para no bloquear escrituras.
+  // PGlite ignora CONCURRENTLY pero no se queja porque no hay transaccion envolvente.
+  if (options.databaseUrl) {
+    try {
+      await database.query(
+        "CREATE INDEX CONCURRENTLY IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
+      );
+      await database.query("ANALYZE records");
+    } catch { /* el indice puede existir ya, o el rol no tiene permiso */ }
+  } else {
+    await database.query(
+      "CREATE INDEX IF NOT EXISTS records_kind_updated_idx ON records(kind, updated_at)"
+    );
+  }
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_system_events_idx ON records(owner, kind, ((data->>'type')), updated_at DESC)"
   );

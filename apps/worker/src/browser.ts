@@ -233,6 +233,10 @@ export async function createBrowserManager(options: {
         void dialog.dismiss();
       });
       page.on("download", (download) => {
+        // DOWNLOAD_LIMIT_ATOMIC — incrementamos pending ANTES de calcular el limite
+        // para que dos descargas simultaneas no lo pasen las dos.
+        const placeholder = (async () => {})();
+        instance.pending.add(placeholder);
         const pending = downloads(id).then((saved) =>
           capturePdfDownload({
             directory: directory(id),
@@ -241,6 +245,7 @@ export async function createBrowserManager(options: {
             limitReached: saved.length + instance.pending.size > 20,
           }),
         );
+        instance.pending.delete(placeholder);
         instance.pending.add(pending);
         void pending.then(
           () => instance.pending.delete(pending),

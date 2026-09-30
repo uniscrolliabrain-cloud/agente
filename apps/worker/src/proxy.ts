@@ -31,9 +31,11 @@ export async function startEgressProxy() {
         },
       );
       upstream.on("timeout", () => upstream.destroy());
+      // DESTROY_ON_ERROR — si headers ya se enviaron, end() puede dejar el socket
+      // abierto. destroy() lo cierra en cualquier caso.
       upstream.on("error", () => {
         if (!response.headersSent) response.writeHead(502);
-        response.end();
+        response.destroy();
       });
       incoming.on("aborted", () => upstream.destroy());
       response.on("close", () => upstream.destroy());

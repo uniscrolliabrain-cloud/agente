@@ -1,10 +1,11 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, timingSafeEqual } from "node:crypto";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MessageSchema } from "@ag-ui/core";
 import { serveStatic } from "@hono/node-server/serve-static";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { z } from "zod";
@@ -24,6 +25,7 @@ import { AgentService } from "./engine/service.ts";
 import { EventBus } from "./engine/events/index.ts";
 import { eventsRoutes } from "./events-routes.ts";
 import { AppError } from "./errors.ts";
+import { RateLimiter } from "./rate-limit.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
 import { WorkspaceService } from "./workspace.ts";
@@ -127,35 +129,19 @@ const agent = new AgentService(db, config, workspace, files, actions, browser, c
       502,
     );
   });
-  app.post("/api/billing/customer", async (c) => {
-    const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
-    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
-    const client = new StripeClient({ apiKey: config.stripeApiKey });
-    return c.json(await client.createCustomer(body.email, body.name));
-  });
-  app.post("/api/billing/payment-link", async (c) => {
-    const body = z
-      .object({
-        amountCents: z.number().int().positive().max(100_000_000),
-        currency: z.string().regex(/^[a-z]{3}$/),
-        description: z.string().min(1).max(200),
-      })
-      .parse(await c.req.json());
-    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
-    const client = new StripeClient({ apiKey: config.stripeApiKey });
-    return c.json(await client.createPaymentLink(body.amountCents, body.currency, body.description));
-  });
-  app.get("/api/billing/invoices", async (c) => {
-    const customerId = z.string().regex(/^cus_[A-Za-z0-9]+$/).parse(c.req.query("customerId"));
-    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
-    const client = new StripeClient({ apiKey: config.stripeApiKey });
-    return c.json(await client.listInvoices(customerId));
-  });
   app.post("/api/whatsapp/incoming", async (c) => {
     const expected = process.env.WHATSAPP_WEBHOOK_TOKEN;
     if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
     const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
-    if (provided !== expected) throw new AppError("Unauthorized", 401);
+    // WHATSAPP_RATE_LIMIT — timingSafeEqual + rate limit por IP.
+    const expectedBuf = Buffer.from(expected);
+    const providedBuf = Buffer.from(provided ?? "");
+    if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf))
+      throw new AppError("Unauthorized", 401);
+    const waLimiter = (globalThis as { __waLimiter?: RateLimiter }).__waLimiter ??= new RateLimiter(30, 60000);
+    const waAddress = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+    if (!waLimiter.take(waAddress).allowed)
+      throw new AppError("Too many webhook calls", 429);
     const body = await c.req.json().catch(() => ({}));
     const data = (body as { data?: { key?: { id?: string; remoteJid?: string }; message?: { conversation?: string } } }).data;
     const id = data?.key?.id;
@@ -178,15 +164,20 @@ const agent = new AgentService(db, config, workspace, files, actions, browser, c
       browserConfigured: Boolean(config.workerUrl && config.workerToken),
     }),
   );
-  let loginWindow = 0,
-    loginAttempts = 0;
+  // SESSION_RATE_LIMIT — rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
+  const sessionLimiter = new RateLimiter(30, 60000);
+  const sessionAddress = (c: Context) => {
+    const fwd = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
+    if (fwd) return fwd;
+    try { return getConnInfo(c as unknown as Context).remote.address ?? "local"; }
+    catch { return "local"; }
+  };
   app.post("/api/session", async (c) => {
-    if (Date.now() - loginWindow > 60000) {
-      loginWindow = Date.now();
-      loginAttempts = 0;
-    }
-    if (++loginAttempts > 30)
+    const verdict = sessionLimiter.take(sessionAddress(c));
+    if (!verdict.allowed) {
+      c.header("Retry-After", String(Math.max(1, Math.ceil(verdict.retryAfterMs / 1000))));
       throw new AppError("Too many sign-in attempts. Try again in a minute.", 429);
+    }
     const body = z.object({ accessKey: z.string().optional() }).parse(await c.req.json());
     const session = await auth.session(body.accessKey);
     await ensureOwnerWorkspace("local-user");
@@ -225,12 +216,38 @@ const agent = new AgentService(db, config, workspace, files, actions, browser, c
     snapshot.browsers = snapshot.browsers.map((s) => browser.decorate(owner, s));
     return c.json(snapshot);
   });
+  // BILLING_AFTER_AUTH — billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
+app.post("/api/billing/customer", async (c) => {
+    const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
+    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
+    const client = new StripeClient({ apiKey: config.stripeApiKey });
+    return c.json(await client.createCustomer(body.email, body.name));
+  });
+  app.post("/api/billing/payment-link", async (c) => {
+    const body = z
+      .object({
+        amountCents: z.number().int().positive().max(100_000_000),
+        currency: z.string().regex(/^[a-z]{3}$/),
+        description: z.string().min(1).max(200),
+      })
+      .parse(await c.req.json());
+    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
+    const client = new StripeClient({ apiKey: config.stripeApiKey });
+    return c.json(await client.createPaymentLink(body.amountCents, body.currency, body.description));
+  });
+  app.get("/api/billing/invoices", async (c) => {
+    const customerId = z.string().regex(/^cus_[A-Za-z0-9]+$/).parse(c.req.query("customerId"));
+    const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
+    const client = new StripeClient({ apiKey: config.stripeApiKey });
+    return c.json(await client.listInvoices(customerId));
+  });
+
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/events", eventsRoutes(bus));
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }));
-  app.route("/api/rag", ragRoutes(rag));
+  app.route("/api/rag", ragRoutes(rag, db, files));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
   app.route("/api/computer", computerRoutes(computer, files));
@@ -473,3 +490,4 @@ const agent = new AgentService(db, config, workspace, files, actions, browser, c
 
   return { app, auth, files, actions, workspace, agent, computer, users };
 }
+// IMPORTS_BACKEND_FIXED — anadidos los imports que los bloques 2 y 46 no supieron inyectar.
