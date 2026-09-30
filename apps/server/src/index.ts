@@ -1,3 +1,4 @@
+// EVENTBUS_STARTUP_V1
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.ts";
 import { readConfig } from "./config.ts";
@@ -10,7 +11,8 @@ const db = await createStore({
   databaseUrl: config.databaseUrl,
 });
 await db.recoverInterruptedActions();
-const { app, agent } = await createApp(db, config);
+const { app, agent, bus } = await createApp(db, config);
+await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mode: config.mode });
 if (config.taskWorkerEnabled) agent.start();
 
 function startBackupScheduler(): () => void {

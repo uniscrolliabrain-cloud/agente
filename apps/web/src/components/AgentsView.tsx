@@ -1,3 +1,4 @@
+// AGENTROLE_V2_VIEW
 import { useState } from "react";
 import { Plus, Sparkles, UserCog, X } from "lucide-react";
 import type { AgentRole } from "../api/agents";
@@ -7,7 +8,7 @@ interface Props {
   enabled: boolean;
 }
 
-const EMPTY = { id: "", name: "", objetivo: "", sops: "", active: true };
+const EMPTY = { id: "", name: "", tone: "warm" as const, avatar: "sky" as const, greeting: "", roi: "", objetivo: "", sops: "", active: true };
 
 // Los inputs del modal van con estilo inline como ProfileModal: index.css esta en la lista
 // de ficheros compartidos y no se toca.
@@ -43,9 +44,14 @@ export default function AgentsView({ enabled }: Props) {
       await create({
         id,
         name: draft.name.trim(),
+        tone: draft.tone,
+        avatar: draft.avatar,
+        ...(draft.greeting.trim() ? { greeting: draft.greeting.trim() } : {}),
+        ...(draft.roi.trim() ? { roi: draft.roi.trim() } : {}),
         objetivo: draft.objetivo.trim(),
         sops: draft.sops.split(",").map((s) => s.trim()).filter(Boolean),
         active: draft.active,
+        memories: [],
       });
       setDraft(EMPTY);
       setOpen(false);
@@ -101,6 +107,40 @@ export default function AgentsView({ enabled }: Props) {
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 placeholder="Agente comercial"
+              />
+              <label className="modal-label" style={{ marginTop: 14 }}>Tono</label>
+              <select
+                style={inputStyle}
+                value={draft.tone}
+                onChange={(e) => setDraft({ ...draft, tone: e.target.value as "warm" | "concise" | "thoughtful" })}
+              >
+                <option value="warm">Cercano</option>
+                <option value="concise">Directo</option>
+                <option value="thoughtful">Reflexivo</option>
+              </select>
+              <label className="modal-label" style={{ marginTop: 14 }}>Avatar</label>
+              <select
+                style={inputStyle}
+                value={draft.avatar}
+                onChange={(e) => setDraft({ ...draft, avatar: e.target.value as "sky" | "sand" | "lilac" })}
+              >
+                <option value="sky">Azul</option>
+                <option value="sand">Arena</option>
+                <option value="lilac">Lila</option>
+              </select>
+              <label className="modal-label" style={{ marginTop: 14 }}>Saludo</label>
+              <input
+                style={inputStyle}
+                value={draft.greeting}
+                onChange={(e) => setDraft({ ...draft, greeting: e.target.value })}
+                placeholder="Hola, en que te ayudo?"
+              />
+              <label className="modal-label" style={{ marginTop: 14 }}>ROI</label>
+              <input
+                style={inputStyle}
+                value={draft.roi}
+                onChange={(e) => setDraft({ ...draft, roi: e.target.value })}
+                placeholder="Te ahorra 3 horas a la semana"
               />
               <label className="modal-label" style={{ marginTop: 14 }}>Objetivo</label>
               <textarea
