@@ -28,6 +28,7 @@
     "beta:smoke": "tsx scripts/beta-smoke.ts",
     "beta:vertical": "tsx scripts/beta-vertical.ts",
     "admin:create": "tsx scripts/admin-create.ts",
+    "roles:export": "tsx scripts/export-roles-public.ts",
     "SEED_AGENTS_REMOVED": "removed: scripts/seed-agents.ts no existe"
   },
   "dependencies": {

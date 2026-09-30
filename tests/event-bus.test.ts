@@ -30,13 +30,47 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "action.outcome_unknown": { title: "T" },
   "monitor.check": { url: "https://example.com", matched: false },
   "monitor.changed": { url: "https://example.com", excerpt: "x" },
-  "monitor.failed": { url: "https://example.com" },
+  "monitor.failed": { url: "https://example.com", error: "x" },
   "system.startup": { mode: "sample" },
   "system.error": { message: "x" },
   "system.maintenance": { tasks: 0, monitors: 0 },
   "system.google_disconnected": { owner: "o" },
   "auth.login": { userId: "u" },
   "auth.login_failed": { email: "e@e.com" },
+  // SCHEMAS_V2 — los 13 tipos de business graph, policy, state machine, agent runtime y
+  // context. Faltaban: el test 1 recorre SYSTEM_EVENT_TYPES y sin estas entradas reventaba
+  // en el primer tipo nuevo, y el test 2 se tragaba 13 ZodErrors en silencio (el bus captura
+  // y solo hace backgroundFailure, asi que el test 2 pasaba igual). Valores minimos validos
+  // contra payloadSchemas: version/durationMs positivos, changedFields obligatorio, etc.
+  "entity.created": { entityId: "e", entityType: "test", version: 1 },
+  "entity.updated": { entityId: "e", entityType: "test", version: 1, changedFields: [] },
+  "entity.deleted": { entityId: "e", entityType: "test" },
+  "relation.created": {
+    relationId: "r",
+    fromEntityId: "a",
+    toEntityId: "b",
+    relationType: "rel",
+  },
+  "relation.deleted": { relationId: "r" },
+  "policy.evaluated": { policyId: "p", decision: "allow", action: "read" },
+  "policy.denied": { policyId: "p", action: "read", reason: "x" },
+  "state.changed": { entityId: "e", stateMachine: "m", to: "b" },
+  "state.transition_denied": {
+    entityId: "e",
+    stateMachine: "m",
+    from: "a",
+    attempted: "b",
+    reason: "x",
+  },
+  "agent.runtime_spawned": { runtimeId: "rt", roleId: "ro", taskId: "t" },
+  "agent.runtime_completed": { runtimeId: "rt", roleId: "ro", taskId: "t", durationMs: 1 },
+  "agent.runtime_failed": { runtimeId: "rt", roleId: "ro", taskId: "t", error: "x" },
+  "context.assembled": {
+    entityCount: 0,
+    relationCount: 0,
+    knowledgeCount: 0,
+    policyCount: 0,
+  },
 };
 
 test("todo SystemEventType tiene schema y un payload minimo valido", () => {
@@ -68,7 +102,7 @@ test("EventBus.emit no lanza con ningun tipo del enum", async () => {
 });
 
 test("todo SystemEventType del enum aparece en algun bus.emit del repo", async () => {
-  const root = (Get-Location).Path;
+  const root = process.cwd();
   const skipDirs = new Set(["node_modules", ".git", "dist", "artifacts", "backups", ".openmuse"]);
   const files: string[] = [];
   async function walk(dir: string) {

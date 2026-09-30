@@ -1,14 +1,30 @@
 // AGENTROLE_V2_VIEW
 import { useState } from "react";
 import { Plus, Sparkles, UserCog, X } from "lucide-react";
-import type { AgentRole } from "../api/agents";
+import type { AgentAvatar, AgentRole, AgentTone } from "../api/agents";
 import { useAgents } from "../hooks/useAgents";
 
 interface Props {
   enabled: boolean;
 }
 
-const EMPTY = { id: "", name: "", tone: "warm" as const, avatar: "sky" as const, greeting: "", roi: "", objetivo: "", sops: "", active: true };
+// AGENTSVIEW_DRAFT_TYPES — el draft va tipado explicito. Antes se declaraba con `as const`,
+// asi que useState(EMPTY) inferia tone: "warm" y avatar: "sky" como literales sueltos y los
+// <select> no podian asignar el resto de la union. AgentTone/AgentAvatar (api/agents.ts) son
+// la fuente de verdad y coinciden con agentToneSchema/agentAvatarSchema del dominio.
+interface RoleDraft {
+  id: string;
+  name: string;
+  tone: AgentTone;
+  avatar: AgentAvatar;
+  greeting: string;
+  roi: string;
+  objetivo: string;
+  sops: string;
+  active: boolean;
+}
+
+const EMPTY: RoleDraft = { id: "", name: "", tone: "warm", avatar: "sky", greeting: "", roi: "", objetivo: "", sops: "", active: true };
 
 // Los inputs del modal van con estilo inline como ProfileModal: index.css esta en la lista
 // de ficheros compartidos y no se toca.
@@ -112,7 +128,7 @@ export default function AgentsView({ enabled }: Props) {
               <select
                 style={inputStyle}
                 value={draft.tone}
-                onChange={(e) => setDraft({ ...draft, tone: e.target.value as "warm" | "concise" | "thoughtful" })}
+                onChange={(e) => setDraft({ ...draft, tone: e.target.value as AgentTone })}
               >
                 <option value="warm">Cercano</option>
                 <option value="concise">Directo</option>
@@ -122,7 +138,7 @@ export default function AgentsView({ enabled }: Props) {
               <select
                 style={inputStyle}
                 value={draft.avatar}
-                onChange={(e) => setDraft({ ...draft, avatar: e.target.value as "sky" | "sand" | "lilac" })}
+                onChange={(e) => setDraft({ ...draft, avatar: e.target.value as AgentAvatar })}
               >
                 <option value="sky">Azul</option>
                 <option value="sand">Arena</option>

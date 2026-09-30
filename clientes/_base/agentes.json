@@ -1,5 +1,5 @@
 {
-  "_comment": "Ejemplo de cliente poblado. Copia de clientes/_base/agentes.json con los 16 activos. Un cliente real edita este fichero para activar solo los roles que ha contratado.",
+  "_comment": "Catalogo canonico de los 16 personajes. Fuente de verdad para la app y para el repo de redes. Los clientes copian este fichero a clientes/<nombre>/agentes.json y ajustan.",
   "agentes": [
     {
       "id": "direccion",

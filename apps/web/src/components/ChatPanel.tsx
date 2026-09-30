@@ -5,6 +5,7 @@ import ChatInput from "./ChatInput";
 import SuggestionChips from "./SuggestionChips";
 import type { ChatMessage } from "../types/api";
 
+// CHAT_ROLE_SELECTOR_V1
 interface ChatState {
   messages: ChatMessage[];
   streaming: boolean;

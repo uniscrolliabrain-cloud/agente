@@ -18,6 +18,8 @@ import {
   type RunEvent,
   // AGENT_ROLE_V2_BACKFILL — se usa el schema del dominio para normalizar los roles guardados.
   agentRoleSchema,
+  // PUBLIC_ROLES_ENDPOINT: tipo de retorno de publicRoles (id, name, tone, avatar, objetivo, roi, identidad).
+  type AgentRolePublic,
 } from "../../../../packages/domain/src/agent.ts";
 import type {
   ActionProposal,
@@ -55,15 +57,38 @@ import type { SOP } from "../../../../packages/domain/src/sop.ts";
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const date = () => new Date().toISOString();
 const terminal = new Set(["succeeded", "failed", "cancelled"]);
+export interface BusinessOsServices {
+  graph?: unknown;
+  truth?: unknown;
+  policy?: unknown;
+  stateMachine?: unknown;
+  context?: unknown;
+  runtime?: unknown;
+  governance?: unknown;
+  workspaceRegistry?: unknown;
+  marketplace?: unknown;
+}
+
 export class AgentService {
   readonly worker: TaskWorker;
   readonly business: BusinessDataService;
   readonly learning: LearningService;
+  // MEMORY_PUBLIC_V1 — memory pasa a ser publico para que el ContextEngine lo use.
   readonly memory: MemoryService;
   private readonly sopExecutor: SOPExecutor;
   private lastDedupAt?: number;
   private maintenance?: ReturnType<typeof setInterval>;
   private refreshing = false;
+  // BUSINESS_OS_CTOR_V1 — servicios nuevos opcionales. Se inyectan en app.ts.
+  readonly graph?: unknown;
+  readonly truth?: unknown;
+  readonly policy?: unknown;
+  readonly stateMachine?: unknown;
+  readonly context?: unknown;
+  readonly runtime?: unknown;
+  readonly governance?: unknown;
+  readonly workspaceRegistry?: unknown;
+  readonly marketplace?: unknown;
   constructor(
     readonly db: Store,
     readonly config: Config,
@@ -75,7 +100,17 @@ export class AgentService {
     readonly rag: RagService = new RagService(db),
     readonly whatsapp: WhatsAppClient = new WhatsAppClient({       apiKey: config.whatsappApiKey,       baseUrl: config.whatsappBaseUrl,       instance: config.whatsappInstance,     }),
     readonly bus?: EventBus,
+    business?: BusinessOsServices,
   ) {
+    this.graph = business?.graph;
+    this.truth = business?.truth;
+    this.policy = business?.policy;
+    this.stateMachine = business?.stateMachine;
+    this.context = business?.context;
+    this.runtime = business?.runtime;
+    this.governance = business?.governance;
+    this.workspaceRegistry = business?.workspaceRegistry;
+    this.marketplace = business?.marketplace;
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
@@ -204,6 +239,22 @@ export class AgentService {
     return created;
   }
 
+  /** Ficha publica del personaje para el repo de redes. */
+  async publicRoles(owner: string): Promise<AgentRolePublic[]> {
+    const roles = await this.db.list<AgentRole>(owner, "agent-roles");
+    return roles
+      .filter((role) => role.active)
+      .map((role) => ({
+        id: role.id,
+        name: role.name,
+        tone: role.tone,
+        avatar: role.avatar,
+        objetivo: role.objetivo,
+        ...(role.roi ? { roi: role.roi } : {}),
+        identidad:
+          role.memories.find((memory) => memory.kind === "identidad")?.text ?? role.objetivo,
+      }));
+  }
   async listAgents(owner: string): Promise<AgentRole[]> {
     // AGENT_ROLE_V2_BACKFILL — los roles guardados antes de que el tipo exigiera tone/avatar/
     // memories llegan sin ellos. Parsear por el schema los rellena con los defaults y, de paso,
@@ -921,7 +972,7 @@ export class AgentService {
       if (action.status === "succeeded") {
         await context.event("result", "Approved action completed", action.result);
         if (task.kind === "document")
-          return this.finish(task, context, action.result ?? "Reply completed");
+          return this.finish(owner, task, context, action.result ?? "Reply completed");
         task = await context.checkpoint({
           state: { ...task.state, approvalResult: action.result },
           actionId: null,
@@ -967,12 +1018,6 @@ export class AgentService {
           url: String(failedMonitor?.url ?? "").slice(0, 2000),
           error: detail.slice(0, 2000),
         });
-        const failedMonitor = await this.db.get<Monitor>(owner, "monitors", String(task.input.monitorId));
-        await context.busEvent("monitor.failed", {
-          monitorId: String(task.input.monitorId),
-          url: String(failedMonitor?.url ?? "").slice(0, 2000),
-          error: detail.slice(0, 2000),
-        });
         return {
           status: failures >= 5 ? "paused" : "scheduled",
           error: detail,
@@ -1012,7 +1057,7 @@ export class AgentService {
           },
         ],
       });
-      return this.finish(task, context, artifact.summary);
+      return this.finish(owner, task, context, artifact.summary);
     }
     return executeModelTask(this, owner, task, context);
   }
@@ -1165,10 +1210,46 @@ export class AgentService {
   async learn(owner: string, task: AgentTask, facts: string[]) {
     return this.learning.learn(owner, task, facts);
   }
-  async finish(task: AgentTask, context: TaskContext, result: string) {
+  async finish(owner: string, task: AgentTask, context: TaskContext, result: string) {
     await context.guard();
     if (task.artifactIds.length === 0 && task.evidence.length === 0)
       throw new Error("Cannot mark a task succeeded without an artifact or evidence");
+    // MATERIALIZE_ENTITY_ON_FINISH_V1 — materializamos una entidad de negocio
+    // por cada artifact creado, para que el grafo se alimente solo.
+    if (this.graph) {
+      try {
+        const { BusinessGraph } = await import("./business/graph.ts");
+        const g = this.graph as InstanceType<typeof BusinessGraph>;
+        for (const artifactId of task.artifactIds) {
+          const artifact = await this.db.get<{
+            id: string;
+            taskId: string;
+            kind: string;
+            title: string;
+            summary: string;
+          }>(owner, "agent-artifacts", artifactId);
+          if (!artifact) continue;
+          const existingId = `artifact:${artifact.id}`;
+          const found = await g.getEntity(owner, existingId);
+          if (found) continue;
+          await g.createEntity(owner, {
+            id: existingId,
+            type: "artifact",
+            name: artifact.title.slice(0, 300),
+            status: "completed",
+            properties: {
+              kind: artifact.kind,
+              summary: artifact.summary.slice(0, 2000),
+              taskId: artifact.taskId,
+            },
+            actor: `task:${task.id}`,
+            source: "task.finish",
+          });
+        }
+      } catch {
+        /* best-effort, no rompe el finish */
+      }
+    }
     await context.event("result", "Work completed", result);
     return {
       status: "succeeded" as const,

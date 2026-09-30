@@ -9,4 +9,6 @@ export * from "./auth";
 export * from "./rag";
 export * from "./threads";
 export * from "./projects";
+// EXPORT_BUSINESS_WEB_V1
+export * from "./business";
 export type { ChatMessage, AgentTask, ActionProposal, TaskDetail, TaskStatus, TaskKind, TaskStep, RunEvent, AgentArtifact, AgentWorkspace, WorkspaceSnapshot } from "../types/api";

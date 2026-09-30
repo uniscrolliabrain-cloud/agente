@@ -1,3 +1,4 @@
+// EVENTBUS_ACTION_EMIT_V1
 import { createHash, randomUUID } from "node:crypto";
 import {
   type ActionProposal,
@@ -6,6 +7,7 @@ import {
   proposalSchema,
 } from "../../../packages/domain/src/index.ts";
 import type { Store } from "./db.ts";
+import type { EventBus } from "./engine/events/index.ts";
 import { AppError } from "./errors.ts";
 
 interface Options {
@@ -30,10 +32,13 @@ interface Options {
 }
 export class ActionService {
   private readonly now: () => number;
+  private readonly bus?: EventBus;
   constructor(
     private readonly db: Store,
     private readonly options: Options,
+    bus?: EventBus,
   ) {
+    this.bus = bus;
     this.now = options.now ?? Date.now;
   }
   async propose(
@@ -101,6 +106,11 @@ export class ActionService {
       return existing;
     }
     await this.record(owner, saved, "Ready for your review");
+    await this.bus?.emit(owner, "action.proposed", { kind: "action", id: saved.id }, {
+      actionId: saved.id,
+      title: saved.title.slice(0, 300),
+      kind: saved.kind,
+    });
     return saved;
   }
   async decide(
@@ -167,7 +177,17 @@ export class ActionService {
       claimed,
       decision === "deny" ? "Declined; no changes made" : "Approved; execution started",
     );
-    if (decision === "deny") return claimed;
+    if (decision === "deny") {
+      await this.bus?.emit(owner, "action.denied", { kind: "action", id: claimed.id }, {
+        actionId: claimed.id,
+        title: claimed.title.slice(0, 300),
+      });
+      return claimed;
+    }
+    await this.bus?.emit(owner, "action.approved", { kind: "action", id: claimed.id }, {
+      actionId: claimed.id,
+      title: claimed.title.slice(0, 300),
+    });
     let finished: ActionProposal;
     try {
       const input = proposalSchema.parse({ kind: claimed.kind, data: claimed.data });
@@ -190,6 +210,25 @@ export class ActionService {
       };
     }
     await this.db.put(owner, "actions", finished);
+    const finishedTitle = finished.title.slice(0, 300);
+    if (finished.status === "succeeded")
+      await this.bus?.emit(owner, "action.executed", { kind: "action", id: finished.id }, {
+        actionId: finished.id,
+        title: finishedTitle,
+        ...(finished.result ? { result: finished.result.slice(0, 2000) } : {}),
+      });
+    else if (finished.status === "outcome_unknown")
+      await this.bus?.emit(owner, "action.outcome_unknown", { kind: "action", id: finished.id }, {
+        actionId: finished.id,
+        title: finishedTitle,
+        ...(finished.error ? { error: finished.error.slice(0, 2000) } : {}),
+      });
+    else
+      await this.bus?.emit(owner, "action.failed", { kind: "action", id: finished.id }, {
+        actionId: finished.id,
+        title: finishedTitle,
+        ...(finished.error ? { error: finished.error.slice(0, 2000) } : {}),
+      });
     await this.record(owner, finished, finished.result ?? finished.error ?? finished.status);
     return finished;
   }
