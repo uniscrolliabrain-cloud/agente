@@ -56,6 +56,9 @@ export function useChat(
     };
   }, [enabled, threadId]);
 
+  // CHAT_ROLE_ID — el rol activo viaja en state para que el backend lo lea.
+  const [roleId, setRoleId] = useState<string | undefined>(undefined);
+
   const send = useCallback(
     async (text: string, attachment?: ChatAttachment) => {
       if ((!text.trim() && !attachment) || streaming || !threadId) return;
@@ -90,6 +93,7 @@ export function useChat(
           {
             threadId,
             runId: uid(),
+            ...(roleId ? { roleId } : {}),
             messages: history.map((m, i) =>
               i === history.length - 1
                 ? { id: m.id, role: m.role, content: llmContent }
@@ -97,7 +101,13 @@ export function useChat(
             ),
           },
           (event: AgUiEvent) => {
-            if (event.type === "TEXT_MESSAGE_CONTENT" && typeof event.delta === "string") {
+            // CopilotKit v2 emite TEXT_MESSAGE_CHUNK (delta en texto plano), no
+            // TEXT_MESSAGE_CONTENT. Escuchando solo el segundo, el LLM contestaba pero
+            // el texto nunca llegaba al estado y el mensaje salia como "(sin respuesta)".
+            if (
+              (event.type === "TEXT_MESSAGE_CONTENT" || event.type === "TEXT_MESSAGE_CHUNK") &&
+              typeof event.delta === "string"
+            ) {
               assistantText += event.delta;
               setStreamBuf(assistantText);
             } else if (event.type === "TOOL_CALL_START" && typeof event.toolCallName === "string") {
@@ -175,5 +185,5 @@ export function useChat(
     abortRef.current?.abort();
   }, []);
 
-  return { messages, streaming, streamBuf, activeTool, error, send, cancel, threadId };
+  return { messages, streaming, streamBuf, activeTool, error, send, cancel, threadId, roleId, setRoleId };
 }
