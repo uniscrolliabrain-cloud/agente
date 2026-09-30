@@ -9,11 +9,18 @@ interface Props {
   onOpenTask?: (taskId: string) => void;
 }
 
+// CONTROL_CENTER_NEW_GROUPS_V1 — anadidos los grupos del Business OS.
 const TYPE_GROUPS: { label: string; prefix: string }[] = [
   { label: "Tareas", prefix: "task." },
   { label: "SOPs", prefix: "sop." },
   { label: "Acciones", prefix: "action." },
   { label: "Monitores", prefix: "monitor." },
+  { label: "Entidades", prefix: "entity." },
+  { label: "Relaciones", prefix: "relation." },
+  { label: "Politicas", prefix: "policy." },
+  { label: "Estados", prefix: "state." },
+  { label: "Agentes", prefix: "agent." },
+  { label: "Contexto", prefix: "context." },
   { label: "Sistema", prefix: "system." },
   { label: "Auth", prefix: "auth." },
 ];

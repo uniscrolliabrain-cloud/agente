@@ -1,3 +1,4 @@
+// EVENTBUS_APP_WIRE_V1
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { existsSync } from "node:fs";
@@ -47,17 +48,47 @@ export async function createApp(
     users = new UserService(db),
     rag = new RagService(db),
     workspace = new WorkspaceService(db, config, files, google, rag);
+  // BUSINESS_OS_FIXED_V1 — bus declarado antes de los servicios que lo usan.
+  const bus = new EventBus(db);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       workspace.execute(owner, input, connectionId, targetVersion),
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     connected: (owner) => workspace.connected(owner),
     connection: (owner) => workspace.connection(owner),
-  });
+  }, bus);
   const browser = new BrowserService(db, config, auth, files);
+  const { BusinessGraph } = await import("./engine/business/graph.ts");
+  const { BusinessTruth } = await import("./engine/business/truth.ts");
+  const { PolicyEngine } = await import("./engine/policy/engine.ts");
+  const { StateMachineEngine } = await import("./engine/policy/state-machine.ts");
+  const { ContextEngine } = await import("./engine/context/engine.ts");
+  const { AgentRuntimeManager } = await import("./engine/agents/runtime.ts");
+  const { AgentGovernance } = await import("./engine/agents/governance.ts");
+  const { WorkspaceRegistry } = await import("./engine/workspace/registry.ts");
+  const { SkillMarketplace } = await import("./engine/skills/marketplace.ts");
+  const graph = new BusinessGraph(db, bus);
+  const truth = new BusinessTruth(graph);
+  const policy = new PolicyEngine(bus);
+  const stateMachine = new StateMachineEngine(bus);
+  const agentRuntime = new AgentRuntimeManager(bus);
+  const governance = new AgentGovernance(policy, bus);
+  const workspaceRegistry = new WorkspaceRegistry();
+  const marketplace = new SkillMarketplace(db);
   const computer = new ComputerService(db, config, options.docker);
-  const bus = new EventBus(db);
-const agent = new AgentService(db, config, workspace, files, actions, browser, computer, rag, undefined, bus);
+  const agent = new AgentService(
+    db,
+    config,
+    workspace,
+    files,
+    actions,
+    browser,
+    computer,
+    rag,
+    undefined,
+    bus,
+    { graph, truth, policy, stateMachine, context: undefined, runtime: agentRuntime, governance, workspaceRegistry, marketplace },
+  );
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
@@ -251,6 +282,9 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
   app.route("/api/computer", computerRoutes(computer, files));
+  // BUSINESS_ROUTES_WIRE_V1 — rutas HTTP del Business Graph.
+  const { businessRoutes } = await import("./business-routes.ts");
+  app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {
     const query = z

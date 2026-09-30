@@ -25,12 +25,26 @@ export const SYSTEM_EVENT_TYPES = [
   "system.google_disconnected",
   "auth.login",
   "auth.login_failed",
+  // EVENTS_V2 — business graph, policy, state machine, agent runtime, context.
+  "entity.created",
+  "entity.updated",
+  "entity.deleted",
+  "relation.created",
+  "relation.deleted",
+  "policy.evaluated",
+  "policy.denied",
+  "state.changed",
+  "state.transition_denied",
+  "agent.runtime_spawned",
+  "agent.runtime_completed",
+  "agent.runtime_failed",
+  "context.assembled",
 ] as const;
 
 export type SystemEventType = (typeof SYSTEM_EVENT_TYPES)[number];
 
 export interface SystemEventSource {
-  kind: "task" | "sop" | "action" | "monitor" | "system" | "auth";
+  kind: "task" | "sop" | "action" | "monitor" | "system" | "auth" | "entity" | "relation" | "policy" | "state" | "agent" | "context";
   id: string;
 }
 

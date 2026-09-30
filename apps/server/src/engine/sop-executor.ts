@@ -312,7 +312,7 @@ export class SOPExecutor {
     ];
     await this.service.learn(owner, task, facts);
     await this.service.ingestTaskArtifacts(owner, task.id).catch(() => {});
-    return this.service.finish(task, ctx, `SOP “${sop.name}” completed ${sop.steps.length} step(s).`);
+    return this.service.finish(owner, task, ctx, `SOP “${sop.name}” completed ${sop.steps.length} step(s).`);
   }
 
   private async runStep(

@@ -21,6 +21,9 @@ import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
 import type { AgentTask } from "./types/api";
+// WORKSPACE_REGISTRY_V1 — los hooks del registry (useStateRegistry/useEffectRegistry) se
+// quitaron: Fase 1 no esta cableada y noUnusedLocals rompia el typecheck. Al implementarla,
+// volver a importar useState/useEffect aqui y consumir WORKSPACE_VIEW_BY_ROLE (ya exportado).
 
 function usePanel(key: string, defaultCollapsed: boolean) {
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -53,6 +56,28 @@ function useTheme() {
   return { dark, toggle: () => setDark((v) => !v) };
 }
 
+// WORKSPACE_REGISTRY_V1 — mapeo rol -> vista por defecto. Fase 1: solo
+// cambia la vista inicial al activar un rol. Fase 3: plantillas ricas.
+// Exportado a proposito: asi el scaffolding se conserva aunque Fase 1 no este
+// cableada todavia, y noUnusedLocals no lo marca como declaracion muerta.
+export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
+  direccion: "control-center",
+  comercial: "tasks",
+  atencion: "chat",
+  administrativo: "documents",
+  finanzas: "control-center",
+  marketing: "tasks",
+  contenido: "documents",
+  operaciones: "tasks",
+  compras: "tasks",
+  rrhh: "tasks",
+  legal: "documents",
+  compliance: "documents",
+  investigacion: "memory",
+  calidad: "tasks",
+  it: "tasks",
+  producto: "projects",
+};
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
@@ -148,6 +173,8 @@ export default function App() {
         <ConversationsPanel
           collapsed={convCollapsed}
           activeView={view}
+          // APP_WORKSPACE_LABEL_V1
+          workspaceLabel="Agente IA Pro"
           onSelectView={setView}
           activeThreadId={threads.activeId}
           threads={threads.threads}

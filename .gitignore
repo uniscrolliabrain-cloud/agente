@@ -18,3 +18,10 @@ repodump-actual.txt
 repodump-*.txt
 backups/
 *.bundle
+
+# BUSINESS_OS_IGNORE_V1
+backups/
+*.bundle
+diag-chat.ts
+diag-*.ts
+artifacts/demo/

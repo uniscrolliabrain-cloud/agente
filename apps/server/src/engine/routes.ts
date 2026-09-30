@@ -276,6 +276,9 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     }
     return c.json({ clients });
   });
+  // PUBLIC_ROLES_ENDPOINT — canon publico de los personajes para el repo de redes.
+  // Solo expone id, name, tone, avatar, objetivo, roi e identidad. Nada interno.
+  app.get("/roles/public", async (c) => c.json(await service.publicRoles(c.get("owner"))));
   app.get("/usage", async (c) => c.json(await service.usageSummary(c.get("owner"))));
   app.get("/search", async (c) => {
     const q = z.string().min(2).max(200).parse(c.req.query("q"));

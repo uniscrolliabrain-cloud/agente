@@ -4,9 +4,12 @@ import WorkspaceSwitcher from "./WorkspaceSwitcher";
 
 export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users";
 
+// NAV_WORKSPACE_TEMPLATE_V1
 interface Props {
   collapsed: boolean;
   activeView: AppView;
+  // APP_WORKSPACE_LABEL_V1 — etiqueta del workspace activo; la pasa App.tsx.
+  workspaceLabel: string;
   onSelectView: (view: AppView) => void;
   isAdmin: boolean;
   onNewChat: () => void;
@@ -43,6 +46,7 @@ function groupThreads(threads: Thread[]): Array<{ label: string; items: Thread[]
 export default function ConversationsPanel({
   collapsed,
   activeView,
+  workspaceLabel,
   onSelectView,
   isAdmin,
   onNewChat,
@@ -71,7 +75,7 @@ export default function ConversationsPanel({
 
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <WorkspaceSwitcher name="Mi empresa" subtitle="Agente IA Pro" />
+      <WorkspaceSwitcher name="Mi empresa" subtitle={workspaceLabel ?? "Agente IA Pro"} />
       <div className="sidebar-top">
         <button className="new-chat-button" onClick={onNewChat}>
           <Plus size={16} />

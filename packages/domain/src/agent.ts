@@ -146,6 +146,21 @@ export interface AgentRoleMemory {
   text: string;
 }
 
+// AGENT_ROLE_V3 — ampliacion del rol con campos tecnicos opcionales.
+// Un rol sin estos campos se comporta como hoy (todo permitido dentro de
+// sus sops). Un rol con ellos es una allowlist adicional.
+export interface AgentRolePermission {
+  resource: string;
+  actions: Array<"read" | "create" | "update" | "delete" | "execute" | "approve">;
+}
+
+export interface AgentRoleMemoryPolicy {
+  read: boolean;
+  write: boolean;
+  categories: string[];
+  maxRecall: number;
+}
+
 export interface AgentRole {
   id: string;
   /** Nombre del personaje: Alex, Leo, Sofia. La cara que ve el dueno. */
@@ -163,6 +178,14 @@ export interface AgentRole {
   active: boolean;
   /** Las 4 memorias vivas. Se materializan como AgentMemory al seedear. */
   memories: AgentRoleMemory[];
+  /** AGENT_ROLE_V3 — allowlist adicional. Ausente = sin restriccion. */
+  permissions?: AgentRolePermission[];
+  /** AGENT_ROLE_V3 — politica de memoria. Ausente = defaults permisivos. */
+  memoryPolicy?: AgentRoleMemoryPolicy;
+  /** AGENT_ROLE_V3 — skills que puede usar este rol. */
+  skills?: string[];
+  /** AGENT_ROLE_V3 — tools permitidas. Ausente = las de sus sops. */
+  allowedTools?: string[];
   createdAt?: string;
 }
 
@@ -203,6 +226,29 @@ export const agentRoleSchema = z.object({
   sops: z.array(z.string().max(200)).max(50).default([]),
   active: z.boolean().default(true),
   memories: z.array(agentRoleMemorySchema).max(8).default([]),
+  // AGENT_ROLE_V3 — campos tecnicos opcionales.
+  permissions: z
+    .array(
+      z.object({
+        resource: z.string().min(1).max(200),
+        actions: z
+          .array(z.enum(["read", "create", "update", "delete", "execute", "approve"]))
+          .min(1)
+          .max(20),
+      }),
+    )
+    .max(100)
+    .optional(),
+  memoryPolicy: z
+    .object({
+      read: z.boolean().default(true),
+      write: z.boolean().default(false),
+      categories: z.array(z.string().max(100)).max(50).default([]),
+      maxRecall: z.number().int().min(0).max(50).default(10),
+    })
+    .optional(),
+  skills: z.array(z.string().max(200)).max(100).optional(),
+  allowedTools: z.array(z.string().max(200)).max(100).optional(),
   createdAt: z.string().optional(),
 });
 export type AgentRoleInput = z.infer<typeof agentRoleSchema>;
