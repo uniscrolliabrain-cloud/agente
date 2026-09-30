@@ -16,3 +16,5 @@ om-chat-acceptance.png
 apps/web/package-lock.json
 repodump-actual.txt
 repodump-*.txt
+backups/
+*.bundle
