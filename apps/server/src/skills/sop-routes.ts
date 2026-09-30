@@ -40,15 +40,18 @@ export function sopRoutes(db: Store, agent: AgentService) {
     return c.json({ ok: true });
   });
   // Real "api" trigger: external callers start this SOP by POSTing here.
+  // ?force=1 lets an operator start a SOP whose trigger is manual, cron or email_subject.
   app.post("/:id/run", async (c) => {
     const owner = c.get("owner");
     const sopId = c.req.param("id");
     const sop = await db.get<SOP>(owner, "sops", sopId);
     if (!sop) throw new AppError("SOP not found", 404);
     if (!sop.active) throw new AppError("SOP is inactive", 409);
-    if (sop.trigger.type !== "api")
+    const forced = c.req.query("force") === "1";
+    if (sop.trigger.type !== "api" && !forced)
       throw new AppError(
-        `SOP trigger is "${sop.trigger.type}"; only "api" SOPs can be started from this endpoint`,
+        `SOP trigger is "${sop.trigger.type}"; only "api" SOPs can be started from this endpoint. ` +
+          `Append ?force=1 to start it anyway.`,
         409,
       );
     const body = ((await c.req.json().catch(() => ({}))) ?? {}) as Record<string, unknown>;
@@ -61,8 +64,8 @@ export function sopRoutes(db: Store, agent: AgentService) {
         kind: "sop",
         title: sop.name,
         prompt: `API trigger for ${sop.name}`,
-        // SOP_ID_LAST_WINS — el sopId del path gana siempre sobre userInput.
-        input: { ...userInput, sopId: sop.id, trigger: { type: "api" } },
+        // Records the SOP's real trigger so a forced run is not logged as an api trigger.
+        input: { sopId: sop.id, ...userInput, trigger: { type: sop.trigger.type, forced } },
       },
       idempotencyKey ? `sop-api:${sop.id}:${idempotencyKey}` : undefined,
     );
