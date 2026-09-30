@@ -1,3 +1,4 @@
+// EVENTBUS_SOP_EMIT_V1
 import { createHash, randomUUID } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
 import { join, resolve, sep } from "node:path";
@@ -143,6 +144,13 @@ export class SOPExecutor {
         const falsy = condition === "" || condition === "0" || condition === "false";
         if (falsy) {
           results[step.id] = { skipped: true, reason: `when: ${step.when}` };
+          await ctx.busEvent("sop.step_skipped", {
+            sopId: sop.id,
+            stepId: step.id,
+            index,
+            title: step.title.slice(0, 200),
+            reason: `when: ${step.when}`.slice(0, 500),
+          });
           task = await ctx.checkpoint({
             plan: task.plan.map((p, i) =>
               i === index
@@ -169,10 +177,23 @@ export class SOPExecutor {
           : await this.runStep(owner, sop, step, task, ctx, results);
       } catch (error) {
         if (error instanceof LostLeaseError || ctx.signal.aborted) throw error;
+        await ctx.busEvent("sop.failed", {
+          sopId: sop.id,
+          stepId: step.id,
+          index,
+          error: (error instanceof Error ? error.message : "Step failed").slice(0, 2000),
+        });
         if (step.required === false) {
           const detail = error instanceof Error ? error.message : "Step failed";
           await ctx.event("step", `SOP step skipped: ${step.title}`, detail.slice(0, 500));
           results[step.id] = { skipped: true, error: detail.slice(0, 500) };
+          await ctx.busEvent("sop.step_skipped", {
+            sopId: sop.id,
+            stepId: step.id,
+            index,
+            title: step.title.slice(0, 200),
+            reason: `required:false: ${detail}`.slice(0, 500),
+          });
           task = await ctx.checkpoint({
             plan: task.plan.map((p, i) =>
               i === index
@@ -239,6 +260,12 @@ export class SOPExecutor {
       }
 
       results[step.id] = outcome;
+      await ctx.busEvent("sop.step_completed", {
+        sopId: sop.id,
+        stepId: step.id,
+        index,
+        title: step.title.slice(0, 200),
+      });
       task = await ctx.checkpoint({
         plan: task.plan.map((p, i) =>
           i === index

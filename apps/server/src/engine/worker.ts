@@ -1,3 +1,4 @@
+// EVENTBUS_WORKER_V1
 import { randomUUID } from "node:crypto";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
@@ -15,6 +16,7 @@ export interface TaskContext {
   guard(): Promise<void>;
   checkpoint(patch: Partial<AgentTask>): Promise<AgentTask>;
   event(kind: RunEvent["kind"], title: string, detail?: string): Promise<void>;
+  busEvent(type: SystemEventType, payload: Record<string, unknown>): Promise<void>;
 }
 export type TaskHandler = (
   owner: string,
@@ -184,18 +186,13 @@ export class TaskWorker {
         title,
         detail,
       });
+    };
+    const busEvent = async (type: SystemEventType, payload: Record<string, unknown>) => {
       const bus = this.options.bus;
-      if (bus) {
-        const mapped = mapRunEventToBusKind(kind);
-        if (mapped) {
-          const source: SystemEventSource = { kind: "task", id: taskId };
-          await bus.emit(owner, mapped, source, {
-            taskId,
-            title: title.slice(0, 200),
-            ...(detail ? { detail: detail.slice(0, 2000) } : {}),
-          });
-        }
-      }
+      if (!bus) return;
+      await guard();
+      const source: SystemEventSource = { kind: "task", id: taskId };
+      await bus.emit(owner, type, source, { taskId, ...payload });
     };
     await this.db.put(owner, "runs", {
       id: leaseId,
@@ -226,6 +223,7 @@ export class TaskWorker {
         guard,
         checkpoint,
         event,
+        busEvent,
       });
       await checkpoint({ ...result, leaseId: null, leaseUntil: null });
       await this.db.put(owner, "runs", {
@@ -282,9 +280,4 @@ export class TaskWorker {
   }
 }
 
-function mapRunEventToBusKind(kind: string): SystemEventType | null {
-  if (kind === "status") return "task.status_changed";
-  if (kind === "error") return "task.failed";
-  if (kind === "result") return "task.completed";
-  return null;
-}
+

@@ -49,6 +49,9 @@ import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
 import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
+// EVENTBUS_TASK_EMIT_V1
+// EVENTBUS_MONITOR_EMIT_V1
+// EVENTBUS_MONITOR_EMIT_V1
 const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const date = () => new Date().toISOString();
 const terminal = new Set(["succeeded", "failed", "cancelled"]);
@@ -251,6 +254,11 @@ export class AgentService {
       .slice(0, 5)
       .map(({ value: task }) => ({ id: task.id, title: task.title.slice(0, 120) }));
     const google = await this.workspace.connected(owner).catch(() => false);
+    if (!google && this.bus) {
+      await this.bus.emit(owner, "system.google_disconnected", { kind: "system", id: "google" }, {
+        owner: owner.slice(0, 200),
+      });
+    }
     return {
       pendingApprovals: pending,
       recentFailures,
@@ -953,6 +961,18 @@ export class AgentService {
           failures >= 5 ? "Watch paused after repeated failures" : "Check failed; retry scheduled",
           detail,
         );
+        const failedMonitor = await this.db.get<Monitor>(owner, "monitors", String(task.input.monitorId));
+        await context.busEvent("monitor.failed", {
+          monitorId: String(task.input.monitorId),
+          url: String(failedMonitor?.url ?? "").slice(0, 2000),
+          error: detail.slice(0, 2000),
+        });
+        const failedMonitor = await this.db.get<Monitor>(owner, "monitors", String(task.input.monitorId));
+        await context.busEvent("monitor.failed", {
+          monitorId: String(task.input.monitorId),
+          url: String(failedMonitor?.url ?? "").slice(0, 2000),
+          error: detail.slice(0, 2000),
+        });
         return {
           status: failures >= 5 ? "paused" : "scheduled",
           error: detail,
@@ -1158,6 +1178,33 @@ export class AgentService {
   }
   private async publishOutcome(owner: string, saved: AgentTask) {
     const task = await this.getTask(owner, saved.id);
+    const bus = this.bus;
+    if (bus) {
+      const src = { kind: "task" as const, id: task.id };
+      if (task.status === "succeeded")
+        await bus.emit(owner, "task.completed", src, {
+          taskId: task.id,
+          title: task.title.slice(0, 200),
+          ...(task.result ? { result: task.result.slice(0, 2000) } : {}),
+        });
+      else if (task.status === "failed")
+        await bus.emit(owner, "task.failed", src, {
+          taskId: task.id,
+          title: task.title.slice(0, 200),
+          ...(task.error ? { error: task.error.slice(0, 2000) } : {}),
+        });
+      else if (task.status === "waiting_input")
+        await bus.emit(owner, "task.waiting_input", src, {
+          taskId: task.id,
+          title: task.title.slice(0, 200),
+          ...(task.question ? { question: task.question.slice(0, 2000) } : {}),
+        });
+      else if (task.status === "waiting_approval")
+        await bus.emit(owner, "task.waiting_approval", src, {
+          taskId: task.id,
+          title: task.title.slice(0, 200),
+        });
+    }
     if (task.status === "succeeded") {
       await this.notify(
         owner,
@@ -1367,9 +1414,19 @@ export class AgentService {
       previousHash ? "Checked for changes" : "Saved the first observation",
       text.slice(0, 1000),
     );
+    await ctx.busEvent("monitor.check", {
+      monitorId: monitor.id,
+      url: monitor.url.slice(0, 2000),
+      matched,
+    });
     if (shouldNotify) {
       await ctx.guard();
       await ctx.event("result", "A meaningful change was found", text.slice(0, 500));
+      await ctx.busEvent("monitor.changed", {
+        monitorId: monitor.id,
+        url: monitor.url.slice(0, 2000),
+        excerpt: text.slice(0, 1000),
+      });
     }
     return {
       status: "scheduled",

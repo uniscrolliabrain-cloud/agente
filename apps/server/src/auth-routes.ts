@@ -1,3 +1,4 @@
+// EVENTBUS_AUTH_EMIT_V1
 import { createHash, randomBytes } from "node:crypto";
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { type Context, Hono } from "hono";
@@ -6,6 +7,7 @@ import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import { backgroundFailure } from "./log.ts";
+import type { EventBus } from "./engine/events/index.ts";
 import { RateLimiter } from "./rate-limit.ts";
 import { type User, type UserService, userRoleSchema, userSetupSchema } from "./users.ts";
 
@@ -68,7 +70,12 @@ export interface AuthRouteOptions {
   afterLogin?: (owner: string) => Promise<void>;
 }
 
-export function authRoutes(db: Store, users: UserService, options: AuthRouteOptions = {}) {
+export function authRoutes(
+  db: Store,
+  users: UserService,
+  options: AuthRouteOptions = {},
+  bus?: EventBus,
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
   const ipLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_IP, LOGIN_WINDOW_MS);
   const emailLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_EMAIL, LOGIN_WINDOW_MS);
@@ -90,11 +97,19 @@ export function authRoutes(db: Store, users: UserService, options: AuthRouteOpti
     }
 
     const user = await users.verifyCredentials(body.email, body.password);
-    if (!user) throw new AppError("Email o contrasena incorrectos", 401);
+    if (!user) {
+      await bus?.emit("system", "auth.login_failed", { kind: "auth", id: "login" }, {
+        email: body.email.toLowerCase().trim().slice(0, 300),
+      });
+      throw new AppError("Email o contrasena incorrectos", 401);
+    }
     ipLimiter.reset(keys[0]);
     emailLimiter.reset(emailKey);
 
     const token = randomBytes(32).toString("base64url");
+    await bus?.emit("system", "auth.login", { kind: "auth", id: user.id }, {
+      userId: user.id,
+    });
     await db.put("system", "sessions", {
       id: digest(token),
       owner: user.id,

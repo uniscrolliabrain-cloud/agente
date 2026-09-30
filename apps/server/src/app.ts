@@ -246,7 +246,7 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/events", eventsRoutes(bus));
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
-  app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }));
+  app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }, bus));
   app.route("/api/rag", ragRoutes(rag, db, files));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
@@ -488,6 +488,6 @@ app.post("/api/billing/customer", async (c) => {
       "[OpenMuse] BUSINESS_DATABASE_URL no esta definido: los SOPs con la tool query_business ejecutan su SQL contra DATABASE_URL, que es la misma base de datos donde viven los datos de todos los owners. Apunta BUSINESS_DATABASE_URL a un rol de solo lectura (GRANT SELECT) en otra base de datos.",
     );
 
-  return { app, auth, files, actions, workspace, agent, computer, users };
+  return { app, auth, files, actions, workspace, agent, computer, users, bus };
 }
 // IMPORTS_BACKEND_FIXED — anadidos los imports que los bloques 2 y 46 no supieron inyectar.
