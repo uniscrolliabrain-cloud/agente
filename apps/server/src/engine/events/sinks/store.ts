@@ -59,7 +59,9 @@ export class StoreQuery implements EventQuery {
 
   async aggregate(owner: string, hours: number): Promise<EventAggregate[]> {
     const since = new Date(Date.now() - hours * 3600000).toISOString();
-    const rows = await this.db.list<SystemEvent>(owner, KIND);
+    // AGGREGATE_LIMIT — 5000 eventos recientes es mas que suficiente para un agregado
+    // de 24h. Evita cargar el historico completo del owner.
+    const rows = await this.db.list<SystemEvent>(owner, KIND, { limit: 5000 });
     const counts = new Map<SystemEventType, number>();
     for (const event of rows) {
       if (event.emittedAt < since) continue;

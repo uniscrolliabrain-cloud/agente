@@ -45,7 +45,7 @@ function formatRecall(ragHits: RagHit[], memories: AgentMemory[]): string {
     for (const m of memories) {
       const cat = m.category ? `[${m.category}] ` : "";
       const tags = m.tags && m.tags.length > 0 ? ` (${m.tags.join(", ")})` : "";
-      parts.push(`- ${cat}${m.text}${tags}`);
+      // RECALL_TEXT_LIMIT — 500 chars como remember(); el formato no debe crecer sin control.      parts.push(`- ${cat}${m.text.slice(0, 500)}${tags}`);
     }
   }
   if (ragHits.length > 0) {

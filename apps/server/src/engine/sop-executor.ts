@@ -531,7 +531,7 @@ export class SOPExecutor {
       const quoted = requirements.map((r: string) => `'${r}'`).join(" ");
       const install = await this.service.computer.execute(
         owner,
-        { command: `python3 -m pip install --user --no-input ${quoted}` },
+        { command: `python3 -m pip install --user --no-input --no-index --find-links=/opt/wheels ${quoted}` },
         {
           idempotencyKey: `skill-pip:${skillId}:${requirements.join(",")}`,
           signal: ctx.signal,

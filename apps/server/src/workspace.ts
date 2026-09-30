@@ -525,7 +525,14 @@ export class WorkspaceService {
     );
     if (cached && cached.connectionId === connection.id)
       return this.files.signed(owner, await this.files.get(owner, cached.artifactId));
-    const [messageId, attachmentId, filename] = reference.split(":");
+    // SAFE_ATTACHMENT_REF — el filename puede contener ":" porque encodeURIComponent no lo
+// escapa. Partimos por los dos primeros ":" y dejamos el resto intacto.
+const firstColon = reference.indexOf(":");
+const secondColon = reference.indexOf(":", firstColon + 1);
+if (firstColon < 0 || secondColon < 0) throw new AppError("Attachment reference is invalid");
+const messageId = reference.slice(0, firstColon);
+const attachmentId = reference.slice(firstColon + 1, secondColon);
+const filename = reference.slice(secondColon + 1);
     if (!messageId || !attachmentId || !filename)
       throw new AppError("Attachment reference is invalid");
     const message = await this.db.get<Mail & { connectionId?: string }>(owner, "mail", messageId);

@@ -171,7 +171,8 @@ export default function App() {
         {view === "chat" && (
           <KanbanPanel
             collapsed={kanbanCollapsed}
-            mobileOpen={false}
+            // MOBILE_KANBAN — en pantallas pequenas el panel se abre como overlay.
+            mobileOpen={!kanbanCollapsed && window.matchMedia("(max-width: 900px)").matches}
             onCloseMobile={() => setKanbanCollapsed(true)}
             tasks={tasks.tasks}
             memories={memories}

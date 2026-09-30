@@ -84,6 +84,8 @@ export class Files {
   ): Promise<Artifact> {
     if (bytes.length === 0) throw new AppError("Empty file", 422);
     if (bytes.length > MAX_BYTES) throw new AppError("Files must be 10 MB or smaller", 413);
+    // PARENT_OWNED — si hay parentId, debe existir y ser del mismo owner.
+    if (parentId !== undefined) await this.get(owner, parentId);
 
     const safeName = Array.from(name.split(/[\\/]/).at(-1) ?? "document")
       .filter((c) => c.charCodeAt(0) >= 32 && c.charCodeAt(0) !== 127)

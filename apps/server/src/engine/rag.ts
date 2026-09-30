@@ -7,7 +7,9 @@ import { embed } from "./embeddings.ts";
 const CHUNK_SIZE = 900;
 const CHUNK_OVERLAP = 120;
 /** Dimension de text-embedding-004. Fija el cast a vector() de la ruta pgvector. */
-const VECTOR_DIMENSIONS = 768;
+// VECTOR_DIM_CONFIG — dim de text-embedding-004. Configurable via env para migrar de modelo
+// sin tocar codigo.
+const VECTOR_DIMENSIONS = Number(process.env.RAG_VECTOR_DIMENSIONS ?? "768") || 768;
 /** Peticiones de embedding simultaneas durante la ingesta. */
 export const RAG_INGEST_CONCURRENCY = 4;
 /** Techo de chunks por fuente, para que un fichero enorme no dispare la ingesta sin fin. */
@@ -171,6 +173,9 @@ export class RagService {
           WHERE owner = $1
             AND kind = 'rag-chunks'
             AND jsonb_typeof(data->'embedding') = 'array'
+            -- VECTOR_DIM_CHECK — el cast a vector(768) revienta si un chunk tiene otra
+            -- dimension (p.ej. 512 de otro modelo). Filtramos por cardinalidad antes.
+            AND jsonb_array_length(data->'embedding') = 768
           ORDER BY (data->'embedding')::vector <=> $2::vector
           LIMIT $3`,
         [owner, JSON.stringify(queryVec), limit],

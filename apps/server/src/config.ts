@@ -89,7 +89,10 @@ export function readConfig(): Config {
     throw new Error("AGENT_BACKEND must be sample, model or agui");
   if (mode === "live" && backend === "sample")
     throw new Error("Live workspaces cannot use the sample agent");
+  // PORT_VALIDATED — NaN en serve() da un error confuso. Fallamos temprano.
   const port = Number(process.env.PORT ?? 8787);
+  if (!Number.isInteger(port) || port < 1 || port > 65535)
+    throw new Error(`PORT must be an integer from 1 to 65535; got "${process.env.PORT}"`);
   const publicUrl = process.env.PUBLIC_API_URL ?? `http://localhost:${port}`;
   const config: Config = {
     mode,
@@ -123,9 +126,14 @@ export function readConfig(): Config {
     stripeApiKey: process.env.STRIPE_API_KEY,
     backupIntervalHours: Number(process.env.BACKUP_INTERVAL_HOURS ?? "24") || 0,
     backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS ?? "7") || 0,
+    // ORIGINS_CLEAN — ALLOWED_ORIGINS="" daba [""], que no matchea nada pero ocupa
+    // un hueco en el Set. Filtramos vacios y hacemos trim.
     allowedOrigins: (
       process.env.ALLOWED_ORIGINS ?? "http://localhost:8081,http://127.0.0.1:8081"
-    ).split(","),
+    )
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
   };
   if (
     mode === "live" &&
