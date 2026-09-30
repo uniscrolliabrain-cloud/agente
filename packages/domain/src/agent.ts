@@ -99,7 +99,12 @@ export type MemoryCategory =
   | "preferencia"
   | "rrhh"
   | "producto"
-  | "otro";
+  | "otro"
+  // AGENT_ROLE_V2 — categorias que usan las memorias de rol al seedear.
+  | "rol-identidad"
+  | "rol-dominio"
+  | "rol-preferencias"
+  | "rol-historial";
 
 export interface AgentMemory {
   id: string;
@@ -108,6 +113,8 @@ export interface AgentMemory {
   category?: MemoryCategory;
   tags?: string[];
   createdAt: string;
+  // AGENT_ROLE_V2 — si la memoria pertenece a un rol, aqui va su id.
+  roleId?: string;
 }
 export interface AgentArtifact {
   id: string;
@@ -126,12 +133,37 @@ export interface AgentNotification {
   createdAt: string;
   read: boolean;
 }
+// AGENT_ROLE_V2 — un rol es un personaje del equipo: nombre, tono, avatar y
+// memoria propia. Los 4 tipos de memoria son semanticamente distintos:
+// identidad (el personaje, canon publico), dominio (su oficio), preferencias
+// (como le gusta al dueno) e historial (lo aprendido currando).
+export type AgentTone = "warm" | "concise" | "thoughtful";
+export type AgentAvatar = "sky" | "sand" | "lilac";
+export type AgentMemoryKind = "identidad" | "dominio" | "preferencias" | "historial";
+
+export interface AgentRoleMemory {
+  kind: AgentMemoryKind;
+  text: string;
+}
+
 export interface AgentRole {
   id: string;
+  /** Nombre del personaje: Alex, Leo, Sofia. La cara que ve el dueno. */
   name: string;
+  /** Como habla: warm tutea y es cercano; concise va al grano; thoughtful explica el porque. */
+  tone: AgentTone;
+  avatar: AgentAvatar;
+  /** Saludo de bienvenida cuando el dueno abre el chat con este rol. Opcional. */
+  greeting?: string;
+  /** Que le ahorra al dueno. Es el gancho de venta, va tambien en redes. */
+  roi?: string;
+  /** El personaje completo. Canon publico, sirve para app y para redes. */
   objetivo: string;
   sops: string[];
   active: boolean;
+  /** Las 4 memorias vivas. Se materializan como AgentMemory al seedear. */
+  memories: AgentRoleMemory[];
+  createdAt?: string;
 }
 
 export interface AgentIdentity {
@@ -150,6 +182,40 @@ export interface AgentWorkspace {
   notifications: AgentNotification[];
   identity: AgentIdentity;
   worker: { running: boolean; lastTickAt?: string };
+}
+export const agentToneSchema = z.enum(["warm", "concise", "thoughtful"]);
+export const agentAvatarSchema = z.enum(["sky", "sand", "lilac"]);
+export const agentMemoryKindSchema = z.enum(["identidad", "dominio", "preferencias", "historial"]);
+export const agentRoleMemorySchema = z.object({
+  kind: agentMemoryKindSchema,
+  text: z.string().trim().min(1).max(1000),
+});
+export const agentRoleSchema = z.object({
+  id: z.string().min(1).max(100),
+  name: z.string().trim().min(1).max(120),
+  // tone y avatar llevan default a proposito: los roles guardados antes de AGENT_ROLE_V2 no
+  // tienen estos campos, y sin default un parse de esos registros reventaria en vez de rellenarlos.
+  tone: agentToneSchema.default("warm"),
+  avatar: agentAvatarSchema.default("sky"),
+  greeting: z.string().max(2000).optional(),
+  roi: z.string().max(500).optional(),
+  objetivo: z.string().max(2000).default(""),
+  sops: z.array(z.string().max(200)).max(50).default([]),
+  active: z.boolean().default(true),
+  memories: z.array(agentRoleMemorySchema).max(8).default([]),
+  createdAt: z.string().optional(),
+});
+export type AgentRoleInput = z.infer<typeof agentRoleSchema>;
+
+/** Ficha publica del personaje: lo que lee el repo de redes. Sin SOPs ni preferencias. */
+export interface AgentRolePublic {
+  id: string;
+  name: string;
+  tone: AgentTone;
+  avatar: AgentAvatar;
+  objetivo: string;
+  roi?: string;
+  identidad: string;
 }
 export const createTaskSchema = z.object({
   title: z.string().trim().min(1).max(160).optional(),
