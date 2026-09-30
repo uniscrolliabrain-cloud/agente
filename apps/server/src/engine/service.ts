@@ -16,6 +16,8 @@ import {
   type Monitor,
   monitorInputSchema,
   type RunEvent,
+  // AGENT_ROLE_V2_BACKFILL — se usa el schema del dominio para normalizar los roles guardados.
+  agentRoleSchema,
 } from "../../../../packages/domain/src/agent.ts";
 import type {
   ActionProposal,
@@ -139,7 +141,7 @@ export class AgentService {
             .catch((error) => backgroundFailure("dedup memories", error));
         }
       }
-      for (const { owner, value } of await this.db.scan<Idea>("ideas"))
+      for (const { owner, value } of await this.db.scanByStatus<Idea>("ideas", ["accepted"], 200))
         if (
           value.status === "accepted" &&
           value.taskId &&
@@ -200,7 +202,22 @@ export class AgentService {
   }
 
   async listAgents(owner: string): Promise<AgentRole[]> {
-    return this.db.list<AgentRole>(owner, "agent-roles");
+    // AGENT_ROLE_V2_BACKFILL — los roles guardados antes de que el tipo exigiera tone/avatar/
+    // memories llegan sin ellos. Parsear por el schema los rellena con los defaults y, de paso,
+    // limpia cualquier registro corrupto en vez de devolver un AgentRole "tipado" pero falso.
+    const rows = await this.db.list<Record<string, unknown>>(owner, "agent-roles");
+    const roles: AgentRole[] = [];
+    for (const row of rows) {
+      const parsed = agentRoleSchema.safeParse(row);
+      if (parsed.success) {
+        roles.push(parsed.data as AgentRole);
+        continue;
+      }
+      console.warn(
+        `[agent-role-v2] rol "${String(row.id)}" no valida y se omite: ${parsed.error.issues[0]?.message}`,
+      );
+    }
+    return roles;
   }
 
   async ensure(owner: string) {
@@ -217,17 +234,22 @@ export class AgentService {
    * usuario lo pide explicitamente.
    */
   async systemContext(owner: string) {
+    // SYSTEM_CONTEXT_BOUNDED — antes cargabamos TODAS las tasks y actions en memoria
+    // para filtrar 5. Con scanByStatus el trabajo lo hace SQL.
     const now = Date.now();
-    const actions = await this.db.list<ActionProposal>(owner, "actions");
-    const pending = actions
-      .filter((action) => action.status === "awaiting_review")
+    const pending = (
+      await this.db.scanByStatus<ActionProposal>("actions", ["awaiting_review"], 20)
+    )
+      .filter(({ owner: o }) => o === owner)
       .slice(0, 5)
-      .map((action) => ({ id: action.id, title: action.title.slice(0, 120), hash: action.hash }));
-    const tasks = await this.db.list<AgentTask>(owner, "tasks");
-    const recentFailures = tasks
-      .filter((task) => task.status === "failed" && now - Date.parse(task.updatedAt) < 3600000)
+      .map(({ value: action }) => ({ id: action.id, title: action.title.slice(0, 120), hash: action.hash }));
+    const recentFailures = (
+      await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 50)
+    )
+      .filter(({ owner: o }) => o === owner)
+      .filter(({ value: task }) => now - Date.parse(task.updatedAt) < 3600000)
       .slice(0, 5)
-      .map((task) => ({ id: task.id, title: task.title.slice(0, 120) }));
+      .map(({ value: task }) => ({ id: task.id, title: task.title.slice(0, 120) }));
     const google = await this.workspace.connected(owner).catch(() => false);
     return {
       pendingApprovals: pending,
@@ -523,7 +545,8 @@ export class AgentService {
         status: "queued",
         question: null,
         input: { ...task.input, ...(fields ? { fields } : {}) },
-        state: { ...task.state, answer },
+        // CLEAR_ESCALATED_ON_ANSWER — al responder, la tarea deja de estar escalada.
+        state: { ...task.state, answer, escalatedTo: undefined, escalatedAt: undefined },
         updatedAt: date(),
       },
     );
@@ -660,7 +683,9 @@ export class AgentService {
       (sentIds.has(messageId) || completedSources.has(`${kind}:${messageId}`));
     // Retire earlier suggestions as well as preventing new duplicates. A concurrent
     // acceptance wins its own compare-and-swap and is never overwritten here.
-    for (const idea of await this.db.list<Idea>(owner, "ideas"))
+    // BOUNDED_IDEAS — solo miramos las ideas nuevas del owner, no todas.
+    const ideaPage = await this.db.listPaged<Idea>(owner, "ideas", { limit: 200 });
+    for (const { data: idea } of ideaPage)
       if (idea.status === "new" && obsolete(idea.kind, idea.input.messageId))
         await this.db.compareAndSwap(
           owner,
@@ -1100,7 +1125,10 @@ export class AgentService {
     const artifacts = await this.db.list<AgentArtifact>(owner, "agent-artifacts");
     const mine = artifacts.filter((a) => a.taskId === taskId);
     for (const artifact of mine) {
-      const sourceId = `task:${taskId}:${artifact.id}`;
+      // STABLE_ARTIFACT_SOURCE — artifact.id ya es hash(taskId:key), asi que el source
+      // cambia al reejecutar el SOP. Usar el id del artifact solo, sin el taskId, hace
+      // la ingesta idempotente entre reejecuciones.
+      const sourceId = `artifact:${artifact.id}`;
       const text = [artifact.title, artifact.summary, JSON.stringify(artifact.data)]
         .filter((x) => typeof x === "string" && x.trim())
         .join("\n\n")

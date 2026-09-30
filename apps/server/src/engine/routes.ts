@@ -6,11 +6,20 @@ import type {
   AgentMemory,
   AgentNotification,
 } from "../../../../packages/domain/src/agent.ts";
+// AGENT_ROLE_V2_ROUTE — el schema vive en el dominio para que ruta y tipo no divergan.
+import { agentRoleSchema } from "../../../../packages/domain/src/agent.ts";
 import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
 
 const text = z.string().trim().min(1).max(4000);
-const memorySchema = z.object({ text, source: z.string().trim().min(1).max(200).optional() });
+// MEMORY_FULL_SCHEMA — la UI edita category y tags; el route debe aceptarlos.
+const memoryCategories = z.enum(["empresa","cliente","proceso","preferencia","rrhh","producto","otro"]);
+const memorySchema = z.object({
+  text,
+  source: z.string().trim().min(1).max(200).optional(),
+  category: memoryCategories.optional(),
+  tags: z.array(z.string().max(60)).max(30).optional(),
+});
 const goalPatchSchema = z.object({
   status: z.enum(["active", "paused", "completed"]).optional(),
   milestones: z
@@ -127,15 +136,11 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   app.get("/roles", async (c) => c.json(await service.listAgents(c.get("owner"))));
 
   app.post("/roles", async (c) => {
-    const body = z
-      .object({
-        id: z.string().min(1).max(100),
-        name: z.string().trim().min(1).max(120),
-        objetivo: z.string().max(2000).default(""),
-        sops: z.array(z.string().max(200)).max(50).default([]),
-        active: z.boolean().default(true),
-      })
-      .parse(await c.req.json());
+    // AGENT_ROLE_V2_ROUTE — se usa agentRoleSchema del dominio en vez de un z.object inline:
+    // el inline solo aceptaba id/name/objetivo/sops/active, asi que un rol creado por aqui se
+    // guardaba sin tone/avatar/memories mientras AgentRole los exige. Con el schema compartido,
+    // la ruta y el tipo no pueden volver a divergir.
+    const body = agentRoleSchema.parse(await c.req.json());
     const owner = c.get("owner");
     const existing = await service.db.get(owner, "agent-roles", body.id);
     if (existing) throw new AppError("Agent role ya existe", 409);
