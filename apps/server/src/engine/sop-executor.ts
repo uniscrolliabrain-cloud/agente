@@ -445,19 +445,6 @@ export class SOPExecutor {
       }
 
       case "llm_generate": {
-        const instruction = String(params.instruction ?? prompt ?? step.title);
-        const text = await generateText(this.service.config, instruction, results);
-        return { text };
-      }
-      default: {
-        // El enum de tools es cerrado y todas estan implementadas arriba, asi que caer aqui
-        // es un fallo del runtime, no una peticion de LLM: antes `default:` caia en el case
-        // de llm_generate y una tool desconocida se ejecutaba como una llamada al modelo sin
-        // que nadie se enterara.
-        const unsupported = String((step as { tool?: unknown }).tool ?? "unknown");
-        throw new AppError(`Unsupported SOP tool: ${unsupported}`, 422);
-      }
-      case "llm_generate": {
         // Step params may override the interpolated prompt, but only with a real string.
         const override = typeof params.instruction === "string" ? params.instruction : undefined;
         const instruction = String(override ?? (prompt || step.title));
@@ -468,8 +455,6 @@ export class SOPExecutor {
           results,
         });
       }
-      default:
-        throw new AppError(`Unsupported SOP tool: ${step.tool}`, 422);
     }
   }
 
