@@ -3,7 +3,6 @@ import { FileText, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { FileEntry } from "../hooks/useWorkspaceData";
 import AttachmentPreview from "./AttachmentPreview";
 import { formatBytes, relativeTime } from "../lib/format";
-// REINGEST_IMPORT_FIXED
 import {
   ragDeleteSource,
   ragReingest,
@@ -61,8 +60,6 @@ export default function DocumentsView({ files }: Props) {
     setBusySource(file.id);
     setSearchError(null);
     try {
-      // REINGEST_SERVER_SIDE — el servidor ya tiene el fichero. Le pedimos que lo
-      // reingeste el mismo, sin descargarlo al navegador.
       await ragReingest(file.id);
       await refreshStatus();
     } catch (err) {
@@ -88,18 +85,20 @@ export default function DocumentsView({ files }: Props) {
   };
 
   return (
-    <main className="view-shell">
-      <div className="view-header">
-        <h2>Documentos</h2>
-        <span className="view-header-meta">
+    <div className="v2-tasks-view" style={{ maxWidth: 900 }}>
+      <div className="v2-tasks-header">
+        <h1 className="v2-tasks-title">Documentos</h1>
+        <div className="v2-tasks-meta">
           {files.length} archivos
-          {status?.configured ? ` · ${status.chunks} chunks · ${status.sources} fuentes` : " · RAG inactivo"}
-        </span>
+          {status?.configured
+            ? ` · ${status.chunks} chunks · ${status.sources} fuentes`
+            : " · RAG inactivo"}
+        </div>
       </div>
 
-      <div className="rag-search">
-        <div className="rag-search-row">
-          <Search size={15} />
+      <div className="v2-composer" style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Search size={15} style={{ color: "var(--v2-text-3)" }} />
           <input
             type="text"
             value={query}
@@ -107,37 +106,52 @@ export default function DocumentsView({ files }: Props) {
             onKeyDown={(e) => { if (e.key === "Enter") void runSearch(); }}
             placeholder="Buscar en tus documentos (busqueda semantica)"
             disabled={!status?.configured || searching}
+            style={{
+              flex: 1,
+              border: 0,
+              outline: 0,
+              background: "transparent",
+              fontSize: 14,
+              color: "var(--v2-text)",
+              fontFamily: "inherit",
+            }}
           />
           <button
-            className="primary-btn"
+            className="v2-need-action-btn"
             onClick={() => void runSearch()}
             disabled={!status?.configured || searching || !query.trim()}
           >
             {searching ? "Buscando..." : "Buscar"}
           </button>
-          <button
-            className="ctrl-btn"
-            onClick={() => void refreshStatus()}
-            title="Refrescar estado"
-          >
+          <button className="v2-pill" onClick={() => void refreshStatus()} title="Refrescar estado">
             <RefreshCw size={14} />
           </button>
         </div>
         {!status?.configured && (
-          <div className="rag-search-hint">
+          <div style={{ marginTop: 8, fontSize: 11, color: "var(--v2-text-3)" }}>
             Falta GEMINI_API_KEY en el servidor para activar la busqueda semantica.
           </div>
         )}
-        {searchError && <div className="chat-error">{searchError}</div>}
+        {searchError && (
+          <div className="chat-error" style={{ marginTop: 12 }}>{searchError}</div>
+        )}
         {hits && hits.length > 0 && (
-          <div className="rag-results">
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 280, overflowY: "auto" }}>
             {hits.map((hit) => (
-              <div key={hit.id} className="rag-result">
-                <div className="rag-result-meta">
-                  <span className="rag-result-source">{hit.sourceName}</span>
-                  <span className="rag-result-score">{(hit.score * 100).toFixed(0)}%</span>
+              <div
+                key={hit.id}
+                style={{
+                  padding: 12,
+                  background: "var(--v2-bg-soft)",
+                  border: "1px solid var(--v2-border)",
+                  borderRadius: 10,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, fontSize: 11 }}>
+                  <span style={{ fontWeight: 600, color: "var(--v2-text-2)" }}>{hit.sourceName}</span>
+                  <span style={{ color: "var(--v2-purple)", fontWeight: 600 }}>{(hit.score * 100).toFixed(0)}%</span>
                   <button
-                    className="ghost-icon-button"
+                    className="v2-pill"
                     onClick={() => void removeSource(hit.sourceId)}
                     disabled={busySource === hit.sourceId}
                     title="Borrar esta fuente del indice"
@@ -145,61 +159,65 @@ export default function DocumentsView({ files }: Props) {
                     <Trash2 size={12} />
                   </button>
                 </div>
-                <div className="rag-result-text">{hit.text}</div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--v2-text)" }}>{hit.text}</div>
               </div>
             ))}
           </div>
         )}
         {hits && hits.length === 0 && (
-          <div className="rag-search-hint">Sin resultados.</div>
+          <div style={{ marginTop: 12, fontSize: 11, color: "var(--v2-text-3)" }}>Sin resultados.</div>
         )}
       </div>
 
       {files.length === 0 ? (
-        <div className="view-empty">
-          <FileText size={22} />
-          <p>Aun no has subido documentos.</p>
-          <small>Adjunta un PDF o un texto desde el chat para empezar.</small>
+        <div className="v2-tasks-empty">
+          <FileText size={22} style={{ marginBottom: 8, color: "var(--v2-purple)" }} />
+          <p style={{ margin: 0, fontSize: 13, color: "var(--v2-text)" }}>Aun no has subido documentos.</p>
+          <small style={{ color: "var(--v2-text-3)" }}>Adjunta un PDF o un texto desde el chat para empezar.</small>
         </div>
       ) : (
-        <div className="view-docs-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
           {files.map((f) => (
-            <div key={f.id} className="view-doc-card">
-              <div className="view-doc-icon">📄</div>
-              <div className="view-doc-body">
+            <div key={f.id} className="v2-suggestion-card" style={{ cursor: "default" }}>
+              <div className="v2-suggestion-icon">📄</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div
-                  className="view-doc-name"
-                  title={`${f.name} (doble clic para previsualizar)`}
-                  onDoubleClick={() => f.url && setPreview(f)}
-                  style={{ cursor: f.url ? "pointer" : "default" }}
+                  style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  title={f.name}
                 >{f.name}</div>
-                <div className="view-doc-meta">
+                <div style={{ fontSize: 11, color: "var(--v2-text-3)", marginTop: 4 }}>
                   {formatBytes(f.size)}{f.size && f.createdAt ? " · " : ""}{relativeTime(f.createdAt)}
                 </div>
-                {f.source && <div className="view-doc-source" title={f.source}>{f.source}</div>}
-                <div className="view-doc-actions">
+                {f.source && (
+                  <div style={{ fontSize: 11, color: "var(--v2-text-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={f.source}>
+                    {f.source}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                   <button
-                    className="ctrl-btn"
+                    className="v2-pill"
                     onClick={() => void ingestFile(f)}
                     disabled={busySource === f.id || !status?.configured}
-                    title="Volver a ingestar este archivo en el indice"
                   >
                     {busySource === f.id ? "..." : "Reingestar"}
                   </button>
                   <button
-                    className="ctrl-btn"
+                    className="v2-pill"
                     onClick={() => void removeSource(f.id)}
                     disabled={busySource === f.id || !status?.configured}
-                    title="Borrar este archivo del indice"
                   >
                     <Trash2 size={12} />
                   </button>
+                  {f.url && (
+                    <button className="v2-pill" onClick={() => setPreview(f)}>Ver</button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
         </div>
       )}
+
       {preview && preview.url && (
         <AttachmentPreview
           url={preview.url}
@@ -208,6 +226,6 @@ export default function DocumentsView({ files }: Props) {
           onClose={() => setPreview(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

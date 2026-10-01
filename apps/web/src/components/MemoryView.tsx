@@ -57,7 +57,6 @@ export default function MemoryView({ memories }: Props) {
     setBusy(true);
     setError(null);
     try {
-      // PERSIST_CATEGORY — el backend acepta category y tags en el update.
       await apiFetch(`/api/agent/memories/${encodeURIComponent(editing.id)}`, {
         method: "POST",
         body: {
@@ -92,69 +91,81 @@ export default function MemoryView({ memories }: Props) {
   };
 
   return (
-    <main className="view-shell">
-      <div className="view-header">
-        <h2>Lo que sabe de tu negocio</h2>
-        <span className="view-header-meta">{items.length} de {memories.length} entradas</span>
+    <div className="v2-tasks-view" style={{ maxWidth: 820 }}>
+      <div className="v2-tasks-header">
+        <h1 className="v2-tasks-title">Conocimiento</h1>
+        <div className="v2-tasks-meta">{items.length} de {memories.length} entradas</div>
       </div>
 
-      <div className="rag-search">
-        <div className="rag-search-row">
-          <Search size={15} />
+      <div className="v2-composer" style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Search size={15} style={{ color: "var(--v2-text-3)" }} />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar en la memoria"
+            style={{
+              flex: 1, border: 0, outline: 0, background: "transparent",
+              fontSize: 14, color: "var(--v2-text)", fontFamily: "inherit",
+            }}
           />
         </div>
-        <div className="memory-categories">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
           <button
-            className={`ctrl-btn ${category === "todas" ? "active" : ""}`}
+            className={`v2-pill ${category === "todas" ? "active" : ""}`}
             onClick={() => setCategory("todas")}
           >Todas</button>
           {CATEGORIES.map((c) => (
             <button
               key={c}
-              className={`ctrl-btn ${category === c ? "active" : ""}`}
+              className={`v2-pill ${category === c ? "active" : ""}`}
               onClick={() => setCategory(c)}
             >{c}</button>
           ))}
         </div>
       </div>
 
-      {error && <div className="chat-error">{error}</div>}
+      {error && <div className="chat-error" style={{ marginBottom: 12 }}>{error}</div>}
 
       {memories.length === 0 ? (
-        <div className="view-empty">
-          <Brain size={22} />
-          <p>El agente aun no ha aprendido nada.</p>
-          <small>Cuando termines tareas con SOPs, se guardaran recuerdos aqui.</small>
+        <div className="v2-tasks-empty">
+          <Brain size={22} style={{ marginBottom: 8, color: "var(--v2-purple)" }} />
+          <p style={{ margin: 0, fontSize: 13, color: "var(--v2-text)" }}>El agente aun no ha aprendido nada.</p>
+          <small style={{ color: "var(--v2-text-3)" }}>Cuando termines tareas con SOPs, se guardaran recuerdos aqui.</small>
         </div>
       ) : items.length === 0 ? (
-        <div className="view-empty">
-          <Search size={22} />
-          <p>Ninguna entrada coincide con el filtro.</p>
+        <div className="v2-tasks-empty">
+          <Search size={22} style={{ marginBottom: 8, color: "var(--v2-purple)" }} />
+          <p style={{ margin: 0, fontSize: 13, color: "var(--v2-text)" }}>Ninguna entrada coincide con el filtro.</p>
         </div>
       ) : (
-        <div className="view-memory-list">
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {items.map((m) => (
-            <div key={m.id} className="view-memory-card">
-              <div className="view-memory-text">{m.text}</div>
-              {m.category && <span className="view-memory-cat">{m.category}</span>}
+            <div
+              key={m.id}
+              style={{
+                padding: 14,
+                background: "#FFF",
+                border: "1px solid var(--v2-border)",
+                borderRadius: 12,
+              }}
+            >
+              <div style={{ fontSize: 12.5, lineHeight: 1.55, color: "var(--v2-text)" }}>{m.text}</div>
+              {m.category && <span className="v2-tag" style={{ marginTop: 8 }}>{m.category}</span>}
               {m.tags && m.tags.length > 0 && (
-                <div className="view-memory-tags">
-                  {m.tags.map((t) => <span key={t} className="view-memory-tag">{t}</span>)}
+                <div style={{ display: "flex", gap: 4, marginTop: 6, flexWrap: "wrap" }}>
+                  {m.tags.map((t) => <span key={t} className="v2-tag">{t}</span>)}
                 </div>
               )}
-              <div className="view-memory-meta">
-                {m.source && <span className="view-memory-source">{m.source}</span>}
-                {m.createdAt && <span className="view-memory-time">{relativeTime(m.createdAt)}</span>}
-                <span className="view-memory-actions">
-                  <button className="ghost-icon-button" title="Editar" onClick={() => openEdit(m)}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, fontSize: 10, color: "var(--v2-text-3)" }}>
+                {m.source && <span>{m.source}</span>}
+                {m.createdAt && <span>{relativeTime(m.createdAt)}</span>}
+                <span style={{ marginLeft: "auto", display: "flex", gap: 4 }}>
+                  <button className="v2-pill" title="Editar" onClick={() => openEdit(m)}>
                     <Pencil size={12} />
                   </button>
-                  <button className="ghost-icon-button" title="Olvidar" onClick={() => void forget(m)}>
+                  <button className="v2-pill" title="Olvidar" onClick={() => void forget(m)}>
                     <Trash2 size={12} />
                   </button>
                 </span>
@@ -180,13 +191,13 @@ export default function MemoryView({ memories }: Props) {
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 rows={4}
-                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)", color: "var(--text)", fontSize: 12.5, fontFamily: "inherit", resize: "vertical" }}
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5, fontFamily: "inherit", resize: "vertical" }}
               />
               <label className="modal-label" style={{ marginTop: 14 }}>Categoria</label>
               <select
                 value={editCategory}
                 onChange={(e) => setEditCategory(e.target.value as Category | "")}
-                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)", color: "var(--text)", fontSize: 12.5 }}
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5 }}
               >
                 <option value="">(sin categoria)</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -196,11 +207,11 @@ export default function MemoryView({ memories }: Props) {
                 type="text"
                 value={editTags}
                 onChange={(e) => setEditTags(e.target.value)}
-                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)", color: "var(--text)", fontSize: 12.5 }}
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5 }}
               />
               <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
-                <button className="ctrl-btn" onClick={() => setEditing(null)} disabled={busy}>Cerrar</button>
-                <button className="primary-btn" onClick={saveEdit} disabled={busy || !editText.trim()}>
+                <button className="v2-pill" onClick={() => setEditing(null)} disabled={busy}>Cerrar</button>
+                <button className="v2-need-action-btn" onClick={saveEdit} disabled={busy || !editText.trim()}>
                   {busy ? "Guardando..." : "Guardar"}
                 </button>
               </div>
@@ -208,6 +219,6 @@ export default function MemoryView({ memories }: Props) {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

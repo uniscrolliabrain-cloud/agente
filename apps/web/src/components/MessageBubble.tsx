@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { Bot, Check, Copy, UserRound } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import type { ChatMessage } from "../types/api";
 import ToolCallCard from "./ToolCallCard";
 
-export default function MessageBubble({
-  message,
-  onQuickAction,
-}: {
+interface Props {
   message: ChatMessage;
   onQuickAction?: (kind: "responder" | "resumir" | "traducir", text: string) => void;
-}) {
+}
+
+export default function MessageBubble({ message, onQuickAction }: Props) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
 
@@ -21,16 +20,19 @@ export default function MessageBubble({
     } catch { /* clipboard bloqueado */ }
   };
 
-  return (
-    <div className={`message-row ${isUser ? "user" : "assistant"}`}>
-      {!isUser && (
-        <div className="assistant-avatar">
-          <Bot size={15} strokeWidth={1.8} />
-        </div>
-      )}
+  if (isUser) {
+    return (
+      <div className="v2-user-bubble">
+        <div className="v2-user-bubble-inner">{message.content}</div>
+      </div>
+    );
+  }
 
-      <div className="message-content">
-        <div className={`message-bubble ${isUser ? "user" : "assistant"}`}>{message.content}</div>
+  return (
+    <div className="v2-assistant-row">
+      <div className="v2-assistant-avatar">IA</div>
+      <div className="v2-assistant-body">
+        <div className="v2-assistant-text" style={{ marginTop: 0 }}>{message.content}</div>
 
         {message.toolCall && (
           <ToolCallCard
@@ -40,35 +42,35 @@ export default function MessageBubble({
           />
         )}
 
-        {!isUser && message.content && (
-          <div className="msg__actions">
+        {message.content && (
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
             <button
-              className="icon-btn"
               onClick={copy}
               title={copied ? "Copiado" : "Copiar"}
               aria-label="Copiar mensaje"
-              style={{ width: 26, height: 26 }}
+              style={{
+                width: 26, height: 26,
+                border: "1px solid var(--v2-border)",
+                borderRadius: 6,
+                background: "transparent",
+                color: copied ? "var(--v2-green)" : "var(--v2-text-3)",
+                display: "grid",
+                placeItems: "center",
+                cursor: "pointer",
+              }}
             >
               {copied ? <Check size={13} /> : <Copy size={13} />}
             </button>
+            {onQuickAction && (
+              <>
+                <button className="v2-tag" onClick={() => onQuickAction("responder", message.content)}>Responder</button>
+                <button className="v2-tag" onClick={() => onQuickAction("resumir", message.content)}>Resumir</button>
+                <button className="v2-tag" onClick={() => onQuickAction("traducir", message.content)}>Traducir</button>
+              </>
+            )}
           </div>
         )}
-        {!isUser && message.content && onQuickAction && (
-          <div className="quick-actions">
-            <button className="ctrl-btn" onClick={() => onQuickAction("responder", message.content)}>Responder</button>
-            <button className="ctrl-btn" onClick={() => onQuickAction("resumir", message.content)}>Resumir</button>
-            <button className="ctrl-btn" onClick={() => onQuickAction("traducir", message.content)}>Traducir</button>
-          </div>
-        )}
-
-        {message.timestamp && <span className="message-time">{message.timestamp}</span>}
       </div>
-
-      {isUser && (
-        <div className="user-message-avatar">
-          <UserRound size={14} />
-        </div>
-      )}
     </div>
   );
 }
