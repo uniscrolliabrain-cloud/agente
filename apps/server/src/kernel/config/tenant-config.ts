@@ -1,30 +1,21 @@
-// KERNEL_TENANT_CONFIG_V1 — configuracion LLM por tenant.
-//
-// El kernel necesita dos velocidades: fast (habla con el usuario) y slow
-// (razona en background). Cada una con su API key. Dos cuentas de Google
-// para cuotas separadas, mismo modelo gemini-3.6-flash.
-//
-// Hoy: EnvTenantConfigResolver lee de .env.
-// Manana: DatabaseTenantConfigResolver lee de records, descifra con vault.
-
+// KERNEL_TENANT_CONFIG_V2 - capabilities + latencias por tenant.
+// SOC-2: cada tenant puede tener caps distintas.
 import { z } from "zod";
-
-export const providerSpecSchema = z.object({
-  provider: z.enum(["google", "anthropic", "openai", "openrouter"]),
-  model: z.string().min(1).max(200),
-  apiKey: z.string().max(2000),
-  baseUrl: z.string().max(2000).optional(),
+export const tenantCapabilitiesSchema=z.object({
+ fastChain:z.boolean().default(true),slowChain:z.boolean().default(true),
+ rag:z.boolean().default(false),businessGraph:z.boolean().default(false),
+ memory:z.boolean().default(false),policy:z.boolean().default(false),
+ views:z.boolean().default(true),progress:z.boolean().default(true),
+ meta:z.boolean().default(true),cromos:z.boolean().default(false),
 });
-
-export type ProviderSpec = z.infer<typeof providerSpecSchema>;
-
-export interface TenantConfig {
-  tenantId: string;
-  fast: ProviderSpec;
-  slow: ProviderSpec;
-  embeddings?: ProviderSpec;
-}
-
-export interface TenantConfigResolver {
-  resolve(tenantId: string): Promise<TenantConfig>;
-}
+export const tenantConfigSchema=z.object({
+ tenantId:z.string().min(1).max(100),
+ capabilities:tenantCapabilitiesSchema,
+ quiescenceMs:z.number().int().min(0).max(600000).default(10000),
+ fastIdleMs:z.number().int().min(0).max(60000).default(1000),
+ slowLongMs:z.number().int().min(0).max(300000).default(30000),
+ maxThoughtsPerTurn:z.number().int().min(1).max(5000).default(500),
+});
+export type TenantCapabilities=z.infer<typeof tenantCapabilitiesSchema>;
+export type TenantConfig=z.infer<typeof tenantConfigSchema>;
+export interface TenantConfigResolver{resolve(tenantId:string):Promise<TenantConfig>}

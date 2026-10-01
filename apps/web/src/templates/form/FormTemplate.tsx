@@ -1,0 +1,1 @@
+export function FormTemplate({spec}:{spec:any}){return <div data-template="form">{spec.title}</div>}
