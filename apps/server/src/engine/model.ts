@@ -7,6 +7,8 @@ import { z } from "zod";
 import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
+// KERNEL_PROMOTER_IMPORT_V1 — import del promoter. El uso viene en un bloque posterior.
+import type { Promoter } from "../kernel/graph/promote.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
 import type { AgentGovernance } from "./agents/governance.ts";
 import type { AgentRole } from "../../../../packages/domain/src/agent.ts";
@@ -22,6 +24,34 @@ export async function executeModelTask(
   ctx: TaskContext,
 ): Promise<Partial<AgentTask>> {
   const config = service.config;
+
+  // KERNEL_TASK_OPEN_V1 — si hay kernel, abrimos turno de tarea y escribimos
+  // el prompt como Thought(reasoning). Si no hay kernel o falla, la tarea
+  // sigue exactamente como antes.
+  let kernelTurnId: string | undefined;
+  let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
+  if (service.kernel) {
+    try {
+      const { kernelContextSchema, SlowAuthor } = await import("../kernel/index.ts");
+      kernelCtx = kernelContextSchema.parse({
+        tenantId: "default",
+        owner,
+        role: "agent",
+        requestId: initial.id,
+      });
+      const turn = await service.kernel.openTurn(kernelCtx, "task.");
+      kernelTurnId = turn.id;
+      await new SlowAuthor({ kernel: service.kernel }).writeReasoning(
+        kernelCtx,
+        turn.id,
+        initial.prompt,
+      );
+    } catch {
+      // KERNEL_NONFATAL_V1 — el kernel no puede romper la tarea.
+      kernelTurnId = undefined;
+      kernelCtx = undefined;
+    }
+  }
   if (!config.model)
     return {
       status: "waiting_input",
@@ -444,6 +474,17 @@ export async function executeModelTask(
     await service.recordUsage(owner, "task", config.model, promptChars, text.length);
   } catch { /* best-effort */ }
   if (text) await ctx.event("step", "Agent update", text.slice(0, 12000));
+
+  // KERNEL_TASK_CLOSE_V1 — cierra turno de tarea y promueve. No rompe la tarea.
+  if (kernelTurnId && kernelCtx && service.kernel) {
+    try {
+      await service.kernel.closeTurn(kernelCtx, kernelTurnId, "promotion");
+      const { Promoter } = await import("../kernel/index.ts");
+      await new Promoter({ kernel: service.kernel }).promote(kernelCtx, kernelTurnId);
+    } catch {
+      // KERNEL_NONFATAL_V1 — el kernel no puede romper la tarea.
+    }
+  }
   return (
     outcome ?? {
       status: "waiting_input",
