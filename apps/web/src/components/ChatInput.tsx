@@ -46,8 +46,9 @@ export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedCon
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
   }, [value]);
+
   useEffect(() => {
     if (seed) {
       setValue(seed);
@@ -125,93 +126,85 @@ export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedCon
   const canSend = Boolean(value.trim()) || attach?.kind === "ready";
 
   return (
-    <div className="composer-area">
-      <div className={`composer ${listening ? "listening" : ""}`}>
-        <textarea
-          ref={ref}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
-          }}
-          placeholder="Pregunta lo que quieras..."
-          rows={1}
-          disabled={streaming}
-        />
+    <div className="v2-composer">
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        placeholder="Pregunta lo que quieras o pide que ejecute un SOP..."
+        rows={2}
+        disabled={streaming}
+      />
 
-        {attach && (
-          <div className="attachment-chip">
-            {attach.kind === "uploading" && <LoaderCircle size={13} className="spin" />}
-            {attach.kind === "ready" && <Check size={13} />}
-            {attach.kind === "error" && <X size={13} />}
-            <span title={attach.kind === "error" ? attach.message : attach.file.name}>
-              {attach.file.name}
-            </span>
-            <button type="button" onClick={() => setAttach(null)} title="Quitar archivo">
-              <X size={12} />
-            </button>
-          </div>
-        )}
-
-        <div className="composer-bottom">
-          <div className="composer-tools">
-            <input
-              ref={fileRef}
-              type="file"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void pickFile(file);
-                e.target.value = "";
-              }}
-            />
-            <button
-              className="composer-tool"
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={streaming || attach?.kind === "uploading"}
-              title="Adjuntar archivo"
-            >
-              <Paperclip size={16} />
-              <span>Adjuntar</span>
-            </button>
-            <button
-              className={`composer-tool ${listening ? "active" : ""}`}
-              type="button"
-              onClick={startVoice}
-              disabled={streaming}
-              title="Transcribir voz"
-            >
-              <Mic size={16} />
-              <span>{listening ? "Escuchando..." : "Voz"}</span>
-            </button>
-          </div>
-
-          {streaming ? (
-            <button className="send-button stop" type="button" onClick={onCancel} title="Detener">
-              <Square size={14} fill="currentColor" />
-            </button>
-          ) : (
-            <button
-              className="send-button"
-              type="button"
-              disabled={!canSend}
-              onClick={submit}
-              title="Enviar"
-            >
-              <ArrowUp size={17} strokeWidth={2.2} />
-            </button>
-          )}
+      {attach && (
+        <div className="v2-composer-chip" style={{ marginTop: 8, maxWidth: 260 }}>
+          {attach.kind === "uploading" && <LoaderCircle size={13} className="spin" />}
+          {attach.kind === "ready" && <Check size={13} />}
+          {attach.kind === "error" && <X size={13} />}
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {attach.kind === "error" ? attach.message : attach.file.name}
+          </span>
+          <button
+            type="button"
+            onClick={() => setAttach(null)}
+            title="Quitar archivo"
+            style={{ border: 0, background: "transparent", cursor: "pointer", color: "var(--v2-text-3)", display: "grid", placeItems: "center" }}
+          >
+            <X size={12} />
+          </button>
         </div>
-      </div>
+      )}
 
-      <div className="composer-hint">
-        <span>Enter para enviar</span>
-        <span>·</span>
-        <span>Shift + Enter para nueva línea</span>
+      <div className="v2-composer-bottom">
+        <div className="v2-composer-tools">
+          <input
+            ref={fileRef}
+            type="file"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void pickFile(file);
+              e.target.value = "";
+            }}
+          />
+          <button
+            className="v2-composer-tool"
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={streaming || attach?.kind === "uploading"}
+            title="Adjuntar archivo"
+          >
+            <Paperclip size={16} />
+          </button>
+          <button
+            className="v2-composer-tool"
+            type="button"
+            onClick={startVoice}
+            disabled={streaming}
+            title="Transcribir voz"
+            style={listening ? { background: "var(--v2-purple-soft)", color: "var(--v2-purple)", borderColor: "var(--v2-purple-border)" } : undefined}
+          >
+            <Mic size={16} />
+          </button>
+          <button className="v2-composer-chip" type="button">
+            SOPs de Mi empresa
+          </button>
+        </div>
+        {streaming ? (
+          <button className="v2-send" type="button" onClick={onCancel} title="Detener">
+            <Square size={14} fill="currentColor" />
+          </button>
+        ) : (
+          <button className="v2-send" type="button" disabled={!canSend} onClick={submit} title="Enviar">
+            <ArrowUp size={17} strokeWidth={2.2} />
+          </button>
+        )}
       </div>
     </div>
   );

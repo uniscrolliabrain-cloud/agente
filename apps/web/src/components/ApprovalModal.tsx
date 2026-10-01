@@ -56,19 +56,33 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
           {!action && !error && <div className="muted">Cargando…</div>}
           {action && (
             <>
-              <div className="tool-card">
-                <div className="tool-card-header">
-                  <div className="tool-card-icon">!</div>
-                  <div className="tool-card-name">
-                    <span>{action.title}</span>
-                    <small>{action.kind}</small>
-                  </div>
+              <div className="v2-suggestion-card" style={{ cursor: "default", marginBottom: 12 }}>
+                <div className="v2-suggestion-icon">!</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{action.title}</div>
+                  <div style={{ fontSize: 11, color: "var(--v2-text-3)", marginTop: 2 }}>{action.kind}</div>
                 </div>
-                <pre>{JSON.stringify(action.data, null, 2)}</pre>
               </div>
-              <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 12 }}>
-                <button className="ctrl-btn danger" disabled={busy} onClick={() => decide("deny")}>Denegar</button>
-                <button className="primary-btn" disabled={busy} onClick={() => decide("approve")}>Aprobar</button>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: 10,
+                  background: "var(--v2-bg-soft)",
+                  border: "1px solid var(--v2-border)",
+                  borderRadius: 10,
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  maxHeight: 200,
+                  overflow: "auto",
+                  color: "var(--v2-text-2)",
+                  fontFamily: "SFMono-Regular, Consolas, monospace",
+                }}
+              >
+                {JSON.stringify(action.data, null, 2)}
+              </pre>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+                <button className="v2-pill" disabled={busy} onClick={() => decide("deny")}>Denegar</button>
+                <button className="v2-need-action-btn" disabled={busy} onClick={() => decide("approve")}>Aprobar</button>
               </div>
             </>
           )}

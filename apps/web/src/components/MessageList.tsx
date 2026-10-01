@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Bot } from "lucide-react";
 import type { ChatMessage } from "../types/api";
 import MessageBubble from "./MessageBubble";
-import ToolCallCard from "./ToolCallCard";
 
 interface Props {
   messages: ChatMessage[];
@@ -20,29 +18,15 @@ export default function MessageList({ messages, streaming, streamBuf, activeTool
   }, [messages, streamBuf, activeTool, streaming]);
 
   return (
-    <div className="message-list scroll" ref={ref}>
+    <div className="v2-assistant-body" ref={ref} style={{ overflow: "visible" }}>
       {messages.map((m) => (
         <MessageBubble key={m.id} message={m} onQuickAction={onQuickAction} />
       ))}
 
-      {streaming && (
-        <div className="message-row assistant streaming">
-          <div className="assistant-avatar">
-            <Bot size={15} />
-          </div>
-          <div className="message-content">
-            {streamBuf ? (
-              <div className="message-bubble assistant streaming-bubble">
-                {streamBuf}
-                <span className="stream-cursor">|</span>
-              </div>
-            ) : (
-              <div className="skeleton" style={{ width: 240 }} />
-            )}
-            {activeTool && (
-              <ToolCallCard name={activeTool.name} status={activeTool.status} args={activeTool.args} />
-            )}
-          </div>
+      {streaming && streamBuf && (
+        <div className="v2-assistant-text" style={{ marginTop: 12 }}>
+          {streamBuf}
+          <span className="stream-cursor">|</span>
         </div>
       )}
     </div>
