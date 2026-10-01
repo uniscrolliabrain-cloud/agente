@@ -1,0 +1,1 @@
+export function DetailTemplate({spec}:{spec:any}){return <div data-template="detail">{spec.title}</div>}

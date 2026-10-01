@@ -1,0 +1,1 @@
+export function TableTemplate({spec}:{spec:any}){return <div data-template="table">{spec.columns?.length} cols</div>}

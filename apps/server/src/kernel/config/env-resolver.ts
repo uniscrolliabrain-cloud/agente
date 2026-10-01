@@ -1,37 +1,21 @@
-// KERNEL_ENV_CONFIG_RESOLVER_V1 — config desde .env.
-//
-// Hoy todo el deployment es un tenant. Este resolver lee de .env y
-// devuelve la config del tenant "default".
-//
-// TODO(KERNEL_CONFIG_DB_V1): cuando haya multi-tenant real,
-// DatabaseTenantConfigResolver leera de records kind "tenant-config"
-// y descifrara los apiKey con packages/integrations/src/vault.ts.
-// La interfaz TenantConfigResolver no cambia.
-
-import { type ProviderSpec, type TenantConfig, type TenantConfigResolver } from "./tenant-config.ts";
-
-export class EnvTenantConfigResolver implements TenantConfigResolver {
-  constructor(private readonly tenantId: string = "default") {}
-
-  async resolve(tenantId: string): Promise<TenantConfig> {
-    const fast: ProviderSpec = {
-      provider: "google",
-      model: process.env.FAST_LLM_MODEL ?? "gemini-3.6-flash",
-      apiKey: process.env.FAST_LLM_API_KEY ?? "",
-    };
-    const slow: ProviderSpec = {
-      provider: "google",
-      model: process.env.SLOW_LLM_MODEL ?? "gemini-3.6-flash",
-      apiKey: process.env.SLOW_LLM_API_KEY ?? "",
-    };
-    const embeddings: ProviderSpec = {
-      provider: "google",
-      model: process.env.EMBEDDINGS_LLM_MODEL ?? "text-embedding-004",
-      apiKey:
-        process.env.EMBEDDINGS_LLM_API_KEY ??
-        process.env.FAST_LLM_API_KEY ??
-        "",
-    };
-    return { tenantId: tenantId || this.tenantId, fast, slow, embeddings };
-  }
+// KERNEL_ENV_RESOLVER_V2 - lee CAPABILITIES y latencias de env.
+// FAST_CHAIN, SLOW_CHAIN, VIEWS, PROGRESS, META, CROMOS, etc.
+import type { TenantConfig, TenantConfigResolver, TenantCapabilities } from "./tenant-config.ts";
+function boolEnv(name:string,def:boolean):boolean{
+ const v=process.env[name];if(v===undefined)return def;return v==="1"||v.toLowerCase()==="true"
+}
+export class EnvTenantConfigResolver implements TenantConfigResolver{
+ async resolve(tenantId:string):Promise<TenantConfig>{
+  const caps:TenantCapabilities={
+   fastChain:boolEnv("FAST_CHAIN",true),slowChain:boolEnv("SLOW_CHAIN",true),
+   rag:boolEnv("RAG",false),businessGraph:boolEnv("BUSINESS_GRAPH",false),
+   memory:boolEnv("MEMORY",false),policy:boolEnv("POLICY",false),
+   views:boolEnv("VIEWS",true),progress:boolEnv("PROGRESS",true),
+   meta:boolEnv("META",true),cromos:boolEnv("CROMOS",false),
+  };
+  const quiescenceMs=Number(process.env.QUIESCENCE_MS?? 10000);
+  const fastIdleMs=Number(process.env.FAST_IDLE_MS?? 1000);
+  const slowLongMs=Number(process.env.SLOW_LONG_MS?? 30000);
+  return {tenantId,capabilities:caps,quiescenceMs,fastIdleMs,slowLongMs,maxThoughtsPerTurn:500}
+ }
 }

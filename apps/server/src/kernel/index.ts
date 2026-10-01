@@ -125,3 +125,14 @@ export {
   type MetaInput,
   type MetaDeps,
 } from "./observers/meta.ts";
+
+export { StoreTurnStore, type StorePort } from "./graph/store-store.ts";
+export { tenantConfigSchema, tenantCapabilitiesSchema, type TenantConfig, type TenantCapabilities, type TenantConfigResolver } from "./config/tenant-config.ts";
+export { EnvTenantConfigResolver } from "./config/env-resolver.ts";
+
+export { DatabaseTenantResolver } from "./tenancy/database-resolver.ts";
+export { DatabaseTenantConfigResolver } from "./config/database-resolver.ts";
+
+export { cromoSchema, type Cromo } from "./cromos/cromo.ts";
+export { LOGIC_AXIOMS, checkContradiction } from "./cromos/logic/axioms.ts";
+export { fieldEnergy, isHighEnergy } from "./cromos/physics/field.ts";

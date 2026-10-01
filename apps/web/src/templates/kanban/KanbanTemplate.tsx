@@ -1,0 +1,1 @@
+export function KanbanTemplate({spec}:{spec:any}){return <div data-template="kanban">{spec.title}</div>}
