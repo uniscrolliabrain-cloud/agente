@@ -3,7 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { AbstractAgent } from "@ag-ui/client";
 import { type BaseEvent, EventType, type RunAgentInput } from "@ag-ui/core";
 import { BuiltInAgent, defineTool } from "@copilotkit/runtime/v2";
-import { Observable } from "rxjs";
+import { Observable, tap } from "rxjs";
 import { z } from "zod";
 import {
   createTaskSchema,
@@ -11,6 +11,8 @@ import {
   monitorInputSchema,
 } from "../../../../packages/domain/src/agent.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
+// KERNEL_PROMOTER_IMPORT_V1 — import del promoter. El uso viene en un bloque posterior.
+import type { Promoter } from "../kernel/graph/promote.ts";
 import type { Config } from "../config.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
 import type { AgentService } from "./service.ts";
@@ -31,6 +33,36 @@ export class ConversationAgent extends AbstractAgent {
   run(input: RunAgentInput): Observable<BaseEvent> {
     const latest = input.messages.filter((m) => m.role === "user").at(-1);
     const requestKey = `${input.threadId}:${latest?.id ?? input.runId}`;
+
+    // KERNEL_TURN_OPEN_V1 — si hay kernel, abrimos turno y escribimos el
+    // mensaje del usuario como Thought(intent). Si no hay kernel o falla,
+    // el chat sigue exactamente como antes.
+    let kernelTurnId: string | undefined;
+    let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
+    if (this.service.kernel) {
+      try {
+        const { kernelContextSchema, UserAuthor } = await import("../kernel/index.ts");
+        kernelCtx = kernelContextSchema.parse({
+          tenantId: "default",
+          owner: this.owner,
+          role: "user",
+          requestId: input.runId,
+        });
+        const turn = await this.service.kernel.openTurn(kernelCtx, "user.message");
+        kernelTurnId = turn.id;
+        if (latest && typeof latest.content === "string") {
+          await new UserAuthor({ kernel: this.service.kernel }).write(
+            kernelCtx,
+            turn.id,
+            latest.content,
+          );
+        }
+      } catch {
+        // KERNEL_NONFATAL_V1 — el kernel no puede romper el chat.
+        kernelTurnId = undefined;
+        kernelCtx = undefined;
+      }
+    }
 
     if (this.config.agentBackend === "sample") {
       return new Observable((subscriber) => {
@@ -69,6 +101,10 @@ export class ConversationAgent extends AbstractAgent {
                 role: "tool",
                 content: JSON.stringify({ id: task.id }),
               });
+            }
+            // KERNEL_SAMPLE_CLOSE_V1 — cierra turno y promueve antes de emitir RUN_FINISHED.
+            if (kernelTurnId && kernelCtx) {
+              void this.closeKernelTurn(kernelCtx, kernelTurnId, "response");
             }
             subscriber.next({
               type: EventType.RUN_FINISHED,
@@ -392,16 +428,9 @@ export class ConversationAgent extends AbstractAgent {
         };
         const roleMemories = roleContext?.memories ?? [];
         let contextBlock = "";
-        if (roleContext && this.service.context && this.service.graph) {
+        if (roleContext && this.service.context) {
           try {
-            const { ContextEngine } = await import("./context/engine.ts");
-            const engine = new ContextEngine(
-              this.service.db,
-              this.service.graph as never,
-              this.service.memory,
-              this.service.bus,
-            );
-            const pkg = await engine.assemble(this.owner, {
+            const pkg = await this.service.context.assemble(this.owner, {
               roleId: roleId!,
               query: typeof latest?.content === "string" ? latest.content : "",
             });
@@ -426,7 +455,32 @@ export class ConversationAgent extends AbstractAgent {
           (model) => new BuiltInAgent({ model, maxSteps: 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
         );
-        subscription = run.events.subscribe(subscriber);
+        // RECORD_USAGE_CHAT_V1 — contamos caracteres de entrada y salida del stream.
+        // Antes solo se contaba en model.ts (tasks); el 80% del uso real es chat.
+        const inputChars = JSON.stringify(enrichedInput.messages).length;
+        let outputChars = 0;
+        const counted = new Observable<BaseEvent>((sub) => {
+          const inner = run!.events.subscribe({
+            next: (event) => {
+              if (
+                event.type === EventType.TEXT_MESSAGE_CONTENT &&
+                "delta" in event &&
+                typeof event.delta === "string"
+              )
+                outputChars += event.delta.length;
+              sub.next(event);
+            },
+            error: (error) => sub.error(error),
+            complete: () => {
+              void this.service
+                .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
+                .catch(() => {});
+              sub.complete();
+            },
+          });
+          return () => inner.unsubscribe();
+        });
+        subscription = counted.subscribe(subscriber);
       })();
 
       return () => {
@@ -438,6 +492,21 @@ export class ConversationAgent extends AbstractAgent {
     });
   }
 
+  // KERNEL_CLOSE_METHOD_V1 — cierra turno y promueve. No puede romper el chat.
+  private async closeKernelTurn(
+    ctx: import("../kernel/index.ts").KernelContext,
+    turnId: string,
+    reason: import("../kernel/index.ts").TurnCloseReason,
+  ): Promise<void> {
+    if (!this.service.kernel) return;
+    try {
+      await this.service.kernel.closeTurn(ctx, turnId, reason);
+      const { Promoter } = await import("../kernel/index.ts");
+      await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+    } catch {
+      // KERNEL_NONFATAL_V1 — el kernel no puede romper el chat.
+    }
+  }
   private async sample(prompt: string, key: string) {
     if (/show.*calendar|what.*calendar|plan my day/i.test(prompt)) {
       const w = await this.service.workspace.snapshot(this.owner);

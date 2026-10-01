@@ -5,10 +5,9 @@ import { useChat } from "./hooks/useChat";
 import { useThreads } from "./hooks/useThreads";
 import { useWorkspaceData } from "./hooks/useWorkspaceData";
 import { useNotifications } from "./hooks/useNotifications";
-import Header from "./components/Header";
-import ConversationsPanel, { type AppView } from "./components/ConversationsPanel";
+import SidebarV2, { type AppView } from "./components/SidebarV2";
+import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
-import KanbanPanel from "./components/KanbanPanel";
 import Login from "./components/Login";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
@@ -21,24 +20,6 @@ import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
 import type { AgentTask } from "./types/api";
-// WORKSPACE_REGISTRY_V1 — los hooks del registry (useStateRegistry/useEffectRegistry) se
-// quitaron: Fase 1 no esta cableada y noUnusedLocals rompia el typecheck. Al implementarla,
-// volver a importar useState/useEffect aqui y consumir WORKSPACE_VIEW_BY_ROLE (ya exportado).
-
-function usePanel(key: string, defaultCollapsed: boolean) {
-  const [collapsed, setCollapsed] = useState<boolean>(() => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved === "1") return true;
-      if (saved === "0") return false;
-    } catch { /* modo privado */ }
-    return defaultCollapsed;
-  });
-  useEffect(() => {
-    try { localStorage.setItem(key, collapsed ? "1" : "0"); } catch { /* noop */ }
-  }, [key, collapsed]);
-  return [collapsed, setCollapsed] as const;
-}
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -47,19 +28,13 @@ function useTheme() {
     if (saved === "light") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
-
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
     localStorage.setItem("openmuse_theme", dark ? "dark" : "light");
   }, [dark]);
-
   return { dark, toggle: () => setDark((v) => !v) };
 }
 
-// WORKSPACE_REGISTRY_V1 — mapeo rol -> vista por defecto. Fase 1: solo
-// cambia la vista inicial al activar un rol. Fase 3: plantillas ricas.
-// Exportado a proposito: asi el scaffolding se conserva aunque Fase 1 no este
-// cableada todavia, y noUnusedLocals no lo marca como declaracion muerta.
 export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
   direccion: "control-center",
   comercial: "tasks",
@@ -78,18 +53,17 @@ export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
   it: "tasks",
   producto: "projects",
 };
+
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const threads = useThreads(auth.isAuthenticated);
   const chat = useChat(auth.isAuthenticated, threads.activeId, threads.touch);
   const { memories, files } = useWorkspaceData(auth.isAuthenticated);
-  const notifications = useNotifications(auth.isAuthenticated);
-  const theme = useTheme();
+  useNotifications(auth.isAuthenticated);
+  useTheme();
 
   const [view, setView] = useState<AppView>("chat");
-  const [convCollapsed, setConvCollapsed] = usePanel("openmuse_conv_collapsed", false);
-  const [kanbanCollapsed, setKanbanCollapsed] = usePanel("openmuse_kanban_collapsed", false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
@@ -99,14 +73,12 @@ export default function App() {
     const onKey = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
       const k = e.key.toLowerCase();
-      if (k === "b") { e.preventDefault(); setConvCollapsed((v) => !v); }
-      if (k === "j") { e.preventDefault(); setKanbanCollapsed((v) => !v); }
       if (k === "k") { e.preventDefault(); setPaletteOpen((v) => !v); }
       if (k === "n") { e.preventDefault(); setView("chat"); void threads.createNew(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [setConvCollapsed, setKanbanCollapsed, threads.createNew]);
+  }, [threads.createNew]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) return;
@@ -139,7 +111,7 @@ export default function App() {
     void threads.createNew();
   };
 
-  const status: "ok" | "working" | "offline" | "error" = chat.streaming
+  const status: "ok" | "working" | "offline" = chat.streaming
     ? "working"
     : tasks.workerRunning
       ? "ok"
@@ -151,63 +123,47 @@ export default function App() {
       : "Desconectado";
 
   return (
-    <div className="app-root">
-      <Header
-        status={status}
-        statusLabel={statusLabel}
-        convCollapsed={convCollapsed}
-        kanbanCollapsed={kanbanCollapsed}
-        dark={theme.dark}
-        onToggleTheme={theme.toggle}
-        onToggleConv={() => setConvCollapsed((v) => !v)}
-        onToggleKanban={() => setKanbanCollapsed((v) => !v)}
-        userName={auth.user?.name ?? "Usuario"}
-        userRole={auth.user?.role ?? "user"}
-        onOpenProfile={() => setProfileOpen(true)}
-        notifications={notifications.unread}
-        onOpenNotifications={() => { void notifications.markAllRead(); setView("tasks"); }}
-        onLogout={auth.logout}
-      />
-
-      <div className="main">
-        <ConversationsPanel
-          collapsed={convCollapsed}
+    <div className="v2-app">
+      <div className="v2-app-shell">
+        <SidebarV2
           activeView={view}
-          // APP_WORKSPACE_LABEL_V1
-          workspaceLabel="Agente IA Pro"
           onSelectView={setView}
+          isAdmin={auth.user?.role === "admin"}
           activeThreadId={threads.activeId}
           threads={threads.threads}
           onSelectThread={(id) => { setView("chat"); threads.select(id); }}
-          isAdmin={auth.user?.role === "admin"}
-          onNewChat={handleNewChat}
-          onOpenPalette={() => setPaletteOpen(true)}
           userName={auth.user?.name ?? "Usuario"}
           userRole={auth.user?.role ?? "user"}
           onOpenProfile={() => setProfileOpen(true)}
         />
 
-        {view === "chat" && <ChatPanel chat={chat} />}
-        {view === "tasks" && <TasksView tasks={tasks.tasks} currentUserId={auth.user?.id ?? null} onOpenTask={openTask} onReviewTask={reviewTask} />}
-        {view === "documents" && <DocumentsView files={files} />}
-        {view === "memory" && <MemoryView memories={memories} />}
-        {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
-        {view === "control-center" && <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />}
-        {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-
-        {view === "chat" && (
-          <KanbanPanel
-            collapsed={kanbanCollapsed}
-            // MOBILE_KANBAN — en pantallas pequenas el panel se abre como overlay.
-            mobileOpen={!kanbanCollapsed && window.matchMedia("(max-width: 900px)").matches}
-            onCloseMobile={() => setKanbanCollapsed(true)}
-            tasks={tasks.tasks}
-            memories={memories}
-            files={files}
-            onOpenTask={openTask}
-            onReviewTask={reviewTask}
+        <main className="v2-main">
+          <TopBarV2
+            status={status}
+            statusLabel={statusLabel}
+            onNewChat={handleNewChat}
+            onOpenPalette={() => setPaletteOpen(true)}
           />
-        )}
+
+          <div className="v2-content">
+            {view === "chat" && <ChatPanel chat={chat} />}
+            {view === "tasks" && (
+              <TasksView
+                tasks={tasks.tasks}
+                currentUserId={auth.user?.id ?? null}
+                onOpenTask={openTask}
+                onReviewTask={reviewTask}
+              />
+            )}
+            {view === "documents" && <DocumentsView files={files} />}
+            {view === "memory" && <MemoryView memories={memories} />}
+            {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
+            {view === "control-center" && (
+              <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
+            )}
+            {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
+          </div>
+        </main>
       </div>
 
       <CommandPalette

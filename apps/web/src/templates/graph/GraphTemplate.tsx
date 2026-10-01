@@ -1,0 +1,1 @@
+export function GraphTemplate({spec}:{spec:any}){return <div data-template="graph">{spec.title}</div>}

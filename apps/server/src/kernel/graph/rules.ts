@@ -1,0 +1,84 @@
+// KERNEL_RULES_V1 — reglas explicitas de promocion.
+//
+// Cada regla tiene id, description, y matches(thought). Determinista,
+// auditable, testeable. Sin LLM, sin heuristica difusa. El PromotionResult
+// incluye que regla aplico a cada Thought, para que la decision sea
+// reconstruible desde el audit trail.
+//
+// El orden importa: la primera regla que matchea decide.
+
+import type { Thought, ThoughtRole } from "./thought.ts";
+
+export interface PromotionRule {
+  id: string;
+  description: string;
+  matches(thought: Thought): boolean;
+}
+
+function hasContent(thought: Thought): boolean {
+  if (typeof thought.content === "string") return thought.content.trim().length > 0;
+  return Object.keys(thought.content).length > 0;
+}
+
+const SURVIVOR_ROLES: ReadonlySet<ThoughtRole> = new Set([
+  "observation",
+  "action",
+  "response",
+  "reflection",
+  "confirmation",
+  "correction",
+  "critic",
+  "verifier",
+]);
+
+export const RULES: readonly PromotionRule[] = [
+  {
+    id: "survive_actionable_role_with_content",
+    description:
+      "Sobrevive si el Thought tiene rol accionable (observation, action, response, reflection, confirmation, correction, critic, verifier) y contenido no vacio.",
+    matches: (t) => hasContent(t) && SURVIVOR_ROLES.has(t.role),
+  },
+  {
+    id: "survive_high_confidence_primary",
+    description:
+      "Sobrevive si la atencion tiene confianza >= 0.9 y el primary esta en matched.",
+    matches: (t) =>
+      hasContent(t) &&
+      t.attention.confidence >= 0.9 &&
+      t.attention.matched.some((m) => m.node === t.attention.primary),
+  },
+  {
+    id: "discard_delegation_internal",
+    description:
+      "Se descarta si el rol es delegation y el contenido es interno (no es respuesta al usuario).",
+    matches: (t) => t.role === "delegation",
+  },
+  {
+    id: "discard_empty",
+    description: "Se descarta si el contenido esta vacio.",
+    matches: (t) => !hasContent(t),
+  },
+  {
+    id: "discard_reasoning_noise",
+    description:
+      "Se descarta si el rol es reasoning y no tiene matched (razonamiento sin anclaje a datos).",
+    matches: (t) => t.role === "reasoning" && t.attention.matched.length === 0,
+  },
+];
+
+export interface RuleOutcome {
+  rule: PromotionRule;
+  survives: boolean;
+}
+
+export function classify(thought: Thought): RuleOutcome | undefined {
+  for (const rule of RULES) {
+    if (rule.matches(thought)) {
+      return {
+        rule,
+        survives: rule.id.startsWith("survive_"),
+      };
+    }
+  }
+  return undefined;
+}

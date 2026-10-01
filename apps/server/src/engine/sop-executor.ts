@@ -1,3 +1,5 @@
+// B102_APPLIED
+// R19_APPLIED
 // EVENTBUS_SOP_EMIT_V1
 import { createHash, randomUUID } from "node:crypto";
 import { readFile, realpath } from "node:fs/promises";
@@ -15,6 +17,8 @@ import type { AgentService } from "./service.ts";
 import { generateText } from "./model.ts";
 import { LostLeaseError, type TaskContext } from "./worker.ts";
 import type { EventBus } from "./events/index.ts";
+import type { BusinessGraph } from "./business/graph.ts";
+import type { StateMachineRegistry } from "./state-machines.ts";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const interpolate = (value: unknown, task: AgentTask, results: Record<string, unknown>) => {
@@ -56,6 +60,8 @@ export class SOPExecutor {
   constructor(
     private readonly service: AgentService,
     private readonly bus?: EventBus,
+    private readonly graph?: BusinessGraph,
+    private readonly stateMachines?: StateMachineRegistry,
   ) {}
 
   async execute(owner: string, initial: AgentTask, ctx: TaskContext): Promise<Partial<AgentTask>> {
@@ -96,7 +102,13 @@ export class SOPExecutor {
       if (!sop.allowedTools.includes(step.tool))
         throw new AppError(`SOP ${sop.id} does not allow tool ${step.tool}`, 422);
 
-    const results = (task.state.sopResults as Record<string, unknown> | undefined) ?? {};
+    // R19 — si arrancamos desde el paso 0, limpiamos sopResults previos. Sin esto,
+    // un SOP que se reintenta despues de fallar puede leer resultados viejos del
+    // intento anterior (los pasos nuevos ven datos que ya no aplican).
+    const startingFresh = Number(task.state.sopStepIndex ?? 0) === 0;
+    const results = startingFresh
+      ? {}
+      : ((task.state.sopResults as Record<string, unknown> | undefined) ?? {});
     const stack = (task.state.sopStack as string[] | undefined) ?? [sop.id];
     if (stack.length > 4) throw new AppError("Nested SOP depth limit exceeded", 409);
     if (new Set(stack).size !== stack.length) throw new AppError("SOP cycle detected", 409);
@@ -350,6 +362,29 @@ export class SOPExecutor {
         return { title: page.title, url: page.url, text: page.text.slice(0, 30000) };
       }
       case "computer_command": {
+        // B102 — si la tarea tiene rol activo, AgentGovernance debe autorizar la tool.
+        const activeRoleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
+        if (activeRoleId && this.service.governance) {
+          const role = await this.service.db
+            .get<import("../../../../packages/domain/src/agent.ts").AgentRole>(
+              owner,
+              "agent-roles",
+              activeRoleId,
+            )
+            .catch(() => null);
+          if (role) {
+            const decision = await this.service.governance.canExecuteTool(
+              owner,
+              role,
+              "computer_command",
+            );
+            if (!decision.allowed)
+              throw new AppError(
+                decision.reason ?? `Tool computer_command not allowed for role ${role.id}`,
+                403,
+              );
+          }
+        }
         await this.service.computer.start(owner);
         const command = String(params.command ?? prompt);
         const operationId = String(
@@ -471,6 +506,36 @@ export class SOPExecutor {
         };
       }
 
+      case "transition_entity": {
+        const entityId = String(params.entityId ?? "");
+        const machineId = String(step.stateMachine ?? params.machineId ?? "");
+        const to = String(params.to ?? "");
+        const roleId = typeof params.roleId === "string" ? params.roleId : undefined;
+        if (!entityId || !machineId || !to)
+          throw new AppError(
+            "transition_entity requires params.entityId, step.stateMachine (o params.machineId) y params.to",
+            422,
+          );
+        if (!this.graph || !this.stateMachines)
+          throw new AppError("State machine engine no esta cableado en el servidor", 503);
+        const entity = await this.graph.getEntity(owner, entityId);
+        if (!entity) throw new AppError(`Entity not found: ${entityId}`, 404);
+        const from = entity.status ?? "";
+        const result = await this.stateMachines.apply(
+          owner,
+          machineId,
+          entityId,
+          from,
+          to,
+          roleId,
+        );
+        await this.graph.updateEntity(owner, entityId, {
+          status: to,
+          actor: `sop:${sop.id}`,
+          source: `step:${step.id}`,
+        });
+        return { from: result.from, to: result.to, action: result.action };
+      }
       case "llm_generate": {
         // Step params may override the interpolated prompt, but only with a real string.
         const override = typeof params.instruction === "string" ? params.instruction : undefined;
