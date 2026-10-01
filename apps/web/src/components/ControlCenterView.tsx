@@ -1,154 +1,287 @@
-import { useMemo, useState } from "react";
-import { Activity, AlertCircle, CheckCircle2, RefreshCw, Search } from "lucide-react";
-import { useEvents } from "../hooks/useEvents";
+import { useEffect, useState } from "react";
+import { Activity, AlertCircle, Briefcase, CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
+import { useTasks } from "../hooks/useTasks";
+import { useNotifications } from "../hooks/useNotifications";
+import type { AgentTask } from "../types/api";
 import { relativeTime } from "../lib/format";
-import type { SystemEvent } from "../api/events";
 
 interface Props {
   enabled: boolean;
   onOpenTask?: (taskId: string) => void;
 }
 
-// CONTROL_CENTER_NEW_GROUPS_V1 — anadidos los grupos del Business OS.
-const TYPE_GROUPS: { label: string; prefix: string }[] = [
-  { label: "Tareas", prefix: "task." },
-  { label: "SOPs", prefix: "sop." },
-  { label: "Acciones", prefix: "action." },
-  { label: "Monitores", prefix: "monitor." },
-  { label: "Entidades", prefix: "entity." },
-  { label: "Relaciones", prefix: "relation." },
-  { label: "Politicas", prefix: "policy." },
-  { label: "Estados", prefix: "state." },
-  { label: "Agentes", prefix: "agent." },
-  { label: "Contexto", prefix: "context." },
-  { label: "Sistema", prefix: "system." },
-  { label: "Auth", prefix: "auth." },
-];
+function statusLabel(task: AgentTask): string {
+  if (task.status === "running") {
+    const running = task.plan.find((s) => s.status === "running");
+    if (running) return running.title;
+    return "Trabajando en ello";
+  }
+  if (task.status === "waiting_approval") return "Esperando tu aprobación";
+  if (task.status === "waiting_input") return "Necesita datos tuyos";
+  if (task.status === "queued") return "En cola";
+  if (task.status === "scheduled") return "Programada";
+  if (task.status === "paused") return "En pausa";
+  if (task.status === "succeeded") return "Completada";
+  if (task.status === "failed") return "Con error";
+  return "Cancelada";
+}
 
-function eventIcon(type: string) {
-  if (type.endsWith("failed") || type.endsWith("error") || type.endsWith("unknown"))
-    return <AlertCircle size={14} />;
-  if (type.endsWith("completed") || type.endsWith("executed") || type.endsWith("approved"))
-    return <CheckCircle2 size={14} />;
-  return <Activity size={14} />;
+function humanKind(kind: string): string {
+  if (kind === "sop") return "Proceso";
+  if (kind === "document") return "Documento";
+  if (kind === "monitor") return "Vigilancia";
+  if (kind === "finance") return "Finanzas";
+  if (kind === "plan") return "Plan";
+  return "Tarea";
+}
+
+function initialOf(assignedTo?: string): string {
+  if (!assignedTo) return "IA";
+  return assignedTo.slice(0, 1).toUpperCase();
 }
 
 export default function ControlCenterView({ enabled, onOpenTask }: Props) {
-  const [group, setGroup] = useState<string>("");
-  const [query, setQuery] = useState("");
-  const { events, aggregates, timeline, error, loading, refresh } = useEvents(enabled);
+  const tasks = useTasks(3000, enabled);
+  const notifications = useNotifications(enabled);
+  const [, setTick] = useState(0);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return events.filter((event) => {
-      if (group && !event.type.startsWith(group)) return false;
-      if (!q) return true;
-      const haystack = `${event.type} ${event.source.kind} ${event.source.id} ${JSON.stringify(event.payload)}`.toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [events, group, query]);
+  // Re-render cada 5 s para que "hace X min" y los contadores en vivo se refresquen.
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 5000);
+    return () => clearInterval(t);
+  }, []);
 
-  const topCount = Math.max(1, ...timeline.map((bucket) => bucket.count));
+  const all = tasks.tasks;
+  const running = all.filter((t) => t.status === "running");
+  const queued = all.filter((t) => t.status === "queued" || t.status === "scheduled");
+  const paused = all.filter((t) => t.status === "paused");
+  const needsAction = all.filter(
+    (t) => t.status === "waiting_approval" || t.status === "waiting_input",
+  );
+  const completed = all.filter((t) => t.status === "succeeded");
+  const failed = all.filter((t) => t.status === "failed");
+  const idle = queued.length + paused.length;
+
+  const banner = needsAction[0];
+
+  const workerBusy = running.length;
+  const workerIdle = idle;
+  const workerPaused = paused.length;
+  const workerTotal = workerBusy + workerIdle + workerPaused;
+
+  const lastError = failed[0];
 
   return (
-    <main className="view-shell">
-      <div className="view-header">
-        <div>
-          <h2>Centro de control</h2>
-          <span className="view-header-meta">
-            {events.length} eventos · {aggregates.length} tipos
-          </span>
-        </div>
-        <button className="ctrl-btn" onClick={() => void refresh()} disabled={loading}>
-          <RefreshCw size={14} />
-        </button>
-      </div>
-
-      {error && <div className="chat-error" style={{ margin: 16 }}>{error}</div>}
-
-      <div className="rag-search">
-        <div className="rag-search-row">
-          <Search size={15} />
-          <input
-            type="text"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar en los eventos"
-          />
-        </div>
-        <div className="memory-categories">
-          <button className={`ctrl-btn ${group === "" ? "active" : ""}`} onClick={() => setGroup("")}>
-            Todos
-          </button>
-          {TYPE_GROUPS.map((item) => (
-            <button
-              key={item.prefix}
-              className={`ctrl-btn ${group === item.prefix ? "active" : ""}`}
-              onClick={() => setGroup(item.prefix)}
-            >
-              {item.label}
-            </button>
-          ))}
+    <div className="v3-cc-main">
+      <div className="v3-cc-header">
+        <h1 className="v3-cc-title">Centro de control</h1>
+        <div className="v3-cc-sub">
+          {workerTotal > 0
+            ? `${workerBusy} agente${workerBusy === 1 ? "" : "s"} trabajando ahora mismo`
+            : "Todo en calma"}
+          {" · "}
+          {needsAction.length > 0
+            ? `${needsAction.length} cosa${needsAction.length === 1 ? "" : "s"} esperando tu OK`
+            : "nada esperando tu OK"}
         </div>
       </div>
 
-      {timeline.length > 0 && (
-        <div style={{ padding: "0 16px 12px" }}>
-          <div style={{ display: "flex", gap: 2, alignItems: "flex-end", height: 48 }}>
-            {timeline.map((bucket) => (
-              <div
-                key={bucket.hour}
-                title={`${bucket.hour}:00 · ${bucket.count} eventos`}
-                style={{
-                  flex: 1,
-                  height: `${(bucket.count / topCount) * 100}%`,
-                  background: "var(--accent)",
-                  borderRadius: 2,
-                  minHeight: 2,
-                }}
-              />
-            ))}
+      {/* KPIs */}
+      <div className="v3-cc-kpis">
+        <div className="v3-kpi">
+          <div className="v3-kpi-head">
+            <div className="v3-kpi-icon green">
+              <Zap size={13} />
+            </div>
+            <span className="v3-kpi-label">Agentes trabajando</span>
+          </div>
+          <div className="v3-kpi-value">{workerBusy}</div>
+          <div className="v3-kpi-meta">
+            <b>{workerIdle}</b> esperando · <b>{workerPaused}</b> en pausa
           </div>
         </div>
-      )}
 
-      {filtered.length === 0 && !loading && !error && (
-        <div className="view-empty">
-          <Activity size={22} />
-          <p>Sin eventos todavia.</p>
-          <small>Los eventos aparecen en cuanto el agente hace algo.</small>
+        <div className="v3-kpi">
+          <div className="v3-kpi-head">
+            <div className="v3-kpi-icon">
+              <CheckCircle2 size={13} />
+            </div>
+            <span className="v3-kpi-label">Tareas completadas</span>
+          </div>
+          <div className="v3-kpi-value">{completed.length}</div>
+          <div className="v3-kpi-meta">
+            <b>{failed.length}</b> con error · <b>{all.length}</b> en total
+          </div>
+        </div>
+
+        <div className="v3-kpi">
+          <div className="v3-kpi-head">
+            <div className="v3-kpi-icon orange">
+              <Clock size={13} />
+            </div>
+            <span className="v3-kpi-label">Pendientes de tu OK</span>
+          </div>
+          <div className="v3-kpi-value">{needsAction.length}</div>
+          <div className="v3-kpi-meta">
+            {notifications.unread > 0 ? (
+              <>
+                <b>{notifications.unread}</b> notificaciones sin leer
+              </>
+            ) : (
+              "todo visto"
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Banner "necesita tu accion" */}
+      {banner && (
+        <div className="v2-need-action">
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div className="v2-need-action-icon">⚠️</div>
+            <div>
+              <div className="v2-need-action-eyebrow">Necesita tu acción</div>
+              <div className="v2-need-action-title">{banner.title}</div>
+              <div className="v2-need-action-sub">
+                {banner.status === "waiting_input"
+                  ? "Necesita datos tuyos para continuar"
+                  : "Esperando tu aprobación"}
+              </div>
+            </div>
+          </div>
+          <button
+            className="v2-need-action-btn"
+            onClick={() => onOpenTask?.(banner.id)}
+          >
+            Revisar
+          </button>
         </div>
       )}
 
-      {filtered.length > 0 && (
-        <div className="view-memory-list">
-          {filtered.map((event: SystemEvent) => (
+      {/* Procesos en curso */}
+      <div className="v3-cc-section">
+        <div className="v3-cc-section-head">
+          <span className="v3-cc-section-title">Procesos en marcha</span>
+          <span className="v3-cc-section-meta">
+            {running.length} en curso
+          </span>
+        </div>
+        {running.length === 0 ? (
+          <div className="v3-cc-empty">
+            {all.length === 0
+              ? "Aún no hay procesos en marcha."
+              : "Nada trabajando ahora mismo."}
+          </div>
+        ) : (
+          running.slice(0, 6).map((t) => (
             <div
-              key={event.id}
-              className="view-memory-card"
-              onClick={() => {
-                if (event.source.kind === "task" && onOpenTask) onOpenTask(event.source.id);
-              }}
-              style={{ cursor: event.source.kind === "task" && onOpenTask ? "pointer" : "default" }}
+              key={t.id}
+              className="v3-task-row"
+              onClick={() => onOpenTask?.(t.id)}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                <span style={{ color: "var(--text-2)" }}>{eventIcon(event.type)}</span>
-                <span className="view-memory-source">{event.type}</span>
-                <span className="view-memory-time" style={{ marginLeft: "auto" }}>
-                  {relativeTime(event.emittedAt)}
-                </span>
+              <div className="v3-spinner" />
+              <div className="v3-task-body">
+                <div className="v3-task-title">{t.title}</div>
+                <div className="v3-task-sub">
+                  {humanKind(t.kind)} · {statusLabel(t)} · {relativeTime(t.updatedAt)}
+                </div>
               </div>
-              <div className="view-memory-text">
-                {typeof event.payload.title === "string" ? event.payload.title : event.source.id}
+              <div className="v3-task-tags">
+                <span className="v2-tag agent">{humanKind(t.kind)}</span>
+                <div className="v3-task-avatar">{initialOf(t.assignedTo)}</div>
               </div>
-              <div className="view-memory-meta">
-                <span className="view-memory-source">{event.source.kind}</span>
-                <span style={{ opacity: 0.6 }}>{event.source.id.slice(0, 12)}</span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Pendientes */}
+      {queued.length > 0 && (
+        <div className="v3-cc-section">
+          <div className="v3-cc-section-head">
+            <span className="v3-cc-section-title">En cola</span>
+            <span className="v3-cc-section-meta">{queued.length} esperando</span>
+          </div>
+          {queued.slice(0, 5).map((t) => (
+            <div
+              key={t.id}
+              className="v3-task-row soft"
+              onClick={() => onOpenTask?.(t.id)}
+            >
+              <span className="v2-task-status empty" />
+              <div className="v3-task-body">
+                <div className="v3-task-title">{t.title}</div>
+                <div className="v3-task-sub">
+                  {humanKind(t.kind)} · {statusLabel(t)}
+                </div>
+              </div>
+              <div className="v3-task-tags">
+                <ChevronRight size={14} style={{ color: "var(--v2-text-3)" }} />
               </div>
             </div>
           ))}
         </div>
       )}
-    </main>
+
+      {/* Estado del equipo + Resumen */}
+      <div className="v3-cc-bottom">
+        <div className="v3-cc-panel">
+          <div className="v3-cc-panel-title">Estado del equipo</div>
+          <div className="v3-cc-stat">
+            <span>Trabajando</span>
+            <div className="v3-cc-bar green">
+              <span style={{ width: `${workerTotal ? (workerBusy / workerTotal) * 100 : 0}%` }} />
+            </div>
+            <b>{workerBusy}</b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Esperando</span>
+            <div className="v3-cc-bar gray">
+              <span style={{ width: `${workerTotal ? (workerIdle / workerTotal) * 100 : 0}%` }} />
+            </div>
+            <b>{workerIdle}</b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>En pausa</span>
+            <div className="v3-cc-bar orange">
+              <span style={{ width: `${workerTotal ? (workerPaused / workerTotal) * 100 : 0}%` }} />
+            </div>
+            <b>{workerPaused}</b>
+          </div>
+        </div>
+
+        <div className="v3-cc-panel">
+          <div className="v3-cc-panel-title">Resumen del sistema</div>
+          <div className="v3-cc-stat">
+            <span>Estado</span>
+            <b style={{ color: tasks.workerRunning ? "var(--v2-green)" : "var(--v2-text-3)" }}>
+              {tasks.workerRunning ? "Funcionando" : "Parado"}
+            </b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Última actividad</span>
+            <b>
+              {tasks.workerLastTickAt
+                ? relativeTime(tasks.workerLastTickAt)
+                : "—"}
+            </b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Último problema</span>
+            <b style={{ color: lastError ? "var(--v2-warn-text)" : "inherit" }}>
+              {lastError ? relativeTime(lastError.updatedAt) : "ninguno"}
+            </b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Notificaciones</span>
+            <b>{notifications.unread} sin leer</b>
+          </div>
+        </div>
+      </div>
+
+      {tasks.error && (
+        <div className="chat-error" style={{ marginTop: 16 }}>{tasks.error}</div>
+      )}
+    </div>
   );
 }

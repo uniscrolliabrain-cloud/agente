@@ -1,6 +1,6 @@
-﻿import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, LayoutDashboard, MessageSquare, Plus, Search } from "lucide-react";
-import type { AppView } from "./ConversationsPanel";
+import type { AppView } from "./SidebarV2";
 
 interface Props {
   open: boolean;

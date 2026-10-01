@@ -1,3 +1,4 @@
+// R4a-db_APPLIED
 import { mkdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import pg from "pg";
@@ -164,10 +165,15 @@ export class Store {
     );
     return (result.rows[0]?.data as T | undefined) ?? null;
   }
-  async scan<T>(kind: string): Promise<{ owner: string; value: T }[]> {
+  /**
+   * Scan de records por kind. `limit` opcional (default 1000, hard cap 50000):
+   * antes no habia tope y un scan en maintain cargaba toda la tabla en memoria.
+   */
+  async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
+    const effective = Math.min(Math.max(1, Math.floor(limit)), 50000);
     const result = await this.db.query(
-      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 ORDER BY updated_at ASC",
-      [kind],
+      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 ORDER BY updated_at ASC LIMIT $2",
+      [kind, effective],
     );
     return result.rows.map((row) => row.data as { owner: string; value: T });
   }

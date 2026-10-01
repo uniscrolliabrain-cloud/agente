@@ -4,6 +4,7 @@ import { AppError } from "./errors.ts";
 import type { BusinessGraph } from "./engine/business/graph.ts";
 import type { BusinessTruth } from "./engine/business/truth.ts";
 import type { WorkspaceRegistry } from "./engine/workspace/registry.ts";
+import type { StateMachineRegistry } from "./engine/state-machines.ts";
 import { businessEntitySchema } from "../../../packages/domain/src/business.ts";
 
 // BUSINESS_ROUTES_V1 — HTTP para el Business Graph. Todo scoped por owner.
@@ -42,6 +43,7 @@ export function businessRoutes(
   graph: BusinessGraph,
   truth: BusinessTruth,
   workspaceRegistry: WorkspaceRegistry,
+  stateMachines?: StateMachineRegistry,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
@@ -110,6 +112,36 @@ export function businessRoutes(
       return c.json({ valid: false, issues: result.error.issues }, 422);
     return c.json({ valid: true });
   });
+
+  // STATE_MACHINES_ROUTES_V1 — CRUD de maquinas de estado por owner.
+  if (stateMachines) {
+    app.get("/state-machines", async (c) => {
+      return c.json({ stateMachines: await stateMachines.list(c.get("owner")) });
+    });
+
+    app.get("/state-machines/:id", async (c) => {
+      const machine = await stateMachines.get(c.get("owner"), c.req.param("id"));
+      if (!machine) throw new AppError("State machine not found", 404);
+      return c.json(machine);
+    });
+
+    app.put("/state-machines/:id", async (c) => {
+      const body = await c.req.json();
+      if (!body || typeof body !== "object" || body.id !== c.req.param("id"))
+        throw new AppError("State machine id must match the URL", 422);
+      return c.json(await stateMachines.upsert(c.get("owner"), body));
+    });
+
+    app.post("/state-machines", async (c) => {
+      const body = await c.req.json();
+      return c.json(await stateMachines.upsert(c.get("owner"), body), 201);
+    });
+
+    app.delete("/state-machines/:id", async (c) => {
+      await stateMachines.remove(c.get("owner"), c.req.param("id"));
+      return c.json({ ok: true });
+    });
+  }
 
   return app;
 }

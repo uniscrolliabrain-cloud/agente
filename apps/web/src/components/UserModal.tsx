@@ -34,7 +34,7 @@ export default function UserModal({ editing, onClose, onSaved }: Props) {
     if (!name.trim()) errors.name = "El nombre es obligatorio";
     if (!isEdit) {
       if (!email.trim()) errors.email = "El email es obligatorio";
-      else if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim()))
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
         errors.email = "El email no tiene un formato valido";
       if (!password) errors.password = "La contrasena es obligatoria";
       else if (password.length < 8)
@@ -86,10 +86,10 @@ export default function UserModal({ editing, onClose, onSaved }: Props) {
   const baseField: React.CSSProperties = {
     width: "100%",
     padding: "9px 11px",
-    border: "1px solid var(--border)",
+    border: "1px solid var(--v2-border)",
     borderRadius: 8,
-    background: "var(--surface)",
-    color: "var(--text)",
+    background: "#FFF",
+    color: "var(--v2-text)",
     fontSize: 12.5,
     outline: "none",
     fontFamily: "inherit",
@@ -97,7 +97,7 @@ export default function UserModal({ editing, onClose, onSaved }: Props) {
 
   const fieldStyle = (field: string): React.CSSProperties => ({
     ...baseField,
-    borderColor: fieldErrors[field] ? "#fca5a5" : "var(--border)",
+    borderColor: fieldErrors[field] ? "#fca5a5" : "var(--v2-border)",
     boxShadow: fieldErrors[field] ? "0 0 0 3px #fca5a51a" : "none",
   });
 
@@ -204,10 +204,10 @@ export default function UserModal({ editing, onClose, onSaved }: Props) {
             style={{ ...baseField, marginBottom: 14 }}
           />
 
-          <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 6 }}>
-            <button className="ctrl-btn" onClick={onClose} disabled={busy}>Cancelar</button>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 6 }}>
+            <button className="v2-pill" onClick={onClose} disabled={busy}>Cancelar</button>
             <button
-              className="primary-btn"
+              className="v2-need-action-btn"
               onClick={submit}
               disabled={busy}
               style={{ minWidth: 120 }}

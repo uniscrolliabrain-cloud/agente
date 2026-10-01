@@ -1,0 +1,1 @@
+export function TimelineTemplate({spec}:{spec:any}){return <div data-template="timeline">{spec.title}</div>}

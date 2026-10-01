@@ -1,3 +1,11 @@
+// B103_APPLIED
+// R5b_APPLIED
+// R3_APPLIED
+// R4a_APPLIED
+// R4b_APPLIED
+// R8_APPLIED
+// R9_APPLIED
+// B104_APPLIED
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import {
@@ -43,6 +51,17 @@ import { executeModelTask } from "./model.ts";
 import { BusinessDataService } from "./business.ts";
 import { LearningService } from "./learning.ts";
 import { SOPExecutor } from "./sop-executor.ts";
+import type { BusinessGraph } from "./business/graph.ts";
+import type { BusinessTruth } from "./business/truth.ts";
+import type { PolicyEngine } from "./policy/engine.ts";
+import type { StateMachineEngine } from "./policy/state-machine.ts";
+import type { StateMachineRegistry } from "./state-machines.ts";
+import type { ContextEngine } from "./context/engine.ts";
+import type { AgentRuntimeManager } from "./agents/runtime.ts";
+import type { AgentGovernance } from "./agents/governance.ts";
+import type { WorkspaceRegistry } from "./workspace/registry.ts";
+import type { SkillMarketplace } from "./skills/marketplace.ts";
+import type { Kernel } from "../kernel/index.ts";
 import { RagService } from "./rag.ts";
 import { WhatsAppClient } from "../../../../packages/integrations/src/stubs/whatsapp.ts";
 import { MemoryService } from "./memory.ts";
@@ -58,15 +77,19 @@ const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const date = () => new Date().toISOString();
 const terminal = new Set(["succeeded", "failed", "cancelled"]);
 export interface BusinessOsServices {
-  graph?: unknown;
-  truth?: unknown;
-  policy?: unknown;
-  stateMachine?: unknown;
-  context?: unknown;
-  runtime?: unknown;
-  governance?: unknown;
-  workspaceRegistry?: unknown;
-  marketplace?: unknown;
+  graph?: BusinessGraph;
+  truth?: BusinessTruth;
+  policy?: PolicyEngine;
+  stateMachine?: StateMachineEngine;
+  stateMachineRegistry?: StateMachineRegistry;
+  context?: ContextEngine;
+  runtime?: AgentRuntimeManager;
+  governance?: AgentGovernance;
+  workspaceRegistry?: WorkspaceRegistry;
+  marketplace?: SkillMarketplace;
+}
+  // KERNEL_WIRE_A_V1 — kernel cognitivo opcional. Sin esto, el repo funciona igual.
+  kernel?: Kernel;
 }
 
 export class AgentService {
@@ -80,15 +103,18 @@ export class AgentService {
   private maintenance?: ReturnType<typeof setInterval>;
   private refreshing = false;
   // BUSINESS_OS_CTOR_V1 — servicios nuevos opcionales. Se inyectan en app.ts.
-  readonly graph?: unknown;
-  readonly truth?: unknown;
-  readonly policy?: unknown;
-  readonly stateMachine?: unknown;
-  readonly context?: unknown;
-  readonly runtime?: unknown;
-  readonly governance?: unknown;
-  readonly workspaceRegistry?: unknown;
-  readonly marketplace?: unknown;
+  readonly graph?: BusinessGraph;
+  readonly truth?: BusinessTruth;
+  readonly policy?: PolicyEngine;
+  readonly stateMachine?: StateMachineEngine;
+  readonly stateMachineRegistry?: StateMachineRegistry;
+  readonly context?: ContextEngine;
+  readonly runtime?: AgentRuntimeManager;
+  readonly governance?: AgentGovernance;
+  readonly workspaceRegistry?: WorkspaceRegistry;
+  readonly marketplace?: SkillMarketplace;
+  // KERNEL_WIRE_A_V1 — kernel cognitivo. Opcional para no romper tests ni arranques sin kernel.
+  readonly kernel?: Kernel;
   constructor(
     readonly db: Store,
     readonly config: Config,
@@ -106,17 +132,19 @@ export class AgentService {
     this.truth = business?.truth;
     this.policy = business?.policy;
     this.stateMachine = business?.stateMachine;
+    this.stateMachineRegistry = business?.stateMachineRegistry;
     this.context = business?.context;
     this.runtime = business?.runtime;
     this.governance = business?.governance;
     this.workspaceRegistry = business?.workspaceRegistry;
     this.marketplace = business?.marketplace;
+    this.kernel = business?.kernel;
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
     this.learning = new LearningService(this.memory);
-    this.sopExecutor = new SOPExecutor(this, this.bus);
+    this.sopExecutor = new SOPExecutor(this, this.bus, this.graph, this.stateMachineRegistry);
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
       settled: (owner, task) => this.publishOutcome(owner, task),
       bus: this.bus,
@@ -129,12 +157,17 @@ export class AgentService {
     this.maintenance = setInterval(() => {
       void this.maintain().catch((error) => backgroundFailure("maintenance", error));
     }, 60000);
+    // R3 — unref para que un proceso que solo tenga este interval pueda salir
+    // limpiamente con SIGTERM/SIGINT, sin esperar al siguiente tick.
+    this.maintenance.unref?.();
   }
   async stop() {
     if (this.maintenance) clearInterval(this.maintenance);
     this.maintenance = undefined;
     await this.worker.stop();
     while (this.refreshing) await new Promise((resolve) => setTimeout(resolve, 10));
+    // R5b — cierra el pool compartido de business para no dejar conexiones abiertas.
+    await this.business.close().catch(() => {});
   }
   private async maintain() {
     if (this.refreshing) return;
@@ -159,7 +192,7 @@ export class AgentService {
 
       // Retry de embeddings que fallaron por rate limits del proveedor. Max 50 por owner.
       const missingOwners = new Set<string>();
-      for (const { owner, value } of await this.db.scan<{ embedding: number[] | null }>("rag-chunks")) {
+      for (const { owner, value } of await this.db.scan<{ embedding: number[] | null }>("rag-chunks", 5000)) {
         if (!value.embedding || value.embedding.length === 0) missingOwners.add(owner);
       }
       for (const owner of missingOwners) {
@@ -172,7 +205,7 @@ export class AgentService {
       if (!this.lastDedupAt || Date.now() - this.lastDedupAt > 5 * 60 * 1000) {
         this.lastDedupAt = Date.now();
         const memoryOwners = new Set<string>();
-        for (const { owner } of await this.db.scan<{ id: string }>("memories")) memoryOwners.add(owner);
+        for (const { owner } of await this.db.scan<{ id: string }>("memories", 5000)) memoryOwners.add(owner);
         for (const owner of memoryOwners) {
           await this.memory
             .dedupMemories(owner)
@@ -197,6 +230,7 @@ export class AgentService {
           });
       for (const { owner, value } of await this.db.scan<{ id: string; lastIdeasAt?: string }>(
         "agent-settings",
+        5000,
       )) {
         if (value.id !== "identity") continue;
         if (!value.lastIdeasAt || Date.now() - Date.parse(value.lastIdeasAt) > 15 * 60000)
@@ -212,7 +246,7 @@ export class AgentService {
       }      // Evaluate declarative SOP triggers (cron + email_subject). Manual and api triggers
       // are driven by their callers and never scanned here.
       const sopEvaluator = new SOPTriggerEvaluator(this);
-      for (const { owner, value } of await this.db.scan<SOP>("sops")) {
+      for (const { owner, value } of await this.db.scan<SOP>("sops", 5000)) {
         try {
           await sopEvaluator.evaluate(owner, value);
         } catch (error) {
@@ -234,6 +268,21 @@ export class AgentService {
       const existing = await this.db.get<AgentRole>(owner, "agent-roles", role.id);
       if (existing) continue;
       await this.db.put(owner, "agent-roles", { ...role, active: role.active ?? true });
+      // materializa las 4 memorias del rol como AgentMemory con roleId.
+      // idempotente: insertIfAbsent por id deterministico (rol:roleId:index).
+      const now = role.createdAt ?? date();
+      for (let i = 0; i < (role.memories ?? []).length; i += 1) {
+        const memory = role.memories[i];
+        if (!memory.text.trim()) continue;
+        await this.db.insertIfAbsent(owner, "memories", {
+          id: `role:${role.id}:${i}`,
+          text: memory.text,
+          source: `Rol ${role.name}`,
+          category: `rol-${memory.kind}` as AgentMemory["category"],
+          roleId: role.id,
+          createdAt: now,
+        });
+      }
       created++;
     }
     return created;
@@ -322,15 +371,17 @@ export class AgentService {
 
   async snapshot(owner: string): Promise<AgentWorkspace> {
     await this.ensure(owner);
+    // R4b — limites por coleccion en el snapshot. Antes: list sin tope; con 50k
+    // tareas o memorias el chat se bloqueaba en cada turno.
     const [tasks, goals, monitors, ideas, memories, artifacts, notifications, identity] =
       await Promise.all([
-        this.db.list<AgentTask>(owner, "tasks"),
-        this.db.list<Goal>(owner, "goals"),
-        this.db.list<Monitor>(owner, "monitors"),
-        this.db.list<Idea>(owner, "ideas"),
-        this.db.list<AgentMemory>(owner, "memories"),
-        this.db.list<AgentArtifact>(owner, "agent-artifacts"),
-        this.db.list<AgentNotification>(owner, "notifications"),
+        this.db.list<AgentTask>(owner, "tasks", { limit: 500 }),
+        this.db.list<Goal>(owner, "goals", { limit: 200 }),
+        this.db.list<Monitor>(owner, "monitors", { limit: 200 }),
+        this.db.list<Idea>(owner, "ideas", { limit: 200 }),
+        this.db.list<AgentMemory>(owner, "memories", { limit: 2000 }),
+        this.db.list<AgentArtifact>(owner, "agent-artifacts", { limit: 500 }),
+        this.db.list<AgentNotification>(owner, "notifications", { limit: 200 }),
         this.db.get<AgentIdentity>(owner, "agent-settings", "identity"),
       ]);
     const heartbeat = await this.db.get<{ lastTickAt: string }>("system", "worker-status", "tasks");
@@ -376,6 +427,38 @@ export class AgentService {
       ),
     };
   }
+  /**
+   * B104 — Orquestador. Elige un rol para la tarea si el caller no fijo uno.
+   * Criterio explicito y determinista:
+   *   - kind === "sop" y hay input.sopId -> primer rol activo con ese sop en `sops`.
+   *   - kind === "monitor" -> primer rol activo con "monitor" en `sops` o rol "operaciones".
+   *   - kind === "finance" -> rol "finanzas" si existe.
+   *   - kind === "document" -> rol "administrativo" si existe.
+   *   - resto -> sin asignacion (comportamiento previo).
+   * No usa embeddings ni heuristica difusa: o hay match explicito o no hay rol.
+   */
+  private async pickRoleForTask(
+    owner: string,
+    kind: AgentTask["kind"],
+    input: Record<string, unknown>,
+  ): Promise<string | undefined> {
+    const roles = await this.listAgents(owner);
+    const active = roles.filter((role) => role.active);
+    if (active.length === 0) return undefined;
+    if (kind === "sop") {
+      const sopId = typeof input.sopId === "string" ? input.sopId : undefined;
+      if (!sopId) return undefined;
+      return active.find((role) => role.sops.includes(sopId))?.id;
+    }
+    if (kind === "monitor") {
+      return active.find((role) => role.sops.some((s) => s.includes("monitor")))?.id
+        ?? active.find((role) => role.id === "operaciones")?.id;
+    }
+    if (kind === "finance") return active.find((role) => role.id === "finanzas")?.id;
+    if (kind === "document") return active.find((role) => role.id === "administrativo")?.id;
+    return undefined;
+  }
+
   async createTask(owner: string, raw: unknown, idempotencyKey?: string, held = false) {
     const input = createTaskSchema.parse(raw);
     if (input.goalId && !(await this.db.get(owner, "goals", input.goalId)))
@@ -406,6 +489,12 @@ export class AgentService {
           : input.kind === "finance"
             ? ["Validate transactions", "Calculate the summary", "Save your tracker"]
             : ["Understand the outcome", "Plan the work", "Use connected tools", "Return a result"];
+    // B104 — si el caller no fija roleId, el orquestador elige uno. Criterio
+    // explicito: si la tarea referencia un SOP, se elige el primer rol activo
+    // cuyo `sops` incluya ese id. Si no hay match, no se asigna rol (comportamiento previo).
+    const resolvedRoleId =
+      input.roleId ??
+      (await this.pickRoleForTask(owner, input.kind, input.input));
     const task: AgentTask = {
       id,
       title: input.title ?? input.prompt.slice(0, 90),
@@ -419,7 +508,7 @@ export class AgentService {
       input: input.input,
       state: {
         connectionId: (await this.workspace.connection(owner))?.id ?? null,
-        ...(input.roleId ? { roleId: input.roleId } : {}),
+        ...(resolvedRoleId ? { roleId: resolvedRoleId } : {}),
         ...(input.kind === "sop" ? { sopId: input.input.sopId, sopStepIndex: 0, sopResults: {}, sopStack: [input.input.sopId] } : {}),
         ...(held && input.kind === "monitor" ? { initializingMonitor: true } : {}),
       },
@@ -561,6 +650,23 @@ export class AgentService {
       const proposal = await this.db.get<ActionProposal>(owner, "actions", task.actionId);
       if (proposal?.status === "awaiting_review")
         await this.actions.decide(owner, proposal.id, proposal.hash, "deny");
+      // R8 — limpiar pending* para que un futuro resume no reabra una aprobacion
+      // o una pregunta ya cerradas.
+      const cleared = await this.db.compareAndSwap<AgentTask>(
+        owner,
+        "tasks",
+        id,
+        { status },
+        {
+          state: {
+            ...updated.state,
+            pendingApprovalStepId: undefined,
+            pendingInputStepId: undefined,
+            approvalResult: undefined,
+          },
+        },
+      );
+      if (cleared) finalTask = cleared;
       if (proposal?.status === "executing" || proposal?.status === "outcome_unknown") {
         const withWarning = await this.db.compareAndSwap<AgentTask>(
           owner,
@@ -604,6 +710,8 @@ export class AgentService {
         status: "queued",
         question: null,
         input: { ...task.input, ...(fields ? { fields } : {}) },
+        // R9 — al responder, la tarea vuelve a su owner original si estaba escalada.
+        assignedTo: owner,
         // CLEAR_ESCALATED_ON_ANSWER — al responder, la tarea deja de estar escalada.
         state: { ...task.state, answer, escalatedTo: undefined, escalatedAt: undefined },
         updatedAt: date(),

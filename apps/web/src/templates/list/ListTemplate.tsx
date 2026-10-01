@@ -1,0 +1,1 @@
+export function ListTemplate({spec}:{spec:any}){return <div data-template="list">{spec.title}</div>}

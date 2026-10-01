@@ -1,0 +1,1 @@
+export function DashboardTemplate({spec}:{spec:any}){return <div data-template="dashboard">{spec.title}</div>}

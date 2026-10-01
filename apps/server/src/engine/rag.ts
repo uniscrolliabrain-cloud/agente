@@ -1,3 +1,5 @@
+// R4d_APPLIED
+// R12_APPLIED
 
 import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../db.ts";
@@ -227,7 +229,9 @@ export class RagService {
   }
 
   async removeSource(owner: string, sourceId: string) {
-    const all = await this.db.list<RagChunk>(owner, "rag-chunks");
+    // R4d — tope 20000; una sola fuente no deberia superar esto. Antes cargaba
+    // todos los chunks de todas las fuentes en memoria para borrar unos pocos.
+    const all = await this.db.list<RagChunk>(owner, "rag-chunks", { limit: 20000 });
     for (const chunk of all) {
       if (chunk.sourceId === sourceId) {
         await this.db.remove(owner, "rag-chunks", chunk.id);
@@ -235,7 +239,12 @@ export class RagService {
     }
   }
 
-  async search(owner: string, query: string, limit = 5): Promise<RagHit[]> {
+  async search(
+    owner: string,
+    query: string,
+    limit = 5,
+    options: { sourceId?: string } = {},
+  ): Promise<RagHit[]> {
     const queryVec = await embed(query);
     const queryWords = query
       .toLowerCase()
@@ -262,6 +271,8 @@ export class RagService {
       });
       if (page.length === 0) break;
       for (const { data: chunk, updatedAt } of page) {
+        // R12 — si se filtra por sourceId, se descartan los chunks que no son de esa fuente.
+        if (options.sourceId && chunk.sourceId !== options.sourceId) continue;
         const cosineScore =
           queryVec && Array.isArray(chunk.embedding) && chunk.embedding.length === queryVec.length
             ? cosine(queryVec, chunk.embedding)
@@ -284,7 +295,9 @@ export class RagService {
     return top;
   }
   async stats(owner: string) {
-    const all = await this.db.list<RagChunk>(owner, "rag-chunks");
+    // R4d — tope 20000; contador aproximado. Si se supera, el conteo no es exacto
+    // pero el endpoint no bloquea. Se puede paginar cuando haga falta.
+    const all = await this.db.list<RagChunk>(owner, "rag-chunks", { limit: 20000 });
     const sources = new Set(all.map((c) => c.sourceId));
     return { chunks: all.length, sources: sources.size };
   }

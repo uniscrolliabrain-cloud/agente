@@ -19,9 +19,6 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
   const [googleBusy, setGoogleBusy] = useState<"read" | "write" | "disconnect" | null>(null);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
-  // B3: hasta ahora /api/google/connect no lo llamaba nadie desde la UI, asi que conectar
-  // Google era imposible sin llamar a la API a mano. Vive aqui porque es ajustes de cuenta
-  // y ProfileModal no lo toca la rama de UI.
   useEffect(() => {
     let cancelled = false;
     void googleStatus()
@@ -35,8 +32,6 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
     setGoogleError(null);
     try {
       const result = await connectGoogle(capability);
-      // En live el servidor devuelve la URL de consentimiento de Google; en sample ya queda
-      // conectado y solo hay que refrescar el estado.
       if (result.url) window.location.assign(result.url);
       else setGoogle(await googleStatus());
     } catch (err) {
@@ -89,8 +84,8 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
     } finally { setBusy(false); }
   };
 
-  const base: React.CSSProperties = { width: "100%", padding: "9px 11px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)", color: "var(--text)", fontSize: 12.5, outline: "none", fontFamily: "inherit" };
-  const fstyle = (f: string): React.CSSProperties => ({ ...base, borderColor: fieldErrors[f] ? "#fca5a5" : "var(--border)", boxShadow: fieldErrors[f] ? "0 0 0 3px #fca5a51a" : "none" });
+  const base: React.CSSProperties = { width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5, outline: "none", fontFamily: "inherit" };
+  const fstyle = (f: string): React.CSSProperties => ({ ...base, borderColor: fieldErrors[f] ? "#fca5a5" : "var(--v2-border)", boxShadow: fieldErrors[f] ? "0 0 0 3px #fca5a51a" : "none" });
   const FE = ({ field }: { field: string }) => fieldErrors[field] ? (<div className="field-error"><AlertCircle size={12} /><span>{fieldErrors[field]}</span></div>) : null;
 
   return (
@@ -106,7 +101,7 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
           <label className="modal-label">Nombre</label>
           <input type="text" value={name} onChange={(e) => { setName(e.target.value); clearField("name"); }} style={fstyle("name")} />
           <FE field="name" />
-          <div style={{ marginTop: 20, marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Conexiones</div>
+          <div style={{ marginTop: 20, marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--v2-text-2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Conexiones</div>
           {googleError && (<div className="modal-error"><AlertCircle size={16} /><span>{googleError}</span></div>)}
           <div className="modal-label">Google Workspace (Gmail, Calendar, Drive)</div>
           <div className="muted" style={{ fontSize: 12, marginBottom: 8 }}>
@@ -123,19 +118,19 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
             </div>
           )}
           <div className="control-row">
-            <button className="ctrl-btn" disabled={googleBusy !== null} onClick={() => void connectGoogleAccount("read")}>
+            <button className="v2-pill" disabled={googleBusy !== null} onClick={() => void connectGoogleAccount("read")}>
               {googleBusy === "read" ? "Abriendo Google..." : "Conectar (lectura)"}
             </button>
-            <button className="ctrl-btn" disabled={googleBusy !== null} onClick={() => void connectGoogleAccount("write")}>
+            <button className="v2-pill" disabled={googleBusy !== null} onClick={() => void connectGoogleAccount("write")}>
               {googleBusy === "write" ? "Abriendo Google..." : "Conectar (escritura)"}
             </button>
             {google?.connected && (
-              <button className="ctrl-btn" disabled={googleBusy !== null} onClick={() => void disconnectGoogleAccount()}>
+              <button className="v2-pill" disabled={googleBusy !== null} onClick={() => void disconnectGoogleAccount()}>
                 {googleBusy === "disconnect" ? "Desconectando..." : "Desconectar"}
               </button>
             )}
           </div>
-          <div style={{ marginTop: 20, marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--text-2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Cambiar contrasena (opcional)</div>
+          <div style={{ marginTop: 20, marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--v2-text-2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Cambiar contrasena (opcional)</div>
           <label className="modal-label">Contrasena actual</label>
           <input type="password" value={currentPassword} onChange={(e) => { setCurrentPassword(e.target.value); clearField("currentPassword"); }} style={fstyle("currentPassword")} />
           <FE field="currentPassword" />
@@ -146,8 +141,8 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
           <input type="password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); clearField("confirmPassword"); }} style={fstyle("confirmPassword")} />
           <FE field="confirmPassword" />
           <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
-            <button className="ctrl-btn" onClick={onClose} disabled={busy}>Cerrar</button>
-            <button className="primary-btn" onClick={submit} disabled={busy} style={{ minWidth: 120 }}>{busy ? "Guardando..." : "Guardar"}</button>
+            <button className="v2-pill" onClick={onClose} disabled={busy}>Cerrar</button>
+            <button className="v2-need-action-btn" onClick={submit} disabled={busy} style={{ minWidth: 120 }}>{busy ? "Guardando..." : "Guardar"}</button>
           </div>
         </div>
       </div>

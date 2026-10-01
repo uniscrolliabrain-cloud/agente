@@ -36,6 +36,13 @@ import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
 import { threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
+import {
+  Kernel,
+  InMemoryTurnStore,
+  DefaultTenantResolver,
+  InMemoryAuditStore,
+  EnvTenantConfigResolver,
+} from "./kernel/index.ts";
 
 export async function createApp(
   db: Store,
@@ -50,13 +57,16 @@ export async function createApp(
     workspace = new WorkspaceService(db, config, files, google, rag);
   // BUSINESS_OS_FIXED_V1 — bus declarado antes de los servicios que lo usan.
   const bus = new EventBus(db);
+  // POLICY_EARLY_V1 — policy se necesita antes del ActionService, asi que se instancia aqui.
+  const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
+  const policy = new PolicyEngineEarly(bus);
   const actions = new ActionService(db, {
     execute: (owner, input, connectionId, targetVersion) =>
       workspace.execute(owner, input, connectionId, targetVersion),
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     connected: (owner) => workspace.connected(owner),
     connection: (owner) => workspace.connection(owner),
-  }, bus);
+  }, bus, policy);
   const browser = new BrowserService(db, config, auth, files);
   const { BusinessGraph } = await import("./engine/business/graph.ts");
   const { BusinessTruth } = await import("./engine/business/truth.ts");
@@ -67,15 +77,29 @@ export async function createApp(
   const { AgentGovernance } = await import("./engine/agents/governance.ts");
   const { WorkspaceRegistry } = await import("./engine/workspace/registry.ts");
   const { SkillMarketplace } = await import("./engine/skills/marketplace.ts");
+  const { MemoryService } = await import("./engine/memory.ts");
+  const { StateMachineRegistry } = await import("./engine/state-machines.ts");
   const graph = new BusinessGraph(db, bus);
   const truth = new BusinessTruth(graph);
-  const policy = new PolicyEngine(bus);
-  const stateMachine = new StateMachineEngine(bus);
+  // policy ya se creo arriba (POLICY_EARLY_V1).
+  const stateMachine = new StateMachineEngine(bus, {
+    getStatus: async (owner, entityId) => (await graph.getEntity(owner, entityId))?.status,
+  });
   const agentRuntime = new AgentRuntimeManager(bus);
   const governance = new AgentGovernance(policy, bus);
   const workspaceRegistry = new WorkspaceRegistry();
   const marketplace = new SkillMarketplace(db);
+  const memory = new MemoryService(db, rag);
+  const context = new ContextEngine(db, graph, memory, bus);
+  const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   const computer = new ComputerService(db, config, options.docker);
+  // KERNEL_WIRE_A_V1 — kernel cognitivo. Hoy in-memory, manana persistente.
+  const kernel = new Kernel({
+    store: new InMemoryTurnStore(),
+    tenants: new DefaultTenantResolver(),
+    audit: new InMemoryAuditStore(),
+    config: new EnvTenantConfigResolver(),
+  });
   const agent = new AgentService(
     db,
     config,
@@ -87,7 +111,7 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, context: undefined, runtime: agentRuntime, governance, workspaceRegistry, marketplace },
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel },
   );
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
@@ -187,14 +211,37 @@ export async function createApp(
     });
     return c.json({ ok: true });
   });
-  app.get("/api/health", (c) =>
-    c.json({
-      ok: true,
-      mode: config.mode,
-      agentConfigured: agentConfigured(config),
-      browserConfigured: Boolean(config.workerUrl && config.workerToken),
-    }),
-  );
+  // R16 — healthcheck profundo: comprueba DB (lectura + escritura idempotente),
+  // que el bus pueda emitir, y el estado del worker. Devuelve 503 si algo falla,
+  // para que Fly/Render sepan cuando reiniciar de verdad.
+  app.get("/api/health", async (c) => {
+    const checks: Record<string, boolean> = {};
+    try {
+      await db.put("system", "health", { id: "ping", at: new Date().toISOString() });
+      const ping = await db.get<{ at: string }>("system", "health", "ping");
+      checks.database = Boolean(ping);
+    } catch {
+      checks.database = false;
+    }
+    try {
+      await bus.emit("system", "system.startup", { kind: "system", id: "health" }, { mode: config.mode });
+      checks.bus = true;
+    } catch {
+      checks.bus = false;
+    }
+    checks.worker = true;
+    checks.agentConfigured = agentConfigured(config);
+    checks.browserConfigured = Boolean(config.workerUrl && config.workerToken);
+    const ok = checks.database && checks.bus;
+    return c.json(
+      {
+        ok,
+        mode: config.mode,
+        checks,
+      },
+      ok ? 200 : 503,
+    );
+  });
   // SESSION_RATE_LIMIT — rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
   const sessionLimiter = new RateLimiter(30, 60000);
   const sessionAddress = (c: Context) => {
@@ -284,7 +331,7 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/computer", computerRoutes(computer, files));
   // BUSINESS_ROUTES_WIRE_V1 — rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");
-  app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry));
+  app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry, stateMachines));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
   app.get("/api/calendar/events", async (c) => {
     const query = z

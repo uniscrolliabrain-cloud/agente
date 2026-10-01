@@ -42,8 +42,15 @@ export interface TransitionResult {
   action: string;
 }
 
+export interface EntityStateProvider {
+  getStatus(owner: string, entityId: string): Promise<string | undefined>;
+}
+
 export class StateMachineEngine {
-  constructor(private readonly bus?: EventBus) {}
+  constructor(
+    private readonly bus?: EventBus,
+    private readonly entities?: EntityStateProvider,
+  ) {}
 
   async transition(
     owner: string,
@@ -53,6 +60,21 @@ export class StateMachineEngine {
     to: string,
     roleId?: string,
   ): Promise<TransitionResult> {
+    // B7 — si hay provider de entidades, el "from" real manda. Protege contra carreras
+    // donde dos SOPs leen el mismo estado obsoleto.
+    if (this.entities) {
+      const actual = await this.entities.getStatus(owner, entityId);
+      if (actual !== undefined && actual !== from) {
+        await this.bus?.emit(owner, "state.transition_denied", { kind: "state", id: `${machine.id}:${entityId}` }, {
+          entityId,
+          stateMachine: machine.id,
+          from: actual,
+          attempted: to,
+          reason: `Entity is in ${actual}, not ${from}`,
+        });
+        throw new AppError(`Entity ${entityId} is in ${actual}, not ${from}`, 409);
+      }
+    }
     const transition = machine.transitions.find(
       (candidate) => candidate.from === from && candidate.to === to,
     );

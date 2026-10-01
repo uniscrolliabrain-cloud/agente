@@ -1,3 +1,4 @@
+// R5_APPLIED
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import pg from "pg";
@@ -69,7 +70,27 @@ function isPrivateIp(address: string): boolean {
 
 /** Small adapter layer for beta. PostgreSQL is real; sample mode has a durable local dataset. */
 export class BusinessDataService {
+  // R5 — pool compartido en vez de uno por query. Se crea lazy en la primera
+  // queryPostgres y se cierra en close(). Antes se abrian y cerraban pools de una
+  // sola conexion en cada SOP: 10 SOPs concurrentes = 10 handshakes a Postgres.
+  private pool?: pg.Pool;
+
   constructor(private readonly db: Store, private readonly databaseUrl?: string) {}
+
+  /** Cierra el pool compartido. Idempotente. */
+  async close(): Promise<void> {
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = undefined;
+    }
+  }
+
+  private getPool(): pg.Pool {
+    if (!this.pool) {
+      this.pool = new pg.Pool({ connectionString: this.databaseUrl, max: 5 });
+    }
+    return this.pool;
+  }
 
   async query(owner: string, q: BusinessQuery) {
     if (q.source === "api") return this.queryApi(q.query);
@@ -148,19 +169,14 @@ export class BusinessDataService {
     rejectUnsafeSql(sql);
 
     if (this.databaseUrl) {
-      const pool = new pg.Pool({ connectionString: this.databaseUrl, max: 1 });
-      try {
-        // The query is already a fully interpolated string; parameters are not usable here
-        // without changing how the SOP executor builds the query. The role used must have
-        // GRANT SELECT only for real defense-in-depth.
-        const result = await pool.query(sql);
-        return {
-          rows: result.rows,
-          summary: `PostgreSQL returned ${result.rowCount ?? result.rows.length} row(s)`,
-        };
-      } finally {
-        await pool.end();
-      }
+      // The query is already a fully interpolated string; parameters are not usable here
+      // without changing how the SOP executor builds the query. The role used must have
+      // GRANT SELECT only for real defense-in-depth.
+      const result = await this.getPool().query(sql);
+      return {
+        rows: result.rows,
+        summary: `PostgreSQL returned ${result.rowCount ?? result.rows.length} row(s)`,
+      };
     }
 
     // Beta fallback: emulate a tiny business table from durable records.
