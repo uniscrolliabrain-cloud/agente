@@ -36,6 +36,13 @@ import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
 import { threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
+import {
+  Kernel,
+  InMemoryTurnStore,
+  DefaultTenantResolver,
+  InMemoryAuditStore,
+  EnvTenantConfigResolver,
+} from "./kernel/index.ts";
 
 export async function createApp(
   db: Store,
@@ -86,6 +93,13 @@ export async function createApp(
   const context = new ContextEngine(db, graph, memory, bus);
   const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   const computer = new ComputerService(db, config, options.docker);
+  // KERNEL_WIRE_A_V1 — kernel cognitivo. Hoy in-memory, manana persistente.
+  const kernel = new Kernel({
+    store: new InMemoryTurnStore(),
+    tenants: new DefaultTenantResolver(),
+    audit: new InMemoryAuditStore(),
+    config: new EnvTenantConfigResolver(),
+  });
   const agent = new AgentService(
     db,
     config,
@@ -97,7 +111,7 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace },
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel },
   );
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
