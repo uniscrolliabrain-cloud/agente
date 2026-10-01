@@ -1,3 +1,5 @@
+// B105_APPLIED
+// B105FIX_APPLIED
 // EVENTBUS_WORKER_V1
 import { randomUUID } from "node:crypto";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
@@ -194,12 +196,18 @@ export class TaskWorker {
       const source: SystemEventSource = { kind: "task", id: taskId };
       await bus.emit(owner, type, source, { taskId, ...payload });
     };
-    await this.db.put(owner, "runs", {
+    // B105 — audit trail: runs guarda roleId, runtimeId y entityId (si estan en task.state).
+    // Asi un run se puede trazar a su rol, a su runtime efimero y a la entidad que toco.
+    const runMeta: { id: string } & Record<string, unknown> = {
       id: leaseId,
       taskId,
       startedAt: new Date(this.now()).toISOString(),
       status: "running",
-    });
+    };
+    if (typeof task.state.roleId === "string") runMeta.roleId = task.state.roleId;
+    if (typeof task.state.runtimeId === "string") runMeta.runtimeId = task.state.runtimeId;
+    if (typeof task.state.entityId === "string") runMeta.entityId = task.state.entityId;
+    await this.db.put(owner, "runs", runMeta);
     const heartbeat = setInterval(
       () => {
         void this.db
@@ -226,13 +234,17 @@ export class TaskWorker {
         busEvent,
       });
       await checkpoint({ ...result, leaseId: null, leaseUntil: null });
-      await this.db.put(owner, "runs", {
+      const finishMeta: { id: string } & Record<string, unknown> = {
         id: leaseId,
         taskId,
         startedAt: task.updatedAt,
         finishedAt: new Date(this.now()).toISOString(),
         status: result.status ?? task.status,
-      });
+      };
+      if (typeof task.state.roleId === "string") finishMeta.roleId = task.state.roleId;
+      if (typeof task.state.runtimeId === "string") finishMeta.runtimeId = task.state.runtimeId;
+      if (typeof task.state.entityId === "string") finishMeta.entityId = task.state.entityId;
+      await this.db.put(owner, "runs", finishMeta);
     } catch (error) {
       if (error instanceof LostLeaseError || controller.signal.aborted) {
         await this.db.compareAndSwap(

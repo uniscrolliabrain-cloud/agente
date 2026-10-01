@@ -1,3 +1,4 @@
+// B101_APPLIED
 import { z } from "zod";
 
 // BUSINESS_GRAPH_V1 — contrato canonico del Business Graph.
@@ -24,6 +25,8 @@ export const businessEntitySchema = z.object({
   properties: z.record(z.string(), z.unknown()).default({}),
   schemaVersion: z.string().max(100).default("1.0"),
   provenance: provenanceSchema,
+  /** B101 — maquina de estados que gobierna `status`. Si esta definida, updateEntity valida la transicion. */
+  stateMachineId: z.string().trim().min(1).max(100).optional(),
 });
 
 export type BusinessEntity = z.infer<typeof businessEntitySchema>;
