@@ -8,6 +8,10 @@ import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
+import type { AgentGovernance } from "./agents/governance.ts";
+import type { AgentRole } from "../../../../packages/domain/src/agent.ts";
+// B9FIX_APPLIED
+// B9FIX_APPLIED
 import type { AgentService } from "./service.ts";
 import type { TaskContext } from "./worker.ts";
 
@@ -44,6 +48,12 @@ export async function executeModelTask(
     );
     return result;
   };
+  const roleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
+  const activeRole: AgentRole | undefined = roleId
+    ? ((await service.db.get<AgentRole>(owner, "agent-roles", roleId).catch(() => null)) ?? undefined)
+    : undefined;
+  const governance = service.governance as AgentGovernance | undefined;
+
   const tool = <T extends z.ZodType>(
     name: string,
     description: string,
@@ -63,6 +73,14 @@ export async function executeModelTask(
               reason: "The task is waiting or finished; do not perform more actions.",
             };
           await ctx.guard();
+          if (governance && activeRole) {
+            const decision = await governance.canExecuteTool(owner, activeRole, name);
+            if (!decision.allowed) {
+              const reason = decision.reason ?? `Tool ${name} not allowed for role ${activeRole.id}`;
+              await ctx.event("error", `${name} denied by governance`, reason);
+              return { error: reason };
+            }
+          }
           await ctx.event("step", description);
           try {
             return await execute(parameters.parse(args));
@@ -320,7 +338,7 @@ export async function executeModelTask(
     ),
   ];
   const identity = await service.db.get<{ name: string; tone: string }>(owner,"agent-settings","identity");
-  const roleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
+
   // ROLE_PROMPT_V2 — tone y memorias del rol en el prompt de tareas durables.
   const roleContext = roleId
     ? await service.db

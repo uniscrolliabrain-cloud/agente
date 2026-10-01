@@ -392,16 +392,9 @@ export class ConversationAgent extends AbstractAgent {
         };
         const roleMemories = roleContext?.memories ?? [];
         let contextBlock = "";
-        if (roleContext && this.service.context && this.service.graph) {
+        if (roleContext && this.service.context) {
           try {
-            const { ContextEngine } = await import("./context/engine.ts");
-            const engine = new ContextEngine(
-              this.service.db,
-              this.service.graph as never,
-              this.service.memory,
-              this.service.bus,
-            );
-            const pkg = await engine.assemble(this.owner, {
+            const pkg = await this.service.context.assemble(this.owner, {
               roleId: roleId!,
               query: typeof latest?.content === "string" ? latest.content : "",
             });
@@ -426,7 +419,32 @@ export class ConversationAgent extends AbstractAgent {
           (model) => new BuiltInAgent({ model, maxSteps: 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
         );
-        subscription = run.events.subscribe(subscriber);
+        // RECORD_USAGE_CHAT_V1 — contamos caracteres de entrada y salida del stream.
+        // Antes solo se contaba en model.ts (tasks); el 80% del uso real es chat.
+        const inputChars = JSON.stringify(enrichedInput.messages).length;
+        let outputChars = 0;
+        const counted = new Observable<BaseEvent>((sub) => {
+          const inner = run!.events.subscribe({
+            next: (event) => {
+              if (
+                event.type === EventType.TEXT_MESSAGE_CONTENT &&
+                "delta" in event &&
+                typeof event.delta === "string"
+              )
+                outputChars += event.delta.length;
+              sub.next(event);
+            },
+            error: (error) => sub.error(error),
+            complete: () => {
+              void this.service
+                .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
+                .catch(() => {});
+              sub.complete();
+            },
+          });
+          return () => inner.unsubscribe();
+        });
+        subscription = counted.subscribe(subscriber);
       })();
 
       return () => {

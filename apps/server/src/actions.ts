@@ -8,6 +8,8 @@ import {
 } from "../../../packages/domain/src/index.ts";
 import type { Store } from "./db.ts";
 import type { EventBus } from "./engine/events/index.ts";
+import type { PolicyEngine } from "./engine/policy/engine.ts";
+import type { AgentRole } from "../../../packages/domain/src/agent.ts";
 import { AppError } from "./errors.ts";
 
 interface Options {
@@ -33,12 +35,15 @@ interface Options {
 export class ActionService {
   private readonly now: () => number;
   private readonly bus?: EventBus;
+  private readonly policy?: PolicyEngine;
   constructor(
     private readonly db: Store,
     private readonly options: Options,
     bus?: EventBus,
+    policy?: PolicyEngine,
   ) {
     this.bus = bus;
+    this.policy = policy;
     this.now = options.now ?? Date.now;
   }
   async propose(
@@ -160,6 +165,19 @@ export class ActionService {
           "Google account or connection changed. Prepare a new action for the connected account.",
           409,
         );
+    }
+    // POLICY_GATE_V1 — si la accion esta vinculada a una tarea con rol activo,
+    // consultamos PolicyEngine antes de aprobar. Deny es siempre libre.
+    if (decision === "approve" && this.policy && proposal.taskId) {
+      const task = await this.db.get<{ state?: { roleId?: string } }>(owner, "tasks", proposal.taskId);
+      const roleId = typeof task?.state?.roleId === "string" ? task.state.roleId : undefined;
+      if (roleId) {
+        const role = await this.db.get<AgentRole>(owner, "agent-roles", roleId).catch(() => null);
+        if (role) {
+          const verdict = await this.policy.can(owner, role, `action:${proposal.kind}`, "approve");
+          if (!verdict.allowed) throw new AppError(verdict.reason ?? "Action denied by policy", 403);
+        }
+      }
     }
     const claimed = await this.db.claim<ActionProposal>(
       owner,

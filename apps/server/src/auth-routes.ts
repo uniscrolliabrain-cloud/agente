@@ -138,6 +138,49 @@ export function authRoutes(
     });
   });
 
+  // POST /api/auth/register -> solo si la DB no tiene usuarios. Crea el primer admin
+  // sin pasar por ADMIN_EMAIL/ADMIN_PASSWORD en .env. Despues, 409 siempre.
+  app.post("/register", async (c) => {
+    const existing = await users.list();
+    if (existing.length > 0)
+      throw new AppError("Ya hay usuarios en esta instalacion. Pide al admin que te cree cuenta.", 409);
+    const body = z
+      .object({
+        email: z.email({ message: "Email invalido" }),
+        name: z.string().trim().min(1).max(120),
+        password: z.string().min(8).max(200),
+      })
+      .parse(await c.req.json());
+    const user = await users.create({ ...body, role: "admin" });
+    const token = randomBytes(32).toString("base64url");
+    await db.put("system", "sessions", {
+      id: digest(token),
+      owner: user.id,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+    });
+    if (options.afterLogin) {
+      try {
+        await options.afterLogin(user.id);
+      } catch (error) {
+        backgroundFailure(`register bootstrap for ${user.id}`, error);
+      }
+    }
+    return c.json(
+      {
+        token,
+        mode: options.config?.mode ?? "live",
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          setup: user.setup,
+        },
+      },
+      201,
+    );
+  });
+
   // POST /api/auth/logout
   app.post("/logout", async (c) => {
     const auth = c.req.header("authorization");

@@ -1,3 +1,4 @@
+// B101b_APPLIED
 import { randomUUID } from "node:crypto";
 import {
   type BusinessEntity,
@@ -8,6 +9,7 @@ import {
 import type { Store } from "../../db.ts";
 import { AppError } from "../../errors.ts";
 import type { EventBus } from "../events/index.ts";
+import type { StateMachineRegistry } from "../state-machines.ts";
 
 const ENTITY_KIND = "business-entities";
 const RELATION_KIND = "business-relations";
@@ -51,6 +53,7 @@ export class BusinessGraph {
   constructor(
     private readonly db: Store,
     private readonly bus?: EventBus,
+    private readonly stateMachines?: StateMachineRegistry,
   ) {}
 
   async createEntity(owner: string, input: CreateEntityInput): Promise<BusinessEntity> {
@@ -83,6 +86,18 @@ export class BusinessGraph {
   async updateEntity(owner: string, id: string, patch: UpdateEntityInput): Promise<BusinessEntity> {
     const current = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, id);
     if (!current) throw new AppError(`Entity not found: ${id}`, 404);
+    // B101b — si la entidad declara stateMachineId y este patch cambia status,
+    // validamos la transicion via StateMachineRegistry. Sin stateMachineId o sin
+    // registry, comportamiento previo.
+    if (
+      this.stateMachines &&
+      current.stateMachineId &&
+      patch.status !== undefined &&
+      patch.status !== current.status
+    ) {
+      const from = current.status ?? "";
+      await this.stateMachines.apply(owner, current.stateMachineId, id, from, patch.status, patch.actor);
+    }
     const next = businessEntitySchema.parse({
       ...current,
       ...(patch.name !== undefined ? { name: patch.name } : {}),

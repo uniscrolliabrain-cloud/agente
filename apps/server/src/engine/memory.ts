@@ -1,3 +1,5 @@
+// R10_APPLIED
+// R4c_APPLIED
 import { createHash } from "node:crypto";
 import type { AgentMemory, MemoryCategory, Project } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
@@ -14,6 +16,11 @@ export interface RecallOptions {
   memoryLimit?: number;
   history?: string[];
   categories?: MemoryCategory[];
+  /** R10 — si se pasa, se prefieren memorias del rol (roleId coincidente) y se
+   *  incluyen también las globales (sin roleId). Sin roleId, comportamiento previo. */
+  roleId?: string;
+  /** R10 — si es false, no se devuelven memorias del rol. Default true. */
+  includeRoleMemories?: boolean;
 }
 
 export interface RecallResult {
@@ -93,7 +100,8 @@ export class MemoryService {
     query: string,
     options: RecallOptions = {},
   ): Promise<AgentMemory[]> {
-    const all = await this.db.list<AgentMemory>(owner, "memories");
+    // R4c — tope en la carga; el filtrado por categoria/palabras hace el trabajo.
+    const all = await this.db.list<AgentMemory>(owner, "memories", { limit: 2000 });
     const words = query
       .toLowerCase()
       .split(/\s+/)
@@ -105,7 +113,15 @@ export class MemoryService {
       return options.categories.includes(m.category);
     };
 
-    const filtered = all.filter(byCategory);
+    // R10 — si hay roleId, se prefieren memorias del rol, pero no se descartan las
+    // globales (sin roleId). Si includeRoleMemories === false, se excluyen las del rol.
+    const byRole = (m: AgentMemory): boolean => {
+      if (options.includeRoleMemories === false && m.roleId) return false;
+      if (options.roleId && m.roleId && m.roleId !== options.roleId) return false;
+      return true;
+    };
+
+    const filtered = all.filter((m) => byCategory(m) && byRole(m));
 
     if (words.length === 0) {
       return filtered
@@ -180,7 +196,9 @@ export class MemoryService {
   }
 
   async dedupMemories(owner: string): Promise<number> {
-    const all = await this.db.list<AgentMemory>(owner, "memories");
+    // R4c — tope en la carga; el mantenimiento corre cada 5 min, no necesita
+    // recorrer el historico completo de golpe. Si hay mas, se cubren en pasadas.
+    const all = await this.db.list<AgentMemory>(owner, "memories", { limit: 5000 });
     const seen = new Map<string, AgentMemory>();
     let removed = 0;
     for (const m of all.sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
