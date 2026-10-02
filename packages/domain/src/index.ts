@@ -212,3 +212,20 @@ export * from "./errors.ts";
 export * from "./business.ts";
 // EXPORT_KERNEL_V1 - contrato del kernel para el engine.
 export * from "./kernel.ts";
+// EXPORT_BUSINESS_OS_V1 - contratos del Business OS.
+export * from "./execution-context.ts";
+export * from "./goal.ts";
+export * from "./outcome.ts";
+export * from "./capability.ts";
+export * from "./plan.ts";
+export * from "./runtime.ts";
+export * from "./verification.ts";
+export * from "./messaging.ts";
+export * from "./policy-context.ts";
+// EXPORT_BUSINESS_OS_V2 - contratos de segunda capa.
+export * from "./truth.ts";
+export * from "./entity-resolution.ts";
+export * from "./business-schema.ts";
+export * from "./reaction.ts";
+export * from "./learning.ts";
+export * from "./workspace-spec.ts";

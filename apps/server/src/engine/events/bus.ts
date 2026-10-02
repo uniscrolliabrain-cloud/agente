@@ -22,6 +22,25 @@ const DEDUPE_MAX_ENTRIES = 64;
 export interface EmitOptions {
   correlationId?: string;
   causationId?: string;
+  /**
+   * EVENTBUS_DEDUPE_KEY_V1 - clave de deduplicacion explicita.
+   *
+   * Si se pasa, el bus deduplica: dos emisiones con la misma clave en la
+   * ventana de 60s solo escriben la primera. Los emisores de RUIDO
+   * (reintentos, estados que cambian repetidamente) la pasan.
+   *
+   * Si NO se pasa, el bus NO deduplica. Los emisores FACTUALES
+   * (entity.updated, entity.created, relation.created) no la pasan,
+   * porque cada emision es un hecho nuevo y no debe descartarse.
+   *
+   * Antes de esto, el bus deduplicaba siempre con
+   * `${owner}:${type}:${source.kind}:${source.id}`. Eso descartaba el
+   * segundo entity.updated del mismo cliente en 60s, corrompiendo el
+   * event log factual.
+   */
+  dedupeKey?: string;
+  /** MULTI_TENANT_V1 - tenantId. Si no se pasa, se usa owner. */
+  tenantId?: string;
   notify?: { title: string; body: string; key: string };
 }
 
@@ -48,11 +67,15 @@ export class EventBus {
     try {
       const schema = payloadSchemas[type];
       const parsed = schema.parse(payload) as T;
-      const dedupeKey = `${owner}:${type}:${source.kind}:${source.id}`;
-      if (await this.isDuplicate(owner, dedupeKey)) return;
+      // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
+      // Sin dedupeKey explicita, cada emision es un hecho nuevo.
+      if (options.dedupeKey !== undefined) {
+        if (await this.isDuplicate(owner, options.dedupeKey)) return;
+      }
       const event: SystemEvent<T> = {
         id: ulid(),
         schemaVersion: "1.0",
+        tenantId: options.tenantId ?? owner,
         owner,
         type,
         emittedAt: new Date().toISOString(),
@@ -62,7 +85,10 @@ export class EventBus {
         payload: parsed,
       };
       await this.sink.write(event);
-      await this.recordDedupe(owner, dedupeKey);
+      // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
+      if (options.dedupeKey !== undefined) {
+        await this.recordDedupe(owner, options.dedupeKey);
+      }
       if (options.notify) {
         await this.db.insertIfAbsent(owner, "notifications", {
           id: createHash("sha256").update(options.notify.key).digest("hex"),

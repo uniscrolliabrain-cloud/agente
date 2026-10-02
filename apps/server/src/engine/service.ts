@@ -68,6 +68,21 @@ import { MemoryService } from "./memory.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
 import type { TenantService } from "./tenant.ts";
+// GUARDRAILS_V1 - limites duros por tenant.
+import { GuardrailService } from "./guardrails/service.ts";
+// CAPABILITY_REGISTRY_V1 - capacidades del sistema.
+import { CapabilityRegistry } from "./capabilities/registry.ts";
+import { bootstrapCapabilities } from "./capabilities/bootstrap.ts";
+// PLANNER_V1 - genera planes.
+import { StubPlanner } from "./planner/planner.ts";
+// VERIFIER_V1 - verifica outcomes.
+import { DeterministicVerifier } from "./verification/verifier.ts";
+// BUSINESS_OS_ORCHESTRATOR_V1 - ciclo completo.
+import { BusinessOSOrchestrator } from "./orchestrator/orchestrator.ts";
+// HANDOFF_SERVICE_V1 - pasa trabajo entre roles.
+import { HandoffService } from "./handoff/service.ts";
+// REACTION_ENGINE_V1 - reacciona a eventos.
+import { ReactionEngine } from "./reactions/engine.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
@@ -125,6 +140,20 @@ export class AgentService {
   readonly kernel?: Kernel;
   // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
   readonly tenantService?: TenantService;
+  // GUARDRAILS_V1 - limites duros por tenant.
+  readonly guardrails: GuardrailService;
+  // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
+  readonly capabilities: CapabilityRegistry;
+  // PLANNER_V1 - genera planes.
+  readonly planner: StubPlanner;
+  // VERIFIER_V1 - verifica outcomes.
+  readonly verifier: DeterministicVerifier;
+  // BUSINESS_OS_ORCHESTRATOR_V1 - ciclo completo.
+  readonly orchestrator: BusinessOSOrchestrator;
+  // HANDOFF_SERVICE_V1 - pasa trabajo entre roles.
+  readonly handoff: HandoffService;
+  // REACTION_ENGINE_V1 - reacciona a eventos.
+  readonly reactions: ReactionEngine;
   constructor(
     readonly db: Store,
     readonly config: Config,
@@ -155,6 +184,14 @@ export class AgentService {
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
+    this.guardrails = new GuardrailService(db);
+    this.capabilities = new CapabilityRegistry();
+    bootstrapCapabilities(this.capabilities);
+    this.planner = new StubPlanner();
+    this.verifier = new DeterministicVerifier();
+    this.orchestrator = new BusinessOSOrchestrator();
+    this.handoff = new HandoffService(db);
+    this.reactions = new ReactionEngine(db, this.bus);
     this.learning = new LearningService(this.memory);
     this.sopExecutor = new SOPExecutor(this, this.bus, this.graph, this.stateMachineRegistry);
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
@@ -303,10 +340,16 @@ export class AgentService {
           backgroundFailure(`sop trigger ${sop.id}`, error);
         }
       }
-      await this.bus?.emit("system", "system.maintenance", { kind: "system", id: "maintain" }, {
-        tasks: 0,
-        monitors: 0,
-      });
+      // EVENTBUS_DEDUPE_MAINTENANCE_V1 - system.maintenance se emite cada
+      // minuto. Deduplicamos con key explicita para no escribir 1440 eventos
+      // por dia por owner. Es la unica emision con dedupe en maintain().
+      await this.bus?.emit(
+        "system",
+        "system.maintenance",
+        { kind: "system", id: "maintain" },
+        { tasks: 0, monitors: 0 },
+        { dedupeKey: "system:maintenance:1m" },
+      );
       // META_LOOP_V1 - bucle de metaconsciencia. Corre cada minuto desde
       // maintain(). Antes Meta.evaluate() no lo llamaba nadie: era decorativo.
       await this.runMetaLoop().catch((error) =>
@@ -597,11 +640,14 @@ export class AgentService {
     const id = idempotencyKey ? hash(`task:${idempotencyKey}`) : randomUUID();
     const existing = await this.db.get<AgentTask>(owner, "tasks", id);
     if (existing) return existing;
-    if (
-      (await this.db.list<AgentTask>(owner, "tasks")).filter((t) => !terminal.has(t.status))
-        .length >= 100
-    )
+    // GUARDRAILS_CHECK_TASK_V1 - limite duro por tenant, no por owner.
+    const tenantIdForGuard = await this.tenantService?.tenantIdFor(owner) ?? owner;
+    const activeTasks = (await this.db.list<AgentTask>(owner, "tasks")).filter(
+      (t) => !terminal.has(t.status),
+    );
+    if (activeTasks.length >= 100)
       throw new AppError("Finish or cancel some tasks before adding more", 409);
+    await this.guardrails.checkTaskCreation(tenantIdForGuard, activeTasks.length);
     const titles =
       input.kind === "sop"
         ? []
@@ -1357,6 +1403,22 @@ export class AgentService {
       date: new Date().toISOString(),
     };
     await this.db.put(owner, "llm-usage", value);
+    // GUARDRAILS_CHECK_USAGE_V1 - verificar cuota despues de registrar.
+    try {
+      const tenantIdForGuard = await this.tenantService?.tenantIdFor(owner) ?? owner;
+      const usage = await this.db.list<{ costEur: number; inputTokens: number; outputTokens: number; date: string }>(
+        owner,
+        "llm-usage",
+      );
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      const today = usage.filter((u) => u.date >= since);
+      const tokensToday = today.reduce((acc, u) => acc + u.inputTokens + u.outputTokens, 0);
+      const costToday = today.reduce((acc, u) => acc + u.costEur, 0);
+      await this.guardrails.checkTokens(tenantIdForGuard, tokensToday);
+      await this.guardrails.checkCost(tenantIdForGuard, costToday);
+    } catch {
+      /* guardrail no bloquea el record; el check se aplica en el proximo createTask */
+    }
     return value;
   }
 

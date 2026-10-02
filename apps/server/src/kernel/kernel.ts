@@ -28,7 +28,8 @@ export class Kernel {
   constructor(readonly deps: KernelDeps) {}
 
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const turn = await this.deps.store.openTurn(tenantId, ctx.owner, trigger);
     await this.deps.audit.append({
       tenantId,

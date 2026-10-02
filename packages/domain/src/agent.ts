@@ -52,6 +52,10 @@ export interface AgentTask {
   requestId?: string;
   parentTaskId?: string;
   lastCheckpointAt?: string;
+  // OUTCOME_V1 - resultado estructurado. Reemplaza progresivamente a `result`.
+  outcome?: import("./outcome.ts").Outcome;
+  // GOAL_LINK_V1 - goal al que pertenece la tarea.
+  // Nota: `goalId` ya existe arriba, este comentario es solo documental.
 }
 export interface RunEvent {
   id: string;

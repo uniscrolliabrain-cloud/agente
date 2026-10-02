@@ -32,6 +32,9 @@ interface Options {
   connection?: (owner: string) => Promise<{ id: string; account: string } | null>;
   now?: () => number;
 }
+// APPROVAL_REQUEST_PRIMITIVE_V1 - la propuesta actual es un ApprovalRequest
+// informal. En la proxima fase se envuelve como primitiva formal con
+// runtimeId + capabilityId + risk, sin cambiar la firma.
 export class ActionService {
   private readonly now: () => number;
   private readonly bus?: EventBus;

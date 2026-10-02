@@ -51,6 +51,7 @@ export interface SystemEventSource {
 export interface SystemEvent<T = Record<string, unknown>> {
   id: string;
   schemaVersion: "1.0";
+  tenantId: string;
   owner: string;
   type: SystemEventType;
   emittedAt: string;

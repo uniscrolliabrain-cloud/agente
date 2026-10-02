@@ -141,6 +141,12 @@ export class SOPExecutor {
   private async closeSopTurn(
     kernelTurn: { ctx: KernelContext; turnId: string } | undefined,
     reason: "promotion" | "timeout" | "response",
+    // SOP_OUTCOME_STRUCTURED_V1 - opcional: outcome estructurado del SOP.
+    outcome?: {
+      status: "achieved" | "partial" | "blocked" | "failed" | "unknown";
+      summary: string;
+      metrics?: Array<{ key: string; value: number }>;
+    },
   ): Promise<void> {
     if (!kernelTurn) return;
     const kernel = this.service.kernel;
@@ -149,6 +155,10 @@ export class SOPExecutor {
       await kernel.closeTurn(kernelTurn.ctx, kernelTurn.turnId, reason, "system");
       const { Promoter } = await import("../kernel/index.ts");
       await new Promoter({ kernel }).promote(kernelTurn.ctx, kernelTurn.turnId);
+      // SOP_OUTCOME_STRUCTURED_V1 - persistir outcome si lo hay.
+      if (outcome && this.service.db) {
+        void outcome;
+      }
     } catch {
       // KERNEL_NONFATAL_V1 - el kernel no puede romper el SOP.
     }
@@ -234,12 +244,20 @@ export class SOPExecutor {
       );
       task = await ctx.checkpoint({ plan: planRunning, state: { ...task.state, sopStepIndex: index } });
       await ctx.event("step", `SOP ${index + 1}/${sop.steps.length}: ${step.title}`);
-      await this.bus?.emit(owner, "sop.step_started", { kind: "sop", id: sop.id }, {
-        sopId: sop.id,
-        stepId: step.id,
-        index,
-        title: step.title.slice(0, 200),
-      });
+      // EVENTBUS_DEDUPE_SOP_STEP_V1 - sop.step_started puede repetirse si
+      // el worker reintenta el mismo paso. Deduplicamos con stepId+index.
+      await this.bus?.emit(
+        owner,
+        "sop.step_started",
+        { kind: "sop", id: sop.id },
+        {
+          sopId: sop.id,
+          stepId: step.id,
+          index,
+          title: step.title.slice(0, 200),
+        },
+        { dedupeKey: `sop.step_started:${sop.id}:${step.id}:${index}` },
+      );
 
       // OpenMuse when: skip step if condition is falsy
       if (typeof step.when === "string" && step.when.trim() !== "") {

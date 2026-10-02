@@ -44,6 +44,11 @@ export interface TransitionResult {
 
 export interface EntityStateProvider {
   getStatus(owner: string, entityId: string): Promise<string | undefined>;
+  /**
+   * STATEMACHINE_ENTITY_TYPE_V1 - opcional, devuelve el tipo de la entidad.
+   * Si esta definido, transition() verifica que coincida con machine.entityType.
+   */
+  getType?(owner: string, entityId: string): Promise<string | undefined>;
 }
 
 export class StateMachineEngine {
@@ -63,6 +68,25 @@ export class StateMachineEngine {
     // B7 — si hay provider de entidades, el "from" real manda. Protege contra carreras
     // donde dos SOPs leen el mismo estado obsoleto.
     if (this.entities) {
+      // STATEMACHINE_ENTITY_TYPE_V1 - si el provider expone getType y la
+      // maquina declara entityType, verificamos la coincidencia. Sin esto,
+      // una maquina de "customer" podia aplicarse a un "invoice".
+      if (this.entities.getType && machine.entityType) {
+        const actualType = await this.entities.getType(owner, entityId);
+        if (actualType !== undefined && actualType !== machine.entityType) {
+          await this.bus?.emit(owner, "state.transition_denied", { kind: "state", id: `${machine.id}:${entityId}` }, {
+            entityId,
+            stateMachine: machine.id,
+            from,
+            attempted: to,
+            reason: `Entity type ${actualType} does not match machine entityType ${machine.entityType}`,
+          });
+          throw new AppError(
+            `Entity ${entityId} is type ${actualType}, not ${machine.entityType}`,
+            409,
+          );
+        }
+      }
       const actual = await this.entities.getStatus(owner, entityId);
       if (actual !== undefined && actual !== from) {
         await this.bus?.emit(owner, "state.transition_denied", { kind: "state", id: `${machine.id}:${entityId}` }, {
@@ -88,15 +112,20 @@ export class StateMachineEngine {
       });
       throw new AppError(`Transition ${from} -> ${to} not allowed by ${machine.id}`, 409);
     }
-    if (transition.roleId && roleId && transition.roleId !== roleId) {
+    // STATEMACHINE_AUTH_FIX_V1 - antes esta condicion tenia un tercer
+    // termino `roleId` que hacia que un caller sin rol (undefined) pasara
+    // la verificacion. Ahora: si la transicion declara un rol, el caller
+    // DEBE tener ese rol. undefined es rechazo, no permiso.
+    if (transition.roleId && transition.roleId !== roleId) {
+      const actual = roleId ?? "anonymous";
       await this.bus?.emit(owner, "state.transition_denied", { kind: "state", id: `${machine.id}:${entityId}` }, {
         entityId,
         stateMachine: machine.id,
         from,
         attempted: to,
-        reason: `Role ${roleId} cannot execute this transition`,
+        reason: `Role ${actual} cannot execute this transition (requires ${transition.roleId})`,
       });
-      throw new AppError(`Role ${roleId} cannot execute ${from} -> ${to}`, 403);
+      throw new AppError(`Role ${actual} cannot execute ${from} -> ${to}`, 403);
     }
     await this.bus?.emit(owner, "state.changed", { kind: "state", id: `${machine.id}:${entityId}` }, {
       entityId,

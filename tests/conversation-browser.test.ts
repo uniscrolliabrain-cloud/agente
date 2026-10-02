@@ -97,7 +97,9 @@ test("chat browse_web emits real SDK tool events and returns observed source con
   assert.equal((await fixture.db.list("local-user", "tasks")).length, 0);
   assert.equal(requests.length, 2);
   assert.ok(requests[0].body.includes('"name":"browse_web"'));
-  assert.match(requests[0].body, /For public-page summaries.*browse_web/);
+  // CHAT_HUMAN_PROMPT_TEST_FIX_V1 - el prompt ahora es en espanol y con reglas de tono.
+  assert.match(requests[0].body, /browse_web/);
+  assert.match(requests[0].body, /asistente personal/);
   assert.match(requests[0].body, /untrusted/);
   assert.ok(requests[1].body.includes(observed.text));
 
