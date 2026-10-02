@@ -82,3 +82,45 @@ export function classify(thought: Thought): RuleOutcome | undefined {
   }
   return undefined;
 }
+
+/**
+ * RULES_TENANT_GUARD_V1 - classify con verificacion de tenant.
+ *
+ * Cierra #206: rules.ts no verificaba el tenant. Un thought de otro tenant
+ * podia colarse si el caller pasaba una lista mezclada. Ahora, si el thought
+ * no pertenece al tenant esperado, se descarta con una regla sintetica.
+ *
+ * No forma parte de RULES porque no es una regla de negocio: es un guard.
+ * Se aplica antes del classify normal.
+ */
+export interface TenantGuardResult {
+  allowed: boolean;
+  reason?: string;
+}
+
+export function checkTenant(thought: Thought, expectedTenantId: string): TenantGuardResult {
+  if (!expectedTenantId) return { allowed: true };
+  if (thought.tenantId === expectedTenantId) return { allowed: true };
+  return {
+    allowed: false,
+    reason: `thought ${thought.id} pertenece a tenant ${thought.tenantId}, esperado ${expectedTenantId}`,
+  };
+}
+
+export function classifyWithTenant(
+  thought: Thought,
+  expectedTenantId: string,
+): RuleOutcome | undefined {
+  const guard = checkTenant(thought, expectedTenantId);
+  if (!guard.allowed) {
+    return {
+      rule: {
+        id: "discard_tenant_mismatch",
+        description: `Descartado: ${guard.reason}`,
+        matches: () => true,
+      },
+      survives: false,
+    };
+  }
+  return classify(thought);
+}

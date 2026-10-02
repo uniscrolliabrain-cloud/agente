@@ -210,3 +210,5 @@ export * from "./sop.ts";
 export * from "./errors.ts";
 // EXPORT_BUSINESS_V1
 export * from "./business.ts";
+// EXPORT_KERNEL_V1 - contrato del kernel para el engine.
+export * from "./kernel.ts";

@@ -1,20 +1,15 @@
-// KERNEL_STORE_AUDIT_STORE_V1 — audit persistente sobre records.
+// KERNEL_STORE_AUDIT_STORE_V2 - audit persistente con hash chain atomica.
 //
-// Hoy el kernel usa InMemoryAuditStore: el audit trail vive en el proceso
-// y se pierde al reiniciar. Este bloque anade la implementacion persistente
-// sobre Store, con kind "audit-entries", reutilizando put/list/compareAndSwap
-// que ya tiene el repo.
+// Cambios respecto a V1:
+//   - append() usa transaction() para que lastHash + put sean atomicos.
+//     Antes, dos procesos concurrentes podian leer el mismo lastHash y
+//     escribir dos entradas con el mismo previousHash, rompiendo la cadena.
+//   - verify() lee en orden cronologico real (updated_at ASC via listPaged).
+//   - list() con tope duro para no traer 100.000 entradas de golpe.
+//   - MAX_LIST ampliable por env var para tenants grandes.
 //
-// No se activa todavia: app.ts sigue inyectando InMemoryAuditStore. Activar
-// este store es cambiar una linea en app.ts cuando se quiera persistencia
-// real (SOC-2 lo exige en produccion).
-//
-// Hash chain igual que el in-memory: cada entrada lleva previousHash y hash
-// calculados con SHA-256 sobre el contenido canonico. verify() recorre la
-// cadena del tenant y comprueba que no ha sido alterada.
-//
-// Aislamiento: cada entrada se escribe con owner = `tenantId` para que la
-// lista por tenant sea una query directa, sin filtrar en memoria.
+// SOC-2: este es el store que se activa en produccion. InMemoryAuditStore
+// solo para tests. app.ts cambia en P2.7.
 
 import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../../db.ts";
@@ -22,6 +17,14 @@ import { auditEntrySchema, type AuditEntry } from "./entry.ts";
 import type { AuditAppendInput, AuditStore } from "./store.ts";
 
 const KIND = "audit-entries";
+const DEFAULT_MAX_LIST = 10_000;
+
+function maxList(): number {
+  const raw = process.env.KERNEL_AUDIT_MAX_LIST;
+  if (!raw) return DEFAULT_MAX_LIST;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : DEFAULT_MAX_LIST;
+}
 
 function computeHash(input: {
   id: string;
@@ -53,34 +56,36 @@ export class StoreAuditStore implements AuditStore {
   constructor(private readonly db: Store) {}
 
   async append(input: AuditAppendInput): Promise<AuditEntry> {
-    const timestamp = new Date().toISOString();
-    const previousHash = await this.lastHash(input.tenantId);
-    const id = randomUUID();
-    const hash = computeHash({
-      id,
-      tenantId: input.tenantId,
-      owner: input.owner,
-      action: input.action,
-      actor: input.actor,
-      payload: input.payload,
-      timestamp,
-      ...(previousHash !== undefined ? { previousHash } : {}),
+    return this.db.transaction(async () => {
+      const timestamp = new Date().toISOString();
+      const previousHash = await this.lastHash(input.tenantId);
+      const id = randomUUID();
+      const hash = computeHash({
+        id,
+        tenantId: input.tenantId,
+        owner: input.owner,
+        action: input.action,
+        actor: input.actor,
+        payload: input.payload,
+        timestamp,
+        ...(previousHash !== undefined ? { previousHash } : {}),
+      });
+      const entry = auditEntrySchema.parse({
+        id,
+        tenantId: input.tenantId,
+        owner: input.owner,
+        action: input.action,
+        actor: input.actor,
+        payload: input.payload,
+        ...(previousHash !== undefined ? { previousHash } : {}),
+        hash,
+        timestamp,
+      });
+      // El owner del record es el tenantId: asi la lista por tenant es una
+      // query directa y no un filtro en memoria.
+      await this.db.put(input.tenantId, KIND, entry);
+      return entry;
     });
-    const entry = auditEntrySchema.parse({
-      id,
-      tenantId: input.tenantId,
-      owner: input.owner,
-      action: input.action,
-      actor: input.actor,
-      payload: input.payload,
-      ...(previousHash !== undefined ? { previousHash } : {}),
-      hash,
-      timestamp,
-    });
-    // El owner del record es el tenantId: asi la lista por tenant es una
-    // query directa y no un filtro en memoria.
-    await this.db.put(input.tenantId, KIND, entry);
-    return entry;
   }
 
   async lastHash(tenantId: string): Promise<string | undefined> {
@@ -89,14 +94,15 @@ export class StoreAuditStore implements AuditStore {
   }
 
   async list(tenantId: string, limit: number): Promise<AuditEntry[]> {
-    const list = await this.db.list<AuditEntry>(tenantId, KIND, { limit });
-    // list ordena por updated_at DESC; el audit trail quiere orden ascendente
-    // por cadena, asi que invertimos.
-    return list.slice().reverse();
+    const capped = Math.min(Math.max(1, limit), maxList());
+    // listPaged ordena por updated_at DESC, id DESC. El audit trail quiere
+    // orden ascendente para verificar la cadena, asi que invertimos.
+    const rows = await this.db.listPaged<AuditEntry>(tenantId, KIND, { limit: capped });
+    return rows.map((row) => row.data).reverse();
   }
 
   async verify(tenantId: string): Promise<boolean> {
-    const list = await this.list(tenantId, 10_000);
+    const list = await this.list(tenantId, maxList());
     let previous: string | undefined;
     for (const entry of list) {
       if (previous !== undefined && entry.previousHash !== previous) return false;

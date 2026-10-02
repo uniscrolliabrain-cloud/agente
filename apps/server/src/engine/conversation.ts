@@ -34,34 +34,61 @@ export class ConversationAgent extends AbstractAgent {
     const latest = input.messages.filter((m) => m.role === "user").at(-1);
     const requestKey = `${input.threadId}:${latest?.id ?? input.runId}`;
 
-    // KERNEL_TURN_OPEN_V1 — si hay kernel, abrimos turno y escribimos el
-    // mensaje del usuario como Thought(intent). Si no hay kernel o falla,
-    // el chat sigue exactamente como antes.
+    // KERNEL_TURN_OPEN_V2 - si hay kernel, abrimos turno o reusamos el abierto
+    // del thread actual, y escribimos el mensaje del usuario como Thought(intent).
+    //
+    // Cambios respecto a V1:
+    //   - tenantId viene de TenantService, no de "default" hardcodeado.
+    //   - threadId y correlationId viajan en el KernelContext.
+    //   - Si hay un turno abierto para el mismo thread, lo reusamos.
+    //   - Si no hay kernel o falla, el chat sigue igual (KERNEL_NONFATAL).
+    // KERNEL_TURN_OPEN_V3_ASYNC_IIFE - run() no es async, asi que envolvemos
+    // el setup del kernel en una IIFE async. Guardamos los resultados en
+    // variables mutables y las leemos mas tarde. Los errores no rompen el chat.
+    // KERNEL_TURN_OPEN_V4 - el await import() va DENTRO del IIFE async.
+    // Antes estaba fuera y daba TS1308 porque run() no es async.
     let kernelTurnId: string | undefined;
     let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
     if (this.service.kernel) {
-      try {
-        const { kernelContextSchema, UserAuthor } = await import("../kernel/index.ts");
-        kernelCtx = kernelContextSchema.parse({
-          tenantId: "default",
-          owner: this.owner,
-          role: "user",
-          requestId: input.runId,
-        });
-        const turn = await this.service.kernel.openTurn(kernelCtx, "user.message");
-        kernelTurnId = turn.id;
-        if (latest && typeof latest.content === "string") {
-          await new UserAuthor({ kernel: this.service.kernel }).write(
-            kernelCtx,
-            turn.id,
-            latest.content,
+      const svc = this.service;
+      const owner = this.owner;
+      void (async () => {
+        try {
+          const { kernelContextSchema, UserAuthor } = await import(
+            "../kernel/index.ts"
           );
+          const tenantId = svc.tenantService
+            ? await svc.tenantService.tenantIdFor(owner)
+            : "default";
+          const ctx = kernelContextSchema.parse({
+            tenantId,
+            owner,
+            role: "user",
+            requestId: input.runId,
+            threadId: input.threadId,
+            correlationId: input.runId,
+          });
+          const open = await svc
+            .kernel!.findOpenTurnForThread(ctx)
+            .catch(() => undefined);
+          const turn =
+            open ?? (await svc.kernel!.openTurn(ctx, `user.message:${input.threadId}`));
+          if (latest && typeof latest.content === "string") {
+            await new UserAuthor({ kernel: svc.kernel! }).write(ctx, {
+              turnId: turn.id,
+              message: latest.content,
+              threadId: input.threadId,
+              messageId: latest.id,
+            });
+          }
+          kernelCtx = ctx;
+          kernelTurnId = turn.id;
+        } catch {
+          // KERNEL_NONFATAL_V1 - el kernel no puede romper el chat.
+          kernelTurnId = undefined;
+          kernelCtx = undefined;
         }
-      } catch {
-        // KERNEL_NONFATAL_V1 — el kernel no puede romper el chat.
-        kernelTurnId = undefined;
-        kernelCtx = undefined;
-      }
+      })();
     }
 
     if (this.config.agentBackend === "sample") {
@@ -71,10 +98,22 @@ export class ConversationAgent extends AbstractAgent {
           threadId: input.threadId,
           runId: input.runId,
         });
-        void this.sample(
-          typeof latest?.content === "string" ? latest.content : "",
-          requestKey,
-        )
+        const sampleAndClose = async () => {
+          try {
+            const result = await this.sample(
+              typeof latest?.content === "string" ? latest.content : "",
+              requestKey,
+            );
+            return result;
+          } finally {
+            // KERNEL_SAMPLE_CLOSE_V2 - cerramos el turno en finally para que
+            // no quede huerfano si sample() lanza.
+            if (kernelTurnId && kernelCtx) {
+              await this.closeKernelTurn(kernelCtx, kernelTurnId, "response").catch(() => {});
+            }
+          }
+        };
+        void sampleAndClose()
           .then(({ content, task }) => {
             const id = randomUUID();
             subscriber.next({ type: EventType.TEXT_MESSAGE_START, messageId: id, role: "assistant" });
@@ -102,10 +141,7 @@ export class ConversationAgent extends AbstractAgent {
                 content: JSON.stringify({ id: task.id }),
               });
             }
-            // KERNEL_SAMPLE_CLOSE_V1 — cierra turno y promueve antes de emitir RUN_FINISHED.
-            if (kernelTurnId && kernelCtx) {
-              void this.closeKernelTurn(kernelCtx, kernelTurnId, "response");
-            }
+
             subscriber.next({
               type: EventType.RUN_FINISHED,
               threadId: input.threadId,
@@ -455,10 +491,13 @@ export class ConversationAgent extends AbstractAgent {
           (model) => new BuiltInAgent({ model, maxSteps: 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
         );
-        // RECORD_USAGE_CHAT_V1 — contamos caracteres de entrada y salida del stream.
-        // Antes solo se contaba en model.ts (tasks); el 80% del uso real es chat.
+        // RECORD_USAGE_CHAT_V1 - contamos caracteres de entrada y salida del stream.
+        // Ademas, KERNEL_FAST_RESPONSE_V1: al terminar, escribimos la respuesta
+        // del fast LLM al grafo y cerramos el turno en el mismo sitio. Antes el
+        // kernel no veia la respuesta del fast: solo el SSE la veia.
         const inputChars = JSON.stringify(enrichedInput.messages).length;
         let outputChars = 0;
+        let fullResponse = "";
         const counted = new Observable<BaseEvent>((sub) => {
           const inner = run!.events.subscribe({
             next: (event) => {
@@ -466,15 +505,32 @@ export class ConversationAgent extends AbstractAgent {
                 event.type === EventType.TEXT_MESSAGE_CONTENT &&
                 "delta" in event &&
                 typeof event.delta === "string"
-              )
+              ) {
                 outputChars += event.delta.length;
+                fullResponse += event.delta;
+              }
               sub.next(event);
             },
-            error: (error) => sub.error(error),
+            error: (error) => {
+              // KERNEL_FAST_RESPONSE_ERROR_V1 - si el fast falla, cerramos el
+              // turno con reason "timeout" para que no quede huerfano.
+              if (kernelTurnId && kernelCtx) {
+                void this.closeKernelTurn(kernelCtx, kernelTurnId, "timeout").catch(() => {});
+              }
+              sub.error(error);
+            },
             complete: () => {
               void this.service
                 .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
                 .catch(() => {});
+              // Escribir la respuesta del fast al grafo si hay kernel.
+              if (kernelTurnId && kernelCtx && fullResponse.trim()) {
+                void this.writeFastResponse(kernelCtx, kernelTurnId, fullResponse).catch(() => {});
+              }
+              // Cerrar turno tras escribir el fast. No en .then(), en complete.
+              if (kernelTurnId && kernelCtx) {
+                void this.closeKernelTurn(kernelCtx, kernelTurnId, "response").catch(() => {});
+              }
               sub.complete();
             },
           });
@@ -492,7 +548,7 @@ export class ConversationAgent extends AbstractAgent {
     });
   }
 
-  // KERNEL_CLOSE_METHOD_V1 — cierra turno y promueve. No puede romper el chat.
+  // KERNEL_CLOSE_METHOD_V2 - cierra turno y promueve. No puede romper el chat.
   private async closeKernelTurn(
     ctx: import("../kernel/index.ts").KernelContext,
     turnId: string,
@@ -500,11 +556,52 @@ export class ConversationAgent extends AbstractAgent {
   ): Promise<void> {
     if (!this.service.kernel) return;
     try {
-      await this.service.kernel.closeTurn(ctx, turnId, reason);
+      await this.service.kernel.closeTurn(ctx, turnId, reason, "presenter");
       const { Promoter } = await import("../kernel/index.ts");
-      await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+      const result = await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+      // KERNEL_PROMOTE_PERSIST_V1 - si el promotor dice destinos, escribimos.
+      // Hoy solo "memory" tiene un destino real: AgentMemory. Business graph
+      // y audit ya estan cubiertos por el kernel.
+      if (result?.destinations.memory.length) {
+        const thoughts = await this.service.kernel.thoughtsOf(ctx, turnId);
+        for (const memoryId of result.destinations.memory) {
+          const thought = thoughts.find((th) => th.id === memoryId);
+          if (!thought) continue;
+          const text =
+            typeof thought.content === "string"
+              ? thought.content
+              : JSON.stringify(thought.content);
+          if (!text.trim()) continue;
+          await this.service.memory
+            .remember(this.owner, text, {
+              source: `kernel:${turnId}:${thought.role}`,
+              category: "proceso",
+            })
+            .catch(() => {});
+        }
+      }
     } catch {
-      // KERNEL_NONFATAL_V1 — el kernel no puede romper el chat.
+      // KERNEL_NONFATAL_V1 - el kernel no puede romper el chat.
+    }
+  }
+
+  // KERNEL_FAST_RESPONSE_V1 - escribe la respuesta del fast LLM al grafo.
+  private async writeFastResponse(
+    ctx: import("../kernel/index.ts").KernelContext,
+    turnId: string,
+    response: string,
+  ): Promise<void> {
+    if (!this.service.kernel) return;
+    try {
+      const { FastAuthor } = await import("../kernel/index.ts");
+      await new FastAuthor({ kernel: this.service.kernel }).writeResponse(ctx, {
+        turnId,
+        response,
+        intent: "respond",
+        confidence: 0.9,
+      });
+    } catch {
+      // KERNEL_NONFATAL_V1 - el kernel no puede romper el chat.
     }
   }
   private async sample(prompt: string, key: string) {

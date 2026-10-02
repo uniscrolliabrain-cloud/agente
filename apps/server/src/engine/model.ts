@@ -25,39 +25,59 @@ export async function executeModelTask(
 ): Promise<Partial<AgentTask>> {
   const config = service.config;
 
-  // KERNEL_TASK_OPEN_V1 — si hay kernel, abrimos turno de tarea y escribimos
-  // el prompt como Thought(reasoning). Si no hay kernel o falla, la tarea
-  // sigue exactamente como antes.
+  // KERNEL_TASK_OPEN_V2 - si hay kernel, abrimos turno de tarea y escribimos
+  // el prompt como Thought(intent). El output real del LLM se escribe en
+  // KERNEL_TASK_CLOSE_V2, cuando ya lo tenemos.
+  //
+  // Cambios respecto a V1:
+  //   - tenantId viene de TenantService, no de "default" hardcodeado.
+  //   - correlationId = initial.id para correlacionar HTTP <-> task <-> turn.
+  //   - Escribimos el prompt como intent, no como reasoning. El reasoning
+  //     real lo escribe el slow LLM cuando termina.
   let kernelTurnId: string | undefined;
   let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
   if (service.kernel) {
     try {
-      const { kernelContextSchema, SlowAuthor } = await import("../kernel/index.ts");
+      const { kernelContextSchema, UserAuthor } = await import("../kernel/index.ts");
+      const tenantId = service.tenantService
+        ? await service.tenantService.tenantIdFor(owner)
+        : "default";
       kernelCtx = kernelContextSchema.parse({
-        tenantId: "default",
+        tenantId,
         owner,
         role: "agent",
         requestId: initial.id,
+        correlationId: initial.id,
       });
-      const turn = await service.kernel.openTurn(kernelCtx, "task.");
+      const turn = await service.kernel.openTurn(kernelCtx, `task.${initial.kind}`);
       kernelTurnId = turn.id;
-      await new SlowAuthor({ kernel: service.kernel }).writeReasoning(
-        kernelCtx,
-        turn.id,
-        initial.prompt,
-      );
+      // Escribimos el prompt como intent (input), no como reasoning.
+      // El reasoning real viene del output del LLM.
+      await new UserAuthor({ kernel: service.kernel }).write(kernelCtx, {
+        turnId: turn.id,
+        message: initial.prompt,
+        messageId: initial.id,
+      });
     } catch {
-      // KERNEL_NONFATAL_V1 — el kernel no puede romper la tarea.
+      // KERNEL_NONFATAL_V1 - el kernel no puede romper la tarea.
       kernelTurnId = undefined;
       kernelCtx = undefined;
     }
   }
-  if (!config.model)
+    if (!config.model) {
+    // KERNEL_NO_MODEL_V1 - cerramos el turno antes de devolver waiting_input.
+    // Antes quedaba huerfano porque el return no cerraba el turno abierto arriba.
+    if (kernelTurnId && kernelCtx && service.kernel) {
+      await service.kernel
+        .closeTurn(kernelCtx, kernelTurnId, "timeout", "system")
+        .catch(() => {});
+    }
     return {
       status: "waiting_input",
       question:
         "A model is required for this open-ended task. Configure MODEL and its provider key on the server, then reply ‘continue’. The document, monitor and finance workflows can run without a model.",
     };
+  }
   let task = initial;
   let outcome: Partial<AgentTask> | undefined;
   const operations =
@@ -468,7 +488,16 @@ export async function executeModelTask(
       },
     });
   });
-  if (runError) throw new Error(runError);
+  if (runError) {
+    // KERNEL_TASK_ERROR_V1 - si el LLM falla, cerramos el turno para que no
+    // quede huerfano. Reason "timeout" porque el modelo no termino.
+    if (kernelTurnId && kernelCtx && service.kernel) {
+      await service.kernel
+        .closeTurn(kernelCtx, kernelTurnId, "timeout", "system")
+        .catch(() => {});
+    }
+    throw new Error(runError);
+  }
   try {
     const promptChars = JSON.stringify(input.messages).length;
     await service.recordUsage(owner, "task", config.model, promptChars, text.length);
@@ -478,7 +507,8 @@ export async function executeModelTask(
   // KERNEL_TASK_CLOSE_V1 — cierra turno de tarea y promueve. No rompe la tarea.
   if (kernelTurnId && kernelCtx && service.kernel) {
     try {
-      await service.kernel.closeTurn(kernelCtx, kernelTurnId, "promotion");
+      // MODEL_CLOSETURN_FIX_V2 - anadido closedBy "system" a la firma V2 del kernel.
+      await service.kernel.closeTurn(kernelCtx, kernelTurnId, "promotion", "system");
       const { Promoter } = await import("../kernel/index.ts");
       await new Promoter({ kernel: service.kernel }).promote(kernelCtx, kernelTurnId);
     } catch {

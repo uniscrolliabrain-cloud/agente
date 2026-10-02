@@ -1,7 +1,12 @@
-// KERNEL_USER_AUTHOR_V1 — escribe el mensaje del usuario al grafo.
+// KERNEL_USER_AUTHOR_V2 - escribe el mensaje del usuario al grafo con provenance.
 //
-// El usuario no habla "al LLM": habla al grafo. Su mensaje es un Thought
-// con role "intent", actor "user", atencion scope "turn", author "user".
+// Cambios respecto a V1:
+//   - Acepta threadId, messageId, parentThoughtId.
+//   - La metadata del AttentionVector lleva threadId y messageId.
+//   - El provenance lleva el source real (user.message) y el parentId si lo hay.
+//
+// Nota: el prompt del usuario NO se trunca aqui. El tope de tamano se aplica
+// en el caller (conversation.ts) o en el schema del Thought.
 
 import { randomUUID } from "node:crypto";
 import type { KernelContext } from "../context/kernel-context.ts";
@@ -12,31 +17,48 @@ export interface UserAuthorDeps {
   kernel: Kernel;
 }
 
+export interface UserAuthorWriteInput {
+  turnId: string;
+  message: string;
+  threadId?: string;
+  messageId?: string;
+  parentThoughtId?: string;
+}
+
 export class UserAuthor {
   constructor(private readonly deps: UserAuthorDeps) {}
 
-  async write(ctx: KernelContext, turnId: string, message: string): Promise<Thought> {
+  async write(ctx: KernelContext, input: UserAuthorWriteInput): Promise<Thought> {
+    const now = new Date().toISOString();
     return this.deps.kernel.appendThought(ctx, {
-      turnId,
+      turnId: input.turnId,
       actor: { kind: "user", id: ctx.owner },
       role: "intent",
-      content: message,
+      content: input.message,
       attention: {
         id: randomUUID(),
         author: "user",
         primary: ctx.owner,
         secondary: [],
-        query: message.slice(0, 500),
+        query: input.message.slice(0, 500),
         matched: [],
         ignored: [],
         intent: "user.message",
         confidence: 1,
         scope: "turn",
-        timestamp: new Date().toISOString(),
-        metadata: {},
+        timestamp: now,
+        metadata: {
+          ...(input.threadId ? { threadId: input.threadId } : {}),
+          ...(input.messageId ? { messageId: input.messageId } : {}),
+        },
       },
       context: { entities: [], policies: [], skills: [], priorThoughts: [] },
       edges: [],
+      provenance: {
+        source: "user.message",
+        timestamp: now,
+        ...(input.parentThoughtId ? { parentId: input.parentThoughtId } : {}),
+      },
     });
   }
 }

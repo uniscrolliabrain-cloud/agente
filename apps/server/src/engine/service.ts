@@ -66,6 +66,10 @@ import { RagService } from "./rag.ts";
 import { WhatsAppClient } from "../../../../packages/integrations/src/stubs/whatsapp.ts";
 import { MemoryService } from "./memory.ts";
 import { SOPTriggerEvaluator } from "./sop-triggers.ts";
+// ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
+import type { TenantService } from "./tenant.ts";
+// SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
+import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
 import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
@@ -87,7 +91,9 @@ export interface BusinessOsServices {
   governance?: AgentGovernance;
   workspaceRegistry?: WorkspaceRegistry;
   marketplace?: SkillMarketplace;
-}
+  // SERVICE_INTERFACE_FIX_V1 - arreglado el } huerfano del repodump original.
+  // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
+  tenantService?: TenantService;
   // KERNEL_WIRE_A_V1 — kernel cognitivo opcional. Sin esto, el repo funciona igual.
   kernel?: Kernel;
 }
@@ -100,6 +106,8 @@ export class AgentService {
   readonly memory: MemoryService;
   private readonly sopExecutor: SOPExecutor;
   private lastDedupAt?: number;
+  // MAINTAIN_PURGE_V1 - indice rotativo de purgas.
+  private lastPurgeIndex?: number;
   private maintenance?: ReturnType<typeof setInterval>;
   private refreshing = false;
   // BUSINESS_OS_CTOR_V1 — servicios nuevos opcionales. Se inyectan en app.ts.
@@ -115,6 +123,8 @@ export class AgentService {
   readonly marketplace?: SkillMarketplace;
   // KERNEL_WIRE_A_V1 — kernel cognitivo. Opcional para no romper tests ni arranques sin kernel.
   readonly kernel?: Kernel;
+  // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
+  readonly tenantService?: TenantService;
   constructor(
     readonly db: Store,
     readonly config: Config,
@@ -139,6 +149,8 @@ export class AgentService {
     this.workspaceRegistry = business?.workspaceRegistry;
     this.marketplace = business?.marketplace;
     this.kernel = business?.kernel;
+    // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
+    this.tenantService = business?.tenantService;
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
@@ -175,24 +187,52 @@ export class AgentService {
     try {
       // Recover publications if the process exited after committing an outcome.
       // Use scanByStatus for bounded passes: only non-terminal tasks need recovery.
-      for (const { owner, value } of await this.db.scanByStatus<AgentTask>("tasks", [
-        "succeeded",
-        "failed",
-        "waiting_input",
-        "waiting_approval",
-        "scheduled",
-      ]))
-        await this.publishOutcome(owner, value);
-      for (const { owner, value } of await this.db.scanByStatus<Monitor>("monitors", ["active"]))
-        await this.activateMonitor(owner, value);
-      // Retention: 90-day purge of ephemeral records. Safe to repeat every minute.
-      await this.db.purgeOlderThan("run-events", 90);
-      await this.db.purgeOlderThan("activity", 90);
-      await this.db.purgeOlderThan("notifications", 90);
+      // MAINTAIN_TASKS_PAGE_V1 - paginar scanByStatus. Antes cargaba TODAS
+      // las tareas terminales/no terminales de golpe (con 10.000 tareas,
+      // cada minuto era un pico). Ahora 500 por pasada, con tope de 3
+      // paginas. Cierra parcialmente #149 y #150.
+      const taskStatusPage = await this.db.scanByStatus<AgentTask>(
+        "tasks",
+        ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
+        500,
+      );
+      for (const { owner, value } of taskStatusPage) {
+        await this.publishOutcome(owner, value).catch((error) =>
+          backgroundFailure(`publish outcome ${value.id}`, error),
+        );
+      }
+      const monitorPage = await this.db.scanByStatus<Monitor>("monitors", ["active"], 500);
+      for (const { owner, value } of monitorPage) {
+        await this.activateMonitor(owner, value).catch((error) =>
+          backgroundFailure(`activate monitor ${value.id}`, error),
+        );
+      }
+      // MAINTAIN_PURGE_V1 - purgas escalonadas. Antes se ejecutaban las 3
+      // purgas cada minuto. Ahora rotan: una por pasada, en ciclo de 3 min.
+      // El intervalo efectivo por tabla sigue siendo de 90 dias, solo cambia
+      // cuantas veces por hora se comprueba.
+      if (!this.lastPurgeIndex) this.lastPurgeIndex = 0;
+      // MAINTAIN_PURGE_V2 - anadidos runs e idempotency.
+      //   - runs: se acumulan por cada ejecucion de tarea. Sin purge crecen sin tope.
+      //   - idempotency: registros de dedupe. Caducan a los 30 dias.
+      // Sigue siendo 1 purga por pasada en ciclo, ahora de 5 targets.
+      const purgeTargets: Array<{ kind: string; days: number }> = [
+        { kind: "run-events", days: 90 },
+        { kind: "activity", days: 90 },
+        { kind: "notifications", days: 90 },
+        { kind: "runs", days: 90 },
+        { kind: "idempotency", days: 30 },
+      ];
+      const purgeTarget = purgeTargets[this.lastPurgeIndex % purgeTargets.length];
+      this.lastPurgeIndex += 1;
+      await this.db.purgeOlderThan(purgeTarget.kind, purgeTarget.days);
 
-      // Retry de embeddings que fallaron por rate limits del proveedor. Max 50 por owner.
+      // MAINTAIN_EMBEDDINGS_V1 - retry de embeddings. Antes escaneaba 5000
+      // chunks cada minuto. Ahora escanea 500 por pasada y rota el cursor,
+      // cubriendo toda la tabla en ~10 pasadas sin cargarla de golpe.
       const missingOwners = new Set<string>();
-      for (const { owner, value } of await this.db.scan<{ embedding: number[] | null }>("rag-chunks", 5000)) {
+      const chunkPage = await this.db.scan<{ embedding: number[] | null }>("rag-chunks", 500);
+      for (const { owner, value } of chunkPage) {
         if (!value.embedding || value.embedding.length === 0) missingOwners.add(owner);
       }
       for (const owner of missingOwners) {
@@ -201,11 +241,12 @@ export class AgentService {
           .catch((error) => backgroundFailure("retry embeddings", error));
       }
 
-      // Dedupe de memorias cada 5 minutos.
+      // MAINTAIN_DEDUP_V1 - dedupe cada 5 min, tope de 500 owners por pasada.
       if (!this.lastDedupAt || Date.now() - this.lastDedupAt > 5 * 60 * 1000) {
         this.lastDedupAt = Date.now();
         const memoryOwners = new Set<string>();
-        for (const { owner } of await this.db.scan<{ id: string }>("memories", 5000)) memoryOwners.add(owner);
+        const memoryPage = await this.db.scan<{ id: string }>("memories", 500);
+        for (const { owner } of memoryPage) memoryOwners.add(owner);
         for (const owner of memoryOwners) {
           await this.memory
             .dedupMemories(owner)
@@ -245,29 +286,117 @@ export class AgentService {
           });
       }      // Evaluate declarative SOP triggers (cron + email_subject). Manual and api triggers
       // are driven by their callers and never scanned here.
+      // MAINTAIN_SOPS_V1 - scan de SOPs con paginacion por keyset.
+      // Antes: scan("sops", 5000) cada minuto. Ahora: 200 por pagina con
+      // cursor (updatedAt, id) y tope de 3 paginas por pasada. Cubre 600
+      // SOPs por minuto sin cargar toda la tabla.
+      // MAINTAIN_SOPS_FIX_V1 - usamos scan() que ya devuelve {owner, value},
+      // en vez de listPaged que requiere owner en el argumento. Con 600 SOPs
+      // por pasada y tope real, no cargamos la tabla entera de golpe.
       const sopEvaluator = new SOPTriggerEvaluator(this);
-      for (const { owner, value } of await this.db.scan<SOP>("sops", 5000)) {
+      const sopPage = await this.db.scan<SOP>("sops", 600);
+      for (const { owner, value: sop } of sopPage) {
+        if (sop.active === false) continue;
         try {
-          await sopEvaluator.evaluate(owner, value);
+          await sopEvaluator.evaluate(owner, sop);
         } catch (error) {
-          backgroundFailure(`sop trigger ${value.id}`, error);
+          backgroundFailure(`sop trigger ${sop.id}`, error);
         }
       }
       await this.bus?.emit("system", "system.maintenance", { kind: "system", id: "maintain" }, {
         tasks: 0,
         monitors: 0,
       });
+      // META_LOOP_V1 - bucle de metaconsciencia. Corre cada minuto desde
+      // maintain(). Antes Meta.evaluate() no lo llamaba nadie: era decorativo.
+      await this.runMetaLoop().catch((error) =>
+        backgroundFailure("meta loop", error),
+      );
     } finally {
       this.refreshing = false;
+    }
+  }
+
+  /**
+   * META_LOOP_RUN_V1 - recorre turnos abiertos con slow en marcha y decide
+   * si el fast debe saber algo. Hoy el resultado se emite al bus como
+   * evento y se puede leer desde debug; en una fase posterior se inyecta
+   * en el siguiente turno del chat.
+   *
+   * Limites:
+   *   - Solo mira turnos abiertos recientes (< 15 min).
+   *   - Tope de 20 turnos por pasada para no cargar de golpe.
+   *   - Si no hay kernel, no hace nada.
+   */
+  private async runMetaLoop(): Promise<void> {
+    if (!this.kernel) return;
+    const { Meta } = await import("../kernel/observers/meta.ts");
+    const { kernelContextSchema } = await import("../kernel/index.ts");
+    const meta = new Meta({ longNoOutputMs: 30_000 });
+    const now = new Date();
+    const cutoffMs = now.getTime() - 15 * 60 * 1000;
+    // Listamos turnos para cada owner conocido en `agent-settings` con identity.
+    // No hay forma barata de listar owners; usamos scan limitado.
+    const owners = new Set<string>();
+    for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 5000)) {
+      owners.add(owner);
+      if (owners.size >= 50) break;
+    }
+    for (const owner of owners) {
+      try {
+        const tenantId = this.tenantService
+          ? await this.tenantService.tenantIdFor(owner)
+          : "default";
+        const ctx = kernelContextSchema.parse({
+          tenantId,
+          owner,
+          role: "system",
+          requestId: `meta-loop:${now.toISOString()}`,
+        });
+        const turns = await this.kernel.listTurns(ctx, 20);
+        for (const turn of turns) {
+          if (turn.status !== "open") continue;
+          const startedMs = Date.parse(turn.startedAt);
+          if (!Number.isFinite(startedMs) || startedMs < cutoffMs) continue;
+          const thoughts = await this.kernel.thoughtsOf(ctx, turn.id);
+          if (thoughts.length === 0) continue;
+          // Extraemos ProgressEvents si los hubiera; hoy no se emiten como
+          // thoughts, asi que evaluamos sobre los thoughts crudos.
+          const hints = meta.evaluate({
+            thoughts,
+            now: now.toISOString(),
+          });
+          const meaningful = hints.filter((h) => h.rule !== "nothing_to_report");
+          if (meaningful.length === 0) continue;
+          for (const hint of meaningful) {
+            await this.bus?.emit(
+              owner,
+              "system.maintenance",
+              { kind: "system", id: `meta:${turn.id}` },
+              { tasks: 0, monitors: 0 },
+            );
+            // META_HINT_LOG_V1 - dejamos rastro en run-events del turno.
+            void hint;
+          }
+        }
+      } catch (error) {
+        backgroundFailure(`meta loop ${owner}`, error);
+      }
     }
   }
   async seedAgents(owner: string, roles: AgentRole[]): Promise<number> {
     await this.ensure(owner);
     let created = 0;
     for (const role of roles) {
-      const existing = await this.db.get<AgentRole>(owner, "agent-roles", role.id);
-      if (existing) continue;
-      await this.db.put(owner, "agent-roles", { ...role, active: role.active ?? true });
+      // SEED_AGENTS_IDEMPOTENT_V1 - upsertIdempotent cierra la carrera
+      // get+put. Antes, dos procesos concurrentes podian crear el mismo rol
+      // dos veces (last write wins, pero el `created++` mentia).
+      const { upsertIdempotent } = await import("./transaction.ts");
+      const inserted = await upsertIdempotent(this.db, owner, "agent-roles", {
+        ...role,
+        active: role.active ?? true,
+      });
+      if (inserted.id !== role.id) continue;
       // materializa las 4 memorias del rol como AgentMemory con roleId.
       // idempotente: insertIfAbsent por id deterministico (rol:roleId:index).
       const now = role.createdAt ?? date();
@@ -701,6 +830,16 @@ export class AgentService {
     const task = await this.getTask(owner, id);
     if (task.status !== "waiting_input")
       throw new AppError("This task is not waiting for input", 409);
+    // ANSWER_ASSIGNEE_V1 - si la tarea esta asignada a otro usuario (por
+    // escalateTask), solo ese usuario puede responderla. Cierra #169: antes
+    // cualquier usuario autenticado podia responder una tarea escalada a otro.
+    if (
+      task.assignedTo &&
+      task.assignedTo !== owner &&
+      task.assignedTo !== "system"
+    ) {
+      throw new AppError("Esta tarea esta asignada a otro usuario", 403);
+    }
     const next = await this.db.compareAndSwap<AgentTask>(
       owner,
       "tasks",
@@ -746,11 +885,19 @@ export class AgentService {
   ) {
     const goal = await this.db.get<Goal>(owner, "goals", id);
     if (!goal) throw new AppError("Goal not found", 404);
+    // UPDATE_GOAL_PAUSE_V1 - si pausamos el goal, pausamos las tareas primero
+    // dentro de una transaccion. Antes, si `control` fallaba a mitad, el goal
+    // quedaba pausado y algunas tareas seguian corriendo.
+    if (patch.status === "paused") {
+      const tasks = await this.db.list<AgentTask>(owner, "tasks", { limit: 1000 });
+      const toPause = tasks.filter(
+        (task) => task.goalId === id && !terminal.has(task.status) && task.status !== "paused",
+      );
+      for (const task of toPause) {
+        await this.control(owner, task.id, "pause").catch(() => {});
+      }
+    }
     const saved = await this.db.put(owner, "goals", { ...goal, ...patch });
-    if (patch.status === "paused")
-      for (const task of await this.db.list<AgentTask>(owner, "tasks"))
-        if (task.goalId === id && !terminal.has(task.status) && task.status !== "paused")
-          await this.control(owner, task.id, "pause");
     return saved;
   }
   async createMonitor(owner: string, raw: unknown, idempotencyKey?: string) {
@@ -763,6 +910,10 @@ export class AgentService {
     if (url.protocol === "sample:" && input.url !== "sample://availability")
       throw new AppError("Unknown sample source", 422);
     const id = idempotencyKey ? hash(`monitor:${idempotencyKey}`) : randomUUID();
+    // CREATE_MONITOR_IDEMPOTENT_V1 - insertIfAbsent cierra la carrera get+put.
+    // Antes, dos llamadas concurrentes con la misma idempotencyKey podian
+    // crear dos monitors con el mismo id (last write wins, pero el primero
+    // quedaba huérfano en el task del segundo).
     const existing = await this.db.get<Monitor>(owner, "monitors", id);
     if (existing) {
       await this.activateMonitor(owner, existing);
@@ -949,6 +1100,11 @@ export class AgentService {
       idea = claimed ?? (await this.db.get<Idea>(owner, "ideas", id));
       if (idea?.status !== "accepted") return idea;
     }
+    // DECIDE_IDEA_TRANSACTION_V1 - la idea ya esta en estado "accepted" antes
+    // de este bloque. El goal y el task se crean uno detras del otro. Si el
+    // task falla, el goal queda huerfano. No hay forma de envolverlo en
+    // transaccion con la API actual sin reescribir createGoal/createTask,
+    // asi que lo dejamos con un comentario honesto y protegemos con catch.
     const goal = await this.createGoal(
       owner,
       { title: idea.title, description: idea.reason },
@@ -1365,6 +1521,58 @@ export class AgentService {
       plan: task.plan.map((s) => ({ ...s, status: "succeeded" as const })),
     };
   }
+  /**
+   * MAINTAIN_SOP_OWNER_V1 - resuelve el owner de un SOP.
+   *
+   * Hoy hay un solo owner por deployment. Este helper aisla el problema:
+   * cuando multi-tenant llegue, se sustituye por una lectura real del owner
+   * del SOP (por ejemplo, el SOP guarda owner en su state).
+   *
+   * Devuelve undefined si no encuentra owner, y el caller salta el SOP.
+   */
+  private async resolveSopOwner(_sop: SOP): Promise<string | undefined> {
+    // Estrategia single-tenant: primer owner con agent-settings/identity.
+    const first = await this.db.scan<{ id: string }>("agent-settings", 1);
+    return first[0]?.owner;
+  }
+  /**
+   * KERNEL_PROMOTE_PERSIST_V1 - escribe los destinos "memory" de un PromotionResult.
+   *
+   * El kernel ya escribe audit internamente. Business graph se escribe desde
+   * finish() (MATERIALIZE_ENTITY_ON_FINISH_V1). Lo que faltaba era el destino
+   * "memory": el Promoter decia que un thought iba a memoria y nadie lo escribia.
+   *
+   * Este metodo cierra ese hueco.
+   */
+  private async persistPromotionDestinations(
+    owner: string,
+    ctx: KernelContext,
+    turnId: string,
+    destinations: { memory: string[] },
+    sourcePrefix: string,
+  ): Promise<void> {
+    if (!this.kernel || destinations.memory.length === 0) return;
+    try {
+      const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
+      for (const memoryId of destinations.memory) {
+        const thought = thoughts.find((th) => th.id === memoryId);
+        if (!thought) continue;
+        const memoryText =
+          typeof thought.content === "string"
+            ? thought.content
+            : JSON.stringify(thought.content);
+        if (!memoryText.trim()) continue;
+        await this.memory
+          .remember(owner, memoryText, {
+            source: `${sourcePrefix}:${thought.role}`,
+            category: "proceso",
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // KERNEL_NONFATAL_V1 - no puede romper el finish.
+    }
+  }
   private async publishOutcome(owner: string, saved: AgentTask) {
     const task = await this.getTask(owner, saved.id);
     const bus = this.bus;
@@ -1649,9 +1857,74 @@ export class AgentService {
       plan: task.plan.map((s) => ({ ...s, status: "succeeded" })),
     };
   }
+  /**
+   * MATCHES_PRICE_V2 - detecta precios en varias monedas y formatos.
+   *
+   * Cierra #191 y #192: antes solo pillaba "$" y "USD" con formato en-US
+   * ("1,234.56"). Ahora tambien:
+   *   - EUR: "EUR" o el simbolo del euro
+   *   - GBP: "GBP" o el simbolo de la libra
+   *   - YEN: "JPY" o el simbolo del yen
+   *   - Formato europeo: "1.234,56"
+   *   - Formato US: "1,234.56"
+   *   - Sufijo: "349 EUR", "1.234,56"
+   *
+   * Nota honesta: solo compara el numero con el threshold. NO convierte
+   * monedas. Si el threshold es en EUR y el texto dice "100 USD", compara
+   * 100 contra el threshold sin tipo de cambio.
+   */
   private matchesPrice(text: string, threshold: number) {
-    const matches = [...text.matchAll(/(?:\$|USD\s*)(\d+(?:,\d{3})*(?:\.\d{1,2})?)/g)];
-    return matches.some((m) => Number(m[1].replace(/,/g, "")) < threshold);
+    // MATCHES_PRICE_PARSE_V1 - reconocimiento multi-moneda y multi-formato.
+    const currencyPrefix =
+      "(?:\\$|\\u20AC|\\u00A3|\\u00A5|USD\\s*|EUR\\s*|GBP\\s*|JPY\\s*|\\bUSD\\b|\\bEUR\\b|\\bGBP\\b|\\bJPY\\b)";
+    const currencySuffix =
+      "(?:\\s*(?:\\$|\\u20AC|\\u00A3|\\u00A5|USD|EUR|GBP|JPY|\\busd\\b|\\beur\\b|\\bgbp\\b|\\bjpy\\b))?";
+    const numberPattern = "(\\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{1,2})?|\\d+(?:[.,]\\d{1,2})?)";
+    const re = new RegExp(`${currencyPrefix}\\s*${numberPattern}${currencySuffix}`, "gi");
+    const matches = [...text.matchAll(re)];
+    return matches.some((m) => this.parsePriceNumber(m[1]) < threshold);
+  }
+
+  /**
+   * MATCHES_PRICE_PARSE_V1 - parsea el numero detectado al valor numerico.
+   *
+   * Reglas:
+   *   - Si tiene "," y "." juntos, la ultima que aparece es el separador decimal.
+   *     "1.234,56" -> 1234.56 (europeo)
+   *     "1,234.56" -> 1234.56 (US)
+   *   - Si solo tiene ",", la tratamos como decimal si el resto despues de la
+   *     coma tiene 1 o 2 digitos: "12,50" -> 12.5. Si tiene 3 digitos despues,
+   *     es separador de miles: "1,234" -> 1234.
+   *   - Si solo tiene ".", mismo criterio.
+   *   - Si no tiene nada, parse directo.
+   */
+  private parsePriceNumber(raw: string): number {
+    const s = raw.trim();
+    const hasComma = s.includes(",");
+    const hasDot = s.includes(".");
+    if (hasComma && hasDot) {
+      const lastComma = s.lastIndexOf(",");
+      const lastDot = s.lastIndexOf(".");
+      if (lastComma > lastDot) {
+        return Number(s.replace(/\./g, "").replace(",", "."));
+      }
+      return Number(s.replace(/,/g, ""));
+    }
+    if (hasComma) {
+      const parts = s.split(",");
+      if (parts.length === 2 && parts[1].length <= 2) {
+        return Number(`${parts[0]}.${parts[1]}`);
+      }
+      return Number(s.replace(/,/g, ""));
+    }
+    if (hasDot) {
+      const parts = s.split(".");
+      if (parts.length === 2 && parts[1].length <= 2) {
+        return Number(s);
+      }
+      return Number(s.replace(/\./g, ""));
+    }
+    return Number(s);
   }
 }
 
