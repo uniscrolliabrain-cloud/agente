@@ -3,7 +3,7 @@
 // Antes este fichero contenia una copia de worker.ts (bug). Ahora expone
 // buildToolExecutors(service) que CapabilityRunner usa para ejecutar steps.
 
-import type { ExecutionContext } from "../../../../packages/domain/src/index.ts";
+import type { ExecutionContext } from "../../../../../packages/domain/src/index.ts";
 import type { AgentService } from "../service.ts";
 
 export interface ToolExecutor {
@@ -44,7 +44,7 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
 
   wrap("save_artifact", async (ctx, inputs) => {
     if (!ctx.taskId) throw new Error("save_artifact requires taskId in ctx");
-    const task = await service.db.get<import("../../../../packages/domain/src/agent.ts").AgentTask>(
+    const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
       ctx.owner,
       "tasks",
       ctx.taskId,
@@ -86,7 +86,7 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
 
   wrap("prepare_email", async (ctx, inputs) => {
     if (!ctx.taskId) throw new Error("prepare_email requires taskId");
-    const task = await service.db.get<import("../../../../packages/domain/src/agent.ts").AgentTask>(
+    const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
       ctx.owner,
       "tasks",
       ctx.taskId,
@@ -103,7 +103,7 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
 
   wrap("prepare_event", async (ctx, inputs) => {
     if (!ctx.taskId) throw new Error("prepare_event requires taskId");
-    const task = await service.db.get<import("../../../../packages/domain/src/agent.ts").AgentTask>(
+    const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
       ctx.owner,
       "tasks",
       ctx.taskId,

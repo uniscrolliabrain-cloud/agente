@@ -1,3 +1,4 @@
+// UI_PANEL_SLIDE_V1_USE
 import { useEffect, useState } from "react";
 import { Check, Plus, Trash2, UserCog, UserX, X } from "lucide-react";
 import { deleteUser, listUsers, userTasks, type AuthUser, type UserTaskSummary } from "../api/auth";

@@ -1,4 +1,5 @@
 import type { ContextPackage } from "./engine.ts";
+import { scoreItem } from "./budget.ts";
 
 // CONTEXT_ASSEMBLY_V1 — renderiza el ContextPackage a texto listo para
 // inyectar en el prompt. Presupuesto por campo para no explotar tokens.
@@ -14,7 +15,21 @@ export function renderContext(pkg: ContextPackage): string {
   parts.push(`Rol activo: ${pkg.role.name} (${pkg.role.tone}).`);
   parts.push(`Objetivo: ${pkg.role.objetivo}`);
   if (pkg.role.memories.length > 0) {
-    const mems = pkg.role.memories.slice(0, MAX_ROLE_MEMORIES);
+    // CONTEXT_BUDGET_WIRE_V1 - ordenar por scoreItem.
+    const scored = [...pkg.role.memories]
+      .map((m, i) => ({
+        m,
+        score: scoreItem({
+          semantic: 0.5,
+          recency: 0.5,
+          authority: m.category?.startsWith("rol-") ? 0.8 : 0.5,
+          roleMatch: 0.9,
+        }) + (pkg.role.memories.length - i) * 0.001,
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, MAX_ROLE_MEMORIES)
+      .map((x) => x.m);
+    const mems = scored;
     parts.push(
       `Memorias del rol (datos):\\n${mems.map((m) => `- [${m.category ?? "memoria"}] ${m.text}`).join("\\n")}`,
     );

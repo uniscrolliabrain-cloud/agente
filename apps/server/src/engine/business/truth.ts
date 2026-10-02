@@ -1,5 +1,6 @@
 import type { BusinessEntity } from "../../../../../packages/domain/src/business.ts";
 import type { BusinessGraph } from "./graph.ts";
+import { TruthResolver } from "./truth-resolver.ts";
 
 export interface TruthValue {
   value: unknown;
@@ -30,6 +31,11 @@ export class BusinessTruth {
     const entity = await this.graph.getEntity(owner, entityId);
     if (!entity) return null;
     return this.project(entity);
+  }
+
+  // TRUTH_RESOLVER_WIRE_V1 - resuelve un campo entre varios candidatos.
+  resolveField(field: string, candidates: import("../../../../../packages/domain/src/truth.ts").TruthCandidate[]) {
+    return new TruthResolver().resolve(field, candidates);
   }
 
   project(entity: BusinessEntity): EntityTruth {

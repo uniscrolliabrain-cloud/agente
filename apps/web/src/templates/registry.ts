@@ -16,6 +16,7 @@
  };
 
  export function findTemplate(spec: ViewSpec) {
-   return MAP[spec.layout] ?? MAP[spec.kind] ?? ListTemplate;
+   const key = spec.layout ?? spec.kind;
+    return MAP[key] ?? ListTemplate;
  }
  export function listTemplates() { return Object.keys(MAP); }
