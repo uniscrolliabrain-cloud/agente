@@ -1,3 +1,4 @@
+// DISTRIBUTED_NOTE: en Fly multi-machine este limiter es por maquina. Para prod cliente-unico con min=1 basta. Si escalas a 2+ maquinas, mover a Redis.
 /**
  * Limite de intentos en memoria, por clave arbitraria (IP, email...). Cada proceso del
  * API lleva su propia cuenta, que es lo que basta para frenar fuerza bruta contra

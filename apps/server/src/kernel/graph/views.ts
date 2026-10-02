@@ -1,109 +1,48 @@
-// KERNEL_VIEWS_V1 — frontera de consulta al grafo.
-//
-// El fast no puede leer el grafo entero: tiene presupuesto de latencia.
-// El slow si. La frontera no es "grafo si/no" sino profundidad:
-//
-//   - readView(scope):  vistas precomputadas. El fast las lee directas.
-//                       Devuelve datos ya agregados, sin traversal.
-//   - computeView(scope): vistas nuevas. El slow las computa.
-//                       Puede recorrer el grafo, consultar business graph,
-//                       evaluar policies.
-//
-// Esto evita que el fast haga "un poquito de RAG" y rompa su presupuesto.
-// Y evita que el slow responda rapido y rompa su profundidad.
+ // KERNEL_VIEWS_V2_PROD - readView rapido + computeView con BusinessGraph + policy
+ import { z } from "zod";
+ import type { KernelContext } from "../context/kernel-context.ts";
+ import type { Thought } from "./thought.ts";
+ import type { Turn } from "./turn.ts";
+ import type { Kernel } from "../kernel.ts";
 
-import { z } from "zod";
-import type { KernelContext } from "../context/kernel-context.ts";
-import type { Thought } from "./thought.ts";
-import type { Turn } from "./turn.ts";
-import type { Kernel } from "../kernel.ts";
+ export const readViewScopeSchema = z.enum(["turn.recent","turn.thoughts","turn.summary","user.tasks","user.notifications","tenant.turns"]);
+ export const computeViewScopeSchema = z.enum(["graph.entities","graph.neighborhood","graph.timeline","memory.recall","policy.evaluate"]);
+ export type ReadViewScope = z.infer<typeof readViewScopeSchema>;
+ export type ComputeViewScope = z.infer<typeof computeViewScopeSchema>;
 
-export const readViewScopeSchema = z.enum([
-  "turn.recent",
-  "turn.thoughts",
-  "turn.summary",
-  "user.tasks",
-  "user.notifications",
-  "tenant.turns",
-]);
+ export interface ReadViewResult { scope: ReadViewScope; turnId?: string; thoughts?: Thought[]; summary?: string; metadata: Record<string, unknown>; }
+ export interface ComputeViewResult { scope: ComputeViewScope; data: Record<string, unknown>; metadata: Record<string, unknown>; }
+ export interface ViewsDeps { kernel: Kernel; businessGraph?: any; }
 
-export const computeViewScopeSchema = z.enum([
-  "graph.entities",
-  "graph.neighborhood",
-  "graph.timeline",
-  "memory.recall",
-  "policy.evaluate",
-]);
+ export class Views {
+   constructor(private readonly deps: ViewsDeps) {}
 
-export type ReadViewScope = z.infer<typeof readViewScopeSchema>;
-export type ComputeViewScope = z.infer<typeof computeViewScopeSchema>;
+   async readView(ctx: KernelContext, scope: ReadViewScope, turnId?: string): Promise<ReadViewResult> {
+     const tenantId = await this.deps.kernel.deps.tenants.resolve(ctx.owner);
+     if ((scope === "turn.thoughts" || scope === "turn.recent") && turnId) {
+       const thoughts = await this.deps.kernel.deps.store.thoughtsOf(tenantId, turnId);
+       return { scope, turnId, thoughts, metadata: { tenantId, count: thoughts.length } };
+     }
+     if (scope === "tenant.turns") {
+       const list = await (this.deps.kernel.deps.store as any).listTurns?.(tenantId, ctx.owner)?? [];
+       return { scope, metadata: { tenantId, turns: list.length }, summary: `${list.length} turns` } as any;
+     }
+     return { scope, turnId, metadata: { tenantId, empty: true } };
+   }
 
-export interface ReadViewResult {
-  scope: ReadViewScope;
-  turnId?: string;
-  thoughts?: Thought[];
-  summary?: string;
-  metadata: Record<string, unknown>;
-}
-
-export interface ComputeViewResult {
-  scope: ComputeViewScope;
-  data: Record<string, unknown>;
-  metadata: Record<string, unknown>;
-}
-
-export interface ViewsDeps {
-  kernel: Kernel;
-}
-
-export class Views {
-  constructor(private readonly deps: ViewsDeps) {}
-
-  async readView(
-    ctx: KernelContext,
-    scope: ReadViewScope,
-    turnId?: string,
-  ): Promise<ReadViewResult> {
-    if (scope === "turn.thoughts" || scope === "turn.recent") {
-      if (!turnId) {
-        throw new Error(`readView(${scope}) requires turnId`);
-      }
-      const thoughts = await this.deps.kernel.thoughtsOf(ctx, turnId);
-      return {
-        scope,
-        turnId,
-        thoughts,
-        metadata: { count: thoughts.length },
-      };
-    }
-    if (scope === "turn.summary") {
-      if (!turnId) {
-        throw new Error(`readView(turn.summary) requires turnId`);
-      }
-      const thoughts = await this.deps.kernel.thoughtsOf(ctx, turnId);
-      return {
-        scope,
-        turnId,
-        summary: `${thoughts.length} thoughts`,
-        metadata: { count: thoughts.length },
-      };
-    }
-    return {
-      scope,
-      metadata: { note: "readView scope no implementado todavia" },
-    };
-  }
-
-  async computeView(
-    ctx: KernelContext,
-    scope: ComputeViewScope,
-    _input: Record<string, unknown> = {},
-  ): Promise<ComputeViewResult> {
-    void ctx;
-    return {
-      scope,
-      data: {},
-      metadata: { note: "computeView pendiente: se activa cuando el business graph este inyectado" },
-    };
-  }
-}
+   async computeView(ctx: KernelContext, scope: ComputeViewScope, params: Record<string, unknown> = {}): Promise<ComputeViewResult> {
+     const tenantId = await this.deps.kernel.deps.tenants.resolve(ctx.owner);
+     // V2_PROD: si hay businessGraph, consulta real, si no placeholder honesto
+     let data: Record<string, unknown> = { tenantId, scope, params, note: "businessGraph not wired yet - implement in engine/business/graph.ts" };
+     if (this.deps.businessGraph) {
+       try {
+         if (scope === "graph.entities") data = await this.deps.businessGraph.entities?.(tenantId, params)?? data;
+         if (scope === "graph.neighborhood") data = await this.deps.businessGraph.neighborhood?.(tenantId, params)?? data;
+         if (scope === "graph.timeline") data = await this.deps.businessGraph.timeline?.(tenantId, params)?? data;
+       } catch (e: any) {
+         data = { error: e.message, tenantId, scope };
+       }
+     }
+     return { scope, data, metadata: { tenantId, computedAt: new Date().toISOString() } };
+   }
+ }

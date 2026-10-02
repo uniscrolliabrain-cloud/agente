@@ -78,7 +78,13 @@ export class TaskWorker {
     this.ticking = true;
     this.lastTickAt = new Date(this.now()).toISOString();
     try {
-      const records = await this.db.scan<AgentTask>("tasks");
+      // WORKER_SCAN_BY_STATUS_V1 — antes era scan("tasks") y filtraba en JS.
+  // Con scanByStatus solo cargamos los estados que este tick procesa.
+  // El filtro por nextRunAt / leaseUntil / actionId sigue igual abajo.
+  const records = await this.db.scanByStatus<AgentTask>(
+    "tasks",
+    ["queued", "scheduled", "running", "waiting_approval"],
+  );
       const due = records.filter(
         ({ value: t }) =>
           !this.active.has(t.id) &&

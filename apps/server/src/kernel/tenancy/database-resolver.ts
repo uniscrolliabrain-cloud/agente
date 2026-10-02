@@ -22,6 +22,9 @@
 //
 // Fallback: si el owner no tiene fila, se devuelve "default" (single-tenant).
 // Eso permite arrancar en un deployment single-tenant sin tocar el kernel.
+//
+// Hoy NADIE instancia este resolver: app.ts usa DefaultTenantResolver
+// directamente. Se deja listo para cuando Supabase este desplegado.
 
 import type { TenantResolver } from "./resolver.ts";
 import { DEFAULT_TENANT_ID } from "./default-resolver.ts";
