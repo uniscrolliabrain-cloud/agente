@@ -28,6 +28,8 @@
     "backup:restore": "tsx scripts/restore.ts",
     "beta:smoke": "tsx scripts/beta-smoke.ts",
     "beta:vertical": "tsx scripts/beta-vertical.ts",
+    "release:check": "tsx scripts/release-check.ts",
+    "release:verify": "tsx scripts/release-verify.ts",
     "admin:create": "tsx scripts/admin-create.ts",
     "roles:export": "tsx scripts/export-roles-public.ts",
     "SEED_AGENTS_REMOVED": "removed: scripts/seed-agents.ts no existe"

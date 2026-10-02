@@ -124,7 +124,9 @@ export class Files {
       parentId,
     };
 
-    const directory = join(this.config.dataDir, "files");
+    // MULTI_TENANT_V1 - directorio por tenant. Fallback a "default".
+    const tenantSegment = "default";
+    const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     await mkdir(directory, { recursive: true, mode: 0o700 });
     await writeFile(join(directory, `${id}.bin`), bytes, { mode: 0o600, flag: "wx" });
     await this.db.put(owner, "files", artifact);
@@ -176,7 +178,9 @@ export class Files {
   /** Reads the stored bytes. Tries .bin first (current format), falls back to .pdf (legacy). */
   async bytes(owner: string, id: string) {
     await this.get(owner, id);
-    const directory = join(this.config.dataDir, "files");
+    // MULTI_TENANT_V1 - directorio por tenant. Fallback a "default".
+    const tenantSegment = "default";
+    const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     try {
       return await readFile(join(directory, `${id}.bin`));
     } catch (error) {

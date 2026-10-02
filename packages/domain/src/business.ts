@@ -24,6 +24,13 @@ export const businessEntitySchema = z.object({
   status: z.string().trim().max(100).optional(),
   properties: z.record(z.string(), z.unknown()).default({}),
   schemaVersion: z.string().max(100).default("1.0"),
+  /**
+   * BUSINESS_ENTITY_VERSION_V1 - version monotonica de la entidad.
+   * Empieza en 1 en createEntity. Incrementa en cada updateEntity.
+   * Permite replay, sincronizacion con UI y optimistic locking.
+   * Antes era decorativa: siempre 1.
+   */
+  version: z.number().int().positive().default(1),
   provenance: provenanceSchema,
   /** B101 — maquina de estados que gobierna `status`. Si esta definida, updateEntity valida la transicion. */
   stateMachineId: z.string().trim().min(1).max(100).optional(),

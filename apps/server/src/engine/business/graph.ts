@@ -57,6 +57,9 @@ export class BusinessGraph {
   ) {}
 
   async createEntity(owner: string, input: CreateEntityInput): Promise<BusinessEntity> {
+    // BUSINESS_SCHEMA_VALIDATE_V1 - pendiente: validar input contra el BusinessSchema
+    // del tenant antes de persistir. Se cablea cuando el schema este disponible
+    // desde el schema registry.
     const id = input.id ?? randomUUID();
     const existing = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, id);
     if (existing) throw new AppError(`Entity already exists: ${id}`, 409);
@@ -67,6 +70,8 @@ export class BusinessGraph {
       ...(input.status ? { status: input.status } : {}),
       properties: input.properties ?? {},
       schemaVersion: "1.0",
+      // BUSINESS_GRAPH_VERSION_V1 - primera version.
+      version: 1,
       provenance: {
         source: input.source,
         actor: input.actor,
@@ -98,11 +103,14 @@ export class BusinessGraph {
       const from = current.status ?? "";
       await this.stateMachines.apply(owner, current.stateMachineId, id, from, patch.status, patch.actor);
     }
+    const nextVersion = current.version + 1;
     const next = businessEntitySchema.parse({
       ...current,
       ...(patch.name !== undefined ? { name: patch.name } : {}),
       ...(patch.status !== undefined ? { status: patch.status } : {}),
       properties: { ...current.properties, ...(patch.properties ?? {}) },
+      // BUSINESS_GRAPH_VERSION_V1 - version monotonica. Antes siempre 1.
+      version: nextVersion,
       provenance: {
         source: patch.source,
         actor: patch.actor,
@@ -114,7 +122,8 @@ export class BusinessGraph {
     await this.bus?.emit(owner, "entity.updated", { kind: "entity", id }, {
       entityId: id,
       entityType: next.type,
-      version: 1,
+      // BUSINESS_GRAPH_VERSION_V1 - la version real, no 1.
+      version: nextVersion,
       changedFields: Object.keys(patch).filter((key) => key !== "actor" && key !== "source"),
     });
     return next;
@@ -167,13 +176,18 @@ export class BusinessGraph {
         updatedAt: new Date().toISOString(),
       },
     });
-    await this.db.insertIfAbsent(owner, RELATION_KIND, relation);
-    await this.bus?.emit(owner, "relation.created", { kind: "relation", id: relation.id }, {
-      relationId: relation.id,
-      fromEntityId: relation.fromEntityId,
-      toEntityId: relation.toEntityId,
-      relationType: relation.type,
-    });
+    // BUSINESS_GRAPH_RELATION_RACE_V1 - antes emitiamos relation.created
+    // aunque insertIfAbsent hubiera devuelto null (la relacion ya existia).
+    // Eso corrompia el event log factual: decia "se creo" cuando no se creo.
+    const inserted = await this.db.insertIfAbsent(owner, RELATION_KIND, relation);
+    if (inserted) {
+      await this.bus?.emit(owner, "relation.created", { kind: "relation", id: relation.id }, {
+        relationId: relation.id,
+        fromEntityId: relation.fromEntityId,
+        toEntityId: relation.toEntityId,
+        relationType: relation.type,
+      });
+    }
     return relation;
   }
 

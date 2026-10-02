@@ -40,6 +40,8 @@ export { StoreTurnStore, type StorePort } from "./graph/store-store.ts";
 export type { TenantResolver } from "./tenancy/resolver.ts";
 export { DefaultTenantResolver, DEFAULT_TENANT_ID } from "./tenancy/default-resolver.ts";
 export { DatabaseTenantResolver } from "./tenancy/database-resolver.ts";
+// SERVICE_TENANT_RESOLVER_V1 - adapter que delega en TenantService.
+export { ServiceTenantResolver } from "./tenancy/service-resolver.ts";
 export {
   auditEntrySchema,
   type AuditAction,

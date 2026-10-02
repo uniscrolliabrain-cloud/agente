@@ -24,6 +24,14 @@ export class RateLimiter {
     private readonly maxKeys = 5000,
   ) {}
 
+  /**
+   * RATE_LIMIT_TENANT_V1 - toma un intento scoped por tenant+usuario.
+   * La key compuesta evita que un tenant agote el limite del otro.
+   */
+  takeForTenant(tenantId: string, userId: string, action: string): RateLimitResult {
+    return this.take(`${tenantId}:${userId}:${action}`);
+  }
+
   /** Registra un intento. `allowed: false` significa que la clave agoto su ventana. */
   take(key: string): RateLimitResult {
     const now = Date.now();

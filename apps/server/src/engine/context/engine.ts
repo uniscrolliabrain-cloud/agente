@@ -33,6 +33,14 @@ export interface AssembleInput {
   query: string;
   eventLimit?: number;
   history?: string[];
+  // CONTEXT_BUDGET_V1 - presupuesto opcional por fuente.
+  budget?: {
+    roleTokens?: number;
+    entityTokens?: number;
+    memoryTokens?: number;
+    eventTokens?: number;
+    documentTokens?: number;
+  };
 }
 
 const DEFAULT_EVENT_LIMIT = 20;

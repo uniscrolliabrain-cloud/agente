@@ -195,6 +195,46 @@ export class Store {
     );
     return result.rows.map((row) => row.data as { owner: string; value: T });
   }
+
+  /**
+   * SCAN_BY_STATUS_CURSOR_V1 - variante con cursor keyset (updated_at, id).
+   * Devuelve hasta `limit` filas cuya updated_at es > cursorUpdatedAt.
+   */
+  async scanByStatusWithCursor<T>(
+    kind: string,
+    statuses: string[],
+    limit: number,
+    cursorUpdatedAt?: string,
+    cursorId?: string,
+  ): Promise<{ owner: string; value: T; updatedAt: string; id: string }[]> {
+    if (!statuses.length) return [];
+    const params: unknown[] = [kind, ...statuses];
+    const placeholders = statuses.map((_, i) => `$${i + 2}`).join(",");
+    let sql = `SELECT jsonb_build_object('owner',owner,'value',data) AS data, updated_at, id FROM records WHERE kind=$1 AND data->>'status' IN (${placeholders})`;
+    if (cursorUpdatedAt && cursorId) {
+      params.push(cursorUpdatedAt, cursorId);
+      sql += ` AND (updated_at, id) > ($${params.length - 1}::timestamptz, $${params.length})`;
+    }
+    sql += ` ORDER BY updated_at ASC, id ASC LIMIT $${params.length + 1}`;
+    params.push(limit);
+    const result = await this.db.query(sql, params);
+    return result.rows.map((row) => {
+      const value = row.data as { owner: string; value: T };
+      const updatedAtRaw = (row as unknown as { updated_at: unknown }).updated_at;
+      const idRaw = (row as unknown as { id: unknown }).id;
+      return {
+        owner: value.owner,
+        value: value.value,
+        updatedAt:
+          updatedAtRaw instanceof Date
+            ? updatedAtRaw.toISOString()
+            : typeof updatedAtRaw === "string"
+              ? updatedAtRaw
+              : "",
+        id: typeof idRaw === "string" ? idRaw : "",
+      };
+    });
+  }
   /**
    * Delete records of the given kind whose updated_at is older than `days`.
    * Returns the number of deleted rows.
@@ -300,6 +340,28 @@ export async function createStore(
   await database.query(
     "CREATE TABLE IF NOT EXISTS records(owner text NOT NULL,kind text NOT NULL,id text NOT NULL,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(owner,kind,id))",
   );
+  // MULTI_TENANT_V1 - columna tenant_id con backfill. Default "default".
+  try {
+    await database.query(
+      "ALTER TABLE records ADD COLUMN IF NOT EXISTS tenant_id text NOT NULL DEFAULT 'default'",
+    );
+  } catch { /* si ya existe, ignorar */ }
+  // Indices por tenant.
+  try {
+    await database.query(
+      "CREATE INDEX IF NOT EXISTS records_tenant_owner_kind_idx ON records(tenant_id, owner, kind, id)",
+    );
+  } catch { /* ignorar */ }
+  try {
+    await database.query(
+      "CREATE INDEX IF NOT EXISTS records_tenant_kind_status_idx ON records(tenant_id, kind, (data->>'status'))",
+    );
+  } catch { /* ignorar */ }
+  try {
+    await database.query(
+      "CREATE INDEX IF NOT EXISTS records_tenant_kind_updated_idx ON records(tenant_id, kind, updated_at)",
+    );
+  } catch { /* ignorar */ }
 
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_owner_kind_updated_idx ON records(owner, kind, updated_at DESC, id DESC)"

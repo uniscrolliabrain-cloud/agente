@@ -77,6 +77,9 @@ export function authRoutes(
   bus?: EventBus,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
+  // RATE_LIMIT_TENANT_WIRE_V1 - limite por IP + por email + por tenant.
+  // El takeForTenant ya existe en RateLimiter. Cuando el login sea por tenant
+  // (subdominio o campo), se usa ese método en vez de take.
   const ipLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_IP, LOGIN_WINDOW_MS);
   const emailLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_EMAIL, LOGIN_WINDOW_MS);
 

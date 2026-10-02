@@ -39,12 +39,14 @@ import { projectRoutes } from "./projects-routes.ts";
 import {
   Kernel,
   InMemoryTurnStore,
-  DefaultTenantResolver,
   InMemoryAuditStore,
   EnvTenantConfigResolver,
   StoreTurnStore,
   StoreAuditStore,
+  // SERVICE_TENANT_RESOLVER_WIRE_V1 - adapter que delega en TenantService.
+  ServiceTenantResolver,
 } from "./kernel/index.ts";
+// REFACTOR_REMOVE_DEFAULT_RESOLVER_V1 - DefaultTenantResolver ya no se usa aqui.
 // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
 import { TenantService } from "./engine/tenant.ts";
 
@@ -126,10 +128,14 @@ export async function createApp(
     : null;
   const kernel = new Kernel({
     store:
-      usePersistentKernel && storePort
+      // PERSISTENT_KERNEL_ONLY_V1 - siempre StoreTurnStore. InMemory solo para tests.
+      storePort
         ? new StoreTurnStore(storePort)
         : new InMemoryTurnStore(),
-    tenants: new DefaultTenantResolver(),
+    // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
+    // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
+    // ignoraba el tenantId del contexto y escribia todo en "default".
+    tenants: new ServiceTenantResolver(tenantService),
     audit: usePersistentKernel ? new StoreAuditStore(db) : new InMemoryAuditStore(),
     config: new EnvTenantConfigResolver(),
   });
@@ -369,6 +375,11 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
   app.route("/api/computer", computerRoutes(computer, files));
+  // ADMIN_ROUTES_WIRE_V1 - endpoints de admin.
+  {
+    const { adminRoutes } = await import("./admin-routes.ts");
+    app.route("/api/admin", adminRoutes(agent, users));
+  }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {
     const { kernelRoutes } = await import("./kernel-routes.ts");

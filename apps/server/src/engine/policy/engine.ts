@@ -35,6 +35,18 @@ export interface PolicyDecision {
 export class PolicyEngine {
   constructor(private readonly bus?: EventBus) {}
 
+  /**
+   * POLICY_CONTEXT_METHOD_V1 - evalua con contexto rico. Hoy delega en `can`
+   * con los campos del contexto. Cuando se implementen condiciones contextuales,
+   * se amplia esta firma.
+   */
+  async canWithContext(
+    ctx: import("../../../../../packages/domain/src/policy-context.ts").PolicyContext,
+    role: PolicyRoleInput,
+  ): Promise<PolicyDecision> {
+    return this.can(ctx.tenantId, role, ctx.resource, ctx.action);
+  }
+
   async can(
     owner: string,
     role: PolicyRoleInput,
