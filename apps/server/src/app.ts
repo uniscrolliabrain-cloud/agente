@@ -55,9 +55,9 @@ export async function createApp(
     users = new UserService(db),
     rag = new RagService(db),
     workspace = new WorkspaceService(db, config, files, google, rag);
-  // BUSINESS_OS_FIXED_V1 — bus declarado antes de los servicios que lo usan.
+  // BUSINESS_OS_FIXED_V1 â€” bus declarado antes de los servicios que lo usan.
   const bus = new EventBus(db);
-  // POLICY_EARLY_V1 — policy se necesita antes del ActionService, asi que se instancia aqui.
+  // POLICY_EARLY_V1 â€” policy se necesita antes del ActionService, asi que se instancia aqui.
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
   const actions = new ActionService(db, {
@@ -93,7 +93,7 @@ export async function createApp(
   const context = new ContextEngine(db, graph, memory, bus);
   const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   const computer = new ComputerService(db, config, options.docker);
-  // KERNEL_WIRE_A_V1 — kernel cognitivo. Hoy in-memory, manana persistente.
+  // KERNEL_WIRE_A_V1 â€” kernel cognitivo. Hoy in-memory, manana persistente.
   const kernel = new Kernel({
     store: new InMemoryTurnStore(),
     tenants: new DefaultTenantResolver(),
@@ -188,7 +188,7 @@ export async function createApp(
     const expected = process.env.WHATSAPP_WEBHOOK_TOKEN;
     if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
     const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
-    // WHATSAPP_RATE_LIMIT — timingSafeEqual + rate limit por IP.
+    // WHATSAPP_RATE_LIMIT â€” timingSafeEqual + rate limit por IP.
     const expectedBuf = Buffer.from(expected);
     const providedBuf = Buffer.from(provided ?? "");
     if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf))
@@ -211,10 +211,17 @@ export async function createApp(
     });
     return c.json({ ok: true });
   });
-  // R16 — healthcheck profundo: comprueba DB (lectura + escritura idempotente),
+  // R16 â€” healthcheck profundo: comprueba DB (lectura + escritura idempotente),
   // que el bus pueda emitir, y el estado del worker. Devuelve 503 si algo falla,
   // para que Fly/Render sepan cuando reiniciar de verdad.
-  app.get("/api/health", async (c) => {
+  app.get("/api/health-deep", async (c) => {
+    // HEALTH_DEEP_V1
+    const checks: any = { ok: true, backend: db.backend, time: new Date().toISOString() };
+    try { checks.kernel = (kernel.deps.store as any).constructor?.name ?? "unknown"; } catch { checks.kernel = "error"; }
+    try { checks.db = (await db.list("system","sessions",{limit:1})) ? "ok" : "empty"; } catch (e:any){ checks.db = e.message; checks.ok=false; }
+    return c.json(checks, checks.ok?200:500);
+  });
+app.get("/api/health", async (c) => {
     const checks: Record<string, boolean> = {};
     try {
       await db.put("system", "health", { id: "ping", at: new Date().toISOString() });
@@ -242,7 +249,7 @@ export async function createApp(
       ok ? 200 : 503,
     );
   });
-  // SESSION_RATE_LIMIT — rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
+  // SESSION_RATE_LIMIT â€” rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
   const sessionLimiter = new RateLimiter(30, 60000);
   const sessionAddress = (c: Context) => {
     const fwd = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
@@ -294,7 +301,7 @@ export async function createApp(
     snapshot.browsers = snapshot.browsers.map((s) => browser.decorate(owner, s));
     return c.json(snapshot);
   });
-  // BILLING_AFTER_AUTH — billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
+  // BILLING_AFTER_AUTH â€” billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
 app.post("/api/billing/customer", async (c) => {
     const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
     const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
@@ -329,7 +336,7 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
   app.route("/api/computer", computerRoutes(computer, files));
-  // BUSINESS_ROUTES_WIRE_V1 — rutas HTTP del Business Graph.
+  // BUSINESS_ROUTES_WIRE_V1 â€” rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");
   app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry, stateMachines));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
@@ -571,4 +578,4 @@ app.post("/api/billing/customer", async (c) => {
 
   return { app, auth, files, actions, workspace, agent, computer, users, bus };
 }
-// IMPORTS_BACKEND_FIXED — anadidos los imports que los bloques 2 y 46 no supieron inyectar.
+// IMPORTS_BACKEND_FIXED â€” anadidos los imports que los bloques 2 y 46 no supieron inyectar.

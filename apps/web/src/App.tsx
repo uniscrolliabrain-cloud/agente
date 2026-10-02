@@ -19,6 +19,9 @@ import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
+import ViewRenderer from "./view/ViewRenderer.tsx";
+import ContextChips from "./components/ContextChips.tsx";
+import { IntentResolver } from "./intent/IntentResolver.ts";
 import type { AgentTask } from "./types/api";
 
 function useTheme() {
@@ -68,6 +71,9 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [currentViewSpec, setCurrentViewSpec] = useState<any>(null);
+  const [contextChips, setContextChips] = useState<any[]>([]);
+  const intentResolver = new IntentResolver();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
