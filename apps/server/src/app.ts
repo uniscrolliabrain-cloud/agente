@@ -150,7 +150,7 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService },
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService }, // APP_RUNTIME_WIRE_V1
   );
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();

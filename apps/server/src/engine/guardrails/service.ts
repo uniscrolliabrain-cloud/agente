@@ -60,4 +60,9 @@ export class GuardrailService {
       );
     }
   }
+
+  /** GUARDRAILS_SET_V1 - admin puede actualizar la cuota de un tenant. */
+  async setQuota(tenantId: string, quota: TenantQuota): Promise<void> {
+    await this.db.put(tenantId, "guardrail-quotas", { id: "default", quota });
+  }
 }

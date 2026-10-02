@@ -285,6 +285,26 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     const limit = Math.min(Number(c.req.query("limit") ?? "30") || 30, 100);
     return c.json(await service.globalSearch(c.get("owner"), q, limit));
   });
+  // FEEDBACK_ROUTE_V1 - el usuario deja feedback sobre un outcome.
+  app.post("/feedback", async (c) => {
+    const owner = c.get("owner");
+    const body = z.object({
+      goalId: z.string().max(200).optional(),
+      taskId: z.string().max(200).optional(),
+      rating: z.enum(["useful", "not_useful", "neutral"]),
+      comment: z.string().max(2000).optional(),
+    }).parse(await c.req.json());
+    const entry = {
+      id: `fb-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      tenantId: owner,
+      owner,
+      ...body,
+      createdAt: new Date().toISOString(),
+    };
+    await service.db.put(owner, "feedback", entry);
+    return c.json(entry, 201);
+  });
+
   app.post("/sample-page", async (c) => {
     if (service.config.mode !== "sample") throw new AppError("Not found", 404);
     const body = z.object({ text: z.string().max(100000) }).parse(await c.req.json());

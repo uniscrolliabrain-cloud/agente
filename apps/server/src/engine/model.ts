@@ -49,6 +49,16 @@ export async function executeModelTask(
         requestId: initial.id,
         correlationId: initial.id,
       });
+      // MODEL_RUNTIME_WIRE_V1 - spawn runtime antes de abrir el turno de tarea.
+      void service
+        .spawnRuntime({
+          tenantId,
+          owner,
+          roleId: "agent",
+          taskId: initial.id,
+          correlationId: initial.id,
+        })
+        .catch(() => undefined);
       const turn = await service.kernel.openTurn(kernelCtx, `task.${initial.kind}`);
       kernelTurnId = turn.id;
       // Escribimos el prompt como intent (input), no como reasoning.
