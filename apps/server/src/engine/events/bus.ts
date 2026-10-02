@@ -71,8 +71,10 @@ export class EventBus {
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
       // EVENTBUS_DEDUPE_TENANT_V1 - la clave incluye tenantId.
       const dedupeTenant = options.tenantId ?? owner;
+      // EVENTBUS_DEDUPE_TENANT_V1 - el registro de dedupe se aisla por tenant.
+      const dedupeKey0 = `${dedupeTenant}:${owner}`;
       if (options.dedupeKey !== undefined) {
-        if (await this.isDuplicate(${dedupeTenant}:, options.dedupeKey)) return;
+        if (await this.isDuplicate(dedupeKey0, options.dedupeKey)) return;
       }
       const event: SystemEvent<T> = {
         id: ulid(),
@@ -89,7 +91,7 @@ export class EventBus {
       await this.sink.write(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
-        await this.recordDedupe(${dedupeTenant}:, options.dedupeKey);
+        await this.recordDedupe(dedupeKey0, options.dedupeKey);
       }
       if (options.notify) {
         await this.db.insertIfAbsent(owner, "notifications", {

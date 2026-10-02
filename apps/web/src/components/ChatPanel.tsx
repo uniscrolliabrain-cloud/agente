@@ -1,4 +1,5 @@
-import { useState } from "react";
+// CHAT_ROLE_SELECTOR_V1
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
@@ -6,6 +7,8 @@ import SuggestionChips from "./SuggestionChips";
 import type { ChatMessage } from "../types/api";
 
 interface ChatState {
+  roleId?: string;
+  setRoleId?: (id: string | undefined) => void;
   messages: ChatMessage[];
   streaming: boolean;
   streamBuf: string;
@@ -37,6 +40,16 @@ export default function ChatPanel({ chat }: Props) {
   // CHAT_QUICK_REPLY_V1 - el boton "Responder" de MessageBubble rellena el composer.
   const [seed, setSeed] = useState("");
   const [expanded, setExpanded] = useState(true);
+  // CHAT_ROLE_SELECTOR_V1 - dropdown de rol activo.
+  const [roles, setRoles] = useState<Array<{ id: string; name: string }>>([]);
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/agent/roles", { headers: { Authorization: "Bearer " + (localStorage.getItem("openmuse_auth") ? JSON.parse(localStorage.getItem("openmuse_auth") || "{}").token : "") } })
+      .then((r) => r.ok ? r.json() : [])
+      .then((list: Array<{ id: string; name: string }>) => { if (!cancelled) setRoles(list); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const isEmpty = chat.messages.length === 0 && !chat.streaming;
 
   const userMessage = [...chat.messages].reverse().find((m) => m.role === "user");
@@ -79,6 +92,20 @@ export default function ChatPanel({ chat }: Props) {
 
   return (
     <div className="v2-conv">
+      {roles.length > 0 && (
+        <select
+          className="v2-pill"
+          style={{ marginBottom: 8 }}
+          value={chat.roleId ?? ""}
+          onChange={(e) => chat.setRoleId?.(e.target.value || undefined)}
+          title="Rol activo"
+        >
+          <option value="">Sin rol</option>
+          {roles.map((r) => (
+            <option key={r.id} value={r.id}>{r.name}</option>
+          ))}
+        </select>
+      )}
       <div className="v2-conv-crumb">
         <span>Chat</span>
         <span style={{ color: "var(--v2-border-strong)" }}>/</span>

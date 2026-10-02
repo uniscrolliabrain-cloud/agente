@@ -13,7 +13,12 @@ const db = await createStore({
 await db.recoverInterruptedActions();
 const { app, agent, bus } = await createApp(db, config);
 await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mode: config.mode });
-if (config.taskWorkerEnabled) agent.start();
+// PROCESS_SPLIT_V1 - API no arranca worker si se ejecuta como API-only.
+//   MODO=api: solo HTTP (el worker vive en otro proceso).
+//   MODO=worker: solo worker (ver worker-entry.ts).
+//   undefined: comportamiento previo (todo en uno).
+const processRole = process.env.OPENMUSE_PROCESS_ROLE ?? "all";
+if (config.taskWorkerEnabled && processRole !== "api") agent.start();
 // INDEX_RECOVER_TASKS_V1 - recuperar tareas running huerfanas.
 void agent.recoverInterruptedTasks().then((n) => {
   if (n > 0) console.log(`[OpenMuse] ${n} tareas recuperadas`);

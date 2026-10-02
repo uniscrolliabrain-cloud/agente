@@ -82,9 +82,19 @@ export class ConversationAgent extends AbstractAgent {
           if (runtimeHandle) {
             (this as unknown as { _runtimeId?: string })._runtimeId = runtimeHandle.runtimeId;
           }
-          const open = await svc
+          // VIEWS_READ_WIRE_V1 - si hay turno abierto, leer su vista reciente.
+        const open = await svc
             .kernel!.findOpenTurnForThread(ctx)
             .catch(() => undefined);
+        if (open) {
+          try {
+            const { Views } = await import("../kernel/index.ts");
+            const views = new Views({ kernel: svc.kernel! });
+            await views.readView(ctx, "turn.recent", open.id);
+          } catch {
+            // VIEWS_READ_WIRE_V1 - best-effort.
+          }
+        }
           const turn =
             open ?? (await svc.kernel!.openTurn(ctx, `user.message:${input.threadId}`));
           if (latest && typeof latest.content === "string") {
@@ -593,6 +603,12 @@ export class ConversationAgent extends AbstractAgent {
       await this.service.kernel.closeTurn(ctx, turnId, reason, "presenter");
       const { Promoter } = await import("../kernel/index.ts");
       const result = await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+      // PROMOTER_DEST_CALL_V1 - persistir los destinos memory del Promoter.
+      if (result?.destinations?.memory?.length) {
+        await this.service
+          .persistPromotionDestinations(ctx, turnId, result.destinations, "kernel")
+          .catch(() => {});
+      }
       // KERNEL_PROMOTE_PERSIST_V1 - si el promotor dice destinos, escribimos.
       // Hoy solo "memory" tiene un destino real: AgentMemory. Business graph
       // y audit ya estan cubiertos por el kernel.

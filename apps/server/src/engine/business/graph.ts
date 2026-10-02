@@ -56,10 +56,29 @@ export class BusinessGraph {
     private readonly stateMachines?: StateMachineRegistry,
   ) {}
 
+  // GRAPH_RESOLVER_WIRE_V1 - busca duplicados por cif/email/name antes de crear.
   async createEntity(owner: string, input: CreateEntityInput): Promise<BusinessEntity> {
     // BUSINESS_SCHEMA_WIRE_V2 - validar contra el schema del tenant.
     await this.validateAgainstSchema(owner, input.type, input.properties ?? {});
+    // GRAPH_RESOLVER_WIRE_V1 - solo si no hay id explicito, buscamos candidatos.
     const id = input.id ?? randomUUID();
+    if (!input.id) {
+      try {
+        const { EntityResolver } = await import("./resolver.ts");
+        const matches = await new EntityResolver(this.db).findCandidates(owner, owner, input.type, {
+          ...(input.name ? { name: input.name } : {}),
+          ...(typeof input.properties?.email === "string" ? { email: input.properties.email } : {}),
+          ...(typeof input.properties?.cif === "string" ? { cif: input.properties.cif } : {}),
+        });
+        const strong = matches.find((m) => m.confidence >= 0.8);
+        if (strong) {
+          const found = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, strong.entityId);
+          if (found) return found;
+        }
+      } catch {
+        // best-effort: si el resolver falla, se crea igual.
+      }
+    }
     const existing = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, id);
     if (existing) throw new AppError(`Entity already exists: ${id}`, 409);
     const entity = businessEntitySchema.parse({
