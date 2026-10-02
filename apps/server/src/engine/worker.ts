@@ -4,6 +4,7 @@
 import { randomUUID } from "node:crypto";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
 import type { EventBus, SystemEventSource, SystemEventType } from "./events/index.ts";
 
@@ -32,7 +33,7 @@ export class TaskWorker {
   private active = new Map<string, AbortController>();
   lastTickAt?: string;
   constructor(
-    private readonly db: Store,
+    private readonly db: Store | TenantScopedStore,
     private readonly execute: TaskHandler,
     private readonly options: {
       now?: () => number;
