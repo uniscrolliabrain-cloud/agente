@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import type { ChatMessage } from "../types/api";
 import ToolCallCard from "./ToolCallCard";
+// MESSAGE_ATTACHMENT_PREVIEW_V1 - preview de adjuntos desde el chat.
+import AttachmentPreview from "./AttachmentPreview";
 
 interface Props {
   message: ChatMessage;
@@ -11,6 +13,7 @@ interface Props {
 export default function MessageBubble({ message, onQuickAction }: Props) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
+  const [preview, setPreview] = useState<{ url: string; name: string; mimeType?: string } | null>(null);
 
   const copy = async () => {
     try {
@@ -72,5 +75,17 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
         )}
       </div>
     </div>
+  );
+  return (
+    <>
+      {preview && (
+        <AttachmentPreview
+          url={preview.url}
+          name={preview.name}
+          mimeType={preview.mimeType}
+          onClose={() => setPreview(null)}
+        />
+      )}
+    </>
   );
 }

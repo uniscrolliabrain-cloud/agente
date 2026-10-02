@@ -1,4 +1,4 @@
-// RELEASE_VERIFY_V1 - checks despues del deploy.
+// RELEASE_VERIFY_V2 - health + health-deep + admin-status + onboarding. - checks despues del deploy.
 // Uso: pnpm exec tsx scripts/release-verify.ts
 
 const base = process.env.OPENMUSE_URL ?? "http://127.0.0.1:8787";

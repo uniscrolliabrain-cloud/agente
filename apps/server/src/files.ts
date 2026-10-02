@@ -178,7 +178,7 @@ export class Files {
   }
 
   /** Reads the stored bytes. Tries .bin first (current format), falls back to .pdf (legacy). */
-  async bytes(owner: string, id: string) {
+  async bytes(owner: string, id: string, tenantId?: string) {
     await this.get(owner, id);
     // FILES_TENANT_V1 - directorio por tenant real.
     const tenantSegment = tenantId ?? "default";

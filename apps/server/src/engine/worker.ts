@@ -216,7 +216,9 @@ export class TaskWorker {
         { leaseId, status: "running" },
         {
           state: {
-            ...task.state,
+            // task se reasigna dentro de guard(); TS lo ve como Task | null aqui.
+            // Si se perdio el lease, guard() ya habria lanzado antes.
+            ...(task?.state ?? {}),
             recentEvents: [...recentEvents.entries()].map(([k, v]) => ({ key: k, ...v })).slice(-64),
           },
         },

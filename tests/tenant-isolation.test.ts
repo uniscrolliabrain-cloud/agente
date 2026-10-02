@@ -48,3 +48,36 @@ test("scanByStatus no mezcla tenants", async () => {
     throw e;
   }
 });
+// TENANT_ISOLATION_SCOPED_V1 - prueba TenantScopedStore con dos tenants.
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
+
+test("TenantScopedStore aisla por tenantId:owner", async () => {
+  const db = await createStore();
+  try {
+    // Dos tenants, mismo owner logico.
+    const tdb = new TenantScopedStore(db, async (owner: string) => {
+      if (owner === "shared-owner-a") return "tenant-a";
+      if (owner === "shared-owner-b") return "tenant-b";
+      return "default";
+    });
+    await tdb.put("shared-owner-a", "tasks", { id: "t1", title: "A" });
+    await tdb.put("shared-owner-b", "tasks", { id: "t1", title: "B" });
+    const a = await tdb.get<{ title: string }>("shared-owner-a", "tasks", "t1");
+    const b = await tdb.get<{ title: string }>("shared-owner-b", "tasks", "t1");
+    assert.equal(a?.title, "A");
+    assert.equal(b?.title, "B");
+    const listA = await tdb.list<{ title: string }>("shared-owner-a", "tasks");
+    const listB = await tdb.list<{ title: string }>("shared-owner-b", "tasks");
+    assert.equal(listA.length, 1);
+    assert.equal(listB.length, 1);
+    assert.equal(listA[0].title, "A");
+    assert.equal(listB[0].title, "B");
+    // El owner plano en la DB es "tenantId:owner".
+    const rawA = await db.get("tenant-a:shared-owner-a", "tasks", "t1");
+    const rawB = await db.get("tenant-b:shared-owner-b", "tasks", "t1");
+    assert.ok(rawA, "record A con clave compuesta");
+    assert.ok(rawB, "record B con clave compuesta");
+  } finally {
+    await db.close();
+  }
+});
