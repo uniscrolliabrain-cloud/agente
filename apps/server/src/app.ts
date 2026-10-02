@@ -63,8 +63,12 @@ export async function createApp(
     users = new UserService(db),
     rag = new RagService(db),
     workspace = new WorkspaceService(db, config, files, google, rag);
+  // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
+  // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
+  const tenantService = new TenantService(db, config);
+  const tdb = new TenantScopedStore(db, (owner) => tenantService.tenantIdFor(owner));
   // BUSINESS_OS_FIXED_V1 â€” bus declarado antes de los servicios que lo usan.
-  const bus = new EventBus(db);
+  const bus = new EventBus(tdb);
   // POLICY_EARLY_V1 â€” policy se necesita antes del ActionService, asi que se instancia aqui.
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
@@ -110,9 +114,6 @@ export async function createApp(
   //
   // El adapter StorePort mapea Store a la interfaz que esperan los stores
   // del kernel. Asi el kernel no depende de la firma exacta de Store.
-  const tenantService = new TenantService(db, config);
-  // APP_TENANT_DB_V1 - store con aislamiento por tenant.
-  const tdb = new TenantScopedStore(db, (owner) => tenantService.tenantIdFor(owner));
   const usePersistentKernel = Boolean(config.databaseUrl);
   const storePort = usePersistentKernel
     ? {
