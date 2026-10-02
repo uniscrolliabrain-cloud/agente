@@ -20,9 +20,10 @@ export class StoreSink implements EventSink {
   constructor(private readonly db: Store) {}
 
   async write(event: SystemEvent): Promise<void> {
-    // MULTI_TENANT_V1 - el record se escribe bajo tenantId si lo lleva.
+    // EVENTBUS_TENANT_SCOPE_V1 - clave compuesta tenantId:owner.
+    const ownerKey = ${event.tenantId}:;
     await this.db.insertIfAbsent(
-      event.tenantId ?? event.owner,
+      ownerKey,
       KIND,
       event as unknown as { id: string },
     );

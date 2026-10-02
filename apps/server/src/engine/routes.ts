@@ -118,6 +118,19 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   app.post("/goals", async (c) =>
     c.json(await service.createGoal(c.get("owner"), await c.req.json()), 201),
   );
+  // GOAL_RUN_ENDPOINT_V1 - dispara el ciclo del orquestador.
+  app.post("/goals/:id/run", async (c) => {
+    const owner = c.get("owner");
+    const goalId = c.req.param("id");
+    const goal = await service.db.get<import("../../../../packages/domain/src/goal.ts").Goal>(owner, "goals", goalId);
+    if (!goal) throw new AppError("Goal not found", 404);
+    const tenantId = await service.tenantService?.tenantIdFor(owner) ?? owner;
+    const result = await service.orchestrator.runGoal(
+      { tenantId, owner, role: "user", requestId: "goal-run:" + goalId, goalId },
+      goal,
+    );
+    return c.json(result);
+  });
   app.post("/goals/:id", async (c) => {
     const body = goalPatchSchema.parse(await c.req.json());
     return c.json(await service.updateGoal(c.get("owner"), c.req.param("id"), body));

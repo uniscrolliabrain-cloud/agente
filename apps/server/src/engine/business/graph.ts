@@ -57,9 +57,8 @@ export class BusinessGraph {
   ) {}
 
   async createEntity(owner: string, input: CreateEntityInput): Promise<BusinessEntity> {
-    // BUSINESS_SCHEMA_VALIDATE_V1 - pendiente: validar input contra el BusinessSchema
-    // del tenant antes de persistir. Se cablea cuando el schema este disponible
-    // desde el schema registry.
+    // BUSINESS_SCHEMA_WIRE_V2 - validar contra el schema del tenant.
+    await this.validateAgainstSchema(owner, input.type, input.properties ?? {});
     const id = input.id ?? randomUUID();
     const existing = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, id);
     if (existing) throw new AppError(`Entity already exists: ${id}`, 409);
@@ -156,6 +155,40 @@ export class BusinessGraph {
       entityType: current.type,
     });
     void actor;
+  }
+
+  // BUSINESS_SCHEMA_WIRE_V2 - valida el payload contra el schema del tenant.
+  // Si no hay schema registrado o no hay definicion para ese type, deja pasar.
+  private async validateAgainstSchema(
+    owner: string,
+    entityType: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    let schema: { entities?: Array<{ type: string; fields?: Array<{ name: string; required?: boolean; type?: string; enumValues?: string[] }> }> } | null = null;
+    try {
+      schema = await this.db.get(owner, "business-schemas", "default");
+    } catch {
+      return;
+    }
+    if (!schema?.entities) return;
+    const def = schema.entities.find((e) => e.type === entityType);
+    if (!def) return;
+    for (const field of def.fields ?? []) {
+      const value = payload[field.name];
+      if (field.required && (value === undefined || value === null)) {
+        throw new AppError(`Entity ${entityType} requires field ${field.name}`, 422);
+      }
+      if (value === undefined || value === null) continue;
+      if (field.type === "number" && typeof value !== "number") {
+        throw new AppError(`Field ${field.name} must be number`, 422);
+      }
+      if (field.type === "boolean" && typeof value !== "boolean") {
+        throw new AppError(`Field ${field.name} must be boolean`, 422);
+      }
+      if (field.type === "enum" && field.enumValues && !field.enumValues.includes(String(value))) {
+        throw new AppError(`Field ${field.name} must be one of ${field.enumValues.join(", ")}`, 422);
+      }
+    }
   }
 
   async createRelation(owner: string, input: CreateRelationInput): Promise<BusinessRelation> {

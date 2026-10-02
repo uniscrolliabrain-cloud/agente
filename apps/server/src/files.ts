@@ -81,6 +81,8 @@ export class Files {
     bytes: Uint8Array,
     source: string,
     parentId?: string,
+    // FILES_TENANT_V1 - tenantId opcional. Fallback a "default".
+    tenantId?: string,
   ): Promise<Artifact> {
     if (bytes.length === 0) throw new AppError("Empty file", 422);
     if (bytes.length > MAX_BYTES) throw new AppError("Files must be 10 MB or smaller", 413);
@@ -124,8 +126,8 @@ export class Files {
       parentId,
     };
 
-    // MULTI_TENANT_V1 - directorio por tenant. Fallback a "default".
-    const tenantSegment = "default";
+    // FILES_TENANT_V1 - directorio por tenant real.
+    const tenantSegment = tenantId ?? "default";
     const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     await mkdir(directory, { recursive: true, mode: 0o700 });
     await writeFile(join(directory, `${id}.bin`), bytes, { mode: 0o600, flag: "wx" });
@@ -178,8 +180,8 @@ export class Files {
   /** Reads the stored bytes. Tries .bin first (current format), falls back to .pdf (legacy). */
   async bytes(owner: string, id: string) {
     await this.get(owner, id);
-    // MULTI_TENANT_V1 - directorio por tenant. Fallback a "default".
-    const tenantSegment = "default";
+    // FILES_TENANT_V1 - directorio por tenant real.
+    const tenantSegment = tenantId ?? "default";
     const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     try {
       return await readFile(join(directory, `${id}.bin`));

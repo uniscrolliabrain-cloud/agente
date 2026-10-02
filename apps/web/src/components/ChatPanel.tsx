@@ -34,6 +34,7 @@ const CHIPS = [
 ];
 
 export default function ChatPanel({ chat }: Props) {
+  // CHAT_QUICK_REPLY_V1 - el boton "Responder" de MessageBubble rellena el composer.
   const [seed, setSeed] = useState("");
   const [expanded, setExpanded] = useState(true);
   const isEmpty = chat.messages.length === 0 && !chat.streaming;

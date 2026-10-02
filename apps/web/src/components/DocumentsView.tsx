@@ -1,8 +1,16 @@
+// DOCUMENTS_REINGEST_SERVER_V1 - reingesta via endpoint server-side.
+import { ragReingest } from "../api/rag";
 import { useCallback, useEffect, useState } from "react";
+// DOCUMENTS_REINGEST_SERVER_V1 - reingesta via endpoint server-side.
+import { ragReingest } from "../api/rag";
 import { FileText, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { FileEntry } from "../hooks/useWorkspaceData";
 import AttachmentPreview from "./AttachmentPreview";
+// DOCUMENTS_REINGEST_SERVER_V1 - reingesta via endpoint server-side.
+import { ragReingest } from "../api/rag";
 import { formatBytes, relativeTime } from "../lib/format";
+// DOCUMENTS_REINGEST_SERVER_V1 - reingesta via endpoint server-side.
+import { ragReingest } from "../api/rag";
 import {
   ragDeleteSource,
   ragReingest,
