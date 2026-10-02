@@ -23,8 +23,11 @@ export interface TenantResolution {
   source: "database" | "default";
 }
 
+const TENANT_CACHE_TTL_MS = 5 * 60 * 1000;
+
 export class TenantService {
-  private readonly cache = new Map<string, string>();
+  // TENANT_SERVICE_TTL_V1 - cache con TTL de 5 min.
+  private readonly cache = new Map<string, { tenantId: string; at: number }>();
 
   constructor(
     private readonly db: Store,
@@ -37,12 +40,14 @@ export class TenantService {
    */
   async resolve(owner: string): Promise<TenantResolution> {
     const cached = this.cache.get(owner);
-    if (cached) return { tenantId: cached, source: "database" };
+    if (cached && Date.now() - cached.at < TENANT_CACHE_TTL_MS) {
+      return { tenantId: cached.tenantId, source: "database" };
+    }
     const row = await this.db
       .get<{ tenantId: string }>(owner, MEMBERSHIP_KIND, MEMBERSHIP_ID)
       .catch(() => null);
     if (row?.tenantId) {
-      this.cache.set(owner, row.tenantId);
+      this.cache.set(owner, { tenantId: row.tenantId, at: Date.now() });
       return { tenantId: row.tenantId, source: "database" };
     }
     return { tenantId: DEFAULT_TENANT_ID, source: "default" };
@@ -64,7 +69,7 @@ export class TenantService {
       tenantId,
       updatedAt: new Date().toISOString(),
     });
-    this.cache.set(owner, tenantId);
+    this.cache.set(owner, { tenantId, at: Date.now() });
   }
 
   /** Invalida la cache de un owner (p.ej. tras cambiar membership). */

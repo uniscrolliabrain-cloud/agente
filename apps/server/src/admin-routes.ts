@@ -84,6 +84,55 @@ export function adminRoutes(service: AgentService, users: UserService) {
     return c.json({ approvals });
   });
 
+  // ADMIN_BUSINESS_SCHEMA_V1 - guarda el schema de negocio por tenant.
+  app.put("/tenants/:tenantId/business-schema", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const body = z.object({
+      entities: z.array(z.unknown()).max(200).default([]),
+      relations: z.array(z.unknown()).max(200).default([]),
+    }).parse(await c.req.json());
+    await service.db.put(tenantId, "business-schemas", {
+      id: "default",
+      tenantId,
+      entities: body.entities,
+      relations: body.relations,
+      updatedAt: new Date().toISOString(),
+    });
+    return c.json({ ok: true, tenantId });
+  });
+
+  app.get("/tenants/:tenantId/business-schema", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const schema = await service.db.get(tenantId, "business-schemas", "default");
+    return c.json({ schema });
+  });
+
+  // ADMIN_WORKSPACE_GEN_V1 - genera workspace desde el schema del tenant.
+  app.get("/tenants/:tenantId/workspace", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const { WorkspaceGenerator } = await import("./engine/workspace/generator.ts");
+    const gen = new WorkspaceGenerator(service.db as never);
+    const spec = await gen.generateForTenant(tenantId);
+    return c.json({ workspace: spec });
+  });
+
+  // ADMIN_VIEWS_RESOLVE_V1 - resuelve un intent a ViewSpec.
+  app.post("/views/resolve", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const body = z.object({ intent: z.string().min(1).max(1000) }).parse(await c.req.json());
+    const { ViewResolver } = await import("./engine/views/resolver.ts");
+    const resolver = new ViewResolver(service);
+    const spec = await resolver.resolve(owner, body.intent);
+    return c.json({ spec });
+  });
+
   app.get("/system/status", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);

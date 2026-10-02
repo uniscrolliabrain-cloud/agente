@@ -14,6 +14,10 @@ await db.recoverInterruptedActions();
 const { app, agent, bus } = await createApp(db, config);
 await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mode: config.mode });
 if (config.taskWorkerEnabled) agent.start();
+// INDEX_RECOVER_TASKS_V1 - recuperar tareas running huerfanas.
+void agent.recoverInterruptedTasks().then((n) => {
+  if (n > 0) console.log(`[OpenMuse] ${n} tareas recuperadas`);
+});
 
 function startBackupScheduler(): () => void {
   const hours = config.backupIntervalHours ?? 0;

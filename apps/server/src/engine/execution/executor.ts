@@ -53,16 +53,25 @@ export class Executor {
         completed.push(step.id);
       } else {
         results.push({ id: step.id, status: "failed", error: lastError });
-        // Compensacion en orden inverso.
+        // EXECUTOR_COMPENSATION_V2 - ejecuta compensaciones en orden inverso.
         const toCompensate = [...completed].reverse();
         for (const id of toCompensate) {
           const prev = plan.steps.find((s) => s.id === id);
-          if (prev?.compensation) {
+          if (prev?.compensation && this.runner) {
             try {
-              // Nota: la compensacion real usa el mismo runner con el capability
-              // de compensacion. Aqui dejamos el placeholder.
-            } catch {
-              /* best effort */
+              await this.runner.run(ctx, {
+                ...prev,
+                id: `compensate-${prev.id}`,
+                capabilityId: prev.compensation.capabilityId,
+                inputs: prev.compensation.inputs,
+              });
+              results.push({ id: `compensate-${prev.id}`, status: "succeeded" });
+            } catch (error) {
+              results.push({
+                id: `compensate-${prev.id}`,
+                status: "failed",
+                error: error instanceof Error ? error.message : "compensation failed",
+              });
             }
           }
         }

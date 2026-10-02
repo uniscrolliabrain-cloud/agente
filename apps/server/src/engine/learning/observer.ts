@@ -62,18 +62,54 @@ export class LearningObserver {
       });
     }
 
-    // Fallo: si el outcome fallo, guardar leccion.
+    // LEARNING_OBSERVER_V2 - fallo: acumula ocurrencias.
     if (input.outcome.status === "failed" || input.outcome.status === "blocked") {
       const sig = input.outcome.summary.slice(0, 200);
-      await this.db.put(tenantId, "failure-lessons", {
-        id: `lesson-${sig}`,
+      const lessonId = `lesson-${sig}`;
+      const existing = await this.db.get<{ occurrences: number }>(tenantId, "failure-lessons", lessonId);
+      if (existing) {
+        await this.db.put(tenantId, "failure-lessons", {
+          ...existing,
+          id: lessonId,
+          tenantId,
+          errorSignature: sig,
+          occurrences: (existing.occurrences ?? 0) + 1,
+          lastSeenAt: now,
+        });
+      } else {
+        await this.db.put(tenantId, "failure-lessons", {
+          id: lessonId,
+          tenantId,
+          errorSignature: sig,
+          cause: input.outcome.summary,
+          correction: "",
+          occurrences: 1,
+          createdAt: now,
+          lastSeenAt: now,
+        });
+      }
+    }
+
+    // LEARNING_OBSERVER_V2 - promueve patrón a SOP propuesto si supera umbral.
+    const patternRow = await this.db.get<{ successCount: number; proposedAsSop: boolean; planSignature: string }>(
+      tenantId,
+      "learning-patterns",
+      `pattern-${signature}`,
+    );
+    if (patternRow && patternRow.successCount >= 5 && !patternRow.proposedAsSop) {
+      await this.db.put(tenantId, "procedural-learning", {
+        id: `proc-${signature}`,
         tenantId,
-        errorSignature: sig,
-        cause: input.outcome.summary,
-        correction: "",
-        occurrences: 1,
+        sourcePatternId: `pattern-${signature}`,
+        proposedSop: { signature: patternRow.planSignature },
+        status: "proposed",
         createdAt: now,
-        lastSeenAt: now,
+      });
+      await this.db.put(tenantId, "learning-patterns", {
+        ...patternRow,
+        id: `pattern-${signature}`,
+        tenantId,
+        proposedAsSop: true,
       });
     }
   }
