@@ -93,4 +93,13 @@ export class AgentRuntimeManager {
     for (const runtime of this.active.values()) if (runtime.owner === owner) count += 1;
     return count;
   }
+
+  /** RUNTIME_LIST_V1 - lista runtimes activos por tenant (para admin). */
+  listForTenant(tenantId: string): EphemeralRuntime[] {
+    const out: EphemeralRuntime[] = [];
+    for (const runtime of this.active.values()) {
+      if ((runtime as unknown as { tenantId?: string }).tenantId === tenantId) out.push(runtime);
+    }
+    return out;
+  }
 }

@@ -30,6 +30,7 @@
     "beta:vertical": "tsx scripts/beta-vertical.ts",
     "release:check": "tsx scripts/release-check.ts",
     "release:verify": "tsx scripts/release-verify.ts",
+    "migrate:tenant": "tsx scripts/migrate-tenant-id.ts",
     "admin:create": "tsx scripts/admin-create.ts",
     "roles:export": "tsx scripts/export-roles-public.ts",
     "SEED_AGENTS_REMOVED": "removed: scripts/seed-agents.ts no existe"

@@ -83,6 +83,12 @@ import { BusinessOSOrchestrator } from "./orchestrator/orchestrator.ts";
 import { HandoffService } from "./handoff/service.ts";
 // REACTION_ENGINE_V1 - reacciona a eventos.
 import { ReactionEngine } from "./reactions/engine.ts";
+// LEARNING_OBSERVER_V1 - observa cada ejecucion.
+import { LearningObserver } from "./learning/observer.ts";
+// EXECUTOR_WIRE_V1 - ejecuta planes.
+import { Executor } from "./execution/executor.ts";
+// CAPABILITY_RUNNER_V1 - ejecuta capabilities.
+import { CapabilityRunner } from "./execution/capability-runner.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
@@ -154,6 +160,10 @@ export class AgentService {
   readonly handoff: HandoffService;
   // REACTION_ENGINE_V1 - reacciona a eventos.
   readonly reactions: ReactionEngine;
+  // LEARNING_OBSERVER_V1 - observa cada ejecucion.
+  readonly learningObserver: LearningObserver;
+  // EXECUTOR_WIRE_V1 - ejecuta planes.
+  readonly executor: Executor;
   constructor(
     readonly db: Store,
     readonly config: Config,
@@ -187,11 +197,46 @@ export class AgentService {
     this.guardrails = new GuardrailService(db);
     this.capabilities = new CapabilityRegistry();
     bootstrapCapabilities(this.capabilities);
+    // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
     this.planner = new StubPlanner();
     this.verifier = new DeterministicVerifier();
-    this.orchestrator = new BusinessOSOrchestrator();
+    // ORCHESTRATOR_DEPS_WIRE_V1 - el orquestador recibe las deps.
+    this.orchestrator = new BusinessOSOrchestrator({
+      context: {
+        assemble: async (owner, input) => {
+          if (!this.context) return {};
+          const pkg = await this.context.assemble(owner, input);
+          return pkg as unknown as Record<string, unknown>;
+        },
+      },
+      capabilities: {
+        list: async (filter) => {
+          const list = await this.capabilities.list(filter);
+          return list.map((c) => ({ id: c.id, kind: c.kind }));
+        },
+      },
+      planner: {
+        plan: (input) => this.planner.plan(input),
+      },
+      executor: {
+        execute: async (ctx, plan) => this.executor.execute(ctx, plan),
+      },
+      verifier: {
+        verify: (goal, outcome) => this.verifier.verify(goal, outcome),
+      },
+      replanner: {
+        replan: async () => null,
+      },
+      observer: {
+        observe: (input) => this.learningObserver.observe(input),
+      },
+    });
     this.handoff = new HandoffService(db);
     this.reactions = new ReactionEngine(db, this.bus);
+    this.learningObserver = new LearningObserver(db);
+    // EXECUTOR_WIRE_V1 - el runner ejecuta capabilities del registry.
+    const capabilityRunner = new CapabilityRunner(this.capabilities, new Map());
+    this.executor = new Executor(capabilityRunner);
     this.learning = new LearningService(this.memory);
     this.sopExecutor = new SOPExecutor(this, this.bus, this.graph, this.stateMachineRegistry);
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
@@ -228,6 +273,9 @@ export class AgentService {
       // las tareas terminales/no terminales de golpe (con 10.000 tareas,
       // cada minuto era un pico). Ahora 500 por pasada, con tope de 3
       // paginas. Cierra parcialmente #149 y #150.
+      // MAINTAIN_TENANT_AWARE_V1 - con multi-tenant, cada tenant se mantiene
+      // con su propio cursor. Hoy scanByStatus es global pero limitado a 500.
+      // En la siguiente fase se itera por tenant con cursor keyset.
       const taskStatusPage = await this.db.scanByStatus<AgentTask>(
         "tasks",
         ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
@@ -1379,6 +1427,38 @@ export class AgentService {
    * Registra uso aproximado del LLM. Cuando el runtime exponga tokens reales, se
    * sustituyen los proxies. Coste estimado en EUR con una tarifa configurable.
    */
+  /**
+   * SERVICE_RUNTIME_SPAWN_V1 - helper para que conversation.ts y model.ts
+   * puedan abrir un runtime efimero sin acceder directo a this.runtime.
+   */
+  async spawnRuntime(input: {
+    tenantId: string;
+    owner: string;
+    roleId?: string;
+    goalId?: string;
+    taskId?: string;
+    correlationId?: string;
+  }): Promise<{ runtimeId: string } | undefined> {
+    if (!this.runtime) return undefined;
+    const r = await this.runtime.spawn({
+      owner: input.owner,
+      roleId: input.roleId ?? "agent",
+      ...(input.taskId ? { taskId: input.taskId } : {}),
+      ...(input.correlationId ? { correlationId: input.correlationId } : {}),
+    });
+    return { runtimeId: r.runtimeId };
+  }
+
+  async completeRuntime(runtimeId: string, durationMs: number): Promise<void> {
+    if (!this.runtime) return;
+    await this.runtime.complete(runtimeId, durationMs);
+  }
+
+  async failRuntime(runtimeId: string, error: string): Promise<void> {
+    if (!this.runtime) return;
+    await this.runtime.fail(runtimeId, error);
+  }
+
   async recordUsage(
     owner: string,
     source: "chat" | "task" | "sop",

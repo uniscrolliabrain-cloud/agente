@@ -47,9 +47,8 @@ export class ConversationAgent extends AbstractAgent {
     // variables mutables y las leemos mas tarde. Los errores no rompen el chat.
     // KERNEL_TURN_OPEN_V4 - el await import() va DENTRO del IIFE async.
     // Antes estaba fuera y daba TS1308 porque run() no es async.
-    // AGENT_RUNTIME_WIRE_V1 - pendiente: spawn del runtime efimero y cierre en finally.
-    // El runtime se publica al bus con agent.runtime_spawned / completed / failed.
-    // Se cablea en la proxima fase cuando AgentRuntimeManager este expuesto en service.
+    // AGENT_RUNTIME_WIRE_V2 - el runtime efimero se abre al arrancar el turno
+    // y se cierra cuando el turno se cierra. Se publica al bus.
     let kernelTurnId: string | undefined;
     let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
     if (this.service.kernel) {
@@ -71,6 +70,18 @@ export class ConversationAgent extends AbstractAgent {
             threadId: input.threadId,
             correlationId: input.runId,
           });
+          // AGENT_RUNTIME_WIRE_V2 - spawn del runtime antes de abrir el turno.
+          const runtimeHandle = await svc
+            .spawnRuntime({
+              tenantId,
+              owner,
+              roleId: "user",
+              correlationId: input.runId,
+            })
+            .catch(() => undefined);
+          if (runtimeHandle) {
+            (this as unknown as { _runtimeId?: string })._runtimeId = runtimeHandle.runtimeId;
+          }
           const open = await svc
             .kernel!.findOpenTurnForThread(ctx)
             .catch(() => undefined);
@@ -80,7 +91,6 @@ export class ConversationAgent extends AbstractAgent {
             await new UserAuthor({ kernel: svc.kernel! }).write(ctx, {
               turnId: turn.id,
               message: latest.content,
-              threadId: input.threadId,
               messageId: latest.id,
             });
           }
@@ -147,7 +157,6 @@ export class ConversationAgent extends AbstractAgent {
 
             subscriber.next({
               type: EventType.RUN_FINISHED,
-              threadId: input.threadId,
               runId: input.runId,
             });
             subscriber.complete();

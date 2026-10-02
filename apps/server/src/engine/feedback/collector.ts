@@ -29,4 +29,20 @@ export class FeedbackCollector {
   async listForTenant(tenantId: string): Promise<FeedbackEntry[]> {
     return this.db.list<FeedbackEntry>(tenantId, "feedback");
   }
+
+  /** FEEDBACK_AGG_V1 - agrega feedback por goalId/taskId. */
+  async aggregate(tenantId: string): Promise<{
+    total: number;
+    useful: number;
+    notUseful: number;
+    neutral: number;
+  }> {
+    const all = await this.listForTenant(tenantId);
+    return {
+      total: all.length,
+      useful: all.filter((f) => f.rating === "useful").length,
+      notUseful: all.filter((f) => f.rating === "not_useful").length,
+      neutral: all.filter((f) => f.rating === "neutral").length,
+    };
+  }
 }

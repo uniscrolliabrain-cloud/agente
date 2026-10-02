@@ -12,9 +12,11 @@ async function check(path: string): Promise<boolean> {
   }
 }
 
+// RELEASE_VERIFY_EXTRA_V1
 const checks: Array<{ name: string; path: string }> = [
   { name: "health", path: "/api/health" },
   { name: "health-deep", path: "/api/health-deep" },
+  { name: "admin-status", path: "/api/admin/system/status" },
 ];
 
 let failed = 0;
