@@ -1,3 +1,4 @@
+// MESSAGELIST_CURSOR_V1 - cursor parpadeante del typewriter.
 import { useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/api";
 import MessageBubble from "./MessageBubble";
@@ -26,7 +27,7 @@ export default function MessageList({ messages, streaming, streamBuf, activeTool
       {streaming && streamBuf && (
         <div className="v2-assistant-text" style={{ marginTop: 12 }}>
           {streamBuf}
-          <span className="stream-cursor">|</span>
+          <span className="stream-cursor" aria-hidden="true" />
         </div>
       )}
     </div>

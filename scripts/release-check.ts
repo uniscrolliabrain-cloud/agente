@@ -1,4 +1,4 @@
-// RELEASE_CHECK_V1 - checks antes de cada deploy.
+// RELEASE_CHECK_V2 - typecheck + tests + isolation + guardrails + contratos + ciclo. - checks antes de cada deploy.
 // Uso: pnpm exec tsx scripts/release-check.ts
 
 import { execSync } from "node:child_process";

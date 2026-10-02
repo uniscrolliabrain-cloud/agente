@@ -1,3 +1,4 @@
+// UI_PANEL_SLIDE_V1_USE
 import { useMemo, useState } from "react";
 import type { AgentTask } from "../types/api";
 

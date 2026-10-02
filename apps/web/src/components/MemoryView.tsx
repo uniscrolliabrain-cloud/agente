@@ -1,3 +1,4 @@
+// UI_PANEL_SLIDE_V1_USE
 import { useMemo, useState } from "react";
 import { Brain, Pencil, Search, Trash2, X } from "lucide-react";
 import { apiFetch } from "../api/client";

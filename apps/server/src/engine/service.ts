@@ -1850,10 +1850,14 @@ export class AgentService {
     const now = Date.now();
     // Alertas de tareas fallidas en la última hora.
     const failed = await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 200);
-    const myFailed = failed.filter(
-      (r) =>
-        r.owner === owner || r.owner.endsWith(`:${owner}`),
-    );
+    // SERVICE_ALERTS_TENANT_REAL_V1 - resuelve owners del tenant y filtra.
+    const owners: string[] = [];
+    for (const { owner: o } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
+      const oTenant = await this.tenantService?.tenantIdFor(o) ?? "default";
+      if (oTenant === owner) owners.push(o);
+      if (owners.length >= 50) break;
+    }
+    const myFailed = failed.filter((r) => owners.includes(r.owner));
     const recentFailed = myFailed.filter(
       (r) => now - Date.parse(r.value.updatedAt) < 3600000,
     );
@@ -1868,7 +1872,48 @@ export class AgentService {
     }
   }
 
+  // MAINTAIN_TENANT_REAL_V1 - resuelve owners del tenant y pagina por cada uno.
   private async maintainTenant(tenantId: string): Promise<void> {
+    const owners: string[] = [];
+    for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
+      const ownerTenant = await this.tenantService?.tenantIdFor(owner) ?? "default";
+      if (ownerTenant === tenantId) owners.push(owner);
+      if (owners.length >= 50) break;
+    }
+    for (const owner of owners) {
+      await this.maintainOwner(owner).catch((error) =>
+        backgroundFailure("maintain owner " + owner, error),
+      );
+    }
+  }
+
+  // MAINTAIN_TENANT_REAL_V1 - pagina tareas terminales por owner.
+  private async maintainOwner(owner: string): Promise<void> {
+    const cursorKey = "maintain-owner-cursor";
+    const cursor = await this.db.get<{ updatedAt: string; id: string }>(owner, "system", cursorKey);
+    const page = await this.db.scanByStatusWithCursor<AgentTask>(
+      "tasks",
+      ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
+      200,
+      cursor?.updatedAt,
+      cursor?.id,
+    );
+    for (const record of page) {
+      await this.publishOutcome(record.owner, record.value).catch((error) =>
+        backgroundFailure("publish outcome " + record.value.id, error),
+      );
+    }
+    const last = page[page.length - 1];
+    if (last) {
+      await this.db.put(owner, "system", {
+        id: cursorKey,
+        updatedAt: last.updatedAt,
+        id2: last.id,
+      });
+    }
+  }
+
+  private async maintainTenantLegacy(tenantId: string): Promise<void> {
     const owner = tenantId;
     const cursorKey = `maintain-cursor-${tenantId}`;
     const cursor = await this.db.get<{ updatedAt: string; id: string }>(

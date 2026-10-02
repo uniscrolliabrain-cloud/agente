@@ -2197,3 +2197,72 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 }
 
 /* V3 CONTROL CENTER END */
+/* UI_STREAM_CURSOR_V1 - cursor parpadeante del typewriter. */
+.stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: currentColor;
+  vertical-align: text-bottom;
+  margin-left: 1px;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* UI_CASCADE_CSS_V1 - cascada de aparicion en listas. */
+.cascade-item {
+  animation: fade-slide-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(min(var(--i, 0), 8) * 70ms);
+}
+@keyframes fade-slide-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cascade-item {
+    animation: fade-in-only 150ms ease-out both;
+    animation-delay: 0ms;
+  }
+  @keyframes fade-in-only {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* UI_PANEL_SLIDE_V1 - slide-in del panel contextual. */
+.panel-slide-in {
+  animation: panel-slide-in 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes panel-slide-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-slide-in {
+    animation: fade-in-only 150ms ease-out both;
+  }
+}
+
+/* UI_REDUCED_MOTION_V1 - respeto a prefers-reduced-motion. */
+.pulse {
+  animation: pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.chip-pop-in {
+  animation: chip-pop-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes chip-pop-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse { animation: none; opacity: 1; }
+  .chip-pop-in { animation: fade-in-only 100ms ease-out both; }
+  .stream-cursor { animation: none; opacity: 0.5; }
+}

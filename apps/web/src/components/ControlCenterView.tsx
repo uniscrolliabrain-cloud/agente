@@ -1,7 +1,9 @@
+// UI_ANIMATED_NUMBER_V1
 import { useEffect, useState } from "react";
 // UI_CC_CLEANUP_V1 - quitados Activity, AlertCircle, Briefcase sin usar.
 import { CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
 import { useTasks } from "../hooks/useTasks";
+import { AnimatedNumber } from "./AnimatedNumber";
 import { useNotifications } from "../hooks/useNotifications";
 import type { AgentTask } from "../types/api";
 import { relativeTime } from "../lib/format";
@@ -96,7 +98,7 @@ export default function ControlCenterView({ enabled, onOpenTask }: Props) {
             </div>
             <span className="v3-kpi-label">Agentes trabajando</span>
           </div>
-          <div className="v3-kpi-value">{workerBusy}</div>
+          <div className="v3-kpi-value"><AnimatedNumber value={workerBusy} /></div>
           <div className="v3-kpi-meta">
             <b>{workerIdle}</b> esperando · <b>{workerPaused}</b> en pausa
           </div>
@@ -109,7 +111,7 @@ export default function ControlCenterView({ enabled, onOpenTask }: Props) {
             </div>
             <span className="v3-kpi-label">Tareas completadas</span>
           </div>
-          <div className="v3-kpi-value">{completed.length}</div>
+          <div className="v3-kpi-value"><AnimatedNumber value={completed.length} /></div>
           <div className="v3-kpi-meta">
             <b>{failed.length}</b> con error · <b>{all.length}</b> en total
           </div>
@@ -122,7 +124,7 @@ export default function ControlCenterView({ enabled, onOpenTask }: Props) {
             </div>
             <span className="v3-kpi-label">Pendientes de tu OK</span>
           </div>
-          <div className="v3-kpi-value">{needsAction.length}</div>
+          <div className="v3-kpi-value"><AnimatedNumber value={needsAction.length} /></div>
           <div className="v3-kpi-meta">
             {notifications.unread > 0 ? (
               <>

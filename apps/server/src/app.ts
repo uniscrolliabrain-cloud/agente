@@ -270,6 +270,8 @@ export async function createApp(
       checks.capabilities = (await agent.capabilities.list()).length;
       checks.guardrails = Boolean(agent.guardrails);
       checks.metrics = Boolean(agent.metrics);
+      // HEALTH_METRICS_V1 - conteo por tenant del worker.
+      checks.tenants = typeof (agent as unknown as { tenantService?: unknown }).tenantService === "object" ? "wired" : "absent";
     } catch (e: unknown) {
       checks.internal = e instanceof Error ? e.message : "error";
       checks.ok = false;

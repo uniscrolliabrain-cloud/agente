@@ -49,8 +49,3 @@ export async function ragReingest(sourceId: string): Promise<{ ok: true }> {
 export async function ragDeleteSource(sourceId: string): Promise<void> {
   await apiFetch(`/api/rag/source/${encodeURIComponent(sourceId)}`, { method: "DELETE" });
 }
-export async function ragReingest(sourceId: string): Promise<{ ok: true }> {
-  return apiFetch<{ ok: true }>(`/api/rag/reingest/${encodeURIComponent(sourceId)}`, {
-    method: "POST",
-  });
-}
