@@ -46,8 +46,8 @@ export interface AgentTask {
   question?: string;
   artifactIds: string[];
   assignedTo?: string;
-  // TASK_AUDIT_V2 - trazabilidad y correlacion. Opcionales para no romper tareas guardadas.
-  tenantId?: string;
+  // TASK_TENANT_REQUIRED_V1 - tenantId obligatorio. Backfill: 'default'.
+  tenantId: string;
   threadId?: string;
   requestId?: string;
   parentTaskId?: string;

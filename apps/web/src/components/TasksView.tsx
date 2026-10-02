@@ -30,7 +30,8 @@ export default function TasksView({ tasks, currentUserId, onOpenTask, onReviewTa
 
   const visible = useMemo(() => {
     if (filter === "mias")
-      return tasks.filter((t) => t.assignedTo === currentUserId);
+      // TASKS_MIAS_V1 - incluye no asignadas.
+      return tasks.filter((t) => t.assignedTo === currentUserId || !t.assignedTo);
     if (filter === "sin_asignar") return tasks.filter((t) => !t.assignedTo);
     if (filter === "escaladas")
       return tasks.filter((t) => Boolean((t.state as Record<string, unknown>)?.escalatedTo));

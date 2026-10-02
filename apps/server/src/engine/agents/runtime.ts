@@ -7,6 +7,8 @@ import type { EventBus } from "../events/index.ts";
 
 export interface EphemeralRuntime {
   runtimeId: string;
+  // RUNTIME_TENANT_V1
+  tenantId: string;
   owner: string;
   roleId: string;
   taskId?: string;
@@ -20,6 +22,8 @@ export class AgentRuntimeManager {
   constructor(private readonly bus?: EventBus) {}
 
   async spawn(input: {
+    // RUNTIME_TENANT_V1
+    tenantId: string;
     owner: string;
     roleId: string;
     taskId?: string;
@@ -27,6 +31,7 @@ export class AgentRuntimeManager {
   }): Promise<EphemeralRuntime> {
     const runtime: EphemeralRuntime = {
       runtimeId: randomUUID(),
+      tenantId: input.tenantId,
       owner: input.owner,
       roleId: input.roleId,
       ...(input.taskId ? { taskId: input.taskId } : {}),
@@ -98,7 +103,7 @@ export class AgentRuntimeManager {
   listForTenant(tenantId: string): EphemeralRuntime[] {
     const out: EphemeralRuntime[] = [];
     for (const runtime of this.active.values()) {
-      if ((runtime as unknown as { tenantId?: string }).tenantId === tenantId) out.push(runtime);
+      if (runtime.tenantId === tenantId) out.push(runtime);
     }
     return out;
   }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Activity, AlertCircle, Briefcase, CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
+// UI_CC_CLEANUP_V1 - quitados Activity, AlertCircle, Briefcase sin usar.
+import { CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
 import { useTasks } from "../hooks/useTasks";
 import { useNotifications } from "../hooks/useNotifications";
 import type { AgentTask } from "../types/api";

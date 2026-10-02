@@ -340,28 +340,9 @@ export async function createStore(
   await database.query(
     "CREATE TABLE IF NOT EXISTS records(owner text NOT NULL,kind text NOT NULL,id text NOT NULL,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(owner,kind,id))",
   );
-  // MULTI_TENANT_V1 - columna tenant_id con backfill. Default "default".
-  try {
-    await database.query(
-      "ALTER TABLE records ADD COLUMN IF NOT EXISTS tenant_id text NOT NULL DEFAULT 'default'",
-    );
-  } catch { /* si ya existe, ignorar */ }
-  // Indices por tenant.
-  try {
-    await database.query(
-      "CREATE INDEX IF NOT EXISTS records_tenant_owner_kind_idx ON records(tenant_id, owner, kind, id)",
-    );
-  } catch { /* ignorar */ }
-  try {
-    await database.query(
-      "CREATE INDEX IF NOT EXISTS records_tenant_kind_status_idx ON records(tenant_id, kind, (data->>'status'))",
-    );
-  } catch { /* ignorar */ }
-  try {
-    await database.query(
-      "CREATE INDEX IF NOT EXISTS records_tenant_kind_updated_idx ON records(tenant_id, kind, updated_at)",
-    );
-  } catch { /* ignorar */ }
+  // STORE_TENANT_CLEANUP_V1 - el aislamiento por tenant se hace en
+  // TenantScopedStore con clave compuesta `tenantId:owner`. La columna
+  // tenant_id en records queda sin uso.
 
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_owner_kind_updated_idx ON records(owner, kind, updated_at DESC, id DESC)"

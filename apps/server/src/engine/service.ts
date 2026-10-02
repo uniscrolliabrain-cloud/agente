@@ -41,6 +41,8 @@ import type { BrowserService } from "../browser.ts";
 import { ComputerService } from "../computer.ts";
 import type { Config } from "../config.ts";
 import type { Store } from "../db.ts";
+// SERVICE_TENANT_DB_V1 - el service acepta Store o TenantScopedStore.
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { AppError } from "../errors.ts";
 import { UserService } from "../users.ts";
 import type { Files } from "../files.ts";
@@ -70,13 +72,18 @@ import { SOPTriggerEvaluator } from "./sop-triggers.ts";
 import type { TenantService } from "./tenant.ts";
 // GUARDRAILS_V1 - limites duros por tenant.
 import { GuardrailService } from "./guardrails/service.ts";
+// SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
+import { RateLimiter } from "../rate-limit.ts";
 // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
 import { CapabilityRegistry } from "./capabilities/registry.ts";
 import { bootstrapCapabilities } from "./capabilities/bootstrap.ts";
 // PLANNER_V1 - genera planes.
 import { StubPlanner } from "./planner/planner.ts";
+import { LlmPlanner } from "./planner/llm-planner.ts";
+import { LlmReplanner } from "./planner/replanner.ts";
 // VERIFIER_V1 - verifica outcomes.
 import { DeterministicVerifier } from "./verification/verifier.ts";
+import { LlmVerifier } from "./verification/llm-verifier.ts";
 // BUSINESS_OS_ORCHESTRATOR_V1 - ciclo completo.
 import { BusinessOSOrchestrator } from "./orchestrator/orchestrator.ts";
 // HANDOFF_SERVICE_V1 - pasa trabajo entre roles.
@@ -85,6 +92,7 @@ import { HandoffService } from "./handoff/service.ts";
 import { ReactionEngine } from "./reactions/engine.ts";
 import { executeReactionActions } from "./reactions/executor.ts";
 import { MetricsCollector } from "./metrics/collector.ts";
+import { FeedbackCollector } from "./feedback/collector.ts";
 // LEARNING_OBSERVER_V1 - observa cada ejecucion.
 import { LearningObserver } from "./learning/observer.ts";
 // EXECUTOR_WIRE_V1 - ejecuta planes.
@@ -151,6 +159,12 @@ export class AgentService {
   readonly tenantService?: TenantService;
   // GUARDRAILS_V1 - limites duros por tenant.
   readonly guardrails: GuardrailService;
+  // SERVICE_METRICS_WIRE_V1 - metricas por tenant.
+  readonly metrics: MetricsCollector;
+  // SERVICE_FEEDBACK_WIRE_V1 - feedback del usuario sobre outcomes.
+  readonly feedback: FeedbackCollector;
+  // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
+  private readonly tenantRateLimiter = new RateLimiter(500, 3600000);
   // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
   readonly capabilities: CapabilityRegistry;
   // PLANNER_V1 - genera planes.
@@ -168,7 +182,8 @@ export class AgentService {
   // EXECUTOR_WIRE_V1 - ejecuta planes.
   readonly executor: Executor;
   constructor(
-    readonly db: Store,
+    // SERVICE_TENANT_DB_V1 - acepta Store o TenantScopedStore.
+    readonly db: Store | TenantScopedStore,
     readonly config: Config,
     readonly workspace: WorkspaceService,
     readonly files: Files,
@@ -199,11 +214,17 @@ export class AgentService {
     this.memory = new MemoryService(db, this.rag);
     this.guardrails = new GuardrailService(db);
     this.metrics = new MetricsCollector(db);
+    this.feedback = new FeedbackCollector(db);
+    this.metrics = new MetricsCollector(db);
+    this.feedback = new FeedbackCollector(db);
     this.capabilities = new CapabilityRegistry();
     bootstrapCapabilities(this.capabilities);
     // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
-    this.planner = new StubPlanner();
-    this.verifier = new DeterministicVerifier();
+    // SERVICE_LLM_PLANNER_V1 - LLM primero, stub como fallback.
+    this.planner = new LlmPlanner(config, new StubPlanner()) as unknown as StubPlanner;
+    const deterministic = new DeterministicVerifier();
+    // SERVICE_LLM_VERIFIER_V1 - LLM como segunda capa.
+    this.verifier = new LlmVerifier(config, deterministic) as unknown as DeterministicVerifier;
     // ORCHESTRATOR_DEPS_WIRE_V1 - el orquestador recibe las deps.
     this.orchestrator = new BusinessOSOrchestrator({
       context: {
@@ -228,8 +249,9 @@ export class AgentService {
       verifier: {
         verify: (goal, outcome) => this.verifier.verify(goal, outcome),
       },
+      // SERVICE_LLM_REPLANNER_V1 - LLM replanner.
       replanner: {
-        replan: async () => null,
+        replan: (input) => new LlmReplanner(config).replan(input),
       },
       observer: {
         observe: (input) => this.learningObserver.observe(input),
@@ -254,6 +276,16 @@ export class AgentService {
     });
   }
   // SERVICE_RECOVER_TASKS_V1 - recupera tareas running con lease expirado.
+  // SERVICE_REACTIONS_LOAD_V1 - carga las rules de cada tenant activo.
+  private async loadReactionsForAllTenants(): Promise<void> {
+    const tenants = await this.collectActiveTenants();
+    for (const tenant of tenants) {
+      await this.reactions.load(tenant).catch((error) =>
+        backgroundFailure("load reactions " + tenant, error),
+      );
+    }
+  }
+
   async recoverInterruptedTasks(): Promise<number> {
     const now = Date.now();
     const rows = await this.db.scanByStatus<AgentTask>("tasks", ["running"], 5000);
@@ -279,6 +311,10 @@ export class AgentService {
   }
 
   start() {
+    // SERVICE_REACTIONS_LOAD_V1 - carga las rules del tenant al arranque.
+    void this.loadReactionsForAllTenants().catch((error) =>
+      backgroundFailure("load reactions", error),
+    );
     this.worker.start();
     // Maintenance is independent of the HTTP response and reconciles durable records.
     void this.maintain().catch((error) => backgroundFailure("initial maintenance", error));
@@ -766,6 +802,9 @@ export class AgentService {
     if (activeTasks.length >= 100)
       throw new AppError("Finish or cancel some tasks before adding more", 409);
     await this.guardrails.checkTaskCreation(tenantIdForGuard, activeTasks.length);
+    // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
+    const rl = this.tenantRateLimiter.takeForTenant(tenantIdForGuard, owner, "createTask");
+    if (!rl.allowed) throw new AppError("Rate limit del tenant superado", 429);
     const titles =
       input.kind === "sop"
         ? []
@@ -790,6 +829,8 @@ export class AgentService {
       (await this.pickRoleForTask(owner, input.kind, input.input));
     const task: AgentTask = {
       id,
+      // SERVICE_TASK_TENANT_V1 - tenantId obligatorio.
+      tenantId: tenantIdForGuard,
       title: input.title ?? input.prompt.slice(0, 90),
       prompt: input.prompt,
       kind: input.kind,
@@ -1511,6 +1552,8 @@ export class AgentService {
   }): Promise<{ runtimeId: string } | undefined> {
     if (!this.runtime) return undefined;
     const r = await this.runtime.spawn({
+      // SERVICE_SPAWN_TENANT_V1
+      tenantId: input.tenantId,
       owner: input.owner,
       roleId: input.roleId ?? "agent",
       ...(input.taskId ? { taskId: input.taskId } : {}),
@@ -1553,6 +1596,10 @@ export class AgentService {
       date: new Date().toISOString(),
     };
     await this.db.put(owner, "llm-usage", value);
+    // SERVICE_METRICS_WIRE_V1 - registrar tokens y coste por tenant.
+    const metricsTenant = await this.tenantService?.tenantIdFor(owner) ?? owner;
+    void this.metrics.record(metricsTenant, "llm.tokens", inputTokens + outputTokens, { source }).catch(() => {});
+    void this.metrics.record(metricsTenant, "llm.cost_eur", costEur, { source }).catch(() => {});
     // GUARDRAILS_CHECK_USAGE_V1 - verificar cuota despues de registrar.
     try {
       const tenantIdForGuard = await this.tenantService?.tenantIdFor(owner) ?? owner;

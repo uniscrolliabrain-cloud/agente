@@ -47,6 +47,19 @@ export function ragRoutes(rag: RagService, db: Store, files: Files) {
     await rag.ingestText(owner, id, file.name, text);
     return c.json({ ok: true });
   });
+  // REINGEST_ENDPOINT_V1 - reingesta server-side sin round-trip al navegador.
+  app.post("/reingest/:id", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const file = await db.get<{ name: string }>(owner, "files", id);
+    if (!file) throw new AppError("File not found", 404);
+    const bytes = await files.bytes(owner, id);
+    const text = new TextDecoder("utf-8").decode(bytes);
+    if (!text.trim()) throw new AppError("El archivo no tiene texto indexable", 422);
+    await rag.ingestText(owner, id, file.name, text);
+    return c.json({ ok: true });
+  });
+
   app.delete("/source/:id", async (c) => {
     await rag.removeSource(c.get("owner"), c.req.param("id"));
     return c.json({ ok: true });

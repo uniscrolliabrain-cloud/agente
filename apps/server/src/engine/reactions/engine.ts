@@ -29,14 +29,31 @@ export class ReactionEngine {
     await this.db.put(tenantId, "reactions", rule);
   }
 
+  // REACTION_EVAL_EXEC_V1 - evalua condition y ejecuta actions.
   async evaluate(tenantId: string, eventType: string, payload: Record<string, unknown>): Promise<void> {
     const list = this.rules.get(tenantId) ?? [];
     for (const rule of list) {
       if (!rule.enabled) continue;
       if (rule.trigger.eventType !== eventType) continue;
-      // TODO: evaluar condition y ejecutar actions. Por ahora solo logueamos.
-      void payload;
-      void this.bus;
+      if (rule.condition && !this.matches(rule.condition, payload)) continue;
+      if (!this.executor || rule.actions.length === 0) continue;
+      const ctx = {
+        tenantId,
+        owner: tenantId,
+        role: "system" as const,
+        requestId: "reaction:" + rule.id,
+      };
+      await this.executor(ctx, rule.actions).catch(() => {});
     }
+  }
+
+  // REACTION_EVAL_EXEC_V1 - matcher minimo para condition.
+  private matches(condition: string, payload: Record<string, unknown>): boolean {
+    const trimmed = condition.trim();
+    if (trimmed === "" || trimmed === "always") return true;
+    if (trimmed === "never") return false;
+    const m = trimmed.match(/^(\\w+)\\s*==\\s*['"]?(.+?)['"]?$/);
+    if (!m) return false;
+    return String(payload[m[1]]) === m[2];
   }
 }

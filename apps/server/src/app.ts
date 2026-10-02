@@ -14,6 +14,8 @@ import { emailDraftSchema, proposalSchema } from "../../../packages/domain/src/i
 import { ActionService } from "./actions.ts";
 import { agentConfigured, makeRuntime } from "./agent.ts";
 import { createAuth } from "./auth.ts";
+// APP_TENANT_DB_V1 - envuelve el store con aislamiento por tenant.
+import { TenantScopedStore } from "./db-tenant.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
@@ -109,6 +111,8 @@ export async function createApp(
   // El adapter StorePort mapea Store a la interfaz que esperan los stores
   // del kernel. Asi el kernel no depende de la firma exacta de Store.
   const tenantService = new TenantService(db, config);
+  // APP_TENANT_DB_V1 - store con aislamiento por tenant.
+  const tdb = new TenantScopedStore(db, (owner) => tenantService.tenantIdFor(owner));
   const usePersistentKernel = Boolean(config.databaseUrl);
   const storePort = usePersistentKernel
     ? {
@@ -140,7 +144,7 @@ export async function createApp(
     config: new EnvTenantConfigResolver(),
   });
   const agent = new AgentService(
-    db,
+    tdb,
     config,
     workspace,
     files,

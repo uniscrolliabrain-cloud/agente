@@ -1,7 +1,11 @@
-// LLM_VERIFIER_V1 - segunda capa de verificacion. Evalua si el Outcome
-// satisface el Goal usando un modelo. La primera capa sigue siendo
-// DeterministicVerifier.
+// LLM_VERIFIER_V2 - segunda capa real de verificacion. Solo se llama si el
+// deterministico falla y hay evidencia. Timeout duro. Nunca rompe la tarea.
 
+import { EventType, type RunAgentInput } from "@ag-ui/core";
+import { randomUUID } from "node:crypto";
+import { BuiltInAgent } from "@copilotkit/runtime/v2";
+import { modelChain, runWithModelFallback } from "../model-chain.ts";
+import type { Config } from "../../config.ts";
 import type {
   Goal,
   Outcome,
@@ -10,25 +14,91 @@ import type {
 import type { Verifier } from "./verifier.ts";
 
 export class LlmVerifier implements Verifier {
-  constructor(private readonly inner: Verifier) {}
+  constructor(
+    private readonly config: Config,
+    private readonly inner: Verifier,
+  ) {}
 
   async verify(goal: Goal, outcome: Outcome): Promise<VerificationResult> {
-    // Primero deterministico.
     const base = await this.inner.verify(goal, outcome);
     if (base.verified) return base;
-
-    // Si falla lo deterministico, ampliamos con razonamiento.
-    // El LLM solo se llama si hay criterios no cumplidos y hay evidencia
-    // disponible para razonar.
     if (outcome.evidence.length === 0) return base;
+    if (!this.config.model) return base;
 
-    // Fase 5: no llamamos al LLM todavia. Marcamos el resultado como
-    // "hybrid" para que el caller sepa que el deterministico fallo pero
-    // hay evidencia que un LLM podria interpretar.
-    return {
-      ...base,
-      method: "hybrid",
-      reason: `${base.reason} (pendiente revision LLM)`,
+    const instruction = [
+      "Evalua si el Outcome satisface el Goal. Responde SOLO JSON:",
+      '{"verified": bool, "reason": "string", "missing": ["..."]}',
+      "",
+      `Goal: ${goal.title}`,
+      `Criterios: ${JSON.stringify(goal.successCriteria)}`,
+      `Outcome: ${outcome.summary}`,
+      `Metricas: ${JSON.stringify(outcome.metrics)}`,
+      `Evidencia: ${outcome.evidence.map((e) => e.excerpt ?? "").join(" | ").slice(0, 4000)}`,
+    ].join("\n");
+
+    const runInput: RunAgentInput = {
+      threadId: `verifier-${randomUUID()}`,
+      runId: randomUUID(),
+      messages: [{ id: randomUUID(), role: "user", content: instruction }],
+      state: {},
+      tools: [],
+      context: [],
+      forwardedProps: {},
     };
+
+    const createAgent = (model: string) =>
+      new BuiltInAgent({
+        model,
+        maxSteps: 1,
+        maxRetries: 0,
+        tools: [],
+        prompt: "Respondes solo con JSON valido.",
+      });
+
+    let text = "";
+    try {
+      const run = runWithModelFallback(modelChain(this.config), createAgent, runInput);
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          run.abort();
+          reject(new Error("verifier timed out"));
+        }, 45000);
+        run.events.subscribe({
+          next: (event) => {
+            if (
+              event.type === EventType.TEXT_MESSAGE_CONTENT &&
+              "delta" in event &&
+              typeof event.delta === "string"
+            )
+              text += event.delta;
+          },
+          error: (err) => {
+            clearTimeout(timeout);
+            reject(err);
+          },
+          complete: () => {
+            clearTimeout(timeout);
+            resolve();
+          },
+        });
+      });
+
+      const jsonStart = text.indexOf("{");
+      const jsonEnd = text.lastIndexOf("}");
+      if (jsonStart < 0 || jsonEnd < 0) return base;
+      const parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+      return {
+        verified: Boolean(parsed.verified),
+        reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 2000) : base.reason,
+        missing: Array.isArray(parsed.missing) ? parsed.missing.slice(0, 50) : base.missing,
+        satisfiedCriteria: base.satisfiedCriteria,
+        failedCriteria: base.failedCriteria,
+        confidence: 0.8,
+        method: "hybrid",
+        verifiedAt: new Date().toISOString(),
+      };
+    } catch {
+      return base;
+    }
   }
 }
