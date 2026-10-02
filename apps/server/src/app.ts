@@ -254,11 +254,23 @@ export async function createApp(
   // que el bus pueda emitir, y el estado del worker. Devuelve 503 si algo falla,
   // para que Fly/Render sepan cuando reiniciar de verdad.
   app.get("/api/health-deep", async (c) => {
-    // HEALTH_DEEP_V1
-    const checks: any = { ok: true, backend: db.backend, time: new Date().toISOString() };
-    try { checks.kernel = (kernel.deps.store as any).constructor?.name ?? "unknown"; } catch { checks.kernel = "error"; }
-    try { checks.db = (await db.list("system","sessions",{limit:1})) ? "ok" : "empty"; } catch (e:any){ checks.db = e.message; checks.ok=false; }
-    return c.json(checks, checks.ok?200:500);
+    // HEALTH_DEEP_V2
+    const checks: Record<string, unknown> = { ok: true, backend: db.backend, time: new Date().toISOString() };
+    try { checks.kernel = (kernel.deps.store as { constructor?: { name?: string } }).constructor?.name ?? "unknown"; } catch { checks.kernel = "error"; }
+    try { checks.db = (await db.list("system","sessions",{limit:1})) ? "ok" : "empty"; } catch (e: unknown){ checks.db = e instanceof Error ? e.message : "error"; checks.ok = false; }
+    // HEALTH_DEEP_V2 - checks adicionales.
+    try {
+      checks.worker = agent.worker.running;
+      checks.tenantService = Boolean(agent.tenantService);
+      checks.kernel = Boolean(agent.kernel);
+      checks.capabilities = (await agent.capabilities.list()).length;
+      checks.guardrails = Boolean(agent.guardrails);
+      checks.metrics = Boolean(agent.metrics);
+    } catch (e: unknown) {
+      checks.internal = e instanceof Error ? e.message : "error";
+      checks.ok = false;
+    }
+    return c.json(checks, checks.ok ? 200 : 500);
   });
 app.get("/api/health", async (c) => {
     const checks: Record<string, boolean> = {};

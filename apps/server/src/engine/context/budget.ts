@@ -41,6 +41,21 @@ export function selectWithinBudget(
   return out;
 }
 
+// CONTEXT_BUDGET_SCORING_V1 - combina relevancia, recencia, autoridad, rol.
+export function scoreItem(input: {
+  semantic: number;
+  recency: number;
+  authority: number;
+  roleMatch: number;
+}): number {
+  return (
+    input.semantic * 0.35 +
+    input.recency * 0.15 +
+    input.authority * 0.15 +
+    input.roleMatch * 0.35
+  );
+}
+
 export function allocationWithDefaults(
   partial?: BudgetAllocation,
 ): Required<BudgetAllocation> {

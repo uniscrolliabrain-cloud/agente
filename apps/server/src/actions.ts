@@ -231,6 +231,25 @@ export class ActionService {
       };
     }
     await this.db.put(owner, "actions", finished);
+    // APPROVAL_SYNC_V2 - reflejar el estado final en approval-requests.
+    const finalStatus =
+      finished.status === "succeeded"
+        ? "approved"
+        : finished.status === "failed" || finished.status === "outcome_unknown"
+          ? "rejected"
+          : "pending";
+    void this.db
+      .put(owner, "approval-requests", {
+        ...((await this.db.get<Record<string, unknown>>(owner, "approval-requests", finished.id)) ?? {}),
+        id: finished.id,
+        tenantId: owner,
+        owner,
+        status: finalStatus,
+        decidedAt: new Date().toISOString(),
+        decidedBy: owner,
+        result: finished.result ?? finished.error ?? null,
+      })
+      .catch(() => {});
     const finishedTitle = finished.title.slice(0, 300);
     if (finished.status === "succeeded")
       await this.bus?.emit(owner, "action.executed", { kind: "action", id: finished.id }, {

@@ -83,12 +83,15 @@ import { BusinessOSOrchestrator } from "./orchestrator/orchestrator.ts";
 import { HandoffService } from "./handoff/service.ts";
 // REACTION_ENGINE_V1 - reacciona a eventos.
 import { ReactionEngine } from "./reactions/engine.ts";
+import { executeReactionActions } from "./reactions/executor.ts";
+import { MetricsCollector } from "./metrics/collector.ts";
 // LEARNING_OBSERVER_V1 - observa cada ejecucion.
 import { LearningObserver } from "./learning/observer.ts";
 // EXECUTOR_WIRE_V1 - ejecuta planes.
 import { Executor } from "./execution/executor.ts";
 // CAPABILITY_RUNNER_V1 - ejecuta capabilities.
 import { CapabilityRunner } from "./execution/capability-runner.ts";
+import { buildToolExecutors } from "./execution/tool-executors.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
@@ -195,6 +198,7 @@ export class AgentService {
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
     this.guardrails = new GuardrailService(db);
+    this.metrics = new MetricsCollector(db);
     this.capabilities = new CapabilityRegistry();
     bootstrapCapabilities(this.capabilities);
     // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
@@ -232,10 +236,15 @@ export class AgentService {
       },
     });
     this.handoff = new HandoffService(db);
-    this.reactions = new ReactionEngine(db, this.bus);
+    // SERVICE_REACTIONS_EXEC_V1 - el engine recibe el service para ejecutar actions.
+    this.reactions = new ReactionEngine(db, this.bus, (ctx, actions) =>
+      executeReactionActions(this, this.handoff, ctx, actions),
+    );
     this.learningObserver = new LearningObserver(db);
     // EXECUTOR_WIRE_V1 - el runner ejecuta capabilities del registry.
-    const capabilityRunner = new CapabilityRunner(this.capabilities, new Map());
+    // SERVICE_TOOL_EXECUTORS_V1 - executors reales.
+    const toolExecutors = buildToolExecutors(this);
+    const capabilityRunner = new CapabilityRunner(this.capabilities, toolExecutors);
     this.executor = new Executor(capabilityRunner);
     this.learning = new LearningService(this.memory);
     this.sopExecutor = new SOPExecutor(this, this.bus, this.graph, this.stateMachineRegistry);
@@ -244,6 +253,31 @@ export class AgentService {
       bus: this.bus,
     });
   }
+  // SERVICE_RECOVER_TASKS_V1 - recupera tareas running con lease expirado.
+  async recoverInterruptedTasks(): Promise<number> {
+    const now = Date.now();
+    const rows = await this.db.scanByStatus<AgentTask>("tasks", ["running"], 5000);
+    let recovered = 0;
+    for (const { owner, value } of rows) {
+      const leaseUntil = value.leaseUntil ? Date.parse(value.leaseUntil) : 0;
+      if (!leaseUntil || leaseUntil > now) continue;
+      const updated = await this.db.compareAndSwap<AgentTask>(
+        owner,
+        "tasks",
+        value.id,
+        { status: "running", leaseId: value.leaseId ?? null },
+        {
+          status: "queued",
+          leaseId: null,
+          leaseUntil: null,
+          updatedAt: new Date().toISOString(),
+        },
+      );
+      if (updated) recovered++;
+    }
+    return recovered;
+  }
+
   start() {
     this.worker.start();
     // Maintenance is independent of the HTTP response and reconciles durable records.
@@ -273,14 +307,43 @@ export class AgentService {
       // las tareas terminales/no terminales de golpe (con 10.000 tareas,
       // cada minuto era un pico). Ahora 500 por pasada, con tope de 3
       // paginas. Cierra parcialmente #149 y #150.
-      // MAINTAIN_TENANT_AWARE_V1 - con multi-tenant, cada tenant se mantiene
-      // con su propio cursor. Hoy scanByStatus es global pero limitado a 500.
-      // En la siguiente fase se itera por tenant con cursor keyset.
-      const taskStatusPage = await this.db.scanByStatus<AgentTask>(
-        "tasks",
-        ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
-        500,
-      );
+      // SERVICE_EXPIRE_APPROVALS_V1 - expira approvals viejas.
+      const nowIso = new Date().toISOString();
+      const pendingActions = await this.db.scanByStatus<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
+      for (const { owner, value } of pendingActions) {
+        if (value.expiresAt && value.expiresAt < nowIso) {
+          await this.db.compareAndSwap(
+            owner,
+            "actions",
+            value.id,
+            { status: "awaiting_review", expiresAt: value.expiresAt },
+            { status: "expired" },
+          ).catch(() => {});
+        }
+      }
+
+      // MAINTAIN_TENANT_CURSOR_V1 - el maintain itera tenants activos y usa
+      // cursor keyset por cada uno. Tope de 3 tenants por pasada rotando.
+      const tenantList = await this.collectActiveTenants();
+      const cursorKey = "maintain-tenant-cursor";
+      const cursor = await this.db.get<{ index: number }>("system", "maintenance", cursorKey);
+      const startIndex = cursor?.index ?? 0;
+      const tenantsThisPass = tenantList.slice(startIndex, startIndex + 3);
+      await this.db.put("system", "maintenance", {
+        id: cursorKey,
+        index: (startIndex + 3) % Math.max(1, tenantList.length),
+      });
+      for (const tenant of tenantsThisPass) {
+        await this.maintainTenant(tenant).catch((error) =>
+          backgroundFailure(`maintain tenant ${tenant}`, error),
+        );
+      }
+      // SERVICE_ALERTS_V1 - alertas por tenant.
+      for (const tenant of tenantsThisPass) {
+        await this.checkTenantAlerts(tenant).catch((error) =>
+          backgroundFailure(`alerts tenant ${tenant}`, error),
+        );
+      }
       for (const { owner, value } of taskStatusPage) {
         await this.publishOutcome(owner, value).catch((error) =>
           backgroundFailure(`publish outcome ${value.id}`, error),
@@ -549,6 +612,13 @@ export class AgentService {
       name: "OpenMuse",
       tone: "warm",
     });
+    // SERVICE_ENSURE_TENANT_V1 - asegura membership del tenant.
+    const tenantId = await this.tenantService?.tenantIdFor(owner) ?? "default";
+    await this.db.insertIfAbsent(owner, "tenant-membership", {
+      id: "default",
+      tenantId,
+      updatedAt: new Date().toISOString(),
+    }).catch(() => {});
   }
   /**
    * Contexto de sistema para el chat. Presupuesto duro: cada campo tiene su tope,
@@ -1715,6 +1785,73 @@ export class AgentService {
       // KERNEL_NONFATAL_V1 - no puede romper el finish.
     }
   }
+  // MAINTAIN_TENANT_CURSOR_V1 - devuelve tenants activos.
+  private async collectActiveTenants(): Promise<string[]> {
+    const set = new Set<string>();
+    for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 2000)) {
+      const tenantId = await this.tenantService?.tenantIdFor(owner) ?? "default";
+      set.add(tenantId);
+      if (set.size >= 500) break;
+    }
+    if (set.size === 0) set.add("default");
+    return [...set];
+  }
+
+  // SERVICE_ALERTS_V1 - genera notificaciones cuando un tenant supera umbrales.
+  private async checkTenantAlerts(tenantId: string): Promise<void> {
+    const owner = tenantId;
+    const now = Date.now();
+    // Alertas de tareas fallidas en la última hora.
+    const failed = await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 200);
+    const myFailed = failed.filter(
+      (r) =>
+        r.owner === owner || r.owner.endsWith(`:${owner}`),
+    );
+    const recentFailed = myFailed.filter(
+      (r) => now - Date.parse(r.value.updatedAt) < 3600000,
+    );
+    if (recentFailed.length >= 10) {
+      await this.notify(
+        owner,
+        "Muchas tareas fallidas",
+        `Tienes ${recentFailed.length} tareas fallidas en la última hora.`,
+        undefined,
+        `alert-failed:${tenantId}:${Math.floor(now / 3600000)}`,
+      ).catch(() => {});
+    }
+  }
+
+  private async maintainTenant(tenantId: string): Promise<void> {
+    const owner = tenantId;
+    const cursorKey = `maintain-cursor-${tenantId}`;
+    const cursor = await this.db.get<{ updatedAt: string; id: string }>(
+      "system",
+      "maintenance",
+      cursorKey,
+    );
+    const page = await this.db.scanByStatusWithCursor<AgentTask>(
+      "tasks",
+      ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
+      200,
+      cursor?.updatedAt,
+      cursor?.id,
+    );
+    for (const record of page) {
+      await this.publishOutcome(record.owner, record.value).catch((error) =>
+        backgroundFailure(`publish outcome ${record.value.id}`, error),
+      );
+    }
+    const last = page[page.length - 1];
+    if (last) {
+      await this.db.put("system", "maintenance", {
+        id: cursorKey,
+        updatedAt: last.updatedAt,
+        id2: last.id,
+      });
+    }
+    void owner;
+  }
+
   private async publishOutcome(owner: string, saved: AgentTask) {
     const task = await this.getTask(owner, saved.id);
     const bus = this.bus;

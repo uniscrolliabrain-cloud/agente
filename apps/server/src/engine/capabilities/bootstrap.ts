@@ -47,4 +47,44 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
       tags: ["tool"],
     });
   }
+
+  // CAPABILITIES_EXTENDED_V1 - capabilities de alto nivel (no tools).
+  const composites: Array<{
+    id: string;
+    kind: "sop" | "composite" | "skill";
+    description: string;
+    risk: "low" | "medium" | "high" | "critical";
+    sideEffects: Array<{ kind: string; target: string; reversible: boolean }>;
+    requiresApproval: boolean;
+  }> = [
+    { id: "run_sop", kind: "composite", description: "Ejecuta un SOP registrado", risk: "low", sideEffects: [], requiresApproval: false },
+    { id: "send_email", kind: "composite", description: "Envía email (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "email", reversible: false }], requiresApproval: true },
+    { id: "send_whatsapp", kind: "composite", description: "Envía WhatsApp (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "whatsapp", reversible: false }], requiresApproval: true },
+    { id: "create_calendar_event", kind: "composite", description: "Crea evento (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "calendar", reversible: false }], requiresApproval: true },
+  ];
+  for (const c of composites) {
+    registry.register({
+      id: c.id,
+      version: "1.0.0",
+      name: c.id,
+      description: c.description,
+      kind: c.kind,
+      inputs: {},
+      outputs: {},
+      preconditions: [],
+      sideEffects: c.sideEffects.map((s) => ({
+        kind: s.kind as "read" | "write" | "external_write" | "notification",
+        target: s.target,
+        reversible: s.reversible,
+      })),
+      permissions: [],
+      risk: c.risk,
+      cost: {},
+      idempotency: "idempotent",
+      retryable: false,
+      compensatable: false,
+      requiresApproval: c.requiresApproval,
+      tags: ["composite"],
+    });
+  }
 }
