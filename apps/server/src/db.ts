@@ -206,6 +206,34 @@ export class Store {
     );
     return result.rows.length;
   }
+  /**
+   * TRANSACTION_V1 - ejecuta varias operaciones dentro de una transaccion.
+   *
+   * PGlite y pg soportan BEGIN/COMMIT/ROLLBACK. El callback recibe this para
+   * que pueda usar put/get/cas sin cambiar de API. No se anida: si necesitas
+   * dos transacciones, secuencialas.
+   *
+   * Uso:
+   *   await db.transaction(async (tx) => {
+   *     await tx.put(owner, "goals", goal);
+   *     await tx.put(owner, "tasks", task);
+   *   });
+   *
+   * Si el callback lanza, se hace ROLLBACK y el error se propaga.
+   */
+  async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
+    const raw = this.db as { query: (sql: string, params?: unknown[]) => Promise<unknown> };
+    await raw.query("BEGIN");
+    try {
+      const result = await fn(this);
+      await raw.query("COMMIT");
+      return result;
+    } catch (error) {
+      try { await raw.query("ROLLBACK"); } catch { /* rollback best-effort */ }
+      throw error;
+    }
+  }
+
   async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
     const result = await this.db.query(
       `UPDATE records AS action SET data=jsonb_set(data,'\{status\}',$4::jsonb),updated_at=now()

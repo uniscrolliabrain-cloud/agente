@@ -10,11 +10,17 @@ import { z } from "zod";
 
 export const kernelRoleSchema = z.enum(["admin", "user", "agent", "system"]);
 
+// KERNEL_CONTEXT_V2 - anadidos threadId, parentTurnId, correlationId.
+// Estos campos permiten reusar turnos abiertos del mismo thread y correlacionar
+// HTTP <-> task <-> turn. Son opcionales para no romper llamadas existentes.
 export const kernelContextSchema = z.object({
   tenantId: z.string().min(1).max(100),
   owner: z.string().min(1).max(200),
   role: kernelRoleSchema,
   requestId: z.string().min(1).max(100),
+  threadId: z.string().min(1).max(200).optional(),
+  parentTurnId: z.string().min(1).max(100).optional(),
+  correlationId: z.string().min(1).max(200).optional(),
 });
 
 export type KernelRole = z.infer<typeof kernelRoleSchema>;

@@ -19,6 +19,8 @@ import { LostLeaseError, type TaskContext } from "./worker.ts";
 import type { EventBus } from "./events/index.ts";
 import type { BusinessGraph } from "./business/graph.ts";
 import type { StateMachineRegistry } from "./state-machines.ts";
+// SOP_THOUGHTS_V1 - escribir Thoughts por paso para que el kernel vea el SOP.
+import type { KernelContext, KernelTurn } from "../../../../packages/domain/src/kernel.ts";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const interpolate = (value: unknown, task: AgentTask, results: Record<string, unknown>) => {
@@ -64,6 +66,94 @@ export class SOPExecutor {
     private readonly stateMachines?: StateMachineRegistry,
   ) {}
 
+  /**
+   * SOP_THOUGHTS_OPEN_V1 - abre turno de SOP si hay kernel. Devuelve
+   * (turnId, ctx) para escribir thoughts por paso. Si no hay kernel o falla,
+   * devuelve undefined y el SOP sigue como antes (KERNEL_NONFATAL).
+   */
+  private async openSopTurn(
+    owner: string,
+    sop: { id: string; name: string },
+    task: AgentTask,
+  ): Promise<{ ctx: KernelContext; turnId: string } | undefined> {
+    const kernel = this.service.kernel;
+    if (!kernel) return undefined;
+    try {
+      const { kernelContextSchema } = await import("../kernel/index.ts");
+      const tenantId = this.service.tenantService
+        ? await this.service.tenantService.tenantIdFor(owner)
+        : "default";
+      const ctx = kernelContextSchema.parse({
+        tenantId,
+        owner,
+        role: "agent",
+        requestId: `sop:${task.id}`,
+        correlationId: task.id,
+      });
+      const turn: KernelTurn = await kernel.openTurn(ctx, `sop.${sop.id}`);
+      return { ctx, turnId: turn.id };
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * SOP_THOUGHT_STEP_V1 - escribe un Thought de un paso del SOP.
+   * Rol: "observation" para reads, "action" para writes.
+   * No puede romper el SOP: cualquier fallo se ignora.
+   */
+  private async writeSopThought(
+    kernelTurn: { ctx: KernelContext; turnId: string } | undefined,
+    stepId: string,
+    stepTitle: string,
+    role: "observation" | "action",
+    content: string,
+  ): Promise<void> {
+    if (!kernelTurn) return;
+    const kernel = this.service.kernel;
+    if (!kernel) return;
+    try {
+      const { SlowAuthor } = await import("../kernel/index.ts");
+      const author = new SlowAuthor({ kernel });
+      const payload = {
+        turnId: kernelTurn.turnId,
+        content: `${stepTitle}: ${content}`.slice(0, 2000),
+        intent: role === "observation" ? "observe" : "act",
+        confidence: 0.9,
+        entities: [],
+        policies: [],
+        skills: [],
+      };
+      if (role === "observation") {
+        await author.writeReasoning(kernelTurn.ctx, payload);
+      } else {
+        await author.writeDelegation(kernelTurn.ctx, payload);
+      }
+      void stepId;
+    } catch {
+      // KERNEL_NONFATAL_V1 - el kernel no puede romper el SOP.
+    }
+  }
+
+  /**
+   * SOP_THOUGHTS_CLOSE_V1 - cierra el turno del SOP y promueve.
+   */
+  private async closeSopTurn(
+    kernelTurn: { ctx: KernelContext; turnId: string } | undefined,
+    reason: "promotion" | "timeout" | "response",
+  ): Promise<void> {
+    if (!kernelTurn) return;
+    const kernel = this.service.kernel;
+    if (!kernel) return;
+    try {
+      await kernel.closeTurn(kernelTurn.ctx, kernelTurn.turnId, reason, "system");
+      const { Promoter } = await import("../kernel/index.ts");
+      await new Promoter({ kernel }).promote(kernelTurn.ctx, kernelTurn.turnId);
+    } catch {
+      // KERNEL_NONFATAL_V1 - el kernel no puede romper el SOP.
+    }
+  }
+
   async execute(owner: string, initial: AgentTask, ctx: TaskContext): Promise<Partial<AgentTask>> {
     let task = initial;
     const sopId = String(task.state.sopId ?? task.input.sopId ?? "");
@@ -71,6 +161,8 @@ export class SOPExecutor {
     const raw = await this.service.db.get(owner, "sops", sopId);
     if (!raw) throw new AppError(`SOP not found: ${sopId}`, 404);
     const sop = sopSchema.parse(raw);
+    // SOP_THOUGHTS_V1 - abrir turno del SOP para que el kernel vea la ejecucion.
+    const kernelTurn = await this.openSopTurn(owner, sop, task);
     // Enforcement: un usuario solo puede ejecutar SOPs asignados en su setup.sopIds.
     // Admin bypassa. Lista vacia = sin restriccion (compat con sample y system).
     const __userRecord = await this.service.db.get<{
@@ -272,6 +364,28 @@ export class SOPExecutor {
       }
 
       results[step.id] = outcome;
+      // SOP_THOUGHT_STEP_V1 - escribir thought del paso.
+      // Reads -> observation, writes -> action.
+      const readOnlyTools = new Set([
+        "read_mail_thread",
+        "read_workspace",
+        "read_web",
+        "inspect_pdf",
+        "recall_memory",
+        "query_business",
+      ]);
+      const thoughtRole: "observation" | "action" = readOnlyTools.has(step.tool)
+        ? "observation"
+        : "action";
+      const outcomeText =
+        typeof outcome === "string" ? outcome : JSON.stringify(outcome ?? "").slice(0, 500);
+      await this.writeSopThought(
+        kernelTurn,
+        step.id,
+        step.title,
+        thoughtRole,
+        outcomeText,
+      );
       await ctx.busEvent("sop.step_completed", {
         sopId: sop.id,
         stepId: step.id,

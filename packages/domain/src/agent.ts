@@ -46,6 +46,12 @@ export interface AgentTask {
   question?: string;
   artifactIds: string[];
   assignedTo?: string;
+  // TASK_AUDIT_V2 - trazabilidad y correlacion. Opcionales para no romper tareas guardadas.
+  tenantId?: string;
+  threadId?: string;
+  requestId?: string;
+  parentTaskId?: string;
+  lastCheckpointAt?: string;
 }
 export interface RunEvent {
   id: string;
@@ -113,8 +119,10 @@ export interface AgentMemory {
   category?: MemoryCategory;
   tags?: string[];
   createdAt: string;
-  // AGENT_ROLE_V2 — si la memoria pertenece a un rol, aqui va su id.
   roleId?: string;
+  // MEMORY_AUDIT_V1 - dedupe y aislamiento. Opcionales.
+  dedupeKey?: string;
+  tenantId?: string;
 }
 export interface AgentArtifact {
   id: string;
@@ -124,6 +132,10 @@ export interface AgentArtifact {
   summary: string;
   data: Record<string, unknown>;
   createdAt: string;
+  // ARTIFACT_AUDIT_V1 - tenant, tamano efectivo y dedupe. Opcionales.
+  tenantId?: string;
+  sizeBytes?: number;
+  dedupeKey?: string;
 }
 export interface AgentNotification {
   id: string;

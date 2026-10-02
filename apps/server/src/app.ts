@@ -42,7 +42,11 @@ import {
   DefaultTenantResolver,
   InMemoryAuditStore,
   EnvTenantConfigResolver,
+  StoreTurnStore,
+  StoreAuditStore,
 } from "./kernel/index.ts";
+// ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
+import { TenantService } from "./engine/tenant.ts";
 
 export async function createApp(
   db: Store,
@@ -93,11 +97,40 @@ export async function createApp(
   const context = new ContextEngine(db, graph, memory, bus);
   const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   const computer = new ComputerService(db, config, options.docker);
-  // KERNEL_WIRE_A_V1 â€” kernel cognitivo. Hoy in-memory, manana persistente.
+  // KERNEL_WIRE_B_V1 - kernel cognitivo.
+  //
+  // Stores:
+  //   - Sin DATABASE_URL: in-memory (dev, tests, single-process).
+  //   - Con DATABASE_URL: StoreTurnStore + StoreAuditStore persistentes.
+  //     Esto es lo que necesita SOC-2 en produccion.
+  //
+  // El adapter StorePort mapea Store a la interfaz que esperan los stores
+  // del kernel. Asi el kernel no depende de la firma exacta de Store.
+  const tenantService = new TenantService(db, config);
+  const usePersistentKernel = Boolean(config.databaseUrl);
+  const storePort = usePersistentKernel
+    ? {
+        put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
+          await db.put(tenantId, kind, data as { id: string });
+        },
+        get: async (tenantId: string, kind: string, id: string) => {
+          return db.get(tenantId, kind, id);
+        },
+        list: async (tenantId: string, kind: string, limit: number) => {
+          const rows = await db.listPaged<unknown>(tenantId, kind, { limit });
+          return rows.map((row) => ({ id: (row.data as { id: string }).id, data: row.data }));
+        },
+        transaction: async <T>(fn: (tx: never) => Promise<T>): Promise<T> =>
+          db.transaction(() => fn(storePort as never)),
+      }
+    : null;
   const kernel = new Kernel({
-    store: new InMemoryTurnStore(),
+    store:
+      usePersistentKernel && storePort
+        ? new StoreTurnStore(storePort)
+        : new InMemoryTurnStore(),
     tenants: new DefaultTenantResolver(),
-    audit: new InMemoryAuditStore(),
+    audit: usePersistentKernel ? new StoreAuditStore(db) : new InMemoryAuditStore(),
     config: new EnvTenantConfigResolver(),
   });
   const agent = new AgentService(
@@ -111,7 +144,7 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel },
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService },
   );
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
@@ -336,6 +369,11 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
   app.route("/api/computer", computerRoutes(computer, files));
+  // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
+  {
+    const { kernelRoutes } = await import("./kernel-routes.ts");
+    app.route("/api/kernel", kernelRoutes(kernel));
+  }
   // BUSINESS_ROUTES_WIRE_V1 â€” rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");
   app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry, stateMachines));

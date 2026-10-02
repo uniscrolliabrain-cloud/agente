@@ -23,7 +23,9 @@ export interface KernelDeps {
 }
 
 export class Kernel {
-  constructor(private readonly deps: KernelDeps) {}
+  // KERNEL_DEPS_PUBLIC_V1 - deps publico para que kernel-routes, views y
+  // debug endpoints puedan leer store, tenants y audit sin cast.
+  constructor(readonly deps: KernelDeps) {}
 
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     const tenantId = await this.deps.tenants.resolve(ctx.owner);
@@ -110,6 +112,19 @@ export class Kernel {
   ): Promise<Turn> {
     const tenantId = await this.deps.tenants.resolve(ctx.owner);
     const turn = await this.deps.store.closeTurn(tenantId, turnId, reason, closedBy);
+    // KERNEL_CLOSE_CHILDREN_V1 - si el store soporta cierre recursivo, lo usamos.
+    // Cierra #198: los turnos hijos abiertos quedaban huerfanos.
+    const store = this.deps.store as TurnStore & {
+      closeTurnAndChildren?: (
+        tenantId: string,
+        turnId: string,
+        reason: TurnCloseReason,
+        closedBy: TurnClosedBy,
+      ) => Promise<Turn[]>;
+    };
+    if (store.closeTurnAndChildren) {
+      await store.closeTurnAndChildren(tenantId, turnId, reason, closedBy);
+    }
     await this.deps.audit.append({
       tenantId,
       owner: ctx.owner,
@@ -123,5 +138,35 @@ export class Kernel {
   async config(ctx: KernelContext) {
     const tenantId = await this.deps.tenants.resolve(ctx.owner);
     return this.deps.config.resolve(tenantId);
+  }
+
+  /**
+   * KERNEL_LIST_TURNS_V1 - lista turnos del owner en su tenant.
+   * Cierra #203: no habia forma de listar turnos para debug.
+   */
+  async listTurns(ctx: KernelContext, limit = 50): Promise<Turn[]> {
+    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const store = this.deps.store as TurnStore & {
+      listTurns?: (tenantId: string, limit: number) => Promise<Turn[]>;
+    };
+    if (!store.listTurns) return [];
+    const all = await store.listTurns(tenantId, limit);
+    return all.filter((turn) => turn.owner === ctx.owner);
+  }
+
+  /**
+   * KERNEL_FIND_OPEN_TURN_V1 - encuentra un turno abierto del thread actual.
+   * Cierra #197: conversation.ts puede reusar el turno abierto en vez de crear
+   * uno nuevo por cada mensaje del usuario.
+   */
+  async findOpenTurnForThread(ctx: KernelContext): Promise<Turn | undefined> {
+    if (!ctx.threadId) return undefined;
+    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const store = this.deps.store as TurnStore & {
+      listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
+    };
+    if (!store.listOpenTurnsForThread) return undefined;
+    const open = await store.listOpenTurnsForThread(tenantId, ctx.owner);
+    return open.find((turn) => turn.triggers.some((t) => t.includes(ctx.threadId as string)));
   }
 }

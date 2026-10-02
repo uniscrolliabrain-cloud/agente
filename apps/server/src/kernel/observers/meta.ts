@@ -114,4 +114,71 @@ export class Meta {
     if (!raw || typeof raw !== "object") return undefined;
     return raw as ProgressEvent;
   }
+
+  /**
+   * KERNEL_META_PROGRESS_V1 - evalua directamente sobre ProgressEvent[].
+   *
+   * Mas limpio que evaluate() cuando el caller ya tiene los eventos reales:
+   * no hay que envolverlos en Thought solo para que Meta los saque por cast.
+   *
+   * Se usa desde el bucle de meta cuando el slow emite progreso real.
+   */
+  evaluateWithProgress(input: {
+    progress: ProgressEvent[];
+    lastFastActivityAt?: string;
+    now: string;
+    thoughtIdByProgressIndex?: Record<number, string>;
+  }): MetaHint[] {
+    const hints: MetaHint[] = [];
+    const nowMs = Date.parse(input.now);
+    const fastActivityMs = input.lastFastActivityAt
+      ? Date.parse(input.lastFastActivityAt)
+      : 0;
+
+    for (let i = 0; i < input.progress.length; i += 1) {
+      const progress = input.progress[i];
+      const progressMs = Date.parse(progress.timestamp);
+      const thoughtId = input.thoughtIdByProgressIndex?.[i];
+
+      if (progress.kind === "ready") {
+        const fastIsIdle = !input.lastFastActivityAt || nowMs - fastActivityMs > 1000;
+        if (fastIsIdle) {
+          hints.push({
+            rule: "slow_ready_fast_idle",
+            urgency: "medium",
+            message: `Slow completo: ${progress.message.slice(0, 200)}`,
+            ...(thoughtId ? { thoughtId } : {}),
+          });
+        }
+      }
+
+      if (progress.kind === "failed") {
+        hints.push({
+          rule: "slow_failed_urgent",
+          urgency: "high",
+          message: `Slow fallo: ${progress.message.slice(0, 200)}`,
+          ...(thoughtId ? { thoughtId } : {}),
+        });
+      }
+
+      if (progress.kind === "progress" && nowMs - progressMs > this.longNoOutputMs) {
+        hints.push({
+          rule: "slow_long_no_output",
+          urgency: "low",
+          message: `Slow sigue trabajando: ${progress.message.slice(0, 200)}`,
+          ...(thoughtId ? { thoughtId } : {}),
+        });
+      }
+    }
+
+    if (hints.length === 0) {
+      hints.push({
+        rule: "nothing_to_report",
+        urgency: "low",
+        message: "Nada relevante que reportar al fast.",
+      });
+    }
+
+    return hints;
+  }
 }

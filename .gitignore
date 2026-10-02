@@ -25,3 +25,11 @@ backups/
 diag-chat.ts
 diag-*.ts
 artifacts/demo/
+
+# PASE_PARCHES_V1 - basura de PowerShell y ficheros temporales
+$*
+Green
+Yellow
+*.tmp
+*.log
+*.tsbuildinfo

@@ -1,4 +1,14 @@
-// KERNEL_FAST_AUTHOR_V1 — escribe la respuesta del fast LLM al grafo.
+// KERNEL_FAST_AUTHOR_V2 - escribe la respuesta real del fast LLM al grafo.
+//
+// Cambios respecto a V1:
+//   - Acepta matched, ignored, entities, policies, skills como input.
+//   - El AttentionVector lleva esa informacion en vez de arrays vacios.
+//   - El provenance es "fast.llm" (antes era "fast").
+//   - El content es el output real del LLM, no un placeholder.
+//
+// Quien lo llama:
+//   conversation.ts, cuando el fast LLM termina de responder al usuario.
+//   Antes el output iba directo al SSE y el kernel nunca lo veia.
 
 import { randomUUID } from "node:crypto";
 import type { KernelContext } from "../context/kernel-context.ts";
@@ -9,35 +19,70 @@ export interface FastAuthorDeps {
   kernel: Kernel;
 }
 
+export interface FastAuthorWriteInput {
+  turnId: string;
+  response: string;
+  intent?: string;
+  confidence?: number;
+  // AUTHOR_MATCHED_METADATA_V1 - metadata opcional para que el schema Zod la
+  // rellene con {} al parsear. El schema tiene `metadata: Record<string, unknown> = {}`
+  // pero el tipo de entrada no lo exigia, y al construir el Thought directo
+  // (sin parse) los matched/ignored llegaban sin metadata.
+  matched?: Array<{
+    node: string;
+    weight: number;
+    reason: string;
+    metadata?: Record<string, unknown>;
+  }>;
+  ignored?: Array<{
+    node: string;
+    reason: string;
+    metadata?: Record<string, unknown>;
+  }>;
+  // AUTHOR_METADATA_NORMALIZE_V1 - el schema Zod exige metadata en cada
+  // matched/ignored. Normalizamos aqui para que el caller pueda omitirlo.
+  entities?: string[];
+  policies?: string[];
+  skills?: string[];
+  parentThoughtId?: string;
+}
+
 export class FastAuthor {
   constructor(private readonly deps: FastAuthorDeps) {}
 
-  async writeResponse(
-    ctx: KernelContext,
-    turnId: string,
-    response: string,
-  ): Promise<Thought> {
+  async writeResponse(ctx: KernelContext, input: FastAuthorWriteInput): Promise<Thought> {
+    const now = new Date().toISOString();
     return this.deps.kernel.appendThought(ctx, {
-      turnId,
+      turnId: input.turnId,
       actor: { kind: "fast-llm", id: "fast" },
       role: "response",
-      content: response,
+      content: input.response,
       attention: {
         id: randomUUID(),
         author: "fast",
         primary: "response",
         secondary: [],
         query: "",
-        matched: [],
-        ignored: [],
-        intent: "respond",
-        confidence: 1,
+        matched: (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} })),
+        ignored: (input.ignored ?? []).map((i) => ({ ...i, metadata: i.metadata ?? {} })),
+        intent: input.intent ?? "respond",
+        confidence: input.confidence ?? 0.9,
         scope: "turn",
-        timestamp: new Date().toISOString(),
+        timestamp: now,
         metadata: {},
       },
-      context: { entities: [], policies: [], skills: [], priorThoughts: [] },
+      context: {
+        entities: input.entities ?? [],
+        policies: input.policies ?? [],
+        skills: input.skills ?? [],
+        priorThoughts: [],
+      },
       edges: [],
+      provenance: {
+        source: "fast.llm",
+        timestamp: now,
+        ...(input.parentThoughtId ? { parentId: input.parentThoughtId } : {}),
+      },
     });
   }
 }
