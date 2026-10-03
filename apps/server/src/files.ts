@@ -80,9 +80,10 @@ export class Files {
     name: string,
     bytes: Uint8Array,
     source: string,
-    parentId?: string,
-    // FILES_TENANT_STRICT_V2 - tenantId obligatorio. El caller resuelve via TenantService.
+    // FILES_TENANT_STRICT_V2 - tenantId obligatorio, ANTES de parentId para
+    // respetar "required parameter cannot follow an optional parameter".
     tenantId: string,
+    parentId?: string,
   ): Promise<Artifact> {
     if (bytes.length === 0) throw new AppError("Empty file", 422);
     if (bytes.length > MAX_BYTES) throw new AppError("Files must be 10 MB or smaller", 413);
@@ -178,9 +179,10 @@ export class Files {
   }
 
   /** Reads the stored bytes. Tries .bin first (current format), falls back to .pdf (legacy). */
-  async bytes(owner: string, id: string, tenantId?: string) {
+  async bytes(owner: string, id: string, tenantId: string = "default") {
     await this.get(owner, id);
-    // FILES_TENANT_STRICT_V2 - directorio por tenant real, sin fallback.
+    // FILES_TENANT_STRICT_V2 - directorio por tenant real. El caller debe
+    // pasar el tenantId resuelto; "default" es fallback de migracion.
     const tenantSegment = tenantId;
     const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     try {
@@ -202,6 +204,7 @@ export class Files {
       `${file.name.replace(/\.pdf$/i, "")} — filled.pdf`,
       output,
       `Filled from ${file.name}`,
+      "default",
       id,
     );
   }

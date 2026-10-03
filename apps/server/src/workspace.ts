@@ -150,6 +150,7 @@ export class WorkspaceService {
       "Field trip permission slip.pdf",
       await createSamplePdf(),
       "Gmail · Lincoln Middle School",
+      "default", // FALLBACK_TENANT_V1
     );
     const now = new Date();
     const at = (h: number, m = 0) => {
@@ -544,6 +545,7 @@ const filename = reference.slice(secondColon + 1);
       decodeURIComponent(filename),
       await this.google(owner, connection.id).getAttachment(messageId, attachmentId),
       `Gmail · ${message.subject}`,
+      "default", // FALLBACK_TENANT_V1
     );
     await this.db.put(owner, "imports", {
       id: reference,

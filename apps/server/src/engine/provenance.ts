@@ -1,9 +1,9 @@
 // PROVENANCE_RESOLVER_V1 - calcula chips de procedencia desde el provenance
 // de una entidad o de una memoria.
 
-import type { BusinessEntity } from "../../../packages/domain/src/business.ts";
-import type { AgentMemory } from "../../../packages/domain/src/agent.ts";
-import type { ProvenanceChipKind } from "../../../packages/domain/src/context-chips.ts";
+import type { BusinessEntity } from "../../../../packages/domain/src/business.ts";
+import type { AgentMemory } from "../../../../packages/domain/src/agent.ts";
+import type { ProvenanceChipKind } from "../../../../packages/domain/src/context-chips.ts";
 
 export function chipForEntity(entity: BusinessEntity | null): ProvenanceChipKind {
   if (!entity) return "missing";
