@@ -1,9 +1,9 @@
 // D3_CONTEXTUALPANEL_V2 - panel que renderiza ViewSpec servido por el sistema.
-import type { ViewSpec } from "@openmuse/domain/views";
+import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
 import ViewRenderer from "../view/ViewRenderer";
 
 interface Props {
-  spec: ViewSpec | null;
+  spec: RuntimeViewSpec | null;
   onClose?: () => void;
   onAction?: (itemId: string, actionId: string) => void;
 }

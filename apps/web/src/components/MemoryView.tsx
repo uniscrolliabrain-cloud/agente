@@ -1,3 +1,5 @@
+// FIX_02_MEMORYVIEW_CLEAN_V1 - import MemoryBoard pendiente de wire.
+// BUG05_MEMORYVIEW_V2 - usa MemoryBoard para agrupacion y filtros.
 // E1_MEMORYVIEW_V2 - delega en MemoryBoard para agrupacion y filtros.
 // UI_PANEL_SLIDE_V1_USE
 import { useMemo, useState } from "react";
@@ -5,7 +7,6 @@ import { Brain, Pencil, Search, Trash2, X } from "lucide-react";
 import { apiFetch } from "../api/client";
 import type { MemoryEntry } from "../hooks/useWorkspaceData";
 // WIRE_MEMORY_BOARD_V1
-import MemoryBoard from "./MemoryBoard";
 
 interface Props {
   memories: MemoryEntry[];

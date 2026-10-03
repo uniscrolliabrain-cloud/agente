@@ -1,5 +1,5 @@
-// D2_VIEWRESOLVER_V2 - intenciones cerradas + validacion Zod.
-import { parseViewSpec, type ViewSpec } from "@openmuse/domain/views";
+// FIX_02_RESOLVER_V3 - usa RuntimeViewSpec para no colisionar con workspace-spec.
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@openmuse/domain/views";
 
 export type ViewBuilder = (owner: string) => Promise<unknown>;
 
@@ -21,17 +21,16 @@ function normalize(text: string): string {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-export async function resolveView(owner: string, text: string): Promise<ViewSpec | null> {
+export async function resolveView(owner: string, text: string): Promise<RuntimeViewSpec | null> {
   const t = normalize(text);
   for (const { re, build } of INTENTS) {
     if (re.test(t)) {
-      return parseViewSpec(await build(owner));
+      return parseRuntimeViewSpec(await build(owner));
     }
   }
   return null;
 }
 
-// D2_VIEWRESOLVER_CLEAR_V1 - reset para tests.
 export function clearIntents(): void {
   INTENTS.length = 0;
 }

@@ -1,11 +1,10 @@
-// WIRE_MESSAGEBUBBLE_TOOLS_V1 - prefiere message.tools[] si existe.
-// B2_MESSAGEBUBBLE_V2 - itera message.tools[] en vez de toolCall singular.
+// BUG03_MESSAGEBUBBLE_V2 - itera message.tools[] + preview.
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import type { ChatMessage } from "../types/api";
-import ToolCallCard from "./ToolCallCard";
-// MESSAGE_ATTACHMENT_PREVIEW_V1 - preview de adjuntos desde el chat.
+import ToolCallsGroup from "./ToolCallsGroup";
 import AttachmentPreview from "./AttachmentPreview";
+import type { ToolCall } from "../lib/toolsReducer";
 
 interface Props {
   message: ChatMessage;
@@ -15,7 +14,7 @@ interface Props {
 export default function MessageBubble({ message, onQuickAction }: Props) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
-  const [preview, setPreview] = useState<{ url: string; name: string; mimeType?: string } | null>(null);
+  const [preview] = useState<{ url: string; name: string; mimeType?: string } | null>(null);
 
   const copy = async () => {
     try {
@@ -33,30 +32,20 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
     );
   }
 
-  // MESSAGE_ATTACHMENT_PREVIEW_V1 - el segundo return del WIP era inalcanzable,
-  // asi que el preview nunca se renderizaba. Se construye antes del return real.
-  const attachment = preview;
-  const previewNode = attachment ? (
-    <AttachmentPreview
-      url={attachment.url}
-      name={attachment.name}
-      mimeType={attachment.mimeType}
-      onClose={() => setPreview(null)}
-    />
-  ) : null;
+  const toolList: ToolCall[] = (message.tools ?? []).map((t) => ({
+    id: t.id,
+    name: t.name,
+    status: t.status,
+    startedAt: t.startedAt,
+    endedAt: t.endedAt,
+  }));
+
   return (
     <div className="v2-assistant-row">
       <div className="v2-assistant-avatar">IA</div>
       <div className="v2-assistant-body">
-        <div className="v2-assistant-text" style={{ marginTop: 0 }}>{message.content}</div>
-
-        {message.toolCall && (
-          <ToolCallCard
-            name={message.toolCall.name}
-            status={message.toolCall.status}
-            args={message.toolCall.args}
-          />
-        )}
+        {toolList.length > 0 && <ToolCallsGroup tools={toolList} />}
+        <div className="v2-assistant-text" style={{ marginTop: 12 }}>{message.content}</div>
 
         {message.content && (
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
@@ -86,7 +75,14 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
             )}
           </div>
         )}
-        {previewNode}
+        {preview && (
+          <AttachmentPreview
+            url={preview.url}
+            name={preview.name}
+            mimeType={preview.mimeType}
+            onClose={() => { /* noop */ }}
+          />
+        )}
       </div>
     </div>
   );
