@@ -1,10 +1,11 @@
 // HANDOFF_SERVICE_V1 - pasa trabajo entre roles.
 
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import type { Handoff } from "../../../../../packages/domain/src/messaging.ts";
 
 export class HandoffService {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async create(handoff: Handoff): Promise<Handoff> {
     await this.db.put(handoff.tenantId, "handoffs", handoff);

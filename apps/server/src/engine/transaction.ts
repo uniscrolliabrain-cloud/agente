@@ -4,6 +4,7 @@
 // decideIdea. Tambien envuelve operaciones multi-paso en un solo BEGIN/COMMIT.
 
 import type { Store } from "../db.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { AppError } from "../errors.ts";
 
 /**
@@ -28,7 +29,7 @@ export async function withTransaction<T>(
  *   const goal = await upsertIdempotent(db, owner, "goals", { id, title, ... });
  */
 export async function upsertIdempotent<T extends { id: string }>(
-  db: Store,
+  db: Store | TenantScopedStore,
   owner: string,
   kind: string,
   value: T,

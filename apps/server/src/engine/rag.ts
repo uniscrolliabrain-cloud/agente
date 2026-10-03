@@ -3,6 +3,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../db.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
 import { embed } from "./embeddings.ts";
 
@@ -129,7 +130,7 @@ export async function embedTexts(
 
 export class RagService {
   private vectorReady: Promise<boolean> | null = null;
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   /**
    * Postgres real **y** extension pgvector instalada. PGlite nunca llega aqui: su motor no

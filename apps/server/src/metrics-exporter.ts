@@ -2,7 +2,7 @@
 // Sin dependencias: genera el texto del formato de exposicion a mano.
 
 import { Hono } from "hono";
-import type { AgentTask, AgentRole } from "../../packages/domain/src/agent.ts";
+import type { AgentTask, AgentRole } from "../../../packages/domain/src/agent.ts";
 import type { AgentService } from "./engine/service.ts";
 import type { UserService } from "./users.ts";
 import { AppError } from "./errors.ts";

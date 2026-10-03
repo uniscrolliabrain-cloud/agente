@@ -31,6 +31,17 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
     );
   }
 
+  // MESSAGE_ATTACHMENT_PREVIEW_V1 - el segundo return del WIP era inalcanzable,
+  // asi que el preview nunca se renderizaba. Se construye antes del return real.
+  const attachment = preview;
+  const previewNode = attachment ? (
+    <AttachmentPreview
+      url={attachment.url}
+      name={attachment.name}
+      mimeType={attachment.mimeType}
+      onClose={() => setPreview(null)}
+    />
+  ) : null;
   return (
     <div className="v2-assistant-row">
       <div className="v2-assistant-avatar">IA</div>
@@ -73,19 +84,8 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
             )}
           </div>
         )}
+        {previewNode}
       </div>
     </div>
-  );
-  return (
-    <>
-      {preview && (
-        <AttachmentPreview
-          url={preview.url}
-          name={preview.name}
-          mimeType={preview.mimeType}
-          onClose={() => setPreview(null)}
-        />
-      )}
-    </>
   );
 }

@@ -11,6 +11,8 @@ import type { AgentTask } from "../packages/domain/src/agent.ts";
 function task(id = "task1"): AgentTask {
   return {
     id,
+    // TASK_TENANT_REQUIRED_V1 - tenantId paso a ser obligatorio en AgentTask.
+    tenantId: "default",
     title: "Check a source",
     prompt: "Check a source",
     kind: "agent",

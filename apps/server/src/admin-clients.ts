@@ -5,8 +5,8 @@
 import { Hono } from "hono";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { join } from "node:path";
-import type { AgentRole, AgentTask } from "../../packages/domain/src/agent.ts";
-import type { SOP } from "../../packages/domain/src/sop.ts";
+import type { AgentRole, AgentTask } from "../../../packages/domain/src/agent.ts";
+import type { SOP } from "../../../packages/domain/src/sop.ts";
 import type { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
 import type { UserService } from "./users.ts";

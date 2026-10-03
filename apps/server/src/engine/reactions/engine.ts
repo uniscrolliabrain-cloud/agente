@@ -1,6 +1,7 @@
 // REACTION_ENGINE_V1 - lee del bus y ejecuta ReactionRules.
 
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import type { EventBus } from "../events/index.ts";
 import type { ReactionDefinition } from "../../../../../packages/domain/src/reaction.ts";
 
@@ -8,7 +9,7 @@ export class ReactionEngine {
   private readonly rules = new Map<string, ReactionDefinition[]>();
 
   constructor(
-    private readonly db: Store,
+    private readonly db: Store | TenantScopedStore,
     private readonly bus?: EventBus,
     private readonly executor?: (
       ctx: import("../../../../../packages/domain/src/index.ts").ExecutionContext,
