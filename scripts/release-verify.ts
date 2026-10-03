@@ -1,4 +1,4 @@
-// RELEASE_VERIFY_V1 - checks despues del deploy.
+// RELEASE_VERIFY_V2 - health + health-deep + admin-status + onboarding. - checks despues del deploy.
 // Uso: pnpm exec tsx scripts/release-verify.ts
 
 const base = process.env.OPENMUSE_URL ?? "http://127.0.0.1:8787";
@@ -14,6 +14,8 @@ async function check(path: string): Promise<boolean> {
 
 // RELEASE_VERIFY_EXTRA_V1
 const checks: Array<{ name: string; path: string }> = [
+    // RELEASE_VERIFY_V3 - checks del equipo digital y builds.
+    { name: "schedule-team", path: "/api/schedule/team?date=" + new Date().toISOString().slice(0, 10) },
   { name: "health", path: "/api/health" },
   { name: "health-deep", path: "/api/health-deep" },
   { name: "admin-status", path: "/api/admin/system/status" },

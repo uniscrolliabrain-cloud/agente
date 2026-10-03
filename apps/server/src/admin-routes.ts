@@ -133,6 +133,25 @@ export function adminRoutes(service: AgentService, users: UserService) {
     return c.json({ spec });
   });
 
+  // ADMIN_ONBOARDING_V1 - estado de onboarding por tenant.
+  app.get("/tenants/:tenantId/onboarding", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const identity = await service.db.get<{ name?: string }>(tenantId, "agent-settings", "identity");
+    const hasFiles = (await service.db.list(tenantId, "files", { limit: 1 })).length > 0;
+    const hasTasks = (await service.db.list(tenantId, "tasks", { limit: 1 })).length > 0;
+    const hasMemory = (await service.db.list(tenantId, "memories", { limit: 1 })).length > 0;
+    return c.json({
+      tenantId,
+      hasIdentity: Boolean(identity),
+      hasFiles,
+      hasTasks,
+      hasMemory,
+      ok: Boolean(identity) && hasFiles && hasTasks,
+    });
+  });
+
   app.get("/system/status", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);

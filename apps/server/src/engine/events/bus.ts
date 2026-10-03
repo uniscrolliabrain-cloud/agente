@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import { backgroundFailure } from "../../log.ts";
 import { payloadSchemas } from "./schemas.ts";
 import { StoreQuery, StoreSink } from "./sinks/store.ts";
@@ -52,7 +53,7 @@ interface DedupeState {
 export class EventBus {
   private readonly inMemory = new Map<string, number>();
   constructor(
-    private readonly db: Store,
+    private readonly db: Store | TenantScopedStore,
     private readonly sink: EventSink = new StoreSink(db),
     private readonly query: EventQuery = new StoreQuery(db),
   ) {}
@@ -69,10 +70,9 @@ export class EventBus {
       const parsed = schema.parse(payload) as T;
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
-      // EVENTBUS_DEDUPE_TENANT_V1 - la clave incluye tenantId.
-      const dedupeTenant = options.tenantId ?? owner;
       if (options.dedupeKey !== undefined) {
-        if (await this.isDuplicate(${dedupeTenant}:, options.dedupeKey)) return;
+        const dedupeKey0 = `${owner}:${options.dedupeKey}`;
+        if (await this.isDuplicate(dedupeKey0, options.dedupeKey)) return;
       }
       const event: SystemEvent<T> = {
         id: ulid(),
@@ -89,7 +89,7 @@ export class EventBus {
       await this.sink.write(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
-        await this.recordDedupe(${dedupeTenant}:, options.dedupeKey);
+        await this.recordDedupe(`${owner}:${options.dedupeKey}`, options.dedupeKey);
       }
       if (options.notify) {
         await this.db.insertIfAbsent(owner, "notifications", {

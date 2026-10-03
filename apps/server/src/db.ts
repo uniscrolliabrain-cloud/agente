@@ -367,6 +367,19 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_system_events_idx ON records(owner, kind, ((data->>'type')), updated_at DESC)"
   );
+  // STORE_INDICES_V2 - indices para el equipo digital y builds.
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_agent_roles_active_idx ON records(owner, kind, ((data->>'active'))) WHERE kind = 'agent-roles'"
+  );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_day_plans_date_idx ON records(owner, kind, ((data->>'date'))) WHERE kind = 'day-plans'"
+  );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_build_status_idx ON records(owner, kind, ((data->>'status'))) WHERE kind = 'build-specs'"
+  );
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_tasks_role_idx ON records(owner, kind, ((data->'state'->>'roleId'))) WHERE kind = 'tasks'"
+  );
 
   let pgvectorReady = false;
   if (options.databaseUrl) {

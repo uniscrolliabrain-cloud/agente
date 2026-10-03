@@ -1,4 +1,4 @@
-// RELEASE_CHECK_V1 - checks antes de cada deploy.
+// RELEASE_CHECK_V2 - typecheck + tests + isolation + guardrails + contratos + ciclo. - checks antes de cada deploy.
 // Uso: pnpm exec tsx scripts/release-check.ts
 
 import { execSync } from "node:child_process";
@@ -11,6 +11,11 @@ const checks: Array<{ name: string; cmd: string; fatal: boolean }> = [
   { name: "guardrails", cmd: "pnpm exec tsx --test tests/guardrails.test.ts", fatal: true },
   { name: "business-os-contracts", cmd: "pnpm exec tsx --test tests/business-os-contracts.test.ts", fatal: true },
   { name: "business-os-cycle", cmd: "pnpm exec tsx --test tests/business-os-cycle.test.ts", fatal: true },
+  // RELEASE_CHECK_V3 - e2e del equipo digital y del Arquitecto.
+  { name: "e2e-team-cycle", cmd: "pnpm exec tsx --test tests/e2e/team-cycle.test.ts", fatal: true },
+  { name: "e2e-architect-cycle", cmd: "pnpm exec tsx --test tests/e2e/architect-cycle.test.ts", fatal: true },
+  { name: "e2e-team-isolation", cmd: "pnpm exec tsx --test tests/e2e/team-isolation.test.ts", fatal: true },
+  { name: "load-50-tenants", cmd: "pnpm exec tsx --test tests/load/fifty-tenants.test.ts", fatal: false },
 ];
 
 let failed = 0;
