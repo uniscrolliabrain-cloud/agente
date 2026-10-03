@@ -1,6 +1,7 @@
 // FEEDBACK_COLLECTOR_V1 - recoge feedback del usuario sobre outcomes.
 
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 
 export interface FeedbackEntry {
   id: string;
@@ -14,7 +15,7 @@ export interface FeedbackEntry {
 }
 
 export class FeedbackCollector {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async record(entry: Omit<FeedbackEntry, "id" | "createdAt">): Promise<FeedbackEntry> {
     const value: FeedbackEntry = {

@@ -606,7 +606,7 @@ export class ConversationAgent extends AbstractAgent {
       // PROMOTER_DEST_CALL_V1 - persistir los destinos memory del Promoter.
       if (result?.destinations?.memory?.length) {
         await this.service
-          .persistPromotionDestinations(ctx, turnId, result.destinations, "kernel")
+          .persistPromotionDestinations(this.owner, ctx, turnId, result.destinations, "kernel")
           .catch(() => {});
       }
       // KERNEL_PROMOTE_PERSIST_V1 - si el promotor dice destinos, escribimos.

@@ -1,6 +1,7 @@
 // LEARNING_OBSERVER_V1 - observa cada ejecucion y guarda hechos/patrones/fallos.
 
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import type {
   Goal,
   Outcome,
@@ -15,7 +16,7 @@ export interface Observation {
 }
 
 export class LearningObserver {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async observe(input: Observation): Promise<void> {
     const now = new Date().toISOString();

@@ -97,6 +97,16 @@ export default function CommandPalette({ open, onClose, onSelectView, onNewChat 
   }, [query]);
 
   const filtered = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
+  // COMMAND_PALETTE_SEARCH_V1 - los hits de busqueda global se ofrecen como
+  // opciones navegables. Antes se calculaban y se descartaban (import sin usar).
+  const searchOptions: Option[] = hits.map((h) => ({
+    id: `search:${h.kind}:${h.id}`,
+    label: h.title,
+    hint: h.kind,
+    icon: <Search size={14} />,
+    run: () => { close(); onSelectView(h.kind as never); },
+  }));
+  const visible = [...filtered, ...searchOptions];
 
   return (
     <dialog className="palette" ref={dialogRef} aria-label="Buscar o ejecutar una accion">
@@ -108,19 +118,19 @@ export default function CommandPalette({ open, onClose, onSelectView, onNewChat 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && filtered[0]) {
+            if (e.key === "Enter" && visible[0]) {
               e.preventDefault();
-              filtered[0].run();
+              visible[0].run();
             }
           }}
           placeholder="Buscar o ejecutar una accion"
         />
       </div>
       <div className="palette__list scroll" role="listbox">
-        {filtered.length === 0 ? (
+        {visible.length === 0 ? (
           <p className="palette__group">Sin resultados</p>
         ) : (
-          filtered.map((o) => (
+          visible.map((o) => (
             <button
               key={o.id}
               className="palette__opt"

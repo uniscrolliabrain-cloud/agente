@@ -13,7 +13,7 @@ import {
 } from "../../packages/domain/src/signup.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
-import { sendEmail, verifyEmailTemplate } from "./email.ts";
+import { RateLimiter } from "./rate-limit.ts";
 import { AppError } from "./errors.ts";
 import { backgroundFailure } from "./log.ts";
 import type { TenantService } from "./engine/tenant.ts";

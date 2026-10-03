@@ -2,6 +2,7 @@ import { randomBytes, randomUUID, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { z } from "zod";
 import type { Store } from "./db.ts";
+import type { TenantScopedStore } from "./db-tenant.ts";
 import { AppError } from "./errors.ts";
 
 const scryptAsync = promisify(scrypt) as (
@@ -61,7 +62,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
 }
 
 export class UserService {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async list(): Promise<User[]> {
     const records = await this.db.list<UserRecord>("system", "users");

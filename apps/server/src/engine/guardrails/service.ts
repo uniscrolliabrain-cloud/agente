@@ -1,6 +1,7 @@
 // GUARDRAILS_V1 - limites duros por tenant, ejecucion y capability.
 
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import { AppError } from "../../errors.ts";
 
 export interface TenantQuota {
@@ -22,7 +23,7 @@ const DEFAULT_QUOTA: TenantQuota = {
 };
 
 export class GuardrailService {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async quotaFor(tenantId: string): Promise<TenantQuota> {
     const row = await this.db

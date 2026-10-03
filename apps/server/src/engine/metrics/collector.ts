@@ -1,6 +1,7 @@
 // METRICS_COLLECTOR_V1 - métricas por tenant.
 
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 
 export interface Metric {
   tenantId: string;
@@ -11,7 +12,7 @@ export interface Metric {
 }
 
 export class MetricsCollector {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async record(tenantId: string, name: string, value: number, tags: Record<string, string> = {}): Promise<void> {
     const id = `${name}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

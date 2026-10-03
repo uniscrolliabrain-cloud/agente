@@ -1803,7 +1803,7 @@ export class AgentService {
    *
    * Este metodo cierra ese hueco.
    */
-  private async persistPromotionDestinations(
+  async persistPromotionDestinations(
     owner: string,
     ctx: KernelContext,
     turnId: string,

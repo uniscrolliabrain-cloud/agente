@@ -3,6 +3,7 @@ import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import pg from "pg";
 import type { Store } from "../db.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { AppError } from "../errors.ts";
 
 export interface BusinessQuery {
@@ -75,7 +76,7 @@ export class BusinessDataService {
   // sola conexion en cada SOP: 10 SOPs concurrentes = 10 handshakes a Postgres.
   private pool?: pg.Pool;
 
-  constructor(private readonly db: Store, private readonly databaseUrl?: string) {}
+  constructor(private readonly db: Store | TenantScopedStore, private readonly databaseUrl?: string) {}
 
   /** Cierra el pool compartido. Idempotente. */
   async close(): Promise<void> {

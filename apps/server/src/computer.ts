@@ -9,6 +9,7 @@ import type {
 } from "../../../packages/domain/src/computer.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
+import type { TenantScopedStore } from "./db-tenant.ts";
 import { AppError } from "./errors.ts";
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
@@ -204,7 +205,7 @@ type Lease = {
 };
 export class ComputerService {
   constructor(
-    readonly db: Store,
+    readonly db: Store | TenantScopedStore,
     readonly config: Config,
     private readonly docker: DockerRunner = runDocker,
   ) {}

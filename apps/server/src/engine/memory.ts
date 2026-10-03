@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import type { AgentMemory, MemoryCategory, Project } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { embed } from "./embeddings.ts";
 import type { RagHit, RagService } from "./rag.ts";
 
@@ -71,7 +72,7 @@ function formatRecall(ragHits: RagHit[], memories: AgentMemory[]): string {
 
 export class MemoryService {
   constructor(
-    private readonly db: Store,
+    private readonly db: Store | TenantScopedStore,
     private readonly rag: RagService,
   ) {}
 
