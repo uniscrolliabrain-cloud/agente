@@ -25,6 +25,7 @@
     "test:computer": "tsx --test apps/computer/smoke.test.ts",
     "provision-client": "tsx scripts/provision-client.ts",
     "backup:create": "tsx scripts/backup.ts",
+    "backup:tenant": "tsx scripts/backup-tenant.ts",
     "backup:restore": "tsx scripts/restore.ts",
     "beta:smoke": "tsx scripts/beta-smoke.ts",
     "beta:vertical": "tsx scripts/beta-vertical.ts",

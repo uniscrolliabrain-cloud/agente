@@ -62,6 +62,17 @@ function startBackupScheduler(): () => void {
 
 const stopBackupScheduler = startBackupScheduler();
 
+// INDEX_ROLLBACK_CHECK_V1 - si hay un rollback solicitado, avisar al arranque.
+{
+  const { hasRollbackRequested, listGoodReleases } = await import("./rollback.ts");
+  if (await hasRollbackRequested(config.dataDir)) {
+    const releases = await listGoodReleases(config.dataDir);
+    console.warn(
+      `[OpenMuse] ROLLBACK_REQUESTED detectado. Ultimas releases buenas: ${releases.slice(0, 3).map((r) => r.stamp).join(", ") || "ninguna"}`,
+    );
+  }
+}
+
 const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>
   console.log(`OpenMuse ${config.mode} API ready at ${config.publicUrl}`),
 );
