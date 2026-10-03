@@ -75,11 +75,17 @@ export class TenantScopedStore {
   }
 
   async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
-    return this.store.scan<T>(kind, limit);
+    // TENANT_SCAN_PEEL_V1 - el store subyacente guarda owner = "tenantId:owner".
+    // El caller (TaskWorker) espera el owner limpio para poder volver a componer
+    // la clave al hacer compareAndSwap/get. Si devolvieramos el owner compuesto,
+    // el worker compondria doble y no encontraria la tarea.
+    const rows = await this.store.scan<T>(kind, limit);
+    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
   }
 
   async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<{ owner: string; value: T }[]> {
-    return this.store.scanByStatus<T>(kind, statuses, limit);
+    const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
+    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
   }
 
   async scanByStatusWithCursor<T>(
@@ -89,7 +95,19 @@ export class TenantScopedStore {
     cursorUpdatedAt?: string,
     cursorId?: string,
   ) {
-    return this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId);
+    const rows = await this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId);
+    return rows.map((r) => ({ ...r, owner: this.peel(r.owner) }));
+  }
+
+  /**
+   * TENANT_SCAN_PEEL_V1 - quita el prefijo "tenantId:" de una clave compuesta.
+   * Si no hay prefijo (fila escrita sin tenant), devuelve el owner tal cual.
+   * El separador es el primero ":" que separa tenantId de owner.
+   * Como los tenantId no contienen ":", esto es seguro.
+   */
+  private peel(composed: string): string {
+    const idx = composed.indexOf(":");
+    return idx >= 0 ? composed.slice(idx + 1) : composed;
   }
 
   async purgeOlderThan(kind: string, days: number): Promise<number> {

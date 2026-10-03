@@ -3,7 +3,7 @@
 import type { Store } from "../db.ts";
 import type { BusinessGraph } from "./business/graph.ts";
 import type { MemoryService } from "./memory.ts";
-import type { FormFieldSpec, FormSpec } from "../../../packages/domain/src/form-spec.ts";
+import type { FormFieldSpec, FormSpec } from "../../../../packages/domain/src/form-spec.ts";
 
 export interface BuildFormInput {
   owner: string;
@@ -64,6 +64,7 @@ export class FormBuilder {
           key,
           label: `Memoria: ${m.text.slice(0, 60)}`,
           type: "text",
+          required: false,
           value: m.text,
           provenance: "sugerido",
         });

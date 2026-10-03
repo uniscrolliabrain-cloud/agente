@@ -37,6 +37,11 @@ await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mod
 //   undefined: comportamiento previo (todo en uno).
 const processRole = process.env.OPENMUSE_PROCESS_ROLE ?? "all";
 if (config.taskWorkerEnabled && processRole !== "api") agent.start();
+// PROCESS_SPLIT_V2 - "worker" no debe servir HTTP. index.ts es el entry de
+// API (y de "all"); para "worker" puro se usa worker-entry.ts. Si aun asi
+// alguien lanza index.ts con role=worker, no levantamos HTTP para no mezclar
+// los dos planos.
+const serveHttp = processRole !== "worker";
 // INDEX_RECOVER_TASKS_V1 - recuperar tareas running huerfanas.
 void agent.recoverInterruptedTasks().then((n) => {
   if (n > 0) console.log(`[OpenMuse] ${n} tareas recuperadas`);
@@ -110,12 +115,14 @@ const stopBackupScheduler = startBackupScheduler();
   }
 }
 
-const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>
-  console.log(`OpenMuse ${config.mode} API ready at ${config.publicUrl}`),
-);
+const server = serveHttp
+  ? serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>
+      console.log(`OpenMuse ${config.mode} API ready at ${config.publicUrl}`),
+    )
+  : null;
 const shutdown = () => {
   stopBackupScheduler();
-  server.close(() => {
+  server?.close(() => {
     void agent
       .stop()
       .then(() => db.close())
