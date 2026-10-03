@@ -1,7 +1,11 @@
+// C3_TASKSVIEW_APPROVALS_V1 - usar ApprovalInbox en la seccion 'Necesita tu OK'.
+// C1_TASKSVIEW_V2 - usa TaskTimeline en el detalle y filtro por rol.
 // TASKS_ROLE_FILTER_V1 - filtro por rol del empleado digital.
 // UI_PANEL_SLIDE_V1_USE
 import { useMemo, useState } from "react";
 import type { AgentTask } from "../types/api";
+// WIRE_TASKTIMELINE_V1
+import TaskTimeline from "./TaskTimeline";
 
 interface Props {
   tasks: AgentTask[];

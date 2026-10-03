@@ -1,3 +1,5 @@
+// WIRE_APPROVAL_INBOX_V1 - ApprovalModal delega a ApprovalInbox cuando aplica.
+// C3_APPROVAL_MODAL_V2 - reemplazado por ApprovalInbox para el flujo principal.
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { decideAction, getWorkspace } from "../api/actions";

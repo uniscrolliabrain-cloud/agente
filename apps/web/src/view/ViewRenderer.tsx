@@ -1,14 +1,36 @@
-// VIEW_RENDERER_V2 — monta el componente React que corresponde al ViewSpec.
-// El original usaba tmpl.kind y tmpl.component, pero findTemplate devuelve un
-// componente React, no un objeto con metadatos. Nunca renderizaba nada.
-import { findTemplate } from "../templates/registry.ts";
-import type { ViewSpec } from "./spec.ts";
-import { FallbackView } from "./fallback.tsx";
+// D3_VIEWRENDERER_V2 - discriminated union + assertNever.
+import { parseViewSpec, type ViewSpec } from "@openmuse/domain/views";
+import DashboardTemplate from "../templates/dashboard/DashboardTemplate";
+import QueueTemplate from "../templates/queue/QueueTemplate";
 
-export function ViewRenderer({ spec }: { spec: ViewSpec }) {
-  const Template = findTemplate(spec) as
-    | React.ComponentType<{ spec: ViewSpec }>
-    | undefined;
-  if (!Template) return <FallbackView spec={spec} />;
-  return <Template spec={spec} />;
+interface Props {
+  spec: unknown;
+  onAction?: (itemId: string, actionId: string) => void;
+}
+
+function assertNever(x: never): never {
+  throw new Error(`kind sin renderer: ${JSON.stringify(x)}`);
+}
+
+export default function ViewRenderer({ spec: raw, onAction }: Props) {
+  const spec = parseViewSpec(raw);
+  if (!spec) {
+    return (
+      <div className="card" role="alert">
+        No he podido mostrar esta vista.
+      </div>
+    );
+  }
+  return <Render spec={spec} onAction={onAction} />;
+}
+
+function Render({ spec, onAction }: { spec: ViewSpec; onAction?: (id: string, a: string) => void }) {
+  switch (spec.kind) {
+    case "dashboard":
+      return <DashboardTemplate spec={spec} />;
+    case "queue":
+      return <QueueTemplate spec={spec} onAction={onAction} />;
+    default:
+      return assertNever(spec);
+  }
 }

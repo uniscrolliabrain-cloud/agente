@@ -14,7 +14,12 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    // TS_PATHS_DOMAIN_V1 - resolver @openmuse/domain/* al paquete local.
+    "baseUrl": ".",
+    "paths": {
+      "@openmuse/domain/*": ["../../packages/domain/src/*"]
+    }
   },
   "include": ["src"]
 }

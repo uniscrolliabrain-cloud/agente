@@ -22,6 +22,8 @@ export interface TaskStep {
   title: string;
   status: "pending" | "running" | "succeeded" | "failed" | "waiting";
   detail?: string;
+  // C1_TASKSTEP_DURATION_V1 - duracion en ms cuando esta disponible.
+  durationMs?: number;
 }
 export interface AgentTask {
   id: string;

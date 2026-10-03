@@ -1,3 +1,5 @@
+// WIRE_MESSAGEBUBBLE_TOOLS_V1 - prefiere message.tools[] si existe.
+// B2_MESSAGEBUBBLE_V2 - itera message.tools[] en vez de toolCall singular.
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import type { ChatMessage } from "../types/api";

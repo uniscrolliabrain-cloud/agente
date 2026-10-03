@@ -1,7 +1,8 @@
-// MESSAGELIST_CURSOR_V1 - cursor parpadeante del typewriter.
+// WIRE_MESSAGELIST_TYPING_V1 - typewriter + ToolCallsGroup.
 import { useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/api";
 import MessageBubble from "./MessageBubble";
+import { useTypewriter } from "../hooks/useTypewriter";
 
 interface Props {
   messages: ChatMessage[];
@@ -13,10 +14,11 @@ interface Props {
 
 export default function MessageList({ messages, streaming, streamBuf, activeTool, onQuickAction }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const { text: typed, typing } = useTypewriter(streamBuf, !streaming);
 
   useEffect(() => {
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
-  }, [messages, streamBuf, activeTool, streaming]);
+  }, [messages, typed, activeTool, streaming]);
 
   return (
     <div className="v2-assistant-body" ref={ref} style={{ overflow: "visible" }}>
@@ -24,10 +26,10 @@ export default function MessageList({ messages, streaming, streamBuf, activeTool
         <MessageBubble key={m.id} message={m} onQuickAction={onQuickAction} />
       ))}
 
-      {streaming && streamBuf && (
+      {streaming && typed && (
         <div className="v2-assistant-text" style={{ marginTop: 12 }}>
-          {streamBuf}
-          <span className="stream-cursor" aria-hidden="true" />
+          {typed}
+          {typing && <span className="stream-cursor" aria-hidden="true" />}
         </div>
       )}
     </div>

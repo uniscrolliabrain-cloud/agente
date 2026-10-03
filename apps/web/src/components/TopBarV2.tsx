@@ -1,3 +1,4 @@
+// B1_TOPBAR_V1
 import { Plus, Search } from "lucide-react";
 import NotificationsDropdown from "./NotificationsDropdown";
 

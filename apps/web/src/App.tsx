@@ -20,6 +20,8 @@ import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
+// B1_APPSHELL_WIRE_V1
+import AppShell from "./components/AppShell";
 
 
 
@@ -72,6 +74,8 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // WIRE_APPSHELL_V1
+  const viewResolver = useViewResolver();
 
 
 
@@ -130,8 +134,8 @@ export default function App() {
       : "Desconectado";
 
   return (
-    <div className="v2-app">
-      <div className="v2-app-shell">
+    <AppShell
+      sidebar={
         <SidebarV2
           activeView={view}
           onSelectView={setView}
@@ -143,8 +147,9 @@ export default function App() {
           userRole={auth.user?.role ?? "user"}
           onOpenProfile={() => setProfileOpen(true)}
         />
-
-        <main className="v2-main">
+      }
+    >
+        <div className="v2-main">
           <TopBarV2
             status={status}
             statusLabel={statusLabel}
@@ -170,8 +175,8 @@ export default function App() {
             )}
             {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
           </div>
-        </main>
-      </div>
+        </div>
+      </AppShell>
 
       <CommandPalette
         open={paletteOpen}

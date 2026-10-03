@@ -141,12 +141,13 @@ export interface ChatAttachment {
   size?: number;
 }
 
+// B2_TOOLS_V1 - toolCall singular -> tools[].
 export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
   timestamp?: string;
-  toolCall?: { id: string; name: string; status: "running" | "done"; args: unknown };
+  tools?: { id: string; name: string; status: "running" | "done" | "error"; startedAt: number; endedAt?: number; args?: unknown }[];
   taskIdRef?: string;
   attachment?: ChatAttachment;
 }

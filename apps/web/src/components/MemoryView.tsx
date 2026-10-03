@@ -1,8 +1,11 @@
+// E1_MEMORYVIEW_V2 - delega en MemoryBoard para agrupacion y filtros.
 // UI_PANEL_SLIDE_V1_USE
 import { useMemo, useState } from "react";
 import { Brain, Pencil, Search, Trash2, X } from "lucide-react";
 import { apiFetch } from "../api/client";
 import type { MemoryEntry } from "../hooks/useWorkspaceData";
+// WIRE_MEMORY_BOARD_V1
+import MemoryBoard from "./MemoryBoard";
 
 interface Props {
   memories: MemoryEntry[];
@@ -58,15 +61,16 @@ export default function MemoryView({ memories }: Props) {
     setBusy(true);
     setError(null);
     try {
+      // A1_MEMORY_PATCH_V2 - enviar siempre category y tags; null cuando el usuario los borra.
       await apiFetch(`/api/agent/memories/${encodeURIComponent(editing.id)}`, {
         method: "POST",
         body: {
           text: editText.trim(),
           source: editing.source ?? "You",
-          ...(editCategory ? { category: editCategory } : {}),
-          ...(editTags.trim()
-            ? { tags: editTags.split(",").map((t) => t.trim()).filter(Boolean) }
-            : {}),
+          category: editCategory || null,
+          tags: editTags.trim()
+            ? editTags.split(",").map((t) => t.trim()).filter(Boolean)
+            : null,
         },
       });
       setEditing(null);
