@@ -13,7 +13,12 @@ const db = await createStore({
 await db.recoverInterruptedActions();
 const { app, agent, bus } = await createApp(db, config);
 await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mode: config.mode });
-if (config.taskWorkerEnabled) agent.start();
+// PROCESS_SPLIT_V1 - API no arranca worker si se ejecuta como API-only.
+//   MODO=api: solo HTTP (el worker vive en otro proceso).
+//   MODO=worker: solo worker (ver worker-entry.ts).
+//   undefined: comportamiento previo (todo en uno).
+const processRole = process.env.OPENMUSE_PROCESS_ROLE ?? "all";
+if (config.taskWorkerEnabled && processRole !== "api") agent.start();
 // INDEX_RECOVER_TASKS_V1 - recuperar tareas running huerfanas.
 void agent.recoverInterruptedTasks().then((n) => {
   if (n > 0) console.log(`[OpenMuse] ${n} tareas recuperadas`);
@@ -56,6 +61,17 @@ function startBackupScheduler(): () => void {
 }
 
 const stopBackupScheduler = startBackupScheduler();
+
+// INDEX_ROLLBACK_CHECK_V1 - si hay un rollback solicitado, avisar al arranque.
+{
+  const { hasRollbackRequested, listGoodReleases } = await import("./rollback.ts");
+  if (await hasRollbackRequested(config.dataDir)) {
+    const releases = await listGoodReleases(config.dataDir);
+    console.warn(
+      `[OpenMuse] ROLLBACK_REQUESTED detectado. Ultimas releases buenas: ${releases.slice(0, 3).map((r) => r.stamp).join(", ") || "ninguna"}`,
+    );
+  }
+}
 
 const server = serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>
   console.log(`OpenMuse ${config.mode} API ready at ${config.publicUrl}`),

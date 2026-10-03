@@ -1,3 +1,4 @@
+// UI_PANEL_SLIDE_V1_USE
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, FileText, Plus, Sparkles, Trash2, X } from "lucide-react";
 import {

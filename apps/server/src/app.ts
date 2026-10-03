@@ -63,8 +63,12 @@ export async function createApp(
     users = new UserService(db),
     rag = new RagService(db),
     workspace = new WorkspaceService(db, config, files, google, rag);
+  // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
+  // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
+  const tenantService = new TenantService(db, config);
+  const tdb = new TenantScopedStore(db, (owner) => tenantService.tenantIdFor(owner));
   // BUSINESS_OS_FIXED_V1 â€” bus declarado antes de los servicios que lo usan.
-  const bus = new EventBus(db);
+  const bus = new EventBus(tdb);
   // POLICY_EARLY_V1 â€” policy se necesita antes del ActionService, asi que se instancia aqui.
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
@@ -110,9 +114,6 @@ export async function createApp(
   //
   // El adapter StorePort mapea Store a la interfaz que esperan los stores
   // del kernel. Asi el kernel no depende de la firma exacta de Store.
-  const tenantService = new TenantService(db, config);
-  // APP_TENANT_DB_V1 - store con aislamiento por tenant.
-  const tdb = new TenantScopedStore(db, (owner) => tenantService.tenantIdFor(owner));
   const usePersistentKernel = Boolean(config.databaseUrl);
   const storePort = usePersistentKernel
     ? {
@@ -270,6 +271,8 @@ export async function createApp(
       checks.capabilities = (await agent.capabilities.list()).length;
       checks.guardrails = Boolean(agent.guardrails);
       checks.metrics = Boolean(agent.metrics);
+      // HEALTH_METRICS_V1 - conteo por tenant del worker.
+      checks.tenants = typeof (agent as unknown as { tenantService?: unknown }).tenantService === "object" ? "wired" : "absent";
     } catch (e: unknown) {
       checks.internal = e instanceof Error ? e.message : "error";
       checks.ok = false;
@@ -387,6 +390,11 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }, bus));
+  // APP_SIGNUP_ROUTES_V1 - endpoints publicos de signup y verify.
+  {
+    const { signupRoutes } = await import("./auth-signup.ts");
+    app.route("/api/auth", signupRoutes({ db, config, users, tenantService }));
+  }
   app.route("/api/rag", ragRoutes(rag, db, files));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
@@ -395,6 +403,16 @@ app.post("/api/billing/customer", async (c) => {
   {
     const { adminRoutes } = await import("./admin-routes.ts");
     app.route("/api/admin", adminRoutes(agent, users));
+  }
+  // APP_ADMIN_CLIENTS_V1 - panel maestro de clientes.
+  {
+    const { adminClientsRoutes } = await import("./admin-clients.ts");
+    app.route("/api/admin/clients", adminClientsRoutes(agent, users));
+  }
+  // APP_METRICS_V1 - endpoint Prometheus.
+  {
+    const { metricsRoutes } = await import("./metrics-exporter.ts");
+    app.route("/metrics", metricsRoutes(agent, users));
   }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {

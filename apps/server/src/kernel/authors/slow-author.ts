@@ -14,6 +14,7 @@ import { randomUUID } from "node:crypto";
 import type { KernelContext } from "../context/kernel-context.ts";
 import type { Thought } from "../graph/thought.ts";
 import type { Kernel } from "../kernel.ts";
+import { progressStep } from "../graph/progress.ts";
 
 export interface SlowAuthorDeps {
   kernel: Kernel;
@@ -52,6 +53,8 @@ export class SlowAuthor {
 
   async writeReasoning(ctx: KernelContext, input: SlowAuthorWriteInput): Promise<Thought> {
     const now = new Date().toISOString();
+    // PROGRESS_EMIT_V1 - marcar inicio del razonamiento lento.
+    void progressStep(0, 1, "slow.reasoning.start");
     return this.deps.kernel.appendThought(ctx, {
       turnId: input.turnId,
       actor: { kind: "slow-llm", id: "slow" },

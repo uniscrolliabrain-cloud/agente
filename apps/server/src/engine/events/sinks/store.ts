@@ -1,4 +1,5 @@
 import type { Store } from "../../../db.ts";
+import type { TenantScopedStore } from "../../../db-tenant.ts";
 import type {
   EventAggregate,
   EventFilter,
@@ -17,13 +18,14 @@ const HARD_LIMIT = 200;
  * (EventBus.purge, llamado desde maintain).
  */
 export class StoreSink implements EventSink {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async write(event: SystemEvent): Promise<void> {
-    // EVENTBUS_TENANT_SCOPE_V1 - clave compuesta tenantId:owner.
-    const ownerKey = ${event.tenantId}:;
+    // El aislamiento por tenant lo compone el db que se inyecta (TenantScopedStore).
+    // Aqui solo se escribe bajo owner plano; si el db es un Store crudo, el bus
+    // sigue funcionando igual que antes del multitenant.
     await this.db.insertIfAbsent(
-      ownerKey,
+      event.owner,
       KIND,
       event as unknown as { id: string },
     );
@@ -36,7 +38,7 @@ export class StoreSink implements EventSink {
  * Hoy resuelve con SQL nativo sobre records.
  */
 export class StoreQuery implements EventQuery {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Store | TenantScopedStore) {}
 
   async recent(owner: string, filter: EventFilter): Promise<SystemEvent[]> {
     const limit = Math.min(filter.limit ?? 100, HARD_LIMIT);
