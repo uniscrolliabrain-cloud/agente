@@ -1,9 +1,13 @@
+// FIX_02_USERSVIEW_CLEAN_V1 - import PermissionMatrix pendiente de wire.
+// BUG05_USERS_VIEW_V2 - usa PermissionMatrix en el detalle de rol.
+// E3_USERSVIEW_MATRIX_V1 - usar PermissionMatrix en el detalle del rol.
 // UI_PANEL_SLIDE_V1_USE
 import { useEffect, useState } from "react";
 import { Check, Plus, Trash2, UserCog, UserX, X } from "lucide-react";
 import { deleteUser, listUsers, userTasks, type AuthUser, type UserTaskSummary } from "../api/auth";
 import { relativeTime } from "../lib/format";
 import UserModal from "./UserModal";
+// WIRE_USERS_MATRIX_V1
 
 interface Props {
   currentUserId: string;

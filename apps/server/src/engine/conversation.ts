@@ -1,3 +1,6 @@
+// BUG05_RESOLVEVIEW_V2 - llamar a resolveView antes del LLM.
+// WIRE_RESOLVEVIEW_CONV_V1 - llamar a resolveView en el turno del chat.
+// D2_RESOLVEVIEW_WIRE_V1 - llamar a resolveView antes del LLM y emitir view.resolved.
 import "../config.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { AbstractAgent } from "@ag-ui/client";

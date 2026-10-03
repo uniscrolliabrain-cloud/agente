@@ -1,47 +1,36 @@
-// VIEW_RESOLVER_V1 - decide ViewSpec dado un intent.
+// FIX_02_RESOLVER_V3 - usa RuntimeViewSpec para no colisionar con workspace-spec.
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@openmuse/domain/views";
 
-import type { AgentService } from "../service.ts";
-import type { ViewSpec } from "../../../../../packages/domain/src/workspace-spec.ts";
+export type ViewBuilder = (owner: string) => Promise<unknown>;
 
-export class ViewResolver {
-  constructor(private readonly service: AgentService) {}
+interface Intent {
+  re: RegExp;
+  build: ViewBuilder;
+}
 
-  async resolve(owner: string, intent: string): Promise<ViewSpec | null> {
-    const lower = intent.toLowerCase();
+const INTENTS: Intent[] = [];
 
-    if (/pipeline|leads|oportunidades/.test(lower)) {
-      return {
-        id: `view-board-${Date.now()}`,
-        kind: "board",
-        title: "Pipeline",
-        provenance: { source: "resolver", intent },
-      };
+export function registerIntent(re: RegExp, build: ViewBuilder): void {
+  INTENTS.push({ re, build });
+}
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export async function resolveView(owner: string, text: string): Promise<RuntimeViewSpec | null> {
+  const t = normalize(text);
+  for (const { re, build } of INTENTS) {
+    if (re.test(t)) {
+      return parseRuntimeViewSpec(await build(owner));
     }
-
-    if (/facturas|invoice/.test(lower)) {
-      return {
-        id: `view-table-${Date.now()}`,
-        kind: "table",
-        title: "Facturas",
-        columns: [
-          { key: "number", label: "Número", type: "text", sortable: true, align: "left" },
-          { key: "amount", label: "Importe", type: "number", sortable: true, align: "right" },
-          { key: "status", label: "Estado", type: "chip", sortable: false, align: "left" },
-        ],
-        provenance: { source: "resolver", intent },
-      };
-    }
-
-    if (/c[oó]mo va|resumen|mes|estado/.test(lower)) {
-      return {
-        id: `view-dashboard-${Date.now()}`,
-        kind: "dashboard",
-        title: "Resumen",
-        provenance: { source: "resolver", intent },
-      };
-    }
-
-    void owner;
-    return null;
   }
+  return null;
+}
+
+export function clearIntents(): void {
+  INTENTS.length = 0;
 }

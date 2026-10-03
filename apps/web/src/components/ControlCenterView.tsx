@@ -1,9 +1,11 @@
+// C2_CONTROLCENTER_V2 - usa KpiCard y Sparkline.
 // UI_ANIMATED_NUMBER_V1
 import { useEffect, useState } from "react";
 // UI_CC_CLEANUP_V1 - quitados Activity, AlertCircle, Briefcase sin usar.
-import { CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
+import { ChevronRight } from "lucide-react"; // FIX_02_CCVIEW_CLEAN_V1
 import { useTasks } from "../hooks/useTasks";
-import { AnimatedNumber } from "./AnimatedNumber";
+import KpiCard from "./KpiCard"; // FIX_02_CCVIEW_CLEAN_V1
+// WIRE_KPICARD_V1
 import { useNotifications } from "../hooks/useNotifications";
 import type { AgentTask } from "../types/api";
 import { relativeTime } from "../lib/format";
@@ -91,50 +93,24 @@ export default function ControlCenterView({ enabled, onOpenTask }: Props) {
 
       {/* KPIs */}
       <div className="v3-cc-kpis">
-        <div className="v3-kpi">
-          <div className="v3-kpi-head">
-            <div className="v3-kpi-icon green">
-              <Zap size={13} />
-            </div>
-            <span className="v3-kpi-label">Agentes trabajando</span>
-          </div>
-          <div className="v3-kpi-value"><AnimatedNumber value={workerBusy} /></div>
-          <div className="v3-kpi-meta">
-            <b>{workerIdle}</b> esperando · <b>{workerPaused}</b> en pausa
-          </div>
-        </div>
-
-        <div className="v3-kpi">
-          <div className="v3-kpi-head">
-            <div className="v3-kpi-icon">
-              <CheckCircle2 size={13} />
-            </div>
-            <span className="v3-kpi-label">Tareas completadas</span>
-          </div>
-          <div className="v3-kpi-value"><AnimatedNumber value={completed.length} /></div>
-          <div className="v3-kpi-meta">
-            <b>{failed.length}</b> con error · <b>{all.length}</b> en total
-          </div>
-        </div>
-
-        <div className="v3-kpi">
-          <div className="v3-kpi-head">
-            <div className="v3-kpi-icon orange">
-              <Clock size={13} />
-            </div>
-            <span className="v3-kpi-label">Pendientes de tu OK</span>
-          </div>
-          <div className="v3-kpi-value"><AnimatedNumber value={needsAction.length} /></div>
-          <div className="v3-kpi-meta">
-            {notifications.unread > 0 ? (
-              <>
-                <b>{notifications.unread}</b> notificaciones sin leer
-              </>
-            ) : (
-              "todo visto"
-            )}
-          </div>
-        </div>
+        {/* WIRE_KPICARD_V1 */}
+        <KpiCard
+          label="Agentes trabajando"
+          value={workerBusy}
+          icon="green"
+          meta={`${workerIdle} esperando · ${workerPaused} en pausa`}
+        />
+        <KpiCard
+          label="Tareas completadas"
+          value={completed.length}
+          meta={`${failed.length} con error · ${all.length} en total`}
+        />
+        <KpiCard
+          label="Pendientes de tu OK"
+          value={needsAction.length}
+          icon="orange"
+          meta={notifications.unread > 0 ? `${notifications.unread} notificaciones sin leer` : "todo visto"}
+        />
       </div>
 
       {/* Banner "necesita tu accion" */}

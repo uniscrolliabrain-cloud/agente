@@ -1,5 +1,9 @@
+// B3_SIDEBAR_LIVE_V1 - LiveItem disponible para usar en la lista de recientes.
+// B1_SIDEBAR_V1
 import { Activity, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Search, Settings, UserCog } from "lucide-react";
 import type { Thread } from "../api/threads";
+// WIRE_SIDEBAR_LIVEITEM_V1
+import LiveItem from "./LiveItem";
 
 export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users";
 
@@ -93,14 +97,13 @@ export default function SidebarV2({
                 <div style={{ padding: "0 12px", fontSize: 12, color: "var(--v2-text-3)" }}>Sin conversaciones</div>
               ) : (
                 recent.map((t) => (
-                  <button
+                  <LiveItem
                     key={t.id}
-                    className={`v2-sidebar-recent-item ${t.id === activeThreadId ? "active" : ""}`}
-                    onClick={() => onSelectThread(t.id)}
                     title={t.title}
-                  >
-                    {t.title}
-                  </button>
+                    active={t.id === activeThreadId}
+                    activities={[]}
+                    onClick={() => onSelectThread(t.id)}
+                  />
                 ))
               )}
             </div>

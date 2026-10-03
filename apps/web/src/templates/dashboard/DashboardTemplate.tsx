@@ -1,5 +1,23 @@
-// UI_TEMPLATES_V1
-import type { ViewSpec } from "../../view/spec.ts";
-export default function DashboardTemplate({ spec }: { spec: ViewSpec }) {
-  return <div className="rounded-xl border p-4"><h2 className="font-semibold">{spec.title} — dashboard</h2><div className="grid grid-cols-3 gap-3 mt-3">{(spec.columns ?? []).map(c=><div key={c.key} className="rounded-lg bg-zinc-50 p-3"><div className="text-xs text-zinc-500">{c.label}</div><div className="text-lg font-bold">—</div></div>)}</div></div>;
+// D3_DASHBOARD_V2 - template dashboard real.
+import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+
+interface Props {
+  spec: Extract<RuntimeViewSpec, { kind: "dashboard" }>;
+}
+
+export default function DashboardTemplate({ spec }: Props) {
+  return (
+    <section className="tpl tpl--dashboard">
+      <h3 className="tpl__title">{spec.title}</h3>
+      <div className="tpl-dashboard__kpis">
+        {spec.kpis.map((k, i) => (
+          <div className="tpl-kpi" key={`${k.label}-${i}`}>
+            <small className="tpl-kpi__label">{k.label}</small>
+            <div className="tpl-kpi__value">{k.value}</div>
+            {k.delta && <span className="tpl-kpi__delta">{k.delta}</span>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

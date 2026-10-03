@@ -1,4 +1,4 @@
-// UI_APP_CLEANUP_V1
+// FIX_TC_APP_V3 - App con AppShell + ContextualPanel + viewResolver.
 import { useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
@@ -6,6 +6,7 @@ import { useChat } from "./hooks/useChat";
 import { useThreads } from "./hooks/useThreads";
 import { useWorkspaceData } from "./hooks/useWorkspaceData";
 import { useNotifications } from "./hooks/useNotifications";
+import { useViewResolver } from "./hooks/useViewResolver";
 import SidebarV2, { type AppView } from "./components/SidebarV2";
 import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
@@ -20,9 +21,8 @@ import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
-
-
-
+import AppShell from "./components/AppShell";
+import ContextualPanel from "./components/ContextualPanel";
 import type { AgentTask } from "./types/api";
 
 function useTheme() {
@@ -66,15 +66,13 @@ export default function App() {
   const { memories, files } = useWorkspaceData(auth.isAuthenticated);
   useNotifications(auth.isAuthenticated);
   useTheme();
+  const viewResolver = useViewResolver();
 
   const [view, setView] = useState<AppView>("chat");
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
-
-
-
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -129,49 +127,56 @@ export default function App() {
       ? "Agente activo"
       : "Desconectado";
 
+  const sidebar = (
+    <SidebarV2
+      activeView={view}
+      onSelectView={setView}
+      isAdmin={auth.user?.role === "admin"}
+      activeThreadId={threads.activeId}
+      threads={threads.threads}
+      onSelectThread={(id) => { setView("chat"); threads.select(id); }}
+      userName={auth.user?.name ?? "Usuario"}
+      userRole={auth.user?.role ?? "user"}
+      onOpenProfile={() => setProfileOpen(true)}
+    />
+  );
+
+  const panel = (
+    <ContextualPanel
+      spec={viewResolver.spec}
+      onClose={viewResolver.clear}
+    />
+  );
+
   return (
-    <div className="v2-app">
-      <div className="v2-app-shell">
-        <SidebarV2
-          activeView={view}
-          onSelectView={setView}
-          isAdmin={auth.user?.role === "admin"}
-          activeThreadId={threads.activeId}
-          threads={threads.threads}
-          onSelectThread={(id) => { setView("chat"); threads.select(id); }}
-          userName={auth.user?.name ?? "Usuario"}
-          userRole={auth.user?.role ?? "user"}
-          onOpenProfile={() => setProfileOpen(true)}
+    <>
+      <AppShell sidebar={sidebar} panel={panel}>
+        <TopBarV2
+          status={status}
+          statusLabel={statusLabel}
+          onNewChat={handleNewChat}
+          onOpenPalette={() => setPaletteOpen(true)}
         />
 
-        <main className="v2-main">
-          <TopBarV2
-            status={status}
-            statusLabel={statusLabel}
-            onNewChat={handleNewChat}
-            onOpenPalette={() => setPaletteOpen(true)}
-          />
-
-          <div className="v2-content">
-            {view === "chat" && <ChatPanel chat={chat} />}
-            {view === "tasks" && (
-              <TasksView
-                tasks={tasks.tasks}
-                currentUserId={auth.user?.id ?? null}
-                onOpenTask={openTask}
-                onReviewTask={reviewTask}
-              />
-            )}
-            {view === "documents" && <DocumentsView files={files} />}
-            {view === "memory" && <MemoryView memories={memories} />}
-            {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
-            {view === "control-center" && (
-              <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
-            )}
-            {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          </div>
-        </main>
-      </div>
+        <div className="v2-content">
+          {view === "chat" && <ChatPanel chat={chat} />}
+          {view === "tasks" && (
+            <TasksView
+              tasks={tasks.tasks}
+              currentUserId={auth.user?.id ?? null}
+              onOpenTask={openTask}
+              onReviewTask={reviewTask}
+            />
+          )}
+          {view === "documents" && <DocumentsView files={files} />}
+          {view === "memory" && <MemoryView memories={memories} />}
+          {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
+          {view === "control-center" && (
+            <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
+          )}
+          {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
+        </div>
+      </AppShell>
 
       <CommandPalette
         open={paletteOpen}
@@ -203,6 +208,6 @@ export default function App() {
           onChanged={tasks.refresh}
         />
       )}
-    </div>
+    </>
   );
 }

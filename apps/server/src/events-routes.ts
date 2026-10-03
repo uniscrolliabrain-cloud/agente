@@ -3,10 +3,12 @@ import { z } from "zod";
 import type { EventBus } from "./engine/events/index.ts";
 import { SYSTEM_EVENT_TYPES } from "./engine/events/index.ts";
 
+// A2_SINCE_V1 - sinceId para polling incremental. since (datetime) se mantiene.
 const filterSchema = z.object({
   type: z.enum(SYSTEM_EVENT_TYPES).optional(),
   taskId: z.string().max(200).optional(),
   since: z.iso.datetime({ offset: true }).optional(),
+  sinceId: z.string().max(50).optional(),
   until: z.iso.datetime({ offset: true }).optional(),
   limit: z.coerce.number().int().min(1).max(200).optional(),
 });

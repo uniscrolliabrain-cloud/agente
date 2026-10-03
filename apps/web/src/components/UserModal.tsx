@@ -1,3 +1,4 @@
+// E3_USERMODAL_ROLEIDS_V1 - preparado para roleIds: string[] cuando llegue D01.
 import { useState } from "react";
 import { AlertCircle, X } from "lucide-react";
 import { createUser, updateUser, type AuthUser } from "../api/auth";

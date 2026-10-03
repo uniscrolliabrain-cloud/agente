@@ -1,6 +1,9 @@
+// C1_TASKDETAIL_V2 - usa TaskTimeline para el plan.
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { controlTask, getTaskDetail, answerTask } from "../api/tasks";
+// WIRE_TASKDETAIL_TIMELINE_V1
+import TaskTimeline from "./TaskTimeline";
 import type { AgentTask, TaskDetail } from "../types/api";
 
 interface Props {
@@ -72,13 +75,8 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
 
           {detail && tab === "plan" && (
             <div className="plan-list">
-              {task!.plan.map((p, i) => (
-                <div key={p.id} className="plan-item">
-                  <span className="plan-num">{i + 1}</span>
-                  <span>{p.title}</span>
-                  <span className="plan-check">{p.status === "succeeded" ? "●" : "○"}</span>
-                </div>
-              ))}
+              {/* WIRE_TASKDETAIL_TIMELINE_V1 */}
+              <TaskTimeline plan={task!.plan} />
               <div className="control-row">
                 <button className="ctrl-btn" onClick={() => control("pause")}>⏸ Pausar</button>
                 <button className="ctrl-btn" onClick={() => control("resume")}>▶ Reanudar</button>

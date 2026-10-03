@@ -9,7 +9,14 @@
     "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "types": ["node"],
-    "lib": ["ES2023", "DOM"]
+    "lib": ["ES2023", "DOM"],
+    "baseUrl": ".",
+    "paths": {
+      "@openmuse/domain/views": ["./packages/domain/src/views.ts"],
+      "@openmuse/domain/live": ["./packages/domain/src/live.ts"],
+      "@openmuse/domain/*": ["./packages/domain/src/*"]
+    }
+    // FIX_02_ROOT_PATHS_V1
   },
   "include": ["apps/server/**/*.ts", "packages/**/*.ts", "tests/**/*.ts"],
   "exclude": ["node_modules", "apps/worker"]
