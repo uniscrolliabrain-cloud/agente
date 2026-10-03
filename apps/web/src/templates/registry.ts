@@ -1,3 +1,4 @@
+// D3_REGISTRY_V2 - solo dashboard y queue activos (D11).
  // TEMPLATES_REGISTRY_V1 - mapa real
  import type { ViewSpec } from "../view/spec.ts";
  import ListTemplate from "./list/ListTemplate.tsx";

@@ -14,11 +14,12 @@ import type { AgentService } from "./service.ts";
 const text = z.string().trim().min(1).max(4000);
 // MEMORY_FULL_SCHEMA — la UI edita category y tags; el route debe aceptarlos.
 const memoryCategories = z.enum(["empresa","cliente","proceso","preferencia","rrhh","producto","otro"]);
+// A1_MEMORY_PATCH_V2 - category y tags aceptan null para borrar; text opcional para patch parcial.
 const memorySchema = z.object({
-  text,
+  text: text.optional(),
   source: z.string().trim().min(1).max(200).optional(),
-  category: memoryCategories.optional(),
-  tags: z.array(z.string().max(60)).max(30).optional(),
+  category: memoryCategories.nullable().optional(),
+  tags: z.array(z.string().trim().min(1).max(60)).max(30).nullable().optional(),
 });
 const goalPatchSchema = z.object({
   status: z.enum(["active", "paused", "completed"]).optional(),
@@ -85,6 +86,45 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       .object({ action: z.enum(["pause", "resume", "cancel", "retry"]) })
       .parse(await c.req.json());
     return c.json(await service.control(c.get("owner"), c.req.param("id"), action));
+  });
+  // C1_REASSIGN_V1 - reasignar tarea a otro rol o usuario.
+  // C3_CANCEL_V1 - cancelar una accion programada.
+  app.post("/actions/:id/cancel", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const action = await service.db.get<{ id: string; status: string }>(owner, "actions", id);
+    if (!action) throw new AppError("Action not found", 404);
+    if (action.status !== "awaiting_review" && action.status !== "scheduled") {
+      throw new AppError("Action cannot be cancelled", 409);
+    }
+    const cancelled = await service.db.compareAndSwap(
+      owner,
+      "actions",
+      id,
+      { status: action.status },
+      { status: "cancelled" },
+    );
+    if (!cancelled) throw new AppError("Action cannot be cancelled", 409);
+    return c.json({ ok: true });
+  });
+  app.post("/tasks/:id/reassign", async (c) => {
+    const body = z
+      .object({ roleId: z.string().max(200).optional() })
+      .parse(await c.req.json());
+    if (!body.roleId) throw new AppError("roleId required", 422);
+    const updated = await service.db.compareAndSwap<{
+      id: string;
+      assignedTo?: string;
+      state?: { roleId?: string };
+    }>(
+      c.get("owner"),
+      "tasks",
+      c.req.param("id"),
+      {},
+      { assignedTo: body.roleId, state: { roleId: body.roleId } },
+    );
+    if (!updated) throw new AppError("Task not found", 404);
+    return c.json(updated);
   });
   app.post("/tasks/:id/escalate", async (c) => {
     const body = z
@@ -156,24 +196,47 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       await service.decideIdea(c.get("owner"), c.req.param("id"), body.action, body.prompt),
     );
   });
+  // A1_MEMORY_PATCH_V2 - crear memoria normaliza tags a lowercase.
   app.post("/memories", async (c) => {
     const body = memorySchema.parse(await c.req.json());
+    if (body.text === undefined) throw new AppError("Text is required", 422);
     const memory: AgentMemory = {
       id: randomUUID(),
       text: body.text,
       source: body.source ?? "You",
+      ...(body.category !== undefined && body.category !== null
+        ? { category: body.category }
+        : {}),
+      ...(body.tags !== undefined && body.tags !== null
+        ? { tags: [...new Set(body.tags.map((x) => x.toLowerCase()))] }
+        : {}),
       createdAt: new Date().toISOString(),
     };
     return c.json(await service.db.put(c.get("owner"), "memories", memory), 201);
   });
+  // A1_MEMORY_PATCH_V2 - solo compareAndSwap, patch parcial, null -> undefined para no mentir al tipo.
   app.post("/memories/:id", async (c) => {
     const body = memorySchema.parse(await c.req.json());
+    const patch: Record<string, unknown> = {};
+    if (body.text !== undefined) patch.text = body.text;
+    if (body.source !== undefined) patch.source = body.source;
+    if (body.category !== undefined) {
+      if (body.category === null) delete patch.category;
+      else patch.category = body.category;
+    }
+    if (body.tags !== undefined) {
+      if (body.tags === null) delete patch.tags;
+      else patch.tags = [...new Set(body.tags.map((x) => x.toLowerCase()))];
+    }
+    if (Object.keys(patch).length === 0) {
+      throw new AppError("Empty memory patch", 422);
+    }
     const memory = await service.db.compareAndSwap<AgentMemory>(
       c.get("owner"),
       "memories",
       c.req.param("id"),
       {},
-      body,
+      patch,
     );
     if (!memory) throw new AppError("Memory not found", 404);
     return c.json(memory);

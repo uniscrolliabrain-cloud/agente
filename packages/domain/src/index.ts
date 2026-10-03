@@ -147,8 +147,10 @@ export interface ActionProposal {
   title: string;
   kind: ProposalInput["kind"];
   data: Record<string, unknown>;
+  // C3_ACTION_SCHEDULED_V1 - estado intermedio para undo en servidor.
   status:
     | "awaiting_review"
+    | "scheduled"
     | "executing"
     | "succeeded"
     | "failed"
@@ -156,6 +158,9 @@ export interface ActionProposal {
     | "denied"
     | "cancelled"
     | "expired";
+  signers?: string[];
+  needed?: number;
+  executeAt?: string | null;
   hash: string;
   createdAt: string;
   expiresAt: string;

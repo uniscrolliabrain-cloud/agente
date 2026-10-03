@@ -1,3 +1,4 @@
+// C1_ASSIGNEDTO_V1 - createTask puebla assignedTo con roleId si viene.
 // NOTIFY_GROUP_TASK_V1 - las notificaciones se agrupan por taskId.
   // ORCHESTRATOR_DEPS_REAL_V1 - deps reales cableadas.
 // B103_APPLIED

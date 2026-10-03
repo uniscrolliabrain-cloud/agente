@@ -1,3 +1,4 @@
+// D2_VIEWS_ENDPOINT_V2 - endpoint real usando resolveView.
 // ROUTES_VIEWS_V2 — Hono, no Fastify.
 //
 // El fichero original importaba FastifyInstance de "fastify", que no esta

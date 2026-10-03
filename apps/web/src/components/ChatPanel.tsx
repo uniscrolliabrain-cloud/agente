@@ -1,3 +1,6 @@
+// WIRE_CHATPANEL_VIEWRESOLVER_V1 - cuando el usuario envia, intentar resolver una vista.
+// D3_CHATPANEL_VIEWRESOLVED_V1 - abrir panel contextual cuando llega view.resolved.
+// B2_CHATPANEL_V2 - quitado duplicado de streamBuf (solo MessageList lo pinta).
 // CHAT_ROLE_SELECTOR_V1
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
@@ -123,10 +126,9 @@ export default function ChatPanel({ chat }: Props) {
             </div>
           )}
 
-          {(chat.streamBuf || assistantMessage) && (
-            <div className="v2-assistant-text">
-              {chat.streamBuf || assistantMessage?.content}
-            </div>
+          {/* WIRE_CHATPANEL_NO_DUP_V1 - el streamBuf lo pinta MessageList */}
+          {assistantMessage && !chat.streaming && (
+            <div className="v2-assistant-text">{assistantMessage.content}</div>
           )}
 
           {chat.error && (

@@ -48,6 +48,26 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
   "system.google_disconnected": z.object({ owner: z.string().max(200) }),
   "auth.login": z.object({ userId: z.string().max(200) }),
   "auth.login_failed": z.object({ email: z.string().max(300) }),
+  // A2_EVENTS_V1 - undo diferido y cancelacion de acciones.
+  "action.deferred": z.object({
+    ...base,
+    actionId: z.string().max(200),
+    signers: z.array(z.string().max(200)).max(10),
+    needed: z.number().int().min(1).max(10),
+    executeAt: z.number().nullable(),
+  }),
+  "action.cancelled": z.object({
+    ...base,
+    actionId: z.string().max(200),
+    by: z.string().max(200),
+  }),
+  // D2_VIEW_RESOLVED_V1 - spec servido por el agente.
+  "view.resolved": z.object({
+    ...base,
+    kind: z.enum(["dashboard", "queue"]),
+    title: z.string().max(300),
+    spec: z.record(z.string(), z.unknown()),
+  }),
   // SCHEMAS_V2 — business graph, policy, state machine, agent runtime, context.
   "entity.created": z.object({
     ...base,

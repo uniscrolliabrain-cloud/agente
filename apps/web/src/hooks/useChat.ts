@@ -1,6 +1,8 @@
+// B2_USECHAT_V2 - tools[] + typewriter integrado (los tools se agrupan en MessageList).
 // CHAT_HOOK_ROLE_V2 - roleId expuesto y persistido por thread.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
+import { toolsReducer, type ToolCall } from "../lib/toolsReducer";
 import { getThread, saveThreadMessages } from "../api/threads";
 import type { ChatAttachment, ChatMessage } from "../types/api";
 
@@ -11,12 +13,8 @@ function now(): string {
   return new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-interface ActiveTool {
-  id: string;
-  name: string;
-  status: "running" | "done";
-  args: unknown;
-}
+// WIRE_USECHAT_TOOLS_V1 - se usa ToolCall del reducer.
+type ActiveTool = ToolCall;
 
 export function useChat(
   enabled: boolean,
