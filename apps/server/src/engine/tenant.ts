@@ -84,3 +84,21 @@ export class TenantService {
 }
 
 export { DEFAULT_TENANT_ID };
+
+// TENANT_SERVICE_V2 - helpers para que nadie hardcodee tenantId.
+//
+// Regla: en codigo de negocio, todo acceso al Store pasa por TenantScopedStore,
+// que resuelve el tenant con este servicio. Si alguien necesita el tenantId
+// directamente, usa tenantIdFor(owner).
+//
+// El unico sitio donde "default" es legitimo es DEFAULT_TENANT_ID (arriba).
+// El resto de codigo nunca lo hardcodea.
+
+export function assertNotHardcodedTenantId(value: string, where: string): void {
+  if (value === DEFAULT_TENANT_ID) {
+    throw new Error(
+      `TENANT_ID_HARDCODED_V2: "${DEFAULT_TENANT_ID}" hardcodeado en ${where}. ` +
+        "Usa TenantService.tenantIdFor(owner) en su lugar.",
+    );
+  }
+}

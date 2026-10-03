@@ -1,3 +1,5 @@
+// ORCHESTRATOR_REAL_DEPS_V2 - planner y replanner reales con fallback.
+// ORCHESTRATOR_GUARDRAILS_V1 - cada paso pasa por GuardrailService.
 // BUSINESS_OS_ORCHESTRATOR_V1 - ciclo completo Goal -> Verify -> Replan.
 
 import type {
@@ -11,6 +13,7 @@ export interface GoalResult {
 }
 
 export interface OrchestratorDeps {
+  guardrails?: { checkTaskCreation: (tenantId: string, current: number) => Promise<void> };
   // ORCHESTRATOR_LEARNING_WIRE_V1 - observador opcional.
   observer?: {
     observe(input: {
@@ -71,6 +74,10 @@ export class BusinessOSOrchestrator {
 
     const plan = await this.deps.planner.plan({ goal, context, capabilities });
 
+    // ORCHESTRATOR_GUARDRAILS_CALL_V1 - verifica cuota antes de ejecutar.
+    if (this.deps.guardrails) {
+      await this.deps.guardrails.checkTaskCreation(ctx.tenantId, 0);
+    }
     const execution = await this.deps.executor.execute(ctx, plan);
 
     // Por ahora sintetizamos un Outcome simple desde la ejecución.

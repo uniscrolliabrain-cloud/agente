@@ -1,3 +1,4 @@
+// TASKS_ROLE_FILTER_V1 - filtro por rol del empleado digital.
 // UI_PANEL_SLIDE_V1_USE
 import { useMemo, useState } from "react";
 import type { AgentTask } from "../types/api";

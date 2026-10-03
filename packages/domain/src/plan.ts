@@ -1,3 +1,4 @@
+// PLAN_VERSIONING_V2 - version monotona + previousPlanId.
 // PLAN_V1 - plan versionado de ejecucion.
 
 import { z } from "zod";

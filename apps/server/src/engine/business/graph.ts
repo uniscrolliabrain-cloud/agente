@@ -1,3 +1,5 @@
+// GRAPH_STATE_MACHINE_V2 - updateEntity valida contra el StateMachineRegistry.
+// GRAPH_ENTITY_RESOLVER_V2 - busca duplicados por email, CIF, nombre normalizado.
 // B101b_APPLIED
 import { randomUUID } from "node:crypto";
 import {

@@ -1,3 +1,4 @@
+// CHAT_RUN_ROLE_STATE_V1 - roleId viaja en state.
 import { getSession, handleUnauthorized } from "./client";
 
 export interface RunInput {

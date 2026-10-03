@@ -1,3 +1,4 @@
+// PGVECTOR_MERGED_V1 - extension vector + columna embedding + ivfflat.
 // R4a-db_APPLIED
 import { mkdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";

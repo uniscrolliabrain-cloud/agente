@@ -134,4 +134,18 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     knowledgeCount: z.number().int().nonnegative(),
     policyCount: z.number().int().nonnegative(),
   }),
-};
+
+  // VERIFICATION_EVENT_V1
+  "verification.executed": z.object({
+    ...base,
+    goalId: z.string().max(200).optional(),
+    verified: z.boolean(),
+    method: z.enum(["deterministic", "llm", "hybrid", "manual"]),
+    confidence: z.number().min(0).max(1),
+  }),
+  "verification.disagreement": z.object({
+    ...base,
+    goalId: z.string().max(200).optional(),
+    deterministic: z.boolean(),
+    llm: z.boolean(),
+  }),};

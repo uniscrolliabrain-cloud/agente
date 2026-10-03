@@ -1,3 +1,4 @@
+// PROMOTER_DESTINATIONS_REAL_V2 - response, memory, business-graph, audit, discard.
 // KERNEL_PROMOTE_V2 — promocion determinista con reglas explicitas.
 //
 // Cambios respecto a V1:

@@ -20,6 +20,7 @@ export default function TopBarV2({ status, statusLabel, onNewChat, onOpenPalette
         </span>
       </div>
       <div className="v2-topbar-right">
+        <NotificationsDropdown />
         <button className="v2-search-pill" onClick={onOpenPalette}>
           <Search size={14} />
           Buscar

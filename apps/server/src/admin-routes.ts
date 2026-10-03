@@ -152,6 +152,78 @@ export function adminRoutes(service: AgentService, users: UserService) {
     });
   });
 
+  // ADMIN_AUDIT_EXPORT_V1 - exporta el audit trail del tenant en JSON.
+  app.get("/tenants/:tenantId/audit-export", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const entries = await service.db.list<Record<string, unknown>>(tenantId, "audit-entries", { limit: 10000 });
+    const exportedAt = new Date().toISOString();
+    const signature = createHash("sha256")
+      .update(JSON.stringify({ tenantId, exportedAt, count: entries.length }))
+      .digest("hex");
+    return c.json({
+      tenantId,
+      exportedAt,
+      count: entries.length,
+      signature,
+      entries,
+    });
+  });
+
+  // ADMIN_ROLES_CRUD_V1 - CRUD de roles por tenant.
+  app.get("/tenants/:tenantId/roles", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const roles = await service.db.list(tenantId, "agent-roles", { limit: 200 });
+    return c.json({ roles });
+  });
+
+  app.delete("/tenants/:tenantId/roles/:roleId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const roleId = c.req.param("roleId");
+    await service.db.remove(tenantId, "agent-roles", roleId);
+    return c.json({ ok: true });
+  });
+
+  app.get("/tenants/:tenantId/roles/:roleId/activity", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const roleId = c.req.param("roleId");
+    const tasks = await service.db.list<Record<string, unknown>>(tenantId, "tasks", { limit: 5000 });
+    const mine = tasks.filter((t) => (t as { state?: { roleId?: string } }).state?.roleId === roleId);
+    const events = await service.db.list<Record<string, unknown>>(tenantId, "run-events", { limit: 2000 });
+    const taskIds = new Set(mine.map((t) => (t as { id: string }).id));
+    const myEvents = events.filter((e) => taskIds.has((e as { taskId?: string }).taskId ?? ""));
+    return c.json({ roleId, tasks: mine, events: myEvents });
+  });
+
+  // ADMIN_VERIFICATION_STATS_V1 - tasa de acuerdos LLM vs determinista.
+  app.get("/tenants/:tenantId/verification-stats", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const events = await service.db.list<{ type: string; payload?: Record<string, unknown> }>(tenantId, "system-events", { limit: 5000 });
+    const executed = events.filter((e) => e.type === "verification.executed");
+    const disagreements = events.filter((e) => e.type === "verification.disagreement");
+    const byMethod: Record<string, number> = {};
+    for (const e of executed) {
+      const m = String(e.payload?.method ?? "unknown");
+      byMethod[m] = (byMethod[m] ?? 0) + 1;
+    }
+    return c.json({
+      tenantId,
+      totalExecuted: executed.length,
+      totalDisagreements: disagreements.length,
+      agreementRate: executed.length > 0 ? 1 - disagreements.length / executed.length : 1,
+      byMethod,
+    });
+  });
+
   app.get("/system/status", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);

@@ -8,3 +8,12 @@ export class AppError extends Error {
     this.name = "AppError";
   }
 }
+// INTEGRATIONS_OUTCOME_UNKNOWN_V1 - error comun para integraciones cuando
+// la peticion pudo haber salido pero la respuesta se perdio.
+export class OutcomeUnknownError extends Error {
+  readonly code = "outcome_unknown";
+  constructor(message = "La operacion pudo haber sucedido. Revisa el proveedor antes de reintentar.") {
+    super(message);
+    this.name = "OutcomeUnknownError";
+  }
+}

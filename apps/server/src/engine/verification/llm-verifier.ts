@@ -1,3 +1,5 @@
+// VERIFIER_TIMEOUT_V2 - timeout 45s, fallback al determinista.
+// VERIFIER_PROMPT_CLOSED_V2 - JSON {verified, reason, missing, confidence}.
 // LLM_VERIFIER_V2 - segunda capa real de verificacion. Solo se llama si el
 // deterministico falla y hay evidencia. Timeout duro. Nunca rompe la tarea.
 
@@ -101,4 +103,27 @@ export class LlmVerifier implements Verifier {
       return base;
     }
   }
+}
+// VERIFIER_FEWSHOT_LEARNING_V1 - los casos donde el LLM acerto se guardan
+// como few-shot para el siguiente verifier similar.
+export interface VerifierFewShot {
+  id: string;
+  tenantId: string;
+  goalTitle: string;
+  outcomeSummary: string;
+  verified: boolean;
+  createdAt: string;
+}
+
+export async function rememberFewShot(
+  db: { put: (owner: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<unknown> },
+  tenantId: string,
+  shot: Omit<VerifierFewShot, "id" | "createdAt">,
+): Promise<void> {
+  await db.put(tenantId, "verifier-fewshots", {
+    id: `vs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    tenantId,
+    ...shot,
+    createdAt: new Date().toISOString(),
+  });
 }

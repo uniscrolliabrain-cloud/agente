@@ -1,3 +1,4 @@
+// CLOSE_TURN_RECURSIVE_V2 - closeTurnAndChildren cierra hijos abiertos.
 // KERNEL_STORE_STORE_V2 - TurnStore persistente con transacciones y tenant checks.
 //
 // Cambios respecto a V1:

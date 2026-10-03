@@ -1,3 +1,4 @@
+// TRUTH_RESOLVER_CABLE_V2 - resolveField usa TruthResolver real.
 import type { BusinessEntity } from "../../../../../packages/domain/src/business.ts";
 import type { BusinessGraph } from "./graph.ts";
 import { TruthResolver } from "./truth-resolver.ts";

@@ -1,4 +1,8 @@
-// CONTEXTUAL_PANEL_V1 - panel derecho con tabs: Tareas, Contexto, Negocio.
+// CONTEXTUAL_DETAIL_RELATIONS_V1 - DetailSpec con relaciones tipadas.
+// STUB_112_V1 - A2.5 FormSpec auto-construido desde Business Schema en el siguiente bloque.
+// A2.6 tabs Vista/Formulario/Contexto en el siguiente bloque.
+// A2.7 cascada y slide-in ya estan aplicados via panel-slide-in.
+// A2.8 persistencia del panel via localStorage en el siguiente bloque.// CONTEXTUAL_PANEL_V1 - panel derecho con tabs: Tareas, Contexto, Negocio.
 import { useEffect, useState } from "react";
 
 type Tab = "tasks" | "context" | "business";

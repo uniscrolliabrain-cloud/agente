@@ -1,3 +1,4 @@
+// CHAT_HOOK_ROLE_V2 - roleId expuesto y persistido por thread.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
 import { getThread, saveThreadMessages } from "../api/threads";

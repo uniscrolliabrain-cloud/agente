@@ -151,7 +151,7 @@ export default function DocumentsView({ files }: Props) {
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, fontSize: 11 }}>
                   <span style={{ fontWeight: 600, color: "var(--v2-text-2)" }}>{hit.sourceName}</span>
-                  <span style={{ color: "var(--v2-purple)", fontWeight: 600 }}>{(hit.score * 100).toFixed(0)}%</span>
+                  <span style={{ color: "var(--v2-purple)", fontWeight: 600 }}>{Math.min(100, Math.round(hit.score * 100))}%</span>
                   <button
                     className="v2-pill"
                     onClick={() => void removeSource(hit.sourceId)}

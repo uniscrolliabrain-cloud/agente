@@ -49,3 +49,15 @@ export async function ragReingest(sourceId: string): Promise<{ ok: true }> {
 export async function ragDeleteSource(sourceId: string): Promise<void> {
   await apiFetch(`/api/rag/source/${encodeURIComponent(sourceId)}`, { method: "DELETE" });
 }
+// RAG_SOURCES_CLIENT_V1 - lista de fuentes del indice.
+export interface RagSource {
+  sourceId: string;
+  sourceName: string;
+  chunks: number;
+  firstAt: string;
+}
+
+export async function ragSources(): Promise<RagSource[]> {
+  const res = await apiFetch<{ sources: RagSource[] }>("/api/rag/sources");
+  return res.sources;
+}

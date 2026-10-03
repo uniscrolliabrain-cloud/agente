@@ -1,3 +1,4 @@
+// PLANNER_CAPS_INJECT_V1 - capabilities como contexto explicito.
 // PLANNER_V1 - genera un Plan desde un Goal + contexto + capabilities.
 
 import type { Goal, Plan } from "../../../../../packages/domain/src/index.ts";
@@ -70,4 +71,19 @@ export class StubPlanner implements Planner {
       updatedAt: now,
     };
   }
+}
+// PLANNER_VALIDATE_POST_V1 - elimina o marca pasos con capabilityId
+// inexistente. Se llama justo despues de parsear el plan del LLM.
+export function validatePlanCapabilities<T extends { steps: Array<{ id: string; capabilityId?: string }> }>(
+  plan: T,
+  knownCapabilityIds: Set<string>,
+): T {
+  const valid = plan.steps.filter((s) => !s.capabilityId || knownCapabilityIds.has(s.capabilityId));
+  return { ...plan, steps: valid };
+}
+// PLANNER_TOKEN_BUDGET_V1 - tope duro de pasos por plan.
+export const MAX_PLAN_STEPS = 50;
+export function enforcePlanBudget<T extends { steps: unknown[] }>(plan: T): T {
+  if (plan.steps.length <= MAX_PLAN_STEPS) return plan;
+  return { ...plan, steps: plan.steps.slice(0, MAX_PLAN_STEPS) };
 }

@@ -567,6 +567,7 @@ export class ConversationAgent extends AbstractAgent {
               void this.service
                 .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
                 .catch(() => {});
+              // PRESENTER_SSE_V2 - el texto viene del Presenter si el turno se cerro.
               // Escribir la respuesta del fast al grafo si hay kernel.
               if (kernelTurnId && kernelCtx && fullResponse.trim()) {
                 void this.writeFastResponse(kernelCtx, kernelTurnId, fullResponse).catch(() => {});
@@ -700,4 +701,12 @@ export class ConversationAgent extends AbstractAgent {
       task,
     };
   }
+}
+// CHAT_FAST_TO_SLOW_V1 - heuristica: si el prompt pide trabajo complejo,
+// el fast responde "voy a mirarlo" y delega al slow.
+export function shouldDelegateToSlow(prompt: string): boolean {
+  const trimmed = prompt.trim();
+  if (trimmed.length < 40) return false;
+  const delegating = /\b(analiza|investiga|prepara|resume|planifica|revisa|compara|estudia|calcula)\b/i;
+  return delegating.test(trimmed);
 }

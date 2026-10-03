@@ -1,3 +1,4 @@
+// KERNEL_CONSOLIDATE_ON_CLOSE_V1 - consolidate se ejecuta al cerrar turno.
 // KERNEL_V2 — orquestador del grafo cognitivo, adaptado a TurnStore V2.
 //
 // Cambios respecto a V1:

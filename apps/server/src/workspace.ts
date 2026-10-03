@@ -1,3 +1,4 @@
+// WORKSPACE_FILES_TENANT_V2 - todos los this.files.import pasan tenantId.
 import { randomUUID } from "node:crypto";
 import type {
   ActionProposal,

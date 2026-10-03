@@ -39,6 +39,9 @@ export const SYSTEM_EVENT_TYPES = [
   "agent.runtime_completed",
   "agent.runtime_failed",
   "context.assembled",
+  // VERIFICATION_EVENT_V1
+  "verification.executed",
+  "verification.disagreement",
 ] as const;
 
 export type SystemEventType = (typeof SYSTEM_EVENT_TYPES)[number];

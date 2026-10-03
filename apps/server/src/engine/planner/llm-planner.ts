@@ -1,3 +1,4 @@
+// PLANNER_PROMPT_CLOSED_V2 - JSON validado, formato cerrado.
 // LLM_PLANNER_V2 - genera planes con el modelo real. Mismo patron que conversation.ts.
 
 import { EventType, type RunAgentInput } from "@ag-ui/core";
