@@ -384,6 +384,11 @@ export class AgentService {
           backgroundFailure(`alerts tenant ${tenant}`, error),
         );
       }
+      const taskStatusPage = await this.db.scanByStatusWithCursor<AgentTask>(
+        "tasks",
+        ["queued", "scheduled", "running"],
+        200,
+      );
       for (const { owner, value } of taskStatusPage) {
         await this.publishOutcome(owner, value).catch((error) =>
           backgroundFailure(`publish outcome ${value.id}`, error),
@@ -1331,12 +1336,16 @@ export class AgentService {
       },
       `idea:${id}`,
     );
+    // DECIDE_IDEA_TASKID_FIX_V1 - la idea ya esta en "accepted" desde el primer
+    // CAS. El expected correcto es { status: "accepted" }, no { status: "new" }.
+    // El taskId del primer CAS era provisional (hash); este lo sustituye por el
+    // id real que devolvio createTask.
     await this.db.compareAndSwap(
       owner,
       "ideas",
       id,
-      { status: "new" },
-      { status: "accepted", taskId: task.id },
+      { status: "accepted" },
+      { taskId: task.id },
     );
     return this.db.get<Idea>(owner, "ideas", id);
   }

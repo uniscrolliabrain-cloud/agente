@@ -122,7 +122,6 @@ export async function rememberFewShot(
 ): Promise<void> {
   await db.put(tenantId, "verifier-fewshots", {
     id: `vs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    tenantId,
     ...shot,
     createdAt: new Date().toISOString(),
   });

@@ -10,7 +10,7 @@ import {
   slugify,
   verificationTokenSchema,
   type VerificationToken,
-} from "../../packages/domain/src/signup.ts";
+} from "../../../packages/domain/src/signup.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { RateLimiter } from "./rate-limit.ts";
@@ -163,4 +163,20 @@ export function signupRoutes({ db, config, users, tenantService }: SignupRoutesD
   });
 
   return app;
+}
+interface VerifyEmailInput { name: string; org: string; verifyUrl: string; }
+function verifyEmailTemplate(input: VerifyEmailInput): { subject: string; html: string; text: string } {
+  const subject = "Confirma tu cuenta de " + input.org;
+  const text = "Hola " + input.name + "," + String.fromCharCode(10) + String.fromCharCode(10) + "Confirma tu cuenta abriendo este enlace:" + String.fromCharCode(10) + input.verifyUrl;
+  const html = "<p>Hola " + input.name + ",</p><p><a href='" + input.verifyUrl + "'>Confirma tu cuenta</a></p>";
+  return { subject, html, text };
+}
+
+interface SendEmailInput { to: string; subject: string; html: string; text: string; }
+interface SendEmailResult { ok: boolean; skipped?: boolean; error?: string; }
+async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
+  const apiKey = process.env.SMTP_API_KEY?.trim();
+  if (!apiKey) return { ok: false, skipped: true, error: "SMTP_API_KEY no configurado" };
+  void input;
+  return { ok: false, skipped: true, error: "Envio de email no cableado" };
 }

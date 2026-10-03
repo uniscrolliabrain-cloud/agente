@@ -245,6 +245,7 @@ export class BrowserService {
         download.name,
         new Uint8Array(await response.arrayBuffer()),
         `Browser · ${id}`,
+      "default", // FALLBACK_TENANT_V1
       );
       await this.db.put(owner, "browser-downloads", { id: download.id, fileId: file.id });
       saved.push(file);

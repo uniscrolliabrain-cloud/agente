@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 // ADMIN_ROUTES_V1 - endpoints de admin para observabilidad.
 
 import { Hono } from "hono";

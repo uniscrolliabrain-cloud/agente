@@ -38,24 +38,25 @@ export default function FormRenderer({ spec, onSubmit, onCancel }: Props) {
     return v;
   });
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const nextErrors: Record<string, string> = {};
+    for (const f of spec.fields) {
+      if (f.required && (values[f.key] === undefined || values[f.key] === null || values[f.key] === "")) {
+        nextErrors[f.key] = f.label + " es obligatorio";
+      }
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+    setErrors({});
+    onSubmit?.(values);
+  };
+
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        // FORM_VALIDATE_ZOD_V1 - validacion minima por required.
-        const errors: Record<string, string> = {};
-        for (const f of spec.fields) {
-          if (f.required && (values[f.key] === undefined || values[f.key] === null || values[f.key] === "")) {
-            errors[f.key] = `${f.label} es obligatorio`;
-          }
-        }
-        if (Object.keys(errors).length > 0) {
-          setErrors(errors);
-          return;
-        }
-        setErrors({});
-        onSubmit?.(values);
-      }}
+      onSubmit={handleSubmit}
       className="v3-cc-panel"
       style={{ display: "flex", flexDirection: "column", gap: 12 }}
     >
@@ -69,10 +70,9 @@ export default function FormRenderer({ spec, onSubmit, onCancel }: Props) {
             </label>
             <ProvenanceBadge kind={f.provenance} />
           </div>
-          <div>
-            {errors[f.key] && <div style={{ fontSize: 11, color: "var(--v2-warn-text)" }}>{errors[f.key]}</div>}
-            <div style={{ display: "none" }}>
-          </div>
+          {errors[f.key] && (
+            <div style={{ fontSize: 11, color: "var(--v2-warn-text)" }}>{errors[f.key]}</div>
+          )}
           {f.type === "textarea" ? (
             <textarea
               className="v2-pill"
