@@ -1,6 +1,6 @@
-// A2_USE_LIVE_ACTIVITY_V1 - polling a /api/events con sinceId, backoff y pausa.
+// BUG01_LIVEACTIVITY_V2 - reducer con acciones tipadas; sin stale_check falso.
 import { useEffect, useReducer, useRef } from "react";
-import { applyEvent, markStale, type BusEvent, type LiveState } from "../lib/applyEvent";
+import { applyEvent, type BusEvent, type LiveState } from "../lib/applyEvent";
 
 export interface UseLiveActivityOptions {
   streamUrl?: string;
@@ -8,8 +8,23 @@ export interface UseLiveActivityOptions {
   pollMs?: number;
 }
 
+type Action =
+  | { type: "feed"; event: BusEvent }
+  | { type: "reset" };
+
+function reducer(state: LiveState, action: Action): LiveState {
+  switch (action.type) {
+    case "feed":
+      return applyEvent(state, action.event);
+    case "reset":
+      return new Map();
+    default:
+      return state;
+  }
+}
+
 export function useLiveActivity(opts: UseLiveActivityOptions): LiveState {
-  const [state, dispatch] = useReducer(applyEvent, new Map() as LiveState);
+  const [state, dispatch] = useReducer(reducer, new Map() as LiveState);
   const lastId = useRef<string | undefined>(undefined);
   const optsRef = useRef(opts);
   optsRef.current = opts;
@@ -22,7 +37,7 @@ export function useLiveActivity(opts: UseLiveActivityOptions): LiveState {
 
     const feed = (e: BusEvent) => {
       lastId.current = e.id;
-      dispatch(e);
+      dispatch({ type: "feed", event: e });
     };
 
     const startPolling = () => {
@@ -58,13 +73,8 @@ export function useLiveActivity(opts: UseLiveActivityOptions): LiveState {
       startPolling();
     }
 
-    const staleTimer = setInterval(() => {
-      dispatch({ id: "stale-tick", type: "__stale_check__", at: Date.now() } as BusEvent);
-    }, 60000);
-
     return () => {
       stop = true;
-      clearInterval(staleTimer);
       es?.close();
       if (tm) clearTimeout(tm);
     };
@@ -73,6 +83,5 @@ export function useLiveActivity(opts: UseLiveActivityOptions): LiveState {
   return state;
 }
 
-// Re-export por conveniencia.
 export type { BusEvent, LiveState };
-export { applyEvent, markStale };
+export { applyEvent };

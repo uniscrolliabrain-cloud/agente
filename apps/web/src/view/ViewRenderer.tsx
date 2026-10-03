@@ -1,5 +1,5 @@
 // D3_VIEWRENDERER_V2 - discriminated union + assertNever.
-import { parseViewSpec, type ViewSpec } from "@openmuse/domain/views";
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
 import DashboardTemplate from "../templates/dashboard/DashboardTemplate";
 import QueueTemplate from "../templates/queue/QueueTemplate";
 
@@ -13,7 +13,7 @@ function assertNever(x: never): never {
 }
 
 export default function ViewRenderer({ spec: raw, onAction }: Props) {
-  const spec = parseViewSpec(raw);
+  const spec = parseRuntimeViewSpec(raw);
   if (!spec) {
     return (
       <div className="card" role="alert">
@@ -24,7 +24,7 @@ export default function ViewRenderer({ spec: raw, onAction }: Props) {
   return <Render spec={spec} onAction={onAction} />;
 }
 
-function Render({ spec, onAction }: { spec: ViewSpec; onAction?: (id: string, a: string) => void }) {
+function Render({ spec, onAction }: { spec: RuntimeViewSpec; onAction?: (id: string, a: string) => void }) {
   switch (spec.kind) {
     case "dashboard":
       return <DashboardTemplate spec={spec} />;

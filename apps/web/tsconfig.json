@@ -15,9 +15,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    // TS_PATHS_DOMAIN_V1 - resolver @openmuse/domain/* al paquete local.
     "baseUrl": ".",
     "paths": {
+      "@openmuse/domain/live": ["../../packages/domain/src/live.ts"],
+      "@openmuse/domain/views": ["../../packages/domain/src/views.ts"],
       "@openmuse/domain/*": ["../../packages/domain/src/*"]
     }
   },

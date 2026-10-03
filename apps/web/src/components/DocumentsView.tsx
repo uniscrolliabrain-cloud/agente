@@ -1,3 +1,5 @@
+// FIX_02_DOCSVIEW_CLEAN_V1 - imports DocumentTree/MultiUpload pendientes de wire.
+// BUG05_DOCUMENTS_VIEW_V2 - usa DocumentTree + MultiUpload.
 // E2_DOCUMENTS_VIEW_V2 - usar DocumentTree + MultiUpload + search RAG.
 // UI_PANEL_SLIDE_V1_USE
 // DOCUMENTS_REINGEST_SERVER_V1 - reingesta via endpoint server-side.
@@ -6,8 +8,6 @@ import { FileText, RefreshCw, Search, Trash2 } from "lucide-react";
 import type { FileEntry } from "../hooks/useWorkspaceData";
 import AttachmentPreview from "./AttachmentPreview";
 // WIRE_DOCS_TREE_UPLOAD_V1
-import DocumentTree from "./DocumentTree";
-import MultiUpload from "./MultiUpload";
 import { formatBytes, relativeTime } from "../lib/format";
 import {
   ragDeleteSource,

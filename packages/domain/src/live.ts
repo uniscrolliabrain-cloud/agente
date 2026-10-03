@@ -41,7 +41,4 @@ export function alertUrgency(a: Extract<LiveActivity, { kind: "alert" }>): "soft
   return a.slaSec && a.since > a.slaSec * 0.5 ? "urgent" : "soft";
 }
 
-export function isStale(activity: LiveActivity, now: number, thresholdMs = 300000): boolean {
-  if (activity.kind !== "timer" && activity.kind !== "progress") return false;
-  return false;
-}
+// FIX_02_LIVE_V2 - isStale eliminado (parámetros sin usar).

@@ -2,11 +2,10 @@
 // UI_ANIMATED_NUMBER_V1
 import { useEffect, useState } from "react";
 // UI_CC_CLEANUP_V1 - quitados Activity, AlertCircle, Briefcase sin usar.
-import { CheckCircle2, ChevronRight, Clock, Zap } from "lucide-react";
+import { ChevronRight } from "lucide-react"; // FIX_02_CCVIEW_CLEAN_V1
 import { useTasks } from "../hooks/useTasks";
-import { AnimatedNumber } from "./AnimatedNumber";
+import KpiCard from "./KpiCard"; // FIX_02_CCVIEW_CLEAN_V1
 // WIRE_KPICARD_V1
-import KpiCard from "./KpiCard";
 import { useNotifications } from "../hooks/useNotifications";
 import type { AgentTask } from "../types/api";
 import { relativeTime } from "../lib/format";

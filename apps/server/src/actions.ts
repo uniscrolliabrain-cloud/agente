@@ -1,3 +1,4 @@
+// BUG05_ACTIONS_DEFERRED_V2 - integrar DeferredActions en decide().
 // C3_ACTIONS_DEFERRED_V1 - integrar DeferredActions en decide() cuando este listo.
 // EVENTBUS_ACTION_EMIT_V1
 import { createHash, randomUUID } from "node:crypto";

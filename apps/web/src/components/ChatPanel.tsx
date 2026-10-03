@@ -1,15 +1,12 @@
-// WIRE_CHATPANEL_VIEWRESOLVER_V1 - cuando el usuario envia, intentar resolver una vista.
-// D3_CHATPANEL_VIEWRESOLVED_V1 - abrir panel contextual cuando llega view.resolved.
-// B2_CHATPANEL_V2 - quitado duplicado de streamBuf (solo MessageList lo pinta).
-// CHAT_ROLE_SELECTOR_V1
+// FIX_02_CHATPANEL_V4 - sin activeTool. Usa chat.tools[].
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import SuggestionChips from "./SuggestionChips";
-// CHAT_ROLE_SELECTOR_V2
 import RoleSelector from "./RoleSelector";
 import type { ChatMessage } from "../types/api";
+import type { ToolCall } from "../lib/toolsReducer";
 
 interface ChatState {
   roleId?: string;
@@ -17,7 +14,7 @@ interface ChatState {
   messages: ChatMessage[];
   streaming: boolean;
   streamBuf: string;
-  activeTool: { id: string; name: string; status: "running" | "done"; args: unknown } | null;
+  tools: ToolCall[];
   error: string | null;
   send: (text: string) => void;
   cancel: () => void;
@@ -42,13 +39,13 @@ const CHIPS = [
 ];
 
 export default function ChatPanel({ chat }: Props) {
-  // CHAT_QUICK_REPLY_V1 - el boton "Responder" de MessageBubble rellena el composer.
   const [seed, setSeed] = useState("");
   const [expanded, setExpanded] = useState(true);
   const isEmpty = chat.messages.length === 0 && !chat.streaming;
 
   const userMessage = [...chat.messages].reverse().find((m) => m.role === "user");
   const assistantMessage = [...chat.messages].reverse().find((m) => m.role === "assistant");
+  const firstTool: ToolCall | null = chat.tools[0] ?? null;
 
   if (isEmpty) {
     return (
@@ -106,27 +103,21 @@ export default function ChatPanel({ chat }: Props) {
       <div className="v2-assistant-row">
         <div className="v2-assistant-avatar">IA</div>
         <div className="v2-assistant-body">
-          {chat.activeTool && (
+          {firstTool && (
             <button className="v2-steps-pill" onClick={() => setExpanded((v) => !v)}>
               <span className="v2-steps-dot" />
-              Trabajando · {chat.activeTool.name}
+              Trabajando · {firstTool.name}
               <ChevronDown size={16} style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 150ms" }} />
             </button>
           )}
-          {expanded && chat.activeTool && (
+          {expanded && firstTool && (
             <div className="v2-steps-timeline">
               <div className="v2-steps-step">
-                <div className="v2-steps-step-title">Ejecutando {chat.activeTool.name}</div>
-                <div className="v2-steps-step-desc">
-                  {typeof chat.activeTool.args === "string"
-                    ? chat.activeTool.args
-                    : JSON.stringify(chat.activeTool.args).slice(0, 200)}
-                </div>
+                <div className="v2-steps-step-title">Ejecutando {firstTool.name}</div>
               </div>
             </div>
           )}
 
-          {/* WIRE_CHATPANEL_NO_DUP_V1 - el streamBuf lo pinta MessageList */}
           {assistantMessage && !chat.streaming && (
             <div className="v2-assistant-text">{assistantMessage.content}</div>
           )}
@@ -141,7 +132,7 @@ export default function ChatPanel({ chat }: Props) {
         messages={chat.messages}
         streaming={chat.streaming}
         streamBuf={chat.streamBuf}
-        activeTool={chat.activeTool}
+        tools={chat.tools}
       />
 
       <div className="v2-conv-input">

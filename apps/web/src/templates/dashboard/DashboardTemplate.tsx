@@ -1,8 +1,8 @@
 // D3_DASHBOARD_V2 - template dashboard real.
-import type { ViewSpec } from "@openmuse/domain/views";
+import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
 
 interface Props {
-  spec: Extract<ViewSpec, { kind: "dashboard" }>;
+  spec: Extract<RuntimeViewSpec, { kind: "dashboard" }>;
 }
 
 export default function DashboardTemplate({ spec }: Props) {

@@ -1,3 +1,4 @@
+// FIX_02_APPSHELL_NOINERT_V1 - inert no está en los tipos de React 18.
 // D3_APPSHELL_PANEL_V1 - panel prop puede recibir ContextualPanel con ViewSpec.
 // B1_APPSHELL_V1 - shell 3 columnas con grid-template-columns.
 import type { ReactNode } from "react";
@@ -16,7 +17,7 @@ export default function AppShell({ sidebar, children, panel }: Props) {
 
   return (
     <div className="shell" data-left={left} data-right={rightVisible}>
-      <aside className="shell__left" inert={!left}>
+      <aside className="shell__left" aria-hidden={!left}>
         {sidebar}
       </aside>
       <main className="shell__main">
@@ -45,7 +46,7 @@ export default function AppShell({ sidebar, children, panel }: Props) {
         {children}
       </main>
       {panel && (
-        <aside className="shell__right" inert={!rightVisible}>
+        <aside className="shell__right" aria-hidden={!rightVisible}>
           {panel}
         </aside>
       )}

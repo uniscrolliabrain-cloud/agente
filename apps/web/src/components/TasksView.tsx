@@ -1,3 +1,4 @@
+// FIX_02_TASKSVIEW_CLEAN_V1 - import TaskTimeline pendiente de wire.
 // C3_TASKSVIEW_APPROVALS_V1 - usar ApprovalInbox en la seccion 'Necesita tu OK'.
 // C1_TASKSVIEW_V2 - usa TaskTimeline en el detalle y filtro por rol.
 // TASKS_ROLE_FILTER_V1 - filtro por rol del empleado digital.
@@ -5,7 +6,6 @@
 import { useMemo, useState } from "react";
 import type { AgentTask } from "../types/api";
 // WIRE_TASKTIMELINE_V1
-import TaskTimeline from "./TaskTimeline";
 
 interface Props {
   tasks: AgentTask[];

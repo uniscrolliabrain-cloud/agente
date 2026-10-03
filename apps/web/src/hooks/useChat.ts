@@ -1,9 +1,8 @@
-// B2_USECHAT_V2 - tools[] + typewriter integrado (los tools se agrupan en MessageList).
-// CHAT_HOOK_ROLE_V2 - roleId expuesto y persistido por thread.
+// BUG02_USECHAT_V2 - tools[] + typewriter en la API publica.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
-import { toolsReducer, type ToolCall } from "../lib/toolsReducer";
 import { getThread, saveThreadMessages } from "../api/threads";
+import { toolsReducer, type ToolCall } from "../lib/toolsReducer";
 import type { ChatAttachment, ChatMessage } from "../types/api";
 
 function uid(): string {
@@ -13,9 +12,6 @@ function now(): string {
   return new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
 }
 
-// WIRE_USECHAT_TOOLS_V1 - se usa ToolCall del reducer.
-type ActiveTool = ToolCall;
-
 export function useChat(
   enabled: boolean,
   threadId: string | null,
@@ -24,12 +20,11 @@ export function useChat(
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState(false);
   const [streamBuf, setStreamBuf] = useState("");
-  const [activeTool, setActiveTool] = useState<ActiveTool | null>(null);
+  const [tools, setTools] = useState<ToolCall[]>([]);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const loadedThreadRef = useRef<string | null>(null);
 
-  // Cargar mensajes al cambiar de thread.
   useEffect(() => {
     if (!enabled || !threadId) {
       setMessages([]);
@@ -50,12 +45,9 @@ export function useChat(
         setError(err instanceof Error ? err.message : "No se pudo cargar la conversación");
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [enabled, threadId]);
 
-  // CHAT_ROLE_ID — el rol activo viaja en state para que el backend lo lea.
   const [roleId, setRoleId] = useState<string | undefined>(undefined);
 
   const send = useCallback(
@@ -73,7 +65,7 @@ export function useChat(
       setMessages(history);
       setStreaming(true);
       setStreamBuf("");
-      setActiveTool(null);
+      setTools([]);
       setError(null);
 
       const controller = new AbortController();
@@ -84,7 +76,7 @@ export function useChat(
         : trimmed;
 
       let assistantText = "";
-      let toolCall: ActiveTool | null = null;
+      let localTools: ToolCall[] = [];
       let runErrorMessage: string | null = null;
 
       try {
@@ -100,46 +92,31 @@ export function useChat(
             ),
           },
           (event: AgUiEvent) => {
-            // CopilotKit v2 emite TEXT_MESSAGE_CHUNK (delta en texto plano), no
-            // TEXT_MESSAGE_CONTENT. Escuchando solo el segundo, el LLM contestaba pero
-            // el texto nunca llegaba al estado y el mensaje salia como "(sin respuesta)".
+            const at = Date.now();
             if (
               (event.type === "TEXT_MESSAGE_CONTENT" || event.type === "TEXT_MESSAGE_CHUNK") &&
               typeof event.delta === "string"
             ) {
               assistantText += event.delta;
               setStreamBuf(assistantText);
+            } else if (event.type === "RUN_STARTED") {
+              localTools = toolsReducer(localTools, { type: "RUN_STARTED" });
+              setTools([...localTools]);
             } else if (event.type === "TOOL_CALL_START" && typeof event.toolCallName === "string") {
-              toolCall = {
+              localTools = toolsReducer(localTools, {
+                type: "TOOL_CALL_START",
                 id: String(event.toolCallId ?? uid()),
                 name: event.toolCallName,
-                status: "running",
-                args: {},
-              };
-              setActiveTool({ ...toolCall });
-            } else if (
-              event.type === "TOOL_CALL_ARGS" &&
-              typeof event.delta === "string" &&
-              toolCall
-            ) {
-              try {
-                toolCall.args = JSON.parse(event.delta);
-              } catch {
-                toolCall.args = event.delta;
-              }
-              setActiveTool({ ...toolCall });
-            } else if (event.type === "TOOL_CALL_END" && toolCall) {
-              toolCall.status = "done";
-              setActiveTool({ ...toolCall });
-            } else if (event.type === "TOOL_CALL_RESULT" && toolCall) {
-              try {
-                const parsed = JSON.parse(String(event.content ?? ""));
-                if (parsed && typeof parsed.id === "string") {
-                  toolCall.args = { ...(toolCall.args as object), taskId: parsed.id };
-                }
-              } catch {
-                /* contenido no JSON */
-              }
+                at,
+              });
+              setTools([...localTools]);
+            } else if (event.type === "TOOL_CALL_END") {
+              localTools = toolsReducer(localTools, {
+                type: "TOOL_CALL_END",
+                id: String(event.toolCallId ?? ""),
+                at,
+              });
+              setTools([...localTools]);
             } else if (event.type === "RUN_ERROR") {
               runErrorMessage = String(event.message ?? "Error del modelo");
             }
@@ -157,12 +134,12 @@ export function useChat(
           role: "assistant",
           content: assistantText.trim() || "(sin respuesta)",
           timestamp: now(),
-          toolCall: toolCall ?? undefined,
+          tools: localTools.length > 0 ? localTools : undefined,
         };
         const finalHistory = [...history, finalAssistant];
         setMessages(finalHistory);
         setStreamBuf("");
-        setActiveTool(null);
+        setTools([]);
         try {
           await saveThreadMessages(threadId, finalHistory);
           onSaved?.(threadId);
@@ -177,12 +154,23 @@ export function useChat(
         abortRef.current = null;
       }
     },
-    [messages, streaming, threadId, onSaved],
+    [messages, streaming, threadId, onSaved, roleId],
   );
 
   const cancel = useCallback(() => {
     abortRef.current?.abort();
   }, []);
 
-  return { messages, streaming, streamBuf, activeTool, error, send, cancel, threadId, roleId, setRoleId };
+  return {
+    messages,
+    streaming,
+    streamBuf,
+    tools,
+    error,
+    send,
+    cancel,
+    threadId,
+    roleId,
+    setRoleId,
+  };
 }

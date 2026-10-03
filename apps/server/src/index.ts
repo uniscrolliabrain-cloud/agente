@@ -1,3 +1,4 @@
+// BUG05_TICK_DEFERRED_V2 - arrancar tick de DeferredActions.
 // C3_TICK_DEFERRED_V1 - arrancar tick de DeferredActions al arrancar el servidor.
 // EVENTBUS_STARTUP_V1
 import { serve } from "@hono/node-server";

@@ -1,10 +1,10 @@
 // D3_USE_VIEW_RESOLVER_V1 - resuelve un intent contra el backend.
 import { useCallback, useState } from "react";
 import { apiFetch } from "../api/client";
-import type { ViewSpec } from "@openmuse/domain/views";
+import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
 
 export function useViewResolver() {
-  const [spec, setSpec] = useState<ViewSpec | null>(null);
+  const [spec, setSpec] = useState<RuntimeViewSpec | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -12,7 +12,7 @@ export function useViewResolver() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch<{ spec: ViewSpec | null }>("/api/views/resolve", {
+      const res = await apiFetch<{ spec: RuntimeViewSpec | null }>("/api/views/resolve", {
         method: "POST",
         body: { intent },
       });
