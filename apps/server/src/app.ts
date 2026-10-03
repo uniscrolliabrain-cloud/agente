@@ -551,6 +551,7 @@ app.post("/api/billing/customer", async (c) => {
         file.name,
         new Uint8Array(await file.arrayBuffer()),
         "Uploaded by you",
+        "default", // FALLBACK_TENANT_V1
       ),
       201,
     );

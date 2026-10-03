@@ -2,7 +2,7 @@
 
 import { Hono } from "hono";
 import { z } from "zod";
-import type { AgentRole, AgentTask } from "../../packages/domain/src/agent.ts";
+import type { AgentRole, AgentTask } from "../../../packages/domain/src/agent.ts";
 import type { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
 import type { UserService } from "./users.ts";
