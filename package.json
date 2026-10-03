@@ -10,6 +10,9 @@
   },
   "scripts": {
     "dev": "tsx watch apps/server/src/index.ts",
+    "// DEMO_SCRIPTS_V1": "scripts de demo",
+    "demo:seed": "tsx scripts/seed-demo.ts",
+    "demo:dev": "tsx scripts/run-demo.ts",
     "dev:all": "concurrently -n api,web -c blue,magenta \"pnpm dev\" \"pnpm --filter @openmuse/web dev\"",
     "dev:demo": "tsx apps/server/src/demo/entry.ts",
     "test": "tsx --test --test-timeout=20000 tests/*.test.ts",
