@@ -128,9 +128,9 @@ export function adminRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const body = z.object({ intent: z.string().min(1).max(1000) }).parse(await c.req.json());
-    const { ViewResolver } = await import("./engine/views/resolver.ts");
-    const resolver = new ViewResolver(service);
-    const spec = await resolver.resolve(owner, body.intent);
+    // FIX_TC_ADMIN_V2 - resolver.ts ahora exporta resolveView, no ViewResolver.
+    const { resolveView } = await import("./engine/views/resolver.ts");
+    const spec = await resolveView(owner, body.intent);
     return c.json({ spec });
   });
 

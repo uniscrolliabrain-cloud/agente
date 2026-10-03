@@ -25,6 +25,11 @@ export const SYSTEM_EVENT_TYPES = [
   "system.google_disconnected",
   "auth.login",
   "auth.login_failed",
+  // A2_EVENTS_V1 - undo diferido y cancelacion de acciones.
+  "action.deferred",
+  "action.cancelled",
+  // D2_VIEW_RESOLVED_V1 - el agente sirve una vista.
+  "view.resolved",
   // EVENTS_V2 — business graph, policy, state machine, agent runtime, context.
   "entity.created",
   "entity.updated",

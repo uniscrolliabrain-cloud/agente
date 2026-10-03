@@ -1,8 +1,8 @@
 # A1 - Hotfix de memorias (category, tags)
 
-> **UI_CAMPAIGN_A1_MEMORIAS_V1**
+> **UI_CAMPAIGN_A1_MEMORIAS_V2**
 >
-> Branch `feat/a1-memory-hotfix`. Estado: EN CURSO.
+> Branch `feat/a1-memory-hotfix`. Estado: HECHO.
 > Última actualización: 2026-10-03.
 
 ---

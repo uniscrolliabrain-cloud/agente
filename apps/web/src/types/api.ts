@@ -16,6 +16,8 @@ export interface TaskStep {
   title: string;
   status: "pending" | "running" | "succeeded" | "failed" | "waiting";
   detail?: string;
+  // FIX_02_TASKSTEP_DURATION_V1
+  durationMs?: number;
 }
 
 export interface Evidence {
@@ -141,12 +143,13 @@ export interface ChatAttachment {
   size?: number;
 }
 
+// B2_TOOLS_V1 - toolCall singular -> tools[].
 export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
   timestamp?: string;
-  toolCall?: { id: string; name: string; status: "running" | "done"; args: unknown };
+  tools?: { id: string; name: string; status: "running" | "done" | "error"; startedAt: number; endedAt?: number; args?: unknown }[];
   taskIdRef?: string;
   attachment?: ChatAttachment;
 }
