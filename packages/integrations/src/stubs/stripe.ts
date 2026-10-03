@@ -84,7 +84,15 @@ export class StripeClient {
     return response.json() as Promise<T>;
   }
 
+  // STRIPE_CUSTOMER_DEDUP_V1 - buscar por email antes de crear + Idempotency-Key.
   async createCustomer(email: string, name: string, signal?: AbortSignal): Promise<StripeCustomer> {
+    const listResult = await this.get<{ data: Array<{ id: string; email?: string; name?: string }> }>(
+      `/v1/customers?email=${encodeURIComponent(email)}&limit=1`,
+      signal,
+    ).catch(() => null);
+    if (listResult?.data?.[0]) {
+      return { id: listResult.data[0].id, email: listResult.data[0].email, name: listResult.data[0].name };
+    }
     if (!/^[^@\\s]+@[^@\\s]+$/.test(email)) throw new AppError("Email invalido", 422);
     const result = await this.post<{ id: string; email?: string; name?: string }>(
       "/v1/customers",

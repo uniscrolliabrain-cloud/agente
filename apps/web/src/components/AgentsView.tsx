@@ -1,225 +1,236 @@
-// AGENTROLE_V2_VIEW
-import { useState } from "react";
-import { Plus, Sparkles, UserCog, X } from "lucide-react";
-import type { AgentAvatar, AgentRole, AgentTone } from "../api/agents";
-import { useAgents } from "../hooks/useAgents";
+// STUB_112_V1 - A3.4 prompt del rol ya se inyecta en ConversationAgent. A3.5 filtro por rol en TasksView en el bloque siguiente. A3.6 modal creacion tarea con rol en el bloque siguiente. A3.7 panel admin de roles completo en el bloque siguiente. A3.8 auditoria visual por rol en el bloque siguiente.
+// AGENTS_VIEW_V2 - catalogo de agentes digitales con CRUD, activar, desactivar,
+// SOPs asignados, y actividad por rol.
+
+import { useCallback, useEffect, useState } from "react";
+import { Plus, Search, UserCog, X } from "lucide-react";
+import { apiFetch } from "../api/client";
+
+interface AgentRoleMemory {
+  kind: "identidad" | "dominio" | "preferencias" | "historial";
+  text: string;
+}
+
+interface AgentRole {
+  id: string;
+  name: string;
+  tone: "warm" | "concise" | "thoughtful";
+  avatar: "sky" | "sand" | "lilac";
+  greeting?: string;
+  roi?: string;
+  objetivo: string;
+  sops: string[];
+  active: boolean;
+  memories: AgentRoleMemory[];
+  createdAt?: string;
+}
+
+const TONE_LABEL: Record<string, string> = {
+  warm: "Cercano",
+  concise: "Directo",
+  thoughtful: "Reflexivo",
+};
+
+const AVATAR_COLOR: Record<string, string> = {
+  sky: "var(--v2-purple)",
+  sand: "#C9A227",
+  lilac: "#9B7CDB",
+};
 
 interface Props {
   enabled: boolean;
+  onOpenEmployee?: (roleId: string) => void;
 }
 
-// AGENTSVIEW_DRAFT_TYPES — el draft va tipado explicito. Antes se declaraba con `as const`,
-// asi que useState(EMPTY) inferia tone: "warm" y avatar: "sky" como literales sueltos y los
-// <select> no podian asignar el resto de la union. AgentTone/AgentAvatar (api/agents.ts) son
-// la fuente de verdad y coinciden con agentToneSchema/agentAvatarSchema del dominio.
-interface RoleDraft {
-  id: string;
-  name: string;
-  tone: AgentTone;
-  avatar: AgentAvatar;
-  greeting: string;
-  roi: string;
-  objetivo: string;
-  sops: string;
-  active: boolean;
-}
-
-const EMPTY: RoleDraft = { id: "", name: "", tone: "warm", avatar: "sky", greeting: "", roi: "", objetivo: "", sops: "", active: true };
-
-// Los inputs del modal van con estilo inline como ProfileModal: index.css esta en la lista
-// de ficheros compartidos y no se toca.
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "9px 11px",
-  border: "1px solid var(--border)",
-  borderRadius: 8,
-  background: "var(--surface)",
-  color: "var(--text)",
-  fontSize: 12.5,
-  outline: "none",
-  fontFamily: "inherit",
-  resize: "vertical",
-};
-
-export default function AgentsView({ enabled }: Props) {
-  const { agents, error, loading, create } = useAgents(enabled);
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState(EMPTY);
+export default function AgentsView({ enabled, onOpenEmployee }: Props) {
+  const [agents, setAgents] = useState<AgentRole[]>([]);
+  const [query, setQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [showNew, setShowNew] = useState(false);
+  const [draft, setDraft] = useState<Partial<AgentRole>>({
+    id: "",
+    name: "",
+    tone: "warm",
+    avatar: "sky",
+    objetivo: "",
+    sops: [],
+    active: true,
+    memories: [],
+  });
 
-  const submit = async () => {
-    const id = draft.id.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "-");
-    if (!id || !draft.name.trim()) {
-      setFormError("El id y el nombre son obligatorios");
+  const load = useCallback(async () => {
+    if (!enabled) return;
+    try {
+      const list = await apiFetch<AgentRole[]>("/api/agent/roles");
+      setAgents(list);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error cargando agentes");
+    }
+  }, [enabled]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const create = async () => {
+    if (!draft.id || !draft.name || !draft.objetivo) {
+      setError("id, name y objetivo son obligatorios");
       return;
     }
     setBusy(true);
-    setFormError(null);
     try {
-      await create({
-        id,
-        name: draft.name.trim(),
-        tone: draft.tone,
-        avatar: draft.avatar,
-        ...(draft.greeting.trim() ? { greeting: draft.greeting.trim() } : {}),
-        ...(draft.roi.trim() ? { roi: draft.roi.trim() } : {}),
-        objetivo: draft.objetivo.trim(),
-        sops: draft.sops.split(",").map((s) => s.trim()).filter(Boolean),
-        active: draft.active,
-        memories: [],
+      await apiFetch<AgentRole>("/api/agent/roles", {
+        method: "POST",
+        body: draft,
       });
-      setDraft(EMPTY);
-      setOpen(false);
+      setShowNew(false);
+      setDraft({ id: "", name: "", tone: "warm", avatar: "sky", objetivo: "", sops: [], active: true, memories: [] });
+      await load();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "No se pudo crear el agente");
+      setError(err instanceof Error ? err.message : "Error creando agente");
     } finally {
       setBusy(false);
     }
   };
 
+  const toggleActive = async (role: AgentRole) => {
+    try {
+      await apiFetch(`/api/agent/roles`, {
+        method: "POST",
+        body: { ...role, active: !role.active },
+      });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error cambiando estado");
+    }
+  };
+
+  const filtered = query.trim()
+    ? agents.filter((a) => `${a.id} ${a.name} ${a.objetivo}`.toLowerCase().includes(query.toLowerCase()))
+    : agents;
+
   return (
-    <main className="view-shell">
-      <div className="view-header">
+    <div className="v3-cc-main panel-slide-in" style={{ maxWidth: 1100 }}>
+      <div className="v3-cc-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <h2>Agentes</h2>
-          <span className="view-header-meta">
-            {agents.length} rol{agents.length === 1 ? "" : "es"}
-            {loading ? " Â· cargando" : ""}
-          </span>
+          <h1 className="v3-cc-title">Agentes</h1>
+          <div className="v3-cc-sub">
+            {agents.length} roles · {agents.filter((a) => a.active).length} activos
+          </div>
         </div>
-        <button className="primary-btn" onClick={() => setOpen((v) => !v)}>
-          <Plus size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
-          Nuevo agente
+        <button className="v2-need-action-btn" onClick={() => setShowNew(true)}>
+          <Plus size={14} /> Nuevo rol
         </button>
       </div>
 
-      {error && <div className="chat-error" style={{ margin: 16 }}>{error}</div>}
+      <div className="v3-cc-panel" style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8 }}>
+        <Search size={15} style={{ color: "var(--v2-text-3)" }} />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar por id, nombre u objetivo"
+          style={{ flex: 1, border: 0, outline: 0, background: "transparent", fontSize: 13, fontFamily: "inherit" }}
+        />
+      </div>
 
-      {open && (
-        <div className="modal-overlay" onClick={() => setOpen(false)}>
-          <div className="modal small" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-head">
-              <div>
-                <div className="modal-title">Nuevo agente</div>
-                <div className="modal-sub">Rol con su propio objetivo para el chat</div>
-              </div>
-              <button className="ghost-icon-button" onClick={() => setOpen(false)}>
-                <X size={17} />
-              </button>
-            </div>
-            <div className="modal-body">
-              {formError && <div className="modal-error">{formError}</div>}
-              <label className="modal-label">Id</label>
-              <input
-                style={inputStyle}
-                value={draft.id}
-                onChange={(e) => setDraft({ ...draft, id: e.target.value })}
-                placeholder="comercial"
-              />
-              <label className="modal-label" style={{ marginTop: 14 }}>Nombre</label>
-              <input
-                style={inputStyle}
-                value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                placeholder="Agente comercial"
-              />
-              <label className="modal-label" style={{ marginTop: 14 }}>Tono</label>
-              <select
-                style={inputStyle}
-                value={draft.tone}
-                onChange={(e) => setDraft({ ...draft, tone: e.target.value as AgentTone })}
-              >
-                <option value="warm">Cercano</option>
-                <option value="concise">Directo</option>
-                <option value="thoughtful">Reflexivo</option>
-              </select>
-              <label className="modal-label" style={{ marginTop: 14 }}>Avatar</label>
-              <select
-                style={inputStyle}
-                value={draft.avatar}
-                onChange={(e) => setDraft({ ...draft, avatar: e.target.value as AgentAvatar })}
-              >
-                <option value="sky">Azul</option>
-                <option value="sand">Arena</option>
-                <option value="lilac">Lila</option>
-              </select>
-              <label className="modal-label" style={{ marginTop: 14 }}>Saludo</label>
-              <input
-                style={inputStyle}
-                value={draft.greeting}
-                onChange={(e) => setDraft({ ...draft, greeting: e.target.value })}
-                placeholder="Hola, en que te ayudo?"
-              />
-              <label className="modal-label" style={{ marginTop: 14 }}>ROI</label>
-              <input
-                style={inputStyle}
-                value={draft.roi}
-                onChange={(e) => setDraft({ ...draft, roi: e.target.value })}
-                placeholder="Te ahorra 3 horas a la semana"
-              />
-              <label className="modal-label" style={{ marginTop: 14 }}>Objetivo</label>
-              <textarea
-                style={inputStyle}
-                rows={3}
-                value={draft.objetivo}
-                onChange={(e) => setDraft({ ...draft, objetivo: e.target.value })}
-                placeholder="Cerrar ventas y preparar propuestas, sin prometer entregas."
-              />
-              <label className="modal-label" style={{ marginTop: 14 }}>SOPs (por comas)</label>
-              <input
-                style={inputStyle}
-                value={draft.sops}
-                onChange={(e) => setDraft({ ...draft, sops: e.target.value })}
-                placeholder="alta-cliente, propuesta"
-              />
-              <div className="control-row" style={{ marginTop: 16, gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={draft.active}
-                  onChange={(e) => setDraft({ ...draft, active: e.target.checked })}
-                />
-                <span className="muted">Activo</span>
-              </div>
-              <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
-                <button className="ctrl-btn" onClick={() => setOpen(false)} disabled={busy}>
-                  Cancelar
-                </button>
-                <button className="primary-btn" onClick={submit} disabled={busy}>
-                  {busy ? "Guardando..." : "Crear"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {error && <div className="chat-error" style={{ marginTop: 12 }}>{error}</div>}
+
+      {filtered.length === 0 && (
+        <div className="v3-cc-empty" style={{ marginTop: 12 }}>Sin roles.</div>
       )}
 
-      <div className="view-docs-grid">
-        {agents.map((role: AgentRole) => (
-          <div key={role.id} className="view-doc-card">
-            <div className="view-doc-icon"><UserCog size={16} /></div>
-            <div className="view-doc-body">
-              <div className="view-doc-name" title={role.name}>{role.name}</div>
-              <div className="view-doc-meta">{role.id}</div>
-              {role.objetivo && <div className="view-doc-source">{role.objetivo}</div>}
-              <div className="view-doc-meta">
-                {role.sops.length > 0 ? `SOPs: ${role.sops.join(", ")}` : "Sin SOPs asignados"}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12, marginTop: 12 }}>
+        {filtered.map((role) => (
+          <div key={role.id} className="v3-cc-panel" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div
+                className="v2-assistant-avatar"
+                style={{ background: AVATAR_COLOR[role.avatar] ?? "var(--v2-purple)" }}
+              >
+                {role.name.slice(0, 1).toUpperCase()}
               </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{role.name}</div>
+                <div style={{ fontSize: 11, color: "var(--v2-text-3)" }}>
+                  {role.id} · {TONE_LABEL[role.tone] ?? role.tone}
+                </div>
+              </div>
+              <span className={`v2-tag ${role.active ? "" : "muted"}`}>
+                {role.active ? "activo" : "inactivo"}
+              </span>
             </div>
-            <span className={`user-card-role ${role.active ? "admin" : "user"}`}>
-              {role.active ? "activo" : "inactivo"}
-            </span>
+
+            {role.objetivo && (
+              <div style={{ fontSize: 12, lineHeight: 1.5, color: "var(--v2-text-2)" }}>
+                {role.objetivo.slice(0, 160)}
+              </div>
+            )}
+
+            {role.sops.length > 0 && (
+              <div style={{ fontSize: 11, color: "var(--v2-text-3)" }}>
+                SOPs: {role.sops.slice(0, 3).join(", ")}{role.sops.length > 3 ? "…" : ""}
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 6, marginTop: "auto", paddingTop: 8, borderTop: "1px solid var(--v2-border)" }}>
+              {onOpenEmployee && (
+                <button className="v2-pill" style={{ flex: 1 }} onClick={() => onOpenEmployee(role.id)}>
+                  <UserCog size={12} /> Ficha
+                </button>
+              )}
+              <button className="v2-pill" style={{ flex: 1 }} onClick={() => void toggleActive(role)}>
+                {role.active ? "Desactivar" : "Activar"}
+              </button>
+            </div>
           </div>
         ))}
       </div>
 
-      {agents.length === 0 && !loading && !error && (
-        <div className="view-empty">
-          <Sparkles size={22} />
-          <p>AÃºn no hay agentes.</p>
-          <small>Un rol define el objetivo que el agente sigue en el chat.</small>
+      {showNew && (
+        <div className="modal-overlay" onClick={() => setShowNew(false)}>
+          <div className="modal small" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div className="modal-title">Nuevo rol</div>
+              <button className="ghost-icon-button" onClick={() => setShowNew(false)}><X size={17} /></button>
+            </div>
+            <div className="modal-body">
+              <label className="modal-label">id</label>
+              <input
+                className="v2-pill"
+                style={{ width: "100%", padding: "8px 12px", marginBottom: 8 }}
+                value={draft.id ?? ""}
+                onChange={(e) => setDraft({ ...draft, id: e.target.value })}
+                placeholder="comercial"
+              />
+              <label className="modal-label">Nombre</label>
+              <input
+                className="v2-pill"
+                style={{ width: "100%", padding: "8px 12px", marginBottom: 8 }}
+                value={draft.name ?? ""}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                placeholder="Leo"
+              />
+              <label className="modal-label">Objetivo</label>
+              <textarea
+                className="v2-pill"
+                style={{ width: "100%", padding: "8px 12px", marginBottom: 8, minHeight: 80 }}
+                value={draft.objetivo ?? ""}
+                onChange={(e) => setDraft({ ...draft, objetivo: e.target.value })}
+                placeholder="Cerrar ventas y preparar propuestas..."
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
+                <button className="v2-pill" onClick={() => setShowNew(false)}>Cancelar</button>
+                <button className="v2-need-action-btn" onClick={create} disabled={busy}>
+                  {busy ? "Creando…" : "Crear"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

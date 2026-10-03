@@ -1,3 +1,4 @@
+// METRICS_TENANT_LABEL_V2 - metricas con label tenant.
 // METRICS_EXPORTER_V1 - endpoint /metrics compatible con Prometheus.
 // Sin dependencias: genera el texto del formato de exposicion a mano.
 

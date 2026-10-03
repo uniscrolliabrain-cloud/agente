@@ -1,3 +1,4 @@
+// LEARNING_OBSERVER_CYCLE_V2 - llamado al final del ciclo por el orquestador.
 // LEARNING_OBSERVER_V1 - observa cada ejecucion y guarda hechos/patrones/fallos.
 
 import type { Store } from "../../db.ts";
@@ -114,4 +115,18 @@ export class LearningObserver {
       });
     }
   }
+}
+// LEARNING_PLAN_REUSE_V1 - cuando un plan funciona, se guarda su firma
+// para reutilizarla en goals similares.
+export function planSignature(steps: Array<{ capabilityId?: string; id: string }>): string {
+  return steps.map((s) => s.capabilityId ?? s.id).join(">");
+}
+
+export function similarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  const sa = new Set(a.split(">"));
+  const sb = new Set(b.split(">"));
+  const inter = [...sa].filter((x) => sb.has(x)).length;
+  const union = new Set([...sa, ...sb]).size;
+  return union > 0 ? inter / union : 0;
 }

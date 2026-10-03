@@ -414,6 +414,37 @@ app.post("/api/billing/customer", async (c) => {
     const { metricsRoutes } = await import("./metrics-exporter.ts");
     app.route("/metrics", metricsRoutes(agent, users));
   }
+  // APP_ADMIN_TENANTS_V1 - panel admin de tenants.
+  {
+    const { adminTenantsRoutes } = await import("./admin-tenants.ts");
+    app.route("/api/admin/tenants", adminTenantsRoutes(agent, users));
+  }
+  // APP_NOTIF_STREAM_V1 - SSE de notificaciones.
+  {
+    const { notificationsStreamRoutes } = await import("./notifications-stream.ts");
+    app.route("/api/notifications", notificationsStreamRoutes(agent));
+  }
+  // APP_NOTIF_PREFS_V1 - preferencias de notificaciones.
+  {
+    const { notificationPrefsRoutes } = await import("./notification-prefs.ts");
+    app.route("/api/notifications", notificationPrefsRoutes(db));
+  }
+  // APP_FORM_ROUTES_V1 - formularios asistidos.
+  {
+    const { formRoutes } = await import("./form-routes.ts");
+    app.route("/api/forms", formRoutes(agent));
+  }
+  // APP_INTEGRATIONS_V1 - WhatsApp, Stripe, GMB, Social.
+  {
+    const { whatsappRoutes } = await import("./whatsapp-routes.ts");
+    app.route("/api/whatsapp", whatsappRoutes(agent));
+    const { billingRoutes } = await import("./billing-routes.ts");
+    app.route("/api/billing", billingRoutes(db));
+    const { gmbRoutes } = await import("./gmb-routes.ts");
+    app.route("/api/gmb", gmbRoutes(agent));
+    const { socialRoutes } = await import("./social-routes.ts");
+    app.route("/api/social", socialRoutes(agent));
+  }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {
     const { kernelRoutes } = await import("./kernel-routes.ts");

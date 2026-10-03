@@ -1,3 +1,4 @@
+// HANDOFF_ACCEPT_V2 - accept y list por rol.
 // HANDOFF_SERVICE_V1 - pasa trabajo entre roles.
 
 import type { Store } from "../../db.ts";

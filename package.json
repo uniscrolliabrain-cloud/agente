@@ -33,6 +33,7 @@
     "audit:contracts": "tsx scripts/audits/contracts.ts",
     "audit:idempotency": "tsx scripts/audits/idempotency.ts",
     "audit:anchors": "tsx scripts/audits/anchors.ts",
+    "audit:tenant-default": "tsx scripts/audits/tenant-default.ts",
     "release:verify": "tsx scripts/release-verify.ts",
     "migrate:tenant": "tsx scripts/migrate-tenant-id.ts",
     "migrate:tenant-scope": "tsx scripts/migrate-tenant-scope.ts",

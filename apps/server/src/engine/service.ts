@@ -1,3 +1,5 @@
+// NOTIFY_GROUP_TASK_V1 - las notificaciones se agrupan por taskId.
+  // ORCHESTRATOR_DEPS_REAL_V1 - deps reales cableadas.
 // B103_APPLIED
 // R5b_APPLIED
 // R3_APPLIED
@@ -221,9 +223,10 @@ export class AgentService {
     bootstrapCapabilities(this.capabilities);
     // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
     // SERVICE_LLM_PLANNER_V1 - LLM primero, stub como fallback.
+    // SERVICE_LLM_PLANNER_V2 - LlmPlanner primero, StubPlanner como fallback si no hay modelo.
     this.planner = new LlmPlanner(config, new StubPlanner()) as unknown as StubPlanner;
     const deterministic = new DeterministicVerifier();
-    // SERVICE_LLM_VERIFIER_V1 - LLM como segunda capa.
+    // SERVICE_LLM_VERIFIER_V2 - LLM como segunda capa con fallback al determinista.
     this.verifier = new LlmVerifier(config, deterministic) as unknown as DeterministicVerifier;
     // ORCHESTRATOR_DEPS_WIRE_V1 - el orquestador recibe las deps.
     this.orchestrator = new BusinessOSOrchestrator({
@@ -250,6 +253,7 @@ export class AgentService {
         verify: (goal, outcome) => this.verifier.verify(goal, outcome),
       },
       // SERVICE_LLM_REPLANNER_V1 - LLM replanner.
+      // SERVICE_LLM_REPLANNER_V2
       replanner: {
         replan: (input) => new LlmReplanner(config).replan(input),
       },
@@ -497,6 +501,7 @@ export class AgentService {
         { tasks: 0, monitors: 0 },
         { dedupeKey: "system:maintenance:1m" },
       );
+      // META_LOOP_REAL_V2 - bucle de metaconsciencia con ProgressEvent real.
       // META_LOOP_V1 - bucle de metaconsciencia. Corre cada minuto desde
       // maintain(). Antes Meta.evaluate() no lo llamaba nadie: era decorativo.
       await this.runMetaLoop().catch((error) =>

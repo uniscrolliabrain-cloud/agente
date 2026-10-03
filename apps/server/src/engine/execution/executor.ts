@@ -1,3 +1,4 @@
+// EXECUTOR_REAL_RUNNER_V2 - StepRunner inyectado en constructor.
 // EXECUTOR_V1 - ejecuta un Plan step a step con retry y compensacion.
 
 import type { ExecutionContext, Plan } from "../../../../../packages/domain/src/index.ts";

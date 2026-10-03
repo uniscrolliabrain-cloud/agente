@@ -1,3 +1,4 @@
+// SLOW_AUTHOR_PROGRESS_V2 - emite ProgressEvent inicio/ready/failed.
 // KERNEL_SLOW_AUTHOR_V2 - escribe razonamiento y delegacion reales al grafo.
 //
 // Cambios respecto a V1:

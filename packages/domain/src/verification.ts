@@ -1,3 +1,4 @@
+// VERIFICATION_CONFIDENCE_V2 - confidence y umbral 0.6.
 // VERIFICATION_V1 - verificacion de un Outcome contra un Goal.
 
 import { z } from "zod";

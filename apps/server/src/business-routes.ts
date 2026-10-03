@@ -47,6 +47,19 @@ export function businessRoutes(
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
+  // BUSINESS_EXPORT_V1 - exporta todo el Business Graph del tenant.
+  app.get("/export", async (c) => {
+    const owner = c.get("owner");
+    const entities = await graph.listEntities(owner);
+    const relations = await graph.listRelations(owner);
+    return c.json({
+      owner,
+      exportedAt: new Date().toISOString(),
+      entities,
+      relations,
+    });
+  });
+
   app.get("/entities", async (c) => {
     const type = c.req.query("type");
     return c.json({ entities: await graph.listEntities(c.get("owner"), type) });

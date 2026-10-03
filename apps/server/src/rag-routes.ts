@@ -9,6 +9,23 @@ import { AppError } from "./errors.ts";
 export function ragRoutes(rag: RagService, db: Store, files: Files) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
+  // RAG_SOURCES_LIST_V1 - lista de fuentes con conteo de chunks.
+  app.get("/sources", async (c) => {
+    const owner = c.get("owner");
+    const all = await db.list<{ id: string; sourceId: string; sourceName: string; createdAt: string }>(
+      owner,
+      "rag-chunks",
+      { limit: 20000 },
+    );
+    const grouped = new Map<string, { sourceId: string; sourceName: string; chunks: number; firstAt: string }>();
+    for (const chunk of all) {
+      const existing = grouped.get(chunk.sourceId);
+      if (existing) existing.chunks++;
+      else grouped.set(chunk.sourceId, { sourceId: chunk.sourceId, sourceName: chunk.sourceName, chunks: 1, firstAt: chunk.createdAt });
+    }
+    return c.json({ sources: [...grouped.values()].sort((a, b) => b.chunks - a.chunks) });
+  });
+
   app.get("/status", async (c) => {
     const stats = await rag.stats(c.get("owner"));
     return c.json({ configured: embeddingsConfigured(), ...stats });

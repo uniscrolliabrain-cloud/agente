@@ -58,3 +58,29 @@ export class ReactionEngine {
     return String(payload[m[1]]) === m[2];
   }
 }
+// REACTION_BUS_SUBSCRIBE_V1 - el engine escucha cada evento del bus y
+// dispara las reglas que matcheen.
+export interface EventLike {
+  type: string;
+  owner: string;
+  tenantId?: string;
+  payload?: Record<string, unknown>;
+}
+
+export async function subscribeToBus(
+  bus: { list: (owner: string, filter: Record<string, unknown>) => Promise<EventLike[]> },
+  engine: { evaluate: (tenantId: string, eventType: string, payload: Record<string, unknown>) => Promise<void> },
+  getActiveTenants: () => Promise<string[]>,
+): Promise<void> {
+  const tick = async () => {
+    const tenants = await getActiveTenants();
+    for (const tenantId of tenants) {
+      const events = await bus.list(tenantId, { limit: 200 }).catch(() => []);
+      for (const e of events) {
+        await engine.evaluate(tenantId, e.type, e.payload ?? {}).catch(() => {});
+      }
+    }
+  };
+  setInterval(() => { void tick().catch(() => {}); }, 60000);
+  void tick().catch(() => {});
+}

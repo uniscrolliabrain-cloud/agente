@@ -4,6 +4,8 @@ import { ChevronDown } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import SuggestionChips from "./SuggestionChips";
+// CHAT_ROLE_SELECTOR_V2
+import RoleSelector from "./RoleSelector";
 import type { ChatMessage } from "../types/api";
 
 interface ChatState {
@@ -106,6 +108,7 @@ export default function ChatPanel({ chat }: Props) {
           ))}
         </select>
       )}
+      <RoleSelector value={chat.roleId} onChange={chat.setRoleId} />
       <div className="v2-conv-crumb">
         <span>Chat</span>
         <span style={{ color: "var(--v2-border-strong)" }}>/</span>
