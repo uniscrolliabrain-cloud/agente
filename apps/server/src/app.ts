@@ -390,6 +390,11 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/skills", skillsRoutes(db));
   app.route("/api/sops", sopRoutes(db, agent));
   app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }, bus));
+  // APP_SIGNUP_ROUTES_V1 - endpoints publicos de signup y verify.
+  {
+    const { signupRoutes } = await import("./auth-signup.ts");
+    app.route("/api/auth", signupRoutes({ db, config, users, tenantService }));
+  }
   app.route("/api/rag", ragRoutes(rag, db, files));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
@@ -398,6 +403,16 @@ app.post("/api/billing/customer", async (c) => {
   {
     const { adminRoutes } = await import("./admin-routes.ts");
     app.route("/api/admin", adminRoutes(agent, users));
+  }
+  // APP_ADMIN_CLIENTS_V1 - panel maestro de clientes.
+  {
+    const { adminClientsRoutes } = await import("./admin-clients.ts");
+    app.route("/api/admin/clients", adminClientsRoutes(agent, users));
+  }
+  // APP_METRICS_V1 - endpoint Prometheus.
+  {
+    const { metricsRoutes } = await import("./metrics-exporter.ts");
+    app.route("/metrics", metricsRoutes(agent, users));
   }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {

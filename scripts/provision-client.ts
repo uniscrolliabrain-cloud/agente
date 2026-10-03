@@ -119,6 +119,40 @@ async function main() {
     }
   }
 
+  // PROVISION_SEED_16_ROLES_V1 - si el cliente no trae agentes.json,
+  // se copia el catalogo base y se seedean los 16 roles.
+  const agentesPath = join(baseDir, "agentes.json");
+  if (!existsSync(agentesPath)) {
+    const baseCatalog = join(root, "clientes", "_base", "agentes.json");
+    if (existsSync(baseCatalog)) {
+      const baseContent = await readFile(baseCatalog, "utf8");
+      await writeFile(agentesPath, baseContent, "utf8");
+      console.log(`  + agentes.json copiado del catalogo base`);
+    }
+  }
+  if (existsSync(agentesPath)) {
+    const catalog = JSON.parse(await readFile(agentesPath, "utf8")) as { agentes?: Array<Record<string, unknown>> };
+    const roles = catalog.agentes ?? [];
+    const existingRoles = await http<Array<{ id: string }>>("/api/agent/roles", { headers: auth }).catch(() => []);
+    const existingIds = new Set(existingRoles.map((r) => r.id));
+    let created = 0;
+    for (const role of roles) {
+      const id = String(role.id ?? "");
+      if (!id || existingIds.has(id)) continue;
+      try {
+        await http("/api/agent/roles", {
+          method: "POST",
+          headers: auth,
+          body: JSON.stringify(role),
+        });
+        created++;
+      } catch (err) {
+        console.log(`  FALLO rol ${id}: ${err instanceof Error ? err.message : "desconocido"}`);
+      }
+    }
+    console.log(`  + ${created} roles creados (${roles.length} en el catalogo)`);
+  }
+
   console.log(`Provision completo: ${cfg.name}`);
 }
 
