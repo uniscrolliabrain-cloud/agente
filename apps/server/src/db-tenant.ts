@@ -13,6 +13,7 @@ export class TenantScopedStore {
 
   private async key(owner: string): Promise<string> {
     const tenantId = await this.resolver(owner);
+    this.tenantPrefixes.add(tenantId);
     return `${tenantId}:${owner}`;
   }
 
@@ -74,11 +75,35 @@ export class TenantScopedStore {
     return this.store.transaction(() => fn(this));
   }
 
+  // TENANT_SCAN_SQL_FILTER_V1 - registramos los prefijos de tenant vistos
+  // para poder filtrar en SQL. Antes scan traia filas de TODOS los tenants
+  // y el caller filtraba en memoria (50x trabajo con 50 tenants).
+  private readonly tenantPrefixes = new Set<string>();
+
   async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
     // TENANT_SCAN_PEEL_V1 - el store subyacente guarda owner = "tenantId:owner".
     // El caller (TaskWorker) espera el owner limpio para poder volver a componer
-    // la clave al hacer compareAndSwap/get. Si devolvieramos el owner compuesto,
+    // la clave al hacer compareAndSwap/get. Si devolveramos el owner compuesto,
     // el worker compondria doble y no encontraria la tarea.
+    // TENANT_SCAN_SQL_FILTER_V1 - si el store subyacente expone
+    // scanByOwnerPrefix, filtramos en SQL por tenant. Si no, caemos al scan
+    // sin filtro (comportamiento previo).
+    const storeWithPrefix = this.store as Store & {
+      scanByOwnerPrefix?: <U>(
+        kind: string,
+        ownerPrefix: string,
+        limit: number,
+      ) => Promise<{ owner: string; value: U }[]>;
+    };
+    const prefix = this.tenantPrefixes.values().next().value;
+    if (prefix && typeof storeWithPrefix.scanByOwnerPrefix === "function") {
+      try {
+        const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
+        return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+      } catch {
+        // Fallback al scan sin filtro si la query falla.
+      }
+    }
     const rows = await this.store.scan<T>(kind, limit);
     return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
   }

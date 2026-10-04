@@ -41,6 +41,19 @@ export class InMemoryAuditStore implements AuditStore {
   private readonly entries = new Map<string, AuditEntry[]>();
 
   async append(input: AuditAppendInput): Promise<AuditEntry> {
+    // INMEM_AUDIT_TENANT_CHECK_V1 - antes no validaba nada. Si alguien
+    // llamaba append con un owner de otro tenant, se escribia igual. Ahora
+    // comprobamos que el tenantId no este vacio y que coincide con el tenant
+    // del owner actual si este tiene prefijo "tenantId:".
+    if (!input.tenantId || input.tenantId.length === 0) {
+      throw new Error("AuditStore.append requiere tenantId");
+    }
+    const ownerParts = input.owner.split(":");
+    if (ownerParts.length === 2 && ownerParts[0] !== input.tenantId) {
+      throw new Error(
+        `AuditStore.append: owner ${input.owner} no pertenece al tenant ${input.tenantId}`,
+      );
+    }
     const timestamp = new Date().toISOString();
     const list = this.entries.get(input.tenantId) ?? [];
     const previousHash = list.length > 0 ? list[list.length - 1].hash : undefined;

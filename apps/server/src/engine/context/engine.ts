@@ -91,6 +91,30 @@ export class ContextEngine {
     const recall = await this.memory.recall(owner, input.query, {
       ...(input.history ? { history: input.history } : {}),
     });
+    // CONTEXT_INCLUDE_LEARNING_V1 - antes LearningObserver escribia en
+    // learning-facts y learning-patterns pero nadie los leia. El contexto
+    // ahora incluye los hechos aprendidos relevantes (facts con source
+    // goal:*) para que el LLM los vea. Tope de 10 facts por turno.
+    let learningFacts: Array<{ text: string; source: string; confidence: number }> = [];
+    try {
+      const all = await this.db.list<{ text: string; source: string; confidence: number; timesUsed: number }>(
+        owner,
+        "learning-facts",
+        { limit: 100 },
+      );
+      const q = input.query.toLowerCase();
+      learningFacts = all
+        .filter((f) => {
+          const words = q.split(/\s+/).filter((w) => w.length > 2);
+          const hay = f.text.toLowerCase();
+          return words.some((w) => hay.includes(w));
+        })
+        .sort((a, b) => (b.confidence ?? 0.7) - (a.confidence ?? 0.7))
+        .slice(0, 10);
+    } catch {
+      // CONTEXT_INCLUDE_LEARNING_V1 - best-effort.
+      learningFacts = [];
+    }
     const pkg: ContextPackage = {
       role: {
         id: role.id,

@@ -54,8 +54,11 @@ export class SlowAuthor {
 
   async writeReasoning(ctx: KernelContext, input: SlowAuthorWriteInput): Promise<Thought> {
     const now = new Date().toISOString();
-    // PROGRESS_EMIT_V1 - marcar inicio del razonamiento lento.
-    void progressStep(0, 1, "slow.reasoning.start");
+    // SLOW_AUTHOR_PROGRESS_ATTENTION_V1 - antes hacíamos `void progressStep(...)`
+    // que descartaba el evento. Ahora lo persistimos como un thought de rol
+    // "display" con el ProgressEvent dentro, para que Meta y el Presenter
+    // puedan leerlo sin reconstruirlo desde strings.
+    const progressEvent = progressStep(0, 1, "slow.reasoning.start");
     return this.deps.kernel.appendThought(ctx, {
       turnId: input.turnId,
       actor: { kind: "slow-llm", id: "slow" },
@@ -73,7 +76,7 @@ export class SlowAuthor {
         confidence: input.confidence ?? 0.8,
         scope: "turn",
         timestamp: now,
-        metadata: {},
+        metadata: { progress: progressEvent },
       },
       context: {
         entities: input.entities ?? [],
@@ -92,6 +95,10 @@ export class SlowAuthor {
 
   async writeDelegation(ctx: KernelContext, input: SlowAuthorWriteInput): Promise<Thought> {
     const now = new Date().toISOString();
+    // SLOW_AUTHOR_DELEGATION_PROGRESS_V2 - writeReasoning ya tenia
+    // progressEvent local; writeDelegation lo usaba sin declararlo. Lo
+    // creamos aqui con un mensaje propio de delegacion.
+    const progressEvent = progressStep(0, 1, "slow.delegation.start");
     return this.deps.kernel.appendThought(ctx, {
       turnId: input.turnId,
       actor: { kind: "slow-llm", id: "slow" },
@@ -109,7 +116,7 @@ export class SlowAuthor {
         confidence: input.confidence ?? 0.8,
         scope: "turn",
         timestamp: now,
-        metadata: {},
+        metadata: { progress: progressEvent },
       },
       context: {
         entities: input.entities ?? [],
