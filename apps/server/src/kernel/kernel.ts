@@ -15,13 +15,36 @@ import { thoughtSchema, type Thought } from "./graph/thought.ts";
 import type { TurnStore } from "./graph/store.ts";
 import type { Turn, TurnCloseReason, TurnClosedBy } from "./graph/turn.ts";
 import type { TenantResolver } from "./tenancy/resolver.ts";
+import { globalMetrics } from "../metrics/registry.ts";
 
 export interface KernelDeps {
   store: TurnStore;
   tenants: TenantResolver;
   audit: AuditStore;
   config: TenantConfigResolver;
+  // VIEWS_BUSINESS_GRAPH_V1 — businessGraph opcional para Views.
+  // Ver: auditoría profunda 09 (computeView devuelve placeholder).
+  businessGraph?: {
+    entities?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
+    neighborhood?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
+    timeline?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
+  };
 }
+
+// KERNEL_METRICS_V1 — contadores del kernel para /metrics.
+// Ver: auditoría profunda 09.
+globalMetrics.counter(
+  "openmuse_kernel_turns_opened_total",
+  "Turnos abiertos por el kernel",
+);
+globalMetrics.counter(
+  "openmuse_kernel_turns_closed_total",
+  "Turnos cerrados",
+);
+globalMetrics.counter(
+  "openmuse_kernel_thoughts_appended_total",
+  "Thoughts añadidos al grafo",
+);
 
 export class Kernel {
   // KERNEL_DEPS_PUBLIC_V1 - deps publico para que kernel-routes, views y
@@ -32,6 +55,7 @@ export class Kernel {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const turn = await this.deps.store.openTurn(tenantId, ctx.owner, trigger);
+    globalMetrics.inc("openmuse_kernel_turns_opened_total", {});
     await this.deps.audit.append({
       tenantId,
       owner: ctx.owner,
@@ -40,6 +64,38 @@ export class Kernel {
       payload: { turnId: turn.id, trigger, requestId: ctx.requestId },
     });
     return turn;
+  }
+
+  /**
+   * KERNEL_OPEN_TURN_IDEMPOTENT_V1 — abre turno reusando el existente si
+   * ya hay uno abierto con la misma correlationId o trigger.
+   * Ver: auditoría profunda 09 (openTurn no deduplica en model.ts ni sop-executor.ts).
+   */
+  async openTurnIdempotent(ctx: KernelContext, trigger: string): Promise<Turn> {
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const store = this.deps.store as TurnStore & {
+      listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
+    };
+    if (typeof store.listOpenTurnsForThread === "function") {
+      const open = await store.listOpenTurnsForThread(tenantId, ctx.owner);
+      const matching = open.find((turn) => turn.triggers.includes(trigger));
+      if (matching) {
+        await this.deps.audit.append({
+          tenantId,
+          owner: ctx.owner,
+          action: "turn.opened",
+          actor: { kind: ctx.role, id: ctx.owner },
+          payload: {
+            turnId: matching.id,
+            trigger,
+            requestId: ctx.requestId,
+            reused: true,
+          },
+        });
+        return matching;
+      }
+    }
+    return this.openTurn(ctx, trigger);
   }
 
   async openChildTurn(ctx: KernelContext, parentTurnId: string, trigger: string): Promise<Turn> {

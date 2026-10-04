@@ -389,6 +389,15 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_system_events_idx ON records(owner, kind, ((data->>'type')), updated_at DESC)"
   );
+  // EVENTS_INDEX_AGG_V1 — índice para agregados GROUP BY type.
+  // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Faltan índices para agregados").
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_system_events_type_ts_idx ON records(kind, ((data->>'type')), updated_at DESC) WHERE kind = 'system-events'"
+  );
+  // EVENTS_INDEX_AGG_V1 — índice por source.kind para snapshots.
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_system_events_source_idx ON records(kind, ((data->'source'->>'kind')), updated_at DESC) WHERE kind = 'system-events'"
+  );
   // STORE_INDICES_V2 - indices para el equipo digital y builds.
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_agent_roles_active_idx ON records(owner, kind, ((data->>'active'))) WHERE kind = 'agent-roles'"

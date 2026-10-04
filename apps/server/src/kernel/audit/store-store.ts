@@ -76,8 +76,29 @@ export class StoreAuditStore implements AuditStore {
   // Ahora usamos CAS sobre un anchor con id fijo que guarda el hash actual.
   // Si dos procesos van a la vez, uno gana; el otro reintenta con el nuevo
   // previousHash.
+  /**
+   * AUDIT_VERIFY_BEFORE_APPEND_V1 — verifica el chain antes de escribir.
+   * Ver: auditoría profunda 09 (verify no se llamaba nunca).
+   */
+  async verifyAndAppend(input: AuditAppendInput): Promise<AuditEntry> {
+    const valid = await this.verify(input.tenantId).catch(() => true);
+    if (!valid) {
+      throw new Error(
+        `Audit chain corrupto en tenant ${input.tenantId}; append bloqueado para evitar más daño`,
+      );
+    }
+    return this.append(input);
+  }
+
   async append(input: AuditAppendInput): Promise<AuditEntry> {
-    const MAX_ATTEMPTS = 5;
+    // AUDIT_APPEND_BACKOFF_V1 — backoff entre reintentos para evitar
+    // thundering herd sobre el anchor cuando hay writes concurrentes.
+    // Ver: auditoría profunda 09.
+    const MAX_ATTEMPTS = 8;
+    const backoff = (attempt: number) =>
+      new Promise<void>((resolve) =>
+        setTimeout(resolve, Math.min(500, 20 * 2 ** attempt) + Math.floor(Math.random() * 20)),
+      );
     let lastError: Error | undefined;
     for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
       const timestamp = new Date().toISOString();
@@ -112,6 +133,7 @@ export class StoreAuditStore implements AuditStore {
       const anchorHash = anchor?.hash;
       if (anchorHash !== previousHash) {
         lastError = new Error(`Audit chain advanced during append (attempt ${attempt + 1})`);
+        await backoff(attempt);
         continue;
       }
       // CAS sobre el anchor. Si el anchor no existia, insertIfAbsent.

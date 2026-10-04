@@ -32,6 +32,14 @@ export class RateLimiter {
     return this.take(`${tenantId}:${userId}:${action}`);
   }
 
+  /**
+   * RATE_LIMIT_USER_V1 — limit por usuario dentro del tenant.
+   * Cierra el hueco del miniaudit 04 ("Sin rate limit por usuario").
+   */
+  takeForUser(userId: string, action: string): RateLimitResult {
+    return this.take(`user:${userId}:${action}`);
+  }
+
   /** Registra un intento. `allowed: false` significa que la clave agoto su ventana. */
   take(key: string): RateLimitResult {
     const now = Date.now();

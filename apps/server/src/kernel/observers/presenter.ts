@@ -33,11 +33,31 @@ const PRIORITY: ThoughtRole[] = [
   "intent",
 ];
 
-function pickByPriority(thoughts: Thought[]): { thought: Thought; reason: string } | undefined {
-  for (const role of PRIORITY) {
-    const found = thoughts.find((t) => t.role === role);
-    if (found) return { thought: found, reason: `selected role ${role} by priority` };
+/**
+   * PRESENTER_SCORE_V1 — combina PRIORITY del rol + confidence +
+   * atención. Antes solo se ordenaba por rol, así que un response con
+   * confidence 0.3 ganaba a un critic con 0.95.
+   * Ver: auditoría profunda 09 (Presenter PRIORITY ignora confidence).
+   */
+  function score(thought: Thought): number {
+    const roleIdx = PRIORITY.indexOf(thought.role);
+    const roleScore = roleIdx >= 0 ? 1 / (roleIdx + 1) : 0;
+    const confidenceScore = thought.attention.confidence;
+    const attentionScore = thought.attention.matched.reduce(
+      (sum, m) => sum + (m.node === thought.attention.primary ? m.weight : 0),
+      0,
+    );
+    return roleScore * 0.5 + confidenceScore * 0.3 + attentionScore * 0.2;
   }
+
+  function pickByPriority(thoughts: Thought[]): { thought: Thought; reason: string } | undefined {
+  const scored = [...thoughts].sort((a, b) => score(b) - score(a));
+    if (scored.length > 0) {
+      return {
+        thought: scored[0],
+        reason: `selected by score (role=${scored[0].role}, conf=${scored[0].attention.confidence.toFixed(2)})`,
+      };
+    }
   const last = thoughts[thoughts.length - 1];
   return last ? { thought: last, reason: "selected last thought as fallback" } : undefined;
 }

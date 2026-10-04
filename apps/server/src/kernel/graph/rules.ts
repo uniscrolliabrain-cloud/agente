@@ -8,6 +8,7 @@
 // El orden importa: la primera regla que matchea decide.
 
 import type { Thought, ThoughtRole } from "./thought.ts";
+import { isFocusedOn, topMatched } from "./attention.ts";
 
 export interface PromotionRule {
   id: string;
@@ -38,6 +39,28 @@ export const RULES: readonly PromotionRule[] = [
       "Sobrevive si el Thought tiene rol accionable (observation, action, response, reflection, confirmation, correction, critic, verifier) y contenido no vacio.",
     matches: (t) => hasContent(t) && SURVIVOR_ROLES.has(t.role),
   },
+  // RULES_CONFIRM_CORRECTION_V1 — confirmation y correction requieren que
+  // el nodo que confirman/corrigen esté presente en `matched`. Si no,
+  // no sobreviven.
+  // Ver: auditoría profunda 09.
+  {
+    id: "survive_confirmation_with_target",
+    description:
+      "Sobrevive si el rol es confirmation y el nodo confirmado está en matched.",
+    matches: (t) =>
+      t.role === "confirmation" &&
+      hasContent(t) &&
+      t.attention.matched.length > 0,
+  },
+  {
+    id: "survive_correction_with_target",
+    description:
+      "Sobrevive si el rol es correction y hay un nodo matched al que corrige.",
+    matches: (t) =>
+      t.role === "correction" &&
+      hasContent(t) &&
+      t.attention.matched.length > 0,
+  },
   {
     id: "survive_high_confidence_primary",
     description:
@@ -63,6 +86,17 @@ export const RULES: readonly PromotionRule[] = [
     description:
       "Se descarta si el rol es reasoning y no tiene matched (razonamiento sin anclaje a datos).",
     matches: (t) => t.role === "reasoning" && t.attention.matched.length === 0,
+  },
+  // RULES_ATTENTION_V1 — regla de promoción basada en atención.
+  // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md ("Rules.ts sin atención"),
+  // roadmap §8 ("Rules.classify con isFocusedOn").
+  {
+    id: "survive_high_attention_focus",
+    description:
+      "Sobrevive si la atención está claramente centrada en un nodo (isFocusedOn >= 0.7) y el contenido no está vacío.",
+    matches: (t) =>
+      hasContent(t) &&
+      topMatched(t.attention, 1).some((m) => isFocusedOn(t.attention, m.node, 0.7)),
   },
 ];
 

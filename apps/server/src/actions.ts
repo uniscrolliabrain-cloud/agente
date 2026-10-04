@@ -10,6 +10,7 @@ import {
 } from "../../../packages/domain/src/index.ts";
 import type { Store } from "./db.ts";
 import type { EventBus } from "./engine/events/index.ts";
+import type { DeferredActions } from "./actions-deferred.ts";
 import type { PolicyEngine } from "./engine/policy/engine.ts";
 import type { AgentRole } from "../../../packages/domain/src/agent.ts";
 import { AppError } from "./errors.ts";
@@ -51,6 +52,39 @@ export class ActionService {
     this.policy = policy;
     this.now = options.now ?? Date.now;
   }
+  /**
+   * ACTIONS_RETRY_V1 — reintenta una acción que falló con error determinista.
+   * Solo permitido si el status es "failed" y el error no es outcome_unknown.
+   * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+   */
+  async retry(owner: string, actionId: string): Promise<ActionProposal> {
+    const action = await this.db.get<ActionProposal>(owner, "actions", actionId);
+    if (!action) throw new AppError("Action not found", 404);
+    if (action.status !== "failed") {
+      throw new AppError(
+        `Only failed actions can be retried (current: ${action.status})`,
+        409,
+      );
+    }
+    if (action.error && /outcome_unknown|uncertain/i.test(action.error)) {
+      throw new AppError(
+        "Cannot retry an action with uncertain outcome. Reconcile it first.",
+        409,
+      );
+    }
+    // Reset a awaiting_review para que el usuario vuelva a aprobar.
+    const reset = await this.db.compareAndSwap<ActionProposal>(
+      owner,
+      "actions",
+      actionId,
+      { status: "failed" },
+      { status: "awaiting_review", error: null, result: null },
+    );
+    if (!reset) throw new AppError("Action changed; refresh and retry", 409);
+    await this.audit(owner, reset, "retried", "Retried by user");
+    return reset;
+  }
+
   async propose(
     owner: string,
     raw: unknown,
@@ -116,6 +150,7 @@ export class ActionService {
       return existing;
     }
     await this.record(owner, saved, "Ready for your review");
+    await this.audit(owner, saved, "proposed", `Ready for review: ${saved.title}`);
     await this.bus?.emit(owner, "action.proposed", { kind: "action", id: saved.id }, {
       actionId: saved.id,
       title: saved.title.slice(0, 300),
@@ -200,6 +235,12 @@ export class ActionService {
       claimed,
       decision === "deny" ? "Declined; no changes made" : "Approved; execution started",
     );
+    await this.audit(
+      owner,
+      claimed,
+      decision,
+      decision === "deny" ? "Declined by user" : "Approved by user",
+    );
     if (decision === "deny") {
       await this.bus?.emit(owner, "action.denied", { kind: "action", id: claimed.id }, {
         actionId: claimed.id,
@@ -211,6 +252,44 @@ export class ActionService {
       actionId: claimed.id,
       title: claimed.title.slice(0, 300),
     });
+    // ACTIONS_DEFERRED_WIRE_V1 — si hay deferred, aprobar no ejecuta ya.
+    // Se programa para dentro de `windowMs` y el usuario puede deshacer.
+    // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+    if (this.options.deferred && decision === "approve") {
+      const deferredRecord = await this.options.deferred.decide(
+        owner,
+        claimed.id,
+        owner,
+        typeof claimed.data === "object" && claimed.data !== null && "amount" in claimed.data
+          ? Number((claimed.data as { amount?: unknown }).amount) || undefined
+          : undefined,
+      );
+      if (deferredRecord.status === "scheduled") {
+        // Guardamos el estado scheduled en la ActionProposal.
+        await this.db.put(owner, "actions", {
+          ...claimed,
+          status: "scheduled",
+          signers: deferredRecord.signers,
+          needed: deferredRecord.needed,
+          executeAt: deferredRecord.executeAt
+            ? new Date(deferredRecord.executeAt).toISOString()
+            : null,
+        });
+        return (await this.db.get<ActionProposal>(owner, "actions", claimed.id)) ?? claimed;
+      }
+      // Si aún no se alcanzó el número de firmas, la propuesta vuelve a
+      // awaiting_review con los signers acumulados.
+      if (deferredRecord.status === "collecting") {
+        await this.db.put(owner, "actions", {
+          ...claimed,
+          status: "awaiting_review",
+          signers: deferredRecord.signers,
+          needed: deferredRecord.needed,
+          executeAt: null,
+        });
+        return (await this.db.get<ActionProposal>(owner, "actions", claimed.id)) ?? claimed;
+      }
+    }
     let finished: ActionProposal;
     try {
       const input = proposalSchema.parse({ kind: claimed.kind, data: claimed.data });
@@ -274,6 +353,24 @@ export class ActionService {
     await this.record(owner, finished, finished.result ?? finished.error ?? finished.status);
     return finished;
   }
+  /**
+   * ACTIONS_AUDIT_V1 — registra una entrada de auditoría estructurada
+   * por cada transición de estado de la propuesta.
+   * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+   */
+  private async audit(owner: string, action: ActionProposal, kind: string, detail: string) {
+    await this.db.put(owner, "action-audit", {
+      id: `audit-${action.id}-${Date.now()}`,
+      actionId: action.id,
+      taskId: action.taskId ?? null,
+      kind,
+      detail: detail.slice(0, 2000),
+      status: action.status,
+      hash: action.hash,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   private async record(owner: string, action: ActionProposal, detail: string) {
     await this.db.put(owner, "activity", {
       id: randomUUID(),

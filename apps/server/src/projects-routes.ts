@@ -10,6 +10,7 @@ import type {
 } from "../../../packages/domain/src/agent.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { globalPresence } from "./engine/presence.ts";
 
 const blockSchema: z.ZodType<ProjectBlock> = z.object({
   id: z.string().min(1).max(100).default(() => randomUUID()),
@@ -80,6 +81,18 @@ export function projectRoutes(db: Store) {
     return c.json(project, 201);
   });
 
+  // PRESENCE_TOUCH_PROJECT_V1 — mismo patrón que threads.
+  // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+  app.post("/:id/presence", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const project = await db.get(owner, "projects", id);
+    if (!project) throw new AppError("Project not found", 404);
+    const userId = c.req.header("x-user-id") ?? owner;
+    const result = globalPresence.touch(userId, "project", id);
+    return c.json(result);
+  });
+
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -107,6 +120,20 @@ export function projectRoutes(db: Store) {
     const id = c.req.param("id");
     const existing = await db.get<Project>(owner, "projects", id);
     if (!existing) throw new AppError("Project not found", 404);
+    // PROJECTS_CAS_V1 — 409 si el proyecto cambió desde que el cliente lo leyó.
+    // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+    const rawBody = await c.req.json();
+    const expected = z
+      .object({ expectedUpdatedAt: z.iso.datetime({ offset: true }).optional() })
+      .parse(rawBody);
+    if (expected.expectedUpdatedAt !== undefined) {
+      if (existing.updatedAt !== expected.expectedUpdatedAt) {
+        throw new AppError(
+          "Otro usuario ha modificado este proyecto. Recarga y vuelve a intentarlo.",
+          409,
+        );
+      }
+    }
     const patch = z
       .object({
         name: z.string().trim().min(1).max(200).optional(),
@@ -138,8 +165,19 @@ export function projectRoutes(db: Store) {
     const existing = await db.get<Project>(owner, "projects", id);
     if (!existing) throw new AppError("Project not found", 404);
     const body = z
-      .object({ blocks: z.array(blockSchema).max(500) })
+      .object({
+        blocks: z.array(blockSchema).max(500),
+        expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
+      })
       .parse(await c.req.json());
+    // PROJECTS_BLOCKS_CAS_V1 — 409 si los bloques cambiaron.
+    // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+    if (body.expectedUpdatedAt !== undefined && existing.updatedAt !== body.expectedUpdatedAt) {
+      throw new AppError(
+        "Otro usuario ha modificado estos bloques. Recarga y vuelve a intentarlo.",
+        409,
+      );
+    }
     const updated: Project = {
       ...existing,
       blocks: body.blocks,

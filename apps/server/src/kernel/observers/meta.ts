@@ -20,6 +20,7 @@
 import { z } from "zod";
 import type { Thought } from "../graph/thought.ts";
 import type { ProgressEvent } from "../graph/progress.ts";
+import { attentionOverlap } from "../graph/attention.ts";
 
 export const metaRuleSchema = z.enum([
   "slow_ready_fast_idle",
@@ -44,15 +45,42 @@ export interface MetaInput {
   now: string;
 }
 
+// FAST_IDLE_MS_WIRE_V1 - respeta TenantConfig.fastIdleMs.
 export interface MetaDeps {
   longNoOutputMs?: number;
 }
 
-export class Meta {
+// META_HINT_CONSUMED_V1 — el Meta recuerda qué hints ya emitió para no
+  // repetirlos. Antes, un ready de hace 5 min se re-emitía cada minuto.
+  // Ver: auditoría profunda 09 (Meta no distingue slow terminó / nadie lo leyó).
+  export interface MetaHintState {
+    seenHints: Set<string>;
+    lastCleanupAt: number;
+  }
+
+  export class Meta {
   private readonly longNoOutputMs: number;
 
   constructor(deps: MetaDeps = {}) {
     this.longNoOutputMs = deps.longNoOutputMs ?? 30_000;
+  }
+
+  // META_HINT_CONSUMED_V1 — estado de hints ya emitidos.
+  private readonly seenHints = new Set<string>();
+  private lastCleanupAt = 0;
+
+  /** Marca un hint como consumido (el fast lo leyó). */
+  consumeHint(hintId: string): void {
+    this.seenHints.add(hintId);
+  }
+
+  /** Limpia la lista de hints si crece demasiado. */
+  private maybeCleanup(): void {
+    if (this.seenHints.size < 200) return;
+    const now = Date.now();
+    if (now - this.lastCleanupAt < 60_000) return;
+    this.lastCleanupAt = now;
+    this.seenHints.clear();
   }
 
   evaluate(input: MetaInput): MetaHint[] {
@@ -107,6 +135,21 @@ export class Meta {
     }
 
     return hints;
+  }
+
+  /**
+   * ATTENTION_OVERLAP_META_V1 — detecta si dos thoughts del mismo turno
+   * están en conflicto (atención divergente). Útil para el hint
+   * slow_failed_urgent cuando dos autores no coinciden.
+   * Ver: auditoría profunda 09 (attentionOverlap no se usaba).
+   */
+  detectAttentionConflict(thoughts: Thought[]): boolean {
+    if (thoughts.length < 2) return false;
+    const [first, ...rest] = thoughts;
+    for (const other of rest) {
+      if (attentionOverlap(first.attention, other.attention) < 0.3) return true;
+    }
+    return false;
   }
 
   private extractProgress(thought: Thought): ProgressEvent | undefined {

@@ -131,6 +131,8 @@ export async function embedTexts(
 
 export class RagService {
   private vectorReady: Promise<boolean> | null = null;
+  // RAG_TENANT_STORE_V1 — acepta Store o TenantScopedStore explícitamente.
+  // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
   constructor(private readonly db: Store | TenantScopedStore) {}
 
   /**

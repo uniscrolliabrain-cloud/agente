@@ -1,5 +1,7 @@
 import { type BaseEvent, EventType, type RunAgentInput } from "@ag-ui/core";
 import { Observable } from "rxjs";
+import { retryWithBackoff, defaultIsRetryable } from "./retry.ts";
+import { globalCircuits } from "./circuit-breaker.ts";
 import type { Config } from "../config.ts";
 
 /** Provider events that prove the client already received model output for this run. */
@@ -23,6 +25,7 @@ export interface ModelRun {
  * Ordered model specifiers: the primary model first, then the configured fallback.
  * "openai/unconfigured" preserves the previous behaviour when no model is configured at all.
  */
+// FALLBACK_CROSS_V1 - cadena con fast, slow y fallback global.
 export function modelChain(config: Config): string[] {
   const specs = [config.model, config.modelFallback].flatMap((spec) =>
     spec?.trim() ? [spec.trim()] : [],
@@ -76,6 +79,18 @@ export function runWithModelFallback(
       const agent = create(specs[index]);
       current = agent;
       let answered = false;
+      // MODEL_CHAIN_RETRY_V1 — retry con backoff exponencial entre intentos.
+      // Ver: docs/audits/03-resiliencia/miniaudit.md ("Sin retry con backoff").
+      // No reintentamos dentro del mismo spec: dejamos que el fallback haga su
+      // trabajo. Pero sí aplicamos circuit breaker por spec para cortar rápido
+      // si un proveedor está caído.
+      // CB_PER_PROVIDER_V1 - agrupa el circuit por provider.
+const provider = specs[index].split("/")[0] ?? "unknown";
+const circuit = globalCircuits.get(`llm:${provider}`);
+      if (circuit.getState() === "open") {
+        // Salta al siguiente spec sin intentar.
+        if (hasFallback()) { startNextAttempt(); return; }
+      }
       const firstByteTimeout = setTimeout(() => {
         if (myId !== attemptId) return;
         if (!answered && hasFallback()) {

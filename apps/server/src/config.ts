@@ -52,6 +52,31 @@ export interface Config {
   stripeApiKey?: string;
   backupIntervalHours?: number;
   backupRetentionDays?: number;
+  // QUOTA_PER_SPEED_V1 - cuotas separadas por velocidad.
+  quotaPerSpeed?: {
+    fastCallsPerHour: number;
+    slowCallsPerHour: number;
+  };
+  /** DEFERRED_ACTION_CONFIG_V1 — configuración de undo diferido.
+   *  Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md. */
+  deferredAction?: {
+    /** ms de ventana para deshacer una aprobación. Default 8000. */
+    windowMs: number;
+    /** Importe a partir del cual se exige doble firma. null = nunca. */
+    dualAt: number | null;
+  };
+  /** TIMEOUTS_CONFIG_V1 — timeouts configurables por tool.
+   *  Ver: docs/audits/03-resiliencia/miniaudit.md ("Timeouts inconsistentes"). */
+  toolTimeouts?: {
+    llmFirstByteMs: number;
+    llmGlobalMs: number;
+    googleHttpMs: number;
+    computerCommandMs: number;
+    computerClientMs: number;
+    whatsappSendMs: number;
+    stripeHttpMs: number;
+    browserNavMs: number;
+  };
   allowedOrigins: string[];
 }
 
@@ -126,6 +151,32 @@ export function readConfig(): Config {
     stripeApiKey: process.env.STRIPE_API_KEY,
     backupIntervalHours: Number(process.env.BACKUP_INTERVAL_HOURS ?? "24") || 0,
     backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS ?? "7") || 0,
+    quotaPerSpeed: {
+      fastCallsPerHour: Number(process.env.FAST_CALLS_PER_HOUR ?? "600"),
+      slowCallsPerHour: Number(process.env.SLOW_CALLS_PER_HOUR ?? "60"),
+    },
+    quotaPerSpeed: {
+      fastCallsPerHour: Number(process.env.FAST_CALLS_PER_HOUR ?? "600"),
+      slowCallsPerHour: Number(process.env.SLOW_CALLS_PER_HOUR ?? "60"),
+    },
+    deferredAction: {
+      windowMs: Number(process.env.DEFERRED_ACTION_WINDOW_MS ?? "8000"),
+      dualAt: process.env.DEFERRED_ACTION_DUAL_AT
+        ? Number(process.env.DEFERRED_ACTION_DUAL_AT)
+        : null,
+    },
+    // TIMEOUTS_CONFIG_V1 — valores por defecto conservadores. Cada uno
+    // configurable por env para ajustar en producción sin redeploy.
+    toolTimeouts: {
+      llmFirstByteMs: Number(process.env.LLM_FIRST_BYTE_MS ?? "45000"),
+      llmGlobalMs: Number(process.env.LLM_GLOBAL_MS ?? "120000"),
+      googleHttpMs: Number(process.env.GOOGLE_HTTP_MS ?? "30000"),
+      computerCommandMs: Number(process.env.COMPUTER_COMMAND_MS ?? "30000"),
+      computerClientMs: Number(process.env.COMPUTER_CLIENT_MS ?? "35000"),
+      whatsappSendMs: Number(process.env.WHATSAPP_SEND_MS ?? "20000"),
+      stripeHttpMs: Number(process.env.STRIPE_HTTP_MS ?? "20000"),
+      browserNavMs: Number(process.env.BROWSER_NAV_MS ?? "20000"),
+    },
     // ORIGINS_CLEAN — ALLOWED_ORIGINS="" daba [""], que no matchea nada pero ocupa
     // un hueco en el Set. Filtramos vacios y hacemos trim.
     allowedOrigins: (

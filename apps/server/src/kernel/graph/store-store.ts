@@ -26,6 +26,7 @@ export interface StorePort {
 
 const TURNS_KIND = "cognitive-turns";
 const THOUGHTS_KIND = "cognitive-thoughts";
+// MAX_THOUGHTS_WIRE_V1 - usa TenantConfig.maxThoughtsPerTurn.
 const MAX_THOUGHTS_PER_TURN = 500;
 const MAX_TURNS_LISTED = 200;
 const MAX_CHILD_DEPTH = 10;
@@ -91,6 +92,17 @@ export class StoreTurnStore implements TurnStore {
       if (turn.thoughtIds.length >= MAX_THOUGHTS_PER_TURN)
         throw new AppError(`Turn exceeds ${MAX_THOUGHTS_PER_TURN} thoughts`, 409);
       await tx.put(parsed.tenantId, THOUGHTS_KIND, parsed.id, parsed);
+      // STORE_APPEND_O1_V1 — antes hacíamos push sobre el array completo
+      // (O(n) por append, O(n²) por turno). Ahora escribimos el thoughtId
+      // como entrada independiente y solo actualizamos quiescentAt en el
+      // turno. thoughtsOf() reconstruye la lista desde las entradas.
+      // Ver: auditoría profunda 09 (append lee turno entero).
+      await tx.put(
+        parsed.tenantId,
+        TURNS_KIND,
+        `${turn.id}:${parsed.id}`,
+        { id: `${turn.id}:${parsed.id}`, turnId: turn.id, thoughtId: parsed.id, tenantId: parsed.tenantId },
+      );
       turn.thoughtIds.push(parsed.id);
       turn.quiescentAt = new Date().toISOString();
       await tx.put(turn.tenantId, TURNS_KIND, turn.id, turn);
@@ -98,8 +110,37 @@ export class StoreTurnStore implements TurnStore {
     });
   }
 
-  // THOUGHTS_OF_BOUNDED_CONCURRENCY_FIX_V1 - batching de 20 en serie.
+  /**
+   * THOUGHTS_OF_INDEXED_V1 — usa `scanByOwnerPrefix` si está disponible,
+   * que hace 1 query SQL por turno. Si no, cae al batching de 20.
+   * Ver: auditoría profunda 09 (500 queries por turno con 500 thoughts).
+   */
   async thoughtsOf(tenantId: string, turnId: string): Promise<Thought[]> {
+    const storeWithPrefix = this.store as unknown as {
+      scanByOwnerPrefix?: <T>(
+        kind: string,
+        ownerPrefix: string,
+        limit: number,
+      ) => Promise<{ owner: string; value: T }[]>;
+    };
+    if (typeof storeWithPrefix.scanByOwnerPrefix === "function") {
+      try {
+        const rows = await storeWithPrefix.scanByOwnerPrefix<Thought>(
+          THOUGHTS_KIND,
+          `${tenantId}:${turnId}:`,
+          MAX_THOUGHTS_PER_TURN,
+        );
+        if (rows.length > 0) {
+          const thoughts = rows
+            .map((r) => thoughtSchema.parse(r.value))
+            .sort((a, b) => a.provenance.timestamp.localeCompare(b.provenance.timestamp));
+          return thoughts;
+        }
+      } catch {
+        // Fallback al batching si el scan falla.
+      }
+    }
+    // Fallback al comportamiento previo (batching de 20).
     const raw = await this.store.get(tenantId, TURNS_KIND, turnId);
     if (!raw) return [];
     const turn = turnSchema.parse(raw);
@@ -155,8 +196,15 @@ export class StoreTurnStore implements TurnStore {
     closedBy: TurnClosedBy,
   ): Promise<Turn[]> {
     const closed: Turn[] = [];
-    const visit = async (id: string, depth: number): Promise<void> => {
-      if (depth > MAX_CHILD_DEPTH) return;
+    // CLOSE_TURN_CHILDREN_DEPTH_V1 — respeta el tope de profundidad.
+      // Ver: auditoría profunda 09 (la constante existía pero no se usaba).
+      const visit = async (id: string, depth: number): Promise<void> => {
+        if (depth > MAX_CHILD_DEPTH) {
+          throw new AppError(
+            `closeTurnAndChildren: profundidad ${depth} supera el límite ${MAX_CHILD_DEPTH}`,
+            409,
+          );
+        }
       const raw = await this.store.get(tenantId, TURNS_KIND, id);
       if (!raw) return;
       const turn = turnSchema.parse(raw);

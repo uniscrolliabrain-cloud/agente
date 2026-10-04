@@ -1,3 +1,8 @@
+// DATABASE_RESOLVER_PENDING_V1 — adaptador Supabase no cableado.
+// En el repo actual, app.ts usa EnvTenantConfigResolver y
+// ServiceTenantResolver. Este resolver se activa cuando Supabase
+// esté desplegado (fase posterior).
+// Ver: auditoría profunda 09.
 // KERNEL_DATABASE_TENANT_RESOLVER_V2 — TenantResolver desde Supabase.
 //
 // Supabase = Postgres + RLS + PostgREST. Este resolver lee la tabla
