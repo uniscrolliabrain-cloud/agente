@@ -1,4 +1,4 @@
-﻿interface Chip {
+interface Chip {
   id: string;
   label: string;
   prompt: string;

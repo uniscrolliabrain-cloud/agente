@@ -209,13 +209,23 @@ export class Files {
     const file = await this.get(owner, id);
     if (file.mimeType !== "application/pdf")
       throw new AppError("Only PDF forms can be filled", 422);
+    // FIX_FILL_DEDUPE_V1 - parche contra duplicados por concurrencia. Antes,
+    // dos requests simultaneos con el mismo fileId creaban dos artifacts
+    // con el mismo parentId. Aqui buscamos uno existente por (parentId, source)
+    // antes de crear. Es un parche: la solucion real requiere que import()
+    // acepte un id deterministico. Con owners con >500 archivos el parche
+    // puede no encontrar el existente; con owners normales, funciona.
+    const candidates = await this.db.list<Artifact>(owner, "files", { limit: 500 });
+    const source = `Filled from ${file.name}`;
+    const existing = candidates.find((f) => f.parentId === id && f.source === source);
+    if (existing) return this.signed(owner, existing);
     const bytes = await this.bytes(owner, id);
     const output = await fillPdf(bytes, values);
     return this.import(
       owner,
       `${file.name.replace(/\.pdf$/i, "")} — filled.pdf`,
       output,
-      `Filled from ${file.name}`,
+      source,
       "default",
       id,
     );

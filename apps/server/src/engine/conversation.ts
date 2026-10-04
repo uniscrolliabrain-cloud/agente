@@ -609,6 +609,12 @@ export class ConversationAgent extends AbstractAgent {
               if (cfg.slow?.provider && cfg.slow.model) {
                 chatModelChain.push(`${cfg.slow.provider}/${cfg.slow.model}`);
               }
+              // FIX_CHAIN_FALLBACK_V1 - si solo hay fast, anadimos el chain
+              // global como red de seguridad. Antes se quedaba en [fast] y si
+              // fallaba, el chat no respondia.
+              if (chatModelChain.length === 1) {
+                chatModelChain.push(...modelChain(this.config));
+              }
             }
           }
         } catch {

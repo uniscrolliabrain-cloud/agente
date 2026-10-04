@@ -121,7 +121,13 @@ export class TaskWorker {
         eligible.push(record);
         if (eligible.length === 3) break;
       }
-      await Promise.all(eligible.map(({ owner, value }) => this.run(owner, value)));
+      // FIX_WORKER_ACTIVE_CAP_V1 - tope global de tareas concurrentes. Antes
+      // cada tick metia 3 pero this.active no tenia tope: con tareas de 5 min
+      // y pollMs=1000, this.active acumulaba ~900 y el stop() tardaba minutos.
+      const MAX_ACTIVE = 30;
+      if (this.active.size >= MAX_ACTIVE) return;
+      const slots = Math.max(1, MAX_ACTIVE - this.active.size);
+      await Promise.all(eligible.slice(0, slots).map(({ owner, value }) => this.run(owner, value)));
     } finally {
       this.ticking = false;
     }

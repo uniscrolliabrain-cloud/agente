@@ -13,9 +13,16 @@ interface Props {
   onQuickAction?: (kind: "responder" | "resumir" | "traducir", text: string) => void;
 }
 
+// FIX_MSGLIST_SLICE_V1 - tope de 50 mensajes visibles. Antes se pintaban
+// todos; con 500 mensajes eran ~5.000 DOM nodes y el scroll caia por debajo
+// de 30 FPS.
+const MAX_RENDERED_MESSAGES = 50;
 export default function MessageList({ messages, streaming, streamBuf, tools, onQuickAction }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { text: typed, typing } = useTypewriter(streamBuf, !streaming);
+  const visibleMessages = messages.length > MAX_RENDERED_MESSAGES
+    ? messages.slice(-MAX_RENDERED_MESSAGES)
+    : messages;
 
   useEffect(() => {
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
@@ -23,7 +30,7 @@ export default function MessageList({ messages, streaming, streamBuf, tools, onQ
 
   return (
     <div className="v2-assistant-body" ref={ref} style={{ overflow: "visible" }}>
-      {messages.map((m) => (
+      {visibleMessages.map((m) => (
         <MessageBubble key={m.id} message={m} onQuickAction={onQuickAction} />
       ))}
 
