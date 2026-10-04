@@ -1,0 +1,918 @@
+node.exe : $ tsx --test 
+--test-timeout=20000 tests/*.test.ts
+En C:\nvm4w\nodejs\pnpm.ps1: 16 Carácter: 5
++     & "$basedir/node$exe"  
+"$basedir/node_modules/corepack/dist/pnpm. 
+...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    ($ tsx --test --...tests/*.test.ts:Str  
+  ing) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+Ô£ö denying a persisted proposal never calls its adapter (10053.038ms)
+Ô£ö concurrent approval consumes the proposal only once (121.3801ms)
+Ô£ö wrong owner and stale hash cannot approve (27.2022ms)
+Ô£ö expired and disconnected proposals never reach the provider (35.1278ms)
+Ô£ö uncertain writes retain uncertainty and cannot be retried (50.1053ms)
+Ô£ö another service instance sees persisted proposals (40.3464ms)
+Ô£ö event validation preserves all-day semantics and rejects missing offsets (163.2628ms)
+Ô£ö account switching and reconnecting invalidate a prepared action (25.7747ms)
+Ô£ö review stores authoritative calendar details and binds execution to their version (84.8744ms)
+Ô£ö idempotent proposal replay returns a completed action before another provider preparation (89.4397ms)
+Ô£ö concurrent idempotent proposals retain a single persisted review and activity entry (46.8164ms)
+Ô£ö an expired stale review cannot overwrite a concurrently executing action (72.6365ms)
+Ô£û agent API requires a session and reports the actual worker state (76011.7086ms)
+Ô£û the main conversation thread survives reopening and concurrent initialization (5.1377ms)
+Ô£û task detail and controls stay scoped to the authenticated owner (2.7785ms)
+Ô£û agent request validation rejects malformed input with useful JSON errors (0.8813ms)
+Ô£û goal updates validate milestones and pausing a goal pauses its task (0.9389ms)
+Ô£û memories can be edited and forgotten while identity changes persist (0.487ms)
+Ô£û idea dismissal survives refresh and concurrent acceptance creates one goal and task (0.4269ms)
+Ô£û sample monitor saves its baseline and deduplicates notifications for repeated changes (0.515ms)
+Ô£û live mode rejects sample sources and hides the fixture mutation endpoint (0.4981ms)
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\agent-api.test.ts (3973.1007ms)
+Ô£ö spawn devuelve runtimeId unico y activoCount lo cuenta (11.4356ms)
+Ô£ö complete limpia el runtime activo (2.401ms)
+Ô£ö fail limpia el runtime y no propaga excepcion (1.1663ms)
+Ô£ö complete/fail sobre runtime inexistente no hace nada (0.8656ms)
+Ô£ö correlationId se genera si no se pasa y se reutiliza si se pasa (1.6548ms)
+Ô£û API protects private data and rejects unrelated web origins (34542.5787ms)
+Ô£û sample workspace serves a real PDF and filling creates a new version (5.0389ms)
+Ô£û reviewed sample email persists a receipt, then revocation blocks another proposal (4.3835ms)
+Ô£û missing browser setup is explicit rather than a fictional browser session (0.7474ms)
+Ô£û calendar ranges and complete sample mail threads survive navigation (52.1413ms)
+Ô£û sample agent streams actual AG-UI events without a model key (0.4071ms)
+Ô£û guided document delegation streams a rich tool result bound to its saved task (0.2681ms)
+Ô£ö sop.step_started anade progress (5.9129ms)
+Ô£ö task.status_changed running anade timer (0.8916ms)
+Ô£ö task.completed anade done (0.957ms)
+Ô£ö action.deferred sin executeAt anade alerta (0.8252ms)
+Ô£ö action.deferred con executeAt elimina el item (1.1784ms)
+Ô£ö action.executed elimina el item (1.1882ms)
+Ô£ö evento desconocido no cambia el estado (0.7103ms)
+Ô£ö upsert del mismo kind reemplaza, no duplica (3.5581ms)
+Ô£û a wrong password is a 401 and never leaks whether the user exists (77692.4314ms)
+Ô£û login returns a token, the user and the real server mode (3.969ms)
+Ô£û the authenticated owner gets its own sample workspace seeded (15.9597ms)
+Ô£û google status is readable so the UI can show the connect button (3.9821ms)
+Ô£û the login rate limit answers 429 with Retry-After (0.7513ms)
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\auth.test.ts (2.7985ms)
+Ô£û browser API reopens an owned profile at the edited address and renews console access (33661.9283ms)
+Ô£ö server reopens the same worker UUID regardless of stale local session status (17643.8581ms)
+Ô£ö console input persists the worker's current page title and URL (17188.8645ms)
+Ô£ö failed creation remains app-visible and can be retried with its original UUID (14280.1338ms)
+Ô£ö browser observations reuse an owned profile and reject unowned reads (12406.8995ms)
+Ô£ö chat browser reads reuse a persisted owned profile across turns and service restarts (11670.0808ms)
+Ô£ö chat browser retries failed navigation using the reserved profile (12726.9924ms)
+Ô£ö concurrent chat reads keep each navigation paired with its page read (10858.1156ms)
+Ô£ö cancelled chat browser requests do not start navigation or a follow-up read (8927.4624ms)
+Ô£ö browser read fails on missing page text instead of inventing observation content (11026.2406ms)
+Ô£ö browser imports return rejected downloads even when no PDF was accepted (14037.6813ms)
+Ô£ö worker persists unsupported, oversized and interrupted download outcomes (2116.8578ms)
+Ô£ö browser rejects private, special-use and encoded IP addresses (43.3025ms)
+Ô£ö browser rejects DNS answers containing any private address and pins public resolution (3.4761ms)
+Ô£ö worker protects all controls, validates before launch, and health reveals no sessions (2397.6189ms)
+Ô£ö egress proxy blocks HTTP and CONNECT traffic to local network destinations (100.8066ms)
+Ô£ö createEntity guarda provenance obligatoria (24555.8289ms)
+Ô£ö createEntity con id duplicado lanza 409 (5277.2967ms)
+Ô£ö updateEntity preserva properties no tocadas y actualiza provenance (5226.0973ms)
+Ô£ö listEntities filtra por type (5341.8986ms)
+Ô£ö createRelation exige que ambas entidades existan (5150.3963ms)
+Ô£ö relation no puede ser self-referencial (3972.7163ms)
+Ô£ö neighborhood depth 1 y 2 devuelve entidades conectadas (5514.1661ms)
+Ô£ö deleteEntity borra tambien sus relaciones huerfanas (5129.9563ms)
+Ô£ö BusinessTruth proyecta cada property con su provenance (2638.16ms)
+Ô£ö business entities estan scoped por owner (2890.3971ms)
+Ô£ö goalSchema parsea un Goal completo (7071.5681ms)
+Ô£ö outcomeSchema parsea un Outcome completo (62.6596ms)
+Ô£ö capabilityContractSchema parsea una capability (62.0817ms)
+Ô£ö executionContextSchema parsea (16.2463ms)
+Ô£ö orchestrator devuelve achieved si verifier verifica (9.9243ms)
+Ô£ö orchestrator devuelve blocked si no hay deps (1.0932ms)
+Ô£ö Goal con criterio de exito se verifica correctamente (147.3771ms)
+Ô£ö CapabilityRegistry registra y lista capabilities (123.3525ms)
+Ô£û computer REST endpoints require session ownership and return persisted receipts (32987.8791ms)
+´╣ú Docker subprocess uses literal argv, strips provider credentials, caps output and bounds hangs (3.4495ms) # Node spawn with shell:false cannot execute .cmd shims on Windows; run on Linux CI
+Ô£ö disabled computer reports setup without invoking Docker (7271.1862ms)
+Ô£ö commands execute solely as Docker argv and persist failed exit/output receipts (196.9666ms)
+Ô£ö a running command holds an atomic lease across service instances (109.7695ms)
+Ô£ö timeouts and interruptions remain durable and idempotent commands never replay (232.2664ms)
+Ô£ö attaching an existing container fails closed on unsafe isolation or owner labels (285.2984ms)
+Ô£ö paths cannot escape the workspace and file contents travel on stdin (28.5399ms)
+Ô£ö Stop interrupts an active command and its final output cannot overwrite the interrupted receipt (108.6969ms)
+Ô£ö exit 137 without a recorded stop remains a failed command (60.7426ms)
+Ô£ö restart waits until a delayed pre-stop Docker execution acknowledges completion (163.1691ms)
+Ô£ö failed Stop keeps commands quarantined and can be retried before the lease expires (160.7297ms)
+Ô£ö a timeout with unconfirmed Docker cleanup stays quarantined until Stop succeeds (147.4761ms)
+Ô£ö an expired lease from a dead executor recovers as interrupted without replay (91.3501ms)
+Ô£ö assemble sin entidad devuelve rol con sus memorias (7838.7786ms)
+Ô£ö assemble con entidad devuelve relaciones (5709.8227ms)
+Ô£ö renderContext incluye rol, entidad y memorias (5483.861ms)
+Ô£ö assemble falla si el rol no existe (3774.7382ms)
+Ô£û chat browse_web emits real SDK tool events and returns observed source content immediately (34591.5815ms)
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+Ô£û chat browse_web emits an honest completed error result when navigation fails (20630.6889ms)
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+Ô£û unsubscribing from chat stops queued browser navigation and further model steps (20470.6191ms)
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+Ô£û chat searches and reads actual owner mail without creating a task or sending (20357.1134ms)
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+APICallError [AI_APICallError]: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash
+Please retry in 7.580539336s.
+    at <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\response-handler.ts:144:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async postToApi (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\post-to-api.ts:118:28)
+    at async GoogleGenerativeAILanguageModel.doStream (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+google@3.0.126_zod@3.25.76\node_modules\@ai-sdk\google\src\google-generative-ai-language-model.ts:606:50)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1917:27)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24)
+    at async retryWithExponentialBackoffInternal (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\retry-with-exponential-backoff.ts:87:12)
+    at async streamStep (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1866:17)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:2442:9)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24) {
+  cause: undefined,
+  url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse',
+  requestBodyValues: {
+    generationConfig: {
+      maxOutputTokens: undefined,
+      temperature: undefined,
+      topK: undefined,
+      topP: undefined,
+      frequencyPenalty: undefined,
+      presencePenalty: undefined,
+      stopSequences: undefined,
+      seed: undefined,
+      responseMimeType: undefined,
+      responseSchema: undefined,
+      responseModalities: undefined,
+      thinkingConfig: undefined
+    },
+    contents: [ [Object] ],
+    systemInstruction: { parts: [Array] },
+    safetySettings: undefined,
+    tools: [ [Object] ],
+    toolConfig: { functionCallingConfig: [Object] },
+    cachedContent: undefined,
+    labels: undefined,
+    serviceTier: undefined
+  },
+  statusCode: 429,
+  responseHeaders: {
+    'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+    'content-length': '1362',
+    'content-type': 'text/event-stream',
+    date: 'Sun, 04 Oct 2026 11:45:52 GMT',
+    server: 'scaffolding on HTTPServer2',
+    'server-timing': 'gfet4t7; dur=220',
+    vary: 'Origin, X-Origin, Referer',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'SAMEORIGIN',
+    'x-xss-protection': '0'
+  },
+  responseBody: '{\n' +
+    '  "error": {\n' +
+    '    "code": 429,\n' +
+    '    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash\\nPlease retry in 7.580539336s.",\n' +
+    '    "status": "RESOURCE_EXHAUSTED",\n' +
+    '    "details": [\n' +
+    '      {\n' +
+    '        "@type": "type.googleapis.com/google.rpc.Help",\n' +
+    '        "links": [\n' +
+    '          {\n' +
+    '            "description": "Learn more about Gemini API quotas",\n' +
+    '            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"\n' +
+    '          }\n' +
+    '        ]\n' +
+    '      },\n' +
+    '      {\n' +
+    '        "@type": "type.googleapis.com/google.rpc.QuotaFailure",\n' +
+    '        "violations": [\n' +
+    '          {\n' +
+    '            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",\n' +
+    '            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",\n' +
+    '            "quotaDimensions": {\n' +
+    '              "location": "global",\n' +
+    '              "model": "gemini-3.6-flash"\n' +
+    '            },\n' +
+    '            "quotaValue": "5"\n' +
+    '          }\n' +
+    '        ]\n' +
+    '      },\n' +
+    '      {\n' +
+    '        "@type": "type.googleapis.com/google.rpc.RetryInfo",\n' +
+    '        "retryDelay": "7s"\n' +
+    '      }\n' +
+    '    ]\n' +
+    '  }\n' +
+    '}\n',
+  isRetryable: true,
+  data: {
+    error: {
+      code: 429,
+      message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n' +
+        '* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash\n' +
+        'Please retry in 7.580539336s.',
+      status: 'RESOURCE_EXHAUSTED',
+      details: [Array]
+    }
+  },
+  Symbol(vercel.ai.error): true,
+  Symbol(vercel.ai.error.AI_APICallError): true
+}
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+APICallError [AI_APICallError]: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash
+Please retry in 6.906492084s.
+    at <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\response-handler.ts:144:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async postToApi (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\post-to-api.ts:118:28)
+    at async GoogleGenerativeAILanguageModel.doStream (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+google@3.0.126_zod@3.25.76\node_modules\@ai-sdk\google\src\google-generative-ai-language-model.ts:606:50)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1917:27)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24)
+    at async retryWithExponentialBackoffInternal (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\retry-with-exponential-backoff.ts:87:12)
+    at async streamStep (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1866:17)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:2442:9)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24) {
+  cause: undefined,
+  url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse',
+  requestBodyValues: {
+    generationConfig: {
+      maxOutputTokens: undefined,
+      temperature: undefined,
+      topK: undefined,
+      topP: undefined,
+      frequencyPenalty: undefined,
+      presencePenalty: undefined,
+      stopSequences: undefined,
+      seed: undefined,
+      responseMimeType: undefined,
+      responseSchema: undefined,
+      responseModalities: undefined,
+      thinkingConfig: undefined
+    },
+    contents: [ [Object] ],
+    systemInstruction: { parts: [Array] },
+    safetySettings: undefined,
+    tools: [ [Object] ],
+    toolConfig: { functionCallingConfig: [Object] },
+    cachedContent: undefined,
+    labels: undefined,
+    serviceTier: undefined
+  },
+  statusCode: 429,
+  responseHeaders: {
+    'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+    'content-length': '1362',
+    'content-type': 'text/event-stream',
+    date: 'Sun, 04 Oct 2026 11:45:53 GMT',
+    server: 'scaffolding on HTTPServer2',
+    'server-timing': 'gfet4t7; dur=176',
+    vary: 'Origin, X-Origin, Referer',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'SAMEORIGIN',
+    'x-xss-protection': '0'
+  },
+  responseBody: '{\n' +
+    '  "error": {\n' +
+    '    "code": 429,\n' +
+    '    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash\\nPlease retry in 6.906492084s.",\n' +
+    '    "status": "RESOURCE_EXHAUSTED",\n' +
+    '    "details": [\n' +
+    '      {\n' +
+    '        "@type": "type.googleapis.com/google.rpc.Help",\n' +
+    '        "links": [\n' +
+    '          {\n' +
+    '            "description": "Learn more about Gemini API quotas",\n' +
+    '            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"\n' +
+    '          }\n' +
+    '        ]\n' +
+    '      },\n' +
+    '      {\n' +
+    '        "@type": "type.googleapis.com/google.rpc.QuotaFailure",\n' +
+    '        "violations": [\n' +
+    '          {\n' +
+    '            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",\n' +
+    '            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",\n' +
+    '            "quotaDimensions": {\n' +
+    '              "model": "gemini-3.6-flash",\n' +
+    '              "location": "global"\n' +
+    '            },\n' +
+    '            "quotaValue": "5"\n' +
+    '          }\n' +
+    '        ]\n' +
+    '      },\n' +
+    '      {\n' +
+    '        "@type": "type.googleapis.com/google.rpc.RetryInfo",\n' +
+    '        "retryDelay": "6s"\n' +
+    '      }\n' +
+    '    ]\n' +
+    '  }\n' +
+    '}\n',
+  isRetryable: true,
+  data: {
+    error: {
+      code: 429,
+      message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n' +
+        '* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash\n' +
+        'Please retry in 6.906492084s.',
+      status: 'RESOURCE_EXHAUSTED',
+      details: [Array]
+    }
+  },
+  Symbol(vercel.ai.error): true,
+  Symbol(vercel.ai.error.AI_APICallError): true
+}
+Ô£û chat mail tools report disconnected mail and refuse another owner's thread (16680.8822ms)
+APICallError [AI_APICallError]: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+    at <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\response-handler.ts:144:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async postToApi (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\post-to-api.ts:118:28)
+    at async GoogleGenerativeAILanguageModel.doStream (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+google@3.0.126_zod@3.25.76\node_modules\@ai-sdk\google\src\google-generative-ai-language-model.ts:606:50)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1917:27)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24)
+    at async retryWithExponentialBackoffInternal (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\retry-with-exponential-backoff.ts:87:12)
+    at async streamStep (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1866:17)
+    at async Object.flush (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:2402:25) {
+  cause: undefined,
+  url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse',
+  requestBodyValues: {
+    generationConfig: {
+      maxOutputTokens: undefined,
+      temperature: undefined,
+      topK: undefined,
+      topP: undefined,
+      frequencyPenalty: undefined,
+      presencePenalty: undefined,
+      stopSequences: undefined,
+      seed: undefined,
+      responseMimeType: undefined,
+      responseSchema: undefined,
+      responseModalities: undefined,
+      thinkingConfig: undefined
+    },
+    contents: [ [Object], [Object], [Object], [Object], [Object] ],
+    systemInstruction: { parts: [Array] },
+    safetySettings: undefined,
+    tools: [ [Object] ],
+    toolConfig: { functionCallingConfig: [Object] },
+    cachedContent: undefined,
+    labels: undefined,
+    serviceTier: undefined
+  },
+  statusCode: 503,
+  responseHeaders: {
+    'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000',
+    'content-length': '198',
+    'content-type': 'text/event-stream',
+    date: 'Sun, 04 Oct 2026 11:45:54 GMT',
+    server: 'scaffolding on HTTPServer2',
+    'server-timing': 'gfet4t7; dur=2164',
+    vary: 'Origin, X-Origin, Referer',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'SAMEORIGIN',
+    'x-xss-protection': '0'
+  },
+  responseBody: '{\n' +
+    '  "error": {\n' +
+    '    "code": 503,\n' +
+    '    "message": "This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.",\n' +
+    '    "status": "UNAVAILABLE"\n' +
+    '  }\n' +
+    '}\n',
+  isRetryable: true,
+  data: {
+    error: {
+      code: 503,
+      message: 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.',
+      status: 'UNAVAILABLE'
+    }
+  },
+  Symbol(vercel.ai.error): true,
+  Symbol(vercel.ai.error.AI_APICallError): true
+}
+Ô£ö importe pequeno: 1 firma programa y ejecuta tras la ventana (3.3835ms)
+Ô£ö importe grande exige 2 firmantes distintos (1.6774ms)
+Ô£ö cancelar dentro de la ventana evita la ejecucion (0.6844ms)
+Ô£ö tick doble no ejecuta dos veces (0.5425ms)
+Ô£ö sin doble firma (dualAt=null) basta una (2.2126ms)
+Ô£ö emit registra los eventos correctos (0.8176ms)
+Ô£ö aquarium research distinguishes exhibit entries from navigation and only quotes observed descriptions (36.1804ms)
+Ô£ö the email demo reads the thread returned by search and quotes its actual details (43.436ms)
+Ô£ö the email demo handles no matches and disconnected mail without inventing details (14.9321ms)
+Ô£ö demo only summarizes browser evidence belonging to the current user turn (2.5187ms)
+Ô£ö demo reports missing or failed browser evidence without inventing a summary (2.5318ms)
+Ô£ö AI Mock drives the real BuiltInAgent SDK through two browser tool rounds (1481.7195ms)
+Ô£ö two workers claim one task only once (7211.8955ms)
+Ô£ö cancellation invalidates a stale worker before its next effect (4035.7817ms)
+Ô£û expired leases recover saved checkpoints after the database restarts (47242.485ms)
+Ô£ö scheduled tasks wait for due time and approvals wait for a recorded outcome (14325.0385ms)
+Ô£ö finance artifacts compute cents exactly and reject ambiguous CSV (111.9909ms)
+Ô£ö pending reviews do not starve queued work (22287.2347ms)
+Ô£ö entity resolver encuentra por CIF (31256.9042ms)
+Ô£û todo SystemEventType tiene schema y un payload minimo valido (773.3372ms)
+{"ts":"2026-10-04T11:45:34.534Z","level":"error","event":"background_failure","phase":"event emit verification.executed","error":"ZodError","message":"[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received undefined\"\n  }\n]"}
+{"ts":"2026-10-04T11:45:34.537Z","level":"error","event":"background_failure","phase":"event emit verification.disagreement","error":"ZodError","message":"[\n  {\n    \"expected\": \"object\",\n    \"code\": \"invalid_type\",\n    \"path\": [],\n    \"message\": \"Invalid input: expected object, received undefined\"\n  }\n]"}
+Ô£ö EventBus.emit no lanza con ningun tipo del enum (25082.007ms)
+Ô£û todo SystemEventType del enum aparece en algun bus.emit del repo (20052.7796ms)
+Ô£ö evaluateExpression compara n├║meros (534.6628ms)
+Ô£ö evaluateExpression soporta exists e in (3.876ms)
+Ô£ö fmtDur segundos (8.7161ms)
+Ô£ö fmtDur cero (1.0797ms)
+Ô£ö fmtDur minuto exacto (4.1276ms)
+Ô£ö fmtDur minutos y segundos (1.1752ms)
+Ô£ö fmtDur negativos se clampean a 0 (1.3966ms)
+Ô£ö mail reads nested plain text and attachment references over authenticated Gmail paths (830.0115ms)
+Ô£ö HTML-only messages expose complete plain text while removing active and non-content elements (1117.6016ms)
+Ô£ö Gmail attachments decode actual bytes and enforce declared and actual size limits (121.9631ms)
+Ô£ö mail sends correctly encoded CRLF MIME and the exact attachment bytes (81.0413ms)
+Ô£ö header injection and oversized outgoing attachments fail before credential access (29.8005ms)
+Ô£ö replies resolve source metadata and preserve thread and message references (38.8968ms)
+Ô£ö reply metadata cannot inject headers (41.0307ms)
+Ô£ö calendar reads expanded primary events and maps all-day boundaries (41.7318ms)
+Ô£ö calendar writes use calendar IDs, preserve unrelated fields via PATCH, and notify guests (477.0066ms)
+Ô£ö calendar review captures authoritative details and requires a usable version (61.75ms)
+Ô£ö calendar writes refuse targets changed since review before dispatch (19.6301ms)
+Ô£ö calendar review resolves the selected calendar zone when Google omits an event zone (9.5983ms)
+Ô£ö calendar writes pass the reviewed version to Google's final conditional write (76.0726ms)
+Ô£ö all-day writes use exclusive date-only end and invalid dates never call Google (65.28ms)
+Ô£ö event updates explicitly clear the opposite time representation when switching all-day mode (27.5082ms)
+Ô£ö scope errors remain visible and do not look like empty inboxes (11.6016ms)
+Ô£ö network failures and 5xx write responses produce outcome_unknown without retrying (97.2344ms)
+Ô£ö credential failures before dispatch and explicit 4xx writes remain definite failures (23.9442ms)
+Ô£ö an interrupted error response body cannot erase uncertainty about a write (7.6443ms)
+Ô£ö thread detail reads sent and archived messages outside the inbox list (56.9051ms)
+Ô£ö thread detail retrieves complete text bodies stored behind Gmail attachment IDs (18.6208ms)
+Ô£ö event reads include earlier today and support selected calendars and bounded ranges (19.9987ms)
+Ô£ö calendar discovery follows pagination and retains names, zones, and access roles (40.9661ms)
+Ô£ö recurring masters and occurrences are rejected from fresh Google data before updates or deletes (37.0599ms)
+Ô£ö single-event validation is repeated at execution and read failures never dispatch writes (13.4473ms)
+Ô£ö checkTaskCreation bloquea al superar cuota (21430.4257ms)
+Ô£ö checkTokens bloquea al superar cuota (15390.092ms)
+Ô£ö pickPrimary devuelve null si no hay actividad (103.6436ms)
+Ô£ö alert gana a todo (2.1331ms)
+Ô£ö error gana a stale (1.3021ms)
+Ô£ö stale gana a pulse (1.2193ms)
+Ô£ö pulse gana a progress (1.5306ms)
+Ô£ö progress gana a timer (0.9923ms)
+Ô£ö entre alertas gana la mas antigua (5.4647ms)
+Ô£ö alertUrgency soft a la mitad del SLA (5.2315ms)
+Ô£ö alertUrgency urgent pasada la mitad del SLA (3.1023ms)
+Ô£ö groupMemories agrupa por categoria cuando no hay roleId (104.2134ms)
+Ô£ö groupMemories agrupa por rol si tiene roleId (1.8287ms)
+Ô£ö groupMemories filtra por categoria (1.8945ms)
+Ô£ö similarity es 1 con textos identicos y 0 sin overlap (2.087ms)
+Ô£ö findDuplicate detecta exacto normalizado (4.2037ms)
+Ô£ö findDuplicate detecta similar por jaccard >= 0.6 (33.152ms)
+Ô£ö findDuplicate no devuelve nada si no supera threshold (1.6766ms)
+Ô£û crear memoria con category y tags (71048.6565ms)
+Ô£û editar solo text (patch parcial) (8.0866ms)
+Ô£û editar category a otro valor (8.4029ms)
+Ô£û editar category a null borra la categoria (0.5739ms)
+Ô£û patch vacio devuelve 422 (0.7107ms)
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\memory.test.ts (1.9918ms)
+Ô£û CopilotKit model worker executes server tools and persists the confirmed outcome (22721.2867ms)
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+APICallError [AI_APICallError]: User not found.
+    at <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\response-handler.ts:144:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async postToApi (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\post-to-api.ts:118:28)
+    at async OpenAIResponsesLanguageModel.doStream (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+openai@3.0.116_zod@3.25.76\node_modules\@ai-sdk\openai\src\responses\openai-responses-language-model.ts:1186:50)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1917:27)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24)
+    at async retryWithExponentialBackoffInternal (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\retry-with-exponential-backoff.ts:87:12)
+    at async streamStep (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1866:17)
+    at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:2442:9)
+    at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24) {
+  cause: undefined,
+  url: 'https://openrouter.ai/api/v1/responses',
+  requestBodyValues: {
+    model: 'fixture',
+    input: [ [Object], [Object] ],
+    temperature: undefined,
+    top_p: undefined,
+    max_output_tokens: undefined,
+    conversation: undefined,
+    max_tool_calls: undefined,
+    metadata: undefined,
+    parallel_tool_calls: undefined,
+    previous_response_id: undefined,
+    store: undefined,
+    user: undefined,
+    instructions: undefined,
+    service_tier: undefined,
+    include: undefined,
+    prompt_cache_key: undefined,
+    prompt_cache_options: undefined,
+    prompt_cache_retention: undefined,
+    safety_identifier: undefined,
+    top_logprobs: undefined,
+    truncation: undefined,
+    tools: [
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object], [Object], [Object],
+      [Object]
+    ],
+    tool_choice: 'auto',
+    stream: true
+  },
+  statusCode: 401,
+  responseHeaders: {
+    'access-control-allow-origin': '*',
+    'access-control-expose-headers': 'X-Generation-Id,X-Provider-Name,request-id,cf-ray',
+    'cf-ray': 'a453f2db1edae55b-MAD',
+    connection: 'keep-alive',
+    'content-type': 'application/json',
+    date: 'Sun, 04 Oct 2026 11:46:53 GMT',
+    'permissions-policy': 'payment=(self "https://checkout.stripe.com" "https://connect-js.stripe.com" "https://js.stripe.com" "https://*.js.stripe.com" "https://hooks.stripe.com")',
+    'referrer-policy': 'no-referrer, strict-origin-when-cross-origin',
+    server: 'cloudflare',
+    'set-cookie': '__cf_bm=.wU.3LDQgKCuqBz29gL7ivPRpVYf5Ca.Wu1XBLgHF48-1791114413.2994385-1.0.1.1-U._jAGSYRdG_.5cNXiyecspOBNord2c3Ei4LSNGK20XLLrrUHDxu.AIeHmrY2ddLiDlkoXPChgaX1znhMAKpi0.9cZmhkQnTPTQLJdfIeoBq7Aa3CFaSS0AcJFHy4Qef; HttpOnly; SameSite=None; Secure; Path=/; Domain=openrouter.ai; Expires=Sun, 04 Oct 2026 12:16:53 GMT',
+    'transfer-encoding': 'chunked',
+    'x-content-type-options': 'nosniff'
+  },
+  responseBody: '{"error":{"message":"User not found.","code":401}}',
+  isRetryable: false,
+  data: { error: { message: 'User not found.', code: 401 } },
+  Symbol(vercel.ai.error): true,
+  Symbol(vercel.ai.error.AI_APICallError): true
+}
+{"ts":"2026-10-04T11:46:53.900Z","level":"error","event":"background_failure","phase":"record task error","error":"LostLeaseError","message":"Task was paused, cancelled or taken over by another worker"}
+Ô£ö old refresh cannot overwrite a newly connected Google account (24576.3954ms)
+Ô£ö OAuth callbacks require a known, single-use state (10687.9644ms)
+Ô£ö disconnect invalidates an OAuth callback suspended during token (12462.5487ms)
+Ô£ö disconnect invalidates an OAuth callback suspended during profile (13483.953ms)
+Ô£ö disconnect invalidates pending OAuth state before a callback contacts Google (14940.4506ms)
+Ô£ö a newer connect attempt invalidates an older callback already exchanging its code (14529.1177ms)
+Ô£ö an in-flight refresh cannot restore credentials after disconnect (15244.8606ms)
+Ô£ö OpenBot is disabled by default and cannot call a supplied transport (50.2184ms)
+Ô£ö enabled configuration requires an authenticated transport and an agent for runtime (2.4383ms)
+Ô£ö runtime is an Intelligence descriptor and reports unsupported capabilities without a connection claim (1.8823ms)
+Ô£ö probe verifies user identity before reporting authenticated Intelligence capabilities (364.7932ms)
+Ô£ö probe does not treat anonymous runtime discovery as authentication (21.226ms)
+Ô£ö probe rejects incompatible capability responses and exposes transport failure (48.437ms)
+Ô£ö channel creation preserves separate channel, thread and agent identities (13.9123ms)
+Ô£ö computer status uses a Bot ID and rejects unknown lifecycle states or mismatched identity (52.011ms)
+Ô£ö snapshot is a read that retains server-owned references (43.0069ms)
+Ô£ö navigation uses the policy gateway, preserves cancellation and never creates a direct computer URL (40.3683ms)
+Ô£ö human control reads and transitions use the exact audited gateway routes (100.8623ms)
+Ô£ö policy refusals preserve status and rule and are never retried (27.4176ms)
+Ô£ö uncertain mutations require reconciliation after transport, server or invalid-response failure (55.2044ms)
+Ô£ö sample is an actual two-page PDF with blank fillable fields (1374.0575ms)
+Ô£ö filling changes only the new PDF and round-trips text and checkbox values (429.257ms)
+Ô£ö PDF operations reject invalid bytes, encrypted input, unknown names, and wrong field types (225.5298ms)
+Ô£ö unsupported fields are disclosed and cannot be silently filled (87.3122ms)
+Ô£ö PDF output removes active actions before returning a filled document (286.4494ms)
+Ô£ö XFA forms fail explicitly instead of silently losing their fields (252.6568ms)
+Ô£ö PDF failures expose safe typed 422 errors including malformed field and font errors (212.9038ms)
+Ô£ö agentRoleSchema acepta rol con permissions (86.4081ms)
+Ô£ö agentRoleSchema rechaza actions invalidas (3.8266ms)
+Ô£ö agentRoleSchema permite rol sin permissions (2.302ms)
+Ô£û fresh nested data directory starts and survives a database restart (57533.7893ms)
+Ô£ö idle Postgres client errors are logged instead of crashing the process (172.8253ms)
+Ô£ö rol sin permissions declarados: allowlist no activa (5.3886ms)
+Ô£ö rol con permissions: solo permite lo declarado (1.4356ms)
+Ô£ö denegacion devuelve reason legible (1.8073ms)
+Ô£ö AgentGovernance: rol con allowedTools rechaza tool no declarada (1.6934ms)
+Ô£ö AgentGovernance: rol sin allowedTools deja pasar al PolicyEngine (1.087ms)
+Ô£ö embedTexts embeds in parallel under a bounded number of in-flight calls (546.8756ms)
+Ô£ö embedTexts without an API key returns nulls instead of throwing (14.9028ms)
+Ô£û RagService.search ranks the best hits across pages of the index (33269.9216ms)
+Ô£ö ingestion caps the number of chunks per source (19562.4315ms)
+Ô£û the pgvector path is never attempted on PGlite (20483.5555ms)
+Ô£ö registry: dashboard pasa el schema (46.9008ms)
+Ô£ö registry: queue pasa el schema (4.556ms)
+Ô£ö registry: kind no soportado devuelve null (8.8582ms)
+Ô£ö reingest endpoint existe y responde a POST (7.4258ms)
+Ô£ö reingest no devuelve 501 en modo sample (1.3401ms)
+Ô£ö SOP contract accepts a first-class sop task and rejects duplicate step ids (354.8078ms)
+Ô£ö every:Nm matches any second of the matching minute (41.0801ms)
+Ô£ö every:1m and every:Nh still behave (2.2915ms)
+Ô£ö daily and weekly crons are unchanged (3.2704ms)
+Ô£ö an unsupported or out-of-range cron is a 422, not a silent never-fire (48.3103ms)
+Ô£ö the SOP step schema is closed: an unknown tool never reaches the executor (63.2517ms)
+Ô£ö finance errors are AppError 422 so the front can show them (80.2916ms)
+Ô£ö stateMachineSchema rechaza estados inexistentes en transiciones (15.2508ms)
+Ô£ö transicion permitida devuelve from/to/action (4.8369ms)
+Ô£ö transicion no declarada lanza 409 (6.1619ms)
+Ô£ö transicion con roleId fija: solo ese rol puede ejecutarla (2.1595ms)
+Ô£ö transicion sin roleId declarado admite cualquier rol (1.4362ms)
+Ô£û reassign cambia assignedTo y state.roleId (29459.1923ms)
+Ô£û reassign sin roleId devuelve 422 (4.7115ms)
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\tasks-reassign.test.ts (1.433ms)
+Ô£ö records de un tenant no son visibles desde otro (32920.2835ms)
+Ô£ö scanByStatus no mezcla tenants (8623.7416ms)
+Ô£ö TenantScopedStore aisla por tenantId:owner (7988.9355ms)
+Ô£ö RUN_STARTED resetea la lista (38.0395ms)
+Ô£ö TOOL_CALL_START anade con status running (1.8189ms)
+Ô£ö TOOL_CALL_START duplicado no anade dos veces (1.3866ms)
+Ô£ö TOOL_CALL_END marca done (1.5635ms)
+Ô£ö TOOL_CALL_END con error marca error (1.2867ms)
+Ô£ö TOOL_CALL_END de id desconocido no cambia (29.698ms)
+Ô£ö resolver elige la fuente m├ís fiable y detecta conflictos (117.4932ms)
+Ô£ö vault encrypts with a fresh nonce and authenticates the entire envelope (59.1213ms)
+Ô£ö vault rejects malformed keys and envelopes without echoing secrets (8.3651ms)
+Ô£ö resolveView devuelve null si no hay intencion (91.5536ms)
+Ô£ö resolveView matchea dashboard (142.9258ms)
+Ô£ö resolveView matchea queue (85.8515ms)
+Ô£ö resolveView normaliza tildes y mayusculas (9.8496ms)
+Ô£ö resolveView valida el spec del builder (9.3026ms)
+Ô£û document job runs without a client, waits for review, and resumes from its receipt (28129.0709ms)
+Ô£û ideas ignore sent replies while retaining unfinished incoming requests (3.7761ms)
+Ô£û cancelling a task denies its pending action (0.8291ms)
+Ô£û failed page checks back off, expose the error, and pause after repeated failures (0.4475ms)
+Ô£û dismissal racing acceptance never creates work for a dismissed idea (0.5664ms)
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\workflows.test.ts (1.1408ms)
+Ôä╣ tests 269
+Ôä╣ suites 0
+Ôä╣ pass 216
+Ôä╣ fail 40
+Ôä╣ cancelled 12
+Ôä╣ skipped 1
+Ôä╣ todo 0
+Ôä╣ duration_ms 460165.9168
+
+Ô£û failing tests:
+
+test at tests\agent-api.test.ts:62:1
+Ô£û agent API requires a session and reports the actual worker state (76011.7086ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:80:1
+Ô£û the main conversation thread survives reopening and concurrent initialization (5.1377ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:103:1
+Ô£û task detail and controls stay scoped to the authenticated owner (2.7785ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:140:1
+Ô£û agent request validation rejects malformed input with useful JSON errors (0.8813ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:171:1
+Ô£û goal updates validate milestones and pausing a goal pauses its task (0.9389ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:189:1
+Ô£û memories can be edited and forgotten while identity changes persist (0.487ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:227:1
+Ô£û idea dismissal survives refresh and concurrent acceptance creates one goal and task (0.4269ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:255:1
+Ô£û sample monitor saves its baseline and deduplicates notifications for repeated changes (0.515ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:318:1
+Ô£û live mode rejects sample sources and hides the fixture mutation endpoint (0.4981ms)
+  'test timed out after 20000ms'
+
+test at tests\agent-api.test.ts:56:1
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\agent-api.test.ts (3973.1007ms)
+  [Error: ENOTEMPTY: directory not empty, rmdir 'C:\Users\Alfonso\AppData\Local\Temp\openmuse-agent-api-TSLbub'] { errno: -4051, code: 'ENOTEMPTY', syscall: 'rmdir', path: 'C:\\Users\\Alfonso\\AppData\\Local\\Temp\\openmuse-agent-api-TSLbub' }
+
+test at tests\api.test.ts:49:1
+Ô£û API protects private data and rejects unrelated web origins (34542.5787ms)
+  'test timed out after 20000ms'
+
+test at tests\api.test.ts:60:1
+Ô£û sample workspace serves a real PDF and filling creates a new version (5.0389ms)
+  'test timed out after 20000ms'
+
+test at tests\api.test.ts:90:1
+Ô£û reviewed sample email persists a receipt, then revocation blocks another proposal (4.3835ms)
+  'test timed out after 20000ms'
+
+test at tests\api.test.ts:130:1
+Ô£û missing browser setup is explicit rather than a fictional browser session (0.7474ms)
+  'test timed out after 20000ms'
+
+test at tests\api.test.ts:139:1
+Ô£û calendar ranges and complete sample mail threads survive navigation (52.1413ms)
+  'test timed out after 20000ms'
+
+test at tests\api.test.ts:179:1
+Ô£û sample agent streams actual AG-UI events without a model key (0.4071ms)
+  'test timed out after 20000ms'
+
+test at tests\api.test.ts:193:1
+Ô£û guided document delegation streams a rich tool result bound to its saved task (0.2681ms)
+  'test timed out after 20000ms'
+
+test at tests\auth.test.ts:47:1
+Ô£û a wrong password is a 401 and never leaks whether the user exists (77692.4314ms)
+  'test timed out after 20000ms'
+
+test at tests\auth.test.ts:55:1
+Ô£û login returns a token, the user and the real server mode (3.969ms)
+  'test timed out after 20000ms'
+
+test at tests\auth.test.ts:72:1
+Ô£û the authenticated owner gets its own sample workspace seeded (15.9597ms)
+  'test timed out after 20000ms'
+
+test at tests\auth.test.ts:90:1
+Ô£û google status is readable so the UI can show the connect button (3.9821ms)
+  'test timed out after 20000ms'
+
+test at tests\auth.test.ts:100:1
+Ô£û the login rate limit answers 429 with Retry-After (0.7513ms)
+  'test timed out after 20000ms'
+
+test at tests\auth.test.ts:32:1
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\auth.test.ts (2.7985ms)
+  TypeError: Cannot read properties of undefined (reading 'agent')
+      at TestContext.<anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\tests\auth.test.ts:33:16)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1325:25)
+      at TestHook.run (node:internal/test_runner/test:1669:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.runHook (node:internal/test_runner/test:1212:20)
+      at after (node:internal/test_runner/test:1265:20)
+      at Test.run (node:internal/test_runner/test:1351:13)
+
+test at tests\browser.test.ts:29:1
+Ô£û browser API reopens an owned profile at the edited address and renews console access (33661.9283ms)
+  'test timed out after 20000ms'
+
+test at tests\computer-api.test.ts:10:1
+Ô£û computer REST endpoints require session ownership and return persisted receipts (32987.8791ms)
+  'test timed out after 20000ms'
+
+test at tests\conversation-browser.test.ts:57:1
+Ô£û chat browse_web emits real SDK tool events and returns observed source content immediately (34591.5815ms)
+  'test timed out after 20000ms'
+
+test at tests\conversation-browser.test.ts:118:1
+Ô£û chat browse_web emits an honest completed error result when navigation fails (20630.6889ms)
+  'test timed out after 20000ms'
+
+test at tests\conversation-browser.test.ts:134:1
+Ô£û unsubscribing from chat stops queued browser navigation and further model steps (20470.6191ms)
+  'test timed out after 20000ms'
+
+test at tests\conversation-browser.test.ts:158:1
+Ô£û chat searches and reads actual owner mail without creating a task or sending (20357.1134ms)
+  'test timed out after 20000ms'
+
+test at tests\conversation-browser.test.ts:197:1
+Ô£û chat mail tools report disconnected mail and refuse another owner's thread (16680.8822ms)
+  Error [AI_APICallError]: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+  * Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash
+  Please retry in 6.906492084s.
+      at <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\response-handler.ts:144:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async postToApi (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\post-to-api.ts:118:28)
+      at async GoogleGenerativeAILanguageModel.doStream (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+google@3.0.126_zod@3.25.76\node_modules\@ai-sdk\google\src\google-generative-ai-language-model.ts:606:50)
+      at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1917:27)
+      at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24)
+      at async retryWithExponentialBackoffInternal (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\@ai-sdk+provider-utils@4.0.53_zod@3.25.76\node_modules\@ai-sdk\provider-utils\src\retry-with-exponential-backoff.ts:87:12)
+      at async streamStep (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:1866:17)
+      at async fn (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\generate-text\stream-text.ts:2442:9)
+      at async <anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\node_modules\.pnpm\ai@6.0.289_zod@3.25.76\node_modules\ai\src\telemetry\record-span.ts:34:24) {
+    cause: undefined,
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:streamGenerateContent?alt=sse',
+    requestBodyValues: { generationConfig: { maxOutputTokens: undefined, temperature: undefined, topK: undefined, topP: undefined, frequencyPenalty: undefined, presencePenalty: undefined, stopSequences: undefined, seed: undefined, responseMimeType: undefined, responseSchema: undefined, responseModalities: undefined, thinkingConfig: undefined }, contents: [ [Object] ], systemInstruction: { parts: [Array] }, safetySettings: undefined, tools: [ [Object] ], toolConfig: { functionCallingConfig: [Object] }, cachedContent: undefined, labels: undefined, serviceTier: undefined },
+    statusCode: 429,
+    responseHeaders: { 'alt-svc': 'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000', 'content-length': '1362', 'content-type': 'text/event-stream', date: 'Sun, 04 Oct 2026 11:45:53 GMT', server: 'scaffolding on HTTPServer2', 'server-timing': 'gfet4t7; dur=176', vary: 'Origin, X-Origin, Referer', 'x-content-type-options': 'nosniff', 'x-frame-options': 'SAMEORIGIN', 'x-xss-protection': '0' },
+    responseBody: '{\n  "error": {\n    "code": 429,\n    "message": "You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash\\nPlease retry in 6.906492084s.",\n    "status": "RESOURCE_EXHAUSTED",\n    "details": [\n      {\n        "@type": "type.googleapis.com/google.rpc.Help",\n        "links": [\n          {\n            "description": "Learn more about Gemini API quotas",\n            "url": "https://ai.google.dev/gemini-api/docs/rate-limits"\n          }\n        ]\n      },\n      {\n        "@type": "type.googleapis.com/google.rpc.QuotaFailure",\n        "violations": [\n          {\n            "quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",\n            "quotaId": "GenerateRequestsPerMinutePerProjectPerModel-FreeTier",\n            "quotaDimensions": {\n              "model": "gemini-3.6-flash",\n              "location": "global"\n            },\n            "quotaValue": "5"\n          }\n        ]\n      },\n      {\n        "@type": "type.googleapis.com/google.rpc.RetryInfo",\n        "retryDelay": "6s"\n      }\n    ]\n  }\n}\n',
+    isRetryable: true,
+    data: { error: { code: 429, message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 5, model: gemini-3.6-flash\nPlease retry in 6.906492084s.', status: 'RESOURCE_EXHAUSTED', details: [Array] } }
+  }
+
+test at tests\engine.test.ts:72:1
+Ô£û expired leases recover saved checkpoints after the database restarts (47242.485ms)
+  'test timed out after 20000ms'
+
+test at tests\event-bus.test.ts:81:1
+Ô£û todo SystemEventType tiene schema y un payload minimo valido (773.3372ms)
+  AssertionError [ERR_ASSERTION]: falta payload minimo para verification.executed en el test
+      at TestContext.<anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\tests\event-bus.test.ts:86:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1325:25)
+      at Test.start (node:internal/test_runner/test:1191:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests\event-bus.test.ts:109:1
+Ô£û todo SystemEventType del enum aparece en algun bus.emit del repo (20052.7796ms)
+  'test timed out after 20000ms'
+
+test at tests\memory.test.ts:46:1
+Ô£û crear memoria con category y tags (71048.6565ms)
+  'test timed out after 20000ms'
+
+test at tests\memory.test.ts:58:1
+Ô£û editar solo text (patch parcial) (8.0866ms)
+  'test timed out after 20000ms'
+
+test at tests\memory.test.ts:75:1
+Ô£û editar category a otro valor (8.4029ms)
+  'test timed out after 20000ms'
+
+test at tests\memory.test.ts:91:1
+Ô£û editar category a null borra la categoria (0.5739ms)
+  'test timed out after 20000ms'
+
+test at tests\memory.test.ts:108:1
+Ô£û patch vacio devuelve 422 (0.7107ms)
+  'test timed out after 20000ms'
+
+test at tests\memory.test.ts:38:1
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\memory.test.ts (1.9918ms)
+  TypeError: Cannot read properties of undefined (reading 'agent')
+      at TestContext.<anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\tests\memory.test.ts:39:16)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1325:25)
+      at TestHook.run (node:internal/test_runner/test:1669:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.runHook (node:internal/test_runner/test:1212:20)
+      at after (node:internal/test_runner/test:1265:20)
+      at Test.run (node:internal/test_runner/test:1351:13)
+
+test at tests\model-worker.test.ts:12:1
+Ô£û CopilotKit model worker executes server tools and persists the confirmed outcome (22721.2867ms)
+  'test timed out after 20000ms'
+
+test at tests\persistence.test.ts:8:1
+Ô£û fresh nested data directory starts and survives a database restart (57533.7893ms)
+  'test timed out after 20000ms'
+
+test at tests\rag.test.ts:63:1
+Ô£û RagService.search ranks the best hits across pages of the index (33269.9216ms)
+  'test timed out after 20000ms'
+
+test at tests\rag.test.ts:123:1
+Ô£û the pgvector path is never attempted on PGlite (20483.5555ms)
+  'test timed out after 20000ms'
+
+test at tests\tasks-reassign.test.ts:45:1
+Ô£û reassign cambia assignedTo y state.roleId (29459.1923ms)
+  'test timed out after 20000ms'
+
+test at tests\tasks-reassign.test.ts:58:1
+Ô£û reassign sin roleId devuelve 422 (4.7115ms)
+  'test timed out after 20000ms'
+
+test at tests\tasks-reassign.test.ts:37:1
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\tasks-reassign.test.ts (1.433ms)
+  TypeError: Cannot read properties of undefined (reading 'agent')
+      at TestContext.<anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\tests\tasks-reassign.test.ts:38:16)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1325:25)
+      at TestHook.run (node:internal/test_runner/test:1669:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.runHook (node:internal/test_runner/test:1212:20)
+      at after (node:internal/test_runner/test:1265:20)
+      at Test.run (node:internal/test_runner/test:1351:13)
+
+test at tests\workflows.test.ts:74:1
+Ô£û document job runs without a client, waits for review, and resumes from its receipt (28129.0709ms)
+  'test timed out after 20000ms'
+
+test at tests\workflows.test.ts:109:1
+Ô£û ideas ignore sent replies while retaining unfinished incoming requests (3.7761ms)
+  'test timed out after 20000ms'
+
+test at tests\workflows.test.ts:135:1
+Ô£û cancelling a task denies its pending action (0.8291ms)
+  'test timed out after 20000ms'
+
+test at tests\workflows.test.ts:146:1
+Ô£û failed page checks back off, expose the error, and pause after repeated failures (0.4475ms)
+  'test timed out after 20000ms'
+
+test at tests\workflows.test.ts:183:1
+Ô£û dismissal racing acceptance never creates work for a dismissed idea (0.5664ms)
+  'test timed out after 20000ms'
+
+test at tests\workflows.test.ts:32:1
+Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\workflows.test.ts (1.1408ms)
+  TypeError: Cannot read properties of undefined (reading 'agent')
+      at TestContext.<anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\tests\workflows.test.ts:33:16)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1325:25)
+      at TestHook.run (node:internal/test_runner/test:1669:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.runHook (node:internal/test_runner/test:1212:20)
+      at after (node:internal/test_runner/test:1265:20)
+      at Test.run (node:internal/test_runner/test:1351:13)
+[ELIFECYCLE] Test failed. See above for more details.
