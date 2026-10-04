@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { globalPresence } from "./engine/presence.ts";
 
 interface Thread {
   id: string;
@@ -40,6 +41,34 @@ export function threadRoutes(db: Store) {
     return c.json(thread, 201);
   });
 
+  // PRESENCE_TOUCH_V1 — el cliente marca su presencia al editar un thread.
+  // Devuelve quién más está editando. Ver miniaudit 04.
+  app.post("/:id/presence", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const thread = await db.get(owner, "threads", id);
+    if (!thread) throw new AppError("Thread not found", 404);
+    const userId = c.req.header("x-user-id") ?? owner;
+    const result = globalPresence.touch(userId, "thread", id);
+    return c.json(result);
+  });
+
+  // RECONCILE_THREAD_V1 — el cliente pide el estado más reciente tras un 409.
+  // Devuelve updatedAt + messages para comparar con lo que tenía.
+  // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+  app.get("/:id/state", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const thread = await db.get<Thread>(owner, "threads", id);
+    if (!thread) throw new AppError("Thread not found", 404);
+    const conversation = await db.get<{ messages: unknown[] }>(owner, "conversations", id);
+    return c.json({
+      id,
+      updatedAt: thread.updatedAt,
+      messages: conversation?.messages ?? [],
+    });
+  });
+
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -56,7 +85,33 @@ export function threadRoutes(db: Store) {
     if (!thread) throw new AppError("Thread not found", 404);
     const body = await c.req.json();
     const messages = z.array(z.unknown()).max(1000).parse(body.messages);
-    await db.put(owner, "conversations", { id, messages });
+    // THREADS_CAS_V1 — optimismo de concurrencia. El cliente envía
+    // `expectedUpdatedAt` con la versión que leyó. Si el thread cambió
+    // desde entonces, devolvemos 409 y el cliente recarga.
+    // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+    const expected = z
+      .object({ expectedUpdatedAt: z.iso.datetime({ offset: true }).optional() })
+      .parse(body);
+    if (expected.expectedUpdatedAt !== undefined) {
+      const current = await db.get<Thread>(owner, "threads", id);
+      if (!current || current.updatedAt !== expected.expectedUpdatedAt) {
+        throw new AppError(
+          "Otro usuario ha modificado esta conversación. Recarga y vuelve a intentarlo.",
+          409,
+        );
+      }
+    }
+    // Escribir la conversación con CAS: expected = updatedAt leído, patch = messages.
+    const currentThread = await db.get<Thread>(owner, "threads", id);
+    if (!currentThread) throw new AppError("Thread not found", 404);
+    const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(
+      owner,
+      "conversations",
+      id,
+      {},
+      { messages },
+    );
+    if (!swapped) throw new AppError("Thread changed; refresh and try again", 409);
     let title = thread.title;
     if (title === "Nuevo chat" && messages.length > 0) {
       const first = messages.find(

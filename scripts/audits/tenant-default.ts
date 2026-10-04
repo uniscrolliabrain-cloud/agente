@@ -89,6 +89,8 @@ async function main(): Promise<void> {
     }
   }
 
+  // TENANT_DEFAULT_AUDIT_V2 — verificado como parte del bloque 07.
+  // Ver: docs/audits/07-aislamiento-multi-tenant/roadmap.md §8.
   const forbidden = hits.filter((h) => !h.allowed);
   const report: string[] = [
     "# Auditoria de default hardcodeado",

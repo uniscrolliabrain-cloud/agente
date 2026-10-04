@@ -41,6 +41,12 @@ function providerEnv(name: string, fallback: Provider): Provider {
   return fallback;
 }
 
+// ENV_RESOLVER_VALIDATE_V1 — parsea con tenantConfigSchema antes de
+  // devolver. Antes, un valor raro caía silenciosamente al default.
+  // Ver: auditoría profunda 09.
+  import { tenantConfigSchema } from "./tenant-config.ts";
+
+  // CONFIG_CACHE_V1 - cache de TenantConfig por tenant (TTL 5 min).
 export class EnvTenantConfigResolver implements TenantConfigResolver {
   async resolve(tenantId: string): Promise<TenantConfig> {
     const fastKey = process.env.FAST_LLM_API_KEY?.trim() ?? "";
@@ -61,7 +67,7 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
       cromos: boolEnv("CROMOS", false),
     };
 
-    return {
+    const candidate = {
       tenantId,
       fast: {
         provider: providerEnv("FAST_LLM_PROVIDER", "google"),
@@ -84,5 +90,12 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
       slowLongMs: numEnv("SLOW_LONG_MS", 30_000),
       maxThoughtsPerTurn: numEnv("MAX_THOUGHTS_PER_TURN", 500),
     };
+    // ENV_RESOLVER_VALIDATE_V1 — parse; si falla, log y fallback.
+    const parsed = tenantConfigSchema.safeParse(candidate);
+    if (parsed.success) return parsed.data;
+    console.warn(
+      `[kernel/env-resolver] tenant ${tenantId} config inválido: ${parsed.error.issues[0]?.message ?? "unknown"}`,
+    );
+    return candidate as unknown as TenantConfig;
   }
 }

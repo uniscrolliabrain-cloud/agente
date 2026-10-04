@@ -24,7 +24,9 @@ import type { RagService } from "./engine/rag.ts";
 export class WorkspaceService {
   private seeding = new Map<string, Promise<void>>();
   constructor(
-    private readonly db: Store,
+    // WORKSPACE_TENANT_STORE_V1 — acepta Store o TenantScopedStore.
+    // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+    private readonly db: Store | import("./db-tenant.ts").TenantScopedStore,
     private readonly config: Config,
     private readonly files: Files,
     private readonly googleAuth: GoogleAuth,

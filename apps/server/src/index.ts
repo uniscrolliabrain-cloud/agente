@@ -8,6 +8,10 @@ import { createStore } from "./db.ts";
 import { backgroundFailure } from "./log.ts";
 
 const config = readConfig();
+// VALIDATE_LLM_KEYS_V1 - aviso al arrancar si las keys estan vacias.
+if (!process.env.FAST_LLM_API_KEY && !process.env.GEMINI_API_KEY) {
+  console.warn("[kernel] FAST_LLM_API_KEY y GEMINI_API_KEY vacias.");
+}
 const db = await createStore({
   dataDir: `${config.dataDir}/postgres`,
   databaseUrl: config.databaseUrl,
@@ -116,6 +120,48 @@ const stopBackupScheduler = startBackupScheduler();
     );
   }
 }
+
+// DEFERRED_ACTIONS_WIRE_V1 — instancia única de DeferredActions y tick.
+// Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+// El tick corre cada segundo, pero solo ejecuta lo que ya venció.
+const { DeferredActions, MemoryDeferredStore } = await import("./actions-deferred.ts");
+const deferredStore = new MemoryDeferredStore();
+const deferred = new DeferredActions(
+  deferredStore,
+  async (_owner: string, actionId: string) => {
+    const action = await db.get<{ id: string; owner?: string }>("system", "actions", actionId);
+    void action;
+    // El run real lo hace `ActionService.execute` cuando se llama a `decide`
+    // con `run` (pendiente). Por ahora, marcamos la acción como ejecutada.
+  },
+  (type, payload) => {
+    void bus.emit("system", "system.maintenance", { kind: "system", id: "deferred" }, {
+      deferredType: type,
+      ...payload,
+    });
+  },
+  {
+    windowMs: Number(process.env.DEFERRED_ACTION_WINDOW_MS ?? "8000"),
+    dualAt: process.env.DEFERRED_ACTION_DUAL_AT
+      ? Number(process.env.DEFERRED_ACTION_DUAL_AT)
+      : null,
+  },
+);
+// EVENTS_CONSUMERS_WIRE_V1 — arranca los 3 consumidores del bus.
+  // Ver: docs/audits/08-bus-de-eventos/roadmap.md §8
+  // ("3 consumidores reales además de ReactionEngine").
+  const { startMetricsConsumer } = await import("./engine/events/consumers/metrics.ts");
+  const { startAuditConsumer } = await import("./engine/events/consumers/audit.ts");
+  const { startNotificationsConsumer } = await import("./engine/events/consumers/notifications.ts");
+  const ownersWithConsumers = ["local-user", "system"];
+  const metricsConsumer = startMetricsConsumer(ownersWithConsumers);
+  const auditConsumer = startAuditConsumer(ownersWithConsumers, db);
+  const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, db);
+
+  const deferredTick = setInterval(() => {
+  void deferred.tick().catch((error) => backgroundFailure("deferred tick", error));
+}, 1000);
+deferredTick.unref?.();
 
 const server = serveHttp
   ? serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>

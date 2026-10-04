@@ -11,6 +11,9 @@ import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import type { TenantScopedStore } from "./db-tenant.ts";
 import { AppError } from "./errors.ts";
+// COMPUTER_RETRY_V1 — retry solo en errores transitorios de Docker client.
+// NUNCA reintentamos un comando que pudo haber ejecutado.
+import { retryWithBackoff } from "./engine/retry.ts";
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 const outputLimit = 128 * 1024;

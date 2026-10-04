@@ -80,6 +80,44 @@ export class TenantScopedStore {
   // y el caller filtraba en memoria (50x trabajo con 50 tenants).
   private readonly tenantPrefixes = new Set<string>();
 
+  /**
+   * TENANT_PREFIXES_SET_V1 — los prefijos vistos durante la vida del proceso.
+   * Antes se guardaba solo el último en una variable; ahora se acumulan
+   * en un Set para que un `scan` global pueda iterar por todos.
+   * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+   */
+  allTenantPrefixes(): string[] {
+    return [...this.tenantPrefixes];
+  }
+
+  /**
+   * TENANT_SCAN_BY_PREFIX_V1 — scan explícito por un prefijo concreto.
+   * Útil en `maintain` cuando ya sabemos el tenant a mantener.
+   */
+  async scanByPrefix<T>(
+    kind: string,
+    tenantId: string,
+    limit = 500,
+  ): Promise<{ owner: string; value: T }[]> {
+    const storeWithPrefix = this.store as Store & {
+      scanByOwnerPrefix?: <U>(
+        kind: string,
+        ownerPrefix: string,
+        limit: number,
+      ) => Promise<{ owner: string; value: U }[]>;
+    };
+    if (typeof storeWithPrefix.scanByOwnerPrefix !== "function") {
+      // Fallback: scan global y filtro en memoria.
+      const rows = await this.store.scan<T>(kind, limit * 4);
+      return rows
+        .filter((r) => r.owner.startsWith(`${tenantId}:`))
+        .map((r) => ({ owner: this.peel(r.owner), value: r.value }))
+        .slice(0, limit);
+    }
+    const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${tenantId}:`, limit);
+    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+  }
+
   async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
     // TENANT_SCAN_PEEL_V1 - el store subyacente guarda owner = "tenantId:owner".
     // El caller (TaskWorker) espera el owner limpio para poder volver a componer

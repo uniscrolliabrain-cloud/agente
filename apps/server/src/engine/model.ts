@@ -533,7 +533,8 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
   }
   try {
     const promptChars = JSON.stringify(input.messages).length;
-    await service.recordUsage(owner, "task", config.model, promptChars, text.length);
+    // RECORD_USAGE_SLOW_V1 - tareas durables registran slow.
+await service.recordUsage(owner, "task", config.model, promptChars, text.length, "slow");
   } catch { /* best-effort */ }
   if (text) await ctx.event("step", "Agent update", text.slice(0, 12000));
 

@@ -15,11 +15,21 @@ import { z } from "zod";
 import type { Kernel } from "./kernel/index.ts";
 import { kernelContextSchema } from "./kernel/index.ts";
 import { AppError } from "./errors.ts";
+import { UserService } from "./users.ts";
 
 const limitSchema = z.coerce.number().int().min(1).max(200).optional();
 
-export function kernelRoutes(kernel: Kernel) {
+export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   const app = new Hono<{ Variables: { owner: string } }>();
+  // KERNEL_ROUTES_ADMIN_V1 — valida admin antes de exponer el kernel.
+  // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
+  const requireAdmin = async (owner: string) => {
+    if (!userService) return; // Retrocompatible si no se inyecta.
+    const user = await userService.getById(owner);
+    if (!user || user.role !== "admin") {
+      throw new AppError("Solo admin puede consultar el kernel", 403);
+    }
+  };
 
   /** Helper: construye el KernelContext del owner autenticado. */
   const ctxFor = (owner: string, requestId: string) =>
@@ -33,6 +43,7 @@ export function kernelRoutes(kernel: Kernel) {
   // GET /api/kernel/turns?limit=50
   app.get("/turns", async (c) => {
     const owner = c.get("owner");
+    await requireAdmin(owner);
     const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
     const ctx = ctxFor(owner, `kernel-routes:turns:${Date.now()}`);
     try {

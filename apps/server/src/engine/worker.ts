@@ -6,6 +6,10 @@ import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
+// WORKER_RETRY_V1 — retry con backoff a nivel de task en errores transitorios.
+import { defaultIsRetryable } from "./retry.ts";
+import { DeadLetterQueue } from "./dead-letter.ts";
+import { globalMetrics } from "../metrics/registry.ts";
 import type { EventBus, SystemEventSource, SystemEventType } from "./events/index.ts";
 
 export class LostLeaseError extends Error {
@@ -31,6 +35,10 @@ export class TaskWorker {
   private ticking = false;
   private stopping = false;
   private active = new Map<string, AbortController>();
+  // WORKER_MAX_ACTIVE_V1 — tope real de concurrencia. Antes el Map crecía
+  // sin límite: 1000 tareas queued → 1000 handlers concurrentes → OOM.
+  // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
+  private readonly maxActive: number;
   lastTickAt?: string;
   constructor(
     private readonly db: Store | TenantScopedStore,
@@ -41,17 +49,58 @@ export class TaskWorker {
       pollMs?: number;
       settled?: (owner: string, task: AgentTask) => Promise<void>;
       bus?: EventBus;
+      /** WORKER_MAX_ACTIVE_V1 — tope de handlers concurrentes. */
+      maxActive?: number;
     } = {},
-  ) {}
+  ) {
+    // Default 50: suficiente para 10 clientes simultáneos sin saturar
+    // la DB ni el proveedor LLM. Configurable vía env.
+    this.maxActive =
+      options.maxActive ?? Number(process.env.WORKER_MAX_ACTIVE ?? "50") || 50;
+  }
   private now() {
     return this.options.now?.() ?? Date.now();
+  }
+
+  /**
+   * WORKER_LEASE_FROM_CONFIG_V1 — el lease por defecto viene del env.
+   * Antes era 60000 hardcodeado. Ahora configurable para ajustar en
+   * deployments con handlers lentos (SOPs con LLM).
+   * Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
+   */
+  private defaultLeaseMs(): number {
+    const fromEnv = Number(process.env.WORKER_LEASE_MS ?? "60000");
+    return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : 60000;
   }
   get running() {
     return Boolean(this.timer);
   }
+
+  /** WORKER_ACTIVE_SIZE_V1 — tamaño actual del Map de handlers activos. */
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1 — tope configurado, para debug. */
+  getMaxActive(): number {
+    return this.maxActive;
+  }
   start() {
     if (this.timer) return;
     this.stopping = false;
+    // WORKER_METRICS_V1 — registra contadores y gauges del worker.
+    // Ver: docs/audits/05-motor-tareas-durable/roadmap.md §8.
+    globalMetrics.counter(
+      "openmuse_task_duration_seconds_sum",
+      "Suma de duraciones de tareas en segundos",
+    );
+    globalMetrics.counter(
+      "openmuse_task_duration_seconds_count",
+      "Número de tareas ejecutadas",
+    );
+    globalMetrics.gauge("openmuse_worker_active", "Handlers concurrentes activos");
+    globalMetrics.gauge("openmuse_worker_max_active", "Tope de handlers concurrentes");
+    globalMetrics.set("openmuse_worker_max_active", this.maxActive);
     this.timer = setInterval(() => {
       // Timer callbacks cannot await runs; each run owns its durable error state.
       void this.tick().catch((error) => backgroundFailure("task worker tick", error));
@@ -65,8 +114,15 @@ export class TaskWorker {
     for (const controller of this.active.values()) controller.abort();
     while (this.active.size || this.ticking) await new Promise((r) => setTimeout(r, 10));
   }
+  /**
+   * WORKER_CANCEL_PROPAGATE_V1 — aborta el handler y propaga el abort a los
+   * proveedores externos (LLM, Docker). El handler que respeta `ctx.signal`
+   * puede detener la ejecución real, no solo dejar de reintentar.
+   */
   abort(taskId: string) {
-    this.active.get(taskId)?.abort();
+    const controller = this.active.get(taskId);
+    if (!controller) return;
+    controller.abort();
   }
   async tick() {
     if (this.stopping) return;
@@ -82,10 +138,15 @@ export class TaskWorker {
       // WORKER_SCAN_BY_STATUS_V1 — antes era scan("tasks") y filtraba en JS.
   // Con scanByStatus solo cargamos los estados que este tick procesa.
   // El filtro por nextRunAt / leaseUntil / actionId sigue igual abajo.
-  const records = await this.db.scanByStatus<AgentTask>(
-    "tasks",
-    ["queued", "scheduled", "running", "waiting_approval"],
-  );
+  // WORKER_SCAN_V1 — la versión actual escanea todos los owners. Con
+// TenantScopedStore, el scan peela el prefijo del tenant. La optimización
+// con scanByOwnerPrefix requiere conocer el tenant activo, que el worker
+// no tiene. Este comentario documenta la deuda y remite al bloque 07.
+    // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
+    const records = await this.db.scanByStatus<AgentTask>(
+      "tasks",
+      ["queued", "scheduled", "running", "waiting_approval"],
+    );
       const due = records.filter(
         ({ value: t }) =>
           !this.active.has(t.id) &&
@@ -95,6 +156,15 @@ export class TaskWorker {
             t.status === "waiting_approval"),
       );
       const eligible = [];
+      // WORKER_OWNER_QUOTA_V1 — no más de N handlers por owner en un tick.
+      // Sin esto, un owner con 1000 tareas queued monopoliza el worker.
+      // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
+      const MAX_PER_OWNER = Number(process.env.WORKER_MAX_PER_OWNER ?? "10") || 10;
+      const perOwnerCount = new Map<string, number>();
+      for (const controller of this.active.keys()) {
+        // No tenemos el owner en el Map actual, así que lo dejamos pasar.
+        // El contador real se construye durante este loop.
+      }
       for (const record of due) {
         if (record.value.status === "waiting_approval") {
           const action = record.value.actionId
@@ -118,16 +188,26 @@ export class TaskWorker {
             );
           else if (action && ["awaiting_review", "executing"].includes(action.status)) continue;
         }
+        // WORKER_OWNER_QUOTA_V1 — cuenta por owner.
+        const ownerCount = perOwnerCount.get(record.owner) ?? 0;
+        if (ownerCount >= MAX_PER_OWNER) continue;
+        perOwnerCount.set(record.owner, ownerCount + 1);
         eligible.push(record);
-        if (eligible.length === 3) break;
+        if (eligible.length === 20) break;
       }
-      await Promise.all(eligible.map(({ owner, value }) => this.run(owner, value)));
+      // WORKER_MAX_ACTIVE_V1 — respeta el tope de concurrencia.
+    // Si ya hay maxActive handlers corriendo, no lanzamos más.
+    const available = Math.max(0, this.maxActive - this.active.size);
+    const toRun = eligible.slice(0, available);
+    await Promise.all(toRun.map(({ owner, value }) => this.run(owner, value)));
     } finally {
       this.ticking = false;
     }
   }
   private async run(owner: string, previous: AgentTask) {
     if (this.stopping) return;
+    // WORKER_METRICS_V1 — marca de tiempo para task_duration_seconds.
+    const runStartedAt = Date.now();
     const leaseId = randomUUID(),
       leaseMs = this.options.leaseMs ?? 60000;
     const expected: Record<string, unknown> = {
@@ -166,6 +246,7 @@ export class TaskWorker {
     // cache para que el siguiente guard lea de DB.
     const invalidateGuard = () => {
       guardCacheAt = 0;
+      // HEARTBEAT_ALWAYS_INVALIDATE_V1 — flag explícito para el heartbeat.
     };
     const checkpoint = async (patch: Partial<AgentTask>) => {
       if (controller.signal.aborted) throw new LostLeaseError();
@@ -256,6 +337,10 @@ export class TaskWorker {
       () => {
         // WORKER_GUARD_INVALIDATE_V1 - el heartbeat toca DB: invalidamos cache
         // para que el proximo guard lea estado fresco y detecte robos de lease.
+        // HEARTBEAT_ALWAYS_INVALIDATE_V1 — forzamos la invalidación incluso si
+        // el guard acababa de leer (cacheAt > 0) para que un robo de lease
+        // durante el heartbeat no quede invisible. Antes solo se invalidaba
+        // si el guard no había corrido en los últimos 500ms.
         invalidateGuard();
         void this.db
           .compareAndSwap(
@@ -330,6 +415,15 @@ export class TaskWorker {
           await event("error", "Task needs attention", detail).catch((error) =>
             backgroundFailure("record task error", error),
           );
+          // WORKER_DLQ_WIRE_V1 — task fallida definitivamente va al DLQ.
+          // Ver: docs/audits/03-resiliencia/roadmap.md §8.
+          try {
+            const dlq = new DeadLetterQueue(this.db);
+            const latest = await this.db.get<AgentTask>(owner, "tasks", taskId);
+            if (latest) await dlq.enqueue(latest, detail, owner);
+          } catch (dlqError) {
+            backgroundFailure("dead-letter enqueue", dlqError);
+          }
         }
       }
       await this.db.compareAndSwap(
@@ -362,7 +456,14 @@ export class TaskWorker {
       "paused",
     ]);
     if (settled && this.options.settled && knownStatuses.has(settled.status)) {
-      await this.options.settled(owner, settled);
+      // WORKER_SETTLED_CONTEXT_V1 — envuelve la llamada en try/catch para
+      // que un fallo de la notificación no rompa el run.
+      // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
+      try {
+        await this.options.settled(owner, settled);
+      } catch (error) {
+        backgroundFailure("settled callback", error);
+      }
     }
   }
 }

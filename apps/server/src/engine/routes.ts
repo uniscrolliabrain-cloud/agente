@@ -88,7 +88,101 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(await service.control(c.get("owner"), c.req.param("id"), action));
   });
   // C1_REASSIGN_V1 - reasignar tarea a otro rol o usuario.
+  // RECONCILE_ENDPOINT_V1 — reconciliar una acción en outcome_unknown.
+  // El operador confirma si la acción externa se ejecutó o no.
+  // Ver: docs/audits/03-resiliencia/roadmap.md §8.
+  app.post("/actions/:id/reconcile", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const body = z
+      .object({
+        outcome: z.enum(["executed", "not_executed"]),
+        note: z.string().max(2000).optional(),
+      })
+      .parse(await c.req.json());
+
+    const action = await service.db.get<{
+      id: string;
+      status: string;
+      taskId?: string;
+    }>(owner, "actions", id);
+    if (!action) throw new AppError("Action not found", 404);
+    if (action.status !== "outcome_unknown") {
+      throw new AppError(
+        `Only outcome_unknown actions can be reconciled (current: ${action.status})`,
+        409,
+      );
+    }
+
+    const nextStatus = body.outcome === "executed" ? "succeeded" : "failed";
+    const note = body.note?.slice(0, 2000) ?? "";
+    const result =
+      body.outcome === "executed"
+        ? `Reconciled by operator: executed${note ? ` — ${note}` : ""}`
+        : `Reconciled by operator: not executed${note ? ` — ${note}` : ""}`;
+
+    const updated = await service.db.compareAndSwap(
+      owner,
+      "actions",
+      id,
+      { status: "outcome_unknown" },
+      { status: nextStatus, result, error: null },
+    );
+    if (!updated) throw new AppError("Action changed; refresh and retry", 409);
+
+    await service.db.put(owner, "activity", {
+      id: `reconcile-${id}-${Date.now()}`,
+      actionId: id,
+      title: "Action reconciled",
+      detail: result,
+      date: new Date().toISOString(),
+      status: nextStatus,
+    });
+
+    if (action.taskId) {
+      const task = await service.db.get<{ status: string }>(owner, "tasks", action.taskId);
+      if (task?.status === "waiting_approval") {
+        await service.db.compareAndSwap(
+          owner,
+          "tasks",
+          action.taskId,
+          { status: "waiting_approval" },
+          { status: nextStatus === "succeeded" ? "queued" : "failed" },
+        );
+      }
+    }
+
+    return c.json(updated);
+  });
+
   // C3_CANCEL_V1 - cancelar una accion programada.
+  // ACTIONS_CANCEL_VERIFY_V1 — verificado como parte del bloque 06.
+  // ACTIONS_RETRY_ENDPOINT_V1 — reintento controlado.
+  // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+  app.post("/actions/:id/retry", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const action = await service.actions.retry(owner, id);
+    return c.json(action);
+  });
+
+  // ACTIONS_AUDIT_ENDPOINT_V1 — audit trail de una acción.
+  // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+  app.get("/actions/:id/audit", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const action = await service.db.get(owner, "actions", id);
+    if (!action) throw new AppError("Action not found", 404);
+    const entries = await service.db.list<{ actionId: string }>(owner, "action-audit", {
+      limit: 200,
+    });
+    return c.json({
+      actionId: id,
+      audit: entries.filter((e) => e.actionId === id),
+    });
+  });
+  // El endpoint cancela una acción scheduled si el usuario firmó.
+  // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
   app.post("/actions/:id/cancel", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -285,6 +379,31 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   app.get("/notifications", async (c) =>
     c.json((await service.snapshot(c.get("owner"))).notifications),
   );
+  // NOTIF_ASSIGN_V1 — crear una notificación dirigida a un usuario concreto.
+  // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+  app.post("/notifications/direct", async (c) => {
+    const owner = c.get("owner");
+    const body = z
+      .object({
+        userId: z.string().min(1).max(200),
+        title: z.string().min(1).max(200),
+        body: z.string().min(1).max(2000),
+        taskId: z.string().max(200).optional(),
+      })
+      .parse(await c.req.json());
+    const notification = {
+      id: `notif-direct-${crypto.randomUUID()}`,
+      taskId: body.taskId,
+      title: body.title,
+      body: body.body,
+      createdAt: new Date().toISOString(),
+      read: false,
+      assignedTo: body.userId,
+    };
+    await service.db.put(owner, "notifications", notification);
+    return c.json(notification, 201);
+  });
+
   app.post("/notifications/:id/read", async (c) => {
     const notification = await service.db.compareAndSwap<AgentNotification>(
       c.get("owner"),
@@ -356,6 +475,51 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   // Solo expone id, name, tone, avatar, objetivo, roi e identidad. Nada interno.
   app.get("/roles/public", async (c) => c.json(await service.publicRoles(c.get("owner"))));
   app.get("/usage", async (c) => c.json(await service.usageSummary(c.get("owner"))));
+  // TENANT_CACHE_ENDPOINT_V1 — debug de la cache de TenantService.
+  // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+  app.get("/tenant/cache-stats", async (c) => {
+    const ts = service.tenantService as unknown as {
+      cacheSize?: () => number;
+      invalidateAll?: () => void;
+    };
+    return c.json({
+      cacheSize: typeof ts?.cacheSize === "function" ? ts.cacheSize() : null,
+      ttlMs: Number(process.env.TENANT_CACHE_TTL_MS ?? "300000"),
+    });
+  });
+
+  // TENANT_CACHE_ENDPOINT_V1 — invalidación explícita.
+  app.post("/tenant/cache-invalidate", async (c) => {
+    const ts = service.tenantService as unknown as {
+      invalidateAll?: () => void;
+    };
+    if (typeof ts?.invalidateAll === "function") ts.invalidateAll();
+    return c.json({ ok: true });
+  });
+  // WORKER_STATUS_ENDPOINT_V1 — estado del worker para operador.
+  // Ver: docs/audits/05-motor-tareas-durable/roadmap.md §8.
+  app.get("/worker-status", async (c) => {
+    const worker = service.worker as unknown as {
+      running: boolean;
+      lastTickAt?: string;
+      activeSize?: () => number;
+      getMaxActive?: () => number;
+    };
+    const activeCount =
+      typeof worker.activeSize === "function" ? worker.activeSize() : null;
+    const maxActive =
+      typeof worker.getMaxActive === "function"
+        ? worker.getMaxActive()
+        : Number(process.env.WORKER_MAX_ACTIVE ?? "50");
+    return c.json({
+      running: worker.running,
+      lastTickAt: worker.lastTickAt,
+      active: activeCount,
+      maxActive,
+      leaseMs: Number(process.env.WORKER_LEASE_MS ?? "60000"),
+      maxPerOwner: Number(process.env.WORKER_MAX_PER_OWNER ?? "10"),
+    });
+  });
   app.get("/search", async (c) => {
     const q = z.string().min(2).max(200).parse(c.req.query("q"));
     const limit = Math.min(Number(c.req.query("limit") ?? "30") || 30, 100);

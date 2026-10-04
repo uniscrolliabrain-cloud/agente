@@ -29,6 +29,8 @@ import { EventBus } from "./engine/events/index.ts";
 import { eventsRoutes } from "./events-routes.ts";
 import { AppError } from "./errors.ts";
 import { RateLimiter } from "./rate-limit.ts";
+import { requestLogger } from "./middleware/request-logger.ts";
+import { logContext } from "./log.ts";
 import { Files } from "./files.ts";
 import { GoogleAuth } from "./google-auth.ts";
 import { WorkspaceService } from "./workspace.ts";
@@ -55,16 +57,25 @@ export async function createApp(
   config: Config,
   options: { docker?: DockerRunner } = {},
 ) {
+  // SERVICE_TENANT_DB_V2 — creamos primero TenantService y tdb, luego el
+// resto de servicios con tdb. Antes se construían con `db` crudo, así que
+// Files/Rag/Workspace escribían con clave plana mientras el resto leía
+// con clave `tenantId:owner`. Los artifacts no aparecían en agent.detail().
+  // Ver: docs/KNOWN_ISSUES.md FASE0_DEBT_FILES_TDB_V1 y
+  // docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+  const tenantServiceEarly = new TenantService(db, config);
+  const tdbEarly = new TenantScopedStore(db, (owner) => tenantServiceEarly.tenantIdFor(owner));
   const auth = await createAuth(db, config),
-    files = new Files(db, config, auth),
+    files = new Files(tdbEarly, config, auth),
     google = new GoogleAuth(db, config),
     users = new UserService(db),
-    rag = new RagService(db),
-    workspace = new WorkspaceService(db, config, files, google, rag);
+    rag = new RagService(tdbEarly),
+    workspace = new WorkspaceService(tdbEarly, config, files, google, rag);
   // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
   // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
-  const tenantService = new TenantService(db, config);
-  const tdb = new TenantScopedStore(db, (owner) => tenantService.tenantIdFor(owner));
+  // SERVICE_TENANT_DB_V2 — reutilizamos los creados arriba.
+  const tenantService = tenantServiceEarly;
+  const tdb = tdbEarly;
   // BUSINESS_OS_FIXED_V1 â€” bus declarado antes de los servicios que lo usan.
   const bus = new EventBus(tdb);
   // POLICY_EARLY_V1 â€” policy se necesita antes del ActionService, asi que se instancia aqui.
@@ -186,6 +197,9 @@ export async function createApp(
     await agent.ensure(owner);
     if (config.mode === "sample") await agent.refreshIdeas(owner);
   };
+  // REQUEST_LOGGER_WIRE_V1 — correlationId por request, logging estructurado.
+  // Ver docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
+  app.use("*", requestLogger());
   app.use("*", async (c, next) => {
     const origin = c.req.header("origin");
     if (origin && !origins.has(origin)) return c.json({ error: "Origin is not allowed" }, 403);
@@ -365,6 +379,11 @@ app.get("/api/health", async (c) => {
         ? auth.verify(new URL(c.req.url))
         : await auth.owner(c.req.header("authorization"));
     c.set("owner", owner);
+    // OWNER_LOG_CONTEXT_V1 — propaga owner al contexto de log del request.
+    const current = logContext.getStore();
+    if (current) {
+      logContext.enterWith({ ...current, owner });
+    }
     await next();
   });
   app.get("/api/workspace", async (c) => {
@@ -462,7 +481,9 @@ app.post("/api/billing/customer", async (c) => {
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {
     const { kernelRoutes } = await import("./kernel-routes.ts");
-    app.route("/api/kernel", kernelRoutes(kernel));
+    // KERNEL_ROUTES_ADMIN_WIRE_V1 — pasa UserService para validación admin.
+    // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
+    app.route("/api/kernel", kernelRoutes(kernel, users));
   }
   // APP_VIEWS_WIRE_V1 - endpoint publico de resolucion de vistas. Antes solo
   // estaba bajo /api/admin/views/resolve (requireAdmin) y el frontend llamaba

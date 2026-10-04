@@ -78,6 +78,8 @@ import type { TenantService } from "./tenant.ts";
 import { GuardrailService } from "./guardrails/service.ts";
 // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
 import { RateLimiter } from "../rate-limit.ts";
+import { planForKind } from "./task-plans.ts";
+import { globalMetrics } from "../metrics/registry.ts";
 // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
 import { CapabilityRegistry } from "./capabilities/registry.ts";
 import { bootstrapCapabilities } from "./capabilities/bootstrap.ts";
@@ -169,6 +171,9 @@ export class AgentService {
   readonly feedback: FeedbackCollector;
   // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
   private readonly tenantRateLimiter = new RateLimiter(500, 3600000);
+  // RATE_LIMIT_USER_FIELD_V1 — limiter por usuario reutilizable.
+  // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+  private readonly userRateLimiter = new RateLimiter(100, 60 * 60 * 1000);
   // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
   readonly capabilities: CapabilityRegistry;
   // PLANNER_V1 - genera planes.
@@ -354,6 +359,38 @@ export class AgentService {
       // cada minuto era un pico). Ahora 500 por pasada, con tope de 3
       // paginas. Cierra parcialmente #149 y #150.
       // SERVICE_EXPIRE_APPROVALS_V1 - expira approvals viejas.
+      // RECONCILE_OUTCOME_UNKNOWN_V1 — barrido runtime de acciones colgadas.
+      // Antes solo se hacía al arrancar (index.ts). Si el proceso sigue vivo
+      // y una acción quedó en "executing" por un fallo de red, se quedaba así
+      // para siempre.
+      // Ver: docs/audits/03-resiliencia/miniaudit.md ("recoverInterruptedActions
+      // solo al arrancar").
+      const STUCK_MS = 10 * 60 * 1000;
+      const stuckCutoff = new Date(Date.now() - STUCK_MS).toISOString();
+      const stuckActions = await this.db.scanByStatus<{
+        id: string;
+        status: string;
+        updatedAt?: string;
+      }>("actions", ["executing"], 200);
+      for (const { owner, value } of stuckActions) {
+        const lastUpdate = value.updatedAt ? Date.parse(value.updatedAt) : 0;
+        if (lastUpdate && lastUpdate > Date.parse(stuckCutoff)) continue;
+        await this.db
+          .compareAndSwap(
+            owner,
+            "actions",
+            value.id,
+            { status: "executing" },
+            {
+              status: "outcome_unknown",
+              error:
+                "Action was executing for more than 10 minutes without resolution. " +
+                "Check the provider before retrying.",
+            },
+          )
+          .catch((error) => backgroundFailure("reconcile outcome_unknown", error));
+      }
+
       const nowIso = new Date().toISOString();
       const pendingActions = await this.db.scanByStatus<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
       for (const { owner, value } of pendingActions) {
@@ -425,10 +462,36 @@ export class AgentService {
         // nunca purgaba) y dedupe-state idem (una fila LRU por owner).
         { kind: "system-events", days: 90 },
         { kind: "dedupe-state", days: 1 },
+        // KERNEL_PURGE_V1 — purga de turnos y thoughts del kernel.
+        // Ver: auditoría profunda 09.
+        { kind: "cognitive-turns", days: 30 },
+        { kind: "cognitive-thoughts", days: 30 },
       ];
       const purgeTarget = purgeTargets[this.lastPurgeIndex % purgeTargets.length];
       this.lastPurgeIndex += 1;
       await this.db.purgeOlderThan(purgeTarget.kind, purgeTarget.days);
+      // EVENTS_RETENTION_WIRE_V1 — retención por tipo para system-events.
+      // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Retención uniforme 90 días").
+      if (purgeTarget.kind === "system-events") {
+        try {
+          const { groupTypesByRetention } = await import("./events/retention.ts");
+          const { SYSTEM_EVENT_TYPES } = await import("./events/types.ts");
+          const grouped = groupTypesByRetention(SYSTEM_EVENT_TYPES);
+          for (const [days, types] of grouped) {
+            if (days >= purgeTarget.days) continue;
+            for (const type of types) {
+              await this.db
+                .select(
+                  "DELETE FROM records WHERE kind = 'system-events' AND data->>'type' = $1 AND updated_at < now() - ($2 || ' days')::interval",
+                  [type, String(days)],
+                )
+                .catch(() => {});
+            }
+          }
+        } catch {
+          /* EVENTS_RETENTION_WIRE_V1 best-effort */
+        }
+      }
 
       // MAINTAIN_EMBEDDINGS_V1 - retry de embeddings. Antes escaneaba 5000
       // chunks cada minuto. Ahora escanea 500 por pasada y rota el cursor,
@@ -549,6 +612,12 @@ export class AgentService {
       await this.runMetaLoop().catch((error) =>
         backgroundFailure("meta loop", error),
       );
+      // CONSOLIDATE_IN_MAINTAIN_V1 — consolida turnos cerrados recientes.
+      // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md
+      // ("consolidate no se llama en maintain"), roadmap §8.
+      await this.runConsolidateLoop().catch((error) =>
+        backgroundFailure("consolidate loop", error),
+      );
     } finally {
       this.refreshing = false;
     }
@@ -565,6 +634,46 @@ export class AgentService {
    *   - Tope de 20 turnos por pasada para no cargar de golpe.
    *   - Si no hay kernel, no hace nada.
    */
+  /**
+   * CONSOLIDATE_IN_MAINTAIN_V1 — ejecuta consolidate sobre turnos cerrados.
+   * Ver: docs/audits/09-kernel-cognitivo/roadmap.md §8.
+   */
+  private async runConsolidateLoop(): Promise<void> {
+    if (!this.kernel || !this.tenantService) return;
+    const { kernelContextSchema, Promoter } = await import("../kernel/index.ts");
+    const tenants = await this.collectActiveTenants();
+    for (const tenantId of tenants.slice(0, 3)) {
+      try {
+        const ctx = kernelContextSchema.parse({
+          tenantId,
+          owner: tenantId,
+          role: "system",
+          requestId: `consolidate:${Date.now()}`,
+        });
+        const turns = await this.kernel.listTurns(ctx, 10);
+        for (const turn of turns) {
+          if (turn.status !== "closed") continue;
+          const thoughts = await this.kernel.thoughtsOf(ctx, turn.id);
+          if (thoughts.length < 2) continue;
+          const { consolidate } = await import("../kernel/graph/consolidate.ts");
+          const result = consolidate(thoughts);
+          if (result.duplicateGroups.length > 0 || result.textualNegations.length > 0) {
+            await this.bus?.emit(
+              tenantId,
+              "system.maintenance",
+              { kind: "system", id: "consolidate" },
+              { tasks: 0, monitors: 0 },
+              { dedupeKey: `consolidate:${turn.id}` },
+            );
+          }
+        }
+        void Promoter;
+      } catch (error) {
+        backgroundFailure(`consolidate tenant ${tenantId}`, error);
+      }
+    }
+  }
+
   private async runMetaLoop(): Promise<void> {
     if (!this.kernel) return;
     const { Meta } = await import("../kernel/observers/meta.ts");
@@ -796,9 +905,49 @@ export class AgentService {
         owner: owner.slice(0, 200),
       });
     }
+    // META_CONTEXT_V1 — lee los hints de Meta del último turno abierto.
+    // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md ("Meta sin consumidor"),
+    // roadmap §8 ("Meta hint inyectado en el siguiente turno").
+    let metaHints: Array<{ rule: string; urgency: string; message: string }> = [];
+    if (this.kernel && this.tenantService) {
+      try {
+        const tenantId = await this.tenantService.tenantIdFor(owner);
+        const { kernelContextSchema } = await import("../kernel/index.ts");
+        const ctx = kernelContextSchema.parse({
+          tenantId,
+          owner,
+          role: "system",
+          requestId: `meta-context:${Date.now()}`,
+        });
+        const turns = await this.kernel.listTurns(ctx, 5);
+        const openTurn = turns.find((tn) => tn.status === "open");
+        if (openTurn) {
+          const { Meta } = await import("../kernel/observers/meta.ts");
+          const meta = new Meta({ longNoOutputMs: 30_000 });
+          const thoughts = await this.kernel.thoughtsOf(ctx, openTurn.id);
+          const progressEvents: import("../kernel/index.ts").ProgressEvent[] = [];
+          for (const th of thoughts) {
+            const raw = (th.attention.metadata as { progress?: unknown }).progress;
+            if (raw && typeof raw === "object" && "kind" in raw) {
+              progressEvents.push(raw as import("../kernel/index.ts").ProgressEvent);
+            }
+          }
+          const hints = meta.evaluateWithProgress({
+            progress: progressEvents,
+            now: new Date().toISOString(),
+          });
+          metaHints = hints
+            .filter((h) => h.rule !== "nothing_to_report")
+            .map((h) => ({ rule: h.rule, urgency: h.urgency, message: h.message }));
+        }
+      } catch (error) {
+        backgroundFailure("meta context", error);
+      }
+    }
     const result = {
       pendingApprovals: pending,
       recentFailures,
+      metaHints,
       health: {
         google,
         worker: this.worker.running,
@@ -914,6 +1063,21 @@ export class AgentService {
     return undefined;
   }
 
+  /**
+   * TENANT_RATE_LIMIT_PUBLIC_V1 — limiter por tenant expuesto para chat.
+   * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+   */
+  async checkTenantRateLimit(
+    owner: string,
+    action: string,
+    limit = 60,
+    windowMs = 60_000,
+  ): Promise<{ allowed: boolean; retryAfterMs: number }> {
+    const tenantId = (await this.tenantService?.tenantIdFor(owner)) ?? owner;
+    const limiter = new RateLimiter(limit, windowMs);
+    return limiter.takeForTenant(tenantId, owner, action);
+  }
+
   async createTask(owner: string, raw: unknown, idempotencyKey?: string, held = false) {
     const input = createTaskSchema.parse(raw);
     if (input.goalId && !(await this.db.get(owner, "goals", input.goalId)))
@@ -946,22 +1110,13 @@ export class AgentService {
     // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
     const rl = this.tenantRateLimiter.takeForTenant(tenantIdForGuard, owner, "createTask");
     if (!rl.allowed) throw new AppError("Rate limit del tenant superado", 429);
-    const titles =
-      input.kind === "sop"
-        ? []
-        : input.kind === "document"
-        ? [
-            "Find the source document",
-            "Fill a new copy",
-            "Prepare a reply",
-            "Wait for your decision",
-            "Record the outcome",
-          ]
-        : input.kind === "monitor"
-          ? ["Check the source", "Compare with the last observation", "Report a meaningful change"]
-          : input.kind === "finance"
-            ? ["Validate transactions", "Calculate the summary", "Save your tracker"]
-            : ["Understand the outcome", "Plan the work", "Use connected tools", "Return a result"];
+    // RATE_LIMIT_USER_WIRE_V1 — límite por usuario (100 tareas/hora).
+    // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+    const url = this.userRateLimiter.takeForUser(owner, "createTask");
+    if (!url.allowed) throw new AppError("Has creado demasiadas tareas. Espera un momento.", 429);
+    // TASK_PLANS_WIRE_V1 — planes centralizados en task-plans.ts.
+    // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
+    const titles = input.kind === "sop" ? [] : planForKind(input.kind);
     // B104 — si el caller no fija roleId, el orquestador elige uno. Criterio
     // explicito: si la tarea referencia un SOP, se elige el primer rol activo
     // cuyo `sops` incluya ese id. Si no hay match, no se asigna rol (comportamiento previo).
@@ -1774,6 +1929,7 @@ export class AgentService {
   }
 
   async recordUsage(
+  // RECORD_USAGE_SPEED_V1 - velocidad del modelo.
     owner: string,
     source: "chat" | "task" | "sop",
     model: string | undefined,
@@ -1799,6 +1955,15 @@ export class AgentService {
     await this.db.put(owner, "llm-usage", value);
     // SERVICE_METRICS_WIRE_V1 - registrar tokens y coste por tenant.
     const metricsTenant = await this.tenantService?.tenantIdFor(owner) ?? owner;
+    // METRICS_LLM_WIRE_V1 — contadores acumulativos (no escaneo de DB).
+    globalMetrics.inc("openmuse_llm_calls_total", {
+      speed: source,
+      model: model ?? "unknown",
+    });
+    globalMetrics.inc("openmuse_llm_tokens_total", {
+      speed: source,
+      model: model ?? "unknown",
+    }, inputTokens + outputTokens);
     void this.metrics.record(metricsTenant, "llm.tokens", inputTokens + outputTokens, { source }).catch(() => {});
     void this.metrics.record(metricsTenant, "llm.cost_eur", costEur, { source }).catch(() => {});
     // GUARDRAILS_CHECK_USAGE_V1 - verificar cuota despues de registrar.
@@ -2090,6 +2255,19 @@ export class AgentService {
     // tenant-membership, que tiene una fila por tenant y es O(tenants).
     const set = new Set<string>();
     try {
+      // COLLECT_TENANTS_PREFIX_V1 — usa scanByOwnerPrefix si el store lo
+      // soporta. En TenantScopedStore, el scan peela el prefijo, así que
+      // el owner que devuelve ya es el tenantId limpio.
+      // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+      const tenantScoped = this.db as unknown as {
+        allTenantPrefixes?: () => string[];
+      };
+      if (typeof tenantScoped.allTenantPrefixes === "function") {
+        for (const prefix of tenantScoped.allTenantPrefixes()) {
+          set.add(prefix);
+          if (set.size >= 1000) break;
+        }
+      }
       const rows = await this.db.scan<{ tenantId?: string }>("tenant-membership", 5000);
       for (const { value } of rows) {
         if (typeof value.tenantId === "string" && value.tenantId.length > 0) {
@@ -2143,8 +2321,23 @@ export class AgentService {
 
   // MAINTAIN_TENANT_REAL_V1 - resuelve owners del tenant y pagina por cada uno.
   private async maintainTenant(tenantId: string): Promise<void> {
+    // MAINTAIN_TENANT_PREFIX_V1 — usa scanByPrefix si el store lo tiene.
+    // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
     const owners: string[] = [];
-    for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
+    const withPrefix = this.db as unknown as {
+      scanByPrefix?: <T>(
+        kind: string,
+        tenantId: string,
+        limit: number,
+      ) => Promise<{ owner: string; value: T }[]>;
+    };
+    const rows =
+      typeof withPrefix.scanByPrefix === "function"
+        ? await withPrefix.scanByPrefix<{ id: string }>("agent-settings", tenantId, 50)
+        : await this.db.scan<{ id: string }>("agent-settings", 500).then((all) =>
+            all.filter((r) => r.owner.startsWith(`${tenantId}:`) || r.owner === tenantId),
+          );
+    for (const { owner } of rows) {
       const ownerTenant = await this.tenantService?.tenantIdFor(owner) ?? "default";
       if (ownerTenant === tenantId) owners.push(owner);
       if (owners.length >= 50) break;

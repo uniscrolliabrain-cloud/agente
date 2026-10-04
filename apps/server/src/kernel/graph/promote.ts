@@ -160,6 +160,8 @@ export class Promoter {
     };
     for (const thought of thoughts) {
       counts[thought.role] += 1;
+      // PROMOTE_ATTENTION_V1 — classify ahora considera isFocusedOn.
+      // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
       const outcome = classify(thought);
       const destination: PromotionDestination =
         outcome && outcome.survives ? classifyDestination(thought.role) : "discard";
@@ -189,7 +191,40 @@ export class Promoter {
         discarded.push(thought.id);
       }
     }
+    // PROMOTER_DEDUPE_V1 — deduplica survivors por contenido normalizado
+    // antes de decidir destinos, para no escribir 500 veces lo mismo.
+    // Ver: auditoría profunda 09 (Promoter no distingue turnos cortos/largos).
+    const contentSeen = new Map<string, string>();
+    const survivorsDedup: string[] = [];
+    for (const id of survivors) {
+      const thought = thoughts.find((t) => t.id === id);
+      if (!thought) continue;
+      const normalized =
+        typeof thought.content === "string"
+          ? thought.content.trim().toLowerCase().replace(/\s+/g, " ").slice(0, 500)
+          : JSON.stringify(thought.content).slice(0, 500);
+      const key = `${thought.role}:${normalized}`;
+      if (contentSeen.has(key)) continue;
+      contentSeen.set(key, id);
+      survivorsDedup.push(id);
+    }
+    // CONSOLIDATE_PERSIST_V1 — persiste el resultado para no recalcular.
+    // Ver: auditoría profunda 09.
     const consolidation = consolidate(thoughts);
+    void this.deps.kernel.deps.audit
+      .append({
+        tenantId: thoughts[0].tenantId,
+        owner: thoughts[0].owner,
+        action: "promotion.executed",
+        actor: { kind: "system", id: "promoter" },
+        payload: {
+          turnId,
+          duplicateGroups: consolidation.duplicateGroups.length,
+          textualNegations: consolidation.textualNegations.length,
+          tenants: consolidation.tenants,
+        },
+      })
+      .catch(() => {});
     return {
       turnId,
       tenantId: thoughts[0].tenantId,
@@ -201,7 +236,7 @@ export class Promoter {
       decisions,
       destinations,
       consolidation,
-      reason: `rules.ts aplicado en orden; ${survivors.length} sobreviven (${destinations.response.length} response, ${destinations.memory.length} memory, ${destinations.audit.length} audit), ${discarded.length} descartados`,
+      reason: `rules.ts aplicado en orden; ${survivorsDedup.length} sobreviven (dedup) (${destinations.response.length} response, ${destinations.memory.length} memory, ${destinations.audit.length} audit), ${discarded.length} descartados`,
     };
   }
 }

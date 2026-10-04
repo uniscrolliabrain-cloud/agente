@@ -70,7 +70,9 @@ function categoryFromMime(mime: string): "pdf" | "image" | "text" | "office" | "
 
 export class Files {
   constructor(
-    private readonly db: Store,
+    // FILES_TENANT_STORE_V1 — acepta Store o TenantScopedStore.
+    // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+    private readonly db: Store | import("./db-tenant.ts").TenantScopedStore,
     private readonly config: Config,
     private readonly auth: Auth,
   ) {}

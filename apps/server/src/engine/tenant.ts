@@ -90,6 +90,20 @@ export class TenantService {
   clearCache(): void {
     this.cache.clear();
   }
+
+  /**
+   * TENANT_CACHE_INVALIDATE_ALL_V1 — invalida toda la cache tras cambios
+   * administrativos (mover owner entre tenants).
+   * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+   */
+  invalidateAll(): void {
+    this.cache.clear();
+  }
+
+  /** TENANT_CACHE_STATS_V1 — tamaño actual de la cache, para debug. */
+  cacheSize(): number {
+    return this.cache.size;
+  }
 }
 
 export { DEFAULT_TENANT_ID };

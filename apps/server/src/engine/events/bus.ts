@@ -14,6 +14,7 @@ import type {
   SystemEventType,
 } from "./types.ts";
 import { ulid } from "./ulid.ts";
+import { globalSubscribers } from "./subscriber.ts";
 
 const KIND = "system-events";
 const DEDUPE_KIND = "dedupe-state";
@@ -90,6 +91,9 @@ export class EventBus {
         payload: parsed,
       };
       await this.sink.write(event);
+      // EVENTS_BUS_PUBLISH_V1 — publicar a subscribers en vivo (SSE, métricas).
+      // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
+      globalSubscribers.publish(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.

@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { type DefaultTreeAdapterMap, parseFragment } from "parse5";
+// GOOGLE_RETRY_V1 — retry con backoff en errores transitorios.
+// Ver: docs/audits/03-resiliencia/miniaudit.md ("Sin retry con backoff").
+import { retryWithBackoff, defaultIsRetryable } from "../../../apps/server/src/engine/retry.ts";
+import { globalCircuits } from "../../../apps/server/src/engine/circuit-breaker.ts";
 import { z } from "zod";
 import {
   type CalendarEvent,
