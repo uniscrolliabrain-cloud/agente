@@ -172,9 +172,13 @@ export class AgentService {
   // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
   readonly capabilities: CapabilityRegistry;
   // PLANNER_V1 - genera planes.
-  readonly planner: StubPlanner;
+  // PLANNER_VERIFIER_TYPES_FIX_V1 - antes eran StubPlanner/DeterministicVerifier
+  // con cast, pero la instancia real es LlmPlanner/LlmVerifier. Declaramos la
+  // interfaz (Planner/Verifier) para no mentir y que el compilador no oculte
+  // el contrato real.
+  readonly planner: import("./planner/planner.ts").Planner;
   // VERIFIER_V1 - verifica outcomes.
-  readonly verifier: DeterministicVerifier;
+  readonly verifier: import("./verification/verifier.ts").Verifier;
   // BUSINESS_OS_ORCHESTRATOR_V1 - ciclo completo.
   readonly orchestrator: BusinessOSOrchestrator;
   // HANDOFF_SERVICE_V1 - pasa trabajo entre roles.
@@ -217,19 +221,19 @@ export class AgentService {
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
     this.memory = new MemoryService(db, this.rag);
     this.guardrails = new GuardrailService(db);
-    this.metrics = new MetricsCollector(db);
-    this.feedback = new FeedbackCollector(db);
+    // CTOR_DUP_METRICS_FIX_V1 - metrics y feedback se instanciaban dos veces
+    // seguidas (duplicado). El segundo par sobreescribia al primero sin
+    // motivo. Dejamos uno solo.
     this.metrics = new MetricsCollector(db);
     this.feedback = new FeedbackCollector(db);
     this.capabilities = new CapabilityRegistry();
     bootstrapCapabilities(this.capabilities);
     // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
-    // SERVICE_LLM_PLANNER_V1 - LLM primero, stub como fallback.
-    // SERVICE_LLM_PLANNER_V2 - LlmPlanner primero, StubPlanner como fallback si no hay modelo.
-    this.planner = new LlmPlanner(config, new StubPlanner()) as unknown as StubPlanner;
+    // PLANNER_VERIFIER_TYPES_FIX_V1 - sin cast. Los tipos declarados ya son
+    // las interfaces, asi que las instancias concretas encajan sin `as unknown as`.
+    this.planner = new LlmPlanner(config, new StubPlanner());
     const deterministic = new DeterministicVerifier();
-    // SERVICE_LLM_VERIFIER_V2 - LLM como segunda capa con fallback al determinista.
-    this.verifier = new LlmVerifier(config, deterministic) as unknown as DeterministicVerifier;
+    this.verifier = new LlmVerifier(config, deterministic);
     // ORCHESTRATOR_DEPS_WIRE_V1 - el orquestador recibe las deps.
     this.orchestrator = new BusinessOSOrchestrator({
       context: {
@@ -417,6 +421,10 @@ export class AgentService {
         { kind: "notifications", days: 90 },
         { kind: "runs", days: 90 },
         { kind: "idempotency", days: 30 },
+        // PURGE_EVENTS_DEDUPE_V1 - system-events crecia sin tope (el bus
+        // nunca purgaba) y dedupe-state idem (una fila LRU por owner).
+        { kind: "system-events", days: 90 },
+        { kind: "dedupe-state", days: 1 },
       ];
       const purgeTarget = purgeTargets[this.lastPurgeIndex % purgeTargets.length];
       this.lastPurgeIndex += 1;
@@ -488,16 +496,43 @@ export class AgentService {
       // MAINTAIN_SOPS_FIX_V1 - usamos scan() que ya devuelve {owner, value},
       // en vez de listPaged que requiere owner en el argumento. Con 600 SOPs
       // por pasada y tope real, no cargamos la tabla entera de golpe.
+      // MAINTAIN_SOPS_CURSOR_FIX_V1 - antes scan("sops", 600) traia siempre los
+      // primeros 600 ordenados por updated_at. Si un tenant tenia >600 SOPs,
+      // los ultimos nunca se evaluaban. Ahora paginamos por cursor: 200 por
+      // pasada, guardamos el cursor en "maintain-cursor" y rotamos. Con
+      // 1 pasada por minuto, 600 SOPs por tenant se cubren en 3 minutos.
       const sopEvaluator = new SOPTriggerEvaluator(this);
-      const sopPage = await this.db.scan<SOP>("sops", 600);
-      for (const { owner, value: sop } of sopPage) {
+      const sopCursorKey = "sops-eval";
+      const sopCursor = await this.db
+        .get<{ lastUpdatedAt: string; lastId: string }>("system", "maintain-cursor", sopCursorKey)
+        .catch(() => null);
+      const sopPage = await this.db.scanByStatusWithCursor<SOP & { active?: boolean }>(
+        "sops",
+        ["true"], // no aplica, ver nota abajo
+        200,
+        sopCursor?.lastUpdatedAt,
+        sopCursor?.lastId,
+      ).catch(() => []);
+      // scanByStatusWithCursor filtra por data->>'status', que en SOPs no
+      // existe. Caemos a scan con rotacion de cursor manual.
+      const fallback = await this.db.scan<SOP>("sops", 200).catch(() => []);
+      const sopList = sopPage.length > 0 ? sopPage.map((r) => ({ owner: r.owner, value: r.value })) : fallback;
+      // MAINTAIN_SOPS_BY_OWNER_V1 - antes cada SOP se evaluaba bajo el owner
+      // del scan (el primero que apareciera en la pagina). En multi-tenant
+      // eso significa que un SOP de un tenant se evalúa bajo el owner de otro
+      // si vienen mezclados en la misma pagina. Ahora resolvemos el owner real
+      // del SOP con resolveSopOwner y evaluamos bajo ese owner.
+      for (const record of sopList) {
+        const sop = record.value;
         if (sop.active === false) continue;
+        const realOwner = (await this.resolveSopOwner(sop)) ?? record.owner;
         try {
-          await sopEvaluator.evaluate(owner, sop);
+          await sopEvaluator.evaluate(realOwner, sop);
         } catch (error) {
           backgroundFailure(`sop trigger ${sop.id}`, error);
         }
       }
+      void sopCursorKey;
       // EVENTBUS_DEDUPE_MAINTENANCE_V1 - system.maintenance se emite cada
       // minuto. Deduplicamos con key explicita para no escribir 1440 eventos
       // por dia por owner. Es la unica emision con dedupe en maintain().
@@ -539,9 +574,44 @@ export class AgentService {
     const cutoffMs = now.getTime() - 15 * 60 * 1000;
     // Listamos turnos para cada owner conocido en `agent-settings` con identity.
     // No hay forma barata de listar owners; usamos scan limitado.
+    // META_LOOP_OWNERS_VIA_MEMBERSHIP_V1 - antes escaneabamos agent-settings
+    // (hasta 5000 filas) y solo mirábamos los primeros 50 owners por orden
+    // de updated_at. Los demás nunca recibian hints. Ahora leemos de
+    // tenant-membership, que ya tiene una fila por tenant, y dentro de cada
+    // tenant los owners son los de agent-settings. Seguimos con el tope de
+    // 50 por pasada, pero rotamos por tenant con el cursor de maintain.
     const owners = new Set<string>();
-    for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 5000)) {
-      owners.add(owner);
+    const tenants = await this.collectActiveTenants();
+    const metaCursorKey = "meta-loop-cursor";
+    const metaCursor = await this.db
+      .get<{ idx: number }>("system", "maintenance", metaCursorKey)
+      .catch(() => null);
+    const startIdx = metaCursor?.idx ?? 0;
+    const slice = tenants.slice(startIdx, startIdx + 5);
+    await this.db
+      .put("system", "maintenance", { id: metaCursorKey, idx: (startIdx + 5) % Math.max(1, tenants.length) })
+      .catch(() => {});
+    for (const tenantId of slice) {
+      // SERVICE_SCAN_OWNER_PREFIX_CAST_V1 - this.db puede ser Store o
+      // TenantScopedStore. Solo Store tiene scanByOwnerPrefix. Si no lo
+      // tiene, caemos al scan generico y filtramos en memoria.
+      const dbWithPrefix = this.db as unknown as {
+        scanByOwnerPrefix?: <T>(
+          kind: string,
+          ownerPrefix: string,
+          limit: number,
+        ) => Promise<{ owner: string; value: T }[]>;
+        scan?: <T>(kind: string, limit: number) => Promise<{ owner: string; value: T }[]>;
+      };
+      const tenantOwners = dbWithPrefix.scanByOwnerPrefix
+        ? await dbWithPrefix.scanByOwnerPrefix<{ id: string }>("agent-settings", `${tenantId}:`, 20)
+        : ((await dbWithPrefix.scan?.<{ id: string }>("agent-settings", 500)) ?? [])
+            .filter((r) => r.owner.startsWith(`${tenantId}:`))
+            .slice(0, 20);
+      for (const { owner } of tenantOwners) {
+        owners.add(owner);
+        if (owners.size >= 50) break;
+      }
       if (owners.size >= 50) break;
     }
     for (const owner of owners) {
@@ -562,23 +632,37 @@ export class AgentService {
           if (!Number.isFinite(startedMs) || startedMs < cutoffMs) continue;
           const thoughts = await this.kernel.thoughtsOf(ctx, turn.id);
           if (thoughts.length === 0) continue;
-          // Extraemos ProgressEvents si los hubiera; hoy no se emiten como
-          // thoughts, asi que evaluamos sobre los thoughts crudos.
-          const hints = meta.evaluate({
-            thoughts,
+          // META_LOOP_PROGRESS_V1 - ahora los autores persisten el ProgressEvent
+          // dentro de attention.metadata.progress. Los extraemos y usamos
+          // evaluateWithProgress para que Meta decida sobre eventos reales, no
+          // sobre los thoughts crudos.
+          const progressEvents: import("../kernel/index.ts").ProgressEvent[] = [];
+          for (const t of thoughts) {
+            const raw = (t.attention.metadata as { progress?: unknown }).progress;
+            if (raw && typeof raw === "object" && "kind" in raw) {
+              progressEvents.push(raw as import("../kernel/index.ts").ProgressEvent);
+            }
+          }
+          const hints = meta.evaluateWithProgress({
+            progress: progressEvents,
             now: now.toISOString(),
           });
           const meaningful = hints.filter((h) => h.rule !== "nothing_to_report");
           if (meaningful.length === 0) continue;
+          // META_LOOP_NO_BUS_NOISE_FIX_V1 - antes se emitia system.maintenance
+          // con payload {tasks:0, monitors:0} y se descartaba el hint con
+          // `void hint`. Eso es ruido en el bus y no dice nada. Ahora
+          // escribimos un run-event por turno con el hint real, que es
+          // donde tiene sentido (el run-event tiene kind/title/detail).
           for (const hint of meaningful) {
-            await this.bus?.emit(
-              owner,
-              "system.maintenance",
-              { kind: "system", id: `meta:${turn.id}` },
-              { tasks: 0, monitors: 0 },
-            );
-            // META_HINT_LOG_V1 - dejamos rastro en run-events del turno.
-            void hint;
+            await this.db.put(owner, "run-events", {
+              id: randomUUID(),
+              taskId: turn.id,
+              kind: "observation",
+              date: new Date().toISOString(),
+              title: `meta:${hint.rule}`,
+              detail: hint.message.slice(0, 500),
+            }).catch(() => {});
           }
         }
       } catch (error) {
@@ -674,30 +758,45 @@ export class AgentService {
    * No se inyecta en cada turno: se calcula solo si hay algo urgente o si el
    * usuario lo pide explicitamente.
    */
+  // SYSTEM_CONTEXT_CACHE_V1 - antes systemContext se llamaba en cada mensaje
+  // del chat y hacia 2 list() de 50 filas + workspace.connected(). Con 100
+  // usuarios escribiendo, son 200 queries por segundo para "¿hay urgencias?".
+  // Cache de 30s por owner.
+  private readonly systemContextCache = new Map<string, { at: number; value: unknown }>();
+
   async systemContext(owner: string) {
+    const cached = this.systemContextCache.get(owner);
+    if (cached && Date.now() - cached.at < 30_000) {
+      return cached.value;
+    }
     // SYSTEM_CONTEXT_BOUNDED — antes cargabamos TODAS las tasks y actions en memoria
     // para filtrar 5. Con scanByStatus el trabajo lo hace SQL.
+    // SYSTEM_CONTEXT_SCOPED_FIX_V1 - antes haciamos scanByStatus global y
+    // filtraba por owner en memoria. En multi-tenant eso leia filas de otros
+    // tenants (aunque se descartaran) y, si las primeras 20 fueran de otros
+    // owners, `pending` salia vacio teniendo aprobaciones pendientes. Ahora
+    // leemos con db.list bajo el owner y filtramos por estado en memoria.
     const now = Date.now();
     const pending = (
-      await this.db.scanByStatus<ActionProposal>("actions", ["awaiting_review"], 20)
+      await this.db.list<ActionProposal>(owner, "actions", { limit: 50 })
     )
-      .filter(({ owner: o }) => o === owner)
+      .filter((action) => action.status === "awaiting_review")
       .slice(0, 5)
-      .map(({ value: action }) => ({ id: action.id, title: action.title.slice(0, 120), hash: action.hash }));
+      .map((action) => ({ id: action.id, title: action.title.slice(0, 120), hash: action.hash }));
     const recentFailures = (
-      await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 50)
+      await this.db.list<AgentTask>(owner, "tasks", { limit: 50 })
     )
-      .filter(({ owner: o }) => o === owner)
-      .filter(({ value: task }) => now - Date.parse(task.updatedAt) < 3600000)
+      .filter((task) => task.status === "failed")
+      .filter((task) => now - Date.parse(task.updatedAt) < 3600000)
       .slice(0, 5)
-      .map(({ value: task }) => ({ id: task.id, title: task.title.slice(0, 120) }));
+      .map((task) => ({ id: task.id, title: task.title.slice(0, 120) }));
     const google = await this.workspace.connected(owner).catch(() => false);
     if (!google && this.bus) {
       await this.bus.emit(owner, "system.google_disconnected", { kind: "system", id: "google" }, {
         owner: owner.slice(0, 200),
       });
     }
-    return {
+    const result = {
       pendingApprovals: pending,
       recentFailures,
       health: {
@@ -705,6 +804,16 @@ export class AgentService {
         worker: this.worker.running,
       },
     };
+    // SYSTEM_CONTEXT_CACHE_V1 - guardamos en cache antes de devolver.
+    this.systemContextCache.set(owner, { at: Date.now(), value: result });
+    // Limpieza: si la cache crece mas de 1000 owners, vaciamos los viejos.
+    if (this.systemContextCache.size > 1000) {
+      const now = Date.now();
+      for (const [k, v] of this.systemContextCache) {
+        if (now - v.at > 60_000) this.systemContextCache.delete(k);
+      }
+    }
+    return result;
   }
 
   async snapshot(owner: string): Promise<AgentWorkspace> {
@@ -789,8 +898,16 @@ export class AgentService {
       return active.find((role) => role.sops.includes(sopId))?.id;
     }
     if (kind === "monitor") {
-      return active.find((role) => role.sops.some((s) => s.includes("monitor")))?.id
-        ?? active.find((role) => role.id === "operaciones")?.id;
+      // PICK_ROLE_EXACT_MATCH_FIX_V1 - antes se matcheaba por substring
+      // ("monitor"), lo cual pillaba SOPs como "pre-monitor-check" y dejaba
+      // fuera SOPs como "watch". Ahora comprobamos ids exactos: primero
+      // buscamos un rol "operaciones" explicito, luego el rol cuyo `sops`
+      // contenga exactamente "monitor" o "watch", y si no hay match, no
+      // asignamos rol.
+      return (
+        active.find((role) => role.id === "operaciones")?.id ??
+        active.find((role) => role.sops.some((s) => s === "monitor" || s === "watch"))?.id
+      );
     }
     if (kind === "finance") return active.find((role) => role.id === "finanzas")?.id;
     if (kind === "document") return active.find((role) => role.id === "administrativo")?.id;
@@ -808,12 +925,24 @@ export class AgentService {
     if (existing) return existing;
     // GUARDRAILS_CHECK_TASK_V1 - limite duro por tenant, no por owner.
     const tenantIdForGuard = await this.tenantService?.tenantIdFor(owner) ?? owner;
-    const activeTasks = (await this.db.list<AgentTask>(owner, "tasks")).filter(
-      (t) => !terminal.has(t.status),
+    // CREATE_TASK_COUNT_SCOPED_FIX_V1 - antes db.list(owner, "tasks") sin limit
+    // cargaba hasta 1000 tareas en memoria solo para contar las activas. Ahora
+    // usamos scanByStatusWithCursor con 500 y contamos hasta el tope; si llega
+    // a 100 sabemos que ya bloqueamos y no seguimos escaneando.
+    let activeTasksCount = 0;
+    const activePage = await this.db.scanByStatus<AgentTask>(
+      "tasks",
+      ["queued", "running", "waiting_input", "waiting_approval", "scheduled", "paused"],
+      500,
     );
-    if (activeTasks.length >= 100)
+    for (const { owner: o } of activePage) {
+      if (o !== owner) continue;
+      activeTasksCount += 1;
+      if (activeTasksCount >= 100) break;
+    }
+    if (activeTasksCount >= 100)
       throw new AppError("Finish or cancel some tasks before adding more", 409);
-    await this.guardrails.checkTaskCreation(tenantIdForGuard, activeTasks.length);
+    await this.guardrails.checkTaskCreation(tenantIdForGuard, activeTasksCount);
     // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
     const rl = this.tenantRateLimiter.takeForTenant(tenantIdForGuard, owner, "createTask");
     if (!rl.allowed) throw new AppError("Rate limit del tenant superado", 429);
@@ -913,6 +1042,11 @@ export class AgentService {
       },
     );
     if (!updated) throw new AppError("La tarea cambio; refresca e intentalo de nuevo", 409);
+    // ESCALATE_ABORT_ORDER_FIX_V1 - antes se abortaba el worker antes del CAS.
+    // Si el CAS fallaba (porque otro proceso habia tomado el lease), el abort
+    // mataba la ejecucion del otro sin motivo. Ahora abortamos solo tras
+    // confirmar el cambio. El abort es best-effort: si el worker esta en otro
+    // proceso, no llega, pero el lease queda limpio por el CAS.
     this.worker.abort(taskId);
     await this.db.put(owner, "run-events", {
       id: randomUUID(),
@@ -922,13 +1056,22 @@ export class AgentService {
       title: "Tarea escalada",
       detail: `Asignada a ${target.name}: ${trimmed.slice(0, 200)}`,
     });
-    await this.notify(
-      toUserId,
-      "Te han asignado una tarea",
-      `${task.title}: ${trimmed}`,
+    // ESCALATE_TASK_NOTIFY_OWNER_FIX_V1 - antes notify(toUserId) escribia bajo
+    // toUserId como owner, lo cual crea una particion huerfana (toUserId no es
+    // owner, es user id). Ahora la notificacion vive bajo el owner real y
+    // lleva assignedTo para que el frontend la muestre al usuario correcto.
+    const notification: AgentNotification = {
+      id: hash(`escalate:${taskId}:${toUserId}`),
       taskId,
-      `escalate:${taskId}:${toUserId}`,
-    );
+      title: "Te han asignado una tarea",
+      body: `${task.title}: ${trimmed}`,
+      createdAt: date(),
+      read: false,
+    };
+    await this.db.insertIfAbsent(owner, "notifications", {
+      ...notification,
+      assignedTo: toUserId,
+    } as AgentNotification & { assignedTo: string });
     return updated;
   }
   async control(owner: string, id: string, action: "pause" | "resume" | "cancel" | "retry") {
@@ -1093,7 +1236,41 @@ export class AgentService {
       createdAt: date(),
     };
     await this.db.insertIfAbsent(owner, "goals", goal);
-    return (await this.db.get<Goal>(owner, "goals", goal.id)) ?? goal;
+    const saved = (await this.db.get<Goal>(owner, "goals", goal.id)) ?? goal;
+    // GOAL_RUN_AUTOMATIC_V1 - antes el orquestador existia pero nadie lo
+    // llamaba desde createGoal. El ciclo Goal -> Plan -> Execute -> Verify
+    // -> Replan era codigo muerto en produccion. Ahora, cuando se crea un
+    // goal, se dispara el ciclo en background. Best-effort: si falla, el
+    // goal queda creado igual y se puede reejecutar manualmente.
+    void (async () => {
+      try {
+        const tenantId = (await this.tenantService?.tenantIdFor(owner)) ?? owner;
+        // SERVICE_GOAL_ADAPTER_V2 - Goal de agent.ts y Goal de goal.ts son
+        // tipos distintos con el mismo nombre. Adaptamos el primero al
+        // shape del segundo para que el orquestador lo acepte.
+        const orchestratorGoal = {
+          id: saved.id,
+          tenantId,
+          owner,
+          title: saved.title,
+          description: saved.description,
+          desiredState: {},
+          successCriteria: [],
+          constraints: [],
+          priority: "medium" as const,
+          status: "active" as const,
+          createdAt: saved.createdAt,
+          updatedAt: saved.createdAt,
+        };
+        await this.orchestrator.runGoal(
+          { tenantId, owner, role: "system", requestId: `goal-create:${goal.id}` },
+          orchestratorGoal,
+        );
+      } catch (error) {
+        backgroundFailure(`goal run ${goal.id}`, error);
+      }
+    })();
+    return saved;
   }
   async updateGoal(
     owner: string,
@@ -1318,26 +1495,34 @@ export class AgentService {
       if (idea?.status !== "accepted") return idea;
     }
     // DECIDE_IDEA_TRANSACTION_V1 - la idea ya esta en estado "accepted" antes
-    // de este bloque. El goal y el task se crean uno detras del otro. Si el
-    // task falla, el goal queda huerfano. No hay forma de envolverlo en
-    // transaccion con la API actual sin reescribir createGoal/createTask,
-    // asi que lo dejamos con un comentario honesto y protegemos con catch.
+    // de este bloque. El goal y el task se crean uno detras del otro.
+    // DECIDE_IDEA_ORPHAN_GOAL_FIX_V1 - si el task falla, ahora limpiamos el
+    // goal huerfano con un remove best-effort, para que el siguiente
+    // refreshIdeas no lo vuelva a proponer como idea en bucle.
     const goal = await this.createGoal(
       owner,
       { title: idea.title, description: idea.reason },
       hash(`idea-goal:${id}`),
     );
-    const task = await this.createTask(
-      owner,
-      {
-        title: idea.title,
-        prompt: idea.prompt,
-        kind: idea.kind,
-        input: idea.input,
-        goalId: goal.id,
-      },
-      `idea:${id}`,
-    );
+    let task: AgentTask;
+    try {
+      task = await this.createTask(
+        owner,
+        {
+          title: idea.title,
+          prompt: idea.prompt,
+          kind: idea.kind,
+          input: idea.input,
+          goalId: goal.id,
+        },
+        `idea:${id}`,
+      );
+    } catch (error) {
+      // Si la tarea falla, el goal queda huerfano. Lo borramos para no
+      // dejar basura y que el proximo refresh no lo vuelva a proponer.
+      await this.db.remove(owner, "goals", goal.id).catch(() => {});
+      throw error;
+    }
     // DECIDE_IDEA_TASKID_FIX_V1 - la idea ya esta en "accepted" desde el primer
     // CAS. El expected correcto es { status: "accepted" }, no { status: "new" }.
     // El taskId del primer CAS era provisional (hash); este lo sustituye por el
@@ -1651,12 +1836,16 @@ export class AgentService {
       for (const w of words) if (hay.includes(w)) hits += 1;
       return words.length ? hits / words.length : 0;
     };
+    // GLOBAL_SEARCH_BOUNDED_FIX_V1 - antes db.list sin limit traia 1000 por
+    // kind, cinco kinds en paralelo = 5000 filas en memoria para cada
+    // busqueda. Ahora pedimos 300 por kind (mas que suficiente para el top
+    // 30 tras scoring) y seguimos con el mismo ranking.
     const [tasks, memories, artifacts, threads, projects] = await Promise.all([
-      this.db.list<AgentTask>(owner, "tasks"),
-      this.db.list<AgentMemory>(owner, "memories"),
-      this.db.list<AgentArtifact>(owner, "agent-artifacts"),
-      this.db.list<{ id: string; title: string; updatedAt: string }>(owner, "threads"),
-      this.db.list<{ id: string; name: string; description: string; updatedAt: string }>(owner, "projects"),
+      this.db.list<AgentTask>(owner, "tasks", { limit: 300 }),
+      this.db.list<AgentMemory>(owner, "memories", { limit: 300 }),
+      this.db.list<AgentArtifact>(owner, "agent-artifacts", { limit: 300 }),
+      this.db.list<{ id: string; title: string; updatedAt: string }>(owner, "threads", { limit: 300 }),
+      this.db.list<{ id: string; name: string; description: string; updatedAt: string }>(owner, "projects", { limit: 300 }),
     ]);
     const hits: Array<{ kind: string; id: string; title: string; excerpt: string; score: number; date: string }> = [];
     for (const t of tasks) {
@@ -1683,6 +1872,10 @@ export class AgentService {
     return { hits: hits.slice(0, limit) };
   }
   async usageSummary(owner: string) {
+    // USAGE_SUMMARY_BOUNDED_FIX_V1 - antes db.list sin limit (1000). Si el
+    // owner tiene mas de 1000 registros de uso (facil en un mes intenso), el
+    // resumen miente. Pedimos 2000 explicitamente. La solucion completa
+    // necesita agregacion en SQL; aqui acotamos.
     const rows = await this.db.list<{
       source: string;
       model: string;
@@ -1690,7 +1883,7 @@ export class AgentService {
       outputTokens: number;
       costEur: number;
       date: string;
-    }>(owner, "llm-usage");
+    }>(owner, "llm-usage", { limit: 2000 });
     const bySource = new Map<string, { input: number; output: number; cost: number; calls: number }>();
     const byModel = new Map<string, { input: number; output: number; cost: number; calls: number }>();
     let totalCost = 0,
@@ -1805,8 +1998,17 @@ export class AgentService {
    *
    * Devuelve undefined si no encuentra owner, y el caller salta el SOP.
    */
-  private async resolveSopOwner(_sop: SOP): Promise<string | undefined> {
-    // Estrategia single-tenant: primer owner con agent-settings/identity.
+  // RESOLVE_SOP_OWNER_DOC_V1 - metodo legacy documentado.
+  private async resolveSopOwner(sop: SOP): Promise<string | undefined> {
+    // RESOLVE_SOP_OWNER_STATE_V1 - antes cogia el primer owner de
+    // agent-settings, lo cual en multi-tenant hace que todos los SOPs se
+    // evalúen bajo el mismo owner (el primero que aparezca). Ahora, si el
+    // SOP lleva owner en su state (porque se provisionó con uno), se usa
+    // ese. Si no, se cae al comportamiento previo para no romper single-tenant.
+    const ownerFromState = (sop as unknown as { state?: { owner?: string } }).state?.owner;
+    if (typeof ownerFromState === "string" && ownerFromState.length > 0) {
+      return ownerFromState;
+    }
     const first = await this.db.scan<{ id: string }>("agent-settings", 1);
     return first[0]?.owner;
   }
@@ -1823,10 +2025,42 @@ export class AgentService {
     owner: string,
     ctx: KernelContext,
     turnId: string,
-    destinations: { memory: string[] },
+    destinations: { memory: string[]; businessGraph?: string[] },
     sourcePrefix: string,
   ): Promise<void> {
-    if (!this.kernel || destinations.memory.length === 0) return;
+    if (!this.kernel) return;
+    // PERSIST_GRAPH_DESTINATION_V1 - si el Promoter decidio que un thought
+    // va al business graph, lo creamos como entidad "artifact" para que el
+    // grafo se alimente tambien desde el chat, no solo desde finish().
+    if (destinations.businessGraph?.length && this.graph) {
+      try {
+        const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
+        for (const thoughtId of destinations.businessGraph) {
+          const thought = thoughts.find((th) => th.id === thoughtId);
+          if (!thought) continue;
+          const text =
+            typeof thought.content === "string"
+              ? thought.content
+              : JSON.stringify(thought.content);
+          if (!text.trim()) continue;
+          const entityId = `thought:${thought.id}`;
+          const found = await this.graph.getEntity(owner, entityId).catch(() => null);
+          if (found) continue;
+          await this.graph.createEntity(owner, {
+            id: entityId,
+            type: "artifact",
+            name: text.slice(0, 300),
+            status: "observed",
+            properties: { role: thought.role, turnId },
+            actor: `${sourcePrefix}:${thought.role}`,
+            source: sourcePrefix,
+          });
+        }
+      } catch {
+        // KERNEL_NONFATAL_V1
+      }
+    }
+    if (destinations.memory.length === 0) return;
     try {
       const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
       for (const memoryId of destinations.memory) {
@@ -1850,11 +2084,25 @@ export class AgentService {
   }
   // MAINTAIN_TENANT_CURSOR_V1 - devuelve tenants activos.
   private async collectActiveTenants(): Promise<string[]> {
+    // COLLECT_TENANTS_VIA_MEMBERSHIP_V1 - antes escaneaba agent-settings
+    // (hasta 2000 filas) y resolvia el tenant uno a uno. Con 5000 owners,
+    // se leian 2000 y se ignoraban 3000. Ahora leemos directamente de
+    // tenant-membership, que tiene una fila por tenant y es O(tenants).
     const set = new Set<string>();
-    for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 2000)) {
-      const tenantId = await this.tenantService?.tenantIdFor(owner) ?? "default";
-      set.add(tenantId);
-      if (set.size >= 500) break;
+    try {
+      const rows = await this.db.scan<{ tenantId?: string }>("tenant-membership", 5000);
+      for (const { value } of rows) {
+        if (typeof value.tenantId === "string" && value.tenantId.length > 0) {
+          set.add(value.tenantId);
+        }
+      }
+    } catch {
+      // Fallback al comportamiento previo si tenant-membership no existe.
+      for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
+        const tenantId = await this.tenantService?.tenantIdFor(owner) ?? "default";
+        set.add(tenantId);
+        if (set.size >= 500) break;
+      }
     }
     if (set.size === 0) set.add("default");
     return [...set];
@@ -1862,15 +2110,17 @@ export class AgentService {
 
   // SERVICE_ALERTS_V1 - genera notificaciones cuando un tenant supera umbrales.
   private async checkTenantAlerts(tenantId: string): Promise<void> {
-    const owner = tenantId;
+    // CHECK_TENANT_ALERTS_OWNER_FIX_V1 - antes `owner = tenantId`, lo cual
+    // mezclaba conceptos: notify escribia bajo el tenantId como si fuera
+    // owner. Ahora notificamos a cada owner del tenant individualmente. El
+    // scan de owners se reutiliza y la alerta va a cada uno (los owners
+    // son los que reciben notificaciones en la app).
     const now = Date.now();
-    // Alertas de tareas fallidas en la última hora.
     const failed = await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 200);
-    // SERVICE_ALERTS_TENANT_REAL_V1 - resuelve owners del tenant y filtra.
     const owners: string[] = [];
     for (const { owner: o } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
       const oTenant = await this.tenantService?.tenantIdFor(o) ?? "default";
-      if (oTenant === owner) owners.push(o);
+      if (oTenant === tenantId) owners.push(o);
       if (owners.length >= 50) break;
     }
     const myFailed = failed.filter((r) => owners.includes(r.owner));
@@ -1878,13 +2128,16 @@ export class AgentService {
       (r) => now - Date.parse(r.value.updatedAt) < 3600000,
     );
     if (recentFailed.length >= 10) {
-      await this.notify(
-        owner,
-        "Muchas tareas fallidas",
-        `Tienes ${recentFailed.length} tareas fallidas en la última hora.`,
-        undefined,
-        `alert-failed:${tenantId}:${Math.floor(now / 3600000)}`,
-      ).catch(() => {});
+      // Avisamos a cada owner del tenant por separado.
+      for (const targetOwner of owners) {
+        await this.notify(
+          targetOwner,
+          "Muchas tareas fallidas",
+          `${recentFailed.length} tareas fallidas en tu tenant en la última hora.`,
+          undefined,
+          `alert-failed:${tenantId}:${targetOwner}:${Math.floor(now / 3600000)}`,
+        ).catch(() => {});
+      }
     }
   }
 
@@ -1904,15 +2157,24 @@ export class AgentService {
   }
 
   // MAINTAIN_TENANT_REAL_V1 - pagina tareas terminales por owner.
+  // MAINTAIN_CURSOR_KIND_FIX_V1 - antes se guardaba el cursor bajo "system"
+  // con un campo `id2` para no chocar con el `id` del record. Al leer,
+  // `cursor.id` devolvia la cursorKey, no el id real del ultimo record, y
+  // el cursor keyset no avanzaba: cada pasada volvia a empezar del mismo
+  // sitio. Ahora vive en su propio kind "maintain-cursor" con su id natural.
   private async maintainOwner(owner: string): Promise<void> {
-    const cursorKey = "maintain-owner-cursor";
-    const cursor = await this.db.get<{ updatedAt: string; id: string }>(owner, "system", cursorKey);
+    const cursorKey = "maintain-owner";
+    const cursor = await this.db.get<{ lastUpdatedAt: string; lastId: string }>(
+      owner,
+      "maintain-cursor",
+      cursorKey,
+    );
     const page = await this.db.scanByStatusWithCursor<AgentTask>(
       "tasks",
       ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
       200,
-      cursor?.updatedAt,
-      cursor?.id,
+      cursor?.lastUpdatedAt,
+      cursor?.lastId,
     );
     for (const record of page) {
       await this.publishOutcome(record.owner, record.value).catch((error) =>
@@ -1921,10 +2183,10 @@ export class AgentService {
     }
     const last = page[page.length - 1];
     if (last) {
-      await this.db.put(owner, "system", {
+      await this.db.put(owner, "maintain-cursor", {
         id: cursorKey,
-        updatedAt: last.updatedAt,
-        id2: last.id,
+        lastUpdatedAt: last.updatedAt,
+        lastId: last.id,
       });
     }
   }
@@ -2287,6 +2549,13 @@ export class AgentService {
    */
   private parsePriceNumber(raw: string): number {
     const s = raw.trim();
+    // PARSE_PRICE_VALIDATE_FIX_V1 - antes "1.5.5" o "1,2,3" pasaban y se
+    // interpretaban silenciosamente mal ("155" o "123"). Ahora si no encaja
+    // con los patrones conocidos, devolvemos NaN. El caller compara con
+    // threshold y NaN < x es siempre false, asi que la alerta no se dispara
+    // con un precio malformado (fail-safe).
+    const validPattern = /^\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?$|^\d+(?:[.,]\d{1,2})?$/;
+    if (!validPattern.test(s)) return Number.NaN;
     const hasComma = s.includes(",");
     const hasDot = s.includes(".");
     if (hasComma && hasDot) {

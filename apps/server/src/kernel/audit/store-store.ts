@@ -26,6 +26,19 @@ function maxList(): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : DEFAULT_MAX_LIST;
 }
 
+// AUDIT_CANONICAL_HASH_FIX_V1 - JSON.stringify no garantiza orden de claves
+// en objetos anidados (payload, actor). Si el orden cambia entre append y
+// verify, el hash no coincide y la cadena "falla" sin motivo real. Aqui
+// ordenamos recursivamente las claves antes de serializar.
+function canonicalize(value: unknown): unknown {
+  if (value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) return value.map(canonicalize);
+  const obj = value as Record<string, unknown>;
+  const out: Record<string, unknown> = {};
+  for (const key of Object.keys(obj).sort()) out[key] = canonicalize(obj[key]);
+  return out;
+}
+
 function computeHash(input: {
   id: string;
   tenantId: string;
@@ -38,16 +51,18 @@ function computeHash(input: {
 }): string {
   return createHash("sha256")
     .update(
-      JSON.stringify({
-        id: input.id,
-        tenantId: input.tenantId,
-        owner: input.owner,
-        action: input.action,
-        actor: input.actor,
-        payload: input.payload,
-        timestamp: input.timestamp,
-        previousHash: input.previousHash ?? null,
-      }),
+      JSON.stringify(
+        canonicalize({
+          id: input.id,
+          tenantId: input.tenantId,
+          owner: input.owner,
+          action: input.action,
+          actor: input.actor,
+          payload: input.payload,
+          timestamp: input.timestamp,
+          previousHash: input.previousHash ?? null,
+        }),
+      ),
     )
     .digest("hex");
 }
@@ -55,8 +70,16 @@ function computeHash(input: {
 export class StoreAuditStore implements AuditStore {
   constructor(private readonly db: Store) {}
 
+  // AUDIT_APPEND_CAS_FIX_V1 - el `db.transaction()` original era decorativo:
+  // lastHash usaba una conexion distinta del pool, asi que dos appends
+  // concurrentes podian leer el mismo previousHash y romper la cadena.
+  // Ahora usamos CAS sobre un anchor con id fijo que guarda el hash actual.
+  // Si dos procesos van a la vez, uno gana; el otro reintenta con el nuevo
+  // previousHash.
   async append(input: AuditAppendInput): Promise<AuditEntry> {
-    return this.db.transaction(async () => {
+    const MAX_ATTEMPTS = 5;
+    let lastError: Error | undefined;
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
       const timestamp = new Date().toISOString();
       const previousHash = await this.lastHash(input.tenantId);
       const id = randomUUID();
@@ -81,28 +104,89 @@ export class StoreAuditStore implements AuditStore {
         hash,
         timestamp,
       });
-      // El owner del record es el tenantId: asi la lista por tenant es una
-      // query directa y no un filtro en memoria.
+      // Anchor con id fijo. Guarda el hash actual de la cadena.
+      const anchorId = "__audit_anchor__";
+      const anchor = await this.db
+        .get<{ hash: string }>(input.tenantId, KIND, anchorId)
+        .catch(() => null);
+      const anchorHash = anchor?.hash;
+      if (anchorHash !== previousHash) {
+        lastError = new Error(`Audit chain advanced during append (attempt ${attempt + 1})`);
+        continue;
+      }
+      // CAS sobre el anchor. Si el anchor no existia, insertIfAbsent.
+      if (anchor === null) {
+        const inserted = await this.db.insertIfAbsent(input.tenantId, KIND, {
+          id: anchorId,
+          hash,
+        } as { id: string } & Record<string, unknown>);
+        if (!inserted) {
+          lastError = new Error(`Audit anchor insert lost (attempt ${attempt + 1})`);
+          continue;
+        }
+      } else {
+        const updated = await this.db.compareAndSwap<{ hash: string }>(
+          input.tenantId,
+          KIND,
+          anchorId,
+          { hash: anchorHash },
+          { hash },
+        );
+        if (!updated) {
+          lastError = new Error(`Audit anchor CAS failed (attempt ${attempt + 1})`);
+          continue;
+        }
+      }
       await this.db.put(input.tenantId, KIND, entry);
       return entry;
-    });
+    }
+    throw lastError ?? new Error("Audit append failed after retries");
   }
 
+  // AUDIT_LASTHASH_ANCHOR_FIX_V1 - tras el fix del append, existe una entrada
+  // con id "__audit_anchor__" que guarda el hash actual de la cadena. Se lee
+  // primero. Si no existe (cadena pre-fix), cae a la ultima entrada real.
   async lastHash(tenantId: string): Promise<string | undefined> {
+    const anchor = await this.db
+      .get<{ hash: string }>(tenantId, KIND, "__audit_anchor__")
+      .catch(() => null);
+    if (anchor?.hash) return anchor.hash;
     const list = await this.db.list<AuditEntry>(tenantId, KIND, { limit: 1 });
     return list[0]?.hash;
   }
 
+  // AUDIT_LIST_EXCLUDE_ANCHOR_FIX_V1 - tras introducir el anchor con id
+  // "__audit_anchor__", el list debe excluirlo porque no es una entrada real
+  // (es el puntero al hash actual). Filtramos en memoria; el anchor es 1 fila.
   async list(tenantId: string, limit: number): Promise<AuditEntry[]> {
     const capped = Math.min(Math.max(1, limit), maxList());
+    // Pedimos capped + 1 por si el anchor entra en la pagina.
+    const rows = await this.db.listPaged<AuditEntry>(tenantId, KIND, { limit: capped + 1 });
+    const entries = rows
+      .map((row) => row.data)
+      .filter((entry) => entry.id !== "__audit_anchor__")
+      .slice(0, capped);
     // listPaged ordena por updated_at DESC, id DESC. El audit trail quiere
     // orden ascendente para verificar la cadena, asi que invertimos.
-    const rows = await this.db.listPaged<AuditEntry>(tenantId, KIND, { limit: capped });
-    return rows.map((row) => row.data).reverse();
+    return entries.reverse();
   }
 
+  // AUDIT_VERIFY_INCOMPLETE_FIX_V1 - antes verify() topaba a maxList() (10.000
+  // por defecto) y devolvia true aunque no hubiera verificado las entradas
+  // antiguas. Ahora devuelve false si el list llego al tope, porque no puede
+  // garantizar que la cadena entera este intacta.
   async verify(tenantId: string): Promise<boolean> {
-    const list = await this.list(tenantId, maxList());
+    const cap = maxList();
+    const list = await this.list(tenantId, cap);
+    // Si el list devolvio exactamente cap entradas, no hemos verificado todo.
+    // Un audit trail con mas entradas que el tope no se puede verificar de una
+    // pasada con esta implementacion. Fallar honestamente es mejor que mentir.
+    if (list.length >= cap) {
+      console.warn(
+        `[audit] verify(${tenantId}) incompleto: ${list.length} >= ${cap}. Sube KERNEL_AUDIT_MAX_LIST o pagina.`,
+      );
+      return false;
+    }
     let previous: string | undefined;
     for (const entry of list) {
       if (previous !== undefined && entry.previousHash !== previous) return false;

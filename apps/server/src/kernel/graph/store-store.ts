@@ -98,20 +98,31 @@ export class StoreTurnStore implements TurnStore {
     });
   }
 
+  // THOUGHTS_OF_BOUNDED_CONCURRENCY_FIX_V1 - batching de 20 en serie.
   async thoughtsOf(tenantId: string, turnId: string): Promise<Thought[]> {
     const raw = await this.store.get(tenantId, TURNS_KIND, turnId);
     if (!raw) return [];
     const turn = turnSchema.parse(raw);
     if (turn.tenantId !== tenantId) return [];
-    // BATCH_GET - antes era un for con await, ahora Promise.all.
-    const rows = await Promise.all(
-      turn.thoughtIds.map((tid) => this.store.get(tenantId, THOUGHTS_KIND, tid)),
-    );
+    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacíamos Promise.all sobre
+    // todos los thoughtIds. Con MAX_THOUGHTS_PER_TURN=500 son 500 queries
+    // concurrentes: en Postgres con pool de 5 bloquea el pool entero. Ahora
+    // procesamos en lotes de 20 en serie.
+    const BATCH = 20;
     const out: Thought[] = [];
-    for (const row of rows) if (row) out.push(thoughtSchema.parse(row));
-    return out;
+    for (let i = 0; i < turn.thoughtIds.length; i += BATCH) {
+      const batch = turn.thoughtIds.slice(i, i + BATCH);
+      const rows = await Promise.all(
+        batch.map((tid) => this.store.get(tenantId, THOUGHTS_KIND, tid)),
+      );
+      for (const row of rows) if (row) out.push(thoughtSchema.parse(row));
+    }
+    // THOUGHTS_OF_SORTED_V1 - ordenamos por provenance.timestamp para que el
+    // analisis de atencion vea los thoughts en el orden real de escritura.
+    return out.sort((a, b) =>
+      a.provenance.timestamp.localeCompare(b.provenance.timestamp),
+    );
   }
-
   async closeTurn(
     tenantId: string,
     turnId: string,
@@ -176,7 +187,14 @@ export class StoreTurnStore implements TurnStore {
    * Cierra #197: openTurn no deduplicaba por thread.
    */
   async listOpenTurnsForThread(tenantId: string, owner: string): Promise<Turn[]> {
-    const rows = await this.store.list(tenantId, TURNS_KIND, MAX_TURNS_LISTED);
+    // OPEN_TURNS_BY_OWNER_FIX_V1 - antes traia los 200 turnos mas recientes
+    // del tenant y filtraba en memoria. Si el owner tenia un turno abierto
+    // viejo (>200 turnos), no lo encontraba y se abria uno nuevo: turnos
+    // huerfanos acumulandose. Ahora pedimos mas (500) y filtramos, con un
+    // tope duro para no explotar memoria. La solucion completa necesita un
+    // indice por owner+status; aqui acotamos el dano.
+    // STORE_TURN_OPEN_TURNS_SCOPED_FIX_V1 - mismo fix con marca.
+    const rows = await this.store.list(tenantId, TURNS_KIND, 500);
     return rows
       .map((row) => turnSchema.parse(row.data))
       .filter((turn) => turn.owner === owner && turn.status === "open");

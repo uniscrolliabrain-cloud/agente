@@ -36,7 +36,10 @@ export interface ContradictionPair {
 
 export interface ConsolidationResult {
   duplicateGroups: DuplicateGroup[];
-  contradictions: ContradictionPair[];
+  // CONSOLIDATE_HONEST_NAME_V1 - renombrado a textualNegations porque la
+  // deteccion es solo negacion explicita ('no X' vs 'X'). No detecta
+  // contradicciones semanticas reales. El nombre anterior mentia.
+  textualNegations: ContradictionPair[];
   reason: string;
   /** CONSOLIDATE_TENANT_V1 - tenants vistos en la lista, para debug. */
   tenants: string[];
@@ -115,7 +118,7 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
   }
 
   const duplicateGroups: DuplicateGroup[] = [];
-  const contradictions: ContradictionPair[] = [];
+  const textualNegations: ContradictionPair[] = [];
 
   for (const [tenantId, tenantThoughts] of byTenant) {
     // Duplicados dentro del tenant.
@@ -143,7 +146,7 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
       for (let j = i + 1; j < tenantThoughts.length; j++) {
         const reason = isNegationPair(tenantThoughts[i], tenantThoughts[j]);
         if (reason) {
-          contradictions.push({
+          textualNegations.push({
             a: tenantThoughts[i].id,
             b: tenantThoughts[j].id,
             reason,
@@ -156,8 +159,8 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
 
   return {
     duplicateGroups,
-    contradictions,
+    textualNegations,
     tenants: [...byTenant.keys()],
-    reason: `heuristica determinista: ${duplicateGroups.length} grupos de duplicados, ${contradictions.length} pares contradictorios en ${byTenant.size} tenant(s)`,
+    reason: `heuristica determinista: ${duplicateGroups.length} grupos de duplicados, ${textualNegations.length} pares con negacion explicita en ${byTenant.size} tenant(s)`, // CONSOLIDATE_REASON_V1
   };
 }

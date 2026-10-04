@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile, rm, rename } from "node:fs/promises";
 import { join } from "node:path";
 import type { Artifact } from "../../../packages/domain/src/index.ts";
 import { fillPdf, inspectPdf } from "../../../packages/integrations/src/pdf.ts";
@@ -131,8 +131,20 @@ export class Files {
     const tenantSegment = tenantId;
     const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     await mkdir(directory, { recursive: true, mode: 0o700 });
-    await writeFile(join(directory, `${id}.bin`), bytes, { mode: 0o600, flag: "wx" });
-    await this.db.put(owner, "files", artifact);
+    // FILES_ATOMIC_WRITE_V1 - antes escribiamos el fichero con flag "wx"
+    // y luego haciamos el put. Si el put fallaba, quedaba un fichero
+    // huerfano en disco. Ahora escribimos a .tmp, hacemos el put, y
+    // renombramos. Si algo falla entre medio, limpiamos el .tmp.
+    const tmpPath = join(directory, `.${id}.tmp`);
+    const finalPath = join(directory, `${id}.bin`);
+    await writeFile(tmpPath, bytes, { mode: 0o600, flag: "wx" });
+    try {
+      await this.db.put(owner, "files", artifact);
+    } catch (error) {
+      await rm(tmpPath, { force: true }).catch(() => {});
+      throw error;
+    }
+    await rename(tmpPath, finalPath);
 
     // Ingesta automatica en RAG para archivos de texto plano. Los embeddings van con
     // concurrencia acotada (embedTexts) y el numero de chunks tiene tope: antes era un bucle

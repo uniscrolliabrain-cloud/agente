@@ -23,7 +23,16 @@ export interface TenantResolution {
   source: "database" | "default";
 }
 
-const TENANT_CACHE_TTL_MS = 5 * 60 * 1000;
+// TENANT_SERVICE_TTL_ENV_V1 - antes el TTL era 5 min hardcodeado. Si un admin
+// cambia la membership, el cache no se entera hasta 5 min despues, y el kernel
+// escribe en el tenant viejo durante ese tiempo. Ahora es configurable:
+// en produccion conviene bajarlo a 30s; en dev, mantener 5 min.
+const TENANT_CACHE_TTL_MS = (() => {
+  const raw = process.env.TENANT_CACHE_TTL_MS;
+  if (!raw) return 5 * 60 * 1000;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 5 * 60 * 1000;
+})();
 
 export class TenantService {
   // TENANT_SERVICE_TTL_V1 - cache con TTL de 5 min.

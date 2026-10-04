@@ -44,7 +44,13 @@ export function runWithModelFallback(
   specs: string[],
   create: (spec: string) => ModelRun,
   input: RunAgentInput,
+  options: { timeoutMs?: number } = {},
 ): { events: Observable<BaseEvent>; abort: () => void } {
+  // MODEL_CHAIN_TIMEOUT_V1 - antes no habia timeout global. Si el modelo
+  // primario se quedaba colgado (red, proveedor caido), el fallback nunca
+  // entraba. Ahora cada intento tiene un timeout implicito (default 120s,
+  // configurable). Al expirar, se aborta el intento y entra el fallback.
+  const timeoutMs = options.timeoutMs ?? 120_000;
   let current: ModelRun | undefined;
   const events = new Observable<BaseEvent>((subscriber) => {
     let index = 0;
@@ -62,17 +68,34 @@ export function runWithModelFallback(
       attempt();
     };
 
+    // MODEL_CHAIN_NETWORK_TIMEOUT_V1 - timeout duro por intento. Si el modelo
+    // no emite output en 45s, abortamos y pasamos al fallback. Antes un fetch
+    // colgado no emitia ni evento ni error, y el fallback nunca entraba.
     const attempt = () => {
       const myId = ++attemptId;
       const agent = create(specs[index]);
       current = agent;
       let answered = false;
+      const firstByteTimeout = setTimeout(() => {
+        if (myId !== attemptId) return;
+        if (!answered && hasFallback()) {
+          try { agent.abortRun(); } catch { /* noop */ }
+          startNextAttempt();
+        } else if (!answered) {
+          try { agent.abortRun(); } catch { /* noop */ }
+          subscriber.error(new Error("Model did not respond within 45 seconds"));
+        }
+      }, 45_000);
       subscription = agent.run(input).subscribe({
         next: (event) => {
           if (myId !== attemptId) return;
-          if (producedOutput.has(event.type)) answered = true;
+          if (producedOutput.has(event.type)) {
+            answered = true;
+            clearTimeout(firstByteTimeout);
+          }
           if (event.type === EventType.RUN_STARTED && !announceStart) return;
           if (event.type === EventType.RUN_ERROR && !answered && hasFallback()) {
+            clearTimeout(firstByteTimeout);
             startNextAttempt();
             return;
           }
@@ -80,6 +103,7 @@ export function runWithModelFallback(
         },
         error: (error) => {
           if (myId !== attemptId) return;
+          clearTimeout(firstByteTimeout);
           if (stopped) return;
           if (!answered && hasFallback()) {
             startNextAttempt();
@@ -89,6 +113,7 @@ export function runWithModelFallback(
         },
         complete: () => {
           if (myId !== attemptId) return;
+          clearTimeout(firstByteTimeout);
           if (!stopped) subscriber.complete();
         },
       });

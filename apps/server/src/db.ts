@@ -198,6 +198,27 @@ export class Store {
   }
 
   /**
+   * STORE_SCAN_BY_OWNER_PREFIX_V1 - variante de scan que filtra por prefijo
+   * de owner en SQL. Lo usa TenantScopedStore para no traer filas de otros
+   * tenants. El prefijo se pasa ya compuesto (por ejemplo "tenant-1:").
+   * Defensa: solo acepta prefijos sin caracteres de escape LIKE salvo el
+   * propio ":". Si el prefijo contiene "%" o "_" los escapamos.
+   */
+  async scanByOwnerPrefix<T>(
+    kind: string,
+    ownerPrefix: string,
+    limit = 1000,
+  ): Promise<{ owner: string; value: T }[]> {
+    const effective = Math.min(Math.max(1, Math.floor(limit)), 50000);
+    const escaped = ownerPrefix.replace(/[%_]/g, (m) => "\\" + m);
+    const result = await this.db.query(
+      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND owner LIKE $2 ESCAPE '\\\\' ORDER BY updated_at ASC LIMIT $3",
+      [kind, escaped + "%", effective],
+    );
+    return result.rows.map((row) => row.data as { owner: string; value: T });
+  }
+
+  /**
    * SCAN_BY_STATUS_CURSOR_V1 - variante con cursor keyset (updated_at, id).
    * Devuelve hasta `limit` filas cuya updated_at es > cursorUpdatedAt.
    */
