@@ -762,9 +762,26 @@ export class AgentService {
   // del chat y hacia 2 list() de 50 filas + workspace.connected(). Con 100
   // usuarios escribiendo, son 200 queries por segundo para "¿hay urgencias?".
   // Cache de 30s por owner.
-  private readonly systemContextCache = new Map<string, { at: number; value: unknown }>();
+  // FIX_SYSTEMCTX_TYPE_V1 - el cache tenia value: unknown, lo cual contaminaba
+  // el tipo de retorno de systemContext() y hacia que conversation.ts infiriera
+  // systemCtx como unknown (TS18046 x7).
+  private readonly systemContextCache = new Map<
+    string,
+    {
+      at: number;
+      value: {
+        pendingApprovals: Array<{ id: string; title: string; hash: string }>;
+        recentFailures: Array<{ id: string; title: string }>;
+        health: { google: boolean; worker: boolean };
+      };
+    }
+  >();
 
-  async systemContext(owner: string) {
+  async systemContext(owner: string): Promise<{
+    pendingApprovals: Array<{ id: string; title: string; hash: string }>;
+    recentFailures: Array<{ id: string; title: string }>;
+    health: { google: boolean; worker: boolean };
+  }> {
     const cached = this.systemContextCache.get(owner);
     if (cached && Date.now() - cached.at < 30_000) {
       return cached.value;

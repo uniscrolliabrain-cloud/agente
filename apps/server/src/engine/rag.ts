@@ -305,57 +305,8 @@ export class RagService {
   }
 }
 
-// RAG_IDF_V2 - IDF real sobre el corpus del tenant.
-export function computeIdf(docs: string[]): Map<string, number> {
-  const df = new Map<string, number>();
-  for (const d of docs) {
-    const seen = new Set(d.toLowerCase().split(/\W+/).filter((w) => w.length > 2));
-    for (const w of seen) df.set(w, (df.get(w) ?? 0) + 1);
-  }
-  const idf = new Map<string, number>();
-  const N = Math.max(1, docs.length);
-  for (const [w, count] of df) idf.set(w, Math.log((N + 1) / (count + 1)) + 1);
-  return idf;
-}
 
-export function bm25WithIdf(queryWords: string[], text: string, idf: Map<string, number>, avgLen: number): number {
-  if (!queryWords.length) return 0;
-  const words = text.toLowerCase().split(/\W+/).filter(Boolean);
-  if (!words.length) return 0;
-  const tf = new Map<string, number>();
-  for (const w of words) tf.set(w, (tf.get(w) ?? 0) + 1);
-  const k1 = 1.2;
-  const b = 0.75;
-  const norm = 1 - b + b * (words.length / Math.max(1, avgLen));
-  let score = 0;
-  for (const q of queryWords) {
-    const f = tf.get(q) ?? 0;
-    if (f > 0) {
-      const weight = idf.get(q) ?? 1;
-      score += weight * ((f * (k1 + 1)) / (f + k1 * norm));
-    }
-  }
-  return score;
-}
-// RAG_AVG_LEN_V2 - longitud media del corpus derivada, no hardcodeada.
-export function computeAvgLen(docs: string[]): number {
-  if (docs.length === 0) return 200;
-  let total = 0;
-  for (const d of docs) total += d.split(/\W+/).filter(Boolean).length;
-  return Math.max(1, total / docs.length);
-}
-// RAG_REINGEST_ON_CHANGE_V1 - si un fichero cambia, se reingesta.
-export function contentHash(text: string): string {
-  // Hash simple y estable. No criptografico.
-  let h = 5381;
-  for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) | 0;
-  return String(h >>> 0);
-}
-// RAG_THRESHOLD_BY_MIME_V1 - umbral de ingesta segun el tipo de fichero.
-export function shouldIngest(mimeType: string, sizeBytes: number): boolean {
-  if (mimeType.startsWith("text/")) return sizeBytes >= 4 * 1024;
-  if (mimeType === "application/json" || mimeType === "application/xml") return sizeBytes >= 4 * 1024;
-  if (mimeType === "application/vnd.google-apps.document") return true;
-  if (mimeType === "application/pdf") return sizeBytes >= 8 * 1024;
-  return false;
-}
+// FIX_RAG_DEAD_CODE_V1 - eliminados computeIdf, bm25WithIdf, computeAvgLen,
+// contentHash y shouldIngest. Estaban exportados pero nadie los importaba:
+// search usa un bm25Score interno sin IDF. Si se quieren usar, hay que
+// reescribir search para consumirlos. Mientras tanto, fuera para no confundir.

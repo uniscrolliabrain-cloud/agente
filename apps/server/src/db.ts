@@ -283,9 +283,15 @@ export class Store {
    *
    * Si el callback lanza, se hace ROLLBACK y el error se propaga.
    */
+  // FIX_TX_GUARD_V1 - guard contra transaccion anidada. Antes dos BEGIN
+  // seguidos reventaban Postgres con "there is already a transaction in
+  // progress". Si ya estamos en transaccion, el callback corre sin BEGIN.
+  private inTransaction = false;
   async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
+    if (this.inTransaction) return fn(this);
     const raw = this.db as { query: (sql: string, params?: unknown[]) => Promise<unknown> };
     await raw.query("BEGIN");
+    this.inTransaction = true;
     try {
       const result = await fn(this);
       await raw.query("COMMIT");
@@ -293,6 +299,8 @@ export class Store {
     } catch (error) {
       try { await raw.query("ROLLBACK"); } catch { /* rollback best-effort */ }
       throw error;
+    } finally {
+      this.inTransaction = false;
     }
   }
 
