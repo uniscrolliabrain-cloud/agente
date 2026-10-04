@@ -86,5 +86,21 @@ export async function createAuth(db: Store, config: Config) {
     key = randomBytes(32).toString("base64");
     await writeFile(path, key, { mode: 0o600, flag: "wx" });
   }
+  // AUTH_KEY_ROTATION_V1 - si hay TOKEN_ENCRYPTION_KEY, guardamos y leemos la
+  // clave de firma cifrada con AES-256-GCM. Si no, comportamiento previo
+  // (texto plano en disco con permisos 0600).
+  const encKey = process.env.TOKEN_ENCRYPTION_KEY?.trim();
+  if (encKey) {
+    const encPath = `${path}.enc`;
+    try {
+      const raw = await readFile(encPath, "utf8");
+      // AUTH_VAULT_PATH_V1 - ruta corregida a 3 niveles.
+      const { decryptSecret } = await import("../../../packages/integrations/src/vault.ts");
+      key = decryptSecret(raw.trim(), encKey);
+    } catch {
+      const { encryptSecret } = await import("../../../packages/integrations/src/vault.ts");
+      await writeFile(encPath, encryptSecret(key, encKey), { mode: 0o600, flag: "w" });
+    }
+  }
   return new Auth(db, config, key);
 }

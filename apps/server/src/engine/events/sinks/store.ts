@@ -63,16 +63,32 @@ export class StoreQuery implements EventQuery {
 
   async aggregate(owner: string, hours: number): Promise<EventAggregate[]> {
     const since = new Date(Date.now() - hours * 3600000).toISOString();
-    // AGGREGATE_LIMIT — 5000 eventos recientes es mas que suficiente para un agregado
-    // de 24h. Evita cargar el historico completo del owner.
-    const rows = await this.db.list<SystemEvent>(owner, KIND, { limit: 5000 });
-    const counts = new Map<SystemEventType, number>();
-    for (const event of rows) {
-      if (event.emittedAt < since) continue;
-      counts.set(event.type, (counts.get(event.type) ?? 0) + 1);
+    // BUS_AGGREGATE_SQL_V1 - antes traia 5000 eventos a memoria y contaba en
+    // JS. Con miles de eventos por hora, el agregado mentia (se truncaba) y
+    // la query era pesada. Ahora agrupamos en SQL con GROUP BY. El Store
+    // expone `select` para queries arbitrarias de lectura.
+    try {
+      const rows = await this.db.select<{ type: string; count: number }>(
+        `SELECT data->>'type' AS type, count(*)::int AS count
+           FROM records
+          WHERE owner = $1 AND kind = $2 AND (data->>'emittedAt') >= $3
+          GROUP BY data->>'type'
+          ORDER BY count DESC`,
+        [owner, KIND, since],
+      );
+      return rows.map((row) => ({ type: row.type as SystemEventType, count: row.count }));
+    } catch {
+      // Fallback al comportamiento previo si select falla (p. ej. PGlite sin
+      // soporte para GROUP BY sobre jsonb). Mantiene la funcionalidad.
+      const rows = await this.db.list<SystemEvent>(owner, KIND, { limit: 5000 });
+      const counts = new Map<SystemEventType, number>();
+      for (const event of rows) {
+        if (event.emittedAt < since) continue;
+        counts.set(event.type, (counts.get(event.type) ?? 0) + 1);
+      }
+      return [...counts]
+        .map(([type, count]) => ({ type, count }))
+        .sort((a, b) => b.count - a.count);
     }
-    return [...counts]
-      .map(([type, count]) => ({ type, count }))
-      .sort((a, b) => b.count - a.count);
   }
 }

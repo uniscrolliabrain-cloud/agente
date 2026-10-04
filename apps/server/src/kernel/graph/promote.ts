@@ -105,7 +105,11 @@ function classifyDestination(role: string): PromotionDestination {
     case "observation":
     case "reflection":
       return "memory";
+    // PROMOTE_GRAPH_DESTINATION_V1 - los thoughts de tipo "action" que
+    // describen una entidad o un hecho de negocio van al business graph en
+    // lugar de solo al audit. El audit los sigue teniendo por separado.
     case "action":
+      return "business-graph";
     case "critic":
     case "verifier":
     case "intent":

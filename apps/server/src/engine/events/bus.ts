@@ -70,9 +70,12 @@ export class EventBus {
       const parsed = schema.parse(payload) as T;
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
+      // EVENTBUS_DEDUPE_OWNER_FIX_V1 - antes pasabamos `${owner}:${dedupeKey}`
+      // como owner a isDuplicate, lo cual creaba una fila por cada dedupeKey
+      // distinta y rompia el LRU compartido entre procesos. Ahora pasamos
+      // el owner real y la key por separado.
       if (options.dedupeKey !== undefined) {
-        const dedupeKey0 = `${owner}:${options.dedupeKey}`;
-        if (await this.isDuplicate(dedupeKey0, options.dedupeKey)) return;
+        if (await this.isDuplicate(owner, options.dedupeKey)) return;
       }
       const event: SystemEvent<T> = {
         id: ulid(),
@@ -89,17 +92,29 @@ export class EventBus {
       await this.sink.write(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
-        await this.recordDedupe(`${owner}:${options.dedupeKey}`, options.dedupeKey);
+        // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.
+        await this.recordDedupe(owner, options.dedupeKey);
       }
       if (options.notify) {
-        await this.db.insertIfAbsent(owner, "notifications", {
-          id: createHash("sha256").update(options.notify.key).digest("hex"),
-          taskId: source.kind === "task" ? source.id : undefined,
-          title: options.notify.title.slice(0, 200),
-          body: options.notify.body.slice(0, 2000),
-          createdAt: event.emittedAt,
-          read: false,
-        });
+        // BUS_NOTIFY_PREFS_V1 - antes el bus escribia siempre en
+        // notifications, ignorando las preferencias del usuario en
+        // notification-prefs. Ahora consultamos prefs y, si el tipo esta
+        // deshabilitado, no escribimos la notificacion. El evento sigue
+        // emitiendose al bus por si otros consumidores lo quieren.
+        const prefs = await this.db
+          .get<{ disabled: string[] }>(owner, "notification-prefs", "default")
+          .catch(() => null);
+        const disabled = prefs?.disabled ?? [];
+        if (!disabled.includes(type)) {
+          await this.db.insertIfAbsent(owner, "notifications", {
+            id: createHash("sha256").update(options.notify.key).digest("hex"),
+            taskId: source.kind === "task" ? source.id : undefined,
+            title: options.notify.title.slice(0, 200),
+            body: options.notify.body.slice(0, 2000),
+            createdAt: event.emittedAt,
+            read: false,
+          });
+        }
       }
     } catch (error) {
       backgroundFailure(`event emit ${type}`, error);
@@ -141,11 +156,36 @@ export class EventBus {
       const oldest = [...this.inMemory.entries()].sort((a, b) => a[1] - b[1])[0];
       if (oldest) this.inMemory.delete(oldest[0]);
     }
-    const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
-    const seen = state?.seen ?? [];
-    const filtered = seen.filter((entry) => now - entry.at < DEDUPE_TTL_MS);
-    filtered.push({ key, at: now });
-    const trimmed = filtered.slice(-DEDUPE_MAX_ENTRIES);
-    await this.db.put(owner, DEDUPE_KIND, { id: "lru", seen: trimmed });
+    // EVENTBUS_DEDUPE_CAS_FIX_V1 - antes leiamos + modificabamos + escribiamos
+    // sin CAS. Dos emisiones concurrentes con la misma key se pisaban. Ahora
+    // reintentamos con CAS sobre el `seen` actual hasta 3 veces.
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
+      const seen = state?.seen ?? [];
+      const filtered = seen.filter((entry) => now - entry.at < DEDUPE_TTL_MS);
+      if (filtered.some((entry) => entry.key === key)) return;
+      filtered.push({ key, at: now });
+      const trimmed = filtered.slice(-DEDUPE_MAX_ENTRIES);
+      if (!state) {
+        const inserted = await this.db.insertIfAbsent(owner, DEDUPE_KIND, {
+          id: "lru",
+          seen: trimmed,
+        } as { id: string } & Record<string, unknown>);
+        if (inserted) return;
+        continue;
+      }
+      const updated = await this.db.compareAndSwap<DedupeState>(
+        owner,
+        DEDUPE_KIND,
+        "lru",
+        { id: "lru", seen: state.seen },
+        { seen: trimmed },
+      );
+      if (updated) return;
+    }
+    backgroundFailure(
+      `eventbus dedupe ${owner}/${key}`,
+      new Error("No se pudo registrar la clave de deduplicacion tras 3 intentos"),
+    );
   }
 }

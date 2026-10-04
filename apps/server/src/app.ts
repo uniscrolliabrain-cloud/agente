@@ -40,8 +40,6 @@ import { threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
 import {
   Kernel,
-  InMemoryTurnStore,
-  InMemoryAuditStore,
   EnvTenantConfigResolver,
   StoreTurnStore,
   StoreAuditStore,
@@ -131,17 +129,33 @@ export async function createApp(
           db.transaction(() => fn(storePort as never)),
       }
     : null;
+  // KERNEL_STORE_ALWAYS_V1 - antes el kernel usaba InMemoryTurnStore cuando
+  // no habia DATABASE_URL. Eso hacia que en dev/test/sample todo el trabajo
+  // del kernel (turnos, thoughts, audit) se perdiera al reiniciar, y que la
+  // vision de "kernel persistente" fuera falsa. Ahora SIEMPRE StoreTurnStore
+  // apoyado en el mismo Store que el resto del sistema. InMemoryTurnStore
+  // queda solo para tests que lo instancian a mano.
+  const persistentStorePort = storePort ?? {
+    put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
+      await db.put(tenantId, kind, data as { id: string });
+    },
+    get: async (tenantId: string, kind: string, id: string) => db.get(tenantId, kind, id),
+    list: async (tenantId: string, kind: string, limit: number) => {
+      const rows = await db.listPaged<unknown>(tenantId, kind, { limit });
+      return rows.map((row) => ({ id: (row.data as { id: string }).id, data: row.data }));
+    },
+    transaction: async <T>(fn: (tx: never) => Promise<T>): Promise<T> =>
+      db.transaction(() => fn(persistentStorePort as never)),
+  };
   const kernel = new Kernel({
-    store:
-      // PERSISTENT_KERNEL_ONLY_V1 - siempre StoreTurnStore. InMemory solo para tests.
-      storePort
-        ? new StoreTurnStore(storePort)
-        : new InMemoryTurnStore(),
+    store: new StoreTurnStore(persistentStorePort),
     // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
     // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
     // ignoraba el tenantId del contexto y escribia todo en "default".
     tenants: new ServiceTenantResolver(tenantService),
-    audit: usePersistentKernel ? new StoreAuditStore(db) : new InMemoryAuditStore(),
+    // AUDIT_STORE_ALWAYS_V1 - mismo razonamiento que KERNEL_STORE_ALWAYS_V1:
+    // StoreAuditStore siempre. La cadena de hash se persiste.
+    audit: new StoreAuditStore(db),
     config: new EnvTenantConfigResolver(),
   });
   const agent = new AgentService(
@@ -449,6 +463,14 @@ app.post("/api/billing/customer", async (c) => {
   {
     const { kernelRoutes } = await import("./kernel-routes.ts");
     app.route("/api/kernel", kernelRoutes(kernel));
+  }
+  // APP_VIEWS_WIRE_V1 - endpoint publico de resolucion de vistas. Antes solo
+  // estaba bajo /api/admin/views/resolve (requireAdmin) y el frontend llamaba
+  // a /api/views/resolve, que no existia. Ahora el endpoint publico esta
+  // cableado y usa la instancia del resolver del proceso.
+  {
+    const { viewsRoutes } = await import("./routes/views.ts");
+    app.route("/api/views", viewsRoutes());
   }
   // BUSINESS_ROUTES_WIRE_V1 â€” rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");

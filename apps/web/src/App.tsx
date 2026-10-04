@@ -159,7 +159,7 @@ export default function App() {
         />
 
         <div className="v2-content">
-          {view === "chat" && <ChatPanel chat={chat} />}
+          {view === "chat" && <ChatPanel chat={chat} onResolveView={(intent) => void viewResolver.resolve(intent)} />} {/* APP_CONNECT_VIEWRESOLVER_V1 */}
           {view === "tasks" && (
             <TasksView
               tasks={tasks.tasks}
