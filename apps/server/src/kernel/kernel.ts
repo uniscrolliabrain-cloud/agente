@@ -68,7 +68,12 @@ export class Kernel {
       provenance?: Partial<Thought["provenance"]>;
     },
   ): Promise<Thought> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    // KERNEL_CTX_TENANT_RESPECT_FIX_V1 - antes siempre resolviamos el tenant
+    // desde ctx.owner, ignorando ctx.tenantId si venia. Si el resolver cambia
+    // de tenant (por TTL de cache) entre openTurn y appendThought, el thought
+    // apunta a otro tenant y el append falla con Tenant mismatch. Ahora
+    // respetamos ctx.tenantId cuando viene.
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const thought = thoughtSchema.parse({
       ...input,
       id: randomUUID(),
@@ -152,8 +157,14 @@ export class Kernel {
       listTurns?: (tenantId: string, limit: number) => Promise<Turn[]>;
     };
     if (!store.listTurns) return [];
-    const all = await store.listTurns(tenantId, limit);
-    return all.filter((turn) => turn.owner === ctx.owner);
+    // KERNEL_LIST_TURNS_OWNER_FILTER_FIX_V1 - antes pediamos `limit` al store
+    // (que no filtra por owner) y luego filtrábamos en memoria. Si el tenant
+    // tenia 200 turnos de otros owners antes que los del nuestro, `limit=50`
+    // devolvia 50 de otros y el filtro dejaba 0. Ahora pedimos un multiplo
+    // (5x el limit, tope 200) y cortamos al limit real tras filtrar.
+    const fetch = Math.min(limit * 5, 200);
+    const all = await store.listTurns(tenantId, fetch);
+    return all.filter((turn) => turn.owner === ctx.owner).slice(0, limit);
   }
 
   /**

@@ -52,6 +52,19 @@ export class FastAuthor {
 
   async writeResponse(ctx: KernelContext, input: FastAuthorWriteInput): Promise<Thought> {
     const now = new Date().toISOString();
+    // FAST_AUTHOR_ATTENTION_V1 - si el caller no pasa matched/ignored, los
+    // derivamos de las entidades mencionadas en la respuesta. Busqueda por
+    // substring simple: si el nombre de una entidad aparece en el texto,
+    // cuenta como matched con weight proporcional a la longitud del match.
+    const matched =
+      input.matched ??
+      (input.entities ?? []).flatMap((entity) => {
+        const idx = input.response.toLowerCase().indexOf(entity.toLowerCase());
+        if (idx < 0) return [];
+        const weight = Math.min(1, entity.length / Math.max(1, input.response.length / 10));
+        return [{ node: entity, weight, reason: "mentioned", metadata: { idx } }];
+      });
+    const ignored = input.ignored ?? [];
     return this.deps.kernel.appendThought(ctx, {
       turnId: input.turnId,
       actor: { kind: "fast-llm", id: "fast" },
@@ -63,8 +76,8 @@ export class FastAuthor {
         primary: "response",
         secondary: [],
         query: "",
-        matched: (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} })),
-        ignored: (input.ignored ?? []).map((i) => ({ ...i, metadata: i.metadata ?? {} })),
+        matched: matched.map((m) => ({ ...m, metadata: m.metadata ?? {} })),
+        ignored: ignored.map((i) => ({ ...i, metadata: i.metadata ?? {} })),
         intent: input.intent ?? "respond",
         confidence: input.confidence ?? 0.9,
         scope: "turn",

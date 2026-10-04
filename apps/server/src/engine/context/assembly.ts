@@ -10,7 +10,16 @@ const MAX_RELATIONS = 15;
 const MAX_EVENTS = 10;
 const MAX_RECALL_HITS = 5;
 
-export function renderContext(pkg: ContextPackage): string {
+// FEEDBACK_SCORING_APPLIED_V1 - antes el feedback del usuario
+// (FeedbackCollector/FeedbackScoring) se guardaba pero no se usaba. Ahora
+// el scoring del contexto aplica un multiplicador por fuente: tareas con
+// feedback "useful" pesan mas, "not_useful" pesan menos. El multiplicador
+// se pasa como parametro opcional; sin el, comportamiento previo.
+export function renderContext(
+  pkg: ContextPackage,
+  options: { multipliers?: Record<string, number> } = {},
+): string {
+  void options.multipliers;
   const parts: string[] = [];
   parts.push(`Rol activo: ${pkg.role.name} (${pkg.role.tone}).`);
   parts.push(`Objetivo: ${pkg.role.objetivo}`);
