@@ -18,11 +18,21 @@ export interface RateLimitResult {
 export class RateLimiter {
   private readonly buckets = new Map<string, Bucket>();
 
+  // RATE_LIMIT_PRUNE_V1 - prune periodico interno.
+  private pruneTimer?: ReturnType<typeof setInterval>;
   constructor(
     private readonly limit: number,
     private readonly windowMs: number,
     private readonly maxKeys = 5000,
-  ) {}
+  ) {
+    this.pruneTimer = setInterval(() => {
+      const now = Date.now();
+      for (const [key, bucket] of this.buckets) {
+        if (bucket.resetAt <= now) this.buckets.delete(key);
+      }
+    }, Math.max(60_000, this.windowMs));
+    this.pruneTimer.unref?.();
+  }
 
   /**
    * RATE_LIMIT_TENANT_V1 - toma un intento scoped por tenant+usuario.

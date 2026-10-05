@@ -1,0 +1,22 @@
+﻿apps/server/src/actions.ts(258,22): error TS2339: Property 'deferred' does not exist on type 'Options'.
+apps/server/src/actions.ts(259,49): error TS2339: Property 'deferred' does not exist on type 'Options'.
+apps/server/src/engine/conversation.ts(386,31): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/conversation.ts(405,28): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/conversation.ts(522,15): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/conversation.ts(523,38): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/conversation.ts(524,15): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/conversation.ts(525,45): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/conversation.ts(526,16): error TS18046: 'systemCtx' is of type 'unknown'.
+apps/server/src/engine/model.ts(537,82): error TS2554: Expected 5 arguments, but got 6.
+apps/server/src/engine/worker.ts(59,7): error TS5076: '??' and '||' operations cannot be mixed without parentheses.
+apps/server/src/threads-routes.ts(95,18): error TS2304: Cannot find name 'globalEditLock'.
+apps/server/src/threads-routes.ts(116,13): error TS2322: Type 'string | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+apps/server/src/threads-routes.ts(155,7): error TS2304: Cannot find name 'globalEditLock'.
+tests/actions-deferred-wire.test.ts(39,9): error TS2353: Object literal may only specify known properties, and 'deferred' does not exist in type 'Options'.
+tests/alerts.test.ts(67,28): error TS2739: Type '{ http5xx: number; httpTotal: number; taskFailuresLastHour: number; tenantQuotaExceeded: number; workerRunning: true; }' is missing the following properties from type '{ http5xx: number; httpTotal: number; taskFailuresLastHour: number; tenantQuotaExceeded: number; workerRunning: boolean; httpLatencyP99Ms: number; circuitOpenCount: number; deadLetterCount: number; outcomeUnknownCount: number; }': httpLatencyP99Ms, circuitOpenCount, deadLetterCount, outcomeUnknownCount
+tests/event-bus-dedupe.test.ts(21,47): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+tests/event-bus-dedupe.test.ts(22,47): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+tests/events-sse.test.ts(68,33): error TS2345: Argument of type '"unknown.type"' is not assignable to parameter of type '"action.deferred" | "action.cancelled" | "action.executed" | "action.failed" | "task.created" | "task.status_changed" | "task.completed" | "task.failed" | "task.waiting_input" | ... 34 more ... | "verification.disagreement"'.
+tests/tenant-isolation-extended.test.ts(75,42): error TS2339: Property 'tenantId' does not exist on type '{ id: string; }'.
+tests/tenant-isolation-extended.test.ts(79,33): error TS2339: Property 'tenantId' does not exist on type '{ id: string; }'.

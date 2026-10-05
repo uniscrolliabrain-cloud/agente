@@ -77,7 +77,7 @@ export class Store {
       sql += ` AND (updated_at, id) < ($3::timestamptz, $4)`;
     }
     sql += " ORDER BY updated_at DESC, id";
-    // LIST_HARD_LIMIT — sin options.limit, aplicamos 1000 filas como techo de seguridad.
+    // LIST_HARD_LIMIT â€” sin options.limit, aplicamos 1000 filas como techo de seguridad.
     // Los callers que necesiten mas deben usar listPaged con cursor.
     const effectiveLimit = options.limit ?? 1000;
     params.push(effectiveLimit);
@@ -188,7 +188,7 @@ export class Store {
     limit = 1000,
   ): Promise<{ owner: string; value: T }[]> {
     if (!statuses.length) return [];
-    // SCAN_STATUS_IN — IN con lista literal usa el indice de expresion mejor que ANY.
+    // SCAN_STATUS_IN â€” IN con lista literal usa el indice de expresion mejor que ANY.
     const placeholders = statuses.map((_, i) => `$${i + 2}`).join(",");
     const result = await this.db.query(
       `SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND data->>'status' IN (${placeholders}) ORDER BY updated_at ASC LIMIT $${statuses.length + 2}`,
@@ -372,7 +372,7 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_kind_status_idx ON records(kind, (data->>'status'))"
   );
-  // INDEX_CONCURRENTLY — Postgres real: fuera de transaccion para no bloquear escrituras.
+  // INDEX_CONCURRENTLY â€” Postgres real: fuera de transaccion para no bloquear escrituras.
   // PGlite ignora CONCURRENTLY pero no se queja porque no hay transaccion envolvente.
   if (options.databaseUrl) {
     try {
@@ -389,12 +389,12 @@ export async function createStore(
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_system_events_idx ON records(owner, kind, ((data->>'type')), updated_at DESC)"
   );
-  // EVENTS_INDEX_AGG_V1 — índice para agregados GROUP BY type.
-  // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Faltan índices para agregados").
+  // EVENTS_INDEX_AGG_V1 â€” Ã­ndice para agregados GROUP BY type.
+  // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Faltan Ã­ndices para agregados").
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_system_events_type_ts_idx ON records(kind, ((data->>'type')), updated_at DESC) WHERE kind = 'system-events'"
   );
-  // EVENTS_INDEX_AGG_V1 — índice por source.kind para snapshots.
+  // EVENTS_INDEX_AGG_V1 â€” Ã­ndice por source.kind para snapshots.
   await database.query(
     "CREATE INDEX IF NOT EXISTS records_system_events_source_idx ON records(kind, ((data->'source'->>'kind')), updated_at DESC) WHERE kind = 'system-events'"
   );

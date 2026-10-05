@@ -9,10 +9,13 @@ if (!config.databaseUrl)
     "A separate task worker requires DATABASE_URL. Embedded PGlite runs inside the API process.",
   );
 const db = await createStore({ databaseUrl: config.databaseUrl });
-// R2 — igual que en index.ts, antes de arrancar el worker, reconciliar acciones
+// R2 â€” igual que en index.ts, antes de arrancar el worker, reconciliar acciones
 // que quedaron en "executing" por un crash previo.
 await db.recoverInterruptedActions();
 const { agent } = await createApp(db, config);
+// WORKER_ENTRY_RECOVER_V1 - recupera tareas huerfanas.
+const recoveredCount = await agent.recoverInterruptedTasks().catch(() => 0);
+if (recoveredCount > 0) console.log(`[worker] `${recoveredCount} tareas recuperadas`);
 agent.start();
 console.log("OpenMuse task worker running");
 let stopping = false;

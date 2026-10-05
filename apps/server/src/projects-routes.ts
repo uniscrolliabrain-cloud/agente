@@ -93,6 +93,15 @@ export function projectRoutes(db: Store) {
     return c.json(result);
   });
 
+  // PRESENCE_LEAVE_PROJECT_V1 - desconexión explícita.
+  app.post("/:id/presence/leave", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const userId = c.req.header("x-user-id") ?? owner;
+    globalPresence.leave(userId, "project", id);
+    return c.json({ ok: true });
+  });
+
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -128,9 +137,11 @@ export function projectRoutes(db: Store) {
       .parse(rawBody);
     if (expected.expectedUpdatedAt !== undefined) {
       if (existing.updatedAt !== expected.expectedUpdatedAt) {
+        // PROJECT_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
         throw new AppError(
           "Otro usuario ha modificado este proyecto. Recarga y vuelve a intentarlo.",
           409,
+          { current: existing.updatedAt, expected: expected.expectedUpdatedAt },
         );
       }
     }

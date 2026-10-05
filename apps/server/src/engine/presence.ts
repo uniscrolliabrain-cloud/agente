@@ -15,8 +15,9 @@ export interface PresenceEntry {
   lastSeen: number;
 }
 
+// PRESENCE_MULTI_V1 - Map por usuario. Antes solo guardaba uno.
 export class PresenceService {
-  private readonly entries = new Map<string, PresenceEntry>();
+  private readonly entries = new Map<string, Map<string, PresenceEntry>>();
 
   private key(resourceType: string, resourceId: string): string {
     return `${resourceType}:${resourceId}`;
@@ -30,42 +31,64 @@ export class PresenceService {
   ): { others: Array<{ userId: string; lastSeen: number }> } {
     const k = this.key(resourceType, resourceId);
     this.gc();
-    const existing = this.entries.get(k);
-    this.entries.set(k, {
+    let bucket = this.entries.get(k);
+    if (!bucket) {
+      bucket = new Map<string, PresenceEntry>();
+      this.entries.set(k, bucket);
+    }
+    bucket.set(userId, {
       userId,
       resourceId,
       resourceType,
       lastSeen: Date.now(),
     });
-    // En una implementación multi-usuario real, la clave incluiría userId.
-    // Aquí, para simplificar, guardamos el último que tocó y devolvemos
-    // como "others" a los que la key anterior tenía.
     const others: Array<{ userId: string; lastSeen: number }> = [];
-    if (existing && existing.userId !== userId && Date.now() - existing.lastSeen < PRESENCE_TTL_MS) {
-      others.push({ userId: existing.userId, lastSeen: existing.lastSeen });
+    for (const [uid, entry] of bucket) {
+      if (uid === userId) continue;
+      if (Date.now() - entry.lastSeen < PRESENCE_TTL_MS) {
+        others.push({ userId: uid, lastSeen: entry.lastSeen });
+      }
     }
     return { others };
   }
 
-  /** Limpia entradas caducadas. */
+  /** PRESENCE_LEAVE_V1 - desconexión explícita. */
+  leave(userId: string, resourceType: "thread" | "project", resourceId: string): void {
+    const k = this.key(resourceType, resourceId);
+    const bucket = this.entries.get(k);
+    if (!bucket) return;
+    bucket.delete(userId);
+    if (bucket.size === 0) this.entries.delete(k);
+  }
+
+  /** PRESENCE_GC_V1 - limpia entradas caducadas del Map anidado. */
   private gc(): void {
     const now = Date.now();
-    for (const [k, v] of this.entries) {
-      if (now - v.lastSeen > PRESENCE_TTL_MS) this.entries.delete(k);
+    for (const [k, bucket] of this.entries) {
+      for (const [uid, entry] of bucket) {
+        if (now - entry.lastSeen > PRESENCE_TTL_MS) bucket.delete(uid);
+      }
+      if (bucket.size === 0) this.entries.delete(k);
     }
   }
 
-  /** Consulta quién está editando sin tocar presencia. */
+  /** PRESENCE_QUERY_V1 - consulta todos los usuarios presentes. */
   query(
     resourceType: "thread" | "project",
     resourceId: string,
   ): Array<{ userId: string; lastSeen: number }> {
     this.gc();
     const k = this.key(resourceType, resourceId);
-    const existing = this.entries.get(k);
-    if (!existing) return [];
-    if (Date.now() - existing.lastSeen > PRESENCE_TTL_MS) return [];
-    return [{ userId: existing.userId, lastSeen: existing.lastSeen }];
+    const bucket = this.entries.get(k);
+    if (!bucket) return [];
+    const now = Date.now();
+    const result: Array<{ userId: string; lastSeen: number }> = [];
+    for (const [uid, entry] of bucket) {
+      if (now - entry.lastSeen <= PRESENCE_TTL_MS) {
+        result.push({ userId: uid, lastSeen: entry.lastSeen });
+      }
+    }
+    return result;
   }
 
   clear(): void {

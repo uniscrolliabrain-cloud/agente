@@ -30,7 +30,7 @@ export function notificationsStreamRoutes(service: AgentService) {
         const tick = async () => {
           try {
             const items = await service.db
-              .list<{ id: string; title: string; body: string; read: boolean; createdAt: string }>(
+              .list<{ id: string; title: string; body: string; read: boolean; createdAt: string; assignedTo?: string }>(
                 owner,
                 "notifications",
                 { limit: 50 },
@@ -42,7 +42,8 @@ export function notificationsStreamRoutes(service: AgentService) {
               lastSeen.add(item.id);
               push(item);
             }
-            if (lastSeen.size > 200) lastSeen = new Set(Array.from(lastSeen).slice(-100));
+            // NOTIF_STREAM_BUFFER_V1 - buffer mas grande para no perder avisos.
+            if (lastSeen.size > 2000) lastSeen = new Set(Array.from(lastSeen).slice(-1000));
           } catch (error) {
             backgroundFailure("notifications stream tick", error);
           }
