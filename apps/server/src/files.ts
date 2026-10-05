@@ -159,7 +159,8 @@ export class Files {
       try {
         const text = new TextDecoder("utf-8").decode(bytes);
         const chunks = chunkText(text).slice(0, RAG_MAX_CHUNKS_PER_SOURCE);
-        const vectors = await embedTexts(chunks);
+        const { retryWithBackoff } = await import("./engine/retry.ts");
+        const vectors = await retryWithBackoff(() => embedTexts(chunks), { maxAttempts: 3, baseMs: 500, maxMs: 5000 });
         const createdAt = new Date().toISOString();
         for (let i = 0; i < chunks.length; i += 1) {
           await this.db.put(owner, "rag-chunks", {

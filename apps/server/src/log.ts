@@ -1,18 +1,18 @@
-// LOG_STRUCTURED_V2 — correlationId + redacción de secretos.
+// LOG_STRUCTURED_V2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â correlationId + redacciÃƒÆ’Ã‚Â³n de secretos.
 //
 // V2 respecto a V1:
-//   - correlationId en cada línea (propagado desde el request HTTP).
-//   - Redacción automática de campos sensibles en payloads anidados.
+//   - correlationId en cada lÃƒÆ’Ã‚Â­nea (propagado desde el request HTTP).
+//   - RedacciÃƒÆ’Ã‚Â³n automÃƒÆ’Ã‚Â¡tica de campos sensibles en payloads anidados.
 //   - backgroundFailure con contexto estructurado (owner, tenantId, taskId).
 //   - Cabecera obligatoria: http.method, http.path, http.status cuando aplica.
 //
 // Ver: docs/audits/02-observabilidad/miniaudit.md ("Sin traceId",
-// "backgroundFailure sin contexto", "Sin redacción de secretos").
+// "backgroundFailure sin contexto", "Sin redacciÃƒÆ’Ã‚Â³n de secretos").
 
 import { AsyncLocalStorage } from "node:async_hooks";
 
 // ---------------------------------------------------------------------------
-// Contexto de correlación por request.
+// Contexto de correlaciÃƒÆ’Ã‚Â³n por request.
 // ---------------------------------------------------------------------------
 
 export interface LogContext {
@@ -26,16 +26,16 @@ export interface LogContext {
 export const logContext = new AsyncLocalStorage<LogContext>();
 
 /**
- * Ejecuta `fn` con el contexto de correlación activo. Las llamadas a
+ * Ejecuta `fn` con el contexto de correlaciÃƒÆ’Ã‚Â³n activo. Las llamadas a
  * logInfo/logWarn/logError/backgroundFailure dentro de `fn` incluyen
- * automáticamente correlationId, owner y tenantId.
+ * automÃƒÆ’Ã‚Â¡ticamente correlationId, owner y tenantId.
  */
 export function withLogContext<T>(ctx: LogContext, fn: () => T): T {
   return logContext.run(ctx, fn);
 }
 
 // ---------------------------------------------------------------------------
-// Redacción de campos sensibles.
+// RedacciÃƒÆ’Ã‚Â³n de campos sensibles.
 // ---------------------------------------------------------------------------
 
 const SENSITIVE_KEYS = new Set([
@@ -60,7 +60,7 @@ const REDACTED = "[REDACTED]";
 
 /**
  * Recorre el objeto y sustituye valores de claves sensibles por [REDACTED].
- * Profundidad máxima 8 para evitar ciclos.
+ * Profundidad mÃƒÆ’Ã‚Â¡xima 8 para evitar ciclos.
  */
 export function redact(value: unknown, depth = 0): unknown {
   if (depth > 8) return value;
@@ -80,12 +80,25 @@ export function redact(value: unknown, depth = 0): unknown {
 }
 
 // ---------------------------------------------------------------------------
-// Emisión.
+// EmisiÃƒÆ’Ã‚Â³n.
 // ---------------------------------------------------------------------------
 
 type Level = "info" | "warn" | "error" | "debug";
 
+const LEVEL_ORDER: Record<Level, number> = { debug: 0, info: 1, warn: 2, error: 3 };
+function minLevel(): number {
+  const raw = process.env.LOG_LEVEL?.toLowerCase();
+  if (raw && raw in LEVEL_ORDER) return LEVEL_ORDER[raw as Level];
+  return LEVEL_ORDER.info;
+}
+// LOG_LEVEL_GLOBAL_V1 - respeta LOG_LEVEL en todos los niveles.
 function emit(level: Level, event: string, fields: Record<string, unknown>): void {
+  if (LEVEL_ORDER[level] < minLevel()) return;
+  // LOG_SAMPLING_V1 Ã¢â‚¬â€ sampling configurable solo para INFO.
+  if (level === "info") {
+    const rate = Number(process.env.LOG_SAMPLE_RATE ?? "1");
+    if (Number.isFinite(rate) && rate < 1 && Math.random() > rate) return;
+  }
   const ctx = logContext.getStore();
   const line = JSON.stringify({
     ts: new Date().toISOString(),
@@ -132,15 +145,41 @@ export interface FailureContext {
   sopId?: string;
 }
 
+// LOG_RETRYABLE_V1 - importa la clasificacion de retry del motor.
+import { defaultIsRetryable } from "./engine/retry.ts";
+
+// LOG_RETRYABLE_V1 - extrae stack y cause del error para logs estructurados.
+function errorFields(error: unknown): Record<string, unknown> {
+  if (!(error instanceof Error)) {
+    return { error: "UnknownError", message: String(error).slice(0, 500) };
+  }
+  const out: Record<string, unknown> = {
+    error: error.name,
+    message: error.message.slice(0, 500),
+  };
+  if (error.stack) out.stack = error.stack.split("\n").slice(0, 8).join("\n").slice(0, 2000);
+  const cause = (error as { cause?: unknown }).cause;
+  if (cause instanceof Error) {
+    out.cause = { name: cause.name, message: cause.message.slice(0, 500) };
+  }
+  return out;
+}
+
 export function backgroundFailure(
   phase: string,
   error: unknown,
   context: FailureContext = {},
 ): void {
+  // LOG_RETRYABLE_V1 - distingue transitorio (retry) vs permanente.
+  const retryable = defaultIsRetryable(error);
+  // LOG_BG_FAILURES_METRIC_V1 - contador por fase.
+  import("./metrics/registry.ts").then(({ globalMetrics }) => {
+    globalMetrics.inc("background_failures_total", { phase, retryable: String(retryable) });
+  }).catch(() => {});
   emit("error", "background_failure", {
     phase,
-    error: error instanceof Error ? error.name : "UnknownError",
-    message: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
+    retryable,
+    ...errorFields(error),
     ...context,
   });
 }

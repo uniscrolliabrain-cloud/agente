@@ -88,10 +88,25 @@ export class CircuitBreaker {
   private open(): void {
     this.state = "open";
     this.openedAt = Date.now();
+    // CIRCUIT_ALERT_ON_OPEN_V1 - notifica al log cuando se abre.
+    import("../log.ts")
+      .then(({ logWarn }) => {
+        logWarn("circuit.open", { circuit: this.name });
+      })
+      .catch(() => {});
     this.failures = 0;
   }
 
   /** Fuerza el cierre (útil en tests). */
+  recordFailure(error: unknown): void {
+    if (typeof (error as { status?: number })?.status === "number") {
+      const s = (error as { status: number }).status;
+      if (s >= 400 && s < 500 && s !== 408 && s !== 429) return;
+    }
+    this.onFailure();
+  }
+  recordSuccess(): void { this.onSuccess(); }
+
   reset(): void {
     this.state = "closed";
     this.failures = 0;

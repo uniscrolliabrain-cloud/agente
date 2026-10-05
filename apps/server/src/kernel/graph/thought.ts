@@ -1,4 +1,4 @@
-// KERNEL_THOUGHT_V2 — AttentionVector completo en Zod.
+// KERNEL_THOUGHT_V2 Ã¢â‚¬â€ AttentionVector completo en Zod.
 //
 // Cambios respecto a V1:
 //   - AttentionVector reescrito: author, id, thoughtId, timestamp, metadata.
@@ -182,11 +182,17 @@ export const thoughtContextSchema = z.object({
   priorThoughts: z.array(z.string().max(100)).max(100).default([]),
 });
 
-export const thoughtProvenanceSchema = z.object({
-  source: z.string().min(1).max(300),
-  timestamp: z.iso.datetime({ offset: true }),
-  parentId: z.string().max(100).optional(),
-});
+// ATTENTION_STRICT_V1 - .strict() para que un campo desconocido en provenance
+// se detecte (antes se descartaba silenciosamente).
+export const thoughtProvenanceSchema = z
+  .object({
+    source: z.string().min(1).max(300),
+    timestamp: z.iso.datetime({ offset: true }),
+    parentId: z.string().max(100).optional(),
+    // PROVENANCE_CORRELATION_V1 - trazabilidad HTTP -> kernel.
+    correlationId: z.string().max(200).optional(),
+  })
+  .strict();
 
 // ---------------------------------------------------------------------
 // Thought

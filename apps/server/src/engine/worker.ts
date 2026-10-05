@@ -112,7 +112,19 @@ export class TaskWorker {
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
     for (const controller of this.active.values()) controller.abort();
-    while (this.active.size || this.ticking) await new Promise((r) => setTimeout(r, 10));
+    // WORKER_STOP_TIMEOUT_V1 - drain con timeout duro de 10s.
+    const drainStart = Date.now();
+    const DRAIN_TIMEOUT_MS = Number(process.env.WORKER_DRAIN_TIMEOUT_MS ?? "10000") || 10000;
+    while (this.active.size || this.ticking) {
+      if (Date.now() - drainStart > DRAIN_TIMEOUT_MS) {
+        backgroundFailure(
+          "worker drain timeout",
+          new Error(`drain excedio ${DRAIN_TIMEOUT_MS}ms con ${this.active.size} handlers activos`),
+        );
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 10));
+    }
   }
   /**
    * WORKER_CANCEL_PROPAGATE_V1 — aborta el handler y propaga el abort a los
@@ -232,7 +244,8 @@ export class TaskWorker {
     // solo para verificar el lease. Ahora cacheamos y solo releemos cada 500ms
     // o cuando el heartbeat invalida la cache.
     let guardCacheAt = 0;
-    const GUARD_CACHE_MS = 500;
+    // GUARD_CACHE_100_V1 - 100ms detecta robos de lease antes.
+    const GUARD_CACHE_MS = Number(process.env.WORKER_GUARD_CACHE_MS ?? "100") || 100;
     const guard = async () => {
       const now = Date.now();
       if (controller.signal.aborted) throw new LostLeaseError();

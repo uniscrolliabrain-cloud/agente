@@ -193,7 +193,7 @@ export class ConversationAgent extends AbstractAgent {
           .catch((error) => {
             subscriber.next({
               type: EventType.RUN_ERROR,
-              message: error instanceof Error ? error.message : "Could not start the task",
+              message: (() => { const raw = error instanceof Error ? error.message : ""; return raw.includes("Model did not respond") || raw.includes("fetch failed") || raw.includes("timeout") ? "Ahora mismo no puedo responder. Prueba en un minuto." : raw.slice(0, 200) || "Algo ha fallado. Prueba otra vez."; })(),
             });
             subscriber.complete();
           });
