@@ -21,6 +21,7 @@ export interface RetryOptions {
   onRetry?: (attempt: number, delayMs: number, error: unknown) => void;
   /** Signal externo (abort del worker, shutdown). */
   signal?: AbortSignal;
+  maxTotalTimeMs?: number;
 }
 
 export function defaultIsRetryable(error: unknown): boolean {
@@ -55,8 +56,10 @@ export async function retryWithBackoff<T>(
 ): Promise<T> {
   const isRetryable = options.isRetryable ?? defaultIsRetryable;
   let lastError: unknown;
+  const startedAt = Date.now();
 
   for (let attempt = 1; attempt <= options.maxAttempts; attempt += 1) {
+    if (options.maxTotalTimeMs !== undefined && Date.now() - startedAt > options.maxTotalTimeMs) { throw lastError ?? new Error("retry maxTotalTimeMs exceeded"); }
     options.signal?.throwIfAborted();
     try {
       return await operation();
@@ -71,11 +74,9 @@ export async function retryWithBackoff<T>(
 
       options.onRetry?.(attempt, delayMs, error);
       await new Promise<void>((resolve, reject) => {
-        const timer = setTimeout(resolve, delayMs);
-        const abort = () => {
-          clearTimeout(timer);
-          reject(new Error("Aborted during retry backoff"));
-        };
+        const done = () => { options.signal?.removeEventListener("abort", abort); resolve(); };
+        const timer = setTimeout(done, delayMs);
+        const abort = () => { clearTimeout(timer); options.signal?.removeEventListener("abort", abort); reject(new Error("Aborted during retry backoff")); };
         options.signal?.addEventListener("abort", abort, { once: true });
       });
     }

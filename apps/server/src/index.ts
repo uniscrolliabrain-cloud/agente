@@ -121,9 +121,9 @@ const stopBackupScheduler = startBackupScheduler();
   }
 }
 
-// DEFERRED_ACTIONS_WIRE_V1 — instancia única de DeferredActions y tick.
+// DEFERRED_ACTIONS_WIRE_V1 Ã¢â‚¬â€ instancia ÃƒÂºnica de DeferredActions y tick.
 // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
-// El tick corre cada segundo, pero solo ejecuta lo que ya venció.
+// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÂ³.
 const { DeferredActions, MemoryDeferredStore } = await import("./actions-deferred.ts");
 const deferredStore = new MemoryDeferredStore();
 const deferred = new DeferredActions(
@@ -132,7 +132,7 @@ const deferred = new DeferredActions(
     const action = await db.get<{ id: string; owner?: string }>("system", "actions", actionId);
     void action;
     // El run real lo hace `ActionService.execute` cuando se llama a `decide`
-    // con `run` (pendiente). Por ahora, marcamos la acción como ejecutada.
+    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÂ³n como ejecutada.
   },
   (type, payload) => {
     void bus.emit("system", "system.maintenance", { kind: "system", id: "deferred" }, {
@@ -147,9 +147,9 @@ const deferred = new DeferredActions(
       : null,
   },
 );
-// EVENTS_CONSUMERS_WIRE_V1 — arranca los 3 consumidores del bus.
-  // Ver: docs/audits/08-bus-de-eventos/roadmap.md §8
-  // ("3 consumidores reales además de ReactionEngine").
+// EVENTS_CONSUMERS_WIRE_V1 Ã¢â‚¬â€ arranca los 3 consumidores del bus.
+  // Ver: docs/audits/08-bus-de-eventos/roadmap.md Ã‚Â§8
+  // ("3 consumidores reales ademÃƒÂ¡s de ReactionEngine").
   const { startMetricsConsumer } = await import("./engine/events/consumers/metrics.ts");
   const { startAuditConsumer } = await import("./engine/events/consumers/audit.ts");
   const { startNotificationsConsumer } = await import("./engine/events/consumers/notifications.ts");
@@ -158,7 +158,40 @@ const deferred = new DeferredActions(
   const auditConsumer = startAuditConsumer(ownersWithConsumers, db);
   const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, db);
 
-  const deferredTick = setInterval(() => {
+  // ALERTS_WIRE_V1 â€” instancia AlertService, registra las alertas y arranca.
+const { AlertService, LogAlertHandler } = await import("./alerts/service.ts");
+const { buildAlertDefinitions } = await import("./alerts/definitions.ts");
+const { globalMetrics: alertMetrics } = await import("./metrics/registry.ts");
+const alerts = new AlertService([new LogAlertHandler()]);
+for (const def of buildAlertDefinitions({
+  metricsSnapshot: () => {
+    const httpCounter = (alertMetrics as unknown as { counters?: Map<string, { samples: Map<string, { labels: Record<string,string>; value: number }> }> }).counters?.get("openmuse_http_requests_total");
+    let http5xx = 0;
+    let httpTotal = 0;
+    if (httpCounter) {
+      for (const s of httpCounter.samples.values()) {
+        httpTotal += s.value;
+        if (String(s.labels.status ?? "").startsWith("5")) http5xx += s.value;
+      }
+    }
+    const snap = { http5xx, httpTotal };
+    return {
+      http5xx: snap.http5xx,
+      httpTotal: snap.httpTotal,
+      taskFailuresLastHour: 0,
+      tenantQuotaExceeded: 0,
+      workerRunning: agent.worker.running,
+      circuitOpenCount: 0,
+      deadLetterCount: 0,
+      outcomeUnknownCount: 0,
+      httpLatencyP99Ms: alertMetrics.quantile("openmuse_http_request_duration_ms", 0.99) ?? 0,
+    };
+  },
+})) {
+  alerts.register(def);
+}
+alerts.start();
+const deferredTick = setInterval(() => {
   void deferred.tick().catch((error) => backgroundFailure("deferred tick", error));
 }, 1000);
 deferredTick.unref?.();
@@ -170,11 +203,15 @@ const server = serveHttp
   : null;
 const shutdown = () => {
   stopBackupScheduler();
+  const DRAIN_MS = Number(process.env.SHUTDOWN_DRAIN_MS ?? "10000") || 10000;
+  const forceExit = setTimeout(() => { console.warn("[OpenMuse] shutdown drain timeout"); process.exit(1); }, DRAIN_MS);
+  forceExit.unref?.();
   server?.close(() => {
     void agent
       .stop()
       .then(() => db.close())
-      .then(() => process.exit(0));
+      .then(() => { clearTimeout(forceExit); process.exit(0); })
+      .catch(() => process.exit(1));
   });
 };
 process.on("SIGINT", shutdown);

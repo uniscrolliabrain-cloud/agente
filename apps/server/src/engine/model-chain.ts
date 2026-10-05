@@ -91,7 +91,19 @@ const circuit = globalCircuits.get(`llm:${provider}`);
         // Salta al siguiente spec sin intentar.
         if (hasFallback()) { startNextAttempt(); return; }
       }
+      // MODEL_FIRST_BYTE_CONFIG_V1
+      const firstByteMs = Number(process.env.LLM_FIRST_BYTE_MS ?? "45000") || 45000;
+      const bulkheadKey = "__llm_bulkhead__";
+      const bulkhead = ((globalThis as Record<string, unknown>)[bulkheadKey] as Map<string, number>) ?? new Map<string, number>();
+      (globalThis as Record<string, unknown>)[bulkheadKey] = bulkhead;
+      const BULKHEAD_MAX = Number(process.env.LLM_BULKHEAD_PER_PROVIDER ?? "10") || 10;
+      const providerKey = specs[index].split("/")[0] ?? "unknown";
+      const running = bulkhead.get(providerKey) ?? 0;
+      if (running >= BULKHEAD_MAX && hasFallback()) { startNextAttempt(); return; }
+      bulkhead.set(providerKey, running + 1);
+      const releaseBulkhead = () => { const cur = bulkhead.get(providerKey) ?? 1; if (cur <= 1) bulkhead.delete(providerKey); else bulkhead.set(providerKey, cur - 1); };
       const firstByteTimeout = setTimeout(() => {
+        releaseBulkhead();
         if (myId !== attemptId) return;
         if (!answered && hasFallback()) {
           try { agent.abortRun(); } catch { /* noop */ }
@@ -119,6 +131,7 @@ const circuit = globalCircuits.get(`llm:${provider}`);
         error: (error) => {
           if (myId !== attemptId) return;
           clearTimeout(firstByteTimeout);
+          releaseBulkhead();
           if (stopped) return;
           if (!answered && hasFallback()) {
             startNextAttempt();
@@ -137,6 +150,7 @@ const circuit = globalCircuits.get(`llm:${provider}`);
     attempt();
     return () => {
       stopped = true;
+      if (typeof current !== "undefined") { try { current?.abortRun(); } catch { /* noop */ } }
       subscription?.unsubscribe();
     };
   });

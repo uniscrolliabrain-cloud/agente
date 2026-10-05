@@ -39,6 +39,7 @@
     "audit:idempotency": "tsx scripts/audits/idempotency.ts",
     "audit:anchors": "tsx scripts/audits/anchors.ts",
     "audit:tenant-default": "tsx scripts/audits/tenant-default.ts",
+    "audit:coherence": "pnpm audit:anchors && pnpm audit:contracts && pnpm audit:idempotency && pnpm audit:tenant-default",
     "release:verify": "tsx scripts/release-verify.ts",
     "migrate:tenant": "tsx scripts/migrate-tenant-id.ts",
     "migrate:tenant-scope": "tsx scripts/migrate-tenant-scope.ts",

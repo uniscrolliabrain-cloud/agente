@@ -1,5 +1,5 @@
 // KERNEL_CONSOLIDATE_ON_CLOSE_V1 - consolidate se ejecuta al cerrar turno.
-// KERNEL_V2 — orquestador del grafo cognitivo, adaptado a TurnStore V2.
+// KERNEL_V2 â€” orquestador del grafo cognitivo, adaptado a TurnStore V2.
 //
 // Cambios respecto a V1:
 //   - openTurn ahora lee el tenant y lo pasa explicitamente al store.
@@ -22,8 +22,8 @@ export interface KernelDeps {
   tenants: TenantResolver;
   audit: AuditStore;
   config: TenantConfigResolver;
-  // VIEWS_BUSINESS_GRAPH_V1 — businessGraph opcional para Views.
-  // Ver: auditoría profunda 09 (computeView devuelve placeholder).
+  // VIEWS_BUSINESS_GRAPH_V1 â€” businessGraph opcional para Views.
+  // Ver: auditorÃ­a profunda 09 (computeView devuelve placeholder).
   businessGraph?: {
     entities?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
     neighborhood?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
@@ -31,8 +31,8 @@ export interface KernelDeps {
   };
 }
 
-// KERNEL_METRICS_V1 — contadores del kernel para /metrics.
-// Ver: auditoría profunda 09.
+// KERNEL_METRICS_V1 â€” contadores del kernel para /metrics.
+// Ver: auditorÃ­a profunda 09.
 globalMetrics.counter(
   "openmuse_kernel_turns_opened_total",
   "Turnos abiertos por el kernel",
@@ -43,7 +43,7 @@ globalMetrics.counter(
 );
 globalMetrics.counter(
   "openmuse_kernel_thoughts_appended_total",
-  "Thoughts añadidos al grafo",
+  "Thoughts aÃ±adidos al grafo",
 );
 
 export class Kernel {
@@ -67,9 +67,9 @@ export class Kernel {
   }
 
   /**
-   * KERNEL_OPEN_TURN_IDEMPOTENT_V1 — abre turno reusando el existente si
+   * KERNEL_OPEN_TURN_IDEMPOTENT_V1 â€” abre turno reusando el existente si
    * ya hay uno abierto con la misma correlationId o trigger.
-   * Ver: auditoría profunda 09 (openTurn no deduplica en model.ts ni sop-executor.ts).
+   * Ver: auditorÃ­a profunda 09 (openTurn no deduplica en model.ts ni sop-executor.ts).
    */
   async openTurnIdempotent(ctx: KernelContext, trigger: string): Promise<Turn> {
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
@@ -142,6 +142,12 @@ export class Kernel {
         ...(input.provenance?.parentId !== undefined
           ? { parentId: input.provenance.parentId }
           : {}),
+        // KERNEL_CORRELATION_PROPAGATE_V1 - correlationId del request al Thought.
+        ...(input.provenance?.correlationId !== undefined
+          ? { correlationId: input.provenance.correlationId }
+          : ctx.correlationId !== undefined
+            ? { correlationId: ctx.correlationId }
+            : {}),
       },
     });
     const saved = await this.deps.store.append(thought);
@@ -214,7 +220,7 @@ export class Kernel {
     };
     if (!store.listTurns) return [];
     // KERNEL_LIST_TURNS_OWNER_FILTER_FIX_V1 - antes pediamos `limit` al store
-    // (que no filtra por owner) y luego filtrábamos en memoria. Si el tenant
+    // (que no filtra por owner) y luego filtrÃ¡bamos en memoria. Si el tenant
     // tenia 200 turnos de otros owners antes que los del nuestro, `limit=50`
     // devolvia 50 de otros y el filtro dejaba 0. Ahora pedimos un multiplo
     // (5x el limit, tope 200) y cortamos al limit real tras filtrar.

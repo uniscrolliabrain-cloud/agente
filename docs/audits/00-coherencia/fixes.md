@@ -25,6 +25,9 @@
 | 00-16 | Fixes sin test documentados | (por bloque) | pending |
 | 00-17 | Ramas sin merge documentadas | (por bloque) | pending |
 | 00-18 | Informe de coherencia por bloque | docs/audits/00-coherencia/report-<bloque>.md | pending |
+| 00-18b | Script audit:coherence | package.json | applied |
+| 00-19 | Informe consolidado del bloque 00 | docs/audits/00-coherencia/report.md | applied |
+| 00-20 | Sección Ruta a multi-tenant real | docs/audits/07-aislamiento-multi-tenant/miniaudit.md | applied |
 
 ## Notas
 

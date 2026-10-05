@@ -171,13 +171,13 @@ export class GoogleAuth {
         code,
         code_verifier: state.verifier,
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(this.config.toolTimeouts?.googleHttpMs ?? 15000),
     });
     if (!response.ok) throw new AppError("Google could not complete sign-in. Connect again.", 502);
     const token = tokenSchema.parse(await response.json());
     const profile = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
       headers: { Authorization: `Bearer ${token.access_token}` },
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(this.config.toolTimeouts?.googleHttpMs ?? 15000),
     });
     if (!profile.ok)
       throw new AppError("Google did not grant Gmail read access. Connect again.", 403);
@@ -222,7 +222,7 @@ export class GoogleAuth {
         grant_type: "refresh_token",
         refresh_token: tokens.refreshToken,
       }),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(this.config.toolTimeouts?.googleHttpMs ?? 15000),
     });
     if (!response.ok) throw new AppError("Google session expired. Connect again.", 401);
     const token = tokenSchema.parse(await response.json());
@@ -249,7 +249,7 @@ export class GoogleAuth {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ token: tokens.refreshToken ?? tokens.accessToken }),
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(this.config.toolTimeouts?.googleHttpMs ?? 15000),
       });
       if (!response.ok && response.status !== 400)
         throw new AppError(

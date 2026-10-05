@@ -275,12 +275,13 @@ export async function createApp(
     const from = data?.key?.remoteJid;
     const text = data?.message?.conversation;
     if (!id || !from || !text) return c.json({ ok: true, ignored: true });
-    await db.put("system", "whatsapp-incoming", {
+    const { retryWithBackoff } = await import("./engine/retry.ts");
+    await retryWithBackoff(() => db.put("system", "whatsapp-incoming", {
       id,
       from,
       text: text.slice(0, 4000),
       receivedAt: new Date().toISOString(),
-    });
+    }), { maxAttempts: 3, baseMs: 200, maxMs: 2000 });
     return c.json({ ok: true });
   });
   // R16 â€” healthcheck profundo: comprueba DB (lectura + escritura idempotente),

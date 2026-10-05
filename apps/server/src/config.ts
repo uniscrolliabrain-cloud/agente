@@ -5,7 +5,7 @@ if (existsSync(".env")) process.loadEnvFile(".env");
 process.env.DO_NOT_TRACK ??= "1";
 process.env.COPILOTKIT_TELEMETRY_DISABLED ??= "true";
 
-// The CopilotKit runtime resolves "google/…" models from GOOGLE_API_KEY and every
+// The CopilotKit runtime resolves "google/â€¦" models from GOOGLE_API_KEY and every
 // OpenAI-compatible endpoint from OPENAI_API_KEY plus OPENAI_BASE_URL. Aliasing here keeps a
 // single source of truth for the provider keys, so GEMINI_API_KEY and OPENROUTER_API_KEY are
 // enough on their own and existing OPENAI_*/GOOGLE_* values always win.
@@ -57,15 +57,15 @@ export interface Config {
     fastCallsPerHour: number;
     slowCallsPerHour: number;
   };
-  /** DEFERRED_ACTION_CONFIG_V1 — configuración de undo diferido.
+  /** DEFERRED_ACTION_CONFIG_V1 â€” configuraciÃ³n de undo diferido.
    *  Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md. */
   deferredAction?: {
-    /** ms de ventana para deshacer una aprobación. Default 8000. */
+    /** ms de ventana para deshacer una aprobaciÃ³n. Default 8000. */
     windowMs: number;
     /** Importe a partir del cual se exige doble firma. null = nunca. */
     dualAt: number | null;
   };
-  /** TIMEOUTS_CONFIG_V1 — timeouts configurables por tool.
+  /** TIMEOUTS_CONFIG_V1 â€” timeouts configurables por tool.
    *  Ver: docs/audits/03-resiliencia/miniaudit.md ("Timeouts inconsistentes"). */
   toolTimeouts?: {
     llmFirstByteMs: number;
@@ -114,7 +114,7 @@ export function readConfig(): Config {
     throw new Error("AGENT_BACKEND must be sample, model or agui");
   if (mode === "live" && backend === "sample")
     throw new Error("Live workspaces cannot use the sample agent");
-  // PORT_VALIDATED — NaN en serve() da un error confuso. Fallamos temprano.
+  // PORT_VALIDATED â€” NaN en serve() da un error confuso. Fallamos temprano.
   const port = Number(process.env.PORT ?? 8787);
   if (!Number.isInteger(port) || port < 1 || port > 65535)
     throw new Error(`PORT must be an integer from 1 to 65535; got "${process.env.PORT}"`);
@@ -151,10 +151,7 @@ export function readConfig(): Config {
     stripeApiKey: process.env.STRIPE_API_KEY,
     backupIntervalHours: Number(process.env.BACKUP_INTERVAL_HOURS ?? "24") || 0,
     backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS ?? "7") || 0,
-    quotaPerSpeed: {
-      fastCallsPerHour: Number(process.env.FAST_CALLS_PER_HOUR ?? "600"),
-      slowCallsPerHour: Number(process.env.SLOW_CALLS_PER_HOUR ?? "60"),
-    },
+    // CONFIG_QUOTA_DEDUP_V1 - quotaPerSpeed estaba duplicado.
     quotaPerSpeed: {
       fastCallsPerHour: Number(process.env.FAST_CALLS_PER_HOUR ?? "600"),
       slowCallsPerHour: Number(process.env.SLOW_CALLS_PER_HOUR ?? "60"),
@@ -165,8 +162,8 @@ export function readConfig(): Config {
         ? Number(process.env.DEFERRED_ACTION_DUAL_AT)
         : null,
     },
-    // TIMEOUTS_CONFIG_V1 — valores por defecto conservadores. Cada uno
-    // configurable por env para ajustar en producción sin redeploy.
+    // TIMEOUTS_CONFIG_V1 â€” valores por defecto conservadores. Cada uno
+    // configurable por env para ajustar en producciÃ³n sin redeploy.
     toolTimeouts: {
       llmFirstByteMs: Number(process.env.LLM_FIRST_BYTE_MS ?? "45000"),
       llmGlobalMs: Number(process.env.LLM_GLOBAL_MS ?? "120000"),
@@ -177,7 +174,7 @@ export function readConfig(): Config {
       stripeHttpMs: Number(process.env.STRIPE_HTTP_MS ?? "20000"),
       browserNavMs: Number(process.env.BROWSER_NAV_MS ?? "20000"),
     },
-    // ORIGINS_CLEAN — ALLOWED_ORIGINS="" daba [""], que no matchea nada pero ocupa
+    // ORIGINS_CLEAN â€” ALLOWED_ORIGINS="" daba [""], que no matchea nada pero ocupa
     // un hueco en el Set. Filtramos vacios y hacemos trim.
     allowedOrigins: (
       process.env.ALLOWED_ORIGINS ?? "http://localhost:8081,http://127.0.0.1:8081"

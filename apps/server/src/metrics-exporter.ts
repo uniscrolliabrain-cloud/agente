@@ -1,4 +1,4 @@
-// METRICS_EXPORTER_V2 — Prometheus exporter sobre el registry acumulativo.
+// METRICS_EXPORTER_V2 â€” Prometheus exporter sobre el registry acumulativo.
 //
 // V1 escaneaba la DB en cada GET /metrics. V2 solo serializa el registry
 // que los servicios alimentan.
@@ -21,9 +21,13 @@ export function metricsRoutes(service: AgentService, users: UserService) {
     const authorized = expected ? token === expected : user?.role === "admin";
     if (!authorized) throw new AppError("Unauthorized", 401);
 
-    // METRICS_WORKER_GAUGE_V1 — el worker no cambia en runtime, es un gauge
+    // METRICS_WORKER_GAUGE_V1 â€” el worker no cambia en runtime, es un gauge
     // de estado que se setea al vuelo (no escanea DB).
     globalMetrics.set("openmuse_worker_running", service.worker.running ? 1 : 0);
+
+    // METRICS_P99_EXPOSE_V1 - expone p99 HTTP derivado del histograma.
+    const p99 = globalMetrics.quantile("openmuse_http_request_duration_ms", 0.99);
+    if (p99 !== undefined) globalMetrics.set("openmuse_http_latency_p99_ms", p99);
 
     c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
     return c.body(globalMetrics.render());
