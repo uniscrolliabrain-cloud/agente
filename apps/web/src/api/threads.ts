@@ -28,10 +28,15 @@ export async function getThread(id: string): Promise<ThreadWithMessages> {
   return apiFetch<ThreadWithMessages>(`/api/threads/${encodeURIComponent(id)}`);
 }
 
-export async function saveThreadMessages(id: string, messages: ChatMessage[]): Promise<Thread> {
+// SAVE_THREAD_EXPECTED_V1 - acepta expectedUpdatedAt para activar el CAS del server.
+export async function saveThreadMessages(
+  id: string,
+  messages: ChatMessage[],
+  expectedUpdatedAt?: string,
+): Promise<Thread> {
   return apiFetch<Thread>(`/api/threads/${encodeURIComponent(id)}`, {
     method: "PUT",
-    body: { messages },
+    body: { messages, ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}) },
   });
 }
 

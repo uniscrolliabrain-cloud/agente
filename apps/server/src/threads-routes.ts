@@ -53,6 +53,15 @@ export function threadRoutes(db: Store) {
     return c.json(result);
   });
 
+  // PRESENCE_LEAVE_THREAD_V1 - desconexión explícita.
+  app.post("/:id/presence/leave", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const userId = c.req.header("x-user-id") ?? owner;
+    globalPresence.leave(userId, "thread", id);
+    return c.json({ ok: true });
+  });
+
   // RECONCILE_THREAD_V1 — el cliente pide el estado más reciente tras un 409.
   // Devuelve updatedAt + messages para comparar con lo que tenía.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
@@ -81,6 +90,11 @@ export function threadRoutes(db: Store) {
   app.put("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
+    // THREAD_EDIT_LOCK_V1 - evita doble-tab del mismo usuario.
+    const lockUser = c.req.header("x-user-id") ?? owner;
+    const lock = globalEditLock.acquire(lockUser, "thread", id);
+    if (!lock) throw new AppError("Ya estas editando este thread en otro tab.", 409);
+    try {
     const thread = await db.get<Thread>(owner, "threads", id);
     if (!thread) throw new AppError("Thread not found", 404);
     const body = await c.req.json();
@@ -95,9 +109,11 @@ export function threadRoutes(db: Store) {
     if (expected.expectedUpdatedAt !== undefined) {
       const current = await db.get<Thread>(owner, "threads", id);
       if (!current || current.updatedAt !== expected.expectedUpdatedAt) {
+        // THREAD_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
         throw new AppError(
           "Otro usuario ha modificado esta conversación. Recarga y vuelve a intentarlo.",
           409,
+          { current: current?.updatedAt ?? null, expected: expected.expectedUpdatedAt },
         );
       }
     }
@@ -134,6 +150,10 @@ export function threadRoutes(db: Store) {
     };
     await db.put(owner, "threads", updated);
     return c.json(updated);
+    } finally {
+      // THREAD_EDIT_UNLOCK_V1 - libera el lock siempre.
+      globalEditLock.release(lockUser, "thread", id);
+    }
   });
 
   app.patch("/:id", async (c) => {

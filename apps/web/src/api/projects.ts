@@ -67,6 +67,7 @@ export async function getProject(id: string): Promise<ProjectDetail> {
   return apiFetch<ProjectDetail>(`/api/projects/${encodeURIComponent(id)}`);
 }
 
+// PROJECT_EXPECTED_V1 - updateProject acepta expectedUpdatedAt.
 export async function updateProject(
   id: string,
   patch: Partial<{
@@ -76,20 +77,23 @@ export async function updateProject(
     status: ProjectStatus;
     tags: string[];
   }>,
+  expectedUpdatedAt?: string,
 ): Promise<Project> {
   return apiFetch<Project>(`/api/projects/${encodeURIComponent(id)}`, {
     method: "PATCH",
-    body: patch,
+    body: { ...patch, ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}) },
   });
 }
 
+// PROJECT_BLOCKS_EXPECTED_V1 - acepta expectedUpdatedAt para CAS.
 export async function saveProjectBlocks(
   id: string,
   blocks: ProjectBlock[],
+  expectedUpdatedAt?: string,
 ): Promise<Project> {
   return apiFetch<Project>(`/api/projects/${encodeURIComponent(id)}/blocks`, {
     method: "PUT",
-    body: { blocks },
+    body: { blocks, ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}) },
   });
 }
 
