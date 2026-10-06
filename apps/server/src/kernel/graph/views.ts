@@ -20,8 +20,10 @@
    async readView(ctx: KernelContext, scope: ReadViewScope, turnId?: string): Promise<ReadViewResult> {
      const tenantId = await this.deps.kernel.deps.tenants.resolve(ctx.owner);
      if ((scope === "turn.thoughts" || scope === "turn.recent") && turnId) {
-       const thoughts = await this.deps.kernel.deps.store.thoughtsOf(tenantId, turnId);
-       return { scope, turnId, thoughts, metadata: { tenantId, count: thoughts.length } };
+       // VIEWS_READ_PAGED_V1 - tope de 200 thoughts por lectura.
+       const all = await this.deps.kernel.deps.store.thoughtsOf(tenantId, turnId);
+       const thoughts = all.slice(0, 200);
+       return { scope, turnId, thoughts, metadata: { tenantId, count: thoughts.length, total: all.length, truncated: all.length > 200 } };
      }
      if (scope === "tenant.turns") {
        // VIEWS_TENANT_TURNS_FIX_V1 - sin as any, con paginacion.

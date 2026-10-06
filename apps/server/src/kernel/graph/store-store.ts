@@ -216,11 +216,21 @@ export class StoreTurnStore implements TurnStore {
     return closed;
   }
 
+  // STORE_GET_TURN_CACHE_V1 - cache en memoria con TTL 1s para turnos
+  // abiertos. Antes cada thoughtsOf hacia getTurn y volvia a leer el
+  // turno entero. Con turnos de 500 thoughts era 1 read extra por
+  // operacion.
+  private readonly getTurnCache = new Map<string, { at: number; turn: Turn }>();
   async getTurn(tenantId: string, turnId: string): Promise<Turn | undefined> {
+    const cacheKey = `${tenantId}:${turnId}`;
+    const cached = this.getTurnCache.get(cacheKey);
+    if (cached && Date.now() - cached.at < 1000) return cached.turn;
     const raw = await this.store.get(tenantId, TURNS_KIND, turnId);
     if (!raw) return undefined;
     const turn = turnSchema.parse(raw);
     if (turn.tenantId !== tenantId) return undefined;
+    if (turn.status === "open") this.getTurnCache.set(cacheKey, { at: Date.now(), turn });
+    else this.getTurnCache.delete(cacheKey);
     return turn;
   }
 

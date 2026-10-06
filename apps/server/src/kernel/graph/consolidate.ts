@@ -143,14 +143,20 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
       });
     }
 
+    // CONSOLIDATE_O2_CAP_V1 - tope de 200 thoughts por tenant para
+    // comparaciones O(n²). Con 500 thoughts eran 125k comparaciones.
+    const CMP_CAP = 200;
+    const cmpList = tenantThoughts.length > CMP_CAP
+      ? tenantThoughts.slice(0, CMP_CAP)
+      : tenantThoughts;
     // Contradicciones dentro del tenant.
-    for (let i = 0; i < tenantThoughts.length; i++) {
-      for (let j = i + 1; j < tenantThoughts.length; j++) {
-        const reason = isNegationPair(tenantThoughts[i], tenantThoughts[j]);
+    for (let i = 0; i < cmpList.length; i++) {
+      for (let j = i + 1; j < cmpList.length; j++) {
+        const reason = isNegationPair(cmpList[i], cmpList[j]);
         if (reason) {
           textualNegations.push({
-            a: tenantThoughts[i].id,
-            b: tenantThoughts[j].id,
+            a: cmpList[i].id,
+            b: cmpList[j].id,
             reason,
             tenantId,
           });
