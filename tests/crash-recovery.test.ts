@@ -1,7 +1,7 @@
-// TESTS_CRASH_RECOVERY_V1 — el proceso muere a mitad de tarea.
+// TESTS_CRASH_RECOVERY_V1 â€” el proceso muere a mitad de tarea.
 // El roadmap 01 lo pide: "test que mate el proceso a mitad de tarea
-// y verifique la recuperación".
-// Ver: docs/audits/01-tests/roadmap.md §8.
+// y verifique la recuperaciÃ³n".
+// Ver: docs/audits/01-tests/roadmap.md Â§8.
 
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -32,7 +32,7 @@ after(async () => {
 const CRASH_TASK_ID = "crash-test-task";
 
 test("el proceso worker muere a mitad de tarea y la tarea queda running con lease", async () => {
-  // 1. Creamos una tarea que el worker procesará y colgará a propósito.
+  // 1. Creamos una tarea que el worker procesarÃ¡ y colgarÃ¡ a propÃ³sito.
   const task: AgentTask = {
     id: CRASH_TASK_ID,
     tenantId: "default",
@@ -57,7 +57,8 @@ test("el proceso worker muere a mitad de tarea y la tarea queda running con leas
   // 2. Lanzamos un subproceso que hace el tick del worker con una tarea
   //    que duerme indefinidamente (para forzar el kill).
   const workerScript = join(here, "helpers", "crash-worker.ts");
-  const child = spawn("pnpm", ["exec", "tsx", workerScript], {
+  // CRASH_RECOVERY_PORTABLE_SPAWN_V1 - usa el mismo Node del test.
+  const child = spawn(process.execPath, ["--import", "tsx", workerScript], {
     cwd: repoRoot,
     stdio: "pipe",
     env: { ...process.env, DATA_DIR: join(directory, "db") },
@@ -95,7 +96,7 @@ test("el proceso worker muere a mitad de tarea y la tarea queda running con leas
     googleRedirectUri: "http://localhost:8787/api/google/callback",
     allowedOrigins: [],
   });
-  // Forzamos que el lease esté expirado para que recoverInterruptedTasks lo recoja.
+  // Forzamos que el lease estÃ© expirado para que recoverInterruptedTasks lo recoja.
   await probe.compareAndSwap<AgentTask>(
     "crash-owner", "tasks", CRASH_TASK_ID,
     { status: "running" },

@@ -1,4 +1,4 @@
-// EVENTBUS_STRICT_TEST — valida que todo tipo de SYSTEM_EVENT_TYPES tiene schema y que
+// EVENTBUS_STRICT_TEST â€” valida que todo tipo de SYSTEM_EVENT_TYPES tiene schema y que
 // un payload minimo valido no revienta al emitir. Ademas, falla si un tipo del enum no
 // aparece en ningun bus.emit del repo (defensa contra schemas decorativos).
 import assert from "node:assert/strict";
@@ -37,7 +37,7 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "system.google_disconnected": { owner: "o" },
   "auth.login": { userId: "u" },
   "auth.login_failed": { email: "e@e.com" },
-  // SCHEMAS_V2 — los 13 tipos de business graph, policy, state machine, agent runtime y
+  // SCHEMAS_V2 â€” los 13 tipos de business graph, policy, state machine, agent runtime y
   // context. Faltaban: el test 1 recorre SYSTEM_EVENT_TYPES y sin estas entradas reventaba
   // en el primer tipo nuevo, y el test 2 se tragaba 13 ZodErrors en silencio (el bus captura
   // y solo hace backgroundFailure, asi que el test 2 pasaba igual). Valores minimos validos
@@ -65,6 +65,11 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "agent.runtime_spawned": { runtimeId: "rt", roleId: "ro", taskId: "t" },
   "agent.runtime_completed": { runtimeId: "rt", roleId: "ro", taskId: "t", durationMs: 1 },
   "agent.runtime_failed": { runtimeId: "rt", roleId: "ro", taskId: "t", error: "x" },
+  "action.deferred": { actionId: "a", signers: [], needed: 1, executeAt: null },
+  "action.cancelled": { actionId: "a", by: "u" },
+  "view.resolved": { kind: "dashboard", title: "T", spec: {} },
+  "verification.executed": { verified: true, method: "deterministic", confidence: 1 },
+  "verification.disagreement": { deterministic: true, llm: false },
   "context.assembled": {
     entityCount: 0,
     relationCount: 0,

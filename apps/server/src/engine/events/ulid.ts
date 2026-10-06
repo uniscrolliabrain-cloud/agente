@@ -24,3 +24,15 @@ export function ulid(now: number = Date.now()): string {
   }
   return time + rand;
 }
+// EVENTS_TIMESTAMP_OF_V1 - extrae ms del ULID.
+export function timestampOf(id: string): number {
+  if (typeof id !== "string" || id.length < 10) return 0;
+  const time = id.slice(0, 10);
+  let ts = 0;
+  for (const c of time) {
+    const idx = "0123456789ABCDEFGHJKMNPQRSTVWXYZ".indexOf(c);
+    if (idx < 0) return 0;
+    ts = ts * 32 + idx;
+  }
+  return ts;
+}

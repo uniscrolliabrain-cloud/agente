@@ -1,10 +1,10 @@
-// EVENTS_SUBSCRIBER_V1 — suscriptores en vivo del bus.
+// EVENTS_SUBSCRIBER_V1 â€” suscriptores en vivo del bus.
 //
 // El bus hoy solo persiste a StoreSink. Para SSE necesitamos que alguien
 // pueda suscribirse en memoria y recibir cada evento conforme se emite.
 //
 // El subscriber se registra en EventBus.emit y recibe todos los eventos
-// nuevos del owner. Si el buffer se llena, descarta los más antiguos
+// nuevos del owner. Si el buffer se llena, descarta los mÃ¡s antiguos
 // (slow consumer no puede bloquear el bus).
 //
 // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
@@ -18,7 +18,7 @@ export interface SubscriberHandle {
 export interface SubscribeOptions {
   /** Filtro opcional por tipo. */
   types?: string[];
-  /** Tope del buffer. Si se llena, descarta los más viejos. Default 200. */
+  /** Tope del buffer. Si se llena, descarta los mÃ¡s viejos. Default 200. */
   bufferSize?: number;
 }
 
@@ -36,7 +36,6 @@ export class EventSubscriberRegistry {
       id,
       onEvent,
       types: options.types ? new Set(options.types) : null,
-      bufferSize: options.bufferSize ?? 200,
     };
     let set = this.subscribers.get(owner);
     if (!set) {
@@ -84,7 +83,6 @@ interface Subscriber {
   id: string;
   onEvent: (event: SystemEvent) => void;
   types: Set<string> | null;
-  bufferSize: number;
 }
 
 export const globalSubscribers = new EventSubscriberRegistry();

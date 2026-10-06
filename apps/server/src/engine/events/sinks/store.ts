@@ -40,14 +40,38 @@ export class StoreSink implements EventSink {
 export class StoreQuery implements EventQuery {
   constructor(private readonly db: Store | TenantScopedStore) {}
 
+  // EVENTS_RECENT_SQL_V1 - filtros en SQL cuando el backend los soporta.
   async recent(owner: string, filter: EventFilter): Promise<SystemEvent[]> {
     const limit = Math.min(filter.limit ?? 100, HARD_LIMIT);
-    const rows = await this.db.list<SystemEvent>(owner, KIND);
     const types = filter.type
       ? Array.isArray(filter.type)
         ? filter.type
         : [filter.type]
       : undefined;
+    const selectFn = (this.db as unknown as {
+      select?: <T>(sql: string, params: unknown[]) => Promise<T[]>;
+    }).select;
+    if (typeof selectFn === "function") {
+      try {
+        const params: unknown[] = [owner, KIND];
+        let sql = "SELECT data FROM records WHERE owner = $1 AND kind = $2";
+        if (filter.since) { params.push(filter.since); sql += ` AND (data->>'emittedAt') >= $${params.length}`; }
+        if (filter.until) { params.push(filter.until); sql += ` AND (data->>'emittedAt') <= $${params.length}`; }
+        if (filter.sourceId) { params.push(filter.sourceId); sql += ` AND (data->'source'->>'id') = $${params.length}`; }
+        if (filter.projectId) { params.push(filter.projectId); sql += ` AND (data->'payload'->>'projectId') = $${params.length}`; }
+        if (types && types.length > 0) {
+          params.push(types);
+          sql += ` AND (data->>'type') = ANY($${params.length}::text[])`;
+        }
+        params.push(limit);
+        sql += ` ORDER BY (data->>'emittedAt') DESC, id DESC LIMIT $${params.length}`;
+        const rows = await selectFn<{ data: SystemEvent }>(sql, params);
+        return rows.map((r) => r.data);
+      } catch {
+        // Fallback al filtrado en memoria si el SQL no esta soportado.
+      }
+    }
+    const rows = await this.db.list<SystemEvent>(owner, KIND);
     return rows
       .filter((event) => {
         if (types && !types.includes(event.type)) return false;
@@ -55,6 +79,7 @@ export class StoreQuery implements EventQuery {
         if (filter.until && event.emittedAt > filter.until) return false;
         if (filter.sourceId && event.source.id !== filter.sourceId) return false;
         if (filter.projectId && event.payload?.projectId !== filter.projectId) return false;
+        if (filter.sinceId && event.id <= filter.sinceId) return false;
         return true;
       })
       .sort((a, b) => b.emittedAt.localeCompare(a.emittedAt) || b.id.localeCompare(a.id))

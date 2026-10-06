@@ -75,7 +75,7 @@ export class FastAuthor {
         author: "fast",
         primary: "response",
         secondary: [],
-        query: "",
+        query: input.response.slice(0, 500) || "respond", // FAST_AUTHOR_QUERY_V1
         matched: matched.map((m) => ({ ...m, metadata: m.metadata ?? {} })),
         ignored: ignored.map((i) => ({ ...i, metadata: i.metadata ?? {} })),
         intent: input.intent ?? "respond",

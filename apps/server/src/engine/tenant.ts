@@ -59,6 +59,8 @@ export class TenantService {
       this.cache.set(owner, { tenantId: row.tenantId, at: Date.now() });
       return { tenantId: row.tenantId, source: "database" };
     }
+    // TENANT_CACHE_FALLBACK_V1 - cachear el fallback.
+    this.cache.set(owner, { tenantId: DEFAULT_TENANT_ID, at: Date.now() });
     return { tenantId: DEFAULT_TENANT_ID, source: "default" };
   }
 
@@ -92,7 +94,7 @@ export class TenantService {
   }
 
   /**
-   * TENANT_CACHE_INVALIDATE_ALL_V1 — invalida toda la cache tras cambios
+   * TENANT_CACHE_INVALIDATE_ALL_V1 â€” invalida toda la cache tras cambios
    * administrativos (mover owner entre tenants).
    * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
    */
@@ -100,7 +102,7 @@ export class TenantService {
     this.cache.clear();
   }
 
-  /** TENANT_CACHE_STATS_V1 — tamaño actual de la cache, para debug. */
+  /** TENANT_CACHE_STATS_V1 â€” tamaÃ±o actual de la cache, para debug. */
   cacheSize(): number {
     return this.cache.size;
   }

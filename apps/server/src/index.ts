@@ -121,9 +121,9 @@ const stopBackupScheduler = startBackupScheduler();
   }
 }
 
-// DEFERRED_ACTIONS_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â instancia ÃƒÆ’Ã‚Âºnica de DeferredActions y tick.
+// DEFERRED_ACTIONS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â instancia ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºnica de DeferredActions y tick.
 // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
-// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÆ’Ã‚Â³.
+// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³.
 // STORE_DEFERRED_WIRE_V1 - store persistente.
 const { DeferredActions, StoreDeferredStore } = await import("./actions-deferred.ts");
 const deferredStore = new StoreDeferredStore(db);
@@ -133,7 +133,7 @@ const deferred = new DeferredActions(
     const action = await db.get<{ id: string; owner?: string }>("system", "actions", actionId);
     void action;
     // El run real lo hace `ActionService.execute` cuando se llama a `decide`
-    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÆ’Ã‚Â³n como ejecutada.
+    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n como ejecutada.
   },
   (type, payload) => {
     void bus.emit("system", "system.maintenance", { kind: "system", id: "deferred" }, {
@@ -148,18 +148,23 @@ const deferred = new DeferredActions(
       : null,
   },
 );
-// EVENTS_CONSUMERS_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â arranca los 3 consumidores del bus.
-  // Ver: docs/audits/08-bus-de-eventos/roadmap.md Ãƒâ€šÃ‚Â§8
-  // ("3 consumidores reales ademÃƒÆ’Ã‚Â¡s de ReactionEngine").
+// EVENTS_CONSUMERS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â arranca los 3 consumidores del bus.
+  // Ver: docs/audits/08-bus-de-eventos/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8
+  // ("3 consumidores reales ademÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡s de ReactionEngine").
   const { startMetricsConsumer } = await import("./engine/events/consumers/metrics.ts");
   const { startAuditConsumer } = await import("./engine/events/consumers/audit.ts");
   const { startNotificationsConsumer } = await import("./engine/events/consumers/notifications.ts");
-  const ownersWithConsumers = ["local-user", "system"];
+  // EVENTS_CONSUMERS_DYNAMIC_OWNERS_V1 - itera owners activos via scan.
+  const ownersWithConsumers = await db
+    .scan<{ tenantId: string }>("tenant-membership", 100)
+    .then((rows) => rows.map((r) => r.value.tenantId).filter((v) => typeof v === "string" && v.length > 0))
+    .catch(() => [] as string[]);
+  if (ownersWithConsumers.length === 0) ownersWithConsumers.push("local-user", "system");
   const metricsConsumer = startMetricsConsumer(ownersWithConsumers);
   const auditConsumer = startAuditConsumer(ownersWithConsumers, db);
   const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, db);
 
-  // ALERTS_WIRE_V1 Ã¢â‚¬â€ instancia AlertService, registra las alertas y arranca.
+  // ALERTS_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â instancia AlertService, registra las alertas y arranca.
 const { AlertService, LogAlertHandler } = await import("./alerts/service.ts");
 const { buildAlertDefinitions } = await import("./alerts/definitions.ts");
 const { globalMetrics: alertMetrics } = await import("./metrics/registry.ts");
