@@ -51,6 +51,9 @@ Fixes:
 - `store-store.ts` — cache `getTurn` TTL 1s.
 
 **Pipeline 5 — Cierre**:
+**Pipeline 6 — slow-author atencion real**:
+- `slow-author.ts` — `SLOW_AUTHOR_ATTENTION_V1` en reasoning y `SLOW_AUTHOR_DELEGATION_ATTENTION_V1` en delegation.
+
 - `service.ts` — `TenantScopedCapabilityRegistry` wireado con resolver real.
 
 ## Qué NO hace esta fase

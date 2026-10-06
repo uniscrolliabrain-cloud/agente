@@ -46,6 +46,11 @@ El kernel ha sido remodelado en 3 fases:
 | N11 | `kernel-meta-context.test.ts` usa `require` | **APLAZADO** (bloque 01) |
 | N12 | `kernel-presenter.test.ts` no verifica persistencia | **APLAZADO** (bloque 01) |
 
+## Pipeline 6 — slow-author atencion real
+
+- `slow-author.ts` — atencion real en `writeReasoning` y `writeDelegation`.
+- Marcas `SLOW_AUTHOR_ATTENTION_V1` y `SLOW_AUTHOR_DELEGATION_ATTENTION_V1`.
+
 ## Pendientes reales
 
 1. `TenantScopedCapabilityRegistry` **wireado** en `service.ts` (Pipeline 5, Fix A).

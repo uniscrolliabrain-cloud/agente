@@ -152,3 +152,8 @@
 ### Pendientes (bloque 19 - backups)
 - `StoreAuditStore.verify` paginado con cursor keyset. Hoy fail-honest:
   devuelve `false` si el list llega a `KERNEL_AUDIT_MAX_LIST` (10.000).
+
+## 09z Fase 3 - Pipeline 6 (2026-10-07)
+
+- slow-author.ts: atencion real en reasoning y delegation (SLOW_AUTHOR_ATTENTION_V1 + SLOW_AUTHOR_DELEGATION_ATTENTION_V1).
+
