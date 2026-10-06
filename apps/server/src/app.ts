@@ -290,6 +290,15 @@ export async function createApp(
   app.get("/api/health-deep", async (c) => {
     // HEALTH_DEEP_V2
     const checks: Record<string, unknown> = { ok: true, backend: db.backend, time: new Date().toISOString() };
+    // KERNEL_LIFECYCLE_WIRE_V1 - consulta el ciclo de vida del kernel.
+    try {
+      const { checkKernelHealth } = await import("./kernel/lifecycle.ts");
+      const report = await checkKernelHealth(kernel);
+      checks.kernelHealth = report;
+      if (report.health === "unavailable") checks.ok = false;
+    } catch (error) {
+      checks.kernelHealth = { health: "unknown", error: error instanceof Error ? error.message : "unknown" };
+    }
     try { checks.kernel = (kernel.deps.store as { constructor?: { name?: string } }).constructor?.name ?? "unknown"; } catch { checks.kernel = "error"; }
     try { checks.db = (await db.list("system","sessions",{limit:1})) ? "ok" : "empty"; } catch (e: unknown){ checks.db = e instanceof Error ? e.message : "error"; checks.ok = false; }
     // HEALTH_DEEP_V2 - checks adicionales.

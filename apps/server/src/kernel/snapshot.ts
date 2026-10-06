@@ -60,14 +60,25 @@ export async function importKernelSnapshot(
   const errors: string[] = [];
   let imported = 0;
   let failed = 0;
-  for (const thought of snapshot.thoughts) {
+  // SNAPSHOT_IMPORT_TX_V1 - agrupamos los thoughts en lotes de 50 dentro de
+  // una transaccion. Si un lote falla, se revierte el lote entero.
+  const BATCH = 50;
+  for (let i = 0; i < snapshot.thoughts.length; i += BATCH) {
+    const batch = snapshot.thoughts.slice(i, i + BATCH);
     try {
-      await kernel.deps.store.append(thought);
-      imported++;
+      const store = kernel.deps.store as { transaction?: <T>(fn: () => Promise<T>) => Promise<T> };
+      if (typeof store.transaction === "function") {
+        await store.transaction(async () => {
+          for (const thought of batch) await kernel.deps.store.append(thought);
+        });
+      } else {
+        for (const thought of batch) await kernel.deps.store.append(thought);
+      }
+      imported += batch.length;
     } catch (error) {
-      failed++;
+      failed += batch.length;
       errors.push(
-        `thought ${thought.id}: ${error instanceof Error ? error.message : "unknown"}`,
+        `batch ${i / BATCH}: ${error instanceof Error ? error.message : "unknown"}`,
       );
     }
   }
