@@ -10,6 +10,24 @@ export type TaskStatus =
   | "succeeded"
   | "failed"
   | "cancelled";
+// TASK_TRANSITIONS_V1 - tabla explicita de transiciones permitidas.
+// Guard: canTransitionTask(from, to).
+export const ALLOWED_TASK_TRANSITIONS: Record<TaskStatus, ReadonlySet<TaskStatus>> = {
+  queued: new Set(["running", "cancelled", "paused"]),
+  running: new Set(["succeeded", "failed", "waiting_input", "waiting_approval", "paused", "cancelled"]),
+  waiting_input: new Set(["queued", "cancelled"]),
+  waiting_approval: new Set(["queued", "succeeded", "failed", "cancelled"]),
+  scheduled: new Set(["running", "paused", "cancelled"]),
+  paused: new Set(["queued", "cancelled"]),
+  succeeded: new Set(),
+  failed: new Set(["queued"]),
+  cancelled: new Set(),
+};
+
+export function canTransitionTask(from: TaskStatus, to: TaskStatus): boolean {
+  return ALLOWED_TASK_TRANSITIONS[from].has(to);
+}
+
 export interface Evidence {
   id: string;
   kind: "mail" | "file" | "web" | "user";
@@ -112,7 +130,7 @@ export type MemoryCategory =
   | "rrhh"
   | "producto"
   | "otro"
-  // AGENT_ROLE_V2 — categorias que usan las memorias de rol al seedear.
+  // AGENT_ROLE_V2 â€” categorias que usan las memorias de rol al seedear.
   | "rol-identidad"
   | "rol-dominio"
   | "rol-preferencias"
@@ -151,7 +169,7 @@ export interface AgentNotification {
   createdAt: string;
   read: boolean;
 }
-// AGENT_ROLE_V2 — un rol es un personaje del equipo: nombre, tono, avatar y
+// AGENT_ROLE_V2 â€” un rol es un personaje del equipo: nombre, tono, avatar y
 // memoria propia. Los 4 tipos de memoria son semanticamente distintos:
 // identidad (el personaje, canon publico), dominio (su oficio), preferencias
 // (como le gusta al dueno) e historial (lo aprendido currando).
@@ -164,7 +182,7 @@ export interface AgentRoleMemory {
   text: string;
 }
 
-// AGENT_ROLE_V3 — ampliacion del rol con campos tecnicos opcionales.
+// AGENT_ROLE_V3 â€” ampliacion del rol con campos tecnicos opcionales.
 // Un rol sin estos campos se comporta como hoy (todo permitido dentro de
 // sus sops). Un rol con ellos es una allowlist adicional.
 export interface AgentRolePermission {
@@ -196,13 +214,13 @@ export interface AgentRole {
   active: boolean;
   /** Las 4 memorias vivas. Se materializan como AgentMemory al seedear. */
   memories: AgentRoleMemory[];
-  /** AGENT_ROLE_V3 — allowlist adicional. Ausente = sin restriccion. */
+  /** AGENT_ROLE_V3 â€” allowlist adicional. Ausente = sin restriccion. */
   permissions?: AgentRolePermission[];
-  /** AGENT_ROLE_V3 — politica de memoria. Ausente = defaults permisivos. */
+  /** AGENT_ROLE_V3 â€” politica de memoria. Ausente = defaults permisivos. */
   memoryPolicy?: AgentRoleMemoryPolicy;
-  /** AGENT_ROLE_V3 — skills que puede usar este rol. */
+  /** AGENT_ROLE_V3 â€” skills que puede usar este rol. */
   skills?: string[];
-  /** AGENT_ROLE_V3 — tools permitidas. Ausente = las de sus sops. */
+  /** AGENT_ROLE_V3 â€” tools permitidas. Ausente = las de sus sops. */
   allowedTools?: string[];
   createdAt?: string;
 }
@@ -244,7 +262,7 @@ export const agentRoleSchema = z.object({
   sops: z.array(z.string().max(200)).max(50).default([]),
   active: z.boolean().default(true),
   memories: z.array(agentRoleMemorySchema).max(8).default([]),
-  // AGENT_ROLE_V3 — campos tecnicos opcionales.
+  // AGENT_ROLE_V3 â€” campos tecnicos opcionales.
   permissions: z
     .array(
       z.object({

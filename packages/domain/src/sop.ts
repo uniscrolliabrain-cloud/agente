@@ -8,7 +8,7 @@ export const sopStepSchema = z.object({
   params: z.record(z.string(), z.unknown()).default(() => ({ type: "manual" as const, value: "" })),
   when: z.string().max(500).optional(),
   required: z.boolean().default(true),
-  /** STATE_MACHINE_STEP_V1 — id de la maquina en el kind "state-machines". Solo si tool = transition_entity. */
+  /** STATE_MACHINE_STEP_V1 â€” id de la maquina en el kind "state-machines". Solo si tool = transition_entity. */
   stateMachine: z.string().min(1).max(100).optional(),
 });
 

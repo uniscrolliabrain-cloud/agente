@@ -1,6 +1,10 @@
 // CAPABILITY_V1 - capacidad ejecutable del sistema (tool, skill, SOP).
 
 import { z } from "zod";
+// CAPABILITY_ACTION_TYPE_V1 - actionType y family opcionales.
+// TODO: migrar todas las capacidades de bootstrap.ts a declarar estos campos.
+import { actionTypeSchema } from "./actions.ts";
+import { taxonomyFamilySchema } from "./taxonomy.ts";
 
 export const capabilityRiskSchema = z.enum(["low", "medium", "high", "critical"]);
 
@@ -36,6 +40,10 @@ export const capabilityContractSchema = z.object({
   compensationId: z.string().max(200).optional(),
   requiresApproval: z.boolean().default(false),
   tags: z.array(z.string().max(100)).max(50).default([]),
+  // CAPABILITY_ACTION_TYPE_V1 - opcional con default para no romper
+  // las capacidades existentes. Se migran en bloque 24.
+  actionType: actionTypeSchema.optional(),
+  family: taxonomyFamilySchema.optional(),
 });
 
 export type CapabilityRisk = z.infer<typeof capabilityRiskSchema>;
