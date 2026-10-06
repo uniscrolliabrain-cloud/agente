@@ -132,3 +132,23 @@
 - F2-01-18 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
 - F2-01-19 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
 - F2-04-01 : MISS anchor en apps\server\src\engine\service.ts
+
+## 09z Fase 3 - cierre (2026-10-07)
+
+### Aplicados
+- **Pipeline 1**: attention Zod, lifecycle, snapshot, health-deep.
+- **Pipeline 2**: meta consumeHint, rules order, child turn.
+- **Pipeline 3**: atencion real autores, presenter compose, views sin as any.
+- **Pipeline 4**: consolidate O(n2) cap, views paged, getTurn cache.
+- **Pipeline 5**: TenantScopedCapabilityRegistry wireado en service.ts.
+
+### Pendientes (bloque 01 - tests)
+- `packages/domain/test/ontology.test.ts` (slug, colision, bundle congelado).
+- Test SSE que verifica que el Presenter decide el texto.
+- Test `closeTurnAndChildren` con arbol profundo (N10).
+- `kernel-meta-context.test.ts` con import en vez de require (N11).
+- `kernel-presenter.test.ts` verifica persistencia (N12).
+
+### Pendientes (bloque 19 - backups)
+- `StoreAuditStore.verify` paginado con cursor keyset. Hoy fail-honest:
+  devuelve `false` si el list llega a `KERNEL_AUDIT_MAX_LIST` (10.000).
