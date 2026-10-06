@@ -1,5 +1,5 @@
-// TESTS_ACTIONS_DEFERRED_WIRE_V1 — DeferredActions cableado en ActionService.
-// Ver: docs/audits/06-aprobaciones-acciones/roadmap.md §8.
+// TESTS_ACTIONS_DEFERRED_WIRE_V1 â€” DeferredActions cableado en ActionService.
+// Ver: docs/audits/06-aprobaciones-acciones/roadmap.md Â§8.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -36,7 +36,7 @@ test("approve con deferred pasa a scheduled en vez de ejecutar", async () => {
     const service = new ActionService(
       db,
       {
-        deferred,
+        deferred, // TYPE_FIX_DEFERRED_OPT_V1
         execute: async () => {
           executed++;
           return "executed";
@@ -46,9 +46,9 @@ test("approve con deferred pasa a scheduled en vez de ejecutar", async () => {
     );
     const proposal = await service.propose("owner", email);
     const result = await service.decide("owner", proposal.id, proposal.hash, "approve");
-    assert.equal(result.status, "scheduled", "aprobación debe quedar scheduled");
+    assert.equal(result.status, "scheduled", "aprobaciÃ³n debe quedar scheduled");
     assert.ok(result.executeAt, "debe tener executeAt");
-    assert.equal(executed, 0, "no debe haberse ejecutado aún");
+    assert.equal(executed, 0, "no debe haberse ejecutado aÃºn");
   } finally {
     await db.close();
   }

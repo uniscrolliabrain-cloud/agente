@@ -1,5 +1,5 @@
-// TESTS_TENANT_ISOLATION_EXTENDED_V1 — 50 tenants con verificación de fugas.
-// Ver: docs/audits/07-aislamiento-multi-tenant/roadmap.md §8.
+// TESTS_TENANT_ISOLATION_EXTENDED_V1 â€” 50 tenants con verificaciÃ³n de fugas.
+// Ver: docs/audits/07-aislamiento-multi-tenant/roadmap.md Â§8.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -33,7 +33,7 @@ test(`${TENANTS} tenants con lectura cruzada imposible`, { timeout: 60000 }, asy
     }
     await Promise.all(writes);
 
-    // Fase 2: lectura cruzada — tenant t lee la task de tenant s ≠ t.
+    // Fase 2: lectura cruzada â€” tenant t lee la task de tenant s â‰  t.
     let leaks = 0;
     for (let t = 0; t < TENANTS; t++) {
       const owner = `tenant-${t}-owner-${t}`;
@@ -72,11 +72,11 @@ test("scanByPrefix filtra correctamente por tenant", async () => {
 
     const fromA = await tdb.scanByPrefix<{ id: string }>("tasks", "tenant-a", 100);
     assert.equal(fromA.length, 2);
-    assert.ok(fromA.every((r) => r.value.tenantId === "tenant-a"));
+    assert.ok(fromA.every((r) => (r.value as { tenantId?: string }).tenantId === "tenant-a"));
 
     const fromB = await tdb.scanByPrefix<{ id: string }>("tasks", "tenant-b", 100);
     assert.equal(fromB.length, 1);
-    assert.equal(fromB[0].value.tenantId, "tenant-b");
+    assert.equal((fromB[0].value as { tenantId?: string }).tenantId, "tenant-b");
   } finally {
     await db.close();
   }

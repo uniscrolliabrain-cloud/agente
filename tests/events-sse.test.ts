@@ -1,5 +1,5 @@
-// TESTS_EVENTS_SSE_V1 — suscriptores del bus, dedupe y retención.
-// Ver: docs/audits/08-bus-de-eventos/roadmap.md §8.
+// TESTS_EVENTS_SSE_V1 â€” suscriptores del bus, dedupe y retenciÃ³n.
+// Ver: docs/audits/08-bus-de-eventos/roadmap.md Â§8.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -60,15 +60,15 @@ test("unsubscribe deja de recibir eventos", async () => {
   }
 });
 
-test("retención por tipo devuelve valores coherentes", () => {
+test("retenciÃ³n por tipo devuelve valores coherentes", () => {
   assert.equal(retentionDaysFor("auth.login"), 365);
   assert.equal(retentionDaysFor("task.created"), 90);
   assert.equal(retentionDaysFor("monitor.check"), 30);
   assert.equal(retentionDaysFor("system.maintenance"), 7);
-  assert.equal(retentionDaysFor("unknown.type"), 90);
+  assert.equal(retentionDaysFor("unknown.type" as never), 90);
 });
 
-test("groupTypesByRetention agrupa por días", () => {
+test("groupTypesByRetention agrupa por dÃ­as", () => {
   const types = ["auth.login", "task.created", "monitor.check"] as const;
   const grouped = groupTypesByRetention(types);
   assert.equal(grouped.get(365)?.length, 1);

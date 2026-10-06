@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import { globalPresence } from "./engine/presence.ts";
+import { globalEditLock } from "./engine/edit-lock.ts"; // TYPE_FIX_EDIT_LOCK_IMPORT_V1
 
 interface Thread {
   id: string;
@@ -41,8 +42,8 @@ export function threadRoutes(db: Store) {
     return c.json(thread, 201);
   });
 
-  // PRESENCE_TOUCH_V1 — el cliente marca su presencia al editar un thread.
-  // Devuelve quién más está editando. Ver miniaudit 04.
+  // PRESENCE_TOUCH_V1 Ã¢â‚¬â€ el cliente marca su presencia al editar un thread.
+  // Devuelve quiÃƒÂ©n mÃƒÂ¡s estÃƒÂ¡ editando. Ver miniaudit 04.
   app.post("/:id/presence", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -53,7 +54,7 @@ export function threadRoutes(db: Store) {
     return c.json(result);
   });
 
-  // PRESENCE_LEAVE_THREAD_V1 - desconexión explícita.
+  // PRESENCE_LEAVE_THREAD_V1 - desconexiÃƒÂ³n explÃƒÂ­cita.
   app.post("/:id/presence/leave", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -62,8 +63,8 @@ export function threadRoutes(db: Store) {
     return c.json({ ok: true });
   });
 
-  // RECONCILE_THREAD_V1 — el cliente pide el estado más reciente tras un 409.
-  // Devuelve updatedAt + messages para comparar con lo que tenía.
+  // RECONCILE_THREAD_V1 Ã¢â‚¬â€ el cliente pide el estado mÃƒÂ¡s reciente tras un 409.
+  // Devuelve updatedAt + messages para comparar con lo que tenÃƒÂ­a.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
   app.get("/:id/state", async (c) => {
     const owner = c.get("owner");
@@ -91,7 +92,7 @@ export function threadRoutes(db: Store) {
     const owner = c.get("owner");
     const id = c.req.param("id");
     // THREAD_EDIT_LOCK_V1 - evita doble-tab del mismo usuario.
-    const lockUser = c.req.header("x-user-id") ?? owner;
+    const lockUser: string = c.req.header("x-user-id") ?? owner;
     const lock = globalEditLock.acquire(lockUser, "thread", id);
     if (!lock) throw new AppError("Ya estas editando este thread en otro tab.", 409);
     try {
@@ -99,8 +100,8 @@ export function threadRoutes(db: Store) {
     if (!thread) throw new AppError("Thread not found", 404);
     const body = await c.req.json();
     const messages = z.array(z.unknown()).max(1000).parse(body.messages);
-    // THREADS_CAS_V1 — optimismo de concurrencia. El cliente envía
-    // `expectedUpdatedAt` con la versión que leyó. Si el thread cambió
+    // THREADS_CAS_V1 Ã¢â‚¬â€ optimismo de concurrencia. El cliente envÃƒÂ­a
+    // `expectedUpdatedAt` con la versiÃƒÂ³n que leyÃƒÂ³. Si el thread cambiÃƒÂ³
     // desde entonces, devolvemos 409 y el cliente recarga.
     // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
     const expected = z
@@ -111,13 +112,13 @@ export function threadRoutes(db: Store) {
       if (!current || current.updatedAt !== expected.expectedUpdatedAt) {
         // THREAD_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
         throw new AppError(
-          "Otro usuario ha modificado esta conversación. Recarga y vuelve a intentarlo.",
+          "Otro usuario ha modificado esta conversaciÃƒÂ³n. Recarga y vuelve a intentarlo.",
           409,
-          { current: current?.updatedAt ?? null, expected: expected.expectedUpdatedAt },
+          { current: current?.updatedAt ?? "", expected: expected.expectedUpdatedAt },
         );
       }
     }
-    // Escribir la conversación con CAS: expected = updatedAt leído, patch = messages.
+    // Escribir la conversaciÃƒÂ³n con CAS: expected = updatedAt leÃƒÂ­do, patch = messages.
     const currentThread = await db.get<Thread>(owner, "threads", id);
     if (!currentThread) throw new AppError("Thread not found", 404);
     const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(

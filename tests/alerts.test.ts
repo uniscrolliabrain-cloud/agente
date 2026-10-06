@@ -1,5 +1,5 @@
-// TESTS_ALERTS_V1 — el motor de alertas respeta cooldown y dispara handlers.
-// Ver: docs/audits/02-observabilidad/roadmap.md §8.
+// TESTS_ALERTS_V1 â€” el motor de alertas respeta cooldown y dispara handlers.
+// Ver: docs/audits/02-observabilidad/roadmap.md Â§8.
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
@@ -12,7 +12,7 @@ class CountingHandler implements AlertHandler {
   }
 }
 
-test("alerta que cumple condición dispara", async () => {
+test("alerta que cumple condiciÃ³n dispara", async () => {
   const handler = new CountingHandler();
   const svc = new AlertService([handler]);
   let triggered = true;
@@ -43,7 +43,7 @@ test("cooldown evita disparos consecutivos", async () => {
   assert.equal(handler.fired.length, 1, "cooldown de 1h debe impedir el segundo");
 });
 
-test("condición que lanza no rompe el motor", async () => {
+test("condiciÃ³n que lanza no rompe el motor", async () => {
   const handler = new CountingHandler();
   const svc = new AlertService([handler]);
   svc.register({
@@ -70,9 +70,13 @@ test("buildAlertDefinitions devuelve las 5 alertas base", async () => {
       taskFailuresLastHour: 0,
       tenantQuotaExceeded: 0,
       workerRunning: true,
+      httpLatencyP99Ms: 0,
+      circuitOpenCount: 0,
+      deadLetterCount: 0,
+      outcomeUnknownCount: 0,
     }),
   });
-  assert.equal(defs.length, 5);
+  assert.equal(defs.length, 8);
   const ids = defs.map((d) => d.id).sort();
   assert.deepEqual(ids, [
     "http_5xx_high",

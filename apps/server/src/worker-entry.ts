@@ -15,7 +15,7 @@ await db.recoverInterruptedActions();
 const { agent } = await createApp(db, config);
 // WORKER_ENTRY_RECOVER_V1 - recupera tareas huerfanas.
 const recoveredCount = await agent.recoverInterruptedTasks().catch(() => 0);
-if (recoveredCount > 0) console.log(`[worker] `${recoveredCount} tareas recuperadas`);
+if (recoveredCount > 0) console.log(`[worker] ${recoveredCount} tareas recuperadas`);
 agent.start();
 console.log("OpenMuse task worker running");
 let stopping = false;

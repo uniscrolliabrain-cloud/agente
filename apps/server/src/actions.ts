@@ -16,6 +16,8 @@ import type { AgentRole } from "../../../packages/domain/src/agent.ts";
 import { AppError } from "./errors.ts";
 
 interface Options {
+  // TYPE_FIX_DEFERRED_V1 - campo deferred.
+  deferred?: import("./actions-deferred.ts").DeferredActions;
   execute: (
     owner: string,
     input: ProposalInput,
@@ -53,16 +55,47 @@ export class ActionService {
     this.now = options.now ?? Date.now;
   }
   /**
-   * ACTIONS_RETRY_V1 — reintenta una acción que falló con error determinista.
+   * ACTIONS_RETRY_V1 Ã¢â‚¬â€ reintenta una acciÃƒÂ³n que fallÃƒÂ³ con error determinista.
    * Solo permitido si el status es "failed" y el error no es outcome_unknown.
    * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
    */
+  // ACTION_EDIT_V1 - editar propuesta antes de aprobar. Cambia el hash.
+  async edit(
+    owner: string,
+    actionId: string,
+    newData: Record<string, unknown>,
+    expectedHash: string,
+  ): Promise<ActionProposal> {
+    const action = await this.db.get<ActionProposal>(owner, "actions", actionId);
+    if (!action) throw new AppError("Action not found", 404);
+    if (action.status !== "awaiting_review") {
+      throw new AppError("Only awaiting_review actions can be edited", 409);
+    }
+    if (action.hash !== expectedHash) {
+      throw new AppError("Action changed. Reload and retry.", 409);
+    }
+    const nextHash = createHash("sha256")
+      .update(JSON.stringify({ data: newData, connectionId: action.connectionId }))
+      .digest("hex");
+    const updated = await this.db.compareAndSwap<ActionProposal>(
+      owner,
+      "actions",
+      actionId,
+      { status: "awaiting_review", hash: action.hash },
+      { data: newData as ActionProposal["data"], hash: nextHash },
+    );
+    if (!updated) throw new AppError("Action changed. Reload and retry.", 409);
+    await this.audit(owner, updated, "edited", "Edited by user");
+    return updated;
+  }
+
   async retry(owner: string, actionId: string): Promise<ActionProposal> {
     const action = await this.db.get<ActionProposal>(owner, "actions", actionId);
     if (!action) throw new AppError("Action not found", 404);
-    if (action.status !== "failed") {
+    // RETRY_DENIED_V1 - permite reintentar failed y denied.
+    if (action.status !== "failed" && action.status !== "denied") {
       throw new AppError(
-        `Only failed actions can be retried (current: ${action.status})`,
+        `Only failed or denied actions can be retried (current: ${action.status})`,
         409,
       );
     }
@@ -77,7 +110,7 @@ export class ActionService {
       owner,
       "actions",
       actionId,
-      { status: "failed" },
+      { status: action.status },
       { status: "awaiting_review", error: null, result: null },
     );
     if (!reset) throw new AppError("Action changed; refresh and retry", 409);
@@ -107,13 +140,13 @@ export class ActionService {
     const input = proposalSchema.parse(prepared?.input ?? parsed);
     const title =
       input.kind === "email.send"
-        ? `Send “${input.data.subject}”`
+        ? `Send Ã¢â‚¬Å“${input.data.subject}Ã¢â‚¬Â`
         : input.kind === "calendar.delete"
           ? `Delete ${input.data.title}`
           : input.kind === "drive.trash"
-            ? `Move “${input.data.name}” to trash`
+            ? `Move Ã¢â‚¬Å“${input.data.name}Ã¢â‚¬Â to trash`
             : input.kind === "drive.rename"
-              ? `Rename file to “${input.data.name}”`
+              ? `Rename file to Ã¢â‚¬Å“${input.data.name}Ã¢â‚¬Â`
               : `${input.kind === "calendar.create" ? "Create" : "Update"} ${input.data.title}`;
     const createdAt = new Date(this.now()).toISOString();
     const proposal: ActionProposal = {
@@ -138,7 +171,10 @@ export class ActionService {
         )
         .digest("hex"),
       createdAt,
-      expiresAt: new Date(this.now() + 30 * 60 * 1000).toISOString(),
+      // ACTION_EXPIRES_V1 - configurable por env.
+      expiresAt: new Date(
+        this.now() + (Number(process.env.ACTION_EXPIRES_MS ?? "1800000") || 1800000),
+      ).toISOString(),
     };
     const saved =
       idempotencyKey === undefined
@@ -158,11 +194,13 @@ export class ActionService {
     });
     return saved;
   }
+  // USER_ID_REAL_V1 - userId opcional para doble firma real.
   async decide(
     owner: string,
     id: string,
     hash: string,
     decision: "approve" | "deny",
+    userId?: string,
   ): Promise<ActionProposal> {
     const proposal = await this.db.get<ActionProposal>(owner, "actions", id);
     if (!proposal) throw new AppError("Action not found", 404);
@@ -206,7 +244,7 @@ export class ActionService {
           409,
         );
     }
-    // POLICY_GATE_V1 — si la accion esta vinculada a una tarea con rol activo,
+    // POLICY_GATE_V1 Ã¢â‚¬â€ si la accion esta vinculada a una tarea con rol activo,
     // consultamos PolicyEngine antes de aprobar. Deny es siempre libre.
     if (decision === "approve" && this.policy && proposal.taskId) {
       const task = await this.db.get<{ state?: { roleId?: string } }>(owner, "tasks", proposal.taskId);
@@ -252,14 +290,14 @@ export class ActionService {
       actionId: claimed.id,
       title: claimed.title.slice(0, 300),
     });
-    // ACTIONS_DEFERRED_WIRE_V1 — si hay deferred, aprobar no ejecuta ya.
+    // ACTIONS_DEFERRED_WIRE_V1 Ã¢â‚¬â€ si hay deferred, aprobar no ejecuta ya.
     // Se programa para dentro de `windowMs` y el usuario puede deshacer.
     // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
     if (this.options.deferred && decision === "approve") {
       const deferredRecord = await this.options.deferred.decide(
         owner,
         claimed.id,
-        owner,
+        userId ?? owner,
         typeof claimed.data === "object" && claimed.data !== null && "amount" in claimed.data
           ? Number((claimed.data as { amount?: unknown }).amount) || undefined
           : undefined,
@@ -277,7 +315,7 @@ export class ActionService {
         });
         return (await this.db.get<ActionProposal>(owner, "actions", claimed.id)) ?? claimed;
       }
-      // Si aún no se alcanzó el número de firmas, la propuesta vuelve a
+      // Si aÃƒÂºn no se alcanzÃƒÂ³ el nÃƒÂºmero de firmas, la propuesta vuelve a
       // awaiting_review con los signers acumulados.
       if (deferredRecord.status === "collecting") {
         await this.db.put(owner, "actions", {
@@ -305,11 +343,20 @@ export class ActionService {
         error instanceof Error &&
         (("outcomeUnknown" in error && error.outcomeUnknown === true) ||
           ("code" in error && error.code === "outcome_unknown"));
+      // ERROR_KIND_V1 - distingue negocio de infra.
+      const message = error instanceof Error ? error.message : "Execution failed";
+      const status = (error as { status?: number })?.status;
+      const errorKind = unknown
+        ? "outcome_unknown"
+        : typeof status === "number" && status >= 400 && status < 500
+          ? "business"
+          : "infra";
       finished = {
         ...claimed,
         status: unknown ? "outcome_unknown" : "failed",
-        error: error instanceof Error ? error.message : "Execution failed",
-      };
+        error: message,
+        ...(errorKind !== "outcome_unknown" ? { errorKind } : {}),
+      } as ActionProposal;
     }
     await this.db.put(owner, "actions", finished);
     // APPROVAL_SYNC_V2 - reflejar el estado final en approval-requests.
@@ -354,8 +401,8 @@ export class ActionService {
     return finished;
   }
   /**
-   * ACTIONS_AUDIT_V1 — registra una entrada de auditoría estructurada
-   * por cada transición de estado de la propuesta.
+   * ACTIONS_AUDIT_V1 Ã¢â‚¬â€ registra una entrada de auditorÃƒÂ­a estructurada
+   * por cada transiciÃƒÂ³n de estado de la propuesta.
    * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
    */
   private async audit(owner: string, action: ActionProposal, kind: string, detail: string) {

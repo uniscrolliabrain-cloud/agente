@@ -6,13 +6,13 @@ import type {
   AgentMemory,
   AgentNotification,
 } from "../../../../packages/domain/src/agent.ts";
-// AGENT_ROLE_V2_ROUTE â€” el schema vive en el dominio para que ruta y tipo no divergan.
+// AGENT_ROLE_V2_ROUTE Ã¢â‚¬â€ el schema vive en el dominio para que ruta y tipo no divergan.
 import { agentRoleSchema } from "../../../../packages/domain/src/agent.ts";
 import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
 
 const text = z.string().trim().min(1).max(4000);
-// MEMORY_FULL_SCHEMA â€” la UI edita category y tags; el route debe aceptarlos.
+// MEMORY_FULL_SCHEMA Ã¢â‚¬â€ la UI edita category y tags; el route debe aceptarlos.
 const memoryCategories = z.enum(["empresa","cliente","proceso","preferencia","rrhh","producto","otro"]);
 // A1_MEMORY_PATCH_V2 - category y tags aceptan null para borrar; text opcional para patch parcial.
 const memorySchema = z.object({
@@ -88,9 +88,9 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(await service.control(c.get("owner"), c.req.param("id"), action));
   });
   // C1_REASSIGN_V1 - reasignar tarea a otro rol o usuario.
-  // RECONCILE_ENDPOINT_V1 â€” reconciliar una acciÃ³n en outcome_unknown.
-  // El operador confirma si la acciÃ³n externa se ejecutÃ³ o no.
-  // Ver: docs/audits/03-resiliencia/roadmap.md Â§8.
+  // RECONCILE_ENDPOINT_V1 Ã¢â‚¬â€ reconciliar una acciÃƒÂ³n en outcome_unknown.
+  // El operador confirma si la acciÃƒÂ³n externa se ejecutÃƒÂ³ o no.
+  // Ver: docs/audits/03-resiliencia/roadmap.md Ã‚Â§8.
   app.post("/actions/:id/reconcile", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -118,8 +118,8 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     const note = body.note?.slice(0, 2000) ?? "";
     const result =
       body.outcome === "executed"
-        ? `Reconciled by operator: executed${note ? ` â€” ${note}` : ""}`
-        : `Reconciled by operator: not executed${note ? ` â€” ${note}` : ""}`;
+        ? `Reconciled by operator: executed${note ? ` Ã¢â‚¬â€ ${note}` : ""}`
+        : `Reconciled by operator: not executed${note ? ` Ã¢â‚¬â€ ${note}` : ""}`;
 
     const updated = await service.db.compareAndSwap(
       owner,
@@ -156,9 +156,29 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   });
 
   // C3_CANCEL_V1 - cancelar una accion programada.
-  // ACTIONS_CANCEL_VERIFY_V1 â€” verificado como parte del bloque 06.
-  // ACTIONS_RETRY_ENDPOINT_V1 â€” reintento controlado.
+  // ACTIONS_CANCEL_VERIFY_V1 Ã¢â‚¬â€ verificado como parte del bloque 06.
+  // ACTIONS_RETRY_ENDPOINT_V1 Ã¢â‚¬â€ reintento controlado.
   // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+  // FORCE_CANCEL_EXECUTING_V1 - cancelar accion en executing pasa a outcome_unknown.
+  app.post("/actions/:id/force-cancel", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const action = await service.db.get<{ id: string; status: string }>(owner, "actions", id);
+    if (!action) throw new AppError("Action not found", 404);
+    if (action.status !== "executing") {
+      throw new AppError("Only executing actions can be force-cancelled", 409);
+    }
+    const updated = await service.db.compareAndSwap(
+      owner,
+      "actions",
+      id,
+      { status: "executing" },
+      { status: "outcome_unknown", error: "Force-cancelled by user. Verify with provider." },
+    );
+    if (!updated) throw new AppError("Action changed", 409);
+    return c.json(updated);
+  });
+
   app.post("/actions/:id/retry", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -166,7 +186,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(action);
   });
 
-  // ACTIONS_AUDIT_ENDPOINT_V1 â€” audit trail de una acciÃ³n.
+  // ACTIONS_AUDIT_ENDPOINT_V1 Ã¢â‚¬â€ audit trail de una acciÃƒÂ³n.
   // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
   app.get("/actions/:id/audit", async (c) => {
     const owner = c.get("owner");
@@ -181,7 +201,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       audit: entries.filter((e) => e.actionId === id),
     });
   });
-  // El endpoint cancela una acciÃ³n scheduled si el usuario firmÃ³.
+  // El endpoint cancela una acciÃƒÂ³n scheduled si el usuario firmÃƒÂ³.
   // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
   app.post("/actions/:id/cancel", async (c) => {
     const owner = c.get("owner");
@@ -343,7 +363,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   app.get("/roles", async (c) => c.json(await service.listAgents(c.get("owner"))));
 
   app.post("/roles", async (c) => {
-    // AGENT_ROLE_V2_ROUTE â€” se usa agentRoleSchema del dominio en vez de un z.object inline:
+    // AGENT_ROLE_V2_ROUTE Ã¢â‚¬â€ se usa agentRoleSchema del dominio en vez de un z.object inline:
     // el inline solo aceptaba id/name/objetivo/sops/active, asi que un rol creado por aqui se
     // guardaba sin tone/avatar/memories mientras AgentRole los exige. Con el schema compartido,
     // la ruta y el tipo no pueden volver a divergir.
@@ -379,7 +399,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   app.get("/notifications", async (c) =>
     c.json((await service.snapshot(c.get("owner"))).notifications),
   );
-  // NOTIF_ASSIGN_V1 â€” crear una notificaciÃ³n dirigida a un usuario concreto.
+  // NOTIF_ASSIGN_V1 Ã¢â‚¬â€ crear una notificaciÃƒÂ³n dirigida a un usuario concreto.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
   app.post("/notifications/direct", async (c) => {
     const owner = c.get("owner");
@@ -472,11 +492,11 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     }
     return c.json({ clients });
   });
-  // PUBLIC_ROLES_ENDPOINT â€” canon publico de los personajes para el repo de redes.
+  // PUBLIC_ROLES_ENDPOINT Ã¢â‚¬â€ canon publico de los personajes para el repo de redes.
   // Solo expone id, name, tone, avatar, objetivo, roi e identidad. Nada interno.
   app.get("/roles/public", async (c) => c.json(await service.publicRoles(c.get("owner"))));
   app.get("/usage", async (c) => c.json(await service.usageSummary(c.get("owner"))));
-  // TENANT_CACHE_ENDPOINT_V1 â€” debug de la cache de TenantService.
+  // TENANT_CACHE_ENDPOINT_V1 Ã¢â‚¬â€ debug de la cache de TenantService.
   // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
   app.get("/tenant/cache-stats", async (c) => {
     const ts = service.tenantService as unknown as {
@@ -489,7 +509,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     });
   });
 
-  // TENANT_CACHE_ENDPOINT_V1 â€” invalidaciÃ³n explÃ­cita.
+  // TENANT_CACHE_ENDPOINT_V1 Ã¢â‚¬â€ invalidaciÃƒÂ³n explÃƒÂ­cita.
   app.post("/tenant/cache-invalidate", async (c) => {
     const ts = service.tenantService as unknown as {
       invalidateAll?: () => void;
@@ -497,8 +517,8 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (typeof ts?.invalidateAll === "function") ts.invalidateAll();
     return c.json({ ok: true });
   });
-  // WORKER_STATUS_ENDPOINT_V1 â€” estado del worker para operador.
-  // Ver: docs/audits/05-motor-tareas-durable/roadmap.md Â§8.
+  // WORKER_STATUS_ENDPOINT_V1 Ã¢â‚¬â€ estado del worker para operador.
+  // Ver: docs/audits/05-motor-tareas-durable/roadmap.md Ã‚Â§8.
   app.get("/worker-status", async (c) => {
     const worker = service.worker as unknown as {
       running: boolean;

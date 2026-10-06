@@ -37,30 +37,34 @@ export default function ApprovalItem({ approval, me, onApprove, onReject, onCanc
       <header className="ap__head">
         <b className="ap__title">{approval.title}</b>
         {approval.amount != null && (
-          <span className="ap__amount">{approval.amount.toLocaleString("es-ES")}€</span>
+          <span className="ap__amount">{approval.amount.toLocaleString("es-ES")}â‚¬</span>
         )}
       </header>
       <small className="ap__meta">
-        Pedido por {approval.requestedBy} · hace{" "}
+        Pedido por {approval.requestedBy} Â· hace{" "}
         {fmtDur((now - approval.requestedAt) / 1000)}
-        {approval.needed > 1 && ` · firmas ${approval.signers.length}/${approval.needed}`}
+        {approval.needed > 1 && ` Â· firmas ${approval.signers.length}/${approval.needed}`}
       </small>
 
       {left !== null ? (
         <p className="ap__countdown">
-          Se ejecutará en <b>{left}s</b>{" "}
+          Se ejecutarÃ¡ en <b>{left}s</b>{" "}
           {iSigned && (
             <button type="button" className="btn" onClick={() => onCancel(approval.id)}>
               Deshacer
             </button>
           )}
         </p>
+      ) : (approval as { status?: string }).status === "outcome_unknown" ? (
+        <p>
+          <small>Outcome incierto. Reconcilia en el detalle de la tarea.</small>
+        </p>
       ) : approval.lockedReason ? (
         <p>
           <button type="button" className="btn" disabled>
             Aprobar
           </button>{" "}
-          <small>🔒 {approval.lockedReason}</small>
+          <small>ðŸ”’ {approval.lockedReason}</small>
         </p>
       ) : iSigned ? (
         <p>
@@ -68,7 +72,7 @@ export default function ApprovalItem({ approval, me, onApprove, onReject, onCanc
         </p>
       ) : confirming ? (
         <p>
-          ¿Aprobar {approval.amount?.toLocaleString("es-ES")}€?{" "}
+          Â¿Aprobar {approval.amount?.toLocaleString("es-ES")}â‚¬?{" "}
           <button type="button" className="btn primary" onClick={() => onApprove(approval.id)}>
             Confirmar
           </button>{" "}

@@ -28,7 +28,7 @@ import {
   type Monitor,
   monitorInputSchema,
   type RunEvent,
-  // AGENT_ROLE_V2_BACKFILL Ã¢â‚¬â€ se usa el schema del dominio para normalizar los roles guardados.
+  // AGENT_ROLE_V2_BACKFILL ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â se usa el schema del dominio para normalizar los roles guardados.
   agentRoleSchema,
   // PUBLIC_ROLES_ENDPOINT: tipo de retorno de publicRoles (id, name, tone, avatar, objetivo, roi, identidad).
   type AgentRolePublic,
@@ -132,7 +132,7 @@ export interface BusinessOsServices {
   // SERVICE_INTERFACE_FIX_V1 - arreglado el } huerfano del repodump original.
   // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
   tenantService?: TenantService;
-  // KERNEL_WIRE_A_V1 Ã¢â‚¬â€ kernel cognitivo opcional. Sin esto, el repo funciona igual.
+  // KERNEL_WIRE_A_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â kernel cognitivo opcional. Sin esto, el repo funciona igual.
   kernel?: Kernel;
 }
 
@@ -140,7 +140,7 @@ export class AgentService {
   readonly worker: TaskWorker;
   readonly business: BusinessDataService;
   readonly learning: LearningService;
-  // MEMORY_PUBLIC_V1 Ã¢â‚¬â€ memory pasa a ser publico para que el ContextEngine lo use.
+  // MEMORY_PUBLIC_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â memory pasa a ser publico para que el ContextEngine lo use.
   readonly memory: MemoryService;
   private readonly sopExecutor: SOPExecutor;
   private lastDedupAt?: number;
@@ -148,7 +148,7 @@ export class AgentService {
   private lastPurgeIndex?: number;
   private maintenance?: ReturnType<typeof setInterval>;
   private refreshing = false;
-  // BUSINESS_OS_CTOR_V1 Ã¢â‚¬â€ servicios nuevos opcionales. Se inyectan en app.ts.
+  // BUSINESS_OS_CTOR_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â servicios nuevos opcionales. Se inyectan en app.ts.
   readonly graph?: BusinessGraph;
   readonly truth?: BusinessTruth;
   readonly policy?: PolicyEngine;
@@ -159,7 +159,7 @@ export class AgentService {
   readonly governance?: AgentGovernance;
   readonly workspaceRegistry?: WorkspaceRegistry;
   readonly marketplace?: SkillMarketplace;
-  // KERNEL_WIRE_A_V1 Ã¢â‚¬â€ kernel cognitivo. Opcional para no romper tests ni arranques sin kernel.
+  // KERNEL_WIRE_A_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â kernel cognitivo. Opcional para no romper tests ni arranques sin kernel.
   readonly kernel?: Kernel;
   // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
   readonly tenantService?: TenantService;
@@ -171,7 +171,7 @@ export class AgentService {
   readonly feedback: FeedbackCollector;
   // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
   private readonly tenantRateLimiter = new RateLimiter(500, 3600000);
-  // RATE_LIMIT_USER_FIELD_V1 Ã¢â‚¬â€ limiter por usuario reutilizable.
+  // RATE_LIMIT_USER_FIELD_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â limiter por usuario reutilizable.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
   private readonly userRateLimiter = new RateLimiter(100, 60 * 60 * 1000);
   // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
@@ -346,7 +346,7 @@ export class AgentService {
     this.maintenance = setInterval(() => {
       void this.maintain().catch((error) => backgroundFailure("maintenance", error));
     }, 60000);
-    // R3 Ã¢â‚¬â€ unref para que un proceso que solo tenga este interval pueda salir
+    // R3 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â unref para que un proceso que solo tenga este interval pueda salir
     // limpiamente con SIGTERM/SIGINT, sin esperar al siguiente tick.
     this.maintenance.unref?.();
   }
@@ -355,7 +355,7 @@ export class AgentService {
     this.maintenance = undefined;
     await this.worker.stop();
     while (this.refreshing) await new Promise((resolve) => setTimeout(resolve, 10));
-    // R5b Ã¢â‚¬â€ cierra el pool compartido de business para no dejar conexiones abiertas.
+    // R5b ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â cierra el pool compartido de business para no dejar conexiones abiertas.
     await this.business.close().catch(() => {});
   }
   private async maintain() {
@@ -369,9 +369,9 @@ export class AgentService {
       // cada minuto era un pico). Ahora 500 por pasada, con tope de 3
       // paginas. Cierra parcialmente #149 y #150.
       // SERVICE_EXPIRE_APPROVALS_V1 - expira approvals viejas.
-      // RECONCILE_OUTCOME_UNKNOWN_V1 Ã¢â‚¬â€ barrido runtime de acciones colgadas.
-      // Antes solo se hacÃƒÂ­a al arrancar (index.ts). Si el proceso sigue vivo
-      // y una acciÃƒÂ³n quedÃƒÂ³ en "executing" por un fallo de red, se quedaba asÃƒÂ­
+      // RECONCILE_OUTCOME_UNKNOWN_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â barrido runtime de acciones colgadas.
+      // Antes solo se hacÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a al arrancar (index.ts). Si el proceso sigue vivo
+      // y una acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n quedÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ en "executing" por un fallo de red, se quedaba asÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­
       // para siempre.
       // Ver: docs/audits/03-resiliencia/miniaudit.md ("recoverInterruptedActions
       // solo al arrancar").
@@ -477,18 +477,20 @@ export class AgentService {
         // nunca purgaba) y dedupe-state idem (una fila LRU por owner).
         { kind: "system-events", days: 90 },
         { kind: "dedupe-state", days: 1 },
-        // KERNEL_PURGE_V1 Ã¢â‚¬â€ purga de turnos y thoughts del kernel.
-        // Ver: auditorÃƒÂ­a profunda 09.
+        // KERNEL_PURGE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â purga de turnos y thoughts del kernel.
+        // Ver: auditorÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a profunda 09.
         { kind: "cognitive-turns", days: 30 },
         { kind: "cognitive-thoughts", days: 30 },
         // PURGE_DEAD_LETTER_V1 - dead letter queue con retencion de 90 dias.
         { kind: "dead-letter", days: 90 },
+        // PURGE_DEFERRED_V1 - purga acciones diferidas terminales.
+        { kind: "deferred-actions", days: 30 },
       ];
       const purgeTarget = purgeTargets[this.lastPurgeIndex % purgeTargets.length];
       this.lastPurgeIndex += 1;
       await this.db.purgeOlderThan(purgeTarget.kind, purgeTarget.days);
-      // EVENTS_RETENTION_WIRE_V1 Ã¢â‚¬â€ retenciÃƒÂ³n por tipo para system-events.
-      // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("RetenciÃƒÂ³n uniforme 90 dÃƒÂ­as").
+      // EVENTS_RETENTION_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â retenciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n por tipo para system-events.
+      // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("RetenciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n uniforme 90 dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­as").
       if (purgeTarget.kind === "system-events") {
         try {
           const { groupTypesByRetention } = await import("./events/retention.ts");
@@ -599,7 +601,7 @@ export class AgentService {
       const sopList = sopPage.length > 0 ? sopPage.map((r) => ({ owner: r.owner, value: r.value })) : fallback;
       // MAINTAIN_SOPS_BY_OWNER_V1 - antes cada SOP se evaluaba bajo el owner
       // del scan (el primero que apareciera en la pagina). En multi-tenant
-      // eso significa que un SOP de un tenant se evalÃƒÂºa bajo el owner de otro
+      // eso significa que un SOP de un tenant se evalÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºa bajo el owner de otro
       // si vienen mezclados en la misma pagina. Ahora resolvemos el owner real
       // del SOP con resolveSopOwner y evaluamos bajo ese owner.
       for (const record of sopList) {
@@ -629,9 +631,9 @@ export class AgentService {
       await this.runMetaLoop().catch((error) =>
         backgroundFailure("meta loop", error),
       );
-      // CONSOLIDATE_IN_MAINTAIN_V1 Ã¢â‚¬â€ consolida turnos cerrados recientes.
+      // CONSOLIDATE_IN_MAINTAIN_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â consolida turnos cerrados recientes.
       // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md
-      // ("consolidate no se llama en maintain"), roadmap Ã‚Â§8.
+      // ("consolidate no se llama en maintain"), roadmap ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
       await this.runConsolidateLoop().catch((error) =>
         backgroundFailure("consolidate loop", error),
       );
@@ -652,8 +654,8 @@ export class AgentService {
    *   - Si no hay kernel, no hace nada.
    */
   /**
-   * CONSOLIDATE_IN_MAINTAIN_V1 Ã¢â‚¬â€ ejecuta consolidate sobre turnos cerrados.
-   * Ver: docs/audits/09-kernel-cognitivo/roadmap.md Ã‚Â§8.
+   * CONSOLIDATE_IN_MAINTAIN_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ejecuta consolidate sobre turnos cerrados.
+   * Ver: docs/audits/09-kernel-cognitivo/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
    */
   private async runConsolidateLoop(): Promise<void> {
     if (!this.kernel || !this.tenantService) return;
@@ -701,8 +703,8 @@ export class AgentService {
     // Listamos turnos para cada owner conocido en `agent-settings` con identity.
     // No hay forma barata de listar owners; usamos scan limitado.
     // META_LOOP_OWNERS_VIA_MEMBERSHIP_V1 - antes escaneabamos agent-settings
-    // (hasta 5000 filas) y solo mirÃƒÂ¡bamos los primeros 50 owners por orden
-    // de updated_at. Los demÃƒÂ¡s nunca recibian hints. Ahora leemos de
+    // (hasta 5000 filas) y solo mirÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡bamos los primeros 50 owners por orden
+    // de updated_at. Los demÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡s nunca recibian hints. Ahora leemos de
     // tenant-membership, que ya tiene una fila por tenant, y dentro de cada
     // tenant los owners son los de agent-settings. Seguimos con el tope de
     // 50 por pasada, pero rotamos por tenant con el cursor de maintain.
@@ -846,7 +848,7 @@ export class AgentService {
       }));
   }
   async listAgents(owner: string): Promise<AgentRole[]> {
-    // AGENT_ROLE_V2_BACKFILL Ã¢â‚¬â€ los roles guardados antes de que el tipo exigiera tone/avatar/
+    // AGENT_ROLE_V2_BACKFILL ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â los roles guardados antes de que el tipo exigiera tone/avatar/
     // memories llegan sin ellos. Parsear por el schema los rellena con los defaults y, de paso,
     // limpia cualquier registro corrupto en vez de devolver un AgentRole "tipado" pero falso.
     const rows = await this.db.list<Record<string, unknown>>(owner, "agent-roles");
@@ -886,16 +888,25 @@ export class AgentService {
    */
   // SYSTEM_CONTEXT_CACHE_V1 - antes systemContext se llamaba en cada mensaje
   // del chat y hacia 2 list() de 50 filas + workspace.connected(). Con 100
-  // usuarios escribiendo, son 200 queries por segundo para "Ã‚Â¿hay urgencias?".
+  // usuarios escribiendo, son 200 queries por segundo para "ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¿hay urgencias?".
   // Cache de 30s por owner.
-  private readonly systemContextCache = new Map<string, { at: number; value: unknown }>();
+  // TYPE_FIX_CTX_CACHE_V1 - tipado del cache.
+  private readonly systemContextCache = new Map<string, {
+    at: number;
+    value: {
+      pendingApprovals: Array<{ id: string; title: string; hash: string }>;
+      recentFailures: Array<{ id: string; title: string }>;
+      metaHints: Array<{ rule: string; urgency: string; message: string }>;
+      health: { google: boolean; worker: boolean };
+    };
+  }>();
 
   async systemContext(owner: string) {
     const cached = this.systemContextCache.get(owner);
     if (cached && Date.now() - cached.at < 30_000) {
       return cached.value;
     }
-    // SYSTEM_CONTEXT_BOUNDED Ã¢â‚¬â€ antes cargabamos TODAS las tasks y actions en memoria
+    // SYSTEM_CONTEXT_BOUNDED ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â antes cargabamos TODAS las tasks y actions en memoria
     // para filtrar 5. Con scanByStatus el trabajo lo hace SQL.
     // SYSTEM_CONTEXT_SCOPED_FIX_V1 - antes haciamos scanByStatus global y
     // filtraba por owner en memoria. En multi-tenant eso leia filas de otros
@@ -922,9 +933,9 @@ export class AgentService {
         owner: owner.slice(0, 200),
       });
     }
-    // META_CONTEXT_V1 Ã¢â‚¬â€ lee los hints de Meta del ÃƒÂºltimo turno abierto.
+    // META_CONTEXT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â lee los hints de Meta del ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºltimo turno abierto.
     // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md ("Meta sin consumidor"),
-    // roadmap Ã‚Â§8 ("Meta hint inyectado en el siguiente turno").
+    // roadmap ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8 ("Meta hint inyectado en el siguiente turno").
     let metaHints: Array<{ rule: string; urgency: string; message: string }> = [];
     if (this.kernel && this.tenantService) {
       try {
@@ -961,7 +972,13 @@ export class AgentService {
         backgroundFailure("meta context", error);
       }
     }
-    const result = {
+    // TYPE_FIX_SYSTEM_CTX_RETURN_V1 - tipado explicito.
+    const result: {
+      pendingApprovals: Array<{ id: string; title: string; hash: string }>;
+      recentFailures: Array<{ id: string; title: string }>;
+      metaHints: Array<{ rule: string; urgency: string; message: string }>;
+      health: { google: boolean; worker: boolean };
+    } = {
       pendingApprovals: pending,
       recentFailures,
       metaHints,
@@ -984,7 +1001,7 @@ export class AgentService {
 
   async snapshot(owner: string): Promise<AgentWorkspace> {
     await this.ensure(owner);
-    // R4b Ã¢â‚¬â€ limites por coleccion en el snapshot. Antes: list sin tope; con 50k
+    // R4b ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â limites por coleccion en el snapshot. Antes: list sin tope; con 50k
     // tareas o memorias el chat se bloqueaba en cada turno.
     const [tasks, goals, monitors, ideas, memories, artifacts, notifications, identity] =
       await Promise.all([
@@ -1041,7 +1058,7 @@ export class AgentService {
     };
   }
   /**
-   * B104 Ã¢â‚¬â€ Orquestador. Elige un rol para la tarea si el caller no fijo uno.
+   * B104 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Orquestador. Elige un rol para la tarea si el caller no fijo uno.
    * Criterio explicito y determinista:
    *   - kind === "sop" y hay input.sopId -> primer rol activo con ese sop en `sops`.
    *   - kind === "monitor" -> primer rol activo con "monitor" en `sops` o rol "operaciones".
@@ -1081,7 +1098,7 @@ export class AgentService {
   }
 
   /**
-   * TENANT_RATE_LIMIT_PUBLIC_V1 Ã¢â‚¬â€ limiter por tenant expuesto para chat.
+   * TENANT_RATE_LIMIT_PUBLIC_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â limiter por tenant expuesto para chat.
    * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
    */
   async checkTenantRateLimit(
@@ -1127,14 +1144,14 @@ export class AgentService {
     // SERVICE_RATE_LIMIT_TENANT_V1 - rate limit por tenant.
     const rl = this.tenantRateLimiter.takeForTenant(tenantIdForGuard, owner, "createTask");
     if (!rl.allowed) throw new AppError("Rate limit del tenant superado", 429);
-    // RATE_LIMIT_USER_WIRE_V1 Ã¢â‚¬â€ lÃƒÂ­mite por usuario (100 tareas/hora).
+    // RATE_LIMIT_USER_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­mite por usuario (100 tareas/hora).
     // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
     const url = this.userRateLimiter.takeForUser(owner, "createTask");
     if (!url.allowed) throw new AppError("Has creado demasiadas tareas. Espera un momento.", 429);
-    // TASK_PLANS_WIRE_V1 Ã¢â‚¬â€ planes centralizados en task-plans.ts.
+    // TASK_PLANS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â planes centralizados en task-plans.ts.
     // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
     const titles = input.kind === "sop" ? [] : planForKind(input.kind);
-    // B104 Ã¢â‚¬â€ si el caller no fija roleId, el orquestador elige uno. Criterio
+    // B104 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â si el caller no fija roleId, el orquestador elige uno. Criterio
     // explicito: si la tarea referencia un SOP, se elige el primer rol activo
     // cuyo `sops` incluya ese id. Si no hay match, no se asigna rol (comportamiento previo).
     const resolvedRoleId =
@@ -1311,7 +1328,7 @@ export class AgentService {
       const proposal = await this.db.get<ActionProposal>(owner, "actions", task.actionId);
       if (proposal?.status === "awaiting_review")
         await this.actions.decide(owner, proposal.id, proposal.hash, "deny");
-      // R8 Ã¢â‚¬â€ limpiar pending* para que un futuro resume no reabra una aprobacion
+      // R8 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â limpiar pending* para que un futuro resume no reabra una aprobacion
       // o una pregunta ya cerradas.
       const cleared = await this.db.compareAndSwap<AgentTask>(
         owner,
@@ -1381,9 +1398,9 @@ export class AgentService {
         status: "queued",
         question: null,
         input: { ...task.input, ...(fields ? { fields } : {}) },
-        // R9 Ã¢â‚¬â€ al responder, la tarea vuelve a su owner original si estaba escalada.
+        // R9 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â al responder, la tarea vuelve a su owner original si estaba escalada.
         assignedTo: owner,
-        // CLEAR_ESCALATED_ON_ANSWER Ã¢â‚¬â€ al responder, la tarea deja de estar escalada.
+        // CLEAR_ESCALATED_ON_ANSWER ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â al responder, la tarea deja de estar escalada.
         state: { ...task.state, answer, escalatedTo: undefined, escalatedAt: undefined },
         updatedAt: date(),
       },
@@ -1479,7 +1496,7 @@ export class AgentService {
     // CREATE_MONITOR_IDEMPOTENT_V1 - insertIfAbsent cierra la carrera get+put.
     // Antes, dos llamadas concurrentes con la misma idempotencyKey podian
     // crear dos monitors con el mismo id (last write wins, pero el primero
-    // quedaba huÃƒÂ©rfano en el task del segundo).
+    // quedaba huÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©rfano en el task del segundo).
     const existing = await this.db.get<Monitor>(owner, "monitors", id);
     if (existing) {
       await this.activateMonitor(owner, existing);
@@ -1567,7 +1584,7 @@ export class AgentService {
       (sentIds.has(messageId) || completedSources.has(`${kind}:${messageId}`));
     // Retire earlier suggestions as well as preventing new duplicates. A concurrent
     // acceptance wins its own compare-and-swap and is never overwritten here.
-    // BOUNDED_IDEAS Ã¢â‚¬â€ solo miramos las ideas nuevas del owner, no todas.
+    // BOUNDED_IDEAS ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â solo miramos las ideas nuevas del owner, no todas.
     const ideaPage = await this.db.listPaged<Idea>(owner, "ideas", { limit: 200 });
     for (const { data: idea } of ideaPage)
       if (idea.status === "new" && obsolete(idea.kind, idea.input.messageId))
@@ -1592,7 +1609,7 @@ export class AgentService {
         title: `I can help with ${mail.subject}`,
         reason: `${mail.sender} sent a document that may need your attention. I can prepare it and a reply for your review.`,
         evidence: [this.mailEvidence(mail)],
-        prompt: `Help complete the PDF from Ã¢â‚¬Å“${mail.subject}Ã¢â‚¬Â and prepare a reply for review.`,
+        prompt: `Help complete the PDF from ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“${mail.subject}ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â and prepare a reply for review.`,
         kind: "document",
         input: { messageId: mail.id },
         status: "new",
@@ -1612,7 +1629,7 @@ export class AgentService {
         title: `I can help coordinate ${mail.subject}`,
         reason: `${mail.sender} mentioned getting together. I can check your calendar and prepare a response for review.`,
         evidence: [this.mailEvidence(mail)],
-        prompt: `Review the email Ã¢â‚¬Å“${mail.subject}Ã¢â‚¬Â, check my calendar, and propose a next step. Ask me about missing preferences before preparing a reply.`,
+        prompt: `Review the email ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã¢â‚¬Å“${mail.subject}ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â, check my calendar, and propose a next step. Ask me about missing preferences before preparing a reply.`,
         kind: "agent",
         input: { messageId: mail.id },
         status: "new",
@@ -1885,7 +1902,7 @@ export class AgentService {
         task,
         "finance",
         "Spending tracker",
-        `${data.count} transactions Ã‚Â· ${data.spending.toFixed(2)} spent`,
+        `${data.count} transactions ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· ${data.spending.toFixed(2)} spent`,
         data,
       );
       task = await context.checkpoint({
@@ -1952,6 +1969,7 @@ export class AgentService {
     model: string | undefined,
     inputChars: number,
     outputChars: number,
+    _speed?: string,
   ) {
     const id = randomUUID();
     const inputTokens = Math.ceil(inputChars / 4);
@@ -1972,7 +1990,7 @@ export class AgentService {
     await this.db.put(owner, "llm-usage", value);
     // SERVICE_METRICS_WIRE_V1 - registrar tokens y coste por tenant.
     const metricsTenant = await this.tenantService?.tenantIdFor(owner) ?? owner;
-    // METRICS_LLM_WIRE_V1 Ã¢â‚¬â€ contadores acumulativos (no escaneo de DB).
+    // METRICS_LLM_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â contadores acumulativos (no escaneo de DB).
     globalMetrics.inc("openmuse_llm_calls_total", {
       speed: source,
       model: model ?? "unknown",
@@ -2104,7 +2122,7 @@ export class AgentService {
     const artifacts = await this.db.list<AgentArtifact>(owner, "agent-artifacts");
     const mine = artifacts.filter((a) => a.taskId === taskId);
     for (const artifact of mine) {
-      // STABLE_ARTIFACT_SOURCE Ã¢â‚¬â€ artifact.id ya es hash(taskId:key), asi que el source
+      // STABLE_ARTIFACT_SOURCE ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â artifact.id ya es hash(taskId:key), asi que el source
       // cambia al reejecutar el SOP. Usar el id del artifact solo, sin el taskId, hace
       // la ingesta idempotente entre reejecuciones.
       const sourceId = `artifact:${artifact.id}`;
@@ -2128,7 +2146,7 @@ export class AgentService {
     await context.guard();
     if (task.artifactIds.length === 0 && task.evidence.length === 0)
       throw new Error("Cannot mark a task succeeded without an artifact or evidence");
-    // MATERIALIZE_ENTITY_ON_FINISH_V1 Ã¢â‚¬â€ materializamos una entidad de negocio
+    // MATERIALIZE_ENTITY_ON_FINISH_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â materializamos una entidad de negocio
     // por cada artifact creado, para que el grafo se alimente solo.
     if (this.graph) {
       try {
@@ -2184,8 +2202,8 @@ export class AgentService {
   private async resolveSopOwner(sop: SOP): Promise<string | undefined> {
     // RESOLVE_SOP_OWNER_STATE_V1 - antes cogia el primer owner de
     // agent-settings, lo cual en multi-tenant hace que todos los SOPs se
-    // evalÃƒÂºen bajo el mismo owner (el primero que aparezca). Ahora, si el
-    // SOP lleva owner en su state (porque se provisionÃƒÂ³ con uno), se usa
+    // evalÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºen bajo el mismo owner (el primero que aparezca). Ahora, si el
+    // SOP lleva owner en su state (porque se provisionÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ con uno), se usa
     // ese. Si no, se cae al comportamiento previo para no romper single-tenant.
     const ownerFromState = (sop as unknown as { state?: { owner?: string } }).state?.owner;
     if (typeof ownerFromState === "string" && ownerFromState.length > 0) {
@@ -2272,8 +2290,8 @@ export class AgentService {
     // tenant-membership, que tiene una fila por tenant y es O(tenants).
     const set = new Set<string>();
     try {
-      // COLLECT_TENANTS_PREFIX_V1 Ã¢â‚¬â€ usa scanByOwnerPrefix si el store lo
-      // soporta. En TenantScopedStore, el scan peela el prefijo, asÃƒÂ­ que
+      // COLLECT_TENANTS_PREFIX_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â usa scanByOwnerPrefix si el store lo
+      // soporta. En TenantScopedStore, el scan peela el prefijo, asÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­ que
       // el owner que devuelve ya es el tenantId limpio.
       // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
       const tenantScoped = this.db as unknown as {
@@ -2328,7 +2346,7 @@ export class AgentService {
         await this.notify(
           targetOwner,
           "Muchas tareas fallidas",
-          `${recentFailed.length} tareas fallidas en tu tenant en la ÃƒÂºltima hora.`,
+          `${recentFailed.length} tareas fallidas en tu tenant en la ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºltima hora.`,
           undefined,
           `alert-failed:${tenantId}:${targetOwner}:${Math.floor(now / 3600000)}`,
         ).catch(() => {});
@@ -2338,7 +2356,7 @@ export class AgentService {
 
   // MAINTAIN_TENANT_REAL_V1 - resuelve owners del tenant y pagina por cada uno.
   private async maintainTenant(tenantId: string): Promise<void> {
-    // MAINTAIN_TENANT_PREFIX_V1 Ã¢â‚¬â€ usa scanByPrefix si el store lo tiene.
+    // MAINTAIN_TENANT_PREFIX_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â usa scanByPrefix si el store lo tiene.
     // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
     const owners: string[] = [];
     const withPrefix = this.db as unknown as {

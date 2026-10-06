@@ -1,4 +1,8 @@
 // C3_DEFERRED_ACTIONS_V1 - undo en servidor. CAS para cancelar y para ejecutar.
+// STORE_DEFERRED_IMPORT_V1 - import para StoreDeferredStore.
+import type { Store } from "./db.ts";
+import type { TenantScopedStore } from "./db-tenant.ts";
+
 export type DeferredStatus =
   | "collecting"
   | "scheduled"
@@ -12,6 +16,7 @@ export interface DeferredRecord {
   owner: string;
   amount?: number;
   signers: string[];
+  needed: number;
   executeAt: number | null;
   status: DeferredStatus;
 }
@@ -46,6 +51,11 @@ export class DeferredActions {
     return d != null && amount != null && amount >= d ? 2 : 1;
   }
 
+  // DEFERRED_GET_V1 - wrapper para consultar el registro sin modificarlo.
+  async get(actionId: string): Promise<DeferredRecord | undefined> {
+    return this.store.get(actionId);
+  }
+
   async decide(owner: string, actionId: string, userId: string, amount?: number) {
     const r: DeferredRecord =
       (await this.store.get(actionId)) ?? {
@@ -53,6 +63,7 @@ export class DeferredActions {
         owner,
         amount,
         signers: [],
+        needed: this.needed(amount),
         executeAt: null,
         status: "collecting",
       };
@@ -95,6 +106,65 @@ export class DeferredActions {
         this.emit("action.failed", { actionId: r.actionId, error: String(e) });
       }
     }
+  }
+}
+
+// STORE_DEFERRED_STORE_V1 - store persistente sobre records.
+export class StoreDeferredStore implements DeferredStore {
+  constructor(private readonly db: Store | TenantScopedStore) {}
+
+  async get(actionId: string): Promise<DeferredRecord | undefined> {
+    const row = await this.db.get<DeferredRecord & { id: string }>(
+      "system",
+      "deferred-actions",
+      actionId,
+    );
+    return row ?? undefined;
+  }
+
+  async put(r: DeferredRecord): Promise<void> {
+    await this.db.put("system", "deferred-actions", { id: r.actionId, ...r });
+  }
+
+  async due(now: number): Promise<DeferredRecord[]> {
+    const all = await this.db.list<DeferredRecord & { id: string }>(
+      "system",
+      "deferred-actions",
+    );
+    return all.filter(
+      (r) => r.status === "scheduled" && (r.executeAt ?? Infinity) <= now,
+    );
+  }
+
+  async claim(actionId: string): Promise<boolean> {
+    const r = await this.get(actionId);
+    if (r?.status !== "scheduled") return false;
+    const updated = await this.db.compareAndSwap<DeferredRecord & { id: string }>(
+      "system",
+      "deferred-actions",
+      actionId,
+      { status: "scheduled" },
+      { status: "running" },
+    );
+    return updated !== null;
+  }
+
+  async cancelIfOpen(actionId: string): Promise<boolean> {
+    const r = await this.get(actionId);
+    if (!r || (r.status !== "scheduled" && r.status !== "collecting")) return false;
+    const updated = await this.db.compareAndSwap<DeferredRecord & { id: string }>(
+      "system",
+      "deferred-actions",
+      actionId,
+      { status: r.status },
+      { status: "cancelled" },
+    );
+    return updated !== null;
+  }
+
+  /** STORE_DEFERRED_PURGE_V1 - purga terminales antiguos. */
+  async purgeOlderThan(days: number): Promise<number> {
+    return this.db.purgeOlderThan("deferred-actions", days);
   }
 }
 
