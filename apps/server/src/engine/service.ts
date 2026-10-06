@@ -776,7 +776,14 @@ export class AgentService {
             progress: progressEvents,
             now: now.toISOString(),
           });
-          const meaningful = hints.filter((h) => h.rule !== "nothing_to_report");
+          // META_HINT_CONSUMED_WIRE_V1 - filtra los hints que ya se emitieron.
+          const fresh = hints.filter((h) => {
+            const id = `${turn.id}:${h.rule}:${h.message.slice(0, 80)}`;
+            if (meta["seenHints"] && meta["seenHints"].has(id)) return false;
+            meta.consumeHint(id);
+            return true;
+          });
+          const meaningful = fresh.filter((h) => h.rule !== "nothing_to_report");
           if (meaningful.length === 0) continue;
           // META_LOOP_NO_BUS_NOISE_FIX_V1 - antes se emitia system.maintenance
           // con payload {tasks:0, monitors:0} y se descartaba el hint con
