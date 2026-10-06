@@ -9,7 +9,7 @@ export function notificationsStreamRoutes(service: AgentService) {
 
   app.get("/stream", async (c) => {
     const owner = c.get("owner");
-    // NOTIF_USER_FILTER_V1 — filtrar por userId para no emitir notificaciones
+    // NOTIF_USER_FILTER_V1 â€” filtrar por userId para no emitir notificaciones
     // dirigidas a otro usuario. Ver: docs/audits/04-.../miniaudit.md.
     const userId = c.req.header("x-user-id") ?? owner;
     c.header("Content-Type", "text/event-stream");
@@ -36,7 +36,7 @@ export function notificationsStreamRoutes(service: AgentService) {
                 { limit: 50 },
               );
             for (const item of items) {
-              // NOTIF_USER_FILTER_V1 — solo si es del usuario o general.
+              // NOTIF_USER_FILTER_V1 â€” solo si es del usuario o general.
               if (item.assignedTo && item.assignedTo !== userId) continue;
               if (lastSeen.has(item.id)) continue;
               lastSeen.add(item.id);

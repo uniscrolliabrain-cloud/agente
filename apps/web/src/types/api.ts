@@ -95,6 +95,7 @@ export interface ActionProposal {
   connectionId?: string;
   status:
     | "awaiting_review"
+    | "scheduled"
     | "executing"
     | "succeeded"
     | "failed"
@@ -102,6 +103,11 @@ export interface ActionProposal {
     | "denied"
     | "cancelled"
     | "expired";
+  // DUAL_SIGN_UI_V1 — doble firma y ventana de undo (espejo de ActionProposal
+  // en packages/domain/src/index.ts). Mantener sincronizado con ese contrato.
+  signers?: string[];
+  needed?: number;
+  executeAt?: string | null;
   hash: string;
   createdAt: string;
   expiresAt: string;

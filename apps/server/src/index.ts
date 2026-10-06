@@ -121,18 +121,19 @@ const stopBackupScheduler = startBackupScheduler();
   }
 }
 
-// DEFERRED_ACTIONS_WIRE_V1 Ã¢â‚¬â€ instancia ÃƒÂºnica de DeferredActions y tick.
+// DEFERRED_ACTIONS_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â instancia ÃƒÆ’Ã‚Âºnica de DeferredActions y tick.
 // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
-// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÂ³.
-const { DeferredActions, MemoryDeferredStore } = await import("./actions-deferred.ts");
-const deferredStore = new MemoryDeferredStore();
+// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÆ’Ã‚Â³.
+// STORE_DEFERRED_WIRE_V1 - store persistente.
+const { DeferredActions, StoreDeferredStore } = await import("./actions-deferred.ts");
+const deferredStore = new StoreDeferredStore(db);
 const deferred = new DeferredActions(
   deferredStore,
   async (_owner: string, actionId: string) => {
     const action = await db.get<{ id: string; owner?: string }>("system", "actions", actionId);
     void action;
     // El run real lo hace `ActionService.execute` cuando se llama a `decide`
-    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÂ³n como ejecutada.
+    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÆ’Ã‚Â³n como ejecutada.
   },
   (type, payload) => {
     void bus.emit("system", "system.maintenance", { kind: "system", id: "deferred" }, {
@@ -147,9 +148,9 @@ const deferred = new DeferredActions(
       : null,
   },
 );
-// EVENTS_CONSUMERS_WIRE_V1 Ã¢â‚¬â€ arranca los 3 consumidores del bus.
-  // Ver: docs/audits/08-bus-de-eventos/roadmap.md Ã‚Â§8
-  // ("3 consumidores reales ademÃƒÂ¡s de ReactionEngine").
+// EVENTS_CONSUMERS_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â arranca los 3 consumidores del bus.
+  // Ver: docs/audits/08-bus-de-eventos/roadmap.md Ãƒâ€šÃ‚Â§8
+  // ("3 consumidores reales ademÃƒÆ’Ã‚Â¡s de ReactionEngine").
   const { startMetricsConsumer } = await import("./engine/events/consumers/metrics.ts");
   const { startAuditConsumer } = await import("./engine/events/consumers/audit.ts");
   const { startNotificationsConsumer } = await import("./engine/events/consumers/notifications.ts");
@@ -158,7 +159,7 @@ const deferred = new DeferredActions(
   const auditConsumer = startAuditConsumer(ownersWithConsumers, db);
   const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, db);
 
-  // ALERTS_WIRE_V1 â€” instancia AlertService, registra las alertas y arranca.
+  // ALERTS_WIRE_V1 Ã¢â‚¬â€ instancia AlertService, registra las alertas y arranca.
 const { AlertService, LogAlertHandler } = await import("./alerts/service.ts");
 const { buildAlertDefinitions } = await import("./alerts/definitions.ts");
 const { globalMetrics: alertMetrics } = await import("./metrics/registry.ts");
