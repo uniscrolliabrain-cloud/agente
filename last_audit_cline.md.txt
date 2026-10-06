@@ -1,0 +1,86 @@
+# Sección 1: estado del repo (typecheck, tests, git)
+
+- Rama: `main`. Evidencia real (salida de `git log --oneline` capturada en terminal):
+  - `d0331ef (HEAD -> main, origin/main, origin/HEAD) chore(audits): bloque 08 bus de eventos aplicado`
+  - `f728b6e chore: gitignore para temporales de auditoria`
+  - `88e6f2d (fix/bloque-04-10) chore: batch 00-08 + typecheck verde`
+  - `d6436e1 (origin/fix/bloque-04-10) chore(audits): bloques 04 y 05 aplicados + doc de pendientes`
+  - `33cb139 chore(audits): bloques 00 + 02 + 03 aplicados`
+- `git status --short`: aparentemente limpio (en la primera ejecución no apareció ninguna línea antes de `---BRANCH---`). No verificado al 100%: la integración shell de este entorno no devuelve salida observable (`Command completion could not be observed`) y el conteo con `Measure-Object` no se capturó.
+- `pnpm typecheck`: **no verificado**. Motivo: la redirección a fichero (`> "$env:TEMP\tc.txt"`) está bloqueada en Plan Mode (`file modifications are blocked in plan mode`), y la ejecución directa sin redirigir excede la captura de la shell. Último estado conocido: verde según tu patchset, sin evidencia fresca por mi parte.
+- `pnpm test` (resumen pasa/fallan, ficheros que fallan, o "colgado"): **no verificado** por el mismo motivo. No ejecutado.
+- Conclusión de la sección: el repo está en `main @ d0331ef` con worktree aparentemente limpio; typecheck y tests quedan como **no verificados** en esta pasada por restricciones de Plan Mode + shell sin captura.
+
+# Sección 2: problemas residuales (listas por categoría)
+
+## 2.1. `docs/audits/_pendientes.md` — no verificado
+- Intenté `Get-Content 'C:\Users\Alfonso\Desktop\git hub repos\agente\docs\audits\_pendientes.md'` por shell. La salida no se capturó (`Command completion could not be observed`). No listo su contenido: **no verificado**. No invento la lista.
+
+## 2.2. TODOs / FIXMEs / `@ts-ignore` / `@ts-expect-error` / `as any` / `as unknown as` — parcialmente verificado
+Verificado por lectura directa previa (fragmentos literales):
+
+- `apps/server/src/kernel/observers/presenter.ts:110`:
+  - `const store = (this.deps.kernel as unknown as { deps?: { store?: unknown } }).deps?.store as`
+- `apps/server/src/kernel/observers/presenter.ts:116-118`:
+  - `const tenantId = await (`
+  - `this.deps.kernel as unknown as { deps: { tenants: { resolve: (owner: string) => Promise<string> } } }`
+  - `).deps.tenants.resolve(ctx.owner);`
+- Marcadores de patchset (no son TODO/FIXME, son anclas `_V1`; los listo porque es lo único verificable por lectura y facilitan re-grep cuando tengas Act):
+  - `apps/server/src/threads-routes.ts:7`: `import { globalEditLock } from "./engine/edit-lock.ts"; // TYPE_FIX_EDIT_LOCK_IMPORT_V1`
+  - `apps/server/src/engine/tenant.ts:62`: `// TENANT_CACHE_FALLBACK_V1 - cachear el fallback.`
+  - `apps/server/src/kernel/authors/fast-author.ts:78`: `query: input.response.slice(0, 500) || "respond", // FAST_AUTHOR_QUERY_V1`
+  - `tests/crash-recovery.test.ts:60`: `// CRASH_RECOVERY_PORTABLE_SPAWN_V1 - usa el mismo Node del test.`
+  - `tests/alerts.test.ts:90`: `]); // ALERTS_TEST_8_IDS_V1`
+  - `.github/workflows/ci.yml:68`: `# CI_RELEASE_GATE_V1 - gate adicional antes de release.`
+- Barrido completo de `TODO|FIXME|@ts-ignore|@ts-expect-error|as any` en `apps/server/src` y `apps/web/src`: **no verificado**. Motivos: (a) `search_codebase` indexa otro workspace (`Searched 993 files` sin resultados para patrones que sí existen en el repo); (b) `Select-String` por shell no devuelve captura observable en este entorno.
+
+## 2.3. `catch {}` vacíos o `catch (e) {}` sin usar `e` — no verificado
+- No pude ejecutar `Select-String -Pattern 'catch'` con captura observable. **No verificado.**
+
+## 2.4. `console.log` directo en `apps/server/src` (fuera de `log.ts`) — no verificado
+- Mismo bloqueo de captura shell. **No verificado.**
+
+## 2.5. Rutas HTTP sin cliente web (`*-routes.ts` vs `apps/web/src/api/**`) — no verificado
+- No pude cruzar `app.get/post/put/delete` con `apiFetch` por shell con salida observable. **No verificado.** Indicio previo (no concluyente): `apps/server/src/threads-routes.ts:17` expone `threadRoutes()` con `app.get(...)` y `PUT /:id` usando `globalEditLock`; el cruce contra `apps/web/src/api/` queda pendiente de un grep con captura.
+
+# Sección 3: audits propuestos (4, con justificación y archivos)
+
+## A1. Bloque 05 — motor de tareas durable
+- Por qué: tu patchset tocó `tenant.ts` (fallback cacheado), `fast-author.ts` y el spawn de `crash-recovery.test.ts:60-61`; el batch 00-08 tocó `service.ts`/`worker`. El worker es el punto donde typecheck, tests y arranque se cruzan.
+- Archivos a leer (por shell, `Get-Content`):
+  - `apps/server/src/engine/service.ts`
+  - `apps/server/src/engine/worker.ts`
+  - `apps/server/src/worker-entry.ts`
+  - `apps/server/src/engine/tenant.ts:50-65`
+  - `tests/crash-recovery.test.ts:57-70`
+- Tests a correr (solo lectura/ejecución, sin editar):
+  - `tests/crash-recovery.test.ts`, `tests/worker-concurrency.test.ts`, `tests/worker-metrics.test.ts`, `tests/tasks-reassign.test.ts`
+
+## A2. Bloque 07 — aislamiento multi-tenant
+- Por qué: el Fix 3 (`tenant.ts:62-64`) cambia la semántica de cacheo del fallback a `"default"`; el hit de cache devuelve `source: "database"` (`tenant.ts:53`) aunque el origen real sea el fallback. Riesgo de falso positivo en auditoría por `source` y de regresión en `cacheSize`.
+- Archivos a leer:
+  - `apps/server/src/engine/tenant.ts:1-107`
+  - `apps/server/src/db-tenant.ts`
+  - `tests/tenant-cache.test.ts:23-48`
+- Tests a correr:
+  - `tests/tenant-cache.test.ts`, `tests/tenant-isolation.test.ts`, `tests/tenant-isolation-extended.test.ts`, `tests/tenant-migration.test.ts`
+
+## A3. Bloque 08 — bus de eventos
+- Por qué: el Fix 2 añadió 5 entradas a `minimalPayload` (`tests/event-bus.test.ts:68-79` según shell) contra `schemas.ts:52-70,159-171`; hay que confirmar que los schemas estrictos (`Record<SystemEventType, ...>` en `schemas.ts:24`) y el test 3 (todo tipo aparece en un `bus.emit`) siguen alineados con `types.ts:29-49`.
+- Archivos a leer:
+  - `apps/server/src/engine/events/types.ts:1-50`
+  - `apps/server/src/engine/events/schemas.ts:24-71,158-171`
+  - `tests/event-bus.test.ts:13-102`
+- Tests a correr:
+  - `tests/event-bus.test.ts`, `tests/event-bus-dedupe.test.ts`, `tests/events-sse.test.ts`
+
+## A4. Bloques 09 + 02 — kernel-presenter y alertas (combinado por dependencia test-código)
+- Por qué: el Fix 4 (`fast-author.ts:78`) cambia el `query` que valida `thought.ts:112` (`query: min(1).max(500)`) vía `kernel.ts:133`; y el Fix 1 (`alerts.test.ts:79-90`) fija 8 ids contra `definitions.ts:28-94`. Ambos son casos test-correcto-vs-código-roto ya confirmados, con riesgo de regresión si el schema o las definiciones vuelven a moverse.
+- Archivos a leer:
+  - `apps/server/src/kernel/authors/fast-author.ts:68-90`
+  - `apps/server/src/kernel/graph/thought.ts` (línea de `query:` del `attentionVectorSchema`)
+  - `apps/server/src/kernel/kernel.ts:120-152`
+  - `apps/server/src/alerts/definitions.ts:28-95`
+  - `tests/alerts.test.ts:62-91`
+- Tests a correr:
+  - `tests/kernel-presenter.test.ts`, `tests/kernel-rules-attention.test.ts`, `tests/kernel-consolidate.test.ts`, `tests/alerts.test.ts`

@@ -81,12 +81,7 @@ export const RULES: readonly PromotionRule[] = [
     description: "Se descarta si el contenido esta vacio.",
     matches: (t) => !hasContent(t),
   },
-  {
-    id: "discard_reasoning_noise",
-    description:
-      "Se descarta si el rol es reasoning y no tiene matched (razonamiento sin anclaje a datos).",
-    matches: (t) => t.role === "reasoning" && t.attention.matched.length === 0,
-  },
+
   // RULES_ATTENTION_V1 — regla de promoción basada en atención.
   // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md ("Rules.ts sin atención"),
   // roadmap §8 ("Rules.classify con isFocusedOn").
@@ -97,6 +92,13 @@ export const RULES: readonly PromotionRule[] = [
     matches: (t) =>
       hasContent(t) &&
       topMatched(t.attention, 1).some((m) => isFocusedOn(t.attention, m.node, 0.7)),
+  },
+  // RULES_ATTENTION_ORDER_V1 - discard_reasoning_noise movido DESPUES de survive_high_attention_focus.
+  {
+    id: "discard_reasoning_noise",
+    description:
+      "Se descarta si el rol es reasoning y no tiene matched (razonamiento sin anclaje a datos).",
+    matches: (t) => t.role === "reasoning" && t.attention.matched.length === 0,
   },
 ];
 

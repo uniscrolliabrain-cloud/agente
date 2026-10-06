@@ -70,7 +70,10 @@ export class SlowAuthor {
         primary: "reasoning",
         secondary: [],
         query: "",
-        matched: (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} })),
+        // SLOW_AUTHOR_ATTENTION_V1
+        matched: (input.matched ?? []).length > 0
+          ? (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} }))
+          : [{ node: "reasoning", weight: 0.6, reason: "slow reasoning", metadata: {} }],
         ignored: (input.ignored ?? []).map((i) => ({ ...i, metadata: i.metadata ?? {} })),
         intent: input.intent ?? "reason",
         confidence: input.confidence ?? 0.8,
@@ -110,7 +113,10 @@ export class SlowAuthor {
         primary: "delegation",
         secondary: [],
         query: "",
-        matched: (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} })),
+        // SLOW_AUTHOR_DELEGATION_ATTENTION_V1
+        matched: (input.matched ?? []).length > 0
+          ? (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} }))
+          : [{ node: "delegation", weight: 0.5, reason: "slow delegation", metadata: {} }],
         ignored: (input.ignored ?? []).map((i) => ({ ...i, metadata: i.metadata ?? {} })),
         intent: input.intent ?? "delegate",
         confidence: input.confidence ?? 0.8,

@@ -41,7 +41,11 @@ export class UserAuthor {
         primary: ctx.owner,
         secondary: [],
         query: input.message.slice(0, 500),
-        matched: [],
+        // USER_AUTHOR_ATTENTION_V1 - matched real con thread y user.
+        matched: [
+          ...(input.threadId ? [{ node: `thread:${input.threadId}`, weight: 0.9, reason: "user in thread", metadata: {} }] : []),
+          { node: `user:${ctx.owner}`, weight: 0.7, reason: "user identity", metadata: {} },
+        ],
         ignored: [],
         intent: "user.message",
         confidence: 1,
