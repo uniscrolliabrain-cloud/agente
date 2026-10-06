@@ -545,6 +545,14 @@ await service.recordUsage(owner, "task", config.model, promptChars, text.length,
       await service.kernel.closeTurn(kernelCtx, kernelTurnId, "promotion", "system");
       const { Promoter } = await import("../kernel/index.ts");
       await new Promoter({ kernel: service.kernel }).promote(kernelCtx, kernelTurnId);
+      // MODEL_OPEN_CHILD_TURN_V1 - si el slow termina tras cerrar el padre,
+      // abrimos un turno hijo para que el resultado quede registrado.
+      const parent = await service.kernel.deps.store.getTurn(kernelCtx.tenantId, kernelTurnId).catch(() => undefined);
+      if (parent && parent.status === "closed") {
+        await service.kernel
+          .openChildTurn(kernelCtx, kernelTurnId, `slow.done:${initial.id}`)
+          .catch(() => {});
+      }
     } catch {
       // KERNEL_NONFATAL_V1 — el kernel no puede romper la tarea.
     }

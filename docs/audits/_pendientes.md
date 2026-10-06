@@ -113,3 +113,47 @@
 - Motivo: mejora nueva, no es del miniaudit.
 - Fix: `setInterval` que re-consulta la acción y actualiza estado si el hash cambió.
 - Estado: pendiente
+## Tanda 1 Fase 2 - MISS 2026-10-06 18:57
+
+- F2-01-01 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-02 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-03 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-04 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-05 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-06 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-07 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-08 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-09 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-11 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-12 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-13 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-15 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-17 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-18 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-19 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-04-01 : MISS anchor en apps\server\src\engine\service.ts
+
+## 09z Fase 3 - cierre (2026-10-07)
+
+### Aplicados
+- **Pipeline 1**: attention Zod, lifecycle, snapshot, health-deep.
+- **Pipeline 2**: meta consumeHint, rules order, child turn.
+- **Pipeline 3**: atencion real autores, presenter compose, views sin as any.
+- **Pipeline 4**: consolidate O(n2) cap, views paged, getTurn cache.
+- **Pipeline 5**: TenantScopedCapabilityRegistry wireado en service.ts.
+
+### Pendientes (bloque 01 - tests)
+- `packages/domain/test/ontology.test.ts` (slug, colision, bundle congelado).
+- Test SSE que verifica que el Presenter decide el texto.
+- Test `closeTurnAndChildren` con arbol profundo (N10).
+- `kernel-meta-context.test.ts` con import en vez de require (N11).
+- `kernel-presenter.test.ts` verifica persistencia (N12).
+
+### Pendientes (bloque 19 - backups)
+- `StoreAuditStore.verify` paginado con cursor keyset. Hoy fail-honest:
+  devuelve `false` si el list llega a `KERNEL_AUDIT_MAX_LIST` (10.000).
+
+## 09z Fase 3 - Pipeline 6 (2026-10-07)
+
+- slow-author.ts: atencion real en reasoning y delegation (SLOW_AUTHOR_ATTENTION_V1 + SLOW_AUTHOR_DELEGATION_ATTENTION_V1).
+

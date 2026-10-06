@@ -154,6 +154,34 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
     }
   });
 
+  // KERNEL_SNAPSHOT_ROUTES_V1 - export e import de snapshots (admin).
+  // GET /api/kernel/snapshot/export
+  app.get("/snapshot/export", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const ctx = ctxFor(owner, `kernel-routes:snapshot-export:${Date.now()}`);
+    try {
+      const { exportKernelSnapshot } = await import("./kernel/snapshot.ts");
+      const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
+      const snap = await exportKernelSnapshot(kernel, tenantId);
+      return c.json(snap);
+    } catch (error) {
+      throw new AppError(error instanceof Error ? error.message : "snapshot export failed", 500);
+    }
+  });
+  // POST /api/kernel/snapshot/import
+  app.post("/snapshot/import", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    try {
+      const body = await c.req.json();
+      const { importKernelSnapshot } = await import("./kernel/snapshot.ts");
+      const result = await importKernelSnapshot(kernel, body);
+      return c.json(result);
+    } catch (error) {
+      throw new AppError(error instanceof Error ? error.message : "snapshot import failed", 500);
+    }
+  });
   // GET /api/kernel/audit/verify
   app.get("/audit/verify", async (c) => {
     const owner = c.get("owner");

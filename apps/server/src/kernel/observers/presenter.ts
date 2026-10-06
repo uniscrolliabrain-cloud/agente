@@ -150,4 +150,29 @@ export class Presenter {
       reason,
     };
   }
+
+  /**
+   * PRESENTER_COMPOSE_V1 - compone primary + secondary.
+   */
+  composeFromThoughts(turnId: string, thoughts: Thought[], max = 3): {
+    primary: Presentation;
+    secondary: Presentation[];
+  } | undefined {
+    if (thoughts.length === 0) return undefined;
+    const scored = [...thoughts].sort((a, b) => score(b) - score(a)).slice(0, max);
+    const [first, ...rest] = scored;
+    if (!first) return undefined;
+    const toPresentation = (thought: Thought, reason: string): Presentation => ({
+      turnId,
+      thoughtId: thought.id,
+      role: thought.role,
+      content: thought.content,
+      actor: thought.actor,
+      reason,
+    });
+    return {
+      primary: toPresentation(first, `primary (role=${first.role})`),
+      secondary: rest.map((t) => toPresentation(t, `secondary (role=${t.role})`)),
+    };
+  }
 }

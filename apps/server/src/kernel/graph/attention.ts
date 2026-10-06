@@ -4,7 +4,7 @@
 // validado por Zod y devuelven numeros o agregados. La logica de "que
 // significa" vive en los autores y el presenter.
 
-import type { AttentionVector, IgnoredNode, MatchedNode } from "./thought.ts";
+import { attentionVectorSchema, type AttentionVector, type IgnoredNode, type MatchedNode } from "./thought.ts";
 
 export function topMatched(vector: AttentionVector, n = 3): MatchedNode[] {
   return vector.matched.slice().sort((a, b) => b.weight - a.weight).slice(0, n);
@@ -92,6 +92,7 @@ export function toMetadata(vector: AttentionVector): AttentionMetadata {
 export function fromMetadata(input: unknown): AttentionVector | undefined {
   if (!input || typeof input !== "object") return undefined;
   const payload = (input as { attention?: unknown }).attention ?? input;
-  // Import dinamico del schema para evitar ciclo de importacion.
-  return payload as AttentionVector;
+  // ATTENTION_FROM_METADATA_VALIDATE_V1 - validacion Zod real, no cast ciego.
+  const parsed = attentionVectorSchema.safeParse(payload);
+  return parsed.success ? parsed.data : undefined;
 }
