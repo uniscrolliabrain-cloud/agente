@@ -82,7 +82,7 @@ import { RateLimiter } from "../rate-limit.ts";
 import { planForKind } from "./task-plans.ts";
 import { globalMetrics } from "../metrics/registry.ts";
 // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
-import { CapabilityRegistry } from "./capabilities/registry.ts";
+import { CapabilityRegistry, TenantScopedCapabilityRegistry, type CapabilityBundleResolver } from "./capabilities/registry.ts";
 import { bootstrapCapabilities } from "./capabilities/bootstrap.ts";
 // PLANNER_V1 - genera planes.
 import { StubPlanner } from "./planner/planner.ts";
@@ -177,6 +177,10 @@ export class AgentService {
   private readonly userRateLimiter = new RateLimiter(100, 60 * 60 * 1000);
   // CAPABILITY_REGISTRY_V1 - capacidades del sistema.
   readonly capabilities: CapabilityRegistry;
+  // TENANT_SCOPED_CAPABILITY_WIRE_V1 - registry por tenant con cache TTL.
+  // El resolver lee del CapabilityRegistry global (bootstrap) y devuelve
+  // el mismo bundle para cualquier tenant hasta que haya bundles por tenant.
+  readonly tenantCapabilities: TenantScopedCapabilityRegistry;
   // PLANNER_V1 - genera planes.
   // PLANNER_VERIFIER_TYPES_FIX_V1 - antes eran StubPlanner/DeterministicVerifier
   // con cast, pero la instancia real es LlmPlanner/LlmVerifier. Declaramos la
@@ -234,6 +238,15 @@ export class AgentService {
     this.feedback = new FeedbackCollector(db);
     this.capabilities = new CapabilityRegistry();
     bootstrapCapabilities(this.capabilities);
+    // TENANT_SCOPED_CAPABILITY_WIRE_V1
+    const globalCapabilities = this.capabilities;
+    const bundleResolver: CapabilityBundleResolver = {
+      resolve: async (_tenantId: string) => ({
+        capabilities: await globalCapabilities.list(),
+        version: 1,
+      }),
+    };
+    this.tenantCapabilities = new TenantScopedCapabilityRegistry(bundleResolver);
     // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
     // PLANNER_VERIFIER_TYPES_FIX_V1 - sin cast. Los tipos declarados ya son
     // las interfaces, asi que las instancias concretas encajan sin `as unknown as`.
