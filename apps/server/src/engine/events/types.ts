@@ -30,7 +30,7 @@ export const SYSTEM_EVENT_TYPES = [
   "action.cancelled",
   // D2_VIEW_RESOLVED_V1 - el agente sirve una vista.
   "view.resolved",
-  // EVENTS_V2 — business graph, policy, state machine, agent runtime, context.
+  // EVENTS_V2 â€” business graph, policy, state machine, agent runtime, context.
   "entity.created",
   "entity.updated",
   "entity.deleted",
@@ -76,6 +76,8 @@ export interface EventFilter {
   limit?: number;
   sourceId?: string;
   projectId?: string;
+  // EVENTS_SINCE_ID_V1 - polling incremental.
+  sinceId?: string;
 }
 
 export interface EventAggregate {

@@ -3,6 +3,12 @@ import type { Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
 import { backgroundFailure } from "../../log.ts";
 import { payloadSchemas } from "./schemas.ts";
+// EVENTBUS_SCHEMA_REGISTRY_V1 - registry consultable.
+import { SchemaRegistry } from "./schema-registry.ts";
+export const globalSchemaRegistry = new SchemaRegistry();
+for (const [t, s] of Object.entries(payloadSchemas)) {
+  try { globalSchemaRegistry.register({ type: t as SystemEventType, version: "1.0", schema: s }); } catch { /* ya registrado */ }
+}
 import { StoreQuery, StoreSink } from "./sinks/store.ts";
 import type {
   EventAggregate,
@@ -18,8 +24,10 @@ import { globalSubscribers } from "./subscriber.ts";
 
 const KIND = "system-events";
 const DEDUPE_KIND = "dedupe-state";
-const DEDUPE_TTL_MS = 60_000;
-const DEDUPE_MAX_ENTRIES = 64;
+// EVENTBUS_DEDUPE_TTL_V1 - TTL configurable.
+const DEDUPE_TTL_MS = Number(process.env.EVENTBUS_DEDUPE_TTL_MS ?? "60000") || 60_000;
+// EVENTBUS_DEDUPE_LRU_V1 - LRU configurable.
+const DEDUPE_MAX_ENTRIES = Number(process.env.EVENTBUS_DEDUPE_LRU ?? "64") || 64;
 
 export interface EmitOptions {
   correlationId?: string;
@@ -78,6 +86,10 @@ export class EventBus {
       if (options.dedupeKey !== undefined) {
         if (await this.isDuplicate(owner, options.dedupeKey)) return;
       }
+      // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
+      const logCtx = (await import("../../log.ts")).logContext.getStore();
+      const finalCorrelationId = options.correlationId ?? logCtx?.correlationId;
+      const finalCausationId = options.causationId;
       const event: SystemEvent<T> = {
         id: ulid(),
         schemaVersion: "1.0",
@@ -86,12 +98,12 @@ export class EventBus {
         type,
         emittedAt: new Date().toISOString(),
         source,
-        ...(options.correlationId ? { correlationId: options.correlationId } : {}),
-        ...(options.causationId ? { causationId: options.causationId } : {}),
+        ...(finalCorrelationId ? { correlationId: finalCorrelationId } : {}),
+        ...(finalCausationId ? { causationId: finalCausationId } : {}),
         payload: parsed,
       };
       await this.sink.write(event);
-      // EVENTS_BUS_PUBLISH_V1 — publicar a subscribers en vivo (SSE, métricas).
+      // EVENTS_BUS_PUBLISH_V1 â€” publicar a subscribers en vivo (SSE, mÃ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
       globalSubscribers.publish(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
@@ -121,6 +133,10 @@ export class EventBus {
         }
       }
     } catch (error) {
+      // EVENTBUS_ERROR_METRIC_V1 - contador de errores.
+      import("../../metrics/registry.ts")
+        .then(({ globalMetrics }) => { globalMetrics.inc("event_bus_errors_total", { type }); })
+        .catch(() => {});
       backgroundFailure(`event emit ${type}`, error);
     }
   }
@@ -139,7 +155,7 @@ export class EventBus {
 
   private async isDuplicate(owner: string, key: string): Promise<boolean> {
     const now = Date.now();
-    // DEDUPE_DB_FIRST — consultamos la DB ANTES que el Map en memoria para que
+    // DEDUPE_DB_FIRST â€” consultamos la DB ANTES que el Map en memoria para que
     // multiples procesos compartan el dedupe. El Map es solo cache de lectura.
     const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
     if (state) {

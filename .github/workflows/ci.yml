@@ -40,6 +40,17 @@ jobs:
       - working-directory: apps/worker
         run: npm run typecheck
 
+  web:
+    name: web (typecheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - run: pnpm --filter @openmuse/web exec tsc --noEmit
   integration:
     name: integration (network + Docker, main only)
     if: github.ref == 'refs/heads/main'
