@@ -24,8 +24,14 @@
        return { scope, turnId, thoughts, metadata: { tenantId, count: thoughts.length } };
      }
      if (scope === "tenant.turns") {
-       const list = await (this.deps.kernel.deps.store as any).listTurns?.(tenantId, ctx.owner)?? [];
-       return { scope, metadata: { tenantId, turns: list.length }, summary: `${list.length} turns` } as any;
+       // VIEWS_TENANT_TURNS_FIX_V1 - sin as any, con paginacion.
+       const store = this.deps.kernel.deps.store as {
+         listTurns?: (tenantId: string, limit: number) => Promise<Turn[]>;
+       };
+       const list = typeof store.listTurns === "function"
+         ? await store.listTurns(tenantId, 100).catch(() => [] as Turn[])
+         : ([] as Turn[]);
+       return { scope, metadata: { tenantId, turns: list.length }, summary: `${list.length} turns` };
      }
      return { scope, turnId, metadata: { tenantId, empty: true } };
    }
