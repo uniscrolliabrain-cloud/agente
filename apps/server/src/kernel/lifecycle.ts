@@ -63,7 +63,7 @@ export async function checkKernelHealth(kernel: Kernel): Promise<KernelLifecycle
     try {
       auditChainValid = await kernel.deps.audit.verify("health").catch(() => false);
       if (!auditChainValid) notes.push("audit chain no verificable en tenant health (esperado)");
-      auditChainValid = true; // health tenant vacío, OK
+      // P1.2 - auditChainValid refleja el resultado real de verify().
     } catch (error) {
       notes.push(`audit: ${error instanceof Error ? error.message : "unknown"}`);
     }
