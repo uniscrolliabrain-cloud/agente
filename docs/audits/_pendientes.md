@@ -113,3 +113,22 @@
 - Motivo: mejora nueva, no es del miniaudit.
 - Fix: `setInterval` que re-consulta la acción y actualiza estado si el hash cambió.
 - Estado: pendiente
+## Tanda 1 Fase 2 - MISS 2026-10-06 18:57
+
+- F2-01-01 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-02 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-03 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-04 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-05 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-06 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-07 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-08 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-09 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-11 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-12 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-13 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-15 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-17 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-18 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-01-19 : MISS anchor en apps\server\src\engine\capabilities\bootstrap.ts
+- F2-04-01 : MISS anchor en apps\server\src\engine\service.ts
