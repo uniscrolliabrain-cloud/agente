@@ -40,6 +40,8 @@ import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
 import { threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
+import { PersonaRegistry, bootstrapPersonas } from "./engine/agents/personas/index.ts";
+import { personasRoutes } from "./engine/agents/personas/routes.ts";
 import {
   Kernel,
   EnvTenantConfigResolver,
@@ -57,10 +59,10 @@ export async function createApp(
   config: Config,
   options: { docker?: DockerRunner } = {},
 ) {
-  // SERVICE_TENANT_DB_V2 — creamos primero TenantService y tdb, luego el
-// resto de servicios con tdb. Antes se construían con `db` crudo, así que
-// Files/Rag/Workspace escribían con clave plana mientras el resto leía
-// con clave `tenantId:owner`. Los artifacts no aparecían en agent.detail().
+  // SERVICE_TENANT_DB_V2 â€” creamos primero TenantService y tdb, luego el
+// resto de servicios con tdb. Antes se construÃ­an con `db` crudo, asÃ­ que
+// Files/Rag/Workspace escribÃ­an con clave plana mientras el resto leÃ­a
+// con clave `tenantId:owner`. Los artifacts no aparecÃ­an en agent.detail().
   // Ver: docs/KNOWN_ISSUES.md FASE0_DEBT_FILES_TDB_V1 y
   // docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
   const tenantServiceEarly = new TenantService(db, config);
@@ -73,12 +75,24 @@ export async function createApp(
     workspace = new WorkspaceService(tdbEarly, config, files, google, rag);
   // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
   // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
-  // SERVICE_TENANT_DB_V2 — reutilizamos los creados arriba.
+  // SERVICE_TENANT_DB_V2 â€” reutilizamos los creados arriba.
   const tenantService = tenantServiceEarly;
   const tdb = tdbEarly;
-  // BUSINESS_OS_FIXED_V1 â€” bus declarado antes de los servicios que lo usan.
+  // PERSONAS_WIRE_V1 - registry de personas del tenant. Se carga al arrancar
+  // desde clientes/<tenant>/personas/*.json. Fail-soft: si un JSON no valida,
+  // ese se salta.
+  const personaRegistry = new PersonaRegistry();
+  {
+    const clientsDir = process.env.OPENMUSE_CLIENTS_DIR ?? "clientes";
+    void bootstrapPersonas(personaRegistry, "default", clientsDir).then((r) => {
+      if (r.loaded > 0 || r.failed > 0) {
+        console.log(`[personas] tenant default: ${r.loaded} cargadas, ${r.failed} fallidas`);
+      }
+    }).catch(() => {});
+  }
+  // BUSINESS_OS_FIXED_V1 Ã¢â‚¬â€ bus declarado antes de los servicios que lo usan.
   const bus = new EventBus(tdb);
-  // POLICY_EARLY_V1 â€” policy se necesita antes del ActionService, asi que se instancia aqui.
+  // POLICY_EARLY_V1 Ã¢â‚¬â€ policy se necesita antes del ActionService, asi que se instancia aqui.
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
   const actions = new ActionService(db, {
@@ -197,7 +211,7 @@ export async function createApp(
     await agent.ensure(owner);
     if (config.mode === "sample") await agent.refreshIdeas(owner);
   };
-  // REQUEST_LOGGER_WIRE_V1 — correlationId por request, logging estructurado.
+  // REQUEST_LOGGER_WIRE_V1 â€” correlationId por request, logging estructurado.
   // Ver docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
   app.use("*", requestLogger());
   app.use("*", async (c, next) => {
@@ -260,7 +274,7 @@ export async function createApp(
     const expected = process.env.WHATSAPP_WEBHOOK_TOKEN;
     if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
     const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
-    // WHATSAPP_RATE_LIMIT â€” timingSafeEqual + rate limit por IP.
+    // WHATSAPP_RATE_LIMIT Ã¢â‚¬â€ timingSafeEqual + rate limit por IP.
     const expectedBuf = Buffer.from(expected);
     const providedBuf = Buffer.from(provided ?? "");
     if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf))
@@ -284,7 +298,7 @@ export async function createApp(
     }), { maxAttempts: 3, baseMs: 200, maxMs: 2000 });
     return c.json({ ok: true });
   });
-  // R16 â€” healthcheck profundo: comprueba DB (lectura + escritura idempotente),
+  // R16 Ã¢â‚¬â€ healthcheck profundo: comprueba DB (lectura + escritura idempotente),
   // que el bus pueda emitir, y el estado del worker. Devuelve 503 si algo falla,
   // para que Fly/Render sepan cuando reiniciar de verdad.
   app.get("/api/health-deep", async (c) => {
@@ -345,7 +359,7 @@ app.get("/api/health", async (c) => {
       ok ? 200 : 503,
     );
   });
-  // SESSION_RATE_LIMIT â€” rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
+  // SESSION_RATE_LIMIT Ã¢â‚¬â€ rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
   const sessionLimiter = new RateLimiter(30, 60000);
   const sessionAddress = (c: Context) => {
     const fwd = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
@@ -389,7 +403,7 @@ app.get("/api/health", async (c) => {
         ? auth.verify(new URL(c.req.url))
         : await auth.owner(c.req.header("authorization"));
     c.set("owner", owner);
-    // OWNER_LOG_CONTEXT_V1 — propaga owner al contexto de log del request.
+    // OWNER_LOG_CONTEXT_V1 â€” propaga owner al contexto de log del request.
     const current = logContext.getStore();
     if (current) {
       logContext.enterWith({ ...current, owner });
@@ -402,7 +416,7 @@ app.get("/api/health", async (c) => {
     snapshot.browsers = snapshot.browsers.map((s) => browser.decorate(owner, s));
     return c.json(snapshot);
   });
-  // BILLING_AFTER_AUTH â€” billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
+  // BILLING_AFTER_AUTH Ã¢â‚¬â€ billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
 app.post("/api/billing/customer", async (c) => {
     const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
     const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
@@ -441,6 +455,12 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/rag", ragRoutes(rag, db, files));
   app.route("/api/threads", threadRoutes(db));
   app.route("/api/projects", projectRoutes(db));
+  // PERSONAS_WIRE_V1 - endpoints de personas del tenant.
+  app.route("/api/agent-personas", personasRoutes({
+    registry: personaRegistry,
+    db,
+    ...(tenantService ? { tenantService } : {}),
+  }));
   app.route("/api/computer", computerRoutes(computer, files));
   // ADMIN_ROUTES_WIRE_V1 - endpoints de admin.
   {
@@ -491,7 +511,7 @@ app.post("/api/billing/customer", async (c) => {
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {
     const { kernelRoutes } = await import("./kernel-routes.ts");
-    // KERNEL_ROUTES_ADMIN_WIRE_V1 — pasa UserService para validación admin.
+    // KERNEL_ROUTES_ADMIN_WIRE_V1 â€” pasa UserService para validaciÃ³n admin.
     // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
     app.route("/api/kernel", kernelRoutes(kernel, users));
   }
@@ -503,7 +523,7 @@ app.post("/api/billing/customer", async (c) => {
     const { viewsRoutes } = await import("./routes/views.ts");
     app.route("/api/views", viewsRoutes());
   }
-  // BUSINESS_ROUTES_WIRE_V1 â€” rutas HTTP del Business Graph.
+  // BUSINESS_ROUTES_WIRE_V1 Ã¢â‚¬â€ rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");
   app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry, stateMachines));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
@@ -746,4 +766,4 @@ app.post("/api/billing/customer", async (c) => {
 
   return { app, auth, files, actions, workspace, agent, computer, users, bus };
 }
-// IMPORTS_BACKEND_FIXED â€” anadidos los imports que los bloques 2 y 46 no supieron inyectar.
+// IMPORTS_BACKEND_FIXED Ã¢â‚¬â€ anadidos los imports que los bloques 2 y 46 no supieron inyectar.

@@ -1,4 +1,4 @@
-// KERNEL_THOUGHT_V2 Ã¢â‚¬â€ AttentionVector completo en Zod.
+// KERNEL_THOUGHT_V2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â AttentionVector completo en Zod.
 //
 // Cambios respecto a V1:
 //   - AttentionVector reescrito: author, id, thoughtId, timestamp, metadata.
@@ -73,6 +73,8 @@ export const thoughtActorSchema = z.object({
   kind: z.enum(["user", "fast-llm", "slow-llm", "worker", "presenter", "system", "agent"]),
   id: z.string().min(1).max(200),
   onBehalfOf: z.string().max(200).optional(),
+  // THOUGHT_PERSONA_V1 - persona funcional que escribio este thought.
+  personaId: z.string().min(1).max(80).optional(),
 });
 
 // ---------------------------------------------------------------------
