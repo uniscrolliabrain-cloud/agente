@@ -1,11 +1,11 @@
 # Auditoria de contratos del dominio
 
-> Generado por `scripts/audits/contracts.ts` el 2026-10-03T15:43:47.811Z.
+> Generado por `scripts/audits/contracts.ts` el 2026-10-04T11:50:14.862Z.
 
-- Contratos totales: **212**
-- Con implementacion real: **78**
-- Marcados PENDING o STUB: **13**
-- Sin implementacion y sin marca: **121** (esto es lo que hay que arreglar)
+- Contratos totales: **218**
+- Con implementacion real: **80**
+- Marcados PENDING o STUB: **14**
+- Sin implementacion y sin marca: **124** (esto es lo que hay que arreglar)
 
 ## Sin implementacion y sin marca PENDING
 
@@ -81,6 +81,7 @@
 | `learningFactSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\learning.ts` | schema |
 | `LearningPattern` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\learning.ts` | type |
 | `learningPatternSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\learning.ts` | schema |
+| `LiveKind` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\live.ts` | type |
 | `OutcomeEvidence` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\outcome.ts` | type |
 | `outcomeEvidenceSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\outcome.ts` | schema |
 | `OutcomeMetric` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\outcome.ts` | type |
@@ -128,6 +129,8 @@
 | `verificationResultSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\verification.ts` | schema |
 | `ViewKind` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | type |
 | `viewKindSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | schema |
+| `ViewKpi` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\views.ts` | type |
+| `ViewQueueItem` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\views.ts` | type |
 | `viewSpecSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | schema |
 | `WorkspaceMode` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\index.ts` | type |
 | `workspaceSectionSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | schema |
@@ -150,6 +153,7 @@
 | `planStatusSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\plan.ts` | schema |
 | `planStepSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\plan.ts` | schema |
 | `planStepStatusSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\plan.ts` | schema |
+| `runtimeViewSpecSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\views.ts` | schema |
 
 ## Con implementacion real
 
@@ -200,6 +204,7 @@
 | `KernelContext` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\kernel.ts` | `apps\server\src\engine\conversation.ts`, `apps\server\src\engine\model.ts`, `apps\server\src\engine\service.ts`, `apps\server\src\engine\sop-executor.ts`, `apps\server\src\kernel\authors\fast-author.ts` |
 | `KernelRole` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\kernel.ts` | `apps\server\src\kernel\context\kernel-context.ts`, `apps\server\src\kernel\index.ts` |
 | `KernelTurn` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\kernel.ts` | `apps\server\src\engine\sop-executor.ts` |
+| `LiveActivity` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\live.ts` | `apps\web\src\components\LiveItem.tsx`, `apps\web\src\lib\applyEvent.ts` |
 | `Mail` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\index.ts` | `apps\server\src\demo\model.ts`, `apps\server\src\engine\conversation.ts`, `apps\server\src\engine\service.ts`, `apps\server\src\workspace.ts` |
 | `MatchReason` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\entity-resolution.ts` | `apps\server\src\kernel\graph\thought.ts` |
 | `matchReasonSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\entity-resolution.ts` | `apps\server\src\kernel\graph\thought.ts` |
@@ -218,18 +223,19 @@
 | `ProvenanceChipKind` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\context-chips.ts` | `apps\server\src\engine\provenance.ts`, `apps\web\src\components\ProvenanceBadge.tsx`, `apps\web\src\forms\FormRenderer.tsx` |
 | `ReactionDefinition` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\reaction.ts` | `apps\server\src\engine\reactions\engine.ts` |
 | `RunEvent` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\agent.ts` | `apps\server\src\engine\service.ts`, `apps\server\src\engine\worker.ts`, `apps\web\src\api\index.ts`, `apps\web\src\types\api.ts` |
+| `RuntimeViewSpec` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\views.ts` | `apps\server\src\engine\views\resolver.ts`, `apps\web\src\components\ContextualPanel.tsx`, `apps\web\src\hooks\useViewResolver.ts`, `apps\web\src\templates\dashboard\DashboardTemplate.tsx`, `apps\web\src\templates\queue\QueueTemplate.tsx` |
 | `signupRequestSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\signup.ts` | `apps\server\src\auth-signup.ts` |
 | `SOP` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\sop.ts` | `apps\server\src\admin-clients.ts`, `apps\server\src\engine\capabilities\bootstrap.ts`, `apps\server\src\engine\conversation.ts`, `apps\server\src\engine\service.ts`, `apps\server\src\engine\sop-executor.ts` |
 | `sopSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\sop.ts` | `apps\server\src\engine\sop-executor.ts`, `apps\server\src\skills\sop-routes.ts` |
 | `SOPStep` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\sop.ts` | `apps\server\src\engine\sop-executor.ts` |
 | `TaskStatus` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\agent.ts` | `apps\web\src\api\index.ts`, `apps\web\src\lib\taskColumns.ts`, `apps\web\src\types\api.ts` |
-| `TaskStep` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\agent.ts` | `apps\web\src\api\index.ts`, `apps\web\src\types\api.ts` |
+| `TaskStep` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\agent.ts` | `apps\web\src\api\index.ts`, `apps\web\src\components\TaskTimeline.tsx`, `apps\web\src\types\api.ts` |
 | `TruthCandidate` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\truth.ts` | `apps\server\src\engine\business\truth-resolver.ts`, `apps\server\src\engine\business\truth.ts` |
 | `TruthResolution` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\truth.ts` | `apps\server\src\engine\business\truth-resolver.ts` |
 | `VerificationResult` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\verification.ts` | `apps\server\src\engine\orchestrator\orchestrator.ts`, `apps\server\src\engine\verification\disagreement.ts`, `apps\server\src\engine\verification\llm-verifier.ts`, `apps\server\src\engine\verification\verifier.ts` |
 | `VerificationToken` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\signup.ts` | `apps\server\src\auth-signup.ts` |
 | `verificationTokenSchema` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\signup.ts` | `apps\server\src\auth-signup.ts` |
-| `ViewSpec` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | `apps\server\src\engine\views\resolver.ts`, `apps\web\src\templates\dashboard\DashboardTemplate.tsx`, `apps\web\src\templates\detail\DetailTemplate.tsx`, `apps\web\src\templates\form\FormTemplate.tsx`, `apps\web\src\templates\graph\GraphTemplate.tsx` |
+| `ViewSpec` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | `apps\web\src\templates\detail\DetailTemplate.tsx`, `apps\web\src\templates\form\FormTemplate.tsx`, `apps\web\src\templates\graph\GraphTemplate.tsx`, `apps\web\src\templates\kanban\KanbanTemplate.tsx`, `apps\web\src\templates\list\ListTemplate.tsx` |
 | `Workspace` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\index.ts` | `apps\server\src\engine\workspace\generator.ts`, `apps\server\src\workspace.ts`, `apps\web\src\components\Login.tsx`, `apps\web\src\components\Onboarding.tsx`, `apps\web\src\components\ProfileModal.tsx` |
 | `WorkspaceSection` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | `apps\server\src\engine\workspace\generator.ts` |
 | `WorkspaceSpec` | `C:\Users\Alfonso\Desktop\git hub repos\agente\packages\domain\src\workspace-spec.ts` | `apps\server\src\engine\workspace\generator.ts` |

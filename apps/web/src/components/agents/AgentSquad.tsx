@@ -1,4 +1,6 @@
 // AGENT_SQUAD_V1 - grid del squad activo con filtros.
+// AGENT_SQUAD_FILTER_V1 - filtro por arquetipo.
+import { useMemo, useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import AgentCard from "./AgentCard";
 import { AGENTS, type AgentId, type AgentArchetype } from "./types";
@@ -11,13 +13,17 @@ interface Props {
 const FILTERS: Array<{ id: "all" | AgentArchetype; label: string }> = [
   { id: "all", label: "Todos" },
   { id: "hunter", label: "Cazador" },
-  { id: "guardian", label: "Guardián" },
+  { id: "guardian", label: "GuardiÃ¡n" },
   { id: "strategist", label: "Estratega" },
   { id: "architect", label: "Arquitecto" },
 ];
 
 export default function AgentSquad({ selected, onSelect }: Props) {
-  const withoutPrincipal = AGENTS.filter((a) => a.id !== "openmuse");
+  const [filter, setFilter] = useState<"all" | AgentArchetype>("all");
+  const withoutPrincipal = useMemo(() => {
+    const base = AGENTS.filter((a) => a.id !== "openmuse");
+    return filter === "all" ? base : base.filter((a) => a.archetype === filter);
+  }, [filter]);
 
   return (
     <section className="agent-squad">
@@ -31,7 +37,11 @@ export default function AgentSquad({ selected, onSelect }: Props) {
 
       <div className="agent-filters">
         {FILTERS.map((f) => (
-          <button key={f.id} className={f.id === "all" ? "is-active" : ""}>
+          <button
+            key={f.id}
+            className={f.id === filter ? "is-active" : ""}
+            onClick={() => setFilter(f.id)}
+          >
             {f.label}
           </button>
         ))}

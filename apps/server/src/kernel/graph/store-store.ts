@@ -38,11 +38,13 @@ function tenantMismatch(expected: string, actual: string): AppError {
 export class StoreTurnStore implements TurnStore {
   constructor(private readonly store: StorePort) {}
 
-  async openTurn(tenantId: string, owner: string, trigger: string): Promise<Turn> {
+  // STORE_TURN_PERSONA_V1 - persiste el personaId que abre el turno. Opcional.
+  async openTurn(tenantId: string, owner: string, trigger: string, personaId?: string): Promise<Turn> {
     const turn = turnSchema.parse({
       id: randomUUID(),
       tenantId,
       owner,
+      ...(personaId ? { personaId } : {}),
       startedAt: new Date().toISOString(),
       status: "open",
       triggers: [trigger],
@@ -92,11 +94,11 @@ export class StoreTurnStore implements TurnStore {
       if (turn.thoughtIds.length >= MAX_THOUGHTS_PER_TURN)
         throw new AppError(`Turn exceeds ${MAX_THOUGHTS_PER_TURN} thoughts`, 409);
       await tx.put(parsed.tenantId, THOUGHTS_KIND, parsed.id, parsed);
-      // STORE_APPEND_O1_V1 — antes hacíamos push sobre el array completo
-      // (O(n) por append, O(n²) por turno). Ahora escribimos el thoughtId
+      // STORE_APPEND_O1_V1 â€” antes hacÃ­amos push sobre el array completo
+      // (O(n) por append, O(nÂ²) por turno). Ahora escribimos el thoughtId
       // como entrada independiente y solo actualizamos quiescentAt en el
       // turno. thoughtsOf() reconstruye la lista desde las entradas.
-      // Ver: auditoría profunda 09 (append lee turno entero).
+      // Ver: auditorÃ­a profunda 09 (append lee turno entero).
       await tx.put(
         parsed.tenantId,
         TURNS_KIND,
@@ -111,9 +113,9 @@ export class StoreTurnStore implements TurnStore {
   }
 
   /**
-   * THOUGHTS_OF_INDEXED_V1 — usa `scanByOwnerPrefix` si está disponible,
+   * THOUGHTS_OF_INDEXED_V1 â€” usa `scanByOwnerPrefix` si estÃ¡ disponible,
    * que hace 1 query SQL por turno. Si no, cae al batching de 20.
-   * Ver: auditoría profunda 09 (500 queries por turno con 500 thoughts).
+   * Ver: auditorÃ­a profunda 09 (500 queries por turno con 500 thoughts).
    */
   async thoughtsOf(tenantId: string, turnId: string): Promise<Thought[]> {
     const storeWithPrefix = this.store as unknown as {
@@ -145,7 +147,7 @@ export class StoreTurnStore implements TurnStore {
     if (!raw) return [];
     const turn = turnSchema.parse(raw);
     if (turn.tenantId !== tenantId) return [];
-    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacíamos Promise.all sobre
+    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacÃ­amos Promise.all sobre
     // todos los thoughtIds. Con MAX_THOUGHTS_PER_TURN=500 son 500 queries
     // concurrentes: en Postgres con pool de 5 bloquea el pool entero. Ahora
     // procesamos en lotes de 20 en serie.
@@ -196,12 +198,12 @@ export class StoreTurnStore implements TurnStore {
     closedBy: TurnClosedBy,
   ): Promise<Turn[]> {
     const closed: Turn[] = [];
-    // CLOSE_TURN_CHILDREN_DEPTH_V1 — respeta el tope de profundidad.
-      // Ver: auditoría profunda 09 (la constante existía pero no se usaba).
+    // CLOSE_TURN_CHILDREN_DEPTH_V1 â€” respeta el tope de profundidad.
+      // Ver: auditorÃ­a profunda 09 (la constante existÃ­a pero no se usaba).
       const visit = async (id: string, depth: number): Promise<void> => {
         if (depth > MAX_CHILD_DEPTH) {
           throw new AppError(
-            `closeTurnAndChildren: profundidad ${depth} supera el límite ${MAX_CHILD_DEPTH}`,
+            `closeTurnAndChildren: profundidad ${depth} supera el lÃ­mite ${MAX_CHILD_DEPTH}`,
             409,
           );
         }

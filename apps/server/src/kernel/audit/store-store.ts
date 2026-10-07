@@ -198,32 +198,45 @@ export class StoreAuditStore implements AuditStore {
   // antiguas. Ahora devuelve false si el list llego al tope, porque no puede
   // garantizar que la cadena entera este intacta.
   async verify(tenantId: string): Promise<boolean> {
-    const cap = maxList();
-    const list = await this.list(tenantId, cap);
-    // Si el list devolvio exactamente cap entradas, no hemos verificado todo.
-    // Un audit trail con mas entradas que el tope no se puede verificar de una
-    // pasada con esta implementacion. Fallar honestamente es mejor que mentir.
-    if (list.length >= cap) {
-      console.warn(
-        `[audit] verify(${tenantId}) incompleto: ${list.length} >= ${cap}. Sube KERNEL_AUDIT_MAX_LIST o pagina.`,
-      );
-      return false;
-    }
+    // FIX_AUDIT_VERIFY_PAGINATED_V1 - antes topaba a maxList() y devolvia
+    // false al pasar 10.000 entradas aunque la cadena estuviera intacta.
+    // Ahora pagina por keyset (updated_at, id) en bloques de 1000 y verifica
+    // la cadena entera.
+    const PAGE = 1000;
+    let cursorUpdatedAt: string | undefined;
+    let cursorId: string | undefined;
     let previous: string | undefined;
-    for (const entry of list) {
-      if (previous !== undefined && entry.previousHash !== previous) return false;
-      const expected = computeHash({
-        id: entry.id,
-        tenantId: entry.tenantId,
-        owner: entry.owner,
-        action: entry.action,
-        actor: entry.actor,
-        payload: entry.payload,
-        timestamp: entry.timestamp,
-        ...(entry.previousHash !== undefined ? { previousHash: entry.previousHash } : {}),
+    for (;;) {
+      const page = await this.db.listPaged<AuditEntry>(tenantId, KIND, {
+        limit: PAGE,
+        ...(cursorUpdatedAt && cursorId ? { cursorUpdatedAt, cursorId } : {}),
       });
-      if (expected !== entry.hash) return false;
-      previous = entry.hash;
+      if (page.length === 0) break;
+      // listPaged ordena DESC. La cadena se construyo ASC, asi que la
+      // recorremos al reves dentro de cada pagina.
+      const entries = page
+        .map((row) => row.data)
+        .filter((entry) => entry.id !== "__audit_anchor__")
+        .reverse();
+      for (const entry of entries) {
+        if (previous !== undefined && entry.previousHash !== previous) return false;
+        const expected = computeHash({
+          id: entry.id,
+          tenantId: entry.tenantId,
+          owner: entry.owner,
+          action: entry.action,
+          actor: entry.actor,
+          payload: entry.payload,
+          timestamp: entry.timestamp,
+          ...(entry.previousHash !== undefined ? { previousHash: entry.previousHash } : {}),
+        });
+        if (expected !== entry.hash) return false;
+        previous = entry.hash;
+      }
+      const last = page[page.length - 1];
+      cursorUpdatedAt = last.updatedAt;
+      cursorId = last.data.id;
+      if (page.length < PAGE) break;
     }
     return true;
   }

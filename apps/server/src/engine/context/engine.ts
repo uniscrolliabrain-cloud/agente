@@ -22,6 +22,9 @@ export interface ContextPackage {
   relations: BusinessRelation[];
   events: SystemEvent[];
   recall: RecallResult;
+  // FIX_LEARNING_IN_PKG_V1 - facts aprendidos por LearningObserver.
+  // Se calculaban en assemble() pero se descartaban al construir pkg.
+  learning: Array<{ text: string; source: string; confidence: number }>;
   metadata: {
     assembledAt: string;
   };
@@ -127,6 +130,7 @@ export class ContextEngine {
       relations,
       events,
       recall,
+      learning: learningFacts,
       metadata: { assembledAt: new Date().toISOString() },
     };
     await this.bus?.emit(owner, "context.assembled", { kind: "context", id: input.roleId }, {

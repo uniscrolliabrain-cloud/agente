@@ -64,5 +64,13 @@ export function renderContext(
     const hits = pkg.recall.ragHits.slice(0, MAX_RECALL_HITS);
     parts.push(`Documentos relevantes:\\n${hits.map((h) => `- [${h.sourceName}] ${h.text.slice(0, 400)}`).join("\\n")}`);
   }
+  // FIX_LEARNING_IN_PKG_V1_RENDER - pinta los facts aprendidos por LearningObserver.
+  if (pkg.learning.length > 0) {
+    const facts = pkg.learning.slice(0, 10);
+    parts.push(
+      "Aprendizajes previos (datos):" + String.fromCharCode(10) +
+        facts.map((f) => "- [" + f.source + "] " + f.text.slice(0, 300)).join(String.fromCharCode(10)),
+    );
+  }
   return parts.join("\\n\\n");
 }

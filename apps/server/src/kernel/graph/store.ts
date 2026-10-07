@@ -1,4 +1,4 @@
-// KERNEL_TURN_STORE_V2 — contrato con tenantId explicito.
+// KERNEL_TURN_STORE_V2 â€” contrato con tenantId explicito.
 //
 // Cambios respecto a V1:
 //   - Todos los metodos reciben tenantId. Sin esto, el store persistente
@@ -10,7 +10,8 @@ import type { Thought } from "./thought.ts";
 import type { Turn, TurnCloseReason } from "./turn.ts";
 
 export interface TurnStore {
-  openTurn(tenantId: string, owner: string, trigger: string): Promise<Turn>;
+  // TURN_STORE_PERSONA_V1 - persona funcional que abre el turno. Opcional.
+  openTurn(tenantId: string, owner: string, trigger: string, personaId?: string): Promise<Turn>;
   openChildTurn(
     tenantId: string,
     owner: string,

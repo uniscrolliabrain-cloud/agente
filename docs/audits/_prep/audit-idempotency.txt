@@ -1,0 +1,22 @@
+node.exe : $ tsx 
+scripts/audits/idempotency.ts
+En C:\nvm4w\nodejs\pnpm.ps1: 16 Carácter: 5
++     & "$basedir/node$exe"  
+"$basedir/node_modules/corepack/dist/pnpm. 
+...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    ($ tsx scripts/audits/idempotency.ts:S  
+  tring) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+[audit:idempotency] Recorriendo ficheros...
+[audit:idempotency] Ficheros: 311
+[audit:idempotency] Marcas encontradas: 713
+[audit:idempotency] Informe escrito en docs/AUDIT_IDEMPOTENCY.md
+[audit:idempotency] DUPLICADAS: 75   HUERFANAS: 4   REPETIDAS: 64
+[audit:idempotency] Hay marcas conflictivas 
+o repetidas.
+[ELIFECYCLE] Command failed with exit code 1.

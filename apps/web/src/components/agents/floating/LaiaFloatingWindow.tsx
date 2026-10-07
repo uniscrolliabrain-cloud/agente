@@ -105,7 +105,7 @@ export default function LaiaFloatingWindow({
 
         <div className="laia-window__title">
           <span>{agent.name.toUpperCase()}.exe</span>
-          <small>— {agent.role}</small>
+          <small>â€” {agent.role}</small>
         </div>
 
         <div className="laia-window__lvl">LVL {agent.level}</div>
@@ -184,7 +184,7 @@ export default function LaiaFloatingWindow({
             </div>
             <div className="laia-panel__divider" />
             <span className="laia-panel__label">OBJETIVO</span>
-            <p>Que todo funcione y tú no tengas que vigilarlo.</p>
+            <p>Que todo funcione y tÃº no tengas que vigilarlo.</p>
           </div>
         )}
 
@@ -231,7 +231,7 @@ export default function LaiaFloatingWindow({
               </div>
               <div>
                 <strong>99.4%</strong>
-                <span>sincronización</span>
+                <span>sincronizaciÃ³n</span>
               </div>
             </div>
             <p>
@@ -244,19 +244,33 @@ export default function LaiaFloatingWindow({
       <footer className="laia-window__chat">
         <div className="laia-window__chat-label">
           <span />
-          {agent.name} está activa
+          {agent.name} estÃ¡ activa
         </div>
         <div className="laia-window__chat-row">
+          {/* LAIA_WINDOW_CHAT_V1 - envia al chat global con personaId. */}
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") setInput("");
+              if (e.key === "Enter" && input.trim()) {
+                // Notifica al padre para enviar al chat global.
+                window.dispatchEvent(new CustomEvent("openmuse:chat", {
+                  detail: { message: input.trim(), personaId: agent.id },
+                }));
+                setInput("");
+              }
             }}
             placeholder={`Habla con ${agent.name}...`}
           />
-          <button type="button" onClick={() => setInput("")}>
-            →
+          <button type="button" onClick={() => {
+            if (input.trim()) {
+              window.dispatchEvent(new CustomEvent("openmuse:chat", {
+                detail: { message: input.trim(), personaId: agent.id },
+              }));
+              setInput("");
+            }
+          }}>
+            â†’
           </button>
         </div>
       </footer>
