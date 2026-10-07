@@ -17,6 +17,7 @@ import MemoryView from "./components/MemoryView";
 import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
+import AgentsPage from "./components/agents/AgentsPage";
 import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
@@ -175,6 +176,7 @@ export default function App() {
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
+          {view === "agents" && <AgentsPage />}
         </div>
       </AppShell>
 
