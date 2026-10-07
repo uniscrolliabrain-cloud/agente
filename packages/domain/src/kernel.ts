@@ -24,7 +24,9 @@ export interface KernelContext {
   correlationId?: string;
 
   /** KERNEL_PERSONA_V1 - persona funcional que habla en este turno. Opcional. */
-  personaId?: string;}
+  // DOMAIN_KERNEL_PERSONA_FORMAT_V1 - formato limpio.
+  personaId?: string;
+}
 
 export interface KernelThought {
   id: string;

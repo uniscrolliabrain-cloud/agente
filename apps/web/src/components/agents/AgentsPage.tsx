@@ -3,10 +3,13 @@
 // Y abre la ventana flotante cuando se selecciona Laia.
 //
 // Desde el chat del homepage se puede invocar "llama a Laia" para traer la
-// ventana. Eso se conectará al useChat en una fase posterior. Por ahora el
+// ventana. Eso se conectarÃƒÂ¡ al useChat en una fase posterior. Por ahora el
 // input del command bar ya lo detecta.
 
-import { useCallback, useMemo, useState } from "react";
+// AGENTS_PAGE_FETCH_V1 - lee personas reales del backend.
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../../api/client";
+import { toAgentUI, type AgentUI } from "./types";
 import { Plus, Search } from "lucide-react";
 import { AGENTS, type AgentId } from "./types";
 import AgentHero from "./AgentHero";
@@ -19,6 +22,39 @@ import AgentDockLauncher from "./floating/AgentDockLauncher";
 
 export default function AgentsPage() {
   const [selected, setSelected] = useState<AgentId>("laia");
+  // AGENTS_PAGE_FETCH_V1 - estado de personas reales.
+  const [remoteAgents, setRemoteAgents] = useState<AgentUI[] | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await apiFetch<{ personas: Array<{ personaId: string; displayName: string; role: string; archetype: string; stats: unknown; avatar: unknown; reportsTo: string | null; peers: string[] }> }>("/api/agent-personas");
+        if (cancelled) return;
+        const mapped = res.personas.map((p) => toAgentUI(
+          {
+            id: p.personaId,
+            displayName: p.displayName,
+            role: p.role,
+            personality: { traits: [], tone: p.archetype, quirks: [] },
+            capabilities: { domains: [], scope: "" },
+            ...(p.reportsTo ? { reportsTo: p.reportsTo } : {}),
+          },
+          p.stats as never,
+          "#7C5CFC",
+          "#EDE8FF",
+        ));
+        setRemoteAgents(mapped);
+      } catch (err) {
+        if (cancelled) return;
+        setFetchError(err instanceof Error ? err.message : "Error cargando agentes");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const realAgents = remoteAgents ?? AGENTS;
 
   const [windowOpen, setWindowOpen] = useState(true);
   const [windowMinimized, setWindowMinimized] = useState(false);
@@ -26,12 +62,16 @@ export default function AgentsPage() {
   const [windowPosition, setWindowPosition] = useState({ x: 22, y: 180 });
   const [zIndex, setZIndex] = useState(100);
 
+  // AGENTS_PAGE_USE_REAL_V1 - usa realAgents en vez de AGENTS mock.
   const selectedAgent = useMemo(
-    () => AGENTS.find((a) => a.id === selected) ?? AGENTS[1],
-    [selected],
+    () => realAgents.find((a) => a.id === selected) ?? realAgents[1] ?? AGENTS[1],
+    [selected, realAgents],
   );
 
-  const laia = useMemo(() => AGENTS.find((a) => a.id === "laia")!, []);
+  const laia = useMemo(
+    () => realAgents.find((a) => a.id === "laia") ?? AGENTS.find((a) => a.id === "laia")!,
+    [realAgents],
+  );
 
   const openLaia = useCallback(() => {
     setSelected("laia");
@@ -76,10 +116,10 @@ export default function AgentsPage() {
       <div className="agents-page__inner">
         <div className="agents-page__top">
           <div>
-            <span className="agents-page__eyebrow">WORKSPACE · AGENTES</span>
+            <span className="agents-page__eyebrow">WORKSPACE Ã‚Â· AGENTES</span>
             <h1>Agentes</h1>
             <p>
-              Tu equipo de IA operativo. Activo 24/7 — orquesta tareas, memoria y ejecución.
+              Tu equipo de IA operativo. Activo 24/7 Ã¢â‚¬â€ orquesta tareas, memoria y ejecuciÃƒÂ³n.
             </p>
           </div>
 

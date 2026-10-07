@@ -1,0 +1,13 @@
+node.exe : $ tsc --noEmit
+En C:\nvm4w\nodejs\pnpm.ps1: 16 Carácter: 5
++     & "$basedir/node$exe"  
+"$basedir/node_modules/corepack/dist/pnpm. 
+...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    ($ tsc --noEmit:String) [], RemoteExce  
+  ption
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 

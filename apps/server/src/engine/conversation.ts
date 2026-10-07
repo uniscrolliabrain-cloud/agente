@@ -14,7 +14,7 @@ import {
   monitorInputSchema,
 } from "../../../../packages/domain/src/agent.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
-// KERNEL_PROMOTER_IMPORT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â import del promoter. El uso viene en un bloque posterior.
+// KERNEL_PROMOTER_IMPORT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â import del promoter. El uso viene en un bloque posterior.
 import type { Promoter } from "../kernel/graph/promote.ts";
 import type { Config } from "../config.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
@@ -77,6 +77,13 @@ export class ConversationAgent extends AbstractAgent {
           const tenantId = svc.tenantService
             ? await svc.tenantService.tenantIdFor(owner)
             : "default";
+          // CONVERSATION_PERSONA_V1 - si el frontend manda roleId y existe una
+          // persona con ese id, se usa como personaId. Si no, el turno se abre
+          // sin persona (comportamiento actual).
+          const stateRoleId =
+            typeof (input.state as Record<string, unknown>)?.roleId === "string"
+              ? String((input.state as Record<string, unknown>).roleId)
+              : undefined;
           const ctx = kernelContextSchema.parse({
             tenantId,
             owner,
@@ -84,6 +91,7 @@ export class ConversationAgent extends AbstractAgent {
             requestId: input.runId,
             threadId: input.threadId,
             correlationId: input.runId,
+            ...(stateRoleId ? { personaId: stateRoleId } : {}),
           });
           // AGENT_RUNTIME_WIRE_V2 - spawn del runtime antes de abrir el turno.
           const runtimeHandle = await svc
@@ -122,7 +130,7 @@ export class ConversationAgent extends AbstractAgent {
           kernelCtx = ctx;
           kernelTurnId = turn.id;
         } catch (error) {
-          // KERNEL_NONFATAL_LOGGED_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â loguea el fallo, no lo silencia.
+          // KERNEL_NONFATAL_LOGGED_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â loguea el fallo, no lo silencia.
           // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
           const { backgroundFailure } = await import("../log.ts");
           backgroundFailure("conversation.kernelTurnOpen", error);
@@ -524,8 +532,8 @@ export class ConversationAgent extends AbstractAgent {
           if (systemCtx.recentFailures.length > 0)
             lines.push(`Fallos recientes: ${systemCtx.recentFailures.length} tarea(s) fallida(s) en la ultima hora.`);
           if (!systemCtx.health.google) lines.push("Google desconectado.");
-          // META_INJECT_PROMPT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â aÃƒÆ’Ã‚Â±ade los hints de Meta al bloque urgente.
-          // Ver: docs/audits/09-kernel-cognitivo/roadmap.md Ãƒâ€šÃ‚Â§8.
+          // META_INJECT_PROMPT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â aÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±ade los hints de Meta al bloque urgente.
+          // Ver: docs/audits/09-kernel-cognitivo/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
           const metaHints = (systemCtx as { metaHints?: Array<{ rule: string; urgency: string; message: string }> }).metaHints ?? [];
           for (const hint of metaHints) {
             if (hint.urgency === "high" || hint.urgency === "medium") {
@@ -538,7 +546,7 @@ export class ConversationAgent extends AbstractAgent {
         const roleId = typeof (input.state as Record<string, unknown>)?.roleId === "string"
           ? String((input.state as Record<string, unknown>).roleId)
           : undefined;
-        // ROLE_PROMPT_V2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â traemos tone y memories ademas de name/objetivo/sops.
+        // ROLE_PROMPT_V2 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â traemos tone y memories ademas de name/objetivo/sops.
         // Los roles guardados antes del v2 no tienen estos campos: se usan defaults.
         const roleContext = roleId
           ? await this.service.db
@@ -551,7 +559,7 @@ export class ConversationAgent extends AbstractAgent {
               }>(this.owner, "agent-roles", roleId)
               .catch(() => null)
           : null;
-        // CONTEXT_ENGINE_IN_CHAT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â si hay roleId, intentamos ensamblar contexto
+        // CONTEXT_ENGINE_IN_CHAT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â si hay roleId, intentamos ensamblar contexto
         // completo. Si falla o no hay, caemos al prompt simple de rol.
         const ROLE_TONE_PROMPT: Record<string, string> = {
           warm: "Tutea. Cercano. Si el cliente esta enfadado, primero reconoce y luego resuelve.",
@@ -625,6 +633,12 @@ export class ConversationAgent extends AbstractAgent {
               if (cfg.slow?.provider && cfg.slow.model) {
                 chatModelChain.push(`${cfg.slow.provider}/${cfg.slow.model}`);
               }
+              // FIX_CHAIN_FALLBACK_V1 - si solo hay fast, anadimos el chain
+              // global como red de seguridad. Antes se quedaba en [fast] y si
+              // fallaba, el chat no respondia.
+              if (chatModelChain.length === 1) {
+                chatModelChain.push(...modelChain(this.config));
+              }
             }
           }
         } catch {
@@ -668,9 +682,9 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
               void this.service
                 .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
                 .catch(() => {});
-              // PRESENTER_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â el Presenter decide quÃƒÆ’Ã‚Â© texto emitir al SSE.
-              // Antes se emitÃƒÆ’Ã‚Â­a `fullResponse` directamente, ignorando el
-              // Presenter. Ahora, si el Presenter tiene una presentaciÃƒÆ’Ã‚Â³n
+              // PRESENTER_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â el Presenter decide quÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© texto emitir al SSE.
+              // Antes se emitÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a `fullResponse` directamente, ignorando el
+              // Presenter. Ahora, si el Presenter tiene una presentaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n
               // disponible, se usa su `content`; si no, fallback a fullResponse.
               // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
               // KERNEL_FAST_RESPONSE_ORDER_FIX_V1 - writeFastResponse y closeKernelTurn
@@ -683,11 +697,11 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
                 const ctx = kernelCtx;
                 const response = fullResponse;
                 void (async () => {
-                  // PRESENTER_USE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â el Presenter decide quÃƒÆ’Ã‚Â© texto se persiste.
-                  // Ver: docs/audits/09-kernel-cognitivo/roadmap.md Ãƒâ€šÃ‚Â§8.
+                  // PRESENTER_USE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â el Presenter decide quÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© texto se persiste.
+                  // Ver: docs/audits/09-kernel-cognitivo/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
                   const presenterText = await this.presentText(ctx, turnId);
-                  // PRESENTER_EMIT_VIEW_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â publica al bus que el Presenter
-                  // decidiÃƒÆ’Ã‚Â³. Ver: docs/audits/09-kernel-cognitivo/roadmap.md Ãƒâ€šÃ‚Â§8.
+                  // PRESENTER_EMIT_VIEW_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â publica al bus que el Presenter
+                  // decidiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³. Ver: docs/audits/09-kernel-cognitivo/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
                   if (presenterText) {
                     try {
                       await this.service.bus?.emit(
@@ -787,7 +801,7 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
   }
 
   /**
-   * PRESENTER_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â pregunta al Presenter quÃƒÆ’Ã‚Â© texto mostrar.
+   * PRESENTER_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â pregunta al Presenter quÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© texto mostrar.
    * Devuelve undefined si no hay Presenter o el turno no tiene thoughts.
    */
   private async presentText(

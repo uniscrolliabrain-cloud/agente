@@ -28,6 +28,11 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "action.executed": { title: "T" },
   "action.failed": { title: "T" },
   "action.outcome_unknown": { title: "T" },
+  // FIX_EVENTBUS_PAYLOAD_V1 - payloads minimos para los tipos A2_EVENTS_V1
+  // y D2_VIEW_RESOLVED_V1. El schema los exigia pero el test no los cubria.
+  "action.deferred": { actionId: "a1", signers: [], needed: 1, executeAt: null },
+  "action.cancelled": { actionId: "a1", by: "u1" },
+  "view.resolved": { kind: "dashboard", title: "T", spec: {} },
   "monitor.check": { url: "https://example.com", matched: false },
   "monitor.changed": { url: "https://example.com", excerpt: "x" },
   "monitor.failed": { url: "https://example.com", error: "x" },

@@ -15,9 +15,11 @@ import { activityForPersona } from "./activity.ts";
 import type { Store } from "../../../db.ts";
 import type { TenantService } from "../../tenant.ts";
 
+// PERSONA_ROUTES_KERNEL_V1 - kernel para leer turns/thoughts de la persona.
 export interface PersonaRoutesDeps {
   registry: PersonaRegistry;
   db: Store;
+  kernel?: import("../../../kernel/index.ts").Kernel;
   tenantService?: TenantService;
 }
 
@@ -88,6 +90,21 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
       state: skin.state,
       activity,
     });
+  });
+
+  // PERSONA_ROUTES_NODE_V1 - turns + thoughts de la persona.
+  app.get("/:id/node", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    const personaId = c.req.param("id");
+    const skin = await resolveSkin(deps.registry, tenantId, personaId);
+    if (!skin) throw new AppError(`Persona not found: ${personaId}`, 404);
+    if (!deps.kernel) {
+      return c.json({ personaId, tenantId, turns: [], thoughts: [], memory: [], note: "kernel not wired" });
+    }
+    const { loadAgentNode } = await import("./node.ts");
+    const node = await loadAgentNode(deps.db, deps.kernel, tenantId, owner, skin);
+    return c.json(node);
   });
 
   // GET /api/agent-personas/:id/activity

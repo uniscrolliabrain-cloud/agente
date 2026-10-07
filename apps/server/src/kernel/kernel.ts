@@ -1,5 +1,5 @@
 // KERNEL_CONSOLIDATE_ON_CLOSE_V1 - consolidate se ejecuta al cerrar turno.
-// KERNEL_V2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â orquestador del grafo cognitivo, adaptado a TurnStore V2.
+// KERNEL_V2 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â orquestador del grafo cognitivo, adaptado a TurnStore V2.
 //
 // Cambios respecto a V1:
 //   - openTurn ahora lee el tenant y lo pasa explicitamente al store.
@@ -22,8 +22,8 @@ export interface KernelDeps {
   tenants: TenantResolver;
   audit: AuditStore;
   config: TenantConfigResolver;
-  // VIEWS_BUSINESS_GRAPH_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â businessGraph opcional para Views.
-  // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (computeView devuelve placeholder).
+  // VIEWS_BUSINESS_GRAPH_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â businessGraph opcional para Views.
+  // Ver: auditorÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a profunda 09 (computeView devuelve placeholder).
   businessGraph?: {
     entities?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
     neighborhood?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
@@ -31,8 +31,8 @@ export interface KernelDeps {
   };
 }
 
-// KERNEL_METRICS_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â contadores del kernel para /metrics.
-// Ver: auditorÃƒÆ’Ã‚Â­a profunda 09.
+// KERNEL_METRICS_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â contadores del kernel para /metrics.
+// Ver: auditorÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a profunda 09.
 globalMetrics.counter(
   "openmuse_kernel_turns_opened_total",
   "Turnos abiertos por el kernel",
@@ -43,7 +43,7 @@ globalMetrics.counter(
 );
 globalMetrics.counter(
   "openmuse_kernel_thoughts_appended_total",
-  "Thoughts aÃƒÆ’Ã‚Â±adidos al grafo",
+  "Thoughts aÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â±adidos al grafo",
 );
 
 export class Kernel {
@@ -54,7 +54,8 @@ export class Kernel {
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
-    const turn = await this.deps.store.openTurn(tenantId, ctx.owner, trigger);
+    // KERNEL_OPEN_TURN_PERSONA_V1 - propaga el personaId del contexto al store.
+    const turn = await this.deps.store.openTurn(tenantId, ctx.owner, trigger, ctx.personaId);
     globalMetrics.inc("openmuse_kernel_turns_opened_total", {});
     await this.deps.audit.append({
       tenantId,
@@ -67,9 +68,9 @@ export class Kernel {
   }
 
   /**
-   * KERNEL_OPEN_TURN_IDEMPOTENT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â abre turno reusando el existente si
+   * KERNEL_OPEN_TURN_IDEMPOTENT_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â abre turno reusando el existente si
    * ya hay uno abierto con la misma correlationId o trigger.
-   * Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (openTurn no deduplica en model.ts ni sop-executor.ts).
+   * Ver: auditorÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a profunda 09 (openTurn no deduplica en model.ts ni sop-executor.ts).
    */
   async openTurnIdempotent(ctx: KernelContext, trigger: string): Promise<Turn> {
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
@@ -78,7 +79,12 @@ export class Kernel {
     };
     if (typeof store.listOpenTurnsForThread === "function") {
       const open = await store.listOpenTurnsForThread(tenantId, ctx.owner);
-      const matching = open.find((turn) => turn.triggers.includes(trigger));
+      // KERNEL_OPEN_TURN_IDEMPOTENT_PERSONA_V1 - si el ctx trae personaId, filtra por el.
+      const matching = open.find(
+        (turn) =>
+          turn.triggers.includes(trigger) &&
+          (!ctx.personaId || turn.personaId === ctx.personaId),
+      );
       if (matching) {
         await this.deps.audit.append({
           tenantId,
@@ -226,13 +232,17 @@ export class Kernel {
     };
     if (!store.listTurns) return [];
     // KERNEL_LIST_TURNS_OWNER_FILTER_FIX_V1 - antes pediamos `limit` al store
-    // (que no filtra por owner) y luego filtrÃƒÆ’Ã‚Â¡bamos en memoria. Si el tenant
+    // (que no filtra por owner) y luego filtrÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡bamos en memoria. Si el tenant
     // tenia 200 turnos de otros owners antes que los del nuestro, `limit=50`
     // devolvia 50 de otros y el filtro dejaba 0. Ahora pedimos un multiplo
     // (5x el limit, tope 200) y cortamos al limit real tras filtrar.
     const fetch = Math.min(limit * 5, 200);
     const all = await store.listTurns(tenantId, fetch);
-    return all.filter((turn) => turn.owner === ctx.owner).slice(0, limit);
+    // KERNEL_LIST_TURNS_PERSONA_V1 - si el ctx trae personaId, filtra por el.
+    return all
+      .filter((turn) => turn.owner === ctx.owner)
+      .filter((turn) => !ctx.personaId || turn.personaId === ctx.personaId)
+      .slice(0, limit);
   }
 
   /**
@@ -248,6 +258,11 @@ export class Kernel {
     };
     if (!store.listOpenTurnsForThread) return undefined;
     const open = await store.listOpenTurnsForThread(tenantId, ctx.owner);
-    return open.find((turn) => turn.triggers.some((t) => t.includes(ctx.threadId as string)));
+    // KERNEL_FIND_OPEN_TURN_PERSONA_V1 - si el ctx trae personaId, filtra por el.
+    return open.find(
+      (turn) =>
+        turn.triggers.some((t) => t.includes(ctx.threadId as string)) &&
+        (!ctx.personaId || turn.personaId === ctx.personaId),
+    );
   }
 }

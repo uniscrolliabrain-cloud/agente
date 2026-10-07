@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { EventBus } from "../events/index.ts";
 
-// AGENT_RUNTIME_V1 — runtime efimero por ejecucion. No se persiste.
+// AGENT_RUNTIME_V1 â€” runtime efimero por ejecucion. No se persiste.
 // El historial durable vive en el event bus. El runtime solo da identidad
 // a cada ejecucion de agente (spawn + complete/fail + destroy).
 
@@ -97,6 +97,22 @@ export class AgentRuntimeManager {
     let count = 0;
     for (const runtime of this.active.values()) if (runtime.owner === owner) count += 1;
     return count;
+  }
+
+  /**
+   * RUNTIME_SWEEP_V1 - cierra runtimes que llevan mas de ttlMs sin completarse.
+   * Los marca como failed con error "runtime timeout".
+   */
+  async sweep(ttlMs = 5 * 60 * 1000): Promise<number> {
+    const now = Date.now();
+    const toKill: string[] = [];
+    for (const [id, runtime] of this.active) {
+      if (now - Date.parse(runtime.createdAt) > ttlMs) toKill.push(id);
+    }
+    for (const id of toKill) {
+      await this.fail(id, `runtime timeout: ${ttlMs}ms`).catch(() => {});
+    }
+    return toKill.length;
   }
 
   /** RUNTIME_LIST_V1 - lista runtimes activos por tenant (para admin). */
