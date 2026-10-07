@@ -1,0 +1,807 @@
+/* AGENTS_CSS_V1 - estilos del frente Agentes (workspace + ventana flotante).
+   Prefijos: agents-, agent-card-, agent-activity-, agent-command-,
+             laia-window-, laia-panel-, laia-runtime-, laia-squad-,
+             laia-memory-, agent-dock-.
+   No choca con --v2-* ni --v3-* existentes.
+*/
+
+/* =========================================================
+   PAGE
+========================================================= */
+
+.agents-page {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 70% 0%, rgba(124, 92, 252, 0.055), transparent 35%),
+    #fafafa;
+  color: #171717;
+}
+
+.agents-page__inner {
+  width: min(100% - 48px, 1120px);
+  margin: 0 auto;
+  padding: 42px 0 90px;
+}
+
+.agents-page__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 28px;
+}
+
+.agents-page__eyebrow,
+.agent-profile__eyebrow,
+.agent-section-heading__eyebrow {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  color: #8a8a8a;
+  text-transform: uppercase;
+}
+
+.agents-page h1 {
+  margin: 5px 0 4px;
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.agents-page__top p {
+  margin: 0;
+  color: #8a8a8a;
+  font-size: 14px;
+}
+
+.agents-page__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
+.agents-button {
+  height: 42px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #e7e7e3;
+  border-radius: 11px;
+  background: white;
+  color: #171717;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.agents-button:hover {
+  transform: translateY(-1px);
+  border-color: #d5d5d0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
+}
+
+.agents-button--dark {
+  background: #111;
+  border-color: #111;
+  color: white;
+}
+
+.agents-button--primary {
+  background: #7c5cfc;
+  border-color: #7c5cfc;
+  color: white;
+  box-shadow: 0 10px 28px rgba(124, 92, 252, 0.22);
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.agents-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 27px;
+  border: 1px solid #ddd9ff;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 80% 15%, var(--hero-accent, #EDE8FF), transparent 40%),
+    white;
+  box-shadow: 0 24px 70px rgba(124, 92, 252, 0.09);
+  animation: agentsHeroIn 500ms ease both;
+}
+
+.agents-hero__glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  right: -120px;
+  top: -120px;
+  border-radius: 50%;
+  background: var(--hero-color, #7C5CFC);
+  filter: blur(100px);
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.agents-hero__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.agents-hero__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.agents-hero__live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.09);
+}
+
+.agents-hero__level {
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #f1efff;
+  color: #7355e8;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.agents-hero__main {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  padding: 34px 0 27px;
+}
+
+.agents-hero__portrait {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  flex: 0 0 116px;
+  display: grid;
+  place-items: center;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #7c5cfc, #df4fb1);
+  color: white;
+  font-size: 43px;
+  font-weight: 700;
+  box-shadow: 0 18px 40px rgba(124, 92, 252, 0.25);
+}
+
+.agents-hero__portrait-status {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  right: 7px;
+  bottom: 7px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.agents-hero__identity {
+  min-width: 0;
+}
+
+.agents-hero__name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agents-hero__name-row h1 {
+  margin: 0;
+  font-size: 34px;
+  letter-spacing: -0.045em;
+}
+
+.agents-hero__badge {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #eee9ff;
+  color: #7455ed;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.agents-hero__role {
+  margin-top: 3px;
+  color: #6d6d6d;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.agents-hero__identity p {
+  max-width: 670px;
+  margin: 12px 0 14px;
+  color: #555;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.agents-hero__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.agents-hero__chips span {
+  padding: 5px 8px;
+  border: 1px solid #ecebea;
+  border-radius: 7px;
+  background: #fafafa;
+  color: #777;
+  font-size: 10px;
+}
+
+.agents-hero__stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.agents-hero__stats > div {
+  padding: 14px;
+  border: 1px solid #ecebea;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.agents-hero__stats span {
+  display: block;
+  margin-bottom: 5px;
+  color: #a0a0a0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.agents-hero__stats strong {
+  font-size: 15px;
+}
+
+.agents-hero__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+.agent-profile {
+  margin-top: 14px;
+  padding: 25px;
+  border: 1px solid #e7e7e3;
+  border-radius: 20px;
+  background: white;
+  animation: agentsCascade 500ms 120ms both;
+}
+
+.agent-profile__heading {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.agent-profile__heading h2 {
+  margin: 5px 0 0;
+  font-size: 20px;
+  letter-spacing: -0.025em;
+}
+
+.agent-profile__heading svg {
+  color: #7c5cfc;
+}
+
+.agent-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+
+.agent-profile__grid article {
+  padding: 16px;
+  border: 1px solid #ecebe8;
+  border-radius: 14px;
+  background: #fcfcfb;
+}
+
+.agent-profile__icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: #f0edff;
+  color: #7455ed;
+}
+
+.agent-profile__grid article > span {
+  font-size: 9px;
+  font-weight: 800;
+  color: #a0a0a0;
+  letter-spacing: 0.08em;
+}
+
+.agent-profile__grid p {
+  margin: 7px 0 0;
+  color: #444;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* =========================================================
+   SQUAD
+========================================================= */
+
+.agent-squad,
+.agent-activity {
+  margin-top: 40px;
+}
+
+.agent-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 15px;
+}
+
+.agent-section-heading h2 {
+  margin: 5px 0 0;
+  font-size: 21px;
+  letter-spacing: -0.03em;
+}
+
+.agent-section-count {
+  padding: 5px 9px;
+  border: 1px solid #e8e8e5;
+  border-radius: 8px;
+  color: #777;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.agent-filters {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 13px;
+}
+
+.agent-filters button {
+  padding: 7px 12px;
+  border: 1px solid #e9e9e6;
+  border-radius: 999px;
+  background: white;
+  color: #777;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.agent-filters button.is-active {
+  background: #111;
+  border-color: #111;
+  color: white;
+}
+
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.agent-card {
+  position: relative;
+  min-height: 176px;
+  padding: 17px;
+  border: 1px solid #e6e6e2;
+  border-radius: 17px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  animation: agentCardIn 550ms var(--agent-delay, 0ms) both;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.agent-card:hover {
+  transform: translateY(-3px);
+  border-color: #c9c1f5;
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.07);
+}
+
+.agent-card--selected {
+  border: 2px solid var(--agent-color, #7C5CFC);
+  box-shadow: 0 12px 35px rgba(124, 92, 252, 0.14);
+}
+
+.agent-card__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.agent-card__avatar {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.agent-card__rarity {
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: #f2f0eb;
+  color: #8d8b86;
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.agent-card__level {
+  margin-left: auto;
+  color: #999;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.agent-card__name {
+  margin-top: 17px;
+  color: #171717;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.agent-card__role {
+  margin-top: 2px;
+  color: #888;
+  font-size: 10px;
+}
+
+.agent-card__hp {
+  position: relative;
+  margin-top: 17px;
+}
+
+.agent-card__hp > span {
+  color: #999;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.agent-card__hp strong {
+  float: right;
+  font-size: 9px;
+}
+
+.agent-card__hp-track {
+  clear: both;
+  height: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: #eee;
+}
+
+.agent-card__hp-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.agent-card__footer {
+  position: absolute;
+  left: 17px;
+  right: 17px;
+  bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #999;
+}
+
+.agent-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.agent-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.agent-card--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #aaa;
+  border-style: dashed;
+  background: transparent;
+}
+
+.agent-card--empty strong {
+  margin-top: 10px;
+  color: #777;
+  font-size: 12px;
+}
+
+.agent-card--empty span {
+  margin-top: 3px;
+  color: #aaa;
+  font-size: 10px;
+}
+
+/* =========================================================
+   ACTIVITY
+========================================================= */
+
+.agent-activity__list {
+  overflow: hidden;
+  border: 1px solid #e6e6e2;
+  border-radius: 16px;
+  background: white;
+}
+
+.agent-activity__row {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: 28px 55px 1fr 70px;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid #efefed;
+  animation: agentCardIn 450ms var(--agent-delay, 0ms) both;
+}
+
+.agent-activity__row:last-child {
+  border-bottom: 0;
+}
+
+.agent-activity__indicator {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.agent-activity__indicator--ok {
+  background: #e8faf3;
+  color: #10a77b;
+}
+
+.agent-activity__indicator--warn {
+  background: #fff7dd;
+  color: #d99c00;
+}
+
+.agent-activity__time {
+  color: #aaa;
+  font-size: 10px;
+}
+
+.agent-activity__message {
+  color: #555;
+  font-size: 11px;
+}
+
+.agent-activity__state {
+  justify-self: end;
+  padding: 4px 6px;
+  border-radius: 5px;
+  font-size: 7px;
+  font-weight: 900;
+}
+
+.agent-activity__state--ok {
+  background: #e9faf3;
+  color: #0c9b72;
+}
+
+.agent-activity__state--warn {
+  background: #fff5d9;
+  color: #b98000;
+}
+
+.agent-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #e9faf3;
+  color: #0c9b72;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.agent-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: agentPulse 1.6s ease-in-out infinite;
+}
+
+/* =========================================================
+   COMMAND BAR
+========================================================= */
+
+.agent-command {
+  margin-top: 24px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #111;
+  color: white;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.12);
+}
+
+.agent-command__header {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid #2b2b2b;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.agent-command__header span {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+
+.agent-command__header svg {
+  color: #8a6cff;
+}
+
+.agent-command__header code {
+  color: #777;
+}
+
+.agent-command__system {
+  display: flex;
+  gap: 9px;
+  margin: 13px;
+  padding: 10px;
+  border: 1px solid #2b2b2b;
+  border-radius: 10px;
+  background: #171717;
+}
+
+.agent-command__system-icon {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #272727;
+  color: #aaa;
+}
+
+.agent-command__system strong {
+  display: block;
+  color: #777;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.agent-command__system p {
+  margin: 2px 0 0;
+  color: #aaa;
+  font-family: monospace;
+  font-size: 9px;
+}
+
+.agent-command__input {
+  display: flex;
+  gap: 7px;
+  padding: 0 13px 13px;
+}
+
+.agent-command__input input {
+  flex: 1;
+  height: 39px;
+  padding: 0 12px;
+  border: 1px solid #2b2b2b;
+  border-radius: 9px;
+  outline: none;
+  background: #171717;
+  color: white;
+}
+
+.agent-command__input button {
+  width: 42px;
+  border: 0;
+  border-radius: 9px;
+  background: white;
+  color: #111;
+  cursor: pointer;
+}
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
+@keyframes agentsHeroIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes agentsCascade {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes agentCardIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes agentPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .agents-hero,
+  .agent-profile,
+  .agent-card,
+  .agent-activity__row,
+  .agent-live i {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .agents-page__top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .agent-grid { grid-template-columns: repeat(2, 1fr); }
+  .agent-profile__grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 650px) {
+  .agents-page__inner { width: min(100% - 24px, 1120px); padding-top: 24px; }
+  .agents-hero__main { flex-direction: column; align-items: flex-start; }
+  .agents-hero__stats { grid-template-columns: repeat(2, 1fr); }
+  .agent-grid { grid-template-columns: 1fr; }
+}

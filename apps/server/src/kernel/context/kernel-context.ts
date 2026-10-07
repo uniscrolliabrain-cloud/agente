@@ -1,4 +1,4 @@
-// KERNEL_CONTEXT_V1 — identidad de cada operacion del kernel.
+// KERNEL_CONTEXT_V1 â€” identidad de cada operacion del kernel.
 //
 // Por que existe: SOC-2 exige control de acceso y trazabilidad. Cada
 // operacion del kernel (abrir turno, escribir pensamiento, cerrar turno,
@@ -21,7 +21,9 @@ export const kernelContextSchema = z.object({
   threadId: z.string().min(1).max(200).optional(),
   parentTurnId: z.string().min(1).max(100).optional(),
   correlationId: z.string().min(1).max(200).optional(),
-});
+
+  // KERNEL_PERSONA_V1 - persona funcional que habla en este turno.
+  personaId: z.string().min(1).max(80).optional(),});
 
 export type KernelRole = z.infer<typeof kernelRoleSchema>;
 export type KernelContext = z.infer<typeof kernelContextSchema>;

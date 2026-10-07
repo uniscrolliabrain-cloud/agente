@@ -22,7 +22,9 @@ export interface KernelContext {
   parentTurnId?: string;
   /** KERNEL_CORRELATION_V1 - correlacion HTTP <-> task <-> turn. */
   correlationId?: string;
-}
+
+  /** KERNEL_PERSONA_V1 - persona funcional que habla en este turno. Opcional. */
+  personaId?: string;}
 
 export interface KernelThought {
   id: string;
