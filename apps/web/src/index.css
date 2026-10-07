@@ -2793,3 +2793,7 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .pm__cell input[type="checkbox"] { cursor: pointer; }
 .pm__cell input[type="checkbox"]:disabled { cursor: not-allowed; }
 .pm__empty { text-align: center; color: var(--text-3); font-size: 12px; padding: 20px; }
+
+/* AGENTS_CSS_IMPORT_V1 - estilos del frente Agentes. */
+@import "./components/agents/agents.css";
+
