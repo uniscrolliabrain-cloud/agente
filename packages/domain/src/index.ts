@@ -236,3 +236,7 @@ export * from "./learning.ts";
 export * from "./workspace-spec.ts";
 export * from "./live.ts";
 export * from "./views.ts";
+
+// AGENT_PERSONA_V1 - personas funcionales del sistema.
+export * from "./agent-persona.ts";
+

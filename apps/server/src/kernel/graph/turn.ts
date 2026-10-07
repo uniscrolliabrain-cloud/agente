@@ -1,4 +1,4 @@
-// KERNEL_TURN_V2 — ciclo de vida completo.
+// KERNEL_TURN_V2 â€” ciclo de vida completo.
 //
 // Cambios respecto a V1:
 //   - parentTurnId: si el slow sigue tras cerrar el padre, abre turno hijo.
@@ -26,7 +26,9 @@ export const turnSchema = z.object({
   status: turnStatusSchema,
   thoughtIds: z.array(z.string().max(100)).max(500).default([]),
   triggers: z.array(z.string().max(100)).max(50).default([]),
-  closeReason: turnCloseReasonSchema.optional(),
+
+  // TURN_PERSONA_V1 - persona funcional que abrio este turno. Opcional.
+  personaId: z.string().min(1).max(80).optional(),  closeReason: turnCloseReasonSchema.optional(),
   closedBy: turnClosedBySchema.optional(),
 });
 
