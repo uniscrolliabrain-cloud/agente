@@ -142,6 +142,12 @@ export default function AgentsPage() {
           }}
         />
 
+        {fetchError && (
+          <p className="agents-page__fetch-error" role="alert">
+            {fetchError}
+          </p>
+        )}
+
         <AgentProfile agent={selectedAgent} />
 
         <AgentSquad selected={selected} onSelect={openAgent} />

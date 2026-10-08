@@ -13,7 +13,7 @@ interface Props {
 const FILTERS: Array<{ id: "all" | AgentArchetype; label: string }> = [
   { id: "all", label: "Todos" },
   { id: "hunter", label: "Cazador" },
-  { id: "guardian", label: "GuardiÃ¡n" },
+  { id: "guardian", label: "Guardián" },
   { id: "strategist", label: "Estratega" },
   { id: "architect", label: "Arquitecto" },
 ];

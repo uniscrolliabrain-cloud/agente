@@ -19,7 +19,13 @@ export class InMemoryTurnStore implements TurnStore {
   private readonly turns = new Map<string, Turn>();
   private readonly thoughts = new Map<string, Thought>();
 
-  async openTurn(tenantId: string, owner: string, trigger: string): Promise<Turn> {
+  // TURN_STORE_PERSONA_V1 - persona funcional que abre el turno. Opcional.
+  async openTurn(
+    tenantId: string,
+    owner: string,
+    trigger: string,
+    personaId?: string,
+  ): Promise<Turn> {
     const turn = turnSchema.parse({
       id: randomUUID(),
       tenantId,
@@ -27,6 +33,7 @@ export class InMemoryTurnStore implements TurnStore {
       startedAt: new Date().toISOString(),
       status: "open",
       triggers: [trigger],
+      ...(personaId ? { personaId } : {}),
     });
     this.turns.set(turn.id, turn);
     return turn;

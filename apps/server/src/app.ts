@@ -121,6 +121,12 @@ export async function createApp(
     getStatus: async (owner, entityId) => (await graph.getEntity(owner, entityId))?.status,
   });
   const agentRuntime = new AgentRuntimeManager(bus);
+  // RUNTIME_SWEEP_WIRE_V1 - cablea AgentRuntimeManager.sweep (RUNTIME_SWEEP_V1):
+  // cada 60s cierra runtimes activos con mas de 5 min sin completarse.
+  const runtimeSweepTimer = setInterval(() => {
+    void agentRuntime.sweep().catch(() => {});
+  }, 60_000);
+  runtimeSweepTimer.unref?.();
   const governance = new AgentGovernance(policy, bus);
   const workspaceRegistry = new WorkspaceRegistry();
   const marketplace = new SkillMarketplace(db);
