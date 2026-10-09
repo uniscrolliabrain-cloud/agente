@@ -24,7 +24,47 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
     { id: "transition_entity", actionType: "Update", family: "DATA", risk: "medium", sideEffects: [{ kind: "write", target: "entity", reversible: false }], requiresApproval: false },
   ];
 
+  // CAPABILITY_ACTION_TYPE_V1 - cada tool declara su verbo (16 actions) y su
+  // familia (15 families). El kernel los usa para ordenar thoughts y enrutar.
+  // CAPABILITY_COGNITIVE_V1 - cada tool declara atencion, promocion y presentacion.
+  const cognitiveSpec: Record<string, { focus: string; destination: string[]; priority: string[] }> = {
+    read_mail_thread:   { focus: "inbox",       destination: ["audit"],          priority: ["observation"] },
+    read_workspace:     { focus: "workspace",   destination: ["audit"],          priority: ["observation"] },
+    import_pdf:         { focus: "files",       destination: ["audit"],          priority: ["observation"] },
+    inspect_pdf:        { focus: "files",       destination: ["audit"],          priority: ["observation"] },
+    fill_pdf:           { focus: "files",       destination: ["memory","audit"], priority: ["action"] },
+    prepare_email:      { focus: "outbox",      destination: ["response"],       priority: ["response"] },
+    prepare_event:      { focus: "calendar",    destination: ["response"],       priority: ["response"] },
+    read_web:           { focus: "web",         destination: ["audit"],          priority: ["observation"] },
+    save_artifact:      { focus: "artifacts",   destination: ["memory","audit"], priority: ["action"] },
+    ask_user:           { focus: "user",        destination: ["response"],       priority: ["query"] },
+    computer_command:   { focus: "sandbox",     destination: ["audit"],          priority: ["action"] },
+    query_business:     { focus: "business",    destination: ["audit"],          priority: ["observation"] },
+    recall_memory:      { focus: "memory",      destination: ["audit"],          priority: ["observation"] },
+    llm_generate:       { focus: "context",     destination: ["response"],       priority: ["reasoning"] },
+    transition_entity:  { focus: "graph",       destination: ["business-graph"], priority: ["action"] },
+  };
+
+  const toolMeta: Record<string, { actionType: string; family: string }> = {
+    read_mail_thread:      { actionType: "Read",        family: "COMMUNICATION" },
+    read_workspace:        { actionType: "Read",        family: "DATA" },
+    import_pdf:            { actionType: "Retrieve",    family: "DOCUMENTS" },
+    inspect_pdf:           { actionType: "Read",        family: "DOCUMENTS" },
+    fill_pdf:              { actionType: "Write",       family: "DOCUMENTS" },
+    prepare_email:         { actionType: "Communicate", family: "COMMUNICATION" },
+    prepare_event:         { actionType: "Create",      family: "AUTOMATION" },
+    read_web:              { actionType: "Read",        family: "WEB" },
+    save_artifact:         { actionType: "Write",       family: "DATA" },
+    ask_user:              { actionType: "Communicate", family: "COMMUNICATION" },
+    computer_command:      { actionType: "Execute",     family: "SOFTWARE" },
+    query_business:        { actionType: "Retrieve",    family: "DATA" },
+    recall_memory:         { actionType: "Retrieve",    family: "DATA" },
+    llm_generate:          { actionType: "Transform",   family: "CONTENT" },
+    transition_entity:     { actionType: "Update",      family: "DATA" },
+  };
+
   for (const t of tools) {
+    const meta = toolMeta[t.id];
     registry.register({
       id: t.id,
       version: "1.0.0",
@@ -40,8 +80,8 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
         reversible: s.reversible,
       })),
       permissions: [],
-      actionType: t.actionType as "Read" | "Write" | "Execute" | "Retrieve" | "Communicate" | "Create" | "Update" | "Transform",
-      family: t.family as "COMMUNICATION" | "DATA" | "DOCUMENTS" | "AUTOMATION" | "WEB" | "SOFTWARE" | "CONTENT",
+      actionType: (meta?.actionType ?? t.actionType) as "Read" | "Write" | "Execute" | "Retrieve" | "Communicate" | "Create" | "Update" | "Transform",
+      family: (meta?.family ?? t.family) as "COMMUNICATION" | "DATA" | "DOCUMENTS" | "AUTOMATION" | "WEB" | "SOFTWARE" | "CONTENT",
       risk: t.risk as "low" | "medium" | "high" | "critical",
       cost: {},
       idempotency: "idempotent",
@@ -64,8 +104,8 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
     requiresApproval: boolean;
   }> = [
     { id: "run_sop", kind: "composite", actionType: "Execute", family: "AUTOMATION", description: "Ejecuta un SOP registrado", risk: "low", sideEffects: [], requiresApproval: false },
-    { id: "send_email", kind: "composite", actionType: "Communicate", family: "COMMUNICATION", description: "Envía email (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "email", reversible: false }], requiresApproval: true },
-    { id: "send_whatsapp", kind: "composite", actionType: "Communicate", family: "COMMUNICATION", description: "Envía WhatsApp (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "whatsapp", reversible: false }], requiresApproval: true },
+    { id: "send_email", kind: "composite", actionType: "Communicate", family: "COMMUNICATION", description: "EnvÃƒÂ­a email (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "email", reversible: false }], requiresApproval: true },
+    { id: "send_whatsapp", kind: "composite", actionType: "Communicate", family: "COMMUNICATION", description: "EnvÃƒÂ­a WhatsApp (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "whatsapp", reversible: false }], requiresApproval: true },
     { id: "create_calendar_event", kind: "composite", actionType: "Create", family: "AUTOMATION", description: "Crea evento (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "calendar", reversible: false }], requiresApproval: true },
   ];
   for (const c of composites) {

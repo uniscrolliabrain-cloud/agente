@@ -47,7 +47,8 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
         personaId: skin.personaId,
         displayName: skin.persona.displayName,
         role: skin.persona.role,
-        archetype: skin.persona.personality.tone,
+        // PERSONAS_ARCHETYPE_FIX_V1 - devuelve el arquetipo real (stats), no el tono.
+        archetype: skin.stats.archetype,
         stats: skin.stats,
         avatar: skin.persona.avatar ?? null,
         reportsTo: skin.persona.reportsTo ?? null,
@@ -90,6 +91,29 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
       state: skin.state,
       activity,
     });
+  });
+
+  // PERSONAS_ALL_NODES_V1 - informe agregado de todos los agentes del tenant.
+  // Laia (supervisora) puede pedir turnos + thoughts + memory de los 12 de golpe.
+  app.get("/all/nodes", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    if (!deps.kernel) {
+      return c.json({ tenantId, total: 0, nodes: [], note: "kernel not wired" });
+    }
+    const { loadAgentNode } = await import("./node.ts");
+    const skins = resolveAllSkins(deps.registry, tenantId);
+    const nodes = [];
+    for (const skin of skins) {
+      if (skin.personaId === "laia") continue;
+      try {
+        const node = await loadAgentNode(deps.db, deps.kernel, tenantId, owner, skin, 50);
+        nodes.push(node);
+      } catch {
+        nodes.push({ personaId: skin.personaId, tenantId, owner, turns: [], thoughts: [], memory: [] });
+      }
+    }
+    return c.json({ tenantId, total: nodes.length, nodes });
   });
 
   // PERSONA_ROUTES_NODE_V1 - turns + thoughts de la persona.

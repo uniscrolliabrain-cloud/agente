@@ -176,7 +176,7 @@ export default function App() {
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "agents" && <AgentsPage />}
+          {view === "agents" && <AgentsPage enabled={auth.isAuthenticated} />} {/* AGENTS_PAGE_ENABLED_V1 */}
         </div>
       </AppShell>
 

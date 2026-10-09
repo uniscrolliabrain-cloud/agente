@@ -1,0 +1,21 @@
+{
+    "source":  "clientes/_base/agentes.json",
+    "count":  12,
+    "ids":  [
+                "direccion",
+                "comercial",
+                "atencion",
+                "administrativo",
+                "finanzas",
+                "marketing",
+                "contenido",
+                "operaciones",
+                "compras",
+                "rrhh",
+                "legal",
+                "compliance"
+            ],
+    "_marca":  "LAIA_12_PERSONAS_V1",
+    "tenantId":  "default",
+    "createdAt":  "2026-10-08T15:47:31.8074396+02:00"
+}
