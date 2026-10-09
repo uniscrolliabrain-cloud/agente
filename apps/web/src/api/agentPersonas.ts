@@ -115,5 +115,9 @@ export const getAgentNode = (personaId: string, signal?: AbortSignal) =>
 export const getAgentAttention = (personaId: string, signal?: AbortSignal) =>
   get<AgentAttention>(`/api/agent-personas/${enc(personaId)}/attention`, signal);
 
+// AGENTS_REFRESH_STATS_BUTTON_V1 - recalcula stats de todas las personas.
+export const refreshAllStats = (): Promise<{ tenantId: string; refreshed: number; errors: string[] }> =>
+  apiFetch("/api/agent-personas/refresh-stats", { method: "POST" });
+
 export const getAgentActivity = (personaId: string, limit = 20, signal?: AbortSignal) =>
   get<AgentActivityResponse>(`/api/agent-personas/${enc(personaId)}/activity?limit=${limit}`, signal);

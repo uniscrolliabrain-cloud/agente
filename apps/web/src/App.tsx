@@ -18,12 +18,19 @@ import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
 import AgentsPage from "./components/agents/AgentsPage";
+import AgentDetailPage from "./components/agents/AgentDetailPage"; // AGENT_DETAIL_ROUTE_V1
 import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
 import AppShell from "./components/AppShell";
 import ContextualPanel from "./components/ContextualPanel";
+import { AgentWindowProvider, useAgentWindow } from "./contexts/AgentWindowContext"; // FLOATING_WINDOW_MOUNT_V1
+import LaiaFloatingWindow from "./components/agents/floating/LaiaFloatingWindow"; // FLOATING_WINDOW_MOUNT_V1
+import AgentDockLauncher from "./components/agents/floating/AgentDockLauncher"; // FLOATING_WINDOW_MOUNT_V1
+import { useAgentPersonas } from "./hooks/useAgentPersonas"; // FLOATING_WINDOW_MOUNT_V1
+import { useAgentNode } from "./hooks/useAgentNode"; // FLOATING_WINDOW_MOUNT_V1
+import { personaToAgentUI } from "./components/agents/types"; // FLOATING_WINDOW_MOUNT_V1
 import type { AgentTask } from "./types/api";
 
 function useTheme() {
@@ -59,6 +66,36 @@ export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
   producto: "projects",
 };
 
+function AgentWindowLayer({ enabled }: { enabled: boolean }) {
+  const { windowOpen, minimized, maximized, position, zIndex, agentId, close, minimize, maximize, focus, move, open } = useAgentWindow();
+  const { personas } = useAgentPersonas(enabled);
+  const { node } = useAgentNode(agentId, enabled);
+  const persona = agentId ? personas.find((p) => p.personaId === agentId) : undefined;
+  const agent = persona ? personaToAgentUI(persona) : null;
+  if (!agent) return null;
+  return (
+    <>
+      {windowOpen && !minimized && (
+        <LaiaFloatingWindow
+          agent={agent}
+          node={node}
+          maximized={maximized}
+          position={position}
+          zIndex={zIndex}
+          onMinimize={minimize}
+          onMaximize={maximize}
+          onClose={close}
+          onMove={move}
+          onFocus={focus}
+        />
+      )}
+      {windowOpen && minimized && (
+        <AgentDockLauncher agent={agent} onOpen={() => open(agent.id)} />
+      )}
+    </AgentWindowProvider>
+  );
+}
+
 export default function App() {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
@@ -74,6 +111,7 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null); // AGENT_DETAIL_ROUTE_V1
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -150,7 +188,7 @@ export default function App() {
   );
 
   return (
-    <>
+    <AgentWindowProvider>
       <AppShell sidebar={sidebar} panel={panel}>
         <TopBarV2
           status={status}
@@ -176,9 +214,17 @@ export default function App() {
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "agents" && <AgentsPage enabled={auth.isAuthenticated} />} {/* AGENTS_PAGE_ENABLED_V1 */}
+          {view === "agents" && !selectedAgentId && <AgentsPage enabled={auth.isAuthenticated} onOpenAgent={(id) => setSelectedAgentId(id)} />} {/* AGENTS_PAGE_ENABLED_V1 */}
+          {view === "agents" && selectedAgentId && (
+            <AgentDetailPage
+              personaId={selectedAgentId}
+              enabled={auth.isAuthenticated}
+              onBack={() => setSelectedAgentId(null)}
+            />
+          )} {/* AGENT_DETAIL_ROUTE_V1 */}
         </div>
       </AppShell>
+      <AgentWindowLayer enabled={auth.isAuthenticated} />
 
       <CommandPalette
         open={paletteOpen}
@@ -210,6 +256,6 @@ export default function App() {
           onChanged={tasks.refresh}
         />
       )}
-    </>
+    </AgentWindowProvider>
   );
 }

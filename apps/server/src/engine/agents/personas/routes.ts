@@ -116,6 +116,49 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
     return c.json({ tenantId, total: nodes.length, nodes });
   });
 
+  // PERSONAS_STATS_REFRESH_BUTTON_V1 - recalcula stats de todas las personas.
+  app.post("/refresh-stats", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    const skins = resolveAllSkins(deps.registry, tenantId);
+    let refreshed = 0;
+    const errors: string[] = [];
+    for (const skin of skins) {
+      try {
+        await resolveSkin(deps.registry, tenantId, skin.personaId, {
+          refreshStats: true,
+          db: deps.db,
+          owner,
+        });
+        refreshed += 1;
+      } catch (err) {
+        errors.push(`${skin.personaId}: ${err instanceof Error ? err.message : "unknown"}`);
+      }
+    }
+    return c.json({ tenantId, refreshed, errors });
+  });
+
+  // PERSONAS_ATTENTION_V1 - atencion agregada de una persona.
+  app.get("/:id/attention", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    const personaId = c.req.param("id");
+    const skin = await resolveSkin(deps.registry, tenantId, personaId);
+    if (!skin) throw new AppError(`Persona not found: ${personaId}`, 404);
+    if (!deps.kernel) {
+      return c.json({ personaId, tenantId, attention: null, note: "kernel not wired" });
+    }
+    const ctx: import("../../../kernel/context/kernel-context.ts").KernelContext = {
+      tenantId,
+      owner,
+      role: "system",
+      requestId: `attention:${personaId}:${Date.now()}`,
+      personaId,
+    };
+    const attention = await deps.kernel.attentionOfPersona(ctx, personaId);
+    return c.json({ personaId, tenantId, attention });
+  });
+
   // PERSONA_ROUTES_NODE_V1 - turns + thoughts de la persona.
   app.get("/:id/node", async (c) => {
     const owner = c.get("owner");
@@ -124,7 +167,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
     const skin = await resolveSkin(deps.registry, tenantId, personaId);
     if (!skin) throw new AppError(`Persona not found: ${personaId}`, 404);
     if (!deps.kernel) {
-      return c.json({ personaId, tenantId, turns: [], thoughts: [], memory: [], note: "kernel not wired" });
+      return c.json({ personaId, tenantId, owner, turns: [], thoughts: [], memory: [], note: "kernel not wired" }); // NODE_FALLBACK_OWNER_V1
     }
     const { loadAgentNode } = await import("./node.ts");
     const node = await loadAgentNode(deps.db, deps.kernel, tenantId, owner, skin);

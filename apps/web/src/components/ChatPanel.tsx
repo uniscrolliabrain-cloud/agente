@@ -9,6 +9,7 @@ import SuggestionChips from "./SuggestionChips";
 import RoleSelector from "./RoleSelector";
 import type { ChatMessage } from "../types/api";
 import type { ToolCall } from "../lib/toolsReducer";
+import { useAgentWindow } from "../contexts/AgentWindowContext"; // CHAT_OPEN_AGENT_COMMAND_V1
 
 interface ChatState {
   roleId?: string;
@@ -35,6 +36,17 @@ const CHIPS = [
 ];
 
 export default function ChatPanel({ chat, onResolveView }: Props) {
+  // CHAT_OPEN_AGENT_COMMAND_V1 - intercepta "llama a X" / "abre a X" y
+  // abre la ventana del agente en vez de enviarlo al backend.
+  const { open: openAgentWindow } = useAgentWindow();
+  const sendWithCommand = (text: string) => {
+    const m = /^\s*(?:llama|abre|abrir|invoca)\s+a\s+([a-z0-9-]+)\s*$/i.exec(text);
+    if (m) {
+      openAgentWindow(m[1].toLowerCase());
+      return;
+    }
+    chat.send(text);
+  };
   const [seed, setSeed] = useState("");
   const isEmpty = chat.messages.length === 0 && !chat.streaming;
 
@@ -50,10 +62,10 @@ export default function ChatPanel({ chat, onResolveView }: Props) {
   if (isEmpty) {
     return (
       <div className="v2-home">
-        <div className="v2-greeting">✦ Buenas tardes, Alfonso</div>
-        <h1 className="v2-hero-title">¿En qué te ayudo hoy?</h1>
+        <div className="v2-greeting">âœ¦ Buenas tardes, Alfonso</div>
+        <h1 className="v2-hero-title">Â¿En quÃ© te ayudo hoy?</h1>
         <ChatInput
-          onSend={chat.send}
+          onSend={sendWithCommand}
           onCancel={chat.cancel}
           streaming={chat.streaming}
           seed={seed}
@@ -75,7 +87,7 @@ export default function ChatPanel({ chat, onResolveView }: Props) {
       />
       <div className="v2-conv-input">
         <ChatInput
-          onSend={chat.send}
+          onSend={sendWithCommand}
           onCancel={chat.cancel}
           streaming={chat.streaming}
           seed=""
