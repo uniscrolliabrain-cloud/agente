@@ -59,10 +59,10 @@ export async function createApp(
   config: Config,
   options: { docker?: DockerRunner } = {},
 ) {
-  // SERVICE_TENANT_DB_V2 Ã¢â‚¬â€ creamos primero TenantService y tdb, luego el
-// resto de servicios con tdb. Antes se construÃƒÂ­an con `db` crudo, asÃƒÂ­ que
-// Files/Rag/Workspace escribÃƒÂ­an con clave plana mientras el resto leÃƒÂ­a
-// con clave `tenantId:owner`. Los artifacts no aparecÃƒÂ­an en agent.detail().
+  // SERVICE_TENANT_DB_V2 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â creamos primero TenantService y tdb, luego el
+// resto de servicios con tdb. Antes se construÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­an con `db` crudo, asÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­ que
+// Files/Rag/Workspace escribÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­an con clave plana mientras el resto leÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a
+// con clave `tenantId:owner`. Los artifacts no aparecÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­an en agent.detail().
   // Ver: docs/KNOWN_ISSUES.md FASE0_DEBT_FILES_TDB_V1 y
   // docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
   const tenantServiceEarly = new TenantService(db, config);
@@ -75,7 +75,7 @@ export async function createApp(
     workspace = new WorkspaceService(tdbEarly, config, files, google, rag);
   // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
   // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
-  // SERVICE_TENANT_DB_V2 Ã¢â‚¬â€ reutilizamos los creados arriba.
+  // SERVICE_TENANT_DB_V2 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â reutilizamos los creados arriba.
   const tenantService = tenantServiceEarly;
   const tdb = tdbEarly;
   // PERSONAS_WIRE_V1 - registry de personas del tenant. Se carga al arrancar
@@ -84,15 +84,22 @@ export async function createApp(
   const personaRegistry = new PersonaRegistry();
   {
     const clientsDir = process.env.OPENMUSE_CLIENTS_DIR ?? "clientes";
-    void bootstrapPersonas(personaRegistry, "default", clientsDir).then((r) => {
-      if (r.loaded > 0 || r.failed > 0) {
-        console.log(`[personas] tenant default: ${r.loaded} cargadas, ${r.failed} fallidas`);
+    // LAIA_BOOTSTRAP_EXAMPLE_V1 - carga tambien el tenant _example para que
+    // Laia (que vive ahi) entre en el registry bajo "default".
+    void Promise.all([
+      bootstrapPersonas(personaRegistry, "default", clientsDir),
+      bootstrapPersonas(personaRegistry, "default", "clientes/_example"),
+    ]).then(([r1, r2]) => {
+      const loaded = r1.loaded + r2.loaded;
+      const failed = r1.failed + r2.failed;
+      if (loaded > 0 || failed > 0) {
+        console.log(`[personas] tenant default: ${loaded} cargadas, ${failed} fallidas`);
       }
     }).catch(() => {});
   }
-  // BUSINESS_OS_FIXED_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â bus declarado antes de los servicios que lo usan.
+  // BUSINESS_OS_FIXED_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â bus declarado antes de los servicios que lo usan.
   const bus = new EventBus(tdb);
-  // POLICY_EARLY_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â policy se necesita antes del ActionService, asi que se instancia aqui.
+  // POLICY_EARLY_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â policy se necesita antes del ActionService, asi que se instancia aqui.
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
   const actions = new ActionService(db, {
@@ -121,6 +128,12 @@ export async function createApp(
     getStatus: async (owner, entityId) => (await graph.getEntity(owner, entityId))?.status,
   });
   const agentRuntime = new AgentRuntimeManager(bus);
+  // RUNTIME_SWEEP_WIRE_V1 - cablea AgentRuntimeManager.sweep (RUNTIME_SWEEP_V1):
+  // cada 60s cierra runtimes activos con mas de 5 min sin completarse.
+  const runtimeSweepTimer = setInterval(() => {
+    void agentRuntime.sweep().catch(() => {});
+  }, 60_000);
+  runtimeSweepTimer.unref?.();
   const governance = new AgentGovernance(policy, bus);
   const workspaceRegistry = new WorkspaceRegistry();
   const marketplace = new SkillMarketplace(db);
@@ -196,6 +209,41 @@ export async function createApp(
     bus,
     { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService }, // APP_RUNTIME_WIRE_V1
   );
+  // ONTOLOGY_VALIDATE_WIRE_V1 - valida el vocabulario del tenant contra el
+  // metamodelo. Fail-soft: si falla, se loguea y se sigue.
+  try {
+    const { validateAgainstMetamodel } = await import("../../../packages/domain/src/ontology.ts");
+    const { BASE_VOCABULARY } = await import("../../../packages/domain/src/ontology-seed.ts");
+    const caps = await agent.capabilities.list();
+    validateAgainstMetamodel({
+      entityKinds: [],
+      relationKinds: [],
+      capabilityKinds: caps.map((c) => c.id),
+      tenantScope: "default",
+      baseVocabulary: BASE_VOCABULARY,
+    });
+    console.log(`[ontology] validado: ${caps.length} capabilities`);
+  } catch (error) {
+    console.warn("[ontology] validacion fallida:", error instanceof Error ? error.message : error);
+  }
+
+  // ONTOLOGY_BUNDLE_LOAD_V1 - bundle del tenant cargado al arrancar.
+  try {
+    const { readFile: readOntologyFile } = await import("node:fs/promises");
+    const { join: joinOntology } = await import("node:path");
+    // ONTOLOGY_BUNDLE_CLIENTSDIR_FIX_V1 - clientsDir vive en otro bloque; se recalcula aqui.
+    const ontologyPath = joinOntology(process.env.OPENMUSE_CLIENTS_DIR ?? "clientes", "default", "ontology.json");
+    const raw = await readOntologyFile(ontologyPath, "utf8").catch(() => null);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      const { ontologyBundleSchema } = await import("../../../packages/domain/src/ontology.ts");
+      ontologyBundleSchema.parse(parsed);
+      console.log(`[ontology] bundle cargado: ${parsed.entities?.length ?? 0} entidades`);
+    }
+  } catch (error) {
+    console.warn("[ontology] bundle no cargado:", error instanceof Error ? error.message : error);
+  }
+
   const runtime = makeRuntime(config, agent, auth);
   const app = new Hono<{ Variables: { owner: string } }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
@@ -211,7 +259,7 @@ export async function createApp(
     await agent.ensure(owner);
     if (config.mode === "sample") await agent.refreshIdeas(owner);
   };
-  // REQUEST_LOGGER_WIRE_V1 Ã¢â‚¬â€ correlationId por request, logging estructurado.
+  // REQUEST_LOGGER_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â correlationId por request, logging estructurado.
   // Ver docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
   app.use("*", requestLogger());
   app.use("*", async (c, next) => {
@@ -274,7 +322,7 @@ export async function createApp(
     const expected = process.env.WHATSAPP_WEBHOOK_TOKEN;
     if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
     const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
-    // WHATSAPP_RATE_LIMIT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â timingSafeEqual + rate limit por IP.
+    // WHATSAPP_RATE_LIMIT ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â timingSafeEqual + rate limit por IP.
     const expectedBuf = Buffer.from(expected);
     const providedBuf = Buffer.from(provided ?? "");
     if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf))
@@ -298,7 +346,7 @@ export async function createApp(
     }), { maxAttempts: 3, baseMs: 200, maxMs: 2000 });
     return c.json({ ok: true });
   });
-  // R16 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â healthcheck profundo: comprueba DB (lectura + escritura idempotente),
+  // R16 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â healthcheck profundo: comprueba DB (lectura + escritura idempotente),
   // que el bus pueda emitir, y el estado del worker. Devuelve 503 si algo falla,
   // para que Fly/Render sepan cuando reiniciar de verdad.
   app.get("/api/health-deep", async (c) => {
@@ -359,7 +407,7 @@ app.get("/api/health", async (c) => {
       ok ? 200 : 503,
     );
   });
-  // SESSION_RATE_LIMIT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
+  // SESSION_RATE_LIMIT ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
   const sessionLimiter = new RateLimiter(30, 60000);
   const sessionAddress = (c: Context) => {
     const fwd = c.req.header("x-forwarded-for")?.split(",")[0]?.trim();
@@ -403,7 +451,7 @@ app.get("/api/health", async (c) => {
         ? auth.verify(new URL(c.req.url))
         : await auth.owner(c.req.header("authorization"));
     c.set("owner", owner);
-    // OWNER_LOG_CONTEXT_V1 Ã¢â‚¬â€ propaga owner al contexto de log del request.
+    // OWNER_LOG_CONTEXT_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â propaga owner al contexto de log del request.
     const current = logContext.getStore();
     if (current) {
       logContext.enterWith({ ...current, owner });
@@ -416,7 +464,7 @@ app.get("/api/health", async (c) => {
     snapshot.browsers = snapshot.browsers.map((s) => browser.decorate(owner, s));
     return c.json(snapshot);
   });
-  // BILLING_AFTER_AUTH ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
+  // BILLING_AFTER_AUTH ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â billing vive debajo del middleware de auth para que Stripe no quede abierto al mundo.
 app.post("/api/billing/customer", async (c) => {
     const body = z.object({ email: z.email(), name: z.string().min(1).max(200) }).parse(await c.req.json());
     const { StripeClient } = await import("../../../packages/integrations/src/stubs/stripe.ts");
@@ -513,7 +561,7 @@ app.post("/api/billing/customer", async (c) => {
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {
     const { kernelRoutes } = await import("./kernel-routes.ts");
-    // KERNEL_ROUTES_ADMIN_WIRE_V1 Ã¢â‚¬â€ pasa UserService para validaciÃƒÂ³n admin.
+    // KERNEL_ROUTES_ADMIN_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â pasa UserService para validaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n admin.
     // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
     app.route("/api/kernel", kernelRoutes(kernel, users));
   }
@@ -525,7 +573,7 @@ app.post("/api/billing/customer", async (c) => {
     const { viewsRoutes } = await import("./routes/views.ts");
     app.route("/api/views", viewsRoutes());
   }
-  // BUSINESS_ROUTES_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â rutas HTTP del Business Graph.
+  // BUSINESS_ROUTES_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");
   app.route("/api/business", businessRoutes(graph, truth, workspaceRegistry, stateMachines));
   app.get("/api/calendars", async (c) => c.json(await workspace.calendars(c.get("owner"))));
@@ -768,4 +816,4 @@ app.post("/api/billing/customer", async (c) => {
 
   return { app, auth, files, actions, workspace, agent, computer, users, bus };
 }
-// IMPORTS_BACKEND_FIXED ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â anadidos los imports que los bloques 2 y 46 no supieron inyectar.
+// IMPORTS_BACKEND_FIXED ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â anadidos los imports que los bloques 2 y 46 no supieron inyectar.
