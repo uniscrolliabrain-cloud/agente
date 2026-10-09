@@ -94,11 +94,11 @@ export class StoreTurnStore implements TurnStore {
       if (turn.thoughtIds.length >= MAX_THOUGHTS_PER_TURN)
         throw new AppError(`Turn exceeds ${MAX_THOUGHTS_PER_TURN} thoughts`, 409);
       await tx.put(parsed.tenantId, THOUGHTS_KIND, parsed.id, parsed);
-      // STORE_APPEND_O1_V1 â€” antes hacÃ­amos push sobre el array completo
-      // (O(n) por append, O(nÂ²) por turno). Ahora escribimos el thoughtId
+      // STORE_APPEND_O1_V1 Ã¢â‚¬â€ antes hacÃƒÂ­amos push sobre el array completo
+      // (O(n) por append, O(nÃ‚Â²) por turno). Ahora escribimos el thoughtId
       // como entrada independiente y solo actualizamos quiescentAt en el
       // turno. thoughtsOf() reconstruye la lista desde las entradas.
-      // Ver: auditorÃ­a profunda 09 (append lee turno entero).
+      // Ver: auditorÃƒÂ­a profunda 09 (append lee turno entero).
       await tx.put(
         parsed.tenantId,
         TURNS_KIND,
@@ -113,9 +113,9 @@ export class StoreTurnStore implements TurnStore {
   }
 
   /**
-   * THOUGHTS_OF_INDEXED_V1 â€” usa `scanByOwnerPrefix` si estÃ¡ disponible,
+   * THOUGHTS_OF_INDEXED_V1 Ã¢â‚¬â€ usa `scanByOwnerPrefix` si estÃƒÂ¡ disponible,
    * que hace 1 query SQL por turno. Si no, cae al batching de 20.
-   * Ver: auditorÃ­a profunda 09 (500 queries por turno con 500 thoughts).
+   * Ver: auditorÃƒÂ­a profunda 09 (500 queries por turno con 500 thoughts).
    */
   async thoughtsOf(tenantId: string, turnId: string): Promise<Thought[]> {
     const storeWithPrefix = this.store as unknown as {
@@ -147,7 +147,7 @@ export class StoreTurnStore implements TurnStore {
     if (!raw) return [];
     const turn = turnSchema.parse(raw);
     if (turn.tenantId !== tenantId) return [];
-    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacÃ­amos Promise.all sobre
+    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacÃƒÂ­amos Promise.all sobre
     // todos los thoughtIds. Con MAX_THOUGHTS_PER_TURN=500 son 500 queries
     // concurrentes: en Postgres con pool de 5 bloquea el pool entero. Ahora
     // procesamos en lotes de 20 en serie.
@@ -198,12 +198,12 @@ export class StoreTurnStore implements TurnStore {
     closedBy: TurnClosedBy,
   ): Promise<Turn[]> {
     const closed: Turn[] = [];
-    // CLOSE_TURN_CHILDREN_DEPTH_V1 â€” respeta el tope de profundidad.
-      // Ver: auditorÃ­a profunda 09 (la constante existÃ­a pero no se usaba).
+    // CLOSE_TURN_CHILDREN_DEPTH_V1 Ã¢â‚¬â€ respeta el tope de profundidad.
+      // Ver: auditorÃƒÂ­a profunda 09 (la constante existÃƒÂ­a pero no se usaba).
       const visit = async (id: string, depth: number): Promise<void> => {
         if (depth > MAX_CHILD_DEPTH) {
           throw new AppError(
-            `closeTurnAndChildren: profundidad ${depth} supera el lÃ­mite ${MAX_CHILD_DEPTH}`,
+            `closeTurnAndChildren: profundidad ${depth} supera el lÃƒÂ­mite ${MAX_CHILD_DEPTH}`,
             409,
           );
         }
@@ -240,6 +240,17 @@ export class StoreTurnStore implements TurnStore {
     const capped = Math.min(Math.max(1, limit), MAX_TURNS_LISTED);
     const rows = await this.store.list(tenantId, TURNS_KIND, capped);
     return rows.map((row) => turnSchema.parse(row.data));
+  }
+
+  // KERNEL_LIST_TURNS_ALL_PERSONAS_V1 - lista turnos del owner sin filtrar
+  // por personaId. La usa Laia (supervisora) para leer a los 12 agentes.
+  async listTurnsForOwner(tenantId: string, owner: string, limit: number): Promise<Turn[]> {
+    const capped = Math.min(Math.max(1, limit), MAX_TURNS_LISTED);
+    const rows = await this.store.list(tenantId, TURNS_KIND, capped);
+    return rows
+      .map((row) => turnSchema.parse(row.data))
+      .filter((turn) => turn.owner === owner)
+      .slice(0, capped);
   }
 
   /**
