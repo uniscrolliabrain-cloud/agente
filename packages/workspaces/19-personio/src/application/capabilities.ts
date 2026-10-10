@@ -1,9 +1,73 @@
-// 19-personio - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "position.open", title: "position.open", kind: "action" as const, risk: "low" as const },
-  { id: "onboarding.start", title: "onboarding.start", kind: "action" as const, risk: "low" as const },
-  { id: "onboarding.complete", title: "onboarding.complete", kind: "action" as const, risk: "low" as const },
-  { id: "employment.close", title: "employment.close", kind: "action" as const, risk: "low" as const },
-  { id: "lifecycle.read", title: "lifecycle.read", kind: "action" as const, risk: "low" as const },
-  { id: "onboarding.progress", title: "onboarding.progress", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "position.open",
+    title: "position.open",
+    description: "position.open",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "onboarding.start",
+    title: "onboarding.start",
+    description: "onboarding.start",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "onboarding.complete",
+    title: "onboarding.complete",
+    description: "onboarding.complete",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "employment.close",
+    title: "employment.close",
+    description: "employment.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "lifecycle.read",
+    title: "lifecycle.read",
+    description: "lifecycle.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "onboarding.progress",
+    title: "onboarding.progress",
+    description: "onboarding.progress",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

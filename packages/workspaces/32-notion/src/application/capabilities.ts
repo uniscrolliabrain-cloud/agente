@@ -1,9 +1,73 @@
-// 32-notion - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "page.create", title: "page.create", kind: "action" as const, risk: "low" as const },
-  { id: "page.update", title: "page.update", kind: "action" as const, risk: "low" as const },
-  { id: "page.relate", title: "page.relate", kind: "action" as const, risk: "low" as const },
-  { id: "page.archive", title: "page.archive", kind: "action" as const, risk: "low" as const },
-  { id: "search.knowledge", title: "search.knowledge", kind: "action" as const, risk: "low" as const },
-  { id: "knowledge.read", title: "knowledge.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "page.create",
+    title: "page.create",
+    description: "page.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "page.update",
+    title: "page.update",
+    description: "page.update",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "page.relate",
+    title: "page.relate",
+    description: "page.relate",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "page.archive",
+    title: "page.archive",
+    description: "page.archive",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "search.knowledge",
+    title: "search.knowledge",
+    description: "search.knowledge",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "knowledge.read",
+    title: "knowledge.read",
+    description: "knowledge.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

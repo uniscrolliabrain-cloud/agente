@@ -1,9 +1,73 @@
-// 23-buffer - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "post.compose", title: "post.compose", kind: "action" as const, risk: "low" as const },
-  { id: "post.schedule", title: "post.schedule", kind: "action" as const, risk: "low" as const },
-  { id: "post.publish", title: "post.publish", kind: "action" as const, risk: "low" as const },
-  { id: "post.cancel", title: "post.cancel", kind: "action" as const, risk: "low" as const },
-  { id: "post.metrics.collect", title: "post.metrics.collect", kind: "action" as const, risk: "low" as const },
-  { id: "post.read", title: "post.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "post.compose",
+    title: "post.compose",
+    description: "post.compose",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "post.schedule",
+    title: "post.schedule",
+    description: "post.schedule",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "post.publish",
+    title: "post.publish",
+    description: "post.publish",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "post.cancel",
+    title: "post.cancel",
+    description: "post.cancel",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "post.metrics.collect",
+    title: "post.metrics.collect",
+    description: "post.metrics.collect",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "post.read",
+    title: "post.read",
+    description: "post.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

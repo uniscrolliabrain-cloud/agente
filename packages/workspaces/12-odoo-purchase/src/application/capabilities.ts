@@ -1,9 +1,73 @@
-// 12-odoo-purchase - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "purchase.request", title: "purchase.request", kind: "action" as const, risk: "low" as const },
-  { id: "purchase.approve", title: "purchase.approve", kind: "action" as const, risk: "low" as const },
-  { id: "purchase.send", title: "purchase.send", kind: "action" as const, risk: "low" as const },
-  { id: "purchase.receive", title: "purchase.receive", kind: "action" as const, risk: "low" as const },
-  { id: "purchase.list", title: "purchase.list", kind: "action" as const, risk: "low" as const },
-  { id: "purchase.read", title: "purchase.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "purchase.request",
+    title: "purchase.request",
+    description: "purchase.request",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "purchase.approve",
+    title: "purchase.approve",
+    description: "purchase.approve",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "purchase.send",
+    title: "purchase.send",
+    description: "purchase.send",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "purchase.receive",
+    title: "purchase.receive",
+    description: "purchase.receive",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "purchase.list",
+    title: "purchase.list",
+    description: "purchase.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "purchase.read",
+    title: "purchase.read",
+    description: "purchase.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

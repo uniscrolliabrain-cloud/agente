@@ -1,9 +1,73 @@
-// 27-maintainx - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "asset.register", title: "asset.register", kind: "action" as const, risk: "low" as const },
-  { id: "maintenance.open", title: "maintenance.open", kind: "action" as const, risk: "low" as const },
-  { id: "maintenance.complete", title: "maintenance.complete", kind: "action" as const, risk: "low" as const },
-  { id: "maintenance.schedule", title: "maintenance.schedule", kind: "action" as const, risk: "low" as const },
-  { id: "inspection.record", title: "inspection.record", kind: "action" as const, risk: "low" as const },
-  { id: "asset.registry", title: "asset.registry", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "asset.register",
+    title: "asset.register",
+    description: "asset.register",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "maintenance.open",
+    title: "maintenance.open",
+    description: "maintenance.open",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "maintenance.complete",
+    title: "maintenance.complete",
+    description: "maintenance.complete",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "maintenance.schedule",
+    title: "maintenance.schedule",
+    description: "maintenance.schedule",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "inspection.record",
+    title: "inspection.record",
+    description: "inspection.record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "asset.registry",
+    title: "asset.registry",
+    description: "asset.registry",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

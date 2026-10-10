@@ -1,9 +1,73 @@
-// 18-factorial - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "employee.create", title: "employee.create", kind: "action" as const, risk: "low" as const },
-  { id: "employee.read", title: "employee.read", kind: "action" as const, risk: "low" as const },
-  { id: "leave.approve", title: "leave.approve", kind: "action" as const, risk: "low" as const },
-  { id: "leave.reject", title: "leave.reject", kind: "action" as const, risk: "low" as const },
-  { id: "attendance.record", title: "attendance.record", kind: "action" as const, risk: "low" as const },
-  { id: "schedule.update", title: "schedule.update", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "employee.create",
+    title: "employee.create",
+    description: "employee.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "employee.read",
+    title: "employee.read",
+    description: "employee.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "leave.approve",
+    title: "leave.approve",
+    description: "leave.approve",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "leave.reject",
+    title: "leave.reject",
+    description: "leave.reject",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "attendance.record",
+    title: "attendance.record",
+    description: "attendance.record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "schedule.update",
+    title: "schedule.update",
+    description: "schedule.update",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

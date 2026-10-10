@@ -1,9 +1,73 @@
-// 16-n8n - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "workflow.create", title: "workflow.create", kind: "action" as const, risk: "low" as const },
-  { id: "workflow.enable", title: "workflow.enable", kind: "action" as const, risk: "low" as const },
-  { id: "workflow.disable", title: "workflow.disable", kind: "action" as const, risk: "low" as const },
-  { id: "workflow.trigger", title: "workflow.trigger", kind: "action" as const, risk: "low" as const },
-  { id: "workflow.read", title: "workflow.read", kind: "action" as const, risk: "low" as const },
-  { id: "workflow.list_executions", title: "workflow.list_executions", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "workflow.create",
+    title: "workflow.create",
+    description: "workflow.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "workflow.enable",
+    title: "workflow.enable",
+    description: "workflow.enable",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "workflow.disable",
+    title: "workflow.disable",
+    description: "workflow.disable",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "workflow.trigger",
+    title: "workflow.trigger",
+    description: "workflow.trigger",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "workflow.read",
+    title: "workflow.read",
+    description: "workflow.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "workflow.list_executions",
+    title: "workflow.list_executions",
+    description: "workflow.list_executions",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

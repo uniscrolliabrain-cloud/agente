@@ -1,9 +1,73 @@
-// 15-docusign - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "envelope.prepare", title: "envelope.prepare", kind: "action" as const, risk: "low" as const },
-  { id: "envelope.send", title: "envelope.send", kind: "action" as const, risk: "low" as const },
-  { id: "envelope.record_signature", title: "envelope.record_signature", kind: "action" as const, risk: "low" as const },
-  { id: "envelope.cancel", title: "envelope.cancel", kind: "action" as const, risk: "low" as const },
-  { id: "envelope.read", title: "envelope.read", kind: "action" as const, risk: "low" as const },
-  { id: "envelope.list_pending", title: "envelope.list_pending", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "envelope.prepare",
+    title: "envelope.prepare",
+    description: "envelope.prepare",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "envelope.send",
+    title: "envelope.send",
+    description: "envelope.send",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "envelope.record_signature",
+    title: "envelope.record_signature",
+    description: "envelope.record_signature",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "envelope.cancel",
+    title: "envelope.cancel",
+    description: "envelope.cancel",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "envelope.read",
+    title: "envelope.read",
+    description: "envelope.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "envelope.list_pending",
+    title: "envelope.list_pending",
+    description: "envelope.list_pending",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

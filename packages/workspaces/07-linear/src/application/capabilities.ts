@@ -1,10 +1,84 @@
-// 07-linear - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "work.create", title: "work.create", kind: "action" as const, risk: "low" as const },
-  { id: "work.assign", title: "work.assign", kind: "action" as const, risk: "low" as const },
-  { id: "work.change_status", title: "work.change_status", kind: "action" as const, risk: "low" as const },
-  { id: "work.add_dependency", title: "work.add_dependency", kind: "action" as const, risk: "low" as const },
-  { id: "work.close", title: "work.close", kind: "action" as const, risk: "low" as const },
-  { id: "work.list", title: "work.list", kind: "action" as const, risk: "low" as const },
-  { id: "work.read", title: "work.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "work.create",
+    title: "work.create",
+    description: "work.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "work.assign",
+    title: "work.assign",
+    description: "work.assign",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "work.change_status",
+    title: "work.change_status",
+    description: "work.change_status",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "work.add_dependency",
+    title: "work.add_dependency",
+    description: "work.add_dependency",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "work.close",
+    title: "work.close",
+    description: "work.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "work.list",
+    title: "work.list",
+    description: "work.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "work.read",
+    title: "work.read",
+    description: "work.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

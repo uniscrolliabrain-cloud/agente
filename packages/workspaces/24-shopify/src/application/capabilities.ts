@@ -1,10 +1,84 @@
-// 24-shopify - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "order.create", title: "order.create", kind: "action" as const, risk: "low" as const },
-  { id: "order.fulfill", title: "order.fulfill", kind: "action" as const, risk: "low" as const },
-  { id: "order.return_register", title: "order.return_register", kind: "action" as const, risk: "low" as const },
-  { id: "inventory.sync", title: "inventory.sync", kind: "action" as const, risk: "low" as const },
-  { id: "refund.issue", title: "refund.issue", kind: "action" as const, risk: "low" as const },
-  { id: "order.list", title: "order.list", kind: "action" as const, risk: "low" as const },
-  { id: "order.read", title: "order.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "order.create",
+    title: "order.create",
+    description: "order.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "order.fulfill",
+    title: "order.fulfill",
+    description: "order.fulfill",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "order.return_register",
+    title: "order.return_register",
+    description: "order.return_register",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "inventory.sync",
+    title: "inventory.sync",
+    description: "inventory.sync",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "refund.issue",
+    title: "refund.issue",
+    description: "refund.issue",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "order.list",
+    title: "order.list",
+    description: "order.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "order.read",
+    title: "order.read",
+    description: "order.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

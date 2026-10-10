@@ -1,8 +1,7 @@
 packages:
-  - apps/worker
-  - apps/web
-allowBuilds:
-  esbuild: true
-  "@biomejs/biome": true
-  "@scarf/scarf": false
+  - "apps/*"
   - "packages/*"
+  - "workspaces/*"
+allowBuilds:
+  '@biomejs/biome': set this to true or false
+  esbuild: set this to true or false

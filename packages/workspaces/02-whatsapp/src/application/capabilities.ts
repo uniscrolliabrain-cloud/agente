@@ -1,9 +1,73 @@
-// 02-whatsapp - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "messaging.read", title: "messaging.read", kind: "action" as const, risk: "low" as const },
-  { id: "messaging.send", title: "messaging.send", kind: "action" as const, risk: "low" as const },
-  { id: "messaging.send_template", title: "messaging.send_template", kind: "action" as const, risk: "low" as const },
-  { id: "messaging.send_media", title: "messaging.send_media", kind: "action" as const, risk: "low" as const },
-  { id: "messaging.link_identity", title: "messaging.link_identity", kind: "action" as const, risk: "low" as const },
-  { id: "messaging.mark_read", title: "messaging.mark_read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "messaging.read",
+    title: "messaging.read",
+    description: "messaging.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "messaging.send",
+    title: "messaging.send",
+    description: "messaging.send",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "messaging.send_template",
+    title: "messaging.send_template",
+    description: "messaging.send_template",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "messaging.send_media",
+    title: "messaging.send_media",
+    description: "messaging.send_media",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "messaging.link_identity",
+    title: "messaging.link_identity",
+    description: "messaging.link_identity",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "messaging.mark_read",
+    title: "messaging.mark_read",
+    description: "messaging.mark_read",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

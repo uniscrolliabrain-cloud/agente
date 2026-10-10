@@ -18,6 +18,9 @@ import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
 import AgentsPage from "./components/agents/AgentsPage";
+// WS_UI_APP_SHELL_V1
+import WorkspaceShell from "./workspaces/WorkspaceShell";
+import { useWorkspaces } from "./hooks/useWorkspaces";
 import ProfileModal from "./components/ProfileModal";
 import TaskDetailModal from "./components/TaskDetailModal";
 import ApprovalModal from "./components/ApprovalModal";
@@ -74,6 +77,8 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  const { workspaces: _workspaces } = useWorkspaces(auth.isAuthenticated);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -177,6 +182,7 @@ export default function App() {
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
           {view === "agents" && <AgentsPage />}
+          {view === "workspace" && <WorkspaceShell workspaceId={activeWorkspaceId} spec={viewResolver.spec} />}
         </div>
       </AppShell>
 

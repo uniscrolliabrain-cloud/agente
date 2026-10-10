@@ -1,10 +1,84 @@
-// 04-holded - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "invoice.create_draft", title: "invoice.create_draft", kind: "action" as const, risk: "low" as const },
-  { id: "invoice.issue", title: "invoice.issue", kind: "action" as const, risk: "low" as const },
-  { id: "invoice.void", title: "invoice.void", kind: "action" as const, risk: "low" as const },
-  { id: "credit_note.create", title: "credit_note.create", kind: "action" as const, risk: "low" as const },
-  { id: "payment.register", title: "payment.register", kind: "action" as const, risk: "low" as const },
-  { id: "expense.record", title: "expense.record", kind: "action" as const, risk: "low" as const },
-  { id: "counterparty.upsert", title: "counterparty.upsert", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "invoice.create_draft",
+    title: "invoice.create_draft",
+    description: "invoice.create_draft",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "invoice.issue",
+    title: "invoice.issue",
+    description: "invoice.issue",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "invoice.void",
+    title: "invoice.void",
+    description: "invoice.void",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "credit_note.create",
+    title: "credit_note.create",
+    description: "credit_note.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "payment.register",
+    title: "payment.register",
+    description: "payment.register",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "expense.record",
+    title: "expense.record",
+    description: "expense.record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "counterparty.upsert",
+    title: "counterparty.upsert",
+    description: "counterparty.upsert",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

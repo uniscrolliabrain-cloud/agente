@@ -1,10 +1,84 @@
-// 29-isms-online - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "risk.register", title: "risk.register", kind: "action" as const, risk: "low" as const },
-  { id: "control.assign", title: "control.assign", kind: "action" as const, risk: "low" as const },
-  { id: "evidence.attach", title: "evidence.attach", kind: "action" as const, risk: "low" as const },
-  { id: "review.schedule", title: "review.schedule", kind: "action" as const, risk: "low" as const },
-  { id: "risk.close", title: "risk.close", kind: "action" as const, risk: "low" as const },
-  { id: "risk.register_view", title: "risk.register_view", kind: "action" as const, risk: "low" as const },
-  { id: "compliance.overview", title: "compliance.overview", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "risk.register",
+    title: "risk.register",
+    description: "risk.register",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "control.assign",
+    title: "control.assign",
+    description: "control.assign",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "evidence.attach",
+    title: "evidence.attach",
+    description: "evidence.attach",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "review.schedule",
+    title: "review.schedule",
+    description: "review.schedule",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "risk.close",
+    title: "risk.close",
+    description: "risk.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "risk.register_view",
+    title: "risk.register_view",
+    description: "risk.register_view",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "compliance.overview",
+    title: "compliance.overview",
+    description: "compliance.overview",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

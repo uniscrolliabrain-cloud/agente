@@ -5,7 +5,8 @@ import type { Thread } from "../api/threads";
 // WIRE_SIDEBAR_LIVEITEM_V1
 import LiveItem from "./LiveItem";
 
-export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents";
+// WS_UI_APPVIEW_V1 - anadida entrada workspace.
+export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace";
 
 interface Props {
   activeView: AppView;
@@ -27,6 +28,8 @@ const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
   { id: "projects", label: "Proyectos", icon: FolderKanban },
   { id: "control-center", label: "Centro de control", icon: Activity },
   { id: "agents", label: "Agentes", icon: Bot },
+  // WS_UI_SIDEBAR_ITEM_V1
+  { id: "workspace", label: "Workspaces", icon: FolderKanban },
 ];
 
 export default function SidebarV2({

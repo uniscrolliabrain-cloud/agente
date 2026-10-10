@@ -1,10 +1,84 @@
-// 14-zendesk - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "ticket.create", title: "ticket.create", kind: "action" as const, risk: "low" as const },
-  { id: "ticket.assign", title: "ticket.assign", kind: "action" as const, risk: "low" as const },
-  { id: "ticket.escalate", title: "ticket.escalate", kind: "action" as const, risk: "low" as const },
-  { id: "ticket.resolve", title: "ticket.resolve", kind: "action" as const, risk: "low" as const },
-  { id: "ticket.reopen", title: "ticket.reopen", kind: "action" as const, risk: "low" as const },
-  { id: "ticket.list", title: "ticket.list", kind: "action" as const, risk: "low" as const },
-  { id: "ticket.read", title: "ticket.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "ticket.create",
+    title: "ticket.create",
+    description: "ticket.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "ticket.assign",
+    title: "ticket.assign",
+    description: "ticket.assign",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "ticket.escalate",
+    title: "ticket.escalate",
+    description: "ticket.escalate",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "ticket.resolve",
+    title: "ticket.resolve",
+    description: "ticket.resolve",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "ticket.reopen",
+    title: "ticket.reopen",
+    description: "ticket.reopen",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "ticket.list",
+    title: "ticket.list",
+    description: "ticket.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "ticket.read",
+    title: "ticket.read",
+    description: "ticket.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

@@ -35,3 +35,6 @@ Yellow
 *.tsbuildinfo
 
 .openmuse.bak-*/
+*.bak.*
+repomix-*.md
+scripts/fixes/*.ps1

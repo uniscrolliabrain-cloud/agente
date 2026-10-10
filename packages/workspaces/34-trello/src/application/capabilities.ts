@@ -1,10 +1,84 @@
-// 34-trello - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "board.create", title: "board.create", kind: "action" as const, risk: "low" as const },
-  { id: "card.create", title: "card.create", kind: "action" as const, risk: "low" as const },
-  { id: "card.move", title: "card.move", kind: "action" as const, risk: "low" as const },
-  { id: "card.assign", title: "card.assign", kind: "action" as const, risk: "low" as const },
-  { id: "card.archive", title: "card.archive", kind: "action" as const, risk: "low" as const },
-  { id: "board.list", title: "board.list", kind: "action" as const, risk: "low" as const },
-  { id: "card.history", title: "card.history", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "board.create",
+    title: "board.create",
+    description: "board.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "card.create",
+    title: "card.create",
+    description: "card.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "card.move",
+    title: "card.move",
+    description: "card.move",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "card.assign",
+    title: "card.assign",
+    description: "card.assign",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "card.archive",
+    title: "card.archive",
+    description: "card.archive",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "board.list",
+    title: "board.list",
+    description: "board.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "card.history",
+    title: "card.history",
+    description: "card.history",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

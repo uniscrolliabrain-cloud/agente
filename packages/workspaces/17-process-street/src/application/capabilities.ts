@@ -1,9 +1,73 @@
-// 17-process-street - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "sop.create", title: "sop.create", kind: "action" as const, risk: "low" as const },
-  { id: "sop.start_run", title: "sop.start_run", kind: "action" as const, risk: "low" as const },
-  { id: "sop.complete_step", title: "sop.complete_step", kind: "action" as const, risk: "low" as const },
-  { id: "sop.abort_run", title: "sop.abort_run", kind: "action" as const, risk: "low" as const },
-  { id: "sop.read", title: "sop.read", kind: "action" as const, risk: "low" as const },
-  { id: "sop.pending_steps", title: "sop.pending_steps", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "sop.create",
+    title: "sop.create",
+    description: "sop.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "sop.start_run",
+    title: "sop.start_run",
+    description: "sop.start_run",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "sop.complete_step",
+    title: "sop.complete_step",
+    description: "sop.complete_step",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "sop.abort_run",
+    title: "sop.abort_run",
+    description: "sop.abort_run",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "sop.read",
+    title: "sop.read",
+    description: "sop.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "sop.pending_steps",
+    title: "sop.pending_steps",
+    description: "sop.pending_steps",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

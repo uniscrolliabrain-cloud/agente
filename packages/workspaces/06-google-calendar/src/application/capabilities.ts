@@ -1,10 +1,84 @@
-// 06-google-calendar - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "calendar.create", title: "calendar.create", kind: "action" as const, risk: "low" as const },
-  { id: "calendar.reschedule", title: "calendar.reschedule", kind: "action" as const, risk: "low" as const },
-  { id: "calendar.cancel", title: "calendar.cancel", kind: "action" as const, risk: "low" as const },
-  { id: "calendar.add_participant", title: "calendar.add_participant", kind: "action" as const, risk: "low" as const },
-  { id: "calendar.check_availability", title: "calendar.check_availability", kind: "action" as const, risk: "low" as const },
-  { id: "calendar.block_time", title: "calendar.block_time", kind: "action" as const, risk: "low" as const },
-  { id: "calendar.read", title: "calendar.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "calendar.create",
+    title: "calendar.create",
+    description: "calendar.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "calendar.reschedule",
+    title: "calendar.reschedule",
+    description: "calendar.reschedule",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "calendar.cancel",
+    title: "calendar.cancel",
+    description: "calendar.cancel",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "calendar.add_participant",
+    title: "calendar.add_participant",
+    description: "calendar.add_participant",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "calendar.check_availability",
+    title: "calendar.check_availability",
+    description: "calendar.check_availability",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "calendar.block_time",
+    title: "calendar.block_time",
+    description: "calendar.block_time",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "calendar.read",
+    title: "calendar.read",
+    description: "calendar.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

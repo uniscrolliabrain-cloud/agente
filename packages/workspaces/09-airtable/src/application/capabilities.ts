@@ -1,9 +1,73 @@
-// 09-airtable - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "dataset.create_record", title: "dataset.create_record", kind: "action" as const, risk: "low" as const },
-  { id: "dataset.update_record", title: "dataset.update_record", kind: "action" as const, risk: "low" as const },
-  { id: "dataset.define_field", title: "dataset.define_field", kind: "action" as const, risk: "low" as const },
-  { id: "dataset.relate_records", title: "dataset.relate_records", kind: "action" as const, risk: "low" as const },
-  { id: "dataset.list_records", title: "dataset.list_records", kind: "action" as const, risk: "low" as const },
-  { id: "dataset.filter_records", title: "dataset.filter_records", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "dataset.create_record",
+    title: "dataset.create_record",
+    description: "dataset.create_record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dataset.update_record",
+    title: "dataset.update_record",
+    description: "dataset.update_record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dataset.define_field",
+    title: "dataset.define_field",
+    description: "dataset.define_field",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dataset.relate_records",
+    title: "dataset.relate_records",
+    description: "dataset.relate_records",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dataset.list_records",
+    title: "dataset.list_records",
+    description: "dataset.list_records",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dataset.filter_records",
+    title: "dataset.filter_records",
+    description: "dataset.filter_records",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

@@ -1,9 +1,73 @@
-// 28-odoo-manufacturing - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "production.plan", title: "production.plan", kind: "action" as const, risk: "low" as const },
-  { id: "production.start", title: "production.start", kind: "action" as const, risk: "low" as const },
-  { id: "production.consume", title: "production.consume", kind: "action" as const, risk: "low" as const },
-  { id: "production.record_output", title: "production.record_output", kind: "action" as const, risk: "low" as const },
-  { id: "production.close", title: "production.close", kind: "action" as const, risk: "low" as const },
-  { id: "production.read", title: "production.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "production.plan",
+    title: "production.plan",
+    description: "production.plan",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "production.start",
+    title: "production.start",
+    description: "production.start",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "production.consume",
+    title: "production.consume",
+    description: "production.consume",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "production.record_output",
+    title: "production.record_output",
+    description: "production.record_output",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "production.close",
+    title: "production.close",
+    description: "production.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "production.read",
+    title: "production.read",
+    description: "production.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

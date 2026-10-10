@@ -1,10 +1,84 @@
-// 26-odoo-inventory - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "stock.receive", title: "stock.receive", kind: "action" as const, risk: "low" as const },
-  { id: "stock.issue", title: "stock.issue", kind: "action" as const, risk: "low" as const },
-  { id: "stock.transfer", title: "stock.transfer", kind: "action" as const, risk: "low" as const },
-  { id: "stock.adjust", title: "stock.adjust", kind: "action" as const, risk: "low" as const },
-  { id: "stock.reserve", title: "stock.reserve", kind: "action" as const, risk: "low" as const },
-  { id: "stock.list", title: "stock.list", kind: "action" as const, risk: "low" as const },
-  { id: "stock.low_alerts", title: "stock.low_alerts", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "stock.receive",
+    title: "stock.receive",
+    description: "stock.receive",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "stock.issue",
+    title: "stock.issue",
+    description: "stock.issue",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "stock.transfer",
+    title: "stock.transfer",
+    description: "stock.transfer",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "stock.adjust",
+    title: "stock.adjust",
+    description: "stock.adjust",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "stock.reserve",
+    title: "stock.reserve",
+    description: "stock.reserve",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "stock.list",
+    title: "stock.list",
+    description: "stock.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "stock.low_alerts",
+    title: "stock.low_alerts",
+    description: "stock.low_alerts",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

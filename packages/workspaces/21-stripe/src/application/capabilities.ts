@@ -1,10 +1,84 @@
-// 21-stripe - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "payment.record", title: "payment.record", kind: "action" as const, risk: "low" as const },
-  { id: "refund.issue", title: "refund.issue", kind: "action" as const, risk: "low" as const },
-  { id: "dispute.open", title: "dispute.open", kind: "action" as const, risk: "low" as const },
-  { id: "dispute.resolve", title: "dispute.resolve", kind: "action" as const, risk: "low" as const },
-  { id: "revenue.read", title: "revenue.read", kind: "action" as const, risk: "low" as const },
-  { id: "payment.list", title: "payment.list", kind: "action" as const, risk: "low" as const },
-  { id: "subscription.manage", title: "subscription.manage", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "payment.record",
+    title: "payment.record",
+    description: "payment.record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "refund.issue",
+    title: "refund.issue",
+    description: "refund.issue",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dispute.open",
+    title: "dispute.open",
+    description: "dispute.open",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "dispute.resolve",
+    title: "dispute.resolve",
+    description: "dispute.resolve",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "revenue.read",
+    title: "revenue.read",
+    description: "revenue.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "payment.list",
+    title: "payment.list",
+    description: "payment.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "subscription.manage",
+    title: "subscription.manage",
+    description: "subscription.manage",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

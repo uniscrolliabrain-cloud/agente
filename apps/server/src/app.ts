@@ -41,6 +41,9 @@ import { ragRoutes } from "./rag-routes.ts";
 import { threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
 import { PersonaRegistry, bootstrapPersonas } from "./engine/agents/personas/index.ts";
+// WS_ENGINE_WIRE_V1 - import del catalogo de workspaces y del engine de workspaces.
+import { ALL_WORKSPACES } from "../../../packages/workspaces/src/index.ts";
+import { WorkspaceModuleRegistry, bridgeWorkspaceCapabilities, WorkspaceDispatcher } from "./engine/workspaces/index.ts";
 import { personasRoutes } from "./engine/agents/personas/routes.ts";
 import {
   Kernel,
@@ -196,7 +199,14 @@ export async function createApp(
     audit: new StoreAuditStore(db),
     config: new EnvTenantConfigResolver(),
   });
-  const agent = new AgentService(
+  // WS_ENGINE_WIRE_V1 - cablea el catalogo de workspaces al engine.
+  const workspaceModuleRegistry = new WorkspaceModuleRegistry();
+  workspaceModuleRegistry.registerAll(ALL_WORKSPACES);
+  const workspaceCapabilityRegistry = new (await import("./engine/capabilities/registry.ts")).CapabilityRegistry();
+  const workspaceCapabilitiesCount = bridgeWorkspaceCapabilities(workspaceCapabilityRegistry, workspaceModuleRegistry.list());
+  const workspaceDispatcher = new WorkspaceDispatcher({ db: tdb, bus });
+  console.log([workspaces]  workspaces,  capabilities);
+    const agent = new AgentService(
     tdb,
     config,
     workspace,
@@ -207,7 +217,8 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService }, // APP_RUNTIME_WIRE_V1
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
+    // WS_ENGINE_DISPATCH_V1
   );
   // ONTOLOGY_VALIDATE_WIRE_V1 - valida el vocabulario del tenant contra el
   // metamodelo. Fail-soft: si falla, se loguea y se sigue.
@@ -572,6 +583,11 @@ app.post("/api/billing/customer", async (c) => {
   {
     const { viewsRoutes } = await import("./routes/views.ts");
     app.route("/api/views", viewsRoutes());
+  // WS_ROUTES_WIRE_V1 - endpoints del catalogo de workspaces.
+  {
+    const { workspacesRoutes } = await import("./routes/workspaces.ts");
+    app.route("/api/workspaces", workspacesRoutes(workspaceModuleRegistry, workspaceDispatcher));
+  }
   }
   // BUSINESS_ROUTES_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â rutas HTTP del Business Graph.
   const { businessRoutes } = await import("./business-routes.ts");

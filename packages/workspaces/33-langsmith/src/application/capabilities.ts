@@ -1,9 +1,73 @@
-// 33-langsmith - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "run.record", title: "run.record", kind: "action" as const, risk: "low" as const },
-  { id: "span.record", title: "span.record", kind: "action" as const, risk: "low" as const },
-  { id: "evaluation.submit", title: "evaluation.submit", kind: "action" as const, risk: "low" as const },
-  { id: "run.flag", title: "run.flag", kind: "action" as const, risk: "low" as const },
-  { id: "trace.read", title: "trace.read", kind: "action" as const, risk: "low" as const },
-  { id: "cost.by_agent", title: "cost.by_agent", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "run.record",
+    title: "run.record",
+    description: "run.record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "span.record",
+    title: "span.record",
+    description: "span.record",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "evaluation.submit",
+    title: "evaluation.submit",
+    description: "evaluation.submit",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "run.flag",
+    title: "run.flag",
+    description: "run.flag",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "trace.read",
+    title: "trace.read",
+    description: "trace.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "cost.by_agent",
+    title: "cost.by_agent",
+    description: "cost.by_agent",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

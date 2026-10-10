@@ -1,9 +1,73 @@
-// 10-perdoo - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "objective.create", title: "objective.create", kind: "action" as const, risk: "low" as const },
-  { id: "objective.update_kr", title: "objective.update_kr", kind: "action" as const, risk: "low" as const },
-  { id: "objective.link_strategy", title: "objective.link_strategy", kind: "action" as const, risk: "low" as const },
-  { id: "objective.close", title: "objective.close", kind: "action" as const, risk: "low" as const },
-  { id: "objective.list", title: "objective.list", kind: "action" as const, risk: "low" as const },
-  { id: "objective.progress", title: "objective.progress", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "objective.create",
+    title: "objective.create",
+    description: "objective.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "objective.update_kr",
+    title: "objective.update_kr",
+    description: "objective.update_kr",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "objective.link_strategy",
+    title: "objective.link_strategy",
+    description: "objective.link_strategy",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "objective.close",
+    title: "objective.close",
+    description: "objective.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "objective.list",
+    title: "objective.list",
+    description: "objective.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "objective.progress",
+    title: "objective.progress",
+    description: "objective.progress",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

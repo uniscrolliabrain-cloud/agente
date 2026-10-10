@@ -1,9 +1,73 @@
-// 11-holded-tesoreria - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "bank.import_statement", title: "bank.import_statement", kind: "action" as const, risk: "low" as const },
-  { id: "bank.reconcile", title: "bank.reconcile", kind: "action" as const, risk: "low" as const },
-  { id: "bank.flag_discrepancy", title: "bank.flag_discrepancy", kind: "action" as const, risk: "low" as const },
-  { id: "treasury.close_period", title: "treasury.close_period", kind: "action" as const, risk: "low" as const },
-  { id: "treasury.cash_position", title: "treasury.cash_position", kind: "action" as const, risk: "low" as const },
-  { id: "treasury.list_transactions", title: "treasury.list_transactions", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "bank.import_statement",
+    title: "bank.import_statement",
+    description: "bank.import_statement",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "bank.reconcile",
+    title: "bank.reconcile",
+    description: "bank.reconcile",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "bank.flag_discrepancy",
+    title: "bank.flag_discrepancy",
+    description: "bank.flag_discrepancy",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "treasury.close_period",
+    title: "treasury.close_period",
+    description: "treasury.close_period",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "treasury.cash_position",
+    title: "treasury.cash_position",
+    description: "treasury.cash_position",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "treasury.list_transactions",
+    title: "treasury.list_transactions",
+    description: "treasury.list_transactions",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

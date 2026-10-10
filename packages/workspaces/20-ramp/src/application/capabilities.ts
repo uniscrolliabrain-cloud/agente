@@ -1,9 +1,73 @@
-// 20-ramp - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "expense.submit", title: "expense.submit", kind: "action" as const, risk: "low" as const },
-  { id: "expense.approve", title: "expense.approve", kind: "action" as const, risk: "low" as const },
-  { id: "expense.reject", title: "expense.reject", kind: "action" as const, risk: "low" as const },
-  { id: "expense.receipt_attach", title: "expense.receipt_attach", kind: "action" as const, risk: "low" as const },
-  { id: "spend_limit.set", title: "spend_limit.set", kind: "action" as const, risk: "low" as const },
-  { id: "expense.list", title: "expense.list", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "expense.submit",
+    title: "expense.submit",
+    description: "expense.submit",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "expense.approve",
+    title: "expense.approve",
+    description: "expense.approve",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "expense.reject",
+    title: "expense.reject",
+    description: "expense.reject",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "expense.receipt_attach",
+    title: "expense.receipt_attach",
+    description: "expense.receipt_attach",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "spend_limit.set",
+    title: "spend_limit.set",
+    description: "spend_limit.set",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "expense.list",
+    title: "expense.list",
+    description: "expense.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

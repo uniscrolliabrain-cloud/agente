@@ -1,9 +1,73 @@
-// 25-intercom - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "conversation.open", title: "conversation.open", kind: "action" as const, risk: "low" as const },
-  { id: "conversation.send", title: "conversation.send", kind: "action" as const, risk: "low" as const },
-  { id: "conversation.route", title: "conversation.route", kind: "action" as const, risk: "low" as const },
-  { id: "conversation.close", title: "conversation.close", kind: "action" as const, risk: "low" as const },
-  { id: "customer.timeline", title: "customer.timeline", kind: "action" as const, risk: "low" as const },
-  { id: "conversation.list", title: "conversation.list", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "conversation.open",
+    title: "conversation.open",
+    description: "conversation.open",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "conversation.send",
+    title: "conversation.send",
+    description: "conversation.send",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "conversation.route",
+    title: "conversation.route",
+    description: "conversation.route",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "conversation.close",
+    title: "conversation.close",
+    description: "conversation.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "customer.timeline",
+    title: "customer.timeline",
+    description: "customer.timeline",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "conversation.list",
+    title: "conversation.list",
+    description: "conversation.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

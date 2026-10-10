@@ -1,10 +1,84 @@
-// 30-microsoft-entra - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "principal.create", title: "principal.create", kind: "action" as const, risk: "low" as const },
-  { id: "role.assign", title: "role.assign", kind: "action" as const, risk: "low" as const },
-  { id: "access.revoke", title: "access.revoke", kind: "action" as const, risk: "low" as const },
-  { id: "policy.define", title: "policy.define", kind: "action" as const, risk: "low" as const },
-  { id: "session.terminate", title: "session.terminate", kind: "action" as const, risk: "low" as const },
-  { id: "principal.list", title: "principal.list", kind: "action" as const, risk: "low" as const },
-  { id: "access.matrix", title: "access.matrix", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "principal.create",
+    title: "principal.create",
+    description: "principal.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "role.assign",
+    title: "role.assign",
+    description: "role.assign",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "access.revoke",
+    title: "access.revoke",
+    description: "access.revoke",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "policy.define",
+    title: "policy.define",
+    description: "policy.define",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "session.terminate",
+    title: "session.terminate",
+    description: "session.terminate",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "principal.list",
+    title: "principal.list",
+    description: "principal.list",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "access.matrix",
+    title: "access.matrix",
+    description: "access.matrix",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

@@ -1,0 +1,17 @@
+// 32-notion - handlers reales de queries.
+import { z } from "zod";
+import type { WorkspaceServices, WorkspaceContext, WorkspaceQueryEnvelope, QueryResult } from "../../../src/contracts/index.ts";
+
+// QUERIES_AUTO_V1 - un handler por capacidad tipo query declarada en workspace.json.
+
+const knowledge_readParams = z.object({}).passthrough();
+
+async function knowledge_read(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceQueryEnvelope): Promise<QueryResult<unknown>> {
+  knowledge_readParams.parse(env.parameters);
+  const all = await services.db.list<{ id: string }>(ctx.owner, "ws-notion-all", { limit: env.limit });
+  return { status: all.length ? "ok" : "empty", items: all, total: all.length };
+}
+
+export const QUERIES = {
+  "knowledge.read": { queryId: "knowledge.read", version: 1, handle: knowledge_read },
+};

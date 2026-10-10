@@ -1,10 +1,84 @@
-// 05-google-drive - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "document.upload", title: "document.upload", kind: "action" as const, risk: "low" as const },
-  { id: "document.move", title: "document.move", kind: "action" as const, risk: "low" as const },
-  { id: "document.classify", title: "document.classify", kind: "action" as const, risk: "low" as const },
-  { id: "document.link", title: "document.link", kind: "action" as const, risk: "low" as const },
-  { id: "document.archive", title: "document.archive", kind: "action" as const, risk: "low" as const },
-  { id: "document.search", title: "document.search", kind: "action" as const, risk: "low" as const },
-  { id: "document.read", title: "document.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "document.upload",
+    title: "document.upload",
+    description: "document.upload",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.move",
+    title: "document.move",
+    description: "document.move",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.classify",
+    title: "document.classify",
+    description: "document.classify",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.link",
+    title: "document.link",
+    description: "document.link",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.archive",
+    title: "document.archive",
+    description: "document.archive",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.search",
+    title: "document.search",
+    description: "document.search",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.read",
+    title: "document.read",
+    description: "document.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

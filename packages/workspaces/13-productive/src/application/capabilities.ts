@@ -1,9 +1,73 @@
-// 13-productive - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "project.allocate", title: "project.allocate", kind: "action" as const, risk: "low" as const },
-  { id: "project.read", title: "project.read", kind: "action" as const, risk: "low" as const },
-  { id: "project.close", title: "project.close", kind: "action" as const, risk: "low" as const },
-  { id: "time.log", title: "time.log", kind: "action" as const, risk: "low" as const },
-  { id: "budget.adjust", title: "budget.adjust", kind: "action" as const, risk: "low" as const },
-  { id: "profitability.read", title: "profitability.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "project.allocate",
+    title: "project.allocate",
+    description: "project.allocate",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "project.read",
+    title: "project.read",
+    description: "project.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "project.close",
+    title: "project.close",
+    description: "project.close",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "time.log",
+    title: "time.log",
+    description: "time.log",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "budget.adjust",
+    title: "budget.adjust",
+    description: "budget.adjust",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "profitability.read",
+    title: "profitability.read",
+    description: "profitability.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

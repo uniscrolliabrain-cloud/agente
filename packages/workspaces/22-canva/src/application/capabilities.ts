@@ -1,9 +1,73 @@
-// 22-canva - declaracion de capacidades.
-export const CAPABILITIES = [
-  { id: "brief.create", title: "brief.create", kind: "action" as const, risk: "low" as const },
-  { id: "design.generate", title: "design.generate", kind: "action" as const, risk: "low" as const },
-  { id: "asset.export", title: "asset.export", kind: "action" as const, risk: "low" as const },
-  { id: "asset.publish", title: "asset.publish", kind: "action" as const, risk: "low" as const },
-  { id: "brand.upload", title: "brand.upload", kind: "action" as const, risk: "low" as const },
-  { id: "design.read", title: "design.read", kind: "action" as const, risk: "low" as const }
-] as const;
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "brief.create",
+    title: "brief.create",
+    description: "brief.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "design.generate",
+    title: "design.generate",
+    description: "design.generate",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "asset.export",
+    title: "asset.export",
+    description: "asset.export",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "asset.publish",
+    title: "asset.publish",
+    description: "asset.publish",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "brand.upload",
+    title: "brand.upload",
+    description: "brand.upload",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "design.read",
+    title: "design.read",
+    description: "design.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];
