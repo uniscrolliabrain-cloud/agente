@@ -1,16 +1,7 @@
-# Comandos y queries — Tesoreria y conciliacion bancaria
+# Comandos y queries - Tesoreria y conciliacion bancaria
 
-## Comandos (modifican estado)
+Referencia: Holded
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

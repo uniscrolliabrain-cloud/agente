@@ -1,16 +1,7 @@
-# Comandos y queries — Contratos y firma electronica
+# Comandos y queries - Contratos y firma
 
-## Comandos (modifican estado)
+Referencia: DocuSign
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

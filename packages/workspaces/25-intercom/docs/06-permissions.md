@@ -1,10 +1,7 @@
-# Permisos — Atencion posventa y exito del cliente
+# Permisos - Posventa
 
-## Recursos expuestos
-Pendiente.
+Referencia: Intercom
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

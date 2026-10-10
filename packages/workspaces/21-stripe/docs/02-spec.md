@@ -1,13 +1,7 @@
-# Spec — Analitica y dashboards
+# Spec - Pagos y analitica
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Stripe
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

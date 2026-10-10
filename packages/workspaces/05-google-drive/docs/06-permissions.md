@@ -1,10 +1,7 @@
-# Permisos — Archivos y documentos
+# Permisos - Archivos y documentos
 
-## Recursos expuestos
-Pendiente.
+Referencia: Google Drive
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

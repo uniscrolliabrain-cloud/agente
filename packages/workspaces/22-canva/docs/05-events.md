@@ -1,10 +1,7 @@
-# Eventos — Diseno y creacion de contenido
+# Eventos - Diseno
 
-## Eventos publicados
-Pendiente. Formato: nombre, payload, schema registrado en events/schema-registry.
+Referencia: Canva
 
-## Eventos consumidos
-Pendiente. Formato: nombre, origen, efecto.
+## Contenido
 
-## Relacion con SYSTEM_EVENT_TYPES
-Pendiente. Si son tipos nuevos, indicar.
+Eventos publicados, eventos consumidos, relacion con SYSTEM_EVENT_TYPES.

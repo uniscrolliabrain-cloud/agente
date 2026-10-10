@@ -1,13 +1,7 @@
-# Vision — Portal de clientes y proveedores
+# Vision - Portal clientes
 
-## Que problema resuelve
-Pendiente.
+Referencia: SuiteDash
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

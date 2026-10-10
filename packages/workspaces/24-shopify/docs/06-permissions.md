@@ -1,10 +1,7 @@
-# Permisos — Comercio electronico y pedidos
+# Permisos - Ecommerce
 
-## Recursos expuestos
-Pendiente.
+Referencia: Shopify
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

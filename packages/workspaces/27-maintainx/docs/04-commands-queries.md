@@ -1,16 +1,7 @@
-# Comandos y queries — Activos y mantenimiento
+# Comandos y queries - Mantenimiento
 
-## Comandos (modifican estado)
+Referencia: MaintainX
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

@@ -1,10 +1,7 @@
-# Dependencias — Atencion al cliente y tickets
+# Dependencias - Atencion al cliente
 
-## Dependencias con otros workspaces
-Pendiente.
+Referencia: Zendesk
 
-## Dependencias con el core
-Pendiente.
+## Contenido
 
-## Dependencias externas (APIs)
-Pendiente. Si tiene API publica, indicar URL y modo de autenticacion.
+Dependencias con otros workspaces, con el core, dependencias externas (APIs).

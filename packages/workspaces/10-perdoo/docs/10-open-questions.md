@@ -1,9 +1,7 @@
-# Decisiones abiertas — Direccion, objetivos y planificacion
+# Decisiones abiertas - Direccion, objetivos y planificacion
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Perdoo
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

@@ -1,9 +1,7 @@
-# Decisiones abiertas — Cumplimiento y gestion de riesgos
+# Decisiones abiertas - Cumplimiento
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: ISMS.online
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

@@ -1,10 +1,7 @@
-# Permisos — Wiki y conocimiento interno
+# Permisos - Wiki
 
-## Recursos expuestos
-Pendiente.
+Referencia: Notion
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

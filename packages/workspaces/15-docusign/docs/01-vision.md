@@ -1,13 +1,7 @@
-# Vision — Contratos y firma electronica
+# Vision - Contratos y firma
 
-## Que problema resuelve
-Pendiente.
+Referencia: DocuSign
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

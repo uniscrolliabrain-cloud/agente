@@ -1,9 +1,7 @@
-# Decisiones abiertas — Automatizaciones visuales
+# Decisiones abiertas - Automatizaciones
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: n8n
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

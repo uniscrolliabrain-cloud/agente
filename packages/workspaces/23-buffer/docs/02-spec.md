@@ -1,13 +1,7 @@
-# Spec — Redes sociales y publicacion
+# Spec - Redes sociales
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Buffer
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

@@ -1,13 +1,7 @@
-# Vision — Compras y proveedores
+# Vision - Compras y proveedores
 
-## Que problema resuelve
-Pendiente.
+Referencia: Odoo Purchase
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

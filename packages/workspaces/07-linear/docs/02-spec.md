@@ -1,13 +1,7 @@
-# Spec — Tareas y proyectos
+# Spec - Tareas y proyectos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Linear
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

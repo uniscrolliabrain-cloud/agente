@@ -1,16 +1,7 @@
-# Comandos y queries — Cumplimiento y gestion de riesgos
+# Comandos y queries - Cumplimiento
 
-## Comandos (modifican estado)
+Referencia: ISMS.online
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

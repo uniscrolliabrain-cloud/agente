@@ -1,13 +1,7 @@
-# Spec — Tableros Kanban
+# Spec - Kanban
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Trello
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

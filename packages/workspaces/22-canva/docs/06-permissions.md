@@ -1,10 +1,7 @@
-# Permisos — Diseno y creacion de contenido
+# Permisos - Diseno
 
-## Recursos expuestos
-Pendiente.
+Referencia: Canva
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

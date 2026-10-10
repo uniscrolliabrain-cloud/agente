@@ -1,9 +1,7 @@
-# Decisiones abiertas — Seleccion y candidatos
+# Decisiones abiertas - Seleccion y candidatos
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Personio
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

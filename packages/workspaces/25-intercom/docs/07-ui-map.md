@@ -1,20 +1,7 @@
-# UI map — Atencion posventa y exito del cliente
+# UI map - Posventa
 
-## Referencia visual
-Pendiente.
+Referencia: Intercom
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

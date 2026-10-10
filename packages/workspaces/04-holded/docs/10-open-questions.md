@@ -1,9 +1,7 @@
-# Decisiones abiertas — ERP, facturacion y administracion
+# Decisiones abiertas - ERP, facturacion y administracion
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Holded
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

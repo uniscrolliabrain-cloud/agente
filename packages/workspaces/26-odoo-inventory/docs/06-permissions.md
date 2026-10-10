@@ -1,10 +1,7 @@
-# Permisos — Inventario y almacen
+# Permisos - Inventario
 
-## Recursos expuestos
-Pendiente.
+Referencia: Odoo Inventory
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

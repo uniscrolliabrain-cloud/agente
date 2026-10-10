@@ -1,20 +1,7 @@
-# UI map — Wiki y conocimiento interno
+# UI map - Wiki
 
-## Referencia visual
-Pendiente.
+Referencia: Notion
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

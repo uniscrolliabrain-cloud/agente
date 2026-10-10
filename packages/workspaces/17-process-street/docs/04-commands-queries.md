@@ -1,16 +1,7 @@
-# Comandos y queries — Procedimientos y documentacion
+# Comandos y queries - Procedimientos
 
-## Comandos (modifican estado)
+Referencia: Process Street
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

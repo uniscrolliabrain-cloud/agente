@@ -1,20 +1,7 @@
-# UI map — Seleccion y candidatos
+# UI map - Seleccion y candidatos
 
-## Referencia visual
-Pendiente.
+Referencia: Personio
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

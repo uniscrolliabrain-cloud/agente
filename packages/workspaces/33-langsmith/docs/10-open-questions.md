@@ -1,9 +1,7 @@
-# Decisiones abiertas — Observabilidad de agentes
+# Decisiones abiertas - Observabilidad
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: LangSmith
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

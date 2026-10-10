@@ -1,13 +1,7 @@
-# Entidades — Contratos y firma electronica
+# Entidades - Contratos y firma
 
-## Entidades propias
-Pendiente. Formato: nombre, campos, identidad, propietario.
+Referencia: DocuSign
 
-## Entidades canonicas consumidas
-Pendiente. Referenciar packages/domain/src/ sin redefinir.
+## Contenido
 
-## Relaciones
-Pendiente.
-
-## Reglas de identidad
-Pendiente.
+Entidades propias, entidades canonicas consumidas, relaciones, reglas de identidad.

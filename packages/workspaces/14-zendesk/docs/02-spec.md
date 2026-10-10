@@ -1,13 +1,7 @@
-# Spec — Atencion al cliente y tickets
+# Spec - Atencion al cliente
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Zendesk
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

@@ -1,3 +1,14 @@
+// // FIX-02 templates extendidos
+// Aliases y fallbacks para kinds no nativos.
+import ListTemplate from "./list/ListTemplate.tsx";
+import TableTemplate from "./table/TableTemplate.tsx";
+import KanbanTemplate from "./kanban/KanbanTemplate.tsx";
+import TimelineTemplate from "./timeline/TimelineTemplate.tsx";
+import GraphTemplate from "./graph/GraphTemplate.tsx";
+import DetailTemplate from "./detail/DetailTemplate.tsx";
+import FormTemplate from "./form/FormTemplate.tsx";
+import DashboardTemplate from "./dashboard/DashboardTemplate.tsx";
+
 // BUG05_REGISTRY_V2 - solo dashboard y queue activos.
 // D3_REGISTRY_V2 - solo dashboard y queue activos (D11).
  // TEMPLATES_REGISTRY_V1 - mapa real
@@ -22,3 +33,16 @@
     return MAP[key] ?? ListTemplate;
  }
  export function listTemplates() { return Object.keys(MAP); }
+
+const FIX02_EXTRA: Record<string, any> = {
+  inbox:    ListTemplate,
+  queue:    ListTemplate,
+  chart:    DashboardTemplate,
+  compare:  TableTemplate,
+  calendar: TimelineTemplate,
+  document: DetailTemplate,
+};
+
+for (const k of Object.keys(FIX02_EXTRA)) {
+  if (!(k in MAP)) MAP[k] = FIX02_EXTRA[k];
+}

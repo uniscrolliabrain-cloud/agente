@@ -1,13 +1,7 @@
-# Spec — Identidad, accesos y seguridad
+# Spec - Identidad
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Microsoft Entra
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

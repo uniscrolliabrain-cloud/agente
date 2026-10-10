@@ -1,13 +1,7 @@
-# Entidades — Redes sociales y publicacion
+# Entidades - Redes sociales
 
-## Entidades propias
-Pendiente. Formato: nombre, campos, identidad, propietario.
+Referencia: Buffer
 
-## Entidades canonicas consumidas
-Pendiente. Referenciar packages/domain/src/ sin redefinir.
+## Contenido
 
-## Relaciones
-Pendiente.
-
-## Reglas de identidad
-Pendiente.
+Entidades propias, entidades canonicas consumidas, relaciones, reglas de identidad.

@@ -1,20 +1,7 @@
-# UI map — Cumplimiento y gestion de riesgos
+# UI map - Cumplimiento
 
-## Referencia visual
-Pendiente.
+Referencia: ISMS.online
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

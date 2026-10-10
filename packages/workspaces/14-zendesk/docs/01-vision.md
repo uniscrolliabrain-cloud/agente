@@ -1,13 +1,7 @@
-# Vision — Atencion al cliente y tickets
+# Vision - Atencion al cliente
 
-## Que problema resuelve
-Pendiente.
+Referencia: Zendesk
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

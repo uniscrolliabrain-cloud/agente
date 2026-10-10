@@ -1,20 +1,7 @@
-# UI map — Atencion al cliente y tickets
+# UI map - Atencion al cliente
 
-## Referencia visual
-Pendiente.
+Referencia: Zendesk
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

@@ -1,20 +1,7 @@
-# UI map — Tablas y bases de datos
+# UI map - Tablas y bases de datos
 
-## Referencia visual
-Pendiente.
+Referencia: Airtable
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

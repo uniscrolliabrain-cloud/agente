@@ -1,13 +1,7 @@
-# Entidades — Atencion posventa y exito del cliente
+# Entidades - Posventa
 
-## Entidades propias
-Pendiente. Formato: nombre, campos, identidad, propietario.
+Referencia: Intercom
 
-## Entidades canonicas consumidas
-Pendiente. Referenciar packages/domain/src/ sin redefinir.
+## Contenido
 
-## Relaciones
-Pendiente.
-
-## Reglas de identidad
-Pendiente.
+Entidades propias, entidades canonicas consumidas, relaciones, reglas de identidad.

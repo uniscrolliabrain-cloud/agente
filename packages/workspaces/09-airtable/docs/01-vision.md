@@ -1,13 +1,7 @@
-# Vision — Tablas y bases de datos
+# Vision - Tablas y bases de datos
 
-## Que problema resuelve
-Pendiente.
+Referencia: Airtable
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

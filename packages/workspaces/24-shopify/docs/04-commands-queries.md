@@ -1,16 +1,7 @@
-# Comandos y queries — Comercio electronico y pedidos
+# Comandos y queries - Ecommerce
 
-## Comandos (modifican estado)
+Referencia: Shopify
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

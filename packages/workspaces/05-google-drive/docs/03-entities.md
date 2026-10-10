@@ -1,13 +1,7 @@
-# Entidades — Archivos y documentos
+# Entidades - Archivos y documentos
 
-## Entidades propias
-Pendiente. Formato: nombre, campos, identidad, propietario.
+Referencia: Google Drive
 
-## Entidades canonicas consumidas
-Pendiente. Referenciar packages/domain/src/ sin redefinir.
+## Contenido
 
-## Relaciones
-Pendiente.
-
-## Reglas de identidad
-Pendiente.
+Entidades propias, entidades canonicas consumidas, relaciones, reglas de identidad.

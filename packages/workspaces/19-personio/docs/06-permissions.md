@@ -1,10 +1,7 @@
-# Permisos — Seleccion y candidatos
+# Permisos - Seleccion y candidatos
 
-## Recursos expuestos
-Pendiente.
+Referencia: Personio
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

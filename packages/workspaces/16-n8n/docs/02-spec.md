@@ -1,13 +1,7 @@
-# Spec — Automatizaciones visuales
+# Spec - Automatizaciones
 
-## Comportamiento esperado
-Pendiente.
+Referencia: n8n
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

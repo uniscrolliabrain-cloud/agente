@@ -1,9 +1,7 @@
-# Decisiones abiertas — Compras y gestion de gastos
+# Decisiones abiertas - Gastos
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Ramp
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

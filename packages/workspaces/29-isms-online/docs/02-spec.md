@@ -1,13 +1,7 @@
-# Spec — Cumplimiento y gestion de riesgos
+# Spec - Cumplimiento
 
-## Comportamiento esperado
-Pendiente.
+Referencia: ISMS.online
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

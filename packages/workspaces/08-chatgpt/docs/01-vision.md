@@ -1,13 +1,7 @@
-# Vision — Chat con IA
+# Vision - Chat con IA
 
-## Que problema resuelve
-Pendiente.
+Referencia: ChatGPT
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

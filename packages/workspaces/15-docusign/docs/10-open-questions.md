@@ -1,9 +1,7 @@
-# Decisiones abiertas — Contratos y firma electronica
+# Decisiones abiertas - Contratos y firma
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: DocuSign
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

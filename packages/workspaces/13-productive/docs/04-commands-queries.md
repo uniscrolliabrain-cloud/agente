@@ -1,16 +1,7 @@
-# Comandos y queries — Gestion de proyectos y rentabilidad
+# Comandos y queries - Proyectos y rentabilidad
 
-## Comandos (modifican estado)
+Referencia: Productive
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

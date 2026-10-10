@@ -1,10 +1,7 @@
-# Permisos — Automatizaciones visuales
+# Permisos - Automatizaciones
 
-## Recursos expuestos
-Pendiente.
+Referencia: n8n
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

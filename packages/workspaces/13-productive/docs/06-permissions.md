@@ -1,10 +1,7 @@
-# Permisos — Gestion de proyectos y rentabilidad
+# Permisos - Proyectos y rentabilidad
 
-## Recursos expuestos
-Pendiente.
+Referencia: Productive
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

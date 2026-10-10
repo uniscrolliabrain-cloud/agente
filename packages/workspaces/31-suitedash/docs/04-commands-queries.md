@@ -1,16 +1,7 @@
-# Comandos y queries — Portal de clientes y proveedores
+# Comandos y queries - Portal clientes
 
-## Comandos (modifican estado)
+Referencia: SuiteDash
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

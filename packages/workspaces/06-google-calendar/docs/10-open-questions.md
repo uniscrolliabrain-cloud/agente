@@ -1,9 +1,7 @@
-# Decisiones abiertas — Calendario y agenda
+# Decisiones abiertas - Calendario y agenda
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Google Calendar
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

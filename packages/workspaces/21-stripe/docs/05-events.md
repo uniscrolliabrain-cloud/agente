@@ -1,10 +1,7 @@
-# Eventos — Analitica y dashboards
+# Eventos - Pagos y analitica
 
-## Eventos publicados
-Pendiente. Formato: nombre, payload, schema registrado en events/schema-registry.
+Referencia: Stripe
 
-## Eventos consumidos
-Pendiente. Formato: nombre, origen, efecto.
+## Contenido
 
-## Relacion con SYSTEM_EVENT_TYPES
-Pendiente. Si son tipos nuevos, indicar.
+Eventos publicados, eventos consumidos, relacion con SYSTEM_EVENT_TYPES.

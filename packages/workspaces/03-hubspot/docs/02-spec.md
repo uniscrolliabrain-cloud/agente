@@ -1,13 +1,7 @@
-# Spec — CRM y ventas
+# Spec - CRM y ventas
 
-## Comportamiento esperado
-Pendiente.
+Referencia: HubSpot
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

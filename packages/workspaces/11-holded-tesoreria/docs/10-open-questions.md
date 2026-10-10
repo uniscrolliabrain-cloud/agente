@@ -1,9 +1,7 @@
-# Decisiones abiertas — Tesoreria y conciliacion bancaria
+# Decisiones abiertas - Tesoreria y conciliacion bancaria
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Holded
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

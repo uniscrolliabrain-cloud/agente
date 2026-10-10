@@ -1,10 +1,7 @@
-# Dependencias — Tesoreria y conciliacion bancaria
+# Dependencias - Tesoreria y conciliacion bancaria
 
-## Dependencias con otros workspaces
-Pendiente.
+Referencia: Holded
 
-## Dependencias con el core
-Pendiente.
+## Contenido
 
-## Dependencias externas (APIs)
-Pendiente. Si tiene API publica, indicar URL y modo de autenticacion.
+Dependencias con otros workspaces, con el core, dependencias externas (APIs).

@@ -1,9 +1,7 @@
-# Decisiones abiertas — Identidad, accesos y seguridad
+# Decisiones abiertas - Identidad
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Microsoft Entra
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

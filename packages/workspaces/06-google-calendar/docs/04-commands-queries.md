@@ -1,16 +1,7 @@
-# Comandos y queries — Calendario y agenda
+# Comandos y queries - Calendario y agenda
 
-## Comandos (modifican estado)
+Referencia: Google Calendar
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

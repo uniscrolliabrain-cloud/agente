@@ -1,9 +1,7 @@
-# Decisiones abiertas — Mensajeria instantanea
+# Decisiones abiertas - Mensajeria instantanea
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: WhatsApp Web
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

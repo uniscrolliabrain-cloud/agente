@@ -1,13 +1,7 @@
-# Spec — Compras y gestion de gastos
+# Spec - Gastos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Ramp
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

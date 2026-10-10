@@ -1,13 +1,7 @@
-# Spec — Mensajeria instantanea
+# Spec - Mensajeria instantanea
 
-## Comportamiento esperado
-Pendiente.
+Referencia: WhatsApp Web
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

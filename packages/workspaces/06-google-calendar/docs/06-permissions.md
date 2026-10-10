@@ -1,10 +1,7 @@
-# Permisos — Calendario y agenda
+# Permisos - Calendario y agenda
 
-## Recursos expuestos
-Pendiente.
+Referencia: Google Calendar
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

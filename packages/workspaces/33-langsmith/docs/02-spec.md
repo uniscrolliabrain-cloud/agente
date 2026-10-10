@@ -1,13 +1,7 @@
-# Spec — Observabilidad de agentes
+# Spec - Observabilidad
 
-## Comportamiento esperado
-Pendiente.
+Referencia: LangSmith
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

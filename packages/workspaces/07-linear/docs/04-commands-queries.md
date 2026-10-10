@@ -1,16 +1,7 @@
-# Comandos y queries — Tareas y proyectos
+# Comandos y queries - Tareas y proyectos
 
-## Comandos (modifican estado)
+Referencia: Linear
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

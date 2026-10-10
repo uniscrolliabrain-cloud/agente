@@ -1,16 +1,7 @@
-# Comandos y queries — Archivos y documentos
+# Comandos y queries - Archivos y documentos
 
-## Comandos (modifican estado)
+Referencia: Google Drive
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

@@ -1,13 +1,7 @@
-# Spec — Calendario y agenda
+# Spec - Calendario y agenda
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Google Calendar
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

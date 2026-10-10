@@ -1,13 +1,7 @@
-# Spec — Chat con IA
+# Spec - Chat con IA
 
-## Comportamiento esperado
-Pendiente.
+Referencia: ChatGPT
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

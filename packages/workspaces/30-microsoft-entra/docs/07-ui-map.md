@@ -1,20 +1,7 @@
-# UI map — Identidad, accesos y seguridad
+# UI map - Identidad
 
-## Referencia visual
-Pendiente.
+Referencia: Microsoft Entra
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

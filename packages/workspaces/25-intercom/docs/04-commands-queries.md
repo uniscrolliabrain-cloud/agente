@@ -1,16 +1,7 @@
-# Comandos y queries — Atencion posventa y exito del cliente
+# Comandos y queries - Posventa
 
-## Comandos (modifican estado)
+Referencia: Intercom
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

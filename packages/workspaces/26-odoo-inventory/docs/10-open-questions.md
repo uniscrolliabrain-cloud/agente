@@ -1,9 +1,7 @@
-# Decisiones abiertas — Inventario y almacen
+# Decisiones abiertas - Inventario
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Odoo Inventory
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

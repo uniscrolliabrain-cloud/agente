@@ -1,13 +1,7 @@
-# Spec — Inventario y almacen
+# Spec - Inventario
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Odoo Inventory
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

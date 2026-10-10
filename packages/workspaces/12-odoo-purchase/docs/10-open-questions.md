@@ -1,9 +1,7 @@
-# Decisiones abiertas — Compras y proveedores
+# Decisiones abiertas - Compras y proveedores
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Odoo Purchase
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

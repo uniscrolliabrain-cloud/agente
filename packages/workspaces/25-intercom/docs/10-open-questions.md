@@ -1,9 +1,7 @@
-# Decisiones abiertas — Atencion posventa y exito del cliente
+# Decisiones abiertas - Posventa
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Intercom
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

@@ -1,16 +1,7 @@
-# Comandos y queries — Direccion, objetivos y planificacion
+# Comandos y queries - Direccion, objetivos y planificacion
 
-## Comandos (modifican estado)
+Referencia: Perdoo
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

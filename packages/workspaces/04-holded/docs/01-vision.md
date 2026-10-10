@@ -1,13 +1,7 @@
-# Vision — ERP, facturacion y administracion
+# Vision - ERP, facturacion y administracion
 
-## Que problema resuelve
-Pendiente.
+Referencia: Holded
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

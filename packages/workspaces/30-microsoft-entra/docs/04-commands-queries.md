@@ -1,16 +1,7 @@
-# Comandos y queries — Identidad, accesos y seguridad
+# Comandos y queries - Identidad
 
-## Comandos (modifican estado)
+Referencia: Microsoft Entra
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

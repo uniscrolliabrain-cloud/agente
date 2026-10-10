@@ -1,16 +1,7 @@
-# Comandos y queries — Tableros Kanban
+# Comandos y queries - Kanban
 
-## Comandos (modifican estado)
+Referencia: Trello
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

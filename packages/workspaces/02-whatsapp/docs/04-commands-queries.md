@@ -1,16 +1,7 @@
-# Comandos y queries — Mensajeria instantanea
+# Comandos y queries - Mensajeria instantanea
 
-## Comandos (modifican estado)
+Referencia: WhatsApp Web
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

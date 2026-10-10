@@ -1,16 +1,7 @@
-# Comandos y queries — Tablas y bases de datos
+# Comandos y queries - Tablas y bases de datos
 
-## Comandos (modifican estado)
+Referencia: Airtable
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

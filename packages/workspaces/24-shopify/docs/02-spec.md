@@ -1,13 +1,7 @@
-# Spec — Comercio electronico y pedidos
+# Spec - Ecommerce
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Shopify
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

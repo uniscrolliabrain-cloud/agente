@@ -1,10 +1,7 @@
-# Permisos — Activos y mantenimiento
+# Permisos - Mantenimiento
 
-## Recursos expuestos
-Pendiente.
+Referencia: MaintainX
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

@@ -1,13 +1,7 @@
-# Spec — Tesoreria y conciliacion bancaria
+# Spec - Tesoreria y conciliacion bancaria
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Holded
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

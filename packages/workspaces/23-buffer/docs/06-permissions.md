@@ -1,10 +1,7 @@
-# Permisos — Redes sociales y publicacion
+# Permisos - Redes sociales
 
-## Recursos expuestos
-Pendiente.
+Referencia: Buffer
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

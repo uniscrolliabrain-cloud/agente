@@ -1,16 +1,7 @@
-# Comandos y queries — Atencion al cliente y tickets
+# Comandos y queries - Atencion al cliente
 
-## Comandos (modifican estado)
+Referencia: Zendesk
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

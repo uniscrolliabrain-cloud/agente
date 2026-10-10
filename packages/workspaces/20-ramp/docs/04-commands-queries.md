@@ -1,16 +1,7 @@
-# Comandos y queries — Compras y gestion de gastos
+# Comandos y queries - Gastos
 
-## Comandos (modifican estado)
+Referencia: Ramp
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

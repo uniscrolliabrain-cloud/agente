@@ -1,13 +1,7 @@
-# Spec — ERP, facturacion y administracion
+# Spec - ERP, facturacion y administracion
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Holded
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

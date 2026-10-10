@@ -1,13 +1,7 @@
-# Spec — Contratos y firma electronica
+# Spec - Contratos y firma
 
-## Comportamiento esperado
-Pendiente.
+Referencia: DocuSign
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

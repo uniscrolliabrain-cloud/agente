@@ -1,9 +1,7 @@
-# Decisiones abiertas — Atencion al cliente y tickets
+# Decisiones abiertas - Atencion al cliente
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Zendesk
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

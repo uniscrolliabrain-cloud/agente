@@ -1,10 +1,7 @@
-# Permisos — Compras y proveedores
+# Permisos - Compras y proveedores
 
-## Recursos expuestos
-Pendiente.
+Referencia: Odoo Purchase
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

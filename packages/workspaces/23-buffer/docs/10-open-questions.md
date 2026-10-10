@@ -1,9 +1,7 @@
-# Decisiones abiertas — Redes sociales y publicacion
+# Decisiones abiertas - Redes sociales
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Buffer
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

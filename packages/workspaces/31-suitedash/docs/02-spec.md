@@ -1,13 +1,7 @@
-# Spec — Portal de clientes y proveedores
+# Spec - Portal clientes
 
-## Comportamiento esperado
-Pendiente.
+Referencia: SuiteDash
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

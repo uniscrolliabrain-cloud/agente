@@ -1,10 +1,7 @@
-# Dependencias — Diseno y creacion de contenido
+# Dependencias - Diseno
 
-## Dependencias con otros workspaces
-Pendiente.
+Referencia: Canva
 
-## Dependencias con el core
-Pendiente.
+## Contenido
 
-## Dependencias externas (APIs)
-Pendiente. Si tiene API publica, indicar URL y modo de autenticacion.
+Dependencias con otros workspaces, con el core, dependencias externas (APIs).

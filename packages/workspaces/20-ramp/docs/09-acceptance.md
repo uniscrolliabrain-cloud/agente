@@ -1,23 +1,7 @@
-# Criterios de aceptacion — Compras y gestion de gastos
+# Criterios de aceptacion - Gastos
 
-## Contract-ready
-- [ ] Manifiesto valido
-- [ ] Documentacion completa (01 a 07)
-- [ ] Entidades alineadas con el lexicon
-- [ ] Comandos y queries con esquemas
-- [ ] Test de contrato verde
+Referencia: Ramp
 
-## Implemented
-- [ ] Todos los comandos tienen handler
-- [ ] Todas las queries tienen handler
-- [ ] Tests de comandos y queries verdes
+## Contenido
 
-## Integrated
-- [ ] Registrado en el registry
-- [ ] Resuelto por el resolver
-- [ ] Eventos publicados por el bus
-
-## Verified
-- [ ] Todos los criterios anteriores
-- [ ] Script de verificacion verde
-- [ ] Sin violaciones de frontera
+Contract-ready, Implemented, Integrated, Verified.

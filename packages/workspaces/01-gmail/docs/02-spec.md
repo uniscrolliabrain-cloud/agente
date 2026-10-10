@@ -1,13 +1,7 @@
-# Spec — Correo electronico
+# Spec - Correo electronico
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Gmail
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

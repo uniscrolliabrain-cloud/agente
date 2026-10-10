@@ -1,13 +1,7 @@
-# Spec — Activos y mantenimiento
+# Spec - Mantenimiento
 
-## Comportamiento esperado
-Pendiente.
+Referencia: MaintainX
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

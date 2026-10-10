@@ -1,13 +1,7 @@
-# Entidades — Identidad, accesos y seguridad
+# Entidades - Identidad
 
-## Entidades propias
-Pendiente. Formato: nombre, campos, identidad, propietario.
+Referencia: Microsoft Entra
 
-## Entidades canonicas consumidas
-Pendiente. Referenciar packages/domain/src/ sin redefinir.
+## Contenido
 
-## Relaciones
-Pendiente.
-
-## Reglas de identidad
-Pendiente.
+Entidades propias, entidades canonicas consumidas, relaciones, reglas de identidad.

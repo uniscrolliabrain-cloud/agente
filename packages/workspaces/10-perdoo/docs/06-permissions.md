@@ -1,10 +1,7 @@
-# Permisos — Direccion, objetivos y planificacion
+# Permisos - Direccion, objetivos y planificacion
 
-## Recursos expuestos
-Pendiente.
+Referencia: Perdoo
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

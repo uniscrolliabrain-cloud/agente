@@ -1,10 +1,7 @@
-# Permisos — Recursos humanos
+# Permisos - Recursos humanos
 
-## Recursos expuestos
-Pendiente.
+Referencia: Factorial
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

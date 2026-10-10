@@ -1,9 +1,7 @@
-# Decisiones abiertas — Portal de clientes y proveedores
+# Decisiones abiertas - Portal clientes
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: SuiteDash
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

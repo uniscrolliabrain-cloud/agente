@@ -1,13 +1,7 @@
-# Spec — Direccion, objetivos y planificacion
+# Spec - Direccion, objetivos y planificacion
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Perdoo
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

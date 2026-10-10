@@ -1,13 +1,7 @@
-# Vision — Correo electronico
+# Vision - Correo electronico
 
-## Que problema resuelve
-Pendiente.
+Referencia: Gmail
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

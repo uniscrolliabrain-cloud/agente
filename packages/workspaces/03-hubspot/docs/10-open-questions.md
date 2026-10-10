@@ -1,9 +1,7 @@
-# Decisiones abiertas — CRM y ventas
+# Decisiones abiertas - CRM y ventas
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: HubSpot
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

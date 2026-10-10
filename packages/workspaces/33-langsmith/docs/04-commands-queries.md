@@ -1,16 +1,7 @@
-# Comandos y queries — Observabilidad de agentes
+# Comandos y queries - Observabilidad
 
-## Comandos (modifican estado)
+Referencia: LangSmith
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

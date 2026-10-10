@@ -1,9 +1,7 @@
-# Decisiones abiertas — Procedimientos y documentacion
+# Decisiones abiertas - Procedimientos
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Process Street
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

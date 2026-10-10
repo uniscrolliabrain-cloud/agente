@@ -1,9 +1,7 @@
-# Decisiones abiertas — Chat con IA
+# Decisiones abiertas - Chat con IA
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: ChatGPT
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

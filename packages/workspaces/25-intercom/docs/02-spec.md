@@ -1,13 +1,7 @@
-# Spec — Atencion posventa y exito del cliente
+# Spec - Posventa
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Intercom
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

@@ -1,13 +1,7 @@
-# Spec — Recursos humanos
+# Spec - Recursos humanos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Factorial
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

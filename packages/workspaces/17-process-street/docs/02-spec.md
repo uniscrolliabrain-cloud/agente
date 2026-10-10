@@ -1,13 +1,7 @@
-# Spec — Procedimientos y documentacion
+# Spec - Procedimientos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Process Street
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

@@ -1,9 +1,7 @@
-# Decisiones abiertas — Gestion de proyectos y rentabilidad
+# Decisiones abiertas - Proyectos y rentabilidad
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Productive
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

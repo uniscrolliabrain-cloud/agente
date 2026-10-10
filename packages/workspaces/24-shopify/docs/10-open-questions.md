@@ -1,9 +1,7 @@
-# Decisiones abiertas — Comercio electronico y pedidos
+# Decisiones abiertas - Ecommerce
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Shopify
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

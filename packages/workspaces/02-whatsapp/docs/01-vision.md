@@ -1,13 +1,7 @@
-# Vision — Mensajeria instantanea
+# Vision - Mensajeria instantanea
 
-## Que problema resuelve
-Pendiente.
+Referencia: WhatsApp Web
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

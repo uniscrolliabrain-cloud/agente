@@ -1,9 +1,7 @@
-# Decisiones abiertas — Produccion y ordenes de trabajo
+# Decisiones abiertas - Produccion
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Odoo Manufacturing
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

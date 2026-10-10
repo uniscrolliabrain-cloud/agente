@@ -1,13 +1,7 @@
-# Spec — Diseno y creacion de contenido
+# Spec - Diseno
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Canva
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

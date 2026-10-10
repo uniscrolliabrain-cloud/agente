@@ -1,16 +1,7 @@
-# Comandos y queries — Correo electronico
+# Comandos y queries - Correo electronico
 
-## Comandos (modifican estado)
+Referencia: Gmail
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

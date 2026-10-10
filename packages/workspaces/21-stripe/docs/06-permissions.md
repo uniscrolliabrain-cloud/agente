@@ -1,10 +1,7 @@
-# Permisos — Analitica y dashboards
+# Permisos - Pagos y analitica
 
-## Recursos expuestos
-Pendiente.
+Referencia: Stripe
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

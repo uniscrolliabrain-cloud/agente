@@ -1,13 +1,7 @@
-# Spec — Seleccion y candidatos
+# Spec - Seleccion y candidatos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Personio
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

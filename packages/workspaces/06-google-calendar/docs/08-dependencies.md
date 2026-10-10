@@ -1,10 +1,7 @@
-# Dependencias — Calendario y agenda
+# Dependencias - Calendario y agenda
 
-## Dependencias con otros workspaces
-Pendiente.
+Referencia: Google Calendar
 
-## Dependencias con el core
-Pendiente.
+## Contenido
 
-## Dependencias externas (APIs)
-Pendiente. Si tiene API publica, indicar URL y modo de autenticacion.
+Dependencias con otros workspaces, con el core, dependencias externas (APIs).

@@ -1,9 +1,7 @@
-# Decisiones abiertas — Activos y mantenimiento
+# Decisiones abiertas - Mantenimiento
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: MaintainX
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

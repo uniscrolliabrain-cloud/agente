@@ -1,20 +1,7 @@
-# UI map — Produccion y ordenes de trabajo
+# UI map - Produccion
 
-## Referencia visual
-Pendiente.
+Referencia: Odoo Manufacturing
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

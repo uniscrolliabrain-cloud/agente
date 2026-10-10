@@ -1,20 +1,7 @@
-# UI map — Portal de clientes y proveedores
+# UI map - Portal clientes
 
-## Referencia visual
-Pendiente.
+Referencia: SuiteDash
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

@@ -1,13 +1,7 @@
-# Vision — Cumplimiento y gestion de riesgos
+# Vision - Cumplimiento
 
-## Que problema resuelve
-Pendiente.
+Referencia: ISMS.online
 
-## Para quien
-Pendiente.
+## Contenido
 
-## Que queda fuera de su alcance
-Pendiente.
-
-## Relacion con otras areas
-Pendiente.
+Que problema resuelve, para quien, que queda fuera, relacion con otras areas.

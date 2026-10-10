@@ -1,20 +1,7 @@
-# UI map — Calendario y agenda
+# UI map - Calendario y agenda
 
-## Referencia visual
-Pendiente.
+Referencia: Google Calendar
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

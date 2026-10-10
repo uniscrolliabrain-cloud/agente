@@ -1,10 +1,7 @@
-# Permisos — Correo electronico
+# Permisos - Correo electronico
 
-## Recursos expuestos
-Pendiente.
+Referencia: Gmail
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

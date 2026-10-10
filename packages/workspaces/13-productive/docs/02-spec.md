@@ -1,13 +1,7 @@
-# Spec — Gestion de proyectos y rentabilidad
+# Spec - Proyectos y rentabilidad
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Productive
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

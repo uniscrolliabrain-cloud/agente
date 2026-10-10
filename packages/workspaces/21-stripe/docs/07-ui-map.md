@@ -1,20 +1,7 @@
-# UI map — Analitica y dashboards
+# UI map - Pagos y analitica
 
-## Referencia visual
-Pendiente.
+Referencia: Stripe
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

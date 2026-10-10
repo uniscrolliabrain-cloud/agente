@@ -1,20 +1,7 @@
-# UI map — Tesoreria y conciliacion bancaria
+# UI map - Tesoreria y conciliacion bancaria
 
-## Referencia visual
-Pendiente.
+Referencia: Holded
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

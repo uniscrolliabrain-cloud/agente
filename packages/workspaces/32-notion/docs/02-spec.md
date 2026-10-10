@@ -1,13 +1,7 @@
-# Spec — Wiki y conocimiento interno
+# Spec - Wiki
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Notion
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

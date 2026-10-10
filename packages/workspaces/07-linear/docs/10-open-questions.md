@@ -1,9 +1,7 @@
-# Decisiones abiertas — Tareas y proyectos
+# Decisiones abiertas - Tareas y proyectos
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Linear
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

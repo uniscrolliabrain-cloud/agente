@@ -1,20 +1,7 @@
-# UI map — Compras y gestion de gastos
+# UI map - Gastos
 
-## Referencia visual
-Pendiente.
+Referencia: Ramp
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

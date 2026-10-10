@@ -1,10 +1,7 @@
-# Permisos — Contratos y firma electronica
+# Permisos - Contratos y firma
 
-## Recursos expuestos
-Pendiente.
+Referencia: DocuSign
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

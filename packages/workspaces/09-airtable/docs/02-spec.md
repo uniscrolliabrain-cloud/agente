@@ -1,13 +1,7 @@
-# Spec — Tablas y bases de datos
+# Spec - Tablas y bases de datos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Airtable
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

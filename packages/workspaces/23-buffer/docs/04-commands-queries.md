@@ -1,16 +1,7 @@
-# Comandos y queries — Redes sociales y publicacion
+# Comandos y queries - Redes sociales
 
-## Comandos (modifican estado)
+Referencia: Buffer
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

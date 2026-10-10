@@ -1,13 +1,7 @@
-# Spec — Archivos y documentos
+# Spec - Archivos y documentos
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Google Drive
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

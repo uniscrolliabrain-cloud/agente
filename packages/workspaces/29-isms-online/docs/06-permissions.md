@@ -1,10 +1,7 @@
-# Permisos — Cumplimiento y gestion de riesgos
+# Permisos - Cumplimiento
 
-## Recursos expuestos
-Pendiente.
+Referencia: ISMS.online
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

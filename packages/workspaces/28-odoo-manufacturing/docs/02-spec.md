@@ -1,13 +1,7 @@
-# Spec — Produccion y ordenes de trabajo
+# Spec - Produccion
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Odoo Manufacturing
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

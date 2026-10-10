@@ -1,13 +1,7 @@
-# Spec — Compras y proveedores
+# Spec - Compras y proveedores
 
-## Comportamiento esperado
-Pendiente.
+Referencia: Odoo Purchase
 
-## Estados
-Pendiente.
+## Contenido
 
-## Reglas
-Pendiente.
-
-## Errores esperados
-Pendiente.
+Comportamiento esperado, estados, reglas, errores esperados.

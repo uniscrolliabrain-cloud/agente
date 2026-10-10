@@ -1,16 +1,7 @@
-# Comandos y queries — Chat con IA
+# Comandos y queries - Chat con IA
 
-## Comandos (modifican estado)
+Referencia: ChatGPT
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

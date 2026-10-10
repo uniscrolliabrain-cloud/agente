@@ -1,10 +1,7 @@
-# Dependencias — Chat con IA
+# Dependencias - Chat con IA
 
-## Dependencias con otros workspaces
-Pendiente.
+Referencia: ChatGPT
 
-## Dependencias con el core
-Pendiente.
+## Contenido
 
-## Dependencias externas (APIs)
-Pendiente. Si tiene API publica, indicar URL y modo de autenticacion.
+Dependencias con otros workspaces, con el core, dependencias externas (APIs).

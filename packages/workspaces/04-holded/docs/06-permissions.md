@@ -1,10 +1,7 @@
-# Permisos — ERP, facturacion y administracion
+# Permisos - ERP, facturacion y administracion
 
-## Recursos expuestos
-Pendiente.
+Referencia: Holded
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

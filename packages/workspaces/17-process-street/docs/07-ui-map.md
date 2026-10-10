@@ -1,20 +1,7 @@
-# UI map — Procedimientos y documentacion
+# UI map - Procedimientos
 
-## Referencia visual
-Pendiente.
+Referencia: Process Street
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

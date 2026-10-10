@@ -1,9 +1,7 @@
-# Decisiones abiertas — Wiki y conocimiento interno
+# Decisiones abiertas - Wiki
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Notion
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.

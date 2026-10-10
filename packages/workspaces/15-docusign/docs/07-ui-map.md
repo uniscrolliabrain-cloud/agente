@@ -1,20 +1,7 @@
-# UI map — Contratos y firma electronica
+# UI map - Contratos y firma
 
-## Referencia visual
-Pendiente.
+Referencia: DocuSign
 
-## Componentes reutilizados de apps/web
-| Componente | Uso | Notas |
-|---|---|---|
-| | | |
+## Contenido
 
-## Componentes nuevos
-| Componente | Responsabilidad |
-|---|---|
-| | | |
-
-## Vistas servidas
-Pendiente.
-
-## Panel contextual
-Pendiente.
+Pendiente de mockup. Referencia visual, componentes, vistas servidas, panel contextual.

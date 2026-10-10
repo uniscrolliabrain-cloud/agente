@@ -1,16 +1,7 @@
-# Comandos y queries — Seleccion y candidatos
+# Comandos y queries - Seleccion y candidatos
 
-## Comandos (modifican estado)
+Referencia: Personio
 
-| Comando | Entrada | Precondiciones | Efectos | Eventos |
-|---|---|---|---|---|
-| | | | | |
+## Contenido
 
-## Queries (lectura)
-
-| Query | Entrada | Salida | Paginacion |
-|---|---|---|---|
-| | | | |
-
-## Permisos por comando
-Pendiente.
+Comandos que modifican estado. Queries de lectura. Permisos por comando.

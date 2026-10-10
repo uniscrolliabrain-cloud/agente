@@ -1,10 +1,7 @@
-# Permisos — Mensajeria instantanea
+# Permisos - Mensajeria instantanea
 
-## Recursos expuestos
-Pendiente.
+Referencia: WhatsApp Web
 
-## Acciones por recurso
-Pendiente. read / create / update / delete / execute / approve.
+## Contenido
 
-## Roles autorizados
-Pendiente. Alineado con PolicyEngine existente.
+Recursos expuestos, acciones por recurso, roles autorizados.

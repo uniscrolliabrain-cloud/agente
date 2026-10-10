@@ -1,9 +1,7 @@
-# Decisiones abiertas — Tablas y bases de datos
+# Decisiones abiertas - Tablas y bases de datos
 
-Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+Referencia: Airtable
 
-## Formato
-- **Pregunta:** ...
-- **Bloquea:** ...
-- **Opciones:** ...
-- **Decision:** pendiente
+## Contenido
+
+Preguntas sin cerrar que condicionan la implementacion.
