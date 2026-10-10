@@ -33,3 +33,5 @@ Yellow
 *.tmp
 *.log
 *.tsbuildinfo
+
+.openmuse.bak-*/
