@@ -9,17 +9,31 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "email.read",
+                         "email.search",
+                         "email.send",
+                         "email.compose",
+                         "email.label",
+                         "email.archive",
+                         "email.attach",
+                         "email.link_thread"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "crm"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "document.uploaded",
+                                    "contact.created",
+                                    "task.created"
                                 ],
                    "publishes":  [
-
+                                     "email.received",
+                                     "email.sent",
+                                     "email.thread.linked",
+                                     "email.label.applied"
                                  ]
                }
 }

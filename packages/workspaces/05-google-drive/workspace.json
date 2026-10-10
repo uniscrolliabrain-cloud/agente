@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "document.upload",
+                         "document.move",
+                         "document.classify",
+                         "document.link",
+                         "document.archive",
+                         "document.search",
+                         "document.read"
                      ],
     "dependencies":  [
-
+                         "domain-core"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "invoice.issued",
+                                    "envelope.signed",
+                                    "purchase.order.received",
+                                    "email.received"
                                 ],
                    "publishes":  [
-
+                                     "document.uploaded",
+                                     "document.classified",
+                                     "document.linked",
+                                     "document.archived"
                                  ]
                }
 }

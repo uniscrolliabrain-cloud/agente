@@ -9,17 +9,28 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "envelope.prepare",
+                         "envelope.send",
+                         "envelope.record_signature",
+                         "envelope.cancel",
+                         "envelope.read",
+                         "envelope.list_pending"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "crm"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "document.uploaded",
+                                    "contract.drafted"
                                 ],
                    "publishes":  [
-
+                                     "envelope.prepared",
+                                     "envelope.sent",
+                                     "envelope.signed",
+                                     "envelope.completed"
                                  ]
                }
 }

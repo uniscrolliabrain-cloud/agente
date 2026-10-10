@@ -9,17 +9,24 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "workflow.create",
+                         "workflow.enable",
+                         "workflow.disable",
+                         "workflow.trigger",
+                         "workflow.read",
+                         "workflow.list_executions"
                      ],
     "dependencies":  [
-
+                         "domain-core"
                      ],
     "events":  {
                    "consumes":  [
 
                                 ],
                    "publishes":  [
-
+                                     "workflow.executed",
+                                     "workflow.failed",
+                                     "workflow.completed"
                                  ]
                }
 }

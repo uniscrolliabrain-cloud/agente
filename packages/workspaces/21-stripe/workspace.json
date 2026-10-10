@@ -9,17 +9,28 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "payment.record",
+                         "refund.issue",
+                         "dispute.open",
+                         "dispute.resolve",
+                         "revenue.read",
+                         "payment.list",
+                         "subscription.manage"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "holded"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "invoice.issued",
+                                    "subscription.renewed"
                                 ],
                    "publishes":  [
-
+                                     "payment.succeeded",
+                                     "payment.failed",
+                                     "refund.issued",
+                                     "dispute.opened"
                                  ]
                }
 }

@@ -9,17 +9,27 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "purchase.request",
+                         "purchase.approve",
+                         "purchase.send",
+                         "purchase.receive",
+                         "purchase.list",
+                         "purchase.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "inventory"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "invoice.issued",
+                                    "stock.movement.recorded"
                                 ],
                    "publishes":  [
-
+                                     "purchase.requested",
+                                     "purchase.order.approved",
+                                     "purchase.order.received"
                                  ]
                }
 }

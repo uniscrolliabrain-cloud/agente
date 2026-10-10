@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "risk.register",
+                         "control.assign",
+                         "evidence.attach",
+                         "review.schedule",
+                         "risk.close",
+                         "risk.register_view",
+                         "compliance.overview"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "personas"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "document.uploaded",
+                                    "asset.registered"
                                 ],
                    "publishes":  [
-
+                                     "risk.registered",
+                                     "control.assigned",
+                                     "evidence.attached",
+                                     "review.scheduled"
                                  ]
                }
 }

@@ -9,17 +9,23 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "dataset.create_record",
+                         "dataset.update_record",
+                         "dataset.define_field",
+                         "dataset.relate_records",
+                         "dataset.list_records",
+                         "dataset.filter_records"
                      ],
     "dependencies":  [
-
+                         "domain-core"
                      ],
     "events":  {
                    "consumes":  [
 
                                 ],
                    "publishes":  [
-
+                                     "dataset.record.created",
+                                     "dataset.record.updated"
                                  ]
                }
 }

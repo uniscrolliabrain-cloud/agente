@@ -9,17 +9,25 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "run.record",
+                         "span.record",
+                         "evaluation.submit",
+                         "run.flag",
+                         "trace.read",
+                         "cost.by_agent"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "identity"
                      ],
     "events":  {
                    "consumes":  [
 
                                 ],
                    "publishes":  [
-
+                                     "run.recorded",
+                                     "span.recorded",
+                                     "evaluation.submitted"
                                  ]
                }
 }

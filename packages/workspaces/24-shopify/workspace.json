@@ -9,17 +9,30 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "order.create",
+                         "order.fulfill",
+                         "order.return_register",
+                         "inventory.sync",
+                         "refund.issue",
+                         "order.list",
+                         "order.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "inventory",
+                         "payments",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "stock.movement.recorded",
+                                    "payment.succeeded"
                                 ],
                    "publishes":  [
-
+                                     "order.created",
+                                     "order.fulfilled",
+                                     "order.returned",
+                                     "inventory.synced"
                                  ]
                }
 }

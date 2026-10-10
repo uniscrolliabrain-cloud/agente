@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "work.create",
+                         "work.assign",
+                         "work.change_status",
+                         "work.add_dependency",
+                         "work.close",
+                         "work.list",
+                         "work.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "personas"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "task.created",
+                                    "ticket.created",
+                                    "sop.completed"
                                 ],
                    "publishes":  [
-
+                                     "workitem.created",
+                                     "workitem.assigned",
+                                     "workitem.completed",
+                                     "workitem.blocked"
                                  ]
                }
 }

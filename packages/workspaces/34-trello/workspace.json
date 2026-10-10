@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "board.create",
+                         "card.create",
+                         "card.move",
+                         "card.assign",
+                         "card.archive",
+                         "board.list",
+                         "card.history"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "work",
+                         "personas"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "workitem.created",
+                                    "workitem.assigned"
                                 ],
                    "publishes":  [
-
+                                     "board.created",
+                                     "card.created",
+                                     "card.moved",
+                                     "card.archived"
                                  ]
                }
 }

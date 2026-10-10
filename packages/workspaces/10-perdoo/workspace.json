@@ -9,17 +9,27 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "objective.create",
+                         "objective.update_kr",
+                         "objective.link_strategy",
+                         "objective.close",
+                         "objective.list",
+                         "objective.progress"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "work",
+                         "finance"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "workitem.completed",
+                                    "invoice.issued"
                                 ],
                    "publishes":  [
-
+                                     "objective.created",
+                                     "keyresult.updated",
+                                     "objective.closed"
                                  ]
                }
 }

@@ -9,17 +9,22 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "assistant.send_message",
+                         "assistant.trigger_tool",
+                         "assistant.approve_action",
+                         "assistant.list_conversations"
                      ],
     "dependencies":  [
-
+                         "domain-core"
                      ],
     "events":  {
                    "consumes":  [
 
                                 ],
                    "publishes":  [
-
+                                     "assistant.run.started",
+                                     "assistant.run.completed",
+                                     "assistant.tool.invoked"
                                  ]
                }
 }

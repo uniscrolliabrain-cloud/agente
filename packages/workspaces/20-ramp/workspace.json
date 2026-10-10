@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "expense.submit",
+                         "expense.approve",
+                         "expense.reject",
+                         "expense.receipt_attach",
+                         "spend_limit.set",
+                         "expense.list"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "personas",
+                         "purchases"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "document.uploaded",
+                                    "purchase.order.received"
                                 ],
                    "publishes":  [
-
+                                     "expense.submitted",
+                                     "expense.approved",
+                                     "expense.rejected",
+                                     "expense.receipt.attached"
                                  ]
                }
 }

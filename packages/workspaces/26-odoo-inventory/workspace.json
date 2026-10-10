@@ -9,17 +9,32 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "stock.receive",
+                         "stock.issue",
+                         "stock.transfer",
+                         "stock.adjust",
+                         "stock.reserve",
+                         "stock.list",
+                         "stock.low_alerts"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "purchases",
+                         "commerce",
+                         "manufacturing"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "purchase.order.received",
+                                    "order.fulfilled",
+                                    "production.output.recorded"
                                 ],
                    "publishes":  [
-
+                                     "stock.received",
+                                     "stock.issued",
+                                     "stock.transferred",
+                                     "stock.adjusted",
+                                     "stock.low"
                                  ]
                }
 }

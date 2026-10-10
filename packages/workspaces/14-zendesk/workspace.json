@@ -9,17 +9,31 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "ticket.create",
+                         "ticket.assign",
+                         "ticket.escalate",
+                         "ticket.resolve",
+                         "ticket.reopen",
+                         "ticket.list",
+                         "ticket.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "email",
+                         "messaging",
+                         "crm",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "email.received",
+                                    "whatsapp.message.received"
                                 ],
                    "publishes":  [
-
+                                     "ticket.created",
+                                     "ticket.assigned",
+                                     "ticket.resolved",
+                                     "ticket.escalated"
                                  ]
                }
 }

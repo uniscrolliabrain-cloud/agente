@@ -9,17 +9,27 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "employee.create",
+                         "employee.read",
+                         "leave.approve",
+                         "leave.reject",
+                         "attendance.record",
+                         "schedule.update"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "identity"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "document.uploaded"
                                 ],
                    "publishes":  [
-
+                                     "employee.created",
+                                     "leave.approved",
+                                     "leave.rejected",
+                                     "attendance.recorded"
                                  ]
                }
 }

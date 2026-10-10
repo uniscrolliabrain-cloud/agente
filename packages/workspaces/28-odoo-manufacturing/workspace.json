@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "production.plan",
+                         "production.start",
+                         "production.consume",
+                         "production.record_output",
+                         "production.close",
+                         "production.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "inventory",
+                         "purchases",
+                         "commerce"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "stock.reserved",
+                                    "order.created"
                                 ],
                    "publishes":  [
-
+                                     "production.planned",
+                                     "production.started",
+                                     "production.output.recorded",
+                                     "production.closed"
                                  ]
                }
 }

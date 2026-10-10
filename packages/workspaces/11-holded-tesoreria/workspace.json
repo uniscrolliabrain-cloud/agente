@@ -9,17 +9,28 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "bank.import_statement",
+                         "bank.reconcile",
+                         "bank.flag_discrepancy",
+                         "treasury.close_period",
+                         "treasury.cash_position",
+                         "treasury.list_transactions"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "holded",
+                         "payments"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "invoice.paid",
+                                    "purchase.order.received",
+                                    "payment.succeeded"
                                 ],
                    "publishes":  [
-
+                                     "bank.transaction.imported",
+                                     "bank.transaction.reconciled",
+                                     "bank.discrepancy.detected"
                                  ]
                }
 }

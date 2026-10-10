@@ -9,17 +9,28 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "post.compose",
+                         "post.schedule",
+                         "post.publish",
+                         "post.cancel",
+                         "post.metrics.collect",
+                         "post.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "content",
+                         "marketing"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "asset.published",
+                                    "campaign.created"
                                 ],
                    "publishes":  [
-
+                                     "post.composed",
+                                     "post.scheduled",
+                                     "post.published",
+                                     "post.metrics.collected"
                                  ]
                }
 }

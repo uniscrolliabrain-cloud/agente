@@ -9,17 +9,28 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "project.allocate",
+                         "project.read",
+                         "project.close",
+                         "time.log",
+                         "budget.adjust",
+                         "profitability.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "work",
+                         "personas",
+                         "finance"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "workitem.completed",
+                                    "employee.created"
                                 ],
                    "publishes":  [
-
+                                     "resource.allocated",
+                                     "time.logged",
+                                     "budget.adjusted"
                                  ]
                }
 }

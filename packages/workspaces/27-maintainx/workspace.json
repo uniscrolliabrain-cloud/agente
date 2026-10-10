@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "asset.register",
+                         "maintenance.open",
+                         "maintenance.complete",
+                         "maintenance.schedule",
+                         "inspection.record",
+                         "asset.registry"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "inventory",
+                         "personas",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "stock.issued",
+                                    "production.output.recorded"
                                 ],
                    "publishes":  [
-
+                                     "asset.registered",
+                                     "maintenance.opened",
+                                     "maintenance.completed",
+                                     "inspection.recorded"
                                  ]
                }
 }

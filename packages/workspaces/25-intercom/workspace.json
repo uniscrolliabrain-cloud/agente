@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "conversation.open",
+                         "conversation.send",
+                         "conversation.route",
+                         "conversation.close",
+                         "customer.timeline",
+                         "conversation.list"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "crm",
+                         "tickets",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "email.received",
+                                    "whatsapp.message.received",
+                                    "ticket.created"
                                 ],
                    "publishes":  [
-
+                                     "conversation.opened",
+                                     "conversation.routed",
+                                     "conversation.closed"
                                  ]
                }
 }

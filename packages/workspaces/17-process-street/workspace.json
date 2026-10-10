@@ -4,22 +4,32 @@
     "order":  17,
     "family":  "trabajo",
     "reference":  "Process Street",
-    "title":  "Procedimientos y documentacion",
+    "title":  "Procedimientos y documentacion operativa",
     "status":  "scaffold",
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "sop.create",
+                         "sop.start_run",
+                         "sop.complete_step",
+                         "sop.abort_run",
+                         "sop.read",
+                         "sop.pending_steps"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "work",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "workitem.created"
                                 ],
                    "publishes":  [
-
+                                     "sop.started",
+                                     "sop.step.completed",
+                                     "sop.completed",
+                                     "sop.aborted"
                                  ]
                }
 }

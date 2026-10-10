@@ -9,17 +9,25 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "page.create",
+                         "page.update",
+                         "page.relate",
+                         "page.archive",
+                         "search.knowledge",
+                         "knowledge.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "document.uploaded"
                                 ],
                    "publishes":  [
-
+                                     "page.created",
+                                     "page.updated",
+                                     "page.archived"
                                  ]
                }
 }

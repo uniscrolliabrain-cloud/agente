@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "position.open",
+                         "onboarding.start",
+                         "onboarding.complete",
+                         "employment.close",
+                         "lifecycle.read",
+                         "onboarding.progress"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "personas",
+                         "documents",
+                         "identity"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "employee.created",
+                                    "document.uploaded"
                                 ],
                    "publishes":  [
-
+                                     "position.opened",
+                                     "onboarding.started",
+                                     "onboarding.completed",
+                                     "employment.closed"
                                  ]
                }
 }

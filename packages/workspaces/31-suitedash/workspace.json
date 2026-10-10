@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "portal.invite",
+                         "portal.revoke",
+                         "request.submit",
+                         "case.update",
+                         "document.share",
+                         "case.timeline"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "crm",
+                         "documents",
+                         "tickets"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "invoice.issued",
+                                    "ticket.resolved"
                                 ],
                    "publishes":  [
-
+                                     "portal.invited",
+                                     "request.submitted",
+                                     "case.updated",
+                                     "document.shared"
                                  ]
                }
 }

@@ -9,17 +9,29 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "principal.create",
+                         "role.assign",
+                         "access.revoke",
+                         "policy.define",
+                         "session.terminate",
+                         "principal.list",
+                         "access.matrix"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "personas",
+                         "compliance"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "employee.created",
+                                    "employment.closed"
                                 ],
                    "publishes":  [
-
+                                     "principal.created",
+                                     "role.assigned",
+                                     "access.revoked",
+                                     "policy.updated"
                                  ]
                }
 }

@@ -9,17 +9,32 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "invoice.create_draft",
+                         "invoice.issue",
+                         "invoice.void",
+                         "credit_note.create",
+                         "payment.register",
+                         "expense.record",
+                         "counterparty.upsert"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "crm",
+                         "treasury"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "opportunity.stage.changed",
+                                    "purchase.order.received",
+                                    "payment.succeeded"
                                 ],
                    "publishes":  [
-
+                                     "invoice.drafted",
+                                     "invoice.issued",
+                                     "invoice.paid",
+                                     "invoice.voided",
+                                     "expense.recorded"
                                  ]
                }
 }

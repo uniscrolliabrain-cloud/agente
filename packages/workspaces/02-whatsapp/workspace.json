@@ -9,17 +9,27 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "messaging.read",
+                         "messaging.send",
+                         "messaging.send_template",
+                         "messaging.send_media",
+                         "messaging.link_identity",
+                         "messaging.mark_read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "crm"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "contact.created",
+                                    "document.uploaded"
                                 ],
                    "publishes":  [
-
+                                     "whatsapp.message.received",
+                                     "whatsapp.message.sent",
+                                     "whatsapp.identity.linked"
                                  ]
                }
 }

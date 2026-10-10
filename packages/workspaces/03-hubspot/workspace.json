@@ -9,17 +9,32 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "crm.upsert_lead",
+                         "crm.upsert_contact",
+                         "crm.upsert_company",
+                         "crm.qualify",
+                         "crm.create_opportunity",
+                         "crm.move_stage",
+                         "crm.log_activity",
+                         "crm.list_segments"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "email",
+                         "messaging",
+                         "documents"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "email.received",
+                                    "whatsapp.message.received",
+                                    "task.completed"
                                 ],
                    "publishes":  [
-
+                                     "lead.created",
+                                     "opportunity.created",
+                                     "opportunity.stage.changed",
+                                     "sales.activity.logged"
                                  ]
                }
 }

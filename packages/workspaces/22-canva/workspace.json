@@ -9,17 +9,28 @@
     "version":  1,
     "entrypoint":  "./src/index.ts",
     "capabilities":  [
-
+                         "brief.create",
+                         "design.generate",
+                         "asset.export",
+                         "asset.publish",
+                         "brand.upload",
+                         "design.read"
                      ],
     "dependencies":  [
-
+                         "domain-core",
+                         "documents",
+                         "marketing"
                      ],
     "events":  {
                    "consumes":  [
-
+                                    "campaign.created",
+                                    "document.uploaded"
                                 ],
                    "publishes":  [
-
+                                     "brief.created",
+                                     "design.generated",
+                                     "asset.exported",
+                                     "asset.published"
                                  ]
                }
 }
