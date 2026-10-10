@@ -1,0 +1,25 @@
+{
+    "id":  "google-calendar",
+    "slug":  "06-google-calendar",
+    "order":  6,
+    "family":  "trabajo",
+    "reference":  "Google Calendar",
+    "title":  "Calendario y agenda",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

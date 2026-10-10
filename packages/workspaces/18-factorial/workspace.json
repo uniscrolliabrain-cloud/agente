@@ -1,0 +1,25 @@
+{
+    "id":  "factorial",
+    "slug":  "18-factorial",
+    "order":  18,
+    "family":  "personas",
+    "reference":  "Factorial",
+    "title":  "Recursos humanos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "zendesk",
+    "slug":  "14-zendesk",
+    "order":  14,
+    "family":  "comunicacion",
+    "reference":  "Zendesk",
+    "title":  "Atencion al cliente y tickets",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

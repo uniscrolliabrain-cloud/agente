@@ -1,0 +1,25 @@
+{
+    "id":  "ramp",
+    "slug":  "20-ramp",
+    "order":  20,
+    "family":  "finanzas",
+    "reference":  "Ramp",
+    "title":  "Compras y gestion de gastos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

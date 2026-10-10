@@ -1,0 +1,9 @@
+# Decisiones abiertas — Atencion posventa y exito del cliente
+
+Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+
+## Formato
+- **Pregunta:** ...
+- **Bloquea:** ...
+- **Opciones:** ...
+- **Decision:** pendiente

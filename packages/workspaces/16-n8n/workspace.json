@@ -1,0 +1,25 @@
+{
+    "id":  "n8n",
+    "slug":  "16-n8n",
+    "order":  16,
+    "family":  "trabajo",
+    "reference":  "n8n",
+    "title":  "Automatizaciones visuales",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "linear",
+    "slug":  "07-linear",
+    "order":  7,
+    "family":  "trabajo",
+    "reference":  "Linear",
+    "title":  "Tareas y proyectos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

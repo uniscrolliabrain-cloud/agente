@@ -1,0 +1,25 @@
+{
+    "id":  "odoo-purchase",
+    "slug":  "12-odoo-purchase",
+    "order":  12,
+    "family":  "finanzas",
+    "reference":  "Odoo Purchase",
+    "title":  "Compras y proveedores",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "hubspot",
+    "slug":  "03-hubspot",
+    "order":  3,
+    "family":  "comunicacion",
+    "reference":  "HubSpot",
+    "title":  "CRM y ventas",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

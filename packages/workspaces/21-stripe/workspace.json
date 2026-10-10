@@ -1,0 +1,25 @@
+{
+    "id":  "stripe",
+    "slug":  "21-stripe",
+    "order":  21,
+    "family":  "finanzas",
+    "reference":  "Stripe Dashboard",
+    "title":  "Analitica y dashboards",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

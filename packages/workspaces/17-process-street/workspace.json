@@ -1,0 +1,25 @@
+{
+    "id":  "process-street",
+    "slug":  "17-process-street",
+    "order":  17,
+    "family":  "trabajo",
+    "reference":  "Process Street",
+    "title":  "Procedimientos y documentacion",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

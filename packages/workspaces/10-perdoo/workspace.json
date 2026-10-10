@@ -1,0 +1,25 @@
+{
+    "id":  "perdoo",
+    "slug":  "10-perdoo",
+    "order":  10,
+    "family":  "personas",
+    "reference":  "Perdoo",
+    "title":  "Direccion, objetivos y planificacion",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "productive",
+    "slug":  "13-productive",
+    "order":  13,
+    "family":  "trabajo",
+    "reference":  "Productive",
+    "title":  "Gestion de proyectos y rentabilidad",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,266 @@
+version: 1
+package: "@openmuse/workspaces"
+updated_at: "2026-10-10T16:49:37Z"
+
+families:
+  comunicacion: [gmail, whatsapp, hubspot, zendesk, intercom, suitedash, buffer]
+  documentos:   [google-drive, notion, docusign, canva]
+  trabajo:      [linear, trello, google-calendar, productive, n8n, process-street]
+  finanzas:     [holded, holded-tesoreria, odoo-purchase, ramp, stripe, shopify]
+  personas:     [factorial, personio, perdoo]
+  operaciones:  [odoo-inventory, maintainx, odoo-manufacturing]
+  gobierno:     [isms-online, microsoft-entra, langsmith]
+  datos:        [airtable]
+  global:       [chatgpt]
+
+modules:
+  gmail:
+    order: 1
+    folder: "01-gmail"
+    family: comunicacion
+    reference: "Gmail"
+    title: "Correo electronico"
+    status: scaffold
+  whatsapp:
+    order: 2
+    folder: "02-whatsapp"
+    family: comunicacion
+    reference: "WhatsApp Web"
+    title: "Mensajeria instantanea"
+    status: scaffold
+  hubspot:
+    order: 3
+    folder: "03-hubspot"
+    family: comunicacion
+    reference: "HubSpot"
+    title: "CRM y ventas"
+    status: scaffold
+  holded:
+    order: 4
+    folder: "04-holded"
+    family: finanzas
+    reference: "Holded"
+    title: "ERP, facturacion y administracion"
+    status: scaffold
+  google-drive:
+    order: 5
+    folder: "05-google-drive"
+    family: documentos
+    reference: "Google Drive"
+    title: "Archivos y documentos"
+    status: scaffold
+  google-calendar:
+    order: 6
+    folder: "06-google-calendar"
+    family: trabajo
+    reference: "Google Calendar"
+    title: "Calendario y agenda"
+    status: scaffold
+  linear:
+    order: 7
+    folder: "07-linear"
+    family: trabajo
+    reference: "Linear"
+    title: "Tareas y proyectos"
+    status: scaffold
+  chatgpt:
+    order: 8
+    folder: "08-chatgpt"
+    family: global
+    reference: "ChatGPT"
+    title: "Chat con IA"
+    status: scaffold
+  airtable:
+    order: 9
+    folder: "09-airtable"
+    family: datos
+    reference: "Airtable"
+    title: "Tablas y bases de datos"
+    status: scaffold
+  perdoo:
+    order: 10
+    folder: "10-perdoo"
+    family: personas
+    reference: "Perdoo"
+    title: "Direccion, objetivos y planificacion"
+    status: scaffold
+  holded-tesoreria:
+    order: 11
+    folder: "11-holded-tesoreria"
+    family: finanzas
+    reference: "Holded / banca online"
+    title: "Tesoreria y conciliacion bancaria"
+    status: scaffold
+  odoo-purchase:
+    order: 12
+    folder: "12-odoo-purchase"
+    family: finanzas
+    reference: "Odoo Purchase"
+    title: "Compras y proveedores"
+    status: scaffold
+  productive:
+    order: 13
+    folder: "13-productive"
+    family: trabajo
+    reference: "Productive"
+    title: "Gestion de proyectos y rentabilidad"
+    status: scaffold
+  zendesk:
+    order: 14
+    folder: "14-zendesk"
+    family: comunicacion
+    reference: "Zendesk"
+    title: "Atencion al cliente y tickets"
+    status: scaffold
+  docusign:
+    order: 15
+    folder: "15-docusign"
+    family: documentos
+    reference: "DocuSign"
+    title: "Contratos y firma electronica"
+    status: scaffold
+  n8n:
+    order: 16
+    folder: "16-n8n"
+    family: trabajo
+    reference: "n8n"
+    title: "Automatizaciones visuales"
+    status: scaffold
+  process-street:
+    order: 17
+    folder: "17-process-street"
+    family: trabajo
+    reference: "Process Street"
+    title: "Procedimientos y documentacion"
+    status: scaffold
+  factorial:
+    order: 18
+    folder: "18-factorial"
+    family: personas
+    reference: "Factorial"
+    title: "Recursos humanos"
+    status: scaffold
+  personio:
+    order: 19
+    folder: "19-personio"
+    family: personas
+    reference: "Personio"
+    title: "Seleccion y candidatos"
+    status: scaffold
+  ramp:
+    order: 20
+    folder: "20-ramp"
+    family: finanzas
+    reference: "Ramp"
+    title: "Compras y gestion de gastos"
+    status: scaffold
+  stripe:
+    order: 21
+    folder: "21-stripe"
+    family: finanzas
+    reference: "Stripe Dashboard"
+    title: "Analitica y dashboards"
+    status: scaffold
+  canva:
+    order: 22
+    folder: "22-canva"
+    family: documentos
+    reference: "Canva"
+    title: "Diseno y creacion de contenido"
+    status: scaffold
+  buffer:
+    order: 23
+    folder: "23-buffer"
+    family: comunicacion
+    reference: "Buffer"
+    title: "Redes sociales y publicacion"
+    status: scaffold
+  shopify:
+    order: 24
+    folder: "24-shopify"
+    family: finanzas
+    reference: "Shopify"
+    title: "Comercio electronico y pedidos"
+    status: scaffold
+  intercom:
+    order: 25
+    folder: "25-intercom"
+    family: comunicacion
+    reference: "Intercom"
+    title: "Atencion posventa y exito del cliente"
+    status: scaffold
+  odoo-inventory:
+    order: 26
+    folder: "26-odoo-inventory"
+    family: operaciones
+    reference: "Odoo Inventory"
+    title: "Inventario y almacen"
+    status: scaffold
+  maintainx:
+    order: 27
+    folder: "27-maintainx"
+    family: operaciones
+    reference: "MaintainX"
+    title: "Activos y mantenimiento"
+    status: scaffold
+  odoo-manufacturing:
+    order: 28
+    folder: "28-odoo-manufacturing"
+    family: operaciones
+    reference: "Odoo Manufacturing"
+    title: "Produccion y ordenes de trabajo"
+    status: scaffold
+  isms-online:
+    order: 29
+    folder: "29-isms-online"
+    family: gobierno
+    reference: "ISMS.online"
+    title: "Cumplimiento y gestion de riesgos"
+    status: scaffold
+  microsoft-entra:
+    order: 30
+    folder: "30-microsoft-entra"
+    family: gobierno
+    reference: "Microsoft Entra"
+    title: "Identidad, accesos y seguridad"
+    status: scaffold
+  suitedash:
+    order: 31
+    folder: "31-suitedash"
+    family: comunicacion
+    reference: "SuiteDash"
+    title: "Portal de clientes y proveedores"
+    status: scaffold
+  notion:
+    order: 32
+    folder: "32-notion"
+    family: documentos
+    reference: "Notion"
+    title: "Wiki y conocimiento interno"
+    status: scaffold
+  langsmith:
+    order: 33
+    folder: "33-langsmith"
+    family: gobierno
+    reference: "LangSmith"
+    title: "Observabilidad de agentes"
+    status: scaffold
+  trello:
+    order: 34
+    folder: "34-trello"
+    family: trabajo
+    reference: "Trello"
+    title: "Tableros Kanban"
+    status: scaffold
+
+limits:
+  max_files_modified_per_patch: 1
+  forbidden_paths:
+    - "apps/server/src/kernel"
+    - "apps/server/src/engine/events/bus.ts"
+    - "packages/domain/src/ontology.ts"
+  allowlist_existing_files:
+    - "apps/server/src/engine/workspace/registry.ts"
+    - "apps/server/src/engine/workspace/generator.ts"
+    - "apps/web/src/view/resolver.ts"
+    - "apps/web/src/templates/registry.ts"

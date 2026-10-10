@@ -1,0 +1,25 @@
+{
+    "id":  "langsmith",
+    "slug":  "33-langsmith",
+    "order":  33,
+    "family":  "gobierno",
+    "reference":  "LangSmith",
+    "title":  "Observabilidad de agentes",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

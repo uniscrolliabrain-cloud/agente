@@ -1,0 +1,25 @@
+{
+    "id":  "gmail",
+    "slug":  "01-gmail",
+    "order":  1,
+    "family":  "comunicacion",
+    "reference":  "Gmail",
+    "title":  "Correo electronico",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

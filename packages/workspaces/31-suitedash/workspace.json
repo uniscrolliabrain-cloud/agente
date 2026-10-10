@@ -1,0 +1,25 @@
+{
+    "id":  "suitedash",
+    "slug":  "31-suitedash",
+    "order":  31,
+    "family":  "comunicacion",
+    "reference":  "SuiteDash",
+    "title":  "Portal de clientes y proveedores",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "shopify",
+    "slug":  "24-shopify",
+    "order":  24,
+    "family":  "finanzas",
+    "reference":  "Shopify",
+    "title":  "Comercio electronico y pedidos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

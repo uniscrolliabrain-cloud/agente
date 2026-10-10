@@ -1,0 +1,25 @@
+{
+    "id":  "intercom",
+    "slug":  "25-intercom",
+    "order":  25,
+    "family":  "comunicacion",
+    "reference":  "Intercom",
+    "title":  "Atencion posventa y exito del cliente",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

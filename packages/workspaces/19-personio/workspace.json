@@ -1,0 +1,25 @@
+{
+    "id":  "personio",
+    "slug":  "19-personio",
+    "order":  19,
+    "family":  "personas",
+    "reference":  "Personio",
+    "title":  "Seleccion y candidatos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

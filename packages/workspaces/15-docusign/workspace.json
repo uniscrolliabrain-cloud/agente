@@ -1,0 +1,25 @@
+{
+    "id":  "docusign",
+    "slug":  "15-docusign",
+    "order":  15,
+    "family":  "documentos",
+    "reference":  "DocuSign",
+    "title":  "Contratos y firma electronica",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "whatsapp",
+    "slug":  "02-whatsapp",
+    "order":  2,
+    "family":  "comunicacion",
+    "reference":  "WhatsApp Web",
+    "title":  "Mensajeria instantanea",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

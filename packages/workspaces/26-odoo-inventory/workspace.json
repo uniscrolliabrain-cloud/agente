@@ -1,0 +1,25 @@
+{
+    "id":  "odoo-inventory",
+    "slug":  "26-odoo-inventory",
+    "order":  26,
+    "family":  "operaciones",
+    "reference":  "Odoo Inventory",
+    "title":  "Inventario y almacen",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

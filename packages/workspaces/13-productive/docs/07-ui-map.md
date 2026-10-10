@@ -1,0 +1,20 @@
+# UI map — Gestion de proyectos y rentabilidad
+
+## Referencia visual
+Pendiente.
+
+## Componentes reutilizados de apps/web
+| Componente | Uso | Notas |
+|---|---|---|
+| | | |
+
+## Componentes nuevos
+| Componente | Responsabilidad |
+|---|---|
+| | | |
+
+## Vistas servidas
+Pendiente.
+
+## Panel contextual
+Pendiente.

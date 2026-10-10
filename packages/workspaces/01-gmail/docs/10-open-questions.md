@@ -1,0 +1,9 @@
+# Decisiones abiertas — Correo electronico
+
+Pendiente. Listar aqui las decisiones sin cerrar que condicionan la implementacion.
+
+## Formato
+- **Pregunta:** ...
+- **Bloquea:** ...
+- **Opciones:** ...
+- **Decision:** pendiente

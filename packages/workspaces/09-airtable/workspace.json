@@ -1,0 +1,25 @@
+{
+    "id":  "airtable",
+    "slug":  "09-airtable",
+    "order":  9,
+    "family":  "datos",
+    "reference":  "Airtable",
+    "title":  "Tablas y bases de datos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

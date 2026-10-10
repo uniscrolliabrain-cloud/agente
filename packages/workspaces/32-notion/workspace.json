@@ -1,0 +1,25 @@
+{
+    "id":  "notion",
+    "slug":  "32-notion",
+    "order":  32,
+    "family":  "documentos",
+    "reference":  "Notion",
+    "title":  "Wiki y conocimiento interno",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

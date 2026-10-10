@@ -1,0 +1,25 @@
+{
+    "id":  "isms-online",
+    "slug":  "29-isms-online",
+    "order":  29,
+    "family":  "gobierno",
+    "reference":  "ISMS.online",
+    "title":  "Cumplimiento y gestion de riesgos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

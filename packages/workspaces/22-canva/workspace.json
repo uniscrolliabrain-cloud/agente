@@ -1,0 +1,25 @@
+{
+    "id":  "canva",
+    "slug":  "22-canva",
+    "order":  22,
+    "family":  "documentos",
+    "reference":  "Canva",
+    "title":  "Diseno y creacion de contenido",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

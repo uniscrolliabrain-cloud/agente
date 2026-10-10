@@ -1,0 +1,25 @@
+{
+    "id":  "google-drive",
+    "slug":  "05-google-drive",
+    "order":  5,
+    "family":  "documentos",
+    "reference":  "Google Drive",
+    "title":  "Archivos y documentos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

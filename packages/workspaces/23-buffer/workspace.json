@@ -1,0 +1,25 @@
+{
+    "id":  "buffer",
+    "slug":  "23-buffer",
+    "order":  23,
+    "family":  "comunicacion",
+    "reference":  "Buffer",
+    "title":  "Redes sociales y publicacion",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

@@ -1,0 +1,25 @@
+{
+    "id":  "trello",
+    "slug":  "34-trello",
+    "order":  34,
+    "family":  "trabajo",
+    "reference":  "Trello",
+    "title":  "Tableros Kanban",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

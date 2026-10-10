@@ -1,0 +1,25 @@
+{
+    "id":  "holded",
+    "slug":  "04-holded",
+    "order":  4,
+    "family":  "finanzas",
+    "reference":  "Holded",
+    "title":  "ERP, facturacion y administracion",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

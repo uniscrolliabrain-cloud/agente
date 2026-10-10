@@ -1,0 +1,25 @@
+{
+    "id":  "chatgpt",
+    "slug":  "08-chatgpt",
+    "order":  8,
+    "family":  "global",
+    "reference":  "ChatGPT",
+    "title":  "Chat con IA",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

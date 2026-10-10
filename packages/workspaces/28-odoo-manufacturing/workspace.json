@@ -1,0 +1,25 @@
+{
+    "id":  "odoo-manufacturing",
+    "slug":  "28-odoo-manufacturing",
+    "order":  28,
+    "family":  "operaciones",
+    "reference":  "Odoo Manufacturing",
+    "title":  "Produccion y ordenes de trabajo",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

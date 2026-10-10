@@ -1,0 +1,25 @@
+{
+    "id":  "maintainx",
+    "slug":  "27-maintainx",
+    "order":  27,
+    "family":  "operaciones",
+    "reference":  "MaintainX",
+    "title":  "Activos y mantenimiento",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

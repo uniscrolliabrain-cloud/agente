@@ -1,0 +1,25 @@
+{
+    "id":  "holded-tesoreria",
+    "slug":  "11-holded-tesoreria",
+    "order":  11,
+    "family":  "finanzas",
+    "reference":  "Holded / banca online",
+    "title":  "Tesoreria y conciliacion bancaria",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}

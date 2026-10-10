@@ -1,0 +1,25 @@
+{
+    "id":  "microsoft-entra",
+    "slug":  "30-microsoft-entra",
+    "order":  30,
+    "family":  "gobierno",
+    "reference":  "Microsoft Entra",
+    "title":  "Identidad, accesos y seguridad",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+
+                     ],
+    "dependencies":  [
+
+                     ],
+    "events":  {
+                   "consumes":  [
+
+                                ],
+                   "publishes":  [
+
+                                 ]
+               }
+}
