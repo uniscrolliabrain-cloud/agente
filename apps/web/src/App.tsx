@@ -77,7 +77,7 @@ export default function App() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  const [activeWorkspaceId] = useState<string | null>(null);
   const { workspaces: _workspaces } = useWorkspaces(auth.isAuthenticated);
 
   useEffect(() => {

@@ -14,5 +14,5 @@ export async function listWorkspaces(): Promise<WorkspaceListEntry[]> {
 }
 
 export async function getWorkspace(id: string): Promise<WorkspaceListEntry | null> {
-  return apiFetch<WorkspaceListEntry | null>(/api/workspaces/);
+  return apiFetch<WorkspaceListEntry | null>("/api/workspaces/" + encodeURIComponent(id));
 }

@@ -1,9 +1,10 @@
-// 14-zendesk — punto de entrada del workspace en el frontend.
-// Estado: scaffold. Pendiente implementar componentes y hooks.
-// Referencia: Zendesk
+// ZENDESK_WORKSPACE_INDEX_V2
+
+export { default as ZendeskWorkspace } from "./components/ZendeskWorkspace.tsx";
+
 export const zendeskWorkspaceUi = {
   id: "zendesk",
   slug: "14-zendesk",
   family: "comunicacion",
-  status: "scaffold",
+  status: "implemented",
 };
