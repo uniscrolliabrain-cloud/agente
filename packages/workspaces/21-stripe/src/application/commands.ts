@@ -54,7 +54,7 @@ const manageSubscriptionPayload = z.object({
 
 async function recordPayment(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const payload = recordPaymentPayload.parse(env.payload);
-  const id = env.idempotencyKey ?? env.entityId ?? pay-;
+  const id = env.idempotencyKey ?? env.entityId ?? `pay-${crypto.randomUUID()}`;
   const kind = "ws-stripe-payments";
   const existing = await services.db.get<{ id: string }>(ctx.owner, kind, id);
   if (existing) return { status: "ok", entityId: id };
@@ -82,7 +82,7 @@ async function recordPayment(services: WorkspaceServices, ctx: WorkspaceContext,
 
 async function issueRefund(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const payload = issueRefundPayload.parse(env.payload);
-  const id = env.idempotencyKey ?? ef-;
+  const id = env.idempotencyKey ?? `ref-${crypto.randomUUID()}`;
   const kind = "ws-stripe-refunds";
   const existing = await services.db.get<{ id: string }>(ctx.owner, kind, id);
   if (existing) return { status: "ok", entityId: id };
@@ -104,7 +104,7 @@ async function issueRefund(services: WorkspaceServices, ctx: WorkspaceContext, e
 
 async function openDispute(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const payload = openDisputePayload.parse(env.payload);
-  const id = env.idempotencyKey ?? disp-;
+  const id = env.idempotencyKey ?? `disp-${crypto.randomUUID()}`;
   const kind = "ws-stripe-disputes";
   const existing = await services.db.get<{ id: string }>(ctx.owner, kind, id);
   if (existing) return { status: "ok", entityId: id };
@@ -135,7 +135,7 @@ async function resolveDispute(services: WorkspaceServices, ctx: WorkspaceContext
 
 async function manageSubscription(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const payload = manageSubscriptionPayload.parse(env.payload);
-  const id = env.idempotencyKey ?? sub-;
+  const id = env.idempotencyKey ?? `sub-${crypto.randomUUID()}`;
   const kind = "ws-stripe-subscriptions";
   const existing = await services.db.get<{ id: string }>(ctx.owner, kind, id);
   if (existing) return { status: "ok", entityId: id };

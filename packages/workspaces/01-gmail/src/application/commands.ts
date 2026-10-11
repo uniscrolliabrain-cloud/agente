@@ -34,8 +34,8 @@ const archiveThreadPayload = z.object({
 
 async function importMessage(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const p = importMessagePayload.parse(env.payload);
-  const id = env.idempotencyKey ?? msg-;
-  const threadId = p.threadId ?? 	hr-;
+  const id = env.idempotencyKey ?? `msg-${crypto.randomUUID()}`;
+  const threadId = p.threadId ?? `thr-${crypto.randomUUID()}`;
   const existing = await services.db.get<{ id: string }>(ctx.owner, "ws-gmail-messages", id);
   if (existing) return { status: "ok", entityId: id };
   const entity = emailMessageSchema.parse({ id, threadId, tenantId: ctx.tenantId, from: p.from, to: p.to, cc: p.cc, bcc: [], subject: p.subject, body: p.body, receivedAt: p.receivedAt, labels: p.labels });
@@ -49,8 +49,8 @@ async function importMessage(services: WorkspaceServices, ctx: WorkspaceContext,
 
 async function sendMessage(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const p = sendMessagePayload.parse(env.payload);
-  const id = env.idempotencyKey ?? msg-;
-  const threadId = p.threadId ?? 	hr-;
+  const id = env.idempotencyKey ?? `msg-${crypto.randomUUID()}`;
+  const threadId = p.threadId ?? `thr-${crypto.randomUUID()}`;
   const now = new Date().toISOString();
   const entity = emailMessageSchema.parse({ id, threadId, tenantId: ctx.tenantId, from: ctx.owner, to: p.to, cc: p.cc, bcc: p.bcc, subject: p.subject, body: p.body, receivedAt: now, sentAt: now });
   await services.db.insertIfAbsent(ctx.owner, "ws-gmail-messages", entity);

@@ -27,7 +27,7 @@ const closeWorkItemPayload = z.object({
 
 async function createWorkItem(services: WorkspaceServices, ctx: WorkspaceContext, env: WorkspaceCommandEnvelope): Promise<CommandResult> {
   const p = createWorkItemPayload.parse(env.payload);
-  const id = env.idempotencyKey ?? wi-;
+  const id = env.idempotencyKey ?? `wi-${crypto.randomUUID()}`;
   const existing = await services.db.get<{ id: string }>(ctx.owner, "ws-linear-workitems", id);
   if (existing) return { status: "ok", entityId: id };
   const now = new Date().toISOString();

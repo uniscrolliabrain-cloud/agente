@@ -205,7 +205,7 @@ export async function createApp(
   const workspaceCapabilityRegistry = new (await import("./engine/capabilities/registry.ts")).CapabilityRegistry();
   const workspaceCapabilitiesCount = bridgeWorkspaceCapabilities(workspaceCapabilityRegistry, workspaceModuleRegistry.list());
   const workspaceDispatcher = new WorkspaceDispatcher({ db: tdb, bus });
-  console.log([workspaces]  workspaces,  capabilities);
+  // log roto eliminado
     const agent = new AgentService(
     tdb,
     config,
