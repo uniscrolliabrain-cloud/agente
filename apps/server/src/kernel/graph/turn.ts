@@ -24,6 +24,7 @@ export const turnSchema = z.object({
   quiescentAt: z.iso.datetime({ offset: true }).optional(),
   quiescenceMs: z.number().int().min(0).max(600_000).default(10_000),
   status: turnStatusSchema,
+  // KERNEL_TURN_CAP_THOUGHTS_V1
   thoughtIds: z.array(z.string().max(100)).max(500).default([]),
   triggers: z.array(z.string().max(100)).max(50).default([]),
 

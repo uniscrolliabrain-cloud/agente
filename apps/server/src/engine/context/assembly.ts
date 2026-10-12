@@ -15,6 +15,7 @@ const MAX_RECALL_HITS = 5;
 // el scoring del contexto aplica un multiplicador por fuente: tareas con
 // feedback "useful" pesan mas, "not_useful" pesan menos. El multiplicador
 // se pasa como parametro opcional; sin el, comportamiento previo.
+  // CONTEXT_ASSEMBLY_MULTIPLIERS_V1
 export function renderContext(
   pkg: ContextPackage,
   options: { multipliers?: Record<string, number> } = {},

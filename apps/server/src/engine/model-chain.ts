@@ -85,6 +85,7 @@ export function runWithModelFallback(
       // trabajo. Pero sí aplicamos circuit breaker por spec para cortar rápido
       // si un proveedor está caído.
       // CB_PER_PROVIDER_V1 - agrupa el circuit por provider.
+// MODEL_FALLBACK_PROVIDER_CIRCUIT_V1
 const provider = specs[index].split("/")[0] ?? "unknown";
 const circuit = globalCircuits.get(`llm:${provider}`);
       if (circuit.getState() === "open") {
@@ -96,6 +97,7 @@ const circuit = globalCircuits.get(`llm:${provider}`);
       const bulkheadKey = "__llm_bulkhead__";
       const bulkhead = ((globalThis as Record<string, unknown>)[bulkheadKey] as Map<string, number>) ?? new Map<string, number>();
       (globalThis as Record<string, unknown>)[bulkheadKey] = bulkhead;
+      // MODEL_BULKHEAD_PER_PROVIDER_V1
       const BULKHEAD_MAX = Number(process.env.LLM_BULKHEAD_PER_PROVIDER ?? "10") || 10;
       const providerKey = specs[index].split("/")[0] ?? "unknown";
       const running = bulkhead.get(providerKey) ?? 0;

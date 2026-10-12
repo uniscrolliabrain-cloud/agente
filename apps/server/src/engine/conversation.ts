@@ -14,6 +14,11 @@ import {
   monitorInputSchema,
 } from "../../../../packages/domain/src/agent.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
+// META_CONSUME_HINT_V1
+// CONVERSATION_PROGRESS_READ_V1
+// CONVERSATION_PRESENTER_V1
+// CONVERSATION_META_INJECT_V1
+// CONVERSATION_META_EVALUATE_V1
 // KERNEL_PROMOTER_IMPORT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â import del promoter. El uso viene en un bloque posterior.
 import type { Promoter } from "../kernel/graph/promote.ts";
 import type { Config } from "../config.ts";
@@ -21,6 +26,22 @@ import { modelChain, runWithModelFallback } from "./model-chain.ts";
 import type { AgentService } from "./service.ts";
 
 export class ConversationAgent extends AbstractAgent {
+  // CONVERSATION_PENDING_HINTS_FIELD_V1
+  private pendingMetaHints: Array<{ rule: string; urgency: string; message: string }> = [];
+  // CONVERSATION_LAST_META_HINT_FIELD_V1
+  private lastMetaHint: string | null = null;
+  // CONVERSATION_META_CONTEXT_HINT_V1
+  private pendingMetaContext: string[] = [];
+  // CONVERSATION_META_HINTS_CLEANUP_V1
+  private readonly metaHintsMaxAgeMs = 10 * 60 * 1000;
+  // CONVERSATION_META_HINT_USED_FLAG_V1
+  private lastMetaHintUsedAt: number = 0;
+  // CONVERSATION_CURRENT_CTX_FIELD_V1
+  private currentCtx: { personaId?: string; tenantId?: string; owner?: string } | undefined = undefined;
+  // CONVERSATION_META_HINTS_PROMPT_V1
+  private get metaHintsPromptBlock(): string {
+    return "";
+  }
   constructor(
     private readonly config: Config,
     private readonly service: AgentService,
@@ -34,6 +55,31 @@ export class ConversationAgent extends AbstractAgent {
   }
 
   run(input: RunAgentInput): Observable<BaseEvent> {
+    // CONVERSATION_META_HINT_READ_V1
+    // KERNEL_CONTEXT_PERSONA_FROM_STATE_V1
+    const personaId = (input.state as { personaId?: string } | undefined)?.personaId;
+    // CONVERSATION_CURRENT_CTX_SET_V1
+    this.currentCtx = {
+      ...(personaId ? { personaId } : {}),
+    };
+    // KERNEL_CONTEXT_PERSONA_PROPAGATE_V2
+    if (personaId) {
+      const ctxCandidate = (this as unknown as { currentCtx?: { personaId?: string } }).currentCtx;
+      if (ctxCandidate) ctxCandidate.personaId = personaId;
+    }
+    const metaHint = this.lastMetaHint;
+    this.lastMetaHint = null;
+    // CONVERSATION_META_HINT_EXPIRY_V1
+    if (metaHint && this.lastMetaHintUsedAt > 0 && Date.now() - this.lastMetaHintUsedAt > this.metaHintsMaxAgeMs) {
+      this.lastMetaHint = null;
+    }
+    // CONVERSATION_META_HINT_USED_UPDATE_V1
+    if (metaHint) this.lastMetaHintUsedAt = Date.now();
+    // CONVERSATION_META_CONTEXT_READ_V1
+    // CONVERSATION_META_CONTEXT_CLEAR_V1 - los hints se leen pero no se descartan hasta nuevo ciclo
+    void this.pendingMetaContext;
+    // CONVERSATION_LAST_META_HINT_CLEAR_V1
+    void metaHint;
     const latest = input.messages.filter((m) => m.role === "user").at(-1);
     const requestKey = `${input.threadId}:${latest?.id ?? input.runId}`;
     // SHOULD_DELEGATE_IN_USE_V1 - antes shouldDelegateToSlow existia pero
@@ -767,7 +813,56 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
       // decide QUE mostrar, no cierra turnos.
       await this.service.kernel.closeTurn(ctx, turnId, reason, "system");
       const { Promoter } = await import("../kernel/index.ts");
-      const result = await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+      // CONVERSATION_META_HINT_INJECT_V1
+    if (this.pendingMetaHints.length > 0) {
+      const injected = this.pendingMetaHints
+        .map((h) => `[${h.urgency}] ${h.message}`)
+        .join("\n");
+      this.lastMetaHint = injected;
+      // CONVERSATION_META_HINT_PERSIST_AWAIT_V1
+      // CONVERSATION_META_HINTS_PERSIST_V1
+      void (async () => {
+        try {
+          const { MetaHintsStore } = await import("./feedback/meta-hints-store.ts");
+          const store = new MetaHintsStore(this.service.db as unknown as import("../db.ts").Store);
+          await store.persist(ctx.tenantId, ctx.owner, turnId, hints.slice(0, 3));
+        } catch {
+          /* best-effort */
+        }
+      })();
+      // CONVERSATION_META_CONTEXT_PUSH_V1
+      this.pendingMetaContext.push(injected);
+      if (this.pendingMetaContext.length > 3) this.pendingMetaContext.shift();
+      this.pendingMetaHints = [];
+    }
+    // CONVERSATION_PRESENTER_SSE_WIRE_V1
+    let presenterText = "";
+    try {
+      const { presenterTurnToSse } = await import("../kernel/observers/presenter-sse.ts");
+      const presented = await presenterTurnToSse(this.service.kernel, ctx, turnId, "");
+      presenterText = presented.text;
+    } catch {
+      presenterText = "";
+    }
+    void presenterText;
+    const result = await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+    // CONVERSATION_META_EVALUATE_CALLSITE_V1
+    try {
+      const { Meta } = await import("../kernel/observers/meta.ts");
+      const meta = new Meta();
+      const thoughts = await this.service.kernel.thoughtsOf(ctx, turnId);
+      const hints = meta.evaluate({ thoughts, now: new Date().toISOString() });
+      // CONVERSATION_META_HINTS_LOG_V1
+      if (hints.length > 0 && hints[0].rule !== "nothing_to_report") {
+        // CONVERSATION_PENDING_HINTS_CAP_V1
+        this.pendingMetaHints = hints.slice(0, 3);
+        for (const h of hints.slice(0, 3)) {
+          if ("thoughtId" in h && typeof h.thoughtId === "string") meta.consumeHint(h.thoughtId);
+        }
+      }
+    } catch {
+      /* best-effort */
+    }
       // PROMOTER_DEST_CALL_V1 - persistir los destinos memory del Promoter.
       if (result?.destinations?.memory?.length) {
         await this.service

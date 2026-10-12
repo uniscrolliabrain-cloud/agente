@@ -53,12 +53,14 @@ export interface Config {
   backupIntervalHours?: number;
   backupRetentionDays?: number;
   // QUOTA_PER_SPEED_V1 - cuotas separadas por velocidad.
+  // CONFIG_QUOTA_PER_SPEED_V1
   quotaPerSpeed?: {
     fastCallsPerHour: number;
     slowCallsPerHour: number;
   };
   /** DEFERRED_ACTION_CONFIG_V1 â€” configuraciÃ³n de undo diferido.
    *  Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md. */
+  // CONFIG_DEFERRED_ACTION_V1
   deferredAction?: {
     /** ms de ventana para deshacer una aprobaciÃ³n. Default 8000. */
     windowMs: number;
@@ -67,6 +69,7 @@ export interface Config {
   };
   /** TIMEOUTS_CONFIG_V1 â€” timeouts configurables por tool.
    *  Ver: docs/audits/03-resiliencia/miniaudit.md ("Timeouts inconsistentes"). */
+  // CONFIG_TOOL_TIMEOUTS_V1
   toolTimeouts?: {
     llmFirstByteMs: number;
     llmGlobalMs: number;
@@ -176,6 +179,7 @@ export function readConfig(): Config {
     },
     // ORIGINS_CLEAN â€” ALLOWED_ORIGINS="" daba [""], que no matchea nada pero ocupa
     // un hueco en el Set. Filtramos vacios y hacemos trim.
+    // CONFIG_ALLOWED_ORIGINS_CLEAN_V1
     allowedOrigins: (
       process.env.ALLOWED_ORIGINS ?? "http://localhost:8081,http://127.0.0.1:8081"
     )

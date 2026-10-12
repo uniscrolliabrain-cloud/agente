@@ -51,6 +51,7 @@ export class StoreQuery implements EventQuery {
     const selectFn = (this.db as unknown as {
       select?: <T>(sql: string, params: unknown[]) => Promise<T[]>;
     }).select;
+    // EVENTBUS_RECENT_SQL_V1
     if (typeof selectFn === "function") {
       try {
         const params: unknown[] = [owner, KIND];
@@ -93,6 +94,7 @@ export class StoreQuery implements EventQuery {
     // la query era pesada. Ahora agrupamos en SQL con GROUP BY. El Store
     // expone `select` para queries arbitrarias de lectura.
     try {
+      // EVENTBUS_AGGREGATE_SQL_V1
       const rows = await this.db.select<{ type: string; count: number }>(
         `SELECT data->>'type' AS type, count(*)::int AS count
            FROM records

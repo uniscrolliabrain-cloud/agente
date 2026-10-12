@@ -17,6 +17,7 @@ export function billingRoutes(db: Store) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   // POST /api/billing/webhook - recibe eventos de Stripe.
+  // BILLING_WEBHOOK_HMAC_V1
   app.post("/webhook", async (c) => {
     const secret = process.env.STRIPE_WEBHOOK_SECRET;
     if (!secret) throw new AppError("STRIPE_WEBHOOK_SECRET no configurado", 503);

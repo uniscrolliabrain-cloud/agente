@@ -42,6 +42,7 @@ export const RETENTION_RULES: RetentionRule[] = [
   { pattern: "view.", days: 7, reason: "Vistas servidas efÃ­meras" },
 ];
 
+  // EVENTS_RETENTION_RULE_V1
 export function retentionDaysFor(type: SystemEventType): number {
   for (const rule of RETENTION_RULES) {
     // RETENTION_MATCH_STRICT_V1 - exacto o prefijo con punto.
@@ -56,6 +57,7 @@ export function retentionDaysFor(type: SystemEventType): number {
 /**
  * Agrupa los tipos por dÃ­as de retenciÃ³n para hacer purgas eficientes.
  */
+  // EVENTS_RETENTION_GROUP_V1
 export function groupTypesByRetention(types: readonly SystemEventType[]): Map<number, string[]> {
   const grouped = new Map<number, string[]>();
   for (const type of types) {

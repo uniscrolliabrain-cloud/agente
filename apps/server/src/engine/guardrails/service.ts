@@ -32,6 +32,7 @@ export class GuardrailService {
     return row?.quota ?? DEFAULT_QUOTA;
   }
 
+  // GUARDRAILS_TASK_CREATION_V1
   async checkTaskCreation(tenantId: string, currentActiveTasks: number): Promise<void> {
     const q = await this.quotaFor(tenantId);
     if (currentActiveTasks >= q.tasksActive) {
@@ -42,6 +43,7 @@ export class GuardrailService {
     }
   }
 
+  // GUARDRAILS_TOKEN_CHECK_V1
   async checkTokens(tenantId: string, tokensUsedToday: number): Promise<void> {
     const q = await this.quotaFor(tenantId);
     if (tokensUsedToday >= q.tokensPerDay) {
@@ -52,6 +54,7 @@ export class GuardrailService {
     }
   }
 
+  // GUARDRAILS_COST_CHECK_V1
   async checkCost(tenantId: string, costToday: number): Promise<void> {
     const q = await this.quotaFor(tenantId);
     if (costToday >= q.costEurPerDay) {

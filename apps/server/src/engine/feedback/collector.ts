@@ -17,6 +17,7 @@ export interface FeedbackEntry {
 export class FeedbackCollector {
   constructor(private readonly db: Store | TenantScopedStore) {}
 
+  // FEEDBACK_COLLECTOR_RECORD_V1
   async record(entry: Omit<FeedbackEntry, "id" | "createdAt">): Promise<FeedbackEntry> {
     const value: FeedbackEntry = {
       ...entry,

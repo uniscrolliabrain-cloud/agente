@@ -52,6 +52,7 @@ export interface SlowAuthorWriteInput {
 export class SlowAuthor {
   constructor(private readonly deps: SlowAuthorDeps) {}
 
+  // SLOW_AUTHOR_PROGRESS_EVENT_PERSIST_V1
   async writeReasoning(ctx: KernelContext, input: SlowAuthorWriteInput): Promise<Thought> {
     const now = new Date().toISOString();
     // SLOW_AUTHOR_PROGRESS_ATTENTION_V1 - antes hacíamos `void progressStep(...)`

@@ -50,6 +50,7 @@ export interface FastAuthorWriteInput {
 export class FastAuthor {
   constructor(private readonly deps: FastAuthorDeps) {}
 
+  // FAST_AUTHOR_RESPONSE_TURN_LINK_V1
   async writeResponse(ctx: KernelContext, input: FastAuthorWriteInput): Promise<Thought> {
     const now = new Date().toISOString();
     // FAST_AUTHOR_ATTENTION_V1 - si el caller no pasa matched/ignored, los

@@ -131,6 +131,212 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
     }
   });
 
+  // KERNEL_ROUTES_TURN_INDEX_V1
+  app.get("/turns-index/recent", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
+    const { KernelTurnIndex } = await import("./kernel/subscribers/turn-index-query.ts");
+    const deps = (kernel as unknown as { deps: { store: unknown; tenants: { resolve: (o: string) => Promise<string> } } }).deps;
+    const db = deps.store as unknown as import("./db.ts").Store;
+    const tenantId = await deps.tenants.resolve(owner);
+    const index = new KernelTurnIndex(db);
+    return c.json({ turns: await index.recent(tenantId, limit) });
+  });
+
+  // KERNEL_ROUTES_METRICS_V1
+  app.get("/metrics-summary", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const { globalMetrics } = await import("./metrics/registry.ts");
+    const p99 = globalMetrics.quantile("openmuse_http_request_duration_ms", 0.99) ?? 0;
+    return c.json({ httpLatencyP99Ms: p99, generatedAt: new Date().toISOString() });
+  });
+
+  // KERNEL_ROUTES_SUBSCRIBER_STATUS_V1
+  app.get("/subscribers/status", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const { kernelSubscriberStatus } = await import("./kernel/subscribers/status.ts");
+    return c.json(await kernelSubscriberStatus(kernel.deps.store as unknown as import("./db.ts").Store));
+  });
+
+  // KERNEL_ROUTES_META_HINTS_V1
+  app.get("/meta-hints/pending", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const { MetaHintsStore } = await import("./engine/feedback/meta-hints-store.ts");
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
+    const store = new MetaHintsStore(db);
+    return c.json({ hints: await store.pendingForOwner(tenantId, owner) });
+  });
+
+  // KERNEL_ENGINE_GETSTORE_USED_V1
+  // KERNEL_ROUTES_META_HINTS_BY_TURN_V1
+  app.get("/meta-hints/by-turn/:turnId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const turnId = c.req.param("turnId");
+    const { MetaHintsStore } = await import("./engine/feedback/meta-hints-store.ts");
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
+    const store = new MetaHintsStore(db);
+    return c.json({ turnId, hints: await store.byTurn(tenantId, turnId) });
+  });
+
+  // KERNEL_META_HINTS_CONSUME_API_V1
+  app.post("/meta-hints/:id/consume", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const id = c.req.param("id");
+    const { MetaHintsStore } = await import("./engine/feedback/meta-hints-store.ts");
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
+    const store = new MetaHintsStore(db);
+    await store.consume(tenantId, id);
+    return c.json({ ok: true, id });
+  });
+
+  // KERNEL_ROUTES_PURGE_V1
+  app.post("/indexes/purge", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const { purgeKernelRetention } = await import("./engine/events/retention-purge.ts");
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const report = await purgeKernelRetention(db, {
+      "kernel-thought-index": 180,
+      "kernel-turn-index": 180,
+      "kernel-audit-index": 365,
+      "meta-hints": 30,
+    });
+    return c.json(report);
+  });
+
+  // KERNEL_ROUTES_STATE_LOG_V1
+  app.get("/state-transitions/recent", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const all = await db.list<Record<string, unknown>>("system", "state-transition-log", { limit: limit * 4 }).catch(() => []);
+    return c.json({ transitions: all.slice(0, limit) });
+  });
+
+  // KERNEL_ROUTES_SNAPSHOT_TENANT_V1
+  app.get("/snapshot-by-tenant/:tenantId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const { exportKernelSnapshot } = await import("./kernel/snapshot.ts");
+    const snap = await exportKernelSnapshot(kernel, tenantId);
+    return c.json(snap);
+  });
+
+  // KERNEL_ROUTES_AUDIT_BY_ACTION_V1
+  app.get("/audit/by-action/:action", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const action = c.req.param("action");
+    const limit = limitSchema.parse(c.req.query("limit")) ?? 100;
+    const deps = (kernel as unknown as {
+      deps: {
+        audit: { listByAction?: (tenantId: string, action: string, limit: number) => Promise<unknown[]>; list: (tenantId: string, limit: number) => Promise<unknown[]> };
+        tenants: { resolve: (o: string) => Promise<string> };
+      };
+    }).deps;
+    const tenantId = await deps.tenants.resolve(owner);
+    const entries = deps.audit.listByAction
+      ? await deps.audit.listByAction(tenantId, action, limit)
+      : (await deps.audit.list(tenantId, limit * 10)).filter((e) => (e as { action?: string }).action === action).slice(-limit);
+    return c.json({ tenantId, action, entries });
+  });
+
+  // KERNEL_ROUTES_INDEXES_LIST_V1
+  app.get("/indexes/summary", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const [thoughts, turns, audits, transitions, metaHints] = await Promise.all([
+      db.list("system", "kernel-thought-index", { limit: 1 }).catch(() => []),
+      db.list("system", "kernel-turn-index", { limit: 1 }).catch(() => []),
+      db.list("system", "kernel-audit-index", { limit: 1 }).catch(() => []),
+      db.list("system", "state-transition-log", { limit: 1 }).catch(() => []),
+      db.list("system", "meta-hints", { limit: 1 }).catch(() => []),
+    ]);
+    return c.json({
+      indexes: {
+        thoughts: thoughts.length,
+        turns: turns.length,
+        audits: audits.length,
+        transitions: transitions.length,
+        metaHints: metaHints.length,
+      },
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  // KERNEL_ROUTES_META_HINTS_LIST_V1
+  app.get("/meta-hints", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
+    const { MetaHintsStore } = await import("./engine/feedback/meta-hints-store.ts");
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
+    const store = new MetaHintsStore(db);
+    return c.json({ hints: await store.pendingForOwner(tenantId, owner, limit) });
+  });
+
+  // KERNEL_ROUTES_PERSONAS_COUNT_V1
+  app.get("/personas/count", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const { UserService } = await import("./users.ts");
+    void UserService;
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const [roles, memories, tasks] = await Promise.all([
+      db.list("system", "agent-roles", { limit: 200 }).catch(() => []),
+      db.list("system", "memories", { limit: 200 }).catch(() => []),
+      db.list("system", "tasks", { limit: 200 }).catch(() => []),
+    ]);
+    return c.json({
+      agentRoles: roles.length,
+      memories: memories.length,
+      tasks: tasks.length,
+      generatedAt: new Date().toISOString(),
+    });
+  });
+
+  // KERNEL_ROUTES_PERSONAS_LIST_V1
+  app.get("/personas", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
+    const db = (kernel as unknown as { deps: { store: import("./db.ts").Store } }).deps.store;
+    const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
+    const thoughts = await db.list<{ role?: string; owner?: string }>("system", "kernel-thought-index", { limit }).catch(() => []);
+    const turns = await db.list<{ owner?: string }>("system", "kernel-turn-index", { limit }).catch(() => []);
+    return c.json({
+      tenantId,
+      thoughtsIndexed: thoughts.length,
+      turnsIndexed: turns.length,
+      sampleRoles: Array.from(new Set(thoughts.map((t) => t.role ?? "").filter(Boolean))).slice(0, 10),
+    });
+  });
+
+  // KERNEL_ROUTES_TURNS_PERSONA_FILTER_V1
+  app.get("/turns/by-persona/:personaId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const personaId = c.req.param("personaId");
+    const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
+    const ctx = ctxFor(owner, `kernel-routes:by-persona:${personaId}:${Date.now()}`);
+    const all = await kernel.listTurns(ctx, limit * 4).catch(() => []);
+    const filtered = all.filter((t) => t.personaId === personaId).slice(0, limit);
+    return c.json({ personaId, total: filtered.length, turns: filtered });
+  });
+
   // GET /api/kernel/audit?limit=100
   app.get("/audit", async (c) => {
     const owner = c.get("owner");

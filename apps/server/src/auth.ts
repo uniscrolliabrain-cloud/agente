@@ -28,9 +28,11 @@ export class Auth {
     this.validateAccessKey(accessKey);
     const token = randomBytes(32).toString("base64url");
     await this.db.put("system", "sessions", {
+      // AUTH_SESSION_ID_HEX_V1
       id: digest(token).toString("hex"),
       owner: ownerId,
-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      // AUTH_SESSION_TTL_ENV_V1
+      expiresAt: Date.now() + (Number(process.env.SESSION_TTL_MS ?? "604800000") || 604800000),
     });
     return { token, mode: this.config.mode, ownerId };
   }

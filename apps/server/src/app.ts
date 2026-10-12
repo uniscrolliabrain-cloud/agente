@@ -57,6 +57,7 @@ import {
 // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
 import { TenantService } from "./engine/tenant.ts";
 
+  // KERNEL_STORE_TURN_PERSISTENT_TOGGLE_V1
 export async function createApp(
   db: Store,
   config: Config,

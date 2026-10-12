@@ -24,6 +24,7 @@ export class PresenceService {
   }
 
   /** Marca presencia del usuario. Devuelve quién más está editando. */
+  // PRESENCE_USER_HEADER_VALIDATE_V1
   touch(
     userId: string,
     resourceType: "thread" | "project",

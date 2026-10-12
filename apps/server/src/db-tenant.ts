@@ -11,6 +11,7 @@ export class TenantScopedStore {
     private readonly resolver: (owner: string) => Promise<string>,
   ) {}
 
+  // DB_TENANT_SCOPED_DEFAULT_V1
   private async key(owner: string): Promise<string> {
     const tenantId = await this.resolver(owner);
     this.tenantPrefixes.add(tenantId);
@@ -168,6 +169,7 @@ export class TenantScopedStore {
    * El separador es el primero ":" que separa tenantId de owner.
    * Como los tenantId no contienen ":", esto es seguro.
    */
+  // DB_TENANT_PEEL_V1
   private peel(composed: string): string {
     const idx = composed.indexOf(":");
     return idx >= 0 ? composed.slice(idx + 1) : composed;

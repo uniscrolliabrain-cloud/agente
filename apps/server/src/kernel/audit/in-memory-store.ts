@@ -45,6 +45,7 @@ export class InMemoryAuditStore implements AuditStore {
     // llamaba append con un owner de otro tenant, se escribia igual. Ahora
     // comprobamos que el tenantId no este vacio y que coincide con el tenant
     // del owner actual si este tiene prefijo "tenantId:".
+    // KERNEL_INMEMORY_AUDIT_STRICT_TENANT_V1
     if (!input.tenantId || input.tenantId.length === 0) {
       throw new Error("AuditStore.append requiere tenantId");
     }

@@ -75,6 +75,8 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
+    // ADMIN_TENANTS_TENANT_ID_REGEX_V1
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
     const health = await buildHealth(service, tenantId);
     return c.json({ tenantId, health });
   });
@@ -84,6 +86,8 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
+    // ADMIN_TENANTS_SUSPEND_REGEX_V1
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
     const body = suspendBody.parse(await c.req.json());
     await service.db.put("system", "tenant-state", {
       id: tenantId,

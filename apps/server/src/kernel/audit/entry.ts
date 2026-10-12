@@ -22,6 +22,14 @@ export const auditActionSchema = z.enum([
   "cromo.deleted",
   "field.recalculated",
   "promotion.executed",
+  // KERNEL_AUDIT_ACTION_THOUGHT_PROMOTED_V1
+  "thought.promoted",
+  // KERNEL_AUDIT_ACTION_THOUGHT_DISCARDED_V1
+  "thought.discarded",
+  // KERNEL_AUDIT_ACTION_BUILD_APPLIED_V1
+  "build.applied",
+  // KERNEL_AUDIT_ACTION_STATE_CHANGED_V1
+  "state.changed",
 ]);
 
 export const auditEntrySchema = z.object({

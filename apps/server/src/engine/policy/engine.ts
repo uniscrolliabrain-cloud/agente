@@ -40,6 +40,7 @@ export class PolicyEngine {
    * con los campos del contexto. Cuando se implementen condiciones contextuales,
    * se amplia esta firma.
    */
+  // POLICY_ENGINE_CONTEXT_WIRE_V1
   async canWithContext(
     ctx: import("../../../../../packages/domain/src/policy-context.ts").PolicyContext,
     role: PolicyRoleInput,

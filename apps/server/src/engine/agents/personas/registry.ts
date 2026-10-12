@@ -33,6 +33,7 @@ export class PersonaRegistry {
     return this.byTenant.get(tenantId)?.get(personaId);
   }
 
+  // PERSONAS_REGISTRY_TENANT_INDEX_V1
   list(tenantId: string): RegisteredPersona[] {
     const tenantMap = this.byTenant.get(tenantId);
     if (!tenantMap) return [];

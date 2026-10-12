@@ -72,9 +72,11 @@ export function adminClientsRoutes(service: AgentService, users: UserService) {
     let entries: string[] = [];
     try {
       const dirents = await readdir(root, { withFileTypes: true });
+      // ADMIN_CLIENTS_LIST_PATH_GUARD_V1
       entries = dirents
         .filter((d) => d.isDirectory() && !d.name.startsWith("_"))
-        .map((d) => d.name);
+        .map((d) => d.name)
+        .filter((name) => /^[a-z0-9_-]{1,64}$/i.test(name));
     } catch {
       return c.json({ clients: [] });
     }
@@ -136,6 +138,8 @@ export function adminClientsRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const name = c.req.param("name");
+    // ADMIN_CLIENTS_PATH_TRAVERSAL_GUARD_V1
+    if (!/^[a-z0-9_-]{1,64}$/i.test(name)) throw new AppError("Nombre de cliente invalido", 422);
     const dir = join(process.cwd(), "clientes", name);
     try {
       const config = JSON.parse(await readFile(join(dir, "config.json"), "utf8"));

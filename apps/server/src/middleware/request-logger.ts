@@ -15,6 +15,7 @@ import { globalMetrics } from "../metrics/registry.ts";
  * Acepta X-Correlation-Id y X-Request-Id para clientes existentes.
  */
 // TRACEPARENT_PARSE_V1 - parsea y valida traceparent W3C.
+  // MIDDLEWARE_TRACEPARENT_V1
 function parseTraceparent(header: string | undefined): string | undefined {
   if (!header) return undefined;
   const parts = header.split("-");
@@ -43,6 +44,7 @@ function correlationIdFrom(c: Context): string {
  * Middleware que envuelve el request en un contexto de correlaciÃƒÂ³n.
  * Debe registrarse ANTES que cualquier otro middleware que loguee.
  */
+  // MIDDLEWARE_REQUEST_LOGGER_V1
 export function requestLogger() {
   return async (c: Context, next: Next) => {
     const correlationId = correlationIdFrom(c);
@@ -63,12 +65,14 @@ export function requestLogger() {
         const emit = level === "warn" ? logWarn : logInfo;
         emit("http.response", { method, path, status, durationMs });
         // METRICS_HTTP_V1 Ã¢â‚¬â€ contador por mÃƒÂ©todo, ruta y status.
+        // MIDDLEWARE_HTTP_METRIC_V1
         globalMetrics.inc("openmuse_http_requests_total", {
           method,
           path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
           status: String(status),
         });
         // HISTOGRAM_HTTP_LATENCY_WIRE_V1 - observa la duraciÃ³n en ms.
+        // MIDDLEWARE_HTTP_HISTOGRAM_V1
         globalMetrics.observe(
           "openmuse_http_request_duration_ms",
           durationMs,
@@ -76,6 +80,7 @@ export function requestLogger() {
         );
         // HTTP_ERRORS_AND_HISTOGRAM_V1 - contador dedicado a errores por ruta.
         if (status >= 400) {
+          // MIDDLEWARE_HTTP_ERRORS_V1
           globalMetrics.inc("http_errors_by_route_total", {
             method,
             path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),

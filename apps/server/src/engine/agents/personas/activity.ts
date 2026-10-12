@@ -83,6 +83,7 @@ export async function activityForPersona(
   const tagged = all.filter(
     (t) => t.assignedTo === personaId || (t.state && t.state.roleId === personaId),
   );
+  // PERSONAS_ACTIVITY_FILTER_STRICT_V1
   const anyTagged = all.some(
     (t) => t.assignedTo !== undefined || (t.state && typeof t.state.roleId === "string"),
   );

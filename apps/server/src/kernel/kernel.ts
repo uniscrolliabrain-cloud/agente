@@ -18,6 +18,10 @@ import type { TenantResolver } from "./tenancy/resolver.ts";
 import { globalMetrics } from "../metrics/registry.ts";
 
 export interface KernelDeps {
+  // KERNEL_DEPS_ONTHOUGHTAPPENDED_V1
+  onThoughtAppended?: (thought: import("./graph/thought.ts").Thought) => void;
+  // KERNEL_DEPS_OPEN_HOOK_V1
+  onTurnOpened?: (turn: import("./graph/turn.ts").Turn) => void;
   store: TurnStore;
   tenants: TenantResolver;
   audit: AuditStore;
@@ -51,6 +55,32 @@ export class Kernel {
   // debug endpoints puedan leer store, tenants y audit sin cast.
   constructor(readonly deps: KernelDeps) {}
 
+  // KERNEL_ATTENTION_BY_PERSONA_V1
+  // KERNEL_LIST_TURNS_FOR_OWNER_V1
+  // KERNEL_ATTENTION_PAIRS_EXPORT_V1
+  async attentionPairs(ctx: KernelContext, personaA: string, personaB: string): Promise<unknown> {
+    const turnsA = (await this.listTurns(ctx, 200)).filter((t) => t.personaId === personaA);
+    const turnsB = (await this.listTurns(ctx, 200)).filter((t) => t.personaId === personaB);
+    return { personaA, personaB, turnCountA: turnsA.length, turnCountB: turnsB.length };
+  }
+
+  async listTurnsForOwner(ctx: KernelContext, owner: string, limit: number): Promise<import("./graph/turn.ts").Turn[]> {
+    const all = await this.listTurns(ctx, limit);
+    return all.filter((t) => t.owner === owner).slice(0, limit);
+  }
+
+  async attentionOfPersona(ctx: KernelContext, personaId: string): Promise<unknown> {
+    const turns = await this.listTurns(ctx, 100);
+    const relevant = turns.filter((t) => t.personaId === personaId);
+    const thoughts: unknown[] = [];
+    for (const t of relevant) {
+      const ts = await this.thoughtsOf(ctx, t.id);
+      thoughts.push(...ts);
+    }
+    return { personaId, turnCount: relevant.length, thoughtCount: thoughts.length };
+  }
+
+  // KERNEL_OPEN_TURN_HOOK_V1
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
@@ -185,6 +215,7 @@ export class Kernel {
     return this.deps.store.thoughtsOf(tenantId, turnId);
   }
 
+  // KERNEL_CLOSE_EMITS_BUS_V1
   async closeTurn(
     ctx: KernelContext,
     turnId: string,

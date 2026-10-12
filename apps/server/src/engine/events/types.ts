@@ -117,12 +117,24 @@ export const SYSTEM_EVENT_TYPES = [
   // WS_EVENTS_TYPES_FIX_V1
   "verification.executed",
   "verification.disagreement",
+  // EVENTS_TYPES_TURN_OPENED_SCHEMA_V1
+  "kernel.turn.opened",
+  "kernel.thought.action",
+  "kernel.thought.response",
+  "kernel.thought.reflection",
+  "kernel.thought.critic",
+  "kernel.thought.delegation",
+  // EVENTBUS_BUILD_APPLIED_TYPE_V1
+  "build.applied",
 ] as const;
 
 export type SystemEventType = (typeof SYSTEM_EVENT_TYPES)[number];
 
 export interface SystemEventSource {
-  kind: "task" | "sop" | "action" | "monitor" | "system" | "auth" | "entity" | "relation" | "policy" | "state" | "agent" | "context";
+  // EVENTS_BUS_EMIT_PERSONA_V1
+  personaId?: string;
+  // EVENTS_SOURCE_PERSONA_KIND_V1
+  kind: "task" | "sop" | "action" | "monitor" | "system" | "auth" | "entity" | "relation" | "policy" | "state" | "agent" | "context" | "persona" | "kernel";
   id: string;
 }
 

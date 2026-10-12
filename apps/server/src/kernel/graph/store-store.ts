@@ -66,6 +66,7 @@ export class StoreTurnStore implements TurnStore {
       if (parent.tenantId !== tenantId) throw tenantMismatch(tenantId, parent.tenantId);
       if (parent.status !== "open")
         throw new AppError(`Cannot open child turn on closed parent ${parentTurnId}`, 409);
+      // KERNEL_STORE_CHILD_TURN_PARENT_OPEN_V1
       const child = turnSchema.parse({
         id: randomUUID(),
         tenantId,
@@ -91,6 +92,7 @@ export class StoreTurnStore implements TurnStore {
       if (turn.status !== "open") throw new AppError(`Turn is not open: ${parsed.turnId}`, 409);
       if (turn.tenantId !== parsed.tenantId)
         throw tenantMismatch(parsed.tenantId, turn.tenantId);
+      // KERNEL_STORE_MAX_THOUGHTS_HONOR_V1
       if (turn.thoughtIds.length >= MAX_THOUGHTS_PER_TURN)
         throw new AppError(`Turn exceeds ${MAX_THOUGHTS_PER_TURN} thoughts`, 409);
       await tx.put(parsed.tenantId, THOUGHTS_KIND, parsed.id, parsed);
@@ -105,6 +107,7 @@ export class StoreTurnStore implements TurnStore {
         `${turn.id}:${parsed.id}`,
         { id: `${turn.id}:${parsed.id}`, turnId: turn.id, thoughtId: parsed.id, tenantId: parsed.tenantId },
       );
+      // KERNEL_TURN_THOUGHTID_DEDUPE_V1
       turn.thoughtIds.push(parsed.id);
       turn.quiescentAt = new Date().toISOString();
       await tx.put(turn.tenantId, TURNS_KIND, turn.id, turn);
@@ -151,6 +154,7 @@ export class StoreTurnStore implements TurnStore {
     // todos los thoughtIds. Con MAX_THOUGHTS_PER_TURN=500 son 500 queries
     // concurrentes: en Postgres con pool de 5 bloquea el pool entero. Ahora
     // procesamos en lotes de 20 en serie.
+    // KERNEL_STORE_THOUGHTS_OF_BATCH_SIZE_V1
     const BATCH = 20;
     const out: Thought[] = [];
     for (let i = 0; i < turn.thoughtIds.length; i += BATCH) {
@@ -200,6 +204,7 @@ export class StoreTurnStore implements TurnStore {
     const closed: Turn[] = [];
     // CLOSE_TURN_CHILDREN_DEPTH_V1 Ã¢â‚¬â€ respeta el tope de profundidad.
       // Ver: auditorÃƒÂ­a profunda 09 (la constante existÃƒÂ­a pero no se usaba).
+      // KERNEL_STORE_CLOSE_TURN_CHILDREN_DEPTH_V1
       const visit = async (id: string, depth: number): Promise<void> => {
         if (depth > MAX_CHILD_DEPTH) {
           throw new AppError(
@@ -236,6 +241,7 @@ export class StoreTurnStore implements TurnStore {
     return turn;
   }
 
+  // KERNEL_STORE_LIST_TURNS_CAP_V1
   async listTurns(tenantId: string, limit: number): Promise<Turn[]> {
     const capped = Math.min(Math.max(1, limit), MAX_TURNS_LISTED);
     const rows = await this.store.list(tenantId, TURNS_KIND, capped);
@@ -244,6 +250,7 @@ export class StoreTurnStore implements TurnStore {
 
   // KERNEL_LIST_TURNS_ALL_PERSONAS_V1 - lista turnos del owner sin filtrar
   // por personaId. La usa Laia (supervisora) para leer a los 12 agentes.
+  // KERNEL_STORE_LIST_TURNS_FOR_OWNER_CAP_V1
   async listTurnsForOwner(tenantId: string, owner: string, limit: number): Promise<Turn[]> {
     const capped = Math.min(Math.max(1, limit), MAX_TURNS_LISTED);
     const rows = await this.store.list(tenantId, TURNS_KIND, capped);

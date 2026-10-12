@@ -18,6 +18,10 @@ import { consolidate, type ConsolidationResult } from "./consolidate.ts";
 
 export interface PromotionDeps {
   kernel: Kernel;
+  // PROMOTER_WIRE_MEMORY_GRAPH_V1
+  // PROMOTER_DEPS_EXTEND_V1
+  memory?: { remember(owner: string, text: string, opts?: { source?: string; category?: string }): Promise<unknown> };
+  graph?: { createEntity(owner: string, input: { type: string; name: string; properties?: Record<string, unknown>; actor: string; source: string }): Promise<unknown> };
 }
 
 export interface PromotionCounts {
@@ -67,6 +71,7 @@ export interface PromotionResult {
   counts: PromotionCounts;
   survivors: string[];
   discarded: string[];
+  // PROMOTER_DECISIONS_PUBLIC_V1
   decisions: PromotionDecision[];
   /** PROMOTION_DESTINATIONS_V1 - resumen por destino, para el caller. */
   destinations: {
@@ -162,6 +167,7 @@ export class Promoter {
       counts[thought.role] += 1;
       // PROMOTE_ATTENTION_V1 — classify ahora considera isFocusedOn.
       // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
+      // RULES_TENANT_GUARD_WIRE_V1
       const outcome = classify(thought);
       const destination: PromotionDestination =
         outcome && outcome.survives ? classifyDestination(thought.role) : "discard";
@@ -211,6 +217,47 @@ export class Promoter {
     // CONSOLIDATE_PERSIST_V1 — persiste el resultado para no recalcular.
     // Ver: auditoría profunda 09.
     const consolidation = consolidate(thoughts);
+
+    // PROMOTER_CALLSITE_GRAPH_BATCH_V1
+    // PROMOTER_WRITE_GRAPH_V1
+    if (this.deps.graph) {
+      for (const thoughtId of destinations.businessGraph) {
+        const thought = thoughts.find((t) => t.id === thoughtId);
+        if (!thought) continue;
+        const content = thought.content;
+        if (typeof content !== "object" || content === null) continue;
+        const c = content as Record<string, unknown>;
+        const type = typeof c.type === "string" ? c.type : "unknown";
+        const name = typeof c.name === "string" ? c.name : `thought-${thought.id}`;
+        void this.deps.graph
+          .createEntity(thought.owner, {
+            type,
+            name,
+            properties: c,
+            actor: thought.actor.id,
+            source: "kernel.promoter",
+          })
+          .catch(() => {});
+      }
+    }
+
+    // PROMOTER_CALLSITE_MEMORY_BATCH_V1
+    // PROMOTER_WRITE_MEMORY_V1
+    if (this.deps.memory) {
+      for (const thoughtId of destinations.memory) {
+        const thought = thoughts.find((t) => t.id === thoughtId);
+        if (!thought) continue;
+        const text = typeof thought.content === "string" ? thought.content : JSON.stringify(thought.content);
+        if (!text.trim()) continue;
+        void this.deps.memory
+          .remember(thought.owner, text.slice(0, 500), {
+            source: `kernel:${thought.id}`,
+            // PROMOTER_WRITE_MEMORY_CATEGORY_V1
+            category: "proceso",
+          })
+          .catch(() => {});
+      }
+    }
     void this.deps.kernel.deps.audit
       .append({
         tenantId: thoughts[0].tenantId,
@@ -225,17 +272,56 @@ export class Promoter {
         },
       })
       .catch(() => {});
+    // PROMOTER_DESTINATIONS_AUDIT_V1
+    // PROMOTER_WRITE_RESPONSE_V1
+    for (const thoughtId of destinations.response) {
+      const thought = thoughts.find((t) => t.id === thoughtId);
+      if (!thought) continue;
+      void this.deps.kernel.deps.audit
+        .append({
+          tenantId: thought.tenantId,
+          owner: thought.owner,
+          action: "thought.promoted",
+          actor: { kind: "system", id: "promoter" },
+          payload: { thoughtId: thought.id, turnId, role: thought.role, destination: "response" },
+        })
+        .catch(() => {});
+    }
+
+    // PROMOTER_CALLSITE_AUDIT_BATCH_V1
+    // PROMOTER_WRITE_AUDIT_V1
+    for (const thoughtId of destinations.audit) {
+      const thought = thoughts.find((t) => t.id === thoughtId);
+      if (!thought) continue;
+      void this.deps.kernel.deps.audit
+        .append({
+          tenantId: thought.tenantId,
+          owner: thought.owner,
+          action: "thought.promoted",
+          actor: { kind: "system", id: "promoter" },
+          payload: { thoughtId: thought.id, turnId, role: thought.role },
+        })
+        .catch(() => {});
+    }
+
     return {
       turnId,
       tenantId: thoughts[0].tenantId,
       owner: thoughts[0].owner,
       totalThoughts: thoughts.length,
+      // PROMOTER_METRICS_COUNTERS_V1
+      // PROMOTER_METRICS_V1
       counts,
       survivors,
       discarded,
       decisions,
       destinations,
+      // PROMOTER_DECISIONS_PERSIST_V1
+      // PROMOTER_KERNEL_EMIT_DESTINATIONS_V1
+      // PROMOTER_DESTINATIONS_RESPONSE_INDEX_V1
       consolidation,
+      // PROMOTER_DESTINATIONS_COUNTS_V1
+      // PROMOTER_LOG_DECISIONS_V1
       reason: `rules.ts aplicado en orden; ${survivorsDedup.length} sobreviven (dedup) (${destinations.response.length} response, ${destinations.memory.length} memory, ${destinations.audit.length} audit), ${discarded.length} descartados`,
     };
   }

@@ -170,6 +170,7 @@ export class Store {
    * Scan de records por kind. `limit` opcional (default 1000, hard cap 50000):
    * antes no habia tope y un scan en maintain cargaba toda la tabla en memoria.
    */
+  // DB_RECORDS_SCAN_LIMIT_V1
   async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
     const effective = Math.min(Math.max(1, Math.floor(limit)), 50000);
     const result = await this.db.query(
@@ -204,6 +205,7 @@ export class Store {
    * Defensa: solo acepta prefijos sin caracteres de escape LIKE salvo el
    * propio ":". Si el prefijo contiene "%" o "_" los escapamos.
    */
+  // DB_RECORDS_SCAN_PREFIX_LIMIT_V1
   async scanByOwnerPrefix<T>(
     kind: string,
     ownerPrefix: string,
@@ -222,6 +224,7 @@ export class Store {
    * SCAN_BY_STATUS_CURSOR_V1 - variante con cursor keyset (updated_at, id).
    * Devuelve hasta `limit` filas cuya updated_at es > cursorUpdatedAt.
    */
+  // DB_RECORDS_STATUS_CURSOR_V1
   async scanByStatusWithCursor<T>(
     kind: string,
     statuses: string[],
@@ -261,6 +264,7 @@ export class Store {
    * Delete records of the given kind whose updated_at is older than `days`.
    * Returns the number of deleted rows.
    */
+  // DB_RECORDS_PURGE_RETENTION_V1
   async purgeOlderThan(kind: string, days: number): Promise<number> {
     const result = await this.db.query(
       "DELETE FROM records WHERE kind=$1 AND updated_at < now() - ($2 || ' days')::interval RETURNING id",
@@ -286,6 +290,7 @@ export class Store {
   // FIX_TX_GUARD_V1 - guard contra transaccion anidada. Antes dos BEGIN
   // seguidos reventaban Postgres con "there is already a transaction in
   // progress". Si ya estamos en transaccion, el callback corre sin BEGIN.
+  // DB_TRANSACTION_GUARD_V1
   private inTransaction = false;
   async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
     if (this.inTransaction) return fn(this);
@@ -304,6 +309,7 @@ export class Store {
     }
   }
 
+  // DB_CLAIM_SQL_V1
   async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
     const result = await this.db.query(
       `UPDATE records AS action SET data=jsonb_set(data,'\{status\}',$4::jsonb),updated_at=now()
@@ -317,6 +323,7 @@ export class Store {
     );
     return (result.rows[0]?.data as T | undefined) ?? null;
   }
+  // DB_RECOVER_INTERRUPTED_ACTIONS_V1
   async recoverInterruptedActions(): Promise<void> {
     await this.db.query(
       `UPDATE records SET data=data || '{"status":"outcome_unknown","error":"Server restarted during execution. Check the provider before creating another action."}'::jsonb WHERE kind='actions' AND data->>'status'='executing'`,
@@ -342,6 +349,7 @@ export class Store {
 }
 
 /** Idle clients can be disconnected by a database restart; without a listener pg `error` event crashes the process. */
+  // DB_CREATE_POOL_ERROR_V1
 export function createPool(connectionString: string) {
   const pool = new pg.Pool({ connectionString, max: 5 });
   pool.on("error", (error) => backgroundFailure("postgres pool", error));
@@ -370,6 +378,7 @@ export async function createStore(
   await database.query(
     "CREATE TABLE IF NOT EXISTS records(owner text NOT NULL,kind text NOT NULL,id text NOT NULL,data jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(owner,kind,id))",
   );
+  // DB_RECORDS_INDEX_PG_TENANT_V1
   // STORE_TENANT_CLEANUP_V1 - el aislamiento por tenant se hace en
   // TenantScopedStore con clave compuesta `tenantId:owner`. La columna
   // tenant_id en records queda sin uso.

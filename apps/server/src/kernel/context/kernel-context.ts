@@ -25,6 +25,7 @@ export const kernelContextSchema = z.object({
   // KERNEL_PERSONA_V1 - persona funcional que habla en este turno.
   // KERNEL_CONTEXT_PERSONA_FORMAT_V1 - formato limpio.
   personaId: z.string().min(1).max(80).optional(),
+  // KERNEL_CONTEXT_PERSONA_PROPAGATE_V1
 });
 
 export type KernelRole = z.infer<typeof kernelRoleSchema>;

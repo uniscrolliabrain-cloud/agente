@@ -28,6 +28,7 @@ export function startMetricsConsumer(owners: string[]): MetricsConsumerHandle {
 
   const handles = owners.map((owner) =>
     globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+      // EVENTS_CONSUMERS_METRICS_SKIP_KERNEL_V1
       try {
         globalMetrics.inc("openmuse_events_total", {
           type: event.type,

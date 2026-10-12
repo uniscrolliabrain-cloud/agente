@@ -100,6 +100,7 @@ export class ContextEngine {
     // goal:*) para que el LLM los vea. Tope de 10 facts por turno.
     let learningFacts: Array<{ text: string; source: string; confidence: number }> = [];
     try {
+      // CONTEXT_ENGINE_INCLUDE_LEARNING_V1
       const all = await this.db.list<{ text: string; source: string; confidence: number; timesUsed: number }>(
         owner,
         "learning-facts",

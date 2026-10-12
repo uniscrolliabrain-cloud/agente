@@ -64,6 +64,7 @@ export function whatsappRoutes(service: AgentService) {
   });
 
   // POST /api/whatsapp/webhook -> recibe de Evolution.
+  // WHATSAPP_WEBHOOK_HMAC_V1
   app.post("/webhook", async (c) => {
     const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
     const signature = c.req.header("x-hub-signature-256") ?? c.req.header("x-signature");

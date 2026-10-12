@@ -103,6 +103,7 @@ export class StateMachineEngine {
       (candidate) => candidate.from === from && candidate.to === to,
     );
     if (!transition) {
+      // STATE_MACHINE_EMIT_DENIED_AUDIT_V1
       await this.bus?.emit(owner, "state.transition_denied", { kind: "state", id: `${machine.id}:${entityId}` }, {
         entityId,
         stateMachine: machine.id,
@@ -127,6 +128,7 @@ export class StateMachineEngine {
       });
       throw new AppError(`Role ${actual} cannot execute ${from} -> ${to}`, 403);
     }
+    // STATE_MACHINE_EMIT_AUDIT_V1
     await this.bus?.emit(owner, "state.changed", { kind: "state", id: `${machine.id}:${entityId}` }, {
       entityId,
       stateMachine: machine.id,

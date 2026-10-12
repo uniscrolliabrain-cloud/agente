@@ -34,6 +34,7 @@ export interface ContradictionPair {
   tenantId: string;
 }
 
+  // CONSOLIDATE_DEDUP_DOCSTRING_V1
 export interface ConsolidationResult {
   duplicateGroups: DuplicateGroup[];
   // CONSOLIDATE_HONEST_NAME_V1 - renombrado a textualNegations porque la
@@ -106,12 +107,14 @@ function isNegationPair(a: Thought, b: Thought): string | undefined {
   return undefined;
 }
 
+  // CONSOLIDATE_PERSIST_MARKER_V1
 export function consolidate(thoughts: Thought[]): ConsolidationResult {
   // CONSOLIDATE_ACTION_V1 - ademas de detectar, el caller puede marcar.
   // El resultado expone discarded IDs para que el Promoter los procese.
   // CONSOLIDATE_TENANT_V1 - agrupar por tenant antes de todo.
   // Cierra #205: antes, dos tenants con el mismo thought se consolidaban
   // como duplicados. Ahora cada tenant tiene su propio bucket.
+  // CONSOLIDATE_TENANT_BUCKET_V1
   const byTenant = new Map<string, Thought[]>();
   for (const t of thoughts) {
     const list = byTenant.get(t.tenantId) ?? [];
@@ -165,6 +168,7 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
     }
   }
 
+  // KERNEL_CONSOLIDATE_PERSIST_V2
   return {
     duplicateGroups,
     textualNegations,

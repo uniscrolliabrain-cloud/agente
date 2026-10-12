@@ -70,11 +70,13 @@ export interface MetaDeps {
   private lastCleanupAt = 0;
 
   /** Marca un hint como consumido (el fast lo leyó). */
+  // META_HINT_TTL_V1
   consumeHint(hintId: string): void {
     this.seenHints.add(hintId);
   }
 
   /** Limpia la lista de hints si crece demasiado. */
+  // META_HINT_CONSUMED_CLEANUP_V1
   private maybeCleanup(): void {
     if (this.seenHints.size < 200) return;
     const now = Date.now();
@@ -84,6 +86,7 @@ export interface MetaDeps {
   }
 
   evaluate(input: MetaInput): MetaHint[] {
+    // META_EVALUATE_TENANT_AWARE_V1
     const hints: MetaHint[] = [];
     const nowMs = Date.parse(input.now);
     const fastActivityMs = input.lastFastActivityAt
@@ -143,6 +146,7 @@ export interface MetaDeps {
    * slow_failed_urgent cuando dos autores no coinciden.
    * Ver: auditoría profunda 09 (attentionOverlap no se usaba).
    */
+  // META_EVALUATE_ATTENTION_CONFLICT_V1
   detectAttentionConflict(thoughts: Thought[]): boolean {
     if (thoughts.length < 2) return false;
     const [first, ...rest] = thoughts;
@@ -166,6 +170,7 @@ export interface MetaDeps {
    *
    * Se usa desde el bucle de meta cuando el slow emite progreso real.
    */
+  // META_EVALUATE_PROGRESS_HINTS_V1
   evaluateWithProgress(input: {
     progress: ProgressEvent[];
     lastFastActivityAt?: string;

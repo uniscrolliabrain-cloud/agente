@@ -116,6 +116,7 @@ export class MemoryService {
 
     // R10 — si hay roleId, se prefieren memorias del rol, pero no se descartan las
     // globales (sin roleId). Si includeRoleMemories === false, se excluyen las del rol.
+    // MEMORY_RECALL_ROLE_FILTER_V1
     const byRole = (m: AgentMemory): boolean => {
       if (options.includeRoleMemories === false && m.roleId) return false;
       if (options.roleId && m.roleId && m.roleId !== options.roleId) return false;
@@ -160,6 +161,7 @@ export class MemoryService {
     const id = `mem-${hash}`;
     const existing = await this.db.get<AgentMemory>(owner, "memories", id);
     if (existing) return { memory: existing, created: false };
+    // MEMORY_REMEMBER_CATEGORY_VALIDATE_V1
     const memory: AgentMemory = {
       id,
       text: trimmed,

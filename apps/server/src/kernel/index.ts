@@ -142,5 +142,7 @@ export {
 } from "./graph/views.ts";
 
 export { cromoSchema, type Cromo } from "./cromos/cromo.ts";
+// KERNEL_INDEX_EXPORT_STATUS_V1
+export { wirePersonaBootstrap, clientsDirFrom, type PersonaBootstrapReport } from "./personas-bootstrap.ts";
 export { LOGIC_AXIOMS, checkContradiction } from "./cromos/logic/axioms.ts";
 export { fieldEnergy, isHighEnergy } from "./cromos/physics/field.ts";

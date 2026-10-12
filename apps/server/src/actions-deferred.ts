@@ -85,6 +85,7 @@ export class DeferredActions {
     return r;
   }
 
+  // DEFERRED_ACTION_CANCEL_GUARD_V1
   async cancel(owner: string, actionId: string, userId: string) {
     const r = await this.store.get(actionId);
     if (!r || r.owner !== owner) throw new Error("not found");
@@ -93,6 +94,7 @@ export class DeferredActions {
     this.emit("action.cancelled", { actionId, by: userId });
   }
 
+  // DEFERRED_ACTION_TICK_GUARD_V1
   async tick() {
     const due = await this.store.due(this.now());
     for (const r of due) {
@@ -163,6 +165,7 @@ export class StoreDeferredStore implements DeferredStore {
   }
 
   /** STORE_DEFERRED_PURGE_V1 - purga terminales antiguos. */
+  // DEFERRED_STORE_PURGE_RETENTION_V1
   async purgeOlderThan(days: number): Promise<number> {
     return this.db.purgeOlderThan("deferred-actions", days);
   }

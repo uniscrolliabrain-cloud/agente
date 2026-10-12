@@ -75,6 +75,8 @@ export class EventBus {
     options: EmitOptions = {},
   ): Promise<void> {
     try {
+      // EVENTS_BUS_EMIT_VALIDATES_TENANT_V1
+      // EVENTBUS_METRIC_ERRORS_V1
       const schema = payloadSchemas[type];
       const parsed = schema.parse(payload) as T;
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
@@ -84,6 +86,7 @@ export class EventBus {
       // distinta y rompia el LRU compartido entre procesos. Ahora pasamos
       // el owner real y la key por separado.
       if (options.dedupeKey !== undefined) {
+        // EVENTBUS_DEDUPE_METRIC_V1
         if (await this.isDuplicate(owner, options.dedupeKey)) return;
       }
       // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
@@ -93,6 +96,7 @@ export class EventBus {
       const event: SystemEvent<T> = {
         id: ulid(),
         schemaVersion: "1.0",
+        // EVENTS_BUS_TENANT_SCOPED_FALLBACK_V1
         tenantId: options.tenantId ?? owner,
         owner,
         type,
@@ -105,6 +109,7 @@ export class EventBus {
       await this.sink.write(event);
       // EVENTS_BUS_PUBLISH_V1 â€” publicar a subscribers en vivo (SSE, mÃ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
+      // EVENTBUS_PUBLISH_SUBSCRIBERS_V1
       globalSubscribers.publish(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
@@ -120,6 +125,7 @@ export class EventBus {
         const prefs = await this.db
           .get<{ disabled: string[] }>(owner, "notification-prefs", "default")
           .catch(() => null);
+        // EVENTBUS_NOTIFY_PREF_FILTER_V1
         const disabled = prefs?.disabled ?? [];
         if (!disabled.includes(type)) {
           await this.db.insertIfAbsent(owner, "notifications", {

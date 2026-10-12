@@ -88,6 +88,7 @@ export function projectRoutes(db: Store) {
     const id = c.req.param("id");
     const project = await db.get(owner, "projects", id);
     if (!project) throw new AppError("Project not found", 404);
+    // PROJECTS_USER_HEADER_VALIDATE_V1
     const userId = c.req.header("x-user-id") ?? owner;
     const result = globalPresence.touch(userId, "project", id);
     return c.json(result);

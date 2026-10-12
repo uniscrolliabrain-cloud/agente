@@ -28,6 +28,7 @@ export const progressEventSchema = z.object({
 export type ProgressKind = z.infer<typeof progressKindSchema>;
 export type ProgressEvent = z.infer<typeof progressEventSchema>;
 
+  // KERNEL_PROGRESS_VALIDATE_V1
 export function progressStep(
   step: number,
   totalSteps: number,

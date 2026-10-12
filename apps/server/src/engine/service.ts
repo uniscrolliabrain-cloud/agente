@@ -450,7 +450,8 @@ export class AgentService {
           backgroundFailure(`maintain tenant ${tenant}`, error),
         );
       }
-      // SERVICE_ALERTS_V1 - alertas por tenant.
+      // SERVICE_ALERTS_WIRE_V1
+    // SERVICE_ALERTS_V1 - alertas por tenant.
       for (const tenant of tenantsThisPass) {
         await this.checkTenantAlerts(tenant).catch((error) =>
           backgroundFailure(`alerts tenant ${tenant}`, error),
@@ -472,7 +473,11 @@ export class AgentService {
           backgroundFailure(`activate monitor ${value.id}`, error),
         );
       }
-      // MAINTAIN_PURGE_V1 - purgas escalonadas. Antes se ejecutaban las 3
+      // SERVICE_MAINTAIN_MONITORS_V1
+    // SERVICE_MAINTAIN_SOP_TRIGGERS_V1
+    // SERVICE_MAINTAIN_ALERTS_EVALUATE_V1
+    // SERVICE_MAINTAIN_PURGE_RETENTION_V1
+    // MAINTAIN_PURGE_V1 - purgas escalonadas. Antes se ejecutaban las 3
       // purgas cada minuto. Ahora rotan: una por pasada, en ciclo de 3 min.
       // El intervalo efectivo por tabla sigue siendo de 90 dias, solo cambia
       // cuantas veces por hora se comprueba.
@@ -1142,6 +1147,7 @@ export class AgentService {
     return limiter.takeForTenant(tenantId, owner, action);
   }
 
+  // SERVICE_CREATE_TASK_TENANT_COUNT_V1
   async createTask(owner: string, raw: unknown, idempotencyKey?: string, held = false) {
     const input = createTaskSchema.parse(raw);
     if (input.goalId && !(await this.db.get(owner, "goals", input.goalId)))
@@ -1235,6 +1241,7 @@ export class AgentService {
    * Escala una tarea a otro usuario del deployment. La tarea pasa a waiting_input,
    * assignedTo cambia, y la notificacion va al usuario escalado (no al owner).
    */
+  // SERVICE_ESCALATE_TOCTOU_V1
   async escalateTask(owner: string, taskId: string, toUserId: string, reason: string) {
     const task = await this.getTask(owner, taskId);
     if (terminal.has(task.status))
@@ -1296,6 +1303,8 @@ export class AgentService {
     } as AgentNotification & { assignedTo: string });
     return updated;
   }
+  // SERVICE_TASK_TRANSITION_GUARD_V1
+  // SERVICE_CONTROL_TRANSITION_V1
   async control(
     owner: string, id: string, action: "pause" | "resume" | "cancel" | "retry") {
     const task = await this.getTask(owner, id);
@@ -1404,6 +1413,7 @@ export class AgentService {
     });
     return finalTask;
   }
+  // SERVICE_ANSWER_STATE_V1
   async answer(
 
     owner: string,
@@ -1774,6 +1784,7 @@ export class AgentService {
   mailEvidence(mail: Mail): Evidence {
     return { id: mail.id, kind: "mail", title: mail.subject, excerpt: mail.body.slice(0, 400) };
   }
+  // SERVICE_ARTIFACT_TENANT_V1
   async artifact(
     owner: string,
     task: AgentTask,
@@ -2177,6 +2188,7 @@ export class AgentService {
   async learn(owner: string, task: AgentTask, facts: string[]) {
     return this.learning.learn(owner, task, facts);
   }
+  // SERVICE_FINISH_TRANSITION_GUARD_V1
   async finish(owner: string, task: AgentTask, context: TaskContext, result: string) {
     await context.guard();
     if (task.artifactIds.length === 0 && task.evidence.length === 0)

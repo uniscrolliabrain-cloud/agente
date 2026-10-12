@@ -33,6 +33,7 @@ export function buildAlertDefinitions(deps: AlertDeps): AlertDefinition[] {
       severity: "critical",
       cooldownSec: 300,
       condition: () => {
+        // ALERTS_HTTP_5XX_WIRE_V1
         const s = deps.metricsSnapshot();
         return s.httpTotal >= 20 && s.http5xx / s.httpTotal > 0.05;
       },
@@ -64,6 +65,7 @@ export function buildAlertDefinitions(deps: AlertDeps): AlertDefinition[] {
       severity: "warning",
       cooldownSec: 600,
       condition: () => {
+        // ALERTS_HTTP_P99_WIRE_V1
         // LATENCY_P99_WIRE_V1 - lee el histograma HTTP y calcula p99.
         return deps.metricsSnapshot().httpLatencyP99Ms > 2000;
       },

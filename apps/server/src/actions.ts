@@ -60,12 +60,14 @@ export class ActionService {
    * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
    */
   // ACTION_EDIT_V1 - editar propuesta antes de aprobar. Cambia el hash.
+  // ACTION_SERVICE_EDIT_HASH_V1
   async edit(
     owner: string,
     actionId: string,
     newData: Record<string, unknown>,
     expectedHash: string,
   ): Promise<ActionProposal> {
+    // ACTION_SERVICE_EDIT_ENDPOINT_MARK_V1
     const action = await this.db.get<ActionProposal>(owner, "actions", actionId);
     if (!action) throw new AppError("Action not found", 404);
     if (action.status !== "awaiting_review") {
@@ -89,6 +91,7 @@ export class ActionService {
     return updated;
   }
 
+  // ACTION_SERVICE_RETRY_GUARD_V1
   async retry(owner: string, actionId: string): Promise<ActionProposal> {
     const action = await this.db.get<ActionProposal>(owner, "actions", actionId);
     if (!action) throw new AppError("Action not found", 404);
@@ -187,6 +190,7 @@ export class ActionService {
     }
     await this.record(owner, saved, "Ready for your review");
     await this.audit(owner, saved, "proposed", `Ready for review: ${saved.title}`);
+    // ACTION_SERVICE_PROPOSE_EMIT_V1
     await this.bus?.emit(owner, "action.proposed", { kind: "action", id: saved.id }, {
       actionId: saved.id,
       title: saved.title.slice(0, 300),
@@ -202,6 +206,7 @@ export class ActionService {
     decision: "approve" | "deny",
     userId?: string,
   ): Promise<ActionProposal> {
+    // ACTION_SERVICE_DECIDE_USER_ID_V1
     const proposal = await this.db.get<ActionProposal>(owner, "actions", id);
     if (!proposal) throw new AppError("Action not found", 404);
     if (proposal.hash !== hash)

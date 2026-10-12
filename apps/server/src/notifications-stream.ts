@@ -7,6 +7,7 @@ import { backgroundFailure } from "./log.ts";
 export function notificationsStreamRoutes(service: AgentService) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
+  // NOTIFICATIONS_SSE_CONN_LIMIT_V1
   app.get("/stream", async (c) => {
     const owner = c.get("owner");
     // NOTIF_USER_FILTER_V1 Ã¢â‚¬â€ filtrar por userId para no emitir notificaciones

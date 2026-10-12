@@ -12,6 +12,7 @@ import { globalSubscribers } from "../subscriber.ts";
 import type { Store } from "../../../db.ts";
 import type { SystemEvent } from "../types.ts";
 
+  // NOTIFICATIONS_CONSUMER_EXCLUDES_KERNEL_V1
 const NOTIFY_TYPES: Record<string, (e: SystemEvent) => { title: string; body: string } | null> = {
   "action.outcome_unknown": (e) => ({
     title: "Acción con resultado incierto",
@@ -37,6 +38,7 @@ export function startNotificationsConsumer(
 ): NotificationsConsumerHandle {
   const handles = owners.map((owner) =>
     globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+      // EVENTS_CONSUMERS_NOTIFY_SKIP_KERNEL_V1
       const builder = NOTIFY_TYPES[event.type];
       if (!builder) return;
       const content = builder(event);

@@ -23,6 +23,23 @@ await db.recoverInterruptedActions();
   const enabled = await enableRls(db);
   if (enabled) console.log("[OpenMuse] RLS activo en records");
 }
+// KERNEL_STORE_TURN_PERSISTENT_V1
+if (process.env.OPENMUSE_KERNEL_STORE !== "memory") {
+  process.env.OPENMUSE_KERNEL_STORE = "store";
+}
+// KERNEL_PERSONAS_BOOTSTRAP_WIRE_V1
+{
+  try {
+    const { wirePersonaBootstrap, clientsDirFrom } = await import("./kernel/personas-bootstrap.ts");
+    const { PersonaRegistry } = await import("./engine/agents/personas/registry.ts");
+    const registry = new PersonaRegistry();
+    const tenants = ["default", "_example"];
+    const report = await wirePersonaBootstrap(registry, tenants, clientsDirFrom(config.dataDir));
+    if (report.loaded > 0) console.log(`[kernel] personas cargadas: ${report.loaded} (failed=${report.failed})`);
+  } catch (error) {
+    console.warn(`[kernel] personas bootstrap fallo: ${error instanceof Error ? error.message : error}`);
+  }
+}
 const { app, agent, bus } = await createApp(db, config);
 // INDEX_AUDIT_VERIFY_V1 - verifica el hash chain del audit al arranque.
 {
@@ -197,6 +214,76 @@ for (const def of buildAlertDefinitions({
   alerts.register(def);
 }
 alerts.start();
+
+// EVENTS_KERNEL_SUBSCRIBER_WIRE_V1
+{
+  const { startKernelEventSubscriber } = await import("./kernel/subscribers/events.ts");
+  const { globalSubscribers } = await import("./engine/events/subscriber.ts");
+  const kernelInstance = (agent as unknown as { kernel?: import("./kernel/index.ts").Kernel }).kernel;
+  if (kernelInstance) {
+    const sub = startKernelEventSubscriber(kernelInstance, globalSubscribers, ownersWithConsumers);
+    process.on("SIGTERM", () => sub.stop());
+
+    // EVENTS_CONSUMERS_WIRE_THOUGHT_V1
+    const { startKernelThoughtConsumer } = await import("./kernel/subscribers/thought-consumer.ts");
+    const { startKernelTurnConsumer } = await import("./kernel/subscribers/turn-consumer.ts");
+    const thoughtConsumer = startKernelThoughtConsumer(ownersWithConsumers, db);
+    const turnConsumer = startKernelTurnConsumer(ownersWithConsumers, db);
+    process.on("SIGTERM", () => { thoughtConsumer.stop(); turnConsumer.stop(); });
+
+    // EVENTS_KERNEL_CONSUMERS_WIRE_V2
+    const { startKernelMetricsConsumer } = await import("./kernel/subscribers/metrics-consumer.ts");
+    const { startKernelAuditConsumer } = await import("./kernel/subscribers/audit-consumer.ts");
+    const { startKernelNotificationsConsumer } = await import("./kernel/subscribers/notifications-consumer.ts");
+    const kMetrics = startKernelMetricsConsumer(ownersWithConsumers);
+    const kAudit = startKernelAuditConsumer(ownersWithConsumers, db);
+    const kNotif = startKernelNotificationsConsumer(ownersWithConsumers, db);
+    // EVENTS_CONSUMERS_WIRE_STATE_V1
+    const { startVerificationDisagreementConsumer } = await import("./engine/events/consumers/verification-disagreement.ts");
+    const { startStateChangedConsumer } = await import("./engine/events/consumers/state-changed.ts");
+    const { startStateDeniedConsumer } = await import("./engine/events/consumers/state-denied.ts");
+    const vdConsumer = startVerificationDisagreementConsumer(ownersWithConsumers, db);
+    const scConsumer = startStateChangedConsumer(ownersWithConsumers, db);
+    const sdConsumer = startStateDeniedConsumer(ownersWithConsumers, db);
+    process.on("SIGTERM", () => { vdConsumer.stop(); scConsumer.stop(); sdConsumer.stop(); });
+    // STATE_CHANGED_CONSUMER_INDEX_EXPORT_V1
+    process.on("SIGINT", () => { vdConsumer.stop(); scConsumer.stop(); sdConsumer.stop(); });
+    // KERNEL_META_HINTS_CLEANUP_WIRE_V1
+    const metaHintsCleanup = setInterval(() => {
+      void (async () => {
+        try {
+          const { MetaHintsStore } = await import("./engine/feedback/meta-hints-store.ts");
+          const store = new MetaHintsStore(db);
+          for (const tenantId of ownersWithConsumers) {
+            await store.purgeOlderThan(tenantId, 10 * 60 * 1000).catch(() => 0);
+          }
+        } catch { /* noop */ }
+      })();
+    }, 5 * 60 * 1000);
+    metaHintsCleanup.unref?.();
+
+    // RETENTION_PURGE_SCHEDULE_V1
+    const retentionPurge = setInterval(() => {
+      void (async () => {
+        try {
+          const { purgeKernelRetention } = await import("./engine/events/retention-purge.ts");
+          await purgeKernelRetention(db, {
+            "kernel-thought-index": 180,
+            "kernel-turn-index": 180,
+            "kernel-audit-index": 365,
+            "meta-hints": 30,
+          });
+        } catch { /* noop */ }
+      })();
+    }, 60 * 60 * 1000);
+    retentionPurge.unref?.();
+    process.on("SIGTERM", () => { kMetrics.stop(); kAudit.stop(); kNotif.stop(); });
+    // KERNEL_SUBSCRIBERS_GRACEFUL_SHUTDOWN_V1
+    process.on("SIGINT", () => {
+      try { kMetrics.stop(); kAudit.stop(); kNotif.stop(); } catch { /* noop */ }
+    });
+  }
+}
 const deferredTick = setInterval(() => {
   void deferred.tick().catch((error) => backgroundFailure("deferred tick", error));
 }, 1000);

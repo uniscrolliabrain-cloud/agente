@@ -89,6 +89,7 @@ export class CircuitBreaker {
     this.state = "open";
     this.openedAt = Date.now();
     // CIRCUIT_ALERT_ON_OPEN_V1 - notifica al log cuando se abre.
+    // CIRCUIT_BREAKER_LOG_OPEN_V1
     import("../log.ts")
       .then(({ logWarn }) => {
         logWarn("circuit.open", { circuit: this.name });
@@ -141,4 +142,5 @@ export class CircuitRegistry {
   }
 }
 
+  // CIRCUIT_BREAKER_PER_PROVIDER_V1
 export const globalCircuits = new CircuitRegistry();

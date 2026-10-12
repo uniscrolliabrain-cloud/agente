@@ -13,6 +13,7 @@ import type { Store } from "../../../db.ts";
 const MIN_TASKS_FOR_PRECISION = 5;
 const LEVEL_TASKS_PER_LEVEL = 20;
 
+  // PERSONAS_STATS_REFRESH_DEDUPE_V1
 function deriveLevel(totalTasks: number): number {
   if (totalTasks === 0) return 1;
   const level = Math.floor(Math.log2(totalTasks / LEVEL_TASKS_PER_LEVEL + 1) * 3 + 1);

@@ -23,6 +23,7 @@ export class EditLock {
   }
 
   /** Intenta adquirir. Devuelve null si otro ya lo tiene. */
+  // EDIT_LOCK_USER_VALIDATE_V1
   acquire(userId: string, resourceType: string, resourceId: string): Lock | null {
     this.gc();
     const k = this.key(resourceType, resourceId);

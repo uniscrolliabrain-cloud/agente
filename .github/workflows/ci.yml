@@ -22,6 +22,9 @@ jobs:
           ALLOW_NETWORK: "0"
       - name: audits
         run: |
+          pnpm audit:layers
+          pnpm audit:bridges
+          pnpm audit:console
           pnpm audit:tenant-default
           pnpm audit:idempotency
           pnpm audit:contracts

@@ -99,8 +99,10 @@ export function authRoutes(
       }
     }
 
+    // AUTH_RATE_LIMIT_TENANT_V1
     const user = await users.verifyCredentials(body.email, body.password);
     if (!user) {
+      // AUTH_LOGIN_TENANT_CONTEXT_V1
       await bus?.emit("system", "auth.login_failed", { kind: "auth", id: "login" }, {
         email: body.email.toLowerCase().trim().slice(0, 300),
       });
@@ -185,6 +187,7 @@ export function authRoutes(
   });
 
   // POST /api/auth/logout
+  // AUTH_ROUTES_LOGOUT_INVALIDATE_V1
   app.post("/logout", async (c) => {
     const auth = c.req.header("authorization");
     if (auth?.startsWith("Bearer ")) {
@@ -194,6 +197,7 @@ export function authRoutes(
   });
 
   // GET /api/auth/me -> usuario autenticado actual
+  // AUTH_ME_RATE_LIMIT_V1
   app.get("/me", async (c) => {
     const user = await users.getById(c.get("owner"));
     if (!user) throw new AppError("Usuario no encontrado", 404);

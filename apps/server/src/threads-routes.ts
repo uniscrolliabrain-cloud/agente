@@ -5,6 +5,7 @@ import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import { globalPresence } from "./engine/presence.ts";
 import { globalEditLock } from "./engine/edit-lock.ts"; // TYPE_FIX_EDIT_LOCK_IMPORT_V1
+// THREADS_EDIT_LOCK_FIX_V1
 
 interface Thread {
   id: string;
@@ -49,6 +50,7 @@ export function threadRoutes(db: Store) {
     const id = c.req.param("id");
     const thread = await db.get(owner, "threads", id);
     if (!thread) throw new AppError("Thread not found", 404);
+    // THREADS_USER_HEADER_VALIDATE_V1
     const userId = c.req.header("x-user-id") ?? owner;
     const result = globalPresence.touch(userId, "thread", id);
     return c.json(result);

@@ -34,6 +34,7 @@ export class DeadLetterQueue {
   constructor(private readonly db: Store | TenantScopedStore) {}
 
   /** Mueve una tarea al dead-letter. Idempotente: si ya está, no duplica. */
+  // DEAD_LETTER_ENQUEUE_V1
   async enqueue(task: AgentTask, error: string, owner: string): Promise<DeadLetterEntry> {
     const id = `dl-${task.id}`;
     const existing = await this.db.get<DeadLetterEntry>(owner, KIND, id);
@@ -58,6 +59,7 @@ export class DeadLetterQueue {
     return this.db.list<DeadLetterEntry>(owner, KIND, { limit });
   }
 
+  // DEAD_LETTER_RESOLVE_V1
   async resolve(owner: string, id: string, resolvedBy: string): Promise<DeadLetterEntry | null> {
     const existing = await this.db.get<DeadLetterEntry>(owner, KIND, id);
     if (!existing) return null;
@@ -76,6 +78,7 @@ export class DeadLetterQueue {
 }
 
 /** Re-encola una tarea del dead-letter. Devuelve el nuevo id de task. */
+  // DEAD_LETTER_RESET_REQUEUE_V1
 export function resetForRequeue(task: AgentTask): AgentTask {
   return {
     ...task,

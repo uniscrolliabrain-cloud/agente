@@ -36,6 +36,7 @@ export function eventsRoutes(bus: EventBus) {
   // EVENTS_STREAM_SSE_V1 Ã¢â‚¬â€ SSE en vivo de eventos del owner.
   // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE"),
   // roadmap Ã‚Â§8 ("GET /api/events/stream con SSE funcionando").
+  // EVENTS_SSE_CONN_LIMIT_V1
   app.get("/stream", async (c) => {
     const owner = c.get("owner");
     // Filtro opcional por tipo, comma-separated.

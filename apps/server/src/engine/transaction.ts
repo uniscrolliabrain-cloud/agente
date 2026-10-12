@@ -28,6 +28,7 @@ export async function withTransaction<T>(
  * Uso:
  *   const goal = await upsertIdempotent(db, owner, "goals", { id, title, ... });
  */
+  // TRANSACTION_UPSERT_IDEMPOTENT_V1
 export async function upsertIdempotent<T extends { id: string }>(
   db: Store | TenantScopedStore,
   owner: string,
@@ -57,6 +58,7 @@ export async function upsertIdempotent<T extends { id: string }>(
  *     return createTask(...);
  *   });
  */
+  // IDEMPOTENCY_RESERVE_V1
 export async function withIdempotency<T>(
   db: Store,
   owner: string,

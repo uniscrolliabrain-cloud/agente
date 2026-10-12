@@ -166,6 +166,8 @@ export interface ActionProposal {
   expiresAt: string;
   result?: string;
   error?: string;
+  // ACTION_PROPOSAL_ATTEMPTS_SCHEMA_V1
+  attempts?: number;
 }
 export interface ActivityEntry {
   id: string;

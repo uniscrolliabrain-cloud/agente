@@ -28,6 +28,7 @@ export async function loadAgentNode(
   }
 
   // PERSONAS_NODE_KERNEL_V1 - lee turns y thoughts del kernel.
+  // PERSONAS_NODE_LOAD_WIRE_V1
   let turns: import("../../../kernel/graph/turn.ts").Turn[] = [];
   let thoughts: import("../../../kernel/graph/thought.ts").Thought[] = [];
   try {

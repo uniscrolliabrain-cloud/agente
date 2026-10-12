@@ -58,6 +58,7 @@ const deepInterpolate = (value: unknown, task: AgentTask, results: Record<string
   return value;
 };
 
+  // SOP_EXECUTOR_TOOL_ALLOWLIST_V1
 export class SOPExecutor {
   constructor(
     private readonly service: AgentService,
@@ -171,6 +172,8 @@ export class SOPExecutor {
     const raw = await this.service.db.get(owner, "sops", sopId);
     if (!raw) throw new AppError(`SOP not found: ${sopId}`, 404);
     const sop = sopSchema.parse(raw);
+    // SOP_EXECUTOR_APPROVAL_RESULT_V1
+    // SOP_EXECUTOR_THOUGHT_NONFATAL_V1
     // SOP_THOUGHTS_V1 - abrir turno del SOP para que el kernel vea la ejecucion.
     const kernelTurn = await this.openSopTurn(owner, sop, task);
     // Enforcement: un usuario solo puede ejecutar SOPs asignados en su setup.sopIds.

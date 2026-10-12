@@ -18,6 +18,7 @@
 import type { Store } from "./db.ts";
 import { backgroundFailure } from "./log.ts";
 
+  // DB_RLS_ENABLED_FLAG_V1
 export async function enableRls(store: Store): Promise<boolean> {
   if (store.backend !== "postgres") {
     return false;
@@ -57,6 +58,7 @@ export async function enableRls(store: Store): Promise<boolean> {
  * Uso:
  *   await withTenantRls(store, tenantId, async () => store.list(...));
  */
+  // DB_RLS_TENANT_CTX_V1
 export async function withTenantRls<T>(
   store: Store,
   tenantId: string,

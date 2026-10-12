@@ -35,6 +35,7 @@ export class BusinessTruth {
   }
 
   // TRUTH_RESOLVER_WIRE_V1 - resuelve un campo entre varios candidatos.
+  // BUSINESS_TRUTH_RESOLVE_FIELD_WIRE_V1
   resolveField(field: string, candidates: import("../../../../../packages/domain/src/truth.ts").TruthCandidate[]) {
     return new TruthResolver().resolve(field, candidates);
   }

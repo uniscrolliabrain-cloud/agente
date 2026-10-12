@@ -225,6 +225,17 @@ export function adminRoutes(service: AgentService, users: UserService) {
     });
   });
 
+  // ADMIN_ROUTES_BUILD_APPLY_V1
+  app.post("/tenants/:tenantId/builds/:buildId/apply", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const buildId = c.req.param("buildId");
+    // ADMIN_ROUTES_USE_SERVICE_APPLY_V1
+    const result = await service.applyBuild(tenantId, buildId, owner);
+    return c.json(result);
+  });
+
   app.get("/system/status", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);

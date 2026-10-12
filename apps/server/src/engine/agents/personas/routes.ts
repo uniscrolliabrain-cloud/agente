@@ -116,6 +116,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
     return c.json({ tenantId, total: nodes.length, nodes });
   });
 
+  // PERSONAS_REFRESH_STATS_LOG_V1
   // PERSONAS_STATS_REFRESH_BUTTON_V1 - recalcula stats de todas las personas.
   app.post("/refresh-stats", async (c) => {
     const owner = c.get("owner");
@@ -155,8 +156,26 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
       requestId: `attention:${personaId}:${Date.now()}`,
       personaId,
     };
+    // PERSONAS_ATTENTION_ENDPOINT_WIRE_V1
     const attention = await deps.kernel.attentionOfPersona(ctx, personaId);
     return c.json({ personaId, tenantId, attention });
+  });
+
+  // PERSONAS_ATTENTION_PAIRS_ENDPOINT_V1
+  app.get("/:a/attention-pairs/:b", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    const a = c.req.param("a");
+    const b = c.req.param("b");
+    if (!deps.kernel) return c.json({ a, b, pairs: null, note: "kernel not wired" });
+    const ctx: import("../../../kernel/context/kernel-context.ts").KernelContext = {
+      tenantId,
+      owner,
+      role: "system",
+      requestId: `attention-pairs:${a}:${b}:${Date.now()}`,
+    };
+    const pairs = await deps.kernel.attentionPairs(ctx, a, b);
+    return c.json({ a, b, pairs });
   });
 
   // PERSONA_ROUTES_NODE_V1 - turns + thoughts de la persona.
@@ -174,6 +193,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
     return c.json(node);
   });
 
+  // PERSONAS_ACTIVITY_LIMIT_V1
   // GET /api/agent-personas/:id/activity
   app.get("/:id/activity", async (c) => {
     const owner = c.get("owner");

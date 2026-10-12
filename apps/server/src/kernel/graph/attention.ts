@@ -49,6 +49,7 @@ export function attentionOverlap(a: AttentionVector, b: AttentionVector): number
   return den > 0 ? num / den : 0;
 }
 
+  // ATTENTION_PAIRS_EXPORT_V1
 export function divergence(a: AttentionVector, b: AttentionVector): number {
   return 1 - attentionOverlap(a, b);
 }

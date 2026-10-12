@@ -1,4 +1,4 @@
-﻿// B105_APPLIED
+// B105_APPLIED
 // B105FIX_APPLIED
 // EVENTBUS_WORKER_V1
 import { randomUUID } from "node:crypto";
@@ -329,6 +329,7 @@ export class TaskWorker {
         const oldest = [...recentEvents.entries()].sort((a, b) => a[1].date - b[1].date)[0];
         if (oldest) recentEvents.delete(oldest[0]);
       }
+      // WORKER_DEDUPE_PERSIST_CAS_V1
       // WORKER_DEDUPE_PERSIST_V1 - persistir el dedupe en task.state.
       await this.db.compareAndSwap(
         owner,

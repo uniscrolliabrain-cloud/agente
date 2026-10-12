@@ -91,6 +91,7 @@ export class BusinessGraph {
       properties: input.properties ?? {},
       schemaVersion: "1.0",
       // BUSINESS_GRAPH_VERSION_V1 - primera version.
+      // BUSINESS_GRAPH_VERSION_REQUIRED_V1
       version: 1,
       provenance: {
         source: input.source,
@@ -218,6 +219,7 @@ export class BusinessGraph {
     if (!from) throw new AppError(`From entity not found: ${input.fromEntityId}`, 404);
     const to = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, input.toEntityId);
     if (!to) throw new AppError(`To entity not found: ${input.toEntityId}`, 404);
+    // BUSINESS_GRAPH_RELATION_NO_SELF_V1
     const relation = businessRelationSchema.parse({
       id,
       fromEntityId: input.fromEntityId,

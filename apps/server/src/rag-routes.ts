@@ -12,6 +12,7 @@ export function ragRoutes(rag: RagService, db: Store, files: Files) {
   // RAG_SOURCES_LIST_V1 - lista de fuentes con conteo de chunks.
   app.get("/sources", async (c) => {
     const owner = c.get("owner");
+    // RAG_SOURCES_LIST_PAGED_V1
     const all = await db.list<{ id: string; sourceId: string; sourceName: string; createdAt: string }>(
       owner,
       "rag-chunks",
@@ -31,6 +32,7 @@ export function ragRoutes(rag: RagService, db: Store, files: Files) {
     return c.json({ configured: embeddingsConfigured(), ...stats });
   });
 
+  // RAG_INGEST_RATE_LIMIT_V1
   app.post("/ingest", async (c) => {
     if (!embeddingsConfigured())
       throw new AppError("Embeddings no configurados. Falta GEMINI_API_KEY.", 503);

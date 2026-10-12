@@ -46,10 +46,12 @@ export function defaultIsRetryable(error: unknown): boolean {
 }
 
 /** Jitter completo: un valor uniforme en [0, delay]. Evita sincronización de reintentos. */
+  // RETRY_JITTER_FULL_V1
 function withFullJitter(delayMs: number): number {
   return Math.floor(Math.random() * delayMs);
 }
 
+  // RETRY_BACKOFF_CAP_V1
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   options: RetryOptions,

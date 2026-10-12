@@ -39,6 +39,7 @@ const PRIORITY: ThoughtRole[] = [
    * confidence 0.3 ganaba a un critic con 0.95.
    * Ver: auditoría profunda 09 (Presenter PRIORITY ignora confidence).
    */
+  // PRESENTER_SCORE_LOG_V1
   function score(thought: Thought): number {
     const roleIdx = PRIORITY.indexOf(thought.role);
     const roleScore = roleIdx >= 0 ? 1 / (roleIdx + 1) : 0;
@@ -47,7 +48,9 @@ const PRIORITY: ThoughtRole[] = [
       (sum, m) => sum + (m.node === thought.attention.primary ? m.weight : 0),
       0,
     );
-    return roleScore * 0.5 + confidenceScore * 0.3 + attentionScore * 0.2;
+    // PRESENTER_PRIORITY_CONFIDENCE_V1
+    const composite = roleScore * 0.5 + confidenceScore * 0.3 + attentionScore * 0.2;
+    return composite;
   }
 
   function pickByPriority(thoughts: Thought[]): { thought: Thought; reason: string } | undefined {
@@ -90,6 +93,7 @@ export class Presenter {
    *
    * Si no hay thoughts, devuelve undefined. Si no hay presentation, tambien.
    */
+  // PRESENTER_PRESENT_TURN_LOAD_THOUGHTS_V1
   async presentTurn(
     ctx: KernelContext,
     turnId: string,
@@ -154,6 +158,7 @@ export class Presenter {
   /**
    * PRESENTER_COMPOSE_V1 - compone primary + secondary.
    */
+  // PRESENTER_COMPOSE_METHOD_V1
   composeFromThoughts(turnId: string, thoughts: Thought[], max = 3): {
     primary: Presentation;
     secondary: Presentation[];

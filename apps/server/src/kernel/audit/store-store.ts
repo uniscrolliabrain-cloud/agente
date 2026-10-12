@@ -19,6 +19,7 @@ import type { AuditAppendInput, AuditStore } from "./store.ts";
 const KIND = "audit-entries";
 const DEFAULT_MAX_LIST = 10_000;
 
+  // KERNEL_AUDIT_MAX_LIST_ENV_V1
 function maxList(): number {
   const raw = process.env.KERNEL_AUDIT_MAX_LIST;
   if (!raw) return DEFAULT_MAX_LIST;
@@ -30,6 +31,7 @@ function maxList(): number {
 // en objetos anidados (payload, actor). Si el orden cambia entre append y
 // verify, el hash no coincide y la cadena "falla" sin motivo real. Aqui
 // ordenamos recursivamente las claves antes de serializar.
+  // KERNEL_AUDIT_STORE_CANONICAL_V1
 function canonicalize(value: unknown): unknown {
   if (value === null || typeof value !== "object") return value;
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -80,6 +82,7 @@ export class StoreAuditStore implements AuditStore {
    * AUDIT_VERIFY_BEFORE_APPEND_V1 — verifica el chain antes de escribir.
    * Ver: auditoría profunda 09 (verify no se llamaba nunca).
    */
+  // KERNEL_AUDIT_VERIFY_BEFORE_APPEND_WIRE_V1
   async verifyAndAppend(input: AuditAppendInput): Promise<AuditEntry> {
     const valid = await this.verify(input.tenantId).catch(() => true);
     if (!valid) {
@@ -91,9 +94,11 @@ export class StoreAuditStore implements AuditStore {
   }
 
   async append(input: AuditAppendInput): Promise<AuditEntry> {
+    // AUDIT_APPEND_KERNEL_INDEX_V1
     // AUDIT_APPEND_BACKOFF_V1 — backoff entre reintentos para evitar
     // thundering herd sobre el anchor cuando hay writes concurrentes.
     // Ver: auditoría profunda 09.
+    // KERNEL_AUDIT_APPEND_BACKOFF_V1
     const MAX_ATTEMPTS = 8;
     const backoff = (attempt: number) =>
       new Promise<void>((resolve) =>
@@ -126,6 +131,7 @@ export class StoreAuditStore implements AuditStore {
         timestamp,
       });
       // Anchor con id fijo. Guarda el hash actual de la cadena.
+      // KERNEL_AUDIT_ANCHOR_ID_V1
       const anchorId = "__audit_anchor__";
       const anchor = await this.db
         .get<{ hash: string }>(input.tenantId, KIND, anchorId)
@@ -168,6 +174,7 @@ export class StoreAuditStore implements AuditStore {
   // AUDIT_LASTHASH_ANCHOR_FIX_V1 - tras el fix del append, existe una entrada
   // con id "__audit_anchor__" que guarda el hash actual de la cadena. Se lee
   // primero. Si no existe (cadena pre-fix), cae a la ultima entrada real.
+  // KERNEL_AUDIT_APPEND_LASTHASH_ANCHOR_V1
   async lastHash(tenantId: string): Promise<string | undefined> {
     const anchor = await this.db
       .get<{ hash: string }>(tenantId, KIND, "__audit_anchor__")
@@ -180,6 +187,12 @@ export class StoreAuditStore implements AuditStore {
   // AUDIT_LIST_EXCLUDE_ANCHOR_FIX_V1 - tras introducir el anchor con id
   // "__audit_anchor__", el list debe excluirlo porque no es una entrada real
   // (es el puntero al hash actual). Filtramos en memoria; el anchor es 1 fila.
+  // KERNEL_AUDIT_QUERY_BY_ACTION_V1
+  async listByAction(tenantId: string, action: string, limit: number): Promise<AuditEntry[]> {
+    const all = await this.list(tenantId, Math.min(limit * 10, 10000));
+    return all.filter((e) => e.action === action).slice(-limit);
+  }
+
   async list(tenantId: string, limit: number): Promise<AuditEntry[]> {
     const capped = Math.min(Math.max(1, limit), maxList());
     // Pedimos capped + 1 por si el anchor entra en la pagina.
@@ -188,6 +201,7 @@ export class StoreAuditStore implements AuditStore {
       .map((row) => row.data)
       .filter((entry) => entry.id !== "__audit_anchor__")
       .slice(0, capped);
+    // KERNEL_AUDIT_LIST_EXCLUDE_ANCHOR_V1
     // listPaged ordena por updated_at DESC, id DESC. El audit trail quiere
     // orden ascendente para verificar la cadena, asi que invertimos.
     return entries.reverse();
@@ -197,11 +211,13 @@ export class StoreAuditStore implements AuditStore {
   // por defecto) y devolvia true aunque no hubiera verificado las entradas
   // antiguas. Ahora devuelve false si el list llego al tope, porque no puede
   // garantizar que la cadena entera este intacta.
+  // KERNEL_AUDIT_VERIFY_INCOMPLETE_V1
   async verify(tenantId: string): Promise<boolean> {
     // FIX_AUDIT_VERIFY_PAGINATED_V1 - antes topaba a maxList() y devolvia
     // false al pasar 10.000 entradas aunque la cadena estuviera intacta.
     // Ahora pagina por keyset (updated_at, id) en bloques de 1000 y verifica
     // la cadena entera.
+    // KERNEL_AUDIT_VERIFY_CURSOR_V1
     const PAGE = 1000;
     let cursorUpdatedAt: string | undefined;
     let cursorId: string | undefined;

@@ -8,11 +8,13 @@ import type { Handoff } from "../../../../../packages/domain/src/messaging.ts";
 export class HandoffService {
   constructor(private readonly db: Store | TenantScopedStore) {}
 
+  // HANDOFF_CREATE_V1
   async create(handoff: Handoff): Promise<Handoff> {
     await this.db.put(handoff.tenantId, "handoffs", handoff);
     return handoff;
   }
 
+  // HANDOFF_ACCEPT_V1
   async accept(tenantId: string, handoffId: string): Promise<Handoff | null> {
     const existing = await this.db.get<Handoff>(tenantId, "handoffs", handoffId);
     if (!existing) return null;

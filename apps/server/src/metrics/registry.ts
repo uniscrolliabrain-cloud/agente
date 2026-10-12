@@ -64,6 +64,7 @@ export class MetricsRegistry {
   }
 
   // HISTOGRAM_QUANTILE_V1 - calcula un cuantil (0..1) sobre el histograma.
+  // METRICS_QUANTILE_P99_V1
   quantile(name: string, q: number): number | undefined {
     const h = this.histograms.get(name);
     if (!h || h.samples.size === 0) return undefined;
@@ -143,6 +144,7 @@ export class MetricsRegistry {
       }
     }
     // HISTOGRAM_RENDER_V1 - serializa histogramas en formato Prometheus.
+    // METRICS_RENDER_HISTOGRAM_V1
     for (const h of this.histograms.values()) {
       lines.push(`# HELP ${h.name} ${h.help}`);
       lines.push(`# TYPE ${h.name} histogram`);
