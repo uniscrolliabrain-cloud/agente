@@ -1,13 +1,13 @@
-// DEAD_LETTER_V1 — cola de tareas que han fallado persistentemente.
+// DEAD_LETTER_V1 â€” cola de tareas que han fallado persistentemente.
 //
 // Cuando una tarea agota sus reintentos (o falla con un error determinista
-// grave), va aquí. Operador humano puede:
+// grave), va aquÃ­. Operador humano puede:
 //   - re-encolarla manualmente (con reset de attempts)
 //   - ver el error original
 //   - borrarla
 //
 // Ver: docs/audits/03-resiliencia/miniaudit.md ("Sin dead letter queue"),
-// docs/audits/03-resiliencia/roadmap.md §8.
+// docs/audits/03-resiliencia/roadmap.md Â§8.
 
 import { randomUUID } from "node:crypto";
 import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
@@ -33,7 +33,7 @@ export interface DeadLetterEntry {
 export class DeadLetterQueue {
   constructor(private readonly db: Store | TenantScopedStore) {}
 
-  /** Mueve una tarea al dead-letter. Idempotente: si ya está, no duplica. */
+  /** Mueve una tarea al dead-letter. Idempotente: si ya estÃ¡, no duplica. */
   // DEAD_LETTER_ENQUEUE_V1
   async enqueue(task: AgentTask, error: string, owner: string): Promise<DeadLetterEntry> {
     const id = `dl-${task.id}`;
@@ -80,6 +80,7 @@ export class DeadLetterQueue {
 /** Re-encola una tarea del dead-letter. Devuelve el nuevo id de task. */
   // DEAD_LETTER_RESET_REQUEUE_V1
 export function resetForRequeue(task: AgentTask): AgentTask {
+  // DEAD_LETTER_REQUEUE_CLEAN_V1 - limpia actionId tambien, no solo lease.
   return {
     ...task,
     id: randomUUID(),
@@ -88,6 +89,7 @@ export function resetForRequeue(task: AgentTask): AgentTask {
     error: null,
     leaseId: null,
     leaseUntil: null,
+    actionId: null,
     updatedAt: new Date().toISOString(),
   };
 }

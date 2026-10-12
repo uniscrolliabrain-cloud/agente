@@ -26,7 +26,8 @@ export function ulid(now: number = Date.now()): string {
 }
 // EVENTS_TIMESTAMP_OF_V1 - extrae ms del ULID.
 export function timestampOf(id: string): number {
-  if (typeof id !== "string" || id.length < 10) return 0;
+  // EVENTS_ULID_TIMESTAMP_VALIDATE_V1 - valida tamano maximo tambien.
+  if (typeof id !== "string" || id.length < 10 || id.length > 26) return 0;
   const time = id.slice(0, 10);
   let ts = 0;
   for (const c of time) {

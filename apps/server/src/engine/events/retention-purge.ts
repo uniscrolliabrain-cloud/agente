@@ -12,6 +12,9 @@ const KERNEL_KINDS = [
   "kernel-turn-index",
   "kernel-audit-index",
   "meta-hints",
+  // RETENTION_PURGE_KINDS_V1 - anadidos: dead letter y audit entries.
+  "dead-letter",
+  "audit-entries",
 ];
 
 export async function purgeKernelRetention(

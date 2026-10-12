@@ -1,5 +1,5 @@
 // PROMOTER_DESTINATIONS_REAL_V2 - response, memory, business-graph, audit, discard.
-// KERNEL_PROMOTE_V2 — promocion determinista con reglas explicitas.
+// KERNEL_PROMOTE_V2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â promocion determinista con reglas explicitas.
 //
 // Cambios respecto a V1:
 //   - Las reglas viven en rules.ts, no en un Set suelto.
@@ -13,7 +13,8 @@
 import type { KernelContext } from "../context/kernel-context.ts";
 import type { Thought } from "./thought.ts";
 import type { Kernel } from "../kernel.ts";
-import { classify } from "./rules.ts";
+import { classifyWithTenant } from "./rules.ts";
+// PROMOTE_USE_CLASSIFY_WITH_TENANT_DONE_V1
 import { consolidate, type ConsolidationResult } from "./consolidate.ts";
 
 export interface PromotionDeps {
@@ -165,10 +166,10 @@ export class Promoter {
     };
     for (const thought of thoughts) {
       counts[thought.role] += 1;
-      // PROMOTE_ATTENTION_V1 — classify ahora considera isFocusedOn.
+      // PROMOTE_ATTENTION_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â classify ahora considera isFocusedOn.
       // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
       // RULES_TENANT_GUARD_WIRE_V1
-      const outcome = classify(thought);
+      const outcome = classifyWithTenant(thought, ctx.tenantId);
       const destination: PromotionDestination =
         outcome && outcome.survives ? classifyDestination(thought.role) : "discard";
       if (outcome) {
@@ -197,9 +198,9 @@ export class Promoter {
         discarded.push(thought.id);
       }
     }
-    // PROMOTER_DEDUPE_V1 — deduplica survivors por contenido normalizado
+    // PROMOTER_DEDUPE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â deduplica survivors por contenido normalizado
     // antes de decidir destinos, para no escribir 500 veces lo mismo.
-    // Ver: auditoría profunda 09 (Promoter no distingue turnos cortos/largos).
+    // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (Promoter no distingue turnos cortos/largos).
     const contentSeen = new Map<string, string>();
     const survivorsDedup: string[] = [];
     for (const id of survivors) {
@@ -214,9 +215,9 @@ export class Promoter {
       contentSeen.set(key, id);
       survivorsDedup.push(id);
     }
-    // CONSOLIDATE_PERSIST_V1 — persiste el resultado para no recalcular.
-    // Ver: auditoría profunda 09.
-    const consolidation = consolidate(thoughts);
+    // CONSOLIDATE_PERSIST_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â persiste el resultado para no recalcular.
+    // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09.
+    const consolidation = consolidate(thoughts.filter((t) => t.tenantId === ctx.tenantId));
 
     // PROMOTER_CALLSITE_GRAPH_BATCH_V1
     // PROMOTER_WRITE_GRAPH_V1

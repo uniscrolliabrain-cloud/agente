@@ -123,8 +123,9 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
         displayName: z.string().max(200).optional(),
       })
       .parse(await c.req.json());
+    // TENANT_MEMBERSHIP_ID_UNIFIED_V1 - id="default", tenantId=real.
     await service.db.put("system", "tenant-membership", {
-      id: body.tenantId,
+      id: "default",
       tenantId: body.tenantId,
       displayName: body.displayName ?? body.tenantId,
       createdAt: new Date().toISOString(),

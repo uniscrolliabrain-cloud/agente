@@ -49,3 +49,16 @@
 - [B14] WORKER_TENANT_CURSOR_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
 - [B14] SOP_EXECUTOR_WHEN_TEMPLATE_V1 — apps/server/src/engine/sop-executor.ts — anchor no encontrado
 - [B18] ALERTS_RESILIENCE_FIELDS_V1 — apps/server/src/alerts/definitions.ts — anchor no encontrado
+- [AUDIT_LIST_CURSOR_V1] apps/server/src/kernel/audit/store-store.ts - anchor no encontrado (2026-10-12 16:48)
+- MISS PROMOTE_USE_CLASSIFY_WITH_TENANT_V1 :: apps/server/src/kernel/graph/promote.ts :: anchor no encontrado
+- MISS PROMOTE_TENANT_ARG_V1 :: apps/server/src/kernel/graph/promote.ts :: anchor no encontrado
+- MISS META_READ_PROGRESS_FROM_ATTENTION_V1 :: apps/server/src/kernel/observers/meta.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_CTX_FOR_ASYNC_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_TURNS_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_TURN_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_PRESENT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_BY_PERSONA_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_AUDIT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_VERIFY_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_SNAPSHOT_EXPORT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS APP_KERNEL_ROUTES_PASS_TENANT_V1 :: apps/server/src/app.ts :: anchor no encontrado

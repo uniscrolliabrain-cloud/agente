@@ -13,7 +13,18 @@ const KERNEL_THOUGHT_TYPES = new Set([
 ]);
 
   // KERNEL_THOUGHT_INDEX_RETENTION_V1
-  // KERNEL_THOUGHT_INDEX_LRU_V1
+  // KERNEL_THOUGHT_INDEX_LRU_V1 - LRU real en memoria por tenant, 500 entradas.
+const THOUGHT_LRU_MAX = 500;
+const thoughtLru = new Map<string, true>();
+function thoughtLruTouch(key: string): boolean {
+  if (thoughtLru.has(key)) return false;
+  thoughtLru.set(key, true);
+  if (thoughtLru.size > THOUGHT_LRU_MAX) {
+    const first = thoughtLru.keys().next().value;
+    if (first !== undefined) thoughtLru.delete(first);
+  }
+  return true;
+}
 export function startKernelThoughtConsumer(
   owners: string[],
   db: Store,
@@ -24,7 +35,8 @@ export function startKernelThoughtConsumer(
       const p = event.payload as Record<string, unknown>;
       const thoughtId = typeof p.thoughtId === "string" ? p.thoughtId : "";
       if (!thoughtId) return;
-      // KERNEL_THOUGHT_INDEX_DEDUPE_V1
+      // KERNEL_THOUGHT_INDEX_DEDUPE_V1 + LRU.
+      if (!thoughtLruTouch(`${event.tenantId}:${thoughtId}`)) return;
       // db.put ya es idempotente por (tenantId, kind, id)
       // KERNEL_THOUGHT_INDEX_TENANT_FILTER_V1
       void db

@@ -1,4 +1,4 @@
-// KERNEL_META_V1 — metaconsciencia como policy engine.
+// KERNEL_META_V1 â€” metaconsciencia como policy engine.
 //
 // No es metafora: es un conjunto de reglas explicitas que deciden si el
 // fast debe saber algo del slow, y cuando. Sin esto, el fast o ignora al
@@ -50,9 +50,9 @@ export interface MetaDeps {
   longNoOutputMs?: number;
 }
 
-// META_HINT_CONSUMED_V1 — el Meta recuerda qué hints ya emitió para no
-  // repetirlos. Antes, un ready de hace 5 min se re-emitía cada minuto.
-  // Ver: auditoría profunda 09 (Meta no distingue slow terminó / nadie lo leyó).
+// META_HINT_CONSUMED_V1 â€” el Meta recuerda quÃ© hints ya emitiÃ³ para no
+  // repetirlos. Antes, un ready de hace 5 min se re-emitÃ­a cada minuto.
+  // Ver: auditorÃ­a profunda 09 (Meta no distingue slow terminÃ³ / nadie lo leyÃ³).
   export interface MetaHintState {
     seenHints: Set<string>;
     lastCleanupAt: number;
@@ -65,11 +65,11 @@ export interface MetaDeps {
     this.longNoOutputMs = deps.longNoOutputMs ?? 30_000;
   }
 
-  // META_HINT_CONSUMED_V1 — estado de hints ya emitidos.
+  // META_HINT_CONSUMED_V1 â€” estado de hints ya emitidos.
   private readonly seenHints = new Set<string>();
   private lastCleanupAt = 0;
 
-  /** Marca un hint como consumido (el fast lo leyó). */
+  /** Marca un hint como consumido (el fast lo leyÃ³). */
   // META_HINT_TTL_V1
   consumeHint(hintId: string): void {
     this.seenHints.add(hintId);
@@ -141,10 +141,10 @@ export interface MetaDeps {
   }
 
   /**
-   * ATTENTION_OVERLAP_META_V1 — detecta si dos thoughts del mismo turno
-   * están en conflicto (atención divergente). Útil para el hint
+   * ATTENTION_OVERLAP_META_V1 â€” detecta si dos thoughts del mismo turno
+   * estÃ¡n en conflicto (atenciÃ³n divergente). Ãštil para el hint
    * slow_failed_urgent cuando dos autores no coinciden.
-   * Ver: auditoría profunda 09 (attentionOverlap no se usaba).
+   * Ver: auditorÃ­a profunda 09 (attentionOverlap no se usaba).
    */
   // META_EVALUATE_ATTENTION_CONFLICT_V1
   detectAttentionConflict(thoughts: Thought[]): boolean {
@@ -156,8 +156,17 @@ export interface MetaDeps {
     return false;
   }
 
+  // META_EXTRACT_PROGRESS_V2
   private extractProgress(thought: Thought): ProgressEvent | undefined {
-    const raw = (thought as unknown as { progress?: unknown }).progress;
+    // META_EXTRACT_PROGRESS_FIX_V1 - el progress real vive en
+    // thought.attention.metadata.progress (asi lo escribe slow-author.ts).
+    const fromAttention = (thought.attention?.metadata as { progress?: unknown } | undefined)?.progress;
+    if (fromAttention && typeof fromAttention === "object") {
+      return fromAttention as ProgressEvent;
+    }
+    // META_READ_PROGRESS_FROM_ATTENTION_V1
+    const raw = (thought as unknown as { attention?: { metadata?: { progress?: unknown } } })
+      .attention?.metadata?.progress;
     if (!raw || typeof raw !== "object") return undefined;
     return raw as ProgressEvent;
   }

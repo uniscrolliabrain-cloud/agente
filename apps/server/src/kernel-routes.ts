@@ -14,14 +14,21 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Kernel } from "./kernel/index.ts";
 import { kernelContextSchema } from "./kernel/index.ts";
+// KERNEL_ROUTES_CTX_TYPES_V1
 import { AppError } from "./errors.ts";
 import { UserService } from "./users.ts";
+import type { TenantService } from "./engine/tenant.ts";
 
 const limitSchema = z.coerce.number().int().min(1).max(200).optional();
 
-export function kernelRoutes(kernel: Kernel, userService?: UserService) {
+export function kernelRoutes(
+  kernel: Kernel,
+  userService?: UserService,
+  tenantService?: TenantService,
+) {
+  // KERNEL_ROUTES_TENANT_SERVICE_V1 - resuelve tenant real en vez de hardcodear.
   const app = new Hono<{ Variables: { owner: string } }>();
-  // KERNEL_ROUTES_ADMIN_V1 — valida admin antes de exponer el kernel.
+  // KERNEL_ROUTES_ADMIN_V1 â€” valida admin antes de exponer el kernel.
   // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
   const requireAdmin = async (owner: string) => {
     if (!userService) return; // Retrocompatible si no se inyecta.
@@ -32,20 +39,25 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   };
 
   /** Helper: construye el KernelContext del owner autenticado. */
-  const ctxFor = (owner: string, requestId: string) =>
-    kernelContextSchema.parse({
-      tenantId: "default",
+  // KERNEL_ROUTES_CTX_TENANT_FIX_V1 - resuelve el tenant real.
+  const ctxFor = async (owner: string, requestId: string) => {
+    const tenantId = await (kernel as unknown as {
+      deps: { tenants: { resolve: (o: string) => Promise<string> } };
+    }).deps.tenants.resolve(owner);
+    return kernelContextSchema.parse({
+      tenantId,
       owner,
       role: "admin",
       requestId,
     });
+  };
 
   // GET /api/kernel/turns?limit=50
   app.get("/turns", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
-    const ctx = ctxFor(owner, `kernel-routes:turns:${Date.now()}`);
+    const ctx = await ctxFor(owner, `kernel-routes:turns:${Date.now()}`);
     try {
       const turns = await kernel.listTurns(ctx, limit);
       return c.json({
@@ -74,7 +86,7 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   app.get("/turns/:turnId", async (c) => {
     const owner = c.get("owner");
     const turnId = c.req.param("turnId");
-    const ctx = ctxFor(owner, `kernel-routes:turn:${turnId}`);
+    const ctx = await ctxFor(owner, `kernel-routes:turn:${turnId}`);
     try {
       const thoughts = await kernel.thoughtsOf(ctx, turnId);
       return c.json({
@@ -104,7 +116,7 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   app.get("/turns/:turnId/present", async (c) => {
     const owner = c.get("owner");
     const turnId = c.req.param("turnId");
-    const ctx = ctxFor(owner, `kernel-routes:present:${turnId}`);
+    const ctx = await ctxFor(owner, `kernel-routes:present:${turnId}`);
     try {
       const { Presenter } = await import("./kernel/index.ts");
       const presenter = new Presenter({ kernel });
@@ -331,7 +343,7 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
     await requireAdmin(owner);
     const personaId = c.req.param("personaId");
     const limit = limitSchema.parse(c.req.query("limit")) ?? 50;
-    const ctx = ctxFor(owner, `kernel-routes:by-persona:${personaId}:${Date.now()}`);
+    const ctx = await ctxFor(owner, `kernel-routes:by-persona:${personaId}:${Date.now()}`);
     const all = await kernel.listTurns(ctx, limit * 4).catch(() => []);
     const filtered = all.filter((t) => t.personaId === personaId).slice(0, limit);
     return c.json({ personaId, total: filtered.length, turns: filtered });
@@ -341,7 +353,7 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   app.get("/audit", async (c) => {
     const owner = c.get("owner");
     const limit = limitSchema.parse(c.req.query("limit")) ?? 100;
-    const ctx = ctxFor(owner, `kernel-routes:audit:${Date.now()}`);
+    const ctx = await ctxFor(owner, `kernel-routes:audit:${Date.now()}`);
     try {
       const deps = (kernel as unknown as {
         deps: {
@@ -365,7 +377,7 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   app.get("/snapshot/export", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);
-    const ctx = ctxFor(owner, `kernel-routes:snapshot-export:${Date.now()}`);
+    const ctx = await ctxFor(owner, `kernel-routes:snapshot-export:${Date.now()}`);
     try {
       const { exportKernelSnapshot } = await import("./kernel/snapshot.ts");
       const tenantId = await (kernel as unknown as { deps: { tenants: { resolve: (o: string) => Promise<string> } } }).deps.tenants.resolve(owner);
@@ -391,7 +403,7 @@ export function kernelRoutes(kernel: Kernel, userService?: UserService) {
   // GET /api/kernel/audit/verify
   app.get("/audit/verify", async (c) => {
     const owner = c.get("owner");
-    const ctx = ctxFor(owner, `kernel-routes:verify:${Date.now()}`);
+    const ctx = await ctxFor(owner, `kernel-routes:verify:${Date.now()}`);
     try {
       const deps = (kernel as unknown as {
         deps: {

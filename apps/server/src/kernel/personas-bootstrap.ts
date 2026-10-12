@@ -19,6 +19,13 @@ export async function wirePersonaBootstrap(
   const loaded = reports.reduce((n, r) => n + r.loaded, 0);
   const failed = reports.reduce((n, r) => n + r.failed, 0);
   const errors = reports.flatMap((r) => r.errors);
+  // PERSONAS_BOOTSTRAP_WARN_EMPTY_V1 - fail-loud por tenant si loaded === 0.
+  if (loaded === 0) {
+    console.warn(
+      `[kernel/personas] 0 personas cargadas para tenants=${tenants.join(",")} ` +
+        `(failed=${failed}, errors=${errors.length}). Revisa clientes/<tenant>/personas/*.json`,
+    );
+  }
   return { tenants, loaded, failed, errors };
 }
 

@@ -53,7 +53,7 @@ export class KernelBusEmitter {
       logInfo("kernel.bus.emitting", { thoughtId: thought.id, role: thought.role });
       void this.bus
         .emit(
-          thought.owner,
+          thought.owner, // KERNEL_BUS_EMITTER_OWNER_V1 - owner canonico del thought, no del turno
           type as never,
           { kind: "system", id: thought.id },
           {

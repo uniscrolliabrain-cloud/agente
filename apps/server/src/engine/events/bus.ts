@@ -107,7 +107,7 @@ export class EventBus {
         payload: parsed,
       };
       await this.sink.write(event);
-      // EVENTS_BUS_PUBLISH_V1 â€” publicar a subscribers en vivo (SSE, mÃ©tricas).
+      // EVENTS_BUS_PUBLISH_V1 Ã¢â‚¬â€ publicar a subscribers en vivo (SSE, mÃƒÂ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
       // EVENTBUS_PUBLISH_SUBSCRIBERS_V1
       globalSubscribers.publish(event);
@@ -159,9 +159,15 @@ export class EventBus {
     return this.db.purgeOlderThan(KIND, days);
   }
 
+  // EVENTBUS_DEDUPE_CACHE_V1 - cache negativa en memoria, TTL corto.
+  private readonly negativeCache = new Map<string, number>();
+
   private async isDuplicate(owner: string, key: string): Promise<boolean> {
     const now = Date.now();
-    // DEDUPE_DB_FIRST â€” consultamos la DB ANTES que el Map en memoria para que
+    const negKey = `${owner}:${key}`;
+    const negAt = this.negativeCache.get(negKey);
+    if (negAt && now - negAt < 5000) return false;
+    // DEDUPE_DB_FIRST Ã¢â‚¬â€ consultamos la DB ANTES que el Map en memoria para que
     // multiples procesos compartan el dedupe. El Map es solo cache de lectura.
     const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
     if (state) {

@@ -1,0 +1,496 @@
+﻿===== A. kernel-routes.ts: ctxFor =====
+
+    /** Helper: construye el KernelContext del 
+owner autenticado. */
+    // KERNEL_ROUTES_CTX_TENANT_FIX_V1 - 
+resuelve el tenant real.
+>   const ctxFor = async (owner: string, 
+requestId: string) => {
+      const tenantId = await (kernel as unknown 
+as {
+        deps: { tenants: { resolve: (o: string) 
+=> Promise<string> } };
+      }).deps.tenants.resolve(owner);
+      return kernelContextSchema.parse({
+        tenantId,
+        owner,
+        role: "admin",
+        requestId,
+      });
+    };
+  
+    // GET /api/kernel/turns?limit=50
+      await requireAdmin(owner);
+      const limit = 
+limitSchema.parse(c.req.query("limit")) ?? 50;
+>     const ctx = await ctxFor(owner, 
+`kernel-routes:turns:${Date.now()}`);
+      try {
+        const turns = await 
+kernel.listTurns(ctx, limit);
+        return c.json({
+          turns: turns.map((turn) => ({
+            id: turn.id,
+            status: turn.status,
+            startedAt: turn.startedAt,
+            closedAt: turn.closedAt,
+            closeReason: turn.closeReason,
+            closedBy: turn.closedBy,
+            parentTurnId: turn.parentTurnId,
+            childTurnIds: turn.childTurnIds,
+      const owner = c.get("owner");
+      const turnId = c.req.param("turnId");
+>     const ctx = await ctxFor(owner, 
+`kernel-routes:turn:${turnId}`);
+      try {
+        const thoughts = await 
+kernel.thoughtsOf(ctx, turnId);
+        return c.json({
+          turnId,
+          total: thoughts.length,
+          thoughts: thoughts.map((t) => ({
+            id: t.id,
+            role: t.role,
+            actor: t.actor,
+            contentPreview:
+              typeof t.content === "string"
+                ? t.content.slice(0, 500)
+      const owner = c.get("owner");
+      const turnId = c.req.param("turnId");
+>     const ctx = await ctxFor(owner, 
+`kernel-routes:present:${turnId}`);
+      try {
+        const { Presenter } = await 
+import("./kernel/index.ts");
+        const presenter = new Presenter({ 
+kernel });
+        const result = await 
+presenter.presentTurn(ctx, turnId);
+        if (!result) return c.json({ turnId, 
+present: null });
+        return c.json({
+          turnId,
+          totalThoughts: result.totalThoughts,
+          turnClosedAt: result.turnClosedAt ?? 
+null,
+          closeReason: result.closeReason ?? 
+null,
+          presentation: {
+            thoughtId: 
+result.presentation.thoughtId,
+      const personaId = 
+c.req.param("personaId");
+      const limit = 
+limitSchema.parse(c.req.query("limit")) ?? 50;
+>     const ctx = await ctxFor(owner, `kernel-ro
+utes:by-persona:${personaId}:${Date.now()}`);
+      const all = await kernel.listTurns(ctx, 
+limit * 4).catch(() => []);
+      const filtered = all.filter((t) => 
+t.personaId === personaId).slice(0, limit);
+      return c.json({ personaId, total: 
+filtered.length, turns: filtered });
+    });
+  
+    // GET /api/kernel/audit?limit=100
+    app.get("/audit", async (c) => {
+      const owner = c.get("owner");
+      const limit = 
+limitSchema.parse(c.req.query("limit")) ?? 100;
+>     const ctx = await ctxFor(owner, 
+`kernel-routes:audit:${Date.now()}`);
+      try {
+        const deps = (kernel as unknown as {
+          deps: {
+            audit: { list: (tenantId: string, 
+limit: number) => Promise<unknown[]> };
+            tenants: { resolve: (owner: string) 
+=> Promise<string> };
+          };
+        }).deps;
+        const tenantId = await 
+deps.tenants.resolve(owner);
+        const entries = await 
+deps.audit.list(tenantId, limit);
+        return c.json({ tenantId, entries });
+      } catch (error) {
+        throw new AppError(
+      const owner = c.get("owner");
+      await requireAdmin(owner);
+>     const ctx = await ctxFor(owner, 
+`kernel-routes:snapshot-export:${Date.now()}`);
+      try {
+        const { exportKernelSnapshot } = await 
+import("./kernel/snapshot.ts");
+        const tenantId = await (kernel as 
+unknown as { deps: { tenants: { resolve: (o: 
+string) => Promise<string> } } 
+}).deps.tenants.resolve(owner);
+        const snap = await 
+exportKernelSnapshot(kernel, tenantId);
+        return c.json(snap);
+      } catch (error) {
+        throw new AppError(error instanceof 
+Error ? error.message : "snapshot export 
+failed", 500);
+      }
+    });
+    // POST /api/kernel/snapshot/import
+    app.post("/snapshot/import", async (c) => {
+      const owner = c.get("owner");
+    app.get("/audit/verify", async (c) => {
+      const owner = c.get("owner");
+>     const ctx = await ctxFor(owner, 
+`kernel-routes:verify:${Date.now()}`);
+      try {
+        const deps = (kernel as unknown as {
+          deps: {
+            audit: { verify: (tenantId: string) 
+=> Promise<boolean> };
+            tenants: { resolve: (owner: string) 
+=> Promise<string> };
+          };
+        }).deps;
+        const tenantId = await 
+deps.tenants.resolve(owner);
+        const valid = await 
+deps.audit.verify(tenantId);
+        return c.json({ tenantId, valid });
+      } catch (error) {
+        throw new AppError(
+
+
+
+===== B. kernel-routes.ts: firma =====
+
+> export function kernelRoutes(
+    kernel: Kernel,
+    userService?: UserService,
+    tenantService?: TenantService,
+  ) {
+    // KERNEL_ROUTES_TENANT_SERVICE_V1 - 
+resuelve tenant real en vez de hardcodear.
+    const app = new Hono<{ Variables: { owner: 
+string } }>();
+    // KERNEL_ROUTES_ADMIN_V1 Ã¢â‚¬â€ valida 
+admin antes de exponer el kernel.
+    // Ver: 
+docs/audits/09-kernel-cognitivo/miniaudit.md.
+
+
+
+===== C. app.ts: kernelRoutes =====
+
+    }
+    // KERNEL_ROUTES_WIRE_V1 - endpoints de 
+debug del kernel.
+    {
+>     const { kernelRoutes } = await 
+import("./kernel-routes.ts");
+      // KERNEL_ROUTES_ADMIN_WIRE_V1 
+ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ
+¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ
+’Ã†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ã
+ƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚
+¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ã
+ƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â
+¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã
+‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ã
+ƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â pasa UserService para 
+validaciÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â
+ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â
+¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚
+¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ
+¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n admin.
+      // Ver: 
+docs/audits/09-kernel-cognitivo/miniaudit.md.
+>     app.route("/api/kernel", 
+kernelRoutes(kernel, users, tenantService));
+    }
+    // APP_VIEWS_WIRE_V1 - endpoint publico de 
+resolucion de vistas. Antes solo
+    // estaba bajo /api/admin/views/resolve 
+(requireAdmin) y el frontend llamaba
+
+
+
+===== D. app.ts: imports de routes =====
+
+import { randomUUID, timingSafeEqual } from 
+"node:crypto";
+import { getConnInfo } from 
+"@hono/node-server/conninfo";
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { MessageSchema } from "@ag-ui/core";
+import { serveStatic } from 
+"@hono/node-server/serve-static";
+import { Hono, type Context } from "hono";
+import { bodyLimit } from "hono/body-limit";
+import { cors } from "hono/cors";
+import { z } from "zod";
+import { emailDraftSchema, proposalSchema } 
+from "../../../packages/domain/src/index.ts";
+import { ActionService } from "./actions.ts";
+import { agentConfigured, makeRuntime } from 
+"./agent.ts";
+import { createAuth } from "./auth.ts";
+import { TenantScopedStore } from 
+"./db-tenant.ts";
+import { BrowserService } from "./browser.ts";
+import { ComputerService, type DockerRunner } 
+from "./computer.ts";
+import { computerRoutes } from 
+"./computer-routes.ts";
+import type { Config } from "./config.ts";
+import type { Store } from "./db.ts";
+import { agentRoutes } from 
+"./engine/routes.ts";
+import { skillsRoutes } from 
+"./skills/routes.ts";
+import { sopRoutes } from 
+"./skills/sop-routes.ts";
+import { AgentService } from 
+"./engine/service.ts";
+import { EventBus } from 
+"./engine/events/index.ts";
+import { eventsRoutes } from 
+"./events-routes.ts";
+import { AppError } from "./errors.ts";
+import { RateLimiter } from "./rate-limit.ts";
+import { requestLogger } from 
+"./middleware/request-logger.ts";
+import { logContext } from "./log.ts";
+import { Files } from "./files.ts";
+import { GoogleAuth } from "./google-auth.ts";
+import { WorkspaceService } from 
+"./workspace.ts";
+import { UserService } from "./users.ts";
+import { authRoutes } from "./auth-routes.ts";
+import { RagService } from "./engine/rag.ts";
+import { ragRoutes } from "./rag-routes.ts";
+import { threadRoutes } from 
+"./threads-routes.ts";
+import { projectRoutes } from 
+"./projects-routes.ts";
+import { PersonaRegistry, bootstrapPersonas } 
+from "./engine/agents/personas/index.ts";
+import { ALL_WORKSPACES } from 
+"../../../packages/workspaces/src/index.ts";
+import { WorkspaceModuleRegistry, 
+bridgeWorkspaceCapabilities, 
+WorkspaceDispatcher } from 
+"./engine/workspaces/index.ts";
+import { personasRoutes } from 
+"./engine/agents/personas/routes.ts";
+import {
+import { TenantService } from 
+"./engine/tenant.ts";
+
+
+
+===== E. app.ts: tenantService =====
+
+    StoreAuditStore,
+>   // SERVICE_TENANT_RESOLVER_WIRE_V1 - 
+adapter que delega en TenantService.
+    ServiceTenantResolver,
+  // ENGINE_TENANT_V1 - punto unico de 
+resolucion de tenant.
+> import { TenantService } from 
+"./engine/tenant.ts";
+  
+  ) {
+>   // SERVICE_TENANT_DB_V2 ÃƒÆ’Ã†â€™Ãƒâ€
+Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ
+¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â
+‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã
+‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡Ã
+ƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã
+†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ
+€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å
+¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ
+€šÃ‚Â creamos primero TenantService y tdb, 
+luego el
+  // resto de servicios con tdb. Antes se 
+construÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â
+ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â
+¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚
+¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ
+¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âan con `db` 
+crudo, asÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â
+ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÆ’Ã‚Â
+¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â‚
+¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ
+¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â que
+    // docs/audits/07-aislamiento-multi-tenant/m
+iniaudit.md.
+>   const tenantServiceEarly = new 
+TenantService(db, config);
+>   const tdbEarly = new TenantScopedStore(db, 
+(owner) => 
+tenantServiceEarly.tenantIdFor(owner));
+    const auth = await createAuth(db, config),
+    // SERVICE_TENANT_DB_V2 ÃƒÆ’Ã†â€™Ãƒâ€
+Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬ÂÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ
+¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€Ã¢â
+‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã
+‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡Ã
+ƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã
+†â€™Ãƒâ€Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ
+€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å
+¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ
+€šÃ‚Â reutilizamos los creados arriba.
+>   const tenantService = tenantServiceEarly;
+    const tdb = tdbEarly;
+      // SERVICE_TENANT_RESOLVER_WIRE_V1 - en 
+vez de DefaultTenantResolver, usamos
+>     // ServiceTenantResolver que delega en 
+TenantService. Sin esto, el kernel
+      // ignoraba el tenantId del contexto y 
+escribia todo en "default".
+>     tenants: new 
+ServiceTenantResolver(tenantService),
+      // AUDIT_STORE_ALWAYS_V1 - mismo 
+razonamiento que KERNEL_STORE_ALWAYS_V1:
+      bus,
+>     { graph, truth, policy, stateMachine, 
+stateMachineRegistry: stateMachines, context, 
+runtime: agentRuntime, governance, 
+workspaceRegistry, marketplace, kernel, 
+tenantService, workspaceModuleRegistry, 
+workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
+      // WS_ENGINE_DISPATCH_V1
+        checks.worker = agent.worker.running;
+>       checks.tenantService = 
+Boolean(agent.tenantService);
+        checks.kernel = Boolean(agent.kernel);
+        // HEALTH_METRICS_V1 - conteo por 
+tenant del worker.
+>       checks.tenants = typeof (agent as 
+unknown as { tenantService?: unknown 
+}).tenantService === "object" ? "wired" : 
+"absent";
+      } catch (e: unknown) {
+      const { signupRoutes } = await 
+import("./auth-signup.ts");
+>     app.route("/api/auth", signupRoutes({ db, 
+config, users, tenantService }));
+    }
+      kernel,
+>     ...(tenantService ? { tenantService } : 
+{}),
+    }));
+      // Ver: 
+docs/audits/09-kernel-cognitivo/miniaudit.md.
+>     app.route("/api/kernel", 
+kernelRoutes(kernel, users, tenantService));
+    }
+
+
+
+===== F. promote.ts: import classify =====
+
+import { classifyWithTenant } from "./rules.ts";
+// PROMOTE_USE_CLASSIFY_WITH_TENANT_DONE_V1
+function classifyDestination(role: string): 
+PromotionDestination {
+      // PROMOTE_ATTENTION_V1 
+ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â classify 
+ahora considera isFocusedOn.
+      const outcome = 
+classifyWithTenant(thought, ctx.tenantId);
+        outcome && outcome.survives ? 
+classifyDestination(thought.role) : "discard";
+
+
+
+===== G. meta.ts: extractProgress =====
+
+>       const progress = 
+this.extractProgress(thought);
+        if (!progress) continue;
+        const progressMs = 
+Date.parse(progress.timestamp);
+  
+>   private extractProgress(thought: Thought): 
+ProgressEvent | undefined {
+      // META_EXTRACT_PROGRESS_FIX_V1 - el 
+progress real vive en
+>     // thought.attention.metadata.progress 
+(asi lo escribe slow-author.ts).
+      const fromAttention = 
+(thought.attention?.metadata as { progress?: 
+unknown } | undefined)?.progress;
+      if (fromAttention && typeof fromAttention 
+=== "object") {
+        return fromAttention as ProgressEvent;
+
+
+
+===== H. pendientes actuales =====
+# Pendientes — fixes que no entraron
+
+> Doc vivo. Cada MISS se añade aquí.
+
+- [B1] EVENTS_KERNEL_THOUGHT_TYPES_V1 — apps/server/src/engine/events/types.ts — no aplicado
+- [B1] EVENTS_KERNEL_THOUGHT_SCHEMAS_V1 — apps/server/src/engine/events/schemas.ts — no aplicado
+- [B1] ENGINE_KERNEL_EXPOSE_V1 — apps/server/src/engine/service.ts — no aplicado
+- [B1] PROMOTER_WIRE_KERNEL_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B1] KERNEL_APPEND_THOUGHT_HOOK_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B1] BUS_EMITTER_APPEND_WRAP_V1 — apps/server/src/kernel/subscribers/bus-emitter.ts — no aplicado
+- [B1] KERNEL_DEPS_EXTEND_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B2] KERNEL_APPEND_THOUGHT_FIRE_HOOK_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B2] KERNEL_FIRE_OPEN_HOOK_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B2] EVENTS_KERNEL_TURN_OPENED_TYPE_V1 — apps/server/src/engine/events/types.ts — no aplicado
+- [B2] EVENTS_KERNEL_TURN_OPENED_SCHEMA_V1 — apps/server/src/engine/events/schemas.ts — no aplicado
+- [B2] ENGINE_SERVICE_WIRE_BUS_EMITTER_V1 — apps/server/src/engine/service.ts — no aplicado
+- [B2] PROMOTER_CALLSITE_MEMORY_V1 — apps/server/src/kernel/graph/promote.ts — no aplicado
+- [B3] EVENTS_TYPES_TENANT_SCOPED_V1 — apps/server/src/engine/events/types.ts — no aplicado
+- [B3] EVENTS_SCHEMAS_TURN_OPENED_V1 — apps/server/src/engine/events/schemas.ts — no aplicado
+- [B3] ENGINE_SERVICE_KERNEL_GETTER_V1 — apps/server/src/engine/service.ts — no aplicado
+- [B4] KERNEL_ROUTES_THOUGHT_INDEX_V1 — apps/server/src/kernel-routes.ts — anchor aparece 2 veces
+- [B5] SERVICE_GETTER_PUBLIC_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B5] SERVICE_GETTER_DB_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B5] EVENTS_SCHEMAS_THOUGHT_PAYLOAD_SCHEMA_V1 — apps/server/src/engine/events/schemas.ts — anchor no encontrado
+- [B5] EVENTS_RETENTION_KERNEL_TYPES_V1 — apps/server/src/engine/events/retention.ts — anchor no encontrado
+- [B6] SERVICE_GETTER_HAS_KERNEL_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B6] SERVICE_BUS_TENANT_RESOLVE_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B7] KERNEL_ENGINE_FEEDBACK_INDEX_V1 — apps/server/src/engine/service.ts — anchor no único
+- [B7] EVENTS_RETENTION_META_HINTS_V1 — apps/server/src/engine/events/retention.ts — anchor no encontrado
+- [B8] EVENTBUS_BUILD_APPLIED_SCHEMA_V1 — apps/server/src/engine/events/schemas.ts — anchor no encontrado
+- [B8] SERVICE_EXPOSE_BUS_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B8] KERNEL_OPEN_TURN_EMITS_BUS_V1 — apps/server/src/kernel/kernel.ts — anchor no encontrado
+- [B9] SERVICE_MAINTAIN_PURGE_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B9] SERVICE_BUILD_APPLY_ROUTE_HELPER_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B9] EVENTBUS_STATE_LOG_RETENTION_V1 — apps/server/src/engine/events/retention.ts — anchor no encontrado
+- [B10] SERVICE_KERNEL_CONSOLIDATE_ON_TURN_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B10] SERVICE_KERNEL_LISTENERS_REGISTER_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B13] WORKER_RECOVER_TENANT_SCOPED_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B13] WORKER_LEASE_GUARD_CACHE_V1 — apps/server/src/engine/worker.ts — anchor aparece 2 veces
+- [B13] SOP_EXECUTOR_STACK_CYCLE_V1 — apps/server/src/engine/sop-executor.ts — anchor no encontrado
+- [B13] SERVICE_SYSTEM_CONTEXT_CACHE_TTL_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B13] SERVICE_NOTIFY_USER_FILTER_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B13] SERVICE_MEMORY_WRITE_TENANT_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B14] ACTIONS_ROUTES_EDIT_V1 — apps/server/src/engine/routes.ts — anchor no encontrado
+- [B14] ACTIONS_ROUTES_EDIT_ENDPOINT_V1 — apps/server/src/engine/routes.ts — anchor no encontrado
+- [B14] ACTIONS_ROUTES_DECIDE_USER_ID_V1 — apps/server/src/engine/routes.ts — anchor no encontrado
+- [B14] WORKER_LOST_LEASE_RECOVER_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B14] WORKER_MAX_ACTIVE_CAP_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B14] WORKER_TENANT_CURSOR_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B14] SOP_EXECUTOR_WHEN_TEMPLATE_V1 — apps/server/src/engine/sop-executor.ts — anchor no encontrado
+- [B18] ALERTS_RESILIENCE_FIELDS_V1 — apps/server/src/alerts/definitions.ts — anchor no encontrado
+- [AUDIT_LIST_CURSOR_V1] apps/server/src/kernel/audit/store-store.ts - anchor no encontrado (2026-10-12 16:48)
+- MISS PROMOTE_USE_CLASSIFY_WITH_TENANT_V1 :: apps/server/src/kernel/graph/promote.ts :: anchor no encontrado
+- MISS PROMOTE_TENANT_ARG_V1 :: apps/server/src/kernel/graph/promote.ts :: anchor no encontrado
+- MISS META_READ_PROGRESS_FROM_ATTENTION_V1 :: apps/server/src/kernel/observers/meta.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_CTX_FOR_ASYNC_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_TURNS_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_TURN_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_PRESENT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_BY_PERSONA_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_AUDIT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_VERIFY_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_SNAPSHOT_EXPORT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS APP_KERNEL_ROUTES_PASS_TENANT_V1 :: apps/server/src/app.ts :: anchor no encontrado

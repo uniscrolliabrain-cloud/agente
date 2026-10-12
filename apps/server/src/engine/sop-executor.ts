@@ -207,7 +207,7 @@ export class SOPExecutor {
       if (!sop.allowedTools.includes(step.tool))
         throw new AppError(`SOP ${sop.id} does not allow tool ${step.tool}`, 422);
 
-    // R19 — si arrancamos desde el paso 0, limpiamos sopResults previos. Sin esto,
+    // R19 Ã¢â‚¬â€ si arrancamos desde el paso 0, limpiamos sopResults previos. Sin esto,
     // un SOP que se reintenta despues de fallar puede leer resultados viejos del
     // intento anterior (los pasos nuevos ven datos que ya no aplican).
     const startingFresh = Number(task.state.sopStepIndex ?? 0) === 0;
@@ -216,7 +216,13 @@ export class SOPExecutor {
       : ((task.state.sopResults as Record<string, unknown> | undefined) ?? {});
     const stack = (task.state.sopStack as string[] | undefined) ?? [sop.id];
     if (stack.length > 4) throw new AppError("Nested SOP depth limit exceeded", 409);
-    if (new Set(stack).size !== stack.length) throw new AppError("SOP cycle detected", 409);
+    // SOP_EXECUTOR_STACK_CYCLE_V1 - deteccion explicita de ciclo en la pila.
+    if (new Set(stack).size !== stack.length) {
+      throw new AppError(
+        `SOP cycle detected: ${stack.join(" -> ")} -> ${sop.id}`,
+        409,
+      );
+    }
 
     // First run: synthesize the real plan from sop.steps. Resumes keep whatever they had.
     const plan =
@@ -264,6 +270,9 @@ export class SOPExecutor {
 
       // OpenMuse when: skip step if condition is falsy
       if (typeof step.when === "string" && step.when.trim() !== "") {
+        // SOP_EXECUTOR_WHEN_TEMPLATE_V1 - si el template queda vacio tras
+        // interpolar, se considera falsy y el step se salta. Documentado aqui
+        // para que no parezca un bug.
         const raw = interpolate(step.when, task, results);
         const condition = (typeof raw === "string" ? raw : String(raw ?? "")).trim().toLowerCase();
         const falsy = condition === "" || condition === "0" || condition === "false";
@@ -459,7 +468,7 @@ export class SOPExecutor {
     ];
     await this.service.learn(owner, task, facts);
     await this.service.ingestTaskArtifacts(owner, task.id).catch(() => {});
-    return this.service.finish(owner, task, ctx, `SOP “${sop.name}” completed ${sop.steps.length} step(s).`);
+    return this.service.finish(owner, task, ctx, `SOP Ã¢â‚¬Å“${sop.name}Ã¢â‚¬Â completed ${sop.steps.length} step(s).`);
   }
 
   private async runStep(
@@ -497,7 +506,7 @@ export class SOPExecutor {
         return { title: page.title, url: page.url, text: page.text.slice(0, 30000) };
       }
       case "computer_command": {
-        // B102 — si la tarea tiene rol activo, AgentGovernance debe autorizar la tool.
+        // B102 Ã¢â‚¬â€ si la tarea tiene rol activo, AgentGovernance debe autorizar la tool.
         const activeRoleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
         if (activeRoleId && this.service.governance) {
           const role = await this.service.db

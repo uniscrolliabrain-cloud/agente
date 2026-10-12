@@ -1,10 +1,10 @@
-// PRESENCE_V1 — presencia efímera por recurso.
+// PRESENCE_V1 â€” presencia efÃ­mera por recurso.
 //
 // In-memory. No persiste. Se pierde al reiniciar el proceso.
-// Sirve para avisar "otro usuario está editando este thread/proyecto".
+// Sirve para avisar "otro usuario estÃ¡ editando este thread/proyecto".
 //
 // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md
-// ("Sin presence service", "Sin avisos de otro usuario está editando").
+// ("Sin presence service", "Sin avisos de otro usuario estÃ¡ editando").
 
 const PRESENCE_TTL_MS = 30_000;
 
@@ -23,7 +23,7 @@ export class PresenceService {
     return `${resourceType}:${resourceId}`;
   }
 
-  /** Marca presencia del usuario. Devuelve quién más está editando. */
+  /** Marca presencia del usuario. Devuelve quiÃ©n mÃ¡s estÃ¡ editando. */
   // PRESENCE_USER_HEADER_VALIDATE_V1
   touch(
     userId: string,
@@ -43,17 +43,21 @@ export class PresenceService {
       resourceType,
       lastSeen: Date.now(),
     });
+    // PRESENCE_GC_PER_ENTRY_V1 - limpia entradas caducadas del bucket actual.
+    const now = Date.now();
     const others: Array<{ userId: string; lastSeen: number }> = [];
     for (const [uid, entry] of bucket) {
       if (uid === userId) continue;
-      if (Date.now() - entry.lastSeen < PRESENCE_TTL_MS) {
+      if (now - entry.lastSeen < PRESENCE_TTL_MS) {
         others.push({ userId: uid, lastSeen: entry.lastSeen });
+      } else {
+        bucket.delete(uid);
       }
     }
     return { others };
   }
 
-  /** PRESENCE_LEAVE_V1 - desconexión explícita. */
+  /** PRESENCE_LEAVE_V1 - desconexiÃ³n explÃ­cita. */
   leave(userId: string, resourceType: "thread" | "project", resourceId: string): void {
     const k = this.key(resourceType, resourceId);
     const bucket = this.entries.get(k);

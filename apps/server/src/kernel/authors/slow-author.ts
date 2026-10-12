@@ -65,6 +65,9 @@ export class SlowAuthor {
       actor: { kind: "slow-llm", id: "slow" },
       role: "reasoning",
       content: input.content,
+      // SLOW_AUTHOR_PROGRESS_MIRROR_V1
+      // SLOW_AUTHOR_MIRROR_DONE_V1 - progress va SOLO en attention.metadata.
+      // Meta lee de ahi desde BLOQUE 01 (META_READ_PROGRESS_FROM_ATTENTION_V1).
       attention: {
         id: randomUUID(),
         author: "slow",

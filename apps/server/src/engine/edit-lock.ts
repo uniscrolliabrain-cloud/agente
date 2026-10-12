@@ -1,11 +1,11 @@
-// EDIT_LOCK_V1 — lock optimista in-process por recurso.
+// EDIT_LOCK_V1 â€” lock optimista in-process por recurso.
 //
 // Complementa el CAS del store: si dos requests del MISMO usuario
 // intentan editar el mismo proyecto a la vez (doble click, doble tab),
-// el segundo falla rápido con 409 sin tocar la DB.
+// el segundo falla rÃ¡pido con 409 sin tocar la DB.
 //
 // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md
-// ("Sin locks de edición").
+// ("Sin locks de ediciÃ³n").
 
 const LOCK_TTL_MS = 10_000;
 
@@ -25,6 +25,7 @@ export class EditLock {
   /** Intenta adquirir. Devuelve null si otro ya lo tiene. */
   // EDIT_LOCK_USER_VALIDATE_V1
   acquire(userId: string, resourceType: string, resourceId: string): Lock | null {
+    // EDIT_LOCK_TTL_FIRST_V1 - gc antes de leer.
     this.gc();
     const k = this.key(resourceType, resourceId);
     const existing = this.locks.get(k);

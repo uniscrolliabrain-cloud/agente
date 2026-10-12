@@ -68,7 +68,7 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     title: z.string().max(300),
     spec: z.record(z.string(), z.unknown()),
   }),
-  // SCHEMAS_V2 — business graph, policy, state machine, agent runtime, context.
+  // SCHEMAS_V2 â€” business graph, policy, state machine, agent runtime, context.
   "entity.created": z.object({
     ...base,
     entityId: z.string().max(200),
@@ -1039,4 +1039,68 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     correlationId: z.string().max(200).optional(),
     occurredAt: z.string().optional(),
   }).passthrough(),
-    }),};
+
+  // EVENTS_KERNEL_SCHEMAS_V1
+  "kernel.turn.opened": z.object({
+    turnId: z.string().max(100),
+    owner: z.string().max(200).optional(),
+    tenantId: z.string().max(100).optional(),
+    triggers: z.array(z.string().max(100)).max(50).optional(),
+  }).passthrough(),
+  "kernel.thought.action": z.object({
+    thoughtId: z.string().max(100).optional(),
+    turnId: z.string().max(100).optional(),
+    role: z.string().max(40).optional(),
+    actorKind: z.string().max(40).optional(),
+    actorId: z.string().max(200).optional(),
+    personaId: z.string().max(80).optional(),
+    owner: z.string().max(200).optional(),
+    tenantId: z.string().max(100).optional(),
+    correlationId: z.string().max(200).optional(),
+  }).passthrough(),
+  "kernel.thought.response": z.object({
+    thoughtId: z.string().max(100).optional(),
+    turnId: z.string().max(100).optional(),
+    role: z.string().max(40).optional(),
+    actorKind: z.string().max(40).optional(),
+    actorId: z.string().max(200).optional(),
+    personaId: z.string().max(80).optional(),
+    owner: z.string().max(200).optional(),
+    tenantId: z.string().max(100).optional(),
+    correlationId: z.string().max(200).optional(),
+  }).passthrough(),
+  "kernel.thought.reflection": z.object({
+    thoughtId: z.string().max(100).optional(),
+    turnId: z.string().max(100).optional(),
+    role: z.string().max(40).optional(),
+    actorKind: z.string().max(40).optional(),
+    actorId: z.string().max(200).optional(),
+    personaId: z.string().max(80).optional(),
+    owner: z.string().max(200).optional(),
+    tenantId: z.string().max(100).optional(),
+    correlationId: z.string().max(200).optional(),
+  }).passthrough(),
+  "kernel.thought.critic": z.object({
+    thoughtId: z.string().max(100).optional(),
+    turnId: z.string().max(100).optional(),
+    role: z.string().max(40).optional(),
+    actorKind: z.string().max(40).optional(),
+    actorId: z.string().max(200).optional(),
+    personaId: z.string().max(80).optional(),
+    owner: z.string().max(200).optional(),
+    tenantId: z.string().max(100).optional(),
+    correlationId: z.string().max(200).optional(),
+  }).passthrough(),
+  "kernel.thought.delegation": z.object({
+    thoughtId: z.string().max(100).optional(),
+    turnId: z.string().max(100).optional(),
+    role: z.string().max(40).optional(),
+    actorKind: z.string().max(40).optional(),
+    actorId: z.string().max(200).optional(),
+    personaId: z.string().max(80).optional(),
+    owner: z.string().max(200).optional(),
+    tenantId: z.string().max(100).optional(),
+    correlationId: z.string().max(200).optional(),
+  }).passthrough(),
+  }),
+};

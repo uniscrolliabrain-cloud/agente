@@ -1,12 +1,12 @@
-// CIRCUIT_BREAKER_V1 — cortacircuitos por dominio/proveedor.
+// CIRCUIT_BREAKER_V1 â€” cortacircuitos por dominio/proveedor.
 //
 // Tres estados:
-//   closed   — funcionamiento normal.
-//   open     — falla el último N; rechaza llamadas sin intentar.
-//   half-open — pasado el cooldown, deja pasar un intento de prueba.
+//   closed   â€” funcionamiento normal.
+//   open     â€” falla el Ãºltimo N; rechaza llamadas sin intentar.
+//   half-open â€” pasado el cooldown, deja pasar un intento de prueba.
 //
 // Ver: docs/audits/03-resiliencia/miniaudit.md ("Sin circuit breaker"),
-// docs/audits/03-resiliencia/roadmap.md §8.
+// docs/audits/03-resiliencia/roadmap.md Â§8.
 
 export type CircuitState = "closed" | "open" | "half-open";
 
@@ -15,7 +15,7 @@ export interface CircuitOptions {
   failureThreshold: number;
   /** ms que permanece abierto antes de probar half-open. */
   openMs: number;
-  /** ms máximos para half-open (si el intento de prueba no responde, se vuelve a abrir). */
+  /** ms mÃ¡ximos para half-open (si el intento de prueba no responde, se vuelve a abrir). */
   halfOpenTimeoutMs: number;
 }
 
@@ -37,12 +37,12 @@ export class CircuitBreaker {
   ) {}
 
   getState(): CircuitState {
-    // Si está abierto y ya pasó el cooldown, transiciona a half-open.
+    // Si estÃ¡ abierto y ya pasÃ³ el cooldown, transiciona a half-open.
     if (this.state === "open" && Date.now() - this.openedAt >= this.options.openMs) {
       this.state = "half-open";
       this.halfOpenStartedAt = Date.now();
     }
-    // Si está half-open y lleva demasiado, vuelve a open.
+    // Si estÃ¡ half-open y lleva demasiado, vuelve a open.
     if (
       this.state === "half-open" &&
       Date.now() - this.halfOpenStartedAt > this.options.halfOpenTimeoutMs
@@ -52,7 +52,7 @@ export class CircuitBreaker {
     return this.state;
   }
 
-  /** Llama al handler. Si el circuito está abierto, lanza sin ejecutar. */
+  /** Llama al handler. Si el circuito estÃ¡ abierto, lanza sin ejecutar. */
   async call<T>(operation: () => Promise<T>): Promise<T> {
     const current = this.getState();
     if (current === "open") {
@@ -98,11 +98,12 @@ export class CircuitBreaker {
     this.failures = 0;
   }
 
-  /** Fuerza el cierre (útil en tests). */
+  /** Fuerza el cierre (Ãºtil en tests). */
   recordFailure(error: unknown): void {
-    if (typeof (error as { status?: number })?.status === "number") {
-      const s = (error as { status: number }).status;
-      if (s >= 400 && s < 500 && s !== 408 && s !== 429) return;
+    // CIRCUIT_BREAKER_RECORD_V1 - 4xx no transitorios no cuentan como fallo.
+    const status = (error as { status?: number })?.status;
+    if (typeof status === "number" && status >= 400 && status < 500 && status !== 408 && status !== 429) {
+      return;
     }
     this.onFailure();
   }

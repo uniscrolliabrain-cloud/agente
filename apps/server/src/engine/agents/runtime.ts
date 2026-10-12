@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { EventBus } from "../events/index.ts";
 
-// AGENT_RUNTIME_V1 â€” runtime efimero por ejecucion. No se persiste.
+// AGENT_RUNTIME_V1 Ã¢â‚¬â€ runtime efimero por ejecucion. No se persiste.
 // El historial durable vive en el event bus. El runtime solo da identidad
 // a cada ejecucion de agente (spawn + complete/fail + destroy).
 
@@ -109,9 +109,8 @@ export class AgentRuntimeManager {
     for (const [id, runtime] of this.active) {
       if (now - Date.parse(runtime.createdAt) > ttlMs) toKill.push(id);
     }
-    for (const id of toKill) {
-      await this.fail(id, `runtime timeout: ${ttlMs}ms`).catch(() => {});
-    }
+    // RUNTIME_SWEEP_PARALLEL_V1 - Promise.all en vez de serie.
+    await Promise.all(toKill.map((id) => this.fail(id, `runtime timeout: ${ttlMs}ms`).catch(() => {})));
     return toKill.length;
   }
 

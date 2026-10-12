@@ -1,4 +1,4 @@
-// KERNEL_CONSOLIDATE_V1 — fusion de duplicados + deteccion de contradicciones.
+// KERNEL_CONSOLIDATE_V1 â€” fusion de duplicados + deteccion de contradicciones.
 //
 // Al cerrar un turno, el grafo puede tener:
 //   - Dos Thoughts del mismo autor con el mismo contenido (duplicado).
@@ -147,10 +147,14 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
     }
 
     // CONSOLIDATE_O2_CAP_V1 - tope de 200 thoughts por tenant para
-    // comparaciones O(n²). Con 500 thoughts eran 125k comparaciones.
+    // comparaciones O(nÂ²). Con 500 thoughts eran 125k comparaciones.
     const CMP_CAP = 200;
     const cmpList = tenantThoughts.length > CMP_CAP
-      ? tenantThoughts.slice(0, CMP_CAP)
+      ? tenantThoughts
+          .slice()
+          .sort((a, b) => a.id.localeCompare(b.id))
+          .filter((_, i) => i % Math.ceil(tenantThoughts.length / CMP_CAP) === 0)
+          .slice(0, CMP_CAP)
       : tenantThoughts;
     // Contradicciones dentro del tenant.
     for (let i = 0; i < cmpList.length; i++) {

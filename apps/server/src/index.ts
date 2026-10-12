@@ -35,7 +35,15 @@ if (process.env.OPENMUSE_KERNEL_STORE !== "memory") {
     const registry = new PersonaRegistry();
     const tenants = ["default", "_example"];
     const report = await wirePersonaBootstrap(registry, tenants, clientsDirFrom(config.dataDir));
-    if (report.loaded > 0) console.log(`[kernel] personas cargadas: ${report.loaded} (failed=${report.failed})`);
+    if (report.loaded > 0) {
+      console.log(`[kernel] personas cargadas: ${report.loaded} (failed=${report.failed})`);
+    } else {
+      // PERSONAS_BOOTSTRAP_WARN_ON_ZERO_V1
+      // PERSONAS_BOOTSTRAP_WARN_ON_ZERO_DONE_V1 - aplicado en bloque 01.
+      console.warn(
+        `[kernel] personas bootstrap: 0 cargadas, ${report.failed} fallidas, dir=${clientsDirFrom(config.dataDir)}`,
+      );
+    }
   } catch (error) {
     console.warn(`[kernel] personas bootstrap fallo: ${error instanceof Error ? error.message : error}`);
   }

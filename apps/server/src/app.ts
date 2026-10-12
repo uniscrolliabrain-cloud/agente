@@ -575,7 +575,7 @@ app.post("/api/billing/customer", async (c) => {
     const { kernelRoutes } = await import("./kernel-routes.ts");
     // KERNEL_ROUTES_ADMIN_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â pasa UserService para validaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n admin.
     // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
-    app.route("/api/kernel", kernelRoutes(kernel, users));
+    app.route("/api/kernel", kernelRoutes(kernel, users, tenantService));
   }
   // APP_VIEWS_WIRE_V1 - endpoint publico de resolucion de vistas. Antes solo
   // estaba bajo /api/admin/views/resolve (requireAdmin) y el frontend llamaba

@@ -59,6 +59,22 @@ export class TenantService {
       this.cache.set(owner, { tenantId: row.tenantId, at: Date.now() });
       return { tenantId: row.tenantId, source: "database" };
     }
+    // TENANT_MEMBERSHIP_LEGACY_MIGRATE_V1 - si existe una fila con id=owner
+    // (convencion antigua), la migramos al vuelo a id="default".
+    const legacy = await this.db
+      .list<{ id: string; tenantId: string }>(owner, MEMBERSHIP_KIND)
+      .catch(() => []);
+    const legacyRow = legacy.find((m) => m.id !== MEMBERSHIP_ID && m.tenantId);
+    if (legacyRow) {
+      await this.db.put(owner, MEMBERSHIP_KIND, {
+        id: MEMBERSHIP_ID,
+        tenantId: legacyRow.tenantId,
+        migratedAt: new Date().toISOString(),
+      });
+      await this.db.remove(owner, MEMBERSHIP_KIND, legacyRow.id);
+      this.cache.set(owner, { tenantId: legacyRow.tenantId, at: Date.now() });
+      return { tenantId: legacyRow.tenantId, source: "database" };
+    }
     // TENANT_CACHE_FALLBACK_V1 - cachear el fallback.
     this.cache.set(owner, { tenantId: DEFAULT_TENANT_ID, at: Date.now() });
     return { tenantId: DEFAULT_TENANT_ID, source: "default" };

@@ -51,14 +51,28 @@ export class MetaHintsStore {
   }
 
   async purgeOlderThan(tenantId: string, maxAgeMs: number): Promise<number> {
+    // META_HINTS_PURGE_CURSOR_V1 - keyset pagination para no cargar 5000 en memoria.
     const cutoff = Date.now() - maxAgeMs;
-    const all = await this.db.list<PersistedMetaHint>(tenantId, "meta-hints", { limit: 5000 });
     let removed = 0;
-    for (const h of all) {
-      if (Date.parse(h.persistedAt) < cutoff) {
-        await this.db.remove(tenantId, "meta-hints", h.id);
-        removed++;
+    let cursorUpdatedAt: string | undefined;
+    let cursorId: string | undefined;
+    const PAGE = 500;
+    for (;;) {
+      const page = await this.db.listPaged<PersistedMetaHint>(tenantId, "meta-hints", {
+        limit: PAGE,
+        ...(cursorUpdatedAt && cursorId ? { cursorUpdatedAt, cursorId } : {}),
+      });
+      if (page.length === 0) break;
+      for (const { data: h } of page) {
+        if (Date.parse(h.persistedAt) < cutoff) {
+          await this.db.remove(tenantId, "meta-hints", h.id);
+          removed++;
+        }
       }
+      const last = page[page.length - 1];
+      cursorUpdatedAt = last.updatedAt;
+      cursorId = last.data.id;
+      if (page.length < PAGE) break;
     }
     return removed;
   }
