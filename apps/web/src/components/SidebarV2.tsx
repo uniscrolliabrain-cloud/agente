@@ -6,7 +6,8 @@ import type { Thread } from "../api/threads";
 import LiveItem from "./LiveItem";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
-export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace";
+// SIDEBAR_BRAND_AGNTIA_V1
+export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace" | "centro-mando";
 
 interface Props {
   activeView: AppView;
@@ -30,6 +31,7 @@ const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
   { id: "agents", label: "Agentes", icon: Bot },
   // WS_UI_SIDEBAR_ITEM_V1
   { id: "workspace", label: "Workspaces", icon: FolderKanban },
+  { id: "centro-mando", label: "Centro de Mando", icon: Activity },
 ];
 
 export default function SidebarV2({
@@ -50,11 +52,17 @@ export default function SidebarV2({
   return (
     <aside className="v2-sidebar">
       <div>
-        <div className="v2-sidebar-brand">
-          <div className="v2-sidebar-brand-mark">N</div>
-          <span className="v2-sidebar-brand-name">norte.</span>
+        <button
+          type="button"
+          className="v2-sidebar-brand"
+          onClick={() => onSelectView("chat")}
+          style={{ border: 0, background: "transparent", cursor: "pointer", width: "100%", textAlign: "left", font: "inherit", color: "inherit" }}
+          aria-label="Ir al inicio"
+        >
+          <div className="v2-sidebar-brand-mark">A</div>
+          <span className="v2-sidebar-brand-name">AGNTia OS</span>
           <span className="v2-sidebar-brand-beta">BETA</span>
-        </div>
+        </button>
 
         <div className="v2-sidebar-sections">
           <div>

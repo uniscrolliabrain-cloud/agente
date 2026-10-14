@@ -24,7 +24,7 @@ export default function AgentsPage() {
   const [selected, setSelected] = useState<AgentId>("laia");
   // AGENTS_PAGE_FETCH_V1 - estado de personas reales.
   const [remoteAgents, setRemoteAgents] = useState<AgentUI[] | null>(null);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [_fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;

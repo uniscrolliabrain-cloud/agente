@@ -1,4 +1,4 @@
-﻿// WORKSPACE_FRONTEND_REGISTRY_V1 — registry de workspaces en el frontend.
+// WORKSPACE_FRONTEND_REGISTRY_V1 — registry de workspaces en el frontend.
 
 export type WorkspaceFamily =
   | "comunicacion"
@@ -54,6 +54,7 @@ export const WORKSPACE_ENTRIES: readonly WorkspaceFrontendEntry[] = [
   { id: "notion", slug: "32-notion", family: "documentos", title: "Wiki", reference: "Notion" },
   { id: "langsmith", slug: "33-langsmith", family: "gobierno", title: "Observabilidad", reference: "LangSmith" },
   { id: "trello", slug: "34-trello", family: "trabajo", title: "Kanban", reference: "Trello" },
+  { id: "centro-mando", slug: "35-centro-mando", family: "datos", title: "Centro de mando y analitica", reference: "Centro de Mando" },
 ] as const;
 
 export function getWorkspace(id: string): WorkspaceFrontendEntry | undefined {

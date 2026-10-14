@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { globalSearch } from "../api/search";
+// COMMAND_PALETTE_WORKSPACES_V1
+import { WORKSPACE_ENTRIES } from "../workspaces/registry";
 import { FileText, LayoutDashboard, MessageSquare, Plus, Search } from "lucide-react";
 import type { AppView } from "./SidebarV2";
 
@@ -79,6 +81,14 @@ export default function CommandPalette({ open, onClose, onSelectView, onNewChat 
       icon: <FileText size={14} />,
       run: () => { close(); onSelectView("documents"); },
     },
+    // COMMAND_PALETTE_WORKSPACES_V1
+    ...WORKSPACE_ENTRIES.filter((w) => w.id === "centro-mando").map((w) => ({
+      id: "ws:" + w.id,
+      label: w.title,
+      hint: w.family,
+      icon: <LayoutDashboard size={14} />,
+      run: () => { close(); onSelectView("centro-mando" as never); },
+    })),
   ];
 
   const q = query.trim().toLowerCase();

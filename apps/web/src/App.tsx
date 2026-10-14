@@ -18,6 +18,8 @@ import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
 import AgentsPage from "./components/agents/AgentsPage";
+// APP_CENTRO_MANDO_V1
+import CentroMandoWorkspace from "./workspaces/35-centro-mando/CentroMandoWorkspace";
 // WS_UI_APP_SHELL_V1
 import WorkspaceShell from "./workspaces/WorkspaceShell";
 import { useWorkspaces } from "./hooks/useWorkspaces";
@@ -183,6 +185,8 @@ export default function App() {
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
           {view === "agents" && <AgentsPage />}
           {view === "workspace" && <WorkspaceShell workspaceId={activeWorkspaceId} spec={viewResolver.spec} />}
+          {/* APP_CENTRO_MANDO_V1 */}
+          {view === "centro-mando" && <CentroMandoWorkspace />}
         </div>
       </AppShell>
 
