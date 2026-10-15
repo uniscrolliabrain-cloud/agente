@@ -1,4 +1,3 @@
-// FIX_TC_APP_V3 - App con AppShell + ContextualPanel + viewResolver.
 import { useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
@@ -17,7 +16,6 @@ import MemoryView from "./components/MemoryView";
 import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
-import AgentsPage from "./components/agents/AgentsPage";
 // APP_CENTRO_MANDO_V1
 import CentroMandoWorkspace from "./workspaces/35-centro-mando/CentroMandoWorkspace";
 // WS_UI_APP_SHELL_V1
@@ -183,7 +181,7 @@ export default function App() {
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "agents" && <AgentsPage />}
+          {view === "agents" && <div className="v2-tasks-view"><h1 className="v2-tasks-title">Agentes</h1><div className="v2-tasks-meta">En construccion</div></div>}
           {view === "workspace" && <WorkspaceShell workspaceId={activeWorkspaceId} spec={viewResolver.spec} />}
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
