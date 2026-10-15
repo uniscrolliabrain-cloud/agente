@@ -81,7 +81,7 @@ export const agentValueRefSchema = z
 
 export const agentAvatarSchema = z
   .object({
-    kind: z.enum(["generated-portrait", "initials", "image"]).default("initials"),
+    kind: z.enum(["generated-portrait", "initials", "image", "sand", "lilac", "sky"]).default("initials"),
     seed: z.string().max(120).optional(),
     url: z.string().url().max(2000).optional(),
     style: z.string().max(120).optional(),

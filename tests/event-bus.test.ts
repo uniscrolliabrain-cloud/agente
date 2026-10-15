@@ -70,9 +70,6 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "agent.runtime_spawned": { runtimeId: "rt", roleId: "ro", taskId: "t" },
   "agent.runtime_completed": { runtimeId: "rt", roleId: "ro", taskId: "t", durationMs: 1 },
   "agent.runtime_failed": { runtimeId: "rt", roleId: "ro", taskId: "t", error: "x" },
-  "action.deferred": { actionId: "a", signers: [], needed: 1, executeAt: null },
-  "action.cancelled": { actionId: "a", by: "u" },
-  "view.resolved": { kind: "dashboard", title: "T", spec: {} },
   "verification.executed": { verified: true, method: "deterministic", confidence: 1 },
   "verification.disagreement": { deterministic: true, llm: false },
   "context.assembled": {

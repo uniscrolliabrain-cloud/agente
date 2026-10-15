@@ -27,7 +27,7 @@ import type { AgentService } from "./service.ts";
 
 export class ConversationAgent extends AbstractAgent {
   // CONVERSATION_PENDING_HINTS_FIELD_V1
-  private pendingMetaHints: Array<{ rule: string; urgency: string; message: string }> = [];
+  private pendingMetaHints: import("../kernel/observers/meta.ts").MetaHint[] = [];
   // CONVERSATION_LAST_META_HINT_FIELD_V1
   private lastMetaHint: string | null = null;
   // CONVERSATION_META_CONTEXT_HINT_V1
@@ -825,7 +825,7 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
         try {
           const { MetaHintsStore } = await import("./feedback/meta-hints-store.ts");
           const store = new MetaHintsStore(this.service.db as unknown as import("../db.ts").Store);
-          await store.persist(ctx.tenantId, ctx.owner, turnId, hints.slice(0, 3));
+          await store.persist(ctx.tenantId, ctx.owner, turnId, this.pendingMetaHints.slice(0, 3));
         } catch {
           /* best-effort */
         }

@@ -1,7 +1,7 @@
 // KERNEL_PERSONAS_BOOTSTRAP_REGISTRY_V1
 import { join } from "node:path";
-import { PersonaRegistry } from "../../engine/agents/personas/registry.ts";
-import { bootstrapAllPersonas } from "../../engine/agents/personas/bootstrap.ts";
+import { PersonaRegistry } from "../engine/agents/personas/registry.ts";
+import { bootstrapAllPersonas } from "../engine/agents/personas/bootstrap.ts";
 
 export interface PersonaBootstrapReport {
   tenants: string[];

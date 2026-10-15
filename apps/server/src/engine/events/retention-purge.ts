@@ -1,5 +1,5 @@
 // RETENTION_PURGE_WIRE_V1
-import type { Store } from "../db.ts";
+import type { Store } from "../../db.ts";
 import { retentionDaysFor } from "./retention.ts";
 
 export interface PurgeReport {

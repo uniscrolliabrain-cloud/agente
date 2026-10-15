@@ -71,17 +71,6 @@ export class Kernel {
     return all.filter((t) => t.owner === owner).slice(0, limit);
   }
 
-  async attentionOfPersona(ctx: KernelContext, personaId: string): Promise<unknown> {
-    const turns = await this.listTurns(ctx, 100);
-    const relevant = turns.filter((t) => t.personaId === personaId);
-    const thoughts: unknown[] = [];
-    for (const t of relevant) {
-      const ts = await this.thoughtsOf(ctx, t.id);
-      thoughts.push(...ts);
-    }
-    return { personaId, turnCount: relevant.length, thoughtCount: thoughts.length };
-  }
-
   // KERNEL_OPEN_TURN_HOOK_V1
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
@@ -343,35 +332,6 @@ export class Kernel {
    * Cierra #197: conversation.ts puede reusar el turno abierto en vez de crear
    * uno nuevo por cada mensaje del usuario.
    */
-  // KERNEL_ATTENTION_PAIRS_V1 - compara la atencion de cada par de personas.
-  async attentionPairs(ctx: KernelContext): Promise<Array<{ a: string; b: string; overlap: number }>> {
-    const { attentionOverlap } = await import("./graph/attention.ts");
-    const turns = await this.listTurnsAllPersonas(ctx, 200);
-    const byPersona = new Map<string, Turn[]>();
-    for (const t of turns) {
-      if (!t.personaId) continue;
-      const list = byPersona.get(t.personaId) ?? [];
-      list.push(t);
-      byPersona.set(t.personaId, list);
-    }
-    const ids = [...byPersona.keys()];
-    const pairs: Array<{ a: string; b: string; overlap: number }> = [];
-    for (let i = 0; i < ids.length; i++) {
-      for (let j = i + 1; j < ids.length; j++) {
-        const ta = byPersona.get(ids[i])![0];
-        const tb = byPersona.get(ids[j])![0];
-        if (!ta || !tb) continue;
-        const thoughtsA = await this.thoughtsOf(ctx, ta.id);
-        const thoughtsB = await this.thoughtsOf(ctx, tb.id);
-        const va = thoughtsA[0]?.attention;
-        const vb = thoughtsB[0]?.attention;
-        if (!va || !vb) continue;
-        pairs.push({ a: ids[i], b: ids[j], overlap: attentionOverlap(va, vb) });
-      }
-    }
-    return pairs;
-  }
-
   async findOpenTurnForThread(ctx: KernelContext): Promise<Turn | undefined> {
     if (!ctx.threadId) return undefined;
     const tenantId = await this.deps.tenants.resolve(ctx.owner);

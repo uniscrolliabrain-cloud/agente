@@ -73,7 +73,7 @@ export function startKernelEventSubscriber(
             provenance: { source: "bus.subscriber", timestamp: now, ...(event.correlationId ? { correlationId: event.correlationId } : {}) },
           });
           // KERNEL_EVENTS_CLOSE_GUARD_V1 - solo cerrar si sigue abierto.
-          const stillOpen = await kernel.getTurn(parsed.data, turn.id).catch(() => undefined);
+          const stillOpen = await kernel.deps.store.getTurn(parsed.data.tenantId, turn.id).catch(() => undefined);
           if (stillOpen && stillOpen.status === "open") {
             await kernel.closeTurn(parsed.data, turn.id, "quiescence", "system");
           }

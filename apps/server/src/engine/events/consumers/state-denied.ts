@@ -1,8 +1,8 @@
 // STATE_DENIED_CONSUMER_V1
-import type { Store } from "../../db.ts";
-import { logWarn } from "../../log.ts";
-import type { SystemEvent } from "../../engine/events/types.ts";
-import { globalSubscribers } from "../../engine/events/subscriber.ts";
+import type { Store } from "../../../db.ts";
+import { logWarn } from "../../../log.ts";
+import type { SystemEvent } from "../types.ts";
+import { globalSubscribers } from "../subscriber.ts";
 
 export function startStateDeniedConsumer(
   owners: string[],

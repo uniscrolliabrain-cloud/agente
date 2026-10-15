@@ -1,7 +1,7 @@
 // VERIFICATION_DISAGREEMENT_CONSUMER_V1
-import type { Store } from "../../db.ts";
-import type { SystemEvent } from "../../engine/events/types.ts";
-import { globalSubscribers } from "../../engine/events/subscriber.ts";
+import type { Store } from "../../../db.ts";
+import type { SystemEvent } from "../types.ts";
+import { globalSubscribers } from "../subscriber.ts";
 
 export function startVerificationDisagreementConsumer(
   owners: string[],

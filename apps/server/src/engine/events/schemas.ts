@@ -33,6 +33,9 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
   "sop.step_completed": z.object({ ...base, index: z.number().int().nonnegative(), title: z.string().max(200) }),
   "sop.step_skipped": z.object({ ...base, index: z.number().int().nonnegative(), title: z.string().max(200), reason: z.string().max(500).optional() }),
   "sop.failed": z.object({ ...base, error: z.string().max(2000).optional() }),
+  // SOP_V2_EVENTS - variantes con punto del enum (sop.step.completed, sop.completed).
+  "sop.step.completed": z.object({ ...base, index: z.number().int().nonnegative(), title: z.string().max(200) }),
+  "sop.completed": z.object({ ...base, result: z.string().max(2000).optional() }),
   "action.proposed": z.object({ ...base, title: z.string().max(300), kind: z.string().max(60) }),
   "action.approved": z.object({ ...base, title: z.string().max(300) }),
   "action.denied": z.object({ ...base, title: z.string().max(300) }),
@@ -168,6 +171,7 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     goalId: z.string().max(200).optional(),
     deterministic: z.boolean(),
     llm: z.boolean(),
+  }),
   // WORKSPACE_EVENT_SCHEMAS_V1 - sobre comun de eventos de workspace.
   // Los payloads especificos se validan en el adapter del bus por workspace.
   // Mientras cada workspace no declare su schema, se valida el sobre minimo comun.
@@ -1032,14 +1036,6 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     correlationId: z.string().max(200).optional(),
     occurredAt: z.string().optional(),
   }).passthrough(),
-  "verification.executed": z.object({
-    tenantId: z.string().max(100).optional(),
-    workspaceId: z.string().max(100).optional(),
-    entityId: z.string().max(200).optional(),
-    correlationId: z.string().max(200).optional(),
-    occurredAt: z.string().optional(),
-  }).passthrough(),
-
   // EVENTS_KERNEL_SCHEMAS_V1
   "kernel.turn.opened": z.object({
     turnId: z.string().max(100),
@@ -1102,5 +1098,11 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     tenantId: z.string().max(100).optional(),
     correlationId: z.string().max(200).optional(),
   }).passthrough(),
+  // BUILD_APPLIED_V1 - payload que emite BuildApplier (build-applier.ts).
+  "build.applied": z.object({
+    buildId: z.string().max(200),
+    kind: z.string().max(60),
+    target: z.string().max(200),
+    actor: z.string().max(200).optional(),
   }),
 };

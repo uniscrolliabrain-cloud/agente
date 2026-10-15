@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@openmuse/domain": fileURLToPath(new URL("../../packages/domain/src/index.ts", import.meta.url)),
+      "@openmuse/domain": fileURLToPath(new URL("../../packages/domain/src", import.meta.url)),
     },
   },
   server: {

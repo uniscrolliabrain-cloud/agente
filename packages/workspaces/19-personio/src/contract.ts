@@ -1,5 +1,5 @@
 // 19-personio - contrato publico del workspace.
-import type { WorkspaceModule } from "../../../src/contracts/index.ts";
+import type { WorkspaceModule } from "../../src/contracts/index.ts";
 import { CAPABILITIES } from "./application/capabilities.ts";
 import { VIEWS } from "./application/views.ts";
 import { COMMANDS } from "./application/commands.ts";
