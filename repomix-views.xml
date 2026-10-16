@@ -1,0 +1,1870 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: apps/web/src/components/UsersView.tsx, apps/web/src/components/TasksView.tsx, apps/web/src/components/ControlCenterView.tsx, apps/web/src/components/ProjectsView.tsx, apps/web/src/components/DocumentsView.tsx, apps/web/src/components/ChatPanel.tsx, apps/web/src/components/ChatInput.tsx, apps/web/src/components/KpiCard.tsx, apps/web/src/components/LiveItem.tsx, apps/web/src/components/ApprovalItem.tsx, apps/web/src/workspaces/35-centro-mando/CentroMandoWorkspace.tsx
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+apps/
+  web/
+    src/
+      components/
+        ChatInput.tsx
+        ChatPanel.tsx
+        ControlCenterView.tsx
+        DocumentsView.tsx
+        KpiCard.tsx
+        LiveItem.tsx
+        ProjectsView.tsx
+        TasksView.tsx
+        UsersView.tsx
+      workspaces/
+        35-centro-mando/
+          CentroMandoWorkspace.tsx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="apps/web/src/components/ChatInput.tsx">
+import { useEffect, useRef, useState } from "react";
+import { ArrowUp, Check, LoaderCircle, Mic, Paperclip, Square, X } from "lucide-react";
+import { uploadFile } from "../api/files";
+import type { ChatAttachment } from "../types/api";
+
+interface Props {
+  seed?: string;
+  onSeedConsumed?: () => void;
+  onSend: (text: string, attachment?: ChatAttachment) => void;
+  onCancel: () => void;
+  streaming: boolean;
+}
+
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: ((event: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; [key: number]: { transcript: string } }> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+}
+
+interface SpeechWindow extends Window {
+  SpeechRecognition?: new () => SpeechRecognitionLike;
+  webkitSpeechRecognition?: new () => SpeechRecognitionLike;
+}
+
+type AttachState =
+  | { kind: "uploading"; file: File }
+  | { kind: "ready"; file: File; attachment: ChatAttachment }
+  | { kind: "error"; file: File; message: string };
+
+export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedConsumed }: Props) {
+  const [value, setValue] = useState("");
+  const [listening, setListening] = useState(false);
+  const [attach, setAttach] = useState<AttachState | null>(null);
+
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const voiceBaseRef = useRef<string>("");
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [value]);
+
+  useEffect(() => {
+    if (seed) {
+      setValue(seed);
+      onSeedConsumed?.();
+    }
+  }, [seed, onSeedConsumed]);
+
+  const pickFile = async (file: File) => {
+    setAttach({ kind: "uploading", file });
+    try {
+      const uploaded = await uploadFile(file);
+      setAttach({
+        kind: "ready",
+        file,
+        attachment: { id: uploaded.id, name: uploaded.name, size: uploaded.size },
+      });
+    } catch (err) {
+      setAttach({
+        kind: "error",
+        file,
+        message: err instanceof Error ? err.message : "Error al subir",
+      });
+    }
+  };
+
+  const submit = () => {
+    if (streaming) return;
+    if (!value.trim() && attach?.kind !== "ready") return;
+    const attachment = attach?.kind === "ready" ? attach.attachment : undefined;
+    onSend(value.trim(), attachment);
+    setValue("");
+    setAttach(null);
+    if (ref.current) ref.current.style.height = "auto";
+  };
+
+  const startVoice = () => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const speechWindow = window as SpeechWindow;
+    const SpeechRecognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "es-ES";
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (event) => {
+      let interim = "";
+      let final = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        if (result.isFinal) final += result[0].transcript;
+        else interim += result[0].transcript;
+      }
+      if (final) {
+        const base = voiceBaseRef.current.replace(/\s+$/, "");
+        voiceBaseRef.current = base ? `${base} ${final.trim()}` : final.trim();
+      }
+      const base = voiceBaseRef.current;
+      const tail = interim.trim();
+      setValue(base ? (tail ? `${base} ${tail}` : base) : tail);
+    };
+    recognition.onend = () => { setListening(false); recognitionRef.current = null; };
+    recognition.onerror = () => { setListening(false); recognitionRef.current = null; };
+
+    recognitionRef.current = recognition;
+    voiceBaseRef.current = value;
+    setListening(true);
+    recognition.start();
+  };
+
+  const canSend = Boolean(value.trim()) || attach?.kind === "ready";
+
+  return (
+    <div className="v2-composer">
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        placeholder="Pregunta lo que quieras o pide que ejecute un SOP..."
+        rows={2}
+        disabled={streaming}
+      />
+
+      {attach && (
+        <div className="v2-composer-chip" style={{ marginTop: 8, maxWidth: 260 }}>
+          {attach.kind === "uploading" && <LoaderCircle size={13} className="spin" />}
+          {attach.kind === "ready" && <Check size={13} />}
+          {attach.kind === "error" && <X size={13} />}
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {attach.kind === "error" ? attach.message : attach.file.name}
+          </span>
+          <button
+            type="button"
+            onClick={() => setAttach(null)}
+            title="Quitar archivo"
+            style={{ border: 0, background: "transparent", cursor: "pointer", color: "var(--v2-text-3)", display: "grid", placeItems: "center" }}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+
+      <div className="v2-composer-bottom">
+        <div className="v2-composer-tools">
+          <input
+            ref={fileRef}
+            type="file"
+            hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void pickFile(file);
+              e.target.value = "";
+            }}
+          />
+          <button
+            className="v2-composer-tool"
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={streaming || attach?.kind === "uploading"}
+            title="Adjuntar archivo"
+          >
+            <Paperclip size={16} />
+          </button>
+          <button
+            className="v2-composer-tool"
+            type="button"
+            onClick={startVoice}
+            disabled={streaming}
+            title="Transcribir voz"
+            style={listening ? { background: "var(--v2-purple-soft)", color: "var(--v2-purple)", borderColor: "var(--v2-purple-border)" } : undefined}
+          >
+            <Mic size={16} />
+          </button>
+          <button className="v2-composer-chip" type="button">
+            SOPs de Mi empresa
+          </button>
+        </div>
+        {streaming ? (
+          <button className="v2-send" type="button" onClick={onCancel} title="Detener">
+            <Square size={14} fill="currentColor" />
+          </button>
+        ) : (
+          <button className="v2-send" type="button" disabled={!canSend} onClick={submit} title="Enviar">
+            <ArrowUp size={17} strokeWidth={2.2} />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/KpiCard.tsx">
+// C2_KPICARD_V1 - KPI con contador animado + sparkline opcional.
+import { useEffect, useState } from "react";
+import Sparkline from "./Sparkline";
+
+interface Props {
+  label: string;
+  value: number;
+  meta?: string;
+  icon?: "green" | "orange" | "purple";
+  series?: number[];
+}
+
+function useCountUp(target: number, durationMs = 500) {
+  const [displayed, setDisplayed] = useState(0);
+  useEffect(() => {
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min((now - start) / durationMs, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayed(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs]);
+  return displayed;
+}
+
+export default function KpiCard({ label, value, meta, icon = "purple", series }: Props) {
+  const displayed = useCountUp(value);
+  return (
+    <div className="v3-kpi">
+      <div className="v3-kpi-head">
+        <div className={`v3-kpi-icon ${icon}`}>●</div>
+        <span className="v3-kpi-label">{label}</span>
+      </div>
+      <div className="v3-kpi-value">{displayed.toLocaleString("es-ES")}</div>
+      {series && series.length > 1 && (
+        <div className="v3-kpi-spark">
+          <Sparkline values={series} color="var(--v2-purple)" />
+        </div>
+      )}
+      {meta && <div className="v3-kpi-meta">{meta}</div>}
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/LiveItem.tsx">
+// B3_LIVEITEM_V1 - item de sidebar con franja 18px y 9 estados.
+import { alertUrgency, pickPrimary, type LiveActivity } from "@openmuse/domain/live";
+import { fmtDur, useNow } from "../hooks/useNow";
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  active?: boolean;
+  activities?: LiveActivity[];
+  onClick?: () => void;
+}
+
+export default function LiveItem({
+  title,
+  subtitle,
+  active,
+  activities = [],
+  onClick,
+}: Props) {
+  const now = useNow();
+  const live = pickPrimary(activities);
+  const urgent = live?.kind === "alert" && alertUrgency(live) === "urgent";
+
+  return (
+    <button
+      type="button"
+      className="live-item"
+      data-active={active || undefined}
+      data-kind={live?.kind ?? "idle"}
+      data-urgent={urgent || undefined}
+      onClick={onClick}
+      aria-label={`${title}${live && "label" in live ? `, ${live.label}` : ""}`}
+    >
+      <span className="live-item__title">{title}</span>
+      <span className="live-item__strip">
+        {!live && subtitle}
+        {live?.kind === "counter" && (
+          <>
+            <i className="live-dot live-dot--up" />
+            {live.label} · <b className="live-value">{live.value.toLocaleString("es-ES")}</b>
+          </>
+        )}
+        {live?.kind === "progress" && (
+          <>
+            {live.label}
+            <span className="live-progress" role="progressbar" aria-valuenow={live.value} aria-valuemax={live.max}>
+              <i style={{ width: `${Math.min(100, (live.value / Math.max(1, live.max)) * 100)}%` }} />
+            </span>
+            <b className="live-value">{Math.round((live.value / Math.max(1, live.max)) * 100)}%</b>
+            {live.etaSec != null && <> · ~{fmtDur(live.etaSec)}</>}
+          </>
+        )}
+        {live?.kind === "pulse" && (
+          <>
+            <i className="live-dot live-dot--pulse" />
+            {live.label}
+          </>
+        )}
+        {live?.kind === "timer" && (
+          <>
+            ⏱ {live.label} <b className="live-value">{fmtDur((now - live.startedAt) / 1000)}</b>
+          </>
+        )}
+        {live?.kind === "alert" && (
+          <>
+            <span className="live-warn">!</span>
+            <b className="live-label live-label--warn">{live.label}</b>
+          </>
+        )}
+        {live?.kind === "error" && <b className="live-label live-label--error">Falló · {live.label}</b>}
+        {live?.kind === "queued" && <>En cola · {live.position}º</>}
+        {live?.kind === "stale" && <>Sin datos hace {fmtDur((now - live.lastSeen) / 1000)}</>}
+        {live?.kind === "done" && <>✓ {live.label}</>}
+      </span>
+    </button>
+  );
+}
+</file>
+
+<file path="apps/web/src/workspaces/35-centro-mando/CentroMandoWorkspace.tsx">
+import { useCentroMandoData } from './hooks/useCentroMandoData';
+import { useDateRange } from './hooks/useDateRange';
+import { useToast } from './hooks/useToast';
+import { useClientSelection } from './hooks/useClientSelection';
+import { useMobileMenu } from './hooks/useMobileMenu';
+import { CentroMandoSidebar } from './components/CentroMandoSidebar';
+import { WorkspaceHeader } from './components/WorkspaceHeader';
+import { KpiGrid } from './components/KpiGrid';
+import { KpiCard } from './components/KpiCard';
+import { MiniBarList } from './components/MiniBarList';
+import { BlockedInvoiceList } from './components/BlockedInvoiceList';
+import { Sparkline } from './components/Sparkline';
+import { PipelineFunnel } from './components/PipelineFunnel';
+import { RetentionChart } from './components/RetentionChart';
+import { RetentionStats } from './components/RetentionStats';
+import { CriticalTicketsPanel } from './components/CriticalTicketsPanel';
+import { ActiveProjectsPanel } from './components/ActiveProjectsPanel';
+import { AgentsPerformancePanel } from './components/AgentsPerformancePanel';
+import { TopClientsPanel } from './components/TopClientsPanel';
+import { AiInsightsPanel } from './components/AiInsightsPanel';
+import { ClientDetailModal } from './components/ClientDetailModal';
+import { Toast } from './components/Toast';
+
+export default function CentroMandoWorkspace() {
+  const { range, setRange } = useDateRange('30d');
+  const { toast, showToast } = useToast();
+  const { selectedClient, setSelectedClient } = useClientSelection();
+  const { mobileMenu, toggle, close } = useMobileMenu();
+  const data = useCentroMandoData(range);
+
+  return (
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] flex overflow-hidden">
+      <CentroMandoSidebar mobileOpen={mobileMenu} onClose={close} onNewChat={() => showToast('Nuevo chat creado con IA')} />
+      <div className="flex-1 min-w-0 flex flex-col">
+        <header className="sticky top-0 z-30 bg-[rgba(248,247,255,0.85)] backdrop-blur-[14px] border-b border-[var(--border)] lg:hidden">
+          <div className="px-4 h-[60px] flex items-center gap-3">
+            <button onClick={toggle} className="w-9 h-9 rounded-full bg-white border border-[var(--border)] grid place-items-center">☰</button>
+            <span className="text-[14px] font-semibold">Centro de Mando</span>
+          </div>
+        </header>
+        <WorkspaceHeader range={range} onRange={setRange} onExport={() => showToast('Exportando informe con IA · PDF + CSV')} />
+        <main className="px-4 lg:px-8 py-6 space-y-5 overflow-x-hidden">
+          <KpiGrid>
+            <KpiCard label="MENSAJES / DÍA">
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-[28px] font-semibold tracking-tight">247</span>
+                <span className="text-[12px] px-1.5 py-0.5 rounded-full bg-[#D1FAE5] text-emerald-700 font-medium">+12%</span>
+              </div>
+              <div className="text-[11px] text-[var(--muted)]">vs mes anterior</div>
+              <div className="mt-4"><MiniBarList rows={data.messageRows} /></div>
+              <div className="mt-4 rounded-[12px] bg-[#FFE4E6] border border-red-100 px-3 py-2 flex items-center gap-2">
+                <span className="text-[11px] font-bold text-red-600 tracking-widest">ALTA</span>
+                <span className="text-[11px] text-red-700">Equipo desbordado · automatizar WhatsApp</span>
+              </div>
+            </KpiCard>
+            <KpiCard label="FACTURACIÓN BLOQUEADA">
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-[28px] font-semibold tracking-tight">€4.280</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FEF3C7] text-amber-700 font-medium">4 facturas</span>
+              </div>
+              <div className="text-[11px] text-[var(--muted)]">No sincronizan con Holded</div>
+              <BlockedInvoiceList onResolve={() => showToast('Resolviendo 4 facturas con IA')} />
+            </KpiCard>
+            <KpiCard label="TIEMPO MEDIO RESPUESTA">
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-[28px] font-semibold tracking-tight">2h 14m</span>
+                <span className="text-[12px] px-1.5 py-0.5 rounded-full bg-[#D1FAE5] text-emerald-700 font-medium">-18%</span>
+              </div>
+              <div className="text-[11px] text-emerald-600">Gracias a agente · -42m vs mes anterior</div>
+              <div className="mt-4">
+                <Sparkline points={data.sparkPoints} />
+                <div className="flex justify-between text-[10px] text-[var(--muted)]"><span>7d</span><span>15d</span><span>Hoy</span></div>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
+                <div className="rounded-[10px] bg-[#F8F7FF] p-2"><div className="text-[var(--muted)]">Bot</div><div className="font-semibold">34s</div></div>
+                <div className="rounded-[10px] bg-[#F8F7FF] p-2"><div className="text-[var(--muted)]">Humano</div><div className="font-semibold">1h 58m</div></div>
+                <div className="rounded-[10px] bg-[#FFE4E6] p-2"><div className="text-red-600">Fuera hrs</div><div className="font-semibold">23% fail</div></div>
+              </div>
+            </KpiCard>
+            <KpiCard label="LTV TOTAL PIPELINE" dark>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-[28px] font-semibold tracking-tight">€84.2k</span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10">24 clientes</span>
+              </div>
+              <div className="text-[11px] text-white/60">€3.5k ticket medio</div>
+              <div className="mt-5"><PipelineFunnel stages={data.pipelineStages} /></div>
+              <div className="mt-4 flex gap-2">
+                <button onClick={() => showToast('Funnel analizado')} className="h-8 px-3 rounded-full bg-white text-black text-[11px] font-medium">Ver funnel</button>
+                <button onClick={() => showToast('Pipeline exportado')} className="h-8 px-3 rounded-full bg-white/10 text-white text-[11px]">Exportar</button>
+              </div>
+            </KpiCard>
+          </KpiGrid>
+          <section className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4">
+            <div className="rounded-[20px] bg-white border border-[var(--border)] shadow-[0_8px_24px_rgba(17,17,19,0.06)] p-5 lg:p-6">
+              <div>
+                <h3 className="text-[15px] font-semibold tracking-tight">Retención / Churn</h3>
+                <p className="text-[11px] text-[var(--muted)] mt-0.5">Equipo Growth retención subió 12% después del fix · referencia WhatsApp screenshot</p>
+              </div>
+              <RetentionChart data={data.retention} range={range} />
+              <RetentionStats />
+            </div>
+            <CriticalTicketsPanel tickets={data.tickets} onOpen={(name) => showToast('Abriendo ticket ' + name)} onVerCola={() => showToast('Cola de pagos priorizada')} onFixBot={() => showToast('Agente Soporte re-entrenado')} />
+          </section>
+          <section className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-4">
+            <ActiveProjectsPanel projects={data.projects} onReport={() => showToast('Checklist generado para 5 obras')} />
+            <AgentsPerformancePanel agents={data.agents} onEdit={(name) => showToast('Editando ' + name)} onLogs={(name, conf) => showToast('Logs ' + name + ' · ' + conf + '%')} />
+          </section>
+          <TopClientsPanel clients={data.clients} onOpen={(c) => setSelectedClient(c)} onAction={(c) => showToast(c.action + ' · ' + c.name)} />
+          <AiInsightsPanel insights={data.insights} onAction={(i) => showToast(i.cta)} />
+          <div className="h-10" />
+        </main>
+      </div>
+      {selectedClient && <ClientDetailModal client={selectedClient} onClose={() => setSelectedClient(null)} onGenerate={() => { showToast('Generando ' + selectedClient.action + ' para ' + selectedClient.name); setSelectedClient(null); }} />}
+      <Toast message={toast} />
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/ProjectsView.tsx">
+// UI_PANEL_SLIDE_V1_USE
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, FileText, Plus, Sparkles, Trash2, X } from "lucide-react";
+import {
+  type ProjectBlock,
+  type ProjectBlockType,
+  type ProjectStatus,
+} from "../api/projects";
+import { useProjects } from "../hooks/useProjects";
+
+interface Props {
+  enabled: boolean;
+}
+
+const STATUS_LABEL: Record<ProjectStatus, string> = {
+  active: "Activo",
+  paused: "Pausado",
+  completed: "Completado",
+  archived: "Archivado",
+};
+
+function relativeTime(iso?: string): string {
+  if (!iso) return "";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 60000) return "ahora";
+  if (ms < 3600000) return `${Math.floor(ms / 60000)}m`;
+  if (ms < 86400000) return `${Math.floor(ms / 3600000)}h`;
+  return `${Math.floor(ms / 86400000)}d`;
+}
+
+function uid(): string {
+  return `blk-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function newBlock(type: ProjectBlockType): ProjectBlock {
+  return { id: uid(), type, text: "" };
+}
+
+export default function ProjectsView({ enabled }: Props) {
+  const p = useProjects(enabled);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [draftBlocks, setDraftBlocks] = useState<ProjectBlock[] | null>(null);
+  const [savingBlocks, setSavingBlocks] = useState(false);
+
+  useEffect(() => {
+    if (!p.detail) {
+      setDraftBlocks(null);
+      return;
+    }
+    setDraftBlocks(p.detail.blocks);
+  }, [p.detail]);
+
+  const hasUnsavedBlocks = useMemo(() => {
+    if (!p.detail || !draftBlocks) return false;
+    return JSON.stringify(draftBlocks) !== JSON.stringify(p.detail.blocks);
+  }, [p.detail, draftBlocks]);
+
+  const submitCreate = async () => {
+    const name = newName.trim();
+    if (!name) return;
+    await p.create({ name, description: newDesc.trim() });
+    setCreating(false);
+    setNewName("");
+    setNewDesc("");
+  };
+
+  const saveBlocks = async () => {
+    if (!p.detail || !draftBlocks) return;
+    setSavingBlocks(true);
+    await p.saveBlocks(p.detail.id, draftBlocks);
+    setSavingBlocks(false);
+  };
+
+  const updateBlock = (id: string, patch: Partial<ProjectBlock>) => {
+    setDraftBlocks((current) =>
+      current ? current.map((b) => (b.id === id ? { ...b, ...patch } : b)) : current,
+    );
+  };
+
+  const removeBlock = (id: string) => {
+    setDraftBlocks((current) => (current ? current.filter((b) => b.id !== id) : current));
+  };
+
+  const addBlock = (type: ProjectBlockType) => {
+    setDraftBlocks((current) => (current ? [...current, newBlock(type)] : [newBlock(type)]));
+  };
+
+  if (p.detail && draftBlocks) {
+    return (
+      <main className="view-shell">
+        <div className="view-header">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button className="ghost-icon-button" onClick={p.closeDetail} title="Volver">
+              <ArrowLeft size={17} />
+            </button>
+            <div>
+              <h2 style={{ margin: 0 }}>{p.detail.name}</h2>
+              <span className="view-header-meta">
+                {STATUS_LABEL[p.detail.status]} · actualizado {relativeTime(p.detail.updatedAt)}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <select
+              value={p.detail.status}
+              onChange={(e) => void p.update(p.detail!.id, { status: e.target.value as ProjectStatus })}
+              style={{ height: 30, borderRadius: 7, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--text)", padding: "0 8px", fontSize: 11 }}
+            >
+              <option value="active">Activo</option>
+              <option value="paused">Pausado</option>
+              <option value="completed">Completado</option>
+              <option value="archived">Archivado</option>
+            </select>
+            <button
+              className="primary-btn"
+              onClick={saveBlocks}
+              disabled={!hasUnsavedBlocks || savingBlocks}
+            >
+              {savingBlocks ? "Guardando…" : "Guardar"}
+            </button>
+          </div>
+        </div>
+
+        <div className="view-memory-list" style={{ maxWidth: 820 }}>
+          {p.detail.description && (
+            <div className="view-memory-card" style={{ background: "var(--surface-2)" }}>
+              <div className="view-memory-text">{p.detail.description}</div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+            {(["heading", "text", "checklist", "timeline", "note"] as ProjectBlockType[]).map((t) => (
+              <button key={t} className="ctrl-btn" onClick={() => addBlock(t)}>
+                <Plus size={12} style={{ verticalAlign: "middle", marginRight: 4 }} />
+                {t === "heading" ? "Título" : t === "text" ? "Texto" : t === "checklist" ? "Checklist" : t === "timeline" ? "Timeline" : "Nota"}
+              </button>
+            ))}
+          </div>
+
+          {draftBlocks.length === 0 && (
+            <div className="view-empty" style={{ padding: "30px 10px" }}>
+              <FileText size={22} />
+              <p>Este proyecto está vacío.</p>
+              <small>Añade bloques con los botones de arriba.</small>
+            </div>
+          )}
+
+          {draftBlocks.map((b) => (
+            <div key={b.id} className="view-memory-card" style={{ position: "relative" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span className="view-memory-source" style={{ fontSize: 9 }}>
+                  {b.type === "heading" ? "Título" : b.type === "text" ? "Texto" : b.type === "checklist" ? "Checklist" : b.type === "timeline" ? "Timeline" : "Nota"}
+                </span>
+                <button
+                  className="ghost-icon-button"
+                  onClick={() => removeBlock(b.id)}
+                  title="Borrar bloque"
+                  style={{ marginLeft: "auto", width: 24, height: 24 }}
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+              {b.type === "checklist" ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <input
+                    type="checkbox"
+                    checked={b.checked ?? false}
+                    onChange={(e) => updateBlock(b.id, { checked: e.target.checked })}
+                  />
+                  <input
+                    type="text"
+                    value={b.text}
+                    onChange={(e) => updateBlock(b.id, { text: e.target.value })}
+                    placeholder="Elemento"
+                    style={{ flex: 1, border: 0, outline: 0, background: "transparent", color: "var(--text)", fontSize: 13 }}
+                  />
+                </div>
+              ) : b.type === "heading" ? (
+                <input
+                  type="text"
+                  value={b.text}
+                  onChange={(e) => updateBlock(b.id, { text: e.target.value })}
+                  placeholder="Título del bloque"
+                  style={{ width: "100%", border: 0, outline: 0, background: "transparent", color: "var(--text)", fontSize: 18, fontWeight: 600 }}
+                />
+              ) : (
+                <textarea
+                  value={b.text}
+                  onChange={(e) => updateBlock(b.id, { text: e.target.value })}
+                  rows={b.type === "note" ? 2 : 3}
+                  placeholder={b.type === "timeline" ? "Fecha — hito" : "Contenido"}
+                  style={{
+                    width: "100%",
+                    border: 0,
+                    outline: 0,
+                    background: "transparent",
+                    color: b.type === "note" ? "var(--text-2)" : "var(--text)",
+                    fontSize: b.type === "note" ? 12 : 13,
+                    resize: "vertical",
+                    fontStyle: b.type === "note" ? "italic" : "normal",
+                    fontFamily: "inherit",
+                  }}
+                />
+              )}
+            </div>
+          ))}
+
+          {p.detail.memories.length > 0 && (
+            <>
+              <div className="nav-label" style={{ padding: "12px 2px 4px" }}>
+                Memorias vinculadas ({p.detail.memories.length})
+              </div>
+              {p.detail.memories.map((m) => (
+                <div key={m.id} className="view-memory-card">
+                  <div className="view-memory-text">{m.text}</div>
+                  <div className="view-memory-meta">
+                    <span className="view-memory-source">{m.source}</span>
+                    {m.category && <span>{m.category}</span>}
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {p.detail.artifacts.length > 0 && (
+            <>
+              <div className="nav-label" style={{ padding: "12px 2px 4px" }}>
+                Artefactos vinculados ({p.detail.artifacts.length})
+              </div>
+              {p.detail.artifacts.map((a) => (
+                <div key={a.id} className="view-memory-card">
+                  <div className="view-memory-text" style={{ fontWeight: 600 }}>{a.title}</div>
+                  <div className="view-memory-meta">
+                    <span className="view-memory-source">{a.kind}</span>
+                    <span>{relativeTime(a.createdAt)}</span>
+                  </div>
+                  {a.summary && <div className="view-memory-text" style={{ marginTop: 6, color: "var(--text-2)" }}>{a.summary}</div>}
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="view-shell">
+      <div className="view-header">
+        <div>
+          <h2>Proyectos</h2>
+          <span className="view-header-meta">{p.projects.length} proyectos</span>
+        </div>
+        <button className="primary-btn" onClick={() => setCreating(true)}>
+          <Plus size={14} style={{ verticalAlign: "middle", marginRight: 6 }} />
+          Nuevo proyecto
+        </button>
+      </div>
+
+      {p.error && <div className="chat-error" style={{ margin: 16 }}>{p.error}</div>}
+
+      {p.projects.length === 0 && !p.loading ? (
+        <div className="view-empty">
+          <Sparkles size={22} />
+          <p>Aún no tienes proyectos.</p>
+          <small>Crea uno o pídele al agente que cree un briefing desde el chat.</small>
+        </div>
+      ) : (
+        <div className="users-grid">
+          {p.projects.map((proj) => (
+            <div key={proj.id} className="user-card" onClick={() => void p.openDetail(proj.id)} style={{ cursor: "pointer" }}>
+              <div className="user-card-top">
+                <div className="user-card-avatar">{proj.name.slice(0, 1).toUpperCase()}</div>
+                <div className="user-card-info">
+                  <div className="user-card-name">{proj.name}</div>
+                  {proj.description && (
+                    <div className="user-card-email" title={proj.description}>
+                      {proj.description.slice(0, 80)}
+                    </div>
+                  )}
+                </div>
+                <span className={`user-card-role ${proj.status === "active" ? "admin" : "user"}`}>
+                  {STATUS_LABEL[proj.status]}
+                </span>
+              </div>
+              <div className="user-card-meta">
+                <span>{proj.blocks.length} bloques</span>
+                <span>{proj.linkedMemoryIds.length} memorias</span>
+                <span className="user-card-time">{relativeTime(proj.updatedAt)}</span>
+              </div>
+              <div className="user-card-actions">
+                <button
+                  className="user-card-btn danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`¿Borrar "${proj.name}"?`)) void p.remove(proj.id);
+                  }}
+                  title="Borrar"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {creating && (
+        <div className="modal-overlay" onClick={() => setCreating(false)}>
+          <div className="modal small" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <div className="modal-title">Nuevo proyecto</div>
+                <div className="modal-sub">Un espacio para organizar un tema</div>
+              </div>
+              <button className="ghost-icon-button" onClick={() => setCreating(false)}>
+                <X size={17} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <label className="modal-label">Nombre</label>
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Ej: Cliente Acme"
+                autoFocus
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)", color: "var(--text)", fontSize: 12.5, outline: "none", fontFamily: "inherit" }}
+              />
+              <label className="modal-label" style={{ marginTop: 14 }}>Descripción (opcional)</label>
+              <textarea
+                value={newDesc}
+                onChange={(e) => setNewDesc(e.target.value)}
+                rows={3}
+                placeholder="De qué trata este proyecto"
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--border)", borderRadius: 8, background: "var(--surface)", color: "var(--text)", fontSize: 12.5, outline: "none", fontFamily: "inherit", resize: "vertical" }}
+              />
+              <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
+                <button className="ctrl-btn" onClick={() => setCreating(false)}>Cancelar</button>
+                <button className="primary-btn" onClick={submitCreate} disabled={!newName.trim()}>
+                  Crear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/UsersView.tsx">
+// FIX_02_USERSVIEW_CLEAN_V1 - import PermissionMatrix pendiente de wire.
+// BUG05_USERS_VIEW_V2 - usa PermissionMatrix en el detalle de rol.
+// E3_USERSVIEW_MATRIX_V1 - usar PermissionMatrix en el detalle del rol.
+// UI_PANEL_SLIDE_V1_USE
+import { useEffect, useState } from "react";
+import { Check, Plus, Trash2, UserCog, UserX, X } from "lucide-react";
+import { deleteUser, listUsers, userTasks, type AuthUser, type UserTaskSummary } from "../api/auth";
+import { relativeTime } from "../lib/format";
+import UserModal from "./UserModal";
+// WIRE_USERS_MATRIX_V1
+
+interface Props {
+  currentUserId: string;
+}
+
+export default function UsersView({ currentUserId }: Props) {
+  const [users, setUsers] = useState<AuthUser[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<AuthUser | null>(null);
+  const [detail, setDetail] = useState<{ user: AuthUser; tasks: UserTaskSummary[]; total: number } | null>(null);
+
+  const load = async () => {
+    try {
+      const list = await listUsers();
+      setUsers(list);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error cargando usuarios");
+    }
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const openCreate = () => { setEditing(null); setModalOpen(true); };
+  const openEdit = (u: AuthUser) => { setEditing(u); setModalOpen(true); };
+
+  const remove = async (u: AuthUser) => {
+    if (!confirm(`¿Borrar a ${u.name} (${u.email})? Esta accion no se puede deshacer.`)) return;
+    try {
+      await deleteUser(u.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al borrar");
+    }
+  };
+
+  const openDetail = async (u: AuthUser) => {
+    try {
+      const res = await userTasks(u.id, 20);
+      setDetail({ user: u, tasks: res.tasks, total: res.total });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error cargando tareas");
+    }
+  };
+
+  return (
+    <div className="v2-tasks-view" style={{ maxWidth: 1000 }}>
+      <div className="v2-tasks-header">
+        <h1 className="v2-tasks-title">Equipo</h1>
+        <div className="v2-tasks-meta">{users.length} cuentas</div>
+        <button className="v2-need-action-btn" style={{ marginLeft: "auto" }} onClick={openCreate}>
+          <Plus size={14} /> Nuevo usuario
+        </button>
+      </div>
+
+      {error && <div className="chat-error" style={{ marginBottom: 16 }}>{error}</div>}
+
+      {users.length === 0 && !error ? (
+        <div className="v2-tasks-empty" style={{ padding: "40px 20px" }}>
+          <UserX size={22} style={{ marginBottom: 8, color: "var(--v2-purple)" }} />
+          <p style={{ margin: 0, fontSize: 13, color: "var(--v2-text)" }}>No hay usuarios todavia.</p>
+          <small style={{ color: "var(--v2-text-3)" }}>Crea el primero con el boton de arriba.</small>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 12 }}>
+          {users.map((u) => {
+            const isMe = u.id === currentUserId;
+            return (
+              <div
+                key={u.id}
+                className="v2-suggestion-card"
+                style={{
+                  cursor: "default",
+                  alignItems: "flex-start",
+                  opacity: u.active ? 1 : 0.6,
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10, width: "100%" }}>
+                  <div
+                    className="v2-suggestion-icon"
+                    style={{ background: "var(--v2-purple)", color: "#FFF", borderColor: "var(--v2-purple)" }}
+                  >
+                    {u.name.slice(0, 1).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+                      {u.name}
+                      {isMe && (
+                        <span className="v2-tag agent" style={{ fontSize: 9 }}>tu</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: "var(--v2-text-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {u.email}
+                    </div>
+                  </div>
+                  <span className={`v2-tag ${u.role === "admin" ? "agent" : ""}`}>{u.role}</span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "var(--v2-text-3)", width: "100%" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: u.active ? "var(--v2-green)" : "var(--v2-text-3)" }}>
+                    {u.active ? <Check size={11} /> : <X size={11} />}
+                    {u.active ? "Activo" : "Inactivo"}
+                  </span>
+                  {u.createdAt && <span>desde {relativeTime(u.createdAt)}</span>}
+                </div>
+
+                {(u.setup.sopIds.length > 0 || u.setup.greeting) && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 10px", background: "#FFF", border: "1px solid var(--v2-border)", borderRadius: 8, fontSize: 10.5, color: "var(--v2-text-2)", width: "100%" }}>
+                    {u.setup.sopIds.length > 0 && (
+                      <span><b style={{ color: "var(--v2-text)" }}>{u.setup.sopIds.length}</b> SOP{u.setup.sopIds.length !== 1 ? "s" : ""} asignado{u.setup.sopIds.length !== 1 ? "s" : ""}</span>
+                    )}
+                    {u.setup.greeting && <span>greeting personalizado</span>}
+                  </div>
+                )}
+
+                <div style={{ display: "flex", gap: 6, paddingTop: 8, borderTop: "1px solid var(--v2-border)", marginTop: "auto", width: "100%" }}>
+                  <button className="v2-pill" style={{ flex: 1, justifyContent: "center" }} onClick={() => openDetail(u)} title="Ver tareas">
+                    <UserCog size={13} /> Tareas
+                  </button>
+                  <button className="v2-pill" style={{ flex: 1, justifyContent: "center" }} onClick={() => openEdit(u)} title="Editar">
+                    Editar
+                  </button>
+                  {!isMe && (
+                    <button className="v2-pill" onClick={() => remove(u)} title="Borrar" style={{ color: "var(--v2-warn-text)" }}>
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {modalOpen && (
+        <UserModal
+          editing={editing}
+          onClose={() => setModalOpen(false)}
+          onSaved={async () => { setModalOpen(false); await load(); }}
+        />
+      )}
+
+      {detail && (
+        <div className="modal-overlay" onClick={() => setDetail(null)}>
+          <div className="modal small" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <div>
+                <div className="modal-title">Tareas de {detail.user.name}</div>
+                <div className="modal-sub">{detail.total} en total · {detail.tasks.length} mas recientes</div>
+              </div>
+              <button className="ghost-icon-button" onClick={() => setDetail(null)}><X size={17} /></button>
+            </div>
+            <div className="modal-body">
+              {detail.tasks.length === 0 ? (
+                <div className="muted">Sin tareas todavia.</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {detail.tasks.map((t) => (
+                    <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 9, padding: "9px 11px", background: "var(--v2-bg-soft)", border: "1px solid var(--v2-border)", borderRadius: 8, fontSize: 11 }}>
+                      <span className="v2-tag">{t.kind.slice(0, 2).toUpperCase()}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+                        <div style={{ fontSize: 10, color: "var(--v2-text-3)", marginTop: 2 }}>{t.status} · {relativeTime(t.updatedAt) || "sin fecha"}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/ControlCenterView.tsx">
+// C2_CONTROLCENTER_V2 - usa KpiCard y Sparkline.
+// UI_ANIMATED_NUMBER_V1
+import { useEffect, useState } from "react";
+// UI_CC_CLEANUP_V1 - quitados Activity, AlertCircle, Briefcase sin usar.
+import { ChevronRight } from "lucide-react"; // FIX_02_CCVIEW_CLEAN_V1
+import { useTasks } from "../hooks/useTasks";
+import KpiCard from "./KpiCard"; // FIX_02_CCVIEW_CLEAN_V1
+// WIRE_KPICARD_V1
+import { useNotifications } from "../hooks/useNotifications";
+import type { AgentTask } from "../types/api";
+import { relativeTime } from "../lib/format";
+
+interface Props {
+  enabled: boolean;
+  onOpenTask?: (taskId: string) => void;
+}
+
+function statusLabel(task: AgentTask): string {
+  if (task.status === "running") {
+    const running = task.plan.find((s) => s.status === "running");
+    if (running) return running.title;
+    return "Trabajando en ello";
+  }
+  if (task.status === "waiting_approval") return "Esperando tu aprobación";
+  if (task.status === "waiting_input") return "Necesita datos tuyos";
+  if (task.status === "queued") return "En cola";
+  if (task.status === "scheduled") return "Programada";
+  if (task.status === "paused") return "En pausa";
+  if (task.status === "succeeded") return "Completada";
+  if (task.status === "failed") return "Con error";
+  return "Cancelada";
+}
+
+function humanKind(kind: string): string {
+  if (kind === "sop") return "Proceso";
+  if (kind === "document") return "Documento";
+  if (kind === "monitor") return "Vigilancia";
+  if (kind === "finance") return "Finanzas";
+  if (kind === "plan") return "Plan";
+  return "Tarea";
+}
+
+function initialOf(assignedTo?: string): string {
+  if (!assignedTo) return "IA";
+  return assignedTo.slice(0, 1).toUpperCase();
+}
+
+export default function ControlCenterView({ enabled, onOpenTask }: Props) {
+  const tasks = useTasks(3000, enabled);
+  const notifications = useNotifications(enabled);
+  const [, setTick] = useState(0);
+
+  // Re-render cada 5 s para que "hace X min" y los contadores en vivo se refresquen.
+  useEffect(() => {
+    const t = setInterval(() => setTick((n) => n + 1), 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const all = tasks.tasks;
+  const running = all.filter((t) => t.status === "running");
+  const queued = all.filter((t) => t.status === "queued" || t.status === "scheduled");
+  const paused = all.filter((t) => t.status === "paused");
+  const needsAction = all.filter(
+    (t) => t.status === "waiting_approval" || t.status === "waiting_input",
+  );
+  const completed = all.filter((t) => t.status === "succeeded");
+  const failed = all.filter((t) => t.status === "failed");
+  const idle = queued.length + paused.length;
+
+  const banner = needsAction[0];
+
+  const workerBusy = running.length;
+  const workerIdle = idle;
+  const workerPaused = paused.length;
+  const workerTotal = workerBusy + workerIdle + workerPaused;
+
+  const lastError = failed[0];
+
+  return (
+    <div className="v3-cc-main">
+      <div className="v3-cc-header">
+        <h1 className="v3-cc-title">Centro de control</h1>
+        <div className="v3-cc-sub">
+          {workerTotal > 0
+            ? `${workerBusy} agente${workerBusy === 1 ? "" : "s"} trabajando ahora mismo`
+            : "Todo en calma"}
+          {" · "}
+          {needsAction.length > 0
+            ? `${needsAction.length} cosa${needsAction.length === 1 ? "" : "s"} esperando tu OK`
+            : "nada esperando tu OK"}
+        </div>
+      </div>
+
+      {/* KPIs */}
+      <div className="v3-cc-kpis">
+        {/* WIRE_KPICARD_V1 */}
+        <KpiCard
+          label="Agentes trabajando"
+          value={workerBusy}
+          icon="green"
+          meta={`${workerIdle} esperando · ${workerPaused} en pausa`}
+        />
+        <KpiCard
+          label="Tareas completadas"
+          value={completed.length}
+          meta={`${failed.length} con error · ${all.length} en total`}
+        />
+        <KpiCard
+          label="Pendientes de tu OK"
+          value={needsAction.length}
+          icon="orange"
+          meta={notifications.unread > 0 ? `${notifications.unread} notificaciones sin leer` : "todo visto"}
+        />
+      </div>
+
+      {/* Banner "necesita tu accion" */}
+      {banner && (
+        <div className="v2-need-action">
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div className="v2-need-action-icon">⚠️</div>
+            <div>
+              <div className="v2-need-action-eyebrow">Necesita tu acción</div>
+              <div className="v2-need-action-title">{banner.title}</div>
+              <div className="v2-need-action-sub">
+                {banner.status === "waiting_input"
+                  ? "Necesita datos tuyos para continuar"
+                  : "Esperando tu aprobación"}
+              </div>
+            </div>
+          </div>
+          <button
+            className="v2-need-action-btn"
+            onClick={() => onOpenTask?.(banner.id)}
+          >
+            Revisar
+          </button>
+        </div>
+      )}
+
+      {/* Procesos en curso */}
+      <div className="v3-cc-section">
+        <div className="v3-cc-section-head">
+          <span className="v3-cc-section-title">Procesos en marcha</span>
+          <span className="v3-cc-section-meta">
+            {running.length} en curso
+          </span>
+        </div>
+        {running.length === 0 ? (
+          <div className="v3-cc-empty">
+            {all.length === 0
+              ? "Aún no hay procesos en marcha."
+              : "Nada trabajando ahora mismo."}
+          </div>
+        ) : (
+          running.slice(0, 6).map((t) => (
+            <div
+              key={t.id}
+              className="v3-task-row"
+              onClick={() => onOpenTask?.(t.id)}
+            >
+              <div className="v3-spinner" />
+              <div className="v3-task-body">
+                <div className="v3-task-title">{t.title}</div>
+                <div className="v3-task-sub">
+                  {humanKind(t.kind)} · {statusLabel(t)} · {relativeTime(t.updatedAt)}
+                </div>
+              </div>
+              <div className="v3-task-tags">
+                <span className="v2-tag agent">{humanKind(t.kind)}</span>
+                <div className="v3-task-avatar">{initialOf(t.assignedTo)}</div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Pendientes */}
+      {queued.length > 0 && (
+        <div className="v3-cc-section">
+          <div className="v3-cc-section-head">
+            <span className="v3-cc-section-title">En cola</span>
+            <span className="v3-cc-section-meta">{queued.length} esperando</span>
+          </div>
+          {queued.slice(0, 5).map((t) => (
+            <div
+              key={t.id}
+              className="v3-task-row soft"
+              onClick={() => onOpenTask?.(t.id)}
+            >
+              <span className="v2-task-status empty" />
+              <div className="v3-task-body">
+                <div className="v3-task-title">{t.title}</div>
+                <div className="v3-task-sub">
+                  {humanKind(t.kind)} · {statusLabel(t)}
+                </div>
+              </div>
+              <div className="v3-task-tags">
+                <ChevronRight size={14} style={{ color: "var(--v2-text-3)" }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Estado del equipo + Resumen */}
+      <div className="v3-cc-bottom">
+        <div className="v3-cc-panel">
+          <div className="v3-cc-panel-title">Estado del equipo</div>
+          <div className="v3-cc-stat">
+            <span>Trabajando</span>
+            <div className="v3-cc-bar green">
+              <span style={{ width: `${workerTotal ? (workerBusy / workerTotal) * 100 : 0}%` }} />
+            </div>
+            <b>{workerBusy}</b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Esperando</span>
+            <div className="v3-cc-bar gray">
+              <span style={{ width: `${workerTotal ? (workerIdle / workerTotal) * 100 : 0}%` }} />
+            </div>
+            <b>{workerIdle}</b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>En pausa</span>
+            <div className="v3-cc-bar orange">
+              <span style={{ width: `${workerTotal ? (workerPaused / workerTotal) * 100 : 0}%` }} />
+            </div>
+            <b>{workerPaused}</b>
+          </div>
+        </div>
+
+        <div className="v3-cc-panel">
+          <div className="v3-cc-panel-title">Resumen del sistema</div>
+          <div className="v3-cc-stat">
+            <span>Estado</span>
+            <b style={{ color: tasks.workerRunning ? "var(--v2-green)" : "var(--v2-text-3)" }}>
+              {tasks.workerRunning ? "Funcionando" : "Parado"}
+            </b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Última actividad</span>
+            <b>
+              {tasks.workerLastTickAt
+                ? relativeTime(tasks.workerLastTickAt)
+                : "—"}
+            </b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Último problema</span>
+            <b style={{ color: lastError ? "var(--v2-warn-text)" : "inherit" }}>
+              {lastError ? relativeTime(lastError.updatedAt) : "ninguno"}
+            </b>
+          </div>
+          <div className="v3-cc-stat">
+            <span>Notificaciones</span>
+            <b>{notifications.unread} sin leer</b>
+          </div>
+        </div>
+      </div>
+
+      {tasks.error && (
+        <div className="chat-error" style={{ marginTop: 16 }}>{tasks.error}</div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/DocumentsView.tsx">
+// FIX_02_DOCSVIEW_CLEAN_V1 - imports DocumentTree/MultiUpload pendientes de wire.
+// BUG05_DOCUMENTS_VIEW_V2 - usa DocumentTree + MultiUpload.
+// E2_DOCUMENTS_VIEW_V2 - usar DocumentTree + MultiUpload + search RAG.
+// UI_PANEL_SLIDE_V1_USE
+// DOCUMENTS_REINGEST_SERVER_V1 - reingesta via endpoint server-side.
+import { useCallback, useEffect, useState } from "react";
+import { FileText, RefreshCw, Search, Trash2 } from "lucide-react";
+import type { FileEntry } from "../hooks/useWorkspaceData";
+import AttachmentPreview from "./AttachmentPreview";
+// WIRE_DOCS_TREE_UPLOAD_V1
+import { formatBytes, relativeTime } from "../lib/format";
+import {
+  ragDeleteSource,
+  ragReingest,
+  ragSearch,
+  ragStatus,
+  type RagHit,
+  type RagStatus,
+} from "../api/rag";
+
+interface Props {
+  files: FileEntry[];
+}
+
+export default function DocumentsView({ files }: Props) {
+  const [status, setStatus] = useState<RagStatus | null>(null);
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<RagHit[] | null>(null);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [busySource, setBusySource] = useState<string | null>(null);
+  const [preview, setPreview] = useState<FileEntry | null>(null);
+
+  const refreshStatus = useCallback(async () => {
+    try {
+      setStatus(await ragStatus());
+    } catch {
+      setStatus({ configured: false, chunks: 0, sources: 0 });
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshStatus();
+  }, [refreshStatus, files.length]);
+
+  const runSearch = async () => {
+    const q = query.trim();
+    if (!q) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      setHits(await ragSearch(q, 8));
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Error en la busqueda");
+      setHits(null);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const ingestFile = async (file: FileEntry) => {
+    if (!file.url) {
+      setSearchError("Este archivo no tiene URL firmada; no se puede reingestar.");
+      return;
+    }
+    setBusySource(file.id);
+    setSearchError(null);
+    try {
+      await ragReingest(file.id);
+      await refreshStatus();
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Error al reingestar");
+    } finally {
+      setBusySource(null);
+    }
+  };
+
+  const removeSource = async (sourceId: string) => {
+    if (!confirm("Borrar esta fuente del indice RAG?")) return;
+    setBusySource(sourceId);
+    setSearchError(null);
+    try {
+      await ragDeleteSource(sourceId);
+      await refreshStatus();
+      setHits(null);
+    } catch (err) {
+      setSearchError(err instanceof Error ? err.message : "Error al borrar");
+    } finally {
+      setBusySource(null);
+    }
+  };
+
+  return (
+    <div className="v2-tasks-view" style={{ maxWidth: 900 }}>
+      <div className="v2-tasks-header">
+        <h1 className="v2-tasks-title">Documentos</h1>
+        <div className="v2-tasks-meta">
+          {files.length} archivos
+          {status?.configured
+            ? ` · ${status.chunks} chunks · ${status.sources} fuentes`
+            : " · RAG inactivo"}
+        </div>
+      </div>
+
+      <div className="v2-composer" style={{ marginBottom: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Search size={15} style={{ color: "var(--v2-text-3)" }} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") void runSearch(); }}
+            placeholder="Buscar en tus documentos (busqueda semantica)"
+            disabled={!status?.configured || searching}
+            style={{
+              flex: 1,
+              border: 0,
+              outline: 0,
+              background: "transparent",
+              fontSize: 14,
+              color: "var(--v2-text)",
+              fontFamily: "inherit",
+            }}
+          />
+          <button
+            className="v2-need-action-btn"
+            onClick={() => void runSearch()}
+            disabled={!status?.configured || searching || !query.trim()}
+          >
+            {searching ? "Buscando..." : "Buscar"}
+          </button>
+          <button className="v2-pill" onClick={() => void refreshStatus()} title="Refrescar estado">
+            <RefreshCw size={14} />
+          </button>
+        </div>
+        {!status?.configured && (
+          <div style={{ marginTop: 8, fontSize: 11, color: "var(--v2-text-3)" }}>
+            Falta GEMINI_API_KEY en el servidor para activar la busqueda semantica.
+          </div>
+        )}
+        {searchError && (
+          <div className="chat-error" style={{ marginTop: 12 }}>{searchError}</div>
+        )}
+        {hits && hits.length > 0 && (
+          <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8, maxHeight: 280, overflowY: "auto" }}>
+            {hits.map((hit) => (
+              <div
+                key={hit.id}
+                style={{
+                  padding: 12,
+                  background: "var(--v2-bg-soft)",
+                  border: "1px solid var(--v2-border)",
+                  borderRadius: 10,
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6, fontSize: 11 }}>
+                  <span style={{ fontWeight: 600, color: "var(--v2-text-2)" }}>{hit.sourceName}</span>
+                  <span style={{ color: "var(--v2-purple)", fontWeight: 600 }}>{Math.min(100, Math.round(hit.score * 100))}%</span>
+                  <button
+                    className="v2-pill"
+                    onClick={() => void removeSource(hit.sourceId)}
+                    disabled={busySource === hit.sourceId}
+                    title="Borrar esta fuente del indice"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+                <div style={{ fontSize: 12.5, lineHeight: 1.5, color: "var(--v2-text)" }}>{hit.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        {hits && hits.length === 0 && (
+          <div style={{ marginTop: 12, fontSize: 11, color: "var(--v2-text-3)" }}>Sin resultados.</div>
+        )}
+      </div>
+
+      {files.length === 0 ? (
+        <div className="v2-tasks-empty">
+          <FileText size={22} style={{ marginBottom: 8, color: "var(--v2-purple)" }} />
+          <p style={{ margin: 0, fontSize: 13, color: "var(--v2-text)" }}>Aun no has subido documentos.</p>
+          <small style={{ color: "var(--v2-text-3)" }}>Adjunta un PDF o un texto desde el chat para empezar.</small>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+          {files.map((f) => (
+            <div key={f.id} className="v2-suggestion-card" style={{ cursor: "default" }}>
+              <div className="v2-suggestion-icon">📄</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  title={f.name}
+                >{f.name}</div>
+                <div style={{ fontSize: 11, color: "var(--v2-text-3)", marginTop: 4 }}>
+                  {formatBytes(f.size)}{f.size && f.createdAt ? " · " : ""}{relativeTime(f.createdAt)}
+                </div>
+                {f.source && (
+                  <div style={{ fontSize: 11, color: "var(--v2-text-3)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={f.source}>
+                    {f.source}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
+                  <button
+                    className="v2-pill"
+                    onClick={() => void ingestFile(f)}
+                    disabled={busySource === f.id || !status?.configured}
+                  >
+                    {busySource === f.id ? "..." : "Reingestar"}
+                  </button>
+                  <button
+                    className="v2-pill"
+                    onClick={() => void removeSource(f.id)}
+                    disabled={busySource === f.id || !status?.configured}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                  {f.url && (
+                    <button className="v2-pill" onClick={() => setPreview(f)}>Ver</button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {preview && preview.url && (
+        <AttachmentPreview
+          url={preview.url}
+          name={preview.name}
+          mimeType={preview.mimeType}
+          onClose={() => setPreview(null)}
+        />
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/TasksView.tsx">
+// FIX_02_TASKSVIEW_CLEAN_V1 - import TaskTimeline pendiente de wire.
+// C3_TASKSVIEW_APPROVALS_V1 - usar ApprovalInbox en la seccion 'Necesita tu OK'.
+// C1_TASKSVIEW_V2 - usa TaskTimeline en el detalle y filtro por rol.
+// TASKS_ROLE_FILTER_V1 - filtro por rol del empleado digital.
+// UI_PANEL_SLIDE_V1_USE
+import { useMemo, useState } from "react";
+import type { AgentTask } from "../types/api";
+// WIRE_TASKTIMELINE_V1
+
+interface Props {
+  tasks: AgentTask[];
+  currentUserId: string | null;
+  onOpenTask: (task: AgentTask) => void;
+  onReviewTask: (task: AgentTask) => void;
+}
+
+type Filter = "todas" | "mias" | "sin_asignar" | "escaladas";
+
+const DEMO_BANNER = {
+  title: "Aprobar factura · Consultoría Norte · 7.900 €",
+  sub: "Vence mañana · supera el umbral del SOP · 5.000 € → 7.900 € (+58%)",
+};
+
+const DEMO_EN_CURSO = [
+  { t: "Conciliar banco de septiembre", tag: "Agente", meta: "hace 4 min" },
+  { t: "Enviar recordatorios de pago", tag: "Agente", meta: "hace 12 min" },
+];
+const DEMO_POR_HACER = [
+  { t: "Revisar contrato de alquiler", tag: "Legal", meta: "Vie 3" },
+  { t: "Actualizar SOP de altas de cliente", tag: "SOP", meta: "Lun 6" },
+];
+const DEMO_COMPLETADO = [{ t: "Resumen semanal enviado al equipo", meta: "Hoy" }];
+
+export default function TasksView({ tasks, currentUserId, onOpenTask, onReviewTask }: Props) {
+  const [filter, setFilter] = useState<Filter>("todas");
+
+  const visible = useMemo(() => {
+    if (filter === "mias")
+      // TASKS_MIAS_V1 - incluye no asignadas.
+      return tasks.filter((t) => t.assignedTo === currentUserId || !t.assignedTo);
+    if (filter === "sin_asignar") return tasks.filter((t) => !t.assignedTo);
+    if (filter === "escaladas")
+      return tasks.filter((t) => Boolean((t.state as Record<string, unknown>)?.escalatedTo));
+    return tasks;
+  }, [tasks, filter, currentUserId]);
+
+  const needsAction = visible.filter(
+    (t) => t.status === "waiting_approval" || t.status === "waiting_input",
+  );
+  const enCurso = visible.filter((t) => t.status === "running");
+  const porHacer = visible.filter(
+    (t) => t.status === "queued" || t.status === "scheduled" || t.status === "paused",
+  );
+  const completado = visible.filter((t) => t.status === "succeeded");
+
+  const banner = needsAction[0];
+  const bannerTitle = banner ? banner.title : DEMO_BANNER.title;
+  const bannerSub = banner
+    ? banner.status === "waiting_input"
+      ? "Necesita datos tuyos para continuar"
+      : "Esperando tu aprobación"
+    : DEMO_BANNER.sub;
+
+  const filters: { id: Filter; label: string }[] = [
+    { id: "todas", label: "Todas" },
+    { id: "mias", label: "Mías" },
+    { id: "sin_asignar", label: "Sin asignar" },
+    { id: "escaladas", label: "Escaladas" },
+  ];
+
+  return (
+    <div className="v2-tasks-view">
+      <div className="v2-tasks-header">
+        <h1 className="v2-tasks-title">Tareas</h1>
+        <div className="v2-tasks-meta">
+          {tasks.length} tareas · {needsAction.length} necesitan acción
+        </div>
+      </div>
+
+      <div className="v2-pill-row" style={{ marginBottom: 20 }}>
+        {filters.map((f) => (
+          <button
+            key={f.id}
+            className={`v2-pill ${filter === f.id ? "active" : ""}`}
+            onClick={() => setFilter(f.id)}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
+      {(needsAction.length > 0 || tasks.length === 0) && (
+        <div className="v2-need-action">
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+            <div className="v2-need-action-icon">⚠️</div>
+            <div>
+              <div className="v2-need-action-eyebrow">Necesita tu acción</div>
+              <div className="v2-need-action-title">{bannerTitle}</div>
+              <div className="v2-need-action-sub">{bannerSub}</div>
+            </div>
+          </div>
+          <button
+            className="v2-need-action-btn"
+            onClick={() => (banner ? onReviewTask(banner) : undefined)}
+          >
+            Revisar
+          </button>
+        </div>
+      )}
+
+      <div className="v2-tasks-section">
+        <div className="v2-section-heading">● En curso</div>
+        {enCurso.length === 0 && tasks.length > 0 ? (
+          <div className="v2-tasks-empty">Sin tareas en curso</div>
+        ) : enCurso.length === 0 ? (
+          DEMO_EN_CURSO.map((row, i) => (
+            <div key={i} className="v2-task-row">
+              <span className="v2-task-status half" />
+              <span className="v2-task-row-title">{row.t}</span>
+              <div className="v2-task-row-meta">
+                <span className="v2-tag agent">{row.tag}</span>
+                <span className="v2-task-row-date">{row.meta}</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          enCurso.map((t) => (
+            <div key={t.id} className="v2-task-row" onClick={() => onOpenTask(t)}>
+              <span className="v2-task-status half" />
+              <span className="v2-task-row-title">{t.title}</span>
+              <div className="v2-task-row-meta">
+                <span className="v2-tag agent">{t.kind}</span>
+                <span className="v2-task-row-date">{t.updatedAt.slice(11, 16)}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="v2-tasks-section">
+        <div className="v2-section-heading">○ Por hacer</div>
+        {porHacer.length === 0 && tasks.length > 0 ? (
+          <div className="v2-tasks-empty">Sin tareas pendientes</div>
+        ) : porHacer.length === 0 ? (
+          DEMO_POR_HACER.map((row, i) => (
+            <div key={i} className="v2-task-row soft">
+              <span className="v2-task-status empty" />
+              <span className="v2-task-row-title">{row.t}</span>
+              <div className="v2-task-row-meta">
+                <span className="v2-tag">{row.tag}</span>
+                <span className="v2-task-row-date">{row.meta}</span>
+              </div>
+            </div>
+          ))
+        ) : (
+          porHacer.map((t) => (
+            <div key={t.id} className="v2-task-row soft" onClick={() => onOpenTask(t)}>
+              <span className="v2-task-status empty" />
+              <span className="v2-task-row-title">{t.title}</span>
+              <div className="v2-task-row-meta">
+                <span className="v2-tag">{t.kind}</span>
+                <span className="v2-task-row-date">{t.updatedAt.slice(11, 16)}</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="v2-tasks-section">
+        <div className="v2-section-heading">✓ Completado</div>
+        {completado.length === 0 && tasks.length > 0 ? (
+          <div className="v2-tasks-empty">Sin tareas completadas</div>
+        ) : completado.length === 0 ? (
+          DEMO_COMPLETADO.map((row, i) => (
+            <div key={i} className="v2-task-row done">
+              <span className="v2-task-status done">✓</span>
+              <span className="v2-task-row-title done">{row.t}</span>
+              <span className="v2-task-row-date">{row.meta}</span>
+            </div>
+          ))
+        ) : (
+          completado.map((t) => (
+            <div key={t.id} className="v2-task-row done" onClick={() => onOpenTask(t)}>
+              <span className="v2-task-status done">✓</span>
+              <span className="v2-task-row-title done">{t.title}</span>
+              <span className="v2-task-row-date">{t.updatedAt.slice(11, 16)}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="apps/web/src/components/ChatPanel.tsx">
+// CHATPANEL_RESOLVEVIEW_V1 - el panel contextual se rellena cuando el usuario
+// pide una vista. Antes solo se rellenaba si el backend emitia view.resolved
+// al bus, que no ocurre en la practica. Ahora disparamos resolveView cuando
+// el usuario envia un mensaje y pasamos el spec al viewResolver.
+import { useEffect, useState } from "react";
+import MessageList from "./MessageList";
+import ChatInput from "./ChatInput";
+import SuggestionChips from "./SuggestionChips";
+import RoleSelector from "./RoleSelector";
+import type { ChatMessage } from "../types/api";
+import type { ToolCall } from "../lib/toolsReducer";
+
+interface ChatState {
+  roleId?: string;
+  setRoleId?: (id: string | undefined) => void;
+  messages: ChatMessage[];
+  streaming: boolean;
+  streamBuf: string;
+  tools: ToolCall[];
+  error: string | null;
+  send: (text: string) => void;
+  cancel: () => void;
+  threadId: string | null;
+}
+
+interface Props {
+  chat: ChatState;
+  onResolveView?: (intent: string) => void;
+}
+
+const CHIPS = [
+  { id: "resumen", label: "Resumen de mi negocio", prompt: "Dame un resumen de mi negocio." },
+  { id: "email", label: "Redactar un email", prompt: "Redacta un email profesional." },
+  { id: "doc", label: "Analizar un documento", prompt: "Analiza el ultimo documento que he subido." },
+];
+
+export default function ChatPanel({ chat, onResolveView }: Props) {
+  const [seed, setSeed] = useState("");
+  const isEmpty = chat.messages.length === 0 && !chat.streaming;
+
+  // CHATPANEL_RESOLVEVIEW_V1 - cada vez que el usuario manda un mensaje
+  // nuevo, intentamos resolverlo como intencion de vista.
+  useEffect(() => {
+    if (!onResolveView) return;
+    const lastUser = [...chat.messages].reverse().find((m) => m.role === "user");
+    if (!lastUser?.content) return;
+    onResolveView(lastUser.content);
+  }, [chat.messages, onResolveView]);
+
+  if (isEmpty) {
+    return (
+      <div className="v2-home">
+        <div className="v2-greeting">✦ Buenas tardes, Alfonso</div>
+        <h1 className="v2-hero-title">¿En qué te ayudo hoy?</h1>
+        <ChatInput
+          onSend={chat.send}
+          onCancel={chat.cancel}
+          streaming={chat.streaming}
+          seed={seed}
+          onSeedConsumed={() => setSeed("")}
+        />
+        <SuggestionChips chips={CHIPS} onSelect={(p) => setSeed(p)} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="v2-conv">
+      <RoleSelector value={chat.roleId} onChange={chat.setRoleId} />
+      <MessageList
+        messages={chat.messages}
+        streaming={chat.streaming}
+        streamBuf={chat.streamBuf}
+        tools={chat.tools}
+      />
+      <div className="v2-conv-input">
+        <ChatInput
+          onSend={chat.send}
+          onCancel={chat.cancel}
+          streaming={chat.streaming}
+          seed=""
+          onSeedConsumed={() => {}}
+        />
+      </div>
+    </div>
+  );
+}
+</file>
+
+</files>

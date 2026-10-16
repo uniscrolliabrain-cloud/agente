@@ -1,11 +1,11 @@
-// KERNEL_TENANT_CONFIG_V3 — config por tenant: LLM + capabilities + tiempos.
+// KERNEL_TENANT_CONFIG_V3 â€” config por tenant: LLM + capabilities + tiempos.
 //
 // Fusion de las dos versiones que circularon por el repo:
-//   - ProviderSpec (fast, slow, embeddings) — el LLM del tenant. Vive en
+//   - ProviderSpec (fast, slow, embeddings) â€” el LLM del tenant. Vive en
 //     provider-spec.ts y se importa aqui.
-//   - TenantCapabilities — que partes del kernel estan activas. Idea valida
+//   - TenantCapabilities â€” que partes del kernel estan activas. Idea valida
 //     que aporto la otra IA: cada tenant puede tener caps distintas.
-//   - tiempos — quiescenceMs, fastIdleMs, slowLongMs, maxThoughtsPerTurn.
+//   - tiempos â€” quiescenceMs, fastIdleMs, slowLongMs, maxThoughtsPerTurn.
 //
 // SOC-2: cada tenant puede tener sus propias keys, sus propios modelos y sus
 // propias capacidades. Nada se asume global.
@@ -31,6 +31,9 @@ export const tenantConfigSchema = z.object({
   fast: providerSpecSchema,
   slow: providerSpecSchema,
   embeddings: providerSpecSchema.optional(),
+  // FIX_6A_TENANT_ROLES_V1 - modelo por rol. Opcional: si un rol no tiene
+  // entrada, se usa la cadena fast/slow normal.
+  roles: z.record(z.string().max(80), providerSpecSchema).optional(),
   capabilities: tenantCapabilitiesSchema,
   quiescenceMs: z.number().int().min(0).max(600_000).default(10_000),
   fastIdleMs: z.number().int().min(0).max(60_000).default(1_000),

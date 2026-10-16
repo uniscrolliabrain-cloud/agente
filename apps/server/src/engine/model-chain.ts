@@ -26,10 +26,20 @@ export interface ModelRun {
  * "openai/unconfigured" preserves the previous behaviour when no model is configured at all.
  */
 // FALLBACK_CROSS_V1 - cadena con fast, slow y fallback global.
-export function modelChain(config: Config): string[] {
-  const specs = [config.model, config.modelFallback].flatMap((spec) =>
-    spec?.trim() ? [spec.trim()] : [],
-  );
+// FIX_1_MODELCHAIN_TENANT_V1 - acepta TenantConfig opcional. Si se pasa, la
+// cadena completa es [fast, slow, global, fallback]. Si no, [global, fallback].
+import type { TenantConfig } from "../kernel/config/tenant-config.ts";
+
+export function modelChain(config: Config, tenant?: TenantConfig): string[] {
+  const specs: string[] = [];
+  if (tenant?.fast?.apiKey && tenant.fast.model) {
+    specs.push(`${tenant.fast.provider}/${tenant.fast.model}`);
+  }
+  if (tenant?.slow?.apiKey && tenant.slow.model) {
+    specs.push(`${tenant.slow.provider}/${tenant.slow.model}`);
+  }
+  if (config.model?.trim()) specs.push(config.model.trim());
+  if (config.modelFallback?.trim()) specs.push(config.modelFallback.trim());
   return specs.length ? [...new Set(specs)] : ["openai/unconfigured"];
 }
 
@@ -79,11 +89,11 @@ export function runWithModelFallback(
       const agent = create(specs[index]);
       current = agent;
       let answered = false;
-      // MODEL_CHAIN_RETRY_V1 — retry con backoff exponencial entre intentos.
+      // MODEL_CHAIN_RETRY_V1 Ã¢â‚¬â€ retry con backoff exponencial entre intentos.
       // Ver: docs/audits/03-resiliencia/miniaudit.md ("Sin retry con backoff").
       // No reintentamos dentro del mismo spec: dejamos que el fallback haga su
-      // trabajo. Pero sí aplicamos circuit breaker por spec para cortar rápido
-      // si un proveedor está caído.
+      // trabajo. Pero sÃƒÂ­ aplicamos circuit breaker por spec para cortar rÃƒÂ¡pido
+      // si un proveedor estÃƒÂ¡ caÃƒÂ­do.
       // CB_PER_PROVIDER_V1 - agrupa el circuit por provider.
 // MODEL_FALLBACK_PROVIDER_CIRCUIT_V1
 const provider = specs[index].split("/")[0] ?? "unknown";
@@ -93,7 +103,7 @@ const circuit = globalCircuits.get(`llm:${provider}`);
         if (hasFallback()) { startNextAttempt(); return; }
       }
       // MODEL_FIRST_BYTE_CONFIG_V1
-      const firstByteMs = Number(process.env.LLM_FIRST_BYTE_MS ?? "45000") || 45000;
+      const firstByteMs = options.timeoutMs ?? (Number(process.env.LLM_FIRST_BYTE_MS ?? "45000") || 45000); // FIX_11_A1_FIRST_BYTE_TIMEOUT_V1
       const bulkheadKey = "__llm_bulkhead__";
       const bulkhead = ((globalThis as Record<string, unknown>)[bulkheadKey] as Map<string, number>) ?? new Map<string, number>();
       (globalThis as Record<string, unknown>)[bulkheadKey] = bulkhead;
@@ -112,9 +122,9 @@ const circuit = globalCircuits.get(`llm:${provider}`);
           startNextAttempt();
         } else if (!answered) {
           try { agent.abortRun(); } catch { /* noop */ }
-          subscriber.error(new Error("Model did not respond within 45 seconds"));
+          subscriber.error(new Error(`Model did not respond within ${Math.round(firstByteMs / 1000)} seconds`)); // FIX_11_A1_FIRST_BYTE_TIMEOUT_V1
         }
-      }, 45_000);
+      }, firstByteMs); // FIX_11_A1_FIRST_BYTE_TIMEOUT_V1
       subscription = agent.run(input).subscribe({
         next: (event) => {
           if (myId !== attemptId) return;

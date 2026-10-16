@@ -5,7 +5,7 @@ import type { BusinessGraph } from "../business/graph.ts";
 import type { EventBus, SystemEvent } from "../events/index.ts";
 import type { MemoryService, RecallResult } from "../memory.ts";
 
-// CONTEXT_ENGINE_V1 — ensambla el contexto completo para una ejecucion.
+// CONTEXT_ENGINE_V1 Ã¢â‚¬â€ ensambla el contexto completo para una ejecucion.
 // Envuelve a MemoryService.recall (semantico) y anade: rol, entidad,
 // relaciones, eventos recientes. El resultado es un paquete tipado que
 // el runtime del agente usa para decidir que mostrar y como actuar.
@@ -46,7 +46,7 @@ export interface AssembleInput {
   };
 }
 
-const DEFAULT_EVENT_LIMIT = 20;
+const DEFAULT_EVENT_LIMIT = Number(process.env.CONTEXT_EVENT_LIMIT ?? "20") || 20; // FIX_12_13_EVENT_LIMIT_V1
 
 export class ContextEngine {
   constructor(
@@ -62,7 +62,7 @@ export class ContextEngine {
     const storedMemories = (await this.db.list<AgentMemory>(owner, "memories")).filter(
       (m) => m.roleId === role.id,
     );
-    // CONTEXT_INLINE_ROLE_MEMORIES — las memorias inline del rol ({kind, text}) son su canon
+    // CONTEXT_INLINE_ROLE_MEMORIES Ã¢â‚¬â€ las memorias inline del rol ({kind, text}) son su canon
     // (identidad/dominio/preferencias/historial). Hasta ahora assemble solo miraba la coleccion
     // "memories", asi que un rol sin seedear llegaba al contexto sin ninguna memoria. Se
     // materializan aqui con la misma categoria que usa el seed (rol-<kind>, declarada en el
@@ -107,8 +107,13 @@ export class ContextEngine {
         { limit: 100 },
       );
       const q = input.query.toLowerCase();
+      // FIX_12_14_LEARNING_TTL_FILTER_V1 - ignorar facts con mas de 90 dias.
+      const LEARNING_FACTS_TTL_MS = Number(process.env.LEARNING_FACTS_TTL_MS ?? "7776000000") || 7776000000;
+      const cutoff = Date.now() - LEARNING_FACTS_TTL_MS;
       learningFacts = all
         .filter((f) => {
+          const createdAtRaw = (f as unknown as { createdAt?: string }).createdAt;
+          if (createdAtRaw && Date.parse(createdAtRaw) < cutoff) return false;
           const words = q.split(/\s+/).filter((w) => w.length > 2);
           const hay = f.text.toLowerCase();
           return words.some((w) => hay.includes(w));

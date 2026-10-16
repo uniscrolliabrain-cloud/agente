@@ -1,4 +1,4 @@
-# Fixes — contexto-memoria
+# Fixes — fast-slow-llm
 
 > v1 · 2026-10-04 · Estado: placeholder
 

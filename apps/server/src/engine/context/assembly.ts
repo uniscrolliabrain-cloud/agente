@@ -1,7 +1,7 @@
 import type { ContextPackage } from "./engine.ts";
-import { scoreItem } from "./budget.ts";
+import { scoreItem, estimateTokens, selectWithinBudget, allocationWithDefaults, type BudgetAllocation } from "./budget.ts";
 
-// CONTEXT_ASSEMBLY_V1 — renderiza el ContextPackage a texto listo para
+// CONTEXT_ASSEMBLY_V1 â€” renderiza el ContextPackage a texto listo para
 // inyectar en el prompt. Presupuesto por campo para no explotar tokens.
 
 const MAX_ROLE_MEMORIES = 8;
@@ -18,7 +18,7 @@ const MAX_RECALL_HITS = 5;
   // CONTEXT_ASSEMBLY_MULTIPLIERS_V1
 export function renderContext(
   pkg: ContextPackage,
-  options: { multipliers?: Record<string, number> } = {},
+  options: { multipliers?: Record<string, number>; budget?: BudgetAllocation } = {},
 ): string {
   void options.multipliers;
   const parts: string[] = [];
@@ -39,10 +39,18 @@ export function renderContext(
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_ROLE_MEMORIES)
       .map((x) => x.m);
-    const mems = scored;
-    parts.push(
-      `Memorias del rol (datos):\\n${mems.map((m) => `- [${m.category ?? "memoria"}] ${m.text}`).join("\\n")}`,
-    );
+    // FIX_12_2_BUDGET_APPLIED_V1 - cortar por presupuesto de tokens.
+    const budget = allocationWithDefaults(options.budget as BudgetAllocation | undefined);
+    const items = scored.map((m) => ({
+      value: `- [${m.category ?? "memoria"}] ${m.text}`,
+      tokens: estimateTokens(m.text),
+      score: 1,
+    }));
+    const selected = selectWithinBudget(items, budget.roleTokens);
+    const mems = selected.map((i) => i.value);
+    if (mems.length > 0) {
+      parts.push(`Memorias del rol (datos):\\n${mems.join("\\n")}`);
+    }
   }
   if (pkg.entity) {
     parts.push(`Entidad: ${pkg.entity.type} "${pkg.entity.name}" (${pkg.entity.id})`);

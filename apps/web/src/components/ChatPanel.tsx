@@ -28,11 +28,35 @@ interface Props {
   onResolveView?: (intent: string) => void;
 }
 
-const CHIPS = [
+const CHIPS_DEFAULT = [
   { id: "resumen", label: "Resumen de mi negocio", prompt: "Dame un resumen de mi negocio." },
   { id: "email", label: "Redactar un email", prompt: "Redacta un email profesional." },
   { id: "doc", label: "Analizar un documento", prompt: "Analiza el ultimo documento que he subido." },
 ];
+
+// FIX_11_G_CHIPS_BY_ROLE_V1 - chips contextuales por rol.
+const CHIPS_BY_ROLE: Record<string, { id: string; label: string; prompt: string }[]> = {
+  legal: [
+    { id: "clausula", label: "Revisar una clausula", prompt: "Revisa la clausula del ultimo contrato." },
+    { id: "riesgo", label: "Analizar riesgo legal", prompt: "Analiza los riesgos legales del ultimo documento." },
+    { id: "resumen", label: "Resumen de mi negocio", prompt: "Dame un resumen de mi negocio." },
+  ],
+  finanzas: [
+    { id: "gastos", label: "Resumen de gastos", prompt: "Dame un resumen de gastos del mes." },
+    { id: "factura", label: "Revisar una factura", prompt: "Revisa la ultima factura que he subido." },
+    { id: "email", label: "Redactar un email", prompt: "Redacta un email profesional." },
+  ],
+  comercial: [
+    { id: "lead", label: "Analizar un lead", prompt: "Analiza el ultimo lead que ha entrado." },
+    { id: "propuesta", label: "Preparar propuesta", prompt: "Prepara una propuesta comercial." },
+    { id: "email", label: "Redactar un email", prompt: "Redacta un email profesional." },
+  ],
+  marketing: [
+    { id: "campana", label: "Resumen de campana", prompt: "Dame un resumen de la ultima campana." },
+    { id: "post", label: "Preparar un post", prompt: "Prepara un post para redes." },
+    { id: "doc", label: "Analizar un documento", prompt: "Analiza el ultimo documento que he subido." },
+  ],
+};
 
 export default function ChatPanel({ chat, onResolveView }: Props) {
   const [seed, setSeed] = useState("");
@@ -50,8 +74,8 @@ export default function ChatPanel({ chat, onResolveView }: Props) {
   if (isEmpty) {
     return (
       <div className="v2-home">
-        <div className="v2-greeting">✦ Buenas tardes, Alfonso</div>
-        <h1 className="v2-hero-title">¿En qué te ayudo hoy?</h1>
+        <div className="v2-greeting">âœ¦ Buenas tardes, Alfonso</div>
+        <h1 className="v2-hero-title">Â¿En quÃ© te ayudo hoy?</h1>
         <ChatInput
           onSend={chat.send}
           onCancel={chat.cancel}
@@ -59,7 +83,7 @@ export default function ChatPanel({ chat, onResolveView }: Props) {
           seed={seed}
           onSeedConsumed={() => setSeed("")}
         />
-        <SuggestionChips chips={CHIPS} onSelect={(p) => setSeed(p)} />
+        <SuggestionChips chips={chat.roleId ? (CHIPS_BY_ROLE[chat.roleId] ?? CHIPS_DEFAULT) : CHIPS_DEFAULT} onSelect={(p) => setSeed(p)} /> {/* FIX_11_G_CHIPS_BY_ROLE_V1 */}
       </div>
     );
   }

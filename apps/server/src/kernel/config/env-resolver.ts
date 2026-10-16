@@ -1,4 +1,4 @@
-// KERNEL_ENV_RESOLVER_V3 — TenantConfig completo desde .env.
+// KERNEL_ENV_RESOLVER_V3 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â TenantConfig completo desde .env.
 //
 // Lee:
 //   - FAST_LLM_PROVIDER, FAST_LLM_MODEL, FAST_LLM_API_KEY
@@ -41,16 +41,30 @@ function providerEnv(name: string, fallback: Provider): Provider {
   return fallback;
 }
 
-// ENV_RESOLVER_VALIDATE_V1 — parsea con tenantConfigSchema antes de
-  // devolver. Antes, un valor raro caía silenciosamente al default.
-  // Ver: auditoría profunda 09.
+// ENV_RESOLVER_VALIDATE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â parsea con tenantConfigSchema antes de
+  // devolver. Antes, un valor raro caÃƒÆ’Ã‚Â­a silenciosamente al default.
+  // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09.
   import { tenantConfigSchema } from "./tenant-config.ts";
 
   // CONFIG_CACHE_V1 - cache de TenantConfig por tenant (TTL 5 min).
+// FIX_3_CACHE_TENANT_CONFIG_V1 - cache de TenantConfig por tenant (TTL configurable).
 export class EnvTenantConfigResolver implements TenantConfigResolver {
+  private readonly cache = new Map<string, { config: TenantConfig; expiresAt: number }>();
+  private readonly ttlMs = Number(process.env.TENANT_CONFIG_TTL_MS ?? "300000") || 300000;
   async resolve(tenantId: string): Promise<TenantConfig> {
+    // FIX_3_CACHE_TENANT_CONFIG_V1 - cache hit antes de leer envs.
+    const now = Date.now();
+    const cached = this.cache.get(tenantId);
+    if (cached && cached.expiresAt > now) return cached.config;
     const fastKey = process.env.FAST_LLM_API_KEY?.trim() ?? "";
     const slowKey = process.env.SLOW_LLM_API_KEY?.trim() ?? "";
+    // FIX_2_VALIDATE_KEYS_V1 - warn si las API keys estan vacias.
+    if (!fastKey) {
+      console.warn(`[kernel/env-resolver] tenant ${tenantId}: FAST_LLM_API_KEY vacia. Chat usara chain global.`);
+    }
+    if (!slowKey) {
+      console.warn(`[kernel/env-resolver] tenant ${tenantId}: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.`);
+    }
     const embeddingsKey =
       process.env.EMBEDDINGS_LLM_API_KEY?.trim() ?? fastKey ?? "";
 
@@ -73,16 +87,19 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
         provider: providerEnv("FAST_LLM_PROVIDER", "google"),
         model: process.env.FAST_LLM_MODEL?.trim() ?? "gemini-3.6-flash",
         apiKey: fastKey,
+        ...(process.env.FAST_LLM_BASE_URL?.trim() ? { baseUrl: process.env.FAST_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1
       },
       slow: {
         provider: providerEnv("SLOW_LLM_PROVIDER", "google"),
         model: process.env.SLOW_LLM_MODEL?.trim() ?? "gemini-3.6-flash",
         apiKey: slowKey,
+        ...(process.env.SLOW_LLM_BASE_URL?.trim() ? { baseUrl: process.env.SLOW_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1
       },
       embeddings: {
         provider: providerEnv("EMBEDDINGS_LLM_PROVIDER", "google"),
         model: process.env.EMBEDDINGS_LLM_MODEL?.trim() ?? "text-embedding-004",
         apiKey: embeddingsKey,
+        ...(process.env.EMBEDDINGS_LLM_BASE_URL?.trim() ? { baseUrl: process.env.EMBEDDINGS_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1
       },
       capabilities,
       quiescenceMs: numEnv("QUIESCENCE_MS", 10_000),
@@ -90,12 +107,17 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
       slowLongMs: numEnv("SLOW_LONG_MS", 30_000),
       maxThoughtsPerTurn: numEnv("MAX_THOUGHTS_PER_TURN", 500),
     };
-    // ENV_RESOLVER_VALIDATE_V1 — parse; si falla, log y fallback.
+    // ENV_RESOLVER_VALIDATE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â parse; si falla, log y fallback.
     const parsed = tenantConfigSchema.safeParse(candidate);
-    if (parsed.success) return parsed.data;
+    if (parsed.success) {
+      this.cache.set(tenantId, { config: parsed.data, expiresAt: now + this.ttlMs });
+      return parsed.data;
+    }
     console.warn(
-      `[kernel/env-resolver] tenant ${tenantId} config inválido: ${parsed.error.issues[0]?.message ?? "unknown"}`,
+      `[kernel/env-resolver] tenant ${tenantId} config invÃƒÆ’Ã‚Â¡lido: ${parsed.error.issues[0]?.message ?? "unknown"}`,
     );
-    return candidate as unknown as TenantConfig;
+    const fallback = candidate as unknown as TenantConfig;
+    this.cache.set(tenantId, { config: fallback, expiresAt: now + this.ttlMs });
+    return fallback;
   }
 }
