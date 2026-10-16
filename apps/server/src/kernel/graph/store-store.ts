@@ -27,7 +27,8 @@ export interface StorePort {
 const TURNS_KIND = "cognitive-turns";
 const THOUGHTS_KIND = "cognitive-thoughts";
 // MAX_THOUGHTS_WIRE_V1 - usa TenantConfig.maxThoughtsPerTurn.
-const MAX_THOUGHTS_PER_TURN = 500;
+// FIX_8A_MAX_THOUGHTS_V1 - default. Configurable por tenant via setLimitForTenant.
+const DEFAULT_MAX_THOUGHTS_PER_TURN = 500;
 const MAX_TURNS_LISTED = 200;
 const MAX_CHILD_DEPTH = 10;
 
@@ -36,7 +37,20 @@ function tenantMismatch(expected: string, actual: string): AppError {
 }
 
 export class StoreTurnStore implements TurnStore {
+  // FIX_8A_MAX_THOUGHTS_V1 - limite por tenant. Default 500.
+  private readonly maxThoughtsByTenant = new Map<string, number>();
   constructor(private readonly store: StorePort) {}
+
+  // FIX_8A_MAX_THOUGHTS_V1 - el kernel o el service pueden fijar el limite
+  // por tenant leyendo TenantConfig.maxThoughtsPerTurn.
+  setLimitForTenant(tenantId: string, limit: number): void {
+    if (Number.isFinite(limit) && limit > 0) {
+      this.maxThoughtsByTenant.set(tenantId, Math.floor(limit));
+    }
+  }
+  private limitFor(tenantId: string): number {
+    return this.maxThoughtsByTenant.get(tenantId) ?? DEFAULT_MAX_THOUGHTS_PER_TURN;
+  }
 
   // STORE_TURN_PERSONA_V1 - persiste el personaId que abre el turno. Opcional.
   async openTurn(tenantId: string, owner: string, trigger: string, personaId?: string): Promise<Turn> {
@@ -93,14 +107,15 @@ export class StoreTurnStore implements TurnStore {
       if (turn.tenantId !== parsed.tenantId)
         throw tenantMismatch(parsed.tenantId, turn.tenantId);
       // KERNEL_STORE_MAX_THOUGHTS_HONOR_V1
-      if (turn.thoughtIds.length >= MAX_THOUGHTS_PER_TURN)
-        throw new AppError(`Turn exceeds ${MAX_THOUGHTS_PER_TURN} thoughts`, 409);
+      const maxForTenant = this.limitFor(parsed.tenantId); // FIX_8A_MAX_THOUGHTS_V1
+      if (turn.thoughtIds.length >= maxForTenant)
+        throw new AppError(`Turn exceeds ${maxForTenant} thoughts`, 409);
       await tx.put(parsed.tenantId, THOUGHTS_KIND, parsed.id, parsed);
-      // STORE_APPEND_O1_V1 Ã¢â‚¬â€ antes hacÃƒÂ­amos push sobre el array completo
-      // (O(n) por append, O(nÃ‚Â²) por turno). Ahora escribimos el thoughtId
+      // STORE_APPEND_O1_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â antes hacÃƒÆ’Ã‚Â­amos push sobre el array completo
+      // (O(n) por append, O(nÃƒâ€šÃ‚Â²) por turno). Ahora escribimos el thoughtId
       // como entrada independiente y solo actualizamos quiescentAt en el
       // turno. thoughtsOf() reconstruye la lista desde las entradas.
-      // Ver: auditorÃƒÂ­a profunda 09 (append lee turno entero).
+      // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (append lee turno entero).
       await tx.put(
         parsed.tenantId,
         TURNS_KIND,
@@ -116,9 +131,9 @@ export class StoreTurnStore implements TurnStore {
   }
 
   /**
-   * THOUGHTS_OF_INDEXED_V1 Ã¢â‚¬â€ usa `scanByOwnerPrefix` si estÃƒÂ¡ disponible,
+   * THOUGHTS_OF_INDEXED_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â usa `scanByOwnerPrefix` si estÃƒÆ’Ã‚Â¡ disponible,
    * que hace 1 query SQL por turno. Si no, cae al batching de 20.
-   * Ver: auditorÃƒÂ­a profunda 09 (500 queries por turno con 500 thoughts).
+   * Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (500 queries por turno con 500 thoughts).
    */
   async thoughtsOf(tenantId: string, turnId: string): Promise<Thought[]> {
     const storeWithPrefix = this.store as unknown as {
@@ -150,7 +165,7 @@ export class StoreTurnStore implements TurnStore {
     if (!raw) return [];
     const turn = turnSchema.parse(raw);
     if (turn.tenantId !== tenantId) return [];
-    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacÃƒÂ­amos Promise.all sobre
+    // STORE_TURN_THOUGHTS_BATCHED_FIX_V1 - antes hacÃƒÆ’Ã‚Â­amos Promise.all sobre
     // todos los thoughtIds. Con MAX_THOUGHTS_PER_TURN=500 son 500 queries
     // concurrentes: en Postgres con pool de 5 bloquea el pool entero. Ahora
     // procesamos en lotes de 20 en serie.
@@ -202,13 +217,13 @@ export class StoreTurnStore implements TurnStore {
     closedBy: TurnClosedBy,
   ): Promise<Turn[]> {
     const closed: Turn[] = [];
-    // CLOSE_TURN_CHILDREN_DEPTH_V1 Ã¢â‚¬â€ respeta el tope de profundidad.
-      // Ver: auditorÃƒÂ­a profunda 09 (la constante existÃƒÂ­a pero no se usaba).
+    // CLOSE_TURN_CHILDREN_DEPTH_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â respeta el tope de profundidad.
+      // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (la constante existÃƒÆ’Ã‚Â­a pero no se usaba).
       // KERNEL_STORE_CLOSE_TURN_CHILDREN_DEPTH_V1
       const visit = async (id: string, depth: number): Promise<void> => {
         if (depth > MAX_CHILD_DEPTH) {
           throw new AppError(
-            `closeTurnAndChildren: profundidad ${depth} supera el lÃƒÂ­mite ${MAX_CHILD_DEPTH}`,
+            `closeTurnAndChildren: profundidad ${depth} supera el lÃƒÆ’Ã‚Â­mite ${MAX_CHILD_DEPTH}`,
             409,
           );
         }

@@ -362,6 +362,9 @@ export async function createStore(
   let database: Database;
   if (options.databaseUrl) {
     const pool = createPool(options.databaseUrl);
+    console.log(
+      `[OpenMuse] DB: Postgres (url: ${options.databaseUrl}) — backend: postgres`,
+    );
     database = { query: async (sql, params) => pool.query(sql, params), close: () => pool.end() };
   } else {
     // El directorio que guarda los datos es options.dataDir, no su padre: con

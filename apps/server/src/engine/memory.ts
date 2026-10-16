@@ -17,10 +17,10 @@ export interface RecallOptions {
   memoryLimit?: number;
   history?: string[];
   categories?: MemoryCategory[];
-  /** R10 — si se pasa, se prefieren memorias del rol (roleId coincidente) y se
-   *  incluyen también las globales (sin roleId). Sin roleId, comportamiento previo. */
+  /** R10 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â si se pasa, se prefieren memorias del rol (roleId coincidente) y se
+   *  incluyen tambiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©n las globales (sin roleId). Sin roleId, comportamiento previo. */
   roleId?: string;
-  /** R10 — si es false, no se devuelven memorias del rol. Default true. */
+  /** R10 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â si es false, no se devuelven memorias del rol. Default true. */
   includeRoleMemories?: boolean;
 }
 
@@ -33,17 +33,25 @@ export interface RecallResult {
   explanation: string;
 }
 
+// FIX_12_8_QUERY_REFORM_V1 - reformulacion con stopwords + ponderacion.
+// La query actual pesa 2x, el historial 1x. Se quitan duplicados.
+const STOPWORDS = new Set(["de","la","el","en","y","a","los","las","un","una","que","por","con","para","del","al","es","son","se","su","lo","como","mas","pero","o","si","no","ya","muy","sin","sobre","entre","cuando","donde","este","esta","estos","estas","mi","tu","te","me","le","les","nos","os"]);
+
 function reformulateQuery(query: string, history?: string[]): string {
-  const current = query.trim();
-  if (!history || history.length === 0) return current;
-  const recent = history
+  const current = query.trim().toLowerCase();
+  const tokens = current.split(/\s+/).filter((w) => w.length > 2 && !STOPWORDS.has(w));
+  if (!history || history.length === 0) return tokens.join(" ").slice(0, 1000);
+  const historyTokens = history
     .filter((h) => h.trim().length > 0)
     .slice(-2)
     .join(" ")
-    .trim()
-    .slice(0, 400);
-  if (!recent) return current;
-  return `${recent} ${current}`.trim().slice(0, 1000);
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+  // Query actual pesa 2x, historial 1x.
+  const weighted = [...tokens, ...tokens, ...historyTokens];
+  const unique = [...new Set(weighted)];
+  return unique.join(" ").slice(0, 1000);
 }
 
 function formatRecall(ragHits: RagHit[], memories: AgentMemory[]): string {
@@ -53,14 +61,16 @@ function formatRecall(ragHits: RagHit[], memories: AgentMemory[]): string {
     for (const m of memories) {
       const cat = m.category ? `[${m.category}] ` : "";
       const tags = m.tags && m.tags.length > 0 ? ` (${m.tags.join(", ")})` : "";
-      // RECALL_TEXT_LIMIT — 500 chars como remember(); el formato no debe crecer sin control.      parts.push(`- ${cat}${m.text.slice(0, 500)}${tags}`);
+      // RECALL_TEXT_LIMIT ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â 500 chars como remember(); el formato no debe crecer sin control.      const text = m.text.length > 500 ? m.text.slice(0, 500) + "…[truncado]" : m.text; // FIX_12_9_TRUNCATE_VISIBLE_V2
+      parts.push(`- ${cat}${text}${tags}`);
     }
   }
   if (ragHits.length > 0) {
     if (parts.length > 0) parts.push("");
     parts.push("Fragmentos de documentos:");
     for (const hit of ragHits) {
-      parts.push(`- [${hit.sourceName}] ${hit.text.slice(0, 600)}`);
+      const snippet = hit.text.length > 600 ? hit.text.slice(0, 600) + "…[truncado]" : hit.text; // FIX_12_9_TRUNCATE_VISIBLE_V2
+      parts.push(`- [${hit.sourceName}] ${snippet}`);
     }
   }
   if (parts.length === 0) return "";
@@ -101,8 +111,27 @@ export class MemoryService {
     query: string,
     options: RecallOptions = {},
   ): Promise<AgentMemory[]> {
-    // R4c — tope en la carga; el filtrado por categoria/palabras hace el trabajo.
-    const all = await this.db.list<AgentMemory>(owner, "memories", { limit: 2000 });
+    // R4c ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â tope en la carga; el filtrado por categoria/palabras hace el trabajo.
+    // FIX_12_5_RECALL_PAGINATION_V2 - paginacion keyset. Antes cargaba 2000 en
+    // memoria. Ahora recorre por paginas de 500 hasta juntar un tope de
+    // candidatos, que es lo que necesita el scoring.
+    const MEMORY_SEARCH_CAP = 2000;
+    const MEMORY_SEARCH_PAGE = 500;
+    const all: AgentMemory[] = [];
+    let cursorUpdatedAt: string | undefined;
+    let cursorId: string | undefined;
+    while (all.length < MEMORY_SEARCH_CAP) {
+      const page = await this.db.listPaged<AgentMemory>(owner, "memories", {
+        limit: MEMORY_SEARCH_PAGE,
+        ...(cursorUpdatedAt && cursorId ? { cursorUpdatedAt, cursorId } : {}),
+      });
+      if (page.length === 0) break;
+      for (const row of page) all.push(row.data);
+      const last = page[page.length - 1];
+      cursorUpdatedAt = last.updatedAt;
+      cursorId = last.data.id;
+      if (page.length < MEMORY_SEARCH_PAGE) break;
+    }
     const words = query
       .toLowerCase()
       .split(/\s+/)
@@ -114,7 +143,7 @@ export class MemoryService {
       return options.categories.includes(m.category);
     };
 
-    // R10 — si hay roleId, se prefieren memorias del rol, pero no se descartan las
+    // R10 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â si hay roleId, se prefieren memorias del rol, pero no se descartan las
     // globales (sin roleId). Si includeRoleMemories === false, se excluyen las del rol.
     // MEMORY_RECALL_ROLE_FILTER_V1
     const byRole = (m: AgentMemory): boolean => {
@@ -131,11 +160,20 @@ export class MemoryService {
         .slice(0, options.memoryLimit ?? DEFAULT_MEMORY_LIMIT);
     }
 
+    // FIX_12_10_TF_SCORING_V1 - TF simple: contar frecuencia de cada palabra
+    // en el texto. Antes solo miraba si aparecia (0 o 1 por palabra).
     const scored = filtered
       .map((m) => {
         const haystack = `${m.text} ${(m.tags ?? []).join(" ")}`.toLowerCase();
-        const matches = words.filter((w) => haystack.includes(w)).length;
-        return { memory: m, score: matches };
+        const hayWords = haystack.split(/\W+/).filter(Boolean);
+        const freq = new Map<string, number>();
+        for (const w of hayWords) freq.set(w, (freq.get(w) ?? 0) + 1);
+        let score = 0;
+        for (const w of words) {
+          const f = freq.get(w) ?? 0;
+          if (f > 0) score += 1 + Math.log(f);
+        }
+        return { memory: m, score };
       })
       .filter((x) => x.score > 0)
       .sort((a, b) => b.score - a.score)
@@ -174,6 +212,47 @@ export class MemoryService {
     const saved = await this.db.get<AgentMemory>(owner, "memories", id);
     return { memory: saved ?? memory, created: true };
   }
+  // FIX_12_3_FORGET_TTL_V1 - olvido selectivo con TTL. Dos metodos:
+  //   forget(owner, id) marca una memoria con expiresAt = now (soft delete).
+  //   forgetExpired(owner, ttlMs) purga memorias expiradas.
+  async forget(owner: string, id: string): Promise<boolean> {
+    const existing = await this.db.get<AgentMemory>(owner, "memories", id);
+    if (!existing) return false;
+    await this.db.put(owner, "memories", {
+      ...existing,
+      expiresAt: new Date().toISOString(),
+    });
+    return true;
+  }
+
+  async forgetExpired(owner: string, ttlMs = 90 * 24 * 60 * 60 * 1000): Promise<number> {
+    // FIX_12_3_FORGET_TTL_V1 - purga memorias con expiresAt en el pasado.
+    const all: AgentMemory[] = [];
+    let cursorUpdatedAt: string | undefined;
+    let cursorId: string | undefined;
+    while (all.length < 5000) {
+      const page = await this.db.listPaged<AgentMemory>(owner, "memories", {
+        limit: 500,
+        ...(cursorUpdatedAt && cursorId ? { cursorUpdatedAt, cursorId } : {}),
+      });
+      if (page.length === 0) break;
+      for (const row of page) all.push(row.data);
+      const last = page[page.length - 1];
+      cursorUpdatedAt = last.updatedAt;
+      cursorId = last.data.id;
+      if (page.length < 500) break;
+    }
+    const now = Date.now();
+    let removed = 0;
+    for (const m of all) {
+      if (m.expiresAt && Date.parse(m.expiresAt) < now) {
+        await this.db.remove(owner, "memories", m.id);
+        removed += 1;
+      }
+    }
+    return removed;
+  }
+
   async retryMissingEmbeddings(owner: string): Promise<{ retried: number; fixed: number }> {
     const all = await this.db.list<{
       id: string;
@@ -199,7 +278,7 @@ export class MemoryService {
   }
 
   async dedupMemories(owner: string): Promise<number> {
-    // R4c — tope en la carga; el mantenimiento corre cada 5 min, no necesita
+    // R4c ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â tope en la carga; el mantenimiento corre cada 5 min, no necesita
     // recorrer el historico completo de golpe. Si hay mas, se cubren en pasadas.
     const all = await this.db.list<AgentMemory>(owner, "memories", { limit: 5000 });
     const seen = new Map<string, AgentMemory>();

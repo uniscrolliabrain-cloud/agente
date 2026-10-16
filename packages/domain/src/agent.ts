@@ -130,11 +130,19 @@ export type MemoryCategory =
   | "rrhh"
   | "producto"
   | "otro"
-  // AGENT_ROLE_V2 â€” categorias que usan las memorias de rol al seedear.
+  // AGENT_ROLE_V2 Ã¢â‚¬â€ categorias que usan las memorias de rol al seedear.
   | "rol-identidad"
   | "rol-dominio"
   | "rol-preferencias"
   | "rol-historial";
+
+// FIX_12_4_MEMORY_CONTEXT_V1 - jerarquia de memoria: tenant, owner, rol, sesion.
+export interface MemoryContext {
+  tenantId?: string;
+  owner?: string;
+  roleId?: string;
+  sessionId?: string;
+}
 
 export interface AgentMemory {
   id: string;
@@ -147,6 +155,10 @@ export interface AgentMemory {
   // MEMORY_AUDIT_V1 - dedupe y aislamiento. Opcionales.
   dedupeKey?: string;
   tenantId?: string;
+  // FIX_12_4_MEMORY_CONTEXT_V1 - jerarquia opcional.
+  context?: MemoryContext;
+  // FIX_12_4_MEMORY_CONTEXT_V1 - TTL suave: si existe, la memoria se considera obsoleta tras esta fecha.
+  expiresAt?: string;
 }
 export interface AgentArtifact {
   id: string;
@@ -169,7 +181,7 @@ export interface AgentNotification {
   createdAt: string;
   read: boolean;
 }
-// AGENT_ROLE_V2 â€” un rol es un personaje del equipo: nombre, tono, avatar y
+// AGENT_ROLE_V2 Ã¢â‚¬â€ un rol es un personaje del equipo: nombre, tono, avatar y
 // memoria propia. Los 4 tipos de memoria son semanticamente distintos:
 // identidad (el personaje, canon publico), dominio (su oficio), preferencias
 // (como le gusta al dueno) e historial (lo aprendido currando).
@@ -182,7 +194,7 @@ export interface AgentRoleMemory {
   text: string;
 }
 
-// AGENT_ROLE_V3 â€” ampliacion del rol con campos tecnicos opcionales.
+// AGENT_ROLE_V3 Ã¢â‚¬â€ ampliacion del rol con campos tecnicos opcionales.
 // Un rol sin estos campos se comporta como hoy (todo permitido dentro de
 // sus sops). Un rol con ellos es una allowlist adicional.
 export interface AgentRolePermission {
@@ -214,13 +226,13 @@ export interface AgentRole {
   active: boolean;
   /** Las 4 memorias vivas. Se materializan como AgentMemory al seedear. */
   memories: AgentRoleMemory[];
-  /** AGENT_ROLE_V3 â€” allowlist adicional. Ausente = sin restriccion. */
+  /** AGENT_ROLE_V3 Ã¢â‚¬â€ allowlist adicional. Ausente = sin restriccion. */
   permissions?: AgentRolePermission[];
-  /** AGENT_ROLE_V3 â€” politica de memoria. Ausente = defaults permisivos. */
+  /** AGENT_ROLE_V3 Ã¢â‚¬â€ politica de memoria. Ausente = defaults permisivos. */
   memoryPolicy?: AgentRoleMemoryPolicy;
-  /** AGENT_ROLE_V3 â€” skills que puede usar este rol. */
+  /** AGENT_ROLE_V3 Ã¢â‚¬â€ skills que puede usar este rol. */
   skills?: string[];
-  /** AGENT_ROLE_V3 â€” tools permitidas. Ausente = las de sus sops. */
+  /** AGENT_ROLE_V3 Ã¢â‚¬â€ tools permitidas. Ausente = las de sus sops. */
   allowedTools?: string[];
   createdAt?: string;
 }
@@ -262,7 +274,7 @@ export const agentRoleSchema = z.object({
   sops: z.array(z.string().max(200)).max(50).default([]),
   active: z.boolean().default(true),
   memories: z.array(agentRoleMemorySchema).max(8).default([]),
-  // AGENT_ROLE_V3 â€” campos tecnicos opcionales.
+  // AGENT_ROLE_V3 Ã¢â‚¬â€ campos tecnicos opcionales.
   permissions: z
     .array(
       z.object({

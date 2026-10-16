@@ -97,9 +97,41 @@ button:focus-visible, textarea:focus-visible, input:focus-visible {
   outline-offset: 2px;
 }
 
-/* BOOT */
-.boot-screen { width: 100%; height: 100%; display: grid; place-items: center; background: var(--bg); }
-.boot-card { display: flex; align-items: center; gap: 12px; color: var(--text-2); font-size: 13px; }
+/* FIX_BUG1_HAMBURGER_NO_WEB - Doble hamburger que tapa el botón + Nuevo */
+.shell__toggles { display: none !important; }
+.shell__toggle--mobile { display: none; }
+
+/* Asegura que el TopBar siempre esté por encima */
+.v2-topbar { position: relative; z-index: 2; background: var(--bg); }
+.v2-topbar-right { position: relative; z-index: 3; }
+
+/* Bug 1: Doble hamburger que tapa el botón + Nuevo */
+.shell__toggles { display: none !important; }
+.shell__toggle { display: none; }
+
+/* Bug 2: Sidebar deja hueco blanco a la izquierda en <900px */
+@media (max-width: 900px) {
+  .shell, .shell[data-left="true"], .shell[data-left="false"] {
+    grid-template-columns: 0 1fr 0 !important;
+  }
+  .shell__left {
+    position: fixed; inset: 0 auto 0 0; width: 260px; z-index: 50;
+    background: #F3F0EB; box-shadow: 12px 0 40px rgba(0,0,0,.15);
+    transform: translateX(-100%); transition: transform 250ms ease;
+  }
+  .shell[data-left="true"] .shell__left { transform: translateX(0); }
+  .v2-sidebar { display: flex !important; width: 100% !important; height: 100%; }
+  .shell__toggle--mobile {
+    display: grid; place-items: center;
+    position: absolute; top: 12px; left: 12px; z-index: 5;
+    width: 32px; height: 32px; border: 1px solid var(--border);
+    border-radius: 8px; background: #FFF;
+  }
+  .v2-topbar { padding-left: 56px; }
+}
+
+/* Bug 3: Sidebar no ocupa el ancho reservado (40px blanco en desktop) */
+.v2-sidebar { width: 100%; }
 .brand-mark {
   width: 30px; height: 30px; display: grid; place-items: center;
   border-radius: 9px;
