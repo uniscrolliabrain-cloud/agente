@@ -50,7 +50,7 @@ export class TaskWorker {
       pollMs?: number;
       settled?: (owner: string, task: AgentTask) => Promise<void>;
       bus?: EventBus;
-      /** WORKER_MAX_ACTIVE_V1
+      /** WORKER_MAX_ACTIVE_V1 */
       maxActive?: number;
     } = {},
   ) {
@@ -64,7 +64,7 @@ export class TaskWorker {
   }
 
   /**
-   * WORKER_LEASE_FROM_CONFIG_V1 */
+   * WORKER_LEASE_FROM_CONFIG_V1
    * Antes era 60000 hardcodeado. Ahora configurable para ajustar en
    * deployments con handlers lentos (SOPs con LLM).
    * Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
@@ -92,7 +92,7 @@ export class TaskWorker {
   getMaxActive(): number {
     return this.maxActive;
   }
-  start() {
+  start = () => {
     if (this.timer) return;
     this.stopping = false;
     // WORKER_METRICS_V1
@@ -145,11 +145,11 @@ export class TaskWorker {
       await new Promise((r) => setTimeout(r, 10));
     }
   }
-  /**
-   * WORKER_CANCEL_PROPAGATE_V1 */
-   * proveedores externos (LLM, Docker). El handler que respeta `ctx.signal`
-   * puede detener la ejecuci */
-   */
+  /** WORKER_CANCEL_PROPAGATE_V1 - cancelación del task hacia proveedores externos (LLM, Docker). */
+
+
+
+
   abort(taskId: string) {
     const controller = this.active.get(taskId);
     if (!controller) return;

@@ -82,8 +82,8 @@ export class TenantScopedStore {
   private readonly tenantPrefixes = new Set<string>();
 
   /**
-   * TENANT_PREFIXES_SET_V1 — los prefijos vistos durante la vida del proceso.
-   * Antes se guardaba solo el último en una variable; ahora se acumulan
+   * TENANT_PREFIXES_SET_V1 Ã¢â‚¬â€ los prefijos vistos durante la vida del proceso.
+   * Antes se guardaba solo el ÃƒÂºltimo en una variable; ahora se acumulan
    * en un Set para que un `scan` global pueda iterar por todos.
    * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
    */
@@ -92,8 +92,8 @@ export class TenantScopedStore {
   }
 
   /**
-   * TENANT_SCAN_BY_PREFIX_V1 — scan explícito por un prefijo concreto.
-   * Útil en `maintain` cuando ya sabemos el tenant a mantener.
+   * TENANT_SCAN_BY_PREFIX_V1 Ã¢â‚¬â€ scan explÃƒÂ­cito por un prefijo concreto.
+   * ÃƒÅ¡til en `maintain` cuando ya sabemos el tenant a mantener.
    */
   async scanByPrefix<T>(
     kind: string,
@@ -147,11 +147,44 @@ export class TenantScopedStore {
     return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
   }
 
+  // TENANT_SCAN_STATUS_ISOLATION_V1
+  // Antes llamaba a store.scanByStatus (crudo) sin filtrar por tenant.
+  // Ahora itera por cada prefix conocido y filtra en SQL por prefijo.
   async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<{ owner: string; value: T }[]> {
-    const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
-    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+    const prefixes = this.allTenantPrefixes();
+    if (prefixes.length === 0) {
+      const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
+      return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+    }
+    const storeWithPrefix = this.store as Store & {
+      scanByOwnerPrefix?: <U>(
+        kind: string,
+        ownerPrefix: string,
+        limit: number,
+      ) => Promise<{ owner: string; value: U }[]>;
+    };
+    if (typeof storeWithPrefix.scanByOwnerPrefix !== "function") {
+      const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
+      return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+    }
+    const out: { owner: string; value: T }[] = [];
+    for (const prefix of prefixes) {
+      const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
+      for (const row of rows) {
+        const status = (row.value as { status?: string }).status;
+        if (status && statuses.includes(status)) {
+          out.push({ owner: this.peel(row.owner), value: row.value });
+        }
+      }
+      if (out.length >= limit) break;
+    }
+    return out.slice(0, limit);
   }
 
+  // TENANT_SCAN_STATUS_CURSOR_ISOLATION_V1
+  // Antes llamaba a store.scanByStatusWithCursor (crudo) sin filtrar por tenant.
+  // Ahora filtra en memoria por prefix de tenant. El cursor es por updatedAt/id,
+  // no por owner, así que no se puede usar scanByOwnerPrefix directamente.
   async scanByStatusWithCursor<T>(
     kind: string,
     statuses: string[],
@@ -160,7 +193,11 @@ export class TenantScopedStore {
     cursorId?: string,
   ) {
     const rows = await this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId);
-    return rows.map((r) => ({ ...r, owner: this.peel(r.owner) }));
+    const prefixes = this.allTenantPrefixes();
+    const filtered = prefixes.length > 0
+      ? rows.filter((r) => prefixes.some((p) => r.owner.startsWith(`${p}:`)))
+      : rows;
+    return filtered.map((r) => ({ ...r, owner: this.peel(r.owner) }));
   }
 
   /**
