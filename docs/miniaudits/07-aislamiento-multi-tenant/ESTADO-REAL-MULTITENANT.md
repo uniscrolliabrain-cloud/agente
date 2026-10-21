@@ -35,3 +35,8 @@ Marca: ESTADO_REAL_MULTITENANT_V1
 | COMPUTER_TOOLS_TENANT_V1 | NO |
 
 Resumen: 0 presentes, 27 ausentes.
+## Fase 0 - marcas de verificacion
+
+- ESTADO_REAL_PS01B_V1 (Git verificado)
+- ESTADO_REAL_PS01C_V1 (Entorno verificado)
+- ESTADO_REAL_PS01D_V1 (Ficheros clave)
