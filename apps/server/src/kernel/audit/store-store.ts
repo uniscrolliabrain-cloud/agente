@@ -15,6 +15,8 @@ import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../../db.ts";
 import { auditEntrySchema, type AuditEntry } from "./entry.ts";
 import type { AuditAppendInput, AuditStore } from "./store.ts";
+// AUDIT_STORE_TENANT_V1 | 2026-10-21 | applied
+import { assertNotHardcodedTenantId } from "../../engine/tenant.ts";
 
 const KIND = "audit-entries";
 const DEFAULT_MAX_LIST = 10_000;
@@ -95,6 +97,10 @@ export class StoreAuditStore implements AuditStore {
 
   async append(input: AuditAppendInput): Promise<AuditEntry> {
     // AUDIT_APPEND_KERNEL_INDEX_V1
+    // AUDIT_STORE_TENANT_V1
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      assertNotHardcodedTenantId(input.tenantId, "StoreAuditStore.append");
+    }
     // AUDIT_APPEND_BACKOFF_V1 — backoff entre reintentos para evitar
     // thundering herd sobre el anchor cuando hay writes concurrentes.
     // Ver: auditoría profunda 09.

@@ -48,7 +48,7 @@ globalMetrics.counter(
 );
 globalMetrics.counter(
   "openmuse_kernel_thoughts_appended_total",
-  "Thoughts a
+  "Thoughts agregados por el kernel",
 );
 
 export class Kernel {
@@ -91,9 +91,9 @@ export class Kernel {
   }
 
   /**
-   * KERNEL_OPEN_TURN_IDEMPOTENT_V1 */
+   * KERNEL_OPEN_TURN_IDEMPOTENT_V1
    * ya hay uno abierto con la misma correlationId o trigger.
-   * Ver: auditor */
+   * Ver: auditor
    */
   async openTurnIdempotent(ctx: KernelContext, trigger: string): Promise<Turn> {
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));

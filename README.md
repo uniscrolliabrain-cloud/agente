@@ -1,9 +1,76 @@
-# OpenMuse Enterprise - Cognitive Kernel V2
+// DB_RLS_V1 - Row Level Security opcional para Postgres real.
+//
+// Solo aplica si el backend es "postgres". En PGlite no existe.
+//
+// La idea: cuando multi-tenant este activo en un mismo Postgres (varios
+// tenants en la misma tabla records), se activa RLS por tenant_id. Mientras
+// el modelo sea "un deployment por cliente", RLS no aporta nada, porque
+// cada deployment solo tiene un tenant.
+//
+// Uso:
+//   await enableRls(store);   // al arrancar, si DATABASE_URL y
+//                             // MULTI_TENANT_SHARED=true
+//
+// Requiere que la tabla records tenga columna tenant_id. Si no la tiene,
+// la anade con backfill a 'default'. Si el modelo es un deployment por
+// cliente, esto es decorativo y se puede saltar.
 
-Durable: Tasks (kind=sop) -> SOPExecutor (leases + CAS + allowedTools + cycle/depth + ask_user + approval) -> Computer Docker 512MB no-network no-new-privileges -> Business HTTP/PG/sample -> Learning deduplicada sop:<taskId>.
+import type { Store } from "./db.ts";
+import { backgroundFailure } from "./log.ts";
 
-+ Kernel feat/cognitive-kernel d9d5066 32 archivos +2142: Grafo efimero Turn, Thought con AttentionVector completo Zod (author/id/thoughtId/timestamp/metadata + matchReason 9 + ignoreReason 8 + matched/ignored con kind/metadata + superRefine no-solape/no-duplicados), ProgressEvent progress|partial|ready|failed, Meta 4 reglas slow_ready_fast_idle/medium, slow_long_no_output/low 30s, slow_failed_urgent/high, nothing_to_report/low, Views readView vs computeView, Promoter rules.ts explicitas + decisions + consolidate duplicados/contradicciones, Store V2 con tenantId, authors fast/slow/user, presenter PRIORITY ampliada.
+  // DB_RLS_ENABLED_FLAG_V1
+export async function enableRls(store: Store): Promise<boolean> {
+  if (store.backend !== "postgres") {
+    return false;
+  }
+  if (process.env.MULTI_TENANT_SHARED !== "true") {
+    // Un deployment por cliente: no aplica.
+    return false;
+  }
+  try {
+    // 1. Columna tenant_id con backfill.
+    await store.select(
+      "ALTER TABLE records ADD COLUMN IF NOT EXISTS tenant_id text NOT NULL DEFAULT 'default'",
+    );
+    // 2. Indice compuesto.
+    await store.select(
+      "CREATE INDEX IF NOT EXISTS records_tenant_owner_kind_idx ON records(tenant_id, owner, kind, id)",
+    );
+    // 3. Politica RLS. El usuario de la app debe usar SET LOCAL app.tenant_id
+    //    antes de cada query. Si no lo hace, no ve nada. Esto es defensa en
+    //    profundidad: aunque alguien olvide filtrar por tenant, RLS bloquea.
+    await store.select("ALTER TABLE records ENABLE ROW LEVEL SECURITY");
+    await store.select("DROP POLICY IF EXISTS tenant_isolation ON records");
+    await store.select(
+      "CREATE POLICY tenant_isolation ON records USING (tenant_id = current_setting('app.tenant_id', true))",
+    );
+    // 4. Forzar RLS al owner de la tabla.
+    await store.select("ALTER TABLE records FORCE ROW LEVEL SECURITY");
+    return true;
+  } catch (error) {
+    backgroundFailure("enableRls", error);
+    return false;
+  }
+}
 
-Stack: pnpm 11.19.0 Node>=22 Hono 4.11 AG-UI 0.0.59 pglite 0.3.14
-Quickstart: pnpm dev, pnpm beta:smoke, docker build -t openmuse-computer:local apps/computer; COMPUTER_ENABLED=true pnpm beta:vertical
-Garantia: service.kernel opcional, fallback transparente. KERNEL_NONFATAL.
+/**
+ * Envuelve una query en un SET LOCAL app.tenant_id para que RLS aplique.
+ * Uso:
+ *   await withTenantRls(store, tenantId, async () => store.list(...));
+ */
+  // DB_RLS_TENANT_CTX_V1
+export async function withTenantRls<T>(
+  store: Store,
+  tenantId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  // TENANT_RLS_TX_V1 | 2026-10-21 | applied
+  // store.transaction() comparte conexion entre set_config y la query.
+  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
+    return fn();
+  }
+  return store.transaction(async () => {
+    await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+    return fn();
+  });
+}

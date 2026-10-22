@@ -750,7 +750,7 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
               void this.service
                 .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
                 .catch(() => {});
-              // PRESENTER_WIRE_V1 â€” el Presenter decide qu
+              // PRESENTER_WIRE_V1 — pregunta al Presenter qué
               // Antes se emit
               // Presenter. Ahora, si el Presenter tiene una presentaci
               // disponible, se usa su `content`; si no, fallback a fullResponse.
@@ -918,7 +918,7 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
   }
 
   /**
-   * PRESENTER_WIRE_V1 â€” pregunta al Presenter qu */
+    * PRESENTER_WIRE_V1 — pregunta al Presenter qué
    * Devuelve undefined si no hay Presenter o el turno no tiene thoughts.
    */
   private async presentText(

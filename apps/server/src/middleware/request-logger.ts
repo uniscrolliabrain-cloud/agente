@@ -1,13 +1,13 @@
-// REQUEST_LOGGER_V1 Ã¢â‚¬â€ correlationId + logging estructurado por request.
+// REQUEST_LOGGER_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â correlationId + logging estructurado por request.
 //
 // Genera un correlationId por request (o reusa el header X-Correlation-Id)
-// y lo propaga al resto del cÃƒÂ³digo vÃƒÂ­a AsyncLocalStorage.
+// y lo propaga al resto del cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³digo vÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a AsyncLocalStorage.
 //
 // Ver: docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
 
 import type { Context, Next } from "hono";
 import { randomUUID } from "node:crypto";
-import { withLogContext, logInfo, logWarn } from "../log.ts";
+import { withLogContext, logInfo, logWarn, logContext } from "../log.ts";
 import { globalMetrics } from "../metrics/registry.ts";
 
 /**
@@ -41,11 +41,16 @@ function correlationIdFrom(c: Context): string {
 }
 
 /**
- * Middleware que envuelve el request en un contexto de correlaciÃƒÂ³n.
+ * Middleware que envuelve el request en un contexto de correlaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n.
  * Debe registrarse ANTES que cualquier otro middleware que loguee.
  */
   // MIDDLEWARE_REQUEST_LOGGER_V1
-export function requestLogger() {
+export interface RequestLoggerOptions {
+  // LOG_CONTEXT_TENANT_V1 - resuelve el tenantId del owner para el logContext.
+  getTenantId?: (owner: string) => Promise<string>;
+}
+
+export function requestLogger(options: RequestLoggerOptions = {}) {
   return async (c: Context, next: Next) => {
     const correlationId = correlationIdFrom(c);
     const startedAt = performance.now();
@@ -55,8 +60,18 @@ export function requestLogger() {
     // Cabecera de vuelta para que el cliente pueda trazar.
     c.header("X-Correlation-Id", correlationId);
 
-    await withLogContext({ correlationId }, async () => {
-      logInfo("http.request", { method, path });
+    // LOG_CONTEXT_TENANT_V1 - si options.getTenantId esta y ya hay owner en
+    // el contexto, se resuelve tenantId. Si no, comportamiento anterior.
+    // (Nota: el middleware de auth corre DESPUES; ver deuda Fase 4.)
+    const preCtx = logContext.getStore();
+    let tenantId: string | undefined;
+    if (options.getTenantId && preCtx?.owner) {
+      try { tenantId = await options.getTenantId(preCtx.owner); } catch { tenantId = undefined; }
+    }
+    await withLogContext(
+      { correlationId, ...(tenantId ? { tenantId } : {}), ...(preCtx?.owner ? { owner: preCtx.owner } : {}) },
+      async () => {
+        logInfo("http.request", { method, path });
       try {
         await next();
         const durationMs = Math.round(performance.now() - startedAt);
@@ -64,14 +79,14 @@ export function requestLogger() {
         const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
         const emit = level === "warn" ? logWarn : logInfo;
         emit("http.response", { method, path, status, durationMs });
-        // METRICS_HTTP_V1 Ã¢â‚¬â€ contador por mÃƒÂ©todo, ruta y status.
+        // METRICS_HTTP_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â contador por mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©todo, ruta y status.
         // MIDDLEWARE_HTTP_METRIC_V1
         globalMetrics.inc("openmuse_http_requests_total", {
           method,
           path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
           status: String(status),
         });
-        // HISTOGRAM_HTTP_LATENCY_WIRE_V1 - observa la duraciÃ³n en ms.
+        // HISTOGRAM_HTTP_LATENCY_WIRE_V1 - observa la duraciÃƒÆ’Ã‚Â³n en ms.
         // MIDDLEWARE_HTTP_HISTOGRAM_V1
         globalMetrics.observe(
           "openmuse_http_request_duration_ms",

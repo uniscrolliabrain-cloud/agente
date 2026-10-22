@@ -64,9 +64,13 @@ export async function withTenantRls<T>(
   tenantId: string,
   fn: () => Promise<T>,
 ): Promise<T> {
+  // TENANT_RLS_TX_V1 | 2026-10-21 | applied
+  // store.transaction() comparte conexion entre set_config y la query.
   if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
     return fn();
   }
-  await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
-  return fn();
+  return store.transaction(async () => {
+    await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+    return fn();
+  });
 }

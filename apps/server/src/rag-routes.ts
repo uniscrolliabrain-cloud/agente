@@ -5,8 +5,9 @@ import type { Store } from "./db.ts";
 import type { Files } from "./files.ts";
 import { embeddingsConfigured } from "./engine/embeddings.ts";
 import { AppError } from "./errors.ts";
+import type { RateLimiter } from "./rate-limit.ts";
 
-export function ragRoutes(rag: RagService, db: Store, files: Files) {
+export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: RateLimiter) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   // RAG_SOURCES_LIST_V1 - lista de fuentes con conteo de chunks.
@@ -47,14 +48,23 @@ export function ragRoutes(rag: RagService, db: Store, files: Files) {
     return c.json(result, 201);
   });
 
+  // TAKE_FOR_TENANT_RAG_V1 - un intento por tenant+owner antes de buscar.
+  // Deuda Fase 6: usar tenantService cuando este cableado aqui.
   app.get("/search", async (c) => {
+    const owner = c.get("owner");
+    const verdict = limiter.takeForTenant(owner, owner, "rag.search");
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      c.header("Retry-After", String(retrySec));
+      throw new AppError("Limite de busquedas alcanzado. Prueba en " + retrySec + "s.", 429);
+    }
     const query = z.string().min(1).max(1000).parse(c.req.query("q"));
     const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
-    const hits = await rag.search(c.get("owner"), query, limit);
+    const hits = await rag.search(owner, query, limit);
     return c.json({ hits });
   });
 
-  // REINGEST_ENDPOINT — reingesta server-side sin round-trip al navegador.
+  // REINGEST_ENDPOINT â€” reingesta server-side sin round-trip al navegador.
   app.post("/reingest/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");

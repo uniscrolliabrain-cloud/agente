@@ -18,10 +18,27 @@ const db = await createStore({
 });
 await db.recoverInterruptedActions();
 // INDEX_ENABLE_RLS_V1 - RLS opcional (solo Postgres + MULTI_TENANT_SHARED=true).
+// RLS_REQUIRED_IN_SHARED_V1 | 2026-10-21 | applied
+// Si MULTI_TENANT_SHARED=true y el backend es postgres, enableRls DEBE devolver
+// true. Si devuelve false (backend inesperado, falta de permisos, columna
+// inexistente), abortamos el arranque: un deployment shared sin RLS es un
+// deployment sin defensa en profundidad.
 {
   const { enableRls } = await import("./db-rls.ts");
   const enabled = await enableRls(db);
-  if (enabled) console.log("[OpenMuse] RLS activo en records");
+  if (enabled) {
+    console.log("[OpenMuse] RLS activo en records");
+  } else if (process.env.MULTI_TENANT_SHARED === "true") {
+    if (db.backend === "postgres") {
+      throw new Error(
+        "RLS_REQUIRED_IN_SHARED_V1: MULTI_TENANT_SHARED=true y backend postgres, pero enableRls devolvio false. Abortando arranque.",
+      );
+    } else {
+      throw new Error(
+        "RLS_REQUIRED_IN_SHARED_V1: MULTI_TENANT_SHARED=true requiere backend postgres; el backend actual es " + db.backend + ".",
+      );
+    }
+  }
 }
 // KERNEL_STORE_TURN_PERSISTENT_V1
 if (process.env.OPENMUSE_KERNEL_STORE !== "memory") {
@@ -146,9 +163,9 @@ const stopBackupScheduler = startBackupScheduler();
   }
 }
 
-// DEFERRED_ACTIONS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â instancia ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºnica de DeferredActions y tick.
+// DEFERRED_ACTIONS_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â instancia ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âºnica de DeferredActions y tick.
 // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
-// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³.
+// El tick corre cada segundo, pero solo ejecuta lo que ya venciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³.
 // STORE_DEFERRED_WIRE_V1 - store persistente.
 const { DeferredActions, StoreDeferredStore } = await import("./actions-deferred.ts");
 const deferredStore = new StoreDeferredStore(db);
@@ -158,7 +175,7 @@ const deferred = new DeferredActions(
     const action = await db.get<{ id: string; owner?: string }>("system", "actions", actionId);
     void action;
     // El run real lo hace `ActionService.execute` cuando se llama a `decide`
-    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n como ejecutada.
+    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n como ejecutada.
   },
   (type, payload) => {
     void bus.emit("system", "system.maintenance", { kind: "system", id: "deferred" }, {
@@ -173,9 +190,9 @@ const deferred = new DeferredActions(
       : null,
   },
 );
-// EVENTS_CONSUMERS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â arranca los 3 consumidores del bus.
-  // Ver: docs/audits/08-bus-de-eventos/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8
-  // ("3 consumidores reales ademÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡s de ReactionEngine").
+// EVENTS_CONSUMERS_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â arranca los 3 consumidores del bus.
+  // Ver: docs/audits/08-bus-de-eventos/roadmap.md ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8
+  // ("3 consumidores reales ademÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s de ReactionEngine").
   const { startMetricsConsumer } = await import("./engine/events/consumers/metrics.ts");
   const { startAuditConsumer } = await import("./engine/events/consumers/audit.ts");
   const { startNotificationsConsumer } = await import("./engine/events/consumers/notifications.ts");
@@ -189,7 +206,7 @@ const deferred = new DeferredActions(
   const auditConsumer = startAuditConsumer(ownersWithConsumers, db);
   const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, db);
 
-  // ALERTS_WIRE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â instancia AlertService, registra las alertas y arranca.
+  // ALERTS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â instancia AlertService, registra las alertas y arranca.
 const { AlertService, LogAlertHandler } = await import("./alerts/service.ts");
 const { buildAlertDefinitions } = await import("./alerts/definitions.ts");
 const { globalMetrics: alertMetrics } = await import("./metrics/registry.ts");
