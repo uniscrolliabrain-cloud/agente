@@ -11,9 +11,11 @@ import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import type { TenantScopedStore } from "./db-tenant.ts";
 import { AppError } from "./errors.ts";
-// COMPUTER_RETRY_V1 â€” retry solo en errores transitorios de Docker client.
+// COMPUTER_RETRY_V1 Ã¢â‚¬â€ retry solo en errores transitorios de Docker client.
 // NUNCA reintentamos un comando que pudo haber ejecutado.
 import { retryWithBackoff } from "./engine/retry.ts";
+// TAKE_FOR_TENANT_COMPUTER_V1 — RateLimiter compartido con chat/RAG/threads.
+import type { RateLimiter } from "./rate-limit.ts";
 
 const hash = (value: string) => createHash("sha256").update(value).digest("hex");
 const outputLimit = 128 * 1024;
@@ -124,14 +126,14 @@ export const runDocker: DockerRunner = (args, options) =>
     else child.stdin.end(options.input ?? "");
   });
 
-// COMPUTER_IDENTITY_TENANT_V1 — la identidad del contenedor incluye el
-// tenantId además del ownerId. Sin esto, dos tenants con el mismo ownerId
-// compartirían contenedor y volumen (colisión). Con esto, aunque compartan
+// COMPUTER_IDENTITY_TENANT_V1 â€” la identidad del contenedor incluye el
+// tenantId ademÃ¡s del ownerId. Sin esto, dos tenants con el mismo ownerId
+// compartirÃ­an contenedor y volumen (colisiÃ³n). Con esto, aunque compartan
 // ownerId, cada tenant tiene su propio contenedor. En clone-por-cliente
-// tenantId="default", así que la identidad es idéntica a antes.
+// tenantId="default", asÃ­ que la identidad es idÃ©ntica a antes.
 export function computerIdentity(config: Config, owner: string, tenantId: string = "default") {
   const deployment = hash(config.computerDeploymentId ?? config.publicUrl).slice(0, 16);
-  // COMPUTER_IDENTITY_TENANT_V1 — tenantHash y ownerHash separados.
+  // COMPUTER_IDENTITY_TENANT_V1 â€” tenantHash y ownerHash separados.
   const tenantHash = hash("tenant:" + tenantId).slice(0, 12);
   const ownerHash = hash("owner:" + owner).slice(0, 24);
   const name = `openmuse-${deployment}-${tenantHash}-${ownerHash}`;
@@ -219,14 +221,14 @@ export class ComputerService {
     readonly db: Store | TenantScopedStore,
     readonly config: Config,
     private readonly docker: DockerRunner = runDocker,
-    // COMPUTER_IDENTITY_TENANT_V1 — TenantService opcional para resolver
-    // tenantId a partir del owner. Si no está, todo va a "default".
+    // COMPUTER_IDENTITY_TENANT_V1 â€” TenantService opcional para resolver
+    // tenantId a partir del owner. Si no estÃ¡, todo va a "default".
     private readonly tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
   ) {}
 
-  // COMPUTER_IDENTITY_TENANT_V1 — helper único que resuelve tenantId y
+  // COMPUTER_IDENTITY_TENANT_V1 â€” helper Ãºnico que resuelve tenantId y
   // devuelve la identidad. Todos los call sites usan esto. Si tenantService
-  // falla, cae a "default" (no rompe la operación por un fallo de resolución).
+  // falla, cae a "default" (no rompe la operaciÃ³n por un fallo de resoluciÃ³n).
   private async identity(owner: string) {
     const tenantId = this.tenantService
       ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
@@ -293,7 +295,7 @@ export class ComputerService {
       !h.Privileged &&
       h.CapDrop?.includes("ALL") &&
       empty(h.CapAdd) &&
-      // SECOPT_FLEXIBLE â€” Docker puede devolver "no-new-privileges" o
+      // SECOPT_FLEXIBLE Ã¢â‚¬â€ Docker puede devolver "no-new-privileges" o
       // "no-new-privileges:true" segun version. Aceptamos ambos.
       h.SecurityOpt?.length === 1 &&
       h.SecurityOpt.some((opt) => opt === "no-new-privileges" || opt === "no-new-privileges:true") &&
@@ -476,6 +478,8 @@ export class ComputerService {
     }
   }
   async start(owner: string) {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de arrancar.
+    await this.checkTenantRate(owner, "computer.start");
     await this.exclusive(owner, async () => {
       const identity = await this.identity(owner);
       const existing = await this.inspect(owner);
@@ -549,13 +553,15 @@ export class ComputerService {
     return this.snapshot(owner);
   }
   async stop(owner: string) {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de parar.
+    await this.checkTenantRate(owner, "computer.stop");
     this.enabled();
     let lease = await this.db.get<Lease>(owner, "computer-state", "lease");
     if (!lease || lease.expiresAt <= Date.now()) lease = await this.acquire(owner);
     else if ((lease.operation !== "command" && !lease.stopping) || lease.stopInFlight)
       throw new AppError("Computer is busy with another operation. Try Stop again shortly.", 409);
     const attempt = randomUUID();
-    // STOP_ATTEMPT_ALWAYS â€” el expected debe reflejar el lease real. Si stopAttempt
+    // STOP_ATTEMPT_ALWAYS Ã¢â‚¬â€ el expected debe reflejar el lease real. Si stopAttempt
     // era undefined, el CAS de rollback posterior fallaba en silencio.
     const stopping = await this.db.compareAndSwap<Lease>(
       owner,
@@ -632,6 +638,8 @@ export class ComputerService {
     raw: unknown,
     options: { idempotencyKey?: string; signal?: AbortSignal } = {},
   ): Promise<ComputerCommand> {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de ejecutar.
+    await this.checkTenantRate(owner, "computer.execute");
     this.enabled();
     const args = computerCommandSchema.parse(raw),
       cwd = workspacePath(args.cwd);
@@ -795,6 +803,8 @@ export class ComputerService {
     text?: string,
     base64?: string,
   ): Promise<T> {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de operar.
+    await this.checkTenantRate(owner, "computer.file." + operation);
     const path = workspacePath(rawPath);
     if (text !== undefined && Buffer.byteLength(text) > fileLimit)
       throw new AppError("Text files must be 256 KB or smaller", 413);

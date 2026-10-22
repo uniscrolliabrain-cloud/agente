@@ -1,7 +1,7 @@
-// REQUEST_LOGGER_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â correlationId + logging estructurado por request.
+// REQUEST_LOGGER_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â correlationId + logging estructurado por request.
 //
 // Genera un correlationId por request (o reusa el header X-Correlation-Id)
-// y lo propaga al resto del cÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³digo vÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a AsyncLocalStorage.
+// y lo propaga al resto del cÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³digo vÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a AsyncLocalStorage.
 //
 // Ver: docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
 
@@ -41,7 +41,7 @@ function correlationIdFrom(c: Context): string {
 }
 
 /**
- * Middleware que envuelve el request en un contexto de correlaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n.
+ * Middleware que envuelve el request en un contexto de correlaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n.
  * Debe registrarse ANTES que cualquier otro middleware que loguee.
  */
   // MIDDLEWARE_REQUEST_LOGGER_V1
@@ -71,7 +71,9 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
     await withLogContext(
       { correlationId, ...(tenantId ? { tenantId } : {}), ...(preCtx?.owner ? { owner: preCtx.owner } : {}) },
       async () => {
-        logInfo("http.request", { method, path });
+        // METRICS_TENANT_LABEL_V1 — tenantId del logContext para logs y métricas.
+      const tenantIdForLabels = logContext.getStore()?.tenantId;
+      logInfo("http.request", { method, path, ...(tenantIdForLabels ? { tenantId: tenantIdForLabels } : {}) });
       try {
         await next();
         const durationMs = Math.round(performance.now() - startedAt);
@@ -79,27 +81,33 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
         const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
         const emit = level === "warn" ? logWarn : logInfo;
         emit("http.response", { method, path, status, durationMs });
-        // METRICS_HTTP_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â contador por mÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©todo, ruta y status.
+        // METRICS_HTTP_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â contador por mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©todo, ruta y status.
         // MIDDLEWARE_HTTP_METRIC_V1
+        // METRICS_TENANT_LABEL_V1 — label `tenant` si hay tenantId.
+        const tenantLabels = tenantIdForLabels ? { tenant: tenantIdForLabels } : {};
         globalMetrics.inc("openmuse_http_requests_total", {
           method,
           path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
           status: String(status),
+          ...tenantLabels,
         });
-        // HISTOGRAM_HTTP_LATENCY_WIRE_V1 - observa la duraciÃƒÆ’Ã‚Â³n en ms.
+        // HISTOGRAM_HTTP_LATENCY_WIRE_V1 - observa la duraciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n en ms.
         // MIDDLEWARE_HTTP_HISTOGRAM_V1
+        // METRICS_TENANT_LABEL_V1 — idem para el histograma.
         globalMetrics.observe(
           "openmuse_http_request_duration_ms",
           durationMs,
-          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status) },
+          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status), ...tenantLabels },
         );
         // HTTP_ERRORS_AND_HISTOGRAM_V1 - contador dedicado a errores por ruta.
         if (status >= 400) {
           // MIDDLEWARE_HTTP_ERRORS_V1
+          // METRICS_TENANT_LABEL_V1 — idem para errores por ruta.
           globalMetrics.inc("http_errors_by_route_total", {
             method,
             path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
             status: String(status),
+            ...tenantLabels,
           });
         }
       } catch (error) {

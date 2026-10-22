@@ -4,15 +4,25 @@ import { Hono } from "hono";
 import type { AgentService } from "./engine/service.ts";
 import { backgroundFailure } from "./log.ts";
 
-export function notificationsStreamRoutes(service: AgentService) {
+// NOTIFICATIONS_STREAM_TENANT_V1 — recibe tenantService para filtrar el SSE
+// por tenant. Sin esto, un cliente del tenant A podía recibir notificaciones
+// del tenant B si compartían userId.
+export function notificationsStreamRoutes(
+  service: AgentService,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   // NOTIFICATIONS_SSE_CONN_LIMIT_V1
   app.get("/stream", async (c) => {
     const owner = c.get("owner");
-    // NOTIF_USER_FILTER_V1 Ã¢â‚¬â€ filtrar por userId para no emitir notificaciones
+    // NOTIF_USER_FILTER_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â filtrar por userId para no emitir notificaciones
     // dirigidas a otro usuario. Ver: docs/audits/04-.../miniaudit.md.
     const userId = c.req.header("x-user-id") ?? owner;
+    // NOTIFICATIONS_STREAM_TENANT_V1 — tenantId del request, para filtrar.
+    const requestTenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
     c.header("Content-Type", "text/event-stream");
     c.header("Cache-Control", "no-cache");
     c.header("Connection", "keep-alive");
@@ -37,10 +47,14 @@ export function notificationsStreamRoutes(service: AgentService) {
                 { limit: 50 },
               );
             for (const item of items) {
-              // NOTIF_USER_FILTER_V1 Ã¢â‚¬â€ solo si es del usuario o general.
+              // NOTIF_USER_FILTER_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â solo si es del usuario o general.
               // NOTIF_SUPERVISOR_MODE_V1 - Laia (supervisora) ve las de todos.
               const isSupervisor = userId === "laia";
               if (!isSupervisor && item.assignedTo && item.assignedTo !== userId) continue;
+              // NOTIFICATIONS_STREAM_TENANT_V1 — solo notificaciones del mismo
+              // tenant. Si no trae tenantId (legacy), se asume del actual.
+              const itemTenantId = (item as { tenantId?: string }).tenantId ?? requestTenantId;
+              if (itemTenantId !== requestTenantId) continue;
               if (lastSeen.has(item.id)) continue;
               lastSeen.add(item.id);
               push(item);

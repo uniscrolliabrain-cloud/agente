@@ -7,8 +7,10 @@ import {
   computerWriteSchema,
 } from "./computer.ts";
 import type { Files } from "./files.ts";
+// TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" hardcodeado es bug.
+import { assertNotHardcodedTenantId } from "./engine/tenant.ts";
 
-// COMPUTER_ROUTES_TENANT_V1 — recibe tenantService para resolver tenantId
+// COMPUTER_ROUTES_TENANT_V1 â€” recibe tenantService para resolver tenantId
 // al importar PDFs exportados desde computer. Sin esto, el PDF siempre va
 // bajo "default".
 export function computerRoutes(
@@ -52,11 +54,15 @@ export function computerRoutes(
     const owner = c.get("owner");
     const { path } = computerPathSchema.parse(await c.req.json());
     const { name, bytes } = await computer.pdfBytes(owner, path);
-    // COMPUTER_ROUTES_TENANT_V1 — tenantId real del owner. En clone-por-cliente
+    // COMPUTER_ROUTES_TENANT_V1 â€” tenantId real del owner. En clone-por-cliente
     // cae a "default", igual que antes.
     const tenantId = tenantService
       ? await tenantService.tenantIdFor(owner).catch(() => "default")
       : "default";
+    // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" es bug.
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      assertNotHardcodedTenantId(tenantId, "computer-routes POST /files/export");
+    }
     return c.json(await files.import(owner, name, bytes, `Computer: ${path}`, tenantId), 201);
   });
   return app;

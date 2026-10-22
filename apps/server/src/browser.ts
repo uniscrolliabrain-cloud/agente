@@ -7,6 +7,8 @@ import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import type { Files } from "./files.ts";
+// TAKE_FOR_TENANT_BROWSER_V1 â€” RateLimiter compartido con chat/RAG/threads.
+import type { RateLimiter } from "./rate-limit.ts";
 
 const sessionSchema = z.object({
   id: z.string(),
@@ -37,7 +39,31 @@ export class BrowserService {
     private readonly config: Config,
     private readonly auth: Auth,
     private readonly files: Files,
+    // TAKE_FOR_TENANT_BROWSER_V1 â€” limiter compartido. Opcional para no
+    // romper tests existentes que instancian sin limiter.
+    private readonly limiter?: RateLimiter,
+    // TAKE_FOR_TENANT_BROWSER_V1 â€” tenantService para resolver tenantId.
+    private readonly tenantService?: { tenantIdFor: (o: string) => Promise<string> },
   ) {}
+
+  // TAKE_FOR_TENANT_BROWSER_V1 â€” helper comÃºn. Lanza Error con status 429
+  // si se agota la cuota. El handler HTTP lo convierte a AppError.
+  private async checkTenantRate(owner: string, action: string): Promise<void> {
+    if (!this.limiter) return;
+    const tenantId = this.tenantService
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    const verdict = this.limiter.takeForTenant(tenantId, owner, action);
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      const err = new Error(
+        "LÃ­mite alcanzado para " + action + ". Reintenta en " + retrySec + "s.",
+      ) as Error & { status?: number; retryAfter?: number };
+      err.status = 429;
+      err.retryAfter = retrySec;
+      throw err;
+    }
+  }
   private async serial<T>(id: string, operation: () => Promise<T>): Promise<T> {
     const next = (this.queues.get(id) ?? Promise.resolve()).catch(() => {}).then(operation);
     this.queues.set(id, next);
@@ -102,6 +128,8 @@ export class BrowserService {
     return this.decorate(owner, session);
   }
   async create(owner: string, url: string) {
+    // TAKE_FOR_TENANT_BROWSER_V1 â€” consume intento antes de crear.
+    await this.checkTenantRate(owner, "browser.create");
     const id = randomUUID();
     // Record ownership before calling the worker, including when its response is lost.
     await this.db.put(owner, "browsers", {
@@ -129,7 +157,12 @@ export class BrowserService {
     }
   }
   reopen(owner: string, id: string, url?: string) {
-    return this.serial(id, () => this.openOwned(owner, id, url));
+    // TAKE_FOR_TENANT_BROWSER_V1 â€” consume intento. navigate() delega en
+    // reopen(), asÃ­ que este check cubre ambos sin duplicar.
+    return this.serial(id, async () => {
+      await this.checkTenantRate(owner, "browser.reopen");
+      return this.openOwned(owner, id, url);
+    });
   }
   navigate(owner: string, id: string, url: string) {
     return this.reopen(owner, id, url);
@@ -244,7 +277,7 @@ export class BrowserService {
         owner,
         download.name,
         new Uint8Array(await response.arrayBuffer()),
-        `Browser · ${id}`,
+        `Browser Ã‚Â· ${id}`,
       "default", // FALLBACK_TENANT_V1
       );
       await this.db.put(owner, "browser-downloads", { id: download.id, fileId: file.id });
