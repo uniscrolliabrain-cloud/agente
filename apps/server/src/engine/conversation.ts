@@ -19,7 +19,7 @@ import { computerInstructions, computerTools } from "../computer-tools.ts";
 // CONVERSATION_PRESENTER_V1
 // CONVERSATION_META_INJECT_V1
 // CONVERSATION_META_EVALUATE_V1
-// KERNEL_PROMOTER_IMPORT_V1 â€” import del promoter. El uso viene en un bloque posterior.
+// KERNEL_PROMOTER_IMPORT_V1 Ã¢â‚¬â€ import del promoter. El uso viene en un bloque posterior.
 import type { Promoter } from "../kernel/graph/promote.ts";
 import type { Config } from "../config.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
@@ -176,7 +176,7 @@ export class ConversationAgent extends AbstractAgent {
           kernelCtx = ctx;
           kernelTurnId = turn.id;
         } catch (error) {
-          // KERNEL_NONFATAL_LOGGED_V1 â€” loguea el fallo, no lo silencia.
+          // KERNEL_NONFATAL_LOGGED_V1 Ã¢â‚¬â€ loguea el fallo, no lo silencia.
           // Ver: docs/audits/09-kernel-cognitivo/miniaudit.md.
           const { backgroundFailure } = await import("../log.ts");
           backgroundFailure("conversation.kernelTurnOpen", error);
@@ -260,7 +260,19 @@ export class ConversationAgent extends AbstractAgent {
     const browserAbort = new AbortController();
 
     const tools = [
-      ...computerTools(this.service.computer, this.service.files, this.owner, `chat:${requestKey}`),
+      // COMPUTER_TOOLS_WIRE_V1 — pasa el tenantId resuelto como promesa para
+  // que computerTools lo use al importar PDFs. La promesa se resuelve una
+  // vez por request; si falla, cae a "default".
+  ...computerTools(
+    this.service.computer,
+    this.service.files,
+    this.owner,
+    `chat:${requestKey}`,
+    {},
+    this.service.tenantService
+      ? this.service.tenantService.tenantIdFor(this.owner)
+      : Promise.resolve("default"),
+  ),
       defineTool({
         name: "search_mail",
         description:
@@ -590,7 +602,7 @@ export class ConversationAgent extends AbstractAgent {
           if (systemCtx.recentFailures.length > 0)
             lines.push(`Fallos recientes: ${systemCtx.recentFailures.length} tarea(s) fallida(s) en la ultima hora.`);
           if (!systemCtx.health.google) lines.push("Google desconectado.");
-          // META_INJECT_PROMPT_V1 â€” a
+          // META_INJECT_PROMPT_V1 Ã¢â‚¬â€ a
           // Ver: docs/audits/09-kernel-cognitivo/roadmap.md
           const metaHints = (systemCtx as { metaHints?: Array<{ rule: string; urgency: string; message: string }> }).metaHints ?? [];
           for (const hint of metaHints) {
@@ -604,7 +616,7 @@ export class ConversationAgent extends AbstractAgent {
         const roleId = typeof (input.state as Record<string, unknown>)?.roleId === "string"
           ? String((input.state as Record<string, unknown>).roleId)
           : undefined;
-        // ROLE_PROMPT_V2 â€” traemos tone y memories ademas de name/objetivo/sops.
+        // ROLE_PROMPT_V2 Ã¢â‚¬â€ traemos tone y memories ademas de name/objetivo/sops.
         // Los roles guardados antes del v2 no tienen estos campos: se usan defaults.
         const roleContext = roleId
           ? await this.service.db
@@ -617,7 +629,7 @@ export class ConversationAgent extends AbstractAgent {
               }>(this.owner, "agent-roles", roleId)
               .catch(() => null)
           : null;
-        // CONTEXT_ENGINE_IN_CHAT_V1 â€” si hay roleId, intentamos ensamblar contexto
+        // CONTEXT_ENGINE_IN_CHAT_V1 Ã¢â‚¬â€ si hay roleId, intentamos ensamblar contexto
         // completo. Si falla o no hay, caemos al prompt simple de rol.
         const ROLE_TONE_PROMPT: Record<string, string> = {
           warm: "Tutea. Cercano. Si el cliente esta enfadado, primero reconoce y luego resuelve.",
@@ -750,7 +762,7 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
               void this.service
                 .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
                 .catch(() => {});
-              // PRESENTER_WIRE_V1 — pregunta al Presenter qué
+              // PRESENTER_WIRE_V1 â€” pregunta al Presenter quÃ©
               // Antes se emit
               // Presenter. Ahora, si el Presenter tiene una presentaci
               // disponible, se usa su `content`; si no, fallback a fullResponse.
@@ -765,10 +777,10 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
                 const ctx = kernelCtx;
                 const response = fullResponse;
                 void (async () => {
-                  // PRESENTER_USE_V1 â€” el Presenter decide qu
+                  // PRESENTER_USE_V1 Ã¢â‚¬â€ el Presenter decide qu
                   // Ver: docs/audits/09-kernel-cognitivo/roadmap.md
                   const presenterText = await this.presentText(ctx, turnId);
-                  // PRESENTER_EMIT_VIEW_V1 â€” publica al bus que el Presenter
+                  // PRESENTER_EMIT_VIEW_V1 Ã¢â‚¬â€ publica al bus que el Presenter
                   // decidi
                   if (presenterText) {
                     try {
@@ -918,7 +930,7 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
   }
 
   /**
-    * PRESENTER_WIRE_V1 — pregunta al Presenter qué
+    * PRESENTER_WIRE_V1 â€” pregunta al Presenter quÃ©
    * Devuelve undefined si no hay Presenter o el turno no tiene thoughts.
    */
   private async presentText(

@@ -1,5 +1,9 @@
 // BACKUP_TENANT_V1 - backup por tenant en dataDir/tenants/<tenantId>/backups/<stamp>/
 // Restore probado. Cada tenant tiene su propio arbol de backups.
+// BACKUP_TENANT_PATH_V1 — verificado: la ruta de backup es
+// dataDir/tenants/<tenantId>/backups/<stamp>/, y los directorios copiados son
+// "files" y "browser-profiles". Coincide con lo que escribe Files.import
+// (dataDir/tenants/<tenantId>/files). No requiere cambio de ruta.
 
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
