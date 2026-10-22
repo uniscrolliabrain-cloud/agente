@@ -57,6 +57,26 @@ import {
 // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
 import { TenantService } from "./engine/tenant.ts";
 
+  // APP_TENANT_REQUEST_VALIDATE_BODY_V1 | 2026-10-21 | applied
+  async function validateTenantInBody(
+    owner: string,
+    body: unknown,
+    where: string,
+    tenantService: { tenantIdFor: (o: string) => Promise<string> },
+  ): Promise<void> {
+    if (!body || typeof body !== "object") return;
+    const b = body as { tenantId?: unknown };
+    if (typeof b.tenantId !== "string") return;
+    const expected = await tenantService.tenantIdFor(owner).catch(() => undefined);
+    if (!expected) return;
+    if (b.tenantId !== expected) {
+      const crossMsg = "TENANT_MISMATCH " + where + ": owner=" + owner + " expected=" + expected + " received=" + b.tenantId;
+      void import("./log.ts").then(({ logWarn }) => {
+        logWarn("http.cross_tenant_attempt", { where, owner, expectedTenant: expected, receivedTenant: b.tenantId });
+      }).catch(() => {});
+      throw new AppError(crossMsg, 403);
+    }
+  }
   // KERNEL_STORE_TURN_PERSISTENT_TOGGLE_V1
 export async function createApp(
   db: Store,
@@ -468,6 +488,15 @@ app.get("/api/health", async (c) => {
     if (current) {
       logContext.enterWith({ ...current, owner });
     }
+    // RESPONSE_TENANT_HEADER_V1 | 2026-10-21 | applied
+    try {
+      const tId = await tenantService.tenantIdFor(owner);
+      c.header("X-Tenant-Id", tId);
+      const cur2 = logContext.getStore();
+      if (cur2 && !cur2.tenantId) {
+        logContext.enterWith({ ...cur2, tenantId: tId });
+      }
+    } catch { }
     await next();
   });
   app.get("/api/workspace", async (c) => {
@@ -502,6 +531,12 @@ app.post("/api/billing/customer", async (c) => {
     return c.json(await client.listInvoices(customerId));
   });
 
+  app.use("/api/agent/*", async (c, next) => {
+    if (c.req.method === "GET" || c.req.method === "HEAD" || c.req.method === "OPTIONS") { await next(); return; }
+    const body = await c.req.raw.clone().json().catch(() => null);
+    await validateTenantInBody(c.get("owner"), body, "/api/agent" + new URL(c.req.url).pathname, tenantService);
+    await next();
+  });
   app.route("/api/agent", agentRoutes(agent));
   app.route("/api/events", eventsRoutes(bus));
   app.route("/api/skills", skillsRoutes(db));

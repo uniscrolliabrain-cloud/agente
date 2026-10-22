@@ -104,6 +104,8 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
+    // TENANT_BODY_VALIDATE_V1 - tenantId en path validado antes de tocar DB.
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
     await service.db.put("system", "tenant-state", {
       id: tenantId,
       suspended: false,

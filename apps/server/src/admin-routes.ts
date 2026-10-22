@@ -15,10 +15,31 @@ export function adminRoutes(service: AgentService, users: UserService) {
     if (!user || user.role !== "admin") throw new AppError("Solo admin", 403);
   };
 
+  // TENANT_CROSS_AUDIT_V1 - registra en audit-entries que un admin accedio
+  // a un tenant ajeno. Patron service.db.put(tenantId, kind, value) igual
+  // que el resto del fichero. Best-effort: no rompe la request si falla.
+  const auditCrossTenant = async (adminOwner: string, tenantId: string, action: string) => {
+    try {
+      await service.db.put(tenantId, "audit-entries", {
+        id: `cross-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        tenantId,
+        owner: adminOwner,
+        action,
+        actor: { kind: "admin", id: adminOwner },
+        payload: { targetTenantId: tenantId },
+        hash: "cross-audit",
+        timestamp: new Date().toISOString(),
+      });
+    } catch {
+      /* best-effort */
+    }
+  };
+
   app.get("/tenants/:tenantId/usage", async (c) => {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
+    await auditCrossTenant(owner, tenantId, "admin.tenant.usage.read");
     const usage = await service.usageSummary(tenantId);
     return c.json(usage);
   });
@@ -90,6 +111,9 @@ export function adminRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
+    // TENANT_BODY_VALIDATE_V1 - tenantId en path validado antes de tocar DB.
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    await auditCrossTenant(owner, tenantId, "admin.tenant.business-schema.write");
     const body = z.object({
       entities: z.array(z.unknown()).max(200).default([]),
       relations: z.array(z.unknown()).max(200).default([]),
@@ -158,6 +182,7 @@ export function adminRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
+    await auditCrossTenant(owner, tenantId, "admin.tenant.audit.read");
     const entries = await service.db.list<Record<string, unknown>>(tenantId, "audit-entries", { limit: 10000 });
     const exportedAt = new Date().toISOString();
     const signature = createHash("sha256")
