@@ -74,18 +74,3 @@ export async function withTenantRls<T>(
     return fn();
   });
 }
-  tenantId: string,
-  fn: () => Promise<T>,
-): Promise<T> {
-  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
-    return fn();
-  }
-  // RLS_TX_REQUIRED_V1 - store.transaction() no comparte conexion con
-  // store.select() dentro del callback (pg.Pool max:5, cada query coge una
-  // conexion distinta). set_config(is_local=true) se pierde y RLS no aplica.
-  // Hasta que Store exponga transactionWithConnection(conn, fn), lanzamos
-  // en vez de mentir: si el caller depende de RLS, debe saberlo.
-  throw new Error(
-    "RLS_TX_REQUIRED_V1: withTenantRls no garantiza RLS porque set_config y la query no comparten conexion. Requiere refactor de Store.transaction.",
-  );
-}

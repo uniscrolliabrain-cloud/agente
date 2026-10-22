@@ -547,7 +547,9 @@ app.post("/api/billing/customer", async (c) => {
     const { signupRoutes } = await import("./auth-signup.ts");
     app.route("/api/auth", signupRoutes({ db, config, users, tenantService }));
   }
-    // TENANT_RATE_LIMITER_WIRE_ROUTES_V1 - RAG y threads comparten tenantLimiter
+    // TENANT_RATE_LIMITER_WIRE_V1 - limite en memoria para RAG y threads.
+  const tenantLimiter = new RateLimiter(100, 60 * 60 * 1000);
+  // TENANT_RATE_LIMITER_WIRE_ROUTES_V1 - RAG y threads comparten tenantLimiter
   // con chat: un tenant no puede saturar solo RAG ni solo threads sin consumir
   // su cuota global.
   app.route("/api/rag", ragRoutes(rag, db, files, tenantLimiter));
