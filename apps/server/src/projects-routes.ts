@@ -27,15 +27,20 @@ const statusSchema: z.ZodType<ProjectStatus> = z.enum([
   "archived",
 ]);
 
-export function projectRoutes(db: Store) {
+export function projectRoutes(
+  db: Store,
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/", async (c) => {
     const owner = c.get("owner");
     const projects = await db.list<Project>(owner, "projects");
     return c.json(projects.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/", async (c) => {
     const owner = c.get("owner");
     const body = z
@@ -81,7 +86,7 @@ export function projectRoutes(db: Store) {
     return c.json(project, 201);
   });
 
-  // PRESENCE_TOUCH_PROJECT_V1 — mismo patrón que threads.
+  // PRESENCE_TOUCH_PROJECT_V1 â€” mismo patrÃ³n que threads.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
   app.post("/:id/presence", async (c) => {
     const owner = c.get("owner");
@@ -94,7 +99,7 @@ export function projectRoutes(db: Store) {
     return c.json(result);
   });
 
-  // PRESENCE_LEAVE_PROJECT_V1 - desconexión explícita.
+  // PRESENCE_LEAVE_PROJECT_V1 - desconexiÃ³n explÃ­cita.
   app.post("/:id/presence/leave", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -103,6 +108,7 @@ export function projectRoutes(db: Store) {
     return c.json({ ok: true });
   });
 
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -125,12 +131,13 @@ export function projectRoutes(db: Store) {
     });
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.patch("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
     const existing = await db.get<Project>(owner, "projects", id);
     if (!existing) throw new AppError("Project not found", 404);
-    // PROJECTS_CAS_V1 — 409 si el proyecto cambió desde que el cliente lo leyó.
+    // PROJECTS_CAS_V1 â€” 409 si el proyecto cambiÃ³ desde que el cliente lo leyÃ³.
     // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
     const rawBody = await c.req.json();
     const expected = z
@@ -171,6 +178,7 @@ export function projectRoutes(db: Store) {
     return c.json(updated);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.put("/:id/blocks", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -182,7 +190,7 @@ export function projectRoutes(db: Store) {
         expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
       })
       .parse(await c.req.json());
-    // PROJECTS_BLOCKS_CAS_V1 — 409 si los bloques cambiaron.
+    // PROJECTS_BLOCKS_CAS_V1 â€” 409 si los bloques cambiaron.
     // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
     if (body.expectedUpdatedAt !== undefined && existing.updatedAt !== body.expectedUpdatedAt) {
       throw new AppError(
@@ -199,6 +207,7 @@ export function projectRoutes(db: Store) {
     return c.json(updated);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/:id/link-memory", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -219,6 +228,7 @@ export function projectRoutes(db: Store) {
     return c.json(existing);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/:id/unlink-memory", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -234,6 +244,7 @@ export function projectRoutes(db: Store) {
     return c.json(updated);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/:id/link-artifact", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -254,6 +265,7 @@ export function projectRoutes(db: Store) {
     return c.json(existing);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/:id/unlink-artifact", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -269,6 +281,7 @@ export function projectRoutes(db: Store) {
     return c.json(updated);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.delete("/:id", async (c) => {
     const owner = c.get("owner");
     await db.remove(owner, "projects", c.req.param("id"));

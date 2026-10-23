@@ -21,6 +21,7 @@ export interface PersonaRoutesDeps {
   db: Store;
   kernel?: import("../../../kernel/index.ts").Kernel;
   tenantService?: TenantService;
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } };
 }
 
 export function personasRoutes(deps: PersonaRoutesDeps) {
@@ -36,6 +37,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
   };
 
   // GET /api/agent-personas
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -58,6 +60,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
   });
 
   // GET /api/agent-personas/:id
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -95,6 +98,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
 
   // PERSONAS_ALL_NODES_V1 - informe agregado de todos los agentes del tenant.
   // Laia (supervisora) puede pedir turnos + thoughts + memory de los 12 de golpe.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/all/nodes", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -118,6 +122,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
 
   // PERSONAS_REFRESH_STATS_LOG_V1
   // PERSONAS_STATS_REFRESH_BUTTON_V1 - recalcula stats de todas las personas.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/refresh-stats", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -140,6 +145,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
   });
 
   // PERSONAS_ATTENTION_V1 - atencion agregada de una persona.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id/attention", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -162,6 +168,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
   });
 
   // PERSONAS_ATTENTION_PAIRS_ENDPOINT_V1
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:a/attention-pairs/:b", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -179,6 +186,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
   });
 
   // PERSONA_ROUTES_NODE_V1 - turns + thoughts de la persona.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id/node", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -195,6 +203,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
 
   // PERSONAS_ACTIVITY_LIMIT_V1
   // GET /api/agent-personas/:id/activity
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id/activity", async (c) => {
     const owner = c.get("owner");
     const personaId = c.req.param("id");

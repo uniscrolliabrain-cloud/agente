@@ -48,3 +48,30 @@ Detectados 10 usos en apps/server/src/ al ejecutar el Paso 0. Se deprecan en F1.
 ## Typecheck
 
 Estado en F0: verde. 0 errores TS al ejecutar el Paso 0.13. Si en alguna fase aparece error nuevo, se anota aqui y se aborta la fase.
+
+## Deudas de F2 (2026-10-23)
+
+### PEND-F2-06 — `TaskWorker` no se instancia en el repo
+- **Descripción**: `new TaskWorker` no aparece en ningún `.ts` de `apps/server/src`. `TaskWorker` se importa/referencia en `config.ts`, `db-tenant.ts`, `index.ts`, pero no se instancia. El 9º argumento de `new AgentService(...)` es `undefined` (probablemente el worker).
+- **Impacto**: F2.23 (writes con `withWrite`) y F2.24 (wire `{ pdp, fieldFilter }` al worker) no se pueden aplicar. Sin `TaskWorker` cableado, `withWrite` no recibe `pdp`/`fieldFilter`.
+- **Acción**: F5 (worker wiring). Auditar cómo cablear `TaskWorker` en `AgentService` o en `index.ts`. Cablear `{ pdp, fieldFilter }` en las `options` del `TaskWorker`. Envolver los writes de `tasks` (L250, L290) y `run-events` (L357) con `withWrite`.
+- **Estado**: ABIERTA. Aplazada a F5.
+
+### PEND-F2-07 — `worker.ts` no escribe `activity`
+- **Descripción**: `db.put(owner, "activity", ...)` no aparece en `worker.ts`. F2.23b asumía que el worker escribe `activity`. No es el caso.
+- **Impacto**: F2.23b SKIP. No hay `activity` write que envolver con `withWrite`.
+- **Acción**: F5, si en el futuro el worker escribe `activity`. Anotar.
+- **Estado**: CERRADA (SKIP justificado).
+
+### PEND-F2-08 — `app.ts` con mojibake acumulado (6.4 MB)
+- **Descripción**: `app.ts` tiene 6.425.854 bytes por mojibake acumulado de fases anteriores. Cada `WriteAllText` con `UTF8Encoding` re-codifica los caracteres corruptos y amplía el fichero.
+- **Impacto**: `app.ts` es válido TypeScript (typecheck verde) y F2 PASS, pero el fichero es ilegible en las zonas de mojibake.
+- **Acción**: fase de limpieza dedicada (post-F2, o al final de las campañas). Sustituir `ÃƒÆ'Ã†â€™...` por el carácter original. Reducir bytes.
+- **Estado**: ABIERTA. No bloquea.
+
+### PEND-F2-09 — `new AgentService(..., undefined, ...)` con 9º arg `undefined`
+- **Descripción**: `app.ts` línea 235-245: `const agent = new AgentService(tdb, config, workspace, files, actions, browser, computer, rag, undefined, bus, ...)`. El 9º argumento es `undefined`. Probablemente el `worker`.
+- **Impacto**: `agent.worker` debe tener un default en `AgentService`. Si no, L405 `agent.worker.running` peta en runtime. Typecheck verde, así que debe haber default.
+- **Acción**: F5. Auditar el constructor de `AgentService` para ver qué recibe el 9º arg. Cablear `TaskWorker` en ese slot.
+- **Estado**: ABIERTA. Aplazada a F5.
+

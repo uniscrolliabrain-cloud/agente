@@ -10,13 +10,14 @@ const prefsSchema = z.object({
   disabled: z.array(z.string().max(80)).max(50).default([]),
 });
 
-// NOTIFICATION_PREFS_TENANT_V1 — el id del registro de prefs es el tenantId
+// NOTIFICATION_PREFS_TENANT_V1 â€” el id del registro de prefs es el tenantId
 // real, no "default". En clone-por-cliente tenantId="default" y se comporta
 // igual que antes. En shared, cada tenant tiene su propio registro.
-// TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" hardcodeado es bug.
+// TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 â€” en shared, "default" hardcodeado es bug.
 export function notificationPrefsRoutes(
   db: Store,
   tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
@@ -29,6 +30,7 @@ export function notificationPrefsRoutes(
     }
   };
 
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/prefs", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
@@ -37,6 +39,7 @@ export function notificationPrefsRoutes(
     return c.json(prefs ?? { disabled: [] });
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.put("/prefs", async (c) => {
     const owner = c.get("owner");
     const tenantId = await tenantIdFor(owner);
