@@ -1,4 +1,4 @@
-// METRICS_EXPORTER_V2 â€” Prometheus exporter sobre el registry acumulativo.
+// METRICS_EXPORTER_V2 Ã¢â‚¬â€ Prometheus exporter sobre el registry acumulativo.
 //
 // V1 escaneaba la DB en cada GET /metrics. V2 solo serializa el registry
 // que los servicios alimentan.
@@ -22,7 +22,7 @@ export function metricsRoutes(service: AgentService, users: UserService) {
     const authorized = expected ? token === expected : user?.role === "admin";
     if (!authorized) throw new AppError("Unauthorized", 401);
 
-    // METRICS_WORKER_GAUGE_V1 â€” el worker no cambia en runtime, es un gauge
+    // METRICS_WORKER_GAUGE_V1 Ã¢â‚¬â€ el worker no cambia en runtime, es un gauge
     // de estado que se setea al vuelo (no escanea DB).
     // WORKER_METRICS_GAUGE_V1
     globalMetrics.set("openmuse_worker_running", service.worker.running ? 1 : 0);
@@ -32,8 +32,11 @@ export function metricsRoutes(service: AgentService, users: UserService) {
     const p99 = globalMetrics.quantile("openmuse_http_request_duration_ms", 0.99);
     if (p99 !== undefined) globalMetrics.set("openmuse_http_latency_p99_ms", p99);
 
+    // METRICS_EXPORTER_TENANT_V1 — ?tenant=X filtra las métricas por tenant.
+    // Admin-only (ya verificado arriba).
+    const tenantFilter = c.req.query("tenant") || undefined;
     c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
-    return c.body(globalMetrics.render());
+    return c.body(globalMetrics.render(tenantFilter ? { tenant: tenantFilter } : undefined));
   });
 
   return app;

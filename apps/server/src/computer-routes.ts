@@ -7,8 +7,17 @@ import {
   computerWriteSchema,
 } from "./computer.ts";
 import type { Files } from "./files.ts";
+// TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" hardcodeado es bug.
+import { assertNotHardcodedTenantId } from "./engine/tenant.ts";
 
-export function computerRoutes(computer: ComputerService, files: Files) {
+// COMPUTER_ROUTES_TENANT_V1 â€” recibe tenantService para resolver tenantId
+// al importar PDFs exportados desde computer. Sin esto, el PDF siempre va
+// bajo "default".
+export function computerRoutes(
+  computer: ComputerService,
+  files: Files,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
   app.get("/", async (c) => c.json(await computer.snapshot(c.get("owner"))));
   app.post("/start", async (c) => c.json(await computer.start(c.get("owner"))));
@@ -42,9 +51,19 @@ export function computerRoutes(computer: ComputerService, files: Files) {
     );
   });
   app.post("/files/export", async (c) => {
+    const owner = c.get("owner");
     const { path } = computerPathSchema.parse(await c.req.json());
-    const { name, bytes } = await computer.pdfBytes(c.get("owner"), path);
-    return c.json(await files.import(c.get("owner"), name, bytes, `Computer: ${path}`, "default") /* FALLBACK_TENANT_V1 */, 201);
+    const { name, bytes } = await computer.pdfBytes(owner, path);
+    // COMPUTER_ROUTES_TENANT_V1 â€” tenantId real del owner. En clone-por-cliente
+    // cae a "default", igual que antes.
+    const tenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" es bug.
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      assertNotHardcodedTenantId(tenantId, "computer-routes POST /files/export");
+    }
+    return c.json(await files.import(owner, name, bytes, `Computer: ${path}`, tenantId), 201);
   });
   return app;
 }

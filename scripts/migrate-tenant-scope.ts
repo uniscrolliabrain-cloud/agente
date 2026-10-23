@@ -11,9 +11,14 @@ async function main() {
       "SELECT DISTINCT owner FROM records WHERE owner NOT LIKE 'default:%' AND owner NOT LIKE '%:%'",
     );
     console.log(`Owners sin prefijo: ${rows.length}`);
-    for (const row of rows) {
-      await db.select("UPDATE records SET owner = 'default:' || owner WHERE owner = $1", [row.owner]);
-    }
+    // MIGRATE_SCOPE_TX_V1 — transacción atómica. Si una fila falla, rollback.
+    // Antes cada UPDATE iba por separado; un fallo a mitad dejaba owners
+    // migrados y otros no, y el siguiente arranque no sabía qué había pasado.
+    await db.transaction(async () => {
+      for (const row of rows) {
+        await db.select("UPDATE records SET owner = 'default:' || owner WHERE owner = $1", [row.owner]);
+      }
+    });
     console.log(`OK: ${rows.length} owners reescritos`);
   } finally {
     await db.close();

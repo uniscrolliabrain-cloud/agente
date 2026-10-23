@@ -1,4 +1,4 @@
-// KERNEL_AUDIT_ENTRY_V1 — audit trail inmutable.
+// KERNEL_AUDIT_ENTRY_V1 â€” audit trail inmutable.
 //
 // SOC-2 exige trazabilidad completa: cada operacion del kernel escribe
 // una AuditEntry. La cadena de hashes (previousHash -> hash) hace que
@@ -41,7 +41,12 @@ export const auditEntrySchema = z.object({
     kind: z.string().min(1).max(50),
     id: z.string().min(1).max(200),
   }),
-  payload: z.record(z.string(), z.unknown()),
+  // AUDIT_STORE_CLASSIFICATION_V1 - payload acepta field/classification/allowed
+  payload: z.record(z.string(), z.unknown()).superRefine((val, ctx) => {
+    if ("field" in val && val.field !== null && typeof val.field !== "string") ctx.addIssue({ code: "custom", message: "field must be string or null" });
+    if ("classification" in val && val.classification !== null && !["public", "internal", "confidential", "restricted", "secret"].includes(val.classification as string)) ctx.addIssue({ code: "custom", message: "invalid classification" });
+    if ("allowed" in val && typeof val.allowed !== "boolean") ctx.addIssue({ code: "custom", message: "allowed must be boolean" });
+  }),
   previousHash: z.string().length(64).optional(),
   hash: z.string().length(64),
   timestamp: z.iso.datetime({ offset: true }),

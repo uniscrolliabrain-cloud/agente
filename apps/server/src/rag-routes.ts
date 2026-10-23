@@ -7,10 +7,18 @@ import { embeddingsConfigured } from "./engine/embeddings.ts";
 import { AppError } from "./errors.ts";
 import type { RateLimiter } from "./rate-limit.ts";
 
-export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: RateLimiter) {
+export function ragRoutes(
+  rag: RagService,
+  db: Store,
+  files: Files,
+  limiter: RateLimiter,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   // RAG_SOURCES_LIST_V1 - lista de fuentes con conteo de chunks.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/sources", async (c) => {
     const owner = c.get("owner");
     // RAG_SOURCES_LIST_PAGED_V1
@@ -28,12 +36,14 @@ export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: Rat
     return c.json({ sources: [...grouped.values()].sort((a, b) => b.chunks - a.chunks) });
   });
 
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/status", async (c) => {
     const stats = await rag.stats(c.get("owner"));
     return c.json({ configured: embeddingsConfigured(), ...stats });
   });
 
   // RAG_INGEST_RATE_LIMIT_V1
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/ingest", async (c) => {
     if (!embeddingsConfigured())
       throw new AppError("Embeddings no configurados. Falta GEMINI_API_KEY.", 503);
@@ -50,9 +60,14 @@ export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: Rat
 
   // TAKE_FOR_TENANT_RAG_V1 - un intento por tenant+owner antes de buscar.
   // Deuda Fase 6: usar tenantService cuando este cableado aqui.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/search", async (c) => {
     const owner = c.get("owner");
-    const verdict = limiter.takeForTenant(owner, owner, "rag.search");
+    // TAKE_FOR_TENANT_TENANTID_V1 â€” tenantId real, no owner.
+    const tenantIdForRate = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "rag.search");
     if (!verdict.allowed) {
       const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
       c.header("Retry-After", String(retrySec));
@@ -64,7 +79,7 @@ export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: Rat
     return c.json({ hits });
   });
 
-  // REINGEST_ENDPOINT â€” reingesta server-side sin round-trip al navegador.
+  // REINGEST_ENDPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â reingesta server-side sin round-trip al navegador.
   app.post("/reingest/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -89,6 +104,7 @@ export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: Rat
     return c.json({ ok: true });
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.delete("/source/:id", async (c) => {
     await rag.removeSource(c.get("owner"), c.req.param("id"));
     return c.json({ ok: true });

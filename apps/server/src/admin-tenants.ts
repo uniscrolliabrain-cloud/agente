@@ -136,6 +136,46 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     return c.json({ ok: true, tenantId: body.tenantId }, 201);
   });
 
+  // ADMIN_TENANTS_CRUD_V1 — borra un tenant. Elimina membership y state.
+  // No borra los records del tenant (tasks, files, etc.): esos los borra
+  // un operador con un script dedicado (Fase 9 si hace falta).
+  app.delete("/:tenantId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    await service.db.remove("system", "tenant-membership", tenantId);
+    await service.db.remove("system", "tenant-state", tenantId);
+    // ADMIN_TENANTS_CRUD_V1 — invalidar caché de TenantService.
+    const ts = (service as unknown as { tenantService?: { invalidateAll?: () => void } }).tenantService;
+    ts?.invalidateAll?.();
+    return c.json({ ok: true, tenantId, deleted: true });
+  });
+
+  // ADMIN_TENANTS_CRUD_V1 — actualiza displayName.
+  app.patch("/:tenantId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    const body = z.object({ displayName: z.string().min(1).max(200).optional() }).parse(await c.req.json());
+    if (body.displayName === undefined) {
+      throw new AppError("Nada que actualizar (displayName)", 422);
+    }
+    const existing = await service.db.get<{ id: string; tenantId: string; displayName?: string; createdAt: string; createdBy: string }>(
+      "system",
+      "tenant-membership",
+      tenantId,
+    );
+    if (!existing) throw new AppError("Tenant no encontrado", 404);
+    await service.db.put("system", "tenant-membership", {
+      ...existing,
+      displayName: body.displayName,
+      updatedAt: new Date().toISOString(),
+    });
+    return c.json({ ok: true, tenantId, displayName: body.displayName });
+  });
+
   return app;
 }
 

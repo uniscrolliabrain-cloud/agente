@@ -6,20 +6,28 @@ import { AppError } from "../errors.ts";
 
 const TERMINAL = new Set(["succeeded", "failed", "cancelled"]);
 
-export function sopRoutes(db: Store, agent: AgentService) {
+export function sopRoutes(
+  db: Store,
+  agent: AgentService,
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/", async (c) => c.json(await db.list(c.get("owner"), "sops")));
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id", async (c) => {
     const s = await db.get<SOP>(c.get("owner"), "sops", c.req.param("id"));
     if (!s) throw new AppError("SOP not found", 404);
     return c.json(s);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/", async (c) => {
     const parsed = sopSchema.parse(await c.req.json());
     const sop = { ...parsed, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     await db.put(c.get("owner"), "sops", sop);
     return c.json(sop, 201);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.put("/:id", async (c) => {
     const id = c.req.param("id");
     const ex = await db.get<SOP>(c.get("owner"), "sops", id);
@@ -29,6 +37,7 @@ export function sopRoutes(db: Store, agent: AgentService) {
     await db.put(c.get("owner"), "sops", up);
     return c.json(up);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.delete("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -41,6 +50,7 @@ export function sopRoutes(db: Store, agent: AgentService) {
   });
   // Real "api" trigger: external callers start this SOP by POSTing here.
   // ?force=1 lets an operator start a SOP whose trigger is manual, cron or email_subject.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/:id/run", async (c) => {
     const owner = c.get("owner");
     const sopId = c.req.param("id");

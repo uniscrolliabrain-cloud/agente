@@ -6,13 +6,13 @@ import type {
   AgentMemory,
   AgentNotification,
 } from "../../../../packages/domain/src/agent.ts";
-// AGENT_ROLE_V2_ROUTE Ã¢â‚¬â€ el schema vive en el dominio para que ruta y tipo no divergan.
+// AGENT_ROLE_V2_ROUTE ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â el schema vive en el dominio para que ruta y tipo no divergan.
 import { agentRoleSchema } from "../../../../packages/domain/src/agent.ts";
 import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
 
 const text = z.string().trim().min(1).max(4000);
-// MEMORY_FULL_SCHEMA Ã¢â‚¬â€ la UI edita category y tags; el route debe aceptarlos.
+// MEMORY_FULL_SCHEMA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â la UI edita category y tags; el route debe aceptarlos.
 const memoryCategories = z.enum(["empresa","cliente","proceso","preferencia","rrhh","producto","otro"]);
 // A1_MEMORY_PATCH_V2 - category y tags aceptan null para borrar; text opcional para patch parcial.
 const memorySchema = z.object({
@@ -72,15 +72,22 @@ const parseCsv = (csv: string): string[][] => {
   return rows;
 };
 
-export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: string } }> {
+export function agentRoutes(
+  service: AgentService,
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+): Hono<{ Variables: { owner: string } }> {
   const app = new Hono<{ Variables: { owner: string } }>();
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/", async (c) => c.json(await service.snapshot(c.get("owner"))));
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks", async (c) =>
     c.json(await service.createTask(c.get("owner"), await c.req.json()), 201),
   );
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/tasks/:id", async (c) =>
     c.json(await service.detail(c.get("owner"), c.req.param("id"))),
   );
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks/:id/control", async (c) => {
     const { action } = z
       .object({ action: z.enum(["pause", "resume", "cancel", "retry"]) })
@@ -88,9 +95,10 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(await service.control(c.get("owner"), c.req.param("id"), action));
   });
   // C1_REASSIGN_V1 - reasignar tarea a otro rol o usuario.
-  // RECONCILE_ENDPOINT_V1 Ã¢â‚¬â€ reconciliar una acciÃƒÂ³n en outcome_unknown.
-  // El operador confirma si la acciÃƒÂ³n externa se ejecutÃƒÂ³ o no.
-  // Ver: docs/audits/03-resiliencia/roadmap.md Ã‚Â§8.
+  // RECONCILE_ENDPOINT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â reconciliar una acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n en outcome_unknown.
+  // El operador confirma si la acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n externa se ejecutÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ o no.
+  // Ver: docs/audits/03-resiliencia/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/actions/:id/reconcile", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -118,8 +126,8 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     const note = body.note?.slice(0, 2000) ?? "";
     const result =
       body.outcome === "executed"
-        ? `Reconciled by operator: executed${note ? ` Ã¢â‚¬â€ ${note}` : ""}`
-        : `Reconciled by operator: not executed${note ? ` Ã¢â‚¬â€ ${note}` : ""}`;
+        ? `Reconciled by operator: executed${note ? ` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${note}` : ""}`
+        : `Reconciled by operator: not executed${note ? ` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${note}` : ""}`;
 
     const updated = await service.db.compareAndSwap(
       owner,
@@ -156,10 +164,11 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   });
 
   // C3_CANCEL_V1 - cancelar una accion programada.
-  // ACTIONS_CANCEL_VERIFY_V1 Ã¢â‚¬â€ verificado como parte del bloque 06.
-  // ACTIONS_RETRY_ENDPOINT_V1 Ã¢â‚¬â€ reintento controlado.
+  // ACTIONS_CANCEL_VERIFY_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â verificado como parte del bloque 06.
+  // ACTIONS_RETRY_ENDPOINT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â reintento controlado.
   // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
   // FORCE_CANCEL_EXECUTING_V1 - cancelar accion en executing pasa a outcome_unknown.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/actions/:id/force-cancel", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -179,6 +188,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(updated);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/actions/:id/retry", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -186,8 +196,9 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(action);
   });
 
-  // ACTIONS_AUDIT_ENDPOINT_V1 Ã¢â‚¬â€ audit trail de una acciÃƒÂ³n.
+  // ACTIONS_AUDIT_ENDPOINT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â audit trail de una acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n.
   // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/actions/:id/audit", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -201,8 +212,9 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       audit: entries.filter((e) => e.actionId === id),
     });
   });
-  // El endpoint cancela una acciÃƒÂ³n scheduled si el usuario firmÃƒÂ³.
+  // El endpoint cancela una acciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n scheduled si el usuario firmÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³.
   // Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/actions/:id/cancel", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -221,6 +233,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (!cancelled) throw new AppError("Action cannot be cancelled", 409);
     return c.json({ ok: true });
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks/:id/reassign", async (c) => {
     const body = z
       .object({ roleId: z.string().max(200).optional() })
@@ -240,6 +253,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (!updated) throw new AppError("Task not found", 404);
     return c.json(updated);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks/:id/escalate", async (c) => {
     const body = z
       .object({
@@ -256,6 +270,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       ),
     );
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks/:id/input", async (c) => {
     const body = z
       .object({
@@ -269,10 +284,12 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       await service.answer(c.get("owner"), c.req.param("id"), body.answer, body.fields),
     );
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/goals", async (c) =>
     c.json(await service.createGoal(c.get("owner"), await c.req.json()), 201),
   );
   // GOAL_RUN_ENDPOINT_V1 - dispara el ciclo del orquestador.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/goals/:id/run", async (c) => {
     const owner = c.get("owner");
     const goalId = c.req.param("id");
@@ -285,20 +302,25 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     );
     return c.json(result);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/goals/:id", async (c) => {
     const body = goalPatchSchema.parse(await c.req.json());
     return c.json(await service.updateGoal(c.get("owner"), c.req.param("id"), body));
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/monitors", async (c) =>
     c.json(await service.createMonitor(c.get("owner"), await c.req.json()), 201),
   );
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/monitors/:id/control", async (c) => {
     const { action } = z
       .object({ action: z.enum(["pause", "resume", "stop", "check"]) })
       .parse(await c.req.json());
     return c.json(await service.controlMonitor(c.get("owner"), c.req.param("id"), action));
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/ideas/refresh", async (c) => c.json(await service.refreshIdeas(c.get("owner"))));
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/ideas/:id", async (c) => {
     const body = z
       .object({
@@ -311,6 +333,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     );
   });
   // A1_MEMORY_PATCH_V2 - crear memoria normaliza tags a lowercase.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/memories", async (c) => {
     const body = memorySchema.parse(await c.req.json());
     if (body.text === undefined) throw new AppError("Text is required", 422);
@@ -329,6 +352,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(await service.db.put(c.get("owner"), "memories", memory), 201);
   });
   // A1_MEMORY_PATCH_V2 - solo compareAndSwap, patch parcial, null -> undefined para no mentir al tipo.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/memories/:id", async (c) => {
     const body = memorySchema.parse(await c.req.json());
     const patch: Record<string, unknown> = {};
@@ -355,15 +379,18 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (!memory) throw new AppError("Memory not found", 404);
     return c.json(memory);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/memories/:id/forget", async (c) => {
     if (!(await service.db.take(c.get("owner"), "memories", c.req.param("id"))))
       throw new AppError("Memory not found", 404);
     return c.json({ ok: true });
   });
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/roles", async (c) => c.json(await service.listAgents(c.get("owner"))));
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/roles", async (c) => {
-    // AGENT_ROLE_V2_ROUTE Ã¢â‚¬â€ se usa agentRoleSchema del dominio en vez de un z.object inline:
+    // AGENT_ROLE_V2_ROUTE ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â se usa agentRoleSchema del dominio en vez de un z.object inline:
     // el inline solo aceptaba id/name/objetivo/sops/active, asi que un rol creado por aqui se
     // guardaba sin tone/avatar/memories mientras AgentRole los exige. Con el schema compartido,
     // la ruta y el tipo no pueden volver a divergir.
@@ -375,6 +402,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(body, 201);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/identity", async (c) => {
     const body = z
       .object({
@@ -396,11 +424,13 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (!identity) throw new AppError("Agent identity changed; refresh and try again", 409);
     return c.json(identity);
   });
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/notifications", async (c) =>
     c.json((await service.snapshot(c.get("owner"))).notifications),
   );
-  // NOTIF_ASSIGN_V1 Ã¢â‚¬â€ crear una notificaciÃƒÂ³n dirigida a un usuario concreto.
+  // NOTIF_ASSIGN_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â crear una notificaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n dirigida a un usuario concreto.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/notifications/direct", async (c) => {
     const owner = c.get("owner");
     const body = z
@@ -424,6 +454,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(notification, 201);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/notifications/:id/read", async (c) => {
     // NOTIF_READ_CAS_V1 - solo si no estaba leida.
     const notification = await service.db.compareAndSwap<AgentNotification>(
@@ -441,6 +472,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
    * lo que provisionaria (SOPs, skills, memorias, usuarios). Solo lectura: los clientes
    * viven en el repo, no en la DB. No ejecuta provisioning ni toca la API.
    */
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/admin/clients", async (c) => {
     const { readdir, readFile, stat } = await import("node:fs/promises");
     const { join } = await import("node:path");
@@ -492,12 +524,15 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     }
     return c.json({ clients });
   });
-  // PUBLIC_ROLES_ENDPOINT Ã¢â‚¬â€ canon publico de los personajes para el repo de redes.
+  // PUBLIC_ROLES_ENDPOINT ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â canon publico de los personajes para el repo de redes.
   // Solo expone id, name, tone, avatar, objetivo, roi e identidad. Nada interno.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/roles/public", async (c) => c.json(await service.publicRoles(c.get("owner"))));
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/usage", async (c) => c.json(await service.usageSummary(c.get("owner"))));
-  // TENANT_CACHE_ENDPOINT_V1 Ã¢â‚¬â€ debug de la cache de TenantService.
+  // TENANT_CACHE_ENDPOINT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â debug de la cache de TenantService.
   // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/tenant/cache-stats", async (c) => {
     const ts = service.tenantService as unknown as {
       cacheSize?: () => number;
@@ -509,7 +544,8 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     });
   });
 
-  // TENANT_CACHE_ENDPOINT_V1 Ã¢â‚¬â€ invalidaciÃƒÂ³n explÃƒÂ­cita.
+  // TENANT_CACHE_ENDPOINT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â invalidaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n explÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­cita.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tenant/cache-invalidate", async (c) => {
     const ts = service.tenantService as unknown as {
       invalidateAll?: () => void;
@@ -517,8 +553,9 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     if (typeof ts?.invalidateAll === "function") ts.invalidateAll();
     return c.json({ ok: true });
   });
-  // WORKER_STATUS_ENDPOINT_V1 Ã¢â‚¬â€ estado del worker para operador.
-  // Ver: docs/audits/05-motor-tareas-durable/roadmap.md Ã‚Â§8.
+  // WORKER_STATUS_ENDPOINT_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â estado del worker para operador.
+  // Ver: docs/audits/05-motor-tareas-durable/roadmap.md ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§8.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/worker-status", async (c) => {
     const worker = service.worker as unknown as {
       running: boolean;
@@ -541,12 +578,14 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       maxPerOwner: Number(process.env.WORKER_MAX_PER_OWNER ?? "10"),
     });
   });
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/search", async (c) => {
     const q = z.string().min(2).max(200).parse(c.req.query("q"));
     const limit = Math.min(Number(c.req.query("limit") ?? "30") || 30, 100);
     return c.json(await service.globalSearch(c.get("owner"), q, limit));
   });
   // FEEDBACK_ROUTE_V1 - el usuario deja feedback sobre un outcome.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/feedback", async (c) => {
     const owner = c.get("owner");
     const body = z.object({
@@ -566,12 +605,14 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json(entry, 201);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/sample-page", async (c) => {
     if (service.config.mode !== "sample") throw new AppError("Not found", 404);
     const body = z.object({ text: z.string().max(100000) }).parse(await c.req.json());
     await service.db.put(c.get("owner"), "sample-pages", { id: "availability", text: body.text });
     return c.json({ ok: true });
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/sample-business-records", async (c) => {
     if (service.config.mode !== "sample") throw new AppError("Not found", 404);
     const rows = z.array(z.record(z.string(), z.unknown())).max(500).parse(await c.req.json());
@@ -582,9 +623,11 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
   const businessRecordSchema = z.looseObject({
     id: z.string().trim().min(1).max(200),
   });
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/business-records", async (c) =>
     c.json(await service.db.list(c.get("owner"), "business-records")),
   );
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/business-records", async (c) => {
     const body = z
       .union([businessRecordSchema, z.array(businessRecordSchema).max(500)])
@@ -594,6 +637,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
       await service.db.put(c.get("owner"), "business-records", { ...row, id: row.id });
     return c.json({ ok: true, count: rows.length }, 201);
   });
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.delete("/business-records/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -603,6 +647,7 @@ export function agentRoutes(service: AgentService): Hono<{ Variables: { owner: s
     return c.json({ ok: true });
   });
   // CSV import: the first row is the header; every record gets a fresh uuid id and the body kind.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/business-records/import", async (c) => {
     const body = z
       .object({

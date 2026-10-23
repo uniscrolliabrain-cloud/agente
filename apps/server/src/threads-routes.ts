@@ -16,9 +16,15 @@ interface Thread {
   messageCount: number;
 }
 
-export function threadRoutes(db: Store, limiter: RateLimiter) {
+export function threadRoutes(
+  db: Store,
+  limiter: RateLimiter,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/", async (c) => {
     const owner = c.get("owner");
     const threads = await db.list<Thread>(owner, "threads");
@@ -27,9 +33,14 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
 
   // TAKE_FOR_TENANT_THREADS_V1 - un intento por tenant+owner antes de crear
   // el thread. Deuda Fase 6: usar tenantService cuando este cableado aqui.
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/", async (c) => {
     const owner = c.get("owner");
-    const verdict = limiter.takeForTenant(owner, owner, "threads.create");
+    // TAKE_FOR_TENANT_TENANTID_V1 â€” tenantId real, no owner.
+    const tenantIdForRate = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "threads.create");
     if (!verdict.allowed) {
       const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
       c.header("Retry-After", String(retrySec));
@@ -52,8 +63,8 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     return c.json(thread, 201);
   });
 
-  // PRESENCE_TOUCH_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â el cliente marca su presencia al editar un thread.
-  // Devuelve quiÃƒÆ’Ã‚Â©n mÃƒÆ’Ã‚Â¡s estÃƒÆ’Ã‚Â¡ editando. Ver miniaudit 04.
+  // PRESENCE_TOUCH_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â el cliente marca su presencia al editar un thread.
+  // Devuelve quiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©n mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s estÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ editando. Ver miniaudit 04.
   app.post("/:id/presence", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -65,7 +76,7 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     return c.json(result);
   });
 
-  // PRESENCE_LEAVE_THREAD_V1 - desconexiÃƒÆ’Ã‚Â³n explÃƒÆ’Ã‚Â­cita.
+  // PRESENCE_LEAVE_THREAD_V1 - desconexiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n explÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­cita.
   app.post("/:id/presence/leave", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -74,9 +85,10 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     return c.json({ ok: true });
   });
 
-  // RECONCILE_THREAD_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â el cliente pide el estado mÃƒÆ’Ã‚Â¡s reciente tras un 409.
-  // Devuelve updatedAt + messages para comparar con lo que tenÃƒÆ’Ã‚Â­a.
+  // RECONCILE_THREAD_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â el cliente pide el estado mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡s reciente tras un 409.
+  // Devuelve updatedAt + messages para comparar con lo que tenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id/state", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -90,6 +102,7 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     });
   });
 
+  // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -99,6 +112,7 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     return c.json({ ...thread, messages: conv?.messages ?? [] });
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.put("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -111,8 +125,8 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     if (!thread) throw new AppError("Thread not found", 404);
     const body = await c.req.json();
     const messages = z.array(z.unknown()).max(1000).parse(body.messages);
-    // THREADS_CAS_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â optimismo de concurrencia. El cliente envÃƒÆ’Ã‚Â­a
-    // `expectedUpdatedAt` con la versiÃƒÆ’Ã‚Â³n que leyÃƒÆ’Ã‚Â³. Si el thread cambiÃƒÆ’Ã‚Â³
+    // THREADS_CAS_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â optimismo de concurrencia. El cliente envÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a
+    // `expectedUpdatedAt` con la versiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n que leyÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³. Si el thread cambiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³
     // desde entonces, devolvemos 409 y el cliente recarga.
     // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
     const expected = z
@@ -123,13 +137,13 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
       if (!current || current.updatedAt !== expected.expectedUpdatedAt) {
         // THREAD_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
         throw new AppError(
-          "Otro usuario ha modificado esta conversaciÃƒÆ’Ã‚Â³n. Recarga y vuelve a intentarlo.",
+          "Otro usuario ha modificado esta conversaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n. Recarga y vuelve a intentarlo.",
           409,
           { current: current?.updatedAt ?? "", expected: expected.expectedUpdatedAt },
         );
       }
     }
-    // Escribir la conversaciÃƒÆ’Ã‚Â³n con CAS: expected = updatedAt leÃƒÆ’Ã‚Â­do, patch = messages.
+    // Escribir la conversaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n con CAS: expected = updatedAt leÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­do, patch = messages.
     const currentThread = await db.get<Thread>(owner, "threads", id);
     if (!currentThread) throw new AppError("Thread not found", 404);
     const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(
@@ -168,6 +182,7 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     }
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.patch("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
@@ -179,6 +194,7 @@ export function threadRoutes(db: Store, limiter: RateLimiter) {
     return c.json(updated);
   });
 
+  // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.delete("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");

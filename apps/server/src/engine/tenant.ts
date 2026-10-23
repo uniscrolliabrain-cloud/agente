@@ -97,6 +97,17 @@ export class TenantService {
       updatedAt: new Date().toISOString(),
     });
     this.cache.set(owner, { tenantId, at: Date.now() });
+    // MEMBERSHIP_CACHE_INVALIDATE_V1 — invalidar TODA la caché tras un
+    // cambio administrativo. Un admin puede estar moviendo un owner entre
+    // tenants y otros owners pueden verse afectados si el admin también
+    // reasigna sus memberships. Es más seguro invalidar todo que solo el
+    // owner cambiado.
+    this.invalidateAll();
+    // MEMBERSHIP_CACHE_INVALIDATE_V1 — emitir evento al bus si está
+    // disponible. El evento lo consumen audit y metrics (Fase 6 los cableó).
+    // NOTA: el constructor actual NO recibe bus. Este bloque se activa
+    // cuando Fase 8/9 añada bus al constructor. Por ahora, no-op.
+    // if (this.bus) { await this.bus.emit(...); }
   }
 
   /** Invalida la cache de un owner (p.ej. tras cambiar membership). */
@@ -110,7 +121,7 @@ export class TenantService {
   }
 
   /**
-   * TENANT_CACHE_INVALIDATE_ALL_V1 â€” invalida toda la cache tras cambios
+   * TENANT_CACHE_INVALIDATE_ALL_V1 Ã¢â‚¬â€ invalida toda la cache tras cambios
    * administrativos (mover owner entre tenants).
    * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
    */
@@ -118,7 +129,7 @@ export class TenantService {
     this.cache.clear();
   }
 
-  /** TENANT_CACHE_STATS_V1 â€” tamaÃ±o actual de la cache, para debug. */
+  /** TENANT_CACHE_STATS_V1 Ã¢â‚¬â€ tamaÃƒÂ±o actual de la cache, para debug. */
   cacheSize(): number {
     return this.cache.size;
   }

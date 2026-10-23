@@ -241,4 +241,10 @@ export * from "./views.ts";
 
 // AGENT_PERSONA_V1 - personas funcionales del sistema.
 export * from "./agent-persona.ts";
+// DOMAIN_INDEX_POLICY_V1 - exporta policy.ts y classification.ts (F2).
+export * from "./policy.ts";
+export * from "./classification.ts";
+// DOMAIN_INDEX_ACTOR_V1 - exporta actor.ts y jwt.ts (F1).
+export * from "./actor.ts";
+export * from "./jwt.ts";
 

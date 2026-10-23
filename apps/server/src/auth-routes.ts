@@ -79,7 +79,7 @@ export function authRoutes(
   const app = new Hono<{ Variables: { owner: string } }>();
   // RATE_LIMIT_TENANT_WIRE_V1 - limite por IP + por email + por tenant.
   // El takeForTenant ya existe en RateLimiter. Cuando el login sea por tenant
-  // (subdominio o campo), se usa ese método en vez de take.
+  // (subdominio o campo), se usa ese mÃ©todo en vez de take.
   const ipLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_IP, LOGIN_WINDOW_MS);
   const emailLimiter = new RateLimiter(LOGIN_ATTEMPTS_PER_EMAIL, LOGIN_WINDOW_MS);
 
@@ -194,6 +194,44 @@ export function authRoutes(
       await db.remove("system", "sessions", digest(auth.slice(7)));
     }
     return c.json({ ok: true });
+  });
+
+  // SWITCH_TENANT_ENDPOINT_V1 — cambia el tenant activo del usuario.
+  // Valida que el usuario tiene membership en el tenantId solicitado, y
+  // devuelve un nuevo JWT con tenantId en el payload. El cliente debe
+  // guardar el nuevo token y usarlo en futuras requests.
+  // En clone-por-cliente, el usuario solo tiene una membership; si
+  // tenantId no coincide, 403.
+  app.post("/switch-tenant", async (c) => {
+    const owner = c.get("owner");
+    const body = z.object({ tenantId: z.string().min(1).max(100) }).parse(await c.req.json());
+    // Resolver el tenantId activo actual del owner.
+    const currentTenantId = await db
+      .get<{ tenantId: string }>(owner, "tenant-membership", "default")
+      .then((r) => r?.tenantId ?? null)
+      .catch(() => null);
+    if (currentTenantId === null) {
+      throw new AppError("SWITCH_TENANT_ENDPOINT_V1: el usuario no tiene membership", 403);
+    }
+    // Validar que el usuario tiene acceso al tenantId solicitado.
+    // Hoy solo hay un tenant por usuario (id="default"), así que el switch
+    // solo funciona si tenantId === currentTenantId. Cuando haya multi-membership
+    // (Campaña 2), esto leerá de tenant_members.
+    if (body.tenantId !== currentTenantId) {
+      throw new AppError(
+        "SWITCH_TENANT_ENDPOINT_V1: el usuario no tiene membership en " + body.tenantId,
+        403,
+      );
+    }
+    // Emitir un nuevo JWT con tenantId. Mismo formato que /login.
+    const token = randomBytes(32).toString("base64url");
+    await db.put("system", "sessions", {
+      id: digest(token),
+      owner,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      tenantId: body.tenantId,
+    });
+    return c.json({ ok: true, tenantId: body.tenantId, token });
   });
 
   // GET /api/auth/me -> usuario autenticado actual
@@ -330,7 +368,7 @@ export function authRoutes(
     const target = await users.getById(c.req.param("id"));
     if (!target) throw new AppError("Usuario no encontrado", 404);
     const limit = Math.min(Number(c.req.query("limit") ?? "20") || 20, 100);
-    // KEYSET_CURSOR — paginacion real. El cliente pasa el updatedAt + id de la ultima
+    // KEYSET_CURSOR â€” paginacion real. El cliente pasa el updatedAt + id de la ultima
     // fila recibida para pedir la siguiente pagina.
     const cursorUpdatedAt = c.req.query("cursorUpdatedAt") || undefined;
     const cursorId = c.req.query("cursorId") || undefined;
