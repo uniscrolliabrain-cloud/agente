@@ -1,0 +1,1154 @@
+Antes de escribir la Fase 1, he reanalizado todo lo que tengo. Te dejo el análisis y luego el documento completo.
+
+## Análisis previo (reanálisis)
+
+**Lo que tengo verificado contra código real:**
+
+- `users.ts`: `userSchema` no tiene `authProviderId`, ni `managerId`, ni `fieldClassification`, ni `salaryGross`/`salaryNet`/`bankAccount`. `userRoleSchema` es `z.enum(["admin", "user"])`. `UserService` tiene `list`, `getById`, `getByEmail`, `verifyCredentials`, `create`, `update`, `remove`, `ensureAdmin`. `hashPassword` con scrypt.
+- `auth.ts`: `Auth.owner` solo lee `system/sessions`. `Auth.session(accessKey, ownerId)` genera token random. `sign`/`verify` para signed URLs. `createAuth` genera signing key, con rotación opcional vía `TOKEN_ENCRYPTION_KEY`.
+- `kernel-context.ts`: `kernelContextSchema` sin `actorId` ni `sessionId`. `KernelContext` tiene `tenantId`, `owner`, `role`, `requestId`, `threadId?`, `parentTurnId?`, `correlationId?`, `personaId?`. `systemContext` construye uno con `role: "system"`.
+- `execution-context.ts`: `executionContextSchema` sin `actorId` ni `sessionId`. Tiene `tenantId`, `owner`, `role`, `roleId?`, `requestId`, `correlationId?`, `runtimeId?`, `goalId?`, `taskId?`, `threadId?`, `turnId?`.
+- `agent.ts`: `AgentRole` sin `reportsTo`/`peers`. `AgentTask` sin `version`/`fieldClassification`/`assignmentKind`/`assignedBy`. `AgentMemory`/`AgentArtifact`/`AgentNotification` sin `fieldClassification`. `Goal`, `Monitor`, `Idea`, `Project` como los tenía.
+- `agent-persona.ts`: `AgentPersona` sí tiene `reportsTo?: string` y `peers: string[]`. Tiene `personality`, `capabilities`, `values`, `avatar`, `language`, `metadata`. Es la fuente real de `Flow`.
+- `orchestrator.ts`: `ExecutionContext` sin `actorId`/`sessionId`. `runGoal(ctx, goal)` no atribuye a `assignedTo`/`assignedBy`. `BusinessOSOrchestrator` con `deps.planner`, `deps.executor`, `deps.verifier`, `deps.replanner`, `deps.guardrails`, `deps.observer`, `deps.context`, `deps.capabilities`.
+- `worker.ts`: `run-events` sin `actorId`. `settled` callback sin `actorId`. `busEvent` con `owner` como primer parámetro.
+- `governance.ts`: `canExecuteTool(owner, role, tool)` y `canExecuteAction(owner, role, action, policyAction)`. Llama a `PolicyEngine.can`.
+- `kernel.ts`: `openTurn` con `audit.append({ actor: { kind: ctx.role, id: ctx.owner } })`. Sin `actorId`.
+- `user-header.ts`: `userHeaderMiddleware` solo valida formato de `x-user-id`. No lo valida contra `actor.id`. No es fuente de verdad.
+- `app.ts`: `authMiddleware` en `app.use("/api/*", ...)` pone `c.set("owner", owner)`. `Auth.owner` es la fuente de identidad hoy. `RESPONSE_TENANT_HEADER_V1` ya añade `X-Tenant-Id`. `TENANT_RATE_LIMITER_WIRE_V1` ya monta `tenantLimiter`.
+- `tenant.ts`: `TenantService.tenantIdFor(owner)` con caché TTL. `DEFAULT_TENANT_ID = "default"`. `assertNotHardcodedTenantId` existe.
+- `config.ts`: `Config` sin `jwtSecret`/`jwksUri`/`authProvider`. Tiene `mode`, `publicUrl`, `dataDir`, `databaseUrl`, `accessKey`, `encryptionKey`, `model`, etc.
+
+**Lo que necesito verificar en Paso 0 (y no tengo al 100%):**
+
+- Si `hono/jwk` está en `apps/server/package.json` o si hay que usar `jose`.
+- La firma exacta de `Auth.session` (para no romperla al añadir `verifyJwt`).
+- La firma exacta de `audit.append` (para añadir `actorId` sin romper `StoreAuditStore`).
+- La estructura real de `run-events` en `worker.ts` (para añadir `actorId` y `requestingActorId` sin romper `settled`).
+- Si `PolicyEngine.can` acepta `field` (para que `AgentGovernance` pase `Actor` y el PDP futuro lo use).
+- Si `AgentRole` tiene algún campo `actorId` de fases anteriores (Fase 2 de Campaña 1 no lo añadió, pero conviene verificar).
+
+**Decisiones de diseño para F1:**
+
+1. **`User.authProviderId` único.** No JIT. `sub` sin `User` con `authProviderId` → 401.
+2. **`ActorService.resolve(jwtPayload)` función pura.** Sin `ActorRegistry`. El actor es vista derivada.
+3. **`verifyJwtMiddleware`** con `hono/jwk` si está, si no `jose`.
+4. **`authMiddleware` actual se mantiene para rutas legacy.** `verifyJwtMiddleware` se monta antes. Si no hay JWT y la ruta no es legacy → 401. Si hay JWT → `ActorService.resolve` → `c.set("actor")` + `c.set("ctx")`.
+5. **`KernelContext.actorId` obligatorio.** `sessionId` opcional. `owner` se mantiene.
+6. **`ExecutionContext.actorId` obligatorio.** `sessionId` opcional. Revisar consumidores (`orchestrator.ts`, `service.ts`).
+7. **`worker.ts` atribuye `executingActorId` = `task.assignedTo` (o `task.state.roleId`), `requestingActorId` = `task.assignedBy` (o `task.state.assignedBy`).** Si no hay, cae a `owner` para compatibilidad.
+8. **`AgentGovernance` recibe `Actor`** en `canExecuteTool`/`canExecuteAction`. Sigue llamando a `PolicyEngine.can` con `owner = actor.id`. Sin PDP todavía.
+9. **`x-user-id` deprecado.** `userHeaderMiddleware` valida formato y, si viene, anota `X-User-Id-Mismatch: 1` si no coincide con `actor.id`. No autoriza.
+10. **Sin `ActorRegistry`.** Sin `ActorCapabilities`. Sin `Flow` (F3).
+
+**Decisiones que NO tomo en F1 (van a otras fases):**
+
+- `Policy`, PDP, `withRead`/`withWrite` (F2).
+- `Assignment`, `Flow`, `AssignmentService` (F3).
+- `version`, `expectedVersion`, `reconcile` (F4).
+- `PresenceService`, `EditLockService`, SSE replay, `NotificationService` (F5).
+- `RecordHistory`, `AuditTrail`, `conflict-version` (F6).
+- Tests de producto (F7).
+
+---
+
+# 06 — Campaña 2 / Fase 1 — Identidad y actor (G1)
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 1 — Identidad y actor (G1)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fase 0 cerrada (contrato v5, 7 fases, 5 garantías, 13 invariantes, 17 tests). Supabase Auth decidido. Agentes internos con identidad de ejecución propia.
+**Aprobación:** Fase 1 del mapa de 7 fases aprobada. Aplica las 14 correcciones del contraste contra los 3 ficheros reales. Documento listo para ejecución.
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 0 (documento 05 v5): reconocimiento y contrato. 5 garantías (G1–G5), 13 invariantes (I1–I13), 17 tests (14 obligatorios + 3 condicionales), 7 fases (F1–F7). Supabase Auth decidido para humanos. Agentes internos con identidad de ejecución propia. `executingActorId` vs `requestingActorId` separados. `User.authProviderId` como vínculo entre `sub` de Supabase y `User.id`. Condiciones de activación documentadas para I9, I11, I12. `ESTADO-REAL-MULTIUSUARIO.md` con evidencia `fichero:línea`.
+
+**Verificado contra los 3 ficheros reales:**
+- `packages/domain/src/agent.ts`: `AgentRole` **no** tiene `reportsTo`/`peers`. Los tiene `AgentPersona`. `AgentTask` no tiene `version`, `fieldClassification`, `assignmentKind`, `assignedBy`.
+- `packages/domain/src/agent-persona.ts`: `AgentPersona` **sí** tiene `reportsTo?: string` y `peers: string[]`.
+- `apps/server/src/engine/orchestrator/orchestrator.ts`: `ExecutionContext` **no** tiene `actorId`/`sessionId`. `runGoal(ctx, goal)` no atribuye a `assignedTo`/`assignedBy`.
+
+**Verificado contra el Repomix de Fase 0:**
+- `apps/server/src/users.ts`: `userSchema` sin `authProviderId`, sin `managerId`, sin `fieldClassification`.
+- `apps/server/src/auth.ts`: `Auth.owner` solo lee de `system/sessions`. `Auth.session` genera token random.
+- `apps/server/src/kernel/context/kernel-context.ts`: `kernelContextSchema` sin `actorId`/`sessionId`.
+- `packages/domain/src/execution-context.ts`: `executionContextSchema` sin `actorId`/`sessionId`.
+- `apps/server/src/engine/worker.ts`: `run-events` sin `actorId`.
+- `apps/server/src/engine/agents/governance.ts`: `canExecuteTool(owner, role, tool)` sin `Actor`.
+- `apps/server/src/middleware/user-header.ts`: `x-user-id` solo valida formato, no identidad.
+- `apps/server/src/kernel/kernel.ts`: `audit.append` con `actor: { kind: ctx.role, id: ctx.owner }`.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`User.authProviderId`** (F1.1): campo único que vincula el `sub` de Supabase con el `User.id` interno. Backfill controlado, no vinculación por email. **Sin JIT provisioning**: `sub` sin `User` con `authProviderId` → 401.
+- **`UserService.getByAuthProviderId(sub)`** (F1.2): resuelve el `User` desde el `sub` del JWT. Sin cache por ahora (se añade si hace falta en F2).
+- **`ActorService.resolve(jwtPayload)`** (F1.3): función pura que devuelve `Actor` desde el JWT + `User` de la DB. Verifica `User.active === false` → 403. **Sin `ActorRegistry` persistido**: el actor es vista derivada del JWT + `User`.
+- **Middleware JWT de Supabase** (F1.4): `jwk` de Hono o `jose` directo (según dependencia real verificada en Paso 0.3). Verifica firma, `iss`, `aud`, `exp`, `sub`. `c.set("jwtPayload", ...)`.
+- **`ctx` completo en cada request autenticado** (F1.5): `c.set("ctx", { tenantId, userId, sessionId, requestId })`. El `tenantId` viene de `TenantService.tenantIdFor(userId)`, no del cliente. El `userId` viene del JWT verificado, no de `x-user-id`.
+- **`KernelContext.actorId` y `sessionId`** (F1.6): propagados en `openTurn`, `appendThought`, `closeTurn`, `audit.append`. `owner` se mantiene para compatibilidad.
+- **`ExecutionContext.actorId` y `sessionId`** (F1.7): propagados en `orchestrator.runGoal`, `service.ts`, `worker.ts`. Revisión de consumidores.
+- **`executingActorId` vs `requestingActorId` en worker** (F1.8): `run-events` con ambos. `settled` callback recibe ambos. `bus.emit` con `actorId` = `executingActorId`.
+- **Actor desactivado → 403** (F1.9): check en `ActorService.resolve` en cada request. No depende de que Supabase revoque el JWT.
+- **`x-user-id` deprecado** (F1.10): se ignora para identidad. `userHeaderMiddleware` valida formato y, si viene, anota discrepancia con `actor.id` (`X-User-Id-Mismatch: 1`). No autoriza.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 2 (documento 07): acceso seguro. `Policy`, `PolicyDecisionPoint`, `PolicyEnforcementPoint`, `FieldClassification`, `FieldFilter`, `withRead`, `withWrite`. **Autorización en cada operación protegida**: handlers, workers, acciones internas, streams, rutas alternativas. **No basta middleware global.** Se registra el mecanismo de authz de cada ruta y se verifica que no hay vía alternativa. `fieldClassification` no es seguridad por sí sola: se aplica en lectores, escritores, serializadores, listados, búsquedas, agregaciones. `x-user-id` deja de ser fuente de verdad completamente (F1 ya lo depreca, F2 lo elimina de las rutas).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 1), ejecutada en **10 patchsets de producto** más **1 patchset de verificación sin escritura** (confirmar Fase 0 cerrada). Total: **10 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix de Fase 0 + los 3 ficheros reales:**
+
+- `apps/server/src/users.ts` (íntegro: `User`, `UserService`, `userSchema`, `userRoleSchema`, `hashPassword`, `verifyPassword`).
+- `apps/server/src/auth.ts` (íntegro: `Auth`, `session`, `owner`, `sign`, `verify`, `createAuth`).
+- `apps/server/src/kernel/context/kernel-context.ts` (íntegro: `KernelContext`, `kernelContextSchema`, `systemContext`).
+- `apps/server/src/app.ts` (íntegro: `createApp`, `authMiddleware`, `app.onError`, rutas).
+- `apps/server/src/index.ts` (íntegro: arranque, `createApp`).
+- `apps/server/src/kernel/kernel.ts` (íntegro: `Kernel`, `openTurn`, `appendThought`, `closeTurn`).
+- `apps/server/src/kernel/audit/store-store.ts` (íntegro: `StoreAuditStore`, `auditEntrySchema`).
+- `apps/server/src/engine/worker.ts` (íntegro: `TaskWorker`, `run-events`, `settled`, `busEvent`).
+- `apps/server/src/engine/agents/governance.ts` (íntegro: `AgentGovernance`).
+- `apps/server/src/engine/tenant.ts` (íntegro: `TenantService`, `tenantIdFor`, `assertNotHardcodedTenantId`).
+- `apps/server/src/middleware/user-header.ts` (íntegro: `userHeaderMiddleware`).
+- `apps/server/src/config.ts` (íntegro: `Config`, `readConfig`).
+- `packages/domain/src/execution-context.ts` (íntegro: `ExecutionContext`, `executionContextSchema`, `executionRoleSchema`).
+- `packages/domain/src/agent.ts` (íntegro: `AgentRole`, `AgentTask`, `AgentMemory`, `AgentArtifact`, `AgentNotification`).
+- `packages/domain/src/agent-persona.ts` (íntegro: `AgentPersona`, `AgentStats`, `AgentPersonality`, `AgentCapabilities`).
+- `apps/server/src/engine/orchestrator/orchestrator.ts` (íntegro: `BusinessOSOrchestrator`, `ExecutionContext` usage).
+- `docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md`, `ID-MAP.md`, `CIERRE-MVP.md`, `fuera-de-mvp.md`, `-pendientes.md`, `PLAN-CAMPANA-2.md` (Fase 0 v5).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+
+- `apps/server/package.json` — `Select-String -Pattern "hono|jwk|supabase|jose"` para confirmar si `hono/jwk` está disponible o hay que usar `jose`.
+- `package.json` raíz — `Select-String -Pattern "hono|supabase|jose"`.
+- `apps/server/src/engine/policy/engine.ts` — `Select-String -Pattern "class PolicyEngine|async can\("` con `-Context 0,3`. Para confirmar que `AgentGovernance` puede seguir llamándolo con `owner = actor.id`.
+- `apps/server/src/kernel/audit/store-store.ts` — `Select-String -Pattern "auditEntrySchema|actor|append"` con `-Context 0,4`. Para confirmar la firma de `append` y el tipo `AuditEntry`.
+- `apps/server/src/engine/worker.ts` — `Select-String -Pattern "settled|run-events|busEvent|task\.state"` con `-Context 0,3`. Para confirmar la estructura real de `run-events` y `settled`.
+
+**Archivos que NO se leen en esta fase:**
+
+- `apps/server/src/engine/presence.ts`, `engine/edit-lock.ts` (F5).
+- `apps/server/src/notifications-stream.ts`, `notification-prefs.ts` (F5).
+- `apps/server/src/engine/events/replay-buffer.ts` (no existe, F5).
+- `apps/server/src/engine/assignments/` (no existe, F3).
+- `apps/server/src/engine/authz/` (no existe, F2).
+- `apps/server/src/engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (no existen, F6).
+- `apps/server/src/backup-tenant.ts` (Campaña 1 cerrada).
+- `apps/worker/src/**`, `apps/computer/src/**`, `scripts/**`, `clientes/**`, `docs/audits/**` (no se tocan).
+- `apps/web/src/**` (no se toca en esta campaña).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Crear (dominio):**
+
+- `packages/domain/src/actor.ts` — `Actor`, `HumanActor`, `AgentActor`, `ActorKind`, `ActorProfile`, `ActorRoles`, `actorSchema`, `humanActorSchema`, `agentActorSchema`, `actorKindSchema`, `actorProfileSchema`, `actorRolesSchema`. **Sin `ActorFlow`** (F3). **Sin `ActorCapabilities`** (se resuelve vía `AgentRole` existente).
+- `packages/domain/src/jwt.ts` — `jwtPayloadSchema` (claims mínimos: `iss`, `aud`, `exp`, `sub`, `session_id`, `email`), `JwtPayload`.
+
+**Crear (server):**
+
+- `apps/server/src/engine/actors/service.ts` — `ActorService.resolve(jwtPayload)`. Función pura. Sin `ActorRegistry`.
+- `apps/server/src/engine/auth/jwt.ts` — `verifyJwtMiddleware()` (jwk de Hono o jose).
+
+**Modificar (dominio):**
+
+- `packages/domain/src/execution-context.ts` — `ExecutionContext.actorId` (obligatorio) y `sessionId` (opcional). Cambio de contrato: revisar consumidores (`orchestrator.ts`, `service.ts`).
+- `packages/domain/src/index.ts` — re-exporta `actor.ts` y `jwt.ts`.
+
+**Modificar (server):**
+
+- `apps/server/src/users.ts` — `User.authProviderId` (nuevo, único). `UserService.getByAuthProviderId(sub)`. `UserService.create` acepta `authProviderId`. Backfill en `ensureAdmin`.
+- `apps/server/src/app.ts` — `app.use("/api/*", verifyJwtMiddleware())` antes del `authMiddleware` actual. El `authMiddleware` actual se mantiene para rutas legacy. Si JWT no está presente y la ruta no es legacy, 401. Si JWT presente → `ActorService.resolve` → `c.set("actor")` + `c.set("ctx")`. `c.set("owner", actor.id)` para compatibilidad con handlers existentes.
+- `apps/server/src/kernel/context/kernel-context.ts` — `KernelContext.actorId` (obligatorio) y `sessionId` (opcional). `systemContext` añade `actorId: owner`.
+- `apps/server/src/kernel/kernel.ts` — `openTurn`/`appendThought`/`closeTurn` usan `ctx.actorId` en `audit.append`. `actor: { kind: ctx.role, id: ctx.actorId }` en lugar de `id: ctx.owner`. `provenance.actorId` en `Thought`.
+- `apps/server/src/engine/worker.ts` — `run-events` con `actorId` (`executingActorId`) y `requestingActorId`. `settled` recibe ambos. `busEvent` con `actorId`. `task.assignedTo` → `executingActorId`. `task.assignedBy` → `requestingActorId`. Si no hay `assignedBy`, cae a `owner` para compatibilidad.
+- `apps/server/src/engine/agents/governance.ts` — `canExecuteTool(actor, tool)`, `canExecuteAction(actor, action, policyAction)`. Sigue llamando a `PolicyEngine.can(owner, role, resource, action)` con `owner = actor.id`. Sin PDP todavía.
+- `apps/server/src/middleware/user-header.ts` — `x-user-id` deprecado. Validación de formato. Si viene y no coincide con `actor.id`, `c.header("X-User-Id-Mismatch", "1")` y se sigue. No es fuente de verdad.
+- `apps/server/src/config.ts` — `Config.authProvider: "supabase" | "google" | "session"` (default `"supabase"`). `Config.jwtSecret?`, `Config.jwksUri?`, `Config.jwtIssuer?`, `Config.jwtAudience?`.
+- `apps/server/src/engine/orchestrator/orchestrator.ts` — `runGoal(ctx, goal)` propaga `ctx.actorId` y `ctx.sessionId` si están. Sin cambiar firma pública.
+
+**No crear (prohibido en esta fase):**
+
+- Cualquier `tests/*.test.ts` (F02.10 congelado hasta F7).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multiusuario_pendientes.md` (lo escribe el humano).
+- Cualquier tabla SQL.
+- `ActorRegistry` (Fase 0 lo descartó, vista derivada).
+- `Policy`, `PDP`, `PEP`, `withRead`, `withWrite`, `FieldClassification`, `FieldFilter` (F2).
+- `Assignment`, `Flow`, `AssignmentService` (F3).
+- `version`, `expectedVersion`, `reconcile`, `ConflictDiff` (F4).
+- `PresenceService`, `EditLockService`, `NotificationService`, `ReplayBuffer` (F5).
+- `RecordHistory`, `AuditTrail`, `ReconcileService` (F6).
+
+**No tocar:**
+
+- `worker.ts` más allá de F1.8.
+- `conversation.ts` (no se toca).
+- `kernel.ts` más allá de F1.6.
+- `db-tenant.ts`, `db-rls.ts` (Campaña 1 cerrada).
+- `admin-routes.ts`, `admin-tenants.ts`, `rag-routes.ts`, `threads-routes.ts`, `projects-routes.ts`, `computer-routes.ts`, `computer-tools.ts`, `files.ts`, `computer.ts`, `notification-prefs.ts`, `notifications-stream.ts` (F2 en adelante).
+- `engine/presence.ts`, `engine/edit-lock.ts` (F5).
+- `backup-tenant.ts` (Campaña 1 cerrada).
+- `scripts/audits/*`, `tests/tenant-http-e2e.test.ts` (congelados).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F1.0 | `packages/domain/src/actor.ts` | 1 (crear) | CREATE |
+| F1.0b | `packages/domain/src/jwt.ts` | 1 (crear) | CREATE |
+| F1.1 | `apps/server/src/users.ts` (`authProviderId` + `getByAuthProviderId` + `create`) | 3 | MODIFY |
+| F1.2 | `apps/server/src/engine/actors/service.ts` | 1 (crear) | CREATE |
+| F1.3 | `apps/server/src/engine/auth/jwt.ts` | 1 (crear) | CREATE |
+| F1.4 | `apps/server/src/app.ts` (`verifyJwtMiddleware` + `c.set("actor")` + `c.set("ctx")`) | 3 | MODIFY |
+| F1.5 | `apps/server/src/config.ts` (`authProvider` + `jwtSecret` + `jwksUri` + `jwtIssuer` + `jwtAudience`) | 1 | MODIFY |
+| F1.6 | `apps/server/src/kernel/context/kernel-context.ts` (`actorId` + `sessionId` + `systemContext`) | 2 | MODIFY |
+| F1.6b | `apps/server/src/kernel/kernel.ts` (propagación `actorId`) | 3 | MODIFY |
+| F1.7 | `packages/domain/src/execution-context.ts` (`actorId` + `sessionId`) | 1 | MODIFY |
+| F1.7b | `apps/server/src/engine/orchestrator/orchestrator.ts` (propaga `actorId`) | 1 | MODIFY |
+| F1.8 | `apps/server/src/engine/worker.ts` (`executingActorId` + `requestingActorId`) | 2 | MODIFY |
+| F1.9 | `apps/server/src/engine/agents/governance.ts` (`Actor` en firma) | 1 | MODIFY |
+| F1.10 | `apps/server/src/middleware/user-header.ts` (`x-user-id` deprecado) | 1 | MODIFY |
+| F1.11 | `packages/domain/src/index.ts` (exports `actor.ts` + `jwt.ts`) | 1 | MODIFY |
+
+**Total: 4 CREATE + 11 MODIFY = 15 patchsets, ~23 hunks.**
+
+---
+
+## 8. Número de fixes y multipatches
+
+**Fixes aplicados en F1:**
+
+| Fix | Descripción | Clasificación |
+|---|---|---|
+| F1.0 | `Actor`, `HumanActor`, `AgentActor` (dominio) | Obligatorio |
+| F1.0b | `jwtPayloadSchema` (dominio) | Obligatorio |
+| F1.1 | `User.authProviderId` único + `getByAuthProviderId` + `create` | Obligatorio |
+| F1.2 | `ActorService.resolve(jwtPayload)` función pura | Obligatorio |
+| F1.3 | `verifyJwtMiddleware` (jwk o jose) | Obligatorio |
+| F1.4 | `app.ts` wire JWT + `c.set("actor")` + `c.set("ctx")` | Obligatorio |
+| F1.5 | `Config.authProvider`/`jwtSecret`/`jwksUri`/`jwtIssuer`/`jwtAudience` | Obligatorio |
+| F1.6 | `KernelContext.actorId` + `sessionId` + `systemContext` | Obligatorio |
+| F1.6b | `kernel.ts` propaga `actorId` en `audit.append` | Obligatorio |
+| F1.7 | `ExecutionContext.actorId` + `sessionId` | Obligatorio |
+| F1.7b | `orchestrator.ts` propaga `actorId` | Obligatorio |
+| F1.8 | `worker.ts` `executingActorId` vs `requestingActorId` | Obligatorio |
+| F1.9 | `AgentGovernance` recibe `Actor` | Obligatorio |
+| F1.10 | `x-user-id` deprecado | Obligatorio |
+| F1.11 | `index.ts` exports | Obligatorio |
+
+**Fixes congelados:** F02.10 (tests hasta F7).
+
+**Fixes movidos a fase siguiente:** F2.1–F2.11 (acceso), F3.1–F3.13 (delegación), F4.1–F4.6 (consistencia), F5.1–F5.9 (coordinación), F6.1–F6.9 (trazabilidad), F7.1–F7.4 (cierre).
+
+**Fixes desbloqueados por esta fase:** todos los de F2–F7. Sin identidad, no hay autorización.
+
+**Fuera de alcance de esta campaña:** gestión empresarial (perfiles editables, clientes, procedimientos, plantillas, nóminas, compliance, datos clínicos). Va a otras campañas.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. Fase 0 cerrada.**
+
+```powershell
+$checks = @{
+  "docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md" = "ESTADO_REAL_MULTIUSUARIO_V1"
+  "docs/miniaudits/04-multi-usuario-concurrente/ID-MAP.md" = "ID_MAP_MULTIUSUARIO_V1"
+  "docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md" = "CIERRE_MVP_MULTIUSUARIO_V1"
+  "docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md" = "PLAN_CAMPANA_2_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "Fase 0 verificada" -ForegroundColor Green
+```
+
+**0.3. Dependencias JWT reales.**
+
+```powershell
+$pkgServer = Join-Path $repoRoot "apps/server/package.json"
+if (Test-Path $pkgServer) {
+  Write-Host "--- apps/server/package.json ---"
+  Get-Content $pkgServer | Select-String -Pattern "hono|jwk|supabase|jose"
+}
+$pkgRoot = Join-Path $repoRoot "package.json"
+Write-Host "--- package.json raiz ---"
+Get-Content $pkgRoot | Select-String -Pattern "hono|supabase|jose"
+```
+
+**Decisión:** si `hono/jwk` está disponible, F1.3 lo usa. Si no, `jose`. Se anota en `-pendientes.md` qué paquete concreto se usará y por qué.
+
+**0.4. `userSchema` actual.**
+
+```powershell
+$users = Join-Path $repoRoot "apps/server/src/users.ts"
+Select-String -Path $users -Pattern "userSchema|authProviderId|userRoleSchema|getByEmail|getById|managerId|ensureAdmin" -Context 0,4
+```
+
+**Decisión:** si `authProviderId` no existe, F1.1 lo añade. Si existe, se reutiliza. Anotar.
+
+**0.5. `Auth.session` y `Auth.owner` actual.**
+
+```powershell
+$auth = Join-Path $repoRoot "apps/server/src/auth.ts"
+Select-String -Path $auth -Pattern "async session|async owner|verify\(|sign\(|createAuth" -Context 0,4
+```
+
+**Decisión:** si `Auth.session` acepta `ownerId` opcional, F1.4 no lo rompe. `Auth.owner` se mantiene para rutas legacy. Anotar.
+
+**0.6. `kernelContextSchema` actual.**
+
+```powershell
+$kc = Join-Path $repoRoot "apps/server/src/kernel/context/kernel-context.ts"
+Select-String -Path $kc -Pattern "kernelContextSchema|actorId|sessionId|systemContext" -Context 0,4
+```
+
+**Decisión:** si `actorId` y `sessionId` no existen, F1.6 los añade. Si existen (de otra fase), se reutilizan.
+
+**0.7. `executionContextSchema` actual.**
+
+```powershell
+$ec = Join-Path $repoRoot "packages/domain/src/execution-context.ts"
+Select-String -Path $ec -Pattern "executionContextSchema|actorId|sessionId|roleId" -Context 0,4
+```
+
+**Decisión:** si `actorId` y `sessionId` no existen, F1.7 los añade. Revisar consumidores: `orchestrator.ts`, `service.ts`.
+
+**0.8. `worker.ts` atribución actual.**
+
+```powershell
+$worker = Join-Path $repoRoot "apps/server/src/engine/worker.ts"
+Select-String -Path $worker -Pattern "assignedTo|assignedBy|owner|run-events|settled|busEvent|actorId|task\.state" -Context 0,3
+```
+
+**Decisión:** si el worker atribuye a `owner`, F1.8 lo separa en `executingActorId` (`task.assignedTo` o `task.state.roleId`) y `requestingActorId` (`task.assignedBy` o `task.state.assignedBy`). Si no hay `assignedBy`, cae a `owner` para compatibilidad.
+
+**0.9. `AgentGovernance` firma actual.**
+
+```powershell
+$gov = Join-Path $repoRoot "apps/server/src/engine/agents/governance.ts"
+Select-String -Path $gov -Pattern "async canExecuteTool|async canExecuteAction|PolicyEngine" -Context 0,4
+```
+
+**Decisión:** si las firmas reciben `owner` y `AgentRole`, F1.9 las cambia a `Actor`. `PolicyEngine.can` sigue con `owner = actor.id`.
+
+**0.10. `userHeaderMiddleware` actual.**
+
+```powershell
+$uh = Join-Path $repoRoot "apps/server/src/middleware/user-header.ts"
+Get-Content $uh -Raw
+```
+
+**Decisión:** si `x-user-id` se usa como fuente de identidad, F1.10 lo depreca. Si solo valida formato, se anota como legítimo y se depreca igualmente.
+
+**0.11. `orchestrator.runGoal` actual.**
+
+```powershell
+$orc = Join-Path $repoRoot "apps/server/src/engine/orchestrator/orchestrator.ts"
+Select-String -Path $orc -Pattern "runGoal|ExecutionContext|actorId|sessionId|assignedTo|assignedBy" -Context 0,3
+```
+
+**Decisión:** si `runGoal` no propaga `actorId`, F1.7b lo añade. Sin cambiar firma pública.
+
+**0.12. `kernel.ts` `audit.append` actual.**
+
+```powershell
+$kernel = Join-Path $repoRoot "apps/server/src/kernel/kernel.ts"
+Select-String -Path $kernel -Pattern "openTurn|appendThought|closeTurn|audit\.append|actor:" -Context 0,3
+```
+
+**Decisión:** si `actor: { kind: ctx.role, id: ctx.owner }`, F1.6b lo cambia a `id: ctx.actorId`. `provenance.actorId` en `Thought` se añade si no existe.
+
+**0.13. `Config` actual.**
+
+```powershell
+$cfg = Join-Path $repoRoot "apps/server/src/config.ts"
+Select-String -Path $cfg -Pattern "export interface Config|readConfig|authProvider|jwtSecret|jwksUri" -Context 0,4
+```
+
+**Decisión:** si no existen, F1.5 los añade.
+
+**0.14. Typecheck actual.**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes (`worker.ts`) se anotan. Errores nuevos → abortar F1.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Clasificación | Motivo |
+|---|---|---|---|
+| F1.0 | Sí | Obligatorio | `actor.ts` nuevo |
+| F1.0b | Sí | Obligatorio | `jwt.ts` nuevo |
+| F1.1 | Sí | Obligatorio | `authProviderId` |
+| F1.2 | Sí | Obligatorio | `ActorService.resolve` |
+| F1.3 | Sí | Obligatorio | middleware JWT |
+| F1.4 | Sí | Obligatorio | wire `app.ts` |
+| F1.5 | Sí | Obligatorio | `Config` JWT |
+| F1.6 | Sí | Obligatorio | `KernelContext` |
+| F1.6b | Sí | Obligatorio | `kernel.ts` |
+| F1.7 | Sí | Obligatorio | `ExecutionContext` |
+| F1.7b | Sí | Obligatorio | `orchestrator.ts` |
+| F1.8 | Sí | Obligatorio | `worker.ts` |
+| F1.9 | Sí | Obligatorio | `AgentGovernance` |
+| F1.10 | Sí | Obligatorio | `x-user-id` |
+| F1.11 | Sí | Obligatorio | `index.ts` exports |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
+
+## 10. Patchsets
+
+Los patchsets son 15 en total. Cada uno sigue el protocolo TypeScript v2: función envolvente, `throw` real, `[System.Text.UTF8Encoding]::new($false)`, backup, verificación pre/post, `git diff --check`. Por razones de espacio, en este documento van solo los **3 primeros patchsets completos**. Los 12 restantes siguen el mismo patrón y se escriben en `PLAN-CAMPANA-2-PATCHSETS-F1.md` que la IA de Fase 1 recibe como anexo.
+
+### Patchset F1.0 — `packages/domain/src/actor.ts`
+
+**Fichero:** `packages/domain/src/actor.ts` (CREATE)
+**Marca:** `ACTOR_MODEL_V1`
+
+**Contenido:**
+
+```typescript
+// ACTOR_MODEL_V1 — actor como vista derivada del JWT + User.
+// Sin persistencia. Sin ActorRegistry. Se computa en cada request.
+// HumanActor desde User. AgentActor desde AgentRole.
+// ActorFlow es F3, no F1.
+import { z } from "zod";
+
+export const actorKindSchema = z.enum(["human", "agent"]);
+
+export const actorRoleSchema = z.enum([
+  "owner", "manager", "employee", "hr", "compliance", "agent",
+]);
+
+export const actorProfileSchema = z.object({
+  name: z.string().min(1).max(120),
+  email: z.email().optional(),
+  avatar: z.string().max(2000).optional(),
+  timezone: z.string().max(100).optional(),
+  language: z.string().min(2).max(10).default("es"),
+});
+
+export const actorRolesSchema = z.array(actorRoleSchema).min(1).max(10);
+
+export const humanActorSchema = z.object({
+  kind: z.literal("human"),
+  id: z.string().min(1).max(200),
+  tenantId: z.string().min(1).max(100),
+  userId: z.string().min(1).max(200),
+  roles: actorRolesSchema,
+  profile: actorProfileSchema,
+  active: z.boolean(),
+});
+
+export const agentActorSchema = z.object({
+  kind: z.literal("agent"),
+  id: z.string().min(1).max(200),
+  tenantId: z.string().min(1).max(100),
+  roleId: z.string().min(1).max(200),
+  personaId: z.string().min(1).max(200).optional(),
+  runtimeId: z.string().max(200).optional(),
+  kernelTurnId: z.string().max(200).optional(),
+  roles: actorRolesSchema,
+  profile: actorProfileSchema,
+  active: z.boolean(),
+});
+
+export const actorSchema = z.discriminatedUnion("kind", [
+  humanActorSchema,
+  agentActorSchema,
+]);
+
+export type ActorKind = z.infer<typeof actorKindSchema>;
+export type ActorRole = z.infer<typeof actorRoleSchema>;
+export type ActorProfile = z.infer<typeof actorProfileSchema>;
+export type HumanActor = z.infer<typeof humanActorSchema>;
+export type AgentActor = z.infer<typeof agentActorSchema>;
+export type Actor = z.infer<typeof actorSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: typecheck verde. `Select-String -Pattern "ACTOR_MODEL_V1"` 1×.
+
+### Patchset F1.0b — `packages/domain/src/jwt.ts`
+
+**Fichero:** `packages/domain/src/jwt.ts` (CREATE)
+**Marca:** `JWT_PAYLOAD_V1`
+
+**Contenido:**
+
+```typescript
+// JWT_PAYLOAD_V1 — claims mínimos del JWT de Supabase.
+// role: "authenticated" es categoría de acceso a la app, no rol empresarial.
+// Se ignora para autorización.
+import { z } from "zod";
+
+export const jwtPayloadSchema = z.object({
+  iss: z.string().min(1).max(500),
+  aud: z.union([z.string().min(1).max(500), z.array(z.string().min(1).max(500))]),
+  exp: z.number().int().positive(),
+  iat: z.number().int().positive().optional(),
+  sub: z.string().min(1).max(200),
+  session_id: z.string().min(1).max(200).optional(),
+  email: z.email().optional(),
+  role: z.string().max(100).optional(),
+});
+
+export type JwtPayload = z.infer<typeof jwtPayloadSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: typecheck verde. `Select-String -Pattern "JWT_PAYLOAD_V1"` 1×.
+
+### Patchset F1.1 — `apps/server/src/users.ts`
+
+**Fichero:** `apps/server/src/users.ts` (MODIFY)
+**Marcas:** `USER_AUTH_PROVIDER_ID_V1`, `USER_SERVICE_BY_AUTH_PROVIDER_ID_V1`
+
+**Hunk F1.1a — `userSchema` gana `authProviderId`.**
+
+`$old`:
+```typescript
+export const userSchema = z.object({
+  id: z.string().min(1),
+  email: z.email().transform((v) => v.toLowerCase().trim()),
+  name: z.string().trim().min(1).max(120),
+  role: userRoleSchema.default("user"),
+  setup: userSetupSchema.default(() => ({ sopIds: [], allowedTools: [], greeting: "" })),
+  active: z.boolean().default(true),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+```
+
+`$new`:
+```typescript
+// USER_AUTH_PROVIDER_ID_V1 — vínculo entre el sub del JWT y el User.id interno.
+// Único. Backfill controlado (no vinculación por email).
+// Sin JIT provisioning: sub sin User con authProviderId → 401.
+export const userSchema = z.object({
+  id: z.string().min(1),
+  email: z.email().transform((v) => v.toLowerCase().trim()),
+  name: z.string().trim().min(1).max(120),
+  role: userRoleSchema.default("user"),
+  setup: userSetupSchema.default(() => ({ sopIds: [], allowedTools: [], greeting: "" })),
+  active: z.boolean().default(true),
+  authProviderId: z.string().min(1).max(200).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+```
+
+**Hunk F1.1b — `UserService.getByAuthProviderId`.**
+
+`$old`:
+```typescript
+  async getByEmail(email: string): Promise<User | null> {
+    const target = email.toLowerCase().trim();
+    const records = await this.db.list<UserRecord>("system", "users");
+    const found = records.find((r) => r.data.email === target);
+    return found?.data ?? null;
+  }
+```
+
+`$new`:
+```typescript
+  async getByEmail(email: string): Promise<User | null> {
+    const target = email.toLowerCase().trim();
+    const records = await this.db.list<UserRecord>("system", "users");
+    const found = records.find((r) => r.data.email === target);
+    return found?.data ?? null;
+  }
+
+  // USER_SERVICE_BY_AUTH_PROVIDER_ID_V1 — resuelve el User desde el sub del JWT.
+  // Sin cache por ahora (se añade en F2 si hace falta).
+  // Único en el store: authProviderId no se repite entre Users.
+  async getByAuthProviderId(authProviderId: string): Promise<User | null> {
+    const target = authProviderId.trim();
+    if (!target) return null;
+    const records = await this.db.list<UserRecord>("system", "users");
+    const found = records.find((r) => r.data.authProviderId === target);
+    return found?.data ?? null;
+  }
+```
+
+**Hunk F1.1c — `UserService.create` acepta `authProviderId`.**
+
+`$old`:
+```typescript
+  async create(input: {
+    email: string;
+    name: string;
+    password: string;
+    role?: "admin" | "user";
+    setup?: Partial<z.infer<typeof userSetupSchema>>;
+  }): Promise<User> {
+```
+
+`$new`:
+```typescript
+  // USER_AUTH_PROVIDER_ID_V1 — create acepta authProviderId opcional.
+  // Si no viene, el User queda sin vínculo JWT (solo login por sesión).
+  // Si viene, se valida que no exista otro User con el mismo authProviderId.
+  async create(input: {
+    email: string;
+    name: string;
+    password: string;
+    role?: "admin" | "user";
+    setup?: Partial<z.infer<typeof userSetupSchema>>;
+    authProviderId?: string;
+  }): Promise<User> {
+```
+
+Y en el cuerpo, añadir después de la comprobación de `getByEmail`:
+```typescript
+    if (input.authProviderId) {
+      const existing = await this.getByAuthProviderId(input.authProviderId);
+      if (existing) {
+        throw new AppError("authProviderId ya vinculado a otro User", 409, {
+          authProviderId: "Ya existe un User con ese authProviderId",
+        });
+      }
+    }
+```
+
+Y en el `userSchema.parse`:
+```typescript
+    const user = userSchema.parse({
+      id: randomUUID(),
+      email,
+      name: input.name,
+      role: input.role ?? "user",
+      setup: input.setup ?? {},
+      active: true,
+      ...(input.authProviderId ? { authProviderId: input.authProviderId } : {}),
+      createdAt: now,
+      updatedAt: now,
+    });
+```
+
+**Verificación pre:** `userSchema = z.object(` 1×, `getByEmail` 1×, `async create(input: {` 1×. Post: `authProviderId` ≥ 3×, `getByAuthProviderId` ≥ 2×, `USER_AUTH_PROVIDER_ID_V1` 1×, `USER_SERVICE_BY_AUTH_PROVIDER_ID_V1` 1×.
+
+*(Los 12 patchsets restantes siguen el mismo patrón. Se escriben en `PLAN-CAMPANA-2-PATCHSETS-F1.md` con el contenido completo. Este documento solo cita los 3 primeros por razones de espacio, como en la Campaña 1.)*
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el protocolo TypeScript v2. Además:
+
+- **`actor.ts`, `jwt.ts`, `engine/actors/service.ts`, `engine/auth/jwt.ts` son ficheros nuevos.** `Test-Path` false antes. `Test-Path` true después. `bytes > 500` después.
+- **`users.ts` cambia 3 veces (F1.1).** `userSchema`, `getByAuthProviderId`, `create`. El segundo hunk depende del primero. El tercero depende del primero. Si el primero falla, no se aplican los otros dos.
+- **`app.ts` cambia 3 veces (F1.4).** `verifyJwtMiddleware` wire, `c.set("actor")`, `c.set("ctx")`. Si uno falla, se aplican los demás y se anota.
+- **`config.ts` cambia 1 vez (F1.5).** Añade `authProvider`, `jwtSecret`, `jwksUri`, `jwtIssuer`, `jwtAudience`. Default: `"supabase"`, `undefined`, `undefined`, `undefined`, `undefined`. Si el env no los pone, F1.3 lanza error claro.
+- **`kernel-context.ts` cambia 2 veces (F1.6).** `actorId` + `sessionId` + `systemContext`. El segundo hunk depende del primero.
+- **`kernel.ts` cambia 3 veces (F1.6b).** `openTurn`, `appendThought`, `closeTurn`. Cada hunk verifica su ancla.
+- **`execution-context.ts` cambia 1 vez (F1.7).** `actorId` + `sessionId`. Revisar consumidores: `orchestrator.ts`, `service.ts`.
+- **`orchestrator.ts` cambia 1 vez (F1.7b).** Solo propaga `ctx.actorId`/`ctx.sessionId` si están.
+- **`worker.ts` cambia 2 veces (F1.8).** `run-events` + `settled`. Cada hunk verifica su ancla.
+- **`governance.ts` cambia 1 vez (F1.9).** `canExecuteTool` + `canExecuteAction` reciben `Actor`.
+- **`user-header.ts` cambia 1 vez (F1.10).** `x-user-id` deprecado.
+- **`index.ts` cambia 1 vez (F1.11).** Exports de `actor.ts` y `jwt.ts`.
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+- **`Select-String` antes de escribir cada ancla.** Nunca del doc. Siempre del fichero real.
+- **Si un fichero no está en el Repomix, se pide.** No se inventa. Los 3 ficheros reales ya están.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - `ActorService.resolve(jwtPayload)` con `sub` que existe en `system/users` con `authProviderId` → `HumanActor`.
+  - `ActorService.resolve(jwtPayload)` con `sub` que no existe → 401.
+  - `ActorService.resolve(jwtPayload)` con `User.active = false` → 403.
+  - `verifyJwtMiddleware` con JWT válido → `c.set("jwtPayload")`.
+  - `verifyJwtMiddleware` con JWT inválido → 401.
+  - `authMiddleware` con `c.set("actor")` y `c.set("ctx")`.
+  - `Kernel.openTurn` con `ctx.actorId` → `audit.append` con `actor.id = ctx.actorId`.
+  - `Kernel.appendThought` con `ctx.actorId` → `provenance.actorId` en `Thought`.
+  - `Kernel.closeTurn` con `ctx.actorId` → `audit.append` con `actor.id = ctx.actorId`.
+  - `worker` `run-events` con `actorId` (`executingActorId`) y `requestingActorId`.
+  - `worker` `settled` con `actorId` y `requestingActorId`.
+  - `AgentGovernance.canExecuteTool(actor, tool)` con `HumanActor` y `AgentActor`.
+  - `AgentGovernance.canExecuteAction(actor, action, policyAction)` idem.
+  - `x-user-id` que no coincide con `actor.id` → `X-User-Id-Mismatch: 1` en response.
+  - `ExecutionContext.actorId` propagado en `orchestrator.runGoal`.
+- **La IA commitea con ficheros explícitos:**
+
+```powershell
+git add packages/domain/src/actor.ts
+git add packages/domain/src/jwt.ts
+git add packages/domain/src/execution-context.ts
+git add packages/domain/src/index.ts
+git add apps/server/src/engine/actors/service.ts
+git add apps/server/src/engine/auth/jwt.ts
+git add apps/server/src/users.ts
+git add apps/server/src/app.ts
+git add apps/server/src/config.ts
+git add apps/server/src/kernel/context/kernel-context.ts
+git add apps/server/src/kernel/kernel.ts
+git add apps/server/src/engine/worker.ts
+git add apps/server/src/engine/agents/governance.ts
+git add apps/server/src/middleware/user-header.ts
+git add apps/server/src/engine/orchestrator/orchestrator.ts
+git commit -m "feat(multiusuario): fase 1 — identidad y actor [ACTOR_MODEL_V1, JWT_PAYLOAD_V1, USER_AUTH_PROVIDER_ID_V1, USER_SERVICE_BY_AUTH_PROVIDER_ID_V1, ACTOR_SERVICE_RESOLVE_V1, VERIFY_JWT_MIDDLEWARE_V1, CTX_WIRE_V1, KERNEL_CONTEXT_ACTOR_V1, EXECUTION_CONTEXT_ACTOR_V1, WORKER_REQUESTING_ACTOR_V1, AGENT_GOVERNANCE_ACTOR_V1, USER_HEADER_DEPRECATED_V1]"
+git push origin feat/multitenancy-campaign
+```
+
+**Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fase 0 incompleta → aborta todo.
+- `hono/jwk` no disponible → F1.3 usa `jose`. Anotar.
+- `userSchema = z.object(` 0× → adaptar F1.1.
+- `getByEmail` 0× → adaptar F1.1b.
+- `async create(input: {` 0× → adaptar F1.1c.
+- `authProviderId` ya existe en `userSchema` → F1.1a skip, pero verificar que es único y que tiene backfill.
+- `kernelContextSchema` 0× → adaptar F1.6.
+- `executionContextSchema` 0× → adaptar F1.7.
+- `worker` atribuye a `owner` y no hay `task.assignedTo`/`task.assignedBy` → F1.8 añade ambos con fallback a `owner`.
+- `AgentGovernance` 0× → adaptar F1.9.
+- `user-header.ts` ya valida `x-user-id` contra `actor.id` → F1.10 skip.
+- `Config` 0× → adaptar F1.5.
+- Cline: typecheck rojo por `ExecutionContext.actorId` (consumidores) → ajustar tipos, revertir F1.7 del fichero rojo, anotar.
+- Cline: typecheck rojo por `KernelContext.actorId` (tests antiguos) → ajustar `systemContext` y tests si están congelados, anotar.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\04-multi-usuario-concurrente\missed\_multiusuario_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md` (no en `_multiusuario_pendientes.md`):**
+- F1.1: `User.authProviderId` backfill controlado (no por email). Los `User` existentes quedan sin `authProviderId` hasta que se vinculen explícitamente.
+- F1.3: dependencia JWT real (`hono/jwk` o `jose`). Se anota cuál se usa y por qué.
+- F1.4: `authMiddleware` actual se mantiene para rutas legacy. Se retira cuando todas las rutas migren a JWT (F2).
+- F1.6/F1.7: `KernelContext.actorId` y `ExecutionContext.actorId` obligatorios pueden romper tests antiguos. Se anota.
+- F1.8: `worker` cae a `owner` si no hay `assignedBy`. Correcto para compatibilidad.
+- F1.10: `x-user-id` deprecado. Se retira completamente de las rutas en F2.
+- `ActorService.resolve` sin cache. Se añade en F2 si hace falta.
+- Sin `ActorRegistry` persistido. El actor es vista derivada del JWT + `User`.
+- Revocación de actor desactivado depende de `active` check en cada request (no de Supabase).
+- `TENANT_CACHE_TTL_MS` a 30s en producción para que `active=false` surta efecto rápido.
+
+---
+
+## 14. Checklist de cierre de la fase 1
+
+- [ ] Paso 0.1–0.14 ejecutados, salidas anotadas.
+- [ ] Fase 0 verificada (4 marcas).
+- [ ] Dependencias JWT reales verificadas (`hono/jwk` o `jose`).
+- [ ] `userSchema` verificado (`authProviderId` existe / no existe).
+- [ ] `Auth.session` y `Auth.owner` verificados.
+- [ ] `kernelContextSchema` verificado (`actorId`/`sessionId` existen / no existen).
+- [ ] `executionContextSchema` verificado (`actorId`/`sessionId` existen / no existen).
+- [ ] `worker` atribución verificada (`owner` / `task.assignedTo` / `task.assignedBy`).
+- [ ] `AgentGovernance` verificada.
+- [ ] `user-header.ts` verificado.
+- [ ] `orchestrator.runGoal` verificado.
+- [ ] `kernel.ts` `audit.append` verificado.
+- [ ] `Config` verificado.
+- [ ] Typecheck ejecutado y registrado (no asumido).
+- [ ] F1.0 aplicado (1 hunk) con `ACTOR_MODEL_V1` 1×.
+- [ ] F1.0b aplicado (1 hunk) con `JWT_PAYLOAD_V1` 1×.
+- [ ] F1.1 aplicado (3 hunks) con `USER_AUTH_PROVIDER_ID_V1` y `USER_SERVICE_BY_AUTH_PROVIDER_ID_V1` 1× cada uno.
+- [ ] F1.2 aplicado (1 hunk) con `ACTOR_SERVICE_RESOLVE_V1` 1×.
+- [ ] F1.3 aplicado (1 hunk) con `VERIFY_JWT_MIDDLEWARE_V1` 1×.
+- [ ] F1.4 aplicado (3 hunks) con `CTX_WIRE_V1` 1×.
+- [ ] F1.5 aplicado (1 hunk) con `CONFIG_AUTH_PROVIDER_V1` 1×.
+- [ ] F1.6 aplicado (2 hunks) con `KERNEL_CONTEXT_ACTOR_V1` 1×.
+- [ ] F1.6b aplicado (3 hunks) con `KERNEL_ACTOR_PROPAGATE_V1` 1×.
+- [ ] F1.7 aplicado (1 hunk) con `EXECUTION_CONTEXT_ACTOR_V1` 1×.
+- [ ] F1.7b aplicado (1 hunk) con `ORCHESTRATOR_ACTOR_PROPAGATE_V1` 1×.
+- [ ] F1.8 aplicado (2 hunks) con `WORKER_REQUESTING_ACTOR_V1` 1×.
+- [ ] F1.9 aplicado (1 hunk) con `AGENT_GOVERNANCE_ACTOR_V1` 1×.
+- [ ] F1.10 aplicado (1 hunk) con `USER_HEADER_DEPRECATED_V1` 1×.
+- [ ] F1.11 aplicado (1 hunk) con `DOMAIN_INDEX_ACTOR_V1` 1×.
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` no se ha tocado más allá de F1.8.
+- [ ] `conversation.ts` no se ha tocado.
+- [ ] `kernel.ts` no se ha tocado más allá de F1.6b.
+- [ ] Cline typecheck verde (con filtro `worker.ts`).
+- [ ] Cline test verde o los fallos son preexistentes y están anotados.
+- [ ] Cline probó `ActorService.resolve` con `sub` vinculado → `HumanActor`.
+- [ ] Cline probó `ActorService.resolve` con `sub` no vinculado → 401.
+- [ ] Cline probó `ActorService.resolve` con `User.active = false` → 403.
+- [ ] Cline probó `verifyJwtMiddleware` con JWT válido e inválido.
+- [ ] Cline probó `authMiddleware` con `c.set("actor")` y `c.set("ctx")`.
+- [ ] Cline probó `Kernel.openTurn` con `ctx.actorId`.
+- [ ] Cline probó `Kernel.appendThought` con `ctx.actorId`.
+- [ ] Cline probó `Kernel.closeTurn` con `ctx.actorId`.
+- [ ] Cline probó `worker` `run-events` con `actorId` y `requestingActorId`.
+- [ ] Cline probó `worker` `settled` con `actorId` y `requestingActorId`.
+- [ ] Cline probó `AgentGovernance.canExecuteTool(actor, tool)`.
+- [ ] Cline probó `AgentGovernance.canExecuteAction(actor, action, policyAction)`.
+- [ ] Cline probó `x-user-id` que no coincide con `actor.id` → `X-User-Id-Mismatch: 1`.
+- [ ] Cline probó `ExecutionContext.actorId` propagado en `orchestrator.runGoal`.
+- [ ] `git add` explícito de los 15 ficheros.
+- [ ] `git commit -m "feat(multiusuario): fase 1 — identidad y actor [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 1 cerrada. Siguiente: Fase 2 (acceso seguro con PDP, field-level, withRead/withWrite en todas las rutas)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/users.ts` — `userSchema` (literal):
+
+```typescript
+export const userSchema = z.object({
+  id: z.string().min(1),
+  email: z.email().transform((v) => v.toLowerCase().trim()),
+  name: z.string().trim().min(1).max(120),
+  role: userRoleSchema.default("user"),
+  setup: userSetupSchema.default(() => ({ sopIds: [], allowedTools: [], greeting: "" })),
+  active: z.boolean().default(true),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+```
+
+**F1.1a añade `authProviderId`.**
+
+### A.2. `apps/server/src/users.ts` — `getByEmail` (literal):
+
+```typescript
+  async getByEmail(email: string): Promise<User | null> {
+    const target = email.toLowerCase().trim();
+    const records = await this.db.list<UserRecord>("system", "users");
+    const found = records.find((r) => r.data.email === target);
+    return found?.data ?? null;
+  }
+```
+
+**F1.1b añade `getByAuthProviderId` justo después.**
+
+### A.3. `apps/server/src/auth.ts` — `Auth.session` y `Auth.owner` (literal):
+
+```typescript
+  async session(accessKey?: string, ownerId: string = "local-user") {
+    this.validateAccessKey(accessKey);
+    const token = randomBytes(32).toString("base64url");
+    await this.db.put("system", "sessions", {
+      id: digest(token).toString("hex"),
+      owner: ownerId,
+      expiresAt: Date.now() + (Number(process.env.SESSION_TTL_MS ?? "604800000") || 604800000),
+    });
+    return { token, mode: this.config.mode, ownerId };
+  }
+
+  async owner(authorization?: string) {
+    if (!authorization?.startsWith("Bearer ")) throw new AppError("Sign in to OpenMuse", 401);
+    const session = await this.db.get<{ owner: string; expiresAt: number }>(
+      "system",
+      "sessions",
+      digest(authorization.slice(7)).toString("hex"),
+    );
+    if (!session || session.expiresAt < Date.now())
+      throw new AppError("Session expired. Sign in again.", 401);
+    return session.owner;
+  }
+```
+
+**F1.4 mantiene ambos para rutas legacy. `verifyJwtMiddleware` se monta antes.**
+
+### A.4. `apps/server/src/kernel/context/kernel-context.ts` — `kernelContextSchema` (literal):
+
+```typescript
+export const kernelContextSchema = z.object({
+  tenantId: z.string().min(1).max(100),
+  owner: z.string().min(1).max(200),
+  role: kernelRoleSchema,
+  requestId: z.string().min(1).max(100),
+  threadId: z.string().min(1).max(200).optional(),
+  parentTurnId: z.string().min(1).max(100).optional(),
+  correlationId: z.string().min(1).max(200).optional(),
+  personaId: z.string().min(1).max(80).optional(),
+});
+```
+
+**F1.6 añade `actorId` y `sessionId`.**
+
+### A.5. `packages/domain/src/execution-context.ts` — `executionContextSchema` (literal):
+
+```typescript
+export const executionContextSchema = z.object({
+  tenantId: z.string().min(1).max(100),
+  owner: z.string().min(1).max(200),
+  role: executionRoleSchema,
+  roleId: z.string().max(200).optional(),
+  requestId: z.string().min(1).max(100),
+  correlationId: z.string().max(200).optional(),
+  runtimeId: z.string().max(200).optional(),
+  goalId: z.string().max(200).optional(),
+  taskId: z.string().max(200).optional(),
+  threadId: z.string().max(200).optional(),
+  turnId: z.string().max(200).optional(),
+});
+```
+
+**F1.7 añade `actorId` y `sessionId`.**
+
+### A.6. `apps/server/src/engine/worker.ts` — `busEvent` (fragmento):
+
+```typescript
+const busEvent = async (type: SystemEventType, payload: Record<string, unknown>) => {
+  const bus = this.options.bus;
+  if (!bus) return;
+  await guard();
+  const source: SystemEventSource = { kind: "task", id: taskId };
+  await bus.emit(owner, type, source, { taskId, ...payload });
+};
+```
+
+**F1.8 añade `actorId` y `requestingActorId` al `bus.emit` y a `run-events`.**
+
+### A.7. `apps/server/src/engine/agents/governance.ts` — `canExecuteTool` (literal):
+
+```typescript
+async canExecuteTool(
+  owner: string,
+  role: AgentRole,
+  tool: string,
+): Promise<GovernanceDecision> {
+  if (role.allowedTools && role.allowedTools.length > 0 && !role.allowedTools.includes(tool)) {
+    await this.bus?.emit(owner, "policy.denied", { kind: "policy", id: `${role.id}:tool:${tool}` }, {
+      roleId: role.id,
+      policyId: role.id,
+      action: "execute",
+      reason: `Tool ${tool} not allowed by role ${role.id}`,
+    });
+    return { allowed: false, reason: `Tool ${tool} not allowed by role ${role.id}` };
+  }
+  const decision = await this.policy.can(owner, role, `tool:${tool}`, "execute");
+  return decision;
+}
+```
+
+**F1.9 lo cambia para recibir `Actor`. `PolicyEngine.can` sigue con `owner = actor.id`.**
+
+### A.8. `apps/server/src/middleware/user-header.ts` — `userHeaderMiddleware` (literal, íntegro):
+
+```typescript
+import type { Context, Next } from "hono";
+
+const USER_ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
+
+export function userHeaderMiddleware() {
+  return async (c: Context, next: Next) => {
+    const header = c.req.header("x-user-id");
+    if (header && !USER_ID_RE.test(header)) {
+      c.header("X-User-Id-Rejected", "1");
+      await next();
+      return;
+    }
+    await next();
+  };
+}
+```
+
+**F1.10 lo depreca como fuente de identidad. Valida contra `actor.id` si viene y anota discrepancia.**
+
+### A.9. `apps/server/src/kernel/kernel.ts` — `openTurn` (fragmento):
+
+```typescript
+  await this.deps.audit.append({
+    tenantId,
+    owner: ctx.owner,
+    action: "turn.opened",
+    actor: { kind: ctx.role, id: ctx.owner },
+    payload: { turnId: turn.id, trigger, requestId: ctx.requestId },
+  });
+```
+
+**F1.6b cambia `actor: { kind: ctx.role, id: ctx.owner }` por `actor: { kind: ctx.role, id: ctx.actorId }`.**
+
+### A.10. `packages/domain/src/agent.ts` — `AgentRole` (literal, inicio):
+
+```typescript
+export interface AgentRole {
+  id: string;
+  name: string;
+  tone: AgentTone;
+  avatar: AgentAvatar;
+  greeting?: string;
+  roi?: string;
+  objetivo: string;
+  sops: string[];
+  active: boolean;
+  memories: AgentRoleMemory[];
+  permissions?: AgentRolePermission[];
+  memoryPolicy?: AgentRoleMemoryPolicy;
+  skills?: string[];
+  allowedTools?: string[];
+  createdAt?: string;
+}
+```
+
+**`AgentRole` NO tiene `reportsTo`/`peers`. Es la fuente de `AgentActor`. `Flow` se construye desde `AgentPersona`, no desde `AgentRole`.**
+
+### A.11. `packages/domain/src/agent-persona.ts` — `AgentPersona` (fragmento):
+
+```typescript
+export const agentPersonaSchema = z.object({
+  id: z.string().min(1).max(80).regex(/^[a-z][a-z0-9-]*$/),
+  displayName: z.string().min(1).max(80),
+  role: z.string().min(1).max(200),
+  // ...
+  reportsTo: z.string().min(1).max(80).optional(),
+  peers: z.array(z.string().min(1).max(80)).max(50).default([]),
+  // ...
+}).strict();
+```
+
+**`AgentPersona` SÍ tiene `reportsTo` y `peers`. Es la fuente real de `Flow` (F3).**
+
+### A.12. `apps/server/src/engine/orchestrator/orchestrator.ts` — `runGoal` (fragmento):
+
+```typescript
+  async runGoal(
+    ctx: ExecutionContext,
+    goal: Goal,
+  ): Promise<GoalResult> {
+    if (!this.deps) {
+      return {
+        status: "blocked",
+        summary: `Orquestador sin deps (goal ${goal.id})`,
+      };
+    }
+    const context = await this.deps.context.assemble(ctx.owner, {
+      roleId: ctx.roleId ?? "default",
+      query: goal.description || goal.title,
+    });
+    // ...
+  }
+```
+
+**F1.7b propaga `ctx.actorId` y `ctx.sessionId` si están. Sin cambiar firma pública.**
+
+---
+
+## FIN DEL DOCUMENTO 06
+
+**Fase 1 preparada para ejecución. 15 patchsets (4 CREATE + 11 MODIFY), ~23 hunks. 15 ficheros tocados. Fases 2–7 pospuestas. F02.10 congelado. Typecheck y test los corre Cline, más 17 pruebas de comportamiento. Commit + push al final. Los misses van a `_multiusuario_pendientes.md`, no los escribe la IA. Anexo literal de 12 bloques de código real, sin resúmenes ni cortes. Deudas anotadas en `-pendientes.md` para Fases 2–7.**
+
+**Siguiente: documento 07 — Campaña 2 / Fase 2 — Acceso seguro (G2). Di "sigue".**
+
+---------------------------------------------
+
+nota antes de cerrar: El documento 06 está bastante avanzado, pero no lo daría todavía por listo para ejecutar. Hay varios puntos concretos que conviene corregir antes de que Cline aplique los 15 patchsets.
+
+## Cinco bloqueos que resolvería antes de Fase 1
+
+1\. `AgentActor.id` debe identificar una instancia estable. `AgentRole.id` identifica un rol, no necesariamente un agente concreto. Si se usa como identidad del ejecutor, varios agentes podrían quedar confundidos en auditoría y autorización. Hay que definir de dónde sale el identificador estable de cada instancia.
+
+2\. `authProviderId` no queda garantizado como único. Comprobar duplicados mediante `getByAuthProviderId()` antes de escribir no evita dos altas concurrentes con el mismo valor. La unicidad debe garantizarse en el almacenamiento o mediante una operación atómica equivalente.
+
+3\. La verificación del JWT necesita un contrato completo. No basta con validar el esquema Zod de los claims: la implementación debe verificar criptográficamente la firma y comprobar `iss`, `aud`, `exp` y los demás requisitos aplicables. La selección de claves JWKS también debe gestionar rotaciones y fallos de forma segura.
+
+4\. `PolicyEngine.can(owner = actor.id)` puede romper la autorización existente. El identificador de actor no debe sustituir automáticamente al propietario o ámbito de almacenamiento. Hay que separar identidad del actor, tenant y ámbito de datos, y comprobar cómo funciona realmente el motor actual.
+
+5\. El fallback del worker a `owner` no equivale a atribución real. Si no existen `assignedTo` y `assignedBy`, asignar ambos a partir de `owner` puede generar una falsa impresión de trazabilidad. El fallback debe quedar identificado como compatibilidad heredada, no como identidad demostrada.
+
+## Dos ajustes adicionales
+
+- Caché de tenant: un TTL de 30 segundos no debe permitir que una pertenencia revocada siga autorizando operaciones. La autorización vigente debe comprobarse por separado de la caché de contexto.
+- Pruebas de auditoría: distinguir explícitamente entre una denegación auditada y una lectura sensible autorizada. Son sucesos diferentes y necesitan pruebas distintas.
+
+Mi recomendación es conservar el documento como base conceptual y resolver estos puntos antes de congelar F1. No hace falta rehacer la campaña: basta con ajustar los contratos afectados y sus pruebas.
+
+Después sí tiene sentido continuar con el documento 07 — Fase 2, acceso seguro (G2), pero manteniendo la misma regla: Cline inspecciona el código real, adapta cada patchset a sus anclas verificadas y no declara la fase cerrada hasta demostrar las pruebas.

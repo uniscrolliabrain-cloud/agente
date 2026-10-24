@@ -1,0 +1,227 @@
+Ahora sí veo exactamente qué quieres. Y es mucho más ambicioso de lo que yo tenía en la cabeza. Reordeno todo.
+
+## Lo que veo en los mockups
+
+### Vista `Agentes` (primera imagen)
+
+**Es un workspace completo, no una lista.**
+
+- **Header**: "Agentes. Tu equipo de IA operativo. Activo 24/7 — orquesta tareas, memoria y ejecución."
+- **Botón**: "+ Crear nuevo agente"
+- **Hero card** (agente principal):
+  - `AGENTE IA PRO · PRINCIPAL · Orquestador · LVL 9`
+  - Avatar con grid + icono sparkle
+  - Nombre: "Agente IA Pro — Principal"
+  - Descripción: "Coordinador central. Delega y supervisa a todo el squad."
+  - Stats: `TAREAS 1247`, `PRECISIÓN 98.2%`, `TIEMPO MEDIO 12s`, `UPTIME 99.9%`
+  - Botones: "Delegar tareas", "Redacción comercial", "Gestión operativa", "Email pro"
+  - Caja "LO QUE SABE DE TU NEGOCIO": "OpenMuse, sistema operativo, workflows ventas, tono de marca, 47 playbooks" (`47%`)
+  - Botones: "Hablar con él", "Ver logs", "Configurar"
+  - Estado: `En línea`
+
+- **Squad activo** (`4/6 AGENTES`):
+  - Filtros por arquetipo: `Todos`, `Cazador`, `Guardián`, `Estratega`, `Arquitecto`
+  - **Agent cards** (4 con contenido + 2 slots vacíos):
+    - **Agente Ventas** — Cazador · Lvl 7 — 892 tasks · 96.4% — `ONLINE`
+    - **Agente Soporte** — Guardián · Lvl 5 — 534 tasks · 99.1% — `IDLE`
+    - **Agente Marketing** — Estratega · Lvl 6 — 621 tasks · 94.7% — `TRABAJANDO`
+    - **Agente Ops** — Arquitecto · Lvl 4 — 258 tasks · 91.3% — `STANDBY`
+    - Slot vacío: "+ Invocar agente" — Slot libre
+    - Slot vacío: "+ Crear agente" — Nuevo rol
+  - Tip al pie: `Tip: Escribe "llama al agente" para invocar en chat`
+
+- **Activity log** (con `LIVE`):
+  - Ventas completó: Generar 10 versiones del correo comercial de OpenMuse `[420e674a]` — `SUCCESS · ahora`
+  - Marketing está trabajando en: Calendario de contenidos Semana 47 + copies LinkedIn — `WORKING · hace 3m`
+  - Soporte falló: Responder ticket #8921 - reintento en 2m — `FAILED · hace 5m`
+  - Ops sincronizó: Base de datos Notion > 124 registros actualizados — `SUCCESS · hace 12m [420e674a]`
+
+- **Comandos directos** (`/invoke`):
+  - Texto: "Squad operativo. Escribe "llama al agente de ventas para..."" 
+  - Placeholder: "llama al agente de ventas para..."
+
+**Footer meta**: `Mockup interactivo · Click en agentes cambia el hero · Hover muestra stats · Tipografía Inter · Branding #7C5CFC #FAFAFB`
+
+### Vista `Chat` (segunda imagen)
+
+Es el chat que ya conoces. Pero confirma:
+- **Sidebar**: `Agentes` está en el menú pero gris (muerto).
+- **Chat funcional**: mensaje → respuesta → delegación a tarea → tool call `delegate_task`.
+- **Panel derecho**: `Tareas 1 total`, tabs `Tareas | Contexto | Negocio`, muestra la tarea `DOCUMENT` con estado `Fallida - ahora`.
+
+## Lo que esto significa
+
+**Mi plan de "personas con biografía" era solo la mitad.**
+
+Lo que tú quieres es un **sistema de equipo gamificado**, donde cada agente es:
+
+1. **Una persona funcional** (lo que yo tenía).
+2. **Un personaje con stats de videojuego** (lo que no tenía): Nivel, precisión, tareas completadas, uptime, estado.
+3. **Un arquetipo del negocio** (Cazador, Guardián, Estratega, Arquitecto, etc.).
+4. **Un ente operativo real**: tiene tareas asignadas, sabe del negocio, delega, colabora.
+
+Y la UI lo materializa como un **roster de juego**:
+- Hero del agente principal.
+- Grid del squad.
+- Activity log en vivo.
+- Comandos directos.
+
+## Cómo se traduce esto a estructura
+
+### Lo que ya estaba en mi plan
+
+- `AgentPersona` (schema de dominio).
+- `Personas/` scaffolding en `engine/agents/`.
+- `Laia` como primer agente.
+- `personaId` en kernel.
+
+### Lo que hay que añadir
+
+**1. Stats del agente** (`AgentStats`):
+
+```ts
+{
+  level: 9,                    // nivel del agente
+  archetype: "orchestrator",   // orquestador, cazador, guardián, estratega, arquitecto
+  totalTasks: 1247,
+  precision: 0.982,            // % de tareas completadas bien
+  avgTimeMs: 12000,
+  uptime: 0.999,
+  status: "online" | "idle" | "working" | "standby" | "offline",
+  currentTask?: string,
+}
+```
+
+**2. Arquetipos** (catálogo):
+
+```ts
+export const ARCHETYPES = [
+  { id: "orchestrator", name: "Orquestador", description: "Coordina y delega al squad", color: "purple" },
+  { id: "hunter", name: "Cazador", description: "Busca oportunidades", color: "blue" },
+  { id: "guardian", name: "Guardián", description: "Protege y resuelve problemas", color: "green" },
+  { id: "strategist", name: "Estratega", description: "Planifica a largo plazo", color: "yellow" },
+  { id: "architect", name: "Arquitecto", description: "Construye sistemas", color: "orange" },
+];
+```
+
+**3. Activity log** (eventos en vivo):
+
+Ya existe `system-events` + `run-events`. Solo hay que **filtrados por agente** y exponerlos en el endpoint.
+
+**4. Comandos directos** (`/invoke`):
+
+Necesita un parser de comandos en el chat:
+- `llama al agente X para Y` → abre chat con X (o delega tarea a X).
+
+**5. Botón `+ Crear nuevo agente`**:
+
+Modal de creación de persona (con arquetipo, nivel base, etc.).
+
+## Rediseño de mi plan
+
+Mi plan original de 35 bloques ahora pasa a ser **~50 bloques** en 8 macros:
+
+### MACRO A — Schema base (5 bloques)
+Como antes. `AgentPersona` + `AgentStats` + `Archetype` en dominio.
+
+### MACRO B — Carga (6 bloques)
+Como antes. Loader, registry, bootstrap, resolver, node, Laia.
+
+### MACRO C — Stats y actividad (5 bloques) ← NUEVO
+- `stats.ts` → calcula stats del agente desde sus turns.
+- `activity-log.ts` → expone eventos del agente.
+- `archetypes.ts` → catálogo de arquetipos.
+- `routes/agent-stats.ts` → endpoint.
+- Test.
+
+### MACRO D — Endpoints HTTP (5 bloques)
+Como antes, más endpoints para stats y activity.
+
+### MACRO E — Kernel `personaId` (4 bloques)
+Como antes.
+
+### MACRO F — Chat con persona (3 bloques)
+Como antes + intent `invoke_agent`.
+
+### MACRO G — Frontend workspace (8 bloques) ← AMPLIADO
+- `AgentsWorkspace.tsx` (reemplaza `AgentsView.tsx`).
+- `AgentHeroCard.tsx` (el agente principal grande).
+- `AgentCard.tsx` (los secundarios en grid).
+- `AgentStats.tsx` (componente de stats).
+- `ActivityLog.tsx` (log live).
+- `DirectCommands.tsx` (el /invoke).
+- `NewAgentModal.tsx`.
+- `AgentProfileView.tsx` (perfil detallado).
+
+### MACRO H — Cierre (5 bloques)
+Como antes + docs de gamificación.
+
+**Total: ~41 bloques.**
+
+## Decisiones críticas nuevas
+
+Antes de arrancar necesito que confirmes:
+
+### 1. ¿Los "niveles" de agente son reales o cosméticos?
+
+**Opción A — Cosméticos**: el nivel sube de 1 a N según tareas completadas. Es una métrica derivada. No afecta funcionalidad.
+
+**Opción B — Reales**: el nivel **desbloquea capabilities**. Un agente Lvl 5 no puede hacer lo que hace un Lvl 9. Requiere sistema de niveles + permisos.
+
+**Voto: A primero**. Gamificar visualmente es fácil. Desbloquear por nivel es un sistema completo que merece su propio bloque.
+
+### 2. ¿Los arquetipos son fijos o configurables por tenant?
+
+- **(a)** Fijos: Orquestador, Cazador, Guardián, Estratega, Arquitecto (5, universales).
+- **(b)** Configurables: cada tenant declara sus arquetipos.
+- **(c)** Híbrido: 5 base + los que añada el tenant.
+
+**Voto: (c)**. Base universal, extensible.
+
+### 3. ¿La `activity log` es real o simulada al principio?
+
+- **(a)** Real desde el principio: lee de `run-events` filtrado por agente.
+- **(b)** Simulada: hardcoded al principio, real después.
+
+**Voto: (a)**. `run-events` ya tiene `taskId`, `kind`, `title`, `detail`. Solo hay que filtrar por `assignedTo` (agente). Es trivial.
+
+### 4. ¿El comando `/invoke` es del chat o del agente?
+
+- **(a)** El usuario escribe `llama al agente X para Y` **en el chat normal**.
+- **(b)** Hay un input especial `/invoke` **en la vista de agentes**.
+- **(c)** Ambos.
+
+**Voto: (c)**. El usuario puede invocar desde el chat general o desde la vista de agentes.
+
+### 5. ¿Laia es "Agente Ventas" o "Agente Soporte" o un arquetipo nuevo?
+
+En el mockup hay: Ventas (Cazador), Soporte (Guardián), Marketing (Estratega), Ops (Arquitecto). Y el principal es Orquestador.
+
+**Laia como "Asistente secretaria todoterreno" no encaja en ninguno de los 4.** Necesita su propio arquetipo.
+
+**Opciones:**
+- **(a)** Laia = "Agente Soporte" (Guardián). Encaja con "sabe todo, está para todo".
+- **(b)** Laia = nuevo arquetipo "Asistente" o "Secretaria" o "Todoterreno".
+- **(c)** Laia = "Agente Orquestador" auxiliar, reporta al principal.
+
+**Voto: (b)**. Laia merece su arquetipo propio: **"Asistente"** o **"Vínculo"** (alguien que conecta a todos).
+
+## Lo que necesito de ti antes de arrancar
+
+**Confirma:**
+
+1. Los **5 arquetipos** base: Orquestador, Cazador, Guardián, Estratega, Arquitecto. ¿OK o añadimos "Asistente"?
+2. **Niveles cosméticos** al principio. ¿OK?
+3. **Activity log real** desde el principio. ¿OK?
+4. **`/invoke` doble**: chat + vista agentes. ¿OK?
+5. **Laia** = arquetipo "Asistente". ¿OK?
+
+**Y pásame:**
+
+- Los 5 archivos que pedí antes (`app.ts`, `index.ts`, `service.ts`, `conversation.ts`, `App.tsx`).
+- Los 2 mockups ya los tengo (los veo).
+- La imagen del chat ya la tengo.
+
+**Y por último:** dime si quieres que el **plan de 41 bloques** sea bloque-a-bloque (seguro, lento) o **macro-a-macro** (rápido, más riesgo).
+
+Con eso arranco **Macro A1** sin más dilación.

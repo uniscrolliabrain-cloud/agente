@@ -1,0 +1,3 @@
+# Tests que superan 10s (candidatos a before colgado)
+# Se rellena ejecutando scripts/audits/find-hanging-before.ps1
+# Formato de línea: <archivo> — <motivo>

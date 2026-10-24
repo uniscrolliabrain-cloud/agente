@@ -1,0 +1,2480 @@
+Directory structure:
+└── uniscrolliabrain-cloud-agente/
+    ├── README.md
+    ├── audit-anchors.txt
+    ├── BETA.md
+    ├── biome.json
+    ├── CHANGELOG.md
+    ├── CONTRIBUTING.md
+    ├── dev.ps1
+    ├── Dockerfile
+    ├── fly.toml
+    ├── gpt audit.txt
+    ├── gpt-audit.md
+    ├── last_audit_cline.md.txt
+    ├── LICENSE
+    ├── package.json
+    ├── pnpm-workspace.yaml
+    ├── SECURITY.md
+    ├── tatus
+    ├── test-macroC.txt
+    ├── tsconfig.build.json
+    ├── tsconfig.json
+    ├── typecheck-0801.txt
+    ├── typecheck-0802.txt
+    ├── typecheck-batch.txt
+    ├── typecheck-batch2.txt
+    ├── typecheck-batch3.txt
+    ├── typecheck-bloque04.txt
+    ├── typecheck-fixes.txt
+    ├── typecheck-macroC.txt
+    ├── typecheck-revert.txt
+    ├── typecheck.txt
+    ├── .c8rc.json
+    ├── .dockerignore
+    ├── .env.example
+    ├── .npmrc
+    ├── apps/
+    │   ├── computer/
+    │   │   ├── Dockerfile
+    │   │   ├── files.py
+    │   │   ├── smoke.test.ts
+    │   │   ├── .dockerignore
+    │   │   ├── wheels/
+    │   │   │   ├── README.md
+    │   │   │   └── .gitkeep
+    │   │   └── workspace-template/
+    │   │       └── skills/
+    │   │           ├── alta-cliente/
+    │   │           │   ├── main.py
+    │   │           │   ├── requirements.txt
+    │   │           │   └── SKILL.md
+    │   │           ├── audit-web/
+    │   │           │   ├── main.py
+    │   │           │   └── SKILL.md
+    │   │           ├── business-intel/
+    │   │           │   ├── kpis.py
+    │   │           │   └── SKILL.md
+    │   │           ├── factura/
+    │   │           │   ├── main.py
+    │   │           │   └── SKILL.md
+    │   │           ├── facturacion/
+    │   │           │   ├── pipeline.py
+    │   │           │   └── SKILL.md
+    │   │           ├── gmb-post-prepare/
+    │   │           │   ├── main.py
+    │   │           │   └── SKILL.md
+    │   │           ├── propuesta/
+    │   │           │   ├── main.py
+    │   │           │   └── SKILL.md
+    │   │           ├── social-post-prepare/
+    │   │           │   ├── main.py
+    │   │           │   └── SKILL.md
+    │   │           └── whatsapp-reply-prepare/
+    │   │               ├── main.py
+    │   │               └── SKILL.md
+    │   ├── server/
+    │   │   └── src/
+    │   │       ├── actions-deferred.ts
+    │   │       ├── actions.ts
+    │   │       ├── admin-clients.ts
+    │   │       ├── admin-routes.ts
+    │   │       ├── admin-tenants.ts
+    │   │       ├── agent.ts
+    │   │       ├── auth-routes.ts
+    │   │       ├── auth-signup.ts
+    │   │       ├── auth.ts
+    │   │       ├── backup-tenant.ts
+    │   │       ├── backup.ts
+    │   │       ├── billing-routes.ts
+    │   │       ├── browser-console.ts
+    │   │       ├── browser.ts
+    │   │       ├── business-routes.ts
+    │   │       ├── computer-routes.ts
+    │   │       ├── computer-tools.ts
+    │   │       ├── computer.ts
+    │   │       ├── config.ts
+    │   │       ├── db-rls.ts
+    │   │       ├── db-tenant.ts
+    │   │       ├── db.ts
+    │   │       ├── errors.ts
+    │   │       ├── events-routes.ts
+    │   │       ├── files.ts
+    │   │       ├── form-routes.ts
+    │   │       ├── gmb-routes.ts
+    │   │       ├── google-auth.ts
+    │   │       ├── index.ts
+    │   │       ├── kernel-routes.ts
+    │   │       ├── log.ts
+    │   │       ├── metrics-exporter.ts
+    │   │       ├── notification-prefs.ts
+    │   │       ├── notifications-stream.ts
+    │   │       ├── projects-routes.ts
+    │   │       ├── rag-routes.ts
+    │   │       ├── rate-limit.ts
+    │   │       ├── rollback.ts
+    │   │       ├── social-routes.ts
+    │   │       ├── threads-routes.ts
+    │   │       ├── users.ts
+    │   │       ├── whatsapp-routes.ts
+    │   │       ├── worker-entry.ts
+    │   │       ├── workspace.ts
+    │   │       ├── alerts/
+    │   │       │   ├── definitions.ts
+    │   │       │   └── service.ts
+    │   │       ├── demo/
+    │   │       │   ├── entry.ts
+    │   │       │   └── model.ts
+    │   │       ├── engine/
+    │   │       │   ├── build-applier.ts
+    │   │       │   ├── business.ts
+    │   │       │   ├── circuit-breaker.ts
+    │   │       │   ├── conversation.ts
+    │   │       │   ├── dead-letter.ts
+    │   │       │   ├── edit-lock.ts
+    │   │       │   ├── embeddings.ts
+    │   │       │   ├── finance.ts
+    │   │       │   ├── form-builder.ts
+    │   │       │   ├── idempotency.ts
+    │   │       │   ├── learning.ts
+    │   │       │   ├── log-reexport.ts
+    │   │       │   ├── memory.ts
+    │   │       │   ├── model-chain.ts
+    │   │       │   ├── model.ts
+    │   │       │   ├── notifications-stream.ts
+    │   │       │   ├── presence.ts
+    │   │       │   ├── provenance.ts
+    │   │       │   ├── rag.ts
+    │   │       │   ├── retry.ts
+    │   │       │   ├── routes.ts
+    │   │       │   ├── sop-executor.ts
+    │   │       │   ├── sop-triggers.ts
+    │   │       │   ├── state-machines.ts
+    │   │       │   ├── task-plans.ts
+    │   │       │   ├── tenant.ts
+    │   │       │   ├── transaction.ts
+    │   │       │   ├── worker.ts
+    │   │       │   ├── agents/
+    │   │       │   │   ├── governance.ts
+    │   │       │   │   ├── runtime.ts
+    │   │       │   │   └── personas/
+    │   │       │   │       ├── activity.ts
+    │   │       │   │       ├── bootstrap.ts
+    │   │       │   │       ├── index.ts
+    │   │       │   │       ├── loader.ts
+    │   │       │   │       ├── node.ts
+    │   │       │   │       ├── registry.ts
+    │   │       │   │       ├── resolver.ts
+    │   │       │   │       ├── routes.ts
+    │   │       │   │       ├── stats.ts
+    │   │       │   │       └── types.ts
+    │   │       │   ├── business/
+    │   │       │   │   ├── graph.ts
+    │   │       │   │   ├── resolver.ts
+    │   │       │   │   ├── truth-resolver.ts
+    │   │       │   │   └── truth.ts
+    │   │       │   ├── capabilities/
+    │   │       │   │   ├── bootstrap.ts
+    │   │       │   │   └── registry.ts
+    │   │       │   ├── context/
+    │   │       │   │   ├── assembly.ts
+    │   │       │   │   ├── budget.ts
+    │   │       │   │   ├── engine.ts
+    │   │       │   │   └── meta-hints-prompt.ts
+    │   │       │   ├── events/
+    │   │       │   │   ├── bus.ts
+    │   │       │   │   ├── index.ts
+    │   │       │   │   ├── replay.ts
+    │   │       │   │   ├── retention-purge.ts
+    │   │       │   │   ├── retention.ts
+    │   │       │   │   ├── schema-registry.ts
+    │   │       │   │   ├── schemas.ts
+    │   │       │   │   ├── snapshot.ts
+    │   │       │   │   ├── subscriber.ts
+    │   │       │   │   ├── types.ts
+    │   │       │   │   ├── ulid.ts
+    │   │       │   │   ├── audits/
+    │   │       │   │   │   └── no-console.ts
+    │   │       │   │   ├── consumers/
+    │   │       │   │   │   ├── audit.ts
+    │   │       │   │   │   ├── index.ts
+    │   │       │   │   │   ├── metrics.ts
+    │   │       │   │   │   ├── notifications.ts
+    │   │       │   │   │   ├── state-changed.ts
+    │   │       │   │   │   ├── state-denied.ts
+    │   │       │   │   │   └── verification-disagreement.ts
+    │   │       │   │   ├── exporters/
+    │   │       │   │   │   ├── kafka.ts
+    │   │       │   │   │   └── otel.ts
+    │   │       │   │   └── sinks/
+    │   │       │   │       └── store.ts
+    │   │       │   ├── execution/
+    │   │       │   │   ├── capability-runner.ts
+    │   │       │   │   ├── executor.ts
+    │   │       │   │   └── tool-executors.ts
+    │   │       │   ├── feedback/
+    │   │       │   │   ├── collector.ts
+    │   │       │   │   ├── meta-hints-store.ts
+    │   │       │   │   └── scoring.ts
+    │   │       │   ├── guardrails/
+    │   │       │   │   └── service.ts
+    │   │       │   ├── handoff/
+    │   │       │   │   └── service.ts
+    │   │       │   ├── learning/
+    │   │       │   │   └── observer.ts
+    │   │       │   ├── metrics/
+    │   │       │   │   └── collector.ts
+    │   │       │   ├── orchestrator/
+    │   │       │   │   └── orchestrator.ts
+    │   │       │   ├── planner/
+    │   │       │   │   ├── llm-planner.ts
+    │   │       │   │   ├── planner.ts
+    │   │       │   │   └── replanner.ts
+    │   │       │   ├── policy/
+    │   │       │   │   ├── engine.ts
+    │   │       │   │   ├── expression.ts
+    │   │       │   │   └── state-machine.ts
+    │   │       │   ├── reactions/
+    │   │       │   │   ├── engine.ts
+    │   │       │   │   └── executor.ts
+    │   │       │   ├── skills/
+    │   │       │   │   └── marketplace.ts
+    │   │       │   ├── verification/
+    │   │       │   │   ├── disagreement.ts
+    │   │       │   │   ├── llm-verifier.ts
+    │   │       │   │   └── verifier.ts
+    │   │       │   ├── views/
+    │   │       │   │   └── resolver.ts
+    │   │       │   ├── workspace/
+    │   │       │   │   ├── generator.ts
+    │   │       │   │   └── registry.ts
+    │   │       │   └── workspaces/
+    │   │       │       ├── bridge.ts
+    │   │       │       ├── dispatcher.ts
+    │   │       │       ├── index.ts
+    │   │       │       └── registry.ts
+    │   │       ├── kernel/
+    │   │       │   ├── index.ts
+    │   │       │   ├── kernel.ts
+    │   │       │   ├── lifecycle.ts
+    │   │       │   ├── personas-bootstrap.ts
+    │   │       │   ├── snapshot.ts
+    │   │       │   ├── audit/
+    │   │       │   │   ├── entry.ts
+    │   │       │   │   ├── in-memory-store.ts
+    │   │       │   │   ├── store-store.ts
+    │   │       │   │   └── store.ts
+    │   │       │   ├── authors/
+    │   │       │   │   ├── fast-author.ts
+    │   │       │   │   ├── index.ts
+    │   │       │   │   ├── slow-author.ts
+    │   │       │   │   └── user-author.ts
+    │   │       │   ├── config/
+    │   │       │   │   ├── database-resolver.ts
+    │   │       │   │   ├── env-resolver.ts
+    │   │       │   │   ├── provider-spec.ts
+    │   │       │   │   └── tenant-config.ts
+    │   │       │   ├── context/
+    │   │       │   │   └── kernel-context.ts
+    │   │       │   ├── cromos/
+    │   │       │   │   ├── cromo.ts
+    │   │       │   │   ├── logic/
+    │   │       │   │   │   └── axioms.ts
+    │   │       │   │   └── physics/
+    │   │       │   │       └── field.ts
+    │   │       │   ├── graph/
+    │   │       │   │   ├── attention.ts
+    │   │       │   │   ├── consolidate.ts
+    │   │       │   │   ├── in-memory-store.ts
+    │   │       │   │   ├── progress.ts
+    │   │       │   │   ├── promote.ts
+    │   │       │   │   ├── rules.ts
+    │   │       │   │   ├── store-store.ts
+    │   │       │   │   ├── store.ts
+    │   │       │   │   ├── thought.ts
+    │   │       │   │   ├── turn.ts
+    │   │       │   │   └── views.ts
+    │   │       │   ├── observers/
+    │   │       │   │   ├── meta.ts
+    │   │       │   │   ├── presenter-sse.ts
+    │   │       │   │   └── presenter.ts
+    │   │       │   ├── subscribers/
+    │   │       │   │   ├── audit-consumer.ts
+    │   │       │   │   ├── bus-emitter.ts
+    │   │       │   │   ├── events.ts
+    │   │       │   │   ├── index.ts
+    │   │       │   │   ├── metrics-consumer.ts
+    │   │       │   │   ├── notifications-consumer.ts
+    │   │       │   │   ├── status.ts
+    │   │       │   │   ├── thought-consumer.ts
+    │   │       │   │   ├── thought-index-query.ts
+    │   │       │   │   ├── turn-consumer.ts
+    │   │       │   │   └── turn-index-query.ts
+    │   │       │   └── tenancy/
+    │   │       │       ├── database-resolver.ts
+    │   │       │       ├── default-resolver.ts
+    │   │       │       ├── resolver.ts
+    │   │       │       └── service-resolver.ts
+    │   │       ├── metrics/
+    │   │       │   └── registry.ts
+    │   │       ├── middleware/
+    │   │       │   ├── request-logger.ts
+    │   │       │   └── user-header.ts
+    │   │       ├── routes/
+    │   │       │   ├── views.ts
+    │   │       │   └── workspaces.ts
+    │   │       └── skills/
+    │   │           ├── routes.ts
+    │   │           └── sop-routes.ts
+    │   ├── web/
+    │   │   ├── index.html
+    │   │   ├── package.json
+    │   │   ├── postcss.config.js
+    │   │   ├── tailwind.config.js
+    │   │   ├── tsconfig.json
+    │   │   ├── tsconfig.node.json
+    │   │   ├── vite.config.ts
+    │   │   ├── docs/
+    │   │   │   └── workspace-blueprint.md
+    │   │   └── src/
+    │   │       ├── 01-34-workspaces-pipeline.md
+    │   │       ├── 02-HANDOFF-IA-WORKSPACES.md
+    │   │       ├── 03-CONTINUACION-PIPELINE-WORKSPACES.md.md
+    │   │       ├── 34-workspaces-pipeline.md.bak-V1
+    │   │       ├── App.tsx
+    │   │       ├── main.tsx
+    │   │       ├── api/
+    │   │       │   ├── actions.ts
+    │   │       │   ├── agents.ts
+    │   │       │   ├── auth.ts
+    │   │       │   ├── business.ts
+    │   │       │   ├── chat.ts
+    │   │       │   ├── client.ts
+    │   │       │   ├── conversation.ts
+    │   │       │   ├── events.ts
+    │   │       │   ├── files.ts
+    │   │       │   ├── google.ts
+    │   │       │   ├── index.ts
+    │   │       │   ├── projects.ts
+    │   │       │   ├── rag.ts
+    │   │       │   ├── search.ts
+    │   │       │   ├── session.ts
+    │   │       │   ├── tasks.ts
+    │   │       │   ├── threads.ts
+    │   │       │   └── workspaces.ts
+    │   │       ├── components/
+    │   │       │   ├── ApprovalModal.tsx
+    │   │       │   ├── AppShell.tsx
+    │   │       │   ├── AttachmentPreview.tsx
+    │   │       │   ├── ChatInput.tsx
+    │   │       │   ├── ChatPanel.tsx
+    │   │       │   ├── CommandPalette.tsx
+    │   │       │   ├── ContextualPanel.tsx
+    │   │       │   ├── ControlCenterView.tsx
+    │   │       │   ├── DocumentsView.tsx
+    │   │       │   ├── KpiCard.tsx
+    │   │       │   ├── LiveItem.tsx
+    │   │       │   ├── Login.tsx
+    │   │       │   ├── MemoryView.tsx
+    │   │       │   ├── MessageBubble.tsx
+    │   │       │   ├── MessageList.tsx
+    │   │       │   ├── NotificationsDropdown.tsx
+    │   │       │   ├── ProfileModal.tsx
+    │   │       │   ├── ProjectsView.tsx
+    │   │       │   ├── ProvenanceBadge.tsx
+    │   │       │   ├── RoleSelector.tsx
+    │   │       │   ├── SidebarV2.tsx
+    │   │       │   ├── Sparkline.tsx
+    │   │       │   ├── SuggestionChips.tsx
+    │   │       │   ├── TaskDetailModal.tsx
+    │   │       │   ├── TasksView.tsx
+    │   │       │   ├── TaskTimeline.tsx
+    │   │       │   ├── ToolCallsGroup.tsx
+    │   │       │   ├── TopBarV2.tsx
+    │   │       │   ├── UserModal.tsx
+    │   │       │   └── UsersView.tsx
+    │   │       ├── forms/
+    │   │       │   └── FormRenderer.tsx
+    │   │       ├── hooks/
+    │   │       │   ├── useAuth.ts
+    │   │       │   ├── useChat.ts
+    │   │       │   ├── useNotifications.ts
+    │   │       │   ├── useNow.ts
+    │   │       │   ├── usePanel.ts
+    │   │       │   ├── useProjects.ts
+    │   │       │   ├── useReducedMotion.ts
+    │   │       │   ├── useTasks.ts
+    │   │       │   ├── useThreads.ts
+    │   │       │   ├── useTypewriter.ts
+    │   │       │   ├── useViewResolver.ts
+    │   │       │   ├── useWorkspaceData.ts
+    │   │       │   └── useWorkspaces.ts
+    │   │       ├── lib/
+    │   │       │   ├── format.ts
+    │   │       │   └── toolsReducer.ts
+    │   │       ├── templates/
+    │   │       │   ├── dashboard/
+    │   │       │   │   └── DashboardTemplate.tsx
+    │   │       │   └── queue/
+    │   │       │       └── QueueTemplate.tsx
+    │   │       ├── types/
+    │   │       │   └── api.ts
+    │   │       ├── view/
+    │   │       │   ├── fallback.tsx
+    │   │       │   ├── spec.ts
+    │   │       │   └── ViewRenderer.tsx
+    │   │       └── workspaces/
+    │   │           ├── index.ts
+    │   │           ├── registry.ts
+    │   │           ├── WorkspaceShell.tsx
+    │   │           ├── 01-gmail/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 02-whatsapp/
+    │   │           │   ├── README.md
+    │   │           │   ├── api.ts
+    │   │           │   ├── ChatWorkspace.css
+    │   │           │   ├── format.ts
+    │   │           │   ├── index.ts
+    │   │           │   ├── types.ts
+    │   │           │   ├── components/
+    │   │           │   │   ├── Avatar.tsx
+    │   │           │   │   ├── ChatWorkspace.tsx
+    │   │           │   │   ├── Composer.tsx
+    │   │           │   │   ├── ContextPanel.tsx
+    │   │           │   │   ├── MessageBubble.tsx
+    │   │           │   │   ├── MessageList.tsx
+    │   │           │   │   ├── ThreadFilters.tsx
+    │   │           │   │   ├── ThreadHeader.tsx
+    │   │           │   │   ├── ThreadList.tsx
+    │   │           │   │   ├── ThreadListItem.tsx
+    │   │           │   │   ├── ThreadSearch.tsx
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   ├── 03-spec.md
+    │   │           │   │   └── 04-handoff-v2.md
+    │   │           │   └── hooks/
+    │   │           │       ├── useChatWorkspace.ts
+    │   │           │       └── .gitkeep
+    │   │           ├── 03-hubspot/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 04-holded/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 05-google-drive/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 06-google-calendar/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 07-linear/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 08-chatgpt/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 09-airtable/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 10-perdoo/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 11-holded-tesoreria/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 12-odoo-purchase/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 13-productive/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 14-zendesk/
+    │   │           │   ├── README.md
+    │   │           │   ├── api.ts
+    │   │           │   ├── format.ts
+    │   │           │   ├── index.ts
+    │   │           │   ├── types.ts
+    │   │           │   ├── ZendeskWorkspace.css
+    │   │           │   ├── components/
+    │   │           │   │   ├── AgentStatusPill.tsx
+    │   │           │   │   ├── Avatar.tsx
+    │   │           │   │   ├── CoWriteEditor.tsx
+    │   │           │   │   ├── CoWritePanel.tsx
+    │   │           │   │   ├── CoWriteToggle.tsx
+    │   │           │   │   ├── CustomerHeader.tsx
+    │   │           │   │   ├── CustomerQuickActions.tsx
+    │   │           │   │   ├── EmptyState.tsx
+    │   │           │   │   ├── IconButton.tsx
+    │   │           │   │   ├── InsightChips.tsx
+    │   │           │   │   ├── InsightIntent.tsx
+    │   │           │   │   ├── InsightUrgencyNextStep.tsx
+    │   │           │   │   ├── LeadBadge.tsx
+    │   │           │   │   ├── NewTicketButton.tsx
+    │   │           │   │   ├── SidebarNavItem.tsx
+    │   │           │   │   ├── SidebarSearch.tsx
+    │   │           │   │   ├── SidebarSection.tsx
+    │   │           │   │   ├── TicketAvatar.tsx
+    │   │           │   │   ├── TicketChips.tsx
+    │   │           │   │   ├── TicketDetailPanel.tsx
+    │   │           │   │   ├── TicketFilterPill.tsx
+    │   │           │   │   ├── TicketInsightCard.tsx
+    │   │           │   │   ├── TicketList.tsx
+    │   │           │   │   ├── TicketListActions.tsx
+    │   │           │   │   ├── TicketListHeader.tsx
+    │   │           │   │   ├── TicketListItem.tsx
+    │   │           │   │   ├── TicketListPanel.tsx
+    │   │           │   │   ├── WorkspaceBrand.tsx
+    │   │           │   │   ├── ZendeskSidebar.tsx
+    │   │           │   │   ├── ZendeskWorkspace.tsx
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   ├── 03-spec.md
+    │   │           │   │   └── 04-handoff-v2.md
+    │   │           │   └── hooks/
+    │   │           │       ├── useZendesk.ts
+    │   │           │       └── .gitkeep
+    │   │           ├── 15-docusign/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 16-n8n/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 17-process-street/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 18-factorial/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 19-personio/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 20-ramp/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 21-stripe/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 22-canva/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 23-buffer/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 24-shopify/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 25-intercom/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 26-odoo-inventory/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 27-maintainx/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 28-odoo-manufacturing/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 29-isms-online/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 30-microsoft-entra/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 31-suitedash/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 32-notion/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 33-langsmith/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           ├── 34-trello/
+    │   │           │   ├── README.md
+    │   │           │   ├── index.ts
+    │   │           │   ├── components/
+    │   │           │   │   └── .gitkeep
+    │   │           │   ├── docs/
+    │   │           │   │   ├── 01-ui-map.md
+    │   │           │   │   ├── 02-roadmap.md
+    │   │           │   │   └── 03-spec.md
+    │   │           │   └── hooks/
+    │   │           │       └── .gitkeep
+    │   │           └── 35-centro-mando/
+    │   │               ├── README.md
+    │   │               ├── centro-mando.css
+    │   │               ├── CentroMandoWorkspace.tsx
+    │   │               ├── index.ts
+    │   │               ├── types.ts
+    │   │               ├── components/
+    │   │               │   ├── ActiveProjectsPanel.tsx
+    │   │               │   ├── AgentPerformanceCard.tsx
+    │   │               │   ├── AgentsPerformancePanel.tsx
+    │   │               │   ├── AiActionButton.tsx
+    │   │               │   ├── AiInsightsPanel.tsx
+    │   │               │   ├── Avatar.tsx
+    │   │               │   ├── BlockedInvoiceList.tsx
+    │   │               │   ├── CentroMandoSidebar.tsx
+    │   │               │   ├── ChartAnnotation.tsx
+    │   │               │   ├── ClientDetailModal.tsx
+    │   │               │   ├── CriticalTicketsPanel.tsx
+    │   │               │   ├── DateRangePicker.tsx
+    │   │               │   ├── InsightCard.tsx
+    │   │               │   ├── KpiCard.tsx
+    │   │               │   ├── KpiGrid.tsx
+    │   │               │   ├── MiniBarList.tsx
+    │   │               │   ├── PipelineFunnel.tsx
+    │   │               │   ├── ProgressBar.tsx
+    │   │               │   ├── ProjectProgressRow.tsx
+    │   │               │   ├── RetentionChart.tsx
+    │   │               │   ├── RetentionStats.tsx
+    │   │               │   ├── SectionHeader.tsx
+    │   │               │   ├── Sparkline.tsx
+    │   │               │   ├── StatusBadge.tsx
+    │   │               │   ├── TicketCard.tsx
+    │   │               │   ├── Toast.tsx
+    │   │               │   ├── TopClientRow.tsx
+    │   │               │   ├── TopClientsPanel.tsx
+    │   │               │   ├── TopClientsTable.tsx
+    │   │               │   ├── UrgencyBadge.tsx
+    │   │               │   └── WorkspaceHeader.tsx
+    │   │               ├── docs/
+    │   │               │   ├── 01-ui-map.md
+    │   │               │   ├── 02-roadmap.md
+    │   │               │   └── 03-spec.md
+    │   │               └── hooks/
+    │   │                   ├── useCentroMandoData.ts
+    │   │                   ├── useClientSelection.ts
+    │   │                   ├── useDateRange.ts
+    │   │                   ├── useMobileMenu.ts
+    │   │                   └── useToast.ts
+    │   └── worker/
+    │       ├── README.md
+    │       ├── Dockerfile
+    │       ├── om-chat-acceptance.mjs
+    │       ├── package.json
+    │       ├── tsconfig.json
+    │       ├── .dockerignore
+    │       ├── src/
+    │       │   ├── browser.ts
+    │       │   ├── demo-entry.ts
+    │       │   ├── downloads.ts
+    │       │   ├── errors.ts
+    │       │   ├── index.ts
+    │       │   ├── network.ts
+    │       │   ├── proxy.ts
+    │       │   └── server.ts
+    │       └── tests/
+    │           ├── docker.test.ts
+    │           ├── lifecycle.test.ts
+    │           └── run-docker.mjs
+    ├── clientes/
+    │   ├── _base/
+    │   │   ├── README.md
+    │   │   ├── agentes.json
+    │   │   └── sops-pendientes.json
+    │   ├── _example/
+    │   │   ├── README.md
+    │   │   ├── agentes.json
+    │   │   ├── config.json
+    │   │   ├── memorias.json
+    │   │   ├── users.json
+    │   │   ├── docs/
+    │   │   │   └── README.md
+    │   │   ├── personas/
+    │   │   │   ├── README.md
+    │   │   │   └── laia/
+    │   │   │       ├── persona.json
+    │   │   │       └── stats.json
+    │   │   ├── skills/
+    │   │   │   └── README.md
+    │   │   └── sops/
+    │   │       └── README.md
+    │   └── default/
+    │       ├── ontology.json
+    │       └── personas/
+    │           ├── _index.json
+    │           ├── administrativo/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── atencion/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── comercial/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── compliance/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── compras/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── contenido/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── direccion/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── finanzas/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── legal/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── marketing/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           ├── operaciones/
+    │           │   ├── persona.json
+    │           │   └── stats.json
+    │           └── rrhh/
+    │               ├── persona.json
+    │               └── stats.json
+    ├── docs/
+    │   ├── README.md
+    │   ├── ARCHITECTURE.md
+    │   ├── AUDIT_BRIDGES.md
+    │   ├── AUDIT_CONSOLE.md
+    │   ├── AUDIT_CONTRACTS.md
+    │   ├── AUDIT_IDEMPOTENCY.md
+    │   ├── AUDIT_LAYERS.md
+    │   ├── AUDIT_TENANT_DEFAULT.md
+    │   ├── BUSINESS_OS.md
+    │   ├── COMPUTER.md
+    │   ├── ESTADO-REAL.md
+    │   ├── KERNEL_SPEC.md
+    │   ├── PLAN-6-FASES.md
+    │   ├── PRODUCT.md
+    │   ├── PROTOCOLO.md
+    │   ├── 2026-10-18-resultados/
+    │   │   ├── README.md
+    │   │   ├── 01-resumen-ejecutivo.md
+    │   │   ├── 02-fuentes-y-alcance.md
+    │   │   ├── 03-informe-tests.md
+    │   │   ├── 04-informe-auditorias.md
+    │   │   ├── 05-ci-y-e2e.md
+    │   │   ├── 06-inventario-multitenant.md
+    │   │   ├── 07-riesgos-y-fuera-de-mvp.md
+    │   │   └── 08-runbook.md
+    │   ├── agentes/
+    │   │   └── LOG.md
+    │   ├── archive/
+    │   │   ├── 2026-09-agentes-proyectos.txt
+    │   │   ├── 2026-09-event-bus.txt
+    │   │   ├── 2026-09-handoff.md
+    │   │   ├── 2026-09-prompt-cline-resultado.md
+    │   │   ├── 2026-09-prompt-cline-verificacion.md
+    │   │   ├── 2026-09-reconstruction-notes.md
+    │   │   ├── 2026-09-riesgos-ui.md
+    │   │   ├── 2026-09-todo-cline.md
+    │   │   ├── 2026-09-todo.md
+    │   │   ├── 2026-10-02-ledger.md
+    │   │   └── 2026-10-03-work-log.md
+    │   ├── codespace-automation/
+    │   │   ├── README.md
+    │   │   ├── campaigns/
+    │   │   │   ├── 01-mvp-validation/
+    │   │   │   │   ├── README.md
+    │   │   │   │   └── sessions/
+    │   │   │   │       ├── 01-reconcile-sources.md
+    │   │   │   │       ├── 02-verify-fix-markers.md
+    │   │   │   │       ├── 03-run-test-suite.md
+    │   │   │   │       ├── 04-tenant-isolation-load.md
+    │   │   │   │       ├── 05-run-audits.md
+    │   │   │   │       └── 06-ci-closure.md
+    │   │   │   └── 02-enterprise-hardening/
+    │   │   │       ├── README.md
+    │   │   │       └── sessions/
+    │   │   │           ├── 01-http-e2e.md
+    │   │   │           ├── 02-prefix-scans.md
+    │   │   │           ├── 03-rls-context.md
+    │   │   │           ├── 04-notifications.md
+    │   │   │           ├── 05-files-rag-workspace.md
+    │   │   │           └── 06-enterprise-readiness.md
+    │   │   └── deliverables/
+    │   │       ├── README.md
+    │   │       ├── 01-resumen-ejecutivo.md
+    │   │       ├── 02-fuentes-y-alcance.md
+    │   │       ├── 03-informe-tests.md
+    │   │       ├── 04-informe-auditorias.md
+    │   │       ├── 05-ci-y-e2e.md
+    │   │       ├── 06-inventario-multitenant.md
+    │   │       ├── 07-riesgos-y-fuera-de-mvp.md
+    │   │       └── 08-runbook.md
+    │   ├── estado/
+    │   │   ├── FUTURE.md
+    │   │   ├── KNOWN_ISSUES.md
+    │   │   └── ROADMAP.md
+    │   ├── FUTURE/
+    │   │   └── INSPO-FUTURA.md.txt
+    │   ├── kernel/
+    │   │   ├── AUDIT_CONTRACTS.md
+    │   │   ├── AUDIT_IDEMPOTENCY.md
+    │   │   └── AUDIT_TENANT_DEFAULT.md
+    │   ├── miniaudits/
+    │   │   ├── README.md
+    │   │   ├── 26-capability-e2e-miniaudit (1).md
+    │   │   ├── 31-merge-backend-a-main.md
+    │   │   ├── _pendientes.md
+    │   │   ├── POLICY_REPO.md
+    │   │   ├── PROTOCOLO_FIXES.md
+    │   │   ├── SOP.md
+    │   │   ├── 00-agentes-docs/
+    │   │   │   └── egente-brainstorm.txt
+    │   │   ├── 00-coherencia/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   ├── report.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 01-tests/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 02-observabilidad/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 03-resiliencia/
+    │   │   │   ├── diagnostico.md
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 04-multi-usuario-concurrente/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 05-motor-tareas-durable/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   ├── roadmap.md
+    │   │   │   └── ux-2026-10-06.md
+    │   │   ├── 06-aprobaciones-acciones/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 07-aislamiento-multi-tenant/
+    │   │   │   ├── -pendientes.md
+    │   │   │   ├── CIERRE-MVP.md
+    │   │   │   ├── ESTADO-REAL-MULTITENANT.md
+    │   │   │   ├── fuera-de-mvp.md
+    │   │   │   ├── ID-MAP.md
+    │   │   │   └── missed/
+    │   │   │       └── _multitenant_pendientes.md
+    │   │   ├── 08-bus-de-eventos/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 09-kernel-cognitivo/
+    │   │   │   ├── 09z-fundamentos.md
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   ├── roadmap.md
+    │   │   │   └── runbook.md
+    │   │   ├── 10-fast-slow-llm/
+    │   │   │   ├── handoff.backup-20261015-214852.md
+    │   │   │   ├── handoff.md
+    │   │   │   ├── IA-1-fast-slow-chat-memoria.md
+    │   │   │   └── lo-que-falta.md
+    │   │   ├── 11-chat-con-llm/
+    │   │   │   ├── _pendientes.md
+    │   │   │   ├── fixes.md
+    │   │   │   ├── handoff.md
+    │   │   │   ├── lo-que-falta.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 12-contexto-memoria/
+    │   │   │   ├── handoff.md
+    │   │   │   ├── lo que falta audit.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 13-ui-servida-viewspec/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── IA-2-ui-templates-frontend.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 14-templates-reales/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 15-frontend-react/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   ├── Nuevo Documento de texto.txt
+    │   │   │   └── roadmap.md
+    │   │   ├── 16-autenticacion/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 17-seguridad-basica/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 18-deploy-infra/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 19-backups-restore/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 20-computer-sandbox/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 21-browser-worker/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 22-google-drive-gmail/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 23-whatsapp-stripe-gmb/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── 24-business-os-goals/
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── _backup-10-fast-slow-llm-20261015-204100/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── handoff.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── _backup-10-fast-slow-llm-20261015-204154/
+    │   │   │   ├── fixes.md
+    │   │   │   ├── handoff.md
+    │   │   │   ├── miniaudit.md
+    │   │   │   └── roadmap.md
+    │   │   ├── _prep/
+    │   │   │   ├── audit-contracts.txt
+    │   │   │   ├── audit-idempotency.txt
+    │   │   │   ├── audit-tenant-default.txt
+    │   │   │   ├── bloque08.txt
+    │   │   │   ├── bloque09.txt
+    │   │   │   ├── hanging-before.txt
+    │   │   │   ├── typecheck-web.txt
+    │   │   │   └── typecheck.txt
+    │   │   └── _stage-final/
+    │   │       ├── politica-validacion.md
+    │   │       └── stage-ui-llm-viewspec.md
+    │   ├── mockups/
+    │   │   ├── inspiracion-para-codigo.tsx
+    │   │   └── TEMPLATES_V2.md
+    │   ├── operacion/
+    │   │   ├── CLIENTE.md
+    │   │   ├── DEPLOY-CLIENTE.md
+    │   │   ├── DEPLOY.md
+    │   │   ├── ONBOARDING-CLIENTE.md
+    │   │   ├── PRODUCCION.md
+    │   │   └── TODO-FOR-PROD.md
+    │   ├── trabajos/
+    │   │   ├── IA-1-fast-slow-chat-memoria.md
+    │   │   └── IA-2-ui-templates-frontend.md
+    │   └── ui/
+    │       ├── 34-workspaces-pipeline.md
+    │       ├── ARQUITECTURA.md
+    │       ├── DECISIONES.md
+    │       ├── FLUJOS.md
+    │       ├── GLOSARIO.md
+    │       ├── HISTORIAL.md
+    │       ├── INDICE.md
+    │       ├── LOG-MAESTRO.md
+    │       ├── Nuevo Documento de texto.txt
+    │       ├── PROTOCOLO.md
+    │       ├── RIESGOS.md
+    │       ├── UI-REDESIGN.md
+    │       ├── UI_ANIMATIONS.md
+    │       ├── VERIFICACION.md
+    │       ├── VIEWS_AND_TEMPLATES.md
+    │       └── branches/
+    │           ├── A1-memorias.md
+    │           ├── B1-shell.md
+    │           ├── B2-chat.md
+    │           ├── B3-liveitem.md
+    │           ├── C1-tareas.md
+    │           ├── C2-centro-control.md
+    │           ├── C3-aprobaciones.md
+    │           ├── D1-viewspec-tipos.md
+    │           ├── D2-viewresolver.md
+    │           ├── D3-viewrenderer.md
+    │           ├── E1-conocimiento.md
+    │           ├── E2-documentos.md
+    │           └── E3-equipo.md
+    ├── infra/
+    │   └── compose.yaml
+    ├── packages/
+    │   ├── backends/
+    │   │   └── src/
+    │   │       └── openbot.ts
+    │   ├── domain/
+    │   │   └── src/
+    │   │       ├── actions.ts
+    │   │       ├── agent-persona.ts
+    │   │       ├── agent.ts
+    │   │       ├── business-schema.ts
+    │   │       ├── business.ts
+    │   │       ├── capability.ts
+    │   │       ├── computer.ts
+    │   │       ├── context-chips.ts
+    │   │       ├── entity-resolution.ts
+    │   │       ├── errors.ts
+    │   │       ├── execution-context.ts
+    │   │       ├── form-spec.ts
+    │   │       ├── goal.ts
+    │   │       ├── index.ts
+    │   │       ├── kernel.ts
+    │   │       ├── learning.ts
+    │   │       ├── live.ts
+    │   │       ├── messaging.ts
+    │   │       ├── ontology-seed.ts
+    │   │       ├── ontology.ts
+    │   │       ├── outcome.ts
+    │   │       ├── plan.ts
+    │   │       ├── policy-context.ts
+    │   │       ├── reaction.ts
+    │   │       ├── runtime.ts
+    │   │       ├── signup.ts
+    │   │       ├── sop.ts
+    │   │       ├── taxonomy.ts
+    │   │       ├── truth.ts
+    │   │       ├── verification.ts
+    │   │       ├── views.ts
+    │   │       └── workspace-spec.ts
+    │   ├── integrations/
+    │   │   └── src/
+    │   │       ├── google.ts
+    │   │       ├── pdf.ts
+    │   │       ├── vault.ts
+    │   │       └── stubs/
+    │   │           ├── README.md
+    │   │           ├── gmb.ts
+    │   │           ├── social.ts
+    │   │           ├── stripe.ts
+    │   │           └── whatsapp.ts
+    │   └── workspaces/
+    │       ├── README.md
+    │       ├── MANIFEST.yaml
+    │       ├── 01-gmail/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 02-whatsapp/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 03-hubspot/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 04-holded/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 05-google-drive/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 06-google-calendar/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 07-linear/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 08-chatgpt/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 09-airtable/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 10-perdoo/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 11-holded-tesoreria/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 12-odoo-purchase/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 13-productive/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 14-zendesk/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 15-docusign/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 16-n8n/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 17-process-street/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 18-factorial/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 19-personio/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 20-ramp/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 21-stripe/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 22-canva/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 23-buffer/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 24-shopify/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 25-intercom/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 26-odoo-inventory/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 27-maintainx/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 28-odoo-manufacturing/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 29-isms-online/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 30-microsoft-entra/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 31-suitedash/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 32-notion/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 33-langsmith/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       ├── 34-trello/
+    │       │   ├── README.md
+    │       │   ├── workspace.json
+    │       │   ├── docs/
+    │       │   │   ├── 01-vision.md
+    │       │   │   ├── 02-spec.md
+    │       │   │   ├── 03-entities.md
+    │       │   │   ├── 04-commands-queries.md
+    │       │   │   ├── 05-events.md
+    │       │   │   ├── 06-permissions.md
+    │       │   │   ├── 07-ui-map.md
+    │       │   │   ├── 08-dependencies.md
+    │       │   │   ├── 09-acceptance.md
+    │       │   │   └── 10-open-questions.md
+    │       │   ├── src/
+    │       │   │   ├── contract.ts
+    │       │   │   ├── index.ts
+    │       │   │   ├── .gitkeep
+    │       │   │   ├── application/
+    │       │   │   │   ├── capabilities.ts
+    │       │   │   │   ├── commands.ts
+    │       │   │   │   ├── queries.ts
+    │       │   │   │   └── views.ts
+    │       │   │   ├── domain/
+    │       │   │   │   └── entities.ts
+    │       │   │   └── events/
+    │       │   │       ├── consumed.ts
+    │       │   │       └── published.ts
+    │       │   └── tests/
+    │       │       └── .gitkeep
+    │       └── src/
+    │           ├── index.ts
+    │           └── contracts/
+    │               ├── capability-declaration.ts
+    │               ├── index.ts
+    │               ├── workspace-command.ts
+    │               ├── workspace-context.ts
+    │               ├── workspace-event.ts
+    │               ├── workspace-module.ts
+    │               ├── workspace-query.ts
+    │               └── workspace-view.ts
+    ├── scripts/
+    │   ├── admin-create.ts
+    │   ├── backfill-task-tenant.ts
+    │   ├── backup-tenant.ts
+    │   ├── backup.ts
+    │   ├── beta-smoke.ts
+    │   ├── beta-vertical.ts
+    │   ├── diagnose-users.ts
+    │   ├── drop-tenant-id-column.ts
+    │   ├── export-roles-public.ts
+    │   ├── fix-mojibake.mjs
+    │   ├── migrate-tenant-id.ts
+    │   ├── migrate-tenant-membership.ts
+    │   ├── migrate-tenant-scope.ts
+    │   ├── provision-client.ts
+    │   ├── release-check.ts
+    │   ├── release-verify.ts
+    │   ├── restore.ts
+    │   ├── rollback.ts
+    │   ├── run-demo.ts
+    │   ├── seed-agency.ts
+    │   ├── seed-business-schema.ts
+    │   ├── seed-demo.ts
+    │   ├── seed-sops-agency.ts
+    │   ├── audits/
+    │   │   ├── anchors.ts
+    │   │   ├── bridges.ts
+    │   │   ├── capture-log-samples.ps1
+    │   │   ├── check-secret-redaction.ps1
+    │   │   ├── coherence.ts
+    │   │   ├── contracts.ts
+    │   │   ├── find-hanging-before.ps1
+    │   │   ├── idempotency.ts
+    │   │   ├── layers.ts
+    │   │   ├── no-console.ts
+    │   │   ├── tenant-default.ts
+    │   │   ├── test-coverage-report.ps1
+    │   │   └── blocks/
+    │   │       └── README.md
+    │   └── fixes/
+    │       ├── _runner.ps1
+    │       ├── bloque-03.ps1
+    │       ├── bloque-05.ps1
+    │       ├── bloque-10.ps1
+    │       └── run-fixes.ps1
+    ├── sops-examples/
+    │   ├── informe-semanal-llm.json
+    │   └── pipeline-alta.json
+    ├── tests/
+    │   ├── actions-deferred-wire.test.ts
+    │   ├── actions.test.ts
+    │   ├── agent-api.test.ts
+    │   ├── agent-persona.test.ts
+    │   ├── agent-runtime.test.ts
+    │   ├── alerts.test.ts
+    │   ├── api.test.ts
+    │   ├── apply-event.test.ts
+    │   ├── auth.test.ts
+    │   ├── backup-restore.test.ts
+    │   ├── browser.test.ts
+    │   ├── business-graph.test.ts
+    │   ├── business-os-contracts.test.ts
+    │   ├── business-os-orchestrator.test.ts
+    │   ├── business-os-slice.test.ts
+    │   ├── computer-api.test.ts
+    │   ├── computer-runner.test.ts
+    │   ├── computer.test.ts
+    │   ├── concurrency.test.ts
+    │   ├── context-engine.test.ts
+    │   ├── conversation-browser.test.ts
+    │   ├── crash-recovery.test.ts
+    │   ├── dead-letter.test.ts
+    │   ├── deferred-actions.test.ts
+    │   ├── demo-model.test.ts
+    │   ├── edit-lock.test.ts
+    │   ├── engine.test.ts
+    │   ├── entity-resolver.test.ts
+    │   ├── event-bus-dedupe.test.ts
+    │   ├── event-bus-stress.test.ts
+    │   ├── event-bus.test.ts
+    │   ├── events-sse.test.ts
+    │   ├── expression.test.ts
+    │   ├── fast-response.test.ts
+    │   ├── fast-slow-llm.test.ts
+    │   ├── format.test.ts
+    │   ├── google.test.ts
+    │   ├── guardrails.test.ts
+    │   ├── kernel-consolidate.test.ts
+    │   ├── kernel-meta-context.test.ts
+    │   ├── kernel-persona-isolation.test.ts
+    │   ├── kernel-presenter.test.ts
+    │   ├── kernel-rules-attention.test.ts
+    │   ├── kernel.test.ts
+    │   ├── laia-hierarchy.test.ts
+    │   ├── live.test.ts
+    │   ├── log.test.ts
+    │   ├── memory-board.test.ts
+    │   ├── memory.test.ts
+    │   ├── model-worker.test.ts
+    │   ├── oauth.test.ts
+    │   ├── openbot.test.ts
+    │   ├── pdf.test.ts
+    │   ├── permissions.test.ts
+    │   ├── persistence.test.ts
+    │   ├── policy-engine.test.ts
+    │   ├── prompt-tone.test.ts
+    │   ├── rag.test.ts
+    │   ├── registry.test.ts
+    │   ├── reingest.test.ts
+    │   ├── retry.test.ts
+    │   ├── setup.ts
+    │   ├── sop-contract.test.ts
+    │   ├── sop-triggers.test.ts
+    │   ├── state-machine.test.ts
+    │   ├── task-plans.test.ts
+    │   ├── tasks-reassign.test.ts
+    │   ├── tenant-cache.test.ts
+    │   ├── tenant-isolation-extended.test.ts
+    │   ├── tenant-isolation.test.ts
+    │   ├── tenant-migration.test.ts
+    │   ├── tools-reducer.test.ts
+    │   ├── truth-resolver.test.ts
+    │   ├── vault.test.ts
+    │   ├── view-resolver.test.ts
+    │   ├── worker-concurrency.test.ts
+    │   ├── worker-metrics.test.ts
+    │   ├── workflows.test.ts
+    │   ├── helpers/
+    │   │   ├── browser.ts
+    │   │   ├── computer.ts
+    │   │   ├── crash-worker.ts
+    │   │   ├── lifecycle.ts
+    │   │   └── model.ts
+    │   └── load/
+    │       └── fifty-tenants.test.ts
+    └── .github/
+        └── workflows/
+            └── ci.yml

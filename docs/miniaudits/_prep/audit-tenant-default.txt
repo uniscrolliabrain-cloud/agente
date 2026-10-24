@@ -1,0 +1,19 @@
+node.exe : $ tsx 
+scripts/audits/tenant-default.ts
+En C:\nvm4w\nodejs\pnpm.ps1: 16 Carácter: 5
++     & "$basedir/node$exe"  
+"$basedir/node_modules/corepack/dist/pnpm. 
+...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    ($ tsx scripts/audits/tenant-default.t  
+  s:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+[audit:tenant-default] Recorriendo ficheros...
+[audit:tenant-default] Ficheros: 303
+[audit:tenant-default] Informe en docs/AUDIT_TENANT_DEFAULT.md
+[audit:tenant-default] PERMITIDAS: 63   PROHIBIDAS: 2
+[ELIFECYCLE] Command failed with exit code 1.

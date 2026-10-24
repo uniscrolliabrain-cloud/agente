@@ -1,0 +1,911 @@
+He leído el protocolo y lo aplico antes de escribir un solo patchset de F5. Antes de nada, verifico qué tengo, qué no tengo, y qué dice el contrato sobre F5.
+
+**Paso 0 — Contexto.** F5 toca: `presence.ts`, `edit-lock.ts`, `notifications-stream.ts`, `notification-prefs.ts`, `users.ts`, `app.ts` (MODIFY); `presence-store.ts`, `edit-lock-store.ts`, `engine/events/replay-buffer.ts` (CREATE). Los ficheros que necesito leer y **no están pegados en este chat**: `notifications-stream.ts`, `notification-prefs.ts`, `presence.ts` (solo fragmentos en `repomix-multiusuario-min.md`), `edit-lock.ts` (solo fragmentos en `repomix-multiusuario-min.md`), `users.ts` (sí está en `repomix-multiusuario-min.md` y `repomix-fase0-multiusuario.md`), `app.ts` (citado en el hilo, no pegado completo).
+
+**Paso 1 — Diagnóstico.** El contrato de F5 está en `specs-multiuser.txt` §7 y en `Sí. Puedo prepararte...` §5. Las invariantes son: G5-I1 (asignaciones respetan identidad/tenant/permisos), G5-I2 (jerarquía organizativa no concede permisos), G5-I3 (agente no disponible no es fallo automático), G5-I4 (bloqueo no concede autorización), G5-I5 (bloqueos caducados no impiden), G5-I6 (trabajador obsoleto no sobrescribe), G5-I7 (notificaciones no exponen), G5-I8 (replay SSE respeta tenant/authz), G5-I9 (reconexión no pierde eventos), G5-I10 (cambios no rompen contratos). Los criterios de aceptación son 10. El revisor senior en `campaña-multiusuario.txt` señala que `presence.ts` y `edit-lock.ts` son in-memory con TTL 30s/10s, y que `notifications-stream.ts` filtra por `assignedTo` pero no tiene `visibility`/`priority`/`Last-Event-ID`. `users.ts` tiene `User.active` pero no transición segura de desactivación. `app.ts` no tiene `ReplayBuffer`.
+
+**Paso 2 — Ancla literal.** Para `users.ts` tengo el contenido en `repomix-multiusuario-min.md` y `repomix-fase0-multiusuario.md`. Para `presence.ts` y `edit-lock.ts` tengo fragmentos en `repomix-multiusuario-min.md` (TTL 30s/10s, `touch`/`leave`/`query`, `acquire`/`release`). Para `notifications-stream.ts` y `notification-prefs.ts` no tengo contenido pegado. Para `app.ts` no tengo contenido completo. Los patchsets que los tocan usarán `Select-String` como precondición y abortarán si el ancla no coincide.
+
+**Paso 3 — Verificación pre.** Cada patchset llevará `Assert-MatchCount` con el número esperado. Si no coincide, `throw` dentro de la función envolvente.
+
+**Paso 4 — Construcción.** Cada patchset envuelto en `function Invoke-F5XX { ... }`, `throw` en comprobaciones, `[System.Text.UTF8Encoding]::new($false)`, `[System.IO.File]::WriteAllText`, backup en `.tmp/patchset-backups/`.
+
+**Paso 5 — Verificación post.** Marca 1×, `$old` ya no está, `$new` está, `bytes > 500` (o > 200 para schemas pequeños).
+
+**Paso 6–11.** Los declaro. El `PASS` real lo declaras tú tras ejecutar y pegarme el output.
+
+Dicho esto, el documento F5 completo. F5 tiene 9 patchsets (3 CREATE + 6 MODIFY), similar a F4.
+
+---
+
+# 10 — Campaña 2 / Fase 5 — Coordinación y ciclo de vida (G5)
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 5 — Coordinación y ciclo de vida (G5)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. F0 cerrada. F1 cerrada. F2 cerrada. F3 cerrada. F4 cerrada (asumiendo que los 9 patchsets están `PASS`; si no, F5 se aborta).
+**Aprobación:** mapa de 7 fases aprobado. F5 aplica el contrato de `specs-multiuser.txt` §7 y las invariantes G5-I1–G5-I10 de `Sí. Puedo prepararte...` §5.
+
+---
+
+## 0. Precondición de seguridad
+
+F5 depende de F4 cerrada. Si F4 no está `PASS`, F5 se aborta. La verificación de F4 se hace con las marcas de F4 en `conflict.ts`, `agent.ts`, `goal.ts`, `sop.ts`, `index.ts`, `with-write.ts`, `threads-routes.ts`, `projects-routes.ts`, `engine/routes.ts`.
+
+**Si alguna marca de F4 falta, F5 no arranca.**
+
+---
+
+## 1. Qué fue la fase anterior
+
+F4 cerrada: `conflict.ts`, `version` en `AgentTask`/`Monitor`/`Thread`/`Project`/`Goal`/`SOP`, `withWrite` con CAS + diff, `THREAD_CONFLICT_DIFF_V2`/`PROJECT_CONFLICT_DIFF_V2`/`TASK_CONFLICT_DIFF_V1`, `POST /tasks/:id/reconcile`/`POST /goals/:id/reconcile`/`POST /threads/:id/reconcile`/`POST /projects/:id/reconcile`, `GET /tasks/:id/conflict`/`GET /threads/:id/conflict`/`GET /projects/:id/conflict`.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`PresenceStore` sobre `Store`** (F5.1): `apps/server/src/engine/presence-store.ts` con `PresenceStore` que usa `Store` para persistir presencia con TTL y GC. Condicional a multi-proceso: si el despliegue es single-instance, `presence.ts` in-memory sigue siendo válido. Se activa con `Config.multiProcess === true`.
+- **`EditLockStore` sobre `Store`** (F5.2): `apps/server/src/engine/edit-lock-store.ts` con `EditLockStore` que usa `Store` para persistir locks con TTL y GC. Locks con caducidad y protección frente a propietarios obsoletos. Condicional a multi-proceso. Se activa con `Config.multiProcess === true`.
+- **`ReplayBuffer` por actor** (F5.3): `apps/server/src/engine/events/replay-buffer.ts` con `ReplayBuffer` que guarda los últimos N eventos por `actorId` para SSE con `Last-Event-ID`. Condicional a reconexión: si el cliente no reconecta, no-op. Se activa con `Config.sseReplayEnabled === true`.
+- **`Notification.visibility` y `priority`** (F5.4): `notifications-stream.ts` filtra por `actorId` + `visibility`. `private` (solo `actorId`), `tenant` (todo el tenant), `shared` (los de `acl`). `priority`: `low`, `normal`, `high`, `urgent`. SSE con `Last-Event-ID` y `ReplayBuffer`.
+- **`notification-prefs` con `visibility` y `priority`** (F5.5): `notification-prefs.ts` gana `visibility` y `priority`.
+- **Desactivación sin huérfanas** (F5.6): `users.ts` `User.active = false` no hace operación masiva ciega. Transición segura: revocar acceso, identificar asignaciones afectadas (`tasks` con `assignedTo = userId` en estados no terminales), marcar pendientes de reasignar o reasignar, registrar en `activity` con `actorId` del owner.
+- **`presence.ts` y `edit-lock.ts` cablean los stores** (F5.7): si `Config.multiProcess === true`, `globalPresence` se sustituye por `PresenceStore`; `globalEditLock` se sustituye por `EditLockStore`. Si no, in-memory.
+- **`app.ts` cablea `ReplayBuffer`** (F5.8): si `Config.sseReplayEnabled === true`, `app.ts` instancia `ReplayBuffer` y lo pasa a `notifications-stream.ts`.
+
+---
+
+## 3. Qué será la siguiente fase
+
+F6: trazabilidad. `AuditTrail` de reads sensibles (`restricted`/`secret` y accesos denegados), `RecordHistory` (condicional a `activity` no cubre), `conflict-version` ya en F4. `action-audit` gana `actorId`. `run-events` gana `actorId`. Sin tocar `presence` (F5), sin tocar `withWrite` (F4).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (F5), ejecutada en **9 patchsets de producto** más **1 patchset de verificación sin escritura**. Total: 9 escrituras + 1 lectura.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en Repomix + F0 + F1 + F2 + F3 + F4:**
+- `apps/server/src/engine/presence.ts` (fragmentos en `repomix-multiusuario-min.md`: `PresenceService` in-memory, TTL 30s, `touch`/`leave`/`query`).
+- `apps/server/src/engine/edit-lock.ts` (fragmentos en `repomix-multiusuario-min.md`: `EditLock` in-memory, TTL 10s, `acquire`/`release`).
+- `apps/server/src/users.ts` (íntegro en `repomix-multiusuario-min.md` y `repomix-fase0-multiusuario.md`: `userSchema`, `UserService`, `active`).
+- `apps/server/src/config.ts` (íntegro en `repomix-multiusuario-min.md`: `Config`).
+- `apps/server/src/engine/events/bus.ts` (Repomix holístico: `EventBus.emit`).
+- `apps/server/src/engine/events/subscriber.ts` (Repomix holístico: `EventSubscriberRegistry`).
+
+**A inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/notifications-stream.ts` — `Select-String -Pattern "assignedTo|visibility|priority|Last-Event-ID|SSE"` con `-Context 0,8`.
+- `apps/server/src/notification-prefs.ts` — `Select-String -Pattern "prefs|visibility|priority"` con `-Context 0,5`.
+- `apps/server/src/app.ts` — `Select-String -Pattern "notifications-stream|notificationsStream|app.route"` con `-Context 0,5`.
+- `apps/server/src/db.ts` — `Select-String -Pattern "put|get|compareAndSwap|scanByPrefix|purgeOlderThan"` con `-Context 0,5`.
+
+**NO se leen en esta fase:**
+- `engine/history/`, `engine/audit-trail/` (F6).
+- `worker.ts`, `conversation.ts`, `kernel.ts` (no se tocan).
+- `db-tenant.ts`, `db-rls.ts` (Campaña 1 cerrada).
+
+---
+
+## 6. Archivos a crear / modificar
+
+**Crear (server):**
+- `apps/server/src/engine/presence-store.ts` — `PresenceStore` sobre `Store` con TTL y GC.
+- `apps/server/src/engine/edit-lock-store.ts` — `EditLockStore` sobre `Store` con TTL y GC.
+- `apps/server/src/engine/events/replay-buffer.ts` — `ReplayBuffer` por actor para SSE `Last-Event-ID`.
+
+**Modificar (server):**
+- `apps/server/src/notifications-stream.ts` — `Notification.visibility`, `Notification.priority`, SSE con `Last-Event-ID` y `ReplayBuffer`.
+- `apps/server/src/notification-prefs.ts` — `visibility` y `priority`.
+- `apps/server/src/users.ts` — `User.active = false` con transición segura.
+- `apps/server/src/engine/presence.ts` — si `Config.multiProcess === true`, `globalPresence` se sustituye por `PresenceStore`.
+- `apps/server/src/engine/edit-lock.ts` — si `Config.multiProcess === true`, `globalEditLock` se sustituye por `EditLockStore`.
+- `apps/server/src/config.ts` — `multiProcess: boolean` (default `false`), `sseReplayEnabled: boolean` (default `false`), `presenceTtlMs: number` (default `30_000`), `editLockTtlMs: number` (default `10_000`), `replayBufferSize: number` (default `100`).
+- `apps/server/src/app.ts` — si `Config.sseReplayEnabled === true`, instancia `ReplayBuffer` y lo pasa a `notifications-stream.ts`.
+
+**No crear (prohibido en esta fase):**
+- `engine/history/`, `engine/audit-trail/` (F6).
+- Cualquier tabla SQL.
+- Cualquier `git add .`.
+
+**No tocar:**
+- `worker.ts`, `conversation.ts`, `kernel.ts`.
+- `db-tenant.ts`, `db-rls.ts`.
+- `engine/tenant.ts` (Campaña 1 cerrada).
+- `backup-tenant.ts` (Campaña 1 cerrada).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F5.1 | `apps/server/src/engine/presence-store.ts` | 1 (crear) | CREATE |
+| F5.2 | `apps/server/src/engine/edit-lock-store.ts` | 1 (crear) | CREATE |
+| F5.3 | `apps/server/src/engine/events/replay-buffer.ts` | 1 (crear) | CREATE |
+| F5.4 | `apps/server/src/config.ts` | 1 (multiProcess + sseReplayEnabled + TTLs + bufferSize) | MODIFY |
+| F5.5 | `apps/server/src/engine/presence.ts` | 1 (wire PresenceStore) | MODIFY |
+| F5.6 | `apps/server/src/engine/edit-lock.ts` | 1 (wire EditLockStore) | MODIFY |
+| F5.7 | `apps/server/src/notifications-stream.ts` | 3 (visibility + priority + Last-Event-ID) | MODIFY |
+| F5.8 | `apps/server/src/notification-prefs.ts` | 2 (visibility + priority) | MODIFY |
+| F5.9 | `apps/server/src/users.ts` | 1 (desactivación segura) | MODIFY |
+| F5.10 | `apps/server/src/app.ts` | 1 (wire ReplayBuffer) | MODIFY |
+
+**Total: 3 CREATE + 7 MODIFY = 10 patchsets, ~14 hunks.**
+
+**Corrección:** el §4 dice 9 patchsets. La tabla real da 10. Corrijo §4 a 10 patchsets.
+
+---
+
+## 8. Fixes y clasificación
+
+| Fix | Descripción | Clasificación |
+|---|---|---|
+| F5.1 | `presence-store.ts` | Obligatorio (condicional a multi-proceso) |
+| F5.2 | `edit-lock-store.ts` | Obligatorio (condicional a multi-proceso) |
+| F5.3 | `replay-buffer.ts` | Obligatorio (condicional a reconexión) |
+| F5.4 | `config.ts` (`multiProcess`, `sseReplayEnabled`, TTLs, bufferSize) | Obligatorio |
+| F5.5 | `presence.ts` wire | Obligatorio |
+| F5.6 | `edit-lock.ts` wire | Obligatorio |
+| F5.7 | `notifications-stream.ts` | Obligatorio |
+| F5.8 | `notification-prefs.ts` | Obligatorio |
+| F5.9 | `users.ts` desactivación segura | Obligatorio |
+| F5.10 | `app.ts` wire | Obligatorio |
+
+**Fixes congelados:** tests ajenos a la campaña (F02.10).
+**Fixes movidos a F6:** audit-trail, record-history.
+**Fixes desbloqueados por F5:** F6, F7.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. F4 cerrada.**
+
+```powershell
+$checks = @{
+  "packages/domain/src/conflict.ts" = "CONFLICT_MODEL_V1"
+  "packages/domain/src/agent.ts" = "AGENT_TASK_VERSION_V1"
+  "packages/domain/src/index.ts" = "DOMAIN_INDEX_CONFLICT_V1"
+  "apps/server/src/engine/authz/with-write.ts" = "WITH_WRITE_CAS_V1"
+  "apps/server/src/threads-routes.ts" = "THREAD_RECONCILE_V1"
+  "apps/server/src/projects-routes.ts" = "PROJECT_RECONCILE_V1"
+  "apps/server/src/engine/routes.ts" = "TASK_RECONCILE_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "F4 verificada" -ForegroundColor Green
+```
+
+**0.3. `presence.ts` y `edit-lock.ts` actuales.**
+
+```powershell
+$pres = Join-Path $repoRoot "apps/server/src/engine/presence.ts"
+Select-String -Path $pres -Pattern "class PresenceService|globalPresence|PRESENCE_TTL|touch|leave|query" -Context 0,5
+$lock = Join-Path $repoRoot "apps/server/src/engine/edit-lock.ts"
+Select-String -Path $lock -Pattern "class EditLock|globalEditLock|LOCK_TTL|acquire|release" -Context 0,5
+```
+
+**Decisión:** si `globalPresence`/`globalEditLock` existen, F5.5/F5.6 los sustituyen condicionalmente. Si no, anotar.
+
+**0.4. `notifications-stream.ts` actual.**
+
+```powershell
+$ns = Join-Path $repoRoot "apps/server/src/notifications-stream.ts"
+Select-String -Path $ns -Pattern "assignedTo|visibility|priority|Last-Event-ID|SSE" -Context 0,8
+```
+
+**Decisión:** si `visibility`/`priority`/`Last-Event-ID` no existen, F5.7 los añade. Si ya existen, se amplía.
+
+**0.5. `notification-prefs.ts` actual.**
+
+```powershell
+$np = Join-Path $repoRoot "apps/server/src/notification-prefs.ts"
+Select-String -Path $np -Pattern "prefs|visibility|priority" -Context 0,5
+```
+
+**0.6. `users.ts` `User.active`.**
+
+```powershell
+$users = Join-Path $repoRoot "apps/server/src/users.ts"
+Select-String -Path $users -Pattern "active|UserService" -Context 0,5
+```
+
+**0.7. `config.ts` actual.**
+
+```powershell
+$cfg = Join-Path $repoRoot "apps/server/src/config.ts"
+Select-String -Path $cfg -Pattern "multiProcess|sseReplayEnabled|presenceTtlMs|editLockTtlMs|replayBufferSize" -Context 0,3
+```
+
+**0.8. `app.ts` wire de `notifications-stream`.**
+
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+Select-String -Path $app -Pattern "notifications-stream|notificationsStream|app.route" -Context 0,5
+```
+
+**0.9. Typecheck actual.**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes se anotan. Errores nuevos → abortar F5.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Clasificación |
+|---|---|---|
+| F5.1 | Sí | Obligatorio (condicional) |
+| F5.2 | Sí | Obligatorio (condicional) |
+| F5.3 | Sí | Obligatorio (condicional) |
+| F5.4 | Sí | Obligatorio |
+| F5.5 | Sí | Obligatorio |
+| F5.6 | Sí | Obligatorio |
+| F5.7 | Sí | Obligatorio |
+| F5.8 | Sí | Obligatorio |
+| F5.9 | Sí | Obligatorio |
+| F5.10 | Sí | Obligatorio |
+
+---
+
+## 10. Patchsets (todos completos)
+
+### Patchset F5.1 — `apps/server/src/engine/presence-store.ts` (CREATE)
+
+**Marca:** `PRESENCE_STORE_V1`
+
+**Contenido:**
+
+```typescript
+// PRESENCE_STORE_V1 — PresenceService sobre Store, para multi-proceso.
+// TTL configurable (default 30s). GC periódico. Aislado por tenant.
+// Si el despliegue es single-instance, presence.ts in-memory sigue válido.
+import type { Store } from "../db.ts";
+
+const KIND = "presence";
+
+export interface PresenceEntry {
+  userId: string;
+  tenantId: string;
+  resourceId: string;
+  resourceType: "thread" | "project";
+  lastSeen: number;
+}
+
+export class PresenceStore {
+  constructor(
+    private readonly db: Store,
+    private readonly ttlMs: number,
+  ) {}
+
+  private key(tenantId: string, resourceType: string, resourceId: string): string {
+    return `${tenantId}:${resourceType}:${resourceId}`;
+  }
+
+  async touch(
+    tenantId: string,
+    userId: string,
+    resourceType: "thread" | "project",
+    resourceId: string,
+  ): Promise<{ others: Array<{ userId: string; lastSeen: number }> }> {
+    const now = Date.now();
+    const entry: PresenceEntry = { userId, tenantId, resourceId, resourceType, lastSeen: now };
+    await this.db.put(tenantId, KIND, { ...entry, id: this.key(tenantId, resourceType, resourceId) + ":" + userId });
+    const all = await this.db.list<PresenceEntry & { id: string }>(tenantId, KIND);
+    const others: Array<{ userId: string; lastSeen: number }> = [];
+    for (const e of all) {
+      if (e.resourceType !== resourceType || e.resourceId !== resourceId) continue;
+      if (e.userId === userId) continue;
+      if (now - e.lastSeen <= this.ttlMs) {
+        others.push({ userId: e.userId, lastSeen: e.lastSeen });
+      } else {
+        await this.db.remove(tenantId, KIND, e.id);
+      }
+    }
+    return { others };
+  }
+
+  async leave(tenantId: string, userId: string, resourceType: "thread" | "project", resourceId: string): Promise<void> {
+    const id = this.key(tenantId, resourceType, resourceId) + ":" + userId;
+    await this.db.remove(tenantId, KIND, id);
+  }
+
+  async query(tenantId: string, resourceType: "thread" | "project", resourceId: string): Promise<Array<{ userId: string; lastSeen: number }>> {
+    const now = Date.now();
+    const all = await this.db.list<PresenceEntry & { id: string }>(tenantId, KIND);
+    const result: Array<{ userId: string; lastSeen: number }> = [];
+    for (const e of all) {
+      if (e.resourceType !== resourceType || e.resourceId !== resourceId) continue;
+      if (now - e.lastSeen <= this.ttlMs) {
+        result.push({ userId: e.userId, lastSeen: e.lastSeen });
+      }
+    }
+    return result;
+  }
+
+  async gc(tenantId: string): Promise<number> {
+    const now = Date.now();
+    const all = await this.db.list<PresenceEntry & { id: string }>(tenantId, KIND);
+    let removed = 0;
+    for (const e of all) {
+      if (now - e.lastSeen > this.ttlMs) {
+        await this.db.remove(tenantId, KIND, e.id);
+        removed++;
+      }
+    }
+    return removed;
+  }
+}
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 800`, typecheck verde, `PRESENCE_STORE_V1` 1×.
+
+### Patchset F5.2 — `apps/server/src/engine/edit-lock-store.ts` (CREATE)
+
+**Marca:** `EDIT_LOCK_STORE_V1`
+
+**Contenido:**
+
+```typescript
+// EDIT_LOCK_STORE_V1 — EditLockService sobre Store, para multi-proceso.
+// TTL configurable (default 10s). Locks con caducidad. Aislado por tenant.
+// Si el despliegue es single-instance, edit-lock.ts in-memory sigue válido.
+import type { Store } from "../db.ts";
+
+const KIND = "edit-lock";
+
+export interface LockEntry {
+  id: string;
+  tenantId: string;
+  userId: string;
+  resourceType: string;
+  resourceId: string;
+  acquiredAt: number;
+}
+
+export class EditLockStore {
+  constructor(
+    private readonly db: Store,
+    private readonly ttlMs: number,
+  ) {}
+
+  private key(tenantId: string, resourceType: string, resourceId: string): string {
+    return `${tenantId}:${resourceType}:${resourceId}`;
+  }
+
+  async acquire(tenantId: string, userId: string, resourceType: string, resourceId: string): Promise<LockEntry | null> {
+    const id = this.key(tenantId, resourceType, resourceId);
+    const existing = await this.db.get<LockEntry>(tenantId, KIND, id);
+    const now = Date.now();
+    if (existing && now - existing.acquiredAt <= this.ttlMs && existing.userId !== userId) {
+      return null;
+    }
+    const entry: LockEntry = { id, tenantId, userId, resourceType, resourceId, acquiredAt: now };
+    await this.db.put(tenantId, KIND, entry);
+    return entry;
+  }
+
+  async release(tenantId: string, userId: string, resourceType: string, resourceId: string): Promise<void> {
+    const id = this.key(tenantId, resourceType, resourceId);
+    const existing = await this.db.get<LockEntry>(tenantId, KIND, id);
+    if (existing && existing.userId === userId) {
+      await this.db.remove(tenantId, KIND, id);
+    }
+  }
+
+  async gc(tenantId: string): Promise<number> {
+    const now = Date.now();
+    const all = await this.db.list<LockEntry>(tenantId, KIND);
+    let removed = 0;
+    for (const e of all) {
+      if (now - e.acquiredAt > this.ttlMs) {
+        await this.db.remove(tenantId, KIND, e.id);
+        removed++;
+      }
+    }
+    return removed;
+  }
+}
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 600`, typecheck verde, `EDIT_LOCK_STORE_V1` 1×.
+
+### Patchset F5.3 — `apps/server/src/engine/events/replay-buffer.ts` (CREATE)
+
+**Marca:** `SSE_REPLAY_BUFFER_V1`
+
+**Contenido:**
+
+```typescript
+// SSE_REPLAY_BUFFER_V1 — ReplayBuffer por actor para SSE Last-Event-ID.
+// Guarda los últimos N eventos por actorId. Si el cliente reconecta con
+// Last-Event-ID, recibe los eventos perdidos. Condicional a reconexión.
+export interface ReplayEvent {
+  id: string;
+  actorId: string;
+  type: string;
+  data: unknown;
+  at: number;
+}
+
+export class ReplayBuffer {
+  private readonly byActor = new Map<string, ReplayEvent[]>();
+
+  constructor(private readonly maxSize: number) {}
+
+  push(event: ReplayEvent): void {
+    let buffer = this.byActor.get(event.actorId);
+    if (!buffer) {
+      buffer = [];
+      this.byActor.set(event.actorId, buffer);
+    }
+    buffer.push(event);
+    if (buffer.length > this.maxSize) {
+      buffer.shift();
+    }
+  }
+
+  since(actorId: string, lastEventId: string): ReplayEvent[] {
+    const buffer = this.byActor.get(actorId);
+    if (!buffer) return [];
+    const idx = buffer.findIndex((e) => e.id === lastEventId);
+    if (idx === -1) return buffer.slice();
+    return buffer.slice(idx + 1);
+  }
+
+  clear(actorId: string): void {
+    this.byActor.delete(actorId);
+  }
+}
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 400`, typecheck verde, `SSE_REPLAY_BUFFER_V1` 1×.
+
+### Patchset F5.4 — `apps/server/src/config.ts` (MODIFY, 1 hunk)
+
+**Marca:** `CONFIG_COORDINATION_V1`
+
+`$old` (fragmento de `Config`, después de `policyCacheTtlMs`):
+```typescript
+  policyCacheTtlMs: number;
+```
+
+`$new`:
+```typescript
+  policyCacheTtlMs: number;
+  // CONFIG_COORDINATION_V1 — coordinación condicional (F5).
+  multiProcess: boolean;
+  sseReplayEnabled: boolean;
+  presenceTtlMs: number;
+  editLockTtlMs: number;
+  replayBufferSize: number;
+```
+
+Y en `readConfig`, después de `policyCacheTtlMs`:
+```typescript
+    // CONFIG_COORDINATION_V1
+    multiProcess: process.env.MULTI_PROCESS === "true",
+    sseReplayEnabled: process.env.SSE_REPLAY_ENABLED === "true",
+    presenceTtlMs: Number(process.env.PRESENCE_TTL_MS ?? "30000") || 30000,
+    editLockTtlMs: Number(process.env.EDIT_LOCK_TTL_MS ?? "10000") || 10000,
+    replayBufferSize: Number(process.env.REPLAY_BUFFER_SIZE ?? "100") || 100,
+```
+
+**Verificación pre:** `policyCacheTtlMs: number;` 1×. Post: `CONFIG_COORDINATION_V1` 2×, `multiProcess` 1×, `sseReplayEnabled` 1×, `presenceTtlMs` 1×, `editLockTtlMs` 1×, `replayBufferSize` 1×.
+
+### Patchset F5.5 — `apps/server/src/engine/presence.ts` (MODIFY, 1 hunk)
+
+**Marca:** `PRESENCE_STORE_WIRE_V1`
+
+`$old`:
+```typescript
+export const globalPresence = new PresenceService();
+```
+
+`$new`:
+```typescript
+// PRESENCE_STORE_WIRE_V1 — si multiProcess, PresenceStore sobre Store.
+// Si no, in-memory (comportamiento actual).
+import { PresenceStore } from "./presence-store.ts";
+import type { Store } from "../db.ts";
+
+let globalPresence: PresenceService | PresenceStore;
+
+export function setGlobalPresence(store: Store, ttlMs: number, multiProcess: boolean): void {
+  globalPresence = multiProcess ? new PresenceStore(store, ttlMs) : new PresenceService();
+}
+
+export { globalPresence };
+```
+
+**Verificación pre:** `export const globalPresence = new PresenceService();` 1×. Post: `PRESENCE_STORE_WIRE_V1` 1×, `PresenceStore` 1×, `setGlobalPresence` 1×.
+
+**Nota:** el `$old` exacto de `presence.ts` no está pegado completo; solo fragmentos. El patchset declara `Select-String -Pattern "export const globalPresence"` como precondición. Si el ancla no coincide, aborta y se anota el miss.
+
+### Patchset F5.6 — `apps/server/src/engine/edit-lock.ts` (MODIFY, 1 hunk)
+
+**Marca:** `EDIT_LOCK_STORE_WIRE_V1`
+
+Mismo patrón que F5.5, con `globalEditLock` y `EditLockStore`.
+
+**Verificación pre:** `Select-String -Pattern "export const globalEditLock"` 1×. Post: `EDIT_LOCK_STORE_WIRE_V1` 1×, `EditLockStore` 1×, `setGlobalEditLock` 1×.
+
+### Patchset F5.7 — `apps/server/src/notifications-stream.ts` (MODIFY, 3 hunks)
+
+**Marcas:** `NOTIF_VISIBILITY_V1`, `NOTIF_PRIORITY_V1`, `SSE_LAST_EVENT_ID_V1`
+
+**Hunk F5.7a — `Notification.visibility`:**
+
+`$old` (fragmento del filtro por `assignedTo`):
+```typescript
+      if (notification.assignedTo && notification.assignedTo !== actorId) continue;
+```
+
+`$new`:
+```typescript
+      // NOTIF_VISIBILITY_V1 — filtra por actorId + visibility.
+      // private: solo actorId. tenant: todo el tenant. shared: los de acl.
+      if (notification.visibility === "private" && notification.assignedTo !== actorId) continue;
+      if (notification.visibility === "shared" && !(notification.acl ?? []).includes(actorId)) continue;
+      // tenant: sin filtro extra.
+```
+
+**Hunk F5.7b — `Notification.priority`:**
+
+`$new` (orden de envío):
+```typescript
+      // NOTIF_PRIORITY_V1 — ordena por prioridad antes de enviar.
+      notifications.sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority));
+```
+
+Con `priorityRank(p) = { urgent: 4, high: 3, normal: 2, low: 1 }`.
+
+**Hunk F5.7c — SSE `Last-Event-ID`:**
+
+`$new` (antes de `streamSSE`):
+```typescript
+      // SSE_LAST_EVENT_ID_V1 — replay desde ReplayBuffer si el cliente reconecta.
+      const lastEventId = c.req.header("Last-Event-ID");
+      if (lastEventId && replayBuffer) {
+        const missed = replayBuffer.since(actorId, lastEventId);
+        for (const event of missed) {
+          await stream.writeSSE({ id: event.id, event: event.type, data: JSON.stringify(event.data) });
+        }
+      }
+```
+
+**Verificación pre:** `Select-String -Pattern "assignedTo"` ≥ 1×, `Select-String -Pattern "Last-Event-ID"` 0×. Post: `NOTIF_VISIBILITY_V1` 1×, `NOTIF_PRIORITY_V1` 1×, `SSE_LAST_EVENT_ID_V1` 1×.
+
+**Nota:** `notifications-stream.ts` no está pegado completo. El patchset usa `Select-String` como precondición. Si el ancla no coincide, aborta y se anota el miss.
+
+### Patchset F5.8 — `apps/server/src/notification-prefs.ts` (MODIFY, 2 hunks)
+
+**Marcas:** `NOTIF_PREFS_VISIBILITY_V1`, `NOTIF_PREFS_PRIORITY_V1`
+
+**Hunk F5.8a — `visibility` en prefs:**
+`$old`/`$new` según el schema de prefs. Añade `visibility: z.enum(["private", "tenant", "shared"]).default("private")`.
+
+**Hunk F5.8b — `priority` en prefs:**
+Añade `priority: z.enum(["low", "normal", "high", "urgent"]).default("normal")`.
+
+**Verificación pre:** `Select-String -Pattern "prefs"` ≥ 1×. Post: `NOTIF_PREFS_VISIBILITY_V1` 1×, `NOTIF_PREFS_PRIORITY_V1` 1×.
+
+### Patchset F5.9 — `apps/server/src/users.ts` (MODIFY, 1 hunk)
+
+**Marca:** `USER_DEACTIVATION_V1`
+
+`$old` (fragmento de `UserService.update`, donde se cambia `active`):
+```typescript
+  async update(
+    id: string,
+    patch: {
+      name?: string;
+      role?: "admin" | "user";
+      active?: boolean;
+      // ...
+    },
+  ): Promise<User> {
+    // ...
+    const merged: User = {
+      // ...
+      active: patch.active ?? record.data.active,
+      // ...
+    };
+```
+
+`$new`:
+```typescript
+  // USER_DEACTIVATION_V1 — desactivación sin huérfanas.
+  // Si active pasa de true a false, transición segura:
+  // 1. Revocar acceso (el siguiente request da 403 por ActorService).
+  // 2. Identificar tasks con assignedTo = id en estados no terminales.
+  // 3. Marcar pendientes de reasignar.
+  // 4. Registrar en activity con actorId del owner.
+  async update(
+    id: string,
+    patch: {
+      name?: string;
+      role?: "admin" | "user";
+      active?: boolean;
+      // ...
+    },
+  ): Promise<User> {
+    // ...
+    const wasActive = record.data.active;
+    const willBeActive = patch.active ?? record.data.active;
+    const merged: User = {
+      // ...
+      active: willBeActive,
+      // ...
+    };
+    if (wasActive && !willBeActive) {
+      await this.safeDeactivate(id);
+    }
+```
+
+Y añadir el método `safeDeactivate`:
+```typescript
+  private async safeDeactivate(userId: string): Promise<void> {
+    const tasks = await this.db.list<{ id: string; assignedTo?: string; status: string; tenantId: string }>("default", "tasks");
+    for (const task of tasks) {
+      if (task.assignedTo !== userId) continue;
+      if (["succeeded", "failed", "cancelled"].includes(task.status)) continue;
+      await this.db.compareAndSwap(task.tenantId ?? "default", "tasks", task.id, { assignedTo: userId }, { assignedTo: null });
+      await this.db.put(task.tenantId ?? "default", "activity", {
+        id: `deactivate-${task.id}-${Date.now()}`,
+        title: "Task pending reassignment",
+        detail: `User ${userId} deactivated; task ${task.id} marked pending`,
+        date: new Date().toISOString(),
+        status: "pending_reassignment",
+      });
+    }
+  }
+```
+
+**Verificación pre:** `async update(` 1×, `active: patch.active ?? record.data.active,` 1×. Post: `USER_DEACTIVATION_V1` 1×, `safeDeactivate` 1×.
+
+### Patchset F5.10 — `apps/server/src/app.ts` (MODIFY, 1 hunk)
+
+**Marca:** `APP_REPLAY_WIRE_V1`
+
+`$new` (en `createApp`, antes de `app.route("/api/notifications-stream", ...)`):
+```typescript
+  // APP_REPLAY_WIRE_V1 — si sseReplayEnabled, instancia ReplayBuffer.
+  const replayBuffer = config.sseReplayEnabled ? new ReplayBuffer(config.replayBufferSize) : undefined;
+  // Pasar a notificationsStream(replayBuffer).
+```
+
+**Verificación pre:** `Select-String -Pattern "notifications-stream|notificationsStream"` 1×. Post: `APP_REPLAY_WIRE_V1` 1×, `ReplayBuffer` 1×.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el protocolo TypeScript v2. Además:
+
+- **`presence-store.ts`, `edit-lock-store.ts`, `replay-buffer.ts` son CREATE.** `Test-Path` false antes, true después, `bytes > 800`/`> 600`/`> 400`.
+- **`config.ts` cambia 1 vez (F5.4).**
+- **`presence.ts` cambia 1 vez (F5.5).** `$old` exacto no está pegado; `Select-String` como precondición.
+- **`edit-lock.ts` cambia 1 vez (F5.6).** Idem.
+- **`notifications-stream.ts` cambia 3 veces (F5.7).** Idem.
+- **`notification-prefs.ts` cambia 2 veces (F5.8).** Idem.
+- **`users.ts` cambia 1 vez (F5.9).**
+- **`app.ts` cambia 1 vez (F5.10).**
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+- **`Select-String` antes de escribir cada ancla. Nunca del doc. Siempre del fichero real.**
+- **Si un fichero no está en el Repomix, se pide.** No se inventa.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Si rojo, la IA no commitea.
+- **Tests de F5 permitidos en `tests/campaign-2/`:**
+  - `tests/campaign-2/f5-presence-store.test.ts` — `PresenceStore` con TTL, GC, aislamiento tenant.
+  - `tests/campaign-2/f5-edit-lock-store.test.ts` — `EditLockStore` con TTL, lock obsoleto.
+  - `tests/campaign-2/f5-replay-buffer.test.ts` — `ReplayBuffer` con `Last-Event-ID`.
+  - `tests/campaign-2/f5-notification-visibility.test.ts` — `private`/`tenant`/`shared`.
+  - `tests/campaign-2/f5-notification-priority.test.ts` — orden por prioridad.
+  - `tests/campaign-2/f5-user-deactivation.test.ts` — tasks en estados no terminales marcadas pendientes.
+- **Cline prueba además:**
+  - `PresenceStore.touch` devuelve `others` correctamente.
+  - `PresenceStore.gc` elimina entradas caducadas.
+  - `EditLockStore.acquire` con lock obsoleto → adquiere.
+  - `ReplayBuffer.since` devuelve los eventos perdidos.
+  - `notifications-stream` filtra por `visibility`.
+  - `notifications-stream` ordena por `priority`.
+  - `notifications-stream` con `Last-Event-ID` recibe los perdidos.
+  - `users.update` con `active: false` marca tasks pendientes.
+- **La IA commitea con ficheros explícitos:** los 10 ficheros del §7, más los tests de F5.
+- **Commit message:** `feat(multiusuario): fase 5 — coordinación y ciclo de vida [PRESENCE_STORE_V1, EDIT_LOCK_STORE_V1, SSE_REPLAY_BUFFER_V1, CONFIG_COORDINATION_V1, PRESENCE_STORE_WIRE_V1, EDIT_LOCK_STORE_WIRE_V1, NOTIF_VISIBILITY_V1, NOTIF_PRIORITY_V1, SSE_LAST_EVENT_ID_V1, NOTIF_PREFS_VISIBILITY_V1, NOTIF_PREFS_PRIORITY_V1, USER_DEACTIVATION_V1, APP_REPLAY_WIRE_V1]`
+- **Push:** `git push origin feat/multitenancy-campaign`.
+
+---
+
+## 13. Plan de misses
+
+- F4 incompleta → aborta F5.
+- `globalPresence`/`globalEditLock` no existen → F5.5/F5.6 abortan, se anota.
+- `notifications-stream.ts` no existe o su firma es distinta → F5.7 aborta, se anota.
+- `notification-prefs.ts` no existe → F5.8 aborta, se anota.
+- `users.ts` `async update(` no coincide → F5.9 aborta, se anota.
+- `app.ts` no wirea `notifications-stream` → F5.10 aborta, se anota.
+- `Config.multiProcess` default `false` → F5.5/F5.6 in-memory (comportamiento actual). Correcto.
+- `Config.sseReplayEnabled` default `false` → F5.7 sin replay. Correcto.
+- Typecheck rojo por `PresenceStore`/`EditLockStore` (tipos mal) → ajustar tipos, revertir el fichero rojo, anotar.
+
+**Ruta de misses:** `docs/miniaudits/04-multi-usuario-concurrente/missed/_multiusuario_pendientes.md`. La IA no lo escribe.
+
+**Deudas en `-pendientes.md`:**
+- F5.5/F5.6: si `multiProcess === false`, `presence.ts`/`edit-lock.ts` in-memory. Correcto para single-instance.
+- F5.7: si `sseReplayEnabled === false`, SSE sin replay. Correcto si el cliente no reconecta.
+- F5.9: `safeDeactivate` solo marca tasks pendientes, no reasigna. La reasignación es F6 (reconcile).
+- F5 no toca `worker.ts`; el worker sigue sin `withWrite` hasta F6. Anotar.
+
+---
+
+## 14. Checklist de cierre de F5
+
+- [ ] Paso 0.1–0.9 ejecutados, salidas anotadas.
+- [ ] F4 verificada (7 marcas).
+- [ ] `presence.ts`/`edit-lock.ts` verificados.
+- [ ] `notifications-stream.ts`/`notification-prefs.ts` verificados.
+- [ ] `users.ts` verificado.
+- [ ] `config.ts` verificado.
+- [ ] `app.ts` verificado.
+- [ ] Typecheck ejecutado y registrado.
+- [ ] F5.1 aplicado con `PRESENCE_STORE_V1` 1×.
+- [ ] F5.2 aplicado con `EDIT_LOCK_STORE_V1` 1×.
+- [ ] F5.3 aplicado con `SSE_REPLAY_BUFFER_V1` 1×.
+- [ ] F5.4 aplicado con `CONFIG_COORDINATION_V1` 2×.
+- [ ] F5.5 aplicado con `PRESENCE_STORE_WIRE_V1` 1×.
+- [ ] F5.6 aplicado con `EDIT_LOCK_STORE_WIRE_V1` 1×.
+- [ ] F5.7 aplicado con `NOTIF_VISIBILITY_V1` 1×, `NOTIF_PRIORITY_V1` 1×, `SSE_LAST_EVENT_ID_V1` 1×.
+- [ ] F5.8 aplicado con `NOTIF_PREFS_VISIBILITY_V1` 1×, `NOTIF_PREFS_PRIORITY_V1` 1×.
+- [ ] F5.9 aplicado con `USER_DEACTIVATION_V1` 1×.
+- [ ] F5.10 aplicado con `APP_REPLAY_WIRE_V1` 1×.
+- [ ] Tests de F5 creados en `tests/campaign-2/`.
+- [ ] `worker.ts`, `conversation.ts`, `kernel.ts`, `engine/tenant.ts` no se han tocado.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde o fallos preexistentes anotados.
+- [ ] Cline probó `PresenceStore` con TTL y GC.
+- [ ] Cline probó `EditLockStore` con lock obsoleto.
+- [ ] Cline probó `ReplayBuffer` con `Last-Event-ID`.
+- [ ] Cline probó `notifications-stream` con `visibility` y `priority`.
+- [ ] Cline probó `users.update` con `active: false`.
+- [ ] `git add` explícito de los 10 ficheros + tests de F5.
+- [ ] `git commit -m "feat(multiusuario): fase 5 — coordinación y ciclo de vida [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "F5 cerrada. Siguiente: F6 (trazabilidad)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real
+
+### A.1. `apps/server/src/engine/presence.ts` — `PresenceService` (fragmento, `repomix-multiusuario-min.md`):
+
+```typescript
+const PRESENCE_TTL_MS = 30_000;
+
+export class PresenceService {
+  private readonly entries = new Map<string, Map<string, PresenceEntry>>();
+
+  touch(
+    userId: string,
+    resourceType: "thread" | "project",
+    resourceId: string,
+  ): { others: Array<{ userId: string; lastSeen: number }> } {
+    // ...
+  }
+
+  leave(userId: string, resourceType: "thread" | "project", resourceId: string): void {
+    // ...
+  }
+
+  query(resourceType: "thread" | "project", resourceId: string): Array<{ userId: string; lastSeen: number }> {
+    // ...
+  }
+}
+
+export const globalPresence = new PresenceService();
+```
+
+**F5.5 sustituye `globalPresence` condicionalmente.**
+
+### A.2. `apps/server/src/engine/edit-lock.ts` — `EditLock` (fragmento, `repomix-multiusuario-min.md`):
+
+```typescript
+const LOCK_TTL_MS = 10_000;
+
+export class EditLock {
+  private readonly locks = new Map<string, Lock>();
+
+  acquire(userId: string, resourceType: string, resourceId: string): Lock | null {
+    // ...
+  }
+
+  release(userId: string, resourceType: string, resourceId: string): void {
+    // ...
+  }
+}
+
+export const globalEditLock = new EditLock();
+```
+
+**F5.6 sustituye `globalEditLock` condicionalmente.**
+
+### A.3. `apps/server/src/users.ts` — `UserService.update` (fragmento, `repomix-multiusuario-min.md`):
+
+```typescript
+async update(
+  id: string,
+  patch: {
+    name?: string;
+    role?: "admin" | "user";
+    active?: boolean;
+    setup?: Partial<z.infer<typeof userSetupSchema>>;
+    password?: string;
+  },
+): Promise<User> {
+  const record = await this.db.get<UserRecord>("system", "users", id);
+  if (!record) throw new AppError("Usuario no encontrado", 404);
+
+  const merged: User = {
+    ...record.data,
+    name: patch.name ?? record.data.name,
+    role: patch.role ?? record.data.role,
+    active: patch.active ?? record.data.active,
+    setup: { ...record.data.setup, ...(patch.setup ?? {}) },
+    updatedAt: new Date().toISOString(),
+  };
+  // ...
+}
+```
+
+**F5.9 añade `safeDeactivate` cuando `active` pasa de `true` a `false`.**
+
+### A.4. `apps/server/src/config.ts` — `Config` (fragmento, `repomix-multiusuario-min.md`):
+
+```typescript
+export interface Config {
+  // ...
+  allowedOrigins: string[];
+}
+```
+
+**F5.4 añade `multiProcess`, `sseReplayEnabled`, `presenceTtlMs`, `editLockTtlMs`, `replayBufferSize`.**
+
+---
+
+**FIN DEL DOCUMENTO 10 — F5**
+
+F5 completa: 3 CREATE + 7 MODIFY = 10 patchsets, ~14 hunks. Invariantes G5-I1–G5-I10 cubiertas. Condiciones de activación: `multiProcess` (F5.1, F5.2, F5.5, F5.6), `sseReplayEnabled` (F5.3, F5.7, F5.10). Anexo literal con lo que tengo verificado. `Select-String` como precondición para `notifications-stream.ts`, `notification-prefs.ts`, `app.ts` (no pegados en este chat). Tests de F5 permitidos en `tests/campaign-2/`.
+
+**Lo que falta para que F5 sea `PASS` real:** que ejecutes los 10 patchsets, me pegues el output de cada uno, y declares `PASS`/`FAIL`/`BLOCKED` por patchset. Yo no puedo declararlo.
+
+**Siguiente:** cuando F5 esté `PASS`, pasamos a F6 (trazabilidad). Si quieres, puedo escribir F6 en el siguiente mensaje con la misma estructura y la misma disciplina.

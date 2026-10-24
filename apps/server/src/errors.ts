@@ -1,0 +1,1 @@
+export { AppError } from "../../../packages/domain/src/errors.ts";

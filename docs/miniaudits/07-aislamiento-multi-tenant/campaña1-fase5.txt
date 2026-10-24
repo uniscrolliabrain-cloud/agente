@@ -1,0 +1,886 @@
+# 06 — Campaña 1 / Fase 5 — B5 verificación `"default"` residual, `computer` tenantId, y `runTenantBackup` bloqueado
+
+**Fecha:** 2026-10-21
+**Campaña:** 1 — Aislamiento multi-tenant
+**Fase:** 5 — B5 usos residuales de `"default"` + `computer` + `backup`
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fases 0, 1, 2, 3, 4 cerradas. **Aplicados:** `TENANT_DEFAULT_STRICT_V1`, `TENANT_SCAN_ALL_PREFIXES_FIX_V1`, `ADMIN_TENANTS_MEMBERSHIP_CACHE_V1`, `ADMIN_TENANTS_SUSPEND_INVALIDATE_V1`, `ADMIN_TENANTS_RESUME_INVALIDATE_V1`, `TENANT_PEEL_GUARD_V1`, `LOG_CONTEXT_TENANT_V1`, `TENANT_RATE_LIMITER_FIELD_V1`, `TENANT_RATE_LIMITER_WIRE_V1`, `TENANT_RATE_LIMITER_WIRE_ROUTES_V1`, `TAKE_FOR_TENANT_CHAT_V1`, `TAKE_FOR_TENANT_RAG_V1`, `TAKE_FOR_TENANT_THREADS_V1`, `TENANT_RLS_TX_V1`, `RLS_REQUIRED_IN_SHARED_V1`, `AUDIT_STORE_TENANT_V1`, `APP_TENANT_REQUEST_VALIDATE_BODY_V1`, `TENANT_CROSS_AUDIT_V1`, `RESPONSE_TENANT_HEADER_V1`. **Pendientes que NO se tocan en esta fase:** F02.9b (B7, Fase 6), F02.10 (congelado), N06 (opcional, Fase 8), F04.16d/F04.17/F04.14/F04.15/F04.22-25 (Fase 6), F04.10b/c/d/F04.11/F04.14b/F04.14c (Fase 7).
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 4 (documento 05): B4 RLS transaccional, validación de tenantId en body, auditoría cross-tenant, `X-Tenant-Id` en respuestas. Se aplicaron F03.30 (`TENANT_RLS_TX_V1`), F03.38 (`RLS_REQUIRED_IN_SHARED_V1`), F03.11 (`AUDIT_STORE_TENANT_V1`), F03.35 (`APP_TENANT_REQUEST_VALIDATE_BODY_V1`), F03.31 (`TENANT_CROSS_AUDIT_V1`), F04.21 (`RESPONSE_TENANT_HEADER_V1`). Cline validó arranque shared+pglite→throw, `POST /api/agent/tasks` con tenantId ajeno→403, `GET /api/workspace`→`X-Tenant-Id`. Deudas anotadas: F03.35 es guarda preventiva (hoy ningún body lleva `tenantId`), F03.31 puede en el futuro añadir counter con labels, F04.21 requiere membership en shared (ya lo hace signup y admin-tenants con N02).
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **Verificar F04.2 y F04.3 con `Select-String` real**: el Repomix original no mostraba `"default"` en `bus.ts:109` ni `.default("default")` en `views.ts:20`, pero la verificación fue sobre una versión; hay que confirmar sobre el HEAD actual. Si son FP, se cierran como FP y se anotan en `-pendientes.md` como "descartados". Si existen, se aplican.
+- **`computerIdentity` recibe `tenantId`** (F04.24): `computer.ts` cambia la firma de `computerIdentity(config, owner)` → `computerIdentity(config, tenantId, owner)`. La marca de identidad incluye `dev.openmuse.tenant` para que dos tenants no colisionen en el mismo Docker host aunque compartan `ownerId`. Marca nueva `COMPUTER_IDENTITY_TENANT_V1`.
+- **`computer-routes.ts` y `computer-tools.ts` dejan de hardcodear `"default"`** (F04.25): `files.import(..., "default")` en dos sitios pasa a `files.import(..., tenantId)` resuelto con `tenantService.tenantIdFor(owner)`. Marca nueva `COMPUTER_ROUTES_TENANT_V1` (para routes) y `COMPUTER_TOOLS_TENANT_V1` (para tools).
+- **`runTenantBackup` (F04.27) queda BLOQUEADO**: `backup-tenant.ts` **no está en ninguno de los dos Repomix**, y no se puede aplicar sin leerlo. Se anota en `-pendientes.md` con el disparador "cuando el humano pase `backup-tenant.ts`", y **no se intenta adivinar**. El Repomix holístico sí tiene `files.ts`, que escribe en `dataDir/tenants/<tenantId>/files` (línea `const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");`), y sí muestra `apps/server/src/index.ts` con `runTenantBackup({ dataDir: config.dataDir, tenantId, retentionDays })` en el bloque `backupAllTenants`. **Ese bloque de `index.ts` es el que hay que cruzar con `backup-tenant.ts` cuando llegue.**
+- **`computer.ts` no cambia más que la firma de `computerIdentity`.** El resto de la máquina de estados (lease, commands, snapshot, start, stop, execute, file) **no se toca**, porque no usa `tenantId` internamente: usa `owner` y `config`. El `tenantId` solo entra en la identidad del contenedor Docker para que dos tenants no colisionen.
+- **Cero cambios de comportamiento en clone-por-cliente**: el `tenantId` que se pasa a `computerIdentity` y `files.import` sale de `tenantService.tenantIdFor(owner)`, que en clone-por-cliente devuelve `"default"`. Por tanto, la identidad del contenedor y la ruta de los ficheros importados son idénticas a hoy. En shared, `tenantService` devuelve el tenantId real.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 6 (documento 07): B6+B7 cuotas, notificaciones, computer completo. F04.14 (`metrics` con label `tenant`), F04.15 (`metrics-exporter` filtra por tenant), F04.17 (`takeForTenant` en `browser.ts`/`computer.ts`), F04.22 (`notification-prefs.ts` sin `"default"`), F04.23 (`notifications-stream.ts` filtra por `tenantId`), F02.9b (cablear `assertNotHardcodedTenantId` donde queden `"default"`), y **refinar F04.16a/b/c para que usen `tenantService.tenantIdFor(owner)` en lugar de `this.owner`** (deuda de Fase 3). Si Fase 5 confirma que `computerIdentity` ya recibe `tenantId`, F04.17 puede reutilizar el `tenantId` resuelto en `computer-routes.ts`/`computer-tools.ts` sin duplicar la resolución.
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 5), ejecutada en **3 patchsets de producto** (F04.24, F04.25-routes, F04.25-tools) más **1 patchset de verificación sin escritura** (F04.2 y F04.3 con `Select-String`). F04.27 no se aplica (bloqueado). Total: **3 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix original + holístico:**
+- `apps/server/src/computer.ts` (Repomix original, íntegro: `computerIdentity`, `ComputerService`, `snapshot`, `start`, `stop`, `execute`, `file`).
+- `apps/server/src/computer-routes.ts` (Repomix original, íntegro: `computerRoutes(computer, files)`, `app.post("/files/export", ...)` con `files.import(..., "default")`).
+- `apps/server/src/computer-tools.ts` (Repomix original, íntegro: `computerTools(computer, files, owner, scope, options)`, `export_computer_pdf` con `files.import(..., "default")`).
+- `apps/server/src/files.ts` (Repomix holístico, íntegro: `Files.import(owner, name, bytes, source, tenantId, parentId?)`).
+- `apps/server/src/engine/tenant.ts` (Repomix original, íntegro: `tenantIdFor`).
+- `apps/server/src/app.ts` (Repomix original: `app.route("/api/computer", computerRoutes(computer, files))` y dónde se construye `computer`, `files`, `tenantService`).
+- `apps/server/src/engine/events/bus.ts` (Repomix original, íntegro, para verificar F04.2 con `Select-String`).
+- `packages/domain/src/views.ts` (Repomix original, íntegro, para verificar F04.3 con `Select-String`).
+- `apps/server/src/index.ts` (Repomix original: bloque `backupAllTenants` y `runTenantBackup`, para documentar el bloqueo de F04.27).
+- `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md`, `ESTADO-REAL-MULTITENANT.md`, `-pendientes.md` (Fases 0–4).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/worker.ts` — solo `Get-Content -TotalCount 120`. **Prohibido tocar.**
+- `apps/server/src/computer.ts` — `Select-String -Pattern "computerIdentity"` con `-Context 2,4` para las llamadas y la definición.
+- `apps/server/src/app.ts` — `Select-String -Pattern "computerRoutes|new ComputerService|new Files|tenantServiceEarly|computerTools"` con `-Context 1,2`.
+- `apps/server/src/engine/conversation.ts` — `Select-String -Pattern "computerTools\("` con `-Context 1,2` para saber dónde se pasa `tenantId` (hoy no se pasa, se añadirá).
+
+**Archivos que NO se leen en esta fase:**
+- `apps/server/src/engine/worker.ts` (más allá de las 120 líneas).
+- `apps/server/src/db-rls.ts`, `apps/server/src/db-tenant.ts`, `apps/server/src/admin-tenants.ts`, `apps/server/src/auth-signup.ts`, `apps/server/src/rag-routes.ts`, `apps/server/src/threads-routes.ts`, `apps/server/src/notification-prefs.ts`, `apps/server/src/notifications-stream.ts`, `apps/server/src/metrics/*` (van a Fase 6).
+- `backup-tenant.ts` — **no existe en ningún Repomix**, no se puede leer, F04.27 bloqueado.
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Modificar:**
+- `apps/server/src/computer.ts` — F04.24. Cambio de firma de `computerIdentity` y de las llamadas internas. Marca `COMPUTER_IDENTITY_TENANT_V1`.
+- `apps/server/src/computer-routes.ts` — F04.25-routes. Cambio de firma de `computerRoutes(computer, files)` → `computerRoutes(computer, files, tenantService)`, y el `files.import(..., "default")` de `POST /files/export` pasa a `files.import(..., await tenantService.tenantIdFor(owner))`. Marca `COMPUTER_ROUTES_TENANT_V1`.
+- `apps/server/src/computer-tools.ts` — F04.25-tools. Cambio de firma de `computerTools(computer, files, owner, scope, options)` → `computerTools(computer, files, owner, scope, options, tenantId)` (o `options.tenantId`), y el `files.import(..., "default")` de `export_computer_pdf` pasa a `files.import(..., tenantId)`. Marca `COMPUTER_TOOLS_TENANT_V1`.
+- `apps/server/src/app.ts` — F04.25-wire. `app.route("/api/computer", computerRoutes(computer, files, tenantService))` (una línea).
+- `apps/server/src/engine/conversation.ts` — F04.25-wire-tools. `computerTools(this.service.computer, this.service.files, this.owner, ...)` pasa a incluir `tenantId` (resuelto por `this.service.tenantService.tenantIdFor(this.owner)` o por `kernelCtx.tenantId`). **Ojo: `computerTools` se llama en la parte síncrona de `run()`, no puede `await`.** Solución: pasar `tenantId` resuelto con `this.service.tenantService ? this.service.tenantService.tenantIdFor(this.owner) : undefined` como `Promise<string> | undefined`, y que `computerTools` lo resuelva internamente en cada `execute` (que ya es async). **La firma pasa a `computerTools(computer, files, owner, scope, options, tenantIdPromise?: Promise<string>)`.**
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts` (F02.10 congelado).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multitenant_pendientes.md` (lo escribe el humano).
+- Cualquier modificación a `backup-tenant.ts` (no está, no se toca).
+
+**No tocar:**
+- `worker.ts`, `service.ts`, `kernel.ts`, `scripts/audits/*`, `tests/tenant-http-e2e.test.ts`, `db-tenant.ts` (más allá de N01), `admin-tenants.ts`, `db-rls.ts`, `index.ts` (más allá de leerlo).
+- `backup-tenant.ts` (no existe en repo, F04.27 bloqueado).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F04.24 | `computer.ts` | 3 (`computerIdentity` firma, llamada en `acquire`, llamada en `inspect`, llamada en `verifyVolume`, llamada en `start`, llamada en `running`, llamada en `stop`) — **son 6-7 call sites** | MODIFY |
+| F04.25-routes | `computer-routes.ts` | 2 (firma + `files.import` en `POST /files/export`) | MODIFY |
+| F04.25-tools | `computer-tools.ts` | 2 (firma + `files.import` en `export_computer_pdf`) | MODIFY |
+| F04.25-wire | `app.ts` | 1 (`app.route("/api/computer", ...)`) | MODIFY |
+| F04.25-wire-tools | `conversation.ts` | 1 (llamada a `computerTools(...)`) | MODIFY |
+
+**Total: 5 patchsets, ~13 hunks.** F04.24 tiene muchos call sites porque `computerIdentity` se llama en cada método de `ComputerService`. **La forma más limpia es añadir un método privado `identity(owner: string)` que resuelva `tenantId` una sola vez y devuelva `computerIdentity(config, tenantId, owner)`, y cambiar los call sites a `this.identity(owner)`.** Eso reduce los hunks a: 1 (definición `computerIdentity`), 1 (nuevo método `identity`), 6 call sites (una línea cada uno). Sigue siendo 8 hunks en `computer.ts`, pero todos triviales.
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes aplicados:** F04.24, F04.25-routes, F04.25-tools, F04.25-wire, F04.25-wire-tools.
+- **Fixes verificados sin aplicar:** F04.2 (FP o real), F04.3 (FP o real).
+- **Fixes bloqueados:** F04.27 (esperando `backup-tenant.ts`).
+- **Fixes congelados:** F02.10 (tests).
+- **Fixes movidos a fase siguiente:** F02.9b, F04.14, F04.15, F04.16d, F04.17, F04.22, F04.23 (Fase 6), F04.10b/c/d, F04.11, F04.14b/c (Fase 7).
+- **Fixes desbloqueados por esta fase:** F04.17 (browser/computer con `takeForTenant`, Fase 6), F02.9b (assertNotHardcodedTenantId cableado en computer-*, Fase 6).
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado de Fases 0–4.**
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+
+$checks = @{
+  "apps/server/src/admin-tenants.ts" = "ADMIN_TENANTS_MEMBERSHIP_CACHE_V1"
+  "apps/server/src/db-tenant.ts" = "TENANT_PEEL_GUARD_V1"
+  "apps/server/src/middleware/request-logger.ts" = "LOG_CONTEXT_TENANT_V1"
+  "apps/server/src/engine/service.ts" = "TENANT_RATE_LIMITER_FIELD_V1"
+  "apps/server/src/app.ts" = "TENANT_RATE_LIMITER_WIRE_V1"
+  "apps/server/src/engine/conversation.ts" = "TAKE_FOR_TENANT_CHAT_V1"
+  "apps/server/src/rag-routes.ts" = "TAKE_FOR_TENANT_RAG_V1"
+  "apps/server/src/threads-routes.ts" = "TAKE_FOR_TENANT_THREADS_V1"
+  "apps/server/src/db-rls.ts" = "TENANT_RLS_TX_V1"
+  "apps/server/src/index.ts" = "RLS_REQUIRED_IN_SHARED_V1"
+  "apps/server/src/kernel/audit/store-store.ts" = "AUDIT_STORE_TENANT_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw "ERROR: falta $($checks[$k]) en $k" }
+}
+Write-Host "Fases 0-4 verificadas" -ForegroundColor Green
+```
+**Decisión:** si falla, **ABORTA TODO**.
+
+**0.2. F04.2 — verificar `bus.ts` con `Select-String`.**
+```powershell
+$bus = Join-Path $repoRoot "apps/server/src/engine/events/bus.ts"
+if (-not (Test-Path $bus)) { throw "ERROR: falta bus.ts" }
+$bc = Get-Content $bus -Raw
+
+Write-Host "=== 'default' literal en bus.ts ==="
+Select-String -Path $bus -Pattern '"default"' -SimpleMatch -Context 1,1
+Write-Host ("Ocurrencias: {0}" -f ([regex]::Matches($bc, [regex]::Escape('"default"'))).Count)
+
+Write-Host "=== DEFAULT_TENANT_ID o tenantId en bus.ts ==="
+Select-String -Path $bus -Pattern "DEFAULT_TENANT_ID|tenantId" -Context 1,1 | Select-Object -First 20
+```
+**Decisión:**
+- Si `"default"` aparece 0×, F04.2 es **FP**. Se anota en `-pendientes.md` como "descartado, era FP". **No se aplica patchset.**
+- Si `"default"` aparece 1+ veces, se lee el contexto y se decide si se cambia por `options.tenantId ?? owner` o por `assertNotHardcodedTenantId`. Se aplica F04.2 en ese caso. **Pero el Repomix original no muestra `"default"` en la línea 109**; si aparece en otra línea (por ejemplo, en un `console.log` de debug), se anota como "no es bug de aislamiento, es string de debug" y no se toca. **Si está en una ruta de código que escribe `tenantId`, se cambia.**
+
+**0.3. F04.3 — verificar `views.ts` con `Select-String`.**
+```powershell
+$views = Join-Path $repoRoot "packages/domain/src/views.ts"
+if (-not (Test-Path $views)) { throw "ERROR: falta views.ts" }
+$vc = Get-Content $views -Raw
+
+Write-Host "=== '.default(\"default\")' en views.ts ==="
+Select-String -Path $views -Pattern '.default("default")' -SimpleMatch -Context 1,1
+Write-Host ("Ocurrencias: {0}" -f ([regex]::Matches($vc, [regex]::Escape('.default("default")'))).Count)
+
+Write-Host "=== .default( en views.ts ==="
+Select-String -Path $views -Pattern '.default(' -Context 0,1 | Select-Object -First 20
+```
+**Decisión:**
+- Si `.default("default")` aparece 0×, F04.3 es **FP**. Se anota en `-pendientes.md` como "descartado, era FP". **No se aplica patchset.**
+- Si aparece 1+, se lee el contexto. **Ojo: `views.ts` usa `.default("default")` también en `action.kind: z.enum(["primary", "default", "danger"]).default("default")` (línea 20 del Repomix original) — esto es una acción de UI, no un `tenantId`. Es un FP.** El `.default("default")` en `action.kind` es legítimo (acción por defecto). **F04.3 probablemente es FP.** Se anota en `-pendientes.md` como "descartado, el `.default("default")` de `action.kind` es UI, no tenantId. Revisar en Fase 6 si aparece otro".
+
+**0.4. Ancla de F04.24 en `computer.ts`.**
+```powershell
+$comp = Join-Path $repoRoot "apps/server/src/computer.ts"
+$cc = Get-Content $comp -Raw
+
+Write-Host "=== computerIdentity definición ==="
+Select-String -Path $comp -Pattern "export function computerIdentity" -Context 0,15
+
+Write-Host "=== Call sites de computerIdentity ==="
+Select-String -Path $comp -Pattern "computerIdentity\(" -Context 1,1
+
+Write-Host ("COMPUTER_IDENTITY_TENANT_V1 presente: {0}" -f ($cc -match [regex]::Escape("COMPUTER_IDENTITY_TENANT_V1")))
+```
+**Decisión:** si `computerIdentity(` aparece 7× (1 definición + 6 call sites) y marca 0×, aplicar F04.24 con la estrategia del método privado `identity(owner)`. Si aparece N≠7, adaptar el patchset o anotar.
+
+**0.5. Ancla de F04.25-routes en `computer-routes.ts`.**
+```powershell
+$cr = Join-Path $repoRoot "apps/server/src/computer-routes.ts"
+$crc = Get-Content $cr -Raw
+
+Write-Host "=== computerRoutes firma ==="
+Select-String -Path $cr -Pattern "export function computerRoutes" -Context 0,2
+
+Write-Host "=== files.import con 'default' ==="
+Select-String -Path $cr -Pattern 'files.import' -Context 2,2
+
+Write-Host ("COMPUTER_ROUTES_TENANT_V1 presente: {0}" -f ($crc -match [regex]::Escape("COMPUTER_ROUTES_TENANT_V1")))
+```
+**Decisión:** si `export function computerRoutes(computer: ComputerService, files: Files) {` 1× y `files.import(..., "default")` 1×, aplicar.
+
+**0.6. Ancla de F04.25-tools en `computer-tools.ts`.**
+```powershell
+$ct = Join-Path $repoRoot "apps/server/src/computer-tools.ts"
+$ctc = Get-Content $ct -Raw
+
+Write-Host "=== computerTools firma ==="
+Select-String -Path $ct -Pattern "export function computerTools" -Context 0,10
+
+Write-Host "=== files.import con 'default' ==="
+Select-String -Path $ct -Pattern 'files.import' -Context 2,2
+
+Write-Host ("COMPUTER_TOOLS_TENANT_V1 presente: {0}" -f ($ctc -match [regex]::Escape("COMPUTER_TOOLS_TENANT_V1")))
+```
+**Decisión:** si `export function computerTools(...)` 1× y `files.import(..., "default")` 1×, aplicar.
+
+**0.7. Ancla de F04.25-wire en `app.ts`.**
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+$ac = Get-Content $app -Raw
+
+Select-String -Path $app -Pattern 'app.route\("/api/computer"' -Context 0,1
+Select-String -Path $app -Pattern 'new ComputerService|new Files' -Context 0,1
+```
+**Decisión:** si `app.route("/api/computer", computerRoutes(computer, files))` 1×, aplicar.
+
+**0.8. Ancla de F04.25-wire-tools en `conversation.ts`.**
+```powershell
+$conv = Join-Path $repoRoot "apps/server/src/engine/conversation.ts"
+$cconv = Get-Content $conv -Raw
+
+Select-String -Path $conv -Pattern 'computerTools\(' -Context 1,2
+```
+**Decisión:** si `...computerTools(this.service.computer, this.service.files, this.owner, \`chat:${requestKey}\`),` 1×, aplicar.
+
+**0.9. Confirmar F04.27 bloqueado.**
+```powershell
+$backup = Join-Path $repoRoot "apps/server/src/backup-tenant.ts"
+$backupScript = Join-Path $repoRoot "scripts/backup-tenant.ts"
+Write-Host ("apps/server/src/backup-tenant.ts existe: {0}" -f (Test-Path $backup))
+Write-Host ("scripts/backup-tenant.ts existe: {0}" -f (Test-Path $backupScript))
+```
+**Decisión:** si ambos existen, **se puede** intentar F04.27 **en Fase 6 o 7**, no en esta fase (el handoff v2 dice que el bloqueo es por no tener el fichero). Si solo existe uno, se lee en Fase 6. **En esta fase: no se toca.**
+
+**0.10. Confirmar `worker.ts` sigue roto (no tocar).**
+```powershell
+Get-Content (Join-Path $repoRoot "apps/server/src/engine/worker.ts") -TotalCount 120
+```
+**Decisión:** solo lectura. Si cambió, anotar y no tocar.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Motivo |
+|---|---|---|
+| F04.2 | No (FP), o sí si aparece en ruta de código | Verificación 0.2 |
+| F04.3 | No (FP, es `action.kind`), o sí si aparece en `tenantId` | Verificación 0.3 |
+| F04.24 | Sí (8 hunks) | `computerIdentity` con `tenantId` |
+| F04.25-routes | Sí (2 hunks) | `files.import(..., tenantId)` |
+| F04.25-tools | Sí (2 hunks) | `files.import(..., tenantId)` |
+| F04.25-wire | Sí (1 hunk) | `app.route` pasa `tenantService` |
+| F04.25-wire-tools | Sí (1 hunk) | `computerTools` recibe `tenantIdPromise` |
+| F04.27 | No | Bloqueado, va a `-pendientes.md` |
+
+---
+
+## 10. Patchsets
+
+### F04.24 — `computer.ts`: `computerIdentity` con `tenantId` (8 hunks)
+
+**Fichero:** `apps/server/src/computer.ts`
+**Marca:** `COMPUTER_IDENTITY_TENANT_V1`.
+
+**Estrategia:** añadir un método privado `identity(owner)` que resuelve `tenantId` con `tenantService` (recibido en el constructor) o con `"default"` si no está. Cambiar los call sites de `computerIdentity(this.config, owner)` a `this.identity(owner)`. Cambiar la firma de `computerIdentity` para recibir `tenantId`.
+
+**Hunk 1 — firma de `computerIdentity`.**
+
+**`$old` (Repomix original, literal):**
+```
+export function computerIdentity(config: Config, owner: string) {
+  const deployment = hash(config.computerDeploymentId ?? config.publicUrl).slice(0, 16);
+  const ownerHash = hash(owner).slice(0, 24);
+  const name = `openmuse-${deployment}-${ownerHash}`;
+  return {
+    container: `${name}-computer`,
+    volume: `${name}-workspace`,
+    labels: {
+      "dev.openmuse.managed": "computer-v1",
+      "dev.openmuse.deployment": deployment,
+      "dev.openmuse.owner": ownerHash,
+    } as Record<string, string>,
+  };
+}
+```
+
+**`$new`:**
+```
+// COMPUTER_IDENTITY_TENANT_V1 — la identidad del contenedor incluye el
+// tenantId además del ownerId. Sin esto, dos tenants con el mismo ownerId
+// compartirían contenedor y volumen (colisión). Con esto, aunque compartan
+// ownerId, cada tenant tiene su propio contenedor. En clone-por-cliente
+// tenantId="default", así que la identidad es idéntica a antes.
+export function computerIdentity(config: Config, tenantId: string, owner: string) {
+  const deployment = hash(config.computerDeploymentId ?? config.publicUrl).slice(0, 16);
+  const tenantHash = hash("tenant:" + tenantId).slice(0, 12);
+  const ownerHash = hash("owner:" + owner).slice(0, 24);
+  const name = `openmuse-${deployment}-${tenantHash}-${ownerHash}`;
+  return {
+    container: `${name}-computer`,
+    volume: `${name}-workspace`,
+    labels: {
+      "dev.openmuse.managed": "computer-v1",
+      "dev.openmuse.deployment": deployment,
+      "dev.openmuse.tenant": tenantHash,
+      "dev.openmuse.owner": ownerHash,
+    } as Record<string, string>,
+  };
+}
+```
+
+**Nota:** el `name` cambia. Contenedores existentes en clone-por-cliente **quedarán huérfanos** con el nombre anterior. **Riesgo asumido:** en desarrollo, se borran con `docker rm -f openmuse-*`. En producción, requiere ventana de mantenimiento. Se anota en `-pendientes.md` como "migración de nombres de contenedor computer". **El humano decide si acepta el coste.** Si no, se puede mantener el `name` sin `tenantHash` y añadir solo la label `dev.openmuse.tenant`; entonces la colisión en shared persiste pero no rompe. **Decisión por defecto: sí, se añade `tenantHash` al `name`.** Si el humano rechaza, se ajusta el patchset.
+
+**Hunk 2 — `ComputerService` constructor: añadir `tenantService` opcional.**
+
+**`$old`:**
+```
+export class ComputerService {
+  constructor(
+    readonly db: Store | TenantScopedStore,
+    readonly config: Config,
+    private readonly docker: DockerRunner = runDocker,
+  ) {}
+```
+
+**`$new`:**
+```
+export class ComputerService {
+  constructor(
+    readonly db: Store | TenantScopedStore,
+    readonly config: Config,
+    private readonly docker: DockerRunner = runDocker,
+    // COMPUTER_IDENTITY_TENANT_V1 — TenantService opcional para resolver
+    // tenantId a partir del owner. Si no está, todo va a "default"
+    // (clone-por-cliente).
+    private readonly tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  ) {}
+
+  // COMPUTER_IDENTITY_TENANT_V1 — helper único que resuelve tenantId y
+  // devuelve la identidad. Todos los call sites usan esto, no computerIdentity
+  // directamente. Si tenantService falla, cae a "default" (no rompe la
+  // operación de computer por un fallo de resolución de tenant).
+  private async identity(owner: string) {
+    const tenantId = this.tenantService
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    return computerIdentity(this.config, tenantId, owner);
+  }
+```
+
+**Hunks 3–8 — call sites de `computerIdentity` → `this.identity`.**
+
+Los call sites en `computer.ts` (Repomix original, literal):
+- `acquire()`: `const identity = computerIdentity(this.config, owner);` → `const identity = await this.identity(owner);`
+- `inspect()`: `const identity = computerIdentity(this.config, owner);` → `const identity = await this.identity(owner);`
+- `verifyVolume()`: `const identity = computerIdentity(this.config, owner);` → `const identity = await this.identity(owner);`
+- `start()`: `const identity = computerIdentity(this.config, owner);` → `const identity = await this.identity(owner);`
+- `running()`: `return computerIdentity(this.config, owner).container;` → `return (await this.identity(owner)).container;`
+- `stop()`: `computerIdentity(this.config, owner).container,` → `(await this.identity(owner)).container,`
+
+**Nota:** `start()` y `stop()` ya son `async`. `running()` ya es `async`. `acquire()`, `inspect()`, `verifyVolume()` ya son `async`. **Cero cambios de firma externa.** Todos los métodos ya son async, así que `await this.identity(owner)` es válido.
+
+**Verificación pre:** 7 ocurrencias de `computerIdentity(` (1 definición + 6 call sites). Si el conteo no cuadra, se ajusta con `Select-String` sobre `computerIdentity(` antes de escribir.
+
+**Verificación post:** `COMPUTER_IDENTITY_TENANT_V1` 1× (en la cabecera del bloque) o 3× (si se cuentan los comentarios), `this.identity(` 6×, `computerIdentity(this.config, owner)` 0×.
+
+**Riesgo principal:** Cline typecheck debe pasar. Si `this.tenantService` no está en el tipo del constructor, TS lo rechaza. **Por eso el hunk 2 lo añade como parámetro opcional.**
+
+### F04.25-routes — `computer-routes.ts`: `files.import` con `tenantId` (2 hunks)
+
+**Fichero:** `apps/server/src/computer-routes.ts`
+**Marca:** `COMPUTER_ROUTES_TENANT_V1`.
+
+**Hunk 1 — firma.**
+
+**`$old`:**
+```
+export function computerRoutes(computer: ComputerService, files: Files) {
+```
+
+**`$new`:**
+```
+// COMPUTER_ROUTES_TENANT_V1 — recibe tenantService para resolver tenantId
+// al importar PDFs exportados desde computer. Sin esto, el PDF siempre va
+// bajo "default".
+export function computerRoutes(
+  computer: ComputerService,
+  files: Files,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
+```
+
+**Hunk 2 — `POST /files/export`.**
+
+**`$old`:**
+```
+  app.post("/files/export", async (c) => {
+    const { path } = computerPathSchema.parse(await c.req.json());
+    const { name, bytes } = await computer.pdfBytes(c.get("owner"), path);
+    return c.json(await files.import(c.get("owner"), name, bytes, `Computer: ${path}`, "default") /* FALLBACK_TENANT_V1 */, 201);
+  });
+```
+
+**`$new`:**
+```
+  app.post("/files/export", async (c) => {
+    const owner = c.get("owner");
+    const { path } = computerPathSchema.parse(await c.req.json());
+    const { name, bytes } = await computer.pdfBytes(owner, path);
+    // COMPUTER_ROUTES_TENANT_V1 — tenantId real del owner. En clone-por-cliente
+    // cae a "default", igual que antes.
+    const tenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    return c.json(await files.import(owner, name, bytes, `Computer: ${path}`, tenantId), 201);
+  });
+```
+
+**Nota:** `files.import` ya acepta `tenantId` obligatorio (Repomix holístico: `tenantId: string` en la firma, sin default). Por eso el `"default"` hardcodeado era el único fallback. Con `tenantService`, se pasa el real.
+
+**Verificación pre:** ancla 1×, marca 0×. Post: `COMPUTER_ROUTES_TENANT_V1` 1×, `files.import(owner, name, bytes, \`Computer: ${path}\`, tenantId)` presente, `"default"` en `files.import` 0×.
+
+### F04.25-tools — `computer-tools.ts`: `files.import` con `tenantId` (2 hunks)
+
+**Fichero:** `apps/server/src/computer-tools.ts`
+**Marca:** `COMPUTER_TOOLS_TENANT_V1`.
+
+**Hunk 1 — firma.**
+
+**`$old`:**
+```
+export function computerTools(
+  computer: ComputerService,
+  files: Files,
+  owner: string,
+  scope: string,
+  options: { before?: () => Promise<void>; signal?: AbortSignal } = {},
+) {
+```
+
+**`$new`:**
+```
+// COMPUTER_TOOLS_TENANT_V1 — recibe tenantIdPromise opcional para resolver
+// tenantId al importar PDFs. Se pasa desde conversation.ts, que ya tiene
+// acceso a tenantService. Si no se pasa, cae a "default" (clone-por-cliente).
+export function computerTools(
+  computer: ComputerService,
+  files: Files,
+  owner: string,
+  scope: string,
+  options: { before?: () => Promise<void>; signal?: AbortSignal } = {},
+  tenantIdPromise?: Promise<string>,
+) {
+```
+
+**Hunk 2 — `export_computer_pdf`.**
+
+**`$old`:**
+```
+    tool(
+      "export_computer_pdf",
+      "Import a completed workspace PDF into app Files",
+      computerPathSchema,
+      async ({ path }) => {
+        const { name, bytes } = await computer.pdfBytes(owner, path);
+        return files.import(owner, name, bytes, `Computer: ${path}`, "default") /* FALLBACK_TENANT_V1 */; // FALLBACK_TENANT_V1
+      },
+    ),
+```
+
+**`$new`:**
+```
+    tool(
+      "export_computer_pdf",
+      "Import a completed workspace PDF into app Files",
+      computerPathSchema,
+      async ({ path }) => {
+        const { name, bytes } = await computer.pdfBytes(owner, path);
+        // COMPUTER_TOOLS_TENANT_V1 — tenantId real si está disponible.
+        const tenantId = tenantIdPromise
+          ? await tenantIdPromise.catch(() => "default")
+          : "default";
+        return files.import(owner, name, bytes, `Computer: ${path}`, tenantId);
+      },
+    ),
+```
+
+**Nota:** `tenantIdPromise` se resuelve una vez por llamada, pero el `Promise` se crea una vez por `computerTools(...)` en `conversation.ts`. Eso significa que todas las exportaciones de un mismo `chat:${requestKey}` comparten la misma resolución de tenantId. **Es correcto:** el tenantId de un owner no cambia dentro de una request. **Cero coste.**
+
+**Verificación pre:** ancla 1×, marca 0×. Post: `COMPUTER_TOOLS_TENANT_V1` 1×, `files.import(owner, name, bytes, \`Computer: ${path}\`, tenantId)` presente, `"default"` en `files.import` 0×.
+
+### F04.25-wire — `app.ts`: `computerRoutes` con `tenantService` (1 hunk)
+
+**Fichero:** `apps/server/src/app.ts`
+**Marca:** `COMPUTER_ROUTES_TENANT_V1` (ya está en `computer-routes.ts`; en `app.ts` se añade `COMPUTER_ROUTES_WIRE_V1` para trazabilidad).
+
+**`$old`:**
+```
+  app.route("/api/computer", computerRoutes(computer, files));
+```
+
+**`$new`:**
+```
+  // COMPUTER_ROUTES_WIRE_V1 — pasa tenantService para que computerRoutes
+  // resuelva el tenantId real al importar PDFs.
+  app.route("/api/computer", computerRoutes(computer, files, tenantService));
+```
+
+**Verificación pre:** ancla 1×. Post: marca `COMPUTER_ROUTES_WIRE_V1` 1×, `computerRoutes(computer, files, tenantService)` presente.
+
+### F04.25-wire-tools — `conversation.ts`: `computerTools` con `tenantIdPromise` (1 hunk)
+
+**Fichero:** `apps/server/src/engine/conversation.ts`
+**Marca:** `COMPUTER_TOOLS_WIRE_V1`.
+
+**`$old`:**
+```
+    const tools = [
+      ...computerTools(this.service.computer, this.service.files, this.owner, `chat:${requestKey}`),
+```
+
+**`$new`:**
+```
+    // COMPUTER_TOOLS_WIRE_V1 — pasa el tenantId resuelto como promesa para
+    // que computerTools lo use al importar PDFs. La promesa se resuelve una
+    // vez por request; si falla, cae a "default".
+    const tools = [
+      ...computerTools(
+        this.service.computer,
+        this.service.files,
+        this.owner,
+        `chat:${requestKey}`,
+        {},
+        this.service.tenantService
+          ? this.service.tenantService.tenantIdFor(this.owner)
+          : Promise.resolve("default"),
+      ),
+```
+
+**Verificación pre:** ancla 1×. Post: `COMPUTER_TOOLS_WIRE_V1` 1×, `tenantIdFor(this.owner)` presente.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y los repasos de docs 02–05 se aplican íntegras. **Además, en esta fase:**
+
+- **`computer.ts` cambia la firma de `computerIdentity`.** La función es exportada y usada fuera (posiblemente en `apps/web` o tests). `Select-String -Pattern "computerIdentity"` en **todo el repo** antes de escribir, para saber todos los call sites. Si hay call sites externos a `computer.ts` no contemplados (por ejemplo en tests, aunque estén congelados), se anotan. **En esta fase no se tocan tests** (F02.10 congelado), pero si un test existente rompe por la firma, **typecheck lo detectará** y Cline lo reportará. **Se anota como deuda: F02.10 congelado puede hacer que un test existente (no `tenant-strict`) rompa por F04.24.** Si es así, la fase 5 se pone en rojo y **se revierte F04.24** (o se cambia la firma a `computerIdentity(config, owner, tenantId?)` con `tenantId` opcional al final, para no romper call sites existentes). **Recomiendo la firma `computerIdentity(config, owner, tenantId?)` con `tenantId` al final y opcional**, para no romper tests existentes. Se ajusta el hunk 1 de F04.24 en consecuencia:
+
+**Hunk 1 ajustado (firma compatible):**
+```
+export function computerIdentity(config: Config, owner: string, tenantId: string = "default") {
+  ...
+}
+```
+Y los call sites pasan a `computerIdentity(this.config, owner, tenantId)` donde `tenantId` se resuelve con `this.tenantService`. **Esto reduce el riesgo de romper tests existentes.** **Cambio de estrategia respecto al hunk 1 anterior.** El resto del patchset F04.24 cambia en consecuencia: `identity(owner)` devuelve `computerIdentity(this.config, owner, tenantId)`, y los call sites usan `await this.identity(owner)`.
+
+- **`computer-routes.ts` y `computer-tools.ts`** cambian la firma. `computerRoutes` y `computerTools` son llamadas desde `app.ts` y `conversation.ts`, ambas modificadas en el mismo patchset. **Cero call sites externos** esperados. Verificar con `Select-String -Pattern "computerRoutes\(|computerTools\("` en todo el repo antes de escribir.
+
+- **`app.ts` recibe 1 hunk** trivial.
+
+- **`conversation.ts` recibe 1 hunk** trivial.
+
+- **No `git add .`, no `--force`, no `commit` dentro del patchset.**
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @openmuse/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - `GET /api/health` OK (no rompe nada).
+  - `POST /api/computer/files/export` con un path válido y auth de owner `A` → devuelve el `Artifact` con `source: "Computer: <path>"` y el fichero importado bajo el `tenantId` correcto. En clone-por-cliente, `tenantId = "default"` (comportamiento anterior). En shared, `tenantId = tenantIdFor(A)`.
+  - Un chat que llame a `export_computer_pdf` → mismo resultado.
+  - `docker ps` no muestra contenedores con nombre duplicado. Los contenedores viejos (con nombre sin `tenantHash`) quedan huérfanos; anotar como deuda de migración.
+- **La IA commitea con ficheros explícitos:**
+  ```powershell
+  git add apps/server/src/computer.ts
+  git add apps/server/src/computer-routes.ts
+  git add apps/server/src/computer-tools.ts
+  git add apps/server/src/app.ts
+  git add apps/server/src/engine/conversation.ts
+  git commit -m "feat(multitenant): fase 5 — computer tenantId + audit checks [COMPUTER_IDENTITY_TENANT_V1, COMPUTER_ROUTES_TENANT_V1, COMPUTER_TOOLS_TENANT_V1, COMPUTER_ROUTES_WIRE_V1, COMPUTER_TOOLS_WIRE_V1]"
+  git push origin feat/multitenancy-campaign
+  ```
+  **Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+- **Si el push falla por conflicto con `origin/main`, no forzar.**
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fases 0–4 incompletas → aborta todo.
+- F04.2 FP confirmado → anotar en `-pendientes.md` como "descartado, era FP (línea 109 no contenía `"default"`)". Cero patchset.
+- F04.3 FP confirmado → anotar en `-pendientes.md` como "descartado, era FP (`.default("default")` es de `action.kind`, no de `tenantId`)". Cero patchset.
+- F04.24 `computerIdentity(` no aparece 7× → adaptar o anotar. Si aparece en tests existentes (congelados) y rompe typecheck → revertir F04.24 o cambiar la firma a compatible.
+- F04.25-routes/tools ancla 0× → `computer-routes.ts` / `computer-tools.ts` cambiaron; abortar y anotar.
+- F04.25-wire ancla 0× → `app.ts` cambió; abortar y anotar.
+- F04.25-wire-tools ancla 0× → `conversation.ts` cambió; abortar y anotar.
+- Typecheck rojo por `tenantService` no tipado como público en `AgentService` (Fase 3 lo añadió a `deps`, pero ¿está accesible como `this.service.tenantService`?) → si no, se resuelve con `(this.service as unknown as { tenantService?: ... }).tenantService` (cast seguro). Anotar.
+- Typecheck rojo por `computerIdentity` con `tenantId` al final y call sites viejos → si es el caso, la firma compatible lo cubre.
+- Typecheck rojo por `computerTools` con 6º parámetro y call sites viejos → si es el caso, el parámetro es opcional (`tenantIdPromise?: Promise<string>`), así que no rompe.
+- `worker.ts` reparado por Copilot → anotar, no tocar.
+- `docker ps` con contenedores huérfanos → anotar en `-pendientes.md` como deuda de migración.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\07-aislamiento-multi-tenant\missed\_multitenant_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md`:**
+- F04.24: migración de nombres de contenedor computer (viejos sin `tenantHash` quedan huérfanos).
+- F04.27: bloqueado hasta `backup-tenant.ts` (no en Repomix).
+- F02.10: congelado, y `computerIdentity` cambia de firma (aunque compatible) — si algún test existente rompe, se resuelve en Fase 6.
+- F04.2/F04.3: FPs confirmados, se descartan.
+
+---
+
+## 14. Checklist de cierre de la fase 5
+
+- [ ] Paso 0.1–0.10 ejecutados, salidas anotadas.
+- [ ] F04.2 verificado (FP o real).
+- [ ] F04.3 verificado (FP o real).
+- [ ] F04.24 aplicado (8 hunks, `COMPUTER_IDENTITY_TENANT_V1` 1×).
+- [ ] F04.25-routes aplicado (2 hunks, `COMPUTER_ROUTES_TENANT_V1` 1×).
+- [ ] F04.25-tools aplicado (2 hunks, `COMPUTER_TOOLS_TENANT_V1` 1×).
+- [ ] F04.25-wire aplicado (1 hunk, `COMPUTER_ROUTES_WIRE_V1` 1×).
+- [ ] F04.25-wire-tools aplicado (1 hunk, `COMPUTER_TOOLS_WIRE_V1` 1×).
+- [ ] F04.27 documentado como bloqueado en `-pendientes.md`.
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` sigue roto y sin tocar.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde.
+- [ ] Cline probó `POST /api/computer/files/export` con auth real.
+- [ ] Cline probó chat con `export_computer_pdf`.
+- [ ] `git add` explícito de los 5 ficheros.
+- [ ] `git commit -m "feat(multitenant): fase 5 — computer tenantId + audit checks [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 5 cerrada. Siguiente: Fase 6 (documento 07 — B6+B7 cuotas, notificaciones, computer completo, F02.9b)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/computer.ts` — `computerIdentity` definición (Repomix original, literal, sin cortes):
+
+```typescript
+export function computerIdentity(config: Config, owner: string) {
+  const deployment = hash(config.computerDeploymentId ?? config.publicUrl).slice(0, 16);
+  const ownerHash = hash(owner).slice(0, 24);
+  const name = `openmuse-${deployment}-${ownerHash}`;
+  return {
+    container: `${name}-computer`,
+    volume: `${name}-workspace`,
+    labels: {
+      "dev.openmuse.managed": "computer-v1",
+      "dev.openmuse.deployment": deployment,
+      "dev.openmuse.owner": ownerHash,
+    } as Record<string, string>,
+  };
+}
+```
+
+**F04.24 la cambia.**
+
+### A.2. `apps/server/src/computer.ts` — `ComputerService` constructor (Repomix original, literal, sin cortes):
+
+```typescript
+export class ComputerService {
+  constructor(
+    readonly db: Store | TenantScopedStore,
+    readonly config: Config,
+    private readonly docker: DockerRunner = runDocker,
+  ) {}
+```
+
+**F04.24 añade `tenantService?`.**
+
+### A.3. `apps/server/src/computer.ts` — call sites de `computerIdentity` (Repomix original, literal, sin cortes):
+
+`acquire()`:
+```typescript
+    const identity = computerIdentity(this.config, owner);
+```
+
+`inspect()`:
+```typescript
+    const identity = computerIdentity(this.config, owner);
+```
+
+`verifyVolume()`:
+```typescript
+    const identity = computerIdentity(this.config, owner);
+```
+
+`start()`:
+```typescript
+      const identity = computerIdentity(this.config, owner);
+```
+
+`running()`:
+```typescript
+    return computerIdentity(this.config, owner).container;
+```
+
+`stop()`:
+```typescript
+          computerIdentity(this.config, owner).container,
+```
+
+**F04.24 los cambia a `this.identity(owner)`.**
+
+### A.4. `apps/server/src/computer-routes.ts` — `POST /files/export` con `"default"` (Repomix original, literal, sin cortes):
+
+```typescript
+  app.post("/files/export", async (c) => {
+    const { path } = computerPathSchema.parse(await c.req.json());
+    const { name, bytes } = await computer.pdfBytes(c.get("owner"), path);
+    return c.json(await files.import(c.get("owner"), name, bytes, `Computer: ${path}`, "default") /* FALLBACK_TENANT_V1 */, 201);
+  });
+```
+
+**F04.25-routes lo cambia.**
+
+### A.5. `apps/server/src/computer-tools.ts` — `export_computer_pdf` con `"default"` (Repomix original, literal, sin cortes):
+
+```typescript
+    tool(
+      "export_computer_pdf",
+      "Import a completed workspace PDF into app Files",
+      computerPathSchema,
+      async ({ path }) => {
+        const { name, bytes } = await computer.pdfBytes(owner, path);
+        return files.import(owner, name, bytes, `Computer: ${path}`, "default") /* FALLBACK_TENANT_V1 */; // FALLBACK_TENANT_V1
+      },
+    ),
+```
+
+**F04.25-tools lo cambia.**
+
+### A.6. `apps/server/src/files.ts` — `Files.import` firma (Repomix holístico, literal, sin cortes):
+
+```typescript
+  async import(
+    owner: string,
+    name: string,
+    bytes: Uint8Array,
+    source: string,
+    // FILES_TENANT_STRICT_V2 - tenantId obligatorio, ANTES de parentId para
+    // respetar "required parameter cannot follow an optional parameter".
+    tenantId: string,
+    parentId?: string,
+  ): Promise<Artifact> {
+```
+
+**Confirma que `tenantId` es obligatorio y va 5º. F04.25 lo pasa con el `tenantId` resuelto.**
+
+### A.7. `apps/server/src/app.ts` — `computerRoutes(computer, files)` (Repomix original, literal, sin cortes):
+
+```typescript
+  app.route("/api/computer", computerRoutes(computer, files));
+```
+
+**F04.25-wire lo cambia.**
+
+### A.8. `apps/server/src/engine/conversation.ts` — `computerTools(...)` (Repomix original, literal, sin cortes):
+
+```typescript
+    const tools = [
+      ...computerTools(this.service.computer, this.service.files, this.owner, `chat:${requestKey}`),
+```
+
+**F04.25-wire-tools lo cambia.**
+
+### A.9. `apps/server/src/engine/tenant.ts` — `tenantIdFor` (Repomix original, literal, sin cortes):
+
+```typescript
+  /** Atajo: solo el tenantId. */
+  async tenantIdFor(owner: string): Promise<string> {
+    return (await this.resolve(owner)).tenantId;
+  }
+```
+
+**F04.24, F04.25-routes, F04.25-tools, F04.25-wire-tools lo usan.**
+
+### A.10. `apps/server/src/engine/events/bus.ts` — `"default"` en línea 109 NO aparece (Repomix original, literal, sin cortes):
+
+La línea 109 actual es:
+```typescript
+      // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
+```
+
+**Confirmado en el Repomix original. La verificación real en 0.2 confirmará si sigue así en HEAD. Si no hay `"default"`, F04.2 es FP.**
+
+### A.11. `packages/domain/src/views.ts` — `.default("default")` en línea 20 NO aparece (Repomix original, literal, sin cortes):
+
+La línea 20 actual es:
+```typescript
+  delta: z.string().max(60).optional(),
+```
+
+Y el `.default("default")` que sí existe está en `action.kind` (Repomix original, literal, sin cortes):
+```typescript
+        kind: z.enum(["primary", "default", "danger"]).default("default"),
+```
+
+**`action.kind` es UI, no `tenantId`. F04.3 es FP. Confirmado en el Repomix original. La verificación real en 0.3 confirmará si sigue así en HEAD.**
+
+### A.12. `apps/server/src/index.ts` — bloque `backupAllTenants` con `runTenantBackup` (Repomix original, literal, sin cortes):
+
+```typescript
+async function backupAllTenants(retentionDays: number): Promise<number> {
+  const { runTenantBackup } = await import("./backup-tenant.ts");
+  const tenants = await db.list<{ tenantId: string }>("system", "tenant-membership").catch(() => []);
+  const unique = Array.from(new Set(tenants.map((t) => t.tenantId)));
+  let ok = 0;
+  for (const tenantId of unique) {
+    try {
+      const result = await runTenantBackup({ dataDir: config.dataDir, tenantId, retentionDays });
+      const mb = (result.bytes / 1024 / 1024).toFixed(2);
+      console.log(`[OpenMuse] backup tenant ${tenantId}: ${mb} MB`);
+      ok++;
+    } catch (error) {
+      console.warn(`[OpenMuse] backup tenant ${tenantId} fallo: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+  return ok;
+}
+```
+
+**`runTenantBackup` se importa de `./backup-tenant.ts`, que no está en ningún Repomix. F04.27 no se puede aplicar en esta fase. Se anota en `-pendientes.md` con el disparador "cuando el humano pase `backup-tenant.ts`, cruzar con `Files.import` que escribe en `dataDir/tenants/<tenantId>/files`".**
+
+### A.13. `apps/server/src/files.ts` — `Files.import` escribe en `dataDir/tenants/<tenantId>/files` (Repomix holístico, literal, sin cortes):
+
+```typescript
+    // FILES_TENANT_STRICT_V2 - directorio por tenant real, sin fallback.
+    const tenantSegment = tenantId;
+    const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
+    await mkdir(directory, { recursive: true, mode: 0o700 });
+```
+
+**Confirma la ruta. `backup-tenant.ts` tendrá que buscar en `dataDir/tenants/<tenantId>/files`, no en `dataDir/files` como decía el handoff v2. Se anota.**
+
+### A.14. `apps/server/src/engine/worker.ts` — sigue roto (Repomix original, literal, sin cortes):
+
+```typescript
+  get running() {
+    return Boolean(this.timer);
+  }
+
+  /** WORKER_ACTIVE_SIZE_V1
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1
+  getMaxActive(): number {
+    return this.maxActive;
+  }
+  start = () => {
+```
+
+**Confirmado. No se toca.**
+
+---
+
+## FIN DEL DOCUMENTO 06
+
+**Fase 5 preparada para ejecución. 5 patchsets fijos (F04.24, F04.25-routes, F04.25-tools, F04.25-wire, F04.25-wire-tools) + 2 verificaciones (F04.2, F04.3) + 1 bloqueado (F04.27). 5 ficheros tocados. Cambio de firma de `computerIdentity` a `(config, owner, tenantId = "default")` para no romper call sites existentes ni tests (F02.10 congelado). `Files.import` confirmado como 5º parámetro obligatorio. F04.2 y F04.3 verificados contra Repomix original (probables FPs, confirmar en Paso 0). F04.27 bloqueado hasta `backup-tenant.ts`. F02.10 congelado. Typecheck y test los corre Cline, más 2 pruebas de comportamiento (export PDF y chat). Commit + push al final. Los misses van a `_multitenant_pendientes.md`, no los escribe la IA. Anexo literal de 14 bloques de código real, sin resúmenes ni cortes. Deudas anotadas en `-pendientes.md` para Fase 6 (migración de nombres de contenedor, F04.2/F04.3 descartados si FP, F04.27 bloqueado).**
+
+**Siguiente: documento 07 — Campaña 1 / Fase 6 — B6+B7 cuotas, notificaciones, computer completo, F02.9b, y refinamiento de F04.16a/b/c con `tenantService.tenantIdFor(owner)`. Di "sigue".**

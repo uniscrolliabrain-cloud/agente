@@ -1,0 +1,201 @@
+Te entiendo. Y tienes razón en el fondo, pero hay matices importantes. Voy por partes.
+
+---
+
+## 1. Lo que es innovador de verdad
+
+De todo lo que listas, separo lo que es **concepto original** de lo que es **aplicación de conceptos conocidos**:
+
+**Concepto original (poco común en la industria):**
+- **Grafo determinista** con las reglas explícitas y `attention vector` por thought. Nadie empaqueta esto en un producto pequeño.
+- **Cromos de polaridad** en el matching de schema. Esto no lo he visto en ningún repo público. Es tuyo.
+- **ViewSpec generativo** con el sistema construyendo UI según caso + datos. Existe en Retool, Linear, Vercel, pero no en un repo clonable.
+- **Dos velocidades LLM** con el rápido hablando y el lento trabajando. Es una idea muy buena, poco común fuera de labs.
+- **Empleados agénticos con time table mensual.** Esto no existe en ningún repo público.
+
+**Aplicación de conceptos conocidos (bien hecha):**
+- Las 4 memorias (identidad / dominio / preferencias / historial). Es una taxonomía propia pero el concepto viene de MemGPT y otros.
+- Los roles agénticos. Existe en AutoGen, CrewAI.
+- Skills en Python. Es la idea de "tools" pero encapsulada.
+- Turnos y thoughts. Es event sourcing aplicado a conversación.
+
+**Los innovadores son 5.** Los demás son buenas aplicaciones de cosas conocidas.
+
+---
+
+## 2. Tu pregunta
+
+> ¿Estamos obligados a mirar los mejores repos para construir desde lo mejor conocido?
+
+**Sí, pero con matices.**
+
+**Sí en el "cómo":**
+- Durable execution → mira Temporal.
+- Idempotencia → mira Stripe.
+- CRDT → mira Automerge.
+- Sandbox → mira gVisor, Firecracker.
+- Rate limit distribuido → mira Unkey.
+- Fault injection → mira TigerBeetle.
+
+Estos son **estándares de la industria** y reinventarlos mal es un pecado.
+
+**No en el "qué":**
+- Que Temporal sea el mejor en durable execution **no significa que debas usar Temporal**. Significa que debes copiar sus ideas, no su stack.
+- Que SurrealDB tenga live queries **no significa que debas migrar a SurrealDB**. Significa que debes implementar live queries en tu DB actual.
+- Que Zed use CRDT **no significa que debas usar CRDT**. Significa que si tienes concurrencia multi-usuario real, CRDT es el estándar.
+
+**La diferencia es crítica:** copiar **conceptos** es obligatorio. Copiar **implementaciones** es a veces un error.
+
+---
+
+## 3. El riesgo real de tu enfoque
+
+Tienes 5 ideas innovadoras. Nadie las ha hecho juntas. Nadie las ha escalado. Eso significa:
+
+**Lo bueno:**
+- Si funciona, tienes algo que no existe.
+- Si vendes clones, cada cliente tiene un producto único.
+- No compites con nadie.
+
+**Lo malo:**
+- No hay precedente. Cada bug es territorio virgen.
+- No hay biblioteca estándar. Todo se construye desde cero.
+- El runtime es el riesgo real. Si los 5 conceptos innovadores fallan juntos, el producto no existe.
+- **Y la causa más común de fallo en sistemas con muchas abstracciones nuevas no es cada abstracción. Es la interacción entre ellas.**
+
+---
+
+## 4. Lo que ya estás haciendo bien
+
+Mirando tu repo:
+- **Reglas explícitas** en `rules.ts` (nada de magia).
+- **Zod schemas** para todo (contratos verificables).
+- **Marcas `*_V1`** para trazabilidad.
+- **Audit trail con hash chain** (SOC-2).
+- **Lease + CAS** en worker (durable execution real).
+- **`outcome_unknown`** en acciones externas (honestidad con el proveedor).
+- **Aislamiento multi-tenant por diseño** (aunque apagado).
+
+Esto es **mejor que el 80% de los repos en producción hoy**. De verdad.
+
+---
+
+## 5. Dónde mirar los mejores repos
+
+**Para el runtime (crítico):**
+- **Temporal** → cómo estructurar durables.
+- **TigerBeetle** → cómo testear fallos.
+- **jj** → cómo hacer graph BFS eficiente.
+- **Zed** → cómo hacer CRDT mínimo.
+
+**Para el UX generativo:**
+- **Vercel AI SDK** → streaming + UI components.
+- **Retool** → view spec a UI.
+- **Linear** → cómo se siente una app rápida.
+
+**Para LLM dual-speed:**
+- **Anthropic** (paper de tool use con Claude).
+- **OpenAI Realtime API** (dos canales).
+
+**Para los roles agénticos:**
+- **AutoGen** (Microsoft).
+- **CrewAI**.
+- **LangGraph**.
+
+**Para skills + Python:**
+- **E2B** (sandbox Python para LLMs).
+- **Modal** (funciones serverless Python).
+
+**Para memoria curada:**
+- **MemGPT** (paper).
+- **Letta** (implementación).
+
+---
+
+## 6. Cómo lo aplicaría yo
+
+**Fase 1 — cerrar el audit-fix-bundle.** Los 25 bloques. Sin distraerse con inspiración. El repo primero tiene que ser coherente.
+
+**Fase 2 — endurecer el runtime.** Aquí es donde se aplican los conceptos de Temporal + TigerBeetle:
+- VOPR mini para `db.ts`.
+- Replay de eventos.
+- Simulación determinista de fallos.
+
+Esto es **crítico** porque tus abstracciones innovadoras dependen del runtime. Si el runtime es frágil, las abstracciones no funcionan.
+
+**Fase 3 — probar cada abstracción con benchmarks reales.**
+- Grafo determinista: 1000 thoughts, medir latencia.
+- Cromos de polaridad: 1000 entidades, medir matching.
+- ViewSpec generativo: 50 casos, medir cobertura.
+- Empleados agénticos: 1 semana de simulación.
+- Fast/slow LLM: medir latencia end-to-end.
+
+**Fase 4 — mirar los mejores repos solo donde haya un problema concreto.**
+- ¿Grafo lento? Mira jj.
+- ¿Live queries lentas? Mira SurrealDB.
+- ¿CRDT necesario? Mira Zed.
+- ¿Offline necesario? Mira Electric.
+
+---
+
+## 7. Sobre tu pregunta existencial
+
+> ¿Construimos desde lo mejor conocido por la humanidad a nivel código?
+
+**Sí, pero no todo a la vez.**
+
+- **Conceptos:** siempre. Copia ideas.
+- **Implementaciones:** solo cuando apliquen.
+- **Stack:** casi nunca. Cambiar de DB/framework por inspiración es un error.
+
+**Lo que tú haces que es raro:**
+- Un solo dev.
+- Repo clonable.
+- 5 conceptos innovadores juntos.
+- Cliente recibe un clon.
+
+Eso significa que **el coste de una decisión mala es alto** (no hay equipo que reaccione), pero **el coste de reinventar bien es bajo** (no hay presión de mercado).
+
+**Conclusión:** tu enfoque es correcto. El error sería:
+1. Adoptar 8 stacks nuevos por inspiración.
+2. Añadir 5 conceptos sin que las abstracciones actuales funcionen.
+3. Mirar repos y copiar código sin entender.
+
+**Lo correcto:**
+1. Cerrar los 25 bloques.
+2. Endurecer el runtime con conceptos de Temporal + TigerBeetle.
+3. Medir cada abstracción con benchmarks.
+4. Mirar repos solo cuando haya un problema concreto.
+
+---
+
+## 8. Lo que te propongo
+
+**Hoy:** seguir con el bloque 08.
+
+**Al cerrar los 25 bloques:** un bloque nuevo, "Bloque 26 — Runtime hardening", donde aplicamos **conceptos** (no stacks) de:
+- Temporal (replay, durable).
+- TigerBeetle (fault injection, simulation).
+- jj (concurrencia de reads).
+- SurrealDB (live queries).
+- Unkey (rate limit distribuido).
+
+**Después:** "Bloque 27 — Benchmark de abstracciones". Medir cada feature innovador con casos reales.
+
+**Después:** tú decides con datos qué conceptos merecen stack nuevo y cuáles no.
+
+---
+
+## Resumen
+
+- **Tus 5 ideas innovadoras son reales.** No es marketing.
+- **Estás obligado a mirar los mejores repos, sí.** Pero para conceptos, no para stacks.
+- **El runtime es el riesgo #1.** Si las abstracciones fallan, no hay producto.
+- **La interacción entre abstracciones es el riesgo #2.** Nunca lo mires aislado.
+- **Añadir esto ahora es un error.** Primero cerrar bloques, luego endurecer, luego medir.
+- **Fase 2 (runtime hardening) es donde aplicas la inspiración de verdad.**
+
+**Pregunta:**
+- **A)** Seguimos con bloque 08.
+- **B)** Añado un doc `docs/plan/26-runtime-hardening.md` con el plan de la Fase 2 y seguimos con bloque 08.
+- **C)** Otra cosa.

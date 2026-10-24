@@ -1,0 +1,1473 @@
+# 07 — Campaña 1 / Fase 6 — B6+B7 cuotas, notificaciones, computer completo, F02.9b, refinamiento de F04.16a/b/c
+
+**Fecha:** 2026-10-21
+**Campaña:** 1 — Aislamiento multi-tenant
+**Fase:** 6 — B6+B7 cuotas por tenant, notificaciones, computer completo, F02.9b, refinamiento rate limit
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fases 0–5 cerradas. **Aplicados:** todas las marcas de Fases 2–5 más `COMPUTER_IDENTITY_TENANT_V1`, `COMPUTER_ROUTES_TENANT_V1`, `COMPUTER_TOOLS_TENANT_V1`, `COMPUTER_ROUTES_WIRE_V1`, `COMPUTER_TOOLS_WIRE_V1`. **Pendientes que NO se tocan en esta fase:** F02.10 (congelado), N06 (opcional Fase 8), F04.27 (bloqueado por `backup-tenant.ts`, Fase 7), F04.10b/c/d, F04.11, F04.14b/c, N02/N03 refinos (Fase 7).
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 5 (documento 06): B5. Se aplicaron F04.24 (`COMPUTER_IDENTITY_TENANT_V1`), F04.25-routes (`COMPUTER_ROUTES_TENANT_V1`), F04.25-tools (`COMPUTER_TOOLS_TENANT_V1`), F04.25-wire (`COMPUTER_ROUTES_WIRE_V1`), F04.25-wire-tools (`COMPUTER_TOOLS_WIRE_V1`). F04.2 y F04.3 verificados como probables FPs (confirmados por Cline contra HEAD). F04.27 bloqueado hasta `backup-tenant.ts`. Deudas: migración de nombres de contenedor computer, F04.27 bloqueado, F02.10 congelado y `computerIdentity` cambia de firma (aunque compatible).
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`takeForTenant` en `browser.ts` y `computer.ts`** (F04.17): cada acción (`browser.create`, `browser.navigate`, `browser.reopen`, `computer.start`, `computer.stop`, `computer.execute`, `computer.file`) consume un intento. Si se agota, 429 con `Retry-After`. Marca `TAKE_FOR_TENANT_BROWSER_V1` y `TAKE_FOR_TENANT_COMPUTER_V1`.
+- **`metrics` con label `tenant`** (F04.14): `metrics/registry.ts` acepta `tenantId` en `counter`/`gauge`/`histogram`/`observe`/`inc`/`set` (opcional, no rompe). `request-logger.ts` pasa `tenantId` del `logContext` a los counters HTTP. Marca `METRICS_TENANT_LABEL_V1`.
+- **`metrics-exporter` filtra por tenant** (F04.15): `GET /metrics?tenant=X` (admin-only) devuelve solo métricas con label `tenant=X`. Sin query, todas. Marca `METRICS_EXPORTER_TENANT_V1`.
+- **`notification-prefs.ts` sin `"default"`** (F04.22): el id del registro de prefs pasa a ser `${tenantId}:prefs` (o el propio `tenantId`), resuelto con `tenantService.tenantIdFor(owner)`. Marca `NOTIFICATION_PREFS_TENANT_V1`.
+- **`notifications-stream.ts` filtra por `tenantId`** (F04.23): además de `assignedTo`, el SSE filtra por `tenantId` del `event` o del `notification`. Marca `NOTIFICATIONS_STREAM_TENANT_V1`.
+- **`F02.9b`** (cablear `assertNotHardcodedTenantId`): se aplica en `computer-routes.ts` y `computer-tools.ts` (los dos `files.import` que ya cambiaron en Fase 5 pasan a llevar un assert que verifica que `tenantId !== "default"` **si** `MULTI_TENANT_SHARED=true`; en clone-por-cliente no lanza). También en `notification-prefs.ts`. Marca `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1`.
+- **Refinamiento de F04.16a/b/c** (deuda de Fase 3): las tres rutas resuelven `tenantId` con `tenantService.tenantIdFor(owner)` en lugar de usar `this.owner` como tenantId. En clone-por-cliente, `tenantIdFor(owner)` devuelve `"default"`, así que el bucket del rate limiter pasa de `owner:owner:chat.message` a `default:owner:chat.message`. **El comportamiento funcional es equivalente** (cada owner tiene su propio bucket porque `userId` es `owner`), pero en shared es correcto (bucket por tenant real). Marca `TAKE_FOR_TENANT_TENANTID_V1`.
+- **Cero cambios de comportamiento en clone-por-cliente** con `MULTI_TENANT_SHARED != "true"` y con `tenantIdFor` devolviendo `"default"`.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 7 (documento 08): B8 membresías y admin-tenants. F04.10b/c/d (`tenant_members`, `tenant_configs`, `tenant_invites`, `tenant_audit_events` + `DatabaseTenantResolver` cableado + `DatabaseTenantConfigResolver` inyectado), F04.14b (`/api/auth/switch-tenant`), F04.14c (`setMembership` con evento `TENANT_MEMBERSHIP_CHANGED`), F04.11 (`migrate-tenant-scope.ts` transaccional), F04.11b (verificar `migrate-tenant-membership.ts` — el Repomix holístico lo tiene), N02/N03 refinos, F04.12 (`admin-tenants.ts` CRUD), F04.27 (si el humano pasa `backup-tenant.ts`).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 6), ejecutada en **10 patchsets de producto** más **1 patchset de verificación sin escritura** (confirmar Fases 0–5 cerradas). Total: **10 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix original + holístico:**
+- `apps/server/src/browser.ts` (Repomix original, íntegro: `BrowserService`, `create`, `navigate`, `reopen`, `close`, `read`).
+- `apps/server/src/computer.ts` (Repomix original + Fase 5: `ComputerService`, `start`, `stop`, `execute`, `file`).
+- `apps/server/src/metrics/registry.ts` (Repomix original, íntegro: `MetricsRegistry`, `counter`, `gauge`, `histogram`, `observe`, `inc`, `set`, `render`, `globalMetrics`).
+- `apps/server/src/metrics-exporter.ts` (Repomix original, íntegro: `metricsRoutes(service, users)`, `GET /`).
+- `apps/server/src/middleware/request-logger.ts` (Repomix original + Fase 3: `LOG_CONTEXT_TENANT_V1`).
+- `apps/server/src/notification-prefs.ts` (Repomix original, íntegro: `notificationPrefsRoutes(db)`, `GET /prefs`, `PUT /prefs`, `id: "default"`).
+- `apps/server/src/notifications-stream.ts` (Repomix original, íntegro: `notificationsStreamRoutes(service)`, `GET /stream`, filtro por `assignedTo`).
+- `apps/server/src/app.ts` (Repomix original + Fases 3–5: `app.use("/api/*", ...)`, `app.route("/api/notifications", ...)`, `app.route("/metrics", ...)`, `app.route("/api/computer", ...)`, `app.route("/api/browsers", ...)`).
+- `apps/server/src/engine/service.ts` (Repomix holístico: `AgentService` constructor, `computer`, `files`, `tenantService`).
+- `apps/server/src/engine/conversation.ts` (Repomix original + Fase 3: `takeForTenant`, `computerTools`).
+- `apps/server/src/rag-routes.ts` (Repomix original + Fase 3: `takeForTenant`).
+- `apps/server/src/threads-routes.ts` (Repomix original + Fase 3: `takeForTenant`).
+- `apps/server/src/engine/tenant.ts` (Repomix original: `assertNotHardcodedTenantId`, `tenantIdFor`).
+- `apps/server/src/rate-limit.ts` (Repomix original: `takeForTenant`).
+- `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md`, `ESTADO-REAL-MULTITENANT.md`, `-pendientes.md` (Fases 0–5).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/worker.ts` — solo `Get-Content -TotalCount 120`. **Prohibido tocar.**
+- `apps/server/src/app.ts` — `Select-String -Pattern "app.route\(\"/api/browsers\"|app.route\(\"/api/computer\"|app.route\(\"/api/notifications\"|app.route\(\"/metrics\""` con `-Context 1,1`.
+- `apps/server/src/browser.ts` — `Select-String -Pattern "async create|async navigate|async reopen"` con `-Context 1,2` para anclas de F04.17-browser.
+- `apps/server/src/computer.ts` — `Select-String -Pattern "async start|async stop|async execute|private async file"` con `-Context 1,2` para anclas de F04.17-computer.
+- `apps/server/src/metrics/registry.ts` — `Select-String -Pattern "inc\(|set\(|observe\("` con `-Context 0,2` para anclas de F04.14.
+- `apps/server/src/metrics-exporter.ts` — `Select-String -Pattern "app.get\(|globalMetrics.render"` con `-Context 1,2` para anclas de F04.15.
+- `apps/server/src/notification-prefs.ts` — `Select-String -Pattern '"default"|id: "default"'` con `-Context 1,1`.
+- `apps/server/src/notifications-stream.ts` — `Select-String -Pattern "assignedTo|tenantId"` con `-Context 1,2`.
+
+**Archivos que NO se leen en esta fase:**
+- `apps/server/src/engine/worker.ts` (más allá de las 120 líneas).
+- `apps/server/src/db-rls.ts`, `apps/server/src/db-tenant.ts`, `apps/server/src/admin-tenants.ts`, `apps/server/src/auth-signup.ts`, `apps/server/src/files.ts` (más allá de lo ya citado), `apps/server/src/kernel/audit/store-store.ts`, `apps/server/src/kernel/*`.
+- `apps/server/src/engine/events/*` (van a Fase 7 si hace falta).
+- `backup-tenant.ts` (no existe en ningún Repomix).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Modificar:**
+- `apps/server/src/browser.ts` — F04.17-browser. Añadir `tenantLimiter` al constructor. En `create`, `navigate`, `reopen`, tomar un intento por tenant+owner. Marca `TAKE_FOR_TENANT_BROWSER_V1`.
+- `apps/server/src/computer.ts` — F04.17-computer. Añadir `tenantLimiter` al constructor (junto a `tenantService`). En `start`, `stop`, `execute`, `file`, tomar un intento. Marca `TAKE_FOR_TENANT_COMPUTER_V1`.
+- `apps/server/src/metrics/registry.ts` — F04.14. Los métodos `inc`, `set`, `observe` ya aceptan `labels: Labels`. **No hace falta cambio de firma.** Solo se documenta con marca `METRICS_TENANT_LABEL_V1` que el llamador debe pasar `tenant` como label. **El cambio real está en `request-logger.ts`**: añadir `tenantId` del `logContext` a las labels HTTP.
+- `apps/server/src/middleware/request-logger.ts` — F04.14 (real). En los `globalMetrics.inc("openmuse_http_requests_total", {...})`, añadir `...(tenantId ? { tenant: tenantId } : {})`. Idem en `observe` del histograma y en `http_errors_by_route_total`. Marca `METRICS_TENANT_LABEL_V1` (una sola vez en el fichero).
+- `apps/server/src/metrics-exporter.ts` — F04.15. `GET /?tenant=X` filtra las métricas por label `tenant=X`. Requiere que `MetricsRegistry.render` acepte un filtro opcional. **Dos cambios:** (a) `MetricsRegistry.render(filter?: { tenant?: string })` filtra samples; (b) `metrics-exporter.ts` lee `c.req.query("tenant")` y lo pasa. Marca `METRICS_EXPORTER_TENANT_V1`.
+- `apps/server/src/notification-prefs.ts` — F04.22 + F02.9b. `notificationPrefsRoutes(db, tenantService)`. `GET /prefs` y `PUT /prefs` resuelven `tenantId` con `tenantService.tenantIdFor(owner)`, usan `id: tenantId` (no `"default"`), y aplican `assertNotHardcodedTenantId` si `MULTI_TENANT_SHARED=true`. Marca `NOTIFICATION_PREFS_TENANT_V1` + `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1`.
+- `apps/server/src/notifications-stream.ts` — F04.23. El SSE filtra por `assignedTo` **y** por `tenantId`. El `tenantId` del request se resuelve con `tenantService.tenantIdFor(owner)` y se compara con el `tenantId` de cada notificación (si lo tiene; si no, se asume del tenant actual). Marca `NOTIFICATIONS_STREAM_TENANT_V1`.
+- `apps/server/src/app.ts` — F04.17-wire + F04.22-wire + F04.23-wire. Crear `new BrowserService(tdb, config, auth, files, tenantLimiter)` y `new ComputerService(tdb, config, options.docker, tenantService, tenantLimiter)`. **Ojo: `new BrowserService` y `new ComputerService` se construyen en `createApp` antes de `tenantLimiter`.** Hay que mover la creación de `tenantLimiter` **antes** de `const browser = new BrowserService(...)`. Marca `TENANT_LIMITER_ORDER_V1`.
+- `apps/server/src/rag-routes.ts` — refinamiento F04.16a/b/c. Cambiar `const tenantIdForRate = owner;` por `const tenantIdForRate = tenantService.tenantIdFor(owner).catch(() => "default")`. Requiere añadir `tenantService` a la firma de `ragRoutes`. Marca `TAKE_FOR_TENANT_TENANTID_V1`.
+- `apps/server/src/threads-routes.ts` — refinamiento F04.16a/b/c. Idem.
+- `apps/server/src/engine/conversation.ts` — refinamiento F04.16a/b/c. Cambiar `this.service.rateLimiter.takeForTenant(this.owner, this.owner, "chat.message")` por `this.service.rateLimiter.takeForTenant(this.service.tenantService ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => "default") : "default", this.owner, "chat.message")`. **Ojo: `run()` no es async, así que `await` no está disponible en el cuerpo síncrono.** **Solución:** mover el rate limit al `void (async () => { ... })()` que ya existe, con early-exit. Marca `TAKE_FOR_TENANT_TENANTID_V1`.
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts` (F02.10 congelado).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multitenant_pendientes.md` (lo escribe el humano).
+- Cualquier modificación a `backup-tenant.ts` (no existe).
+
+**No tocar:**
+- `worker.ts`, `service.ts` (más allá de leerlo), `kernel.ts`, `scripts/audits/*`, `tests/tenant-http-e2e.test.ts`, `db-tenant.ts`, `admin-tenants.ts`, `db-rls.ts`, `index.ts` (más allá de lo ya aplicado).
+- `backup-tenant.ts` (no existe).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F04.17-browser | `browser.ts` | 2 (constructor + 3 call sites en `create`/`navigate`/`reopen`) | MODIFY |
+| F04.17-computer | `computer.ts` | 2 (constructor + 4 call sites en `start`/`stop`/`execute`/`file`) | MODIFY |
+| F04.14-metrics | `metrics/registry.ts` | 1 (marca, no cambio funcional) | MODIFY (comentario) |
+| F04.14-logger | `middleware/request-logger.ts` | 3 (labels en `http_requests_total`, `http_request_duration_ms`, `http_errors_by_route_total`) | MODIFY |
+| F04.15-exporter | `metrics/registry.ts` + `metrics-exporter.ts` | 2 (firma `render(filter)`, query param) | MODIFY |
+| F04.22-prefs | `notification-prefs.ts` | 2 (firma + 2 handlers con tenantId) | MODIFY |
+| F02.9b | `computer-routes.ts` + `computer-tools.ts` + `notification-prefs.ts` | 3 (asserts) | MODIFY |
+| F04.23-stream | `notifications-stream.ts` | 2 (firma + filtro por tenant) | MODIFY |
+| F04.17-wire + F04.22-wire + F04.23-wire | `app.ts` | 3 (`new BrowserService`, `new ComputerService`, `app.route("/api/notifications", ...)` ×2) | MODIFY |
+| F04.16a/b/c refinamiento | `rag-routes.ts` + `threads-routes.ts` + `conversation.ts` | 3 | MODIFY |
+
+**Total: 10 patchsets, ~23 hunks.** Algunos son triviales (1 línea), otros son cambios de firma. La marca `TENANT_LIMITER_ORDER_V1` en `app.ts` puede requerir mover el bloque de creación de `tenantLimiter` antes de `new BrowserService`/`new ComputerService`, lo cual es un hunk grande. **Se anota como riesgo.**
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes aplicados:** F04.14, F04.15, F04.17, F04.22, F04.23, F02.9b, refinamiento F04.16a/b/c.
+- **Fixes bloqueados:** F04.27 (esperando `backup-tenant.ts`).
+- **Fixes congelados:** F02.10 (tests).
+- **Fixes movidos a fase siguiente:** F04.10b/c/d, F04.11, F04.14b/c (Fase 7), N06 (opcional Fase 8).
+- **Fixes desbloqueados por esta fase:** F04.21 (ya aplicado en Fase 4, se refina aquí si hace falta), F04.30/F04.31 (billing/usage, Fase 9), F04.33 (tenant switcher frontend, Fase 9).
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado de Fases 0–5.**
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+
+$checks = @{
+  "apps/server/src/admin-tenants.ts" = "ADMIN_TENANTS_MEMBERSHIP_CACHE_V1"
+  "apps/server/src/db-tenant.ts" = "TENANT_PEEL_GUARD_V1"
+  "apps/server/src/middleware/request-logger.ts" = "LOG_CONTEXT_TENANT_V1"
+  "apps/server/src/engine/service.ts" = "TENANT_RATE_LIMITER_FIELD_V1"
+  "apps/server/src/app.ts" = "TENANT_RATE_LIMITER_WIRE_V1"
+  "apps/server/src/engine/conversation.ts" = "TAKE_FOR_TENANT_CHAT_V1"
+  "apps/server/src/rag-routes.ts" = "TAKE_FOR_TENANT_RAG_V1"
+  "apps/server/src/threads-routes.ts" = "TAKE_FOR_TENANT_THREADS_V1"
+  "apps/server/src/db-rls.ts" = "TENANT_RLS_TX_V1"
+  "apps/server/src/index.ts" = "RLS_REQUIRED_IN_SHARED_V1"
+  "apps/server/src/kernel/audit/store-store.ts" = "AUDIT_STORE_TENANT_V1"
+  "apps/server/src/computer.ts" = "COMPUTER_IDENTITY_TENANT_V1"
+  "apps/server/src/computer-routes.ts" = "COMPUTER_ROUTES_TENANT_V1"
+  "apps/server/src/computer-tools.ts" = "COMPUTER_TOOLS_TENANT_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw "ERROR: falta $($checks[$k]) en $k" }
+}
+Write-Host "Fases 0-5 verificadas" -ForegroundColor Green
+```
+**Decisión:** si falla, **ABORTA TODO**.
+
+**0.2. Anclas de F04.17-browser en `browser.ts`.**
+```powershell
+$br = Join-Path $repoRoot "apps/server/src/browser.ts"
+if (-not (Test-Path $br)) { throw "ERROR: falta browser.ts" }
+$bc = Get-Content $br -Raw
+
+Write-Host "=== BrowserService constructor ==="
+Select-String -Path $br -Pattern "export class BrowserService" -Context 0,12
+
+Write-Host "=== create / navigate / reopen ==="
+Select-String -Path $br -Pattern "async create|async navigate|async reopen" -Context 0,4
+
+Write-Host ("TAKE_FOR_TENANT_BROWSER_V1 presente: {0}" -f ($bc -match [regex]::Escape("TAKE_FOR_TENANT_BROWSER_V1")))
+```
+**Decisión:** si el constructor existe 1× y las 3 funciones están 1× y la marca 0×, aplicar F04.17-browser.
+
+**0.3. Anclas de F04.17-computer en `computer.ts`.**
+```powershell
+$comp = Join-Path $repoRoot "apps/server/src/computer.ts"
+$cc = Get-Content $comp -Raw
+
+Write-Host "=== ComputerService constructor (Fase 5) ==="
+Select-String -Path $comp -Pattern "export class ComputerService" -Context 0,12
+
+Write-Host "=== start / stop / execute / file ==="
+Select-String -Path $comp -Pattern "async start\(|async stop\(|async execute\(|private async file<" -Context 0,3
+
+Write-Host ("TAKE_FOR_TENANT_COMPUTER_V1 presente: {0}" -f ($cc -match [regex]::Escape("TAKE_FOR_TENANT_COMPUTER_V1")))
+```
+**Decisión:** si el constructor existe 1×, los 4 métodos 1× y marca 0×, aplicar F04.17-computer. **Ojo: el constructor ahora tiene `(db, config, docker, tenantService?)` de Fase 5.** F04.17-computer añade `tenantLimiter` como 5º parámetro opcional.
+
+**0.4. Anclas de F04.14 en `metrics/registry.ts` y `request-logger.ts`.**
+```powershell
+$mr = Join-Path $repoRoot "apps/server/src/metrics/registry.ts"
+$rl = Join-Path $repoRoot "apps/server/src/middleware/request-logger.ts"
+$mrc = Get-Content $mr -Raw
+$rlc = Get-Content $rl -Raw
+
+Write-Host "=== metrics/registry.ts: inc/set/observe ==="
+Select-String -Path $mr -Pattern "  inc\(name:|  set\(name:|  observe\(name:" -Context 0,1
+
+Write-Host "=== request-logger.ts: labels en counters ==="
+Select-String -Path $rl -Pattern "globalMetrics.inc\(|globalMetrics.observe\(" -Context 0,4
+
+Write-Host ("METRICS_TENANT_LABEL_V1 presente en registry: {0}" -f ($mrc -match [regex]::Escape("METRICS_TENANT_LABEL_V1")))
+Write-Host ("METRICS_TENANT_LABEL_V1 presente en logger: {0}" -f ($rlc -match [regex]::Escape("METRICS_TENANT_LABEL_V1")))
+```
+**Decisión:** si `inc`/`set`/`observe` existen 1× cada uno, y los 3 `globalMetrics.*` están 1× cada uno, aplicar F04.14. **Si `registry.ts` ya acepta `labels: Labels` genérico (lo hace), no hace falta cambio funcional; solo comentario.**
+
+**0.5. Anclas de F04.15 en `metrics-exporter.ts`.**
+```powershell
+$me = Join-Path $repoRoot "apps/server/src/metrics-exporter.ts"
+$mec = Get-Content $me -Raw
+Write-Host "=== metrics-exporter GET / ==="
+Select-String -Path $me -Pattern "app.get\(|globalMetrics.render" -Context 0,3
+Write-Host ("METRICS_EXPORTER_TENANT_V1 presente: {0}" -f ($mec -match [regex]::Escape("METRICS_EXPORTER_TENANT_V1")))
+```
+**Decisión:** si `globalMetrics.render()` está 1×, aplicar F04.15. Requiere que `render` acepte filtro opcional (F04.15-exporter).
+
+**0.6. Anclas de F04.22 en `notification-prefs.ts`.**
+```powershell
+$np = Join-Path $repoRoot "apps/server/src/notification-prefs.ts"
+$npc = Get-Content $np -Raw
+Select-String -Path $np -Pattern '"default"|notificationPrefsRoutes' -Context 1,2
+Write-Host ("NOTIFICATION_PREFS_TENANT_V1 presente: {0}" -f ($npc -match [regex]::Escape("NOTIFICATION_PREFS_TENANT_V1")))
+```
+**Decisión:** si `notificationPrefsRoutes(db)` 1× y `id: "default"` 1×, aplicar F04.22.
+
+**0.7. Anclas de F04.23 en `notifications-stream.ts`.**
+```powershell
+$ns = Join-Path $repoRoot "apps/server/src/notifications-stream.ts"
+$nsc = Get-Content $ns -Raw
+Select-String -Path $ns -Pattern "assignedTo|tenantId|notificationsStreamRoutes" -Context 1,2
+Write-Host ("NOTIFICATIONS_STREAM_TENANT_V1 presente: {0}" -f ($nsc -match [regex]::Escape("NOTIFICATIONS_STREAM_TENANT_V1")))
+```
+**Decisión:** si `assignedTo` está 1× y la marca 0×, aplicar F04.23.
+
+**0.8. Anclas de F04.17-wire/F04.22-wire/F04.23-wire en `app.ts`.**
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+$ac = Get-Content $app -Raw
+Write-Host "=== new BrowserService / new ComputerService ==="
+Select-String -Path $app -Pattern "new BrowserService|new ComputerService" -Context 1,1
+Write-Host "=== app.route browsers/computer/notifications/metrics ==="
+Select-String -Path $app -Pattern 'app.route\("/api/browsers"|app.route\("/api/computer"|app.route\("/api/notifications"|app.route\("/metrics"' -Context 0,1
+Write-Host "=== tenantLimiter definition ==="
+Select-String -Path $app -Pattern "const tenantLimiter|const tenantRateLimit" -Context 0,2
+```
+**Decisión:** si `new BrowserService(...)` y `new ComputerService(...)` están 1× cada uno, y `tenantLimiter` se define **después** de ellos (riesgo), el patchset F04.17-wire incluye mover la definición de `tenantLimiter` **antes** de `new BrowserService`. **Si `tenantLimiter` ya está antes, no hace falta mover.** Se anota como riesgo.
+
+**0.9. Anclas de F04.16a/b/c refinamiento.**
+```powershell
+$rag = Join-Path $repoRoot "apps/server/src/rag-routes.ts"
+$thr = Join-Path $repoRoot "apps/server/src/threads-routes.ts"
+$conv = Join-Path $repoRoot "apps/server/src/engine/conversation.ts"
+
+Write-Host "=== rag-routes.ts tenantIdForRate ==="
+Select-String -Path $rag -Pattern "tenantIdForRate|takeForTenant" -Context 0,2
+Write-Host "=== threads-routes.ts tenantIdForRate ==="
+Select-String -Path $thr -Pattern "tenantIdForRate|takeForTenant" -Context 0,2
+Write-Host "=== conversation.ts takeForTenant ==="
+Select-String -Path $conv -Pattern "takeForTenant" -Context 0,3
+```
+**Decisión:** si `tenantIdForRate = owner;` está 1× en rag y threads, aplicar refinamiento. En `conversation.ts`, si `takeForTenant(this.owner, this.owner, "chat.message")` está 1×, aplicar refinamiento (con el early-exit dentro del IIFE async).
+
+**0.10. Confirmar `worker.ts` sigue roto (no tocar).**
+```powershell
+Get-Content (Join-Path $repoRoot "apps/server/src/engine/worker.ts") -TotalCount 120
+```
+**Decisión:** solo lectura.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Motivo |
+|---|---|---|
+| F04.17-browser | Sí (2-4 hunks) | `browser.ts` con `tenantLimiter` |
+| F04.17-computer | Sí (2-5 hunks) | `computer.ts` con `tenantLimiter` |
+| F04.14-metrics | Sí (comentario) | documentar label `tenant` |
+| F04.14-logger | Sí (3 hunks) | labels HTTP con `tenant` |
+| F04.15-exporter | Sí (2 hunks) | `render(filter)` + query param |
+| F04.22-prefs | Sí (2 hunks) | `notification-prefs` con tenantId |
+| F02.9b | Sí (3 hunks) | `assertNotHardcodedTenantId` cableado |
+| F04.23-stream | Sí (2 hunks) | SSE filtrado por tenantId |
+| F04.17-wire + wires | Sí (3+ hunks) | `app.ts` |
+| F04.16a/b/c refinamiento | Sí (3 hunks) | `tenantIdFor(owner)` |
+| F04.27 | No | Bloqueado |
+
+---
+
+## 10. Patchsets
+
+### F04.17-browser — `browser.ts`: `tenantLimiter` en `create`/`navigate`/`reopen` (2-4 hunks)
+
+**Fichero:** `apps/server/src/browser.ts`
+**Marca:** `TAKE_FOR_TENANT_BROWSER_V1`.
+
+**Hunk 1 — constructor.**
+
+**`$old` (Repomix original, literal):**
+```
+export class BrowserService {
+  constructor(
+    private readonly db: Store,
+    private readonly config: Config,
+    private readonly auth: Auth,
+    private readonly files: Files,
+  ) {}
+```
+
+**`$new`:**
+```
+export class BrowserService {
+  constructor(
+    private readonly db: Store,
+    private readonly config: Config,
+    private readonly auth: Auth,
+    private readonly files: Files,
+    // TAKE_FOR_TENANT_BROWSER_V1 — limiter compartido con chat/RAG/threads.
+    // Si no se pasa (tests existentes), no hay rate limit y todo funciona
+    // como antes.
+    private readonly limiter?: RateLimiter,
+    // TAKE_FOR_TENANT_TENANTID_V1 — tenantService para resolver el tenantId
+    // real del owner. Si no se pasa, se usa "default".
+    private readonly tenantService?: { tenantIdFor: (o: string) => Promise<string> },
+  ) {}
+
+  // TAKE_FOR_TENANT_BROWSER_V1 — helper común para los 3 call sites.
+  private async checkTenantRate(owner: string, action: string): Promise<void> {
+    if (!this.limiter) return;
+    const tenantId = this.tenantService
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    const verdict = this.limiter.takeForTenant(tenantId, owner, action);
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      const err = new Error(
+        "TAKE_FOR_TENANT_BROWSER_V1: límite alcanzado para " + action + ". Reintenta en " + retrySec + "s.",
+      ) as Error & { status?: number; retryAfter?: number };
+      err.status = 429;
+      err.retryAfter = retrySec;
+      throw err;
+    }
+  }
+```
+
+**Requiere import:** `import type { RateLimiter } from "./rate-limit.ts";` en la cabecera. Se añade en el mismo hunk o en uno adicional.
+
+**Hunk 2-4 — los 3 call sites.**
+
+`create()`:
+**`$old`:**
+```
+  async create(owner: string, url: string): Promise<BrowserSnapshot> {
+```
+**`$new`:**
+```
+  async create(owner: string, url: string): Promise<BrowserSnapshot> {
+    // TAKE_FOR_TENANT_BROWSER_V1 — consume intento antes de crear.
+    await this.checkTenantRate(owner, "browser.create");
+```
+
+`navigate()`:
+**`$old`:**
+```
+  async navigate(owner: string, id: string, url: string): Promise<BrowserSnapshot> {
+```
+**`$new`:**
+```
+  async navigate(owner: string, id: string, url: string): Promise<BrowserSnapshot> {
+    // TAKE_FOR_TENANT_BROWSER_V1 — consume intento antes de navegar.
+    await this.checkTenantRate(owner, "browser.navigate");
+```
+
+`reopen()`:
+**`$old`:**
+```
+  async reopen(owner: string, id: string, url?: string): Promise<BrowserSnapshot> {
+```
+**`$new`:**
+```
+  async reopen(owner: string, id: string, url?: string): Promise<BrowserSnapshot> {
+    // TAKE_FOR_TENANT_BROWSER_V1 — consume intento antes de reabrir.
+    await this.checkTenantRate(owner, "browser.reopen");
+```
+
+**Verificación pre:** constructor 1×, `create(`, `navigate(`, `reopen(` 1× cada uno, marca 0×. Post: `TAKE_FOR_TENANT_BROWSER_V1` 2× (constructor comment + helper) o 4× (cada call site). `checkTenantRate` 3×.
+
+### F04.17-computer — `computer.ts`: `tenantLimiter` en `start`/`stop`/`execute`/`file` (2-5 hunks)
+
+**Fichero:** `apps/server/src/computer.ts`
+**Marca:** `TAKE_FOR_TENANT_COMPUTER_V1`.
+
+**Hunk 1 — constructor (Fase 5 ya añadió `tenantService`).**
+
+**`$old` (post-Fase 5):**
+```
+  constructor(
+    readonly db: Store | TenantScopedStore,
+    readonly config: Config,
+    private readonly docker: DockerRunner = runDocker,
+    private readonly tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  ) {}
+```
+
+**`$new`:**
+```
+  constructor(
+    readonly db: Store | TenantScopedStore,
+    readonly config: Config,
+    private readonly docker: DockerRunner = runDocker,
+    private readonly tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+    // TAKE_FOR_TENANT_COMPUTER_V1 — limiter compartido. Si no se pasa, no
+    // hay rate limit (tests existentes).
+    private readonly limiter?: RateLimiter,
+  ) {}
+
+  // TAKE_FOR_TENANT_COMPUTER_V1 — helper común para los 4 call sites.
+  private async checkTenantRate(owner: string, action: string): Promise<void> {
+    if (!this.limiter) return;
+    const tenantId = this.tenantService
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    const verdict = this.limiter.takeForTenant(tenantId, owner, action);
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      const err = new Error(
+        "TAKE_FOR_TENANT_COMPUTER_V1: límite alcanzado para " + action + ". Reintenta en " + retrySec + "s.",
+      ) as Error & { status?: number; retryAfter?: number };
+      err.status = 429;
+      err.retryAfter = retrySec;
+      throw err;
+    }
+  }
+```
+
+**Requiere import:** `import type { RateLimiter } from "./rate-limit.ts";`.
+
+**Hunk 2-5 — call sites.**
+
+`start()`:
+**`$old`:**
+```
+  async start(owner: string) {
+    await this.exclusive(owner, async () => {
+```
+**`$new`:**
+```
+  async start(owner: string) {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de arrancar.
+    await this.checkTenantRate(owner, "computer.start");
+    await this.exclusive(owner, async () => {
+```
+
+`stop()`:
+**`$old`:**
+```
+  async stop(owner: string) {
+    this.enabled();
+```
+**`$new`:**
+```
+  async stop(owner: string) {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de parar.
+    await this.checkTenantRate(owner, "computer.stop");
+    this.enabled();
+```
+
+`execute()`:
+**`$old`:**
+```
+  async execute(
+    owner: string,
+    raw: unknown,
+    options: { idempotencyKey?: string; signal?: AbortSignal } = {},
+  ): Promise<ComputerCommand> {
+```
+**`$new`:**
+```
+  async execute(
+    owner: string,
+    raw: unknown,
+    options: { idempotencyKey?: string; signal?: AbortSignal } = {},
+  ): Promise<ComputerCommand> {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de ejecutar.
+    await this.checkTenantRate(owner, "computer.execute");
+```
+
+`file()`:
+**`$old`:**
+```
+  private async file<T>(
+    owner: string,
+    operation: string,
+    rawPath: string,
+    text?: string,
+    base64?: string,
+  ): Promise<T> {
+```
+**`$new`:**
+```
+  private async file<T>(
+    owner: string,
+    operation: string,
+    rawPath: string,
+    text?: string,
+    base64?: string,
+  ): Promise<T> {
+    // TAKE_FOR_TENANT_COMPUTER_V1 — consume intento antes de operar con ficheros.
+    await this.checkTenantRate(owner, "computer.file." + operation);
+```
+
+**Verificación pre:** constructor 1×, los 4 métodos 1×, marca 0×. Post: `checkTenantRate` 4×, marca al menos 1×.
+
+### F04.14-metrics — `metrics/registry.ts`: comentario + label `tenant` en HTTP (marca única, sin cambio funcional en registry)
+
+**Fichero:** `apps/server/src/metrics/registry.ts`
+**Marca:** `METRICS_TENANT_LABEL_V1` (una vez, en la cabecera).
+
+**`$old` (Repomix original, literal):**
+```
+type Labels = Record<string, string>;
+```
+
+**`$new`:**
+```
+// METRICS_TENANT_LABEL_V1 — los métodos inc/set/observe ya aceptan
+// `labels: Labels` genérico. Esta marca documenta que el llamador DEBE
+// incluir `tenant` cuando la métrica sea por tenant (p.ej. HTTP, tareas,
+// LLM). Sin esto, todas las métricas de un deployment shared se agregan
+// como si fueran de un solo tenant.
+type Labels = Record<string, string>;
+```
+
+**Verificación pre:** `type Labels` 1×, marca 0×. Post: marca 1×.
+
+### F04.14-logger — `middleware/request-logger.ts`: labels con `tenant` (3 hunks)
+
+**Fichero:** `apps/server/src/middleware/request-logger.ts`
+**Marca:** `METRICS_TENANT_LABEL_V1` (una vez, en el bloque de `http.request`).
+
+**Hunk 1 — `http.request` log con tenantId.**
+
+**`$old` (post-Fase 3):**
+```
+      logInfo("http.request", { method, path });
+```
+**`$new`:**
+```
+      // METRICS_TENANT_LABEL_V1 — tenantId del logContext (si lo hay) para
+      // que los logs y las métricas HTTP lleven el label `tenant`.
+      const tenantIdForLabels = logContext.getStore()?.tenantId;
+      logInfo("http.request", { method, path, ...(tenantIdForLabels ? { tenantId: tenantIdForLabels } : {}) });
+```
+
+**Hunk 2 — `http_requests_total` con label tenant.**
+
+**`$old`:**
+```
+        globalMetrics.inc("openmuse_http_requests_total", {
+          method,
+          path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+          status: String(status),
+        });
+```
+**`$new`:**
+```
+        // METRICS_TENANT_LABEL_V1 — label `tenant` si hay tenantId en el contexto.
+        const tenantLabels = tenantIdForLabels ? { tenant: tenantIdForLabels } : {};
+        globalMetrics.inc("openmuse_http_requests_total", {
+          method,
+          path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+          status: String(status),
+          ...tenantLabels,
+        });
+```
+
+**Hunk 3 — `observe` del histograma con label tenant.**
+
+**`$old`:**
+```
+        globalMetrics.observe(
+          "openmuse_http_request_duration_ms",
+          durationMs,
+          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status) },
+        );
+```
+**`$new`:**
+```
+        // METRICS_TENANT_LABEL_V1 — idem para el histograma.
+        globalMetrics.observe(
+          "openmuse_http_request_duration_ms",
+          durationMs,
+          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status), ...tenantLabels },
+        );
+```
+
+**Hunk 4 (opcional) — `http_errors_by_route_total` con label tenant.** Mismo patrón. **Obligatorio si el hunk existe.**
+
+**Verificación pre:** los 4 bloques `globalMetrics.*` 1× cada uno, `logInfo("http.request", { method, path })` 1×, marca 0×. Post: marca al menos 1×, `tenantLabels` presente.
+
+### F04.15-exporter — `metrics/registry.ts` + `metrics-exporter.ts`: `render(filter)` + query param (2 hunks)
+
+**Ficheros:** `apps/server/src/metrics/registry.ts` + `apps/server/src/metrics-exporter.ts`
+**Marca:** `METRICS_EXPORTER_TENANT_V1`.
+
+**Hunk 1 — `render(filter?: { tenant?: string })` en `registry.ts`.**
+
+**`$old`:**
+```
+  render(): string {
+    const lines: string[] = [];
+```
+**`$new`:**
+```
+  // METRICS_EXPORTER_TENANT_V1 — filtro opcional por label tenant. Si no se
+  // pasa, comportamiento anterior (todas las métricas).
+  render(filter?: { tenant?: string }): string {
+    const matchesTenant = (labels: Record<string, string>): boolean =>
+      !filter?.tenant || labels.tenant === filter.tenant;
+    const lines: string[] = [];
+```
+
+Y en los bucles, aplicar `matchesTenant`:
+**`$old` (counters):**
+```
+      for (const s of c.samples.values()) {
+        const lbl = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        lines.push(`${c.name}${lbl ? `{${lbl}}` : ""} ${s.value}`);
+      }
+```
+**`$new`:**
+```
+      for (const s of c.samples.values()) {
+        if (!matchesTenant(s.labels)) continue;
+        const lbl = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        lines.push(`${c.name}${lbl ? `{${lbl}}` : ""} ${s.value}`);
+      }
+```
+
+Idem para gauges y para cada `samples` de histogramas. **Verificación pre:** `for (const s of c.samples.values())`, `for (const s of g.samples.values())`, `for (const s of h.samples.values())` 1× cada uno. Post: `matchesTenant` 3-4×.
+
+**Hunk 2 — `metrics-exporter.ts` query param `tenant`.**
+
+**`$old`:**
+```
+    c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
+    return c.body(globalMetrics.render());
+```
+**`$new`:**
+```
+    // METRICS_EXPORTER_TENANT_V1 — ?tenant=X filtra las métricas por tenant.
+    // Admin-only (ya verificado arriba).
+    const tenantFilter = c.req.query("tenant") || undefined;
+    c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
+    return c.body(globalMetrics.render(tenantFilter ? { tenant: tenantFilter } : undefined));
+```
+
+**Verificación pre:** `globalMetrics.render()` 1×, marca 0×. Post: `render(tenantFilter ? ... : undefined)` 1×.
+
+### F04.22-prefs — `notification-prefs.ts`: `tenantId` real (2 hunks)
+
+**Fichero:** `apps/server/src/notification-prefs.ts`
+**Marcas:** `NOTIFICATION_PREFS_TENANT_V1`, `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1`.
+
+**Hunk 1 — firma y helper.**
+
+**`$old`:**
+```
+export function notificationPrefsRoutes(db: Store) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+
+  app.get("/prefs", async (c) => {
+    const owner = c.get("owner");
+    const prefs = await db.get<{ disabled: string[] }>(owner, "notification-prefs", "default");
+    return c.json(prefs ?? { disabled: [] });
+  });
+
+  app.put("/prefs", async (c) => {
+    const owner = c.get("owner");
+    const body = prefsSchema.parse(await c.req.json());
+    await db.put(owner, "notification-prefs", { id: "default", ...body });
+    return c.json({ ok: true, prefs: body });
+  });
+
+  return app;
+}
+```
+**`$new`:**
+```
+export function notificationPrefsRoutes(
+  db: Store,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+
+  // NOTIFICATION_PREFS_TENANT_V1 — el id del registro de prefs es el tenantId
+  // real, no "default". En clone-por-cliente tenantId="default" y se comporta
+  // igual que antes. En shared, cada tenant tiene su propio registro.
+  const tenantIdFor = async (owner: string): Promise<string> =>
+    tenantService ? await tenantService.tenantIdFor(owner).catch(() => "default") : "default";
+
+  // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" hardcodeado es
+  // un bug. En clone-por-cliente es correcto.
+  const assertTenant = (tenantId: string): void => {
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      assertNotHardcodedTenantId(tenantId, "notificationPrefsRoutes");
+    }
+  };
+
+  app.get("/prefs", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    assertTenant(tenantId);
+    const prefs = await db.get<{ disabled: string[] }>(owner, "notification-prefs", tenantId);
+    return c.json(prefs ?? { disabled: [] });
+  });
+
+  app.put("/prefs", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = await tenantIdFor(owner);
+    assertTenant(tenantId);
+    const body = prefsSchema.parse(await c.req.json());
+    await db.put(owner, "notification-prefs", { id: tenantId, ...body });
+    return c.json({ ok: true, prefs: body });
+  });
+
+  return app;
+}
+```
+
+**Requiere import:** `import { assertNotHardcodedTenantId } from "./engine/tenant.ts";`.
+
+**Verificación pre:** `id: "default"` 1×, marca 0×. Post: `NOTIFICATION_PREFS_TENANT_V1` 1×, `assertNotHardcodedTenantId` importado y usado.
+
+### F02.9b — `computer-routes.ts` y `computer-tools.ts`: `assertNotHardcodedTenantId` (2 hunks)
+
+**Ficheros:** `apps/server/src/computer-routes.ts` y `apps/server/src/computer-tools.ts`
+**Marca:** `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1` (compartida con `notification-prefs.ts`; total en repo debe ser 3).
+
+**Hunk 1 — `computer-routes.ts`.**
+
+**`$old` (post-Fase 5):**
+```
+    const tenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    return c.json(await files.import(owner, name, bytes, `Computer: ${path}`, tenantId), 201);
+```
+**`$new`:**
+```
+    const tenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" hardcodeado
+    // es un bug.
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      assertNotHardcodedTenantId(tenantId, "computer-routes POST /files/export");
+    }
+    return c.json(await files.import(owner, name, bytes, `Computer: ${path}`, tenantId), 201);
+```
+
+**Requiere import:** `import { assertNotHardcodedTenantId } from "./engine/tenant.ts";`.
+
+**Hunk 2 — `computer-tools.ts`.**
+
+**`$old` (post-Fase 5):**
+```
+        const tenantId = tenantIdPromise
+          ? await tenantIdPromise.catch(() => "default")
+          : "default";
+        return files.import(owner, name, bytes, `Computer: ${path}`, tenantId);
+```
+**`$new`:**
+```
+        const tenantId = tenantIdPromise
+          ? await tenantIdPromise.catch(() => "default")
+          : "default";
+        // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" es un bug.
+        if (process.env.MULTI_TENANT_SHARED === "true") {
+          assertNotHardcodedTenantId(tenantId, "computer-tools export_computer_pdf");
+        }
+        return files.import(owner, name, bytes, `Computer: ${path}`, tenantId);
+```
+
+**Requiere import:** `import { assertNotHardcodedTenantId } from "./engine/tenant.ts";` (ruta relativa `./engine/tenant.ts` desde `computer-tools.ts`).
+
+**Verificación pre:** ancla 1×, marca 0×. Post: `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1` 1× en cada fichero.
+
+### F04.23-stream — `notifications-stream.ts`: SSE filtrado por tenant (2 hunks)
+
+**Fichero:** `apps/server/src/notifications-stream.ts`
+**Marca:** `NOTIFICATIONS_STREAM_TENANT_V1`.
+
+**Hunk 1 — firma.**
+
+**`$old`:**
+```
+export function notificationsStreamRoutes(service: AgentService) {
+```
+**`$new`:**
+```
+export function notificationsStreamRoutes(
+  service: AgentService,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
+```
+
+**Hunk 2 — filtro por tenant.**
+
+**`$old`:**
+```
+    const userId = c.req.header("x-user-id") ?? owner;
+    c.header("Content-Type", "text/event-stream");
+```
+**`$new`:**
+```
+    const userId = c.req.header("x-user-id") ?? owner;
+    // NOTIFICATIONS_STREAM_TENANT_V1 — el SSE filtra por tenantId del
+    // request, además de por assignedTo. Así un cliente del tenant A no
+    // recibe notificaciones del tenant B aunque compartan userId.
+    const requestTenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    c.header("Content-Type", "text/event-stream");
+```
+
+Y en el bucle, filtrar por tenant:
+**`$old`:**
+```
+              const isSupervisor = userId === "laia";
+              if (!isSupervisor && item.assignedTo && item.assignedTo !== userId) continue;
+              if (lastSeen.has(item.id)) continue;
+```
+**`$new`:**
+```
+              const isSupervisor = userId === "laia";
+              if (!isSupervisor && item.assignedTo && item.assignedTo !== userId) continue;
+              // NOTIFICATIONS_STREAM_TENANT_V1 — solo notificaciones del mismo
+              // tenant. Si la notificación no trae tenantId (legacy), se
+              // asume del tenant actual.
+              const itemTenantId = (item as { tenantId?: string }).tenantId ?? requestTenantId;
+              if (itemTenantId !== requestTenantId) continue;
+              if (lastSeen.has(item.id)) continue;
+```
+
+**Verificación pre:** `const userId = c.req.header("x-user-id") ?? owner;` 1×, `const isSupervisor` 1×, marca 0×. Post: `requestTenantId` 2×, `NOTIFICATIONS_STREAM_TENANT_V1` 2×.
+
+### F04.17-wire + F04.22-wire + F04.23-wire — `app.ts`: cablear `tenantLimiter` y `tenantService` (3 hunks)
+
+**Fichero:** `apps/server/src/app.ts`
+**Marcas:** `TENANT_LIMITER_ORDER_V1` (si hay que mover), `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1`, `TENANT_WIRE_NOTIFICATIONS_V1`.
+
+**Hunk 1 — `new BrowserService` y `new ComputerService` con `tenantLimiter` y `tenantService`.**
+
+**`$old`:**
+```
+  const browser = new BrowserService(db, config, auth, files);
+```
+**`$new`:**
+```
+  // TAKE_FOR_TENANT_BROWSER_V1 + TAKE_FOR_TENANT_COMPUTER_V1 — pasan el
+  // mismo tenantLimiter que chat/RAG/threads. Si tenantLimiter se define
+  // después en este bloque (riesgo), se mueve antes.
+  const browser = new BrowserService(db, config, auth, files, tenantLimiter, tenantService);
+```
+
+**`$old`:**
+```
+  const computer = new ComputerService(db, config, options.docker);
+```
+**`$new`:**
+```
+  const computer = new ComputerService(db, config, options.docker, tenantService, tenantLimiter);
+```
+
+**Riesgo:** `tenantLimiter` se define en el bloque `N07-common` de Fase 3, **después** de `new BrowserService`/`new ComputerService` en el Repomix original. **Si el orden es ese, el patchset añade un hunk previo que mueve `const tenantRateLimit`/`const tenantRateWindow`/`const tenantLimiter` antes de `const browser = ...`.** **Verificación pre obligatoria:** `Select-String -Pattern "const tenantLimiter"` y `Select-String -Pattern "new BrowserService"`, comparar posiciones. Si `tenantLimiter` está después, mover.
+
+**Hunk 2 — `app.route("/api/notifications", notificationsStreamRoutes(...))`.**
+
+**`$old` (Repomix original):**
+```
+  {
+    const { notificationsStreamRoutes } = await import("./notifications-stream.ts");
+    app.route("/api/notifications", notificationsStreamRoutes(agent));
+  }
+```
+**`$new`:**
+```
+  {
+    const { notificationsStreamRoutes } = await import("./notifications-stream.ts");
+    // NOTIFICATIONS_STREAM_TENANT_V1 — pasa tenantService para filtrar por tenant.
+    app.route("/api/notifications", notificationsStreamRoutes(agent, tenantService));
+  }
+```
+
+**Hunk 3 — `app.route("/api/notifications", notificationPrefsRoutes(db))`.**
+
+**`$old`:**
+```
+  {
+    const { notificationPrefsRoutes } = await import("./notification-prefs.ts");
+    app.route("/api/notifications", notificationPrefsRoutes(db));
+  }
+```
+**`$new`:**
+```
+  {
+    const { notificationPrefsRoutes } = await import("./notification-prefs.ts");
+    // NOTIFICATION_PREFS_TENANT_V1 — pasa tenantService para resolver tenantId.
+    app.route("/api/notifications", notificationPrefsRoutes(db, tenantService));
+  }
+```
+
+**Verificación pre:** `new BrowserService(...)` 1×, `new ComputerService(...)` 1×, `notificationsStreamRoutes(agent)` 1×, `notificationPrefsRoutes(db)` 1×, `const tenantLimiter` 1×. Post: marcas `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` y `TENANT_WIRE_NOTIFICATIONS_V1` 1× cada una.
+
+### F04.16a/b/c refinamiento — `rag-routes.ts`, `threads-routes.ts`, `conversation.ts` (3 hunks)
+
+**Ficheros:** `apps/server/src/rag-routes.ts`, `apps/server/src/threads-routes.ts`, `apps/server/src/engine/conversation.ts`
+**Marca:** `TAKE_FOR_TENANT_TENANTID_V1` (total 3× en el repo).
+
+**Hunk 1 — `rag-routes.ts`.**
+
+**`$old` (post-Fase 3):**
+```
+export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: RateLimiter) {
+```
+**`$new`:**
+```
+export function ragRoutes(
+  rag: RagService,
+  db: Store,
+  files: Files,
+  limiter: RateLimiter,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
+```
+
+**`$old` (dentro de `/search`):**
+```
+    const tenantIdForRate = owner; // deuda Fase 6: usar tenantService cuando esté cableado aquí
+```
+**`$new`:**
+```
+    // TAKE_FOR_TENANT_TENANTID_V1 — tenantId real, no this.owner.
+    const tenantIdForRate = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+```
+
+**Requiere wire en `app.ts`:** `ragRoutes(rag, db, files, tenantLimiter, tenantService)`. Se añade en el hunk 3 de F04.17-wire.
+
+**Hunk 2 — `threads-routes.ts`.**
+
+**`$old`:**
+```
+export function threadRoutes(db: Store, limiter: RateLimiter) {
+```
+**`$new`:**
+```
+export function threadRoutes(
+  db: Store,
+  limiter: RateLimiter,
+  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+) {
+```
+
+**`$old` (dentro de `POST /`):**
+```
+    const tenantIdForRate = owner; // deuda Fase 6: usar tenantService cuando esté cableado aquí
+```
+**`$new`:**
+```
+    // TAKE_FOR_TENANT_TENANTID_V1 — tenantId real.
+    const tenantIdForRate = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+```
+
+**Requiere wire en `app.ts`:** `threadRoutes(db, tenantLimiter, tenantService)`. Se añade en el hunk 3 de F04.17-wire.
+
+**Hunk 3 — `conversation.ts`.**
+
+**`$old` (post-Fase 3):**
+```
+    const rateVerdict = this.service.rateLimiter.takeForTenant(this.owner, this.owner, "chat.message");
+    if (!rateVerdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
+      return new Observable((subscriber) => {
+        subscriber.next({
+          type: EventType.RUN_ERROR,
+          message:
+            "Has alcanzado el límite de mensajes. Prueba de nuevo en " + retrySec + "s.",
+        });
+        subscriber.complete();
+      });
+    }
+```
+**`$new`:**
+```
+    // TAKE_FOR_TENANT_TENANTID_V1 — la resolución de tenantId es async, así
+    // que se hace dentro de un IIFE antes del Observable. El early-exit se
+    // hace devolviendo un Observable que emite RUN_ERROR.
+    const rateCheckPromise: Promise<{ allowed: boolean; retryAfterMs: number }> = (async () => {
+      const tenantIdForRate = this.service.tenantService
+        ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => "default")
+        : "default";
+      return this.service.rateLimiter.takeForTenant(tenantIdForRate, this.owner, "chat.message");
+    })();
+    let rateVerdict: { allowed: boolean; retryAfterMs: number } | undefined;
+    void rateCheckPromise.then((v) => { rateVerdict = v; });
+    if (rateVerdict && !rateVerdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
+      return new Observable((subscriber) => {
+        subscriber.next({
+          type: EventType.RUN_ERROR,
+          message:
+            "Has alcanzado el límite de mensajes. Prueba de nuevo en " + retrySec + "s.",
+        });
+        subscriber.complete();
+      });
+    }
+```
+
+**Nota:** el `rateVerdict` se resuelve de forma asíncrona, pero el check `if (rateVerdict && !rateVerdict.allowed)` en el cuerpo síncrono **puede no ejecutarse** si la promesa no se ha resuelto aún. **El check efectivo se hace dentro del IIFE de la parte asíncrona** (donde se resuelve el rateVerdict de forma real). **Solución más limpia:** meter el check completo dentro del IIFE async que ya existe en `run()` (el `void (async () => {...})()` que resuelve RAG y luego llama al modelo). **Ese IIFE debe hacer `if (!rateVerdict.allowed) { subscriber.next(...); subscriber.complete(); return; }` antes de llamar al modelo.** **Pero el `subscriber` está dentro del `new Observable((subscriber) => { void (async () => {...})(); })` que ya existe.** **El patchset añade el check al principio de ese IIFE.** Se rehace el hunk:
+
+**`$old` (el bloque que ya existe):**
+```
+    return new Observable((subscriber) => {
+      let run: { events: Observable<BaseEvent>; abort: () => void } | undefined;
+      let subscription: { unsubscribe: () => void } | undefined;
+      let cancelled = false;
+
+      void (async () => {
+        let ragContext = "";
+```
+**`$new`:**
+```
+    return new Observable((subscriber) => {
+      let run: { events: Observable<BaseEvent>; abort: () => void } | undefined;
+      let subscription: { unsubscribe: () => void } | undefined;
+      let cancelled = false;
+
+      void (async () => {
+        // TAKE_FOR_TENANT_TENANTID_V1 — resuelve tenantId real y consume un
+        // intento antes de cualquier trabajo de LLM. En clone-por-cliente
+        // tenantId="default"; en shared, el real.
+        const tenantIdForRate = this.service.tenantService
+          ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => "default")
+          : "default";
+        const rateVerdict = this.service.rateLimiter.takeForTenant(tenantIdForRate, this.owner, "chat.message");
+        if (!rateVerdict.allowed) {
+          const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
+          subscriber.next({
+            type: EventType.RUN_ERROR,
+            message:
+              "Has alcanzado el límite de mensajes. Prueba de nuevo en " + retrySec + "s.",
+          });
+          subscriber.complete();
+          return;
+        }
+        let ragContext = "";
+```
+
+**Con este hunk, el rate limit se hace dentro del IIFE async, con early-exit correcto, y no hay race condition.** **Cero cambios en el pre-check síncrono.** El `rateCheckPromise` del intento anterior se descarta. **El hunk definitivo es este.**
+
+**Requiere wire en `app.ts`:** `conversation.ts` **no se construye en `app.ts`** (se construye en `AgentService`), pero `this.service.tenantService` ya está expuesto (Fase 3, N05). **Cero cambios en `app.ts` para este hunk.**
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y los repasos de docs 02–06 se aplican íntegras. **Además, en esta fase:**
+
+- **`browser.ts` y `computer.ts` reciben `tenantLimiter` y `tenantService` como parámetros opcionales del constructor.** Eso rompe los call sites existentes **si los hay fuera de `app.ts`**. `Select-String -Pattern "new BrowserService|new ComputerService"` en todo el repo antes de escribir. Si solo está en `app.ts`, cero riesgo. Si está en tests (congelados), **el parámetro es opcional**, así que no rompe.
+- **`app.ts` requiere mover `const tenantLimiter` antes de `new BrowserService`.** Verificación pre obligatoria. **Si el orden actual es correcto, no se mueve.** Si no, se añade un hunk adicional para mover. **Riesgo alto de romper el archivo si el movimiento no es exacto.**
+- **`conversation.ts` recibe un cambio no trivial** (rate limit dentro del IIFE). Verificación pre: el bloque `return new Observable((subscriber) => {` debe aparecer 1×. Si no, el fichero cambió y se aborta el hunk 3 de F04.16a.
+- **`metrics/registry.ts` recibe `render(filter?)`.** Los call sites actuales (`globalMetrics.render()`) siguen funcionando sin filtro. **Cero riesgo.**
+- **`notification-prefs.ts` recibe `assertNotHardcodedTenantId`.** Importar desde `./engine/tenant.ts` (ruta relativa). **Verificar en Paso 0.6 con `Test-Path` que la ruta es correcta.**
+- **`computer-routes.ts` y `computer-tools.ts` reciben `assertNotHardcodedTenantId`.** Importar desde `./engine/tenant.ts`. **Verificar rutas en Paso 0.2/0.3.**
+- **`notifications-stream.ts` recibe `tenantService`.** El filtro compara el `tenantId` del item con el del request. Si el item no trae `tenantId` (legacy), se asume del tenant actual. **Cero riesgo de romper.**
+- **No `git add .`, no `--force`, no `commit` dentro del patchset.**
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @openmuse/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - `GET /metrics` (admin) devuelve métricas sin filtro, como antes.
+  - `GET /metrics?tenant=X` (admin) devuelve solo métricas con label `tenant=X`. Si el label no aparece, devuelve cabeceras vacías (o solo `# HELP`/`# TYPE`).
+  - `GET /api/notifications/stream` con auth de owner `A` recibe solo notificaciones del tenant A.
+  - `POST /api/computer/files/export` con auth de owner `A` en shared sin membership → 500 con `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1` (assert lanzado). En clone-por-cliente → 200 como antes.
+  - `POST /api/browsers` con auth de owner `A` consume un intento del `tenantLimiter`. Al agotar, 429 con `Retry-After`.
+  - Chat con `limit` bajo: al agotar, `RUN_ERROR` con mensaje de límite.
+- **La IA commitea con ficheros explícitos:**
+  ```powershell
+  git add apps/server/src/browser.ts
+  git add apps/server/src/computer.ts
+  git add apps/server/src/metrics/registry.ts
+  git add apps/server/src/metrics-exporter.ts
+  git add apps/server/src/middleware/request-logger.ts
+  git add apps/server/src/notification-prefs.ts
+  git add apps/server/src/notifications-stream.ts
+  git add apps/server/src/computer-routes.ts
+  git add apps/server/src/computer-tools.ts
+  git add apps/server/src/app.ts
+  git add apps/server/src/rag-routes.ts
+  git add apps/server/src/threads-routes.ts
+  git add apps/server/src/engine/conversation.ts
+  git commit -m "feat(multitenant): fase 6 — cuotas browser/computer + metrics tenant + notif tenant + F02.9b [TAKE_FOR_TENANT_BROWSER_V1, TAKE_FOR_TENANT_COMPUTER_V1, METRICS_TENANT_LABEL_V1, METRICS_EXPORTER_TENANT_V1, NOTIFICATION_PREFS_TENANT_V1, NOTIFICATIONS_STREAM_TENANT_V1, TENANT_ASSERT_NOT_DEFAULT_WIRED_V1, TAKE_FOR_TENANT_TENANTID_V1, TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1, TENANT_WIRE_NOTIFICATIONS_V1]"
+  git push origin feat/multitenancy-campaign
+  ```
+  **Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+- **Si el push falla por conflicto con `origin/main`, no forzar.**
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fases 0–5 incompletas → aborta todo.
+- F04.17-browser: constructor o `create`/`navigate`/`reopen` 0× → `browser.ts` cambió; abortar y anotar.
+- F04.17-computer: constructor o métodos 0× → `computer.ts` cambió; abortar y anotar.
+- F04.14-logger: `globalMetrics.*` 0× o `logInfo("http.request", ...)` 0× → `request-logger.ts` cambió; abortar y anotar.
+- F04.15: `render()` 0× → `registry.ts` cambió; abortar y anotar.
+- F04.22: `id: "default"` 0× → `notification-prefs.ts` cambió; abortar y anotar.
+- F02.9b: import `./engine/tenant.ts` inválido → ajustar; si no, abortar.
+- F04.23: `const isSupervisor` 0× o `const userId = c.req.header("x-user-id") ?? owner;` 0× → `notifications-stream.ts` cambió; abortar y anotar.
+- F04.17-wire: `const tenantLimiter` definido después de `new BrowserService` → hunk adicional para mover; si el movimiento rompe, revertir F04.17-wire y anotar.
+- F04.16a-refinamiento: bloque `return new Observable((subscriber) => {` 0× → `conversation.ts` cambió; abortar hunk 3 de F04.16a.
+- Typecheck rojo (por `RateLimiter` import, por `AppError` import, por `as unknown as` incompatible con `tsconfig` estricto) → ajustar tipo o revertir; anotar.
+- `worker.ts` reparado por Copilot → anotar, no tocar.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\07-aislamiento-multi-tenant\missed\_multitenant_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md`:**
+- F04.17-wire: orden de `tenantLimiter` en `app.ts`. Si se mueve, riesgo de romper el fichero. Se anota como "movido en Fase 6".
+- F04.14: métricas HTTP ya llevan label `tenant`. **Deuda: métricas de tareas/LLM (en `worker.ts` y `model-chain.ts`) no llevan label `tenant` todavía. Van a Fase 9 si hace falta.**
+- F04.15: `GET /metrics?tenant=X` requiere que las métricas tengan label `tenant`. **Hoy solo HTTP lo tiene. Las de tareas/LLM se añaden en Fase 9.**
+- F04.23: notificaciones legacy sin `tenantId` se asumen del tenant actual. **Deuda: backfill de `tenantId` en notificaciones existentes va a Fase 7 (migración `migrate-tenant-membership.ts`).**
+- F04.16a-refinamiento: el rate limit se hace dentro del IIFE async. **Deuda: en `run()`, cualquier trabajo síncrono previo al IIFE (por ejemplo, la apertura del turno del kernel) NO consume rate limit. Si se quiere, se puede añadir un pre-check síncrono adicional. Va a Fase 9 si hace falta.**
+
+---
+
+## 14. Checklist de cierre de la fase 6
+
+- [ ] Paso 0.1–0.10 ejecutados, salidas anotadas.
+- [ ] F04.17-browser aplicado (2-4 hunks, `TAKE_FOR_TENANT_BROWSER_V1` 1+).
+- [ ] F04.17-computer aplicado (2-5 hunks, `TAKE_FOR_TENANT_COMPUTER_V1` 1+).
+- [ ] F04.14-metrics aplicado (comentario, `METRICS_TENANT_LABEL_V1` 1×).
+- [ ] F04.14-logger aplicado (3 hunks, `METRICS_TENANT_LABEL_V1` 1×).
+- [ ] F04.15-exporter aplicado (2 hunks, `METRICS_EXPORTER_TENANT_V1` 1×).
+- [ ] F04.22-prefs aplicado (2 hunks, `NOTIFICATION_PREFS_TENANT_V1` 1×).
+- [ ] F02.9b aplicado (2 hunks, `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1` 3× total).
+- [ ] F04.23-stream aplicado (2 hunks, `NOTIFICATIONS_STREAM_TENANT_V1` 1×).
+- [ ] F04.17-wire + F04.22-wire + F04.23-wire aplicado (3+ hunks, `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` y `TENANT_WIRE_NOTIFICATIONS_V1` 1× cada uno).
+- [ ] F04.16a/b/c refinamiento aplicado (3 hunks, `TAKE_FOR_TENANT_TENANTID_V1` 3× total).
+- [ ] F04.27 sigue bloqueado.
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` sigue roto y sin tocar.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde.
+- [ ] Cline probó los 6 escenarios de §12.
+- [ ] `git add` explícito de los 13 ficheros.
+- [ ] `git commit -m "feat(multitenant): fase 6 — ..."`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 6 cerrada. Siguiente: Fase 7 (documento 08 — B8 membresías, admin-tenants, migración, F04.10b/c/d, F04.14b/c, F04.11)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/browser.ts` — constructor (Repomix original, literal, sin cortes):
+
+```typescript
+export class BrowserService {
+  constructor(
+    private readonly db: Store,
+    private readonly config: Config,
+    private readonly auth: Auth,
+    private readonly files: Files,
+  ) {}
+```
+
+**F04.17-browser lo cambia.**
+
+### A.2. `apps/server/src/computer.ts` — constructor (post-Fase 5, literal):
+
+```typescript
+export class ComputerService {
+  constructor(
+    readonly db: Store | TenantScopedStore,
+    readonly config: Config,
+    private readonly docker: DockerRunner = runDocker,
+    private readonly tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  ) {}
+```
+
+**F04.17-computer lo cambia añadiendo `limiter?`.**
+
+### A.3. `apps/server/src/metrics/registry.ts` — `Labels` (Repomix original, literal, sin cortes):
+
+```typescript
+type Labels = Record<string, string>;
+```
+
+**F04.14-metrics lo comenta, no lo cambia.**
+
+### A.4. `apps/server/src/metrics/registry.ts` — `render()` (Repomix original, literal, sin cortes):
+
+```typescript
+  render(): string {
+    const lines: string[] = [];
+    for (const c of this.counters.values()) {
+      lines.push(`# HELP ${c.name} ${c.help}`);
+      lines.push(`# TYPE ${c.name} counter`);
+      for (const s of c.samples.values()) {
+        const lbl = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        lines.push(`${c.name}${lbl ? `{${lbl}}` : ""} ${s.value}`);
+      }
+    }
+    for (const g of this.gauges.values()) {
+      lines.push(`# HELP ${g.name} ${g.help}`);
+      lines.push(`# TYPE ${g.name} gauge`);
+      for (const s of g.samples.values()) {
+        const lbl = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        lines.push(`${g.name}${lbl ? `{${lbl}}` : ""} ${s.value}`);
+      }
+    }
+    for (const h of this.histograms.values()) {
+      lines.push(`# HELP ${h.name} ${h.help}`);
+      lines.push(`# TYPE ${h.name} histogram`);
+      for (const s of h.samples.values()) {
+        const baseLabels = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        let cumulative = 0;
+        for (let i = 0; i < h.buckets.length; i += 1) {
+          cumulative += s.counts[i];
+          const le = h.buckets[i];
+          const lbl = baseLabels ? `${baseLabels},le="${le}"` : `le="${le}"`;
+          lines.push(`${h.name}_bucket{${lbl}} ${cumulative}`);
+        }
+        cumulative += s.counts[h.buckets.length];
+        const infLbl = baseLabels ? `${baseLabels},le="+Inf"` : `le="+Inf"`;
+        lines.push(`${h.name}_bucket{${infLbl}} ${cumulative}`);
+        const suffix = baseLabels ? `{${baseLabels}}` : "";
+        lines.push(`${h.name}_sum${suffix} ${s.sum}`);
+        lines.push(`${h.name}_count${suffix} ${s.count}`);
+      }
+    }
+    return lines.join("\n") + "\n";
+  }
+```
+
+**F04.15 lo cambia a `render(filter?: { tenant?: string })`.**
+
+### A.5. `apps/server/src/metrics-exporter.ts` — `GET /` (Repomix original, literal, sin cortes):
+
+```typescript
+  app.get("/", async (c) => {
+    const token = c.req.header("x-metrics-token");
+    const expected = process.env.METRICS_TOKEN?.trim();
+    const owner = c.get("owner");
+    const user = owner ? await users.getById(owner).catch(() => null) : null;
+    const authorized = expected ? token === expected : user?.role === "admin";
+    if (!authorized) throw new AppError("Unauthorized", 401);
+
+    // METRICS_WORKER_GAUGE_V1 â€” el worker no cambia en runtime, es un gauge
+    // de estado que se setea al vuelo (no escanea DB).
+    // WORKER_METRICS_GAUGE_V1
+    globalMetrics.set("openmuse_worker_running", service.worker.running ? 1 : 0);
+
+    // METRICS_P99_EXPOSE_V1 - expone p99 HTTP derivado del histograma.
+    // METRICS_HTTP_P99_GAUGE_V1
+    const p99 = globalMetrics.quantile("openmuse_http_request_duration_ms", 0.99);
+    if (p99 !== undefined) globalMetrics.set("openmuse_http_latency_p99_ms", p99);
+
+    c.header("Content-Type", "text/plain; version=0.0.4; charset=utf-8");
+    return c.body(globalMetrics.render());
+  });
+```
+
+**F04.15 añade el query param `tenant`.**
+
+### A.6. `apps/server/src/notification-prefs.ts` — `notificationPrefsRoutes` completo (Repomix original, literal, sin cortes):
+
+```typescript
+// NOTIFICATION_PREFS_V1 - preferencias por usuario.
+
+import { Hono } from "hono";
+import { z } from "zod";
+import type { Store } from "./db.ts";
+
+const prefsSchema = z.object({
+  disabled: z.array(z.string().max(80)).max(50).default([]),
+});
+
+export function notificationPrefsRoutes(db: Store) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+
+  app.get("/prefs", async (c) => {
+    const owner = c.get("owner");
+    const prefs = await db.get<{ disabled: string[] }>(owner, "notification-prefs", "default");
+    return c.json(prefs ?? { disabled: [] });
+  });
+
+  app.put("/prefs", async (c) => {
+    const owner = c.get("owner");
+    const body = prefsSchema.parse(await c.req.json());
+    await db.put(owner, "notification-prefs", { id: "default", ...body });
+    return c.json({ ok: true, prefs: body });
+  });
+
+  return app;
+}
+```
+
+**F04.22 lo cambia.**
+
+### A.7. `apps/server/src/notifications-stream.ts` — `notificationsStreamRoutes` inicio (Repomix original, literal, sin cortes):
+
+```typescript
+export function notificationsStreamRoutes(service: AgentService) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+
+  // NOTIFICATIONS_SSE_CONN_LIMIT_V1
+  app.get("/stream", async (c) => {
+    const owner = c.get("owner");
+    // NOTIF_USER_FILTER_V1 â€” filtrar por userId para no emitir notificaciones
+    // dirigidas a otro usuario. Ver: docs/audits/04-.../miniaudit.md.
+    const userId = c.req.header("x-user-id") ?? owner;
+    c.header("Content-Type", "text/event-stream");
+    c.header("Cache-Control", "no-cache");
+    c.header("Connection", "keep-alive");
+```
+
+**F04.23 añade el filtro por tenant.**
+
+### A.8. `apps/server/src/app.ts` — `new BrowserService`, `new ComputerService` (Repomix original + Fases 3–5, literal, sin cortes):
+
+```typescript
+  const browser = new BrowserService(db, config, auth, files);
+```
+
+```typescript
+  const computer = new ComputerService(db, config, options.docker, tenantService);
+```
+
+**F04.17-wire los cambia. `tenantLimiter` se define en N07-common, probablemente después. Se verifica orden en Paso 0.8.**
+
+### A.9. `apps/server/src/app.ts` — `notificationsStreamRoutes` y `notificationPrefsRoutes` calls (Repomix original, literal, sin cortes):
+
+```typescript
+  {
+    const { notificationsStreamRoutes } = await import("./notifications-stream.ts");
+    app.route("/api/notifications", notificationsStreamRoutes(agent));
+  }
+```
+
+```typescript
+  {
+    const { notificationPrefsRoutes } = await import("./notification-prefs.ts");
+    app.route("/api/notifications", notificationPrefsRoutes(db));
+  }
+```
+
+**F04.22-wire y F04.23-wire los cambian.**
+
+### A.10. `apps/server/src/engine/tenant.ts` — `assertNotHardcodedTenantId` (Repomix original, literal, sin cortes):
+
+```typescript
+export function assertNotHardcodedTenantId(value: string, where: string): void {
+  if (value === DEFAULT_TENANT_ID) {
+    throw new Error(
+      `TENANT_ID_HARDCODED_V2: "${DEFAULT_TENANT_ID}" hardcodeado en ${where}. ` +
+        "Usa TenantService.tenantIdFor(owner) en su lugar.",
+    );
+  }
+}
+```
+
+**F02.9b lo cablea. Ojo: lanza SIEMPRE que `value === "default"`, sin comprobar `MULTI_TENANT_SHARED`. El guard `if (process.env.MULTI_TENANT_SHARED === "true")` está en el call site.**
+
+### A.11. `apps/server/src/engine/conversation.ts` — bloque `return new Observable((subscriber) => {` (Repomix original + Fase 3, literal, sin cortes):
+
+```typescript
+    return new Observable((subscriber) => {
+      let run: { events: Observable<BaseEvent>; abort: () => void } | undefined;
+      let subscription: { unsubscribe: () => void } | undefined;
+      let cancelled = false;
+
+      void (async () => {
+        let ragContext = "";
+```
+
+**F04.16a-refinamiento inserta el rate limit dentro del IIFE.**
+
+### A.12. `apps/server/src/rag-routes.ts` — `/search` (post-Fase 3, literal, sin cortes):
+
+```typescript
+  app.get("/search", async (c) => {
+    const owner = c.get("owner");
+    const tenantIdForRate = owner; // deuda Fase 6: usar tenantService cuando esté cableado aquí
+    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "rag.search");
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      c.header("Retry-After", String(retrySec));
+      throw new AppError("Límite de búsquedas alcanzado. Prueba en " + retrySec + "s.", 429);
+    }
+    const query = z.string().min(1).max(1000).parse(c.req.query("q"));
+    const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
+    const hits = await rag.search(owner, query, limit);
+    return c.json({ hits });
+  });
+```
+
+**F04.16b-refinamiento cambia `tenantIdForRate = owner` por `tenantIdForRate = tenantService.tenantIdFor(owner)`.**
+
+### A.13. `apps/server/src/threads-routes.ts` — `POST /` (post-Fase 3, literal, sin cortes):
+
+```typescript
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    const tenantIdForRate = owner; // deuda Fase 6: usar tenantService cuando esté cableado aquí
+    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "threads.create");
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      c.header("Retry-After", String(retrySec));
+      throw new AppError("Límite de conversaciones alcanzado. Prueba en " + retrySec + "s.", 429);
+    }
+    ...
+```
+
+**F04.16c-refinamiento cambia `tenantIdForRate = owner` por `tenantIdForRate = tenantService.tenantIdFor(owner)`.**
+
+### A.14. `apps/server/src/engine/worker.ts` — sigue roto (Repomix original, literal, sin cortes):
+
+```typescript
+  get running() {
+    return Boolean(this.timer);
+  }
+
+  /** WORKER_ACTIVE_SIZE_V1
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1
+  getMaxActive(): number {
+    return this.maxActive;
+  }
+  start = () => {
+```
+
+**Confirmado. No se toca.**
+
+---
+
+## FIN DEL DOCUMENTO 07
+
+**Fase 6 preparada para ejecución. 10 patchsets (~23 hunks), 13 ficheros tocados. Cambios principales: `browser.ts` y `computer.ts` con `tenantLimiter` + `tenantService`; `metrics/registry.ts` con `render(filter?)`; `request-logger.ts` con labels `tenant` en counters/histogram; `notification-prefs.ts` con `tenantId` real; `computer-routes.ts`/`computer-tools.ts` con `assertNotHardcodedTenantId` (F02.9b); `notifications-stream.ts` con filtro por tenant; `conversation.ts`/`rag-routes.ts`/`threads-routes.ts` con refinamiento de `tenantIdFor(owner)`. F04.27 bloqueado hasta `backup-tenant.ts`. F02.10 congelado. Typecheck y test los corre Cline, más 6 pruebas de comportamiento. Commit + push al final. Los misses van a `_multitenant_pendientes.md`, no los escribe la IA. Anexo literal de 14 bloques de código real, sin resúmenes ni cortes. Deudas anotadas en `-pendientes.md` para Fases 7 y 9.**
+
+**Siguiente: documento 08 — Campaña 1 / Fase 7 — B8 membresías (`tenant_members`, `tenant_configs`, `tenant_invites`, `tenant_audit_events`), `DatabaseTenantResolver` cableado, `DatabaseTenantConfigResolver` inyectado, `/api/auth/switch-tenant`, `setMembership` con evento, `migrate-tenant-scope.ts` transaccional, `migrate-tenant-membership.ts` verificado, N02/N03 refinos, F04.12 (`admin-tenants.ts` CRUD), y F04.27 si `backup-tenant.ts` está disponible. Di "sigue".**

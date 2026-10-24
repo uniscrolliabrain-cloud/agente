@@ -1,3 +1,0 @@
-lineas=13
-
---- fallos ---

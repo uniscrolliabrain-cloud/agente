@@ -1,0 +1,23 @@
+node.exe : $ tsx scripts/audits/contracts.ts
+En C:\nvm4w\nodejs\pnpm.ps1: 16 Carácter: 5
++     & "$basedir/node$exe"  
+"$basedir/node_modules/corepack/dist/pnpm. 
+...
++     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    ($ tsx scripts/audits/contracts.ts:Str  
+  ing) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+[audit:contracts] Recorriendo dominios...
+[audit:contracts] Contratos encontrados: 218
+[audit:contracts] Cargando implementaciones...
+[audit:contracts] Ficheros de implementacion: 255
+[audit:contracts] Buscando implementaciones...
+[audit:contracts] Informe escrito en docs/AUDIT_CONTRACTS.md
+[audit:contracts] OK: 80   PENDING: 14   HUERFANOS: 124
+[audit:contracts] Hay 124 contratos sin 
+implementar y sin marca PENDING.
+[ELIFECYCLE] Command failed with exit code 1.

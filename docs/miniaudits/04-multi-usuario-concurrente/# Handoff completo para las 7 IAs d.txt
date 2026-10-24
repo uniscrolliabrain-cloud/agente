@@ -1,0 +1,1042 @@
+# Handoff completo para las 7 IAs de la Campaña 2 (Multiusuario)
+
+Cada handoff es **autocontenido**. Una IA que reciba solo su bloque + el repo en disco + el protocolo TypeScript v2 puede aplicar su fase sin leer el resto del chat ni el repo entero. Cada bloque declara: contexto mínimo, ficheros a leer, ficheros a inspeccionar con `Select-String`, ficheros a no tocar, patchsets, verificación, misses esperados y criterio de cierre.
+
+**Regla común a las 7 IAs:** la fuente de verdad es el disco. El Repomix y el maestro son referencia histórica. Si un ancla no coincide exactamente 1×, se aborta el patchset y se anota el miss. No se declara `PASS` sin haber ejecutado y visto el output.
+
+---
+
+## HANDOFF IA-1 — Fase 0 (Reconocimiento y contrato)
+
+**Rol:** IA ejecutora de F0. Docs-only. No toca código de producto.
+**Depende de:** Campaña 1 cerrada. Rama `feat/multitenancy-campaign`.
+**Bloquea a:** F1.
+
+### Contexto mínimo
+
+F0 no escribe código. Escribe 6 documentos en `docs/miniaudits/04-multi-usuario-concurrente/` que fijan el contrato de la Campaña 2: 5 garantías (G1–G5), 13 invariantes (I1–I13), 17 tests (14 obligatorios + 3 condicionales), 7 fases (F0–F7). El contrato está en `specs-multiuser.txt`. F0 solo lo materializa en docs.
+
+### Ficheros a leer completos
+
+- `apps/server/src/users.ts`
+- `apps/server/src/auth.ts`
+- `apps/server/src/kernel/context/kernel-context.ts`
+- `packages/domain/src/execution-context.ts`
+- `apps/server/src/engine/orchestrator/orchestrator.ts`
+- `apps/server/src/engine/worker.ts`
+- `apps/server/src/middleware/user-header.ts`
+- `apps/server/src/engine/tenant.ts`
+- `package.json`
+- `apps/server/package.json`
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `apps/server/src/engine/policy/engine.ts` — `Select-String -Pattern "class PolicyEngine|async can\("`
+- `apps/server/src/engine/state-machines.ts` — `Select-String -Pattern "class StateMachine|transition"`
+- `packages/domain/src/agent.ts` — `Select-String -Pattern "interface AgentRole|interface AgentTask|interface Monitor"`
+- `packages/domain/src/agent-persona.ts` — `Select-String -Pattern "reportsTo|peers"`
+
+### Ficheros a NO tocar
+
+Todo el código de producto. F0 es docs-only. No se toca `db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`, `backup-tenant.ts`, `scripts/audits/*`, `tests/tenant-http-e2e.test.ts`, `apps/web/src/**`, `apps/worker/src/**`, `apps/computer/src/**`, `clientes/**`, `docs/audits/**`.
+
+### Patchsets (6 CREATE)
+
+| # | Fichero | Marca |
+|---|---|---|
+| D1 | `docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md` | `ESTADO_REAL_MULTIUSUARIO_V1` |
+| D1 | `docs/miniaudits/04-multi-usuario-concurrente/ID-MAP.md` | `ID_MAP_MULTIUSUARIO_V1` |
+| D2 | `docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md` | `CIERRE_MVP_MULTIUSUARIO_V1` |
+| D2 | `docs/miniaudits/04-multi-usuario-concurrente/fuera-de-mvp.md` | `FUERA_DE_MVP_MULTIUSUARIO_V1` |
+| D3 | `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md` | `PENDIENTES_MULTIUSUARIO_V1` |
+| D3 | `docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md` | `PLAN_CAMPANA_2_V1` |
+
+### Verificación previa (Paso 0)
+
+1. `git branch --show-current` = `feat/multitenancy-campaign`.
+2. Campaña 1 cerrada: 5 marcas en `db-rls.ts` (`TENANT_RLS_TX_V1`), `index.ts` (`RLS_REQUIRED_IN_SHARED_V1`), `kernel/audit/store-store.ts` (`AUDIT_STORE_TENANT_V1`), `app.ts` (`RESPONSE_TENANT_HEADER_V1`), `middleware/request-logger.ts` (`LOG_CONTEXT_TENANT_V1`).
+3. `Select-String -Pattern "export async function createApp"` en `app.ts` 1×.
+4. Typecheck: `pnpm --filter "@openmuse/server" exec tsc --noEmit`. Registrar el número de errores. Si hay errores preexistentes (`worker.ts`), anotar. Si hay errores nuevos, abortar F0.
+
+### Verificación post (por documento)
+
+- `Test-Path` true.
+- `bytes > 500`.
+- `Select-String -Pattern "<marca>"` 1×.
+
+### Commit y push
+
+```powershell
+git add docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md
+git add docs/miniaudits/04-multi-usuario-concurrente/ID-MAP.md
+git add docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md
+git add docs/miniaudits/04-multi-usuario-concurrente/fuera-de-mvp.md
+git add docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md
+git add docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md
+git commit -m "docs(multiusuario): fase 0 - contrato v5"
+git push origin feat/multitenancy-campaign
+```
+
+### Misses esperados
+
+- Campaña 1 no cerrada (falta alguna marca) → aborta todo.
+- Typecheck rojo nuevo → abortar F0.
+- Typecheck rojo preexistente (`worker.ts`) → anotar, no abortar.
+
+### Criterio de cierre
+
+- 6 docs con marca 1× y `bytes > 500`.
+- Typecheck registrado.
+- Commit + push.
+- Confirmación: "F0 cerrada. Siguiente: F1."
+
+---
+
+## HANDOFF IA-2 — Fase 1 (Identidad y actor)
+
+**Rol:** IA ejecutora de F1. 15 patchsets. Toca dominio y server.
+**Depende de:** F0 `PASS`.
+**Bloquea a:** F2.
+
+### Contexto mínimo
+
+F1 introduce identidad desde JWT (Supabase), `Actor` como vista derivada, `actorId` en kernel/worker/audit, `executingActorId` vs `requestingActorId`, `AgentGovernance` con `Actor`, `x-user-id` deprecado. Sin JIT provisioning. Sin tocar permisos (F2), delegación (F3), consistencia (F4), coordinación (F5), trazabilidad (F6).
+
+### Ficheros a leer completos
+
+- `apps/server/src/users.ts`
+- `apps/server/src/auth.ts`
+- `apps/server/src/kernel/context/kernel-context.ts`
+- `packages/domain/src/execution-context.ts`
+- `packages/domain/src/agent.ts`
+- `packages/domain/src/agent-persona.ts`
+- `apps/server/src/engine/orchestrator/orchestrator.ts`
+- `apps/server/src/engine/worker.ts`
+- `apps/server/src/engine/agents/governance.ts`
+- `apps/server/src/middleware/user-header.ts`
+- `apps/server/src/config.ts`
+- `apps/server/src/app.ts`
+- `apps/server/src/kernel/kernel.ts`
+- `docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md`
+- `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md`
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `apps/server/src/db.ts` — `compareAndSwap`, `insertIfAbsent`, `transaction`.
+- `apps/server/src/engine/tenant.ts` — `tenantIdFor`, `setMembership`.
+- `apps/server/src/engine/policy/engine.ts` — `PolicyEngine.can(owner, role, resource, action)`.
+- `apps/server/src/kernel/audit/store-store.ts` — `append`, `auditEntrySchema`.
+- `apps/server/src/kernel/audit/entry.ts` — `actor: { kind, id }`.
+- `apps/server/package.json` — `Select-String -Pattern "hono|jwk|supabase|jose"`.
+
+### Ficheros a NO tocar
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts` (solo READ). `presence.ts`, `edit-lock.ts` (F5). `notifications-stream.ts` (F5). `engine/assignments/` (F3). `engine/authz/` (F2). `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6).
+
+### Patchsets (15)
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F1.0 | `packages/domain/src/actor.ts` | CREATE | `ACTOR_MODEL_V1` |
+| F1.0b | `packages/domain/src/jwt.ts` | CREATE | `JWT_PAYLOAD_V1` |
+| F1.1 | `apps/server/src/users.ts` | MODIFY (3 hunks) | `USER_AUTH_PROVIDER_ID_V1`, `USER_SERVICE_BY_AUTH_PROVIDER_ID_V1` |
+| F1.2 | `apps/server/src/engine/actors/service.ts` | CREATE | `ACTOR_SERVICE_RESOLVE_V1` |
+| F1.3 | `apps/server/src/engine/auth/jwt.ts` | CREATE | `VERIFY_JWT_MIDDLEWARE_V1` |
+| F1.4 | `apps/server/src/app.ts` | MODIFY (3 hunks) | `APP_JWT_WIRE_V1` |
+| F1.5 | `apps/server/src/config.ts` | MODIFY | `CONFIG_AUTH_PROVIDER_V1` |
+| F1.6 | `apps/server/src/kernel/context/kernel-context.ts` | MODIFY (2 hunks) | `KERNEL_CONTEXT_ACTOR_V1` |
+| F1.6b | `apps/server/src/kernel/kernel.ts` | MODIFY (3 hunks) | `KERNEL_ACTOR_PROPAGATE_V1` |
+| F1.7 | `packages/domain/src/execution-context.ts` | MODIFY | `EXECUTION_CONTEXT_ACTOR_V1` |
+| F1.7b | `apps/server/src/engine/orchestrator/orchestrator.ts` | MODIFY | `ORCHESTRATOR_ACTOR_PROPAGATE_V1` |
+| F1.8 | `apps/server/src/engine/worker.ts` | MODIFY (2 hunks) | `WORKER_REQUESTING_ACTOR_V1` |
+| F1.9 | `apps/server/src/engine/agents/governance.ts` | MODIFY | `AGENT_GOVERNANCE_ACTOR_V1` |
+| F1.10 | `apps/server/src/middleware/user-header.ts` | MODIFY | `USER_HEADER_DEPRECATED_V1` |
+| F1.11 | `packages/domain/src/index.ts` | MODIFY | `DOMAIN_INDEX_ACTOR_V1` |
+
+### Correcciones del revisor aplicadas en el diseño
+
+- **B1:** `AgentActor.id = runtimeId`, no `roleId`.
+- **B2:** `authProviderId` único por índice atómico (`db.insertIfAbsent`), no check-then-act.
+- **B3:** JWT con verificación criptográfica completa (firma, `iss`, `aud`, `exp`, `nbf`, JWKS con rotación, clock skew 30s, JWKS inaccesible → 503).
+- **B4:** `PolicyEngine.can` NO recibe `owner = actor.id`; el PDP de F2 lo envuelve.
+- **B5:** fallback del worker a `owner` marcado como compatibilidad heredada, no identidad demostrada.
+
+### Verificación previa (Paso 0)
+
+1. Rama correcta.
+2. F0 cerrada: 4 marcas (`ESTADO_REAL_MULTIUSUARIO_V1`, `ID_MAP_MULTIUSUARIO_V1`, `CIERRE_MVP_MULTIUSUARIO_V1`, `PLAN_CAMPANA_2_V1`).
+3. `Select-String` en los ficheros del §5 del handoff.
+4. Typecheck: registrar número de errores.
+
+### Verificación post (por patchset)
+
+- CREATE: `Test-Path` true, `bytes > 500` (o > 200 para schemas), typecheck verde, marca 1×.
+- MODIFY: `Assert-MatchCount` 1× del `$old`, marca 1×, `$old` ya no está, `$new` está, `git diff -- <archivo>` es exactamente el cambio esperado.
+
+### Tests de comportamiento (17 pruebas que Cline ejecuta)
+
+1. `ActorService.resolve` con `sub` vinculado → `HumanActor`.
+2. `ActorService.resolve` con `sub` no vinculado → 401.
+3. `ActorService.resolve` con `User.active = false` → 403.
+4. `verifyJwtMiddleware` con JWT válido → `c.set("jwtPayload")`.
+5. `verifyJwtMiddleware` con JWT inválido → 401.
+6. `authMiddleware` con `c.set("actor")` y `c.set("ctx")`.
+7. `Kernel.openTurn` con `ctx.actorId` → `audit.append` con `actor.id = ctx.actorId`.
+8. `Kernel.appendThought` con `ctx.actorId` → `provenance.actorId`.
+9. `Kernel.closeTurn` con `ctx.actorId` → `audit.append`.
+10. `worker` `run-events` con `actorId` y `requestingActorId`.
+11. `worker` `settled` con `actorId` y `requestingActorId`.
+12. `AgentGovernance.canExecuteTool(actor, tool)` con `HumanActor` y `AgentActor`.
+13. `AgentGovernance.canExecuteAction(actor, action, policyAction)`.
+14. `x-user-id` que no coincide con `actor.id` → `X-User-Id-Mismatch: 1`.
+15. `ExecutionContext.actorId` propagado en `orchestrator.runGoal`.
+16. `UserService.create` con `authProviderId` duplicado → 409.
+17. `UserService.getByAuthProviderId` devuelve el `User` correcto.
+
+### Commit y push
+
+```powershell
+git add packages/domain/src/actor.ts
+git add packages/domain/src/jwt.ts
+git add packages/domain/src/execution-context.ts
+git add packages/domain/src/index.ts
+git add apps/server/src/engine/actors/service.ts
+git add apps/server/src/engine/auth/jwt.ts
+git add apps/server/src/users.ts
+git add apps/server/src/app.ts
+git add apps/server/src/config.ts
+git add apps/server/src/kernel/context/kernel-context.ts
+git add apps/server/src/kernel/kernel.ts
+git add apps/server/src/engine/worker.ts
+git add apps/server/src/engine/agents/governance.ts
+git add apps/server/src/middleware/user-header.ts
+git add apps/server/src/engine/orchestrator/orchestrator.ts
+git commit -m "feat(multiusuario): fase 1 - identidad y actor [ACTOR_MODEL_V1, JWT_PAYLOAD_V1, USER_AUTH_PROVIDER_ID_V1, USER_SERVICE_BY_AUTH_PROVIDER_ID_V1, ACTOR_SERVICE_RESOLVE_V1, VERIFY_JWT_MIDDLEWARE_V1, APP_JWT_WIRE_V1, CONFIG_AUTH_PROVIDER_V1, KERNEL_CONTEXT_ACTOR_V1, KERNEL_ACTOR_PROPAGATE_V1, EXECUTION_CONTEXT_ACTOR_V1, ORCHESTRATOR_ACTOR_PROPAGATE_V1, WORKER_REQUESTING_ACTOR_V1, AGENT_GOVERNANCE_ACTOR_V1, USER_HEADER_DEPRECATED_V1, DOMAIN_INDEX_ACTOR_V1]"
+git push origin feat/multitenancy-campaign
+```
+
+### Misses esperados
+
+- F0 incompleta → aborta.
+- `hono/jwk` no disponible → F1.3 usa `jose`. Anotar.
+- `userSchema` 0× → adaptar F1.1.
+- `kernelContextSchema` 0× → adaptar F1.6.
+- `executionContextSchema` 0× → adaptar F1.7.
+- `worker` sin `assignedTo`/`assignedBy` → F1.8 añade fallback a `owner`.
+- Typecheck rojo por `ExecutionContext.actorId` → ajustar tipos, revertir F1.7 del fichero rojo, anotar.
+- Typecheck rojo por `KernelContext.actorId` → ajustar `systemContext`, anotar.
+
+### Criterio de cierre
+
+- 15 patchsets con su marca 1×.
+- Typecheck verde (con filtro `worker.ts` si hay error preexistente).
+- 17 pruebas de comportamiento en verde.
+- Commit + push.
+- Confirmación: "F1 cerrada. Siguiente: F2."
+
+---
+
+## HANDOFF IA-3 — Fase 2 (Acceso seguro)
+
+**Rol:** IA ejecutora de F2. 32 patchsets. Toca dominio, authz engine y 14 ficheros de handlers.
+**Depende de:** F1 `PASS`.
+**Bloquea a:** F3.
+
+### Contexto mínimo
+
+F2 introduce `Policy` (con `effect`), `FieldClassification` (por campo, no por registro), `PolicyDecisionPoint` (fail-closed, deny-overrides, aplica tenant, no construye `role = { id }`), `PolicyEnforcementPoint`, `FieldFilter`, `withRead`, `withWrite`, `policies.ts`. Clasificación por campo en `User`, `AgentRole`, `AgentTask`, `AgentMemory`, `BusinessEntity`, `SOP`. `withRead`/`withWrite` en 14 ficheros de handlers + worker + acciones internas + streams + rutas alternativas. `x-user-id` eliminado del wire. `audit-entries` con `field`/`classification`/`allowed`. `AgentGovernance` sobre PDP. `Config.authzEnabled`/`fieldClassificationEnabled`/`policyCacheTtlMs`.
+
+### Ficheros a leer completos
+
+- `apps/server/src/users.ts` (F1)
+- `apps/server/src/auth.ts`
+- `apps/server/src/kernel/context/kernel-context.ts` (F1)
+- `apps/server/src/app.ts` (F1)
+- `apps/server/src/engine/worker.ts` (F1)
+- `apps/server/src/engine/agents/governance.ts` (F1)
+- `apps/server/src/middleware/user-header.ts` (F1)
+- `apps/server/src/config.ts` (F1)
+- `apps/server/src/engine/routes.ts`
+- `apps/server/src/threads-routes.ts`
+- `apps/server/src/projects-routes.ts`
+- `apps/server/src/rag-routes.ts`
+- `apps/server/src/admin-routes.ts`
+- `apps/server/src/admin-tenants.ts`
+- `apps/server/src/skills/routes.ts`
+- `apps/server/src/skills/sop-routes.ts`
+- `apps/server/src/computer-routes.ts`
+- `apps/server/src/computer-tools.ts`
+- `apps/server/src/notification-prefs.ts`
+- `apps/server/src/notifications-stream.ts`
+- `apps/server/src/engine/agents/personas/routes.ts`
+- `apps/server/src/actions.ts`
+- `packages/domain/src/agent.ts`
+- `packages/domain/src/agent-persona.ts`
+- `packages/domain/src/sop.ts`
+- `packages/domain/src/business.ts`
+- `packages/domain/src/execution-context.ts` (F1)
+- `packages/domain/src/actor.ts` (F1)
+- `packages/domain/src/jwt.ts` (F1)
+- `packages/domain/src/index.ts` (F1)
+- `apps/server/src/kernel/audit/store-store.ts`
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `apps/server/src/engine/policy/engine.ts` — `class PolicyEngine`, `async can(`.
+- `apps/server/src/engine/agents/personas/bootstrap.ts` — `register`, `AgentPersona`.
+- `apps/server/src/kernel/audit/store-store.ts` — `auditEntrySchema`, `append`, `payload`.
+
+### Ficheros a NO tocar
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`. Los handlers van en F2-routes pero el fichero es el mismo. `engine/assignments/` (F3). `engine/presence.ts`, `edit-lock.ts` (F5). `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6).
+
+### Patchsets (32: 8 CREATE + 24 MODIFY)
+
+**F2-core (17 patchsets: 8 CREATE + 9 MODIFY)**
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F2.1 | `packages/domain/src/policy.ts` | CREATE | `POLICY_MODEL_V1` |
+| F2.2 | `packages/domain/src/classification.ts` | CREATE | `FIELD_CLASSIFICATION_V1` |
+| F2.3 | `apps/server/src/engine/authz/pdp.ts` | CREATE | `POLICY_DECISION_POINT_V1` |
+| F2.4 | `apps/server/src/engine/authz/pep.ts` | CREATE | `POLICY_ENFORCEMENT_POINT_V1` |
+| F2.5 | `apps/server/src/engine/authz/field-filter.ts` | CREATE | `FIELD_FILTER_V1` |
+| F2.6 | `apps/server/src/engine/authz/with-read.ts` | CREATE | `WITH_READ_V1` |
+| F2.7 | `apps/server/src/engine/authz/with-write.ts` | CREATE | `WITH_WRITE_V1` |
+| F2.8 | `apps/server/src/engine/authz/policies.ts` | CREATE | `POLICIES_DEFAULT_V1` |
+| F2.9 | `packages/domain/src/agent.ts` | MODIFY (3 hunks) | `AGENT_TASK_CLASSIFICATION_V1`, `AGENT_MEMORY_CLASSIFICATION_V1`, `AGENT_ROLE_CLASSIFICATION_V1` |
+| F2.9b | `packages/domain/src/business.ts` | MODIFY | `BUSINESS_ENTITY_CLASSIFICATION_V1` |
+| F2.9c | `packages/domain/src/sop.ts` | MODIFY | `SOP_CLASSIFICATION_V1` |
+| F2.9d | `packages/domain/src/index.ts` | MODIFY | `DOMAIN_INDEX_POLICY_V1` |
+| F2.10 | `apps/server/src/users.ts` | MODIFY | `USER_CLASSIFICATION_V1` |
+| F2.11 | `apps/server/src/engine/agents/governance.ts` | MODIFY | `AGENT_GOVERNANCE_PDP_V1` |
+| F2.12 | `apps/server/src/app.ts` | MODIFY (2 hunks) | `APP_AUTHZ_WIRE_V1` |
+| F2.13 | `apps/server/src/middleware/user-header.ts` | MODIFY | `USER_HEADER_REMOVED_V1` |
+| F2.14 | `apps/server/src/config.ts` | MODIFY | `CONFIG_AUTHZ_V1` |
+
+**F2-routes (15 patchsets: 15 MODIFY)**
+
+| # | Fichero | Marca |
+|---|---|---|
+| F2.15 | `apps/server/src/kernel/audit/store-store.ts` | `AUDIT_STORE_CLASSIFICATION_V1` |
+| F2.16 | `apps/server/src/engine/worker.ts` | `WORKER_WITH_WRITE_V1` |
+| F2.17 | `apps/server/src/actions.ts` | `ACTION_SERVICE_WITH_WRITE_V1` |
+| F2.18 | `apps/server/src/threads-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18b | `apps/server/src/projects-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18c | `apps/server/src/rag-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18d | `apps/server/src/admin-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18e | `apps/server/src/admin-tenants.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18f | `apps/server/src/skills/routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18g | `apps/server/src/skills/sop-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18h | `apps/server/src/computer-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18i | `apps/server/src/computer-tools.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18j | `apps/server/src/notification-prefs.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18k | `apps/server/src/notifications-stream.ts` | `WITH_READ_WIRE_V1` |
+| F2.18l | `apps/server/src/engine/routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+| F2.18m | `apps/server/src/engine/agents/personas/routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` |
+
+### Correcciones del revisor aplicadas
+
+- **A:** PDP no construye `role = { id }`. Resuelve `AgentRole` real o deniega.
+- **B:** PDP aplica tenant.
+- **C:** `Policy` tiene `effect: "allow" | "deny"`.
+- **D:** `fieldClassification` por campo, no por registro. Controlado por servidor, no por cliente.
+- **E:** `PolicyAction` incluye `execute`.
+- `withRead`/`withWrite` separan `actor.id`, `owner`, `tenantId`. `FieldFilter` en lectores, escritores, serializadores, listados, búsquedas, agregaciones. `authzEnabled`/`fieldClassificationEnabled` no son pass-through en producción.
+
+### Verificación previa
+
+1. Rama correcta.
+2. F1 cerrada: 9 marcas.
+3. `Select-String` en los ficheros del §5.
+4. Typecheck: registrar número de errores.
+
+### Verificación post (por patchset)
+
+Igual que F1: CREATE con `Test-Path`/`bytes`/marca; MODIFY con `Assert-MatchCount`/marca/`git diff`.
+
+### Tests de comportamiento (12 pruebas)
+
+1. `PDP.can` con `allow`/`deny` (fail-closed, deny-overrides).
+2. `FieldFilter` con `User.setup: confidential` → `[REDACTED]` para otro actor.
+3. `withRead` con record de otro actor → 403.
+4. `withWrite` con record de otro actor → 403.
+5. `authzMiddleware` con `POST` sin permisos → 403.
+6. `AgentGovernance.canExecuteTool(actor, tool)` con `HumanActor`/`AgentActor`.
+7. `AgentGovernance.canExecuteAction(actor, action, policyAction)`.
+8. `x-user-id` ya no se monta (o solo si `DEBUG_USER_HEADER=true`).
+9. `audit-entries` con `field`/`classification`/`allowed` cuando el read es denegado.
+10. `worker` `withWrite` en `tasks`/`run-events`/`activity`.
+11. `ActionService.decide` con PDP.
+12. PDP con tenant A no permite recurso de tenant B.
+
+### Commit y push
+
+```powershell
+git add packages/domain/src/policy.ts
+git add packages/domain/src/classification.ts
+git add packages/domain/src/agent.ts
+git add packages/domain/src/business.ts
+git add packages/domain/src/sop.ts
+git add packages/domain/src/index.ts
+git add apps/server/src/engine/authz/
+git add apps/server/src/users.ts
+git add apps/server/src/app.ts
+git add apps/server/src/config.ts
+git add apps/server/src/middleware/user-header.ts
+git add apps/server/src/kernel/audit/store-store.ts
+git add apps/server/src/engine/agents/governance.ts
+git add apps/server/src/engine/worker.ts
+git add apps/server/src/actions.ts
+git add apps/server/src/threads-routes.ts
+git add apps/server/src/projects-routes.ts
+git add apps/server/src/rag-routes.ts
+git add apps/server/src/admin-routes.ts
+git add apps/server/src/admin-tenants.ts
+git add apps/server/src/skills/routes.ts
+git add apps/server/src/skills/sop-routes.ts
+git add apps/server/src/computer-routes.ts
+git add apps/server/src/computer-tools.ts
+git add apps/server/src/notification-prefs.ts
+git add apps/server/src/notifications-stream.ts
+git add apps/server/src/engine/routes.ts
+git add apps/server/src/engine/agents/personas/routes.ts
+git commit -m "feat(multiusuario): fase 2 - acceso seguro [POLICY_MODEL_V1, FIELD_CLASSIFICATION_V1, POLICY_DECISION_POINT_V1, POLICY_ENFORCEMENT_POINT_V1, FIELD_FILTER_V1, WITH_READ_V1, WITH_WRITE_V1, POLICIES_DEFAULT_V1, AGENT_TASK_CLASSIFICATION_V1, AGENT_MEMORY_CLASSIFICATION_V1, AGENT_ROLE_CLASSIFICATION_V1, BUSINESS_ENTITY_CLASSIFICATION_V1, SOP_CLASSIFICATION_V1, DOMAIN_INDEX_POLICY_V1, USER_CLASSIFICATION_V1, AGENT_GOVERNANCE_PDP_V1, APP_AUTHZ_WIRE_V1, USER_HEADER_REMOVED_V1, CONFIG_AUTHZ_V1, AUDIT_STORE_CLASSIFICATION_V1, WORKER_WITH_WRITE_V1, ACTION_SERVICE_WITH_WRITE_V1, WITH_READ_WIRE_V1, WITH_WRITE_WIRE_V1]"
+git push origin feat/multitenancy-campaign
+```
+
+### Misses esperados
+
+- F1 incompleta → aborta.
+- `PolicyEngine.can` 0× → adaptar PDP para no depender de él.
+- `AgentRole.permissions` 0× → el PDP no puede heredar de `AgentRole`. Anotar.
+- `AgentTask`/`AgentMemory` 0× → añadir solo a los que existan.
+- `app.use("/api/*"` 0× o `c.set("ctx")` 0× → adaptar F2.12.
+- `createApp` 0× → adaptar.
+- `userSchema` 0× → adaptar F2.10.
+- `AgentGovernance` 0× → adaptar F2.11.
+- `user-header.ts` ya no está montado → F2.13 skip.
+- `Config` 0× → adaptar F2.14.
+- Typecheck rojo por `withRead`/`withWrite` → ajustar tipos, revertir el fichero rojo, anotar.
+- Typecheck rojo por `fieldClassification` en `agent.ts` → ajustar tipos, revertir F2.9 del fichero rojo, anotar.
+- Tests de `withRead`/`withWrite` no ejecutables (F02.10 congelado) → anotar `MISSING_TEST_*`. **Nota:** F2 permite tests de la campaña en `tests/campaign-2/`.
+
+### Criterio de cierre
+
+- 32 patchsets con su marca 1×.
+- Typecheck verde.
+- 12 pruebas en verde.
+- Commit + push.
+- Confirmación: "F2 cerrada. Siguiente: F3."
+
+---
+
+## HANDOFF IA-4 — Fase 3 (Delegación controlada)
+
+**Rol:** IA ejecutora de F3. 26 patchsets. Toca dominio, assignments service, adapters, routes, wire.
+**Depende de:** F2 `PASS`.
+**Bloquea a:** F4.
+
+### Contexto mínimo
+
+F3 introduce `Assignment` como interfaz de lectura (no entidad persistida), `Flow` desde `AgentPersona` (no desde `AgentRole`), `AssignmentService` con `assign(ctx, ...)` y `assignedBy = ctx.actor.id`, `AssignmentRegistry`, 5 adapters (task, goal, monitor, approval, sop), `executingActorId` vs `requestingActorId`, agente no escala, scope de tarea. `Assignment.id = ${kind}:${recordId}`. `AssignmentStatus` unión de estados reales. `AssignmentOutcome` reusa `outcomeStatusSchema`. Sin `z.any()`.
+
+### Ficheros a leer completos
+
+- `packages/domain/src/agent.ts` (F2)
+- `packages/domain/src/agent-persona.ts`
+- `packages/domain/src/actor.ts` (F1)
+- `packages/domain/src/jwt.ts` (F1)
+- `packages/domain/src/policy.ts` (F2)
+- `packages/domain/src/classification.ts` (F2)
+- `packages/domain/src/sop.ts` (F2)
+- `packages/domain/src/business.ts` (F2)
+- `packages/domain/src/execution-context.ts` (F1)
+- `packages/domain/src/index.ts` (F2)
+- `packages/domain/src/outcome.ts`
+- `apps/server/src/engine/authz/pdp.ts` (F2)
+- `apps/server/src/engine/authz/pep.ts` (F2)
+- `apps/server/src/engine/authz/with-read.ts` (F2)
+- `apps/server/src/engine/authz/with-write.ts` (F2)
+- `apps/server/src/engine/authz/field-filter.ts` (F2)
+- `apps/server/src/engine/authz/policies.ts` (F2)
+- `apps/server/src/engine/actors/service.ts` (F1)
+- `apps/server/src/engine/auth/jwt.ts` (F1)
+- `apps/server/src/users.ts` (F1)
+- `apps/server/src/app.ts` (F2)
+- `apps/server/src/config.ts` (F2)
+- `apps/server/src/engine/agents/governance.ts` (F2)
+- `apps/server/src/engine/agents/personas/registry.ts`
+- `apps/server/src/engine/agents/personas/routes.ts` (F2)
+- `apps/server/src/engine/agents/personas/resolver.ts`
+- `apps/server/src/engine/agents/personas/activity.ts`
+- `apps/server/src/actions.ts` (F2)
+- `apps/server/src/engine/service.ts`
+- `apps/server/src/engine/routes.ts` (F2)
+- `apps/server/src/skills/sop-routes.ts` (F2)
+- `apps/server/src/engine/worker.ts` (F2)
+- `apps/server/src/engine/events/bus.ts`
+- `apps/server/src/engine/tenant.ts`
+- `apps/server/src/kernel/context/kernel-context.ts` (F1)
+- `apps/server/src/kernel/kernel.ts` (F1)
+- `apps/server/src/kernel/audit/store-store.ts` (F2)
+- `apps/server/src/index.ts`
+- `apps/server/src/engine/orchestrator/orchestrator.ts` (F1)
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `apps/server/src/engine/state-machines.ts` — `class StateMachineRegistry|transition|apply`.
+- `apps/server/src/engine/policy/engine.ts` — `class PolicyEngine|async can\(`.
+
+### Ficheros a NO tocar
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`. `engine/presence.ts`, `edit-lock.ts` (F5). `notifications-stream.ts`, `notification-prefs.ts` (F5). `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6). `conversation.ts`, `kernel.ts` más allá de F1. `worker.ts` más allá de F1+F2.
+
+### Patchsets (26: 14 CREATE + 12 MODIFY)
+
+**F3-core (18 patchsets)**
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F3.1 | `packages/domain/src/assignment.ts` | CREATE | `ASSIGNMENT_MODEL_V1` |
+| F3.2 | `packages/domain/src/flow.ts` | CREATE | `FLOW_MODEL_V1` |
+| F3.3 | `packages/domain/src/assignments/task.ts` | CREATE | `ASSIGNMENT_IMPL_V1` |
+| F3.3b | `packages/domain/src/assignments/goal.ts` | CREATE | `ASSIGNMENT_IMPL_V1` |
+| F3.3c | `packages/domain/src/assignments/monitor.ts` | CREATE | `ASSIGNMENT_IMPL_V1` |
+| F3.3d | `packages/domain/src/assignments/approval.ts` | CREATE | `ASSIGNMENT_IMPL_V1` |
+| F3.3e | `packages/domain/src/assignments/sop.ts` | CREATE | `ASSIGNMENT_IMPL_V1` |
+| F3.4 | `apps/server/src/engine/assignments/registry.ts` | CREATE | `ASSIGNMENT_REGISTRY_V1` |
+| F3.5 | `apps/server/src/engine/assignments/adapters/task-adapter.ts` | CREATE | `ASSIGNMENT_ADAPTER_V1` |
+| F3.5b | `apps/server/src/engine/assignments/adapters/goal-adapter.ts` | CREATE | `ASSIGNMENT_ADAPTER_V1` |
+| F3.5c | `apps/server/src/engine/assignments/adapters/monitor-adapter.ts` | CREATE | `ASSIGNMENT_ADAPTER_V1` |
+| F3.5d | `apps/server/src/engine/assignments/adapters/approval-adapter.ts` | CREATE | `ASSIGNMENT_ADAPTER_V1` |
+| F3.5e | `apps/server/src/engine/assignments/adapters/sop-adapter.ts` | CREATE | `ASSIGNMENT_ADAPTER_V1` |
+| F3.6 | `apps/server/src/engine/assignments/service.ts` | CREATE | `ASSIGNMENT_SERVICE_V1` |
+| F3.7 | `apps/server/src/engine/assignments/routes.ts` | CREATE | `ASSIGNMENT_ROUTES_V1` |
+| F3.8 | `packages/domain/src/agent.ts` | MODIFY (2 hunks) | `AGENT_TASK_ASSIGNED_BY_V1`, `MONITOR_ASSIGNED_BY_V1` |
+| F3.9 | `packages/domain/src/goal.ts` (o `agent.ts`) | MODIFY | `GOAL_ASSIGNED_BY_V1` |
+| F3.10 | `packages/domain/src/sop.ts` | MODIFY | `SOP_ASSIGNED_BY_V1` |
+| F3.11 | `packages/domain/src/index.ts` | MODIFY | `DOMAIN_INDEX_ASSIGNMENT_V1` |
+
+**F3-adapters (8 patchsets)**
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F3.12 | `apps/server/src/engine/service.ts` | MODIFY (2 hunks) | `AGENT_SERVICE_ASSIGNMENT_V1` |
+| F3.13 | `apps/server/src/actions.ts` | MODIFY (2 hunks) | `ACTION_SERVICE_ASSIGNMENT_V1` |
+| F3.14 | `apps/server/src/engine/routes.ts` | MODIFY (2 hunks) | `ENGINE_ROUTES_ASSIGNMENT_V1` |
+| F3.15 | `apps/server/src/skills/sop-routes.ts` | MODIFY | `SOP_ROUTES_ASSIGNMENT_V1` |
+| F3.16 | `apps/server/src/engine/agents/personas/registry.ts` | MODIFY | `PERSONA_REGISTRY_FLOW_V1` |
+| F3.17 | `apps/server/src/engine/agents/personas/routes.ts` | MODIFY | `PERSONA_ROUTES_FLOW_V1` |
+| F3.18 | `apps/server/src/app.ts` | MODIFY (2 hunks) | `APP_ASSIGNMENT_WIRE_V1` |
+| F3.19 | `apps/server/src/engine/orchestrator/orchestrator.ts` | MODIFY | `ORCHESTRATOR_REQUESTING_ACTOR_V1` |
+
+### Correcciones del revisor aplicadas
+
+- **1.1:** `P_efectivos = P_asignador ∩ P_ejecutor ∩ P_tarea ∩ P_tenant`.
+- **1.2:** `assignedBy = ctx.actor.id`, no `owner`.
+- **1.3:** rutas autorizan el recurso real, no solo el kind.
+- **2.1:** sin `z.any()`.
+- **2.2:** `toAssignment`/`applyAssignment` sin pérdida de datos. `metadata` declarado y validado.
+- **2.3:** `assignedTo` opcional. Bandeja de pendientes explícita.
+- **3:** `Flow` resuelve `persona.id` contra `Actor` real del mismo tenant.
+- **4:** conteo corregido: 26 patchsets (14 CREATE + 12 MODIFY).
+- **5:** tests de F3 permitidos en `tests/campaign-2/`.
+- **B-N1:** `Assignment.id = ${kind}:${recordId}`.
+- **B-N2:** `AssignmentStatus` unión de estados reales + `nativeStatus`.
+- **B-N3:** `AssignmentOutcome` reusa `outcomeStatusSchema`.
+- **B-N4:** `assign(ctx, ...)`.
+- **B-N5:** `PolicyAction.execute` (F2) + `complete` mapea a `execute`.
+- **B-N6:** `AgentActor.flow` se computa, no se persiste en `Actor`.
+- **B-N7:** `approval` sin `taskId` → asignación al owner con `assignedBy = null` explícito.
+
+### Verificación previa
+
+1. Rama correcta.
+2. F2 cerrada: 12 marcas.
+3. `Select-String` en `state-machines.ts`, `policy/engine.ts`.
+4. Typecheck.
+
+### Tests de comportamiento (17 pruebas)
+
+1. `AssignmentService.assign` con `HumanActor` → `AgentActor`.
+2. `accept`/`reject`/`approve`/`escalate`/`complete` con el actor correcto.
+3. `AssignmentRegistry` resuelve los 5 kinds.
+4. `TaskAdapter` idempotente.
+5. `GoalAdapter` idempotente.
+6. `MonitorAdapter` idempotente.
+7. `ApprovalAdapter` idempotente.
+8. `SopAdapter` idempotente.
+9. `AgentService.createTask` con `assignedTo` → `AssignmentService`.
+10. `ActionService.propose` con `taskId` → `AssignmentService.assign` (approval).
+11. `ActionService.decide` → `AssignmentService.approve`/`reject`.
+12. `sopRoutes POST /:id/run` → `AssignmentService.assign` (sop).
+13. `POST /api/assignments/:kind/:id/accept` con actor correcto (200) y otro (403).
+14. `POST /api/assignments/:kind/:id/escalate` con `toActor` y `reason` (200).
+15. `PersonaRegistry.register` construye `Flow`.
+16. `GET /api/agent-personas/:id` devuelve `flow`.
+17. T13: agente con tarea delegada no obtiene más permisos que el asignador.
+
+### Commit y push
+
+Ver §12 del documento 08 v2. Los 26 ficheros + tests de F3 en `tests/campaign-2/`.
+
+### Misses esperados
+
+- F2 incompleta → aborta.
+- `taskStepSchema`/`evidenceSchema`/`outcomeSchema` no existen → F3.3 aborta, se crean primero.
+- `Goal` no está en `goal.ts` → está en `agent.ts`. F3.9 va a `agent.ts`.
+- `AgentPersona.reportsTo`/`peers` 0× → F3.16 limita `Flow` a `{ peers: [] }`.
+- `AgentService.createTask` 0× → F3.12 no cablea `AgentService`.
+- `ActionService.propose` 0× → F3.13 no cablea `ActionService`.
+- `sopRoutes POST /:id/run` 0× → F3.15 no cablea `sopRoutes`.
+- `PersonaRegistry.register` 0× → F3.16 no construye `Flow`.
+- `createApp` 0× → F3.18 no wirea `assignmentsRoutes`.
+- Typecheck rojo por `AssignmentService` → ajustar tipos, revertir el fichero rojo, anotar.
+
+### Criterio de cierre
+
+- 26 patchsets con su marca 1×.
+- Typecheck verde.
+- 17 pruebas en verde.
+- Commit + push.
+- Confirmación: "F3 cerrada. Siguiente: F4."
+
+---
+
+## HANDOFF IA-5 — Fase 4 (Consistencia e integridad)
+
+**Rol:** IA ejecutora de F4. 9 patchsets. Toca dominio (version) y server (withWrite, routes, conflict).
+**Depende de:** F3 `PASS`.
+**Bloquea a:** F5.
+
+### Contexto mínimo
+
+F4 introduce `version` selectiva en `AgentTask`, `Goal`, `Monitor`, `SOP`, `Thread`, `Project`, `BusinessEntity` (este último ya tiene). `ConflictDiff`, `ConflictVersion`, `ConflictResolution`. `withWrite` aplica CAS con `expectedVersion`. 409 con diff por campo. Reconcile por recurso. `ConflictVersion` expuesto por recurso.
+
+### Ficheros a leer completos
+
+- `packages/domain/src/agent.ts` (F2 + F3)
+- `packages/domain/src/goal.ts` (o `agent.ts`)
+- `packages/domain/src/sop.ts` (F2 + F3)
+- `packages/domain/src/business.ts` (F2)
+- `packages/domain/src/index.ts` (F3)
+- `packages/domain/src/outcome.ts`
+- `apps/server/src/engine/authz/with-write.ts` (F2)
+- `apps/server/src/threads-routes.ts` (F2)
+- `apps/server/src/projects-routes.ts` (F2)
+- `apps/server/src/engine/routes.ts` (F2 + F3)
+- `apps/server/src/db.ts`
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `apps/server/src/db.ts` — `compareAndSwap`, `transaction`.
+- `apps/server/src/threads-routes.ts` — `THREAD_CONFLICT_DIFF_V1`, `current`, `expected`.
+- `apps/server/src/projects-routes.ts` — `PROJECT_CONFLICT_DIFF_V1`, `current`, `expected`.
+- `apps/server/src/engine/routes.ts` — `app.post\("/tasks`, `app.post\("/goals`.
+
+### Ficheros a NO tocar
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`. `engine/presence.ts`, `edit-lock.ts` (F5). `engine/history/`, `engine/audit-trail/` (F6). `worker.ts`, `conversation.ts`, `kernel.ts`.
+
+### Patchsets (9)
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F4.1 | `packages/domain/src/conflict.ts` | CREATE | `CONFLICT_MODEL_V1` |
+| F4.2 | `packages/domain/src/agent.ts` | MODIFY (4 hunks) | `AGENT_TASK_VERSION_V1`, `MONITOR_VERSION_V1`, `THREAD_VERSION_V1`, `PROJECT_VERSION_V1` |
+| F4.3 | `packages/domain/src/goal.ts` (o `agent.ts`) | MODIFY | `GOAL_VERSION_V1` |
+| F4.4 | `packages/domain/src/sop.ts` | MODIFY | `SOP_VERSION_V1` |
+| F4.5 | `packages/domain/src/index.ts` | MODIFY | `DOMAIN_INDEX_CONFLICT_V1` |
+| F4.6 | `apps/server/src/engine/authz/with-write.ts` | MODIFY | `WITH_WRITE_CAS_V1` |
+| F4.7 | `apps/server/src/threads-routes.ts` | MODIFY (3 hunks) | `THREAD_CONFLICT_DIFF_V2`, `THREAD_RECONCILE_V1`, `THREAD_CONFLICT_VERSION_V1` |
+| F4.8 | `apps/server/src/projects-routes.ts` | MODIFY (3 hunks) | `PROJECT_CONFLICT_DIFF_V2`, `PROJECT_RECONCILE_V1`, `PROJECT_CONFLICT_VERSION_V1` |
+| F4.9 | `apps/server/src/engine/routes.ts` | MODIFY (4 hunks) | `TASK_RECONCILE_V1`, `GOAL_RECONCILE_V1`, `TASK_CONFLICT_DIFF_V1`, `TASK_CONFLICT_VERSION_V1` |
+
+### Correcciones del revisor aplicadas
+
+- `version` selectiva, no universal.
+- `expectedVersion` obligatorio en writes compartidos.
+- 409 con `diff = { field: { before, after } }`.
+- Reconcile por recurso, no genérico.
+- `ConflictVersion` expuesto por recurso.
+
+### Verificación previa
+
+1. Rama correcta.
+2. F3 cerrada: 12 marcas.
+3. `Select-String` en los ficheros del §5.
+4. Typecheck.
+
+### Tests de comportamiento (10 pruebas)
+
+1. `withWrite` con `expectedVersion` correcto → 200.
+2. `withWrite` con `expectedVersion` incorrecto → 409 con diff.
+3. `withWrite` sin `version` en el record → put normal.
+4. `POST /tasks/:id/reconcile` con `expectedVersion` correcto → 200.
+5. `POST /tasks/:id/reconcile` con `expectedVersion` incorrecto → 409.
+6. `GET /tasks/:id/conflict` → 200 con `current`.
+7. `GET /threads/:id/conflict` → 200 con `current`.
+8. `GET /projects/:id/conflict` → 200 con `current`.
+9. Dos writes concurrentes de task → uno 200, otro 409 con diff.
+10. CAS no cruza tenants.
+
+### Commit y push
+
+Ver §12 del documento 09. Los 9 ficheros + tests de F4 en `tests/campaign-2/`.
+
+### Misses esperados
+
+- F3 incompleta → aborta.
+- `AgentTask.version` ya existe → F4.2a skip.
+- `Thread`/`Project` no están en `agent.ts` → F4.2c/F4.2d se omiten, se anota.
+- `Goal` está en `agent.ts` → F4.3 va a `agent.ts`.
+- `SOP` es interface → F4.4 se adapta.
+- `withWrite` firma distinta → F4.6 aborta, se anota.
+- `THREAD_CONFLICT_DIFF_V1`/`PROJECT_CONFLICT_DIFF_V1` 0× → F4.7a/F4.8a se omiten.
+- `app.post("/:id/reconcile"` ya existe → F4.7b/F4.8b skip.
+- Typecheck rojo por `version` en consumidores → ajustar tipos, revertir el fichero rojo, anotar.
+
+### Criterio de cierre
+
+- 9 patchsets con su marca 1×.
+- Typecheck verde.
+- 10 pruebas en verde.
+- Commit + push.
+- Confirmación: "F4 cerrada. Siguiente: F5."
+
+---
+
+## HANDOFF IA-6 — Fase 5 (Coordinación y ciclo de vida)
+
+**Rol:** IA ejecutora de F5. 10 patchsets. Toca presence, edit-lock, notifications, users, config, app.
+**Depende de:** F4 `PASS`.
+**Bloquea a:** F6.
+
+### Contexto mínimo
+
+F5 introduce `PresenceStore` y `EditLockStore` sobre `Store` (condicional a multi-proceso), `ReplayBuffer` por actor (condicional a reconexión), `Notification.visibility`/`priority`, SSE con `Last-Event-ID`, `notification-prefs` con `visibility`/`priority`, desactivación sin huérfanas (`User.active = false` con transición segura).
+
+### Ficheros a leer completos
+
+- `apps/server/src/engine/presence.ts`
+- `apps/server/src/engine/edit-lock.ts`
+- `apps/server/src/users.ts` (F1 + F2)
+- `apps/server/src/config.ts` (F1 + F2)
+- `apps/server/src/engine/events/bus.ts`
+- `apps/server/src/engine/events/subscriber.ts`
+- `apps/server/src/notifications-stream.ts`
+- `apps/server/src/notification-prefs.ts`
+- `apps/server/src/app.ts` (F2 + F3)
+- `apps/server/src/db.ts`
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `apps/server/src/notifications-stream.ts` — `assignedTo|visibility|priority|Last-Event-ID|SSE`.
+- `apps/server/src/notification-prefs.ts` — `prefs|visibility|priority`.
+- `apps/server/src/app.ts` — `notifications-stream|notificationsStream|app.route`.
+- `apps/server/src/db.ts` — `put|get|compareAndSwap|scanByPrefix|purgeOlderThan`.
+
+### Ficheros a NO tocar
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`. `engine/history/`, `engine/audit-trail/` (F6). `worker.ts`, `conversation.ts`, `kernel.ts`.
+
+### Patchsets (10)
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F5.1 | `apps/server/src/engine/presence-store.ts` | CREATE | `PRESENCE_STORE_V1` |
+| F5.2 | `apps/server/src/engine/edit-lock-store.ts` | CREATE | `EDIT_LOCK_STORE_V1` |
+| F5.3 | `apps/server/src/engine/events/replay-buffer.ts` | CREATE | `SSE_REPLAY_BUFFER_V1` |
+| F5.4 | `apps/server/src/config.ts` | MODIFY | `CONFIG_COORDINATION_V1` |
+| F5.5 | `apps/server/src/engine/presence.ts` | MODIFY | `PRESENCE_STORE_WIRE_V1` |
+| F5.6 | `apps/server/src/engine/edit-lock.ts` | MODIFY | `EDIT_LOCK_STORE_WIRE_V1` |
+| F5.7 | `apps/server/src/notifications-stream.ts` | MODIFY (3 hunks) | `NOTIF_VISIBILITY_V1`, `NOTIF_PRIORITY_V1`, `SSE_LAST_EVENT_ID_V1` |
+| F5.8 | `apps/server/src/notification-prefs.ts` | MODIFY (2 hunks) | `NOTIF_PREFS_VISIBILITY_V1`, `NOTIF_PREFS_PRIORITY_V1` |
+| F5.9 | `apps/server/src/users.ts` | MODIFY | `USER_DEACTIVATION_V1` |
+| F5.10 | `apps/server/src/app.ts` | MODIFY | `APP_REPLAY_WIRE_V1` |
+
+### Condiciones de activación
+
+- `I9` (presence/lock compartidos): `Config.multiProcess === true`.
+- `I11` (SSE replay): `Config.sseReplayEnabled === true`.
+- `I10` (notificaciones dirigidas): obligatorio.
+
+### Correcciones del revisor aplicadas
+
+- `PresenceStore` y `EditLockStore` sobre `Store`, con TTL y GC. Si single-instance, in-memory sigue válido.
+- `Notification.visibility`: `private`/`tenant`/`shared`. `priority`: `low`/`normal`/`high`/`urgent`.
+- SSE con `Last-Event-ID` y `ReplayBuffer`. Si no reconecta, no-op.
+- `User.active = false` con transición segura: revocar acceso, identificar asignaciones afectadas, marcar pendientes o reasignar, registrar en `activity`.
+
+### Verificación previa
+
+1. Rama correcta.
+2. F4 cerrada: 7 marcas.
+3. `Select-String` en `notifications-stream.ts`, `notification-prefs.ts`, `app.ts`, `db.ts`.
+4. Typecheck.
+
+### Tests de comportamiento (10 pruebas)
+
+1. `PresenceStore.touch` devuelve `others`.
+2. `PresenceStore.gc` elimina entradas caducadas.
+3. `EditLockStore.acquire` con lock obsoleto → adquiere.
+4. `ReplayBuffer.since` devuelve los eventos perdidos.
+5. `notifications-stream` filtra por `visibility`.
+6. `notifications-stream` ordena por `priority`.
+7. `notifications-stream` con `Last-Event-ID` recibe los perdidos.
+8. `users.update` con `active: false` marca tasks pendientes.
+9. `PresenceStore` aislado por tenant.
+10. `EditLockStore` aislado por tenant.
+
+### Commit y push
+
+Ver §12 del documento 10. Los 10 ficheros + tests de F5 en `tests/campaign-2/`.
+
+### Misses esperados
+
+- F4 incompleta → aborta.
+- `globalPresence`/`globalEditLock` 0× → F5.5/F5.6 abortan, se anota.
+- `notifications-stream.ts` firma distinta → F5.7 aborta, se anota.
+- `notification-prefs.ts` 0× → F5.8 aborta, se anota.
+- `users.ts` `async update(` no coincide → F5.9 aborta, se anota.
+- `app.ts` no wirea `notifications-stream` → F5.10 aborta, se anota.
+- `Config.multiProcess` default `false` → F5.5/F5.6 in-memory. Correcto.
+- `Config.sseReplayEnabled` default `false` → F5.7 sin replay. Correcto.
+- Typecheck rojo por `PresenceStore`/`EditLockStore` → ajustar tipos, revertir el fichero rojo, anotar.
+
+### Criterio de cierre
+
+- 10 patchsets con su marca 1×.
+- Typecheck verde.
+- 10 pruebas en verde.
+- Commit + push.
+- Confirmación: "F5 cerrada. Siguiente: F6."
+
+---
+
+## HANDOFF IA-7 — Fase 6 (Trazabilidad y auditoría)
+
+**Rol:** IA ejecutora de F6. 9 patchsets. Toca `with-read`, `with-write`, `actions`, `worker`, `config`, `retention-purge`, `store-store`.
+**Depende de:** F5 `PASS`.
+**Bloquea a:** F7.
+
+### Contexto mínimo
+
+F6 introduce `AuditTrail` de reads sensibles (campos `restricted`/`secret` y accesos denegados), `RecordHistory` condicional, `action-audit` con `actorId`, `run-events` con `actorId`, `Config.auditTrailEnabled`/`recordHistoryEnabled`, `retention-purge` respeta `audit-entries` (365 días SOC-2), `store-store.ts` `payload` con `field`/`classification`/`allowed`.
+
+### Ficheros a leer completos
+
+- `apps/server/src/actions.ts` (F2 + F3)
+- `apps/server/src/engine/worker.ts` (F1 + F2)
+- `apps/server/src/kernel/audit/entry.ts`
+- `apps/server/src/kernel/audit/store-store.ts` (F2)
+- `apps/server/src/engine/events/retention-purge.ts`
+- `apps/server/src/config.ts` (F1 + F2 + F5)
+- `apps/server/src/engine/authz/with-read.ts` (F2)
+- `apps/server/src/engine/authz/with-write.ts` (F2 + F4)
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `with-read.ts` — `withRead|FieldFilter|audit|denied|Forbidden`.
+- `with-write.ts` — `withWrite|activity|history|audit|compareAndSwap|return db.put`.
+- `kernel/audit/entry.ts` — `AuditAction|auditEntrySchema|payload`.
+- `kernel/audit/store-store.ts` — `append|payload|auditEntrySchema`.
+- `retention-purge.ts` — `KERNEL_KINDS|audit-entries|purgeKernelRetention|RETENTION_RULES`.
+- `worker.ts` — `bus.emit|executingActorId|requestingActorId`.
+
+### Ficheros a NO tocar
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`. `conversation.ts`, `kernel.ts`. `worker.ts` más allá de F6.6.
+
+### Patchsets (9: 2 CREATE + 7 MODIFY)
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F6.1 | `apps/server/src/engine/audit-trail/service.ts` | CREATE | `AUDIT_TRAIL_V1` |
+| F6.2 | `apps/server/src/engine/history/record-history.ts` | CREATE | `RECORD_HISTORY_V1` |
+| F6.3 | `apps/server/src/engine/authz/with-read.ts` | MODIFY | `WITH_READ_AUDIT_TRAIL_V1` |
+| F6.4 | `apps/server/src/engine/authz/with-write.ts` | MODIFY | `WITH_WRITE_RECORD_HISTORY_V1` |
+| F6.5 | `apps/server/src/actions.ts` | MODIFY | `ACTIONS_ACTOR_ID_V1` |
+| F6.6 | `apps/server/src/engine/worker.ts` | MODIFY | `WORKER_ACTOR_ID_V1` |
+| F6.7 | `apps/server/src/config.ts` | MODIFY | `CONFIG_AUDIT_V1` |
+| F6.8 | `apps/server/src/engine/events/retention-purge.ts` | MODIFY | `RETENTION_AUDIT_ENTRIES_V1` |
+| F6.9 | `apps/server/src/kernel/audit/store-store.ts` | MODIFY | `AUDIT_STORE_CLASSIFICATION_V1` |
+
+### Correcciones del revisor aplicadas
+
+- `AuditTrail` de reads sensibles: solo `restricted`/`secret` denegados.
+- `RecordHistory` condicional a `recordHistoryEnabled` y a que `activity` no cubra.
+- `action-audit` con `actorId`.
+- `run-events` con `actorId`.
+- `retention-purge` no purga `audit-entries` si `auditTrailEnabled`. Retención 365 días (SOC-2).
+- `store-store.ts` `payload` valida `field`/`classification`/`allowed` con `superRefine`.
+
+### Verificación previa
+
+1. Rama correcta.
+2. F5 cerrada: 10 marcas.
+3. `Select-String` en los ficheros del §5.
+4. Typecheck.
+
+### Tests de comportamiento (10 pruebas)
+
+1. `withRead` deniega campo `restricted` → `AuditTrail` escribe.
+2. `withRead` con campo `internal` denegado → no escribe `AuditTrail`.
+3. `withRead` con campo `restricted` permitido → no escribe `AuditTrail`.
+4. `withWrite` con `recordHistoryEnabled` → `RecordHistory` escribe.
+5. `withWrite` sin `recordHistoryEnabled` → no escribe.
+6. `action-audit` con `actorId`.
+7. `action-audit` con `actorId` null si no hay actor.
+8. `run-events` con `actorId` = `executingActorId`.
+9. `retention-purge` con `auditTrailEnabled` → no purga `audit-entries`.
+10. `retention-purge` sin `auditTrailEnabled` → purga `audit-entries` a 365 días.
+
+### Commit y push
+
+Ver §12 del documento 11. Los 9 ficheros + tests de F6 en `tests/campaign-2/`.
+
+### Misses esperados
+
+- F5 incompleta → aborta.
+- `withRead` firma distinta → F6.3 aborta, se anota.
+- `withWrite` firma distinta → F6.4 aborta, se anota.
+- `actions.ts` `audit` no coincide → F6.5 aborta, se anota.
+- `worker.ts` `busEvent` no coincide → F6.6 aborta, se anota.
+- `retention-purge.ts` 0× → F6.8 aborta, se anota.
+- `store-store.ts` `payload` no coincide → F6.9 aborta, se anota.
+- Typecheck rojo por `AuditTrail`/`RecordHistory` → ajustar tipos, revertir el fichero rojo, anotar.
+
+### Criterio de cierre
+
+- 9 patchsets con su marca 1×.
+- Typecheck verde.
+- 10 pruebas en verde.
+- Commit + push.
+- Confirmación: "F6 cerrada. Siguiente: F7."
+
+---
+
+## HANDOFF IA-8 — Fase 7 (Cierre)
+
+**Rol:** IA ejecutora de F7. 19 patchsets. Crea los tests de la campaña y cierra los docs.
+**Depende de:** F6 `PASS`.
+**Bloquea a:** Campaña 3 (no existe aún).
+
+### Contexto mínimo
+
+F7 crea los 17 tests de la Campaña 2 en `tests/campaign-2/`, `KNOWN_ISSUES.md`, `CIERRE-MVP.md`, y actualiza `-pendientes.md`. Ejecuta la suite completa. Declara la Campaña 2 cerrada.
+
+### Ficheros a leer completos
+
+- `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md` (F0)
+- `docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md` (F0)
+- `docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md` (F0)
+- `tests/setup.ts`
+
+### Ficheros a inspeccionar con `Select-String`
+
+- `tests/agent-api.test.ts` — `Select-String -Pattern "app.request|Authorization"`.
+- `tests/auth.test.ts` — `Select-String -Pattern "app.request|Authorization"`.
+- `tests/tenant-isolation.test.ts` — `Select-String -Pattern "app.request|Authorization"`.
+
+### Ficheros a NO tocar
+
+Ningún fichero de producto. F7 solo crea tests y docs.
+
+### Patchsets (19: 17 tests CREATE + 2 docs CREATE + 1 doc MODIFY)
+
+| # | Fichero | Tipo | Marca |
+|---|---|---|---|
+| F7.1 | `tests/campaign-2/t1-jwt-required.test.ts` | CREATE | `T1_JWT_REQUIRED_V1` |
+| F7.2 | `tests/campaign-2/t2-sub-no-user.test.ts` | CREATE | `T2_SUB_NO_USER_V1` |
+| F7.3 | `tests/campaign-2/t3-ownership-read.test.ts` | CREATE | `T3_OWNERSHIP_READ_V1` |
+| F7.4 | `tests/campaign-2/t4-acl-read-write.test.ts` | CREATE | `T4_ACL_READ_WRITE_V1` |
+| F7.5 | `tests/campaign-2/t5-classified-field.test.ts` | CREATE | `T5_CLASSIFIED_FIELD_V1` |
+| F7.6 | `tests/campaign-2/t6-concurrent-writes.test.ts` | CREATE | `T6_CONCURRENT_WRITES_V1` |
+| F7.7 | `tests/campaign-2/t7-conflict-diff.test.ts` | CREATE | `T7_CONFLICT_DIFF_V1` |
+| F7.8 | `tests/campaign-2/t8-reconcile.test.ts` | CREATE | `T8_RECONCILE_V1` |
+| F7.9 | `tests/campaign-2/t9-presence-lock.test.ts` | CREATE | `T9_PRESENCE_LOCK_V1` |
+| F7.10 | `tests/campaign-2/t10-notification-directed.test.ts` | CREATE | `T10_NOTIFICATION_DIRECTED_V1` |
+| F7.11 | `tests/campaign-2/t11-sse-replay.test.ts` | CREATE | `T11_SSE_REPLAY_V1` |
+| F7.12 | `tests/campaign-2/t12a-audit-write.test.ts` | CREATE | `T12A_AUDIT_WRITE_V1` |
+| F7.13 | `tests/campaign-2/t12b-record-history.test.ts` | CREATE | `T12B_RECORD_HISTORY_V1` |
+| F7.14 | `tests/campaign-2/t13-no-privilege-escalation.test.ts` | CREATE | `T13_NO_PRIVILEGE_ESCALATION_V1` |
+| F7.15 | `tests/campaign-2/t14-deactivated-actor.test.ts` | CREATE | `T14_DEACTIVATED_ACTOR_V1` |
+| F7.16 | `tests/campaign-2/t15-worker-attribution.test.ts` | CREATE | `T15_WORKER_ATTRIBUTION_V1` |
+| F7.17 | `tests/campaign-2/t16-forbidden-no-leak.test.ts` | CREATE | `T16_FORBIDDEN_NO_LEAK_V1` |
+| F7.18 | `tests/campaign-2/t17-reconcile-authz.test.ts` | CREATE | `T17_RECONCILE_AUTHZ_V1` |
+| F7.19 | `docs/miniaudits/04-multi-usuario-concurrente/KNOWN_ISSUES.md` | CREATE | `KNOWN_ISSUES_MULTIUSUARIO_V1` |
+| F7.20 | `docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md` | MODIFY | `CIERRE_MVP_MULTIUSUARIO_V1` |
+| F7.21 | `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md` | MODIFY | `PENDIENTES_MULTIUSUARIO_V1` |
+
+### Tests obligatorios (14)
+
+T1, T2, T3, T4, T5, T6, T7, T8, T10, T12a, T13, T14, T15, T16, T17. **Nota:** son 15, no 14. El contrato original dice 14 obligatorios + 3 condicionales = 17. La lista real es:
+- **Obligatorios:** T1, T2, T3, T4, T5, T6, T7, T8, T10, T12a, T13, T14, T15, T16, T17 = **15**.
+- **Condicionales:** T9 (multi-proceso), T11 (reconexión), T12b (recordHistoryEnabled) = **3**.
+- **Total:** 18. El contrato dice 17. **Discrepancia de conteo.** Se resuelve: 14 obligatorios + 3 condicionales = 17, pero la lista real da 15 + 3 = 18. **Falta un test por decidir o un test está mal contado.** La corrección: T12a y T12b son dos tests, no uno. T12a obligatorio, T12b condicional. Entonces: 14 obligatorios (T1–T8, T10, T12a, T13–T17 = 14) + 3 condicionales (T9, T11, T12b) = **17**. Correcto. La lista de 18 incluía T12a y T12b como dos, pero T12b es condicional y ya está en los 3. **14 obligatorios + 3 condicionales = 17.** Correcto.
+
+### Verificación previa
+
+1. Rama correcta.
+2. F6 cerrada: 9 marcas.
+3. `Select-String` en los tests existentes.
+4. Typecheck.
+
+### Verificación post
+
+- 17 tests con su marca 1×.
+- `KNOWN_ISSUES.md` con `KNOWN_ISSUES_MULTIUSUARIO_V1` 1×.
+- `CIERRE-MVP.md` con `CIERRE_MVP_MULTIUSUARIO_V1` 1×.
+- `-pendientes.md` actualizado.
+- `pnpm test` verde o fallos preexistentes anotados.
+
+### Commit y push
+
+```powershell
+git add tests/campaign-2/
+git add docs/miniaudits/04-multi-usuario-concurrente/KNOWN_ISSUES.md
+git add docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md
+git add docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md
+git commit -m "feat(multiusuario): fase 7 - cierre [T1-T17, KNOWN_ISSUES, CIERRE-MVP]"
+git push origin feat/multitenancy-campaign
+```
+
+### Misses esperados
+
+- F6 incompleta → aborta.
+- Algún test no compila por tipo mal → ajustar el test, no el producto.
+- Algún test falla por comportamiento no implementado → anotar `MISSING_*`, no declarar `PASS`.
+- T9/T11/T12b condicionales no aplican → `SKIP` con justificación.
+
+### Criterio de cierre
+
+- 17 tests con su marca 1×.
+- `KNOWN_ISSUES.md` y `CIERRE-MVP.md` creados/modificados.
+- Typecheck verde.
+- `pnpm test` verde o fallos preexistentes anotados.
+- 14 tests obligatorios en verde. 3 condicionales en verde o `SKIP` justificado.
+- Commit + push.
+- Confirmación: "Campaña 2 cerrada. Siguiente: Campaña 3."
+
+---
+
+## Resumen de las 7 IAs
+
+| IA | Fase | Patchsets | Tipo | Depende de | Bloquea a |
+|---|---|---|---|---|---|
+| IA-1 | F0 | 6 | Docs | Campaña 1 | F1 |
+| IA-2 | F1 | 15 | Dominio + server | F0 | F2 |
+| IA-3 | F2 | 32 | Dominio + authz + 14 handlers | F1 | F3 |
+| IA-4 | F3 | 26 | Dominio + assignments + 5 adapters | F2 | F4 |
+| IA-5 | F4 | 9 | Dominio + withWrite + routes | F3 | F5 |
+| IA-6 | F5 | 10 | Presence + lock + notifications | F4 | F6 |
+| IA-7 | F6 | 9 | Trazabilidad | F5 | F7 |
+| IA-8 | F7 | 19 | Tests + docs | F6 | Campaña 3 |
+
+**Nota:** son 8 IAs, no 7, porque F7 es una fase más. Si quieres 7 IAs, puedes agrupar F6 y F7 en una sola IA (28 patchsets, mismo contexto de trazabilidad + cierre). Las otras 7 IAs son F0–F6.
+
+**Cada IA recibe:** su handoff + el repo en disco + el protocolo TypeScript v2 + las reglas PowerShell v2.1. No necesita el chat completo ni el resto de handoffs.
+
+**El humano entre fases:** ejecuta los patchsets, pega el output a la IA, la IA declara `PASS`/`FAIL`/`BLOCKED` por patchset, y solo pasa a la siguiente fase si todo está `PASS`.

@@ -1,0 +1,1096 @@
+# 08 — Campaña 1 / Fase 7 — B8 membresías, resolvers cableados, switch-tenant, migración transaccional, admin CRUD
+
+**Fecha:** 2026-10-21
+**Campaña:** 1 — Aislamiento multi-tenant
+**Fase:** 7 — B8 membresías y resolvers
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fases 0–6 cerradas. **Aplicados:** todas las marcas de Fases 2–6 más `TAKE_FOR_TENANT_BROWSER_V1`, `TAKE_FOR_TENANT_COMPUTER_V1`, `METRICS_TENANT_LABEL_V1`, `METRICS_EXPORTER_TENANT_V1`, `NOTIFICATION_PREFS_TENANT_V1`, `NOTIFICATIONS_STREAM_TENANT_V1`, `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1`, `TAKE_FOR_TENANT_TENANTID_V1`, `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1`, `TENANT_WIRE_NOTIFICATIONS_V1`. **Pendientes que NO se tocan en esta fase:** F02.10 (congelado), N06 (opcional, Fase 8), F04.30/F04.31/F04.33 (billing/tenant switcher frontend, Fase 9), F04.27 (bloqueado, ver §9).
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 6 (documento 07): B6+B7. Se aplicaron `TAKE_FOR_TENANT_BROWSER_V1` (browser.ts con `tenantLimiter` + `tenantService`), `TAKE_FOR_TENANT_COMPUTER_V1` (computer.ts idem), `METRICS_TENANT_LABEL_V1` (metrics/registry.ts + request-logger.ts con label `tenant` en counters/histogram), `METRICS_EXPORTER_TENANT_V1` (`render(filter?)` + `?tenant=X`), `NOTIFICATION_PREFS_TENANT_V1` (prefs con tenantId real), `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1` (F02.9b en computer-routes, computer-tools, notification-prefs), `NOTIFICATIONS_STREAM_TENANT_V1` (SSE filtra por tenantId), `TAKE_FOR_TENANT_TENANTID_V1` (refinamiento de F04.16a/b/c con `tenantService.tenantIdFor(owner)`), `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` y `TENANT_WIRE_NOTIFICATIONS_V1` (`app.ts` cablea todo). Deudas anotadas: métricas de tareas/LLM sin label tenant (Fase 9), backfill de `tenantId` en notificaciones legacy (Fase 7 esta), pre-check síncrono de rate limit antes del IIFE (Fase 9), F04.27 bloqueado.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`tenant_members`, `tenant_configs`, `tenant_invites`, `tenant_audit_events`** creadas y usables (F04.10b): no son tablas SQL nuevas (evitamos tocar el esquema de `records`), sino **kinds nuevos en `records`** (`"tenant-members"`, `"tenant-configs"`, `"tenant-invites"`, `"tenant-audit-events"`). El modelo sigue siendo `records(owner, kind, id, data)`, así que no hace falta migración SQL. Marca `TENANT_MEMBERS_TABLE_V1`.
+- **`DatabaseTenantResolver` cableado** (F04.10c): `app.ts` inyecta `DatabaseTenantResolver(db, fallback)` en el kernel si `MULTI_TENANT_SHARED=true`, o `ServiceTenantResolver(tenantService)` si no. **El fallback es `ServiceTenantResolver` en ambos casos**, pero el primario cambia según el modo. Marca `DB_TENANT_RESOLVER_WIRED_V1`.
+- **`DatabaseTenantConfigResolver` inyectado** (F04.10d): `app.ts` construye `DatabaseTenantConfigResolver({ query }, envResolver)` si `MULTI_TENANT_SHARED=true`, o `EnvTenantConfigResolver` si no. Marca `DB_TENANT_CONFIG_RESOLVER_WIRED_V1`.
+- **`/api/auth/switch-tenant`** (F04.14b): endpoint que valida membership y emite un nuevo JWT con `tenantId` en el payload. Con `/api/auth/me` que ya devuelve `user`, el switch permite al usuario cambiar de tenant activo. Marca `SWITCH_TENANT_ENDPOINT_V1`.
+- **`setMembership` con invalidación + evento** (F04.14c): `TenantService.setMembership` emite `TENANT_MEMBERSHIP_CHANGED` al bus (con `eventBus` opcional en el constructor) y llama `invalidateAll()` además de actualizar la caché del owner. Marca `MEMBERSHIP_CACHE_INVALIDATE_V1`.
+- **`migrate-tenant-scope.ts` transaccional** (F04.11): el script envuelve la actualización en `db.transaction(...)`. Si alguna fila falla, rollback. Marca `MIGRATE_SCOPE_TX_V1`.
+- **`migrate-tenant-membership.ts` verificado** (F04.11b): el script **ya existe** en `scripts/migrate-tenant-membership.ts` y es idempotente (skip si id==default, skip si tenantId vacío, skip si ya existe default). Se verifica con `Test-Path` y se documenta en `-pendientes.md` como "no requiere cambios". Marca `MIGRATE_MEMBERSHIP_VERIFIED_V1`.
+- **`admin-tenants.ts` CRUD de memberships** (F04.12): añade `DELETE /api/admin/tenants/:tenantId` que borra el registro `tenant-membership` y `tenant-configs` del tenant, y `PATCH /api/admin/tenants/:tenantId` que cambia `displayName`. Marca `ADMIN_TENANTS_CRUD_V1`.
+- **N02/N03 refinos**: `admin-tenants.ts` usa `tenantService.setMembership` (que ahora emite evento) y `invalidateAll`. Ya está casi completo desde Fase 2; aquí se refina para emitir el evento y añadir `switch-tenant`.
+- **F04.27 sigue bloqueado** (`backup-tenant.ts` no está en Repomix). Se documenta en `-pendientes.md`.
+- **Cero cambios de comportamiento en clone-por-cliente** con `MULTI_TENANT_SHARED != "true"`: `DatabaseTenantResolver` y `DatabaseTenantConfigResolver` no se usan, `/switch-tenant` devuelve 400 si el usuario no tiene memberships múltiples, `setMembership` emite evento (que no rompe), y los scripts de migración no se ejecutan.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 8 (documento 09): B9 CI + cierre Campaña 1. F05.3 (`continue-on-error` en CI), F05.5 (`tsc` en CI), F05.9 (`worker.ts` typecheck en CI), F02.10 congelado se anota como deuda para Cline, F02.7/F02.12/F03.31-test/F03.36-test/F04.20-test/F05.1/F05.4/F05.6/F05.7 congelados, `CIERRE-MVP.md` actualizado, `-pendientes.md` consolidado, `ID-MAP.md` final. **Este es el último documento de Campaña 1.**
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 7), ejecutada en **8 patchsets de producto** más **2 patchsets de scripts** más **1 patchset de verificación sin escritura**. Total: **10 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix original + holístico:**
+- `apps/server/src/engine/tenant.ts` (Repomix original, íntegro: `TenantService`, `setMembership`, `invalidateAll`, `DEFAULT_TENANT_ID`, `assertNotHardcodedTenantId`).
+- `apps/server/src/kernel/tenancy/database-resolver.ts` (Repomix original: `DatabaseTenantResolver`, `SupabasePort`).
+- `apps/server/src/kernel/tenancy/service-resolver.ts` (Repomix original: `ServiceTenantResolver`).
+- `apps/server/src/kernel/tenancy/default-resolver.ts` (Repomix original: `DefaultTenantResolver`, `DEFAULT_TENANT_ID`).
+- `apps/server/src/kernel/tenancy/resolver.ts` (Repomix holístico: `TenantResolver` interface).
+- `apps/server/src/kernel/config/database-resolver.ts` (Repomix original: `DatabaseTenantConfigResolver`, `SupabasePort`).
+- `apps/server/src/kernel/config/env-resolver.ts` (Repomix original: `EnvTenantConfigResolver`).
+- `apps/server/src/kernel/index.ts` (Repomix holístico: exports de todos los resolvers).
+- `apps/server/src/kernel/kernel.ts` (Repomix original: `KernelDeps` con `tenants` y `config`).
+- `apps/server/src/app.ts` (Repomix original + Fases 3–6: `createApp`, construcción de `kernel`, `adminTenantsRoutes`, `authRoutes`, `signupRoutes`).
+- `apps/server/src/admin-tenants.ts` (Repomix original + Fase 2: `adminTenantsRoutes`, `tenant-membership` y `tenant-state` writes).
+- `apps/server/src/auth-routes.ts` (Repomix original: `authRoutes`, `POST /login`, `POST /logout`, `GET /me`, `PATCH /me`, `GET /users`).
+- `apps/server/src/auth-signup.ts` (Repomix holístico: `signupRoutes`, `POST /signup`, `GET /verify`).
+- `apps/server/src/engine/events/bus.ts` (Repomix original: `EventBus.emit`).
+- `apps/server/src/db.ts` (Repomix original: `db.transaction`).
+- `scripts/migrate-tenant-scope.ts` (Repomix original: script actual sin transacción).
+- `scripts/migrate-tenant-membership.ts` (Repomix holístico: script actual, ya existe e idempotente).
+- `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md`, `ESTADO-REAL-MULTITENANT.md`, `-pendientes.md` (Fases 0–6).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/worker.ts` — solo `Get-Content -TotalCount 120`. **Prohibido tocar.**
+- `apps/server/src/app.ts` — `Select-String -Pattern "new Kernel|ServiceTenantResolver|EnvTenantConfigResolver|adminTenantsRoutes|authRoutes|signupRoutes"` con `-Context 2,3`.
+- `apps/server/src/admin-tenants.ts` — `Select-String -Pattern "tenant-membership|tenant-state|requireAdmin"` con `-Context 1,2`.
+- `apps/server/src/auth-routes.ts` — `Select-String -Pattern "app.post\(\"/login|app.get\(\"/me|app.patch\(\"/me"` con `-Context 1,2`.
+- `apps/server/src/auth-signup.ts` — `Select-String -Pattern "setMembership|signupRoutes"` con `-Context 1,2`.
+- `apps/server/src/engine/tenant.ts` — `Select-String -Pattern "constructor|setMembership|invalidateAll"` con `-Context 1,2`.
+- `apps/server/src/kernel/tenancy/database-resolver.ts` — `Select-String -Pattern "class DatabaseTenantResolver|async resolve|resolveAll"` con `-Context 1,2`.
+- `apps/server/src/kernel/config/database-resolver.ts` — `Select-String -Pattern "class DatabaseTenantConfigResolver|async resolve"` con `-Context 1,2`.
+- `scripts/migrate-tenant-scope.ts` — `Select-String -Pattern "db.select|UPDATE"` con `-Context 1,2`.
+
+**Archivos que NO se leen en esta fase:**
+- `apps/server/src/engine/worker.ts` (más allá de las 120 líneas).
+- `apps/server/src/db-rls.ts`, `apps/server/src/db-tenant.ts` (más allá de N01), `apps/server/src/files.ts` (más allá de lo ya citado), `apps/server/src/browser.ts`, `apps/server/src/computer.ts`, `apps/server/src/notification-prefs.ts`, `apps/server/src/notifications-stream.ts`, `apps/server/src/metrics/*`, `apps/server/src/middleware/request-logger.ts`.
+- `apps/server/src/engine/events/*` (consumidores, sinks).
+- `packages/domain/src/*` (más allá de lo ya citado).
+- `backup-tenant.ts` (no existe en Repomix).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Modificar:**
+- `apps/server/src/engine/tenant.ts` — F04.14c. `TenantService` recibe un `bus?` opcional en el constructor. `setMembership` emite `TENANT_MEMBERSHIP_CHANGED` al bus y llama `invalidateAll()` (además del `cache.set` por owner). Marca `MEMBERSHIP_CACHE_INVALIDATE_V1`.
+- `apps/server/src/app.ts` — F04.10c + F04.10d. Si `MULTI_TENANT_SHARED=true` y backend `postgres`, usar `DatabaseTenantResolver` como primario y `ServiceTenantResolver` como fallback. Si no, `ServiceTenantResolver`. Idem para `DatabaseTenantConfigResolver` vs `EnvTenantConfigResolver`. Marcas `DB_TENANT_RESOLVER_WIRED_V1`, `DB_TENANT_CONFIG_RESOLVER_WIRED_V1`. También construye `TenantService` con `bus` para F04.14c.
+- `apps/server/src/auth-routes.ts` — F04.14b. Añade `POST /switch-tenant` que valida `tenantId` contra `tenantService` (o contra el `tenant-members` record), y emite un nuevo JWT. Marca `SWITCH_TENANT_ENDPOINT_V1`.
+- `apps/server/src/admin-tenants.ts` — F04.12. Añade `DELETE /:tenantId` y `PATCH /:tenantId`. Marca `ADMIN_TENANTS_CRUD_V1`. Refina N02/N03 para emitir `TENANT_MEMBERSHIP_CHANGED` a través de `tenantService.setMembership` (que ahora emite).
+- `scripts/migrate-tenant-scope.ts` — F04.11. Envuelve el `UPDATE` en `db.transaction(...)`. Marca `MIGRATE_SCOPE_TX_V1`.
+- `scripts/migrate-tenant-membership.ts` — F04.11b. **No requiere cambios.** Se verifica y se anota en `-pendientes.md` como "verificado, no requiere cambios".
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts` (F02.10 congelado).
+- Cualquier modificación a `_multitenant_pendientes.md` (lo escribe el humano).
+- Cualquier modificación a `backup-tenant.ts` (no existe).
+- Cualquier tabla SQL nueva (usamos `records` con kinds nuevos).
+
+**No tocar:**
+- `worker.ts`, `service.ts` (más allá de leerlo), `kernel.ts`, `scripts/audits/*`, `tests/tenant-http-e2e.test.ts`, `db-tenant.ts`, `db-rls.ts`, `index.ts` (más allá de lo ya aplicado), `kernel/audit/store-store.ts`, `kernel/kernel.ts` (más allá de leerlo para el `KernelDeps`).
+- `backup-tenant.ts` (no existe).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F04.14c | `engine/tenant.ts` | 3 (constructor con bus, `setMembership` con evento, `invalidateAll` en `setMembership`) | MODIFY |
+| F04.10c | `app.ts` | 1 (elegir `DatabaseTenantResolver` vs `ServiceTenantResolver`) | MODIFY |
+| F04.10d | `app.ts` | 1 (elegir `DatabaseTenantConfigResolver` vs `EnvTenantConfigResolver`) | MODIFY |
+| F04.10-wire | `app.ts` | 1 (`new TenantService(db, config, bus)`) | MODIFY |
+| F04.14b | `auth-routes.ts` | 1 (endpoint `POST /switch-tenant`) | MODIFY |
+| F04.12 | `admin-tenants.ts` | 2 (`DELETE /:tenantId` + `PATCH /:tenantId`) | MODIFY |
+| N02-refino | `admin-tenants.ts` | 1 (usar `tenantService.setMembership` que ahora emite) | MODIFY (ya cubierto por F04.14c si `setMembership` emite) |
+| F04.11 | `scripts/migrate-tenant-scope.ts` | 1 (`db.transaction`) | MODIFY |
+| F04.11b | `scripts/migrate-tenant-membership.ts` | 0 (verificación, no escritura) | — |
+
+**Total: 7 patchsets fijos, ~11 hunks.** F04.12 tiene 2 hunks. F04.10c/d/wire comparten `app.ts`, se aplican en orden. F04.11b es solo verificación.
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes aplicados:** F04.10b (kinds nuevos en `records`), F04.10c, F04.10d, F04.14b, F04.14c, F04.11, F04.12.
+- **Fixes verificados sin aplicar:** F04.11b (script ya existe, se verifica).
+- **Fixes bloqueados:** F04.27 (esperando `backup-tenant.ts`).
+- **Fixes congelados:** F02.10 (tests).
+- **Fixes movidos a fase siguiente:** F04.30, F04.31, F04.33 (billing/tenant switcher frontend, Fase 9), N06 (opcional Fase 8).
+- **Fixes desbloqueados por esta fase:** F04.30 (billing necesita `tenant_members` para atribuir facturas), F04.33 (tenant switcher frontend usa `/switch-tenant`), F04.31 (reconciliación de uso necesita `tenant_quotas` que van con las memberships), F05.1 (test N=500 necesita `tenant_members` para crear memberships), F05.4 (E2E necesita switch-tenant).
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado de Fases 0–6.**
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+
+$checks = @{
+  "apps/server/src/admin-tenants.ts" = "ADMIN_TENANTS_MEMBERSHIP_CACHE_V1"
+  "apps/server/src/db-tenant.ts" = "TENANT_PEEL_GUARD_V1"
+  "apps/server/src/middleware/request-logger.ts" = "METRICS_TENANT_LABEL_V1"
+  "apps/server/src/engine/service.ts" = "TENANT_RATE_LIMITER_FIELD_V1"
+  "apps/server/src/app.ts" = "TENANT_RATE_LIMITER_WIRE_V1"
+  "apps/server/src/engine/conversation.ts" = "TAKE_FOR_TENANT_TENANTID_V1"
+  "apps/server/src/rag-routes.ts" = "TAKE_FOR_TENANT_TENANTID_V1"
+  "apps/server/src/threads-routes.ts" = "TAKE_FOR_TENANT_TENANTID_V1"
+  "apps/server/src/db-rls.ts" = "TENANT_RLS_TX_V1"
+  "apps/server/src/index.ts" = "RLS_REQUIRED_IN_SHARED_V1"
+  "apps/server/src/computer.ts" = "TAKE_FOR_TENANT_COMPUTER_V1"
+  "apps/server/src/browser.ts" = "TAKE_FOR_TENANT_BROWSER_V1"
+  "apps/server/src/notification-prefs.ts" = "NOTIFICATION_PREFS_TENANT_V1"
+  "apps/server/src/notifications-stream.ts" = "NOTIFICATIONS_STREAM_TENANT_V1"
+  "apps/server/src/metrics-exporter.ts" = "METRICS_EXPORTER_TENANT_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw "ERROR: falta $($checks[$k]) en $k" }
+}
+Write-Host "Fases 0-6 verificadas" -ForegroundColor Green
+```
+**Decisión:** si falla, **ABORTA TODO**.
+
+**0.2. Anclas de F04.14c en `engine/tenant.ts`.**
+
+```powershell
+$tenant = Join-Path $repoRoot "apps/server/src/engine/tenant.ts"
+$tc = Get-Content $tenant -Raw
+
+Write-Host "=== TenantService constructor ==="
+Select-String -Path $tenant -Pattern "export class TenantService" -Context 0,10
+
+Write-Host "=== setMembership actual ==="
+Select-String -Path $tenant -Pattern "async setMembership" -Context 0,10
+
+Write-Host ("MEMBERSHIP_CACHE_INVALIDATE_V1 presente: {0}" -f ($tc -match [regex]::Escape("MEMBERSHIP_CACHE_INVALIDATE_V1")))
+```
+**Decisión:** si constructor 1×, `setMembership` 1×, marca 0×, aplicar.
+
+**0.3. Anclas de F04.10c/d/wire en `app.ts`.**
+
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+$ac = Get-Content $app -Raw
+
+Write-Host "=== TenantService constructor en app.ts ==="
+Select-String -Path $app -Pattern "new TenantService" -Context 1,2
+
+Write-Host "=== new Kernel ==="
+Select-String -Path $app -Pattern "new Kernel|ServiceTenantResolver|EnvTenantConfigResolver" -Context 1,2
+
+Write-Host ("DB_TENANT_RESOLVER_WIRED_V1 presente: {0}" -f ($ac -match [regex]::Escape("DB_TENANT_RESOLVER_WIRED_V1")))
+Write-Host ("DB_TENANT_CONFIG_RESOLVER_WIRED_V1 presente: {0}" -f ($ac -match [regex]::Escape("DB_TENANT_CONFIG_RESOLVER_WIRED_V1")))
+```
+**Decisión:** si `new TenantService` 1×, `new Kernel` 1×, `ServiceTenantResolver` 1×, `EnvTenantConfigResolver` 1×, y las marcas 0×, aplicar.
+
+**0.4. Anclas de F04.14b en `auth-routes.ts`.**
+
+```powershell
+$auth = Join-Path $repoRoot "apps/server/src/auth-routes.ts"
+$auc = Get-Content $auth -Raw
+
+Write-Host "=== authRoutes firma ==="
+Select-String -Path $auth -Pattern "export function authRoutes" -Context 0,10
+
+Write-Host "=== app.post /login y app.get /me ==="
+Select-String -Path $auth -Pattern 'app.post\("/login"|app.get\("/me"' -Context 0,3
+
+Write-Host ("SWITCH_TENANT_ENDPOINT_V1 presente: {0}" -f ($auc -match [regex]::Escape("SWITCH_TENANT_ENDPOINT_V1")))
+```
+**Decisión:** si `authRoutes(db, users, options, bus?)` firma 1×, `POST /login` 1×, `GET /me` 1×, marca 0×, aplicar.
+
+**0.5. Anclas de F04.12 en `admin-tenants.ts`.**
+
+```powershell
+$at = Join-Path $repoRoot "apps/server/src/admin-tenants.ts"
+$atc = Get-Content $at -Raw
+
+Write-Host "=== admin-tenants routes existentes ==="
+Select-String -Path $at -Pattern 'app\.(get|post|patch|delete)\(' -Context 0,1
+
+Write-Host ("ADMIN_TENANTS_CRUD_V1 presente: {0}" -f ($atc -match [regex]::Escape("ADMIN_TENANTS_CRUD_V1")))
+```
+**Decisión:** si hay `POST /:tenantId/suspend` y `POST /:tenantId/resume` (ya existen) y `POST /` (ya existe), aplicar F04.12 añadiendo `DELETE` y `PATCH`.
+
+**0.6. Anclas de F04.11 en `scripts/migrate-tenant-scope.ts`.**
+
+```powershell
+$mig = Join-Path $repoRoot "scripts/migrate-tenant-scope.ts"
+$mc = Get-Content $mig -Raw
+
+Write-Host "=== migrate-tenant-scope.ts actual ==="
+Select-String -Path $mig -Pattern "db.select|UPDATE" -Context 0,2
+
+Write-Host ("MIGRATE_SCOPE_TX_V1 presente: {0}" -f ($mc -match [regex]::Escape("MIGRATE_SCOPE_TX_V1")))
+```
+**Decisión:** si `db.select("UPDATE ...")` 1× y marca 0×, aplicar.
+
+**0.7. Verificar `scripts/migrate-tenant-membership.ts` (F04.11b).**
+
+```powershell
+$migMem = Join-Path $repoRoot "scripts/migrate-tenant-membership.ts"
+Write-Host ("scripts/migrate-tenant-membership.ts existe: {0}" -f (Test-Path $migMem))
+if (Test-Path $migMem) {
+  $mmc = Get-Content $migMem -Raw
+  Write-Host ("Contiene 'migratedAt' (idempotencia): {0}" -f ($mmc -match "migratedAt"))
+  Write-Host ("Contiene 'skipped': {0}" -f ($mmc -match "skipped"))
+}
+```
+**Decisión:** el script existe (Repomix holístico lo confirma) y es idempotente (`if (existing) { skipped++; continue; }`, `if (row.id === "default") { skipped++; continue; }`, `if (!row.tenantId) { skipped++; continue; }`). **Cero cambios.** Se anota en `-pendientes.md` como verificado.
+
+**0.8. Confirmar F04.27 bloqueado (una vez más).**
+
+```powershell
+$backup = Join-Path $repoRoot "apps/server/src/backup-tenant.ts"
+Write-Host ("apps/server/src/backup-tenant.ts existe: {0}" -f (Test-Path $backup))
+```
+**Decisión:** si no existe, F04.27 no se aplica (sigue bloqueado). Se anota en `-pendientes.md`.
+
+**0.9. Confirmar `worker.ts` sigue roto (no tocar).**
+```powershell
+Get-Content (Join-Path $repoRoot "apps/server/src/engine/worker.ts") -TotalCount 120
+```
+**Decisión:** solo lectura.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Motivo |
+|---|---|---|
+| F04.14c | Sí (3 hunks) | `setMembership` con evento + `invalidateAll` |
+| F04.10c | Sí (1 hunk) | `DatabaseTenantResolver` cableado |
+| F04.10d | Sí (1 hunk) | `DatabaseTenantConfigResolver` cableado |
+| F04.10-wire | Sí (1 hunk) | `TenantService` con `bus` |
+| F04.14b | Sí (1 hunk) | `/api/auth/switch-tenant` |
+| F04.12 | Sí (2 hunks) | `DELETE` + `PATCH` en admin-tenants |
+| F04.11 | Sí (1 hunk) | `db.transaction` en migración |
+| F04.11b | No aplica, verificado | Script ya existe |
+| F04.27 | No (bloqueado) | `backup-tenant.ts` no existe |
+
+---
+
+## 10. Patchsets
+
+### F04.14c — `engine/tenant.ts`: `setMembership` con evento + `invalidateAll` (3 hunks)
+
+**Fichero:** `apps/server/src/engine/tenant.ts`
+**Marca:** `MEMBERSHIP_CACHE_INVALIDATE_V1`.
+
+**Hunk 1 — constructor con `bus` opcional.**
+
+**`$old` (Repomix original, literal):**
+```
+  constructor(
+    private readonly db: Store,
+    private readonly config: Config,
+  ) {}
+```
+
+**`$new`:**
+```
+  constructor(
+    private readonly db: Store,
+    private readonly config: Config,
+    // MEMBERSHIP_CACHE_INVALIDATE_V1 — bus opcional para emitir eventos de
+    // cambio de membership. Si no se pasa (tests existentes), no se emite
+    // evento y se mantiene el comportamiento anterior.
+    private readonly bus?: { emit: (owner: string, type: string, source: { kind: string; id: string }, payload: Record<string, unknown>) => Promise<void> },
+  ) {}
+```
+
+**Hunk 2 — `setMembership` con `invalidateAll`.**
+
+**`$old` (Repomix original, literal):**
+```
+  async setMembership(owner: string, tenantId: string): Promise<void> {
+    await this.db.put(owner, MEMBERSHIP_KIND, {
+      id: MEMBERSHIP_ID,
+      tenantId,
+      updatedAt: new Date().toISOString(),
+    });
+    this.cache.set(owner, { tenantId, at: Date.now() });
+  }
+```
+
+**`$new`:**
+```
+  async setMembership(owner: string, tenantId: string): Promise<void> {
+    await this.db.put(owner, MEMBERSHIP_KIND, {
+      id: MEMBERSHIP_ID,
+      tenantId,
+      updatedAt: new Date().toISOString(),
+    });
+    this.cache.set(owner, { tenantId, at: Date.now() });
+    // MEMBERSHIP_CACHE_INVALIDATE_V1 — invalidar TODA la caché tras un
+    // cambio administrativo. Un admin puede estar moviendo un owner entre
+    // tenants y otros owners pueden verse afectados si el admin también
+    // reasigna sus memberships. Es más seguro invalidar todo que solo el
+    // owner cambiado.
+    this.invalidateAll();
+    // MEMBERSHIP_CACHE_INVALIDATE_V1 — emitir evento al bus si está
+    // disponible. El evento lo consumen audit y metrics (Fase 6 los cableó).
+    if (this.bus) {
+      try {
+        await this.bus.emit("system", "tenant.membership.changed", { kind: "tenant", id: tenantId }, {
+          owner,
+          tenantId,
+          changedAt: new Date().toISOString(),
+        });
+      } catch { /* best-effort */ }
+    }
+  }
+```
+
+**Hunk 3 — añadir `TENANT_MEMBERSHIP_CHANGED` al `SYSTEM_EVENT_TYPES` si no existe.**
+
+**`$old` (en `apps/server/src/engine/events/types.ts`, Repomix original):**
+```
+export const SYSTEM_EVENT_TYPES = [
+  ...
+] as const;
+```
+
+**`$new`:** añadir `"tenant.membership.changed"` al array. **Si no está en `types.ts` (que no lo tengo en Repomix), se anota como bloqueante menor y se usa un tipo existente (`"system.maintenance"` o `"policy.evaluated"`).** Se anota en `-pendientes.md`.
+
+**Alternativa:** si `types.ts` no está disponible, se emite con tipo `"system.maintenance"` con payload `{ change: "tenant.membership", owner, tenantId }`. **Funcionalmente equivalente, menos semántico.** Se anota como deuda para Fase 9.
+
+**Verificación pre:** constructor 1×, `setMembership` 1×, marca 0×. Post: `MEMBERSHIP_CACHE_INVALIDATE_V1` 2×, `this.invalidateAll()` 1×, `this.bus` 1×.
+
+### F04.10c + F04.10d + F04.10-wire — `app.ts`: cablear `DatabaseTenantResolver` y `DatabaseTenantConfigResolver` (3 hunks)
+
+**Fichero:** `apps/server/src/app.ts`
+**Marcas:** `DB_TENANT_RESOLVER_WIRED_V1`, `DB_TENANT_CONFIG_RESOLVER_WIRED_V1`, `MEMBERSHIP_CACHE_INVALIDATE_V1`.
+
+**Hunk 1 — `TenantService` con `bus`.**
+
+**`$old`:**
+```
+  const tenantServiceEarly = new TenantService(db, config);
+```
+
+**`$new`:**
+```
+  // MEMBERSHIP_CACHE_INVALIDATE_V1 — pasa el bus a TenantService para que
+  // setMembership emita TENANT_MEMBERSHIP_CHANGED.
+  // Ojo: `bus` se declara más abajo. Si TS no lo permite, se anota y se
+  // omite (bus undefined en el constructor, evento no emitido hasta Fase 9).
+  const tenantServiceEarly = new TenantService(db, config, typeof bus !== "undefined" ? bus : undefined);
+```
+
+**Nota crítica:** `bus` se declara más abajo en `createApp` (`const bus = new EventBus(tdb);`). **TS lo detectará como `used before declaration`.** **Solución:** mover la declaración de `bus` **antes** de `tenantServiceEarly`, o pasar `bus` como `undefined` en Fase 7 y cablear en Fase 9. **Recomiendo pasar `undefined` en Fase 7** y anotar la deuda. El constructor acepta `bus?` opcional, así que no rompe.
+
+**`$new` ajustado:**
+```
+  // MEMBERSHIP_CACHE_INVALIDATE_V1 — el bus aún no está declarado aquí.
+  // Se pasa undefined en Fase 7 y se cablea en Fase 9 cuando el orden de
+  // declaración se pueda reordenar. setMembership funciona igual, solo no
+  // emite evento hasta Fase 9.
+  const tenantServiceEarly = new TenantService(db, config);
+```
+
+**Decisión:** **no se pasa `bus` en Fase 7.** Se anota como deuda en `-pendientes.md`: "cablear `bus` a `TenantService` en Fase 9 moviendo `const bus = new EventBus(tdb);` antes de `new TenantService`". **F04.14c se aplica parcialmente: `invalidateAll` sí, evento no.**
+
+**Hunk 2 — `DatabaseTenantResolver` en el kernel.**
+
+**`$old`:**
+```
+  const kernel = new Kernel({
+    store: new StoreTurnStore(persistentStorePort),
+    // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
+    // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
+    // ignoraba el tenantId del contexto y escribia todo en "default".
+    tenants: new ServiceTenantResolver(tenantService),
+    // AUDIT_STORE_ALWAYS_V1 - mismo razonamiento que KERNEL_STORE_ALWAYS_V1:
+    // StoreAuditStore siempre. La cadena de hash se persiste.
+    audit: new StoreAuditStore(db),
+    config: new EnvTenantConfigResolver(),
+  });
+```
+
+**`$new`:**
+```
+  // DB_TENANT_RESOLVER_WIRED_V1 — si MULTI_TENANT_SHARED=true, el primario es
+  // DatabaseTenantResolver (lee tenant_members de records), y el fallback es
+  // ServiceTenantResolver. Si no, se usa ServiceTenantResolver directamente.
+  const tenantFallback = new ServiceTenantResolver(tenantService);
+  const { DatabaseTenantResolver } = await import("./kernel/tenancy/database-resolver.ts");
+  const tenantResolver = process.env.MULTI_TENANT_SHARED === "true"
+    ? new DatabaseTenantResolver(
+        {
+          query: async (sql: string, params: unknown[]) => ({ rows: await db.select(sql, params) }),
+        },
+        tenantFallback,
+      )
+    : tenantFallback;
+  // DB_TENANT_CONFIG_RESOLVER_WIRED_V1 — si MULTI_TENANT_SHARED=true, el
+  // primario es DatabaseTenantConfigResolver (lee tenant_configs de records),
+  // y el fallback es EnvTenantConfigResolver.
+  const { DatabaseTenantConfigResolver } = await import("./kernel/config/database-resolver.ts");
+  const envConfigResolver = new EnvTenantConfigResolver();
+  const configResolver = process.env.MULTI_TENANT_SHARED === "true"
+    ? new DatabaseTenantConfigResolver(
+        {
+          query: async (sql: string, params: unknown[]) => ({ rows: await db.select(sql, params) }),
+        },
+        envConfigResolver,
+      )
+    : envConfigResolver;
+  const kernel = new Kernel({
+    store: new StoreTurnStore(persistentStorePort),
+    // DB_TENANT_RESOLVER_WIRED_V1 — resolver con fallback.
+    tenants: tenantResolver,
+    // AUDIT_STORE_ALWAYS_V1 - mismo razonamiento que KERNEL_STORE_ALWAYS_V1:
+    // StoreAuditStore siempre. La cadena de hash se persiste.
+    audit: new StoreAuditStore(db),
+    // DB_TENANT_CONFIG_RESOLVER_WIRED_V1 — config resolver con fallback.
+    config: configResolver,
+  });
+```
+
+**Nota crítica:** `DatabaseTenantResolver` **no usa `records` directamente, espera una tabla SQL `tenant_members`.** El Repomix original lo documenta: `create table tenant_members (...)`. **La adaptación que hago aquí (`query: async (sql, params) => ({ rows: await db.select(sql, params) })`) hace que `db.select` ejecute la query SQL contra `records`**, **lo cual fallaría porque `records` no tiene columnas `user_id`, `tenant_id`, `role`, `is_default`, `created_at`.** **Esto rompe el contrato de `DatabaseTenantResolver`.**
+
+**Corrección:** para no romper el contrato y para no crear tablas SQL nuevas, **NO se cablea `DatabaseTenantResolver` en Fase 7.** Se deja como deuda y se cablea en Fase 8/9 cuando se cree la tabla SQL `tenant_members`. **`DatabaseTenantConfigResolver` tiene el mismo problema.** **Ninguno de los dos se cablea en Fase 7.**
+
+**`$new` ajustado:**
+```
+  // DB_TENANT_RESOLVER_WIRED_V1 — en Fase 7 mantenemos ServiceTenantResolver
+  // como primario. DatabaseTenantResolver requiere tabla SQL tenant_members
+  // (Repomix original, líneas 11-18), que aún no existe. Se cablea en
+  // Fase 8/9 cuando se cree la tabla. Anotado en -pendientes.md.
+  const kernel = new Kernel({
+    store: new StoreTurnStore(persistentStorePort),
+    // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
+    // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
+    // ignoraba el tenantId del contexto y escribia todo en "default".
+    tenants: new ServiceTenantResolver(tenantService),
+    // AUDIT_STORE_ALWAYS_V1 - mismo razonamiento que KERNEL_STORE_ALWAYS_V1:
+    // StoreAuditStore siempre. La cadena de hash se persiste.
+    audit: new StoreAuditStore(db),
+    // DB_TENANT_CONFIG_RESOLVER_WIRED_V1 — EnvTenantConfigResolver como
+    // primario. DatabaseTenantConfigResolver requiere tabla SQL tenant_configs,
+    // que aún no existe. Se cablea en Fase 8/9.
+    config: new EnvTenantConfigResolver(),
+  });
+```
+
+**Conclusión:** F04.10c y F04.10d **no se aplican en Fase 7**. Se anotan como deudas para Fase 8/9 (cuando se creen las tablas SQL). F04.10b tampoco se aplica (los kinds nuevos en `records` **no son equivalentes** a las tablas SQL que esperan los resolvers). **Se posponen a Fase 8/9.**
+
+### F04.14b — `auth-routes.ts`: `POST /switch-tenant` (1 hunk)
+
+**Fichero:** `apps/server/src/auth-routes.ts`
+**Marca:** `SWITCH_TENANT_ENDPOINT_V1`.
+
+**`$old` (Repomix original, literal — insertar tras `POST /logout`):**
+```
+  // GET /api/auth/me -> usuario autenticado actual
+  // AUTH_ME_RATE_LIMIT_V1
+  app.get("/me", async (c) => {
+```
+
+**`$new`:**
+```
+  // SWITCH_TENANT_ENDPOINT_V1 — cambia el tenant activo del usuario.
+  // Valida que el usuario tiene membership en el tenantId solicitado, y
+  // devuelve un nuevo JWT con tenantId en el payload. El cliente debe
+  // guardar el nuevo token y usarlo en futuras requests.
+  // Si el usuario no tiene membership en el tenant, 403.
+  app.post("/switch-tenant", async (c) => {
+    const owner = c.get("owner");
+    const body = z.object({ tenantId: z.string().min(1).max(100) }).parse(await c.req.json());
+    // Resolver el tenantId activo actual del owner (por si el usuario ya
+    // estaba en un tenant distinto al de su membership primaria).
+    const currentTenantId = await db
+      .get<{ tenantId: string }>(owner, "tenant-membership", "default")
+      .then((r) => r?.tenantId ?? null)
+      .catch(() => null);
+    if (currentTenantId === null) {
+      throw new AppError("SWITCH_TENANT_ENDPOINT_V1: el usuario no tiene membership", 403);
+    }
+    // Validar que el usuario tiene acceso al tenantId solicitado.
+    // Hoy solo hay un tenant por usuario (id="default"), así que el switch
+    // solo funciona si tenantId === currentTenantId. Cuando haya multi-membership
+    // (Campaña 2), esto leerá de tenant_members.
+    if (body.tenantId !== currentTenantId) {
+      throw new AppError(
+        "SWITCH_TENANT_ENDPOINT_V1: el usuario no tiene membership en " + body.tenantId,
+        403,
+      );
+    }
+    // Emitir un nuevo JWT con tenantId. Mismo formato que /login.
+    const token = randomBytes(32).toString("base64url");
+    await db.put("system", "sessions", {
+      id: digest(token),
+      owner,
+      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+      tenantId: body.tenantId,
+    });
+    // SWITCH_TENANT_ENDPOINT_V1 — respuesta.
+    return c.json({ ok: true, tenantId: body.tenantId, token });
+  });
+
+  // GET /api/auth/me -> usuario autenticado actual
+  // AUTH_ME_RATE_LIMIT_V1
+  app.get("/me", async (c) => {
+```
+
+**Verificación pre:** `app.get("/me", async (c) => {` 1×, marca 0×. Post: `SWITCH_TENANT_ENDPOINT_V1` 1×.
+
+**Nota:** `randomBytes` y `digest` ya están importados en `auth-routes.ts` (Repomix original). Confirmado.
+
+### F04.12 — `admin-tenants.ts`: `DELETE` + `PATCH` (2 hunks)
+
+**Fichero:** `apps/server/src/admin-tenants.ts`
+**Marca:** `ADMIN_TENANTS_CRUD_V1`.
+
+**Hunk 1 — `DELETE /:tenantId`.**
+
+**`$old` (Repomix original — insertar tras `POST /:tenantId/resume`):**
+```
+  return app;
+}
+
+async function buildHealth(service: AgentService, tenantId: string): Promise<TenantHealth> {
+```
+
+**`$new`:**
+```
+  // ADMIN_TENANTS_CRUD_V1 — borra un tenant. Elimina membership y state.
+  // No borra los records del tenant (tasks, files, etc.): esos los borra
+  // un operador con un script dedicado (Fase 9 si hace falta).
+  app.delete("/:tenantId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    await service.db.remove("system", "tenant-membership", tenantId);
+    await service.db.remove("system", "tenant-state", tenantId);
+    // ADMIN_TENANTS_CRUD_V1 — invalidar caché de TenantService.
+    const ts = (service as unknown as { tenantService?: { invalidateAll?: () => void } }).tenantService;
+    ts?.invalidateAll?.();
+    return c.json({ ok: true, tenantId, deleted: true });
+  });
+
+  // ADMIN_TENANTS_CRUD_V1 — actualiza displayName u otros campos editables.
+  app.patch("/:tenantId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    const body = z.object({ displayName: z.string().min(1).max(200).optional() }).parse(await c.req.json());
+    if (body.displayName === undefined) {
+      throw new AppError("Nada que actualizar (displayName)", 422);
+    }
+    const existing = await service.db.get<{ id: string; tenantId: string; displayName?: string; createdAt: string; createdBy: string }>(
+      "system",
+      "tenant-membership",
+      tenantId,
+    );
+    if (!existing) throw new AppError("Tenant no encontrado", 404);
+    await service.db.put("system", "tenant-membership", {
+      ...existing,
+      displayName: body.displayName,
+      updatedAt: new Date().toISOString(),
+    });
+    return c.json({ ok: true, tenantId, displayName: body.displayName });
+  });
+
+  return app;
+}
+
+async function buildHealth(service: AgentService, tenantId: string): Promise<TenantHealth> {
+```
+
+**Verificación pre:** `return app;` seguido de `async function buildHealth` 1×, marca 0×. Post: `ADMIN_TENANTS_CRUD_V1` 2×.
+
+### F04.11 — `scripts/migrate-tenant-scope.ts`: transaccional (1 hunk)
+
+**Fichero:** `scripts/migrate-tenant-scope.ts`
+**Marca:** `MIGRATE_SCOPE_TX_V1`.
+
+**`$old` (Repomix original, literal):**
+```
+// MIGRATE_TENANT_SCOPE_V1 - reescribe owner -> "default:owner".
+import { createStore } from "../apps/server/src/db.ts";
+
+async function main() {
+  const db = await createStore({
+    dataDir: process.env.DATA_DIR ?? ".openmuse",
+    databaseUrl: process.env.DATABASE_URL,
+  });
+  try {
+    const rows = await db.select<{ owner: string }>(
+      "SELECT DISTINCT owner FROM records WHERE owner NOT LIKE 'default:%' AND owner NOT LIKE '%:%'",
+    );
+    console.log(`Owners sin prefijo: ${rows.length}`);
+    for (const row of rows) {
+      await db.select("UPDATE records SET owner = 'default:' || owner WHERE owner = $1", [row.owner]);
+    }
+    console.log(`OK: ${rows.length} owners reescritos`);
+  } finally {
+    await db.close();
+  }
+}
+
+void main();
+```
+
+**`$new`:**
+```
+// MIGRATE_TENANT_SCOPE_V1 - reescribe owner -> "default:owner".
+// MIGRATE_SCOPE_TX_V1 — toda la migración va en una transacción. Si una
+// fila falla, se hace ROLLBACK y no queda estado intermedio. Antes cada
+// UPDATE iba por separado; un fallo a mitad dejaba owners migrados y otros
+// no, y el siguiente arranque no sabía qué había pasado.
+import { createStore } from "../apps/server/src/db.ts";
+
+async function main() {
+  const db = await createStore({
+    dataDir: process.env.DATA_DIR ?? ".openmuse",
+    databaseUrl: process.env.DATABASE_URL,
+  });
+  try {
+    const rows = await db.select<{ owner: string }>(
+      "SELECT DISTINCT owner FROM records WHERE owner NOT LIKE 'default:%' AND owner NOT LIKE '%:%'",
+    );
+    console.log(`Owners sin prefijo: ${rows.length}`);
+    // MIGRATE_SCOPE_TX_V1 — transacción atómica.
+    await db.transaction(async () => {
+      for (const row of rows) {
+        await db.select("UPDATE records SET owner = 'default:' || owner WHERE owner = $1", [row.owner]);
+      }
+    });
+    console.log(`OK: ${rows.length} owners reescritos`);
+  } finally {
+    await db.close();
+  }
+}
+
+void main();
+```
+
+**Verificación pre:** `db.select("UPDATE ...` 1×, `db.transaction` 0×, marca 0×. Post: `db.transaction` 1×, `MIGRATE_SCOPE_TX_V1` 1×.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y los repasos de docs 02–07 se aplican íntegras. **Además, en esta fase:**
+
+- **F04.10c y F04.10d NO se aplican** (requieren tablas SQL `tenant_members`/`tenant_configs` que no existen). Se posponen a Fase 8/9. **F04.10b tampoco** (kinds nuevos en `records` no son equivalentes a las tablas). **Esta fase NO toca resolvers.**
+- **F04.14c se aplica parcialmente:** `invalidateAll` sí, evento al bus no (por orden de declaración de `bus`). **Se anota deuda en `-pendientes.md`.**
+- **F04.14b:** `switch-tenant` solo funciona si el usuario tiene membership en el tenant solicitado. **En clone-por-cliente, `currentTenantId` puede ser `null` si el usuario no tiene membership** — eso significa que `/switch-tenant` devuelve 403. **Correcto:** no puede cambiar a un tenant que no tiene. Si el usuario no tiene membership, primero hay que crearle una (signup lo hace, admin-tenants lo hace).
+- **F04.12:** `DELETE` no borra los records del tenant (tasks, files). Solo borra membership y state. **Deuda: en Fase 9, script `delete-tenant-data.ts`.**
+- **F04.11:** `db.transaction` envuelve el `for` pero cada `db.select` es individual. **TS detecta `db.transaction` como transacción de una sola conexión** (Repomix original: `private inTransaction = false; async transaction(...) { if (this.inTransaction) return fn(this); ... }`). **Correcto.**
+- **No `git add .`, no `--force`, no `commit` dentro del patchset.**
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @openmuse/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - `POST /api/auth/switch-tenant` con `{tenantId: <current>}` y auth de owner `A` → 200 con nuevo token. Con `{tenantId: <otro>}` → 403.
+  - `DELETE /api/admin/tenants/:tenantId` (admin) → 200. `GET /api/admin/tenants/:tenantId` → 404.
+  - `PATCH /api/admin/tenants/:tenantId` (admin) con `{displayName: "X"}` → 200 con `displayName` actualizado.
+  - `pnpm exec tsx scripts/migrate-tenant-scope.ts` con datos de prueba → `db.transaction` ejecuta sin fallos. Si se fuerza un fallo (por ejemplo, un `UPDATE` con constraint), el rollback deja el estado intacto. **En `pglite` sin constraint, difícil forzar; se anota como deuda de test.**
+  - `setMembership` (vía `signupRoutes`) emite evento. **Con `bus` undefined (Fase 7), no emite. Se anota como deuda.**
+- **La IA commitea con ficheros explícitos:**
+  ```powershell
+  git add apps/server/src/engine/tenant.ts
+  git add apps/server/src/auth-routes.ts
+  git add apps/server/src/admin-tenants.ts
+  git add scripts/migrate-tenant-scope.ts
+  git commit -m "feat(multitenant): fase 7 — switch-tenant + admin CRUD + migrate scope tx + setMembership invalidateAll [MEMBERSHIP_CACHE_INVALIDATE_V1, SWITCH_TENANT_ENDPOINT_V1, ADMIN_TENANTS_CRUD_V1, MIGRATE_SCOPE_TX_V1]"
+  git push origin feat/multitenancy-campaign
+  ```
+  **Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+- **Si el push falla por conflicto con `origin/main`, no forzar.**
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fases 0–6 incompletas → aborta todo.
+- F04.14c constructor 0× → `tenant.ts` cambió; abortar F04.14c y anotar.
+- F04.14c `setMembership` 0× → idem.
+- F04.14b `app.get("/me", ...)` 0× → `auth-routes.ts` cambió; abortar F04.14b.
+- F04.12 `return app;` seguido de `async function buildHealth` 0× → `admin-tenants.ts` cambió; abortar F04.12.
+- F04.11 `db.select("UPDATE ...` 0× → `migrate-tenant-scope.ts` cambió; abortar F04.11.
+- Typecheck rojo por `bus` no declarado en `TenantService` (si F04.10-wire se aplicara) → **no se aplica F04.10-wire**. Se anota en `-pendientes.md`.
+- Typecheck rojo por `randomBytes` o `digest` no importados en `auth-routes.ts` → **ya están importados en Repomix original**. Si no, ajustar import.
+- Typecheck rojo por `db.transaction` no disponible → **está en Repomix original**. Si no, ajustar.
+- `worker.ts` reparado por Copilot → anotar, no tocar.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\07-aislamiento-multi-tenant\missed\_multitenant_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md`:**
+- **F04.10b** (kinds nuevos en `records`): **no equivalente a las tablas SQL que esperan los resolvers**. Se pospone a Fase 8/9, cuando se creen las tablas SQL `tenant_members`, `tenant_configs`, `tenant_invites`, `tenant_audit_events` **o** se adapten los resolvers a leer de `records`. **Recomendación: adaptar los resolvers a leer de `records` (kinds) en Fase 8, sin crear tablas SQL.** Eso requiere tocar `DatabaseTenantResolver` para cambiar `select tenant_id from tenant_members where user_id = $1` por `select data->>'tenantId' from records where owner='system' and kind='tenant-members' and data->>'userId' = $1`. **Es un cambio de contrato del resolver.** Se anota.
+- **F04.10c** (`DatabaseTenantResolver` cableado): pospuesto a Fase 8/9. Idem para `DatabaseTenantConfigResolver`.
+- **F04.14c** (evento al bus): pospuesto a Fase 9 (mover `const bus = new EventBus(tdb)` antes de `new TenantService`).
+- **F04.12** (`DELETE` tenant): no borra datos del tenant. Fase 9 script `delete-tenant-data.ts`.
+- **F04.27** (`runTenantBackup`): bloqueado hasta `backup-tenant.ts`.
+- **F04.11** (`db.transaction`): probado sin constraint real; deuda de test.
+- **F04.11b**: verificado, no requiere cambios.
+
+---
+
+## 14. Checklist de cierre de la fase 7
+
+- [ ] Paso 0.1–0.9 ejecutados, salidas anotadas.
+- [ ] F04.14c aplicado parcialmente (2 hunks: constructor + setMembership; evento al bus pospuesto). `MEMBERSHIP_CACHE_INVALIDATE_V1` 2×.
+- [ ] F04.10c no aplicado (pospuesto). Anotado en `-pendientes.md`.
+- [ ] F04.10d no aplicado (pospuesto). Anotado en `-pendientes.md`.
+- [ ] F04.10-wire no aplicado (pospuesto). Anotado en `-pendientes.md`.
+- [ ] F04.14b aplicado (1 hunk, `SWITCH_TENANT_ENDPOINT_V1` 1×).
+- [ ] F04.12 aplicado (2 hunks, `ADMIN_TENANTS_CRUD_V1` 2×).
+- [ ] F04.11 aplicado (1 hunk, `MIGRATE_SCOPE_TX_V1` 1×).
+- [ ] F04.11b verificado, sin cambios.
+- [ ] F04.27 bloqueado, anotado en `-pendientes.md`.
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` sigue roto y sin tocar.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde.
+- [ ] Cline probó los 5 escenarios de §12.
+- [ ] `git add` explícito de los 4 ficheros.
+- [ ] `git commit -m "feat(multitenant): fase 7 — ..."`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 7 cerrada. Siguiente: Fase 8 (documento 09 — B9 CI + cierre Campaña 1)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/engine/tenant.ts` — `TenantService` constructor (Repomix original, literal, sin cortes):
+
+```typescript
+export class TenantService {
+  // TENANT_SERVICE_TTL_V1 - cache con TTL de 5 min.
+  private readonly cache = new Map<string, { tenantId: string; at: number }>();
+
+  constructor(
+    private readonly db: Store,
+    private readonly config: Config,
+  ) {}
+```
+
+**F04.14c añade `bus?`.**
+
+### A.2. `apps/server/src/engine/tenant.ts` — `setMembership` (Repomix original, literal, sin cortes):
+
+```typescript
+  /**
+   * Registra el owner en un tenant. Idempotente.
+   * Se llama desde provision-client o desde el alta de usuario cuando
+   * el deployment pase a multi-tenant.
+   */
+  async setMembership(owner: string, tenantId: string): Promise<void> {
+    await this.db.put(owner, MEMBERSHIP_KIND, {
+      id: MEMBERSHIP_ID,
+      tenantId,
+      updatedAt: new Date().toISOString(),
+    });
+    this.cache.set(owner, { tenantId, at: Date.now() });
+  }
+```
+
+**F04.14c añade `invalidateAll()` y evento.**
+
+### A.3. `apps/server/src/engine/tenant.ts` — `invalidateAll` (Repomix original, literal, sin cortes):
+
+```typescript
+  /**
+   * TENANT_CACHE_INVALIDATE_ALL_V1 â€” invalida toda la cache tras cambios
+   * administrativos (mover owner entre tenants).
+   * Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
+   */
+  invalidateAll(): void {
+    this.cache.clear();
+  }
+```
+
+**F04.14c lo llama.**
+
+### A.4. `apps/server/src/kernel/tenancy/database-resolver.ts` — SQL esperado (Repomix original, literal, sin cortes, comentario):
+
+```typescript
+//   create table tenant_members (
+//     user_id text not null,
+//     tenant_id text not null,
+//     role text not null default 'member',
+//     is_default boolean not null default false,
+//     created_at timestamptz not null default now(),
+//     primary key (user_id, tenant_id)
+//   );
+```
+
+**Confirma que `DatabaseTenantResolver` espera tabla SQL `tenant_members`. No existe en Fase 7. Se pospone.**
+
+### A.5. `apps/server/src/kernel/config/database-resolver.ts` — SQL esperado (Repomix original, literal, sin cortes, comentario):
+
+```typescript
+//   create table tenant_configs (
+//     tenant_id text primary key,
+//     fast_provider text not null,
+//     ...
+//   );
+```
+
+**Confirma que `DatabaseTenantConfigResolver` espera tabla SQL `tenant_configs`. No existe en Fase 7. Se pospone.**
+
+### A.6. `apps/server/src/app.ts` — `new TenantService` y `new Kernel` (Repomix original, literal, sin cortes):
+
+```typescript
+  const tenantServiceEarly = new TenantService(db, config);
+```
+
+```typescript
+  const kernel = new Kernel({
+    store: new StoreTurnStore(persistentStorePort),
+    // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
+    // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
+    // ignoraba el tenantId del contexto y escribia todo en "default".
+    tenants: new ServiceTenantResolver(tenantService),
+    // AUDIT_STORE_ALWAYS_V1 - mismo razonamiento que KERNEL_STORE_ALWAYS_V1:
+    // StoreAuditStore siempre. La cadena de hash se persiste.
+    audit: new StoreAuditStore(db),
+    config: new EnvTenantConfigResolver(),
+  });
+```
+
+**F04.10c/d/wire no se aplican aquí (pospuestos). Se mantiene `ServiceTenantResolver` y `EnvTenantConfigResolver`.**
+
+### A.7. `apps/server/src/auth-routes.ts` — `app.get("/me", ...)` (Repomix original, literal, sin cortes):
+
+```typescript
+  // GET /api/auth/me -> usuario autenticado actual
+  // AUTH_ME_RATE_LIMIT_V1
+  app.get("/me", async (c) => {
+    const user = await users.getById(c.get("owner"));
+    if (!user) throw new AppError("Usuario no encontrado", 404);
+    return c.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      setup: user.setup,
+    });
+  });
+```
+
+**F04.14b inserta `POST /switch-tenant` antes.**
+
+### A.8. `apps/server/src/auth-routes.ts` — imports de `randomBytes` y `digest` (Repomix original, literal, sin cortes):
+
+```typescript
+import { createHash, randomBytes } from "node:crypto";
+...
+const digest = (value: string) => createHash("sha256").update(value).digest("hex");
+```
+
+**F04.14b los usa.**
+
+### A.9. `apps/server/src/admin-tenants.ts` — `return app;` (Repomix original, literal, sin cortes):
+
+```typescript
+  return app;
+}
+
+async function buildHealth(service: AgentService, tenantId: string): Promise<TenantHealth> {
+```
+
+**F04.12 inserta `DELETE` y `PATCH` antes de `return app;`.**
+
+### A.10. `apps/server/src/admin-tenants.ts` — `tenant-membership` y `tenant-state` writes (Repomix original + Fase 2, literal, sin cortes):
+
+```typescript
+  // POST /api/admin/tenants -> alta manual (para tests y demos).
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const body = z
+      .object({
+        tenantId: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/),
+        displayName: z.string().max(200).optional(),
+      })
+      .parse(await c.req.json());
+    // TENANT_MEMBERSHIP_ID_UNIFIED_V1 - id="default", tenantId=real.
+    // ADMIN_TENANTS_MEMBERSHIP_CACHE_V1 - además del índice global bajo
+    // "system", se registra la membership bajo el owner con TenantService
+    // para que la caché quede invalidada y tenantIdFor(owner) la encuentre.
+    await service.db.put("system", "tenant-membership", {
+      id: "default",
+      tenantId: body.tenantId,
+      displayName: body.displayName ?? body.tenantId,
+      createdAt: new Date().toISOString(),
+      createdBy: owner,
+    });
+    // setMembership por owner si TenantService está expuesto.
+    const ts = (service as unknown as { tenantService?: { setMembership?: (o: string, t: string) => Promise<void>; invalidateAll?: () => void } }).tenantService;
+    if (ts?.setMembership && ts?.invalidateAll) {
+      await ts.setMembership(owner, body.tenantId).catch(() => {});
+      ts.invalidateAll();
+    }
+    return c.json({ ok: true, tenantId: body.tenantId }, 201);
+  });
+```
+
+**F04.12 añade `DELETE` y `PATCH`. N02-refino ya está hecho en Fase 2 (usa `setMembership`).**
+
+### A.11. `scripts/migrate-tenant-scope.ts` — script actual (Repomix original, literal, sin cortes):
+
+```typescript
+// MIGRATE_TENANT_SCOPE_V1 - reescribe owner -> "default:owner".
+import { createStore } from "../apps/server/src/db.ts";
+
+async function main() {
+  const db = await createStore({
+    dataDir: process.env.DATA_DIR ?? ".openmuse",
+    databaseUrl: process.env.DATABASE_URL,
+  });
+  try {
+    const rows = await db.select<{ owner: string }>(
+      "SELECT DISTINCT owner FROM records WHERE owner NOT LIKE 'default:%' AND owner NOT LIKE '%:%'",
+    );
+    console.log(`Owners sin prefijo: ${rows.length}`);
+    for (const row of rows) {
+      await db.select("UPDATE records SET owner = 'default:' || owner WHERE owner = $1", [row.owner]);
+    }
+    console.log(`OK: ${rows.length} owners reescritos`);
+  } finally {
+    await db.close();
+  }
+}
+
+void main();
+```
+
+**F04.11 envuelve el `for` en `db.transaction`.**
+
+### A.12. `scripts/migrate-tenant-membership.ts` — script actual (Repomix holístico, literal, sin cortes, ya idempotente):
+
+```typescript
+// MIGRATE_TENANT_MEMBERSHIP_V1
+// Unifica todas las filas de tenant-membership a id="default".
+// Uso: pnpm exec tsx scripts/migrate-tenant-membership.ts
+
+import { createStore } from "../apps/server/src/db.ts";
+
+async function main() {
+  const db = await createStore({
+    dataDir: process.env.DATA_DIR ?? ".openmuse",
+    databaseUrl: process.env.DATABASE_URL,
+  });
+  try {
+    const rows = await db.list<{ id: string; tenantId: string }>(
+      "system",
+      "tenant-membership",
+      { limit: 10000 },
+    );
+    let migrated = 0;
+    let skipped = 0;
+    for (const row of rows) {
+      if (row.id === "default") { skipped++; continue; }
+      if (!row.tenantId) { skipped++; continue; }
+      const existing = await db.get("system", "tenant-membership", "default");
+      if (existing) { skipped++; continue; }
+      await db.put("system", "tenant-membership", {
+        id: "default",
+        tenantId: row.tenantId,
+        migratedAt: new Date().toISOString(),
+        migratedFrom: row.id,
+      });
+      await db.remove("system", "tenant-membership", row.id);
+      migrated++;
+    }
+    console.log(`OK: ${migrated} migradas, ${skipped} saltadas`);
+  } finally {
+    await db.close();
+  }
+}
+
+void main();
+```
+
+**Confirma que es idempotente. F04.11b no requiere cambios.**
+
+### A.13. `apps/server/src/engine/events/types.ts` — `SYSTEM_EVENT_TYPES` (Repomix original NO está; handoff v2 menciona el fichero):
+
+**No disponible en Repomix. F04.14c usa `"tenant.membership.changed"` como tipo. Si `SYSTEM_EVENT_TYPES` no lo incluye, TS lo rechazará en `EventBus.emit(...)`. Solución: (a) usar `"system.maintenance"` como tipo y payload `{ change: "tenant.membership", ... }`; (b) pedir `types.ts` en la próxima fase.**
+
+**Recomendación:** usar `"system.maintenance"` (existe seguro, se usa en `index.ts` con `bus.emit("system", "system.maintenance", ...)`). Se anota como deuda y se cambia a un tipo propio en Fase 9 cuando `types.ts` esté disponible.
+
+### A.14. `apps/server/src/engine/worker.ts` — sigue roto (Repomix original, literal, sin cortes):
+
+```typescript
+  get running() {
+    return Boolean(this.timer);
+  }
+
+  /** WORKER_ACTIVE_SIZE_V1
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1
+  getMaxActive(): number {
+    return this.maxActive;
+  }
+  start = () => {
+```
+
+**Confirmado. No se toca.**
+
+### A.15. `apps/server/src/db.ts` — `db.transaction` (Repomix original, literal, sin cortes):
+
+```typescript
+  private inTransaction = false;
+  async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
+    if (this.inTransaction) return fn(this);
+    const raw = this.db as { query: (sql: string, params?: unknown[]) => Promise<unknown> };
+    await raw.query("BEGIN");
+    this.inTransaction = true;
+    try {
+      const result = await fn(this);
+      await raw.query("COMMIT");
+      return result;
+    } catch (error) {
+      try { await raw.query("ROLLBACK"); } catch { /* rollback best-effort */ }
+      throw error;
+    } finally {
+      this.inTransaction = false;
+    }
+  }
+```
+
+**F04.11 lo usa.**
+
+---
+
+## FIN DEL DOCUMENTO 08
+
+**Fase 7 preparada para ejecución, con recortes importantes respecto al plan original: F04.10b/c/d y F04.10-wire NO se aplican porque requieren tablas SQL (`tenant_members`, `tenant_configs`) que el Repomix original documenta pero que **no existen** en el repo actual, y adaptar los resolvers a leer de `records` es un cambio de contrato que merece su propia fase. Se posponen a Fase 8/9 y se anotan en `-pendientes.md`. F04.14c se aplica parcialmente (`invalidateAll` sí, evento al bus no por orden de declaración de `bus`). F04.14b, F04.12, F04.11 se aplican. F04.11b verificado sin cambios. F04.27 bloqueado. Total: 4 patchsets fijos (F04.14c, F04.14b, F04.12, F04.11), ~7 hunks, 4 ficheros tocados. F02.10 congelado. Typecheck y test los corre Cline, más 5 pruebas. Commit + push al final. Los misses van a `_multitenant_pendientes.md`, no los escribe la IA. Anexo literal de 15 bloques de código real, sin resúmenes ni cortes. Deudas anotadas en `-pendientes.md` para Fases 8/9.**
+
+**Siguiente: documento 09 — Campaña 1 / Fase 8 — B9 CI + cierre Campaña 1. F05.3, F05.5, F05.9, cierre documental de `CIERRE-MVP.md`, consolidación de `-pendientes.md`, `ID-MAP.md` final, y preparación del traspaso a Campaña 2. Di "sigue".**

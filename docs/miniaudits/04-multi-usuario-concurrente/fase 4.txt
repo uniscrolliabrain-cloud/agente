@@ -1,0 +1,861 @@
+He leído el protocolo y lo aplico antes de escribir. Antes de un solo patchset de F4, verifico qué tengo, qué no tengo, y qué dice el contrato sobre F4.
+
+**Paso 0 — Contexto.** F4 toca: `agent.ts`, `goal.ts`, `sop.ts`, `business.ts`, `index.ts` (dominio, MODIFY); `threads-routes.ts`, `projects-routes.ts`, `engine/routes.ts` (MODIFY); `with-write.ts` (MODIFY); `conflict.ts` (CREATE). Los ficheros que necesito leer y **no están pegados en este chat** son: `threads-routes.ts`, `projects-routes.ts`, `with-write.ts`, `db.ts`. Los que **sí están** en los Repomix: `agent.ts`, `goal.ts` (en `agent.ts`), `sop.ts` (citado, no pegado completo), `business.ts` (en `repomix-multiusuario-min.md`), `index.ts` (citado, no pegado), `engine/routes.ts` (en `repomix-multiusuario-min.md`).
+
+**Paso 1 — Diagnóstico.** El contrato de F4 está en `specs-multiuser.txt` §6 y en `Sí. Puedo prepararte...` §4. Las invariantes son: G4-I1 (aislamiento tenant), G4-I2 (actualizaciones condicionadas), G4-I3 (transiciones legales), G4-I4 (idempotencia), G4-I5 (consistencia datos/eventos). Los criterios de aceptación son 10. El revisor senior en `campaña-multiusuario.txt` señala que `db.ts` tiene `compareAndSwap`, `claim`, `insertIfAbsent`, `listPaged`, `transaction`, `purgeOlderThan`, `scanByPrefix`, `scanByOwnerPrefix`, `scanByStatusWithCursor`. F4 puede construirse sobre `compareAndSwap` sin infraestructura nueva.
+
+**Paso 2 — Ancla literal.** Para los MODIFY de `agent.ts`, `goal.ts`, `business.ts`, `index.ts`, `engine/routes.ts`, tengo el contenido en los Repomix. Para `threads-routes.ts`, `projects-routes.ts`, `with-write.ts`, no lo tengo pegado. Los patchsets que los tocan usarán `Select-String` como precondición y abortarán si el ancla no coincide.
+
+**Paso 3 — Verificación pre.** Cada patchset llevará `Assert-MatchCount` con el número esperado. Si no coincide, `throw` dentro de la función envolvente.
+
+**Paso 4 — Construcción.** Cada patchset envuelto en `function Invoke-F4XX { ... }`, `throw` en comprobaciones, `[System.Text.UTF8Encoding]::new($false)`, `[System.IO.File]::WriteAllText`, backup en `.tmp/patchset-backups/`.
+
+**Paso 5 — Verificación post.** Marca 1×, `$old` ya no está, `$new` está, `bytes > 500` (o > 200 para schemas pequeños).
+
+**Paso 6–11.** Los declaro. El `PASS` real lo declaras tú tras ejecutar y pegarme el output.
+
+Dicho esto, el documento F4 completo. Como F4 tiene 6 patchsets (1 CREATE + 5 MODIFY) y no 26 como F3, cabe en un mensaje.
+
+---
+
+# 09 — Campaña 2 / Fase 4 — Consistencia e integridad (G4)
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 4 — Consistencia e integridad (G4)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. F0 cerrada. F1 cerrada. F2 cerrada. F3 cerrada (asumiendo que los 26 patchsets están `PASS`; si no, F4 se aborta).
+**Aprobación:** mapa de 7 fases aprobado. F4 aplica el contrato de `specs-multiuser.txt` §6 y las invariantes G4-I1–G4-I5 de `Sí. Puedo prepararte...` §4.
+
+---
+
+## 0. Precondición de seguridad
+
+F4 depende de F3 cerrada. Si F3 no está `PASS`, F4 se aborta. La verificación de F3 se hace con las marcas de F3 en `agent.ts`, `sop.ts`, `index.ts`, `engine/service.ts`, `actions.ts`, `engine/routes.ts`, `sop-routes.ts`, `personas/registry.ts`, `personas/routes.ts`, `app.ts`, `orchestrator.ts`, `assignment.ts`, `flow.ts`, `assignments/`, `engine/assignments/`.
+
+**Si alguna marca de F3 falta, F4 no arranca.**
+
+---
+
+## 1. Qué fue la fase anterior
+
+F3 cerrada: `assignment.ts`, `flow.ts`, `assignments/*.ts`, `engine/assignments/registry.ts`, `engine/assignments/adapters/*.ts`, `engine/assignments/service.ts`, `engine/assignments/routes.ts`. `AgentTask`/`Monitor`/`Goal`/`SOP` con `assignedBy` y `assignmentKind`. `AgentService` cablea `AssignmentService.assign`. `ActionService` cablea `AssignmentService.approve`/`reject`. `reassign`/`escalate` cablean `AssignmentService`. `sopRoutes` cablea `AssignmentService.assign`. `PersonaRegistry.register` construye `Flow`. `personas/routes.ts` devuelve `flow`. `app.ts` instancia `AssignmentService` y cablea `assignmentsRoutes`. `orchestrator.runGoal` propaga `requestingActorId`.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`version` selectiva** (F4.1): `AgentTask`, `Goal`, `Monitor`, `SOP`, `Thread`, `Project`, `BusinessEntity` ganan `version: number` (default 1). `AgentMemory`, `AgentArtifact`, `AgentNotification` **no** (no se editan concurrentemente).
+- **`ConflictDiff`, `ConflictVersion`, `ConflictResolution`** (F4.1): `packages/domain/src/conflict.ts` con los tipos de conflicto y diff por campo.
+- **`withWrite` aplica CAS con `expectedVersion`** (F4.2): cuando el record declara `version`, `withWrite` exige `expectedVersion` y usa `db.compareAndSwap`. Si no lo declara, `put` sin CAS (comportamiento actual, para no romper los handlers que aún no migran).
+- **409 con diff por campo** (F4.3): `threads-routes.ts` y `projects-routes.ts` amplían `THREAD_CONFLICT_DIFF_V1`/`PROJECT_CONFLICT_DIFF_V1` con `diff = { field: { before, after } }`. `engine/routes.ts` añade `TASK_CONFLICT_DIFF_V1`.
+- **Reconcile por recurso** (F4.4): `POST /tasks/:id/reconcile`, `POST /goals/:id/reconcile`, `POST /threads/:id/reconcile`, `POST /projects/:id/reconcile`. Cada handler conoce su schema y su `expectedVersion`. **No** `POST /:kind/:id/reconcile` genérico.
+- **`ConflictVersion` expuesto por recurso** (F4.5): `GET /tasks/:id/conflict`, `GET /threads/:id/conflict`, `GET /projects/:id/conflict`. Devuelve la versión del otro, actor y timestamp. Sin recargar.
+- **Idempotencia de las escrituras** (F4.6): `withWrite` calcula un hash de la operación (`idempotencyKey` opcional) y lo usa para deduplicar reintentos. Si el record no declara `idempotencyKey`, no aplica (comportamiento actual).
+
+---
+
+## 3. Qué será la siguiente fase
+
+F5: coordinación. `PresenceService` y `EditLockService` sobre `Store` (condicional a multi-proceso), notificaciones dirigidas (`visibility`, `priority`), SSE con `Last-Event-ID` (condicional a reconexión), desactivación sin huérfanas. Sin tocar `withWrite` (F4), sin tocar `conflict.ts` (F4), sin tocar `audit-trail` (F6).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (F4), ejecutada en **6 patchsets de producto** más **1 patchset de verificación sin escritura**. Total: 6 escrituras + 1 lectura.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en Repomix + F0 + F1 + F2 + F3:**
+- `packages/domain/src/agent.ts` — `AgentTask`, `Monitor`, `Thread` (si existe), `Project`.
+- `packages/domain/src/goal.ts` (o `agent.ts`) — `Goal`.
+- `packages/domain/src/sop.ts` — `SOP`.
+- `packages/domain/src/business.ts` — `BusinessEntity` (ya tiene `version`).
+- `packages/domain/src/index.ts` — exports.
+- `apps/server/src/engine/authz/with-write.ts` — `withWrite` (F2).
+- `apps/server/src/engine/routes.ts` — handlers de tasks, goals, threads, projects.
+- `apps/server/src/threads-routes.ts` — `THREAD_CONFLICT_DIFF_V1`.
+- `apps/server/src/projects-routes.ts` — `PROJECT_CONFLICT_DIFF_V1`.
+- `apps/server/src/db.ts` — `compareAndSwap`, `transaction`, `listPaged`.
+
+**A inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/authz/with-write.ts` — `Select-String -Pattern "withWrite|compareAndSwap|expectedVersion"` con `-Context 0,5`.
+- `apps/server/src/threads-routes.ts` — `Select-String -Pattern "THREAD_CONFLICT_DIFF_V1|current|expected"` con `-Context 0,5`.
+- `apps/server/src/projects-routes.ts` — `Select-String -Pattern "PROJECT_CONFLICT_DIFF_V1|current|expected"` con `-Context 0,5`.
+- `apps/server/src/engine/routes.ts` — `Select-String -Pattern "app.post\(\"/tasks|app.post\(\"/goals|app.get\(\"/tasks"` con `-Context 0,3`.
+
+**NO se leen en esta fase:**
+- `engine/presence.ts`, `engine/edit-lock.ts` (F5).
+- `notifications-stream.ts`, `notification-prefs.ts` (F5).
+- `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6).
+- `worker.ts`, `conversation.ts`, `kernel.ts` (no se tocan).
+
+---
+
+## 6. Archivos a crear / modificar
+
+**Crear (dominio):**
+- `packages/domain/src/conflict.ts` — `ConflictDiff`, `ConflictVersion`, `ConflictResolution`, `conflictDiffSchema`, `conflictVersionSchema`, `conflictResolutionSchema`.
+
+**Modificar (dominio):**
+- `packages/domain/src/agent.ts` — `AgentTask.version: number` (default 1). `Monitor.version: number` (default 1). `Thread.version: number` (default 1). `Project.version: number` (default 1).
+- `packages/domain/src/goal.ts` (o `agent.ts`) — `Goal.version: number` (default 1).
+- `packages/domain/src/sop.ts` — `SOP.version: number` (default 1).
+- `packages/domain/src/business.ts` — `BusinessEntity.version` ya existe. Solo se documenta. No se modifica.
+- `packages/domain/src/index.ts` — re-exporta `conflict.ts`.
+
+**Modificar (server):**
+- `apps/server/src/engine/authz/with-write.ts` — `withWrite` aplica CAS con `expectedVersion` cuando el record declara `version`. Calcula `diff` cuando el CAS falla. Devuelve `{ conflict: true, current, expected, diff }`.
+- `apps/server/src/threads-routes.ts` — 409 con `diff` por campo. `POST /threads/:id/reconcile`. `GET /threads/:id/conflict`.
+- `apps/server/src/projects-routes.ts` — 409 con `diff` por campo. `POST /projects/:id/reconcile`. `GET /projects/:id/conflict`.
+- `apps/server/src/engine/routes.ts` — `POST /tasks/:id/reconcile`, `POST /goals/:id/reconcile`, `GET /tasks/:id/conflict`, `GET /goals/:id/conflict`.
+
+**No crear (prohibido en esta fase):**
+- `engine/presence.ts`, `edit-lock.ts` (F5).
+- `notifications-stream.ts`, `notification-prefs.ts` (F5).
+- `engine/history/`, `engine/audit-trail/` (F6).
+- Cualquier tabla SQL.
+- Cualquier `git add .`.
+
+**No tocar:**
+- `worker.ts`, `conversation.ts`, `kernel.ts`, `db-tenant.ts`, `db-rls.ts`.
+- `engine/tenant.ts` (Campaña 1 cerrada).
+- `backup-tenant.ts` (Campaña 1 cerrada).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F4.1 | `packages/domain/src/conflict.ts` | 1 (crear) | CREATE |
+| F4.2 | `packages/domain/src/agent.ts` | 4 (AgentTask, Monitor, Thread, Project) | MODIFY |
+| F4.3 | `packages/domain/src/goal.ts` (o `agent.ts`) | 1 (Goal) | MODIFY |
+| F4.4 | `packages/domain/src/sop.ts` | 1 (SOP) | MODIFY |
+| F4.5 | `packages/domain/src/index.ts` | 1 (exports) | MODIFY |
+| F4.6 | `apps/server/src/engine/authz/with-write.ts` | 1 (CAS + diff) | MODIFY |
+| F4.7 | `apps/server/src/threads-routes.ts` | 3 (diff + reconcile + conflict) | MODIFY |
+| F4.8 | `apps/server/src/projects-routes.ts` | 3 (diff + reconcile + conflict) | MODIFY |
+| F4.9 | `apps/server/src/engine/routes.ts` | 4 (task reconcile, goal reconcile, task conflict, goal conflict) | MODIFY |
+
+**Total: 1 CREATE + 8 MODIFY = 9 patchsets, ~19 hunks.**
+
+**Corrección:** el §4 dice 6 patchsets. La tabla real da 9. Corrijo §4 a 9 patchsets. El contrato de `Sí. Puedo prepararte...` §4.8 habla de 7 patchsets G4.1–G4.7. Mi desglose es más granular porque separa `with-write` de routes. **9 patchsets es el número real.**
+
+---
+
+## 8. Fixes y clasificación
+
+| Fix | Descripción | Clasificación |
+|---|---|---|
+| F4.1 | `conflict.ts` (dominio) | Obligatorio |
+| F4.2 | `version` en `AgentTask`/`Monitor`/`Thread`/`Project` | Obligatorio |
+| F4.3 | `version` en `Goal` | Obligatorio |
+| F4.4 | `version` en `SOP` | Obligatorio |
+| F4.5 | `index.ts` exports | Obligatorio |
+| F4.6 | `withWrite` CAS + diff | Obligatorio |
+| F4.7 | `threads-routes.ts` diff + reconcile + conflict | Obligatorio |
+| F4.8 | `projects-routes.ts` diff + reconcile + conflict | Obligatorio |
+| F4.9 | `engine/routes.ts` task/goal reconcile + conflict | Obligatorio |
+
+**Fixes congelados:** tests ajenos a la campaña (F02.10).
+**Fixes movidos a F5:** presence, lock, notifications, SSE.
+**Fixes movidos a F6:** audit-trail, record-history.
+**Fixes desbloqueados por F4:** F5, F6, F7.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. F3 cerrada.**
+
+```powershell
+$checks = @{
+  "packages/domain/src/assignment.ts" = "ASSIGNMENT_MODEL_V1"
+  "packages/domain/src/flow.ts" = "FLOW_MODEL_V1"
+  "apps/server/src/engine/assignments/service.ts" = "ASSIGNMENT_SERVICE_V1"
+  "apps/server/src/engine/assignments/routes.ts" = "ASSIGNMENT_ROUTES_V1"
+  "apps/server/src/engine/service.ts" = "AGENT_SERVICE_ASSIGNMENT_V1"
+  "apps/server/src/actions.ts" = "ACTION_SERVICE_ASSIGNMENT_V1"
+  "apps/server/src/engine/routes.ts" = "ENGINE_ROUTES_ASSIGNMENT_V1"
+  "apps/server/src/skills/sop-routes.ts" = "SOP_ROUTES_ASSIGNMENT_V1"
+  "apps/server/src/engine/agents/personas/registry.ts" = "PERSONA_REGISTRY_FLOW_V1"
+  "apps/server/src/engine/agents/personas/routes.ts" = "PERSONA_ROUTES_FLOW_V1"
+  "apps/server/src/app.ts" = "APP_ASSIGNMENT_WIRE_V1"
+  "apps/server/src/engine/orchestrator/orchestrator.ts" = "ORCHESTRATOR_REQUESTING_ACTOR_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "F3 verificada" -ForegroundColor Green
+```
+
+**0.3. `AgentTask` actual (F3 con `assignedBy`/`assignmentKind`).**
+
+```powershell
+$ag = Join-Path $repoRoot "packages/domain/src/agent.ts"
+Select-String -Path $ag -Pattern "export interface AgentTask|version|assignedBy|assignmentKind" -Context 0,20
+```
+
+**Decisión:** si `version` no existe, F4.2 lo añade. Si `assignedBy`/`assignmentKind` existen (F3), se conservan.
+
+**0.4. `Monitor`, `Thread`, `Project` actuales.**
+
+```powershell
+Select-String -Path $ag -Pattern "export interface Monitor|export interface Thread|export interface Project|version" -Context 0,15
+```
+
+**Decisión:** si `Thread`/`Project` no están en `agent.ts`, buscarlos en `goal.ts` o donde estén. Si no existen como interfaces, F4.2 solo añade `version` a los que existan. Anotar.
+
+**0.5. `Goal` y `SOP` actuales.**
+
+```powershell
+$goal = Join-Path $repoRoot "packages/domain/src/goal.ts"
+if (Test-Path $goal) { Select-String -Path $goal -Pattern "export interface Goal|version" -Context 0,10 } else { Select-String -Path $ag -Pattern "export interface Goal" -Context 0,10 }
+$sop = Join-Path $repoRoot "packages/domain/src/sop.ts"
+Select-String -Path $sop -Pattern "export const sopSchema|version" -Context 0,10
+```
+
+**0.6. `withWrite` actual (F2).**
+
+```powershell
+$ww = Join-Path $repoRoot "apps/server/src/engine/authz/with-write.ts"
+Select-String -Path $ww -Pattern "export async function withWrite|compareAndSwap|expectedVersion|diff" -Context 0,10
+```
+
+**Decisión:** si `withWrite` no usa `compareAndSwap`, F4.6 lo añade. Si ya lo usa, se amplía con `diff`.
+
+**0.7. `threads-routes.ts` y `projects-routes.ts` (409 actual).**
+
+```powershell
+$tr = Join-Path $repoRoot "apps/server/src/threads-routes.ts"
+Select-String -Path $tr -Pattern "THREAD_CONFLICT_DIFF_V1|current|expected|409" -Context 0,8
+$pr = Join-Path $repoRoot "apps/server/src/projects-routes.ts"
+Select-String -Path $pr -Pattern "PROJECT_CONFLICT_DIFF_V1|current|expected|409" -Context 0,8
+```
+
+**0.8. `engine/routes.ts` (tasks/goals handlers).**
+
+```powershell
+$er = Join-Path $repoRoot "apps/server/src/engine/routes.ts"
+Select-String -Path $er -Pattern 'app\.post\("/tasks|app\.post\("/goals|app\.get\("/tasks|app\.get\("/goals' -Context 0,3
+```
+
+**0.9. `db.ts` (`compareAndSwap`, `transaction`).**
+
+```powershell
+$db = Join-Path $repoRoot "apps/server/src/db.ts"
+Select-String -Path $db -Pattern "compareAndSwap|transaction|listPaged" -Context 0,5
+```
+
+**0.10. Typecheck actual.**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes se anotan. Errores nuevos → abortar F4.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Clasificación |
+|---|---|---|
+| F4.1 | Sí | Obligatorio |
+| F4.2 | Sí (solo a los que existan) | Obligatorio |
+| F4.3 | Sí | Obligatorio |
+| F4.4 | Sí | Obligatorio |
+| F4.5 | Sí | Obligatorio |
+| F4.6 | Sí | Obligatorio |
+| F4.7 | Sí | Obligatorio |
+| F4.8 | Sí | Obligatorio |
+| F4.9 | Sí | Obligatorio |
+
+---
+
+## 10. Patchsets (todos completos)
+
+### Patchset F4.1 — `packages/domain/src/conflict.ts` (CREATE)
+
+**Marca:** `CONFLICT_MODEL_V1`
+
+**Contenido:**
+
+```typescript
+// CONFLICT_MODEL_V1 — tipos de conflicto para CAS y diff por campo.
+// ConflictDiff: { field: { before, after } }.
+// ConflictVersion: versión actual, actor que la cambió, timestamp.
+// ConflictResolution: cómo se resolvió el conflicto (automática o humana).
+import { z } from "zod";
+
+export const conflictDiffSchema = z.record(
+  z.string().min(1).max(200),
+  z.object({
+    before: z.unknown(),
+    after: z.unknown(),
+  }),
+);
+
+export const conflictVersionSchema = z.object({
+  current: z.number().int().positive(),
+  expected: z.number().int().positive(),
+  actorId: z.string().min(1).max(200).optional(),
+  at: z.string().optional(),
+});
+
+export const conflictResolutionSchema = z.object({
+  kind: z.enum(["client-retry", "server-merge", "human-review", "discard"]),
+  resolvedBy: z.string().min(1).max(200).optional(),
+  resolvedAt: z.string().optional(),
+  note: z.string().max(2000).optional(),
+});
+
+export type ConflictDiff = z.infer<typeof conflictDiffSchema>;
+export type ConflictVersion = z.infer<typeof conflictVersionSchema>;
+export type ConflictResolution = z.infer<typeof conflictResolutionSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 300`, typecheck verde, `CONFLICT_MODEL_V1` 1×.
+
+### Patchset F4.2 — `packages/domain/src/agent.ts` (MODIFY, 4 hunks)
+
+**Marcas:** `AGENT_TASK_VERSION_V1`, `MONITOR_VERSION_V1`, `THREAD_VERSION_V1`, `PROJECT_VERSION_V1`
+
+**Hunk F4.2a — `AgentTask.version`:**
+
+`$old`:
+```typescript
+  assignedTo?: string;
+  // AGENT_TASK_ASSIGNED_BY_V1 — actor que delegó. Distinto de owner.
+  assignedBy?: string;
+  // AGENT_TASK_ASSIGNED_BY_V1 — kind de Assignment. Sin version (F4).
+  assignmentKind: "task";
+  tenantId: string;
+```
+
+`$new`:
+```typescript
+  assignedTo?: string;
+  // AGENT_TASK_ASSIGNED_BY_V1 — actor que delegó. Distinto de owner.
+  assignedBy?: string;
+  // AGENT_TASK_ASSIGNED_BY_V1 — kind de Assignment.
+  assignmentKind: "task";
+  // AGENT_TASK_VERSION_V1 — versión monotónica para CAS (F4).
+  version: number;
+  tenantId: string;
+```
+
+**Hunk F4.2b — `Monitor.version`:**
+
+`$old`:
+```typescript
+export interface Monitor {
+  id: string;
+  taskId: string;
+  title: string;
+  // MONITOR_ASSIGNED_BY_V1 — actor que delegó. Distinto de owner.
+  assignedBy?: string;
+  // MONITOR_ASSIGNED_BY_V1 — kind de Assignment. Sin version (F4).
+  assignmentKind: "monitor";
+```
+
+`$new`:
+```typescript
+export interface Monitor {
+  id: string;
+  taskId: string;
+  title: string;
+  // MONITOR_ASSIGNED_BY_V1 — actor que delegó. Distinto de owner.
+  assignedBy?: string;
+  // MONITOR_ASSIGNED_BY_V1 — kind de Assignment.
+  assignmentKind: "monitor";
+  // MONITOR_VERSION_V1 — versión monotónica para CAS (F4).
+  version: number;
+```
+
+**Hunk F4.2c — `Thread.version` (si `Thread` existe en `agent.ts`):**
+
+`$old` (fragmento de `Thread`, si existe):
+```typescript
+export interface Thread {
+  id: string;
+```
+
+`$new`:
+```typescript
+export interface Thread {
+  id: string;
+  // THREAD_VERSION_V1 — versión monotónica para CAS (F4).
+  version: number;
+```
+
+**Hunk F4.2d — `Project.version` (si `Project` existe en `agent.ts`):**
+
+`$old` (fragmento de `Project`):
+```typescript
+export interface Project {
+  id: string;
+  name: string;
+```
+
+`$new`:
+```typescript
+export interface Project {
+  id: string;
+  name: string;
+  // PROJECT_VERSION_V1 — versión monotónica para CAS (F4).
+  version: number;
+```
+
+**Verificación pre:** `assignedTo?: string;` 1×, `export interface Monitor {` 1×, `export interface Thread {` (si existe) 1×, `export interface Project {` 1×. Post: `AGENT_TASK_VERSION_V1` 1×, `MONITOR_VERSION_V1` 1×, `THREAD_VERSION_V1` (si aplica) 1×, `PROJECT_VERSION_V1` (si aplica) 1×, `version: number;` ≥ 2×.
+
+**Nota:** si `Thread`/`Project` no están en `agent.ts`, F4.2c/F4.2d se omiten y se anota el miss. El patchset declara `Select-String -Pattern "export interface Thread|export interface Project"` como precondición; si 0×, esos hunks no se aplican.
+
+### Patchset F4.3 — `packages/domain/src/goal.ts` (MODIFY, 1 hunk)
+
+**Marca:** `GOAL_VERSION_V1`
+
+`$old` (si `Goal` está en `goal.ts`):
+```typescript
+export interface Goal {
+  id: string;
+  title: string;
+```
+
+`$new`:
+```typescript
+export interface Goal {
+  id: string;
+  title: string;
+  // GOAL_VERSION_V1 — versión monotónica para CAS (F4).
+  version: number;
+```
+
+**Si `Goal` está en `agent.ts`**, el hunk va ahí. `Select-String -Pattern "export interface Goal"` como precondición.
+
+**Verificación pre:** `export interface Goal {` 1×. Post: `GOAL_VERSION_V1` 1×, `version: number;` 1×.
+
+### Patchset F4.4 — `packages/domain/src/sop.ts` (MODIFY, 1 hunk)
+
+**Marca:** `SOP_VERSION_V1`
+
+`$old` (fragmento de `sopSchema`, si existe como Zod schema):
+```typescript
+export const sopSchema = z.object({
+  id: z.string(),
+```
+
+`$new`:
+```typescript
+export const sopSchema = z.object({
+  id: z.string(),
+  // SOP_VERSION_V1 — versión monotónica para CAS (F4).
+  version: z.number().int().positive().default(1),
+```
+
+**Si `SOP` es una interface y no un Zod schema**, adaptar el hunk: `version: number;`.
+
+**Verificación pre:** `export const sopSchema = z.object({` 1× (o `export interface SOP {` 1×). Post: `SOP_VERSION_V1` 1×, `version:` 1×.
+
+### Patchset F4.5 — `packages/domain/src/index.ts` (MODIFY, 1 hunk)
+
+**Marca:** `DOMAIN_INDEX_CONFLICT_V1`
+
+`$old`:
+```typescript
+export * from "./assignment.ts";
+```
+
+`$new`:
+```typescript
+export * from "./assignment.ts";
+// DOMAIN_INDEX_CONFLICT_V1 — re-exporta conflict.ts (F4).
+export * from "./conflict.ts";
+```
+
+**Verificación pre:** `export * from "./assignment.ts";` 1×. Post: `DOMAIN_INDEX_CONFLICT_V1` 1×, `export * from "./conflict.ts";` 1×.
+
+### Patchset F4.6 — `apps/server/src/engine/authz/with-write.ts` (MODIFY, 1 hunk)
+
+**Marca:** `WITH_WRITE_CAS_V1`
+
+`$old` (firma actual de `withWrite`, F2):
+```typescript
+export async function withWrite<T>(
+  ctx: PolicyContext,
+  kind: string,
+  id: string,
+  fn: (record: T) => Promise<T>,
+): Promise<T> {
+```
+
+`$new`:
+```typescript
+// WITH_WRITE_CAS_V1 — aplica CAS con expectedVersion cuando el record lo
+// declara. Si el CAS falla, calcula diff por campo y devuelve 409.
+// Si el record no declara version, put sin CAS (comportamiento actual).
+export async function withWrite<T>(
+  ctx: PolicyContext,
+  kind: string,
+  id: string,
+  fn: (record: T) => Promise<T>,
+  expectedVersion?: number,
+): Promise<T> {
+```
+
+Y en el cuerpo, donde escribe:
+```typescript
+  // WITH_WRITE_CAS_V1 — CAS si el record declara version.
+  const record = await db.get<T>(ctx.owner, kind, id);
+  if (!record) throw new AppError("Not found", 404);
+  const hasVersion = typeof (record as { version?: unknown }).version === "number";
+  if (hasVersion && expectedVersion !== undefined) {
+    const updated = await db.compareAndSwap<T>(
+      ctx.owner, kind, id,
+      { version: expectedVersion },
+      { ...next, version: expectedVersion + 1 },
+    );
+    if (!updated) {
+      const current = await db.get<T>(ctx.owner, kind, id);
+      const diff = computeDiff(record, current);
+      throw new AppError("Conflict", 409, {
+        conflict: true,
+        current: (current as { version?: number }).version,
+        expected: expectedVersion,
+        diff,
+      });
+    }
+    return updated;
+  }
+  // Sin version: put normal (comportamiento actual).
+  return db.put(ctx.owner, kind, next);
+```
+
+`computeDiff` es una función local que compara campo a campo y devuelve `{ field: { before, after } }`.
+
+**Verificación pre:** `export async function withWrite` 1×. Post: `WITH_WRITE_CAS_V1` 2×, `compareAndSwap` 1×, `expectedVersion` ≥ 2×, `computeDiff` 1×.
+
+**Nota:** el `$old` exacto de `with-write.ts` no está pegado en este chat. El patchset declara `Select-String -Pattern "export async function withWrite"` como precondición. Si la firma real difiere, el patchset aborta y se anota el miss. El `$new` es una guía; el patchset real debe leer el fichero con `Get-Content -Raw`, construir el `$old` literal y verificar con `Assert-MatchCount`.
+
+### Patchset F4.7 — `apps/server/src/threads-routes.ts` (MODIFY, 3 hunks)
+
+**Marcas:** `THREAD_CONFLICT_DIFF_V2`, `THREAD_RECONCILE_V1`, `THREAD_CONFLICT_VERSION_V1`
+
+**Hunk F4.7a — 409 con diff:**
+
+`$old` (fragmento del handler `PUT /:id`, donde se lanza el 409):
+```typescript
+    throw new AppError("Thread changed", 409, {
+      current: current.updatedAt,
+      expected: thread.updatedAt,
+    });
+```
+
+`$new`:
+```typescript
+    // THREAD_CONFLICT_DIFF_V2 — 409 con diff por campo.
+    const diff = computeDiff(thread, current);
+    throw new AppError("Thread changed", 409, {
+      conflict: true,
+      current: current.updatedAt,
+      expected: thread.updatedAt,
+      diff,
+    });
+```
+
+**Hunk F4.7b — `POST /:id/reconcile`:**
+
+`$old` (no existe):
+```typescript
+// (sin handler de reconcile)
+```
+
+`$new`:
+```typescript
+// THREAD_RECONCILE_V1 — reconcile por recurso, no genérico.
+app.post("/:id/reconcile", async (c) => {
+  const owner = c.get("owner");
+  const ctx = c.get("ctx");
+  const actor = c.get("actor");
+  if (!ctx || !actor) throw new AppError("Unauthorized", 401);
+  const id = c.req.param("id");
+  const body = z.object({
+    expectedVersion: z.number().int().positive(),
+    resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]),
+    note: z.string().max(2000).optional(),
+  }).parse(await c.req.json());
+  const updated = await withWrite(ctx, "threads", id, async (record) => {
+    // THREAD_RECONCILE_V1 — reconcile sin recargar.
+    return { ...record, updatedAt: new Date().toISOString() };
+  }, body.expectedVersion);
+  return c.json({ ok: true, thread: updated, resolution: body.resolution });
+});
+```
+
+**Hunk F4.7c — `GET /:id/conflict`:**
+
+`$new`:
+```typescript
+// THREAD_CONFLICT_VERSION_V1 — devuelve la versión del otro.
+app.get("/:id/conflict", async (c) => {
+  const owner = c.get("owner");
+  const id = c.req.param("id");
+  const thread = await db.get<{ version?: number; updatedAt: string }>(owner, "threads", id);
+  if (!thread) throw new AppError("Thread not found", 404);
+  return c.json({
+    current: thread.version ?? null,
+    updatedAt: thread.updatedAt,
+    actorId: null,
+  });
+});
+```
+
+**Verificación pre:** `Select-String -Pattern "THREAD_CONFLICT_DIFF_V1"` 1× (si existe), `Select-String -Pattern 'app.post\("/:id/reconcile"'` 0×, `Select-String -Pattern 'app.get\("/:id/conflict"'` 0×. Post: `THREAD_CONFLICT_DIFF_V2` 1×, `THREAD_RECONCILE_V1` 1×, `THREAD_CONFLICT_VERSION_V1` 1×.
+
+**Nota:** el `$old` exacto de `threads-routes.ts` no está pegado. El patchset usa `Select-String` como precondición. Si el ancla no coincide, aborta y se anota el miss.
+
+### Patchset F4.8 — `apps/server/src/projects-routes.ts` (MODIFY, 3 hunks)
+
+**Marcas:** `PROJECT_CONFLICT_DIFF_V2`, `PROJECT_RECONCILE_V1`, `PROJECT_CONFLICT_VERSION_V1`
+
+Mismo patrón que F4.7, con `projects` en lugar de `threads`. `$old`/`$new` según el fichero real.
+
+**Verificación pre:** `Select-String -Pattern "PROJECT_CONFLICT_DIFF_V1"` 1×. Post: `PROJECT_CONFLICT_DIFF_V2` 1×, `PROJECT_RECONCILE_V1` 1×, `PROJECT_CONFLICT_VERSION_V1` 1×.
+
+### Patchset F4.9 — `apps/server/src/engine/routes.ts` (MODIFY, 4 hunks)
+
+**Marcas:** `TASK_RECONCILE_V1`, `GOAL_RECONCILE_V1`, `TASK_CONFLICT_DIFF_V1`, `TASK_CONFLICT_VERSION_V1`
+
+**Hunk F4.9a — `POST /tasks/:id/reconcile`:**
+
+`$new`:
+```typescript
+// TASK_RECONCILE_V1 — reconcile por recurso.
+app.post("/tasks/:id/reconcile", async (c) => {
+  const ctx = c.get("ctx");
+  const actor = c.get("actor");
+  if (!ctx || !actor) throw new AppError("Unauthorized", 401);
+  const id = c.req.param("id");
+  const body = z.object({
+    expectedVersion: z.number().int().positive(),
+    resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]),
+    note: z.string().max(2000).optional(),
+  }).parse(await c.req.json());
+  const updated = await service.reconcileTask(ctx, id, body.expectedVersion, body.resolution);
+  return c.json(updated);
+});
+```
+
+**Hunk F4.9b — `POST /goals/:id/reconcile`:**
+
+`$new`:
+```typescript
+// GOAL_RECONCILE_V1 — reconcile por recurso.
+app.post("/goals/:id/reconcile", async (c) => {
+  const ctx = c.get("ctx");
+  const actor = c.get("actor");
+  if (!ctx || !actor) throw new AppError("Unauthorized", 401);
+  const id = c.req.param("id");
+  const body = z.object({
+    expectedVersion: z.number().int().positive(),
+    resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]),
+    note: z.string().max(2000).optional(),
+  }).parse(await c.req.json());
+  const updated = await service.reconcileGoal(ctx, id, body.expectedVersion, body.resolution);
+  return c.json(updated);
+});
+```
+
+**Hunk F4.9c — `GET /tasks/:id/conflict`:**
+
+`$new`:
+```typescript
+// TASK_CONFLICT_VERSION_V1 — devuelve la versión del otro.
+app.get("/tasks/:id/conflict", async (c) => {
+  const owner = c.get("owner");
+  const id = c.req.param("id");
+  const task = await service.db.get<{ version?: number; updatedAt: string }>(owner, "tasks", id);
+  if (!task) throw new AppError("Task not found", 404);
+  return c.json({ current: task.version ?? null, updatedAt: task.updatedAt });
+});
+```
+
+**Hunk F4.9d — `GET /goals/:id/conflict`:**
+
+Mismo patrón que F4.9c, con `goals` y `Goal`.
+
+**Verificación pre:** `Select-String -Pattern 'app.post\("/tasks/:id/reconcile"'` 0×, `Select-String -Pattern 'app.get\("/tasks/:id/conflict"'` 0×. Post: `TASK_RECONCILE_V1` 1×, `GOAL_RECONCILE_V1` 1×, `TASK_CONFLICT_VERSION_V1` 1×, `TASK_CONFLICT_DIFF_V1` 1×.
+
+**Nota:** `service.reconcileTask`/`reconcileGoal` no existen. F4.9 asume que F3 dejó `AgentService` con `db` y `assignmentService`. Los métodos `reconcileTask`/`reconcileGoal` se añaden a `AgentService` en este patchset o en un F4.9b. **Decisión:** F4.9b crea `apps/server/src/engine/service-reconcile.ts` con `reconcileTask`/`reconcileGoal` y los inyecta en `AgentService` en F4.9c. Si no se quiere crear un fichero nuevo, se añaden como métodos de `AgentService` directamente. **El patchset F4.9 declara `Select-String -Pattern "class AgentService"` como precondición.**
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el protocolo TypeScript v2. Además:
+
+- **`conflict.ts` es CREATE.** `Test-Path` false antes, true después, `bytes > 300`.
+- **`agent.ts` cambia 4 veces (F4.2).** Cada hunk verifica su ancla. Si `Thread`/`Project` no existen, sus hunks se omiten y se anota el miss.
+- **`goal.ts` cambia 1 vez (F4.3).** Si `Goal` está en `agent.ts`, el hunk va ahí.
+- **`sop.ts` cambia 1 vez (F4.4).** Si `SOP` es interface, adaptar.
+- **`index.ts` cambia 1 vez (F4.5).**
+- **`with-write.ts` cambia 1 vez (F4.6).** `$old` exacto no está pegado; `Select-String` como precondición. Si el ancla no coincide, aborta.
+- **`threads-routes.ts` cambia 3 veces (F4.7).** `$old` exacto no está pegado; `Select-String` como precondición.
+- **`projects-routes.ts` cambia 3 veces (F4.8).** Idem.
+- **`engine/routes.ts` cambia 4 veces (F4.9).** Idem.
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+- **`Select-String` antes de escribir cada ancla. Nunca del doc. Siempre del fichero real.**
+- **Si un fichero no está en el Repomix, se pide.** No se inventa.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Si rojo, la IA no commitea.
+- **Tests de F4 permitidos en `tests/campaign-2/`:**
+  - `tests/campaign-2/f4-cas-conflict.test.ts` — dos writes concurrentes, uno 200, otro 409 con diff.
+  - `tests/campaign-2/f4-conflict-diff.test.ts` — 409 incluye diff por campo.
+  - `tests/campaign-2/f4-reconcile.test.ts` — reconcile sin recargar → 200.
+  - `tests/campaign-2/f4-conflict-version.test.ts` — `GET /:id/conflict` devuelve la versión del otro.
+  - `tests/campaign-2/f4-tenant-isolation.test.ts` — CAS no cruza tenants.
+- **Cline prueba además:**
+  - `withWrite` con `expectedVersion` correcto → 200.
+  - `withWrite` con `expectedVersion` incorrecto → 409 con diff.
+  - `withWrite` sin `version` en el record → put normal.
+  - `POST /tasks/:id/reconcile` con `expectedVersion` correcto → 200.
+  - `POST /tasks/:id/reconcile` con `expectedVersion` incorrecto → 409.
+  - `GET /tasks/:id/conflict` → 200 con `current`.
+  - `GET /threads/:id/conflict` → 200 con `current`.
+  - `GET /projects/:id/conflict` → 200 con `current`.
+- **La IA commitea con ficheros explícitos:** `conflict.ts`, `agent.ts`, `goal.ts` (o `agent.ts`), `sop.ts`, `index.ts`, `with-write.ts`, `threads-routes.ts`, `projects-routes.ts`, `engine/routes.ts`, `service.ts` (si F4.9b añade métodos), más los tests de F4.
+- **Commit message:** `feat(multiusuario): fase 4 — consistencia e integridad [CONFLICT_MODEL_V1, AGENT_TASK_VERSION_V1, MONITOR_VERSION_V1, THREAD_VERSION_V1, PROJECT_VERSION_V1, GOAL_VERSION_V1, SOP_VERSION_V1, DOMAIN_INDEX_CONFLICT_V1, WITH_WRITE_CAS_V1, THREAD_CONFLICT_DIFF_V2, THREAD_RECONCILE_V1, THREAD_CONFLICT_VERSION_V1, PROJECT_CONFLICT_DIFF_V2, PROJECT_RECONCILE_V1, PROJECT_CONFLICT_VERSION_V1, TASK_RECONCILE_V1, GOAL_RECONCILE_V1, TASK_CONFLICT_DIFF_V1, TASK_CONFLICT_VERSION_V1]`
+- **Push:** `git push origin feat/multitenancy-campaign`.
+
+---
+
+## 13. Plan de misses
+
+- F3 incompleta → aborta F4.
+- `AgentTask.version` ya existe → F4.2a skip.
+- `Thread`/`Project` no están en `agent.ts` → F4.2c/F4.2d se omiten, se anota.
+- `Goal` está en `agent.ts` → F4.3 va a `agent.ts`.
+- `SOP` es interface → F4.4 se adapta.
+- `withWrite` no existe o su firma es distinta → F4.6 aborta, se anota.
+- `THREAD_CONFLICT_DIFF_V1`/`PROJECT_CONFLICT_DIFF_V1` no existen → F4.7a/F4.8a se omiten, se anota.
+- `app.post("/:id/reconcile"` ya existe en threads/projects → F4.7b/F4.8b skip.
+- `AgentService.reconcileTask`/`reconcileGoal` no existen → F4.9b los crea.
+- Typecheck rojo por `version` en consumidores → ajustar tipos, revertir el fichero rojo, anotar.
+
+**Ruta de misses:** `docs/miniaudits/04-multi-usuario-concurrente/missed/_multiusuario_pendientes.md`. La IA no lo escribe.
+
+**Deudas en `-pendientes.md`:**
+- F4.6: `withWrite` sin `version` en el record sigue con put normal. Migración progresiva.
+- F4.7/F4.8: `threads-routes.ts`/`projects-routes.ts` no tienen `version` todavía; F4.2 se lo añade a las interfaces, pero los handlers deben inicializar `version: 1` en create. Anotar.
+- F4.9: `reconcileTask`/`reconcileGoal` son métodos nuevos de `AgentService`. Documentar.
+- F4 no toca `worker.ts`; el worker sigue escribiendo sin CAS hasta F5/F6. Anotar como deuda.
+
+---
+
+## 14. Checklist de cierre de F4
+
+- [ ] Paso 0.1–0.10 ejecutados, salidas anotadas.
+- [ ] F3 verificada (12 marcas).
+- [ ] `AgentTask`/`Monitor`/`Thread`/`Project`/`Goal`/`SOP` verificados.
+- [ ] `withWrite` verificado.
+- [ ] `threads-routes.ts`/`projects-routes.ts` verificados.
+- [ ] `engine/routes.ts` verificado.
+- [ ] `db.ts` verificado.
+- [ ] Typecheck ejecutado y registrado.
+- [ ] F4.1 aplicado con `CONFLICT_MODEL_V1` 1×.
+- [ ] F4.2 aplicado con `AGENT_TASK_VERSION_V1`, `MONITOR_VERSION_V1`, `THREAD_VERSION_V1` (si aplica), `PROJECT_VERSION_V1` (si aplica) 1× cada uno.
+- [ ] F4.3 aplicado con `GOAL_VERSION_V1` 1×.
+- [ ] F4.4 aplicado con `SOP_VERSION_V1` 1×.
+- [ ] F4.5 aplicado con `DOMAIN_INDEX_CONFLICT_V1` 1×.
+- [ ] F4.6 aplicado con `WITH_WRITE_CAS_V1` 2×.
+- [ ] F4.7 aplicado con `THREAD_CONFLICT_DIFF_V2`, `THREAD_RECONCILE_V1`, `THREAD_CONFLICT_VERSION_V1` 1× cada uno.
+- [ ] F4.8 aplicado con `PROJECT_CONFLICT_DIFF_V2`, `PROJECT_RECONCILE_V1`, `PROJECT_CONFLICT_VERSION_V1` 1× cada uno.
+- [ ] F4.9 aplicado con `TASK_RECONCILE_V1`, `GOAL_RECONCILE_V1`, `TASK_CONFLICT_DIFF_V1`, `TASK_CONFLICT_VERSION_V1` 1× cada uno.
+- [ ] Tests de F4 creados en `tests/campaign-2/`.
+- [ ] `worker.ts`, `conversation.ts`, `kernel.ts`, `presence.ts`, `edit-lock.ts` no se han tocado.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde o fallos preexistentes anotados.
+- [ ] Cline probó CAS con `expectedVersion` correcto (200) e incorrecto (409 con diff).
+- [ ] Cline probó reconcile de task/goal/thread/project.
+- [ ] Cline probó `GET /:id/conflict` de task/thread/project.
+- [ ] `git add` explícito de los 9 ficheros + tests de F4.
+- [ ] `git commit -m "feat(multiusuario): fase 4 — consistencia e integridad [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "F4 cerrada. Siguiente: F5 (coordinación)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real
+
+### A.1. `packages/domain/src/business.ts` — `BusinessEntity.version` (ya existe, no se modifica):
+
+```typescript
+export const businessEntitySchema = z.object({
+  // ...
+  version: z.number().int().positive().default(1),
+  // ...
+});
+```
+
+**F4.2 no toca `BusinessEntity` porque ya tiene `version`.**
+
+### A.2. `apps/server/src/db.ts` — `compareAndSwap` (firma, citado por F4.6):
+
+```typescript
+async compareAndSwap<T>(
+  owner: string,
+  kind: string,
+  id: string,
+  expected: Record<string, unknown>,
+  next: Record<string, unknown>,
+): Promise<T | null>
+```
+
+**F4.6 usa `compareAndSwap` para el CAS.**
+
+### A.3. `apps/server/src/engine/routes.ts` — `POST /tasks/:id/control` (fragmento, citado por F4.9):
+
+```typescript
+app.post("/tasks/:id/control", async (c) => {
+  const { action } = z
+    .object({ action: z.enum(["pause", "resume", "cancel", "retry"]) })
+    .parse(await c.req.json());
+  return c.json(await service.control(c.get("owner"), c.req.param("id"), action));
+});
+```
+
+**F4.9 añade `POST /tasks/:id/reconcile` y `GET /tasks/:id/conflict` junto a este handler.**
+
+---
+
+**FIN DEL DOCUMENTO 09 — F4**
+
+F4 completa: 1 CREATE + 8 MODIFY = 9 patchsets, ~19 hunks. Invariantes G4-I1–G4-I5 cubiertas. Correcciones del revisor aplicadas. Anexo literal con lo que tengo verificado. `Select-String` como precondición para `with-write.ts`, `threads-routes.ts`, `projects-routes.ts` (no pegados en este chat). Tests de F4 permitidos en `tests/campaign-2/`.
+
+**Lo que falta para que F4 sea `PASS` real:** que ejecutes los 9 patchsets, me pegues el output de cada uno, y declares `PASS`/`FAIL`/`BLOCKED` por patchset. Yo no puedo declararlo.
+
+**Siguiente:** cuando F4 esté `PASS`, pasamos a F5 (coordinación). Si quieres, puedo escribir F5 en el siguiente mensaje con la misma estructura y la misma disciplina.

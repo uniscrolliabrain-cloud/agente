@@ -1,0 +1,64 @@
+﻿# Pendientes — fixes que no entraron
+
+> Doc vivo. Cada MISS se añade aquí.
+
+- [B1] EVENTS_KERNEL_THOUGHT_TYPES_V1 — apps/server/src/engine/events/types.ts — no aplicado
+- [B1] EVENTS_KERNEL_THOUGHT_SCHEMAS_V1 — apps/server/src/engine/events/schemas.ts — no aplicado
+- [B1] ENGINE_KERNEL_EXPOSE_V1 — apps/server/src/engine/service.ts — no aplicado
+- [B1] PROMOTER_WIRE_KERNEL_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B1] KERNEL_APPEND_THOUGHT_HOOK_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B1] BUS_EMITTER_APPEND_WRAP_V1 — apps/server/src/kernel/subscribers/bus-emitter.ts — no aplicado
+- [B1] KERNEL_DEPS_EXTEND_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B2] KERNEL_APPEND_THOUGHT_FIRE_HOOK_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B2] KERNEL_FIRE_OPEN_HOOK_V1 — apps/server/src/kernel/kernel.ts — no aplicado
+- [B2] EVENTS_KERNEL_TURN_OPENED_TYPE_V1 — apps/server/src/engine/events/types.ts — no aplicado
+- [B2] EVENTS_KERNEL_TURN_OPENED_SCHEMA_V1 — apps/server/src/engine/events/schemas.ts — no aplicado
+- [B2] ENGINE_SERVICE_WIRE_BUS_EMITTER_V1 — apps/server/src/engine/service.ts — no aplicado
+- [B2] PROMOTER_CALLSITE_MEMORY_V1 — apps/server/src/kernel/graph/promote.ts — no aplicado
+- [B3] EVENTS_TYPES_TENANT_SCOPED_V1 — apps/server/src/engine/events/types.ts — no aplicado
+- [B3] EVENTS_SCHEMAS_TURN_OPENED_V1 — apps/server/src/engine/events/schemas.ts — no aplicado
+- [B3] ENGINE_SERVICE_KERNEL_GETTER_V1 — apps/server/src/engine/service.ts — no aplicado
+- [B4] KERNEL_ROUTES_THOUGHT_INDEX_V1 — apps/server/src/kernel-routes.ts — anchor aparece 2 veces
+- [B5] SERVICE_GETTER_PUBLIC_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B5] SERVICE_GETTER_DB_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B5] EVENTS_SCHEMAS_THOUGHT_PAYLOAD_SCHEMA_V1 — apps/server/src/engine/events/schemas.ts — anchor no encontrado
+- [B5] EVENTS_RETENTION_KERNEL_TYPES_V1 — apps/server/src/engine/events/retention.ts — anchor no encontrado
+- [B6] SERVICE_GETTER_HAS_KERNEL_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B6] SERVICE_BUS_TENANT_RESOLVE_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B7] KERNEL_ENGINE_FEEDBACK_INDEX_V1 — apps/server/src/engine/service.ts — anchor no único
+- [B7] EVENTS_RETENTION_META_HINTS_V1 — apps/server/src/engine/events/retention.ts — anchor no encontrado
+- [B8] EVENTBUS_BUILD_APPLIED_SCHEMA_V1 — apps/server/src/engine/events/schemas.ts — anchor no encontrado
+- [B8] SERVICE_EXPOSE_BUS_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B8] KERNEL_OPEN_TURN_EMITS_BUS_V1 — apps/server/src/kernel/kernel.ts — anchor no encontrado
+- [B9] SERVICE_MAINTAIN_PURGE_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B9] SERVICE_BUILD_APPLY_ROUTE_HELPER_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B9] EVENTBUS_STATE_LOG_RETENTION_V1 — apps/server/src/engine/events/retention.ts — anchor no encontrado
+- [B10] SERVICE_KERNEL_CONSOLIDATE_ON_TURN_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B10] SERVICE_KERNEL_LISTENERS_REGISTER_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B13] WORKER_RECOVER_TENANT_SCOPED_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B13] WORKER_LEASE_GUARD_CACHE_V1 — apps/server/src/engine/worker.ts — anchor aparece 2 veces
+- [B13] SOP_EXECUTOR_STACK_CYCLE_V1 — apps/server/src/engine/sop-executor.ts — anchor no encontrado
+- [B13] SERVICE_SYSTEM_CONTEXT_CACHE_TTL_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B13] SERVICE_NOTIFY_USER_FILTER_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B13] SERVICE_MEMORY_WRITE_TENANT_V1 — apps/server/src/engine/service.ts — anchor no encontrado
+- [B14] ACTIONS_ROUTES_EDIT_V1 — apps/server/src/engine/routes.ts — anchor no encontrado
+- [B14] ACTIONS_ROUTES_EDIT_ENDPOINT_V1 — apps/server/src/engine/routes.ts — anchor no encontrado
+- [B14] ACTIONS_ROUTES_DECIDE_USER_ID_V1 — apps/server/src/engine/routes.ts — anchor no encontrado
+- [B14] WORKER_LOST_LEASE_RECOVER_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B14] WORKER_MAX_ACTIVE_CAP_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B14] WORKER_TENANT_CURSOR_V1 — apps/server/src/engine/worker.ts — anchor no encontrado
+- [B14] SOP_EXECUTOR_WHEN_TEMPLATE_V1 — apps/server/src/engine/sop-executor.ts — anchor no encontrado
+- [B18] ALERTS_RESILIENCE_FIELDS_V1 — apps/server/src/alerts/definitions.ts — anchor no encontrado
+- [AUDIT_LIST_CURSOR_V1] apps/server/src/kernel/audit/store-store.ts - anchor no encontrado (2026-10-12 16:48)
+- MISS PROMOTE_USE_CLASSIFY_WITH_TENANT_V1 :: apps/server/src/kernel/graph/promote.ts :: anchor no encontrado
+- MISS PROMOTE_TENANT_ARG_V1 :: apps/server/src/kernel/graph/promote.ts :: anchor no encontrado
+- MISS META_READ_PROGRESS_FROM_ATTENTION_V1 :: apps/server/src/kernel/observers/meta.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_CTX_FOR_ASYNC_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_TURNS_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_TURN_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_PRESENT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_BY_PERSONA_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_AUDIT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_VERIFY_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS KERNEL_ROUTES_AWAIT_CTX_SNAPSHOT_EXPORT_V1 :: apps/server/src/kernel-routes.ts :: anchor no encontrado
+- MISS APP_KERNEL_ROUTES_PASS_TENANT_V1 :: apps/server/src/app.ts :: anchor no encontrado

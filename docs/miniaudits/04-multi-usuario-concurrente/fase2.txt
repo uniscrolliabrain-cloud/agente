@@ -1,0 +1,1070 @@
+# 07 — Campaña 2 / Fase 2 — Acceso seguro (G2)
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 2 — Acceso seguro (G2)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fase 0 cerrada. Fase 1 cerrada (`Actor`, `HumanActor`, `AgentActor`, `ActorService.resolve`, `verifyJwtMiddleware`, `ctx`, `KernelContext.actorId`, `ExecutionContext.actorId`, `worker` `executingActorId` vs `requestingActorId`, `AgentGovernance` con `Actor`, `x-user-id` deprecado).
+**Aprobación:** mapa de 7 fases aprobado. F2 aplica las correcciones del revisor (D2, D3, D12 y transversales 2 y 3). Documento listo para ejecución.
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 1 (documento 06): identidad y actor. Se crearon `packages/domain/src/actor.ts` (`Actor`, `HumanActor`, `AgentActor`, `ActorKind`, `ActorProfile`, `ActorRoles`), `packages/domain/src/jwt.ts` (`jwtPayloadSchema`, `JwtPayload`), `apps/server/src/engine/actors/service.ts` (`ActorService.resolve(jwtPayload)`), `apps/server/src/engine/auth/jwt.ts` (`verifyJwtMiddleware`). `User.authProviderId` (único, backfill controlado, sin JIT). `UserService.getByAuthProviderId(sub)`. `app.ts` con `verifyJwtMiddleware` + `authMiddleware` (legacy) + `c.set("actor")` + `c.set("ctx")`. `KernelContext.actorId` + `sessionId` propagados en `openTurn`/`appendThought`/`closeTurn`. `ExecutionContext.actorId` + `sessionId` propagados en `orchestrator.runGoal`. `worker.ts` con `executingActorId` y `requestingActorId`. `AgentGovernance` recibe `Actor`. `x-user-id` deprecado. Actor desactivado → 403 en `ActorService.resolve`. T1, T2, T14, T15 en verde.
+
+**Verificado contra los 3 ficheros reales + Repomix de Fase 0:**
+- `packages/domain/src/agent.ts`: `AgentTask` no tiene `fieldClassification`. `AgentMemory`, `AgentArtifact`, `AgentNotification` tampoco.
+- `packages/domain/src/agent-persona.ts`: `AgentPersona` sin `fieldClassification`.
+- `apps/server/src/users.ts`: `userSchema` sin `fieldClassification`.
+- `packages/domain/src/sop.ts`: `SOP` sin `fieldClassification`.
+- `packages/domain/src/business.ts`: `BusinessEntity` sin `fieldClassification`.
+- `apps/server/src/engine/policy/engine.ts`: `PolicyEngine.can(owner, role, resource, action)` con allowlist por rol. Sin `field`, sin `condition`.
+- `apps/server/src/engine/agents/governance.ts`: `canExecuteTool(actor, tool)` y `canExecuteAction(actor, action, policyAction)` ya reciben `Actor`.
+- `apps/server/src/threads-routes.ts`: `THREAD_CONFLICT_DIFF_V1` con `current`/`expected`, sin `diff` por campo.
+- `apps/server/src/projects-routes.ts`: `PROJECT_CONFLICT_DIFF_V1` con `current`/`expected`, sin `diff` por campo.
+- Los 14 ficheros de handlers: hoy usan `db.get`/`db.put`/`db.list` directos. No pasan por PDP.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`Policy`** (F2.1): `packages/domain/src/policy.ts` con `Policy`, `PolicyAction`, `PolicyResource`, `PolicySubject`, `PolicyCondition`, `PolicyDecision`. **Solo recursos reales** (`task`, `goal`, `monitor`, `memory`, `artifact`, `sop`, `role`, `action`, `computer`, `file`, `rag`, `audit`, `presence`, `lock`, `notification`, `thread`, `project`). **No** `employee`, `payroll`, `invoice`, `document`, `business-entity` (producto, otra campaña).
+- **`FieldClassification`** (F2.2): `packages/domain/src/classification.ts` con `FieldClassification`, `ClassifiedField`, `ClassifiedRecord`.
+- **`PolicyDecisionPoint`** (F2.3): `apps/server/src/engine/authz/pdp.ts`. `can(ctx, action, resource, field, target)` con fail-closed y deny-overrides. **Sin `Policy` declarativo nuevo**: el PDP traduce `AgentRole.permissions` a `Policy` en el arranque y evalúa sobre el resultado de `PolicyEngine` cuando aplica.
+- **`PolicyEnforcementPoint`** (F2.4): `apps/server/src/engine/authz/pep.ts`. **Autorización en handlers, workers, acciones internas, streams, rutas alternativas**. No middleware global como única defensa.
+- **`FieldFilter`** (F2.5): `apps/server/src/engine/authz/field-filter.ts`. **Aplicado en lectores, escritores, serializadores, listados, búsquedas, agregaciones**. No solo en `withRead`.
+- **`withRead`** (F2.6): `apps/server/src/engine/authz/with-read.ts`. Envuelve `db.get` y `db.list`. PDP + `FieldFilter` + `AuditTrail` si el campo es `restricted`/`secret`.
+- **`withWrite`** (F2.7): `apps/server/src/engine/authz/with-write.ts`. Envuelve `db.put` y `db.compareAndSwap`. PDP + CAS (sin `version` todavía, eso es F4) + `AuditTrail`. **No** aplica `expectedVersion` (F4). **No** aplica diff (F4).
+- **`policies.ts`** (F2.8): `apps/server/src/engine/authz/policies.ts`. Traduce `AgentRole.permissions`, `AgentRole.allowedTools` a `Policy` y añade políticas por defecto. Owner no es root (I15): si no hay política para `secret`, no lo ve.
+- **Clasificación aplicada a campos reales** (F2.9): `User.email: internal`, `User.name: internal`, `User.setup: confidential`. `AgentRole.permissions: restricted`, `AgentRole.memories: confidential`, `AgentRole.allowedTools: restricted`. `AgentTask.prompt: confidential`, `AgentTask.plan: internal`, `AgentTask.outcome: internal`. `AgentMemory.text: confidential`. `BusinessEntity.properties: internal`. `SOP.steps: internal`. **Sin `salaryGross`/`salaryNet`/`bankAccount`** (no existen).
+- **`AgentGovernance` sobre PDP** (F2.10): `canExecuteTool(actor, tool)` y `canExecuteAction(actor, action, policyAction)` llaman al PDP. Heredan de `AgentRole.permissions` y `AgentRole.allowedTools`.
+- **`x-user-id` eliminado como fuente de verdad** (F2.11): `userHeaderMiddleware` ya no se monta o solo se monta para debugging local. `ctx.userId` es la fuente. `c.set("owner", actor.id)` para compatibilidad con handlers existentes.
+- **`withRead`/`withWrite` en todas las rutas** (F2.12, D2 corregida): 14 ficheros de handlers + workers + acciones internas + streams + rutas alternativas. Se registra el mecanismo de authz de cada ruta.
+- **`audit-entries` con `field`, `classification`, `allowed`** (F2.13, D12 corregida): `StoreAuditStore` acepta estos campos en `payload`. **No registra valores completos** de campos `restricted`/`secret`, solo `allowed: false` y `field`.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 3 (documento 08): delegación controlada. `Assignment` como interfaz de lectura, `Flow` desde `AgentPersona`, `AssignmentService`, `AssignmentRegistry`, 5 adapters, `executingActorId` vs `requestingActorId` en `AssignmentService`, agente no escala, scope de tarea. Sin tocar CAS (F4), presence (F5), SSE (F5), audit-trail (F6).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 2), ejecutada en **15 patchsets de producto** más **1 patchset de verificación sin escritura** (confirmar Fase 1 cerrada). Total: **15 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix de Fase 0 + los 3 ficheros reales + Fase 1:**
+
+- `apps/server/src/users.ts` (Fase 1: `User.authProviderId`, `UserService.getByAuthProviderId`).
+- `apps/server/src/auth.ts` (Repomix F0, íntegro).
+- `apps/server/src/kernel/context/kernel-context.ts` (Fase 1: `actorId` + `sessionId`).
+- `apps/server/src/app.ts` (Fase 1: `verifyJwtMiddleware` + `authMiddleware` + `ctx`).
+- `apps/server/src/index.ts` (Repomix holístico, íntegro).
+- `apps/server/src/kernel/kernel.ts` (Fase 1: `actorId`).
+- `apps/server/src/kernel/audit/store-store.ts` (Fase 1: `audit.append`).
+- `apps/server/src/engine/worker.ts` (Fase 1: `executingActorId` vs `requestingActorId`).
+- `apps/server/src/engine/agents/governance.ts` (Fase 1: `Actor`).
+- `apps/server/src/engine/tenant.ts` (Repomix holístico, íntegro).
+- `apps/server/src/middleware/user-header.ts` (Fase 1: `x-user-id` deprecado).
+- `apps/server/src/config.ts` (Fase 1: `authProvider`, `jwtSecret`, `jwksUri`, `jwtIssuer`, `jwtAudience`).
+- `apps/server/src/rate-limit.ts` (Repomix holístico, íntegro).
+- `apps/server/src/notifications-stream.ts` (Repomix holístico, íntegro).
+- `apps/server/src/notification-prefs.ts` (Repomix holístico, íntegro).
+- `apps/server/src/engine/events/bus.ts` (Repomix holístico, íntegro).
+- `apps/server/src/engine/events/subscriber.ts` (Repomix holístico, íntegro).
+- `apps/server/src/engine/agents/personas/registry.ts` (Repomix holístico, íntegro).
+- `apps/server/src/engine/agents/personas/routes.ts` (Repomix audit, íntegro).
+- `apps/server/src/engine/agents/personas/resolver.ts` (Repomix audit, íntegro).
+- `apps/server/src/engine/agents/personas/activity.ts` (Repomix audit, íntegro).
+- `apps/server/src/actions.ts` (Repomix mínimo, íntegro).
+- `apps/server/src/engine/routes.ts` (Repomix mínimo, íntegro).
+- `apps/server/src/threads-routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/projects-routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/rag-routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/admin-routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/admin-tenants.ts` (Repomix holístico, íntegro).
+- `apps/server/src/skills/routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/skills/sop-routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/computer-routes.ts` (Repomix holístico, íntegro).
+- `apps/server/src/computer-tools.ts` (Repomix holístico, íntegro).
+- `apps/server/src/files.ts` (Repomix holístico, íntegro).
+- `apps/server/src/computer.ts` (Repomix holístico, íntegro).
+- `packages/domain/src/agent.ts` (Repomix real, íntegro).
+- `packages/domain/src/agent-persona.ts` (Repomix real, íntegro).
+- `packages/domain/src/sop.ts` (Repomix holístico, íntegro).
+- `packages/domain/src/business.ts` (Repomix holístico, íntegro).
+- `packages/domain/src/execution-context.ts` (Fase 1: `actorId` + `sessionId`).
+- `packages/domain/src/actor.ts` (Fase 1).
+- `packages/domain/src/jwt.ts` (Fase 1).
+- `packages/domain/src/index.ts` (Fase 1: exports).
+- `apps/server/src/engine/orchestrator/orchestrator.ts` (Fase 1: propaga `actorId`).
+- `apps/server/src/engine/presence.ts` (Repomix holístico, íntegro, **no se toca**).
+- `apps/server/src/engine/edit-lock.ts` (Repomix holístico, íntegro, **no se toca**).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+
+- `apps/server/src/engine/policy/engine.ts` — `Select-String -Pattern "class PolicyEngine|async can\(|permissions"` con `-Context 0,3`. Confirmar que el PDP puede envolverlo.
+- `apps/server/src/engine/agents/personas/bootstrap.ts` — `Select-String -Pattern "register|AgentPersona"` con `-Context 0,2`. Confirmar que `AgentPersona` está registrada.
+- `apps/server/src/kernel/audit/store-store.ts` — `Select-String -Pattern "auditEntrySchema|append|payload"` con `-Context 0,4`. Confirmar la firma de `append`.
+
+**Archivos que NO se leen en esta fase:**
+
+- `apps/server/src/engine/events/replay-buffer.ts` (no existe, F5).
+- `apps/server/src/engine/assignments/` (no existe, F3).
+- `apps/server/src/engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (no existen, F6).
+- `apps/server/src/backup-tenant.ts` (Campaña 1 cerrada).
+- `apps/worker/src/**`, `apps/computer/src/**`, `scripts/**`, `clientes/**`, `docs/audits/**` (no se tocan).
+- `apps/web/src/**` (no se toca en esta campaña).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Crear (dominio):**
+
+- `packages/domain/src/policy.ts` — `Policy`, `PolicyAction`, `PolicyResource`, `PolicySubject`, `PolicyCondition`, `PolicyDecision`, `policySchema`, `policyActionSchema`, `policyResourceSchema`, `policySubjectSchema`, `policyConditionSchema`, `policyDecisionSchema`.
+- `packages/domain/src/classification.ts` — `FieldClassification`, `ClassifiedField`, `ClassifiedRecord`, `fieldClassificationSchema`.
+
+**Crear (server):**
+
+- `apps/server/src/engine/authz/pdp.ts` — `PolicyDecisionPoint`, `PolicyContext`, `PolicyTarget`.
+- `apps/server/src/engine/authz/pep.ts` — `authzMiddleware` (para handlers HTTP). **No es la única defensa.**
+- `apps/server/src/engine/authz/with-read.ts` — `withRead`.
+- `apps/server/src/engine/authz/with-write.ts` — `withWrite`.
+- `apps/server/src/engine/authz/field-filter.ts` — `FieldFilter`.
+- `apps/server/src/engine/authz/policies.ts` — `buildPoliciesFromAgentRole`, `defaultPolicies`.
+
+**Modificar (dominio):**
+
+- `packages/domain/src/agent.ts` — `AgentRole.permissions` (ya existe), `AgentRole.allowedTools` (ya existe), `AgentRole.memories` (ya existe). **Clasificación por campo en `AgentTask.prompt: confidential`, `AgentTask.plan: internal`, `AgentTask.outcome: internal`. `AgentMemory.text: confidential`. `AgentArtifact` sin clasificación nueva (F4). `AgentNotification` sin clasificación nueva (F5).** Los schemas ganan `fieldClassification?: fieldClassificationSchema` donde aplique.
+- `packages/domain/src/business.ts` — `BusinessEntity.properties: internal`. `BusinessEntity` gana `fieldClassification?: fieldClassificationSchema`.
+- `packages/domain/src/sop.ts` — `SOP.steps: internal`. `SOP` gana `fieldClassification?: fieldClassificationSchema`.
+- `packages/domain/src/index.ts` — re-exporta `policy.ts` y `classification.ts`.
+
+**Modificar (server):**
+
+- `apps/server/src/users.ts` — `User.email: internal`, `User.name: internal`, `User.setup: confidential`. `User` gana `fieldClassification?: fieldClassificationSchema`.
+- `apps/server/src/app.ts` — `app.use("/api/*", authzMiddleware(pdp))` **no como única defensa**. `createApp` instancia `PolicyDecisionPoint` desde `policies.ts`. `c.set("authz", decision)` no se usa; los handlers usan `withRead`/`withWrite`.
+- `apps/server/src/engine/agents/governance.ts` — `canExecuteTool(actor, tool)` y `canExecuteAction(actor, action, policyAction)` llaman al PDP con `(ctx, action, resource, field, target)`. Heredan de `AgentRole.permissions` y `AgentRole.allowedTools`.
+- `apps/server/src/middleware/user-header.ts` — `userHeaderMiddleware` ya no se monta. Se elimina del `app.use` de `app.ts`. Solo se mantiene para debugging local vía env `DEBUG_USER_HEADER=true`.
+- `apps/server/src/kernel/audit/store-store.ts` — `AuditEntry.payload` acepta `field`, `classification`, `allowed`. No cambia la firma de `auditEntrySchema`.
+- `apps/server/src/engine/worker.ts` — `withWrite` en los writes de `tasks`, `run-events`, `activity`. El worker pasa por PDP con `executingActorId` como `actor`. **No** usa `withRead` (los reads internos del worker no son sensibles).
+- `apps/server/src/actions.ts` — `ActionService.propose`/`decide`/`retry`/`edit` con `withWrite`. `decide` recibe `userId` obligatorio (ya existe opcional). `PolicyEngine.can` se sustituye por el PDP.
+- `apps/server/src/threads-routes.ts` — `withRead` en `GET /`, `GET /:id`, `GET /:id/state`. `withWrite` en `POST /`, `PUT /:id`, `PATCH /:id`, `DELETE /:id`.
+- `apps/server/src/projects-routes.ts` — `withRead` en `GET /`, `GET /:id`. `withWrite` en `POST /`, `PATCH /:id`, `PUT /:id/blocks`, `POST /:id/link-*`, `POST /:id/unlink-*`, `DELETE /:id`.
+- `apps/server/src/rag-routes.ts` — `withRead` en `GET /sources`, `GET /status`, `GET /search`. `withWrite` en `POST /ingest`, `POST /reingest/:id`, `DELETE /source/:id`.
+- `apps/server/src/admin-routes.ts` — `withRead` en todos los `GET`. `withWrite` en todos los `POST`/`PUT`/`DELETE`. El `requireAdmin` se sustituye por el PDP.
+- `apps/server/src/admin-tenants.ts` — `withRead` en `GET /`, `GET /:tenantId`. `withWrite` en `POST /:tenantId/suspend`, `POST /:tenantId/resume`, `POST /`. El `requireAdmin` se sustituye por el PDP.
+- `apps/server/src/skills/routes.ts` — `withRead` en `GET /`, `GET /:id`. `withWrite` en `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/install`.
+- `apps/server/src/skills/sop-routes.ts` — `withRead` en `GET /`, `GET /:id`. `withWrite` en `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/run`.
+- `apps/server/src/computer-routes.ts` — `withRead` en `GET /`, `GET /files`, `POST /files/read`, `POST /files/export`. `withWrite` en `POST /start`, `POST /stop`, `POST /commands`, `POST /files/write`, `POST /files/mkdir`, `POST /files/import`.
+- `apps/server/src/computer-tools.ts` — `withRead` en `computer_status`, `list_computer_files`, `read_computer_file`, `export_computer_pdf`. `withWrite` en `start_computer`, `stop_computer`, `run_computer_command`, `write_computer_file`, `mkdir_computer`, `import_computer_pdf`.
+- `apps/server/src/notification-prefs.ts` — `withRead` en `GET /prefs`. `withWrite` en `PUT /prefs`.
+- `apps/server/src/notifications-stream.ts` — `withRead` en el filtro por `assignedTo`. **SSE con `Last-Event-ID` es F5.** Filtro por `visibility` es F5.
+- `apps/server/src/engine/routes.ts` — `withRead` en `GET /`, `GET /tasks/:id`, `GET /roles`, `GET /roles/public`, `GET /usage`, `GET /notifications`, `GET /search`, `GET /business-records`, `GET /worker-status`, `GET /tenant/cache-stats`, `GET /actions/:id/audit`. `withWrite` en `POST /tasks`, `POST /tasks/:id/control`, `POST /tasks/:id/reassign`, `POST /tasks/:id/escalate`, `POST /tasks/:id/input`, `POST /goals`, `POST /goals/:id/run`, `POST /goals/:id`, `POST /monitors`, `POST /monitors/:id/control`, `POST /ideas/refresh`, `POST /ideas/:id`, `POST /memories`, `POST /memories/:id`, `POST /memories/:id/forget`, `POST /roles`, `POST /identity`, `POST /notifications/direct`, `POST /notifications/:id/read`, `POST /actions/:id/reconcile`, `POST /actions/:id/force-cancel`, `POST /actions/:id/retry`, `POST /actions/:id/cancel`, `POST /feedback`, `POST /business-records`, `DELETE /business-records/:id`, `POST /business-records/import`, `POST /sample-page`, `POST /sample-business-records`.
+- `apps/server/src/engine/agents/personas/routes.ts` — `withRead` en `GET /`, `GET /:id`, `GET /all/nodes`, `GET /:id/attention`, `GET /:a/attention-pairs/:b`, `GET /:id/node`, `GET /:id/activity`. `withWrite` en `POST /refresh-stats`.
+- `apps/server/src/config.ts` — `Config.authzEnabled: boolean` (default `true`), `Config.fieldClassificationEnabled: boolean` (default `true`), `Config.policyCacheTtlMs: number` (default `60_000`).
+
+**No crear (prohibido en esta fase):**
+
+- Cualquier `tests/*.test.ts` (F02.10 congelado hasta F7).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multiusuario_pendientes.md` (lo escribe el humano).
+- Cualquier tabla SQL.
+- `Assignment`, `Flow`, `AssignmentService` (F3).
+- `version`, `expectedVersion`, `reconcile`, `ConflictDiff`, `ConflictVersion` (F4).
+- `PresenceService` sobre `Store`, `EditLockService` sobre `Store`, `NotificationService`, `ReplayBuffer`, `Notification.visibility`/`priority`, SSE `Last-Event-ID` (F5).
+- `RecordHistory`, `AuditTrail` completo, `ReconcileService` (F6).
+
+**No tocar:**
+
+- `worker.ts` más allá de añadir `withWrite` en los writes de `tasks`, `run-events`, `activity`.
+- `conversation.ts` (no se toca).
+- `kernel.ts` más allá de Fase 1.
+- `db-tenant.ts`, `db-rls.ts` (Campaña 1 cerrada).
+- `engine/presence.ts`, `engine/edit-lock.ts` (F5).
+- `backup-tenant.ts` (Campaña 1 cerrada).
+- `scripts/audits/*`, `tests/tenant-http-e2e.test.ts` (congelados).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F2.1 | `packages/domain/src/policy.ts` | 1 (crear) | CREATE |
+| F2.2 | `packages/domain/src/classification.ts` | 1 (crear) | CREATE |
+| F2.3 | `apps/server/src/engine/authz/pdp.ts` | 1 (crear) | CREATE |
+| F2.4 | `apps/server/src/engine/authz/pep.ts` | 1 (crear) | CREATE |
+| F2.5 | `apps/server/src/engine/authz/field-filter.ts` | 1 (crear) | CREATE |
+| F2.6 | `apps/server/src/engine/authz/with-read.ts` | 1 (crear) | CREATE |
+| F2.7 | `apps/server/src/engine/authz/with-write.ts` | 1 (crear) | CREATE |
+| F2.8 | `apps/server/src/engine/authz/policies.ts` | 1 (crear) | CREATE |
+| F2.9 | `packages/domain/src/agent.ts` | 3 (AgentTask, AgentMemory, AgentRole clasificación) | MODIFY |
+| F2.9b | `packages/domain/src/business.ts` | 1 (BusinessEntity) | MODIFY |
+| F2.9c | `packages/domain/src/sop.ts` | 1 (SOP) | MODIFY |
+| F2.9d | `packages/domain/src/index.ts` | 1 (exports) | MODIFY |
+| F2.10 | `apps/server/src/users.ts` | 1 (User clasificación) | MODIFY |
+| F2.11 | `apps/server/src/engine/agents/governance.ts` | 1 (PDP) | MODIFY |
+| F2.12 | `apps/server/src/app.ts` | 2 (instancia PDP + authzMiddleware) | MODIFY |
+| F2.13 | `apps/server/src/middleware/user-header.ts` | 1 (eliminar del wire) | MODIFY |
+| F2.14 | `apps/server/src/config.ts` | 1 (authzEnabled + fieldClassificationEnabled + policyCacheTtlMs) | MODIFY |
+| F2.15 | `apps/server/src/kernel/audit/store-store.ts` | 1 (payload field/classification/allowed) | MODIFY |
+| F2.16 | `apps/server/src/engine/worker.ts` | 2 (withWrite en tasks + withWrite en run-events/activity) | MODIFY |
+| F2.17 | `apps/server/src/actions.ts` | 2 (propose + decide/retry/edit) | MODIFY |
+| F2.18 | `apps/server/src/threads-routes.ts` | 2 (withRead + withWrite) | MODIFY |
+| F2.18b | `apps/server/src/projects-routes.ts` | 2 | MODIFY |
+| F2.18c | `apps/server/src/rag-routes.ts` | 2 | MODIFY |
+| F2.18d | `apps/server/src/admin-routes.ts` | 2 | MODIFY |
+| F2.18e | `apps/server/src/admin-tenants.ts` | 1 | MODIFY |
+| F2.18f | `apps/server/src/skills/routes.ts` | 2 | MODIFY |
+| F2.18g | `apps/server/src/skills/sop-routes.ts` | 2 | MODIFY |
+| F2.18h | `apps/server/src/computer-routes.ts` | 2 | MODIFY |
+| F2.18i | `apps/server/src/computer-tools.ts` | 2 | MODIFY |
+| F2.18j | `apps/server/src/notification-prefs.ts` | 2 | MODIFY |
+| F2.18k | `apps/server/src/notifications-stream.ts` | 1 | MODIFY |
+| F2.18l | `apps/server/src/engine/routes.ts` | 2 | MODIFY |
+| F2.18m | `apps/server/src/engine/agents/personas/routes.ts` | 2 | MODIFY |
+
+**Total: 8 CREATE + 24 MODIFY = 32 patchsets, ~55 hunks.**
+
+---
+
+## 8. Número de fixes y multipatches
+
+**Fixes aplicados en F2:**
+
+| Fix | Descripción | Clasificación |
+|---|---|---|
+| F2.1 | `Policy` (dominio) | Obligatorio |
+| F2.2 | `FieldClassification` (dominio) | Obligatorio |
+| F2.3 | `PolicyDecisionPoint` | Obligatorio |
+| F2.4 | `authzMiddleware` (handlers) | Obligatorio |
+| F2.5 | `FieldFilter` | Obligatorio |
+| F2.6 | `withRead` | Obligatorio |
+| F2.7 | `withWrite` | Obligatorio |
+| F2.8 | `policies.ts` | Obligatorio |
+| F2.9 | Clasificación en `AgentTask`/`AgentMemory`/`AgentRole` | Obligatorio |
+| F2.9b | Clasificación en `BusinessEntity` | Obligatorio |
+| F2.9c | Clasificación en `SOP` | Obligatorio |
+| F2.9d | `index.ts` exports | Obligatorio |
+| F2.10 | Clasificación en `User` | Obligatorio |
+| F2.11 | `AgentGovernance` sobre PDP | Obligatorio |
+| F2.12 | `app.ts` wire PDP + authzMiddleware | Obligatorio |
+| F2.13 | `x-user-id` eliminado del wire | Obligatorio |
+| F2.14 | `Config` authz/fieldClassification | Obligatorio |
+| F2.15 | `audit-entries` con `field`/`classification`/`allowed` | Obligatorio |
+| F2.16 | `withWrite` en worker | Obligatorio |
+| F2.17 | `ActionService` con `withWrite` + PDP | Obligatorio |
+| F2.18 | `withRead`/`withWrite` en 14 ficheros de handlers | Obligatorio |
+
+**Fixes congelados:** F02.10 (tests hasta F7).
+
+**Fixes movidos a fase siguiente:** F3.1–F3.13 (delegación), F4.1–F4.6 (consistencia), F5.1–F5.9 (coordinación), F6.1–F6.9 (trazabilidad), F7.1–F7.4 (cierre).
+
+**Fixes desbloqueados por esta fase:** F3–F7. Sin autorización, no hay delegación ni consistencia.
+
+**Fuera de alcance de esta campaña:** gestión empresarial (perfiles editables, clientes, procedimientos, plantillas, nóminas, compliance, datos clínicos). Va a otras campañas.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. Fase 1 cerrada.**
+
+```powershell
+$checks = @{
+  "packages/domain/src/actor.ts" = "ACTOR_MODEL_V1"
+  "packages/domain/src/jwt.ts" = "JWT_PAYLOAD_V1"
+  "apps/server/src/engine/actors/service.ts" = "ACTOR_SERVICE_RESOLVE_V1"
+  "apps/server/src/engine/auth/jwt.ts" = "VERIFY_JWT_MIDDLEWARE_V1"
+  "apps/server/src/users.ts" = "USER_AUTH_PROVIDER_ID_V1"
+  "apps/server/src/kernel/context/kernel-context.ts" = "KERNEL_CONTEXT_ACTOR_V1"
+  "packages/domain/src/execution-context.ts" = "EXECUTION_CONTEXT_ACTOR_V1"
+  "apps/server/src/engine/worker.ts" = "WORKER_REQUESTING_ACTOR_V1"
+  "apps/server/src/engine/agents/governance.ts" = "AGENT_GOVERNANCE_ACTOR_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "Fase 1 verificada" -ForegroundColor Green
+```
+
+**0.3. `PolicyEngine.can` actual.**
+
+```powershell
+$pe = Join-Path $repoRoot "apps/server/src/engine/policy/engine.ts"
+Select-String -Path $pe -Pattern "class PolicyEngine|async can\(|permissions|PolicyAction" -Context 0,4
+```
+
+**Decisión:** si `async can(` está 1×, el PDP lo envuelve. Si no, anotar y adaptar.
+
+**0.4. `AgentRole.permissions` y `AgentRole.allowedTools`.**
+
+```powershell
+$ag = Join-Path $repoRoot "packages/domain/src/agent.ts"
+Select-String -Path $ag -Pattern "permissions|allowedTools|memoryPolicy|memories" -Context 0,3
+```
+
+**Decisión:** si `permissions` y `allowedTools` existen (sí, verificado), `policies.ts` los traduce a `Policy`. Si no, el PDP no puede heredar de `AgentRole`. Anotar.
+
+**0.5. `AgentTask`, `AgentMemory`, `AgentArtifact`, `AgentNotification`.**
+
+```powershell
+Select-String -Path $ag -Pattern "interface AgentTask|interface AgentMemory|interface AgentArtifact|interface AgentNotification" -Context 0,12
+```
+
+**Decisión:** si las 4 interfaces están 1×, se les añade `fieldClassification?` donde aplique. Si no, anotar.
+
+**0.6. `authMiddleware` y `c.set("ctx")` en `app.ts`.**
+
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+Select-String -Path $app -Pattern 'app.use\("/api/\*"|verifyJwtMiddleware|c.set\("actor"\)|c.set\("ctx"\)|app.onError' -Context 0,20
+```
+
+**Decisión:** si `app.use("/api/*"` está 1× y `c.set("ctx")` está 1×, el `authzMiddleware` se añade justo después. Si no, adaptar.
+
+**0.7. `createApp` para instanciar PDP.**
+
+```powershell
+Select-String -Path $app -Pattern "export async function createApp|const runtime = makeRuntime|const app = new Hono" -Context 0,5
+```
+
+**Decisión:** si `createApp` y `const app = new Hono` están 1×, el PDP se instancia en `createApp`. Si no, adaptar.
+
+**0.8. `userSchema` actual (Fase 1 ya tiene `authProviderId`).**
+
+```powershell
+$users = Join-Path $repoRoot "apps/server/src/users.ts"
+Select-String -Path $users -Pattern "userSchema = z.object|fieldClassification|authProviderId" -Context 0,4
+```
+
+**Decisión:** si `fieldClassification` no existe, F2.10 lo añade. Si existe, se reutiliza.
+
+**0.9. `AgentGovernance` (Fase 1 ya recibe `Actor`).**
+
+```powershell
+$gov = Join-Path $repoRoot "apps/server/src/engine/agents/governance.ts"
+Select-String -Path $gov -Pattern "async canExecuteTool|async canExecuteAction|PolicyEngine|Actor" -Context 0,3
+```
+
+**Decisión:** si las 2 firmas reciben `Actor`, F2.11 las cablea al PDP. Si no, adaptar.
+
+**0.10. `userHeaderMiddleware` y `app.use` en `app.ts`.**
+
+```powershell
+$uh = Join-Path $repoRoot "apps/server/src/middleware/user-header.ts"
+Get-Content $uh -Raw
+Select-String -Path $app -Pattern "userHeaderMiddleware" -Context 0,2
+```
+
+**Decisión:** si `userHeaderMiddleware` está montado en `app.ts`, F2.13 lo elimina del wire (o lo deja solo si `DEBUG_USER_HEADER=true`).
+
+**0.11. `Config` actual (Fase 1 ya tiene `authProvider`, `jwtSecret`, `jwksUri`).**
+
+```powershell
+$cfg = Join-Path $repoRoot "apps/server/src/config.ts"
+Select-String -Path $cfg -Pattern "export interface Config|authzEnabled|fieldClassificationEnabled|policyCacheTtlMs" -Context 0,3
+```
+
+**Decisión:** si no existen, F2.14 los añade.
+
+**0.12. `auditEntrySchema` y `append`.**
+
+```powershell
+$audit = Join-Path $repoRoot "apps/server/src/kernel/audit/store-store.ts"
+Select-String -Path $audit -Pattern "auditEntrySchema|append\(|payload" -Context 0,5
+```
+
+**Decisión:** si `payload` es `Record<string, unknown>`, F2.15 puede añadir `field`, `classification`, `allowed` sin cambiar la firma.
+
+**0.13. `worker.ts` `run-events` y `activity`.**
+
+```powershell
+$worker = Join-Path $repoRoot "apps/server/src/engine/worker.ts"
+Select-String -Path $worker -Pattern "run-events|activity|db\.put|db\.compareAndSwap" -Context 0,2
+```
+
+**Decisión:** si los writes del worker van por `db.put`/`db.compareAndSwap`, F2.16 los envuelve en `withWrite`.
+
+**0.14. `ActionService.decide` y `PolicyEngine.can`.**
+
+```powershell
+$act = Join-Path $repoRoot "apps/server/src/actions.ts"
+Select-String -Path $act -Pattern "async decide|this.policy|PolicyEngine" -Context 0,4
+```
+
+**Decisión:** si `this.policy.can` está en `decide`, F2.17 lo cambia por el PDP.
+
+**0.15. Typecheck actual (registro, no asumido).**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes se anotan. Errores nuevos → abortar F2.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Clasificación | Motivo |
+|---|---|---|---|
+| F2.1–F2.8 | Sí | Obligatorio | 8 ficheros nuevos |
+| F2.9 | Sí | Obligatorio | Clasificación en `agent.ts` |
+| F2.9b | Sí | Obligatorio | Clasificación en `business.ts` |
+| F2.9c | Sí | Obligatorio | Clasificación en `sop.ts` |
+| F2.9d | Sí | Obligatorio | `index.ts` exports |
+| F2.10 | Sí | Obligatorio | Clasificación en `User` |
+| F2.11 | Sí | Obligatorio | `AgentGovernance` PDP |
+| F2.12 | Sí | Obligatorio | `app.ts` PDP + authzMiddleware |
+| F2.13 | Sí | Obligatorio | Eliminar `x-user-id` del wire |
+| F2.14 | Sí | Obligatorio | `Config` authz |
+| F2.15 | Sí | Obligatorio | `audit-entries` clasificación |
+| F2.16 | Sí | Obligatorio | `withWrite` worker |
+| F2.17 | Sí | Obligatorio | `ActionService` PDP |
+| F2.18 | Sí | Obligatorio | `withRead`/`withWrite` en 14 ficheros |
+
+---
+
+## 10. Patchsets
+
+Los patchsets son 32 en total. Cada uno sigue el protocolo TypeScript v2: función envolvente, `throw` real, `[System.Text.UTF8Encoding]::new($false)`, backup, verificación pre/post, `git diff --check`. Por razones de espacio, en este documento van solo los **3 primeros patchsets completos**. Los 29 restantes siguen el mismo patrón y se escriben en `PLAN-CAMPANA-2-PATCHSETS-F2.md` que la IA de Fase 2 recibe como anexo.
+
+### Patchset F2.1 — `packages/domain/src/policy.ts`
+
+**Fichero:** `packages/domain/src/policy.ts` (CREATE)
+**Marca:** `POLICY_MODEL_V1`
+
+**Contenido:**
+
+```typescript
+// POLICY_MODEL_V1 — modelo ABAC declarativo. La condición evalúa
+// actor, subject y context. Fail-closed. Deny-overrides.
+// Solo recursos reales del código. No employee/payroll/invoice/document
+// (esos son de la campaña de producto).
+import { z } from "zod";
+
+export const policyActionSchema = z.enum([
+  "read", "create", "update", "delete", "approve", "export", "assign", "escalate",
+]);
+
+export const policyResourceSchema = z.enum([
+  "task", "goal", "monitor", "memory", "artifact", "sop", "role",
+  "action", "computer", "file", "rag", "audit", "presence", "lock",
+  "notification", "thread", "project",
+]);
+
+export const policySubjectSchema = z.object({
+  actorId: z.string().min(1).max(200).optional(),
+  role: z.enum(["owner", "manager", "employee", "hr", "compliance", "agent"]).optional(),
+  kind: z.enum(["human", "agent"]).optional(),
+});
+
+export const policyConditionSchema = z.object({
+  kind: z.enum(["ownedBy", "inTaskScope", "assignedBy", "hasClassification"]),
+  value: z.string().min(1).max(200).optional(),
+});
+
+export const policySchema = z.object({
+  id: z.string().min(1).max(200),
+  subject: policySubjectSchema,
+  action: policyActionSchema,
+  resource: policyResourceSchema,
+  field: z.string().min(1).max(200).optional(),
+  condition: policyConditionSchema.optional(),
+  tenantId: z.string().min(1).max(100).optional(),
+});
+
+export const policyDecisionSchema = z.enum(["allow", "deny"]);
+
+export type PolicyAction = z.infer<typeof policyActionSchema>;
+export type PolicyResource = z.infer<typeof policyResourceSchema>;
+export type PolicySubject = z.infer<typeof policySubjectSchema>;
+export type PolicyCondition = z.infer<typeof policyConditionSchema>;
+export type Policy = z.infer<typeof policySchema>;
+export type PolicyDecision = z.infer<typeof policyDecisionSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 500`, typecheck verde, `Select-String -Pattern "POLICY_MODEL_V1"` 1×.
+
+### Patchset F2.2 — `packages/domain/src/classification.ts`
+
+**Fichero:** `packages/domain/src/classification.ts` (CREATE)
+**Marca:** `FIELD_CLASSIFICATION_V1`
+
+**Contenido:**
+
+```typescript
+// FIELD_CLASSIFICATION_V1 — clasificación por campo.
+// public, internal, confidential, restricted, secret.
+// La clasificación no es seguridad por sí sola: FieldFilter se aplica
+// en lectores, escritores, serializadores, listados, búsquedas y agregaciones.
+import { z } from "zod";
+
+export const fieldClassificationSchema = z.enum([
+  "public", "internal", "confidential", "restricted", "secret",
+]);
+
+export const classifiedFieldSchema = z.object({
+  field: z.string().min(1).max(200),
+  classification: fieldClassificationSchema,
+});
+
+export const classifiedRecordSchema = z.object({
+  fields: z.array(classifiedFieldSchema).max(200),
+});
+
+export type FieldClassification = z.infer<typeof fieldClassificationSchema>;
+export type ClassifiedField = z.infer<typeof classifiedFieldSchema>;
+export type ClassifiedRecord = z.infer<typeof classifiedRecordSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 200`, typecheck verde.
+
+### Patchset F2.3 — `apps/server/src/engine/authz/pdp.ts`
+
+**Fichero:** `apps/server/src/engine/authz/pdp.ts` (CREATE)
+**Marca:** `POLICY_DECISION_POINT_V1`
+
+**Contenido:**
+
+```typescript
+// POLICY_DECISION_POINT_V1 — evalúa políticas ABAC. Fail-closed. Deny-overrides.
+// Envuelve PolicyEngine cuando el rol tiene permisos declarados.
+// La autorización se aplica en handlers, workers, acciones internas,
+// streams y rutas alternativas. No middleware global como única defensa.
+import type {
+  Policy, PolicyAction, PolicyCondition, PolicyDecision, PolicyResource, PolicySubject,
+} from "../../../../../packages/domain/src/policy.ts";
+import type { PolicyEngine } from "../policy/engine.ts";
+import type { Actor } from "../../../../../packages/domain/src/actor.ts";
+
+export interface PolicyContext {
+  tenantId: string;
+  actor: Actor;
+  sessionId?: string;
+  requestId?: string;
+}
+
+export interface PolicyTarget {
+  ownerId?: string;
+  taskScope?: string;
+  assignedBy?: string;
+  classification?: "public" | "internal" | "confidential" | "restricted" | "secret";
+}
+
+export class PolicyDecisionPoint {
+  constructor(
+    private readonly policies: Policy[],
+    private readonly engine?: PolicyEngine,
+  ) {}
+
+  async can(
+    ctx: PolicyContext,
+    action: PolicyAction,
+    resource: PolicyResource,
+    field: string | undefined,
+    target: PolicyTarget,
+  ): Promise<PolicyDecision> {
+    const applicable = this.policies.filter(
+      (p) => p.resource === resource
+        && p.action === action
+        && this.subjectMatches(p.subject, ctx.actor)
+        && this.fieldMatches(p.field, field),
+    );
+    let sawAllow = false;
+    for (const p of applicable) {
+      const decision = p.condition ? this.evaluateCondition(p.condition, ctx, target) : "allow";
+      if (decision === "deny") return "deny";
+      if (decision === "allow") sawAllow = true;
+    }
+    // PolicyEngine como fuente adicional. Si el rol tiene permisos y el motor
+    // deniega, deny. Si el motor permite, se suma a sawAllow.
+    if (this.engine && ctx.actor.kind === "agent" && "roleId" in ctx.actor) {
+      const roleId = (ctx.actor as { roleId: string }).roleId;
+      const role = { id: roleId };
+      const verdict = await this.engine.can(ctx.actor.id, role, resource, action);
+      if (!verdict.allowed) return "deny";
+      if (verdict.allowed) sawAllow = true;
+    }
+    return sawAllow ? "allow" : "deny";
+  }
+
+  private subjectMatches(subject: PolicySubject, actor: Actor): boolean {
+    if (subject.actorId && subject.actorId !== actor.id) return false;
+    if (subject.kind && subject.kind !== actor.kind) return false;
+    if (subject.role && !actor.roles.includes(subject.role)) return false;
+    return true;
+  }
+
+  private fieldMatches(policyField: string | undefined, field: string | undefined): boolean {
+    if (!policyField) return true;
+    if (!field) return false;
+    return policyField === field || policyField === "*";
+  }
+
+  private evaluateCondition(condition: PolicyCondition, ctx: PolicyContext, target: PolicyTarget): PolicyDecision {
+    switch (condition.kind) {
+      case "ownedBy":
+        return target.ownerId === ctx.actor.id ? "allow" : "deny";
+      case "inTaskScope":
+        return target.taskScope === condition.value ? "allow" : "deny";
+      case "assignedBy":
+        return target.assignedBy === condition.value ? "allow" : "deny";
+      case "hasClassification":
+        return target.classification === condition.value ? "allow" : "deny";
+      default:
+        return "deny";
+    }
+  }
+}
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 500`, typecheck verde, `Select-String -Pattern "POLICY_DECISION_POINT_V1"` 1×.
+
+*(Los 29 patchsets restantes siguen el mismo patrón. Se escriben en `PLAN-CAMPANA-2-PATCHSETS-F2.md` con el contenido completo.)*
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el protocolo TypeScript v2. Además:
+
+- **`policy.ts`, `classification.ts`, `pdp.ts`, `pep.ts`, `with-read.ts`, `with-write.ts`, `field-filter.ts`, `policies.ts` son ficheros nuevos.** `Test-Path` false antes. `Test-Path` true después. `bytes > 500` después (200 para `classification.ts`).
+- **`app.ts` cambia 2 veces (F2.12).** `PDP` + `authzMiddleware`. Si uno falla, se aplican los demás y se anota.
+- **`users.ts` cambia 1 vez (F2.10).** `User` clasificación.
+- **`agent.ts` cambia 3 veces (F2.9).** `AgentTask`, `AgentMemory`, `AgentRole`. Cada hunk verifica su ancla.
+- **`business.ts`, `sop.ts` cambian 1 vez cada uno (F2.9b/c).**
+- **`user-header.ts` cambia 1 vez (F2.13).** Eliminar del wire.
+- **`config.ts` cambia 1 vez (F2.14).**
+- **`store-store.ts` cambia 1 vez (F2.15).**
+- **`worker.ts` cambia 2 veces (F2.16).**
+- **`actions.ts` cambia 2 veces (F2.17).**
+- **Los 14 ficheros de handlers cambian 1-2 veces cada uno (F2.18).** Si un handler no compila con `withRead`/`withWrite`, se revierte ese handler y se anota.
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+- **`Select-String` antes de escribir cada ancla.** Nunca del doc. Siempre del fichero real.
+- **`Config.authzEnabled`** default `true`. Si es `false`, el `authzMiddleware` no se monta y `withRead`/`withWrite` hacen pass-through. `Config.fieldClassificationEnabled` default `true`. Si es `false`, `FieldFilter` no filtra. `Config.policyCacheTtlMs` default `60_000`.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - `PDP.can` con `allow`, `deny` (fail-closed, deny-overrides).
+  - `FieldFilter` con `User.setup: confidential` → `[REDACTED]` para otro actor.
+  - `withRead` con record de otro actor → 403.
+  - `withWrite` con record de otro actor → 403.
+  - `authzMiddleware` con `POST` sin permisos → 403.
+  - `AgentGovernance.canExecuteTool(actor, tool)` con `HumanActor` y `AgentActor`.
+  - `AgentGovernance.canExecuteAction(actor, action, policyAction)` idem.
+  - `x-user-id` ya no se monta (o solo si `DEBUG_USER_HEADER=true`).
+  - `audit-entries` con `field`, `classification`, `allowed` cuando el read es denegado.
+  - `worker` `withWrite` en `tasks`/`run-events`/`activity`.
+  - `ActionService.decide` con PDP.
+- **La IA commitea con ficheros explícitos:**
+
+```powershell
+git add packages/domain/src/policy.ts
+git add packages/domain/src/classification.ts
+git add packages/domain/src/agent.ts
+git add packages/domain/src/business.ts
+git add packages/domain/src/sop.ts
+git add packages/domain/src/index.ts
+git add apps/server/src/engine/authz/
+git add apps/server/src/users.ts
+git add apps/server/src/app.ts
+git add apps/server/src/config.ts
+git add apps/server/src/middleware/user-header.ts
+git add apps/server/src/kernel/audit/store-store.ts
+git add apps/server/src/engine/agents/governance.ts
+git add apps/server/src/engine/worker.ts
+git add apps/server/src/actions.ts
+git add apps/server/src/threads-routes.ts
+git add apps/server/src/projects-routes.ts
+git add apps/server/src/rag-routes.ts
+git add apps/server/src/admin-routes.ts
+git add apps/server/src/admin-tenants.ts
+git add apps/server/src/skills/routes.ts
+git add apps/server/src/skills/sop-routes.ts
+git add apps/server/src/computer-routes.ts
+git add apps/server/src/computer-tools.ts
+git add apps/server/src/notification-prefs.ts
+git add apps/server/src/notifications-stream.ts
+git add apps/server/src/engine/routes.ts
+git add apps/server/src/engine/agents/personas/routes.ts
+git commit -m "feat(multiusuario): fase 2 — acceso seguro [POLICY_MODEL_V1, FIELD_CLASSIFICATION_V1, POLICY_DECISION_POINT_V1, POLICY_ENFORCEMENT_POINT_V1, FIELD_FILTER_V1, WITH_READ_V1, WITH_WRITE_V1, POLICIES_DEFAULT_V1, AUDIT_STORE_CLASSIFICATION_V1, AGENT_GOVERNANCE_PDP_V1]"
+git push origin feat/multitenancy-campaign
+```
+
+**Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fase 1 incompleta → aborta todo.
+- `PolicyEngine.can` 0× → adaptar PDP para no depender de él.
+- `AgentRole.permissions` 0× → el PDP no puede heredar de `AgentRole`. Anotar.
+- `AgentTask`/`AgentMemory` 0× → añadir solo a los que existan. Anotar.
+- `app.use("/api/*"` 0× o `c.set("ctx")` 0× → adaptar F2.12.
+- `createApp` 0× → adaptar.
+- `userSchema = z.object(` 0× → adaptar F2.10.
+- `AgentGovernance` 0× → adaptar F2.11.
+- `user-header.ts` ya no está montado → F2.13 skip.
+- `Config` 0× → adaptar F2.14.
+- Cline: typecheck rojo por `withRead`/`withWrite` (tipos mal) → ajustar tipos, revertir F2.18 del fichero rojo, anotar.
+- Cline: typecheck rojo por `fieldClassification` en `agent.ts` (consumidores) → ajustar tipos, revertir F2.9 del fichero rojo, anotar.
+- Cline: tests de `withRead`/`withWrite` no ejecutables (F02.10 congelado) → anotar como `MISSING_TEST_*`.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\04-multi-usuario-concurrente\missed\_multiusuario_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md`:**
+- F2.6/F2.7: `withRead`/`withWrite` sin `RecordHistory` (F6). El audit trail de reads de campos `restricted`/`secret` se hace en F2.6, pero sin `RecordHistory`.
+- F2.11: `AgentGovernance` recibe `Actor`. El `PolicyEngine.can` sigue siendo la fuente para roles. La migración completa al PDP es progresiva.
+- F2.12: `authzMiddleware` no es la única defensa. Se registra el mecanismo de authz de cada ruta.
+- F2.13: `x-user-id` se elimina del wire. Solo se mantiene si `DEBUG_USER_HEADER=true`.
+- F2.18: `withRead`/`withWrite` en 14 ficheros. Si alguno no compila, se revierte ese fichero y se anota. Los demás se aplican.
+- `fieldClassification` en `AgentTask.prompt`, `AgentTask.plan`, `AgentTask.outcome`, `AgentMemory.text`, `BusinessEntity.properties`, `SOP.steps`, `User.email`, `User.name`, `User.setup`, `AgentRole.permissions`, `AgentRole.memories`, `AgentRole.allowedTools`. **Sin `salaryGross`/`salaryNet`/`bankAccount`** (no existen).
+
+---
+
+## 14. Checklist de cierre de la fase 2
+
+- [ ] Paso 0.1–0.15 ejecutados, salidas anotadas.
+- [ ] Fase 1 verificada (9 marcas).
+- [ ] `PolicyEngine.can` verificado.
+- [ ] `AgentRole.permissions`/`allowedTools` verificados.
+- [ ] `AgentTask`/`AgentMemory`/`AgentArtifact`/`AgentNotification` verificados.
+- [ ] `app.use("/api/*"` y `c.set("ctx")` verificados.
+- [ ] `createApp` verificado.
+- [ ] `userSchema` verificado.
+- [ ] `AgentGovernance` verificado.
+- [ ] `userHeaderMiddleware` verificado.
+- [ ] `Config` verificado.
+- [ ] `auditEntrySchema` verificado.
+- [ ] `worker.ts` writes verificados.
+- [ ] `ActionService.decide` verificado.
+- [ ] Typecheck ejecutado y registrado.
+- [ ] F2.1 aplicado con `POLICY_MODEL_V1` 1×.
+- [ ] F2.2 aplicado con `FIELD_CLASSIFICATION_V1` 1×.
+- [ ] F2.3 aplicado con `POLICY_DECISION_POINT_V1` 1×.
+- [ ] F2.4 aplicado con `POLICY_ENFORCEMENT_POINT_V1` 1×.
+- [ ] F2.5 aplicado con `FIELD_FILTER_V1` 1×.
+- [ ] F2.6 aplicado con `WITH_READ_V1` 1×.
+- [ ] F2.7 aplicado con `WITH_WRITE_V1` 1×.
+- [ ] F2.8 aplicado con `POLICIES_DEFAULT_V1` 1×.
+- [ ] F2.9 aplicado con `AGENT_TASK_CLASSIFICATION_V1`, `AGENT_MEMORY_CLASSIFICATION_V1`, `AGENT_ROLE_CLASSIFICATION_V1` 1× cada uno.
+- [ ] F2.9b aplicado con `BUSINESS_ENTITY_CLASSIFICATION_V1` 1×.
+- [ ] F2.9c aplicado con `SOP_CLASSIFICATION_V1` 1×.
+- [ ] F2.9d aplicado con `DOMAIN_INDEX_POLICY_V1` 1×.
+- [ ] F2.10 aplicado con `USER_CLASSIFICATION_V1` 1×.
+- [ ] F2.11 aplicado con `AGENT_GOVERNANCE_PDP_V1` 1×.
+- [ ] F2.12 aplicado con `APP_AUTHZ_WIRE_V1` 1×.
+- [ ] F2.13 aplicado con `USER_HEADER_REMOVED_V1` 1×.
+- [ ] F2.14 aplicado con `CONFIG_AUTHZ_V1` 1×.
+- [ ] F2.15 aplicado con `AUDIT_STORE_CLASSIFICATION_V1` 1×.
+- [ ] F2.16 aplicado con `WORKER_WITH_WRITE_V1` 1×.
+- [ ] F2.17 aplicado con `ACTION_SERVICE_WITH_WRITE_V1` 1×.
+- [ ] F2.18 aplicado con `WITH_READ_WIRE_V1` y `WITH_WRITE_WIRE_V1` 1× por fichero (14 ficheros).
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` no se ha tocado más allá de F2.16.
+- [ ] `conversation.ts` no se ha tocado.
+- [ ] Cline typecheck verde (con filtro `worker.ts`).
+- [ ] Cline test verde o fallos preexistentes anotados.
+- [ ] Cline probó PDP con allow/deny.
+- [ ] Cline probó `FieldFilter` con `[REDACTED]`.
+- [ ] Cline probó `withRead`/`withWrite` con record de otro actor → 403.
+- [ ] Cline probó `authzMiddleware` con `POST` sin permisos → 403.
+- [ ] Cline probó `AgentGovernance` con `HumanActor` y `AgentActor`.
+- [ ] Cline probó `x-user-id` ya no se monta.
+- [ ] Cline probó `audit-entries` con `field`/`classification`/`allowed` en read denegado.
+- [ ] Cline probó `worker` `withWrite` en `tasks`/`run-events`/`activity`.
+- [ ] Cline probó `ActionService.decide` con PDP.
+- [ ] `git add` explícito de los 32 ficheros.
+- [ ] `git commit -m "feat(multiusuario): fase 2 — acceso seguro [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 2 cerrada. Siguiente: Fase 3 (delegación controlada con Assignment/Flow/AssignmentService)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/engine/policy/engine.ts` — `PolicyEngine.can` (literal, inicio):
+
+```typescript
+async can(
+  owner: string,
+  role: PolicyRoleInput,
+  resource: string,
+  action: PolicyAction,
+): Promise<PolicyDecision> {
+  if (!role.permissions || role.permissions.length === 0) {
+    await this.bus?.emit(owner, "policy.evaluated", ...);
+    return { allowed: true };
+  }
+  const permission = role.permissions.find((item) => item.resource === resource);
+  const allowed = Boolean(permission?.actions.includes(action));
+  // ...
+}
+```
+
+**F2.3 lo envuelve. `PolicyEngine.can` sigue siendo la fuente para roles con `permissions`. El PDP añade `field` y `condition`.**
+
+### A.2. `apps/server/src/engine/agents/governance.ts` — `canExecuteTool` (literal):
+
+```typescript
+async canExecuteTool(actor: Actor, tool: string): Promise<GovernanceDecision> {
+  // (Fase 1 ya recibe Actor)
+  // ...
+}
+```
+
+**F2.11 lo cablea al PDP. `PolicyEngine.can` sigue para roles con `permissions`.**
+
+### A.3. `packages/domain/src/agent.ts` — `AgentTask` (fragmento):
+
+```typescript
+export interface AgentTask {
+  id: string;
+  title: string;
+  prompt: string;
+  kind: "agent" | "document" | "monitor" | "finance" | "plan" | "sop";
+  status: TaskStatus;
+  // ...
+  plan: TaskStep[];
+  evidence: Evidence[];
+  // ...
+}
+```
+
+**F2.9 añade `fieldClassification?: fieldClassificationSchema` con `prompt: confidential`, `plan: internal`, `outcome: internal`.**
+
+### A.4. `packages/domain/src/agent.ts` — `AgentRole` (fragmento):
+
+```typescript
+export interface AgentRole {
+  id: string;
+  name: string;
+  // ...
+  memories: AgentRoleMemory[];
+  permissions?: AgentRolePermission[];
+  // ...
+  allowedTools?: string[];
+  // ...
+}
+```
+
+**F2.9 añade `fieldClassification?: fieldClassificationSchema` con `permissions: restricted`, `memories: confidential`, `allowedTools: restricted`.**
+
+### A.5. `apps/server/src/users.ts` — `userSchema` (fragmento, Fase 1 ya tiene `authProviderId`):
+
+```typescript
+export const userSchema = z.object({
+  id: z.string().min(1),
+  email: z.email().transform((v) => v.toLowerCase().trim()),
+  name: z.string().trim().min(1).max(120),
+  role: userRoleSchema.default("user"),
+  setup: userSetupSchema.default(() => ({ sopIds: [], allowedTools: [], greeting: "" })),
+  active: z.boolean().default(true),
+  authProviderId: z.string().min(1).max(200).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+```
+
+**F2.10 añade `fieldClassification?: fieldClassificationSchema` con `email: internal`, `name: internal`, `setup: confidential`.**
+
+### A.6. `apps/server/src/kernel/audit/store-store.ts` — `auditEntrySchema` (fragmento):
+
+```typescript
+export const auditEntrySchema = z.object({
+  id: z.string().min(1),
+  tenantId: z.string().min(1),
+  owner: z.string().min(1),
+  action: z.string().min(1),
+  actor: z.object({ kind: z.string(), id: z.string() }),
+  payload: z.record(z.string(), z.unknown()),
+  // ...
+});
+```
+
+**F2.15 añade `field`, `classification`, `allowed` al `payload`. No cambia la firma de `auditEntrySchema`.**
+
+### A.7. `apps/server/src/threads-routes.ts` — `PUT /:id` (fragmento):
+
+```typescript
+app.put("/:id", async (c) => {
+  const owner = c.get("owner");
+  const id = c.req.param("id");
+  // THREAD_EDIT_LOCK_V1 ...
+  const thread = await db.get<Thread>(owner, "threads", id);
+  // ...
+  await db.put(owner, "threads", updated);
+  return c.json(updated);
+});
+```
+
+**F2.18 añade `withWrite` y `withRead`. Lo mismo en `projects-routes.ts`, `rag-routes.ts`, `admin-routes.ts`, `admin-tenants.ts`, `skills/routes.ts`, `skills/sop-routes.ts`, `computer-routes.ts`, `computer-tools.ts`, `notification-prefs.ts`, `notifications-stream.ts`, `engine/routes.ts`, `personas/routes.ts`.**
+
+### A.8. `apps/server/src/app.ts` — `authMiddleware` (fragmento, Fase 1):
+
+```typescript
+app.use("/api/*", async (c, next) => {
+  const owner = await auth.owner(c.req.header("authorization"));
+  c.set("owner", owner);
+  c.set("ctx", { tenantId, userId: owner, sessionId, requestId });
+  await next();
+});
+```
+
+**F2.12 añade `authzMiddleware(pdp)` justo después. `c.set("authz", decision)` no se usa; los handlers usan `withRead`/`withWrite`.**
+
+---
+
+## FIN DEL DOCUMENTO 07
+
+**Fase 2 preparada para ejecución. 32 patchsets (8 CREATE + 24 MODIFY), ~55 hunks. 32 ficheros tocados. Fases 3–7 pospuestas. F02.10 congelado. Typecheck y test los corre Cline, más 12 pruebas de comportamiento. Commit + push al final. Los misses van a `_multiusuario_pendientes.md`, no los escribe la IA. Anexo literal de 8 bloques de código real, sin resúmenes ni cortes. Deudas anotadas en `-pendientes.md` para Fases 3–7.**
+
+-----------------------------------------------------------------------------------------------
+
+## Veredicto del documento 07: todavía no lo ejecutes
+
+La dirección es buena: introducir un punto de decisión de políticas (PDP), aplicar controles en los puntos de lectura y escritura, filtrar campos sensibles y extender la autorización a rutas, workers y acciones internas. Pero el diseño del PDP presentado en F2.3 tiene fallos de autorización que pueden hacer que el sistema deniegue acceso legítimo o permita acceso indebido. Además, la cobertura propuesta no demuestra todavía que todas las rutas queden protegidas.
+
+No es necesario descartar la fase ni rehacer la arquitectura. Sí conviene corregir los contratos centrales antes de desplegar los 32 patchsets.
+
+## 1. Bloqueos técnicos del diseño
+
+### A. El PDP puede permitir todo a un agente
+
+En F2.3 aparece esta lógica:
+
+```
+const role = { id: roleId };
+const verdict = await this.engine.can(ctx.actor.id, role, resource, action);
+```
+
+El anexo A.1 del propio documento indica que `PolicyEngine.can()` devuelve permiso cuando el rol no tiene `permissions` o tiene una lista vacía. Como el PDP construye un rol que solo contiene `id`, puede convertir la ausencia de permisos en una autorización positiva.
+
+Esto contradice el principio fail-closed.
+
+Corrección necesaria: el PDP debe resolver el `AgentRole` real y sus permisos efectivos, no construir un objeto incompleto. Si no puede resolver el rol, su estado o sus permisos, debe denegar. Además, `owner` no debe sustituirse por `actor.id` sin verificar qué ámbito espera el motor.
+
+### B. Las políticas no aplican el tenant
+
+`PolicyContext` contiene `tenantId`, y `Policy` admite `tenantId`, pero `PolicyDecisionPoint.can()` no comprueba que la política corresponda al tenant del contexto.
+
+Eso deja sin aplicar una condición esencial del aislamiento multiusuario.
+
+Corrección necesaria: definir y comprobar el tenant del contexto y del recurso en cada decisión. Una política de otro tenant nunca debe conceder acceso. Si falta el ámbito necesario para decidir, denegar.
+
+### C. El modelo de políticas no representa realmente el efecto de una política
+
+El esquema declara:
+
+```
+export const policyDecisionSchema = z.enum(["allow", "deny"]);
+```
+
+Pero `Policy` no contiene un campo `effect` o equivalente. En el PDP, toda política coincidente sin condición se interpreta como `allow`.
+
+Por tanto, aunque el comentario anuncia deny-overrides, el modelo no permite expresar de manera explícita una política de denegación. Solo puede denegar cuando una condición evaluada resulta falsa.
+
+Corrección necesaria: incorporar un efecto explícito (`allow` o `deny`) a cada política, definir precedencia y aplicar la denegación explícita con prioridad. La ausencia de una política coincidente debe seguir denegando.
+
+### D. Las clasificaciones de campos están modeladas de forma ambigua
+
+El documento plantea clasificaciones diferentes para varios campos de un mismo registro:
+
+- `User.email`: `internal`.
+- `User.name`: `internal`.
+- `User.setup`: `confidential`.
+
+Sin embargo, propone añadir `fieldClassification?: fieldClassificationSchema` al esquema del registro, y ese esquema representa una sola clasificación. Así no se puede expresar correctamente la clasificación de cada campo.
+
+Hay además un riesgo de seguridad si el propio usuario puede modificar la clasificación almacenada para rebajarla y acceder a datos que deberían seguir protegidos.
+
+Corrección necesaria: mantener un mapa de clasificación por recurso y campo, controlado por el servidor. El filtrado debe usar esa definición confiable, no una clasificación arbitraria enviada por el cliente o contenida en datos modificables.
+
+### E. `PolicyAction` no incluye `execute`
+
+El modelo de F2.1 enumera `read`, `create`, `update`, `delete`, `approve`, `export`, `assign` y `escalate`, pero `AgentGovernance` necesita autorizar la ejecución de herramientas y acciones.
+
+El contrato actual no define cómo representar esa operación. No debe suponerse que `execute` equivale a `create` o `update`.
+
+Corrección necesaria: acordar las acciones que realmente usa el código existente, incluir las necesarias en el modelo y mapearlas explícitamente desde `AgentGovernance` y `PolicyEngine`.
+
+## 2. `withRead` y `withWrite` no bastan por sí solos
+
+El documento acierta al exigir controles en handlers, workers, acciones internas, streams y rutas alternativas. Pero envolver `db.get()` y `db.list()` no demuestra que todas esas vías queden protegidas.
+
+Hay tres condiciones adicionales:
+
+- Ámbito de almacenamiento: `actor.id`, `owner` y `tenantId` son conceptos distintos. No se debe sustituir automáticamente el propietario o la partición de almacenamiento por el ID del actor.
+- Datos derivados: las búsquedas RAG, agregaciones, resultados de herramientas y respuestas serializadas también deben filtrar los campos sensibles. Un resultado puede exponer información aunque su lectura original se haya autorizado.
+- Configuración: `authzEnabled: false` hace que los wrappers pasen sin autorización, y `fieldClassificationEnabled: false` desactiva el filtrado. En producción no debe existir un interruptor que convierta silenciosamente estas defensas en pass-through.
+
+La solución es definir el contrato de cada wrapper —contexto, recurso, acción, tenant, objetivo, resultado y auditoría— y comprobarlo en cada punto de acceso real. El middleware global puede aportar contexto o una protección adicional, pero no sustituye una decisión específica sobre el recurso.
+
+## 3. Inconsistencias del propio plan
+
+| Apartado  | Problema                                                                                                                       | Corrección                                                                                                           |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| §4 y §7   | Se anuncia un total de 32 patchsets: 8 CREATE + 24 MODIFY.                                                                     | La tabla enumera 8 CREATE y 25 MODIFY: 33 patchsets, si se cuentan las filas tal como están escritas.                |
+| §2 y §6   | Se afirma que hay 14 ficheros de handlers, pero la lista visible de F2.18 a F2.18m contiene 13.                                | Identificar el fichero que falta o corregir la cifra y revisar el alcance.                                           |
+| §6 y §11  | Se exige `withRead`/`withWrite` en muchas rutas, pero el código completo de esos wrappers no aparece aquí.                     | Revisar el anexo `PLAN-CAMPANA-2-PATCHSETS-F2.md` antes de aprobar la ejecución.                                     |
+| §12 y §14 | Se prohíben los archivos de tests hasta F7, pero F2 exige pruebas de comportamiento de seguridad.                              | Permitir pruebas focalizadas de F2 o acordar una verificación equivalente que realmente se pueda ejecutar y repetir. |
+| §2 y §12  | Se exige auditar lecturas sensibles y denegaciones, pero no se especifica con suficiente precisión cómo se registra cada caso. | Definir los eventos de auditoría, sus campos y qué información sensible queda excluida.                              |
+
+## 4. Orden de ejecución que recomiendo
+
+No empezaría aplicando los 33 patchsets en bloque. Los separaría en estas etapas:
+
+Etapa 1 — Corregir el contrato de autorización
+
+Resolver el rol real del agente, el ámbito del tenant, los efectos `allow`/`deny`, las acciones y la clasificación por campo.
+
+Etapa 2 — Implementar el núcleo
+
+Crear los modelos, PDP, PEP, `FieldFilter`, `withRead`, `withWrite` y las políticas por defecto. Verificar sus contratos antes de extenderlos a toda la aplicación.
+
+Etapa 3 — Integrar por grupos
+
+Aplicar las defensas a las rutas, después a las acciones internas y al worker. Revisar los accesos directos a almacenamiento y los resultados derivados, no solo las llamadas `db.get` y `db.put`.
+
+Etapa 4 — Validar y cerrar
+
+Ejecutar typecheck, las pruebas de autorización y filtrado, las comprobaciones de aislamiento entre tenants y la revisión de `git diff`. Commit y push solo si los criterios de cierre están demostrados.
+
+Veredicto final: el objetivo de Fase 2 está bien planteado, pero el PDP de ejemplo no es seguro para ejecutar tal cual. Primero corregiría los cinco bloqueos técnicos anteriores y la discrepancia de alcance. Después revisaría el anexo completo de patchsets, porque es el que determinará si Cline tiene instrucciones suficientes para implementar los wrappers sin inventar contratos.
+
+No puedo confirmar desde el documento que Fase 1 esté realmente cerrada ni que los archivos citados tengan exactamente el contenido indicado. Esa verificación debe hacerse en el repositorio antes de comenzar F2.
+
+**Siguiente: documento 08 — Campaña 2 / Fase 3 — Delegación controlada (G3). Di "sigue".**

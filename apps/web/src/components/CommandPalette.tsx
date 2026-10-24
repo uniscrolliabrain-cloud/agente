@@ -1,0 +1,159 @@
+import { useEffect, useRef, useState } from "react";
+import { globalSearch } from "../api/search";
+// COMMAND_PALETTE_WORKSPACES_V1
+import { WORKSPACE_ENTRIES } from "../workspaces/registry";
+import { FileText, LayoutDashboard, MessageSquare, Plus, Search } from "lucide-react";
+import type { AppView } from "./SidebarV2";
+
+interface Props {
+  open: boolean;
+  onClose: () => void;
+  onSelectView: (view: AppView) => void;
+  onNewChat: () => void;
+}
+
+interface Option {
+  id: string;
+  label: string;
+  hint: string;
+  icon: React.ReactNode;
+  run: () => void;
+}
+
+export default function CommandPalette({ open, onClose, onSelectView, onNewChat }: Props) {
+  const [query, setQuery] = useState("");
+  // COMMAND_PALETTE_SEARCH_V1 - hits de la busqueda global.
+  const [hits, setHits] = useState<Array<{ kind: string; id: string; title: string; excerpt: string }>>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setQuery("");
+      dialogRef.current?.showModal();
+      setTimeout(() => inputRef.current?.focus(), 30);
+    } else {
+      dialogRef.current?.close();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    const handleCancel = (e: Event) => {
+      e.preventDefault();
+      onClose();
+    };
+    dialog.addEventListener("cancel", handleCancel);
+    return () => dialog.removeEventListener("cancel", handleCancel);
+  }, [onClose]);
+
+  const close = () => {
+    onClose();
+  };
+
+  const options: Option[] = [
+    {
+      id: "new-chat",
+      label: "Nuevo chat",
+      hint: "Cmd+N",
+      icon: <Plus size={14} />,
+      run: () => { close(); onNewChat(); },
+    },
+    {
+      id: "chat",
+      label: "Ir a Chat",
+      hint: "",
+      icon: <MessageSquare size={14} />,
+      run: () => { close(); onSelectView("chat"); },
+    },
+    {
+      id: "tasks",
+      label: "Ir a Tareas",
+      hint: "",
+      icon: <LayoutDashboard size={14} />,
+      run: () => { close(); onSelectView("tasks"); },
+    },
+    {
+      id: "documents",
+      label: "Ir a Documentos",
+      hint: "",
+      icon: <FileText size={14} />,
+      run: () => { close(); onSelectView("documents"); },
+    },
+    // COMMAND_PALETTE_WORKSPACES_V1
+    ...WORKSPACE_ENTRIES.filter((w) => w.id === "centro-mando").map((w) => ({
+      id: "ws:" + w.id,
+      label: w.title,
+      hint: w.family,
+      icon: <LayoutDashboard size={14} />,
+      run: () => { close(); onSelectView("centro-mando" as never); },
+    })),
+  ];
+
+  const q = query.trim().toLowerCase();
+  // COMMAND_PALETTE_SEARCH_V1 - busqueda global con debounce 200ms.
+  useEffect(() => {
+    if (query.trim().length < 2) {
+      setHits([]);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      void globalSearch(query.trim(), 10)
+        .then((list) => setHits(list.slice(0, 10)))
+        .catch(() => setHits([]));
+    }, 200);
+    return () => window.clearTimeout(handle);
+  }, [query]);
+
+  const filtered = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
+  // COMMAND_PALETTE_SEARCH_V1 - los hits de busqueda global se ofrecen como
+  // opciones navegables. Antes se calculaban y se descartaban (import sin usar).
+  const searchOptions: Option[] = hits.map((h) => ({
+    id: `search:${h.kind}:${h.id}`,
+    label: h.title,
+    hint: h.kind,
+    icon: <Search size={14} />,
+    run: () => { close(); onSelectView(h.kind as never); },
+  }));
+  const visible = [...filtered, ...searchOptions];
+
+  return (
+    <dialog className="palette" ref={dialogRef} aria-label="Buscar o ejecutar una accion">
+      <div className="palette__search">
+        <Search size={15} aria-hidden="true" />
+        <input
+          ref={inputRef}
+          className="palette__input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && visible[0]) {
+              e.preventDefault();
+              visible[0].run();
+            }
+          }}
+          placeholder="Buscar o ejecutar una accion"
+        />
+      </div>
+      <div className="palette__list scroll" role="listbox">
+        {visible.length === 0 ? (
+          <p className="palette__group">Sin resultados</p>
+        ) : (
+          visible.map((o) => (
+            <button
+              key={o.id}
+              className="palette__opt"
+              role="option"
+              onClick={o.run}
+            >
+              {o.icon}
+              <span>{o.label}</span>
+              {o.hint && <span style={{ marginLeft: "auto", opacity: 0.5, fontSize: 11 }}>{o.hint}</span>}
+            </button>
+          ))
+        )}
+      </div>
+    </dialog>
+  );
+}

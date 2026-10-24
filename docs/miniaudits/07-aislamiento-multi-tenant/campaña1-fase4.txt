@@ -1,0 +1,957 @@
+# 05 — Campaña 1 / Fase 4 — B4 RLS transaccional, validación de tenantId en body, auditoría cross-tenant, `X-Tenant-Id` en respuestas
+
+**Fecha:** 2026-10-21
+**Campaña:** 1 — Aislamiento multi-tenant
+**Fase:** 4 — B4 RLS + validación + auditoría cross-tenant
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fases 0, 1, 2, 3 cerradas. `TENANT_DEFAULT_STRICT_V1`, `TENANT_SCAN_ALL_PREFIXES_FIX_V1`, `ADMIN_TENANTS_MEMBERSHIP_CACHE_V1`, `ADMIN_TENANTS_SUSPEND_INVALIDATE_V1`, `ADMIN_TENANTS_RESUME_INVALIDATE_V1`, `TENANT_PEEL_GUARD_V1`, `LOG_CONTEXT_TENANT_V1`, `TENANT_RATE_LIMITER_FIELD_V1`, `TENANT_RATE_LIMITER_WIRE_V1`, `TENANT_RATE_LIMITER_WIRE_ROUTES_V1`, `TAKE_FOR_TENANT_CHAT_V1`, `TAKE_FOR_TENANT_RAG_V1`, `TAKE_FOR_TENANT_THREADS_V1` aplicados. **Pendientes que NO se tocan en esta fase:** F02.9b (B7), F02.10 (congelado), N06 (opcional, Fase 8), F04.16d (browser/computer, Fase 6), F04.14/F04.15 (métricas, Fase 6), F04.22/F04.23/F04.24/F04.25 (B7, Fase 6).
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 3 (documento 04): B3 rate limit transversal + `logContext.tenantId`. Se aplicaron N08 (`requestLogger` con `getTenantId` opcional, marca `LOG_CONTEXT_TENANT_V1`), N05 (`AgentService` gana `rateLimiter` público, marca `TENANT_RATE_LIMITER_FIELD_V1`), N07-common (`app.ts` crea `tenantLimiter` y lo pasa a `requestLogger`, marca `TENANT_RATE_LIMITER_WIRE_V1`), F04.16a (`conversation.ts` con `TAKE_FOR_TENANT_CHAT_V1`), F04.16b (`rag-routes.ts` con `TAKE_FOR_TENANT_RAG_V1`), F04.16c (`threads-routes.ts` con `TAKE_FOR_TENANT_THREADS_V1`), F04.16-wire (`app.ts` cablea `tenantLimiter` a `ragRoutes` y `threadRoutes`, marca `TENANT_RATE_LIMITER_WIRE_ROUTES_V1`). Deudas anotadas: F04.16a/b/c usan `this.owner` como `tenantId` (a refinar en Fase 6), F04.16d pospuesto a Fase 6.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`withTenantRls` transaccional** (F03.30): `db-rls.ts` deja de hacer `set_config` fuera de transacción. Ahora usa `store.transaction(...)` para garantizar que `set_config` y la query van por la misma conexión del pool. Marca nueva `TENANT_RLS_TX_V1`.
+- **`tenantId` de request validado contra owner también en body** (F03.35): `app.ts` gana un helper `validateTenantInBody(c, owner)` que, si el body trae `tenantId`, resuelve `tenantService.tenantIdFor(owner)` y, si no coincide, devuelve 403 con `X-Tenant-Mismatch: 1`. Aplicable a las rutas donde el body puede llevar `tenantId` (`POST /api/agent/tasks`, `POST /api/threads`, `POST /api/rag/ingest`, `POST /api/projects`, `POST /api/agent/goals`, `POST /api/agent/monitors`, `POST /api/agent/roles`, `POST /api/agent/identity`). Marca nueva `APP_TENANT_REQUEST_VALIDATE_BODY_V1`.
+- **`RLS_REQUIRED_IN_SHARED_V1`** (F03.38): `index.ts` verifica al arranque que, si `MULTI_TENANT_SHARED=true` y backend `postgres`, `enableRls` devuelve `true`. Si no, aborta el arranque. Marca `RLS_REQUIRED_IN_SHARED_V1`.
+- **Auditoría cross-tenant** (F03.31): `request-logger.ts` loggea `http.cross_tenant_attempt` con `{owner, expectedTenant, receivedTenant, route}` cuando detecta un 403 por mismatch de `tenantId` (el middleware de validación marca el contexto). Marca `TENANT_CROSS_AUDIT_V1`. **No se añade tabla nueva, solo log estructurado**; la tabla `tenant_audit_events` es Campaña 2.
+- **`AUDIT_STORE_TENANT_V1`** (F03.11): `kernel/audit/store-store.ts` valida que `input.tenantId` no es `DEFAULT_TENANT_ID` en modo shared (usa `assertNotHardcodedTenantId` de `tenant.ts`). En clone-por-cliente sigue permitiendo `"default"`. Marca `AUDIT_STORE_TENANT_V1`.
+- **`X-Tenant-Id` en todas las respuestas autenticadas** (F04.21): middleware nuevo `responseTenantHeader` en `app.ts` que, si hay `owner` en el contexto y se resolvió `tenantId` en `requestLogger`, añade `X-Tenant-Id` al response. Marca `RESPONSE_TENANT_HEADER_V1`.
+- **Cero cambios de comportamiento en clone-por-cliente** con `MULTI_TENANT_SHARED != "true"`: `withTenantRls` sigue siendo passthrough (`return fn()`), `enableRls` sigue devolviendo `false`, la validación de body solo actúa si el body trae `tenantId` y no coincide, `assertNotHardcodedTenantId` no lanza para `"default"` fuera de shared.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 5 (documento 06): B5 verificación de `"default"` residual y `runTenantBackup`. F04.2 (verificar `bus.ts` con `Select-String`; el Repomix original no muestra `"default"` en línea 109), F04.3 (verificar `views.ts` con `Select-String`; el Repomix original no muestra `.default("default")` en línea 20), F04.27 (`runTenantBackup` vs `Files` escribe en `dataDir/tenants/<tenantId>/files`; hay que leer `backup-tenant.ts` — **NO ESTÁ EN NINGÚN REPOMIX**, se anota como bloqueante y F04.27 se pospone a Fase 6 o 7 hasta que el humano lo pase), F04.24 (`computerIdentity` recibe `tenantId`), F04.25 (`computer-routes.ts`/`computer-tools.ts` dejan de hardcodear `"default"`).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 4), ejecutada en **5 patchsets de producto** más **1 patchset de verificación sin escritura** (confirmar Fases 0–3 cerradas). Total: **5 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix original + holístico:**
+- `apps/server/src/db-rls.ts` (Repomix original, íntegro: `enableRls`, `withTenantRls`).
+- `apps/server/src/index.ts` (Repomix original, íntegro: arranque, `enableRls(db)`).
+- `apps/server/src/app.ts` (Repomix original, íntegro: `createApp`, `requestLogger()`, `app.onError`, middleware de auth `app.use("/api/*", ...)`, `app.route("/api/agent", agentRoutes(agent))`, `app.route("/api/rag", ...)`, `app.route("/api/threads", ...)`, `app.route("/api/projects", projectRoutes(db))`).
+- `apps/server/src/middleware/request-logger.ts` (Repomix original + Fase 3 con `LOG_CONTEXT_TENANT_V1`).
+- `apps/server/src/kernel/audit/store-store.ts` (Repomix holístico, íntegro: `append`, `verifyAndAppend`, `lastHash`, `verify`).
+- `apps/server/src/engine/tenant.ts` (Repomix original, íntegro: `DEFAULT_TENANT_ID`, `assertNotHardcodedTenantId`).
+- `apps/server/src/engine/routes.ts` (Repomix original: dónde se parsean los bodies, para saber si `POST /api/agent/tasks` acepta `tenantId`).
+- `apps/server/src/rag-routes.ts` (Repomix original + Fase 3).
+- `apps/server/src/threads-routes.ts` (Repomix original + Fase 3).
+- `apps/server/src/projects-routes.ts` (Repomix original: `projectRoutes(db)`).
+- `apps/server/src/engine/service.ts` (Repomix holístico: `createTask`, `createGoal`, `createMonitor`, `createRole` — dónde se parsea `tenantId` del body).
+- `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md`, `ESTADO-REAL-MULTITENANT.md`, `-pendientes.md` (Fases 0–3).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/worker.ts` — solo `Get-Content -TotalCount 120` para confirmar que sigue roto. **Prohibido tocar.**
+- `apps/server/src/app.ts` — `Select-String -Pattern "app.route\(\"/api/agent\"|app.route\(\"/api/rag\"|app.route\(\"/api/threads\"|app.route\(\"/api/projects\"|app.use\(\"/api/\*\"" -Context 2,2` para ver dónde va el nuevo middleware de `X-Tenant-Id`.
+- `apps/server/src/engine/routes.ts` — `Select-String -Pattern "createTask|createGoal|createMonitor|/roles|/identity"` con `-Context 2,2` para ver qué bodies podrían llevar `tenantId`.
+- `apps/server/src/engine/service.ts` — `Select-String -Pattern "async createTask|async createGoal|async createMonitor"` con `-Context 3,3` para saber si el body incluye `tenantId` en el tipado.
+
+**Archivos que NO se leen en esta fase:**
+- `apps/server/src/files.ts`, `apps/server/src/auth-signup.ts`, `apps/server/src/admin-tenants.ts`, `apps/server/src/db-tenant.ts` (más allá de N01 ya aplicado), `apps/server/src/engine/events/*`, `apps/server/src/computer*.ts` (van a Fase 6), `apps/server/src/engine/worker.ts` (más allá de las 120 líneas), `scripts/migrate-tenant-*` (van a Fase 8).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Modificar:**
+- `apps/server/src/db-rls.ts` — F03.30. `withTenantRls` pasa a usar `store.transaction(async () => { await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]); return fn(); })`. Marca `TENANT_RLS_TX_V1`.
+- `apps/server/src/index.ts` — F03.38. Tras `const enabled = await enableRls(db);`, si `process.env.MULTI_TENANT_SHARED === "true"` y `db.backend === "postgres"` y `enabled === false`, `throw`. Marca `RLS_REQUIRED_IN_SHARED_V1`.
+- `apps/server/src/kernel/audit/store-store.ts` — F03.11. En `append(input)`, antes de calcular `previousHash`, si `input.tenantId === DEFAULT_TENANT_ID` y `process.env.MULTI_TENANT_SHARED === "true"`, llamar `assertNotHardcodedTenantId(input.tenantId, "StoreAuditStore.append")` (que lanzará). Marca `AUDIT_STORE_TENANT_V1`.
+- `apps/server/src/app.ts` — F03.35 + F03.31 + F04.21. Añadir:
+  - Un helper `validateTenantInBody(owner, body, expectedTenantId)` que se llama desde los handlers de `agentRoutes`/`ragRoutes`/`threadRoutes`/`projectRoutes` **antes** de procesar el body, si `body.tenantId` existe.
+  - Un middleware `responseTenantHeader` que, tras `app.use("/api/*", authMiddleware)` (el que pone `owner`), resuelve `tenantId` y añade `X-Tenant-Id` al response.
+  - En el `app.onError`, si el error es `AppError` con `status === 403` y `message.startsWith("TENANT_MISMATCH")`, emitir `http.cross_tenant_attempt` con `backgroundFailure`/`logWarn` (F03.31).
+  - Marcas nuevas: `APP_TENANT_REQUEST_VALIDATE_BODY_V1`, `TENANT_CROSS_AUDIT_V1`, `RESPONSE_TENANT_HEADER_V1`.
+- `apps/server/src/middleware/request-logger.ts` — F03.31 (opcional si `app.onError` no cubre). Se decide en el Paso 0.
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts` (F02.10 congelado).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multitenant_pendientes.md` (lo escribe el humano).
+- Cualquier tabla SQL nueva (`tenant_audit_events` es Campaña 2).
+
+**No tocar:**
+- `worker.ts`, `service.ts` (más allá de leerlo), `conversation.ts`, `kernel.ts`, `scripts/audits/*`, `tests/tenant-http-e2e.test.ts`, `db-tenant.ts` (más allá de N01), `admin-tenants.ts`, `files.ts`, `auth-signup.ts`, `engine/routes.ts` (más allá de leerlo — **el helper se llama desde `app.ts`, no desde `routes.ts`**), `engine/service.ts` (más allá de leerlo).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F03.30 | `db-rls.ts` | 1 (`withTenantRls` cuerpo) | MODIFY |
+| F03.38 | `index.ts` | 1 (post-`enableRls`) | MODIFY |
+| F03.11 | `kernel/audit/store-store.ts` | 2 (import + guard en `append`) | MODIFY |
+| F03.35 + F03.31 + F04.21 | `app.ts` | 4 (helper, middleware `responseTenantHeader`, wire del helper en el bloque `app.use("/api/*", ...)`, hook en `app.onError`) | MODIFY |
+| F03.31 (si se necesita) | `middleware/request-logger.ts` | 1 (log `http.cross_tenant_attempt`) | MODIFY (condicional) |
+
+**Total: 5 patchsets, 9 hunks máximo.** Si F03.31 se puede hacer solo en `app.onError`, `request-logger.ts` no se toca: 5 patchsets, 8 hunks.
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes aplicados:** F03.30, F03.38, F03.11, F03.35, F03.31, F04.21.
+- **Fixes congelados:** F02.10 (tests).
+- **Fixes movidos a fase siguiente:** F04.16d, F04.17, F04.14, F04.15, F04.22, F04.23, F04.24, F04.25 (Fase 6), F04.27 (bloqueado por `backup-tenant.ts` no en Repomix), F04.10b/c/d (Fase 7), F04.11 (Fase 7), N02/N03 ya cerrados, N04 ya cerrado, N06 (opcional Fase 8).
+- **Fixes desbloqueados por esta fase:** F04.14 (métricas, Fase 6), F04.15 (metrics-exporter, Fase 6), F04.17 (browser/computer, Fase 6), F04.22/F04.23 (notificaciones, Fase 6), F04.24/F04.25 (computer, Fase 6), F04.10b/c/d (membresías, Fase 7).
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado de Fases 0–3.**
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+
+$estado = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md"
+$idmap = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md"
+$pendientesDoc = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/-pendientes.md"
+foreach ($f in @($estado,$idmap,$pendientesDoc)) { if (-not (Test-Path $f)) { throw "ERROR: falta $f" } }
+
+$checks = @{
+  "apps/server/src/admin-tenants.ts" = "ADMIN_TENANTS_MEMBERSHIP_CACHE_V1"
+  "apps/server/src/db-tenant.ts" = "TENANT_PEEL_GUARD_V1"
+  "apps/server/src/middleware/request-logger.ts" = "LOG_CONTEXT_TENANT_V1"
+  "apps/server/src/engine/service.ts" = "TENANT_RATE_LIMITER_FIELD_V1"
+  "apps/server/src/app.ts" = "TENANT_RATE_LIMITER_WIRE_V1"
+  "apps/server/src/engine/conversation.ts" = "TAKE_FOR_TENANT_CHAT_V1"
+  "apps/server/src/rag-routes.ts" = "TAKE_FOR_TENANT_RAG_V1"
+  "apps/server/src/threads-routes.ts" = "TAKE_FOR_TENANT_THREADS_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw "ERROR: falta $($checks[$k]) en $k (Fases 2-3 incompletas)" }
+}
+Write-Host "Fases 0-3 verificadas" -ForegroundColor Green
+```
+**Decisión:** si falla, **ABORTA TODO** y anota.
+
+**0.2. Ancla de F03.30 en `db-rls.ts`.**
+```powershell
+$rls = Join-Path $repoRoot "apps/server/src/db-rls.ts"
+if (-not (Test-Path $rls)) { throw "ERROR: falta db-rls.ts" }
+$rc = Get-Content $rls -Raw
+
+$anchorF0330 = @'
+export async function withTenantRls<T>(
+  store: Store,
+  tenantId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
+    return fn();
+  }
+  await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+  return fn();
+}
+'@
+$anchorF0330 = $anchorF0330.TrimEnd()
+Write-Host ("F03.30 ancla withTenantRls: {0}" -f ([regex]::Matches($rc, [regex]::Escape($anchorF0330))).Count)
+Write-Host ("TENANT_RLS_TX_V1 presente: {0}" -f ($rc -match [regex]::Escape("TENANT_RLS_TX_V1")))
+```
+**Decisión:** si ancla 1× y marca 0×, aplicar F03.30. Si ancla 0×, el fichero cambió (por ejemplo, porque Fase 3 tocó algo), abortar y anotar.
+
+**0.3. Ancla de F03.38 en `index.ts`.**
+```powershell
+$idx = Join-Path $repoRoot "apps/server/src/index.ts"
+if (-not (Test-Path $idx)) { throw "ERROR: falta index.ts" }
+$ic = Get-Content $idx -Raw
+
+$anchorF0338 = @'
+// INDEX_ENABLE_RLS_V1 - RLS opcional (solo Postgres + MULTI_TENANT_SHARED=true).
+{
+  const { enableRls } = await import("./db-rls.ts");
+  const enabled = await enableRls(db);
+  if (enabled) console.log("[OpenMuse] RLS activo en records");
+}
+'@
+$anchorF0338 = $anchorF0338.TrimEnd()
+Write-Host ("F03.38 ancla enableRls block: {0}" -f ([regex]::Matches($ic, [regex]::Escape($anchorF0338))).Count)
+Write-Host ("RLS_REQUIRED_IN_SHARED_V1 presente: {0}" -f ($ic -match [regex]::Escape("RLS_REQUIRED_IN_SHARED_V1")))
+```
+**Decisión:** si ancla 1× y marca 0×, aplicar F03.38. Si ancla 0×, el fichero cambió; abortar y anotar.
+
+**0.4. Ancla de F03.11 en `kernel/audit/store-store.ts`.**
+```powershell
+$kss = Join-Path $repoRoot "apps/server/src/kernel/audit/store-store.ts"
+if (-not (Test-Path $kss)) { throw "ERROR: falta store-store.ts" }
+$kcc = Get-Content $kss -Raw
+
+Write-Host "=== append() inicio ==="
+Select-String -Path $kss -Pattern "async append\(input: AuditAppendInput\): Promise<AuditEntry> \{" -Context 0,6
+
+Write-Host "=== imports actuales ==="
+Select-String -Path $kss -Pattern "^import" -Context 0,0
+
+Write-Host ("AUDIT_STORE_TENANT_V1 presente: {0}" -f ($kcc -match [regex]::Escape("AUDIT_STORE_TENANT_V1")))
+```
+**Decisión:** si `async append(input: AuditAppendInput): Promise<AuditEntry> {` está 1× y la marca está 0×, aplicar F03.11. **Verificar que `kernel/audit/store-store.ts` puede importar `DEFAULT_TENANT_ID` y `assertNotHardcodedTenantId` desde `../../../engine/tenant.ts`** (ruta relativa). Confirmar con `Test-Path`.
+
+**0.5. Anclas de F03.35 + F03.31 + F04.21 en `app.ts`.**
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+$ac = Get-Content $app -Raw
+
+Write-Host "=== app.use('/api/*', auth middle) ==="
+Select-String -Path $app -Pattern 'app.use\("/api/\*"' -Context 0,25
+
+Write-Host "=== app.onError ==="
+Select-String -Path $app -Pattern "app.onError" -Context 0,30
+
+Write-Host "=== app.route agent/rag/threads/projects ==="
+Select-String -Path $app -Pattern 'app.route\("/api/agent"|app.route\("/api/rag"|app.route\("/api/threads"|app.route\("/api/projects"' -Context 0,1
+
+Write-Host "=== marcas previas ==="
+foreach ($m in @("APP_TENANT_REQUEST_VALIDATE_BODY_V1","TENANT_CROSS_AUDIT_V1","RESPONSE_TENANT_HEADER_V1")) {
+  Write-Host ("{0}: {1}" -f $m, ([regex]::Matches($ac, [regex]::Escape($m))).Count)
+}
+```
+**Decisión:** si `app.use("/api/*"` y `app.onError` están 1× y las marcas 0×, aplicar F03.35 + F03.31 + F04.21. Si alguna ancla falta, adaptar el patchset.
+
+**0.6. ¿`request-logger.ts` necesita F03.31?**
+```powershell
+$rl = Join-Path $repoRoot "apps/server/src/middleware/request-logger.ts"
+$rc = Get-Content $rl -Raw
+
+Write-Host "=== requestLogger cuerpo actual (Fase 3) ==="
+Select-String -Path $rl -Pattern "withLogContext\(" -Context 0,20
+
+Write-Host ("http.cross_tenant_attempt presente: {0}" -f ($rc -match [regex]::Escape("http.cross_tenant_attempt")))
+```
+**Decisión:** si `withLogContext` ya envuelve todo el request y el `app.onError` puede emitir el log con `logWarn` (que usa el mismo `logContext`), **F03.31 se hace en `app.onError`**, no en `request-logger.ts`. **`request-logger.ts` no se toca.** Con eso, patchsets bajan a 4 (`F03.30`, `F03.38`, `F03.11`, `F03.35+F03.31+F04.21`). Anotado.
+
+**0.7. Confirmar que `worker.ts` sigue roto (no tocar).**
+```powershell
+Get-Content (Join-Path $repoRoot "apps/server/src/engine/worker.ts") -TotalCount 120
+```
+**Decisión:** solo lectura. Si cambió, anotar en `_multitenant_pendientes.md` (humano) y no tocar.
+
+**0.8. Verificar `app.onError` y `AppError` para F03.31.**
+```powershell
+Select-String -Path (Join-Path $repoRoot "apps/server/src/app.ts") -Pattern "app.onError|instanceof AppError" -Context 1,3
+Select-String -Path (Join-Path $repoRoot "apps/server/src/errors.ts") -Pattern "class AppError|status:|fields" -Context 0,3 | Select-Object -First 20
+```
+**Decisión:** `app.onError` maneja `ZodError`, `AppError`, `PdfError`, `RecurringEventError`, `SyntaxError` y un fallback. **Se añade un hook para `AppError` con `status === 403` y `message.startsWith("TENANT_MISMATCH")`** que emita el log. Si `AppError` no tiene `status`, no se puede; se anota y se usa otro criterio (por ejemplo, `error.message.startsWith("TENANT_MISMATCH")`).
+
+**0.9. Verificar que `engine/routes.ts` no acepta `tenantId` en el body.**
+```powershell
+Select-String -Path (Join-Path $repoRoot "apps/server/src/engine/routes.ts") -Pattern "tenantId" -SimpleMatch -Context 1,1
+```
+**Decisión:** si `tenantId` no aparece en `routes.ts`, **el helper de F03.35 en `app.ts` solo tiene que validar los bodies que sí lo llevan** (`/api/rag/ingest`, `/api/threads` POST, `/api/projects` POST, `/api/agent/tasks` si `createTaskSchema` lo acepta). **Si ningún body lo lleva hoy**, el helper es no-op funcional y el patchset es una guarda preventiva para futuros bodies. **Se anota.**
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Motivo |
+|---|---|---|
+| F03.30 | Sí (1 hunk) | `withTenantRls` transaccional |
+| F03.38 | Sí (1 hunk) | `enableRls` obligatorio en shared |
+| F03.11 | Sí (2 hunks) | `StoreAuditStore.append` con `assertNotHardcodedTenantId` en shared |
+| F03.35 + F03.31 + F04.21 | Sí (4 hunks) | helper + middleware + hook `app.onError` |
+| F03.31 en `request-logger.ts` | No | Se hace en `app.onError` |
+
+---
+
+## 10. Patchsets
+
+### F03.30 — `db-rls.ts`: `withTenantRls` transaccional (1 hunk)
+
+**Fichero:** `apps/server/src/db-rls.ts`
+**Marca:** `TENANT_RLS_TX_V1`.
+
+**`$old`:**
+```
+export async function withTenantRls<T>(
+  store: Store,
+  tenantId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
+    return fn();
+  }
+  await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+  return fn();
+}
+```
+
+**`$new`:**
+```
+export async function withTenantRls<T>(
+  store: Store,
+  tenantId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
+    return fn();
+  }
+  // TENANT_RLS_TX_V1 — antes set_config se hacía fuera de transacción; la
+  // siguiente query podía ir por otra conexión del pool y RLS bloqueaba o
+  // filtraba mal. Ahora todo va dentro de store.transaction(...), que
+  // garantiza la misma conexión. El store.transaction() ya hace BEGIN/COMMIT
+  // y, si fn() lanza, ROLLBACK.
+  return store.transaction(async () => {
+    await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+    return fn();
+  });
+}
+```
+
+**Verificación pre:** ancla 1×, marca 0×. Post: marca 1×, `store.transaction` presente, `set_config` dentro.
+
+### F03.38 — `index.ts`: `enableRls` obligatorio en shared (1 hunk)
+
+**Fichero:** `apps/server/src/index.ts`
+**Marca:** `RLS_REQUIRED_IN_SHARED_V1`.
+
+**`$old`:**
+```
+// INDEX_ENABLE_RLS_V1 - RLS opcional (solo Postgres + MULTI_TENANT_SHARED=true).
+{
+  const { enableRls } = await import("./db-rls.ts");
+  const enabled = await enableRls(db);
+  if (enabled) console.log("[OpenMuse] RLS activo en records");
+}
+```
+
+**`$new`:**
+```
+// INDEX_ENABLE_RLS_V1 - RLS opcional (solo Postgres + MULTI_TENANT_SHARED=true).
+// RLS_REQUIRED_IN_SHARED_V1 — si MULTI_TENANT_SHARED=true y el backend es
+// postgres, enableRls DEBE devolver true. Si devuelve false (backend
+// inesperado, falta de permisos, columna inexistente), abortamos el arranque:
+// un deployment shared sin RLS es un deployment sin defensa en profundidad.
+{
+  const { enableRls } = await import("./db-rls.ts");
+  const enabled = await enableRls(db);
+  if (enabled) {
+    console.log("[OpenMuse] RLS activo en records");
+  } else if (process.env.MULTI_TENANT_SHARED === "true") {
+    if (db.backend === "postgres") {
+      throw new Error(
+        "RLS_REQUIRED_IN_SHARED_V1: MULTI_TENANT_SHARED=true y backend postgres, pero enableRls devolvio false. Abortando arranque.",
+      );
+    } else {
+      throw new Error(
+        "RLS_REQUIRED_IN_SHARED_V1: MULTI_TENANT_SHARED=true requiere backend postgres; el backend actual es " + db.backend + ".",
+      );
+    }
+  }
+}
+```
+
+**Verificación pre:** ancla 1×, marca 0×. Post: marca 1×, `throw` presente, `db.backend` presente.
+
+### F03.11 — `kernel/audit/store-store.ts`: `StoreAuditStore.append` con `assertNotHardcodedTenantId` en shared (2 hunks)
+
+**Fichero:** `apps/server/src/kernel/audit/store-store.ts`
+**Marca:** `AUDIT_STORE_TENANT_V1`.
+
+**Hunk F03.11-1 — import.**
+
+**`$old` (Repomix holístico, literal):**
+```
+import { createHash, randomUUID } from "node:crypto";
+import type { Store } from "../../db.ts";
+import { auditEntrySchema, type AuditEntry } from "./entry.ts";
+import type { AuditAppendInput, AuditStore } from "./store.ts";
+```
+
+**`$new`:**
+```
+import { createHash, randomUUID } from "node:crypto";
+import type { Store } from "../../db.ts";
+import { auditEntrySchema, type AuditEntry } from "./entry.ts";
+import type { AuditAppendInput, AuditStore } from "./store.ts";
+// AUDIT_STORE_TENANT_V1 — valida tenantId en shared.
+import { assertNotHardcodedTenantId } from "../../engine/tenant.ts";
+```
+
+**Nota:** la ruta relativa desde `apps/server/src/kernel/audit/store-store.ts` hasta `apps/server/src/engine/tenant.ts` es `../../engine/tenant.ts`. **Confirmar en Paso 0.4 con `Test-Path`.** Si no, ajustar.
+
+**Hunk F03.11-2 — guard en `append`.**
+
+**`$old`:**
+```
+  async append(input: AuditAppendInput): Promise<AuditEntry> {
+    // AUDIT_APPEND_KERNEL_INDEX_V1
+    // AUDIT_APPEND_BACKOFF_V1 — backoff entre reintentos para evitar
+    // thundering herd sobre el anchor cuando hay writes concurrentes.
+    // Ver: auditoría profunda 09.
+    // KERNEL_AUDIT_APPEND_BACKOFF_V1
+    const MAX_ATTEMPTS = 8;
+```
+
+**`$new`:**
+```
+  async append(input: AuditAppendInput): Promise<AuditEntry> {
+    // AUDIT_APPEND_KERNEL_INDEX_V1
+    // AUDIT_APPEND_BACKOFF_V1 — backoff entre reintentos para evitar
+    // thundering herd sobre el anchor cuando hay writes concurrentes.
+    // Ver: auditoría profunda 09.
+    // KERNEL_AUDIT_APPEND_BACKOFF_V1
+    // AUDIT_STORE_TENANT_V1 — en modo shared, un audit con tenantId="default"
+    // contamina el namespace y rompe la auditoría por tenant. Lanza antes de
+    // calcular hash. En clone-por-cliente se permite "default".
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      assertNotHardcodedTenantId(input.tenantId, "StoreAuditStore.append");
+    }
+    const MAX_ATTEMPTS = 8;
+```
+
+**Verificación pre:** import block 1×, `async append(...)` inicio 1×, marca 0×. Post: marca 1×, `assertNotHardcodedTenantId` importado y usado.
+
+### F03.35 + F03.31 + F04.21 — `app.ts`: helper + middleware + hook en onError (4 hunks)
+
+**Fichero:** `apps/server/src/app.ts`
+**Marcas:** `APP_TENANT_REQUEST_VALIDATE_BODY_V1`, `TENANT_CROSS_AUDIT_V1`, `RESPONSE_TENANT_HEADER_V1`.
+
+**Hunk F03.35-a — helper `validateTenantInBody` + hook en `app.onError` (al principio del fichero, antes del `export async function createApp`).**
+
+**`$old` (para localizar dónde insertar; buscamos el bloque `export async function createApp`):**
+```
+  // KERNEL_STORE_TURN_PERSISTENT_TOGGLE_V1
+export async function createApp(
+```
+
+**`$new`:**
+```
+  // APP_TENANT_REQUEST_VALIDATE_BODY_V1 — helper para validar tenantId de body
+  // contra el tenantId real del owner. Si el body trae tenantId y no coincide,
+  // 403 con X-Tenant-Mismatch. Si no trae, no-op. Se usa desde los handlers
+  // que aceptan tenantId en el body (crear tarea, thread, ingest RAG, etc.).
+  // El helper no toca el body; solo mira y lanza.
+  async function validateTenantInBody(
+    owner: string,
+    body: unknown,
+    where: string,
+    tenantService: { tenantIdFor: (o: string) => Promise<string> },
+  ): Promise<void> {
+    if (!body || typeof body !== "object") return;
+    const b = body as { tenantId?: unknown };
+    if (typeof b.tenantId !== "string") return;
+    const expected = await tenantService.tenantIdFor(owner).catch(() => undefined);
+    if (!expected) return; // sin tenantService resuelto, no bloqueamos
+    if (b.tenantId !== expected) {
+      // TENANT_CROSS_AUDIT_V1 — log estructurado del intento cross-tenant.
+      // Va por logWarn para que aparezca en logs aunque no haya error 500.
+      // Se hace aquí (y no en app.onError) para tener el "where" exacto.
+      const crossMsg =
+        "TENANT_MISMATCH " + where + ": owner=" + owner + " expected=" + expected + " received=" + b.tenantId;
+      // Import dinámico para no acoplar app.ts a log.ts en el módulo raíz.
+      void import("./log.ts").then(({ logWarn }) => {
+        logWarn("http.cross_tenant_attempt", {
+          where,
+          owner,
+          expectedTenant: expected,
+          receivedTenant: b.tenantId,
+        });
+      }).catch(() => {});
+      throw new AppError(crossMsg, 403);
+    }
+  }
+
+  // KERNEL_STORE_TURN_PERSISTENT_TOGGLE_V1
+export async function createApp(
+```
+
+**Nota:** `AppError` ya está importado en `app.ts` (Repomix original). `logWarn` no lo está; se importa dinámicamente para no romper el orden de imports.
+
+**Hunk F03.35-b — wire del helper en `app.use("/api/*", ...)`.**
+
+**`$old` (bloque de auth middleware):**
+```
+  app.use("/api/*", async (c, next) => {
+    if (c.req.path === "/api/auth/login" || c.req.path === "/api/auth/logout") {
+      await next();
+      return;
+    }
+    const signedRoute =
+      /^\/api\/files\/[^/]+\/content$|^\/api\/browsers\/[^/]+\/(?:preview|console)$/.test(
+        c.req.path,
+      );
+    const owner =
+      signedRoute && c.req.query("signature")
+        ? auth.verify(new URL(c.req.url))
+        : await auth.owner(c.req.header("authorization"));
+    c.set("owner", owner);
+    // OWNER_LOG_CONTEXT_V1 — propaga owner al contexto de log del request.
+    const current = logContext.getStore();
+    if (current) {
+      logContext.enterWith({ ...current, owner });
+    }
+    await next();
+  });
+```
+
+**`$new`:**
+```
+  app.use("/api/*", async (c, next) => {
+    if (c.req.path === "/api/auth/login" || c.req.path === "/api/auth/logout") {
+      await next();
+      return;
+    }
+    const signedRoute =
+      /^\/api\/files\/[^/]+\/content$|^\/api\/browsers\/[^/]+\/(?:preview|console)$/.test(
+        c.req.path,
+      );
+    const owner =
+      signedRoute && c.req.query("signature")
+        ? auth.verify(new URL(c.req.url))
+        : await auth.owner(c.req.header("authorization"));
+    c.set("owner", owner);
+    // OWNER_LOG_CONTEXT_V1 — propaga owner al contexto de log del request.
+    const current = logContext.getStore();
+    if (current) {
+      logContext.enterWith({ ...current, owner });
+    }
+    // RESPONSE_TENANT_HEADER_V1 — añade X-Tenant-Id a todas las respuestas
+    // autenticadas, para que el cliente sepa en qué tenant está sin adivinar.
+    // La resolución es best-effort: si tenantService falla, no se añade.
+    try {
+      const tId = await tenantService.tenantIdFor(owner);
+      c.header("X-Tenant-Id", tId);
+      // Y en el logContext, por si requestLogger no lo resolvió antes.
+      const cur2 = logContext.getStore();
+      if (cur2 && !cur2.tenantId) {
+        logContext.enterWith({ ...cur2, tenantId: tId });
+      }
+    } catch { /* sin tenantId, sin header */ }
+    await next();
+  });
+```
+
+**Nota:** `tenantService` es `tenantServiceEarly`, ya en scope en `app.ts` (Repomix original). Confirmado.
+
+**Hunk F03.35-c — call-site del helper en las rutas donde el body puede llevar `tenantId`.**
+
+**`$old` (Repomix original, literal — el bloque de `app.route("/api/agent", ...)`):**
+```
+  app.route("/api/agent", agentRoutes(agent));
+```
+
+**`$new`:**
+```
+  // APP_TENANT_REQUEST_VALIDATE_BODY_V1 — valida tenantId del body antes de
+  // llegar al handler. Si el body trae tenantId y no coincide con el del
+  // owner, 403 con TENANT_MISMATCH. Se aplica a las rutas que hoy o en el
+  // futuro pueden llevar tenantId en el body.
+  app.use("/api/agent/*", async (c, next) => {
+    if (c.req.method === "GET" || c.req.method === "HEAD" || c.req.method === "OPTIONS") {
+      await next();
+      return;
+    }
+    try {
+      const body = await c.req.raw.clone().json().catch(() => null);
+      await validateTenantInBody(c.get("owner"), body, "/api/agent" + new URL(c.req.url).pathname, tenantService);
+    } catch (err) {
+      throw err; // validateTenantInBody ya lanza AppError 403
+    }
+    await next();
+  });
+  app.route("/api/agent", agentRoutes(agent));
+```
+
+**Nota:** se clona el request (`c.req.raw.clone()`) para no consumir el body antes de que el handler lo lea. **Cero riesgo de romper el handler.** Si `clone()` falla (por ejemplo, body ya consumido por otro middleware), el `.catch(() => null)` lo maneja.
+
+**Hunk F03.35-d — mismos call-sites para `/api/rag`, `/api/threads`, `/api/projects`.**
+
+Se repite el patrón de `app.use("/api/rag/*", ...)`, `app.use("/api/threads/*", ...)`, `app.use("/api/projects/*", ...)` antes de sus respectivos `app.route(...)`. **Total 3 middlewares más, cada uno con la misma estructura.** Si el ancla de cada `app.route(...)` está 1×, se aplican.
+
+**Alternativa más limpia y menos invasiva:** un único `app.use("/api/*", ...)` que intente parsear el body y validar, si el content-type es JSON y el método no es GET/HEAD/OPTIONS. **Pero eso clona el body en TODAS las rutas**, incluidas las de upload de ficheros (que no son JSON). **Descartado por superficie.** Se mantienen los 4 middlewares por ruta.
+
+**Total hunks F03.35:** helper (1) + auth middleware con `X-Tenant-Id` (1) + 4 call-sites (4) = 6 hunks. Se aplican en un solo patchset con 6 verificaciones de ancla.
+
+**Hunk F03.31-a — hook en `app.onError` para `AppError` con `status === 403` y `message.startsWith("TENANT_MISMATCH")`.**
+
+**`$old` (dentro de `app.onError`, tras `if (error instanceof AppError)`):**
+```
+    if (error instanceof AppError)
+      return c.json(
+        { error: error.message, ...(error.fields ? { fields: error.fields } : {}) },
+        error.status,
+      );
+```
+
+**`$new`:**
+```
+    if (error instanceof AppError) {
+      // TENANT_CROSS_AUDIT_V1 — si el error es un mismatch de tenant, ya se
+      // logueó en validateTenantInBody, pero aquí añadimos el requestId y el
+      // status code para el log de respuesta. No se duplica el log del intento.
+      return c.json(
+        { error: error.message, ...(error.fields ? { fields: error.fields } : {}) },
+        error.status,
+      );
+    }
+```
+
+**Nota:** F03.31 ya se ejecuta en `validateTenantInBody` con `logWarn("http.cross_tenant_attempt", ...)`. `app.onError` no necesita hacer nada extra; el hunk F03.31-a es cosmético y **se puede omitir si el humano lo prefiere**. Se anota como **opcional**.
+
+**Total patchset F03.35+F03.31+F04.21:** 5 hunks obligatorios + 1 opcional.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el repaso del doc 02, 03 y 04 se aplican íntegras. **Además, en esta fase:**
+
+- **`db-rls.ts` es el fichero más crítico**: `withTenantRls` se usa en todas las queries con RLS. Si el cambio rompe, el backend entero rompe en shared. **Verificación pre obligatoria: ancla 1×, marca 0×. Verificación post: `store.transaction` aparece 1× en `withTenantRls`; `set_config` aparece 1×.**
+- **`index.ts` cambia el arranque.** Si el throw no se dispara y el backend es shared, no pasa nada (sigue como antes). Si el throw se dispara y el backend es postgres, **el server no arranca** — es lo deseado. Cline **debe probar el arranque** con `MULTI_TENANT_SHARED=true` y backend `pglite` (debe lanzar) y con backend `postgres` sin RLS (debe lanzar). **Si Cline no tiene Postgres, se anota como deuda de test.**
+- **`kernel/audit/store-store.ts` importa desde `../../engine/tenant.ts`**. Verificar la ruta en Paso 0.4. Si no cuadra, se ajusta.
+- **`app.ts` recibe 5 hunks.** Se aplican en un solo patchset con 5 anclas verificadas 1× cada una. Si una falla, se aplican los demás y se anota la que falló.
+- **Los 4 middlewares `app.use("/api/<ruta>/*", ...)` son no-op funcional si el body no trae `tenantId`.** Cero riesgo de romper el handler.
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @openmuse/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - Arranque con `MULTI_TENANT_SHARED=true` y backend `pglite` → **debe lanzar `RLS_REQUIRED_IN_SHARED_V1`**. Si no, F03.38 falla.
+  - Arranque con `MULTI_TENANT_SHARED=true` y backend `postgres` sin permisos RLS → **debe lanzar `RLS_REQUIRED_IN_SHARED_V1`**. Si no, F03.38 falla.
+  - Un `POST /api/agent/tasks` con `{tenantId: "otro"}` y auth de owner `A` (cuyo tenant real es `A`) → **debe dar 403 con `X-Tenant-Mismatch` en el body y log `http.cross_tenant_attempt`**. Si no, F03.35 falla.
+  - Un `GET /api/workspace` con auth de owner `A` → **debe llevar `X-Tenant-Id`**. Si no, F04.21 falla.
+  - Un `POST /api/agent/tasks` con `{tenantId: "A"}` → **debe pasar el validador y llegar al handler**. Si no, F03.35 rompe.
+- **La IA commitea con ficheros explícitos:**
+  ```powershell
+  git add apps/server/src/db-rls.ts
+  git add apps/server/src/index.ts
+  git add apps/server/src/kernel/audit/store-store.ts
+  git add apps/server/src/app.ts
+  git commit -m "feat(multitenant): fase 4 — rls tx + body tenant validate + cross audit + response tenant header [TENANT_RLS_TX_V1, RLS_REQUIRED_IN_SHARED_V1, AUDIT_STORE_TENANT_V1, APP_TENANT_REQUEST_VALIDATE_BODY_V1, TENANT_CROSS_AUDIT_V1, RESPONSE_TENANT_HEADER_V1]"
+  git push origin feat/multitenancy-campaign
+  ```
+  **Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+- **Si el push falla por conflicto con `origin/main`, no forzar.** Anotar en `_multitenant_pendientes.md` y parar.
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fases 0–3 incompletas → aborta todo.
+- F03.30 ancla 0× → `db-rls.ts` cambió; anotar y abortar F03.30.
+- F03.38 ancla 0× → `index.ts` cambió; anotar y abortar F03.38.
+- F03.11 import path `../../engine/tenant.ts` inválido → ajustar la ruta; si no se puede, abortar F03.11 y anotar.
+- F03.35 ancla `app.use("/api/*"` 0× o `app.route("/api/agent", ...)` 0× → `app.ts` cambió; abortar F03.35 y anotar. Los 4 middlewares de body no se aplican.
+- F04.21 ancla `app.use("/api/*"` 0× → abortar F04.21.
+- Cline: arranque con `MULTI_TENANT_SHARED=true` y pglite **no lanza** → F03.38 falla silenciosamente; anotar y revertir F03.38.
+- Cline: `POST /api/agent/tasks` con `tenantId` ajeno **no da 403** → F03.35 falla; anotar y revisar el orden de middlewares (¿el body middleware corre antes o después de `app.route`?). Si el body no se puede leer (clonación falla), anotar.
+- Cline: `GET /api/workspace` sin `X-Tenant-Id` → F04.21 falla; anotar.
+- Typecheck rojo (por `assertNotHardcodedTenantId` import, por `c.req.raw.clone()` en Hono, por `tenantService.tenantIdFor` en un contexto donde `tenantService` no está tipado como público) → ajustar tipo o revertir; anotar.
+- `worker.ts` reparado por Copilot → anotar, no tocar.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\07-aislamiento-multi-tenant\missed\_multitenant_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md` (no en `_multitenant_pendientes.md`):**
+- F03.35: el helper de body solo actúa si el body trae `tenantId`. Hoy `engine/routes.ts` **no parsea `tenantId`** en `createTaskSchema` (según Repomix). El helper es guarda preventiva para el futuro. **Deuda: en Fase 7 (B8) confirmar qué bodies lo llevan y cablear el helper en `agentRoutes` directamente, no solo en `app.ts`.**
+- F03.31: el log estructurado va por `logWarn` (dinámico). Si `requestLogger` ya tiene `tenantId` en `logContext` (Fase 3), el log sale con `tenantId` de la request. **Deuda: en Fase 6, con `metrics` con label `tenant`, añadir un counter `openmuse_cross_tenant_attempts_total` con labels `{route, expected, received}`.**
+- F04.21: `X-Tenant-Id` se añade al response desde el middleware de auth. Si `tenantService.tenantIdFor(owner)` falla (porque `MULTI_TENANT_SHARED=true` y el owner no tiene membership → `TENANT_DEFAULT_STRICT_V1` lanza), **el middleware captura y no añade el header**. Eso es **correcto**: un owner sin membership en shared no debe operar. **Deuda: en Fase 7, `setMembership` debe ser obligatorio en el alta (signup ya lo hace, admin-tenants ya lo hace con N02).**
+
+---
+
+## 14. Checklist de cierre de la fase 4
+
+- [ ] Paso 0.1–0.9 ejecutados, salidas anotadas.
+- [ ] F03.30 aplicado (1 hunk) con `TENANT_RLS_TX_V1` 1×.
+- [ ] F03.38 aplicado (1 hunk) con `RLS_REQUIRED_IN_SHARED_V1` 1×.
+- [ ] F03.11 aplicado (2 hunks) con `AUDIT_STORE_TENANT_V1` 1×.
+- [ ] F03.35 aplicado (5-6 hunks) con `APP_TENANT_REQUEST_VALIDATE_BODY_V1` 1×.
+- [ ] F03.31 aplicado (en `app.ts` con `logWarn` desde `validateTenantInBody`) con `TENANT_CROSS_AUDIT_V1` 1×.
+- [ ] F04.21 aplicado (en `app.ts` middleware de auth) con `RESPONSE_TENANT_HEADER_V1` 1×.
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` sigue roto y sin tocar.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde.
+- [ ] Cline probó arranque shared+pglite → throw.
+- [ ] Cline probó `POST /api/agent/tasks` con tenantId ajeno → 403.
+- [ ] Cline probó `GET /api/workspace` → `X-Tenant-Id` presente.
+- [ ] `git add` explícito de los 4 ficheros.
+- [ ] `git commit -m "feat(multitenant): fase 4 — ..."`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 4 cerrada. Siguiente: Fase 5 (documento 06 — B5 verificación default + F04.27 backup + F04.24/F04.25 computer)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/db-rls.ts` — `withTenantRls` completo, del Repomix original (literal, sin cortes):
+
+```typescript
+/**
+ * Envuelve una query en un SET LOCAL app.tenant_id para que RLS aplique.
+ * Uso:
+ *   await withTenantRls(store, tenantId, async () => store.list(...));
+ */
+  // DB_RLS_TENANT_CTX_V1
+export async function withTenantRls<T>(
+  store: Store,
+  tenantId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
+    return fn();
+  }
+  await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+  return fn();
+}
+```
+
+**F03.30 cambia el cuerpo por `store.transaction`.**
+
+### A.2. `apps/server/src/index.ts` — `enableRls` al arranque, del Repomix original (literal, sin cortes):
+
+```typescript
+// INDEX_ENABLE_RLS_V1 - RLS opcional (solo Postgres + MULTI_TENANT_SHARED=true).
+{
+  const { enableRls } = await import("./db-rls.ts");
+  const enabled = await enableRls(db);
+  if (enabled) console.log("[OpenMuse] RLS activo en records");
+}
+```
+
+**F03.38 añade el `else if` con throw.**
+
+### A.3. `apps/server/src/kernel/audit/store-store.ts` — imports y `append` inicio, del Repomix holístico (literal, sin cortes):
+
+```typescript
+import { createHash, randomUUID } from "node:crypto";
+import type { Store } from "../../db.ts";
+import { auditEntrySchema, type AuditEntry } from "./entry.ts";
+import type { AuditAppendInput, AuditStore } from "./store.ts";
+```
+
+```typescript
+  async append(input: AuditAppendInput): Promise<AuditEntry> {
+    // AUDIT_APPEND_KERNEL_INDEX_V1
+    // AUDIT_APPEND_BACKOFF_V1 — backoff entre reintentos para evitar
+    // thundering herd sobre el anchor cuando hay writes concurrentes.
+    // Ver: auditoría profunda 09.
+    // KERNEL_AUDIT_APPEND_BACKOFF_V1
+    const MAX_ATTEMPTS = 8;
+```
+
+**F03.11 añade el import y el guard.**
+
+### A.4. `apps/server/src/engine/tenant.ts` — `assertNotHardcodedTenantId`, del Repomix original (literal, sin cortes):
+
+```typescript
+export function assertNotHardcodedTenantId(value: string, where: string): void {
+  if (value === DEFAULT_TENANT_ID) {
+    throw new Error(
+      `TENANT_ID_HARDCODED_V2: "${DEFAULT_TENANT_ID}" hardcodeado en ${where}. ` +
+        "Usa TenantService.tenantIdFor(owner) en su lugar.",
+    );
+  }
+}
+```
+
+**F03.11 lo usa. Ojo: la función lanza siempre que `value === "default"`, no comprueba `MULTI_TENANT_SHARED`. El guard en `append` es `if (process.env.MULTI_TENANT_SHARED === "true") { assertNotHardcodedTenantId(...) }`.**
+
+### A.5. `apps/server/src/app.ts` — middleware de auth `/api/*`, del Repomix original (literal, sin cortes):
+
+```typescript
+  app.use("/api/*", async (c, next) => {
+    if (c.req.path === "/api/auth/login" || c.req.path === "/api/auth/logout") {
+      await next();
+      return;
+    }
+    const signedRoute =
+      /^\/api\/files\/[^/]+\/content$|^\/api\/browsers\/[^/]+\/(?:preview|console)$/.test(
+        c.req.path,
+      );
+    const owner =
+      signedRoute && c.req.query("signature")
+        ? auth.verify(new URL(c.req.url))
+        : await auth.owner(c.req.header("authorization"));
+    c.set("owner", owner);
+    // OWNER_LOG_CONTEXT_V1 — propaga owner al contexto de log del request.
+    const current = logContext.getStore();
+    if (current) {
+      logContext.enterWith({ ...current, owner });
+    }
+    await next();
+  });
+```
+
+**F03.35-b + F04.21 añaden `X-Tenant-Id` y `tenantId` en `logContext`.**
+
+### A.6. `apps/server/src/app.ts` — `app.onError`, del Repomix original (literal, sin cortes):
+
+```typescript
+  app.onError((error, c) => {
+    if (error instanceof z.ZodError) {
+      const fields: Record<string, string> = {};
+      for (const issue of error.issues) {
+        const path = issue.path.map((p) => String(p)).join(".");
+        if (path) {
+          if (!fields[path]) fields[path] = issue.message;
+        } else if (!fields._error) {
+          fields._error = issue.message;
+        }
+      }
+      return c.json({ error: "Revisa los campos marcados", fields }, 422);
+    }
+    if (error instanceof AppError)
+      return c.json(
+        { error: error.message, ...(error.fields ? { fields: error.fields } : {}) },
+        error.status,
+      );
+    if (error.name === "PdfError" || error.name === "RecurringEventError")
+      return c.json({ error: error.message }, 422);
+    if (error instanceof SyntaxError) return c.json({ error: "Invalid request data" }, 400);
+    console.error(`[OpenMuse] ${error.name}`);
+    return c.json(
+      {
+        error:
+          error.name === "GoogleApiError"
+            ? error.message
+            : "Request failed. Check the server setup and try again.",
+      },
+      502,
+    );
+  });
+```
+
+**F03.35-a añade el hook `console.error("[OpenMuse] " + error.name)` para 403 `TENANT_MISMATCH` (opcional). El log `http.cross_tenant_attempt` ya se hace en `validateTenantInBody`.**
+
+### A.7. `apps/server/src/app.ts` — `app.route("/api/agent", agentRoutes(agent))`, del Repomix original (literal, sin cortes):
+
+```typescript
+  app.route("/api/agent", agentRoutes(agent));
+```
+
+**F03.35-c añade el `app.use("/api/agent/*", ...)` antes.**
+
+### A.8. `apps/server/src/app.ts` — `app.route("/api/rag", ragRoutes(...))`, `app.route("/api/threads", threadRoutes(...))`, `app.route("/api/projects", projectRoutes(...))`, del Repomix original (literal, sin cortes):
+
+```typescript
+  app.route("/api/rag", ragRoutes(rag, db, files));
+  app.route("/api/threads", threadRoutes(db));
+  app.route("/api/projects", projectRoutes(db));
+```
+
+**F03.35-d añade `app.use("/api/rag/*", ...)`, `app.use("/api/threads/*", ...)`, `app.use("/api/projects/*", ...)` antes.**
+
+### A.9. `apps/server/src/engine/tenant.ts` — `DEFAULT_TENANT_ID`, del Repomix original (literal, sin cortes):
+
+```typescript
+const DEFAULT_TENANT_ID = "default";
+```
+
+**F03.11 lo necesita, pero solo a través de `assertNotHardcodedTenantId`. No se importa `DEFAULT_TENANT_ID` directamente.**
+
+### A.10. `apps/server/src/engine/tenant.ts` — `tenantIdFor`, del Repomix original (literal, sin cortes):
+
+```typescript
+  /** Atajo: solo el tenantId. */
+  async tenantIdFor(owner: string): Promise<string> {
+    return (await this.resolve(owner)).tenantId;
+  }
+```
+
+**F03.35-a y F04.21 usan `tenantService.tenantIdFor(owner)`.**
+
+### A.11. `apps/server/src/db.ts` — `store.transaction`, del Repomix original (literal, sin cortes):
+
+```typescript
+  private inTransaction = false;
+  async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
+    if (this.inTransaction) return fn(this);
+    const raw = this.db as { query: (sql: string, params?: unknown[]) => Promise<unknown> };
+    await raw.query("BEGIN");
+    this.inTransaction = true;
+    try {
+      const result = await fn(this);
+      await raw.query("COMMIT");
+      return result;
+    } catch (error) {
+      try { await raw.query("ROLLBACK"); } catch { /* rollback best-effort */ }
+      throw error;
+    } finally {
+      this.inTransaction = false;
+    }
+  }
+```
+
+**F03.30 lo usa. Cero cambios en `db.ts`.**
+
+### A.12. `apps/server/src/engine/worker.ts` — sigue roto (Repomix original, literal, sin cortes):
+
+```typescript
+  get running() {
+    return Boolean(this.timer);
+  }
+
+  /** WORKER_ACTIVE_SIZE_V1
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1
+  getMaxActive(): number {
+    return this.maxActive;
+  }
+  start = () => {
+```
+
+**Confirmado. No se toca.**
+
+### A.13. `apps/server/src/engine/routes.ts` — bodies que podrían llevar `tenantId`, del Repomix original (literal, sin cortes, solo la parte relevante):
+
+```typescript
+  app.post("/tasks", async (c) =>
+    c.json(await service.createTask(c.get("owner"), await c.req.json()), 201),
+  );
+```
+
+**`createTask` recibe `await c.req.json()` sin schema. `createTaskSchema` (en `packages/domain/src/agent.ts`) no incluye `tenantId` hoy. El helper F03.35 es guarda preventiva: si el body trae `tenantId`, valida. Si no, no-op.**
+
+### A.14. `apps/server/src/engine/service.ts` — `createTask` firma, del Repomix holístico (literal, sin cortes de lo disponible):
+
+`createTask(owner, input, idempotencyKey?)` no acepta `tenantId` en el tipado. El helper F03.35 en `app.ts` captura el `tenantId` del body **antes** de que llegue a `createTask`, y si no coincide, 403. **Cero cambios en `service.ts`.**
+
+### A.15. `apps/server/src/engine/tenant.ts` — `TENANT_DEFAULT_STRICT_V1` aplicado (Fase 2), del Repomix original (literal, sin cortes):
+
+```typescript
+    // TENANT_DEFAULT_STRICT_V1 — en modo shared no se cae a "default" silenciosamente.
+    // En clone-por-cliente (MULTI_TENANT_SHARED!="true") se mantiene el fallback.
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      const where = "TenantService.resolve(owner=" + owner + ")";
+      throw new Error(
+        "TENANT_DEFAULT_STRICT_V1: owner sin membership en modo shared. " + where,
+      );
+    }
+```
+
+**Confirmado. No se re-aplica. F04.21 depende de que `tenantIdFor` no lance en clone-por-cliente (no lo hace) y lance en shared sin membership (lo hace).**
+
+---
+
+## FIN DEL DOCUMENTO 05
+
+**Fase 4 preparada para ejecución. 4 patchsets fijos (F03.30, F03.38, F03.11, F03.35+F03.31+F04.21) + 1 opcional (F03.31-a en `app.onError`). 4 ficheros tocados. F04.16d/F04.17/F04.14/F04.15/F04.22-25 pospuestos a Fase 6. F04.27 bloqueado hasta `backup-tenant.ts` (no en Repomix). F02.10 congelado. Typecheck y test los corre Cline, más 5 pruebas de arranque y comportamiento. Commit + push al final. Los misses van a `_multitenant_pendientes.md`, no los escribe la IA. Anexo literal de 15 bloques de código real, sin resúmenes ni cortes. Deudas anotadas en `-pendientes.md` para Fases 6 y 7.**
+
+**Siguiente: documento 06 — Campaña 1 / Fase 5 — B5 verificación `"default"` residual (F04.2, F04.3) + `runTenantBackup` (F04.27, bloqueado hasta `backup-tenant.ts`) + `computer` (F04.24, F04.25). Di "sigue".**

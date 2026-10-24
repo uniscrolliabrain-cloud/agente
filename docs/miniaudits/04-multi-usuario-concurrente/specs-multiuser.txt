@@ -1,0 +1,446 @@
+# Campaña 2 — Multiusuario (v2)
+
+## Brainstorm taxonomizado, categorizado y en lenguaje natural
+
+> **v2 — 2026-10-22.** Esta versión sustituye a la v1 (concepto antiguo descartado). Conserva el formato y el propósito: el **qué** y el **por qué**, en lenguaje natural, para que una IA lo convierta en **cómo**. Cambia el contenido: el concepto es el aprobado tras la revisión senior (5 garantías, 13 invariantes, 17 tests, 5 fases), no las 6 capas del concepto antiguo.
+>
+> **Regla cero:** multiusuario es la capacidad de que varias personas y agentes trabajen en el mismo tenant con identidades, accesos, delegación, coordinación y trazabilidad coherentes. **No** es gestión empresarial (perfiles editables, clientes, procedimientos, plantillas sectoriales, nóminas, compliance, datos clínicos). Eso va en otras campañas.
+
+---
+
+## 1. Qué es multiusuario y qué no
+
+### 1.1. Qué es
+
+Que varias personas y agentes de IA trabajen dentro de la misma empresa con:
+
+- **Identidades** propias, verificadas en servidor, resueltas desde el JWT.
+- **Accesos** definidos: cada uno ve y modifica lo que le corresponde.
+- **Delegación** controlada: el owner asigna trabajo a humanos y agentes con límites.
+- **Coordinación** compartida: responsable ve equipo, notificaciones dirigidas, desactivación sin huérfanas.
+- **Trazabilidad** verificable: quién hizo qué, cuándo, sobre qué, con qué resultado.
+
+Sin pisarse, sin filtrar datos entre actores, sin escalar permisos.
+
+### 1.2. Qué NO es
+
+- **No es** un editor de perfiles operativos.
+- **No es** un constructor de entidades, campos o formularios.
+- **No es** un compilador de empresas ni plantillas sectoriales.
+- **No es** un módulo de nóminas, compliance o datos clínicos.
+- **No es** una colaboración en tiempo real (CRDT, OT, WebSocket).
+- **No es** multi-tenant real en un solo Postgres (eso es Campaña 1, cerrada).
+
+Todo eso se configura **encima** del multiusuario. La campaña construye la base sobre la que se configura, no la configuración.
+
+### 1.3. Lo que el código tiene hoy
+
+El repo es **single-user con agentes**. Tiene:
+
+- `User` con `id`, `email`, `name`, `role: "admin" | "user"`, `active`, `setup`. Sesión propia con `Auth.owner` (no JWT).
+- `AgentRole` con `name`, `tone`, `avatar`, `objetivo`, `sops`, `memories`, `permissions`, `allowedTools`, `skills`, `memoryPolicy`. Sin `reportsTo` ni `peers`.
+- `AgentPersona` con `displayName`, `personality`, `values`, `reportsTo`, `peers`, `capabilities`, `avatar`, `language`.
+- `AgentTask`, `Goal`, `Monitor`, `ActionProposal`, `SOP` como entidades separadas, sin `Assignment` común.
+- `PolicyEngine.can(owner, role, resource, action)` como allowlist por rol, sin `field` ni `condition`.
+- `PresenceService` y `EditLock` in-memory.
+- `EventBus` sin replay.
+- `activity`, `run-events`, `audit-entries` sin `actorId` en la mayoría.
+- `409` con `current`/`expected` en threads y projects, sin `diff` por campo.
+- `x-user-id` sin validar contra el actor.
+
+### 1.4. Lo que falta para que sea multiusuario
+
+- **Identidad desde JWT** (Supabase Auth), no desde sesión propia ni `x-user-id`.
+- **Autorización ABAC** (sujeto, acción, recurso, campo, condición), no solo allowlist por rol.
+- **Clasificación por campo** (`public`, `internal`, `confidential`, `restricted`, `secret`) aplicada en lectores, escritores, serializadores y respuestas.
+- **Delegación separada** de autenticación: `requestingActorId` ≠ `executingActorId`.
+- **CAS obligatorio** en escrituras compartidas, con `expectedVersion` y `version` monotónica.
+- **409 con diff** por campo, reconcile sin recargar.
+- **Presence y lock compartidos** (Store), no in-memory.
+- **SSE con replay** (`Last-Event-ID`).
+- **Trazabilidad** con `actorId`, `sessionId`, `requestId` en writes y reads sensibles.
+
+---
+
+## 2. Principios de diseño
+
+**P1 — Una identidad, dos implementaciones.**
+`HumanActor` y `AgentActor` comparten `id`, `kind`, `tenantId`, `roles`. La diferencia es `auth` (JWT vs ejecución delegada) y `execution` (manual vs kernel). **`Actor` es una vista derivada del JWT + `User`, no una entidad persistida.**
+
+**P2 — La identidad se verifica en servidor.**
+El JWT se verifica contra JWKS de Supabase (o el proveedor elegido). El `sub` se mapea a `User.id` vía `User.authProviderId`. **Sin JIT provisioning**: `sub` sin `User` vinculado → 401.
+
+**P3 — La autorización es ABAC, fail-closed, deny-overrides.**
+Se evalúa por `(actor, action, resource, field, subject, context)`. Si no hay política que permita, se deniega. Si hay una que deniega, gana. **No basta middleware global**: autorización en handlers, workers, acciones internas, streams y rutas alternativas.
+
+**P4 — La clasificación por campo no es seguridad por sí sola.**
+Clasificar `salaryGross` como `restricted` no protege nada si el lector, el escritor, el serializador y la respuesta API no aplican la política. `FieldFilter` se aplica en cada uno de esos puntos, no solo en `withRead`.
+
+**P5 — Delegación separada de autenticación.**
+`requestingActorId` (quien delega) ≠ `executingActorId` (quien ejecuta). El worker atribuye ambos. El agente hereda los permisos del asignador, acotados por el scope de la tarea. No escala. No aprueba en nombre de otro.
+
+**P6 — El owner no es root.**
+Es un rol más, con políticas explícitas. Si no tiene política para un campo `secret`, no lo ve.
+
+**P7 — Consistencia explícita.**
+`version` monotónica solo en los recursos que se editan concurrentemente (`AgentTask`, `Goal`, `Thread`, `Project`, `BusinessEntity`). `expectedVersion` obligatorio en writes compartidos. `409` con diff por campo. Reconcile **por recurso**, no genérico.
+
+**P8 — Coordinación condicional.**
+Presence, lock y SSE replay solo se activan si el despliegue lo requiere (multi-proceso, cliente que reconecta). En clone-por-cliente con una instancia, in-memory es válido para MVP.
+
+**P9 — Trazabilidad condicional.**
+`RecordHistory` solo si `activity` no cubre "qué cambió en el recurso". `AuditTrail` de reads solo para campos `restricted`/`secret` y accesos denegados. **No se registran valores completos de secretos.**
+
+**P10 — El `x-user-id` deja de ser fuente de verdad.**
+El `userId` viene del JWT verificado. El header, si viene, se valida contra el actor y se anota la discrepancia. No se usa para autorizar.
+
+**P11 — La gestión empresarial queda fuera.**
+Perfiles editables, clientes, presupuestos, procedimientos, plantillas sectoriales, nóminas, compliance, datos clínicos. Todo eso va en otras campañas. La Campaña 2 solo construye la base.
+
+**P12 — Reutilizar antes de crear.**
+Si `PolicyEngine` cubre un caso, no se crea un motor nuevo. Si `activity` cubre la trazabilidad, no se crea `RecordHistory`. Si `compareAndSwap` cubre el CAS, no se crea un mecanismo paralelo. **Regla:** reutilizar → identificar brecha demostrada → contrato mínimo → implementar → probar → documentar.
+
+---
+
+## 3. Modelo de identidad
+
+### 3.1. Autenticación decidida: Supabase Auth (JWT vía JWKS)
+
+**Para humanos.** El cliente envía `Authorization: Bearer <supabase_jwt>`. El servidor verifica firma contra `https://<project>.supabase.co/auth/v1/.well-known/jwks.json`. Claims mínimos: `iss`, `aud`, `exp`, `sub`, `session_id`. `role: "authenticated"` **se ignora para autorización** (es categoría de acceso a la app, no rol empresarial).
+
+**Agentes internos.** Sin login humano. El worker usa `task.assignedTo` como `executingActorId` y `task.assignedBy` como `requestingActorId`. El `tenantId` viene de `task.tenantId`. La autorización se evalúa con `(executingActor, action, resource, requestingActor)`.
+
+**`Auth.owner` actual** se mantiene para rutas legacy (signed URLs, webhooks). Se retira cuando todas las rutas migren a JWT.
+
+### 3.2. `User.authProviderId`
+
+`User.id` (UUID interno) ≠ `sub` de Supabase. Se vinculan con `User.authProviderId` (nuevo campo, único). Backfill controlado, **no vinculación por email**. Si `sub` no tiene `User` con `authProviderId` → 401. **Sin JIT provisioning.**
+
+### 3.3. Actor como vista derivada
+
+`Actor` no se persiste. Se computa en cada request:
+
+```
+JWT → jwtPayload → UserService.getByAuthProviderId(sub) → User
+  → si !User.active → 403
+  → tenantId = TenantService.tenantIdFor(User.id)
+  → Actor = { kind: "human", id: User.id, tenantId, userId: User.id, roles: [User.role], profile, active }
+  → c.set("actor", Actor)
+  → c.set("ctx", { tenantId, userId: User.id, sessionId, requestId })
+```
+
+Para agentes, `ActorService.resolveAgent(role)` construye `AgentActor` desde `AgentRole` (sin JWT). Se usa en el worker, no en rutas HTTP.
+
+### 3.4. Revocación
+
+`ActorService.resolve` verifica `User.active` en **cada request**. Si `false` → 403 inmediato. No se depende de que Supabase revoque el JWT. `TENANT_CACHE_TTL_MS` a 30s en producción para que el cambio surta efecto rápido.
+
+### 3.5. Convergencia con el código actual
+
+- `User` → `HumanActor` (vista derivada). No se borra.
+- `AgentRole` → `AgentActor` (vista derivada). No se borra.
+- `Auth.owner` se mantiene para legacy. `verifyJwtMiddleware` paralelo.
+- `x-user-id` deprecado como fuente de verdad. Validado contra `actor.id` si viene.
+
+---
+
+## 4. Modelo de acceso
+
+### 4.1. `Policy`
+
+Un `Policy` es `{ subject, action, resource, field?, condition? }`.
+
+- **`subject`** — `actorId?`, `role?`, `kind?`. Al menos uno.
+- **`action`** — `read`, `create`, `update`, `delete`, `approve`, `export`, `assign`, `escalate`.
+- **`resource`** — `task`, `goal`, `monitor`, `memory`, `artifact`, `sop`, `role`, `action`, `computer`, `file`, `rag`, `audit`, `presence`, `lock`, `notification`, `thread`, `project`. **Solo recursos reales del código.** `employee`, `payroll`, `invoice`, `document`, `business-entity` son de otras campañas.
+- **`field`** — opcional. `*` para todos.
+- **`condition`** — `ownedBy`, `managerOf`, `inTaskScope`, `assignedBy`, `hasClassification`. Condiciones reales, no inventadas.
+
+### 4.2. `PolicyDecisionPoint` (PDP)
+
+Función `can(ctx, action, resource, field, target)`:
+
+1. Recoge las políticas que aplican.
+2. Evalúa condiciones.
+3. Si hay `deny` → `deny`.
+4. Si hay `allow` → `allow`.
+5. Si no hay ninguna → `deny` (fail-closed).
+
+### 4.3. `PolicyEnforcementPoint` (PEP)
+
+**No basta middleware global.** La autorización se aplica en:
+
+- **Handlers HTTP** — `withRead`/`withWrite` en cada handler protegido.
+- **Workers** — `withWrite` en `TaskWorker` cuando escribe `tasks`, `run-events`, `activity`.
+- **Acciones internas** — `ActionService.propose`/`decide`/`retry`/`edit`.
+- **Streams** — `notifications-stream.ts` filtra por `actorId` + `visibility`.
+- **Rutas alternativas** — signed URLs, webhooks, `/api/copilotkit/*`. Cada una con su mecanismo registrado.
+
+### 4.4. `withRead` y `withWrite`
+
+- **`withRead(ctx, kind, id, fn)`** — PDP con `(actor, "read", kind, "*", target)`. Si deny → 403. Si allow → `fn(record)`. **`FieldFilter` se aplica al resultado antes de devolverlo al cliente.**
+- **`withWrite(ctx, kind, id, expectedVersion?, fn)`** — PDP con `(actor, "update"|"create"|"delete", kind, "*", target)`. Si deny → 403. Si allow → CAS con `expectedVersion` (si aplica), incrementa `version`, escribe `RecordHistory` (condicional), libera lock, emite evento.
+
+### 4.5. `FieldFilter`
+
+Recorre el record, mira la clasificación de cada campo, llama al PDP con `(actor, "read", kind, field, target)`. Si deny → `"[REDACTED]"` o elimina. Si allow → deja. **Registra en `AuditTrail` si el campo era `restricted`/`secret` y el acceso fue denegado.** No registra el valor.
+
+### 4.6. `fieldClassification`
+
+**Solo en los campos que existen hoy.** No se inventan `salaryGross`/`salaryNet`/`bankAccount`. La clasificación se aplica a:
+
+- `User.email: internal`, `User.name: internal`, `User.setup: confidential`.
+- `AgentRole.permissions: restricted`, `AgentRole.memories: confidential`, `AgentRole.allowedTools: restricted`.
+- `AgentTask.prompt: confidential`, `AgentTask.plan: internal`, `AgentTask.outcome: internal`.
+- `AgentMemory.text: confidential`.
+- `BusinessEntity.properties: internal`.
+- `SOP.steps: internal`.
+
+Los campos de producto (`salaryGross`, etc.) se crean en otra campaña y se clasifican allí.
+
+### 4.7. `fieldClassification` no es seguridad por sí sola
+
+`FieldFilter` se aplica en:
+
+- `withRead` al devolver el record.
+- **Serializadores** de respuesta (`c.json(...)` con record filtrado).
+- **Listados** (`db.list` pasa por `FieldFilter` antes de devolver).
+- **Búsquedas** (`rag.search` filtra chunks con campos restringidos).
+- **Agregaciones** (`usageSummary`, `globalSearch`).
+
+Si un punto no aplica `FieldFilter`, el campo se filtra igual.
+
+### 4.8. Convergencia con el código actual
+
+- `PolicyEngine.can(owner, role, resource, action)` se mantiene. El PDP lo envuelve y amplía con `field` y `condition`.
+- `AgentRole.permissions` se traduce a `Policy` en el arranque.
+- `AgentGovernance` se reescribe sobre el PDP.
+- `withRead`/`withWrite` se cablean en **todos** los handlers que acceden a datos, workers, acciones internas, streams.
+
+---
+
+## 5. Modelo de delegación
+
+### 5.1. `Assignment` como interfaz de lectura
+
+**No se persiste como entidad propia.** Se computa on-the-fly desde el record original (`AgentTask`, `Goal`, `Monitor`, `ActionProposal`, `SOP`) usando el adapter. Esto evita duplicar estado y mantener dos fuentes de verdad.
+
+Cada `Assignment` tiene:
+
+- `id`, `tenantId`, `kind` (`task`|`goal`|`monitor`|`approval`|`sop`).
+- `assignedTo`, `assignedBy`.
+- `status` mapeado desde el status del record.
+- `plan`, `evidence`, `outcome` (según el kind).
+- `version` (si el record lo tiene).
+
+### 5.2. `Flow` desde `AgentPersona`
+
+**`Flow` no vive en `AgentRole`.** Vive en `AgentPersona.reportsTo` y `AgentPersona.peers`. `AgentRole` no tiene `reportsTo` ni `peers`. Esta es una corrección importante contra el brainstorm v1.
+
+`Flow` es `{ reportsTo, peers }`. **`assigners`, `approvers`, `reviewers` no se persisten en `Flow`.** Se resuelven desde `Policy`. Esta es una segunda corrección: el brainstorm v1 metía cuatro responsabilidades en `Flow`; el concepto actual las separa (jerarquía en `AgentPersona`, autorización en `Policy`).
+
+### 5.3. `AssignmentService`
+
+Fachada sobre los 5 kinds. `assign`, `accept`, `reject`, `approve`, `escalate`, `reassign`, `complete`. Cada método llama al PDP y a `withWrite`. **No crea un record `Assignment` paralelo.**
+
+### 5.4. `executingActorId` vs `requestingActorId`
+
+El worker atribuye `executingActorId = task.assignedTo` y `requestingActorId = task.assignedBy`. El agente opera con sus propias capacidades, limitadas por el scope de la tarea y por el permiso del solicitante. **No hereda la identidad del solicitante, hereda sus permisos acotados.**
+
+### 5.5. Agente no escala
+
+- No puede aprobar en nombre de otro.
+- No puede asignar tareas a humanos.
+- No puede ejecutar tools fuera de `allowedTools` o del scope de la tarea.
+- Si la tarea requiere aprobación, la solicita. No la aprueba.
+
+### 5.6. Convergencia con el código actual
+
+- `AgentTask` gana `assignedBy?`, `assignmentKind: "task"`, `version` (si se decide en F4).
+- `Goal`, `Monitor`, `SOP` ganan `assignedBy?`, `assignmentKind`, `version` (si se decide en F4).
+- `ActionProposal` gana `assignedBy?`, `assignmentKind: "approval"`, `version`.
+- `AgentRole` **no** gana `reportsTo`/`peers`. Se construye desde `AgentPersona`.
+- `PersonaRegistry.register` construye `Flow` desde `AgentPersona.reportsTo`/`peers`.
+
+---
+
+## 6. Modelo de consistencia
+
+### 6.1. `version` selectiva
+
+Solo en recursos con escritura concurrente real:
+
+- `AgentTask` (sí).
+- `Goal` (sí).
+- `Monitor` (sí).
+- `SOP` (decidir en F4 según flujos de edición compartida).
+- `Thread` (sí, ya tiene `updatedAt`).
+- `Project` (sí, ya tiene `updatedAt`).
+- `BusinessEntity` (sí, ya tiene `version`).
+
+**No** en `AgentMemory`, `AgentArtifact`, `AgentNotification` (no se editan concurrentemente).
+
+### 6.2. `expectedVersion` obligatorio en writes compartidos
+
+`withWrite` aplica CAS con `expectedVersion` cuando el record lo declara. Si no lo declara, `put` sin CAS (comportamiento actual). Esto evita romper los 14 handlers que hoy hacen `put` directo.
+
+### 6.3. 409 con diff por campo
+
+`withWrite` calcula `diff = { field: { before, after } }` cuando el CAS falla. El 409 devuelve `{ conflict: true, current, expected, diff }`. No solo `current`/`expected`.
+
+### 6.4. Reconcile por recurso
+
+`POST /api/threads/:id/reconcile`, `POST /api/projects/:id/reconcile`, `POST /api/tasks/:id/reconcile`. Cada handler conoce su schema y su `expectedVersion`. **No** `POST /api/:kind/:id/reconcile` genérico.
+
+### 6.5. Convergencia con el código actual
+
+- `compareAndSwap` ya existe. Se reutiliza.
+- `THREAD_CONFLICT_DIFF_V1` y `PROJECT_CONFLICT_DIFF_V1` ya existen. Se amplían con `diff` por campo.
+- `AgentTask`, `Goal`, `Monitor`, `SOP` no tienen `version`. Se añade en F4.
+
+---
+
+## 7. Modelo de coordinación
+
+### 7.1. Presence y lock compartidos (condicional)
+
+`PresenceService` y `EditLockService` sobre `Store` con TTL y GC. **Solo si el despliegue es multi-proceso.** En clone-por-cliente con una instancia, in-memory es válido para MVP. Se activa cuando la topología lo requiera.
+
+Los locks tienen caducidad y protección frente a propietarios obsoletos (si el proceso muere, el lock expira y otro lo puede adquirir).
+
+### 7.2. Notificaciones dirigidas
+
+`Notification.visibility`: `private` (solo `actorId`), `tenant` (todo el tenant), `shared` (los de `acl`). `Notification.priority`: `low`, `normal`, `high`, `urgent`. SSE filtra por `actorId` + `visibility`.
+
+### 7.3. SSE con replay (condicional)
+
+`Last-Event-ID` + `ReplayBuffer` por actor. **Solo si el cliente reconecta.** Si no reconecta, no-op. Se activa cuando el cliente lo requiera.
+
+### 7.4. Responsable de equipo
+
+**`AgentPersona.reportsTo` modela jerarquía de agentes.** No demuestra por sí solo quién es responsable de un equipo de usuarios humanos. **No se mezclan ambos conceptos.** El responsable de un equipo humano se define en otra campaña (configurabilidad empresarial). F5 documenta la dependencia, no la implementa.
+
+### 7.5. Desactivación sin huérfanas
+
+`User.active = false` no hace una operación masiva ciega. Transición segura:
+
+1. Revocar acceso (JWT deja de servir en el siguiente request).
+2. Identificar asignaciones afectadas (`tasks` con `assignedTo = userId` en estados no terminales).
+3. Marcar como pendientes de reasignar o reasignar a otro actor.
+4. Registrar en `activity` con `actorId` del owner.
+
+### 7.6. Convergencia con el código actual
+
+- `PresenceService` y `EditLock` in-memory se reemplazan por versiones sobre `Store` (condicional).
+- `notifications-stream.ts` gana `Last-Event-ID` y replay (condicional).
+- `notification-prefs.ts` gana `visibility` y `priority`.
+
+---
+
+## 8. Modelo de trazabilidad
+
+### 8.1. `AuditTrail` de reads sensibles (condicional)
+
+`withRead` escribe `AuditTrail` cuando el campo es `restricted` o `secret` **y el acceso fue denegado**. No registra valores completos. Solo `{ actorId, action, resource, field, classification, allowed: false, timestamp }`.
+
+### 8.2. `RecordHistory` (condicional)
+
+`withWrite` escribe `RecordHistory` con `before`/`after`. **Solo si `activity` no cubre "qué cambió en el recurso"** con detalle y retención suficientes. Se decide en F6 tras verificar `activity`.
+
+### 8.3. `conflict-version`
+
+`GET /api/threads/:id/conflict`, `GET /api/projects/:id/conflict`, `GET /api/tasks/:id/conflict`. Devuelve la versión del otro, actor y timestamp. Sin recargar.
+
+### 8.4. Convergencia con el código actual
+
+- `activity` ya existe. Se le añade `actorId`, `sessionId`, `requestId`.
+- `run-events` ya existe. Se le añade `actorId`.
+- `audit-entries` ya existe. Se le añade `field`, `classification`, `allowed`.
+
+---
+
+## 9. Las 5 garantías
+
+| ID | Garantía | Qué significa | Qué NO incluye |
+|---|---|---|---|
+| **G1** | Identidad y pertenencia | Saber quién hace cada acción, en qué tenant, con qué sesión, y que esté activo | Perfiles operativos, puestos, responsabilidades |
+| **G2** | Acceso seguro | Impedir que un actor vea o modifique lo que no le corresponde | Qué campos del producto existen, qué clasificación tiene cada uno |
+| **G3** | Delegación controlada | Asignar trabajo a humanos y agentes con límites; agente no escala | Qué tareas del producto existen, qué procedimientos tienen |
+| **G4** | Coordinación compartida | Responsables, tareas visibles al equipo, notificaciones dirigidas, desactivación sin huérfanas | Qué notificaciones del producto existen |
+| **G5** | Consistencia y trazabilidad | CAS, conflict diff, reconcile, audit con actorId | Qué entidades del producto existen, qué retención tiene |
+
+---
+
+## 10. Los 13 invariantes
+
+| ID | Invariante | Garantía | Fase | Reutiliza | Brecha | Condición |
+|---|---|---|---|---|---|---|
+| **I1** | Todo request humano tiene actor resuelto desde JWT verificado | G1 | F1 | `Auth.owner` (parcial) | Falta JWT + `ActorService.resolve` | — |
+| **I2** | Toda operación sensible lleva `actorId` y `requestingActorId` (si delegada) | G1 | F1 | `KernelContext.owner` | Falta `actorId` en kernel/worker/audit | — |
+| **I3** | Todo acceso a recurso pasa por autorización (fail-closed, deny-overrides) | G2 | F2 | `PolicyEngine.can` (parcial) | Falta field-level, handlers, workers, streams, rutas alternativas | — |
+| **I4** | Todo acceso denegado deja `audit-trail` | G2 | F2 | `StoreAuditStore` (acciones) | Falta audit de reads denegados | — |
+| **I5** | Ningún campo clasificado se devuelve sin autorización | G2 | F2 | — | No existe clasificación | — |
+| **I6** | Toda escritura compartida lleva `expectedVersion` y CAS | G5 | F4 | `compareAndSwap` | Falta `version` en `AgentTask`, `Goal`, `Monitor`, `SOP` | — |
+| **I7** | Todo conflicto devuelve diff por campo | G5 | F4 | `THREAD_CONFLICT_DIFF_V1` (parcial) | Falta diff en otros recursos | — |
+| **I8** | Todo conflicto se reconcilia sin recargar | G5 | F4 | `actions/:id/reconcile` (parcial) | Falta reconcile por recurso | — |
+| **I9** | Presence y lock compartidos en `Store` | G4 | F5 | `PresenceService`, `EditLock` in-memory | Multi-proceso | **Solo si multi-proceso** |
+| **I10** | Toda notificación dirigida a actor o tenant | G4 | F5 | `notifications-stream.ts` (filtra `assignedTo`) | Falta `visibility` y `priority` | — |
+| **I11** | Todo SSE con `Last-Event-ID` y replay | G4 | F5 | SSE existente | Falta replay | **Solo si cliente reconecta** |
+| **I12** | Todo write deja `RecordHistory` | G5 | F6 | `action-audit`, `activity` (parcial) | Falta historial por recurso | **Solo si `activity` no cubre** |
+| **I13** | Todo acceso sensible deja `AuditTrail` | G5 | F6 | `StoreAuditStore` | Falta audit de reads clasificados | — |
+
+**Condiciones de activación:** I9, I11, I12 solo se activan cuando el despliegue lo requiera. Se documentan en `PLAN-CAMPANA-2.md` con criterio concreto.
+
+---
+
+## 11. Los 17 tests
+
+| ID | Invariante | Test | Fase | Tipo |
+|---|---|---|---|---|
+| **T1** | I1 | Request sin JWT → 401 | F1 | Obligatorio |
+| **T2** | I1 | `sub` sin `User` vinculado → 401; usuario sin pertenencia al tenant → 403 | F1 | Obligatorio |
+| **T3** | I3 | Ownership: B lee doc de A → 403 | F2 | Obligatorio |
+| **T4** | I3 | ACL: B lee doc compartido → 200, B escribe → 403 | F2 | Obligatorio |
+| **T5** | I5 | Campo clasificado sin permiso → `[REDACTED]` o 403 | F2 | Obligatorio |
+| **T6** | I6 | Dos writes concurrentes, uno 200, otro 409 con diff | F4 | Obligatorio |
+| **T7** | I7 | 409 incluye diff por campo | F4 | Obligatorio |
+| **T8** | I8 | Reconcile sin recargar → 200 | F4 | Obligatorio |
+| **T9** | I9 | Dos procesos, dos actores, presence y lock compartidos | F5 | **Condicional (multi-proceso)** |
+| **T10** | I10 | Notificación dirigida: B no ve la de A | F5 | Obligatorio |
+| **T11** | I11 | SSE reconecta con `Last-Event-ID`, recibe los perdidos | F5 | **Condicional (reconexión)** |
+| **T12a** | I13 | Write deja `audit-trail` con `actorId` | F6 | Obligatorio |
+| **T12b** | I12 | Write deja `record-history` con `before`/`after` | F6 | **Condicional (`activity` no cubre)** |
+| **T13** | G3 | Agente con tarea delegada no obtiene más permisos que el asignador | F3 | Obligatorio |
+| **T14** | G1 | Actor desactivado pierde acceso en el siguiente request | F1 | Obligatorio |
+| **T15** | G1 | Worker atribuye `executingActorId` al agente correcto y `requestingActorId` al solicitante | F1 | Obligatorio |
+| **T16** | G2 | Error 403 no revela contenido sensible (solo "Forbidden") | F2 | Obligatorio |
+| **T17** | G5 | Reconcile no salta autorización ni sobrescribe versión posterior | F4 | Obligatorio |
+
+**14 obligatorios + 3 condicionales (T9, T11, T12b).** Cada test identifica invariante, actor, resultado de seguridad esperado. Los condicionales tienen criterio de activación concreto.
+
+---
+
+## 12. Las 7 fases
+
+| Fase | Garantía | Qué entrega | Qué NO entrega | Condición |
+|---|---|---|---|---|
+| **F1** | G1 | `User.authProviderId`, `ActorService.resolve(jwtPayload)`, middleware JWT, `ctx` en cada request, `actorId` en kernel/worker/audit, `executingActorId` vs `requestingActorId`, actor desactivado 403 | Perfiles operativos | — |
+| **F2** | G2 | `Policy`, PDP, `authzMiddleware`, `FieldClassification` solo campos reales, `FieldFilter` en lectores/escritores/serializadores/listados/búsquedas/agregaciones, `withRead`/`withWrite` en handlers/workers/acciones/streams/rutas alternativas, `x-user-id` deprecado | Catálogo empresarial de campos | — |
+| **F3** | G3 | `Assignment` como interfaz, `Flow` desde `AgentPersona`, `AssignmentService`, `AssignmentRegistry`, 5 adapters, `executingActorId` vs `requestingActorId`, agente no escala, scope de tarea | Qué tareas del producto existen | — |
+| **F4** | G5 | `version` en `AgentTask`/`Goal`/`Monitor`/`SOP` (decidir), `expectedVersion` en writes compartidos, 409 con diff, reconcile por recurso | `version` en todos los writes, reconcile genérico | — |
+| **F5** | G4 | Presence/lock sobre `Store` (condicional), notificaciones dirigidas, SSE replay (condicional), desactivación sin huérfanas (transición segura) | Presence/lock si single-process, replay si no reconecta | **F5 condicional según despliegue** |
+| **F6** | G5 | `AuditTrail` de reads clasificados, `RecordHistory` (condicional), `conflict-version` | `RecordHistory` si `activity` cubre | **F6 condicional** |
+| **F7** | — | 14 tests obligatorios en verde, `KNOWN_ISSUES.md`, `CIERRE-MVP.md` | — | — |
+
+---
+
+## 13. Lo que NO entra en la campaña
+
+| Categoría | Qué | Por qué |
+|---|---|---|
+| **Editor de perfiles** | Crear, editar, versionar perfiles operativos completos desde UI | Es configurabilidad, otra campaña |
+| **Constructor de entidades** | Crear entidades, campos, relaciones desde UI | Es configurabilidad, otra campaña |
+| **Formularios dinámicos** | Renderizar formularios según configuración | Es configurabilidad, otra campaña |
+| **Compilador de empresas** | Aplicar plantillas sectoriales | Es configurabilidad, otra campaña |
+| **Plantillas sectoriales** | Agencia, clínica, fontanería, etc. | Es configurabilidad, otra campaña |
+| **Nómin

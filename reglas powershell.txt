@@ -1,0 +1,628 @@
+# Reglas de PowerShell para escribir fixes en el repo `agente` (v2 — autocontenidas)
+
+> Este documento es la **única fuente de verdad**. Una IA nueva lo lee y trabaja. No necesita leer nada más. No hay "quizás", no hay "según el feedback", no hay "en una v3". Todo lo que sigue es **obligatorio** o el patchset **no se aplica**.
+
+---
+
+## 0. Principio
+
+> La seguridad no depende de que la IA recuerde las reglas.
+> Depende de que el script **aborte** cuando algo no coincide con lo previsto.
+
+Cada patchset verifica antes de escribir. Si una precondición falla, se detiene. Si escribe, deja backup. Si verifica, distingue errores nuevos de preexistentes. Si falla, revierte y genera audit. Si pasa, muestra diff y espera al humano. **El script es el que impide las operaciones incorrectas. La IA solo genera el bloque.**
+
+---
+
+## 1. Contexto fijo
+
+- Repo: `C:\Users\Alfonso\Desktop\git hub repos\agente`
+- Shell: PowerShell en Windows.
+- Package manager: pnpm. Node >= 22.
+- El humano ejecuta los comandos. La IA genera los bloques.
+- **Un patchset = un bloque PowerShell = un fichero.** Excepción solo en la sección 13 y con justificación escrita.
+- Orden obligatorio: **auditar → decidir → precondiciones → escribir → verificar → diff → commit (humano)**. Nunca al revés.
+
+---
+
+## 2. Reglas duras de PowerShell
+
+### 2.1. Rutas con espacios → comillas dobles
+
+```powershell
+# MAL
+cd C:\Users\Alfonso\Desktop\git hub repos\agente
+
+# BIEN
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+```
+
+### 2.2. Prohibido `&&` para encadenar comandos. Prohibido `;` como separador de comandos.
+
+Un comando por línea. Para encadenar condicionalmente:
+
+```powershell
+pnpm typecheck
+if ($LASTEXITCODE -ne 0) { Write-Host "FALLO" -ForegroundColor Red; exit 1 }
+pnpm test
+```
+
+**El carácter `;` está permitido dentro de strings, código fuente o expresiones donde el lenguaje lo exija.** Prohibido como separador de comandos en shell.
+
+### 2.3. Prohibido `git add .`
+
+`git add` selectivo, fichero por fichero o carpeta concreta.
+
+```powershell
+git add apps/server/src/middleware/auth.ts
+git add apps/server/src/middleware/
+```
+
+### 2.4. Heredocs: prohibido anidar
+
+Nunca meter varios `@'...'@` en el mismo script. Usar arrays de líneas.
+
+```powershell
+$lines = @(
+  '// MARCA_V1',
+  'export const x = 1;',
+  ''
+)
+```
+
+### 2.5. UTF-8 sin BOM — obligatorio
+
+```powershell
+[System.IO.File]::WriteAllText(
+  $absolutePath,
+  $content,
+  (New-Object System.Text.UTF8Encoding $false)
+)
+```
+
+Nunca `Set-Content` ni `Out-File` sin `-Encoding utf8`.
+
+### 2.6. Backticks
+
+El backtick es escape en PowerShell. Para saltos de línea: `` "`r`n" `` solo en el `-join`, nunca dentro de las líneas del array.
+
+### 2.7. Variables de entorno
+
+```powershell
+$env:OPENMUSE_CLIENTS_DIR = "clientes"
+pnpm dev
+```
+
+No usar `export` ni `set`.
+
+### 2.8. Redirecciones
+
+```powershell
+pnpm typecheck 2>&1 | Tee-Object -FilePath "typecheck.txt"
+```
+
+`>` sobreescribe. `>>` añade. `Tee-Object` escribe y muestra.
+
+---
+
+## 3. Resolución de raíz única
+
+**Todas las rutas parten de una única raíz absoluta resuelta al inicio. Prohibido usar `Get-Location` después.**
+
+```powershell
+$repoRoot = (Resolve-Path "C:\Users\Alfonso\Desktop\git hub repos\agente").Path
+
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) {
+  Write-Host "ERROR: $repoRoot no es un repo git" -ForegroundColor Red
+  exit 1
+}
+
+$file = Join-Path $repoRoot "ruta/relativa/al/fichero.ext"
+```
+
+Todos los `Join-Path` parten de `$repoRoot`. Todos los temporales, backups y audits se construyen desde `$repoRoot`.
+
+---
+
+## 4. Cuatro operaciones explícitas
+
+Cada patchset declara **exactamente una** de estas operaciones. Nunca dos a la vez.
+
+| Operación | Precondición |
+|---|---|
+| `CREATE` | El fichero **no debe existir**. Si existe → abortar. |
+| `MODIFY` | El fichero **debe existir** y su checksum debe coincidir con el esperado. Si no → abortar. |
+| `DELETE` | El fichero **debe existir** y su checksum debe coincidir con el esperado. Si no → abortar. |
+| `MOVE` | Origen **debe existir**, destino **no debe existir**. Si no → abortar. |
+
+---
+
+## 5. Marca con checksum y estado verificable
+
+La marca **no es un string suelto**. Es una identidad con tres componentes:
+
+```
+<AMBITO>_<FICHERO>_V<n> | sha256:<hash-del-contenido> | <fecha> | <estado>
+```
+
+Ejemplo en el fichero:
+
+```
+// SERVER_AUTH_MIDDLEWARE_V1 | sha256:abcd1234... | 2026-10-19 | applied
+```
+
+Comportamiento obligatorio:
+
+- Marca existe y checksum del contenido actual **coincide** → `SKIP`.
+- Marca existe y checksum **no coincide** → `AVISO: fichero modificado tras el patchset. Revisar manualmente.` → abortar.
+- Marca no existe → aplicar.
+- Patchset posterior con versión superior → aplicar `MODIFY` con precondición de checksum.
+
+**La marca demuestra que el patchset se aplicó. No demuestra que se aplicó correctamente.** El checksum y el estado son los que lo demuestran.
+
+---
+
+## 6. Verificación de coincidencias antes de reemplazar
+
+`$content.Replace()` **no falla** si el patrón no existe. Por eso, antes de cualquier reemplazo:
+
+```powershell
+function Assert-MatchCount {
+  param(
+    [Parameter(Mandatory)] [string] $content,
+    [Parameter(Mandatory)] [string] $pattern,
+    [Parameter(Mandatory)] [int] $expected
+  )
+  $count = ([regex]::Matches($content, [regex]::Escape($pattern))).Count
+  if ($count -ne $expected) {
+    Write-Host "ERROR: '$pattern' aparece $count veces, se esperaban $expected. Abortando." -ForegroundColor Red
+    exit 1
+  }
+}
+```
+
+Uso obligatorio:
+
+```powershell
+Assert-MatchCount -content $content -pattern 'texto_viejo' -expected 1
+$content = $content.Replace('texto_viejo', 'texto_nuevo')
+```
+
+**Si el patrón aparece 0 o 2+ veces cuando se esperaba 1, el patchset aborta sin escribir nada.**
+
+---
+
+## 7. Precondiciones verificables antes de escribir
+
+Todas obligatorias. Si una falla, abortar sin escribir.
+
+```powershell
+# 1. Raíz correcta
+$repoRoot = (Resolve-Path "C:\Users\Alfonso\Desktop\git hub repos\agente").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) {
+  Write-Host "ERROR: $repoRoot no es un repo git" -ForegroundColor Red
+  exit 1
+}
+
+# 2. Fichero existe (MODIFY/DELETE) o no existe (CREATE)
+$file = Join-Path $repoRoot "ruta/relativa/al/fichero.ext"
+$operation = "MODIFY"
+
+if ($operation -in @("MODIFY","DELETE") -and -not (Test-Path $file)) {
+  Write-Host "ERROR: $file no existe. $operation requiere fichero existente." -ForegroundColor Red
+  exit 1
+}
+if ($operation -eq "CREATE" -and (Test-Path $file)) {
+  Write-Host "ERROR: $file ya existe. CREATE requiere fichero nuevo." -ForegroundColor Red
+  exit 1
+}
+
+# 3. Checksum del original (MODIFY/DELETE)
+if ($operation -in @("MODIFY","DELETE")) {
+  $content = Get-Content $file -Raw
+  $actualChecksum = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+  if ($expectedOriginalChecksum -and $actualChecksum -ne $expectedOriginalChecksum) {
+    Write-Host "ERROR: el fichero ha cambiado desde la auditoría. Abortando." -ForegroundColor Red
+    exit 1
+  }
+}
+
+# 4. Marca no existe (o existe con checksum distinto → aviso)
+if ($operation -eq "MODIFY" -and $content -match $mark) {
+  Write-Host "SKIP: $mark ya aplicado" -ForegroundColor DarkGray
+  exit 0
+}
+
+# 5. Estado de git limpio para ESTE fichero
+$gitStatus = git status --porcelain -- $file
+if ($gitStatus -ne "") {
+  Write-Host "AVISO: $file tiene cambios sin commitear. Revisar antes de aplicar." -ForegroundColor Yellow
+  exit 1
+}
+```
+
+**Si alguna precondición falla, el patchset aborta sin escribir nada.**
+
+---
+
+## 8. Escritura atómica + backup + reversión
+
+### 8.1. Preservar el original
+
+```powershell
+$backupDir = Join-Path $repoRoot ".tmp/patchset-backups"
+New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$backup = Join-Path $backupDir "$stamp-$(Split-Path $file -Leaf).bak"
+
+Copy-Item $file $backup -Force
+Write-Host "Backup: $backup" -ForegroundColor DarkGray
+```
+
+### 8.2. Escritura atómica
+
+```powershell
+$dir = Split-Path $file -Parent
+$tmp = Join-Path $dir ("." + (Split-Path $file -Leaf) + ".tmp")
+
+[System.IO.File]::WriteAllText(
+  $tmp,
+  $newContent,
+  (New-Object System.Text.UTF8Encoding $false)
+)
+
+Move-Item -Force $tmp $file
+Write-Host "OK escritura atómica: $file" -ForegroundColor Green
+```
+
+### 8.3. Reversión explícita
+
+Si la verificación falla, revertir desde el backup. **Nunca dejar el código modificado sin backup.**
+
+```powershell
+Copy-Item $backup $file -Force
+Write-Host "REVERTIDO: $file restaurado desde $backup" -ForegroundColor Yellow
+```
+
+---
+
+## 9. Verificación basada en el cambio
+
+Cada patchset declara **qué se verifica**, según el tipo de cambio. No todos los fixes se validan con el mismo comando.
+
+| Tipo de cambio | Verificación obligatoria |
+|---|---|
+| Tipos puros (`.ts` sin lógica) | `pnpm --filter <pkg> exec tsc --noEmit` |
+| Runtime (lógica de negocio) | `tsc --noEmit` + `pnpm --filter <pkg> test` |
+| UI (componentes React) | `tsc --noEmit` + `pnpm --filter @openmuse/web build` |
+| Config (JSON, YAML) | Validación de sintaxis + `tsc --noEmit` del paquete afectado |
+| Scripts (PowerShell) | Dry-run + `tsc --noEmit` del paquete afectado (si aplica) |
+
+**Siempre:**
+
+- Registrar el **estado previo** del typecheck antes de escribir.
+- Distinguir **errores nuevos** de **errores preexistentes**.
+- Si aparecen errores nuevos → fallo + reversión.
+- Si solo aparecen errores preexistentes → aviso, no fallo.
+
+```powershell
+$prev = pnpm --filter $pkg exec tsc --noEmit 2>&1 | Out-String
+$prevErrors = ($prev -split "`n" | Where-Object { $_ -match "error TS" }).Count
+
+$post = pnpm --filter $pkg exec tsc --noEmit 2>&1 | Out-String
+$postErrors = ($post -split "`n" | Where-Object { $_ -match "error TS" }).Count
+
+if ($postErrors -gt $prevErrors) {
+  Write-Host "FALLO: $($postErrors - $prevErrors) errores NUEVOS" -ForegroundColor Red
+  Copy-Item $backup $file -Force
+  Write-Host "REVERTIDO: $file" -ForegroundColor Yellow
+  exit 1
+}
+```
+
+**Un patchset no se declara verde solo porque `tsc` terminó con código 0.** Se declara verde cuando **no introduce errores nuevos** y **las comprobaciones del tipo de cambio pasan**.
+
+---
+
+## 10. Diff obligatorio después de escribir
+
+Después de escribir y antes de dar el patchset por bueno:
+
+```powershell
+git diff --check $file
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "FALLO: diff con problemas de formato" -ForegroundColor Red
+  Copy-Item $backup $file -Force
+  exit 1
+}
+
+git diff -- $file
+git diff --stat -- $file
+```
+
+**Si el diff contiene cambios fuera de lo previsto, se aborta y se revierte desde el backup.**
+
+---
+
+## 11. Audit de fallos con evidencia completa
+
+Cuando el patchset falla, se genera un documento con **toda** la evidencia. El audit va a `$repoRoot` (carpeta de lanzamiento).
+
+```powershell
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$auditFile = Join-Path $repoRoot "audit-fallos-$stamp.md"
+
+$auditLines = @(
+  "# Audit de fallos",
+  "",
+  "- Fecha: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
+  "- Carpeta de lanzamiento: $repoRoot",
+  "- Operación: $operation",
+  "- Fichero: $file",
+  "- Marca: $mark",
+  "- Comando de verificación: pnpm --filter $pkg exec tsc --noEmit",
+  "- Exit code: $LASTEXITCODE",
+  "- Errores previos: $prevErrors",
+  "- Errores nuevos: $($postErrors - $prevErrors)",
+  "",
+  "## Estado de git",
+  "",
+  '```',
+  (git status --short -- $file),
+  '```',
+  "",
+  "## Diff aplicado",
+  "",
+  '```diff',
+  (git diff -- $file),
+  '```',
+  "",
+  "## Backup disponible",
+  "",
+  "- $backup",
+  "",
+  "## Acción tomada",
+  "",
+  "- REVERTIDO desde $backup",
+  "",
+  "FIN DEL AUDIT.",
+  ""
+)
+
+[System.IO.File]::WriteAllText(
+  $auditFile,
+  ($auditLines -join "`r`n"),
+  (New-Object System.Text.UTF8Encoding $false)
+)
+Write-Host "AUDIT: $auditFile" -ForegroundColor Yellow
+```
+
+**El audit es evidencia reproducible.** Cualquier IA o humano puede leerlo y reconstruir qué pasó sin tocar el repo.
+
+---
+
+## 12. Commit separado del patchset
+
+**El patchset nunca commitea.** El commit es un paso humano, separado, después de revisar el diff.
+
+Flujo:
+
+1. IA genera patchset → se aplica.
+2. Verificación → pasa o falla.
+3. **Humano revisa `git diff -- $file`.**
+4. **Humano decide commitear.**
+5. Humano ejecuta:
+
+```powershell
+git add $file
+git commit -m "tipo(ambito): descripcion"
+```
+
+Prefijos de commit obligatorios:
+
+- `feat(<ambito>): ...` — nueva funcionalidad
+- `fix(<ambito>): ...` — corrección
+- `refactor(<ambito>): ...` — refactor sin cambio funcional
+- `docs(<ambito>): ...` — documentación
+- `chore(<ambito>): ...` — tareas varias
+
+`<ambito>` = `web`, `server`, `worker`, `workspaces`, `core`, `scripts`, `root`.
+
+---
+
+## 13. Excepción a "un fichero por patchset"
+
+Un patchset puede tocar **N ficheros** si y solo si:
+
+- El cambio es **atómico**: si se aplica uno, deben aplicarse todos.
+- El patchset **declara la lista completa** de ficheros al inicio.
+- Se aplica **todo o nada**: si falla un fichero, se revierten todos desde sus backups.
+- El audit registra **qué ficheros se aplicaron y cuáles se revirtieron**.
+
+La norma es 1 fichero. La excepción es deliberada, documentada y justificada por escrito en el patchset.
+
+---
+
+## 14. Plantilla completa (obligatoria)
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+
+# --- 0. Raíz única ---
+$repoRoot = (Resolve-Path "C:\Users\Alfonso\Desktop\git hub repos\agente").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) {
+  Write-Host "ERROR: no es un repo git" -ForegroundColor Red
+  exit 1
+}
+
+# --- 1. Identidad del patchset ---
+$operation = "MODIFY"
+$file      = Join-Path $repoRoot "apps/server/src/middleware/auth.ts"
+$mark      = "SERVER_AUTH_MIDDLEWARE_V1"
+$pkg       = "@openmuse/server"
+$expectedOriginalChecksum = ""
+
+# --- 2. Precondiciones ---
+if ($operation -in @("MODIFY","DELETE") -and -not (Test-Path $file)) {
+  Write-Host "ERROR: $operation requiere fichero existente" -ForegroundColor Red
+  exit 1
+}
+if ($operation -eq "CREATE" -and (Test-Path $file)) {
+  Write-Host "ERROR: CREATE requiere fichero nuevo" -ForegroundColor Red
+  exit 1
+}
+
+if ($operation -in @("MODIFY","DELETE")) {
+  $content = Get-Content $file -Raw
+  $actualChecksum = (Get-FileHash $file -Algorithm SHA256).Hash.ToLower()
+  if ($expectedOriginalChecksum -and $actualChecksum -ne $expectedOriginalChecksum) {
+    Write-Host "ERROR: el fichero cambió desde la auditoría" -ForegroundColor Red
+    exit 1
+  }
+  if ($operation -eq "MODIFY" -and $content -match $mark) {
+    Write-Host "SKIP: $mark ya aplicado" -ForegroundColor DarkGray
+    exit 0
+  }
+}
+
+$gitStatus = git status --porcelain -- $file
+if ($gitStatus -ne "") {
+  Write-Host "AVISO: $file tiene cambios sin commitear" -ForegroundColor Yellow
+  exit 1
+}
+
+# --- 3. Contenido nuevo ---
+$old = "export function authMiddleware("
+$new = @'
+// SERVER_AUTH_MIDDLEWARE_V1
+export function authMiddleware(
+'@
+Assert-MatchCount -content $content -pattern $old -expected 1
+$newContent = $content.Replace($old, $new)
+
+# --- 4. Backup ---
+$backupDir = Join-Path $repoRoot ".tmp/patchset-backups"
+New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
+$stamp = Get-Date -Format "yyyyMMdd-HHmmss"
+$backup = Join-Path $backupDir "$stamp-$(Split-Path $file -Leaf).bak"
+Copy-Item $file $backup -Force
+
+# --- 5. Escritura atómica ---
+$dir = Split-Path $file -Parent
+$tmp = Join-Path $dir ("." + (Split-Path $file -Leaf) + ".tmp")
+[System.IO.File]::WriteAllText($tmp, $newContent, (New-Object System.Text.UTF8Encoding $false))
+Move-Item -Force $tmp $file
+Write-Host "OK escritura: $file" -ForegroundColor Green
+
+# --- 6. Verificación con estado previo ---
+$prev = pnpm --filter $pkg exec tsc --noEmit 2>&1 | Out-String
+$prevErrors = ($prev -split "`n" | Where-Object { $_ -match "error TS" }).Count
+
+$post = pnpm --filter $pkg exec tsc --noEmit 2>&1 | Out-String
+$postErrors = ($post -split "`n" | Where-Object { $_ -match "error TS" }).Count
+
+if ($postErrors -gt $prevErrors) {
+  Write-Host "FALLO: $($postErrors - $prevErrors) errores nuevos" -ForegroundColor Red
+  Copy-Item $backup $file -Force
+  Write-Host "REVERTIDO desde $backup" -ForegroundColor Yellow
+  exit 1
+}
+
+# --- 7. Diff obligatorio ---
+git diff --check $file
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "FALLO: diff con problemas" -ForegroundColor Red
+  Copy-Item $backup $file -Force
+  exit 1
+}
+git diff -- $file
+
+# --- 8. OK (commit separado, humano) ---
+Write-Host "OK verde: $pkg. Revisar diff y commitear manualmente." -ForegroundColor Green
+```
+
+---
+
+## 15. Flujo completo
+
+1. **Auditar** — leer el fichero objetivo y sus vecinos directos.
+2. **Decidir** — qué cambia, por escrito, y qué operación (`CREATE` / `MODIFY` / `DELETE` / `MOVE`).
+3. **Calcular checksum del original** (para `MODIFY` / `DELETE`).
+4. **Escribir el patchset** — precondiciones verificadas, escritura atómica, backup.
+5. **Verificar** — con estado previo y estado nuevo, distinguiendo errores nuevos de preexistentes.
+6. **Verde** → mostrar diff → humano revisa → humano commitea.
+7. **Fallo** → revertir desde backup → generar `audit-fallos-<timestamp>.md` → corregir → repetir desde el paso 3.
+
+**Nunca se declara éxito solo porque PowerShell terminó sin errores.**
+
+---
+
+## 16. Prohibiciones absolutas
+
+1. No encadenar comandos con `&&` ni con `;` (fuera de strings/código).
+2. No usar `git add .`.
+3. No meter heredocs anidados.
+4. No escribir sin UTF-8 sin BOM.
+5. No escribir directamente al destino (siempre atómico: temp + `Move-Item -Force`).
+6. No escribir sin backup previo.
+7. No reemplazar sin verificar el número de coincidencias.
+8. No escribir sin precondiciones (raíz, existencia, checksum, marca, git limpio).
+9. No dar un fix por bueno sin verificación basada en el cambio y sin errores nuevos.
+10. No dar un fix por bueno sin revisar el diff.
+11. No commitear dentro del patchset (commit separado, humano).
+12. No sobreescribir un fichero existente sin marca.
+13. No meter más de un fichero por patchset (excepción documentada).
+14. No tocar ficheros a ciegas: leerlos antes.
+15. No commitear ficheros no relacionados con el fix.
+16. No meter artefactos (`typecheck-*.txt`, `audit-fallos-*.md`, `repomix-*.md`) en `src/`.
+17. No declarar éxito porque `tsc` salió con código 0; hay que verificar que no hay errores nuevos.
+
+---
+
+## 17. Niveles de garantía
+
+Cada patchset declara en qué nivel está:
+
+**Nivel 1 — Patchset**
+- Un fichero.
+- Precondiciones verificadas.
+- Escritura atómica con backup.
+- Verificación del tipo de cambio.
+- Diff revisado.
+
+**Nivel 2 — Validación**
+- Todo lo del nivel 1.
+- Comprobaciones específicas del paquete (`tsc`, `test`, `build` según corresponda).
+- Distinción entre errores nuevos y preexistentes.
+- Audit generado si falla.
+
+**Nivel 3 — Integración**
+- Todo lo del nivel 2.
+- Revisión de dependencias entre paquetes.
+- Compatibilidad con los demás módulos del repo.
+- Commit selectivo, humano, revisado.
+- Handoff v2 actualizado si aplica.
+
+**Un patchset puede parar en nivel 1** si el cambio es trivial. **No puede declarar "terminado" sin nivel 2.** **Nivel 3 solo cuando el cambio afecta a varios paquetes.**
+
+---
+
+## 18. Resumen ejecutivo
+
+| Concepto | Regla |
+|---|---|
+| Unidad | 1 patchset = 1 fichero (excepción documentada) |
+| Raíz | `Resolve-Path` único al inicio. Prohibido `Get-Location` después. |
+| Operación | `CREATE` / `MODIFY` / `DELETE` / `MOVE`. Una sola por patchset. |
+| Marca | Identidad con checksum + fecha + estado. No es un string suelto. |
+| Reemplazo | `.Replace()` con `Assert-MatchCount` obligatorio. |
+| Escritura | Atómica (temp + `Move-Item -Force`) + backup previo + reversión explícita. |
+| Verificación | Basada en el tipo de cambio. Distingue errores nuevos de preexistentes. |
+| Diff | Obligatorio, revisado antes de commit. |
+| Audit | Código de salida + diff + estado git + backup + acción tomada. |
+| Commit | Separado, humano, selectivo. |
+| Niveles | 1 (patchset), 2 (validación), 3 (integración). |
+| Prohibiciones | 17 reglas absolutas. |
+
+---
+
+FIN DE LAS REGLAS v2.

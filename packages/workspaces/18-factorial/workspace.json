@@ -1,0 +1,35 @@
+{
+    "id":  "factorial",
+    "slug":  "18-factorial",
+    "order":  18,
+    "family":  "personas",
+    "reference":  "Factorial",
+    "title":  "Recursos humanos",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+                         "employee.create",
+                         "employee.read",
+                         "leave.approve",
+                         "leave.reject",
+                         "attendance.record",
+                         "schedule.update"
+                     ],
+    "dependencies":  [
+                         "domain-core",
+                         "documents",
+                         "identity"
+                     ],
+    "events":  {
+                   "consumes":  [
+                                    "document.uploaded"
+                                ],
+                   "publishes":  [
+                                     "employee.created",
+                                     "leave.approved",
+                                     "leave.rejected",
+                                     "attendance.recorded"
+                                 ]
+               }
+}

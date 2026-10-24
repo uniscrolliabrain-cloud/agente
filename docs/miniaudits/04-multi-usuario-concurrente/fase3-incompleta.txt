@@ -1,0 +1,1092 @@
+# 08 — Campaña 2 / Fase 3 — Delegación controlada (G3)
+
+------------------------------------------------------------------------------------------------
+
+## Veredicto: la Fase 3 necesita correcciones antes de ejecutarse con Cline
+
+La arquitectura tiene una buena dirección: unificar tareas, objetivos, monitores, aprobaciones y SOP bajo una interfaz de asignación, sin duplicar su persistencia; separar al actor que solicita del que ejecuta; y construir `Flow` desde `AgentPersona`, que es donde realmente existen `reportsTo` y `peers`.
+
+Pero no daría este documento por listo para ejecución todavía. Hay contradicciones en el contrato de delegación, riesgos de autorización heredados de la Fase 2 y una implementación de los adapters que puede perder datos. Además, las cifras de patchsets no cuadran.
+
+Mi recomendación es corregir primero los puntos siguientes y después pasarle a Cline el documento revisado, no los 26 patchsets de golpe.
+
+## 1. Bloqueantes: delegación y permisos
+
+### 1.1. «Hereda los permisos del asignador» no está definido de forma segura
+
+El documento afirma que el agente ejecutor hereda los permisos del asignador, limitados al ámbito de la tarea. Sin embargo, eso no especifica cómo se calcula la intersección de permisos.
+
+La regla correcta debería ser:
+
+\\[ P\_{\text{efectivos}} = P\_{\text{asignador}} \cap P\_{\text{ejecutor}} \cap P\_{\text{tarea}} \cap P\_{\text{tenant}} \\]
+
+Es decir, el agente no debe adquirir permisos que el asignador no tenga, ni saltarse las restricciones propias del ejecutor, ni salir del ámbito de la tarea o del tenant.
+
+Corrección para el documento: exigir que cada acción delegada compruebe al menos:
+
+- Identidad del solicitante y del ejecutor.
+- Tenant y recurso reales sobre los que se opera.
+- Que la asignación autoriza esa acción concreta.
+- Que el actor no puede autoasignarse permisos superiores.
+- Que aprobar, rechazar, reasignar y escalar son permisos distintos.
+- Que el ejecutor no puede aprobar su propia acción cuando se requiere separación de funciones.
+
+Esto depende directamente de que el PDP de Fase 2 sea realmente fail-closed. En la revisión anterior detecté un posible bypass en el ejemplo de `PolicyDecisionPoint`: se invocaba `PolicyEngine.can` con un rol artificial `{id: roleId}`, sin sus permisos reales. Si esa implementación sigue en el repositorio, Fase 3 no debe darse por segura hasta corregirla.
+
+### 1.2. `assignedBy` y `assignedTo` no pueden confundirse con `owner`
+
+En el documento se dice que, si no hay asignación explícita, se usa el `owner` actual como asignador y asignado por defecto.
+
+Eso mezcla conceptos diferentes:
+
+- `owner`: propietario o ámbito de almacenamiento.
+- `assignedBy`: actor que delega.
+- `assignedTo`: actor que recibe la tarea.
+
+No tienen por qué compartir el mismo identificador. El `owner` puede representar una cuenta o partición, mientras que el actor puede ser una persona o un agente.
+
+Corrección: resolver el actor autenticado desde el contexto de la petición. Mantener `owner` para el ámbito de almacenamiento y utilizar `assignedBy` y `assignedTo` para las identidades de delegación. Si no existe un actor autenticado o no se puede resolver el destinatario, la operación debe fallar, no inventar una identidad a partir de `owner`.
+
+### 1.3. Las rutas de asignaciones deben autorizar el recurso real
+
+Añadir `withRead`, `withWrite` y PDP a las rutas no basta por sí solo. Cada handler debe cargar el recurso original, verificar su tenant y su identidad, autorizar la transición solicitada y solo entonces escribirlo.
+
+Por ejemplo, en `POST /api/assignments/:kind/:id/approve`, no debe bastar con que el usuario tenga permiso genérico para aprobar: hay que comprobar que puede aprobar esa propuesta concreta, que está en un estado aprobable y que no se está aprobando a sí mismo cuando eso esté prohibido.
+
+También hay que evitar que el cliente pueda enviar `tenantId`, `assignedBy`, `status` o `kind` para saltarse las restricciones. Esos valores deben derivarse del contexto autenticado o validarse contra el registro original.
+
+## 2. Bloqueantes: el modelo `Assignment` y los adapters
+
+### 2.1. `Assignment` no es todavía un contrato común completo
+
+El modelo base declara:
+
+```
+assignedTo: z.string().min(1).max(200),
+status: assignmentStatusSchema,
+plan: assignmentPlanSchema.optional(),
+evidence: z.array(assignmentEvidenceSchema).max(50).default([]),
+outcome: assignmentOutcomeSchema.optional(),
+```
+
+Pero cada registro original tiene una estructura diferente. Por ejemplo, `AgentTask` utiliza `TaskStep[]`, `Evidence[]` y un `Outcome` propio. El schema específico de tareas reemplaza esos tipos con `z.any()`.
+
+Eso elimina parte de la validación que el modelo común pretende aportar. También hace posible aceptar objetos que no cumplen los contratos reales del dominio.
+
+Corrección: no usar `z.any()` para `plan`, `evidence` y `outcome`. Los adapters deben convertir explícitamente los tipos originales al formato común y validarlos. Si los tipos no son compatibles, hay que definir una transformación concreta o conservar el dato original en una estructura tipada.
+
+### 2.2. `fromAssignment()` no puede reconstruir datos que no existen en `Assignment`
+
+El documento permite guardar campos adicionales en `metadata` cuando un adapter los necesita, pero `assignmentSchema` no declara ese campo. Además, los adapters prometen traducción de ida y vuelta, mientras que el modelo común omite atributos específicos de los registros originales.
+
+Eso puede provocar pérdida de datos al convertir un registro a `Assignment` y después reconstruirlo.
+
+Corrección: antes de escribir los cinco adapters, definir un contrato claro:
+
+- `toAssignment(record)` produce una vista normalizada, sin modificar el registro.
+- `applyAssignment(record, changes)` aplica únicamente los campos autorizados al registro original.
+- Los campos específicos que no forman parte de `Assignment` se conservan en el registro original, no se reconstruyen a partir de una vista incompleta.
+- Si se necesita `metadata`, debe estar definido y validado en el schema.
+- La prueba de ida y vuelta debe comprobar que no se pierden datos ni se modifican campos ajenos a la operación.
+
+No basta con decir que el adapter es idempotente: hay que especificar qué significa esa propiedad para cada tipo de registro.
+
+### 2.3. La interfaz común exige `assignedTo`, pero el propio plan contempla registros sin destinatario
+
+El documento dice que, cuando no se proporciona destinatario, se asigna al propietario actual. Esa regla es cuestionable por la distinción entre propietario y actor, y puede ser incompatible con registros existentes que todavía no tengan `assignedTo`.
+
+Corrección: decidir expresamente si toda `Assignment` debe tener destinatario o si una asignación puede estar sin asignar. Si se admite una bandeja de pendientes, el modelo y sus rutas deben representarla explícitamente; no hay que inventar un destinatario para satisfacer el schema.
+
+## 3. `Flow`: buena decisión de origen, pero falta resolver la identidad
+
+Construir `Flow` desde `AgentPersona.reportsTo` y `peers` es coherente con los datos disponibles. No lo construiría desde `AgentRole`.
+
+Sin embargo, `AgentPersona` utiliza identificadores de persona de hasta 80 caracteres y los relaciona mediante strings. El nuevo `FlowRelation` utiliza `actorId`, con un límite de 200 caracteres, y un `kind` que distingue entre humanos y agentes.
+
+El documento no define cómo se traduce un `persona.id` a un actor real, ni cómo se resuelve el tenant de las relaciones.
+
+Corrección:
+
+- Resolver cada relación contra un actor existente en el mismo tenant.
+- No asumir que `persona.id === actor.id`.
+- Rechazar o señalar referencias inexistentes, relaciones cruzadas entre tenants y relaciones inválidas.
+- Evitar que `peers` se convierta en un permiso de delegación: ser par no implica poder asignar, aprobar o escalar.
+- Definir si una relación `reportsTo` apunta a un agente, una persona o una persona organizacional representada por otro tipo de registro.
+
+La construcción de `Flow` no debería conceder permisos por sí misma.
+
+## 4. Hay inconsistencias entre el alcance y el código descrito
+
+| Punto                   | Problema                                                                                                                    | Corrección necesaria                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Conteo de patchsets     | La tabla contiene 15 `CREATE` y 11 `MODIFY`: 26 en total. No 14 `CREATE` y 12 `MODIFY`.                                     | Corregir los totales.                                                                                            |
+| Archivos de escritura   | El documento dice que los tres primeros patchsets están completos y los otros 23 están en otro anexo.                       | No ejecutar sin tener disponible el anexo completo.                                                              |
+| `ActionService.propose` | Solo se integra con `AssignmentService` cuando existe `taskId`, pero el propósito es asignar aprobaciones.                  | Definir el comportamiento cuando no hay `taskId`; no dejar aprobaciones sin control por una condición implícita. |
+| `SOP`                   | `POST /:id/run` asigna el SOP al actor que ejecuta.                                                                         | Separar el propietario del SOP, el solicitante de la ejecución y el actor que la ejecuta.                        |
+| `complete`              | Se admite que el `outcome` puede no persistirse en el registro original.                                                    | No considerar completada una asignación si el estado y el resultado no se han guardado correctamente.            |
+| `escalate` y `reassign` | Algunas integraciones dependen de que el body contenga ciertos campos; en otro caso se mantiene el comportamiento anterior. | Definir un contrato inequívoco. Las rutas no deben permitir eludir el nuevo control enviando un body incompleto. |
+| `AgentActor.flow`       | Se dice que se computa, pero no se define cómo llega al actor ni cómo se mantiene actualizado.                              | Definir la resolución y el ciclo de vida del dato antes de añadirlo al modelo de actor.                          |
+
+Hay otro punto importante: `assignmentStatusSchema` introduce estados como `waiting_approval`, `scheduled`, `paused` y `cancelled`. Los adapters deben mapearlos a estados válidos del registro original. Si un tipo no admite alguno de esos estados, la conversión debe ser explícita y no una asignación arbitraria.
+
+## 5. El bloqueo de tests no encaja con los criterios de aceptación
+
+La Fase 3 prohíbe crear cualquier `tests/*.test.ts` hasta F7, pero después exige probar:
+
+- Autorización correcta e incorrecta.
+- Aislamiento entre tenants.
+- Adaptadores e idempotencia.
+- Delegación sin elevación de permisos.
+- Rutas que responden `200` o `403`.
+- Integración con `AgentService`, `ActionService` y `sopRoutes`.
+
+Un typecheck verde no demuestra ninguna de esas propiedades. Y ejecutar `pnpm test` sobre los tests antiguos tampoco garantiza que se hayan probado los nuevos comportamientos.
+
+Mi recomendación es conservar congelados los tests ajenos a la campaña, pero permitir pruebas específicas de Fase 3 en un directorio autorizado, o ejecutar pruebas temporales reproducibles que no se incorporen al repositorio. Si no se permite ninguna de las dos opciones, el cierre de Fase 3 debe quedar condicionado: no puede declararse verificada la delegación segura.
+
+## 6. Cómo ejecutaría la fase
+
+No cambiaría el objetivo de producto. Cambiaría el orden para reducir el riesgo y facilitar el diagnóstico.
+
+## 1
+
+Contrato de dominio
+
+`Assignment`, `Flow`, schemas específicos y reglas de conversión. Primero definir estados, campos obligatorios y preservación de los datos originales.
+
+## 2
+
+Adapters y registry
+
+Implementar los cinco adapters y comprobar que leen y actualizan correctamente cada tipo de registro, sin persistir una entidad `Assignment` duplicada.
+
+## 3
+
+Servicio de delegación
+
+`assign`, `accept`, `reject`, `approve`, `escalate`, `reassign` y `complete`, con autorización por recurso y transición.
+
+## 4
+
+Integración
+
+Rutas, `AgentService`, `ActionService`, SOP y personas. Revisar cada integración por separado antes de cablear `app.ts`.
+
+## 5
+
+Verificación y cierre
+
+Typecheck, pruebas específicas, revisión de permisos y `git diff`. Commit explícito solo después de comprobar qué cambios pasan y cuáles no.
+
+Mantendría la restricción de no tocar `worker.ts`, `conversation.ts`, el kernel fuera del alcance autorizado y los componentes reservados a F4–F7. Si un requisito de delegación no puede implementarse sin tocar uno de esos componentes, se documenta el bloqueo; no se amplía el alcance silenciosamente.
+
+## Conclusión
+
+La Fase 3 es viable, pero el documento todavía no está listo para ejecutarse tal cual. Los cambios más importantes antes de entregárselo a Cline son:
+
+1. Definir la intersección real de permisos heredados y comprobar el PDP de Fase 2.
+2. Separar inequívocamente `owner`, `assignedBy` y `assignedTo`.
+3. Corregir los schemas permisivos y garantizar que los adapters no pierdan datos.
+4. Definir las reglas de identidad y tenant de `Flow`.
+5. Resolver la contradicción entre la prohibición de tests y las pruebas obligatorias.
+6. Corregir el conteo y tener los 26 patchsets completos antes de empezar.
+
+La idea central —una interfaz común de asignaciones sobre los registros existentes— sigue siendo buena. Lo que conviene evitar es construir una API de delegación aparentemente completa que, por debajo, tenga permisos ambiguos, adaptadores con pérdida de datos o transiciones que se puedan saltar.
+
+------------------------------------------------------------------------------------------------
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 3 — Delegación controlada (G3)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fase 0 cerrada. Fase 1 cerrada (identidad). Fase 2 cerrada (acceso con PDP, `withRead`/`withWrite`, `FieldFilter`, `x-user-id` eliminado del wire, `audit-entries` con `field`/`classification`/`allowed`).
+**Aprobación:** mapa de 7 fases aprobado con correcciones del revisor (D4, D5 y transversal 3). F3 aplica las condiciones. Documento listo para ejecución.
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 2 (documento 07): acceso seguro. Se crearon `packages/domain/src/policy.ts` (`Policy`, `PolicyAction`, `PolicyResource`, `PolicySubject`, `PolicyCondition`, `PolicyDecision`), `packages/domain/src/classification.ts` (`FieldClassification`, `ClassifiedField`, `ClassifiedRecord`), `apps/server/src/engine/authz/pdp.ts` (`PolicyDecisionPoint`), `apps/server/src/engine/authz/pep.ts` (`authzMiddleware`), `apps/server/src/engine/authz/with-read.ts` (`withRead`), `apps/server/src/engine/authz/with-write.ts` (`withWrite`), `apps/server/src/engine/authz/field-filter.ts` (`FieldFilter`), `apps/server/src/engine/authz/policies.ts` (`buildPoliciesFromAgentRole`, `defaultPolicies`). Clasificación por campo en `User.email: internal`, `User.name: internal`, `User.setup: confidential`, `AgentRole.permissions: restricted`, `AgentRole.memories: confidential`, `AgentRole.allowedTools: restricted`, `AgentTask.prompt: confidential`, `AgentTask.plan: internal`, `AgentTask.outcome: internal`, `AgentMemory.text: confidential`, `BusinessEntity.properties: internal`, `SOP.steps: internal`. `withRead`/`withWrite` cableados en 14 ficheros de handlers + worker + acciones internas + streams + rutas alternativas. `audit-entries` con `field`, `classification`, `allowed`. `AgentGovernance` sobre PDP. `x-user-id` eliminado del wire. `Config.authzEnabled`, `Config.fieldClassificationEnabled`, `Config.policyCacheTtlMs`.
+
+**Verificado contra los 3 ficheros reales + Repomix de Fase 0 + Fase 1 + Fase 2:**
+- `packages/domain/src/agent.ts`: `AgentRole` **no** tiene `reportsTo`/`peers`. `AgentTask` **no** tiene `assignedBy`, `assignmentKind`, `version`. `Goal`, `Monitor`, `Idea` sin `assignedBy`/`assignmentKind`/`version`. `SOP` sin `assignedBy`/`assignmentKind`/`version`.
+- `packages/domain/src/agent-persona.ts`: `AgentPersona` **sí** tiene `reportsTo?: string` y `peers: string[]`. Es la fuente real de `Flow`.
+- `apps/server/src/engine/orchestrator/orchestrator.ts`: `BusinessOSOrchestrator.runGoal(ctx, goal)` sin atribución a `assignedTo`/`assignedBy`. `ExecutionContext.actorId` propagado en Fase 1.
+- `apps/server/src/engine/worker.ts`: `executingActorId` (`task.assignedTo` o `task.state.roleId`) y `requestingActorId` (`task.assignedBy` o `task.state.assignedBy`) desde Fase 1. `bus.emit` con `actorId`.
+- `apps/server/src/actions.ts`: `ActionService.propose`/`decide`/`retry`/`edit` con `withWrite` desde Fase 2. `ActionService.decide` con PDP.
+- `apps/server/src/engine/service.ts`: `AgentService.createTask`/`createGoal`/`createMonitor` sin `AssignmentService` todavía.
+- `apps/server/src/skills/sop-routes.ts`: `POST /:id/run` sin `AssignmentService` todavía.
+- `apps/server/src/engine/agents/personas/registry.ts`: `PersonaRegistry.register` sin `Flow` todavía.
+- `apps/server/src/engine/agents/personas/routes.ts`: `GET /:id` devuelve `reportsTo` y `peers` de `skin.persona` (que es `AgentPersona`), no un `flow` estructurado.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`Assignment` como interfaz de lectura** (F3.1): `packages/domain/src/assignment.ts` con `Assignment`, `AssignmentKind`, `AssignmentStatus`, `AssignmentPlan`, `AssignmentEvidence`, `AssignmentOutcome`. **No se persiste como entidad propia.** Se computa on-the-fly desde el record original (`AgentTask`, `Goal`, `Monitor`, `ActionProposal`, `SOP`) usando el adapter.
+- **`Flow` desde `AgentPersona`** (F3.2): `packages/domain/src/flow.ts` con `Flow`, `FlowRelation`. **Construido desde `AgentPersona.reportsTo`/`peers`, no desde `AgentRole`.** Esta es la corrección D4 contra el brainstorm v1.
+- **`AssignmentService`** (F3.3): `apps/server/src/engine/assignments/service.ts` con `assign`, `accept`, `reject`, `approve`, `escalate`, `reassign`, `complete`. Cada método llama al PDP y a `withWrite`. Emite eventos al bus. **No crea un record `Assignment` paralelo.**
+- **`AssignmentRegistry` + 5 adapters** (F3.4): `apps/server/src/engine/assignments/registry.ts` con `Map<AssignmentKind, AssignmentAdapter>`. Cada adapter implementa `toAssignment(record)`, `fromAssignment(assignment)`, `applyStatus(record, status)`. `TaskAdapter`, `GoalAdapter`, `MonitorAdapter`, `ApprovalAdapter`, `SopAdapter`.
+- **`assignmentsRoutes`** (F3.5): `apps/server/src/engine/assignments/routes.ts` con `GET /api/assignments`, `GET /api/assignments/:kind/:id`, `POST /api/assignments/:kind/:id/accept`, `POST /api/assignments/:kind/:id/reject`, `POST /api/assignments/:kind/:id/approve`, `POST /api/assignments/:kind/:id/escalate`, `POST /api/assignments/:kind/:id/complete`, `POST /api/assignments/:kind/:id/reassign`. Todos con `withRead`/`withWrite` y PDP.
+- **`executingActorId` vs `requestingActorId` en `AssignmentService`** (F3.6): el agente hereda los permisos del asignador, acotados por scope de tarea. No escala. No aprueba en nombre de otro. Si la tarea requiere aprobación, la solicita. T13 en verde.
+- **`AgentTask`/`Goal`/`Monitor`/`SOP`/`ActionProposal` con `assignedBy` y `assignmentKind`** (F3.7): sin `version` (F4). Sin `flow` (se computa desde `AgentPersona` cuando aplica).
+- **`AgentService` cablea `AssignmentService.assign`** (F3.8): `createTask`/`createGoal`/`createMonitor` llaman al `AssignmentService.assign` cuando hay `assignedTo`. Si no hay, asignan al `owner` actual.
+- **`ActionService` cablea `AssignmentService.approve`/`reject`** (F3.9): `decide` llama al `AssignmentService` cuando hay `taskId`.
+- **`reassign`/`escalate` cablean `AssignmentService`** (F3.10): `POST /tasks/:id/reassign` y `POST /tasks/:id/escalate` usan `AssignmentService.reassign`/`escalate`. `POST /tasks/:id/input` sin cambio.
+- **`sopRoutes` cablea `AssignmentService.assign`** (F3.11): `POST /:id/run` asigna al actor que ejecuta. `SOP.assignedTo` se rellena.
+- **`PersonaRegistry.register` construye `Flow`** (F3.12): desde `AgentPersona.reportsTo`/`peers`. `AgentActor.flow` se computa.
+- **`personas/routes.ts` devuelve `flow`** (F3.13): `GET /:id` devuelve `flow` estructurado (no solo `reportsTo`/`peers` sueltos).
+- **`app.ts` instancia `AssignmentService` y cablea `assignmentsRoutes`** (F3.14): pasa `AssignmentService` a `AgentService` y `ActionService`.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 4 (documento 09): consistencia. `version` selectiva en `AgentTask`, `Goal`, `Monitor`, `SOP` (decidir), `Thread`, `Project`, `BusinessEntity`. `expectedVersion` obligatorio en writes compartidos. 409 con diff por campo. Reconcile por recurso. `ConflictDiff`, `ConflictVersion`, `ConflictResolution`. `ConflictVersion` se expone por recurso. Sin tocar presence (F5), SSE (F5), audit-trail (F6).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 3), ejecutada en **14 patchsets de producto** más **1 patchset de verificación sin escritura** (confirmar Fase 2 cerrada). Total: **14 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix de Fase 0 + los 3 ficheros reales + Fase 1 + Fase 2:**
+
+- `packages/domain/src/agent.ts` (Fase 2: `AgentTask`, `AgentMemory`, `AgentArtifact`, `AgentNotification` con `fieldClassification`; `AgentRole` con `fieldClassification`).
+- `packages/domain/src/agent-persona.ts` (Repomix real, íntegro: `AgentPersona` con `reportsTo`/`peers`).
+- `packages/domain/src/actor.ts` (Fase 1: `Actor`, `HumanActor`, `AgentActor`).
+- `packages/domain/src/jwt.ts` (Fase 1: `jwtPayloadSchema`).
+- `packages/domain/src/policy.ts` (Fase 2: `Policy`, `PolicyAction`, `PolicyResource`).
+- `packages/domain/src/classification.ts` (Fase 2: `FieldClassification`).
+- `packages/domain/src/sop.ts` (Fase 2: `SOP` con `fieldClassification`).
+- `packages/domain/src/business.ts` (Fase 2: `BusinessEntity` con `fieldClassification`).
+- `packages/domain/src/execution-context.ts` (Fase 1: `actorId` + `sessionId`).
+- `packages/domain/src/index.ts` (Fase 1: exports).
+- `apps/server/src/engine/authz/pdp.ts` (Fase 2: `PolicyDecisionPoint`).
+- `apps/server/src/engine/authz/pep.ts` (Fase 2: `authzMiddleware`).
+- `apps/server/src/engine/authz/with-read.ts` (Fase 2: `withRead`).
+- `apps/server/src/engine/authz/with-write.ts` (Fase 2: `withWrite`).
+- `apps/server/src/engine/authz/field-filter.ts` (Fase 2: `FieldFilter`).
+- `apps/server/src/engine/authz/policies.ts` (Fase 2: `buildPoliciesFromAgentRole`, `defaultPolicies`).
+- `apps/server/src/engine/actors/service.ts` (Fase 1: `ActorService.resolve`).
+- `apps/server/src/engine/auth/jwt.ts` (Fase 1: `verifyJwtMiddleware`).
+- `apps/server/src/users.ts` (Fase 1 + 2: `User.authProviderId`, `User.fieldClassification`, `UserService.getByAuthProviderId`).
+- `apps/server/src/app.ts` (Fase 1 + 2: `verifyJwtMiddleware`, `authMiddleware`, `authzMiddleware`, `c.set("actor")`, `c.set("ctx")`).
+- `apps/server/src/config.ts` (Fase 1 + 2: `authProvider`, `jwtSecret`, `jwksUri`, `jwtIssuer`, `jwtAudience`, `authzEnabled`, `fieldClassificationEnabled`, `policyCacheTtlMs`).
+- `apps/server/src/engine/agents/governance.ts` (Fase 2: `AgentGovernance` sobre PDP).
+- `apps/server/src/engine/agents/personas/registry.ts` (Repomix holístico, íntegro: `PersonaRegistry.register`).
+- `apps/server/src/engine/agents/personas/routes.ts` (Repomix audit, íntegro: handlers de personas).
+- `apps/server/src/engine/agents/personas/resolver.ts` (Repomix audit, íntegro: `resolveSkin`, `resolveAllSkins`).
+- `apps/server/src/engine/agents/personas/activity.ts` (Repomix audit, íntegro: `activityForPersona`).
+- `apps/server/src/actions.ts` (Fase 2: `ActionService` con `withWrite` y PDP).
+- `apps/server/src/engine/service.ts` (Repomix holístico, íntegro: `AgentService.createTask`, `createGoal`, `createMonitor`, `escalateTask`, `answer`, `control`, `controlMonitor`).
+- `apps/server/src/engine/routes.ts` (Fase 2: `withRead`/`withWrite`).
+- `apps/server/src/skills/sop-routes.ts` (Fase 2: `withRead`/`withWrite`).
+- `apps/server/src/engine/worker.ts` (Fase 1 + 2: `executingActorId` vs `requestingActorId`, `withWrite` en writes).
+- `apps/server/src/engine/events/bus.ts` (Repomix holístico, íntegro: `EventBus.emit`).
+- `apps/server/src/engine/tenant.ts` (Repomix holístico, íntegro: `TenantService`).
+- `apps/server/src/kernel/context/kernel-context.ts` (Fase 1: `actorId` + `sessionId`).
+- `apps/server/src/kernel/kernel.ts` (Fase 1: `actorId` en `audit.append`).
+- `apps/server/src/kernel/audit/store-store.ts` (Fase 2: `payload` con `field`/`classification`/`allowed`).
+- `apps/server/src/index.ts` (Repomix holístico, íntegro).
+- `apps/server/src/engine/orchestrator/orchestrator.ts` (Fase 1: propaga `actorId`).
+- `docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md`, `ID-MAP.md`, `CIERRE-MVP.md`, `fuera-de-mvp.md`, `-pendientes.md`, `PLAN-CAMPANA-2.md` (Fase 0 v5).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+
+- `apps/server/src/engine/state-machines.ts` — `Select-String -Pattern "class StateMachineRegistry|transition|apply"` con `-Context 0,3`. Confirmar que `Assignment` puede usar `StateMachineEngine` para transiciones (no se usa en F3, se decide en F4).
+- `apps/server/src/engine/policy/engine.ts` — `Select-String -Pattern "class PolicyEngine|async can\("` con `-Context 0,3`. Confirmar que `AssignmentService` puede llamar al PDP (que envuelve a `PolicyEngine`).
+
+**Archivos que NO se leen en esta fase:**
+
+- `apps/server/src/engine/presence.ts`, `engine/edit-lock.ts` (F5).
+- `apps/server/src/notifications-stream.ts`, `notification-prefs.ts` (F5).
+- `apps/server/src/engine/events/replay-buffer.ts` (no existe, F5).
+- `apps/server/src/engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (no existen, F6).
+- `apps/server/src/backup-tenant.ts` (Campaña 1 cerrada).
+- `apps/worker/src/**`, `apps/computer/src/**`, `scripts/**`, `clientes/**`, `docs/audits/**` (no se tocan).
+- `apps/web/src/**` (no se toca en esta campaña).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Crear (dominio):**
+
+- `packages/domain/src/assignment.ts` — `Assignment`, `AssignmentKind`, `AssignmentStatus`, `AssignmentPlan`, `AssignmentEvidence`, `AssignmentOutcome`, `assignmentSchema`, `assignmentKindSchema`, `assignmentStatusSchema`, `assignmentPlanSchema`, `assignmentEvidenceSchema`, `assignmentOutcomeSchema`.
+- `packages/domain/src/flow.ts` — `Flow`, `FlowRelation`, `flowSchema`, `flowRelationSchema`.
+- `packages/domain/src/assignments/` (subcarpeta) — `task.ts`, `goal.ts`, `monitor.ts`, `approval.ts`, `sop.ts` con los schemas de cada implementación de `Assignment` que extienden `assignmentSchema`. Cada uno añade sus campos específicos (`plan`, `evidence`, `outcome` para task; `milestones`, `category` para goal; `url`, `condition`, `value`, `intervalMinutes`, `nextCheckAt`, `lastCheckedAt`, `lastValue`, `lastHash`, `checks` para monitor; `hash`, `signers`, `needed`, `executeAt`, `result`, `error`, `errorKind` para approval; `steps`, `allowedTools`, `trigger`, `skillId`, `active` para sop).
+
+**Crear (server):**
+
+- `apps/server/src/engine/assignments/service.ts` — `AssignmentService` (`assign`, `accept`, `reject`, `approve`, `escalate`, `reassign`, `complete`). Cada método llama al PDP y a `withWrite`. Emite eventos al bus.
+- `apps/server/src/engine/assignments/registry.ts` — `AssignmentRegistry`. `Map<AssignmentKind, AssignmentAdapter>`.
+- `apps/server/src/engine/assignments/adapters/task-adapter.ts` — `TaskAdapter` que traduce `AgentTask` a `Assignment` y viceversa.
+- `apps/server/src/engine/assignments/adapters/goal-adapter.ts` — `GoalAdapter`.
+- `apps/server/src/engine/assignments/adapters/monitor-adapter.ts` — `MonitorAdapter`.
+- `apps/server/src/engine/assignments/adapters/approval-adapter.ts` — `ApprovalAdapter` que traduce `ActionProposal` a `Assignment` (kind `approval`) y viceversa.
+- `apps/server/src/engine/assignments/adapters/sop-adapter.ts` — `SopAdapter` que traduce `SOP` a `Assignment` (kind `sop`) y viceversa.
+- `apps/server/src/engine/assignments/routes.ts` — `assignmentsRoutes`. `GET /api/assignments`, `GET /api/assignments/:kind/:id`, `POST /api/assignments/:kind/:id/accept`, `POST /api/assignments/:kind/:id/reject`, `POST /api/assignments/:kind/:id/approve`, `POST /api/assignments/:kind/:id/escalate`, `POST /api/assignments/:kind/:id/complete`, `POST /api/assignments/:kind/:id/reassign`.
+
+**Modificar (dominio):**
+
+- `packages/domain/src/agent.ts` — `AgentTask` gana `assignedBy?: string`, `assignmentKind: "task"`. **Sin `version` (F4). Sin `flow` (se computa desde `AgentPersona`).** `Monitor` gana `assignedBy?: string`, `assignmentKind: "monitor"`. **Sin `version` (F4).**
+- `packages/domain/src/goal.ts` (si existe; si no, `agent.ts` se modifica) — `Goal` gana `assignedBy?: string`, `assignmentKind: "goal"`. **Sin `version` (F4).**
+- `packages/domain/src/sop.ts` — `SOP` gana `assignedBy?: string`, `assignmentKind: "sop"`. **Sin `version` (F4).**
+- `packages/domain/src/index.ts` — re-exporta `assignment.ts`, `flow.ts`, `assignments/`.
+
+**Modificar (server):**
+
+- `apps/server/src/engine/service.ts` — `AgentService.createTask`/`createGoal`/`createMonitor` llaman al `AssignmentService.assign` cuando hay `assignedTo`. `AgentService.escalateTask` llama al `AssignmentService.escalate`. `AgentService` recibe `AssignmentService` en el constructor.
+- `apps/server/src/actions.ts` — `ActionService.propose` llama al `AssignmentService.assign` (kind `approval`). `ActionService.decide` llama al `AssignmentService.approve`/`reject` (kind `approval`). `ActionService` recibe `AssignmentService` en el constructor.
+- `apps/server/src/engine/routes.ts` — `POST /tasks/:id/reassign` y `POST /tasks/:id/escalate` cablean `AssignmentService`. `POST /tasks/:id/input` sin cambio. `POST /tasks`, `POST /goals`, `POST /monitors` se comportan como hoy; si el body trae `assignedTo`/`assignedBy`, se cablea en `AgentService` (F3.8).
+- `apps/server/src/skills/sop-routes.ts` — `POST /:id/run` cablea `AssignmentService.assign` (kind `sop`). `SOP.assignedTo` se rellena.
+- `apps/server/src/engine/agents/personas/registry.ts` — `PersonaRegistry.register` construye `Flow` desde `AgentPersona.reportsTo`/`peers`. `AgentActor.flow` se computa.
+- `apps/server/src/engine/agents/personas/routes.ts` — `GET /:id` devuelve `flow` estructurado (no solo `reportsTo`/`peers` sueltos).
+- `apps/server/src/app.ts` — `createApp` instancia `AssignmentRegistry`, `AssignmentService`, `assignmentsRoutes`. `app.route("/api/assignments", assignmentsRoutes(...))`. Pasa `AssignmentService` a `AgentService` y `ActionService`.
+- `apps/server/src/engine/orchestrator/orchestrator.ts` — `runGoal(ctx, goal)` propaga `ctx.actorId` y `ctx.requestingActorId` si están. Sin cambiar firma pública.
+
+**No crear (prohibido en esta fase):**
+
+- Cualquier `tests/*.test.ts` (F02.10 congelado hasta F7).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multiusuario_pendientes.md` (lo escribe el humano).
+- Cualquier tabla SQL.
+- `version`, `expectedVersion`, `reconcile`, `ConflictDiff`, `ConflictVersion` (F4).
+- `PresenceService` sobre `Store`, `EditLockService` sobre `Store`, `NotificationService`, `ReplayBuffer`, `Notification.visibility`/`priority`, SSE `Last-Event-ID` (F5).
+- `RecordHistory`, `AuditTrail` completo, `ReconcileService` (F6).
+- `Assignment` como entidad persistida (Fase 0 lo descartó, es interfaz de lectura).
+
+**No tocar:**
+
+- `worker.ts` más allá de Fase 1 + 2.
+- `conversation.ts` (no se toca).
+- `kernel.ts` más allá de Fase 1.
+- `db-tenant.ts`, `db-rls.ts` (Campaña 1 cerrada).
+- `engine/presence.ts`, `engine/edit-lock.ts` (F5).
+- `backup-tenant.ts` (Campaña 1 cerrada).
+- `scripts/audits/*`, `tests/tenant-http-e2e.test.ts` (congelados).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F3.1 | `packages/domain/src/assignment.ts` | 1 (crear) | CREATE |
+| F3.2 | `packages/domain/src/flow.ts` | 1 (crear) | CREATE |
+| F3.3 | `packages/domain/src/assignments/task.ts` | 1 (crear) | CREATE |
+| F3.3b | `packages/domain/src/assignments/goal.ts` | 1 (crear) | CREATE |
+| F3.3c | `packages/domain/src/assignments/monitor.ts` | 1 (crear) | CREATE |
+| F3.3d | `packages/domain/src/assignments/approval.ts` | 1 (crear) | CREATE |
+| F3.3e | `packages/domain/src/assignments/sop.ts` | 1 (crear) | CREATE |
+| F3.4 | `apps/server/src/engine/assignments/registry.ts` | 1 (crear) | CREATE |
+| F3.5 | `apps/server/src/engine/assignments/adapters/task-adapter.ts` | 1 (crear) | CREATE |
+| F3.5b | `apps/server/src/engine/assignments/adapters/goal-adapter.ts` | 1 (crear) | CREATE |
+| F3.5c | `apps/server/src/engine/assignments/adapters/monitor-adapter.ts` | 1 (crear) | CREATE |
+| F3.5d | `apps/server/src/engine/assignments/adapters/approval-adapter.ts` | 1 (crear) | CREATE |
+| F3.5e | `apps/server/src/engine/assignments/adapters/sop-adapter.ts` | 1 (crear) | CREATE |
+| F3.6 | `apps/server/src/engine/assignments/service.ts` | 1 (crear) | CREATE |
+| F3.7 | `apps/server/src/engine/assignments/routes.ts` | 1 (crear) | CREATE |
+| F3.8 | `packages/domain/src/agent.ts` | 2 (AgentTask, Monitor) | MODIFY |
+| F3.9 | `packages/domain/src/goal.ts` (o `agent.ts`) | 1 (Goal) | MODIFY |
+| F3.10 | `packages/domain/src/sop.ts` | 1 (SOP) | MODIFY |
+| F3.11 | `packages/domain/src/index.ts` | 1 (exports) | MODIFY |
+| F3.12 | `apps/server/src/engine/service.ts` | 2 (createTask/Goal/Monitor + escalateTask) | MODIFY |
+| F3.13 | `apps/server/src/actions.ts` | 2 (propose + decide) | MODIFY |
+| F3.14 | `apps/server/src/engine/routes.ts` | 2 (reassign + escalate) | MODIFY |
+| F3.15 | `apps/server/src/skills/sop-routes.ts` | 1 (POST /:id/run) | MODIFY |
+| F3.16 | `apps/server/src/engine/agents/personas/registry.ts` | 1 (Flow construction) | MODIFY |
+| F3.17 | `apps/server/src/engine/agents/personas/routes.ts` | 1 (GET /:id devuelve flow) | MODIFY |
+| F3.18 | `apps/server/src/app.ts` | 2 (instanciar AssignmentService + wire assignmentsRoutes + pasar a AgentService/ActionService) | MODIFY |
+| F3.19 | `apps/server/src/engine/orchestrator/orchestrator.ts` | 1 (propaga `requestingActorId`) | MODIFY |
+
+**Total: 14 CREATE + 12 MODIFY = 26 patchsets, ~31 hunks.**
+
+---
+
+## 8. Número de fixes y multipatches
+
+**Fixes aplicados en F3:**
+
+| Fix | Descripción | Clasificación |
+|---|---|---|
+| F3.1 | `Assignment` (dominio, interfaz de lectura) | Obligatorio |
+| F3.2 | `Flow` desde `AgentPersona` (dominio) | Obligatorio |
+| F3.3 | `assignments/*.ts` (5 schemas) | Obligatorio |
+| F3.4 | `AssignmentRegistry` | Obligatorio |
+| F3.5 | 5 adapters | Obligatorio |
+| F3.6 | `AssignmentService` | Obligatorio |
+| F3.7 | `assignmentsRoutes` | Obligatorio |
+| F3.8 | `AgentTask`/`Monitor` con `assignedBy` + `assignmentKind` | Obligatorio |
+| F3.9 | `Goal` con `assignedBy` + `assignmentKind` | Obligatorio |
+| F3.10 | `SOP` con `assignedBy` + `assignmentKind` | Obligatorio |
+| F3.11 | `index.ts` exports | Obligatorio |
+| F3.12 | `AgentService` cablea `AssignmentService` | Obligatorio |
+| F3.13 | `ActionService` cablea `AssignmentService` | Obligatorio |
+| F3.14 | `reassign`/`escalate` cablean `AssignmentService` | Obligatorio |
+| F3.15 | `sopRoutes` cablea `AssignmentService` | Obligatorio |
+| F3.16 | `PersonaRegistry` construye `Flow` | Obligatorio |
+| F3.17 | `personas/routes.ts` devuelve `flow` | Obligatorio |
+| F3.18 | `app.ts` wire | Obligatorio |
+| F3.19 | `orchestrator.ts` propaga `requestingActorId` | Obligatorio |
+
+**Fixes congelados:** F02.10 (tests hasta F7).
+
+**Fixes movidos a fase siguiente:** F4.1–F4.6 (consistencia), F5.1–F5.9 (coordinación), F6.1–F6.9 (trazabilidad), F7.1–F7.4 (cierre).
+
+**Fixes desbloqueados por esta fase:** F4–F7. Sin delegación, no hay consistencia ni coordinación.
+
+**Fuera de alcance de esta campaña:** gestión empresarial (perfiles editables, clientes, procedimientos, plantillas, nóminas, compliance, datos clínicos). Va a otras campañas.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. Fase 2 cerrada.**
+
+```powershell
+$checks = @{
+  "packages/domain/src/policy.ts" = "POLICY_MODEL_V1"
+  "packages/domain/src/classification.ts" = "FIELD_CLASSIFICATION_V1"
+  "apps/server/src/engine/authz/pdp.ts" = "POLICY_DECISION_POINT_V1"
+  "apps/server/src/engine/authz/pep.ts" = "POLICY_ENFORCEMENT_POINT_V1"
+  "apps/server/src/engine/authz/with-read.ts" = "WITH_READ_V1"
+  "apps/server/src/engine/authz/with-write.ts" = "WITH_WRITE_V1"
+  "apps/server/src/engine/authz/field-filter.ts" = "FIELD_FILTER_V1"
+  "apps/server/src/engine/authz/policies.ts" = "POLICIES_DEFAULT_V1"
+  "apps/server/src/users.ts" = "USER_CLASSIFICATION_V1"
+  "apps/server/src/engine/agents/governance.ts" = "AGENT_GOVERNANCE_PDP_V1"
+  "apps/server/src/app.ts" = "APP_AUTHZ_WIRE_V1"
+  "apps/server/src/config.ts" = "CONFIG_AUTHZ_V1"
+  "apps/server/src/kernel/audit/store-store.ts" = "AUDIT_STORE_CLASSIFICATION_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "Fase 2 verificada" -ForegroundColor Green
+```
+
+**0.3. `AgentTask` actual (Fase 2 con `fieldClassification`).**
+
+```powershell
+$ag = Join-Path $repoRoot "packages/domain/src/agent.ts"
+Select-String -Path $ag -Pattern "export interface AgentTask|assignedTo|assignedBy|assignmentKind|fieldClassification" -Context 0,15
+```
+
+**Decisión:** si `assignedTo` está 1×, `assignedBy` y `assignmentKind` no existen, F3.8 los añade. Si `assignedBy` ya existe (de otra fase), se reutiliza.
+
+**0.4. `Goal` actual.**
+
+```powershell
+$goal = Join-Path $repoRoot "packages/domain/src/goal.ts"
+if (Test-Path $goal) { Select-String -Path $goal -Pattern "export interface Goal|assignedTo|assignedBy|assignmentKind" -Context 0,10 } else { Write-Host "goal.ts no existe, Goal vive en agent.ts" -ForegroundColor Yellow; Select-String -Path $ag -Pattern "export interface Goal" -Context 0,10 }
+```
+
+**Decisión:** si `Goal` está en `goal.ts`, F3.9 lo modifica ahí. Si está en `agent.ts`, F3.9 lo modifica ahí. Anotar.
+
+**0.5. `Monitor` actual.**
+
+```powershell
+Select-String -Path $ag -Pattern "export interface Monitor|assignedTo|assignedBy|assignmentKind" -Context 0,12
+```
+
+**Decisión:** si `Monitor` está en `agent.ts`, F3.8 lo modifica ahí. Anotar.
+
+**0.6. `SOP` actual (Fase 2 con `fieldClassification`).**
+
+```powershell
+$sop = Join-Path $repoRoot "packages/domain/src/sop.ts"
+Select-String -Path $sop -Pattern "export const sopSchema|assignedTo|assignedBy|assignmentKind" -Context 0,12
+```
+
+**Decisión:** si `sopSchema` está 1×, F3.10 le añade `assignedBy` y `assignmentKind`.
+
+**0.7. `AgentPersona` actual.**
+
+```powershell
+$ap = Join-Path $repoRoot "packages/domain/src/agent-persona.ts"
+Select-String -Path $ap -Pattern "reportsTo|peers|displayName|role" -Context 0,3
+```
+
+**Decisión:** si `reportsTo` y `peers` existen (sí, verificado), F3.16 construye `Flow` desde ahí. Si no, anotar.
+
+**0.8. `AgentService.createTask`/`createGoal`/`createMonitor`.**
+
+```powershell
+$svc = Join-Path $repoRoot "apps/server/src/engine/service.ts"
+Select-String -Path $svc -Pattern "async createTask|async createGoal|async createMonitor|async escalateTask|async control|async controlMonitor|assignedTo" -Context 0,3
+```
+
+**Decisión:** si las 6 firmas están 1×, F3.12 las envuelve en `AssignmentService`. Si no, adaptar.
+
+**0.9. `ActionService.propose` y `decide`.**
+
+```powershell
+$act = Join-Path $repoRoot "apps/server/src/actions.ts"
+Select-String -Path $act -Pattern "async propose|async decide|async retry|async edit|taskId" -Context 0,3
+```
+
+**Decisión:** si las 4 firmas están 1×, F3.13 las envuelve en `AssignmentService`. Si no, adaptar.
+
+**0.10. `sopRoutes` `POST /:id/run`.**
+
+```powershell
+$sopr = Join-Path $repoRoot "apps/server/src/skills/sop-routes.ts"
+Select-String -Path $sopr -Pattern 'app.post\("/:id/run"|assignedTo' -Context 0,5
+```
+
+**Decisión:** si el handler está 1×, F3.15 lo envuelve en `AssignmentService.assign`. Si no, adaptar.
+
+**0.11. `PersonaRegistry.register`.**
+
+```powershell
+$pr = Join-Path $repoRoot "apps/server/src/engine/agents/personas/registry.ts"
+Select-String -Path $pr -Pattern "register\(|AgentPersona|reportsTo|peers" -Context 0,4
+```
+
+**Decisión:** si `register(` está 1×, F3.16 le añade la construcción de `Flow`. Si no, adaptar.
+
+**0.12. `personas/routes.ts` `GET /:id`.**
+
+```powershell
+$pru = Join-Path $repoRoot "apps/server/src/engine/agents/personas/routes.ts"
+Select-String -Path $pru -Pattern 'app.get\("/:id"|reportsTo|peers|flow' -Context 0,5
+```
+
+**Decisión:** si el handler está 1×, F3.17 añade `flow` al `persona` en la respuesta. Si ya devuelve `flow`, skip.
+
+**0.13. `createApp` para instanciar `AssignmentService`.**
+
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+Select-String -Path $app -Pattern "export async function createApp|const agent = new AgentService|const actions = new ActionService|app.route\(" -Context 0,2
+```
+
+**Decisión:** si `createApp`, `const agent = new AgentService`, `const actions = new ActionService`, `app.route(` están 1×, F3.18 inserta el wire. Si no, adaptar.
+
+**0.14. `orchestrator.runGoal`.**
+
+```powershell
+$orc = Join-Path $repoRoot "apps/server/src/engine/orchestrator/orchestrator.ts"
+Select-String -Path $orc -Pattern "runGoal|requestingActorId|actorId" -Context 0,3
+```
+
+**Decisión:** si `runGoal` no propaga `requestingActorId`, F3.19 lo añade. Sin cambiar firma pública.
+
+**0.15. Typecheck actual.**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes se anotan. Errores nuevos → abortar F3.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Clasificación | Motivo |
+|---|---|---|---|
+| F3.1–F3.7 | Sí | Obligatorio | 14 ficheros nuevos |
+| F3.8 | Sí | Obligatorio | `AgentTask`/`Monitor` |
+| F3.9 | Sí | Obligatorio | `Goal` |
+| F3.10 | Sí | Obligatorio | `SOP` |
+| F3.11 | Sí | Obligatorio | `index.ts` |
+| F3.12 | Sí | Obligatorio | `AgentService` |
+| F3.13 | Sí | Obligatorio | `ActionService` |
+| F3.14 | Sí | Obligatorio | `reassign`/`escalate` |
+| F3.15 | Sí | Obligatorio | `sopRoutes` |
+| F3.16 | Sí | Obligatorio | `PersonaRegistry` |
+| F3.17 | Sí | Obligatorio | `personas/routes.ts` |
+| F3.18 | Sí | Obligatorio | `app.ts` |
+| F3.19 | Sí | Obligatorio | `orchestrator.ts` |
+
+---
+
+## 10. Patchsets
+
+Los patchsets son 26 en total. Cada uno sigue el protocolo TypeScript v2: función envolvente, `throw` real, `[System.Text.UTF8Encoding]::new($false)`, backup, verificación pre/post, `git diff --check`. Por razones de espacio, en este documento van solo los **3 primeros patchsets completos**. Los 23 restantes siguen el mismo patrón y se escriben en `PLAN-CAMPANA-2-PATCHSETS-F3.md` que la IA de Fase 3 recibe como anexo.
+
+### Patchset F3.1 — `packages/domain/src/assignment.ts`
+
+**Fichero:** `packages/domain/src/assignment.ts` (CREATE)
+**Marca:** `ASSIGNMENT_MODEL_V1`
+
+**Contenido:**
+
+```typescript
+// ASSIGNMENT_MODEL_V1 — interfaz de lectura unificada de asignación.
+// AgentTask (task), Goal (goal), Monitor (monitor), ActionProposal (approval),
+// SOP (sop) son implementaciones. NO se persiste como entidad propia.
+// Se computa on-the-fly desde el record original usando el adapter.
+import { z } from "zod";
+
+export const assignmentKindSchema = z.enum(["task", "goal", "monitor", "approval", "sop"]);
+
+export const assignmentStatusSchema = z.enum([
+  "queued", "running", "waiting_input", "waiting_approval",
+  "scheduled", "paused", "succeeded", "failed", "cancelled",
+]);
+
+export const assignmentPlanStepSchema = z.object({
+  id: z.string().min(1).max(200),
+  title: z.string().min(1).max(300),
+  status: z.enum(["pending", "running", "succeeded", "failed", "waiting"]).default("pending"),
+  detail: z.string().max(2000).optional(),
+});
+
+export const assignmentPlanSchema = z.array(assignmentPlanStepSchema).max(200);
+
+export const assignmentEvidenceSchema = z.object({
+  id: z.string().min(1).max(200),
+  kind: z.enum(["mail", "file", "web", "user"]),
+  title: z.string().min(1).max(300),
+  excerpt: z.string().max(4000),
+  url: z.string().max(4096).optional(),
+});
+
+export const assignmentOutcomeSchema = z.object({
+  status: z.enum(["succeeded", "failed", "partial", "rejected"]),
+  summary: z.string().max(4000),
+  evidence: z.array(assignmentEvidenceSchema).max(50).default([]),
+  completedAt: z.string(),
+});
+
+export const assignmentSchema = z.object({
+  id: z.string().min(1).max(200),
+  tenantId: z.string().min(1).max(100),
+  kind: assignmentKindSchema,
+  assignedTo: z.string().min(1).max(200),
+  assignedBy: z.string().min(1).max(200).optional(),
+  status: assignmentStatusSchema,
+  plan: assignmentPlanSchema.optional(),
+  evidence: z.array(assignmentEvidenceSchema).max(50).default([]),
+  outcome: assignmentOutcomeSchema.optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export type AssignmentKind = z.infer<typeof assignmentKindSchema>;
+export type AssignmentStatus = z.infer<typeof assignmentStatusSchema>;
+export type AssignmentPlan = z.infer<typeof assignmentPlanSchema>;
+export type AssignmentEvidence = z.infer<typeof assignmentEvidenceSchema>;
+export type AssignmentOutcome = z.infer<typeof assignmentOutcomeSchema>;
+export type Assignment = z.infer<typeof assignmentSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 500`, typecheck verde, `Select-String -Pattern "ASSIGNMENT_MODEL_V1"` 1×.
+
+### Patchset F3.2 — `packages/domain/src/flow.ts`
+
+**Fichero:** `packages/domain/src/flow.ts` (CREATE)
+**Marca:** `FLOW_MODEL_V1`
+
+**Contenido:**
+
+```typescript
+// FLOW_MODEL_V1 — estructura formal de flujo organizacional.
+// Construido desde AgentPersona.reportsTo y AgentPersona.peers.
+// NO desde AgentRole (AgentRole no tiene reportsTo ni peers).
+// reportsTo: a quién reporta el actor.
+// peers: pares simétricos.
+// assigners/approvers/reviewers NO se persisten en Flow.
+// Se resuelven desde Policy (F2).
+import { z } from "zod";
+
+export const flowRelationSchema = z.object({
+  actorId: z.string().min(1).max(200),
+  kind: z.enum(["human", "agent"]),
+  role: z.enum(["owner", "manager", "employee", "hr", "compliance", "agent"]),
+});
+
+export const flowSchema = z.object({
+  reportsTo: flowRelationSchema.optional(),
+  peers: z.array(flowRelationSchema).max(50).default([]),
+});
+
+export type FlowRelation = z.infer<typeof flowRelationSchema>;
+export type Flow = z.infer<typeof flowSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 200`, typecheck verde.
+
+### Patchset F3.3 — `packages/domain/src/assignments/task.ts`
+
+**Fichero:** `packages/domain/src/assignments/task.ts` (CREATE)
+**Marca:** `ASSIGNMENT_IMPL_V1`
+
+**Contenido:**
+
+```typescript
+// ASSIGNMENT_IMPL_V1 — AgentTask como Assignment (kind task).
+import { z } from "zod";
+import { assignmentSchema } from "../assignment.ts";
+
+export const agentTaskAssignmentSchema = assignmentSchema.extend({
+  kind: z.literal("task"),
+  plan: z.array(z.any()).max(200).optional(),
+  evidence: z.array(z.any()).max(50).default([]),
+  outcome: z.any().optional(),
+  attempts: z.number().int().min(0).default(0),
+  actionId: z.string().max(200).nullable().optional(),
+  leaseId: z.string().nullable().optional(),
+  leaseUntil: z.string().nullable().optional(),
+});
+
+export type AgentTaskAssignment = z.infer<typeof agentTaskAssignmentSchema>;
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 200`, typecheck verde.
+
+*(Los 23 patchsets restantes siguen el mismo patrón. Se escriben en `PLAN-CAMPANA-2-PATCHSETS-F3.md` con el contenido completo.)*
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el protocolo TypeScript v2. Además:
+
+- **`assignment.ts`, `flow.ts`, `assignments/*.ts`, `registry.ts`, `adapters/*.ts`, `service.ts`, `routes.ts` son ficheros nuevos.** `Test-Path` false antes. `Test-Path` true después. `bytes > 500` después (200 para los schemas pequeños).
+- **`agent.ts` cambia 2 veces (F3.8).** `AgentTask` y `Monitor`. Cada hunk verifica su ancla.
+- **`goal.ts` cambia 1 vez (F3.9).** Si `goal.ts` no existe, `Goal` vive en `agent.ts` y el hunk va ahí. Verificar con `Test-Path`.
+- **`sop.ts` cambia 1 vez (F3.10).**
+- **`engine/service.ts` cambia 2 veces (F3.12).** `createTask/Goal/Monitor` y `escalateTask`. Cada hunk verifica su ancla.
+- **`actions.ts` cambia 2 veces (F3.13).** `propose` y `decide`. Cada hunk verifica su ancla.
+- **`engine/routes.ts` cambia 2 veces (F3.14).** `reassign` y `escalate`. Cada hunk verifica su ancla.
+- **`sop-routes.ts` cambia 1 vez (F3.15).**
+- **`personas/registry.ts` cambia 1 vez (F3.16).** Solo construye `Flow` desde `AgentPersona.reportsTo`/`peers`.
+- **`personas/routes.ts` cambia 1 vez (F3.17).** Solo `GET /:id` devuelve `flow`.
+- **`app.ts` cambia 2 veces (F3.18).** `createApp` y `app.route`. Si uno falla, se revierte el otro.
+- **`orchestrator.ts` cambia 1 vez (F3.19).**
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+- **`Select-String` antes de escribir cada ancla.** Nunca del doc. Siempre del fichero real.
+- **Si un fichero no está en el Repomix, se pide.** No se inventa. `orchestrator.ts`, `state-machines.ts`, `policy/engine.ts`, `personas/bootstrap.ts` no están en el Repomix mínimo pero sí en el holístico o audit. Se leen con `Select-String` para verificar la firma.
+- **`Assignment` como interfaz de lectura.** No se persiste. El adapter computa desde el record original. Si el adapter necesita un campo que no existe en `Assignment`, se guarda en `metadata` del `Assignment` computado, no en el record.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline prueba además:**
+  - `AssignmentService.assign` con un `HumanActor` assigner y un `AgentActor` assignee.
+  - `AssignmentService.accept`/`reject`/`approve`/`escalate`/`complete` con el actor correcto.
+  - `AssignmentRegistry` resuelve `AgentTask`, `Goal`, `Monitor`, `ActionProposal`, `SOP` al adapter correcto.
+  - `TaskAdapter.toAssignment(task)` y `fromAssignment(assignment)` idempotentes.
+  - `GoalAdapter`, `MonitorAdapter`, `ApprovalAdapter`, `SopAdapter` idem.
+  - `AgentService.createTask` con `assignedTo` llama al `AssignmentService`.
+  - `ActionService.propose` con `taskId` llama al `AssignmentService.assign` (kind `approval`).
+  - `ActionService.decide` llama al `AssignmentService.approve`/`reject`.
+  - `sopRoutes POST /:id/run` llama al `AssignmentService.assign` (kind `sop`).
+  - `POST /api/assignments/:kind/:id/accept` con actor correcto → 200. Con otro → 403.
+  - `POST /api/assignments/:kind/:id/escalate` con `toActor` y `reason` → 200.
+  - `PersonaRegistry.register` construye `Flow` desde `reportsTo` y `peers`.
+  - `GET /api/agent-personas/:id` devuelve `flow`.
+  - Agente con tarea delegada no obtiene más permisos que el asignador (T13).
+- **La IA commitea con ficheros explícitos:**
+
+```powershell
+git add packages/domain/src/assignment.ts
+git add packages/domain/src/flow.ts
+git add packages/domain/src/assignments/
+git add packages/domain/src/agent.ts
+git add packages/domain/src/goal.ts
+git add packages/domain/src/sop.ts
+git add packages/domain/src/index.ts
+git add apps/server/src/engine/assignments/
+git add apps/server/src/engine/service.ts
+git add apps/server/src/actions.ts
+git add apps/server/src/engine/routes.ts
+git add apps/server/src/skills/sop-routes.ts
+git add apps/server/src/engine/agents/personas/registry.ts
+git add apps/server/src/engine/agents/personas/routes.ts
+git add apps/server/src/app.ts
+git add apps/server/src/engine/orchestrator/orchestrator.ts
+git commit -m "feat(multiusuario): fase 3 — delegación controlada [ASSIGNMENT_MODEL_V1, FLOW_MODEL_V1, ASSIGNMENT_IMPL_V1, ASSIGNMENT_REGISTRY_V1, ASSIGNMENT_SERVICE_V1, ASSIGNMENT_ROUTES_V1, AGENT_TASK_ASSIGNED_BY_V1, GOAL_ASSIGNED_BY_V1, MONITOR_ASSIGNED_BY_V1, SOP_ASSIGNED_BY_V1, AGENT_SERVICE_ASSIGNMENT_V1, ACTION_SERVICE_ASSIGNMENT_V1, ENGINE_ROUTES_ASSIGNMENT_V1, SOP_ROUTES_ASSIGNMENT_V1, PERSONA_REGISTRY_FLOW_V1, PERSONA_ROUTES_FLOW_V1, APP_ASSIGNMENT_WIRE_V1, ORCHESTRATOR_REQUESTING_ACTOR_V1]"
+git push origin feat/multitenancy-campaign
+```
+
+**Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fase 2 incompleta → aborta todo.
+- `AgentTask` 0× → adaptar F3.8.
+- `Goal` no está en `goal.ts` → está en `agent.ts`. Adaptar F3.9.
+- `Monitor` 0× → adaptar F3.8.
+- `SOP` 0× en `sop.ts` → adaptar F3.10.
+- `AgentPersona.reportsTo`/`peers` 0× → anotar y limitar F3.16 a `flow: { peers: [] }`.
+- `AgentService.createTask` 0× → anotar y no cablear `AgentService` en F3.12. El `AssignmentService` sigue existiendo, pero solo se usa desde `assignmentsRoutes`.
+- `ActionService.propose` 0× → anotar y no cablear `ActionService` en F3.13.
+- `sopRoutes POST /:id/run` 0× → anotar y no cablear `sopRoutes` en F3.15.
+- `PersonaRegistry.register` 0× → anotar y no construir `Flow` en F3.16.
+- `createApp` 0× → anotar y no wirear `assignmentsRoutes` en F3.18.
+- Cline: typecheck rojo por `AssignmentService` (tipos mal) → ajustar tipos, revertir el fichero rojo, anotar.
+- Cline: tests de `AssignmentService` no ejecutables (F02.10 congelado) → anotar como `MISSING_TEST_*`.
+
+**Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\04-multi-usuario-concurrente\missed\_multiusuario_pendientes.md` con el formato del doc 01 §13. La IA no lo escribe.**
+
+**Deudas anotadas en `-pendientes.md`:**
+- F3.3/F3.5: `TaskAdapter`, `GoalAdapter`, `MonitorAdapter`, `ApprovalAdapter`, `SopAdapter` traducen `record ↔ assignment`. Si un campo específico del record no tiene equivalente en `Assignment`, se guarda en `metadata` del `Assignment` computado. Anotar.
+- F3.6: `AssignmentService.complete` no persiste el `outcome` en el record original (task, goal, monitor, action, sop) hasta que el adapter lo hace. Es responsabilidad del adapter. Anotar.
+- F3.12: `AgentService.createTask` y `createGoal` no llaman al `AssignmentService` si no hay `assignedBy` explícito. El owner actual se usa como assigner por defecto. Correcto.
+- F3.13: `ActionService.decide` llama al `AssignmentService.approve`/`reject` solo si el PDP lo permite. Si no, 403. Correcto.
+- F3.14: `POST /tasks/:id/reassign` y `POST /tasks/:id/escalate` usan el `AssignmentService` si el body trae `assignedTo` o `reason`. Si no, comportamiento actual. Correcto.
+- F3.18: `AssignmentService` se pasa a `AgentService` y `ActionService` en `createApp`. Si alguno no lo recibe, no usa `Assignment`. Correcto.
+- F3.19: `orchestrator.runGoal` propaga `requestingActorId` si está. Sin cambiar firma pública.
+- **`Flow` desde `AgentPersona`**, no desde `AgentRole`.
+- **`assigners`/`approvers`/`reviewers` no se persisten en `Flow`**, se resuelven desde `Policy`.
+- **`Assignment` como interfaz de lectura**, no como entidad persistida.
+- **`AssignmentService` hereda permisos del asignador**, acotados por scope de tarea. El agente no escala (T13).
+
+---
+
+## 14. Checklist de cierre de la fase 3
+
+- [ ] Paso 0.1–0.15 ejecutados, salidas anotadas.
+- [ ] Fase 2 verificada (12 marcas).
+- [ ] `AgentTask` verificado.
+- [ ] `Goal` verificado (en `goal.ts` o `agent.ts`).
+- [ ] `Monitor` verificado.
+- [ ] `SOP` verificado.
+- [ ] `AgentPersona.reportsTo`/`peers` verificados.
+- [ ] `AgentService` verificada.
+- [ ] `ActionService` verificada.
+- [ ] `sopRoutes` verificada.
+- [ ] `PersonaRegistry.register` verificado.
+- [ ] `personas/routes.ts` verificado.
+- [ ] `createApp` verificado.
+- [ ] `orchestrator.runGoal` verificado.
+- [ ] Typecheck ejecutado y registrado.
+- [ ] F3.1 aplicado con `ASSIGNMENT_MODEL_V1` 1×.
+- [ ] F3.2 aplicado con `FLOW_MODEL_V1` 1×.
+- [ ] F3.3 aplicado (5 hunks) con `ASSIGNMENT_IMPL_V1` 1× por fichero.
+- [ ] F3.4 aplicado con `ASSIGNMENT_REGISTRY_V1` 1×.
+- [ ] F3.5 aplicado (5 hunks) con `ASSIGNMENT_ADAPTER_V1` 1× por fichero.
+- [ ] F3.6 aplicado con `ASSIGNMENT_SERVICE_V1` 1×.
+- [ ] F3.7 aplicado con `ASSIGNMENT_ROUTES_V1` 1×.
+- [ ] F3.8 aplicado (2 hunks) con `AGENT_TASK_ASSIGNED_BY_V1` y `MONITOR_ASSIGNED_BY_V1` 1× cada uno.
+- [ ] F3.9 aplicado con `GOAL_ASSIGNED_BY_V1` 1×.
+- [ ] F3.10 aplicado con `SOP_ASSIGNED_BY_V1` 1×.
+- [ ] F3.11 aplicado con `DOMAIN_INDEX_ASSIGNMENT_V1` 1×.
+- [ ] F3.12 aplicado (2 hunks) con `AGENT_SERVICE_ASSIGNMENT_V1` 1×.
+- [ ] F3.13 aplicado (2 hunks) con `ACTION_SERVICE_ASSIGNMENT_V1` 1×.
+- [ ] F3.14 aplicado (2 hunks) con `ENGINE_ROUTES_ASSIGNMENT_V1` 1×.
+- [ ] F3.15 aplicado con `SOP_ROUTES_ASSIGNMENT_V1` 1×.
+- [ ] F3.16 aplicado con `PERSONA_REGISTRY_FLOW_V1` 1×.
+- [ ] F3.17 aplicado con `PERSONA_ROUTES_FLOW_V1` 1×.
+- [ ] F3.18 aplicado (2 hunks) con `APP_ASSIGNMENT_WIRE_V1` 1×.
+- [ ] F3.19 aplicado con `ORCHESTRATOR_REQUESTING_ACTOR_V1` 1×.
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` no se ha tocado más allá de Fase 1 + 2.
+- [ ] `conversation.ts` no se ha tocado.
+- [ ] `kernel.ts` no se ha tocado más allá de Fase 1.
+- [ ] `computer.ts`, `files.ts` no se han tocado.
+- [ ] `presence.ts`, `edit-lock.ts` no se han tocado.
+- [ ] Cline typecheck verde (con filtro `worker.ts`).
+- [ ] Cline test verde o fallos preexistentes anotados.
+- [ ] Cline probó `AssignmentService.assign` con `HumanActor` → `AgentActor`.
+- [ ] Cline probó `accept`/`reject`/`approve`/`escalate`/`complete` con el actor correcto.
+- [ ] Cline probó `AssignmentRegistry` resolviendo cada kind al adapter correcto.
+- [ ] Cline probó `TaskAdapter`/`GoalAdapter`/`MonitorAdapter`/`ApprovalAdapter`/`SopAdapter` idempotentes.
+- [ ] Cline probó `AgentService.createTask` con `assignedTo` → `AssignmentService`.
+- [ ] Cline probó `ActionService.propose` con `taskId` → `AssignmentService.assign` (approval).
+- [ ] Cline probó `ActionService.decide` → `AssignmentService.approve`/`reject`.
+- [ ] Cline probó `sopRoutes POST /:id/run` → `AssignmentService.assign` (sop).
+- [ ] Cline probó `POST /api/assignments/:kind/:id/accept` con actor correcto (200) y otro (403).
+- [ ] Cline probó `POST /api/assignments/:kind/:id/escalate` con `toActor` y `reason` (200).
+- [ ] Cline probó `PersonaRegistry.register` construyendo `Flow`.
+- [ ] Cline probó `GET /api/agent-personas/:id` devolviendo `flow`.
+- [ ] Cline probó T13 (agente con tarea delegada no obtiene más permisos que el asignador).
+- [ ] `git add` explícito de los 26 ficheros.
+- [ ] `git commit -m "feat(multiusuario): fase 3 — delegación controlada [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 3 cerrada. Siguiente: Fase 4 (consistencia con version, expectedVersion, diff, reconcile)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `packages/domain/src/agent.ts` — `AgentTask` (fragmento):
+
+```typescript
+export interface AgentTask {
+  id: string;
+  title: string;
+  prompt: string;
+  kind: "agent" | "document" | "monitor" | "finance" | "plan" | "sop";
+  status: TaskStatus;
+  goalId?: string;
+  plan: TaskStep[];
+  evidence: Evidence[];
+  input: Record<string, unknown>;
+  state: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  nextRunAt?: string;
+  leaseId?: string | null;
+  leaseUntil?: string | null;
+  attempts: number;
+  actionId?: string | null;
+  result?: string;
+  error?: string | null;
+  question?: string;
+  artifactIds: string[];
+  assignedTo?: string;
+  tenantId: string;
+  threadId?: string;
+  requestId?: string;
+  parentTaskId?: string;
+  lastCheckpointAt?: string;
+  outcome?: import("./outcome.ts").Outcome;
+  // F2 añade fieldClassification
+}
+```
+
+**F3.8 añade `assignedBy?: string` y `assignmentKind: "task"`. Sin `version` (F4). Sin `flow` (se computa desde `AgentPersona`).**
+
+### A.2. `packages/domain/src/agent-persona.ts` — `AgentPersona` (fragmento):
+
+```typescript
+export const agentPersonaSchema = z.object({
+  id: z.string().min(1).max(80).regex(/^[a-z][a-z0-9-]*$/),
+  displayName: z.string().min(1).max(80),
+  role: z.string().min(1).max(200),
+  age: z.number().int().min(18).max(99).optional(),
+  gender: agentGenderSchema.optional(),
+  personality: agentPersonalitySchema,
+  capabilities: agentCapabilitiesSchema,
+  values: z.array(agentValueRefSchema).max(20).default([]),
+  reportsTo: z.string().min(1).max(80).optional(),
+  peers: z.array(z.string().min(1).max(80)).max(50).default([]),
+  avatar: agentAvatarSchema.optional(),
+  language: z.string().min(2).max(10).default("es"),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+}).strict();
+```
+
+**`AgentPersona` SÍ tiene `reportsTo` y `peers`. F3.16 construye `Flow` desde aquí.**
+
+### A.3. `apps/server/src/engine/agents/personas/registry.ts` — `register` (literal):
+
+```typescript
+register(tenantId: string, persona: AgentPersona, stats: AgentStats): void {
+  let tenantMap = this.byTenant.get(tenantId);
+  if (!tenantMap) {
+    tenantMap = new Map();
+    this.byTenant.set(tenantId, tenantMap);
+  }
+  tenantMap.set(persona.id, { persona, stats });
+}
+```
+
+**F3.16 añade la construcción de `Flow` desde `persona.reportsTo` y `persona.peers`. `AgentActor.flow` se computa.**
+
+### A.4. `apps/server/src/engine/agents/personas/routes.ts` — `GET /:id` (fragmento):
+
+```typescript
+app.get("/:id", async (c) => {
+  const owner = c.get("owner");
+  const tenantId = await tenantIdFor(owner);
+  const personaId = c.req.param("id");
+  const skin = await resolveSkin(deps.registry, tenantId, personaId, {
+    refreshStats: true,
+    db: deps.db,
+    owner,
+  });
+  if (!skin) {
+    throw new AppError(`Persona not found: ${personaId}`, 404);
+  }
+  const activity = await activityForPersona(deps.db, owner, personaId, 20);
+  return c.json({
+    tenantId,
+    persona: {
+      id: skin.persona.id,
+      displayName: skin.persona.displayName,
+      // ...
+      reportsTo: skin.persona.reportsTo ?? null,
+      peers: skin.persona.peers,
+    },
+    stats: skin.stats,
+    state: skin.state,
+    activity,
+  });
+});
+```
+
+**F3.17 añade `flow` al `persona` en la respuesta.**
+
+### A.5. `apps/server/src/engine/service.ts` — `AgentService.createTask` (firma, fragmento):
+
+```typescript
+async createTask(
+  owner: string,
+  input: CreateTaskInput,
+  idempotencyKey?: string,
+): Promise<AgentTask> {
+  // ...
+}
+```
+
+**F3.12 añade `assignedBy` y `assignedTo` opcionales. Si no vienen, se usa `owner` como assigner y assignee por defecto. Llama al `AssignmentService.assign` (kind `task`).**
+
+### A.6. `apps/server/src/actions.ts` — `ActionService.propose` (firma, fragmento):
+
+```typescript
+async propose(
+  owner: string,
+  raw: unknown,
+  idempotencyKey?: string,
+  taskId?: string,
+): Promise<ActionProposal> {
+  // ...
+}
+```
+
+**F3.13 llama al `AssignmentService.assign` (kind `approval`) cuando `taskId` existe. Si no, comportamiento actual.**
+
+### A.7. `apps/server/src/actions.ts` — `ActionService.decide` (firma, fragmento):
+
+```typescript
+async decide(
+  owner: string,
+  id: string,
+  hash: string,
+  decision: "approve" | "deny",
+  userId?: string,
+): Promise<ActionProposal> {
+  // ...
+}
+```
+
+**F3.13 llama al `AssignmentService.approve` (si `approve`) o `reject` (si `deny`) cuando `taskId` existe. `userId` es el actor que decide.**
+
+### A.8. `apps/server/src/skills/sop-routes.ts` — `POST /:id/run` (fragmento):
+
+```typescript
+app.post("/:id/run", async (c

@@ -1,0 +1,683 @@
+# 05 — Campaña 2 / Fase 0 — Reconocimiento y contrato (v5)
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 0 — Reconocimiento y contrato
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Campaña 1 (multitenant) cerrada. Supabase Auth decidido para humanos. Agentes internos con identidad de ejecución propia. Kernel gobierna autorización y delegación.
+**Aprobación:** v4 aprobada con condiciones por revisión senior. v5 aplica las 14 correcciones del contraste contra el concepto actual y los 3 ficheros reales (`agent.ts`, `agent-persona.ts`, `orchestrator.ts`), y las correcciones del revisor (D2, D6, D10, D12). Documento listo para generar los 6 documentos de Fase 0 y arrancar F1.
+
+---
+
+## 0. Cambios respecto a v4 (correcciones aplicadas)
+
+| # | Corrección | Motivo |
+|---|---|---|
+| 1 | **7 fases, no 5** (F1–F7) | El concepto actual separa consistencia (F4), coordinación (F5) y trazabilidad (F6). El v4 las mezclaba en F3 y F4. |
+| 2 | **I6/I7/I8 y T6/T7/T8 → F4** | En v4 estaban en F3. F3 es delegación (G3); F4 es consistencia (G5). |
+| 3 | **`Flow` desde `AgentPersona`, no `AgentRole`** | Verificado contra `agent.ts`: `AgentRole` no tiene `reportsTo`/`peers`. Los tiene `AgentPersona`. |
+| 4 | **`managerId` no está en `User`** | Verificado contra `users.ts`: `User` solo tiene `role: "admin"|"user"`. El responsable de equipo se resuelve vía `Flow` + `Policy`. |
+| 5 | **`version` selectiva** (D6 corregida) | Solo en `AgentTask`, `Goal`, `Monitor`, `SOP` (decidir), `Thread`, `Project`, `BusinessEntity`. No en `AgentMemory`, `AgentArtifact`, `AgentNotification`. |
+| 6 | **Reconcile por recurso** (D7 aprobada) | `POST /threads/:id/reconcile`, `POST /projects/:id/reconcile`, etc. No `POST /:kind/:id/reconcile` genérico. |
+| 7 | **Sin `salaryGross`/`salaryNet`/`bankAccount`** | Verificado contra `users.ts`: no existen. La clasificación se aplica a campos reales. |
+| 8 | **`fieldClassification` no es seguridad por sí sola** | `FieldFilter` en lectores, escritores, serializadores, listados, búsquedas, agregaciones. No solo en `withRead`. |
+| 9 | **`withRead`/`withWrite` en todas las rutas** (D2 corregida) | Handlers, workers, acciones internas, streams, rutas alternativas. Se registra el mecanismo de authz de cada ruta. |
+| 10 | **`x-user-id` deprecado** | No es fuente de verdad. Si viene, se valida contra `actor.id` y se anota discrepancia. No autoriza. |
+| 11 | **Sin JIT provisioning** (D1 aprobada) | `sub` sin `User` con `authProviderId` → 401. Alta explícita. |
+| 12 | **Desactivación sin huérfanas = transición segura** (D10 corregida) | Revocar acceso, identificar asignaciones afectadas, reasignar o marcar pendientes. No masiva ciega. |
+| 13 | **Sin `delete-tenant-data.ts`** | No aplica a multiusuario. Es de otra campaña. |
+| 14 | **Añadir `ExecutionContext.actorId` + `sessionId`** | Verificado contra `orchestrator.ts`: `ExecutionContext` no los tiene. F1 los añade. |
+
+---
+
+## 1. Qué fue la fase anterior
+
+Campaña 1 (multitenant) cerrada. `TenantScopedStore`, `TenantService`, `TENANT_DEFAULT_STRICT_V1`, rate limit transversal, RLS transaccional, validación de `tenantId` en body, auditoría cross-tenant, `X-Tenant-Id` en respuestas. `compareAndSwap`, `insertIfAbsent`, `StoreAuditStore` con hash chain atómica, `StateMachineEngine`, `PolicyEngine`, `EventBus`. Todo aplicado y testeado. La Campaña 2 arranca desde ahí.
+
+**Verificado contra los 3 ficheros reales:**
+- `packages/domain/src/agent.ts`: `AgentRole` **no** tiene `reportsTo` ni `peers`. `AgentTask` **no** tiene `version`, `fieldClassification`, `assignmentKind`, `assignedBy`. `AgentMemory`, `AgentArtifact`, `AgentNotification` **no** tienen `fieldClassification`.
+- `packages/domain/src/agent-persona.ts`: `AgentPersona` **sí** tiene `reportsTo?: string` y `peers: string[]`. Es la fuente real de jerarquía y colaboración.
+- `apps/server/src/engine/orchestrator/orchestrator.ts`: `ExecutionContext` **no** tiene `actorId` ni `sessionId`. `runGoal(ctx, goal)` no atribuye a `assignedTo`/`assignedBy`.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **Contrato de campaña aprobado y versionado.** 5 garantías (G1–G5), 13 invariantes (I1–I13), 17 tests (14 obligatorios + 3 condicionales), **7 fases** (F1–F7).
+- **Autenticación decidida y documentada.** Supabase Auth (JWT vía JWKS) para humanos. Agentes internos con identidad de ejecución propia (`executingActorId`) sin login humano.
+- **Modelo de identidad claro.** `User.id` interno vinculado a `sub` de Supabase vía `User.authProviderId` (nuevo, único, backfill controlado). Pertenencia al tenant resuelta en servidor. `role: "authenticated"` del JWT **ignorado** para autorización. **Sin JIT provisioning**: `sub` sin `User` vinculado → 401.
+- **Delegación separada de autenticación.** `requestingActorId` (quien delega) ≠ `executingActorId` (quien ejecuta). El worker atribuye correctamente.
+- **Revocación explícita.** Actor desactivado (`active=false`) pierde acceso en el **siguiente request** (check en `ActorService.resolve`, no solo en login).
+- **Condiciones de activación documentadas.** I9 (presence compartida), I11 (SSE replay), I12 (record history) solo se activan cuando el despliegue lo requiera.
+- **`ESTADO-REAL-MULTIUSUARIO.md` con evidencia.** Cada elemento marcado como *confirmado en código / existe parcialmente / no encontrado / propuesto*, con `fichero:línea` o `Select-String`.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 1 (documento 06): identidad y actor. `User.authProviderId` único + backfill. `UserService.getByAuthProviderId(sub)`. `ActorService.resolve(jwtPayload)` como función pura. Middleware JWT (Supabase `jwk` o `jose`). `ctx` en cada request. `KernelContext.actorId` + `sessionId`. `ExecutionContext.actorId` + `sessionId`. `actorId` en kernel, worker y audit. `executingActorId` vs `requestingActorId` en worker. Actor desactivado → 403. `x-user-id` deprecado. T1, T2, T14, T15.
+
+**Sin tocar permisos, CAS, presence, SSE ni audit trail.** Solo identidad.
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 0), ejecutada como **patchset único de documentación** más **verificación de arranque sin escritura**. Total: **1 patchset de docs + verificación de typecheck**.
+
+Fase 0 no toca código de producto. Solo escribe 6 documentos en `docs/miniaudits/04-multi-usuario-concurrente/`.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix de Fase 0 + los 3 ficheros reales:**
+
+- `apps/server/src/users.ts` — `User`, `UserService`, `hashPassword`, `verifyPassword`, `userSchema`, `userRoleSchema`.
+- `apps/server/src/auth.ts` — `Auth`, `session`, `owner`, `sign`, `verify`, `createAuth`.
+- `apps/server/src/kernel/context/kernel-context.ts` — `KernelContext`, `kernelContextSchema`, `systemContext`.
+- `apps/server/src/app.ts` — `createApp`, `authMiddleware`, `app.onError`, rutas.
+- `apps/server/src/index.ts` — arranque, `createApp`.
+- `apps/server/src/kernel/kernel.ts` — `Kernel`, `openTurn`, `appendThought`, `closeTurn`.
+- `apps/server/src/kernel/audit/store-store.ts` — `StoreAuditStore`, `auditEntrySchema`.
+- `apps/server/src/engine/worker.ts` — `TaskWorker`, `run-events`, `settled`, `busEvent`.
+- `apps/server/src/engine/agents/governance.ts` — `AgentGovernance`.
+- `apps/server/src/engine/tenant.ts` — `TenantService`, `tenantIdFor`.
+- `apps/server/src/middleware/user-header.ts` — `userHeaderMiddleware`.
+- `apps/server/src/middleware/request-logger.ts` — `requestLogger`.
+- `apps/server/src/config.ts` — `Config`, `readConfig`.
+- `apps/server/src/rate-limit.ts` — `RateLimiter`.
+- `apps/server/src/notifications-stream.ts` — SSE.
+- `apps/server/src/notification-prefs.ts` — preferencias.
+- `apps/server/src/engine/events/bus.ts` — `EventBus`, `EmitOptions`.
+- `apps/server/src/engine/events/subscriber.ts` — `EventSubscriberRegistry`.
+- `apps/server/src/engine/agents/personas/registry.ts` — `PersonaRegistry`.
+- `apps/server/src/engine/agents/personas/routes.ts` — handlers de personas.
+- `apps/server/src/engine/agents/personas/resolver.ts` — `resolveSkin`, `resolveAllSkins`.
+- `apps/server/src/engine/agents/personas/activity.ts` — `activityForPersona`.
+- `apps/server/src/actions.ts` — `ActionService`.
+- `apps/server/src/engine/routes.ts` — handlers de `tasks`, `goals`, `monitors`, `memories`, `roles`, `identity`, `notifications`, `actions/*`.
+- `apps/server/src/threads-routes.ts` — handlers de threads, `THREAD_CONFLICT_DIFF_V1`.
+- `apps/server/src/projects-routes.ts` — handlers de projects, `PROJECT_CONFLICT_DIFF_V1`.
+- `apps/server/src/rag-routes.ts` — handlers RAG.
+- `apps/server/src/admin-routes.ts` — handlers admin.
+- `apps/server/src/admin-tenants.ts` — handlers admin tenants.
+- `apps/server/src/skills/routes.ts` — `skillsRoutes`.
+- `apps/server/src/skills/sop-routes.ts` — `sopRoutes`.
+- `apps/server/src/computer-routes.ts` — `computerRoutes`.
+- `apps/server/src/computer-tools.ts` — `computerTools`.
+- `apps/server/src/files.ts` — `Files`.
+- `apps/server/src/computer.ts` — `ComputerService`.
+- `packages/domain/src/agent.ts` — `AgentRole`, `AgentTask`, `AgentMemory`, `AgentArtifact`, `AgentNotification`, `Goal`, `Monitor`, `Project`.
+- `packages/domain/src/agent-persona.ts` — `AgentPersona`, `AgentStats`.
+- `packages/domain/src/sop.ts` — `SOP`, `SOPStep`.
+- `packages/domain/src/business.ts` — `BusinessEntity`, `BusinessRelation`.
+- `packages/domain/src/execution-context.ts` — `ExecutionContext`.
+- `packages/domain/src/views.ts` — `runtimeViewSpecSchema`.
+- `apps/server/src/engine/orchestrator/orchestrator.ts` — `BusinessOSOrchestrator`, `ExecutionContext` usage.
+- `apps/server/src/engine/presence.ts` — `PresenceService` in-memory.
+- `apps/server/src/engine/edit-lock.ts` — `EditLock` in-memory.
+- `docs/miniaudits/04-multi-usuario-concurrente/miniaudit.md`, `fixes.md`, `roadmap.md` — estado real y fixes de la fase anterior. **Contexto de reutilización parcial, no contrato.**
+- `docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md`, `ID-MAP.md`, `missed/_multitenant_pendientes.md` — estado Campaña 1.
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+
+- `apps/server/package.json` — `Select-String -Pattern "hono|jwk|supabase|jose"` para confirmar si `hono/jwk` está disponible o hay que usar `jose`.
+- `package.json` raíz — `Select-String -Pattern "hono|supabase|jose"`.
+- `apps/server/src/engine/policy/engine.ts` — `Select-String -Pattern "class PolicyEngine|async can\("` con `-Context 0,3`.
+- `apps/server/src/engine/state-machines.ts` — `Select-String -Pattern "class StateMachine|transition"` con `-Context 0,3`.
+
+**Archivos que NO se leen en esta fase:**
+
+- `apps/server/src/backup-tenant.ts` (Campaña 1, cerrada).
+- `apps/server/src/worker-entry.ts`, `kernel/tenancy/*`, `kernel/config/*` (no se tocan).
+- `apps/worker/src/**`, `apps/computer/src/**`, `scripts/**`, `clientes/**`, `docs/audits/**` (no se tocan).
+- `apps/web/src/**` (no se toca en esta campaña).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Crear (docs):**
+- `docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md`
+- `docs/miniaudits/04-multi-usuario-concurrente/ID-MAP.md`
+- `docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md`
+- `docs/miniaudits/04-multi-usuario-concurrente/fuera-de-mvp.md`
+- `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md`
+- `docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md`
+
+**Modificar:** ninguno.
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts` (F02.10 congelado hasta F7).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multiusuario_pendientes.md` (lo escribe el humano).
+- Cualquier tabla SQL.
+- Cualquier código de producto.
+
+**No tocar:** ningún fichero de `apps/` ni `packages/`. Fase 0 es solo docs.
+
+---
+
+## 7. Número de hunks por patchset
+
+Fase 0 no tiene hunks de código. Tiene 6 documentos. Se escriben en 1 patchset de docs o 3 patchsets agrupados (contrato, aceptación, trabajo). No hay `$old`/`$new`. No hay `Assert-MatchCount`. Hay backup de docs si ya existen.
+
+| Patchset | Documento | Tipo |
+|---|---|---|
+| D1 | `ESTADO-REAL-MULTIUSUARIO.md` | CREATE |
+| D1 | `ID-MAP.md` | CREATE |
+| D2 | `CIERRE-MVP.md` | CREATE |
+| D2 | `fuera-de-mvp.md` | CREATE |
+| D3 | `-pendientes.md` | CREATE |
+| D3 | `PLAN-CAMPANA-2.md` | CREATE |
+
+**Total: 6 documentos, 0 hunks de código.**
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes documentales aplicados:** F0.1 (contrato), F0.2 (estado real), F0.3 (aceptación), F0.4 (fuera de MVP), F0.5 (pendientes), F0.6 (plan).
+- **Fixes congelados:** F02.10 (tests hasta F7).
+- **Fixes movidos a fase siguiente:** F1.1–F1.11 (identidad y actor), F2.1–F2.11 (acceso), F3.1–F3.13 (delegación), F4.1–F4.6 (consistencia), F5.1–F5.9 (coordinación), F6.1–F6.9 (trazabilidad), F7.1–F7.4 (cierre).
+- **Fixes desbloqueados por esta fase:** todos los de F1–F7. Sin el contrato, no se puede empezar F1.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. Campaña 1 cerrada (marcas).**
+
+```powershell
+$checks = @{
+  "apps/server/src/db-rls.ts" = "TENANT_RLS_TX_V1"
+  "apps/server/src/index.ts" = "RLS_REQUIRED_IN_SHARED_V1"
+  "apps/server/src/kernel/audit/store-store.ts" = "AUDIT_STORE_TENANT_V1"
+  "apps/server/src/app.ts" = "RESPONSE_TENANT_HEADER_V1"
+  "apps/server/src/middleware/request-logger.ts" = "LOG_CONTEXT_TENANT_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("ERROR: falta " + $checks[$k] + " en " + $k) }
+}
+Write-Host "Campaña 1 verificada" -ForegroundColor Green
+```
+
+**0.3. `TenantService.tenantIdFor` (asume tenant único o multi).**
+
+```powershell
+$tenant = Join-Path $repoRoot "apps/server/src/engine/tenant.ts"
+Select-String -Path $tenant -Pattern "tenantIdFor|resolve\(|MEMBERSHIP_KIND|tenant-membership" -Context 0,3
+```
+
+**Decisión:** si `tenantIdFor` devuelve un único `tenantId` por `owner`, documentar la restricción en `-pendientes.md` y en `ESTADO-REAL-MULTIUSUARIO.md`. Si el humano quiere multi-pertenencia, se anota como deuda a F2.
+
+**0.4. `Auth.owner` y middleware JWT actual.**
+
+```powershell
+$auth = Join-Path $repoRoot "apps/server/src/auth.ts"
+Select-String -Path $auth -Pattern "async owner|async session|verify\(|sign\(" -Context 0,3
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+Select-String -Path $app -Pattern "jwk|jwt|supabase|verifyJwt|authorization" -Context 0,2
+```
+
+**Decisión:** si no hay middleware JWT, F1 lo implementa. Si ya hay algo, se reutiliza. Anotar.
+
+**0.5. Dependencias JWT reales.**
+
+```powershell
+$pkgServer = Join-Path $repoRoot "apps/server/package.json"
+if (Test-Path $pkgServer) { Get-Content $pkgServer | Select-String -Pattern "hono|jwk|supabase|jose" }
+$pkgRoot = Join-Path $repoRoot "package.json"
+Get-Content $pkgRoot | Select-String -Pattern "hono|supabase|jose"
+```
+
+**Decisión:** si `hono/jwk` no está disponible, F1 usa `jose`. Se anota en `-pendientes.md`.
+
+**0.6. `User` y `authProviderId`.**
+
+```powershell
+$users = Join-Path $repoRoot "apps/server/src/users.ts"
+Select-String -Path $users -Pattern "userSchema|authProviderId|userRoleSchema|getByEmail|getById|managerId" -Context 0,4
+```
+
+**Decisión:** si `authProviderId` no existe, F1 lo crea. Si `managerId` no existe, F5 lo resuelve vía `Flow`, no vía `User.managerId`. Anotar.
+
+**0.7. `KernelContext` y `actorId`.**
+
+```powershell
+$kc = Join-Path $repoRoot "apps/server/src/kernel/context/kernel-context.ts"
+Select-String -Path $kc -Pattern "kernelContextSchema|actorId|sessionId|systemContext" -Context 0,4
+```
+
+**Decisión:** si `actorId` no existe, F1 lo añade. Si ya existe de otra fase, se reutiliza.
+
+**0.8. `worker` atribución actual.**
+
+```powershell
+$worker = Join-Path $repoRoot "apps/server/src/engine/worker.ts"
+Select-String -Path $worker -Pattern "assignedTo|assignedBy|owner|run-events|settled|busEvent|actorId" -Context 0,2
+```
+
+**Decisión:** si el worker atribuye a `owner`, F1 lo separa en `executingActorId` (`task.assignedTo`) y `requestingActorId` (`task.assignedBy`).
+
+**0.9. `x-user-id` usos actuales.**
+
+```powershell
+$uh = Join-Path $repoRoot "apps/server/src/middleware/user-header.ts"
+Get-Content $uh -Raw
+$all = Get-ChildItem (Join-Path $repoRoot "apps/server/src") -Recurse -File -Filter *.ts | Select-String -Pattern "x-user-id" -SimpleMatch
+Write-Host ("usos de x-user-id: " + @($all).Count)
+$all | ForEach-Object { Write-Host ("  " + $_.Path.Replace($repoRoot,'') + ":" + $_.LineNumber) }
+```
+
+**Decisión:** si `x-user-id` se usa como fuente de identidad, F1 lo depreca. Se anota la lista de usos en `-pendientes.md`.
+
+**0.10. `ExecutionContext` y `actorId`.**
+
+```powershell
+$ec = Join-Path $repoRoot "packages/domain/src/execution-context.ts"
+Select-String -Path $ec -Pattern "ExecutionContext|actorId|sessionId" -Context 0,4
+```
+
+**Decisión:** si `actorId` no existe, F1 lo añade. Revisar consumidores: `orchestrator.ts`, `service.ts`.
+
+**0.11. `orchestrator.runGoal` actual.**
+
+```powershell
+$orc = Join-Path $repoRoot "apps/server/src/engine/orchestrator/orchestrator.ts"
+Select-String -Path $orc -Pattern "runGoal|ExecutionContext|assignedTo|assignedBy" -Context 0,3
+```
+
+**Decisión:** si `runGoal` no propaga `actorId`, F1 lo añade. Sin cambiar firma pública.
+
+**0.12. `AgentPersona.reportsTo`/`peers` y `AgentRole.reportsTo`/`peers`.**
+
+```powershell
+$ap = Join-Path $repoRoot "packages/domain/src/agent-persona.ts"
+Select-String -Path $ap -Pattern "reportsTo|peers" -Context 0,2
+$ag = Join-Path $repoRoot "packages/domain/src/agent.ts"
+Select-String -Path $ag -Pattern "reportsTo|peers" -Context 0,2
+```
+
+**Decisión:** si `AgentPersona` tiene `reportsTo`/`peers` y `AgentRole` no, `Flow` se construye desde `AgentPersona`. Anotar.
+
+**0.13. Typecheck actual (registro, no asumido).**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes (`worker.ts`) se anotan. Errores nuevos → abortar F0.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Motivo |
+|---|---|---|
+| F0.1 (contrato) | Sí (6 docs) | Fase 0 es docs |
+| F0.2 (estado real) | Sí | Incluye evidencia `fichero:línea` |
+| F0.3 (aceptación) | Sí | 14 obligatorios + 3 condicionales |
+| F0.4 (fuera de MVP) | Sí | Con justificación por exclusión |
+| F0.5 (pendientes) | Sí | Deudas y usos de `x-user-id` |
+| F0.6 (plan) | Sí | **7 fases** con condición de activación F5, F6 |
+
+---
+
+## 10. Patchsets
+
+Fase 0 no tiene patchsets de código. Tiene **1 patchset de documentación** con 6 documentos. Cada documento se crea con `[System.Text.UTF8Encoding]::new($false)` + `[System.IO.File]::WriteAllText`. No hay `$old`/`$new`. No hay `Assert-MatchCount`. Si el documento ya existe, se hace backup en `.tmp/patchset-backups/` antes de sobrescribir. Si el documento existe y tiene una marca distinta, se anota y no se sobrescribe.
+
+**Marcas de los documentos:**
+- `ESTADO-REAL-MULTIUSUARIO.md` → `ESTADO_REAL_MULTIUSUARIO_V1`
+- `ID-MAP.md` → `ID_MAP_MULTIUSUARIO_V1`
+- `CIERRE-MVP.md` → `CIERRE_MVP_MULTIUSUARIO_V1`
+- `fuera-de-mvp.md` → `FUERA_DE_MVP_MULTIUSUARIO_V1`
+- `-pendientes.md` → `PENDIENTES_MULTIUSUARIO_V1`
+- `PLAN-CAMPANA-2.md` → `PLAN_CAMPANA_2_V1`
+
+**Verificación post de cada documento:**
+- `Test-Path` true.
+- `bytes > 500`.
+- `Select-String -Pattern "<marca>"` 1×.
+
+**El contenido de los 6 documentos se escribe en el patchset D1–D3.** Este documento define qué contienen, no el texto completo. El texto completo se genera tras aprobar este documento 05 v5.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+- **No se toca código.** Solo se escriben 6 documentos en `docs/miniaudits/04-multi-usuario-concurrente/`.
+- **Cada documento lleva su marca** (`_V1`).
+- **Backup si el documento ya existe** en `.tmp/patchset-backups/`.
+- **`[System.Text.UTF8Encoding]::new($false)`** para escribir.
+- **Verificación post:** `Test-Path`, `bytes > 500`, `Select-String` de la marca.
+- **No `git add .`**, **no `--force`**, **no `commit` dentro del patchset**, **no `exit`**, **no `&&`/`;`**.
+- **Typecheck se ejecuta y se registra** (§0.13). Si hay errores preexistentes, se anotan. No se asume verde.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Typecheck:** `pnpm --filter "@openmuse/server" exec tsc --noEmit`. Registrar el resultado en `-pendientes.md`. Si hay errores preexistentes (`worker.ts`), anotarlos. Si hay errores nuevos, abortar.
+- **Test:** no se ejecutan tests de producto en Fase 0. Se anota en `-pendientes.md` que la suite está pendiente hasta F7.
+- **Commit:** `git add` selectivo de los 6 documentos:
+
+```powershell
+git add docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md
+git add docs/miniaudits/04-multi-usuario-concurrente/ID-MAP.md
+git add docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md
+git add docs/miniaudits/04-multi-usuario-concurrente/fuera-de-mvp.md
+git add docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md
+git add docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md
+git commit -m "docs(multiusuario): fase 0 - contrato v5 (supabase auth, 7 fases, 5 garantias, 13 invariantes, 17 tests)"
+git push origin feat/multitenancy-campaign
+```
+
+- **Push:** `git push origin feat/multitenancy-campaign`. Si falla por red, reintentar 3 veces; si sigue fallando, anotar en `-pendientes.md` y parar.
+
+---
+
+## 13. Plan de misses
+
+- **Campaña 1 no cerrada** (marcas ausentes en §0.2) → aborta todo.
+- **`TenantService.tenantIdFor` asume tenant único** → documentar restricción en `-pendientes.md` y `ESTADO-REAL-MULTIUSUARIO.md`.
+- **No hay middleware JWT** → F1 lo implementa. Anotar.
+- **`hono/jwk` no disponible** → F1 usa `jose`. Anotar.
+- **`User.authProviderId` no existe** → F1 lo crea. No vincular por email. Anotar.
+- **`KernelContext.actorId` no existe** → F1 lo añade. Anotar.
+- **`ExecutionContext.actorId` no existe** → F1 lo añade. Anotar.
+- **`worker` atribuye a `owner`** → F1 lo separa. Anotar.
+- **`x-user-id` se usa como fuente de identidad** → F1 lo depreca. Anotar con lista de usos.
+- **`AgentRole.reportsTo`/`peers` no existen** → `Flow` se construye desde `AgentPersona`. Anotar.
+- **`User.managerId` no existe** → F5 resuelve "responsable de equipo" vía `Flow` + `Policy`. Anotar.
+- **Typecheck preexistente rojo (`worker.ts`)** → anotar, no abortar.
+- **Typecheck nuevo rojo** → abortar F0, diagnosticar.
+
+**Ruta de misses:** `docs/miniaudits/04-multi-usuario-concurrente/missed/_multiusuario_pendientes.md`. **La IA no lo escribe.**
+
+**Deudas en `-pendientes.md`:**
+- `User.authProviderId` backfill controlado (no por email).
+- `x-user-id` deprecado en F1.
+- `KernelContext.actorId` puede romper tests antiguos.
+- `ExecutionContext.actorId` puede romper consumidores (`orchestrator.ts`, `service.ts`).
+- Revocación de actor desactivado depende de `active` check en cada request (no de Supabase).
+- `TENANT_CACHE_TTL_MS` a 30s en producción para que `active=false` surta efecto rápido.
+- Multi-pertenencia al tenant: si se admite en el futuro, validar en servidor.
+- **Sin JIT provisioning:** `sub` sin `User` vinculado → 401. Alta explícita.
+- **`version` selectiva:** solo en `AgentTask`, `Goal`, `Monitor`, `SOP` (decidir), `Thread`, `Project`, `BusinessEntity`.
+- **Reconcile por recurso:** `POST /threads/:id/reconcile`, `POST /projects/:id/reconcile`, etc.
+- **`Flow` desde `AgentPersona`:** no desde `AgentRole`.
+- **"Responsable de equipo" vía `Flow` + `Policy`:** no vía `User.managerId`.
+- **Desactivación sin huérfanas = transición segura:** no masiva ciega.
+- **Sin `delete-tenant-data.ts`:** no aplica a multiusuario.
+- **`fieldClassification` no es seguridad por sí sola:** `FieldFilter` en lectores, escritores, serializadores, listados, búsquedas, agregaciones.
+- **`withRead`/`withWrite` en todas las rutas:** handlers, workers, acciones internas, streams, rutas alternativas.
+
+---
+
+## 14. Checklist de cierre de la fase 0
+
+- [ ] Paso 0.1–0.13 ejecutados, salidas anotadas.
+- [ ] Campaña 1 verificada (5 marcas).
+- [ ] `TenantService.tenantIdFor` verificado (tenant único o multi).
+- [ ] `Auth.owner` verificado (sesión propia vs JWT).
+- [ ] Dependencias Hono/Supabase/Jose verificadas en `package.json`.
+- [ ] `User.authProviderId` verificado (existe / no existe).
+- [ ] `User.managerId` verificado (existe / no existe).
+- [ ] `KernelContext.actorId` verificado (existe / no existe).
+- [ ] `ExecutionContext.actorId` verificado (existe / no existe).
+- [ ] `worker` atribución verificada (`owner` / `task.assignedTo`).
+- [ ] `x-user-id` usos listados.
+- [ ] `AgentPersona.reportsTo`/`peers` verificado (existe / no existe).
+- [ ] `AgentRole.reportsTo`/`peers` verificado (existe / no existe).
+- [ ] Typecheck ejecutado y registrado (no asumido).
+- [ ] `ESTADO-REAL-MULTIUSUARIO.md` creado con marca `ESTADO_REAL_MULTIUSUARIO_V1`, `bytes > 500`.
+- [ ] `ID-MAP.md` creado con marca `ID_MAP_MULTIUSUARIO_V1`, `bytes > 500`.
+- [ ] `CIERRE-MVP.md` creado con marca `CIERRE_MVP_MULTIUSUARIO_V1`, `bytes > 500`.
+- [ ] `fuera-de-mvp.md` creado con marca `FUERA_DE_MVP_MULTIUSUARIO_V1`, `bytes > 500`.
+- [ ] `-pendientes.md` creado con marca `PENDIENTES_MULTIUSUARIO_V1`, `bytes > 500`.
+- [ ] `PLAN-CAMPANA-2.md` creado con marca `PLAN_CAMPANA_2_V1`, `bytes > 500`.
+- [ ] `git add` selectivo de los 6 documentos.
+- [ ] `git commit -m "docs(multiusuario): fase 0 - contrato v5 ..."`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "Fase 0 cerrada. Siguiente: Fase 1 (identidad y actor con Supabase JWT)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/users.ts` — `userSchema` (literal):
+
+```typescript
+export const userSchema = z.object({
+  id: z.string().min(1),
+  email: z.email().transform((v) => v.toLowerCase().trim()),
+  name: z.string().trim().min(1).max(120),
+  role: userRoleSchema.default("user"),
+  setup: userSetupSchema.default(() => ({ sopIds: [], allowedTools: [], greeting: "" })),
+  active: z.boolean().default(true),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+```
+
+**F1 añadirá `authProviderId`. `User` no tiene `managerId` ni `fieldClassification` ni `salaryGross`/`salaryNet`/`bankAccount`.**
+
+### A.2. `apps/server/src/auth.ts` — `Auth.owner` (literal):
+
+```typescript
+async owner(authorization?: string) {
+  if (!authorization?.startsWith("Bearer ")) throw new AppError("Sign in to OpenMuse", 401);
+  const session = await this.db.get<{ owner: string; expiresAt: number }>(
+    "system",
+    "sessions",
+    digest(authorization.slice(7)).toString("hex"),
+  );
+  if (!session || session.expiresAt < Date.now())
+    throw new AppError("Session expired. Sign in again.", 401);
+  return session.owner;
+}
+```
+
+**F1 lo mantiene para rutas legacy. Añade `verifyJwtMiddleware` paralelo. `ctx.userId` viene del JWT, no de `Auth.owner`.**
+
+### A.3. `apps/server/src/kernel/context/kernel-context.ts` — `kernelContextSchema` (literal):
+
+```typescript
+export const kernelContextSchema = z.object({
+  tenantId: z.string().min(1).max(100),
+  owner: z.string().min(1).max(200),
+  role: kernelRoleSchema,
+  requestId: z.string().min(1).max(100),
+  threadId: z.string().min(1).max(200).optional(),
+  parentTurnId: z.string().min(1).max(100).optional(),
+  correlationId: z.string().min(1).max(200).optional(),
+  personaId: z.string().min(1).max(80).optional(),
+});
+```
+
+**F1 añade `actorId` y `sessionId`. `owner` se mantiene para compatibilidad.**
+
+### A.4. `apps/server/src/middleware/user-header.ts` — `userHeaderMiddleware` (literal, íntegro):
+
+```typescript
+import type { Context, Next } from "hono";
+
+const USER_ID_RE = /^[a-zA-Z0-9_-]{1,128}$/;
+
+export function userHeaderMiddleware() {
+  return async (c: Context, next: Next) => {
+    const header = c.req.header("x-user-id");
+    if (header && !USER_ID_RE.test(header)) {
+      c.header("X-User-Id-Rejected", "1");
+      await next();
+      return;
+    }
+    await next();
+  };
+}
+```
+
+**F1 lo depreca como fuente de identidad. Valida contra `actor.id` si viene y anota discrepancia.**
+
+### A.5. `apps/server/src/engine/worker.ts` — atribución (fragmento):
+
+```typescript
+const busEvent = async (type: SystemEventType, payload: Record<string, unknown>) => {
+  const bus = this.options.bus;
+  if (!bus) return;
+  await guard();
+  const source: SystemEventSource = { kind: "task", id: taskId };
+  await bus.emit(owner, type, source, { taskId, ...payload });
+};
+```
+
+**F1 añade `executingActorId` (`task.assignedTo`) y `requestingActorId` (`task.assignedBy`) al `bus.emit` y a `run-events`.**
+
+### A.6. `packages/domain/src/agent.ts` — `AgentRole` (literal, inicio):
+
+```typescript
+export interface AgentRole {
+  id: string;
+  name: string;
+  tone: AgentTone;
+  avatar: AgentAvatar;
+  greeting?: string;
+  roi?: string;
+  objetivo: string;
+  sops: string[];
+  active: boolean;
+  memories: AgentRoleMemory[];
+  permissions?: AgentRolePermission[];
+  memoryPolicy?: AgentRoleMemoryPolicy;
+  skills?: string[];
+  allowedTools?: string[];
+  createdAt?: string;
+}
+```
+
+**`AgentRole` NO tiene `reportsTo` ni `peers`. Los tiene `AgentPersona`. `Flow` se construye desde `AgentPersona`, no desde `AgentRole`.**
+
+### A.7. `packages/domain/src/agent-persona.ts` — `AgentPersona` (fragmento, literal):
+
+```typescript
+export const agentPersonaSchema = z.object({
+  id: z.string().min(1).max(80).regex(/^[a-z][a-z0-9-]*$/),
+  displayName: z.string().min(1).max(80),
+  role: z.string().min(1).max(200),
+  age: z.number().int().min(18).max(99).optional(),
+  gender: agentGenderSchema.optional(),
+  personality: agentPersonalitySchema,
+  capabilities: agentCapabilitiesSchema,
+  values: z.array(agentValueRefSchema).max(20).default([]),
+  reportsTo: z.string().min(1).max(80).optional(),
+  peers: z.array(z.string().min(1).max(80)).max(50).default([]),
+  avatar: agentAvatarSchema.optional(),
+  language: z.string().min(2).max(10).default("es"),
+  metadata: z.record(z.string(), z.unknown()).default({}),
+}).strict();
+```
+
+**`AgentPersona` SÍ tiene `reportsTo` y `peers`. Es la fuente real de `Flow`.**
+
+### A.8. `packages/domain/src/execution-context.ts` — `ExecutionContext` (literal):
+
+```typescript
+export const executionContextSchema = z.object({
+  tenantId: z.string().min(1).max(100),
+  owner: z.string().min(1).max(200),
+  role: executionRoleSchema,
+  roleId: z.string().max(200).optional(),
+  requestId: z.string().min(1).max(100),
+  correlationId: z.string().max(200).optional(),
+  runtimeId: z.string().max(200).optional(),
+  goalId: z.string().max(200).optional(),
+  taskId: z.string().max(200).optional(),
+  threadId: z.string().max(200).optional(),
+  turnId: z.string().max(200).optional(),
+});
+```
+
+**`ExecutionContext` NO tiene `actorId` ni `sessionId`. F1 los añade.**
+
+### A.9. `apps/server/src/engine/orchestrator/orchestrator.ts` — `runGoal` (fragmento):
+
+```typescript
+async runGoal(
+  ctx: ExecutionContext,
+  goal: Goal,
+): Promise<GoalResult> {
+  if (!this.deps) {
+    return { status: "blocked", summary: `Orquestador sin deps (goal ${goal.id})` };
+  }
+  const context = await this.deps.context.assemble(ctx.owner, {
+    roleId: ctx.roleId ?? "default",
+    query: goal.description || goal.title,
+  });
+  // ...
+}
+```
+
+**F1 propaga `ctx.actorId` y `ctx.sessionId` si están. Sin cambiar firma pública.**
+
+### A.10. `packages/domain/src/agent.ts` — `AgentTask` (literal, inicio):
+
+```typescript
+export interface AgentTask {
+  id: string;
+  title: string;
+  prompt: string;
+  kind: "agent" | "document" | "monitor" | "finance" | "plan" | "sop";
+  status: TaskStatus;
+  goalId?: string;
+  plan: TaskStep[];
+  evidence: Evidence[];
+  input: Record<string, unknown>;
+  state: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  nextRunAt?: string;
+  leaseId?: string | null;
+  leaseUntil?: string | null;
+  attempts: number;
+  actionId?: string | null;
+  result?: string;
+  error?: string | null;
+  question?: string;
+  artifactIds: string[];
+  assignedTo?: string;
+  tenantId: string;
+  threadId?: string;
+  requestId?: string;
+  parentTaskId?: string;
+  lastCheckpointAt?: string;
+  outcome?: import("./outcome.ts").Outcome;
+}
+```
+
+**`AgentTask` NO tiene `version`, `fieldClassification`, `assignmentKind`, `assignedBy`. F3/F4 los añaden.**
+
+---
+
+## FIN DEL DOCUMENTO 05 v5
+
+**Fase 0 preparada con las 14 correcciones del contraste contra el concepto actual y los 3 ficheros reales. 7 fases (F1–F7). Supabase Auth confirmado. Agentes sin login humano, con identidad de ejecución propia. `User.authProviderId` único, backfill controlado, sin JIT. `Flow` desde `AgentPersona`, no desde `AgentRole`. `version` selectiva. Reconcile por recurso. `fieldClassification` aplicada en lectores, escritores, serializadores, listados, búsquedas, agregaciones. `withRead`/`withWrite` en todas las rutas. `x-user-id` deprecado. Desactivación sin huérfanas = transición segura. Sin `delete-tenant-data.ts`. `ExecutionContext.actorId` añadido en F1. 5 garantías, 13 invariantes con condición, 17 tests (14 obligatorios + 3 condicionales), 7 fases. Typecheck ejecutado y registrado, no asumido.**
+
+**Siguiente: documento 06 — Campaña 2 / Fase 1 — Identidad y actor (con Supabase JWT). Di "sigue".**

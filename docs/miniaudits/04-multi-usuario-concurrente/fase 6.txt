@@ -1,0 +1,742 @@
+He leído el protocolo y lo aplico antes de escribir un solo patchset de F6. Antes de nada, verifico qué tengo, qué no tengo, y qué dice el contrato sobre F6.
+
+**Paso 0 — Contexto.** F6 toca: `with-read.ts`, `with-write.ts`, `threads-routes.ts`, `projects-routes.ts`, `engine/routes.ts`, `actions.ts`, `worker.ts` (MODIFY); `audit-trail/service.ts`, `history/record-history.ts` (CREATE). Los ficheros que necesito leer y **no están pegados completos en este chat**: `with-read.ts`, `with-write.ts`, `threads-routes.ts`, `projects-routes.ts`, `kernel/audit/store-store.ts` (solo fragmentos en el hilo), `actions.ts` (sí está en `repomix-multiusuario-min.md`), `worker.ts` (solo fragmento en `fase0.txt` A.5).
+
+**Paso 1 — Diagnóstico.** El contrato de F6 está en `specs-multiuser.txt` §8 y en `Sí. Puedo prepararte...` §6. Las invariantes son: G6-I1 (acción crítica vinculable a actor y tenant), G6-I2 (autorización concedida ≠ operación completada), G6-I3 (denegación no se registra como éxito), G6-I4 (correlación/causalidad en asíncronas), G6-I5 (historial no depende de logs volátiles), G6-I6 (duplicados detectables), G6-I7 (huecos de secuencia identificables), G6-I8 (auditoría respeta authz/tenant), G6-I9 (datos sensibles excluidos/redactados), G6-I10 (retención y eliminación definidas), G6-I11 (fallos de auditoría obligatoria con comportamiento seguro), G6-I12 (evidencia de reconstrucción éxito/denegación/fallo). Los criterios de aceptación son 12.
+
+El revisor senior en `campaña-multiusuario.txt` señala que `kernel/audit/entry.ts` y `store-store.ts` confirman que `AuditAction` no incluye reads denegados ni `field`/`classification`/`allowed`. `actions.ts` confirma `action-audit` con `{ actionId, taskId, kind, detail, status, hash, createdAt }` sin `actorId`. `activity` existe pero sin `actorId`/`sessionId`. `run-events` sin `actorId`. `retention-purge.ts` purga `audit-entries` a 90 días por defecto, lo que contradice SOC-2 (que `kernel/audit/entry.ts` invoca).
+
+**Paso 2 — Ancla literal.** Para `actions.ts` tengo el contenido en `repomix-multiusuario-min.md`. Para `worker.ts` solo tengo el fragmento de `busEvent` en `fase0.txt` A.5. Para `with-read.ts` y `with-write.ts` no tengo contenido pegado; solo sé que F2 los creó con marcas `WITH_READ_V1` y `WITH_WRITE_V1`. Para `kernel/audit/store-store.ts` no tengo contenido completo. Para `threads-routes.ts`/`projects-routes.ts`/`engine/routes.ts` tengo el contrato de F4 (`THREAD_CONFLICT_DIFF_V2`, etc.) pero no el contenido completo.
+
+**Paso 3 — Verificación pre.** Cada patchset llevará `Assert-MatchCount` con el número esperado. Si no coincide, `throw` dentro de la función envolvente.
+
+**Paso 4 — Construcción.** Cada patchset envuelto en `function Invoke-F6XX { ... }`, `throw` en comprobaciones, `[System.Text.UTF8Encoding]::new($false)`, `[System.IO.File]::WriteAllText`, backup en `.tmp/patchset-backups/`.
+
+**Paso 5 — Verificación post.** Marca 1×, `$old` ya no está, `$new` está, `bytes > 500` (o > 200 para schemas pequeños).
+
+**Paso 6–11.** Los declaro. El `PASS` real lo declaras tú tras ejecutar y pegarme el output.
+
+Dicho esto, el documento F6 completo. F6 tiene 9 patchsets (2 CREATE + 7 MODIFY), similar a F5.
+
+---
+
+# 11 — Campaña 2 / Fase 6 — Trazabilidad y auditoría (G6)
+
+**Fecha:** 2026-10-22
+**Campaña:** 2 — Multiusuario
+**Fase:** 6 — Trazabilidad y auditoría (G6)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. F0 cerrada. F1 cerrada. F2 cerrada. F3 cerrada. F4 cerrada. F5 cerrada (asumiendo que los 10 patchsets están `PASS`; si no, F6 se aborta).
+**Aprobación:** mapa de 7 fases aprobado. F6 aplica el contrato de `specs-multiuser.txt` §8 y las invariantes G6-I1–G6-I12 de `Sí. Puedo prepararte...` §6.
+
+---
+
+## 0. Precondición de seguridad
+
+F6 depende de F5 cerrada. Si F5 no está `PASS`, F6 se aborta. La verificación de F5 se hace con las marcas de F5 en `presence-store.ts`, `edit-lock-store.ts`, `replay-buffer.ts`, `config.ts`, `presence.ts`, `edit-lock.ts`, `notifications-stream.ts`, `notification-prefs.ts`, `users.ts`, `app.ts`.
+
+**Si alguna marca de F5 falta, F6 no arranca.**
+
+---
+
+## 1. Qué fue la fase anterior
+
+F5 cerrada: `PresenceStore`, `EditLockStore`, `ReplayBuffer`, `Config.multiProcess`/`sseReplayEnabled`/TTLs, `globalPresence`/`globalEditLock` condicionales, `notifications-stream` con `visibility`/`priority`/`Last-Event-ID`, `notification-prefs` con `visibility`/`priority`, `User.active = false` con transición segura, `app.ts` cablea `ReplayBuffer`.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`AuditTrail` de reads sensibles** (F6.1): `apps/server/src/engine/audit-trail/service.ts` con `AuditTrail` que escribe en `StoreAuditStore` cuando `withRead` detecta campo `restricted`/`secret` y el acceso fue denegado. No registra valores completos. Solo `{ actorId, action, resource, field, classification, allowed: false, timestamp }`.
+- **`RecordHistory` condicional** (F6.2): `apps/server/src/engine/history/record-history.ts` con `RecordHistory` que escribe `before`/`after` cuando `activity` no cubre. Solo si `Config.recordHistoryEnabled === true`.
+- **`withRead` escribe `AuditTrail`** (F6.3): cuando el campo es `restricted`/`secret` y el acceso fue denegado.
+- **`withWrite` escribe `RecordHistory`** (F6.4): cuando `activity` no cubre y `recordHistoryEnabled`.
+- **`conflict-version`** (F6.5): `GET /threads/:id/conflict`, `GET /projects/:id/conflict`, `GET /tasks/:id/conflict` ya creados en F4. F6 no los toca. Solo documenta que existen.
+- **`action-audit` gana `actorId`** (F6.6): `ActionService.audit` incluye `actorId`.
+- **`run-events` gana `actorId`** (F6.7): `TaskWorker.run-events` incluye `actorId` (`executingActorId`).
+- **`Config.auditTrailEnabled` y `Config.recordHistoryEnabled`** (F6.8): `auditTrailEnabled: boolean` (default `true`), `recordHistoryEnabled: boolean` (default `false`). `auditTrailEnabled` obligatorio en producción; `recordHistoryEnabled` condicional a `activity` no cubre.
+- **`retention-purge` respeta `audit-entries`** (F6.9): `retention-purge.ts` no purga `audit-entries` a 90 días si `auditTrailEnabled`. Solo purga `dead-letter` y otros. `audit-entries` tiene retención de 365 días (SOC-2).
+
+---
+
+## 3. Qué será la siguiente fase
+
+F7: cierre. 14 tests obligatorios en verde, `KNOWN_ISSUES.md`, `CIERRE-MVP.md`. Tests de `tests/campaign-2/`. Documento maestro de archivos cerrado. Sin tocar `withRead`/`withWrite` (F6), sin tocar `conflict.ts` (F4), sin tocar `presence` (F5).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (F6), ejecutada en **9 patchsets de producto** más **1 patchset de verificación sin escritura**. Total: 9 escrituras + 1 lectura.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en Repomix + F0 + F1 + F2 + F3 + F4 + F5:**
+- `apps/server/src/actions.ts` (íntegro en `repomix-multiusuario-min.md`: `ActionService.audit`, `record`).
+- `apps/server/src/engine/worker.ts` (fragmento en `fase0.txt` A.5: `busEvent`).
+- `apps/server/src/kernel/audit/entry.ts` (citado en el hilo: `AuditAction`, `auditEntrySchema`).
+- `apps/server/src/kernel/audit/store-store.ts` (citado en el hilo: `StoreAuditStore`, `append`).
+- `apps/server/src/engine/events/retention-purge.ts` (citado en el hilo: `KERNEL_KINDS`, `purgeKernelRetention`).
+
+**A inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/authz/with-read.ts` — `Select-String -Pattern "withRead|FieldFilter|audit|denied"` con `-Context 0,8`.
+- `apps/server/src/engine/authz/with-write.ts` — `Select-String -Pattern "withWrite|activity|history|audit"` con `-Context 0,8`.
+- `apps/server/src/kernel/audit/entry.ts` — `Select-String -Pattern "AuditAction|auditEntrySchema|payload"` con `-Context 0,10`.
+- `apps/server/src/kernel/audit/store-store.ts` — `Select-String -Pattern "append|payload|auditEntrySchema"` con `-Context 0,8`.
+- `apps/server/src/engine/events/retention-purge.ts` — `Select-String -Pattern "KERNEL_KINDS|audit-entries|purgeKernelRetention|RETENTION_RULES"` con `-Context 0,10`.
+
+**NO se leen en esta fase:**
+- `engine/history/` (F6 lo crea).
+- `engine/audit-trail/` (F6 lo crea).
+- `worker.ts` más allá de F6.7.
+- `conversation.ts`, `kernel.ts` (no se tocan).
+
+---
+
+## 6. Archivos a crear / modificar
+
+**Crear (server):**
+- `apps/server/src/engine/audit-trail/service.ts` — `AuditTrail` que escribe en `StoreAuditStore` cuando `withRead` detecta campo `restricted`/`secret` y el acceso fue denegado.
+- `apps/server/src/engine/history/record-history.ts` — `RecordHistory` que escribe `before`/`after` cuando `activity` no cubre.
+
+**Modificar (server):**
+- `apps/server/src/engine/authz/with-read.ts` — `withRead` escribe `AuditTrail` cuando el campo es `restricted`/`secret` y el acceso fue denegado.
+- `apps/server/src/engine/authz/with-write.ts` — `withWrite` escribe `RecordHistory` cuando `activity` no cubre y `recordHistoryEnabled`.
+- `apps/server/src/actions.ts` — `action-audit` gana `actorId`.
+- `apps/server/src/engine/worker.ts` — `run-events` gana `actorId`.
+- `apps/server/src/config.ts` — `auditTrailEnabled: boolean` (default `true`), `recordHistoryEnabled: boolean` (default `false`).
+- `apps/server/src/engine/events/retention-purge.ts` — no purga `audit-entries` si `auditTrailEnabled`. Retención 365 días para `audit-entries`.
+- `apps/server/src/kernel/audit/store-store.ts` — `AuditEntry.payload` acepta `field`, `classification`, `allowed` (F2 ya lo añadió; F6 verifica y amplía si falta).
+
+**No crear (prohibido en esta fase):**
+- Cualquier tabla SQL.
+- Cualquier `git add .`.
+
+**No tocar:**
+- `worker.ts` más allá de F6.7.
+- `conversation.ts`, `kernel.ts`.
+- `db-tenant.ts`, `db-rls.ts`.
+- `engine/tenant.ts` (Campaña 1 cerrada).
+- `backup-tenant.ts` (Campaña 1 cerrada).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| F6.1 | `apps/server/src/engine/audit-trail/service.ts` | 1 (crear) | CREATE |
+| F6.2 | `apps/server/src/engine/history/record-history.ts` | 1 (crear) | CREATE |
+| F6.3 | `apps/server/src/engine/authz/with-read.ts` | 1 (AuditTrail en deny) | MODIFY |
+| F6.4 | `apps/server/src/engine/authz/with-write.ts` | 1 (RecordHistory) | MODIFY |
+| F6.5 | `apps/server/src/actions.ts` | 1 (`action-audit` con `actorId`) | MODIFY |
+| F6.6 | `apps/server/src/engine/worker.ts` | 1 (`run-events` con `actorId`) | MODIFY |
+| F6.7 | `apps/server/src/config.ts` | 1 (`auditTrailEnabled` + `recordHistoryEnabled`) | MODIFY |
+| F6.8 | `apps/server/src/engine/events/retention-purge.ts` | 1 (no purgar `audit-entries`) | MODIFY |
+| F6.9 | `apps/server/src/kernel/audit/store-store.ts` | 1 (`payload` con `field`/`classification`/`allowed`) | MODIFY |
+
+**Total: 2 CREATE + 7 MODIFY = 9 patchsets, ~9 hunks.**
+
+**Corrección:** el §4 dice 9 patchsets. La tabla real da 9. Correcto.
+
+---
+
+## 8. Fixes y clasificación
+
+| Fix | Descripción | Clasificación |
+|---|---|---|
+| F6.1 | `audit-trail/service.ts` | Obligatorio |
+| F6.2 | `history/record-history.ts` | Condicional (`recordHistoryEnabled`) |
+| F6.3 | `with-read.ts` `AuditTrail` | Obligatorio |
+| F6.4 | `with-write.ts` `RecordHistory` | Condicional (`recordHistoryEnabled`) |
+| F6.5 | `actions.ts` `actorId` | Obligatorio |
+| F6.6 | `worker.ts` `actorId` | Obligatorio |
+| F6.7 | `config.ts` | Obligatorio |
+| F6.8 | `retention-purge.ts` | Obligatorio |
+| F6.9 | `store-store.ts` `payload` | Obligatorio |
+
+**Fixes congelados:** tests ajenos a la campaña (F02.10).
+**Fixes movidos a F7:** tests obligatorios, `KNOWN_ISSUES.md`, `CIERRE-MVP.md`.
+**Fixes desbloqueados por F6:** F7.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado del repo y rama.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+Write-Host ("rama: " + $branch) -ForegroundColor Green
+```
+
+**0.2. F5 cerrada.**
+
+```powershell
+$checks = @{
+  "apps/server/src/engine/presence-store.ts" = "PRESENCE_STORE_V1"
+  "apps/server/src/engine/edit-lock-store.ts" = "EDIT_LOCK_STORE_V1"
+  "apps/server/src/engine/events/replay-buffer.ts" = "SSE_REPLAY_BUFFER_V1"
+  "apps/server/src/config.ts" = "CONFIG_COORDINATION_V1"
+  "apps/server/src/engine/presence.ts" = "PRESENCE_STORE_WIRE_V1"
+  "apps/server/src/engine/edit-lock.ts" = "EDIT_LOCK_STORE_WIRE_V1"
+  "apps/server/src/notifications-stream.ts" = "NOTIF_VISIBILITY_V1"
+  "apps/server/src/notification-prefs.ts" = "NOTIF_PREFS_VISIBILITY_V1"
+  "apps/server/src/users.ts" = "USER_DEACTIVATION_V1"
+  "apps/server/src/app.ts" = "APP_REPLAY_WIRE_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "F5 verificada" -ForegroundColor Green
+```
+
+**0.3. `with-read.ts` actual (F2).**
+
+```powershell
+$wr = Join-Path $repoRoot "apps/server/src/engine/authz/with-read.ts"
+Select-String -Path $wr -Pattern "withRead|FieldFilter|audit|denied" -Context 0,8
+```
+
+**Decisión:** si `withRead` no escribe `AuditTrail` en deny, F6.3 lo añade. Si ya lo hace, se amplía.
+
+**0.4. `with-write.ts` actual (F2 + F4).**
+
+```powershell
+$ww = Join-Path $repoRoot "apps/server/src/engine/authz/with-write.ts"
+Select-String -Path $ww -Pattern "withWrite|activity|history|audit|compareAndSwap" -Context 0,8
+```
+
+**0.5. `actions.ts` `audit` actual.**
+
+```powershell
+$act = Join-Path $repoRoot "apps/server/src/actions.ts"
+Select-String -Path $act -Pattern "private async audit|action-audit|actorId" -Context 0,8
+```
+
+**0.6. `worker.ts` `run-events` actual.**
+
+```powershell
+$worker = Join-Path $repoRoot "apps/server/src/engine/worker.ts"
+Select-String -Path $worker -Pattern "run-events|actorId|busEvent" -Context 0,8
+```
+
+**0.7. `kernel/audit/store-store.ts` `payload` actual.**
+
+```powershell
+$audit = Join-Path $repoRoot "apps/server/src/kernel/audit/store-store.ts"
+Select-String -Path $audit -Pattern "append|payload|auditEntrySchema|field|classification|allowed" -Context 0,10
+```
+
+**0.8. `retention-purge.ts` actual.**
+
+```powershell
+$rp = Join-Path $repoRoot "apps/server/src/engine/events/retention-purge.ts"
+Select-String -Path $rp -Pattern "KERNEL_KINDS|audit-entries|purgeKernelRetention|RETENTION_RULES" -Context 0,10
+```
+
+**0.9. `config.ts` actual (F1 + F2 + F5).**
+
+```powershell
+$cfg = Join-Path $repoRoot "apps/server/src/config.ts"
+Select-String -Path $cfg -Pattern "auditTrailEnabled|recordHistoryEnabled|policyCacheTtlMs|multiProcess" -Context 0,3
+```
+
+**0.10. Typecheck actual.**
+
+```powershell
+$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
+Write-Host ("errores TS: " + @($errs).Count)
+$errs | Select-Object -First 20
+```
+
+**Decisión:** registrar en `-pendientes.md`. Errores preexistentes se anotan. Errores nuevos → abortar F6.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Clasificación |
+|---|---|---|
+| F6.1 | Sí | Obligatorio |
+| F6.2 | Sí (condicional) | Condicional |
+| F6.3 | Sí | Obligatorio |
+| F6.4 | Sí (condicional) | Condicional |
+| F6.5 | Sí | Obligatorio |
+| F6.6 | Sí | Obligatorio |
+| F6.7 | Sí | Obligatorio |
+| F6.8 | Sí | Obligatorio |
+| F6.9 | Sí (si falta en F2) | Obligatorio |
+
+---
+
+## 10. Patchsets (todos completos)
+
+### Patchset F6.1 — `apps/server/src/engine/audit-trail/service.ts` (CREATE)
+
+**Marca:** `AUDIT_TRAIL_V1`
+
+**Contenido:**
+
+```typescript
+// AUDIT_TRAIL_V1 — escribe en StoreAuditStore cuando withRead detecta
+// campo restricted/secret y el acceso fue denegado.
+// No registra valores completos. Solo { actorId, action, resource, field,
+// classification, allowed: false, timestamp }.
+import type { StoreAuditStore } from "../../kernel/audit/store-store.ts";
+
+export interface AuditTrailEntry {
+  actorId: string;
+  action: string;
+  resource: string;
+  field: string;
+  classification: "public" | "internal" | "confidential" | "restricted" | "secret";
+  allowed: false;
+  timestamp: string;
+}
+
+export class AuditTrail {
+  constructor(private readonly audit: StoreAuditStore) {}
+
+  async recordDenied(entry: AuditTrailEntry): Promise<void> {
+    await this.audit.append({
+      tenantId: "default",
+      owner: entry.actorId,
+      action: "audit.read.denied",
+      actor: { kind: "user", id: entry.actorId },
+      payload: {
+        resource: entry.resource,
+        field: entry.field,
+        classification: entry.classification,
+        allowed: false,
+        timestamp: entry.timestamp,
+      },
+    });
+  }
+}
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 600`, typecheck verde, `AUDIT_TRAIL_V1` 1×.
+
+### Patchset F6.2 — `apps/server/src/engine/history/record-history.ts` (CREATE)
+
+**Marca:** `RECORD_HISTORY_V1`
+
+**Contenido:**
+
+```typescript
+// RECORD_HISTORY_V1 — escribe before/after cuando activity no cubre.
+// Condicional a Config.recordHistoryEnabled.
+import type { Store } from "../../db.ts";
+
+export interface RecordHistoryEntry {
+  tenantId: string;
+  resource: string;
+  resourceId: string;
+  actorId: string;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  timestamp: string;
+}
+
+export class RecordHistory {
+  constructor(private readonly db: Store) {}
+
+  async record(entry: RecordHistoryEntry): Promise<void> {
+    await this.db.put(entry.tenantId, "record-history", {
+      id: `${entry.resource}:${entry.resourceId}:${Date.now()}`,
+      ...entry,
+    });
+  }
+}
+```
+
+**Verificación pre:** `Test-Path` false. Post: `Test-Path` true, `bytes > 400`, typecheck verde, `RECORD_HISTORY_V1` 1×.
+
+### Patchset F6.3 — `apps/server/src/engine/authz/with-read.ts` (MODIFY, 1 hunk)
+
+**Marca:** `WITH_READ_AUDIT_TRAIL_V1`
+
+`$old` (fragmento de `withRead`, donde se deniega un campo):
+```typescript
+    if (!allowed) {
+      throw new AppError("Forbidden", 403);
+    }
+```
+
+`$new`:
+```typescript
+    if (!allowed) {
+      // WITH_READ_AUDIT_TRAIL_V1 — registra denegación de campo sensible.
+      if (field && (classification === "restricted" || classification === "secret")) {
+        await auditTrail?.recordDenied({
+          actorId: ctx.actor.id,
+          action: "read",
+          resource: kind,
+          field,
+          classification,
+          allowed: false,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      throw new AppError("Forbidden", 403);
+    }
+```
+
+**Verificación pre:** `Select-String -Pattern "throw new AppError\(\"Forbidden\", 403\)"` 1×. Post: `WITH_READ_AUDIT_TRAIL_V1` 1×, `auditTrail?.recordDenied` 1×.
+
+**Nota:** `with-read.ts` no está pegado completo. El patchset usa `Select-String` como precondición. Si el ancla no coincide, aborta y se anota el miss. El `auditTrail` se inyecta en `withRead` como parámetro opcional; si no se inyecta, no registra (comportamiento actual).
+
+### Patchset F6.4 — `apps/server/src/engine/authz/with-write.ts` (MODIFY, 1 hunk)
+
+**Marca:** `WITH_WRITE_RECORD_HISTORY_V1`
+
+`$old` (fragmento de `withWrite`, donde escribe):
+```typescript
+  return db.put(ctx.owner, kind, next);
+```
+
+`$new`:
+```typescript
+  // WITH_WRITE_RECORD_HISTORY_V1 — escribe RecordHistory si activity no cubre.
+  if (recordHistory && config.recordHistoryEnabled) {
+    await recordHistory.record({
+      tenantId: ctx.tenantId,
+      resource: kind,
+      resourceId: id,
+      actorId: ctx.actor.id,
+      before: record as Record<string, unknown>,
+      after: next as Record<string, unknown>,
+      timestamp: new Date().toISOString(),
+    });
+  }
+  return db.put(ctx.owner, kind, next);
+```
+
+**Verificación pre:** `Select-String -Pattern "return db.put\(ctx.owner, kind, next\)"` 1×. Post: `WITH_WRITE_RECORD_HISTORY_V1` 1×, `recordHistory.record` 1×.
+
+### Patchset F6.5 — `apps/server/src/actions.ts` (MODIFY, 1 hunk)
+
+**Marca:** `ACTIONS_ACTOR_ID_V1`
+
+`$old` (fragmento de `audit`):
+```typescript
+  private async audit(owner: string, action: ActionProposal, kind: string, detail: string) {
+    await this.db.put(owner, "action-audit", {
+      id: `audit-${action.id}-${Date.now()}`,
+      actionId: action.id,
+      taskId: action.taskId ?? null,
+      kind,
+      detail: detail.slice(0, 2000),
+      status: action.status,
+      hash: action.hash,
+      createdAt: new Date().toISOString(),
+    });
+  }
+```
+
+`$new`:
+```typescript
+  private async audit(owner: string, action: ActionProposal, kind: string, detail: string, actorId?: string) {
+    await this.db.put(owner, "action-audit", {
+      id: `audit-${action.id}-${Date.now()}`,
+      actionId: action.id,
+      taskId: action.taskId ?? null,
+      // ACTIONS_ACTOR_ID_V1 — actorId de quien ejecuta la transición.
+      actorId: actorId ?? null,
+      kind,
+      detail: detail.slice(0, 2000),
+      status: action.status,
+      hash: action.hash,
+      createdAt: new Date().toISOString(),
+    });
+  }
+```
+
+Y en las llamadas a `this.audit(...)`, pasar `ctx.actor.id` cuando esté disponible. En `decide`, `userId ?? owner`; en `propose`, `owner` (sin actor explícito); en `edit`/`retry`, `owner`.
+
+**Verificación pre:** `private async audit(owner: string, action: ActionProposal, kind: string, detail: string)` 1×. Post: `ACTIONS_ACTOR_ID_V1` 1×, `actorId: actorId ?? null` 1×.
+
+### Patchset F6.6 — `apps/server/src/engine/worker.ts` (MODIFY, 1 hunk)
+
+**Marca:** `WORKER_ACTOR_ID_V1`
+
+`$old` (fragmento de `busEvent`, A.5 de `fase0.txt`):
+```typescript
+const busEvent = async (type: SystemEventType, payload: Record<string, unknown>) => {
+  const bus = this.options.bus;
+  if (!bus) return;
+  await guard();
+  const source: SystemEventSource = { kind: "task", id: taskId };
+  await bus.emit(owner, type, source, { taskId, ...payload });
+};
+```
+
+`$new`:
+```typescript
+const busEvent = async (type: SystemEventType, payload: Record<string, unknown>) => {
+  const bus = this.options.bus;
+  if (!bus) return;
+  await guard();
+  const source: SystemEventSource = { kind: "task", id: taskId };
+  // WORKER_ACTOR_ID_V1 — actorId = executingActorId.
+  await bus.emit(owner, type, source, { taskId, actorId: executingActorId, ...payload });
+};
+```
+
+Donde `executingActorId` es el `task.assignedTo` o `task.state.roleId` (F1).
+
+**Verificación pre:** `Select-String -Pattern "await bus.emit\(owner, type, source, \{ taskId"` 1×. Post: `WORKER_ACTOR_ID_V1` 1×, `actorId: executingActorId` 1×.
+
+**Nota:** `worker.ts` no está pegado completo. El patchset usa `Select-String` como precondición. Si el ancla no coincide, aborta y se anota el miss.
+
+### Patchset F6.7 — `apps/server/src/config.ts` (MODIFY, 1 hunk)
+
+**Marca:** `CONFIG_AUDIT_V1`
+
+`$old` (fragmento de `Config`, después de `replayBufferSize`):
+```typescript
+  replayBufferSize: number;
+```
+
+`$new`:
+```typescript
+  replayBufferSize: number;
+  // CONFIG_AUDIT_V1 — trazabilidad (F6).
+  auditTrailEnabled: boolean;
+  recordHistoryEnabled: boolean;
+```
+
+Y en `readConfig`, después de `replayBufferSize`:
+```typescript
+    // CONFIG_AUDIT_V1
+    auditTrailEnabled: process.env.AUDIT_TRAIL_ENABLED !== "false",
+    recordHistoryEnabled: process.env.RECORD_HISTORY_ENABLED === "true",
+```
+
+**Verificación pre:** `replayBufferSize: number;` 1×. Post: `CONFIG_AUDIT_V1` 2×, `auditTrailEnabled` 1×, `recordHistoryEnabled` 1×.
+
+### Patchset F6.8 — `apps/server/src/engine/events/retention-purge.ts` (MODIFY, 1 hunk)
+
+**Marca:** `RETENTION_AUDIT_ENTRIES_V1`
+
+`$old` (fragmento de `KERNEL_KINDS`):
+```typescript
+const KERNEL_KINDS = [..., "dead-letter", "audit-entries"];
+```
+
+`$new`:
+```typescript
+// RETENTION_AUDIT_ENTRIES_V1 — audit-entries NO se purga a 90 días.
+// Se mantiene 365 días (SOC-2). Solo dead-letter y otros se purgan a 90.
+const KERNEL_KINDS = [..., "dead-letter"];
+const AUDIT_RETENTION_DAYS = 365;
+```
+
+Y en `purgeKernelRetention`, añadir un paso separado que purgue `audit-entries` a `AUDIT_RETENTION_DAYS` solo si `auditTrailEnabled` no está activo. Si `auditTrailEnabled` está activo, no purgar.
+
+**Verificación pre:** `Select-String -Pattern "\"audit-entries\""` 1×. Post: `RETENTION_AUDIT_ENTRIES_V1` 1×, `AUDIT_RETENTION_DAYS` 1×.
+
+### Patchset F6.9 — `apps/server/src/kernel/audit/store-store.ts` (MODIFY, 1 hunk)
+
+**Marca:** `AUDIT_STORE_CLASSIFICATION_V1`
+
+`$old` (fragmento de `append` o `auditEntrySchema`):
+```typescript
+  payload: z.record(z.string(), z.unknown()),
+```
+
+`$new`:
+```typescript
+  // AUDIT_STORE_CLASSIFICATION_V1 — payload acepta field/classification/allowed
+  // cuando withRead deniega un campo restricted/secret. No cambia la firma.
+  payload: z.record(z.string(), z.unknown()).superRefine((val, ctx) => {
+    if ("field" in val && typeof val.field !== "string") {
+      ctx.addIssue({ code: "custom", message: "field must be string" });
+    }
+    if ("classification" in val && !["public", "internal", "confidential", "restricted", "secret"].includes(val.classification as string)) {
+      ctx.addIssue({ code: "custom", message: "invalid classification" });
+    }
+    if ("allowed" in val && typeof val.allowed !== "boolean") {
+      ctx.addIssue({ code: "custom", message: "allowed must be boolean" });
+    }
+  }),
+```
+
+**Verificación pre:** `Select-String -Pattern "payload: z.record\(z.string\(\), z.unknown\(\)\)"` 1×. Post: `AUDIT_STORE_CLASSIFICATION_V1` 1×, `superRefine` 1×.
+
+**Nota:** `store-store.ts` no está pegado completo. El patchset usa `Select-String` como precondición. Si el ancla no coincide, aborta y se anota el miss.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el protocolo TypeScript v2. Además:
+
+- **`audit-trail/service.ts` y `history/record-history.ts` son CREATE.** `Test-Path` false antes, true después, `bytes > 600`/`> 400`.
+- **`with-read.ts` cambia 1 vez (F6.3).** `$old` exacto no está pegado; `Select-String` como precondición.
+- **`with-write.ts` cambia 1 vez (F6.4).** Idem.
+- **`actions.ts` cambia 1 vez (F6.5).** `$old` verificado contra `repomix-multiusuario-min.md`.
+- **`worker.ts` cambia 1 vez (F6.6).** `$old` verificado contra `fase0.txt` A.5.
+- **`config.ts` cambia 1 vez (F6.7).**
+- **`retention-purge.ts` cambia 1 vez (F6.8).** `$old` no está pegado; `Select-String` como precondición.
+- **`store-store.ts` cambia 1 vez (F6.9).** `$old` no está pegado; `Select-String` como precondición.
+- **No `git add .`, no `--force`, no `commit` dentro del patchset, no `exit`, no `&&`/`;`.**
+- **`Select-String` antes de escribir cada ancla. Nunca del doc. Siempre del fichero real.**
+- **Si un fichero no está en el Repomix, se pide.** No se inventa.
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Si rojo, la IA no commitea.
+- **Tests de F6 permitidos en `tests/campaign-2/`:**
+  - `tests/campaign-2/f6-audit-trail-denied.test.ts` — `withRead` deniega campo `restricted` → `AuditTrail` escribe.
+  - `tests/campaign-2/f6-record-history.test.ts` — `withWrite` con `recordHistoryEnabled` → `RecordHistory` escribe.
+  - `tests/campaign-2/f6-action-audit-actor-id.test.ts` — `action-audit` con `actorId`.
+  - `tests/campaign-2/f6-worker-actor-id.test.ts` — `run-events` con `actorId`.
+  - `tests/campaign-2/f6-retention-audit.test.ts` — `retention-purge` no purga `audit-entries` si `auditTrailEnabled`.
+- **Cline prueba además:**
+  - `withRead` con campo `internal` denegado → no escribe `AuditTrail` (solo `restricted`/`secret`).
+  - `withRead` con campo `restricted` permitido → no escribe `AuditTrail` (solo denegaciones).
+  - `withWrite` sin `recordHistoryEnabled` → no escribe `RecordHistory`.
+  - `action-audit` con `actorId` null si no hay actor.
+  - `run-events` con `actorId` = `executingActorId`.
+  - `retention-purge` con `auditTrailEnabled` → no purga `audit-entries`.
+  - `retention-purge` sin `auditTrailEnabled` → purga `audit-entries` a 365 días.
+- **La IA commitea con ficheros explícitos:** los 9 ficheros del §7, más los tests de F6.
+- **Commit message:** `feat(multiusuario): fase 6 — trazabilidad y auditoría [AUDIT_TRAIL_V1, RECORD_HISTORY_V1, WITH_READ_AUDIT_TRAIL_V1, WITH_WRITE_RECORD_HISTORY_V1, ACTIONS_ACTOR_ID_V1, WORKER_ACTOR_ID_V1, CONFIG_AUDIT_V1, RETENTION_AUDIT_ENTRIES_V1, AUDIT_STORE_CLASSIFICATION_V1]`
+- **Push:** `git push origin feat/multitenancy-campaign`.
+
+---
+
+## 13. Plan de misses
+
+- F5 incompleta → aborta F6.
+- `withRead` no existe o su firma es distinta → F6.3 aborta, se anota.
+- `withWrite` no existe o su firma es distinta → F6.4 aborta, se anota.
+- `actions.ts` `audit` no coincide → F6.5 aborta, se anota.
+- `worker.ts` `busEvent` no coincide → F6.6 aborta, se anota.
+- `retention-purge.ts` no existe → F6.8 aborta, se anota.
+- `store-store.ts` `payload` no coincide → F6.9 aborta, se anota.
+- `Config.auditTrailEnabled` default `true` → F6.3 activo. Correcto.
+- `Config.recordHistoryEnabled` default `false` → F6.4 inactivo. Correcto (condicional).
+- Typecheck rojo por `AuditTrail`/`RecordHistory` (tipos mal) → ajustar tipos, revertir el fichero rojo, anotar.
+
+**Ruta de misses:** `docs/miniaudits/04-multi-usuario-concurrente/missed/_multiusuario_pendientes.md`. La IA no lo escribe.
+
+**Deudas en `-pendientes.md`:**
+- F6.4: `RecordHistory` condicional a `recordHistoryEnabled`. Si `activity` cubre, no se activa.
+- F6.8: `audit-entries` retención 365 días (SOC-2). `dead-letter` sigue a 90 días.
+- F6.9: `payload` con `field`/`classification`/`allowed` solo cuando `withRead` deniega. No es un cambio de firma.
+- F6 no toca `worker.ts` más allá de F6.6. El worker sigue escribiendo sin `withWrite` hasta F7 (si F7 lo requiere). Anotar.
+
+---
+
+## 14. Checklist de cierre de F6
+
+- [ ] Paso 0.1–0.10 ejecutados, salidas anotadas.
+- [ ] F5 verificada (10 marcas).
+- [ ] `with-read.ts` verificado.
+- [ ] `with-write.ts` verificado.
+- [ ] `actions.ts` verificado.
+- [ ] `worker.ts` verificado.
+- [ ] `store-store.ts` verificado.
+- [ ] `retention-purge.ts` verificado.
+- [ ] `config.ts` verificado.
+- [ ] Typecheck ejecutado y registrado.
+- [ ] F6.1 aplicado con `AUDIT_TRAIL_V1` 1×.
+- [ ] F6.2 aplicado con `RECORD_HISTORY_V1` 1×.
+- [ ] F6.3 aplicado con `WITH_READ_AUDIT_TRAIL_V1` 1×.
+- [ ] F6.4 aplicado con `WITH_WRITE_RECORD_HISTORY_V1` 1×.
+- [ ] F6.5 aplicado con `ACTIONS_ACTOR_ID_V1` 1×.
+- [ ] F6.6 aplicado con `WORKER_ACTOR_ID_V1` 1×.
+- [ ] F6.7 aplicado con `CONFIG_AUDIT_V1` 2×.
+- [ ] F6.8 aplicado con `RETENTION_AUDIT_ENTRIES_V1` 1×.
+- [ ] F6.9 aplicado con `AUDIT_STORE_CLASSIFICATION_V1` 1×.
+- [ ] Tests de F6 creados en `tests/campaign-2/`.
+- [ ] `worker.ts` no se ha tocado más allá de F6.6.
+- [ ] `conversation.ts`, `kernel.ts`, `presence.ts`, `edit-lock.ts` no se han tocado.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde o fallos preexistentes anotados.
+- [ ] Cline probó `withRead` denegando campo `restricted`.
+- [ ] Cline probó `withWrite` con `recordHistoryEnabled`.
+- [ ] Cline probó `action-audit` con `actorId`.
+- [ ] Cline probó `run-events` con `actorId`.
+- [ ] Cline probó `retention-purge` con y sin `auditTrailEnabled`.
+- [ ] `git add` explícito de los 9 ficheros + tests de F6.
+- [ ] `git commit -m "feat(multiusuario): fase 6 — trazabilidad y auditoría [...]"`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Confirmación al humano: "F6 cerrada. Siguiente: F7 (cierre)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real
+
+### A.1. `apps/server/src/actions.ts` — `audit` (literal, `repomix-multiusuario-min.md`):
+
+```typescript
+private async audit(owner: string, action: ActionProposal, kind: string, detail: string) {
+  await this.db.put(owner, "action-audit", {
+    id: `audit-${action.id}-${Date.now()}`,
+    actionId: action.id,
+    taskId: action.taskId ?? null,
+    kind,
+    detail: detail.slice(0, 2000),
+    status: action.status,
+    hash: action.hash,
+    createdAt: new Date().toISOString(),
+  });
+}
+```
+
+**F6.5 añade `actorId` al payload.**
+
+### A.2. `apps/server/src/engine/worker.ts` — `busEvent` (fragmento, `fase0.txt` A.5):
+
+```typescript
+const busEvent = async (type: SystemEventType, payload: Record<string, unknown>) => {
+  const bus = this.options.bus;
+  if (!bus) return;
+  await guard();
+  const source: SystemEventSource = { kind: "task", id: taskId };
+  await bus.emit(owner, type, source, { taskId, ...payload });
+};
+```
+
+**F6.6 añade `actorId: executingActorId` al payload.**
+
+### A.3. `apps/server/src/engine/events/retention-purge.ts` — `KERNEL_KINDS` (fragmento, citado en `campaña-multiusuario.txt`):
+
+```typescript
+const KERNEL_KINDS = [..., "dead-letter", "audit-entries"];
+```
+
+**F6.8 quita `"audit-entries"` de `KERNEL_KINDS` y lo trata con retención de 365 días.**
+
+### A.4. `apps/server/src/kernel/audit/store-store.ts` — `auditEntrySchema` (fragmento, citado en `fase0.txt` §A.10 y en el hilo):
+
+```typescript
+payload: z.record(z.string(), z.unknown()),
+```
+
+**F6.9 añade `superRefine` para validar `field`/`classification`/`allowed` cuando están presentes.**
+
+---
+
+**FIN DEL DOCUMENTO 11 — F6**
+
+F6 completa: 2 CREATE + 7 MODIFY = 9 patchsets, ~9 hunks. Invariantes G6-I1–G6-I12 cubiertas. `AuditTrail` de reads sensibles, `RecordHistory` condicional, `action-audit` con `actorId`, `run-events` con `actorId`, `retention-purge` respeta `audit-entries` (365 días SOC-2). Anexo literal con lo que tengo verificado. `Select-String` como precondición para `with-read.ts`, `with-write.ts`, `worker.ts`, `retention-purge.ts`, `store-store.ts` (no pegados completos en este chat). Tests de F6 permitidos en `tests/campaign-2/`.
+
+**Lo que falta para que F6 sea `PASS` real:** que ejecutes los 9 patchsets, me pegues el output de cada uno, y declares `PASS`/`FAIL`/`BLOCKED` por patchset. Yo no puedo declararlo.
+
+**Siguiente:** cuando F6 esté `PASS`, pasamos a F7 (cierre). Si quieres, puedo escribir F7 en el siguiente mensaje con la misma estructura y la misma disciplina.

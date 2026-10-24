@@ -1,0 +1,40 @@
+{
+    "id":  "holded",
+    "slug":  "04-holded",
+    "order":  4,
+    "family":  "finanzas",
+    "reference":  "Holded",
+    "title":  "ERP, facturacion y administracion",
+    "status":  "scaffold",
+    "version":  1,
+    "entrypoint":  "./src/index.ts",
+    "capabilities":  [
+                         "invoice.create_draft",
+                         "invoice.issue",
+                         "invoice.void",
+                         "credit_note.create",
+                         "payment.register",
+                         "expense.record",
+                         "counterparty.upsert"
+                     ],
+    "dependencies":  [
+                         "domain-core",
+                         "documents",
+                         "crm",
+                         "treasury"
+                     ],
+    "events":  {
+                   "consumes":  [
+                                    "opportunity.stage.changed",
+                                    "purchase.order.received",
+                                    "payment.succeeded"
+                                ],
+                   "publishes":  [
+                                     "invoice.drafted",
+                                     "invoice.issued",
+                                     "invoice.paid",
+                                     "invoice.voided",
+                                     "expense.recorded"
+                                 ]
+               }
+}

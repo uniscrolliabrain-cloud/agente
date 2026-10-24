@@ -1,0 +1,47 @@
+app = "openmuse-api"
+primary_region = "mad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  WORKSPACE_MODE = "live"
+  AGENT_BACKEND = "model"
+  HOST = "0.0.0.0"
+  PORT = "8787"
+  DATA_DIR = "/data"
+  GEMINI_MODEL = "gemini-3.6-flash"
+  OPENROUTER_MODEL = "google/gemini-3.6-flash"
+  TASK_WORKER_ENABLED = "true"
+  COMPUTER_ENABLED = "false"
+  BACKUP_INTERVAL_HOURS = "24"
+  BACKUP_RETENTION_DAYS = "7"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+[[mounts]]
+  source = "openmuse_data"
+  destination = "/data"
+
+[checks.health]
+  type = "http"
+  port = 8787
+  path = "/api/health"
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "20s"

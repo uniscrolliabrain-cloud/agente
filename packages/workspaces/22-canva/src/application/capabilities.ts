@@ -1,0 +1,73 @@
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "brief.create",
+    title: "brief.create",
+    description: "brief.create",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "design.generate",
+    title: "design.generate",
+    description: "design.generate",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "asset.export",
+    title: "asset.export",
+    description: "asset.export",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "asset.publish",
+    title: "asset.publish",
+    description: "asset.publish",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "brand.upload",
+    title: "brand.upload",
+    description: "brand.upload",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "design.read",
+    title: "design.read",
+    description: "design.read",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

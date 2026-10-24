@@ -1,0 +1,42 @@
+node_modules/
+dist/
+.openmuse/
+.env
+.env.*
+!.env.example
+artifacts/
+coverage/
+.DS_Store
+# Dumps y probes locales
+dump-web.txt
+om-pglite-probe.ts
+om-chat-acceptance.png
+
+# npm lockfile en apps/web (usamos pnpm)
+apps/web/package-lock.json
+repodump-actual.txt
+repodump-*.txt
+backups/
+*.bundle
+
+# BUSINESS_OS_IGNORE_V1
+backups/
+*.bundle
+diag-chat.ts
+diag-*.ts
+artifacts/demo/
+
+# PASE_PARCHES_V1 - basura de PowerShell y ficheros temporales
+$*
+Green
+Yellow
+*.tmp
+*.log
+*.tsbuildinfo
+
+.openmuse.bak-*/
+*.bak.*
+repomix-*.md
+scripts/fixes/*.ps1
+apps/server/src/engine/service.ts
+*.corrupt.bak

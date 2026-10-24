@@ -1,0 +1,73 @@
+// WS_CAPABILITIES_FULL_V1 - declaracion completa de capacidades (9 campos).
+// Los 5 campos ampliados (description, sideEffects, requiresApproval, inputs, outputs)
+// los exige capabilityDeclarationSchema. Se rellenan aqui para no romper el contrato.
+import type { CapabilityDeclaration } from "../../../src/contracts/index.ts";
+
+export const CAPABILITIES: readonly CapabilityDeclaration[] = [
+  {
+    id: "portal.invite",
+    title: "portal.invite",
+    description: "portal.invite",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "portal.revoke",
+    title: "portal.revoke",
+    description: "portal.revoke",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "request.submit",
+    title: "request.submit",
+    description: "request.submit",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: true,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "case.update",
+    title: "case.update",
+    description: "case.update",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "document.share",
+    title: "document.share",
+    description: "document.share",
+    kind: "action",
+    risk: "low",
+    sideEffects: true,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+  {
+    id: "case.timeline",
+    title: "case.timeline",
+    description: "case.timeline",
+    kind: "query",
+    risk: "low",
+    sideEffects: false,
+    requiresApproval: false,
+    inputs: {},
+    outputs: {},
+  },
+];

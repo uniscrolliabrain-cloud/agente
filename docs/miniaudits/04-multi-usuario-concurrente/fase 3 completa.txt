@@ -1,0 +1,288 @@
+fase 3 completa:
+
+# Fase 3 — Delegación controlada (G3) — Informe de ejecución
+
+**Campaña:** 2 — Multiusuario
+**Fase:** 3 — Delegación controlada
+**Rama:** `feat/multitenancy-campaign`
+**Base:** F1 (identidad) + F2 (acceso) cerradas.
+**Alcance:** 26 patchsets (14 CREATE + 12 MODIFY) + 8 tests de aceptación.
+**Protocolo:** PowerShell v2.1 + protocolo TypeScript v2 (throw, `Assert-MatchCount`, backup, `WriteAllText` UTF-8 sin BOM, typecheck por tanda).
+
+---
+
+## 1. Objetivo
+
+Unificar `AgentTask`, `Goal`, `Monitor`, `ActionProposal` y `SOP` bajo una interfaz de lectura `Assignment` sin duplicar persistencia. Separar `assignedBy` (delegante) de `assignedTo` (ejecutor) y de `owner` (ámbito de almacenamiento). Construir `Flow` desde `AgentPersona.reportsTo`/`peers`, no desde `AgentRole`. Garantizar que el agente ejecutor **no escala permisos** por encima del asignador (T13). Todo con autorización por recurso real, no solo por `kind`.
+
+---
+
+## 2. Correcciones aplicadas (rastreadas de todas las fuentes)
+
+| ID | Corrección | Aplicada en |
+|---|---|---|
+| 1.1 | `P_efectivos = P_asignador ∩ P_ejecutor ∩ P_tarea ∩ P_tenant` | F3.6 `AssignmentService.assign` |
+| 1.2 | `assignedBy = ctx.actor.id`; `throw` si no coincide | F3.6, F3.12 |
+| 1.3 | Cada handler carga recurso, verifica tenant, autoriza transición, luego escribe | F3.7 `assignmentsRoutes` |
+| 2.1 | Sin `z.any()`. Schemas locales estrictos para `plan`/`evidence`/`outcome` | F3.3–F3.3e, F3.5–F3.5e |
+| 2.2 | `toAssignment` vista / `applyAssignment` solo campos autorizados; `metadata` declarado | F3.1, F3.5–F3.5e |
+| 2.3 | `assignedTo` nullable; `null` = bandeja de pendientes | F3.1 |
+| 3 | `FlowRelation` resuelve `personaId` contra `Actor` del mismo tenant; rechaza cruces | F3.2, F3.16 |
+| 4 | Conteo: 14 CREATE + 12 MODIFY = 26 | §5 |
+| 5 | 8 tests de F3 en `tests/campaign-2/` | §7 |
+| 6 | Orden: dominio → adapters → servicio → integración → verificación | §4 |
+| B-N1 | `Assignment.id = ${kind}:${recordId}` | F3.1 |
+| B-N2 | `AssignmentStatus` unión real + `nativeStatus` por kind | F3.1 |
+| B-N3 | `AssignmentOutcome` reusa `outcomeStatusSchema` de `outcome.ts` | F3.1 |
+| B-N4 | `assign(ctx: PolicyContext, ...)` | F3.6 |
+| B-N5 | `PolicyAction.execute` (ya existe en F2) + `complete` mapea a `execute` | F3.6 |
+| B-N6 | `AgentActor.flow` se computa, no se persiste en `Actor` | F3.16 |
+| B-N7 | `approval` sin `taskId` → owner con `assignedBy = null` explícito | F3.13 |
+
+---
+
+## 3. Ficheros que ya existen (F1/F2) — no se crean en F3
+
+- `packages/domain/src/actor.ts` — `Actor`, `HumanActor`, `AgentActor`.
+- `packages/domain/src/policy.ts` — `Policy`, `PolicyAction` (incluye `"execute"`), `PolicyResource`, `PolicyDecision`.
+- `packages/domain/src/classification.ts` — `FieldClassification`, `DEFAULT_CLASSIFICATION`.
+- `apps/server/src/engine/authz/pdp.ts` — `PolicyDecisionPoint.can(ctx, action, resource, field, target)`.
+- `apps/server/src/engine/authz/with-read.ts` — `withRead(deps, ctx, kind, id, fn)`.
+- `apps/server/src/engine/authz/with-write.ts` — `withWrite(deps, ctx, kind, id, fn, useCompareAndSwap?)`.
+- `apps/server/src/engine/events/bus.ts` — `EventBus.emit(owner, type, source, payload, options)`.
+
+---
+
+## 4. Ficheros que no se tocan en F3 (F5/F6)
+
+- `apps/server/src/engine/presence.ts` (F5).
+- `apps/server/src/engine/edit-lock.ts` (F5).
+- `apps/server/src/notifications-stream.ts` (F5).
+- `apps/server/src/notification-prefs.ts` (F5).
+- `apps/server/src/engine/worker.ts` (solo F1+F2).
+- `apps/server/src/engine/history/` (F6, no existe).
+- `apps/server/src/engine/audit-trail/` (F6, no existe).
+- `apps/server/src/engine/reconcile/` (F6, no existe).
+- `apps/server/src/db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts` (Campaña 1 cerrada).
+
+---
+
+## 5. Los 26 patchsets
+
+### Tanda A — Dominio CREATE (7)
+
+| # | Fichero | Marca | Correcciones |
+|---|---|---|---|
+| F3.1 | `packages/domain/src/assignment.ts` | `ASSIGNMENT_MODEL_V1` | B-N1, B-N2, B-N3, 2.2, 2.3 |
+| F3.2 | `packages/domain/src/flow.ts` | `FLOW_MODEL_V1` | 3 |
+| F3.3 | `packages/domain/src/assignments/task.ts` | `ASSIGNMENT_IMPL_V1` | 2.1 |
+| F3.3b | `packages/domain/src/assignments/goal.ts` | `ASSIGNMENT_IMPL_V1` | 2.1 |
+| F3.3c | `packages/domain/src/assignments/monitor.ts` | `ASSIGNMENT_IMPL_V1` | 2.1 |
+| F3.3d | `packages/domain/src/assignments/approval.ts` | `ASSIGNMENT_IMPL_V1` | 2.1 |
+| F3.3e | `packages/domain/src/assignments/sop.ts` | `ASSIGNMENT_IMPL_V1` | 2.1 |
+
+### Tanda B — Dominio MODIFY (4)
+
+| # | Fichero | Hunks | Marca |
+|---|---|---|---|
+| F3.8 | `packages/domain/src/agent.ts` | 2 (`AgentTask`, `Monitor`) | `AGENT_TASK_ASSIGNED_BY_V1`, `MONITOR_ASSIGNED_BY_V1` |
+| F3.9 | `packages/domain/src/goal.ts` | 1 | `GOAL_ASSIGNED_BY_V1` |
+| F3.10 | `packages/domain/src/sop.ts` | 1 | `SOP_ASSIGNED_BY_V1` |
+| F3.11 | `packages/domain/src/index.ts` | 1 | `DOMAIN_INDEX_ASSIGNMENT_V1` |
+
+### Tanda C — Server CREATE (8)
+
+| # | Fichero | Marca | Correcciones |
+|---|---|---|---|
+| F3.4 | `apps/server/src/engine/assignments/registry.ts` | `ASSIGNMENT_REGISTRY_V1` | — |
+| F3.5 | `.../adapters/task-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | 2.1, 2.2 |
+| F3.5b | `.../adapters/goal-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | 2.1, 2.2 |
+| F3.5c | `.../adapters/monitor-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | 2.1, 2.2 |
+| F3.5d | `.../adapters/approval-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | 2.1, 2.2 |
+| F3.5e | `.../adapters/sop-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | 2.1, 2.2 |
+| F3.6 | `apps/server/src/engine/assignments/service.ts` | `ASSIGNMENT_SERVICE_V1` | B-N4, B-N5, 1.1, 1.2 |
+| F3.7 | `apps/server/src/engine/assignments/routes.ts` | `ASSIGNMENT_ROUTES_V1` | 1.3 |
+
+### Tanda D — Server MODIFY (6)
+
+| # | Fichero | Hunks | Marca | Correcciones |
+|---|---|---|---|---|
+| F3.12 | `apps/server/src/engine/service.ts` | 2 (`createTask/Goal/Monitor`, `escalateTask`) | `AGENT_SERVICE_ASSIGNMENT_V1` | 1.2 |
+| F3.13 | `apps/server/src/actions.ts` | 2 (`propose`, `decide`) | `ACTION_SERVICE_ASSIGNMENT_V1` | B-N7 |
+| F3.14 | `apps/server/src/engine/routes.ts` | 2 (`reassign`, `escalate`) | `ENGINE_ROUTES_ASSIGNMENT_V1` | — |
+| F3.15 | `apps/server/src/skills/sop-routes.ts` | 1 (`POST /:id/run`) | `SOP_ROUTES_ASSIGNMENT_V1` | — |
+| F3.16 | `apps/server/src/engine/agents/personas/registry.ts` | 1 (`register`) | `PERSONA_REGISTRY_FLOW_V1` | 3, B-N6 |
+| F3.17 | `apps/server/src/engine/agents/personas/routes.ts` | 1 (`GET /:id`) | `PERSONA_ROUTES_FLOW_V1` | — |
+
+### Tanda E — Wire + cierre (2)
+
+| # | Fichero | Hunks | Marca |
+|---|---|---|---|
+| F3.18 | `apps/server/src/app.ts` | 2 (`createApp`, `app.route`) | `APP_ASSIGNMENT_WIRE_V1` |
+| F3.19 | `apps/server/src/engine/orchestrator/orchestrator.ts` | 1 (`runGoal`) | `ORCHESTRATOR_REQUESTING_ACTOR_V1` |
+
+---
+
+## 6. Contratos clave
+
+### `Assignment` (F3.1)
+
+- `id = ${kind}:${recordId}` (B-N1).
+- `tenantId`, `kind` (`task|goal|monitor|approval|sop`).
+- `assignedTo: string | null` (bandeja de pendientes), `assignedBy: string | null`.
+- `status: AssignmentStatus` (unión real de los 5 kinds), `nativeStatus: string` (B-N2).
+- `plan?`, `evidence[]`, `outcome?` (reusa `outcomeStatusSchema` de `outcome.ts`).
+- `metadata?: Record<string, unknown>` declarado y validado (2.2).
+- **No se persiste**. Se computa on-the-fly desde el record con el adapter.
+
+### `Flow` (F3.2)
+
+- `reportsTo?: FlowRelation`, `peers: FlowRelation[]`.
+- `FlowRelation = { actorId, personaId, kind, role, tenantId }`.
+- **No persistido**. Se computa en `PersonaRegistry.register`.
+- **`assigners`/`approvers`/`reviewers` NO en `Flow`**, se resuelven desde `Policy`.
+- `personaId` se resuelve contra `Actor` real del tenant; rechaza cruces (3).
+
+### `AssignmentService` (F3.6)
+
+- `assign(ctx: PolicyContext, kind, recordId, assignedTo: string | null, assignedBy: string): Promise<Assignment>`.
+- `assignedBy` debe ser `ctx.actor.id` (1.2).
+- `P_efectivos = P_asignador ∩ P_ejecutor ∩ P_tarea ∩ P_tenant` (1.1).
+- `accept`, `reject`, `approve`, `escalate`, `reassign`, `complete`.
+- `complete` de task mapea a `PolicyAction.execute` (B-N5).
+- Emite eventos al bus. Llama a `withWrite`.
+- **No crea record `Assignment` paralelo**.
+
+### `assignmentsRoutes` (F3.7)
+
+8 handlers. Cada uno:
+1. Carga el record original.
+2. Verifica tenant.
+3. Autoriza la transición con PDP.
+4. Solo entonces escribe.
+5. No acepta `tenantId`/`assignedBy`/`status`/`kind` del body para saltarse restricciones (1.3).
+
+### Adapters (F3.5–F3.5e)
+
+- `toAssignment(record)` → vista normalizada.
+- `applyAssignment(record, changes)` → aplica solo campos autorizados; los específicos se conservan.
+- `applyStatus(record, status)` → mapea canónico a nativo.
+- `toCanonicalStatus(native)` / `toNativeStatus(canonical)` por kind.
+- Sin `z.any()`. Sin pérdida de datos.
+
+---
+
+## 7. Tests de aceptación (8, en `tests/campaign-2/`)
+
+| Test | Verifica |
+|---|---|
+| `f3-assignment-registry.test.ts` | `AssignmentRegistry` resuelve los 5 kinds |
+| `f3-adapters-roundtrip.test.ts` | `toAssignment`/`applyAssignment` idempotentes, sin pérdida |
+| `f3-assignment-service-assign.test.ts` | `assign(ctx, ...)` con `assignedBy = ctx.actor.id` |
+| `f3-assignment-service-approve.test.ts` | `approve`/`reject` con PDP |
+| `f3-assignment-service-escalate.test.ts` | `escalate` con `toActor` + `reason` |
+| `f3-assignment-routes-authz.test.ts` | 200 con actor correcto, 403 con otro |
+| `f3-flow-resolution.test.ts` | `Flow` resuelve `personaId` contra `Actor` del mismo tenant, rechaza cruces |
+| `f3-t13-no-escalation.test.ts` | T13: agente no escala permisos |
+
+---
+
+## 8. Orden de ejecución
+
+1. **Tanda A** (7 CREATE dominio) → typecheck.
+2. **Tanda B** (4 MODIFY dominio) → typecheck.
+3. **Tanda C** (8 CREATE server) → typecheck.
+4. **Tanda D** (6 MODIFY server) → typecheck.
+5. **Tanda E** (2 MODIFY wire) → typecheck.
+6. **Tests F3** (8) → ejecución + typecheck.
+7. **Cierre**: verificar 26 marcas, actualizar `-pendientes.md`, `git add` selectivo, commit, push.
+
+---
+
+## 9. Reglas por patchset
+
+- `function Invoke-F3XX { ... }` + `Invoke-F3XX`.
+- `$ErrorActionPreference = "Stop"`.
+- `Assert-MatchCount = 1` con `$old` del disco (MODIFY) o `Test-Path` false (CREATE).
+- Backup en `.tmp/patchset-backups/`.
+- `WriteAllText` con `UTF8Encoding($false)` y line ending del disco.
+- Marca post 1×, `$old` ya no está, `$new` está.
+- Typecheck al final de cada tanda. Si rojo, no se pasa a la siguiente.
+- Deudas a `-pendientes.md`. Misses a `missed/_multiusuario_pendientes.md` (los escribe el humano).
+- `git add` selectivo por patchset. Nunca `git add .`. Commit y push solo al final de F3.
+
+---
+
+## 10. Deudas esperadas (a `-pendientes.md`)
+
+| ID | Deuda |
+|---|---|
+| PEND-F3-01 | `complete` de task mapea a `execute` (B-N5). `PolicyAction.execute` ya existe en F2. |
+| PEND-F3-02 | `approval` sin `taskId` → asignación al owner con `assignedBy = null` (B-N7). |
+| PEND-F3-03 | `AgentActor.flow` computado, no persistido (B-N6). |
+| PEND-F3-04 | `Flow` desde `AgentPersona`, no `AgentRole`. |
+| PEND-F3-05 | `assigners`/`approvers`/`reviewers` no en `Flow`, se resuelven desde `Policy`. |
+| PEND-F3-06 | Adapters sin pérdida de datos: campos específicos conservados en el record original. |
+| PEND-F3-07 | `Goal` existe dos veces (`goal.ts` Zod + `agent.ts` interface legacy). F3 usa `goal.ts`. Limpieza post-F3. |
+| PEND-F3-08 | `TaskStep`/`Evidence` son `interface`, no `z.object`. F3.3 declara schemas locales estrictos. |
+| PEND-F3-09 | `Assignment` como interfaz de lectura, no entidad persistida. |
+
+---
+
+## 11. Criterio de cierre F3
+
+- **26 marcas** presentes 1× (las de Tanda A–E).
+- **8 tests** de `tests/campaign-2/` en verde.
+- **Typecheck verde**.
+- **`-pendientes.md`** con las 9 deudas documentadas.
+- **`git add` selectivo** de los 26 ficheros + 8 tests + `-pendientes.md`.
+- **Commit** con mensaje que lista las 26 marcas.
+- **Push** a `feat/multitenancy-campaign`.
+- **Confirmación**: "F3 cerrada. Siguiente: F4."
+
+---
+
+## 12. Estado de precondiciones
+
+| Precondición | Estado |
+|---|---|
+| F2 cerrada (12 marcas) | Verificada por typecheck verde y repomix de F2 |
+| `actor.ts`, `policy.ts`, `classification.ts`, `pdp.ts`, `with-read.ts`, `with-write.ts`, `bus.ts` existen | ✅ verificados en repomix |
+| `agent.ts`, `goal.ts`, `sop.ts`, `index.ts`, `agent-persona.ts`, `outcome.ts`, `execution-context.ts` existen | ✅ verificados en repomix |
+| `engine/service.ts` firmas `createTask`/`createGoal`/`createMonitor`/`escalateTask` | ⚠️ listado en repomix, contenido no volcado. Requerido para F3.12 |
+| Ancla `app.ts` (`new AgentService(`, `new ActionService(`, `app.route("/api/agent-personas")`) | ⚠️ requerida para F3.18 (fichero 30 MB, no se carga en chat) |
+| `personas/registry.ts` `register` | ✅ verificado |
+| `personas/routes.ts` `GET /:id` con `reportsTo` | ✅ verificado |
+| `actions.ts` `propose`/`decide` | ✅ verificados |
+| `engine/routes.ts` `reassign`/`escalate` | ✅ verificados |
+| `sop-routes.ts` `POST /:id/run` | ✅ verificado |
+| `orchestrator.ts` `runGoal` | ✅ verificado |
+| Typecheck actual | Pendiente de confirmar en disco (Bloque 0) |
+
+---
+
+## 13. Entregables por mensaje
+
+| Mensaje | Contenido |
+|---|---|
+| 1 | Tanda A (7 CREATE) + Tanda B (4 MODIFY) + typecheck |
+| 2 | Tanda C (8 CREATE) + 8 tests + typecheck |
+| 3 | Tanda D (6 MODIFY) + Tanda E (2 MODIFY) + typecheck + cierre F3 |
+
+**Bloqueadores para arrancar Mensaje 3:** `engine/service.ts` (here-string) + ancla `app.ts` (Select-String de 3 patrones).
+
+---
+
+## 14. Fuera de alcance de F3
+
+- `presence.ts`, `edit-lock.ts`, `notifications-stream.ts`, `notification-prefs.ts` (F5).
+- `history/`, `audit-trail/`, `reconcile/` (F6).
+- `worker.ts` más allá de F1+F2.
+- `conversation.ts`, `kernel.ts`.
+- `db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts`.
+- Perfiles editables, clientes, nóminas, compliance, datos clínicos (otras campañas).
+- `version`, `expectedVersion`, `ConflictDiff`, `ConflictVersion` (F4).
+
+---
+
+**Fin del informe. F3 lista para ejecución en 3 mensajes con las 26 marcas + 8 tests + 9 deudas documentadas. Bloqueadores: `engine/service.ts` y ancla de `app.ts`.**

@@ -1,0 +1,471 @@
+# Protocolo operativo para fixes de PowerShell en repositorios TypeScript
+
+## Cómo trabajar sin fallar: método completo, granular y verificable
+
+Este documento describe, paso a paso, el método que uso para aplicar fixes de PowerShell en repositorios reales sin romper nada, sin inventar anclas y sin fingir que algo ha pasado. Está pensado para que otra IA lo lea y lo ejecute tal cual. No es teoría: es el método que ha hecho que 14 fixes entren limpios en un repo TypeScript + Hono + PGlite, y que cuando he fallado, el fallo haya sido diagnosticable y reversible sin daño.
+
+La regla raíz es esta: **no se trata de escribir código que parezca correcto, sino de conseguir que el cambio entre en el repositorio real, se pueda verificar y no rompa lo que ya funciona.**
+
+---
+
+## 1. Principios que gobiernan todo lo demás
+
+Antes de tocar nada, interioriza estos principios. Cada decisión posterior se deriva de ellos.
+
+1. **Primero diagnosticar, después modificar.** Leer el código real, localizar el problema y comprobar las dependencias antes de proponer un fix.
+2. **La fuente de verdad es el repositorio en disco.** No dar por válido un archivo, una ruta, una función o un ancla porque aparezca en documentación, un Repomix anterior o una respuesta de otra IA.
+3. **Un fix = un archivo + un propósito concreto.** Evitar mezclar correcciones independientes en un único parche.
+4. **Preservar lo que ya funciona.** No refactorizar, renombrar, reorganizar ni mejorar código ajeno al objetivo del fix.
+5. **No inventar anclas ni contenido.** Leer el fragmento real antes de escribir el parche. Si falta información, pedir el archivo o generar un Repomix preciso.
+6. **Cada cambio debe poder verificarse.** Comprobar que se ha aplicado, que el contenido es correcto y que no aparecen errores nuevos.
+7. **Priorizar avances reales sobre grandes planes.** Entregar bloques ejecutables y resultados verificables; no afirmar que algo está terminado sin pruebas.
+8. **Respetar el estado del usuario.** Revisar cambios pendientes y archivos sin seguimiento antes de modificar nada. No sobrescribir trabajo previo ni borrar archivos desconocidos.
+9. **Trabajar por fases y dependencias.** Resolver las fases en el orden establecido por las auditorías, sin dar por completada una fase solo porque otra IA lo diga.
+10. **Ser directo.** Si piden un comando, dar el comando. Si piden un fix, dar el fix. No añadir teoría innecesaria.
+
+El principio 5 es el que más fallos evita. Y el 2 es el que más veces se viola: creer que un Repomix de hace tres iteraciones sigue reflejando el disco actual. En un repo que ha pasado por cinco fases de fixes, el Repomix original ya no coincide con el disco. La única fuente fiable es leer el fichero en el momento de escribir el ancla.
+
+---
+
+## 2. Formato obligatorio de un fix
+
+Cada fix que entregues debe tener estos elementos, en este orden:
+
+- **ID único**: `FIX_001`, `FIX_002`, etc. Sin colisiones con fixes anteriores.
+- **Objetivo**: qué problema concreto resuelve, en una frase.
+- **Archivo afectado**: ruta exacta desde la raíz del repositorio.
+- **Diagnóstico**: fragmento real del código y motivo del cambio. Citar línea aproximada.
+- **Ancla**: texto literal extraído del archivo, suficientemente específico y único.
+- **Script PowerShell ejecutable**: autocontenido, sin dependencias de mensajes anteriores.
+- **Verificación posterior**: comandos concretos y resultado esperado.
+- **Resultado explícito**: `PASS`, `PARTIAL`, `FAIL`, `BLOCKED`, `DEFERRED`, `NOT APPLICABLE`.
+
+Si el archivo real no está disponible, **solicitarlo o pedir un Repomix que lo incluya**. No inventar líneas para completar el ejemplo. No sustituir un ancla que no coincide por otra aproximada. No decir "PASS" si no se ha verificado.
+
+---
+
+## 3. Reglas para escribir bloques de PowerShell que entren correctamente
+
+Esta es la sección más operativa. Un bloque de PowerShell que no entra en consola es un bloque inútil, aunque la lógica sea perfecta.
+
+### 3.A. Un bloque, un objetivo
+
+- Cada bloque resuelve un único cambio concreto.
+- No concatenar arreglos independientes en una macro enorme.
+- Preferir un script corto, autocontenido e idempotente.
+- **No usar `&&` ni `;` para encadenar comandos.** PowerShell no los interpreta igual que Bash.
+- Escribir una instrucción por línea.
+- **No usar `exit`** en bloques destinados a pegarse directamente en una sesión interactiva. `exit` cierra la consola.
+- Evitar aliases ambiguos o nombres de funciones de una o dos letras.
+- **No utilizar `Write-Host` con `-f` fuera de paréntesis.** `Write-Host "texto" -f Red` no compila. Es `Write-Host "texto" -ForegroundColor Red`.
+- No introducir dependencias, módulos o instalaciones adicionales sin necesidad.
+
+### 3.B. Comprobar antes de modificar
+
+Antes de tocar un archivo:
+
+1. **Confirmar la ruta y que el archivo existe.** `Test-Path $file`. Si no existe, abortar.
+2. **Leer el fragmento exacto que se va a cambiar.** `Get-Content $file -Raw` y examinar.
+3. **Buscar el ancla y contar las coincidencias.** `([regex]::Matches($content, [regex]::Escape($ancla))).Count`.
+4. **Si hay cero coincidencias, detener el fix.** No improvisar un ancla alternativa.
+5. **Si hay varias coincidencias, refinar el ancla.** Añadir contexto (más líneas) hasta que sea única.
+6. **Si el cambio ya está aplicado, marcarlo como `SKIP`.** Comprobar por la marca de idempotencia.
+7. **Nunca sustituir silenciosamente un ancla que no coincide por otra aproximada.**
+
+La regla de oro: **el script solo modifica el archivo si puede demostrar que está actuando sobre el contenido esperado.** Si no puede demostrarlo, no modifica.
+
+### 3.C. Marcadores únicos de idempotencia
+
+Cada fix debe introducir una marca de comentario única, por ejemplo `XXX_V001` o `TENANT_RLS_TX_V1`. Antes de insertar el cambio:
+
+- **Si la marca ya existe y el contenido es correcto**: `SKIP`.
+- **Si no existe y el ancla coincide exactamente una vez**: aplicar.
+- **Si el ancla no existe**: `MISS`, abortar.
+- **Si hay varias coincidencias**: detenerse, refinar.
+- **Si la marca existe pero el contenido no coincide con lo esperado**: detenerse y diagnosticar. Puede ser que otro fix haya tocado el fichero y haya dejado la marca en un estado inconsistente.
+
+La marca va en comentario, nunca en código ejecutable que pueda afectar al comportamiento. Y nunca dos marcas iguales en el mismo fichero (a menos que sea intencional, como `TENANT_ASSERT_NOT_DEFAULT_WIRED_V1` que aparece en import y en handler; en ese caso, la verificación cuenta el número esperado).
+
+### 3.D. Escritura segura del archivo
+
+- **Preservar la codificación original.** Si el fichero es UTF-8 sin BOM, escribir UTF-8 sin BOM. Si es UTF-8 con BOM, escribir UTF-8 con BOM. Detectar antes.
+- **Respetar los finales de línea CRLF o LF existentes.** Detectar con `$content -match "\r\n"` y construir el `$new` con el mismo separador.
+- **Usar `[System.Text.UTF8Encoding]::new($false)`** para UTF-8 sin BOM. **No usar `New-Object System.Text.UTF8Encoding $false`** porque en PowerShell 5 puede fallar si el parser corta la línea. Usar la sintaxis `::new()`.
+- **Evitar reescribir archivos completos para cambiar unas pocas líneas.** Pero si el ancla es un bloque de varias líneas, es aceptable reescribir el bloque completo con `$content.Replace($old, $new)`.
+- **No utilizar expresiones regulares amplias cuando basta una sustitución literal.** `[regex]::Escape($ancla)` convierte el ancla literal en un patrón seguro. Usar `$content.Replace($old, $new)` con strings literales, no regex.
+- **No usar aquí-strings de más de 40 líneas** para construir el contenido de un archivo. Preferir arrays de líneas y `[string]::Join($lineEnding, $lines)`.
+- **No dejar archivos parcialmente escritos si la operación falla.** Escribir a un `$tmpFile`, luego `[System.IO.File]::Replace($tmpFile, $file, $null)` con `try/catch` y fallback a `Copy-Item $backup $file`.
+- **No crear archivos nuevos con `Move-Item`** para escribir. Usar `[System.IO.File]::WriteAllText`.
+
+### 3.E. Estructura recomendada de un mini-fix
+
+El script debe seguir este flujo, sin saltarse pasos:
+
+1. **Definir la ruta del repositorio y del archivo.**
+2. **Verificar que el archivo existe.** `Test-Path`. Si no, `throw`.
+3. **Crear el backup** en `.tmp/patchset-backups/` con timestamp.
+4. **Leer el contenido real** con `Get-Content -Raw`.
+5. **Comprobar el marcador de idempotencia.** Si existe, `return` (skip).
+6. **Comprobar que el ancla coincide exactamente una vez.** `Assert-MatchCount`. Si no, `throw` con diagnóstico.
+7. **Aplicar una sustitución literal y acotada.** `$content.Replace($old, $new)`.
+8. **Escribir el archivo preservando el formato.** `UTF8Encoding($false)` + `WriteAllText`.
+9. **Volver a leerlo.** `Get-Content -Raw`.
+10. **Verificar que el cambio aparece exactamente como se esperaba.** Contar la marca, contar el nuevo código, verificar que el viejo ya no está.
+11. **Mostrar el resultado sin afirmar que las pruebas del proyecto han pasado** si todavía no se han ejecutado.
+
+Si falla cualquier comprobación previa, no modificar el archivo.
+
+### 3.F. Envolver todo en una función
+
+Este es el truco que salva más vidas. En PowerShell, un `return` dentro de un `if` en un script pegado a consola **no aborta el bloque**. Sigue ejecutando las líneas siguientes. Eso significa que si haces:
+
+```powershell
+if ($c -ne 1) {
+  Write-Host "FAIL"
+  return
+}
+# ... aquí sigue, y escribe el fichero aunque $c -ne 1 ...
+```
+
+el `return` no funciona como esperas. El `WriteAllText` se ejecuta igual. Es exactamente lo que me pasó con FIX_015b-bis: el ancla no coincidió, el `return` no abortó, y el script escribió el fichero sin el cambio e imprimió `PASS` falso.
+
+**Solución: envolver todo en una función y llamarla.**
+
+```powershell
+function Invoke-FixXXX {
+  if ($c -ne 1) {
+    throw "FAIL: ancla = $c"
+  }
+  # ...
+  [System.IO.File]::WriteAllText($file, $content, $utf8)
+  Write-Host "PASS FIX_XXX"
+}
+Invoke-FixXXX
+```
+
+Dentro de una función, `throw` **sí** aborta la función. El `WriteAllText` no se ejecuta. El `PASS` no se imprime. El fichero queda intacto. Y el backup está ahí por si acaso.
+
+**Regla fija: todo fix va envuelto en función, y las comprobaciones usan `throw`, no `return`.** El único `return` aceptable es el del skip por idempotencia, porque ese sí debe salir limpiamente sin error.
+
+### 3.G. Escapes de PowerShell: el infierno de las comillas
+
+PowerShell tiene reglas de escape distintas a Bash y a JSON. Los errores de sintaxis más comunes vienen de aquí.
+
+- **Comillas dobles dentro de comillas dobles**: se escapan con ``` `` ``` (backtick + comilla) o con `""`. **No con `\"`.** `"texto \"interno\""` rompe el parser. Es `"texto ``"interno``""` o `"texto ""interno"""`.
+- **Comillas simples dentro de comillas dobles**: no necesitan escape. `"texto 'interno'"` funciona.
+- **Comillas dobles dentro de comillas simples**: no necesitan escape. `'texto "interno"'` funciona.
+- **Backtick dentro de comillas dobles**: se escapa con doble backtick ``` `` ```.
+- **Dólar dentro de comillas dobles**: se escapa con backtick `` `$ ``. Dentro de comillas simples, `$` es literal.
+
+**Regla fija: si el string contiene comillas dobles, usar comillas simples para envolverlo.** Es la forma más segura. `'texto "interno"'` no rompe el parser. `"texto \"interno\""` sí.
+
+Si necesitas interpolar variables y el string contiene comillas dobles, hay dos opciones:
+
+- **Aquí-string con comillas simples** `@'...'@`: todo literal, no interpola. Ideal para bloques de código.
+- **Aquí-string con comillas dobles** `@"..."@`: interpola variables y acepta comillas dobles sin escape. Útil cuando mezclas variables y comillas.
+
+**Regla fija: para bloques de código que van a escribirse en un fichero, usar aquí-string con comillas simples `@'...'@`.** Es literal al 100%, no hay sorpresas de interpolación.
+
+### 3.H. Line endings: CRLF vs LF
+
+Windows usa CRLF (`\r\n`), Linux usa LF (`\n`). Si el fichero está en un repo mixto, puede tener cualquiera de los dos, o mezcla.
+
+- **Detectar el line ending** antes de construir el `$new`: `if ($content -match "\r\n") { $le = "\r\n" } else { $le = "\n" }`.
+- **Construir el `$new` con el mismo line ending** que el fichero. Si usas `` `r`n `` explícito y el fichero es LF, el ancla no coincidirá.
+- **Para anclas de varias líneas, construir con `[string]::Join($le, $lines)`**, no con un string literal con saltos embebidos.
+
+**Regla fija: para anclas multilínea, construir con `[string]::Join($lineEnding, $linesArray)`.** Es la forma más robusta.
+
+### 3.I. Indentación: espacios vs tabs
+
+Si el fichero usa tabs y tú escribes espacios (o viceversa), el ancla no coincide.
+
+- **Detectar la indentación** de la línea real: `[regex]::Match($line, '^(\s*)').Groups[1].Value`.
+- **Construir el `$new` con la misma indentación**.
+- **Para anclas de varias líneas, copiar la indentación exacta** de cada línea del fichero real, no de un `Select-String` normalizado.
+
+**Regla fija: para anclas multilínea, leer las líneas del fichero real con `Get-Content`, no copiarlas de un `Select-String` con `-Context`.** El `Select-String` normaliza tabs a espacios y colapsa líneas largas. No es fuente fiable para copiar anclas literales.
+
+---
+
+## 4. Protección del repositorio
+
+Antes de una tanda de fixes:
+
+```powershell
+git status --short
+```
+
+Después de cada cambio:
+
+```powershell
+git diff --check
+git diff -- <ruta/al/archivo>
+git status --short
+```
+
+Reglas adicionales:
+
+- **Nunca ejecutar `git add .`** por comodidad. `git add` uno a uno con rutas explícitas.
+- **No borrar archivos** sin autorización y sin entender su función.
+- **No descartar cambios del usuario.** Si hay cambios no commiteados que no son tuyos, no tocar.
+- **No usar `git reset --hard`, `git clean -fd`** ni operaciones destructivas para resolver problemas menores.
+- **No hacer force-push a `main`.**
+- **No incluir secretos, tokens ni archivos `.env`** en commits o Repomix.
+- **No crear commits automáticamente** salvo que se haya solicitado. El humano decide cuándo commitear.
+- **Para revertir una corrección ya confirmada**, preferir un `git revert` revisado y documentado.
+
+Si un fix falla y hay que revertir, `Copy-Item $backup $file -Force` desde `.tmp/patchset-backups/`. Nunca `git checkout -- file` porque borra cambios no commiteados que no son tuyos.
+
+---
+
+## 5. Verificación técnica después de cada fix
+
+En TypeScript:
+
+1. **Aplicar el cambio.**
+2. **Inspeccionar el diff.** `git diff -- <archivo>`.
+3. **Ejecutar el typecheck** definido por el proyecto. `pnpm typecheck` o `pnpm --filter @openmuse/server exec tsc --noEmit`.
+4. **Ejecutar las pruebas relevantes.** `pnpm test`.
+5. **Comprobar si los errores son nuevos o ya existían.** Distinguir errores de `worker.ts` (preexistentes) de errores nuevos introducidos por el fix.
+6. **Registrar el resultado con evidencia.** `archivo.ts:línea` con fragmento literal.
+
+No corregir errores colaterales de forma automática. Si aparece otro problema, diagnosticarlo y abrir un fix independiente.
+
+**Una corrección de texto que entra en el archivo no equivale a una corrección funcional.** Que el `Replace` se haya aplicado no significa que el comportamiento sea el correcto. **Una compilación correcta tampoco demuestra por sí sola que el comportamiento sea correcto.** Que `tsc` pase no significa que el runtime funcione. La verificación funcional (probar el endpoint, probar el flujo) es obligatoria.
+
+---
+
+## 6. Cómo entregar los bloques al usuario
+
+Cada entrega debe ser fácil de copiar y ejecutar.
+
+**Formato preferido:**
+
+```
+FIX_001 — Descripción breve
+
+Archivo: ruta/real/archivo.ts
+
+Objetivo: una frase.
+
+PowerShell: un bloque completo, sin fragmentos que dependan de variables definidas en mensajes anteriores.
+
+Verificación: comandos concretos y resultado esperado.
+```
+
+Si el fix depende de un diagnóstico previo, indicar ese requisito. Si el bloque puede modificar datos o sobrescribir contenido, advertirlo antes de presentarlo.
+
+**No dar por ejecutado el script.** El usuario debe ejecutarlo y compartir el resultado, salvo que la IA disponga de acceso real al entorno y lo haya ejecutado allí. Si la IA no tiene acceso al entorno, no puede afirmar `PASS`. Solo puede decir "el bloque está listo, ejecútalo y pégame el output".
+
+---
+
+## 7. Cómo trabajar con Repomix
+
+- **Generar un Repomix específico para el problema**, no incluir medio repositorio sin necesidad.
+- **Incluir el archivo que se modifica, sus importaciones relevantes, los tipos utilizados y las pruebas relacionadas.**
+- **Si hay dudas sobre qué archivo se ejecuta realmente**, incluir también el punto de entrada y los scripts de configuración.
+- **Comparar el Repomix con el árbol real y el contenido actual del disco** antes de producir un parche.
+- **No asumir que dos archivos con nombres similares son duplicados** ni que uno está obsoleto sin comprobar sus importaciones y usos. Ejemplo: `apps/server/src/backup-tenant.ts` y `scripts/backup-tenant.ts` son dos ficheros distintos; uno implementa, el otro es CLI.
+- **No confundir una ruta documentada con una ruta existente.** `index.ts` importa `./backup-tenant.ts`, que existe en `apps/server/src/`, no en `scripts/`.
+
+**Regla fija: si el fichero que necesitas no está en el Repomix que te han pasado, pídelo. No lo inventes.** Y si el fichero ha sido tocado por un fix anterior, el Repomix original ya no sirve. Pide el fichero actualizado o un `Select-String` acotado.
+
+---
+
+## 8. El ciclo completo de un fix, paso a paso
+
+Este es el ciclo que sigo para cada fix. Es el que ha hecho que 14 entren limpios.
+
+### Paso 0 — Contexto
+
+Antes de escribir nada, confirmar:
+- Rama activa. `git branch --show-current`.
+- Estado del repo. `git status --short`.
+- Ficheros que toca el fix. `Test-Path` para cada uno.
+- Si el fichero ha sido tocado por un fix anterior, **no fiarse del Repomix original**. Pedir el fichero actualizado.
+
+### Paso 1 — Diagnóstico
+
+Leer el fichero real. **No leer el Repomix original si el fichero ha cambiado.** Leer con `Get-Content -Raw` o pedir el fichero completo al humano. Identificar el bloque exacto que se va a modificar. Anotar la línea aproximada.
+
+### Paso 2 — Ancla literal
+
+Construir el ancla **copiando literalmente del fichero real**, con la indentación exacta y el line ending exacto. Si es multilínea, construir con `[string]::Join($lineEnding, $linesArray)`. **No copiar de un `Select-String` con `-Context`**, porque normaliza.
+
+### Paso 3 — Verificación pre
+
+Contar las coincidencias del ancla con `([regex]::Matches($content, [regex]::Escape($old))).Count`. Si no es exactamente 1, **abortar**. No improvisar. Diagnosticar cuál es el problema (indentación, line ending, contenido distinto) y ajustar el ancla.
+
+### Paso 4 — Construcción del nuevo bloque
+
+Construir el `$new` con la misma indentación y el mismo line ending. **No mezclar tabs y espacios.** **No olvidar los cierres de bloque.**
+
+### Paso 5 — Verificación post (en memoria)
+
+Antes de escribir, verificar que el `$new` contiene la marca de idempotencia, el nuevo código esperado, y que el viejo ya no está. **Si alguna comprobación falla, `throw` y no escribir.**
+
+### Paso 6 — Escritura
+
+Escribir con `[System.Text.UTF8Encoding]::new($false)` y `[System.IO.File]::WriteAllText`. Si el fichero tenía BOM, usar `$true`. Detectar antes.
+
+### Paso 7 — Verificación post (en disco)
+
+Releer el fichero con `Get-Content -Raw`. Verificar que el cambio está exactamente como se esperaba. Contar la marca, contar el nuevo código, verificar que el viejo ya no está.
+
+### Paso 8 — Diff
+
+`git diff -- <archivo>`. Inspeccionar visualmente que el diff es exactamente el cambio esperado, ni más ni menos. **Si el diff tiene cambios no esperados, revertir con `Copy-Item $backup $file -Force`.**
+
+### Paso 9 — Typecheck
+
+`pnpm typecheck` o `pnpm --filter @openmuse/server exec tsc --noEmit`. Si rojo, distinguir errores nuevos de errores preexistentes (ej. `worker.ts` roto). Si hay error nuevo, revertir el fix.
+
+### Paso 10 — Tests
+
+`pnpm test`. Si rojo por el fix, revertir. Si rojo por tests preexistentes congelados, anotar y no revertir.
+
+### Paso 11 — Resultado
+
+Marcar `PASS`, `PARTIAL`, `FAIL`, `BLOCKED`, `DEFERRED`, `NOT APPLICABLE`. Documentar con evidencia: `archivo.ts:línea` con fragmento literal. **No inventar resultados.**
+
+---
+
+## 9. Los cinco fallos que he cometido y cómo los he resuelto
+
+Este es el oro del documento: los errores reales que he cometido en este proyecto y cómo los he resuelto. Si otra IA lee esto, que no los repita.
+
+### Fallo 1: `return` dentro de `if` no aborta en bloque pegado a consola
+
+**Síntoma:** FIX_015b-bis imprimió `FAIL: handler = 0` y luego `PASS` falso. El fichero se escribió sin el cambio.
+
+**Causa:** el `return` dentro del `if` de verificación salió del bloque de comandos, pero el script siguió ejecutando el `WriteAllText` y el `Write-Host "PASS"`.
+
+**Solución:** envolver todo en `function Invoke-FixXXX { ... }` y llamar `Invoke-FixXXX`. Dentro de la función, `throw` aborta de verdad. El `WriteAllText` no se ejecuta. El `PASS` no se imprime.
+
+**Regla nueva:** todo fix va envuelto en función, y las comprobaciones usan `throw`, no `return`.
+
+### Fallo 2: `New-Object System.Text.UTF8Encoding $false` rompe el parser si la línea se corta
+
+**Síntoma:** `No se encuentra el tipo [System.Text]`. El parser cortó la línea y trató `System.Text` como tipo.
+
+**Causa:** `New-Object` tiene dos argumentos y el parser es sensible al corte de línea.
+
+**Solución:** usar `[System.Text.UTF8Encoding]::new($false)`. Es la sintaxis `::new()`, más robusta y no depende de `New-Object`.
+
+**Regla nueva:** siempre `[System.Text.UTF8Encoding]::new($false)`, nunca `New-Object System.Text.UTF8Encoding $false`.
+
+### Fallo 3: `\"` dentro de comillas dobles rompe el parser
+
+**Síntoma:** `Token 'rag.search\")' residual"' inesperado en la expresión o la instrucción`. La función no se definió y `Invoke-FixXXX` dijo "no se reconoce".
+
+**Causa:** PowerShell no acepta `\"` como escape de comillas dobles. El escape es `` `` ``` (backtick + comilla) o `""`. El parser se rompió al ver `\"`.
+
+**Solución:** quitar la comprobación de residuo que usaba `\"` dentro de comillas dobles. O usar comillas simples para envolver el string. `'texto "interno"'` funciona sin escape.
+
+**Regla nueva:** si el string contiene comillas dobles, usar comillas simples para envolverlo. Nunca `\"` dentro de comillas dobles.
+
+### Fallo 4: `Select-String -Context` normaliza y no sirve para copiar anclas literales
+
+**Síntoma:** FIX_016a y FIX_016b fallaron con `ancla = 0`. El `Select-String` mostraba el bloque, pero el ancla no coincidía con el fichero real.
+
+**Causa:** `Select-String` con `-Context` normaliza tabs a espacios, colapsa líneas largas y reformatea el output. La indentación del output no es la indentación del fichero.
+
+**Solución:** para anclas multilínea, leer las líneas del fichero real con `Get-Content` y construir el ancla con `[string]::Join($lineEnding, $linesArray)`. No copiar del `Select-String`. O pedir el fichero completo al humano.
+
+**Regla nueva:** para anclas multilínea, leer del fichero real, nunca de un `Select-String` normalizado.
+
+### Fallo 5: asumir que el Repomix original sigue siendo válido tras fixes
+
+**Síntoma:** FIX_016a falló porque el Repomix original no mostraba el estado post-Fase 3 del bloque `/search`. Asumí que `const tenantIdForRate = owner; // deuda Fase 6...` existía, pero no existía.
+
+**Causa:** el Repomix original era anterior a los fixes de Fase 3. El fichero real había cambiado.
+
+**Solución:** si el fichero ha sido tocado por un fix anterior, **no fiarse del Repomix original**. Pedir el fichero actualizado o un `Select-String` acotado. Comparar con el estado del disco.
+
+**Regla nueva:** la fuente de verdad es el disco. Si el fichero ha cambiado, el Repomix original es solo referencia histórica.
+
+---
+
+## 10. El caso del mojibake y la codificación
+
+En este proyecto ha aparecido mojibake en varios ficheros: `â€"` en vez de `—`, `ГѓЖ'Г‚ВўГўв‚¬ЕЎ...` en vez de caracteres acentuados. El mojibake no rompe TypeScript (los comentarios no afectan al typecheck), pero es un problema de calidad.
+
+**Cómo se produce:** un `WriteAllText` con `UTF8Encoding($true)` (con BOM) sobre un fichero que ya tenía `—` en UTF-8 puede corromperlo si el `Get-Content -Raw` anterior no leyó bien. O un `Get-Content -Raw` en una consola con code page distinta a UTF-8.
+
+**Cómo se detecta:** `Select-String` muestra `â€"` en vez de `—`. O `git diff` muestra el cambio de codificación.
+
+**Cómo se evita:** `[System.Text.UTF8Encoding]::new($false)` (sin BOM). Y `Get-Content -Raw` con `-Encoding UTF8` si la consola no está en UTF-8.
+
+**Cómo se arregla:** un fix de limpieza que haga `Get-Content -Raw -Encoding UTF8` y `-replace` de los bytes mojibake por el carácter original, con `WriteAllText` + `UTF8Encoding($false)`.
+
+**Regla fija:** no arreglar mojibake en un fix que no sea de limpieza. Protocolo §1.4: no refactorizar código ajeno al objetivo. Anotar como deuda y abrir un fix específico.
+
+---
+
+## 11. El caso de los duplicados en Hono
+
+En `rag-routes.ts` hay dos `app.post("/reingest/:id", ...)` duplicados. El segundo sobrescribe el primero en Hono. Es un bug preexistente, no de Fase 6.
+
+**Cómo se detecta:** `Select-String -Pattern 'app\.post\("/reingest'` muestra dos coincidencias. O revisar el fichero completo y ver la duplicación.
+
+**Cómo se trata:** no tocarlo en un fix que no sea de limpieza. Anotar como deuda. Si el fix actual toca esa ruta, unificar los dos handlers en uno solo con el cuerpo correcto.
+
+**Regla fija:** los duplicados son deuda. No los arregles si no son parte del objetivo del fix.
+
+---
+
+## 12. El caso de los ficheros con nombres similares
+
+`apps/server/src/backup-tenant.ts` (implementación) y `scripts/backup-tenant.ts` (CLI) son dos ficheros distintos. `index.ts` importa `./backup-tenant.ts`, que es el de `apps/server/src/`.
+
+**Cómo se detecta:** `Select-String -Pattern "backup-tenant"` en todo el repo. O `git ls-files | Select-String backup-tenant`.
+
+**Cómo se trata:** no asumir que son duplicados. Leer los dos. Identificar cuál se ejecuta (el que importa el entry point). Modificar el correcto.
+
+**Regla fija:** no confundir una ruta documentada con una ruta existente. No asumir que dos ficheros con nombre similar son el mismo.
+
+---
+
+## 13. El caso de los fixes que se ejecutan en orden
+
+Un fix puede depender de otro. Ejemplo: FIX_015b (assert en `computer-tools.ts`) depende de FIX_015b-bis (import de `assertNotHardcodedTenantId`). Si ejecutas el assert sin el import, `tsc` falla con "Cannot find name 'assertNotHardcodedTenantId'".
+
+**Cómo se detecta:** el fix declara sus dependencias. O `tsc` falla con un error de import.
+
+**Cómo se trata:** ejecutar en orden. Si un fix depende de otro, no ejecutarlo hasta que el otro esté `PASS`. Si el otro falló, el dependiente queda `BLOCKED`.
+
+**Regla fija:** documentar las dependencias entre fixes. No ejecutar en paralelo fixes que dependen entre sí.
+
+---
+
+## 14. El caso del `git diff` como verificación final
+
+Después de cada fix, `git diff -- <archivo>` es la verificación más honesta. Muestra exactamente qué cambió, ni más ni menos.
+
+**Cómo se lee:**
+- `+` líneas añadidas.
+- `-` líneas eliminadas.
+- ` ` líneas sin cambios (contexto).
+
+**Qué buscar:**
+- Que el diff contenga **exactamente** el cambio esperado.
+- Que no haya cambios colaterales no intencionados (indentación, espacios trailing, line endings).
+- Que las líneas añadidas coincidan con el `$new` que construiste.
+- Que las líneas eliminadas coincidan con el `$old` que reemplazaste.
+
+**Si el diff tiene cambios no esperados, revertir con `Copy-Item $backup $file -Force`.** No intentar arreglarlo a mano. Revertir y diagnosticar.
+
+**Regla fija:** `git diff` es la verificación post definitiva. Si el diff no es exactamente el cambio esperado, el fix no es `PASS`.
+
+---
+
+## 15. El caso del `git diff --check`
+
+`git diff --check` detecta trailing whitespace y otros problemas de formato. Si sale limpio, el diff no tiene problemas de formato. Si sale con warnings, hay trailing whitespace o espacios mezclados.
+
+**Cuándo ejecutarlo:** antes de commitear. Y después de cada fix, para detectar problemas de formato temprano.
+
+**Qué hacer si falla:** revertir el fix, ajustar la indentación del `$new`, volver a aplicar.
+
+**

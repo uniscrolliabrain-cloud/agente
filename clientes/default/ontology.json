@@ -1,0 +1,41 @@
+{
+    "_marca":  "ONTOLOGY_BUNDLE_LOAD_V1",
+    "version":  1,
+    "tenantScope":  "default",
+    "entities":  [
+                     "cliente",
+                     "proyecto",
+                     "factura",
+                     "documento",
+                     "tarea",
+                     "agente"
+                 ],
+    "relations":  [
+                      "cliente-proyecto",
+                      "proyecto-factura",
+                      "proyecto-documento",
+                      "tarea-agente"
+                  ],
+    "capabilities":  [
+                         "read_mail_thread",
+                         "read_workspace",
+                         "import_pdf",
+                         "inspect_pdf",
+                         "fill_pdf",
+                         "prepare_email",
+                         "prepare_event",
+                         "read_web",
+                         "save_artifact",
+                         "ask_user",
+                         "computer_command",
+                         "query_business",
+                         "recall_memory",
+                         "llm_generate",
+                         "transition_entity",
+                         "run_sop",
+                         "send_email",
+                         "send_whatsapp",
+                         "create_calendar_event"
+                     ],
+    "frozen":  true
+}

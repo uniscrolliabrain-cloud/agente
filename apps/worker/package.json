@@ -1,0 +1,20 @@
+{
+  "name": "@openmuse/browser-worker",
+  "version": "0.2.0-beta.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:docker": "node tests/run-docker.mjs",
+    "test:chat": "node om-chat-acceptance.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.62.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "~5.9.2"
+  }
+}
+

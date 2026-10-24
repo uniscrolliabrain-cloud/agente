@@ -1,0 +1,30 @@
+Buena pregunta. Depende de qué llames "agentes", porque en el repo hay tres cosas distintas que se llaman así. Te las separo:
+
+## 1. Roles de agente (`AgentRole`) — los de negocio
+
+Estos son los que se configuran en `clientes/<cliente>/agentes.json` y se guardan en el kind `agent-roles` de la DB. El ejemplo de `clientes/_example/agentes.json` define **6**:
+
+| id | Nombre | Objetivo |
+|---|---|---|
+| `comercial` | Agente comercial | Buscar, investigar y clasificar oportunidades; preparar seguimiento y propuestas. |
+| `atencion` | Agente de atención | Responder consultas; escalar cuando requiera decisión humana. |
+| `administrativo` | Agente administrativo | Gestionar facturación, cobros y documentación. |
+| `marketing` | Agente de marketing | Preparar contenido, publicaciones y campañas. |
+| `operaciones` | Agente de operaciones | Coordinar procesos internos y detectar bloqueos. |
+| `investigacion` | Agente de investigación | Investigar empresas, mercados y proveedores. |
+
+**Estado real**: el backend (`/api/agent/roles`, `seedAgents`, `listAgents`) existe en `feat/client-onboarding` pero **no está mergeado a `main`**. Y la UI (`AgentsView.tsx`) existe pero **no está registrada en el nav** (bloqueo documentado en `docs/PROMPT-CLINE-RESULTADO.md`). O sea: los 6 roles están declarados en JSON, pero hoy no son usables desde la app en `main`.
+
+## 2. Agentes de chat (runtime) — los técnicos
+
+En `apps/server/src/engine/conversation.ts` hay **1** solo: `ConversationAgent`, registrado como `"default"` en el CopilotKit runtime (`apps/server/src/agent.ts`). Todos los threads usan el mismo agente; el "rol" solo cambia el prompt anteponiendo el `objetivo` del rol activo (cuando `roleId` llega en `state`).
+
+No hay un agente distinto por rol: es el mismo `BuiltInAgent` con distinto system prompt.
+
+## 3. Agentes del browser worker
+
+Cero. El `apps/worker` es un servicio Playwright sin concepto de "agente". Solo sirve sesiones de navegador.
+
+---
+
+**Resumen corto**: 6 roles declarados en el ejemplo, 1 agente de chat real, 0 agentes en el worker. Si tu pregunta era "¿cuántos agentes tiene mi deployment ahora mismo?", la respuesta honesta es **1** (el `ConversationAgent`), porque los roles no están cableados en `main` todavía.

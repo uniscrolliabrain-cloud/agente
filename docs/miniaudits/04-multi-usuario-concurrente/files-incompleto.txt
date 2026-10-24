@@ -1,0 +1,886 @@
+# Documento maestro de archivos por campaña
+
+## Propósito y contrato de uso
+
+Este documento existe para que **una IA futura pueda aplicar cualquier campaña de la Campaña 2 (F0–F7) sin agotar el contexto de chat**. La regla es:
+
+- **Un documento por campaña, autocontenido.**
+- **Cada documento lista: ficheros que crea, ficheros que modifica, ficheros que cablea (wire), ficheros que solo lee, y ficheros que NO toca.**
+- **Cada entrada incluye: ruta, operación (CREATE/MODIFY/WIRE/READ), motivo, marca de idempotencia, dependencias y precondición.**
+- **El tamaño de cada documento debe caber en ~50 % del contexto del chat** (≈1,1 MB de texto). Por eso las fases grandes (F2, F3) se parten en subdocumentos: `F2-core`, `F2-routes`, `F3-core`, `F3-adapters`. Cada subdocumento es aplicable por separado.
+- **La IA ejecutora no necesita leer el repositorio entero.** Cada documento le dice exactamente qué ficheros inspeccionar con `Select-String`, qué ficheros leer completos y qué ficheros no toca.
+
+## Cómo se ha construido
+
+He cruzado los 2,26 MB de material que me has pasado en varios ángulos:
+
+1. **Árbol real** (`repotree-lastone.txt`) — qué existe.
+2. **Repomix-campaña-2-audit** — dominio, `app.ts`, kernel, engine, tests.
+3. **Repomix-sin-tests** (el último) — `service.ts`, `db.ts`, `db-tenant.ts`, `db-rls.ts`, `sop-routes.ts`, `conversation.ts`, `sop-executor.ts`, `sop-triggers.ts`, `model.ts`, `model-chain.ts`, `rag.ts`, `memory.ts`, `workspace.ts`, `computer.ts`, `files.ts`, `browser.ts`, todos los `engine/*` restantes, todo `kernel/*`, todo `app.ts`/`index.ts`.
+4. **Repomix-fase0 y repomix-3files y repomix-min** — duplicados parciales; los he usado para verificar firmas y anclas.
+5. **Fase 0 v5, Fase 1, Fase 2, Fase 3** — lo que cada fase dice que toca.
+6. **Comentarios del revisor senior** (los 6+7 bloqueos de F3, los 5 de F1, los 5 de F2).
+
+He detectado y resuelto **contradicciones** entre lo que las fases dicen y lo que el código real tiene:
+
+- F1 dice que `engine/service.ts` "Repomix holístico, íntegro". **No estaba en ningún Repomix anterior**. Ahora sí lo tengo.
+- F3 dice que `sop-routes.ts` "Repomix holístico, íntegro". **No estaba**. Ahora sí.
+- F3 dice que `bootstrap.ts` es "Repomix holístico, íntegro". **No estaba completo**. Ahora sí.
+- F0 §0.13 exige typecheck ejecutado. **No hay salida**. Sigue pendiente.
+- F2 promete `withRead`/`withWrite` en 14 ficheros de handlers. **Solo hay 13 listados**. Falta uno.
+- F2 promete 32 patchsets. **La tabla tiene 33 filas**. Contradicción ya detectada.
+- F3 promete 26 patchsets. **La tabla tiene 27**. Contradicción ya detectada.
+- F3 promete `Assignment` como interfaz de lectura. **`assignment.ts` no existe en el árbol**. Es CREATE.
+- F3 promete `Flow` desde `AgentPersona`. **`AgentPersona.reportsTo`/`peers` existen**. Confirmado.
+- F3 promete `z.any()` prohibido. **El patchset F3.3 usa `z.any()`**. Contradicción interna.
+- F3 promete `AssignmentService.assign(ctx, ...)`. **El patchset F3.6 no existe completo**. Pendiente.
+
+---
+
+# Estructura del documento maestro
+
+```
+1. Convenciones del documento
+2. Campaña 1 (multitenant, CERRADA) — solo referencia
+3. Campaña 2
+   3.1. F0 — Reconocimiento y contrato
+   3.2. F1 — Identidad y actor
+   3.3. F2-core — Modelo de acceso (dominio + authz engine)
+   3.4. F2-routes — Wire de acceso (handlers, workers, streams)
+   3.5. F3-core — Modelo de delegación (dominio + servicio)
+   3.6. F3-adapters — Adapters + routes + wire
+   3.7. F4 — Consistencia (version, CAS, diff, reconcile)
+   3.8. F5 — Coordinación (presence, lock, notifications, SSE)
+   3.9. F6 — Trazabilidad (audit-trail, record-history)
+   3.10. F7 — Cierre (tests, KNOWN_ISSUES, CIERRE-MVP)
+4. Matriz de dependencias entre campañas
+5. Reglas para futuras IA
+6. Ficheros que NUNCA se tocan
+```
+
+---
+
+# 1. Convenciones del documento
+
+| Símbolo | Significado |
+|---|---|
+| **CREATE** | El fichero no existe en el árbol; el patchset lo crea. |
+| **MODIFY** | El fichero existe; el patchset lo modifica con `$old`/`$new` y `Assert-MatchCount`. |
+| **WIRE** | El fichero existe; el patchset añade una llamada/registro (p. ej. `app.route(...)`) sin reescribir el cuerpo. |
+| **READ** | El patchset solo lee el fichero con `Select-String` o `Get-Content` para verificar anclas. No lo modifica. |
+| **NO TOUCH** | Prohibido modificarlo en esta campaña; si aparece un cambio necesario, se documenta como deuda. |
+
+**Reglas de idempotencia:**
+- Cada MODIFY/CREATE lleva una marca única `AMBITO_FICHERO_V<n>` en un comentario del código.
+- Si la marca ya existe y el checksum coincide → `SKIP`.
+- Si la marca existe y el checksum no coincide → `AVISO` y abortar.
+- Si la marca no existe → aplicar.
+
+**Reglas de tamaño:**
+- Un subdocumento (`F2-core`, `F2-routes`, `F3-core`, `F3-adapters`) no debe superar 1,2 MB de texto. Si lo supera, se parte en `-part1` / `-part2`.
+- Una IA ejecutora debe poder leer el documento completo + los ficheros READ + ejecutar los patchsets sin superar el 50 % del contexto. Si no cabe, se le pasa solo el subdocumento.
+
+---
+
+# 2. Campaña 1 (multitenant) — cerrada
+
+No entra en este documento. Solo referencia. Los ficheros que Campaña 1 dejó cerrados y que Campaña 2 NO toca:
+
+**NO TOUCH en Campaña 2:**
+
+| Fichero | Motivo |
+|---|---|
+| `apps/server/src/db-rls.ts` | Campaña 1 cerrada. `RLS_REQUIRED_IN_SHARED_V1` verificado. |
+| `apps/server/src/db.ts` | Campaña 1 cerrada. `compareAndSwap`, `claim`, `insertIfAbsent`, `listPaged`, `transaction` (con guard anti-anidación), `purgeOlderThan`, `scanByOwnerPrefix`, `scanByStatusWithCursor` ya existen. |
+| `apps/server/src/db-tenant.ts` | Campaña 1 cerrada. `TenantScopedStore` con peel, prefix scan, status cursor. |
+| `apps/server/src/engine/tenant.ts` | Campaña 1 cerrada. `TenantService` con cache TTL, `setMembership`, `invalidateAll`, `assertNotHardcodedTenantId`. |
+
+**Excepción:** si F1 necesita `tenantIdFor` para el `Actor`, solo lo lee, no lo modifica. Si F2 necesita `assertNotHardcodedTenantId` en nuevas rutas, solo lo lee.
+
+---
+
+# 3. Campaña 2
+
+## 3.1. F0 — Reconocimiento y contrato
+
+**Objetivo:** 6 documentos en `docs/miniaudits/04-multi-usuario-concurrente/`. No toca código.
+
+**Tamaño:** ~150 KB de documentación. Cabe holgadamente en un chat.
+
+### CREATE (6 docs)
+
+| Ruta | Marca | Contenido |
+|---|---|---|
+| `docs/miniaudits/04-multi-usuario-concurrente/ESTADO-REAL-MULTIUSUARIO.md` | `ESTADO_REAL_MULTIUSUARIO_V1` | Estado real del código frente a la spec. Evidencia `fichero:línea`. |
+| `docs/miniaudits/04-multi-usuario-concurrente/ID-MAP.md` | `ID_MAP_MULTIUSUARIO_V1` | Mapa de identificadores: `User.id`, `Actor.id`, `AgentActor.runtimeId`, `tenantId`, `owner`. Qué es cada uno. |
+| `docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md` | `CIERRE_MVP_MULTIUSUARIO_V1` | Criterios de cierre de la campaña. |
+| `docs/miniaudits/04-multi-usuario-concurrente/fuera-de-mvp.md` | `FUERA_DE_MVP_MULTIUSUARIO_V1` | Lo que NO entra: perfiles editables, clientes, procedimientos, plantillas, nóminas, compliance, datos clínicos. |
+| `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md` | `PENDIENTES_MULTIUSUARIO_V1` | Deudas: `authProviderId` backfill, `x-user-id` deprecated, `KernelContext.actorId`, `ExecutionContext.actorId`, `TENANT_CACHE_TTL_MS`, `Flow` desde `AgentPersona`, `version` selectiva, reconcile por recurso, `fieldClassification` no es seguridad por sí sola, `withRead`/`withWrite` en todas las rutas. |
+| `docs/miniaudits/04-multi-usuario-concurrente/PLAN-CAMPANA-2.md` | `PLAN_CAMPANA_2_V1` | 7 fases con condición de activación. F5/F6 condicionales. |
+
+### MODIFY
+
+Ninguno.
+
+### WIRE
+
+Ninguno.
+
+### READ (para verificar anclas antes de escribir)
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/users.ts` | `userSchema` sin `authProviderId`, `userRoleSchema`. |
+| `apps/server/src/auth.ts` | `Auth.session`, `Auth.owner`, `sign`, `verify`. |
+| `apps/server/src/kernel/context/kernel-context.ts` | `kernelContextSchema` sin `actorId`/`sessionId`. |
+| `packages/domain/src/execution-context.ts` | `executionContextSchema` sin `actorId`/`sessionId`. |
+| `apps/server/src/engine/orchestrator/orchestrator.ts` | `runGoal(ctx, goal)` no propaga `actorId`. |
+| `apps/server/src/engine/worker.ts` | `run-events` sin `actorId`. |
+| `apps/server/src/middleware/user-header.ts` | `userHeaderMiddleware` solo valida formato. |
+| `apps/server/src/engine/tenant.ts` | `tenantIdFor`, `setMembership`. |
+| `package.json` | ¿`hono/jwk`? ¿`jose`? |
+| `apps/server/package.json` | Idem. |
+
+### NO TOUCH
+
+Todo el código de producto. F0 es docs-only.
+
+### Bloqueo pendiente
+
+`§0.13` exige typecheck ejecutado y no hay salida. **Sin esa salida, F0 no está cerrada, solo redactada.** Corrección exigida antes de arrancar F1.
+
+---
+
+## 3.2. F1 — Identidad y actor
+
+**Objetivo:** `User.authProviderId`, `ActorService.resolve(jwtPayload)`, `verifyJwtMiddleware`, `ctx` en cada request, `KernelContext.actorId`, `ExecutionContext.actorId`, `worker` `executingActorId` vs `requestingActorId`, `AgentGovernance` con `Actor`, `x-user-id` deprecado.
+
+**Tamaño:** ~15 patchsets, ~1,1 MB de texto si se incluye todo. **Cabe justo en un chat, pero conviene partirlo en `F1-part1` (dominio + actor + jwt) y `F1-part2` (wire en app, worker, kernel, orchestrator).**
+
+### CREATE (dominio)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/actor.ts` | `ACTOR_MODEL_V1` | `Actor`, `HumanActor`, `AgentActor`, `ActorKind`, `ActorProfile`, `ActorRoles`, `actorSchema`, `humanActorSchema`, `agentActorSchema`, `actorKindSchema`, `actorProfileSchema`, `actorRolesSchema`. **Sin `ActorFlow`** (F3). **Sin `ActorCapabilities`**. | `zod`. **`AgentActor.id` = `runtimeId`**, no `roleId` (corrección B1 del revisor). |
+| `packages/domain/src/jwt.ts` | `JWT_PAYLOAD_V1` | `jwtPayloadSchema` (claims mínimos: `iss`, `aud`, `exp`, `sub`, `session_id`, `email`, `role`), `JwtPayload`. | `zod`. |
+
+### CREATE (server)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/actors/service.ts` | `ACTOR_SERVICE_RESOLVE_V1` | `ActorService.resolve(jwtPayload)`. Función pura. Sin `ActorRegistry`. Verifica `User.active === false` → 403. Sin JIT: `sub` sin `User` con `authProviderId` → 401. | `users.ts` (`getByAuthProviderId`), `tenant.ts` (`tenantIdFor`). |
+| `apps/server/src/engine/auth/jwt.ts` | `VERIFY_JWT_MIDDLEWARE_V1` | `verifyJwtMiddleware()` con `hono/jwk` o `jose`. Verifica firma, `iss`, `aud`, `exp`, `nbf`, JWKS con rotación (cache 5 min, refresh en `kid` desconocido). Fail-closed: JWKS inaccesible → 503. | `config.ts` (`jwksUri`, `jwtIssuer`, `jwtAudience`), `jwt.ts` (schema). |
+
+### MODIFY (dominio)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/execution-context.ts` | `EXECUTION_CONTEXT_ACTOR_V1` | `ExecutionContext.actorId` (opcional en F1, obligatorio en F2). `sessionId` (opcional). Revisar consumidores: `orchestrator.ts`, `service.ts`. | `actor.ts`. |
+| `packages/domain/src/index.ts` | `DOMAIN_INDEX_ACTOR_V1` | Re-exporta `actor.ts` y `jwt.ts`. | — |
+
+### MODIFY (server)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `apps/server/src/users.ts` | `USER_AUTH_PROVIDER_ID_V1`, `USER_SERVICE_BY_AUTH_PROVIDER_ID_V1` | `userSchema` gana `authProviderId` (único, opcional). `UserService.getByAuthProviderId(sub)`. `UserService.create` acepta `authProviderId`. **Unicidad por índice atómico, no check-then-act** (corrección B2 del revisor). | `db.ts` (`insertIfAbsent`). |
+| `apps/server/src/app.ts` | `APP_JWT_WIRE_V1` | `app.use("/api/*", verifyJwtMiddleware())` antes del `authMiddleware` actual. `c.set("actor")`, `c.set("ctx")`. `c.set("owner", actor.id)` para compatibilidad. Tabla ruta→mecanismo auth (corrección R1 mía). | `engine/auth/jwt.ts`, `engine/actors/service.ts`. |
+| `apps/server/src/kernel/context/kernel-context.ts` | `KERNEL_CONTEXT_ACTOR_V1` | `KernelContext.actorId` (obligatorio), `sessionId` (opcional). `systemContext` añade `actorId: owner`. | — |
+| `apps/server/src/kernel/kernel.ts` | `KERNEL_ACTOR_PROPAGATE_V1` | `openTurn`/`appendThought`/`closeTurn` usan `ctx.actorId` en `audit.append` y `provenance.actorId`. | `kernel-context.ts`. |
+| `apps/server/src/engine/worker.ts` | `WORKER_REQUESTING_ACTOR_V1` | `run-events` con `actorId` (`executingActorId`) y `requestingActorId`. `settled` recibe ambos. `bus.emit` con `actorId`. `task.assignedTo` → `executingActorId`. `task.assignedBy` → `requestingActorId`. Si no hay `assignedBy`, fallback a `owner` **marcado como compatibilidad heredada, no identidad demostrada** (corrección B5 del revisor). | `agent.ts` (dominio). |
+| `apps/server/src/engine/agents/governance.ts` | `AGENT_GOVERNANCE_ACTOR_V1` | `canExecuteTool(actor, tool)`, `canExecuteAction(actor, action, policyAction)`. **`PolicyEngine.can` NO recibe `owner = actor.id`**; recibe `owner` del store y `role` real, y el PDP de F2 lo envuelve (corrección B4 del revisor). | `policy/engine.ts`. |
+| `apps/server/src/middleware/user-header.ts` | `USER_HEADER_DEPRECATED_V1` | `x-user-id` deprecado. Validación de formato. Si viene y no coincide con `actor.id`, `c.header("X-User-Id-Mismatch", "1")`. No autoriza. | — |
+| `apps/server/src/config.ts` | `CONFIG_AUTH_PROVIDER_V1` | `Config.authProvider: "supabase" | "google" | "session"`. `jwtSecret?`, `jwksUri?`, `jwtIssuer?`, `jwtAudience?`. | — |
+| `apps/server/src/engine/orchestrator/orchestrator.ts` | `ORCHESTRATOR_ACTOR_PROPAGATE_V1` | `runGoal(ctx, goal)` propaga `ctx.actorId` y `ctx.sessionId` si están. Sin cambiar firma pública. | `execution-context.ts`. |
+
+### READ (Select-String, no lectura completa)
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/db.ts` | `compareAndSwap`, `insertIfAbsent`, `transaction`. |
+| `apps/server/src/engine/tenant.ts` | `tenantIdFor`, `setMembership`. |
+| `apps/server/src/engine/policy/engine.ts` | `PolicyEngine.can(owner, role, resource, action)`. |
+| `apps/server/src/kernel/audit/store-store.ts` | `append`, `auditEntrySchema`. |
+| `apps/server/src/kernel/audit/entry.ts` | `actor: { kind, id }`. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`, `engine/tenant.ts` (solo READ). `presence.ts`, `edit-lock.ts` (F5). `notifications-stream.ts` (F5). `engine/assignments/` (F3). `engine/authz/` (F2). `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6).
+
+### Bloqueos pendientes (del revisor senior)
+
+1. **B1**: `AgentActor.id` debe ser instancia estable (`runtimeId`), no `AgentRole.id`. → Aplicado en `actor.ts`.
+2. **B2**: `authProviderId` único por índice atómico, no check-then-act. → Aplicado en `users.ts`.
+3. **B3**: JWT verificación criptográfica completa (firma, `iss`, `aud`, `exp`, JWKS con rotación). → Aplicado en `engine/auth/jwt.ts`.
+4. **B4**: `PolicyEngine.can(owner = actor.id)` rompe autorización. → `governance.ts` NO pasa `actor.id` como `owner`; el PDP de F2 lo envuelve.
+5. **B5**: fallback del worker a `owner` no es atribución real. → Marcado como compatibilidad heredada.
+
+**Todos los bloqueos están resueltos en el diseño de este documento.** La IA ejecutora debe aplicarlos literalmente.
+
+---
+
+## 3.3. F2-core — Modelo de acceso (dominio + authz engine)
+
+**Objetivo:** `Policy`, `FieldClassification`, `PolicyDecisionPoint`, `PolicyEnforcementPoint`, `FieldFilter`, `withRead`, `withWrite`, `policies.ts`. **Sin wire en handlers todavía.** Esto es lo que hace que F2 sea ejecutable sin romper todo el servidor de golpe.
+
+**Tamaño:** ~8 patchsets, ~600 KB. Cabe holgadamente.
+
+### CREATE (dominio)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/policy.ts` | `POLICY_MODEL_V1` | `Policy` con `effect: "allow" | "deny"` (corrección C del revisor). `PolicyAction` (incluye `execute` — corrección E). `PolicyResource` (solo recursos reales). `PolicySubject`, `PolicyCondition`, `PolicyDecision`. | `zod`. |
+| `packages/domain/src/classification.ts` | `FIELD_CLASSIFICATION_V1` | `FieldClassification` por **campo**, no por registro (corrección D). `ClassifiedField`, `ClassifiedRecord` (mapa `field → classification`, controlado por servidor, no por cliente). | `zod`. |
+
+### CREATE (server)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/authz/pdp.ts` | `POLICY_DECISION_POINT_V1` | `PolicyDecisionPoint.can(ctx, action, resource, field, target)`. **Fail-closed, deny-overrides.** **Aplica tenant** (corrección B). **No construye `role = { id }`** (corrección A). Resuelve `AgentRole` real con `permissions` y `allowedTools`. Si no puede resolver, deniega. | `policy.ts`, `policy/engine.ts`, `actor.ts`. |
+| `apps/server/src/engine/authz/pep.ts` | `POLICY_ENFORCEMENT_POINT_V1` | `authzMiddleware(pdp)`. **No es la única defensa.** Registra mecanismo de authz por ruta. | `pdp.ts`. |
+| `apps/server/src/engine/authz/field-filter.ts` | `FIELD_FILTER_V1` | `FieldFilter` por campo. Aplicado en lectores, escritores, serializadores, listados, búsquedas, agregaciones. | `classification.ts`, `pdp.ts`. |
+| `apps/server/src/engine/authz/with-read.ts` | `WITH_READ_V1` | `withRead(ctx, kind, id, fn)`. PDP + `FieldFilter` + `AuditTrail` si el campo es `restricted`/`secret`. | `pdp.ts`, `field-filter.ts`. |
+| `apps/server/src/engine/authz/with-write.ts` | `WITH_WRITE_V1` | `withWrite(ctx, kind, id, expectedVersion?, fn)`. PDP + CAS (F4) + `AuditTrail`. **No aplica `expectedVersion` todavía** (F4). **No aplica diff** (F4). | `pdp.ts`. |
+| `apps/server/src/engine/authz/policies.ts` | `POLICIES_DEFAULT_V1` | Traduce `AgentRole.permissions`, `AgentRole.allowedTools` a `Policy`. Owner no es root (I15). Políticas por defecto. | `policy.ts`. |
+
+### MODIFY (dominio)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/agent.ts` | `AGENT_TASK_CLASSIFICATION_V1`, `AGENT_MEMORY_CLASSIFICATION_V1`, `AGENT_ROLE_CLASSIFICATION_V1` | `AgentTask.prompt: confidential`, `AgentTask.plan: internal`, `AgentTask.outcome: internal`. `AgentMemory.text: confidential`. `AgentRole.permissions: restricted`, `AgentRole.memories: confidential`, `AgentRole.allowedTools: restricted`. **No `salaryGross`/`salaryNet`/`bankAccount`** (no existen). | `classification.ts`. |
+| `packages/domain/src/business.ts` | `BUSINESS_ENTITY_CLASSIFICATION_V1` | `BusinessEntity.properties: internal`. | `classification.ts`. |
+| `packages/domain/src/sop.ts` | `SOP_CLASSIFICATION_V1` | `SOP.steps: internal`. | `classification.ts`. |
+| `packages/domain/src/index.ts` | `DOMAIN_INDEX_POLICY_V1` | Re-exporta `policy.ts` y `classification.ts`. | — |
+
+### MODIFY (server)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `apps/server/src/users.ts` | `USER_CLASSIFICATION_V1` | `User.email: internal`, `User.name: internal`, `User.setup: confidential`. | `classification.ts`. |
+| `apps/server/src/engine/agents/governance.ts` | `AGENT_GOVERNANCE_PDP_V1` | `canExecuteTool(actor, tool)` y `canExecuteAction(actor, action, policyAction)` llaman al PDP. | `pdp.ts`. |
+| `apps/server/src/app.ts` | `APP_AUTHZ_WIRE_V1` | Instancia `PolicyDecisionPoint` desde `policies.ts`. `app.use("/api/*", authzMiddleware(pdp))` **no como única defensa**. | `pdp.ts`, `pep.ts`, `policies.ts`. |
+| `apps/server/src/config.ts` | `CONFIG_AUTHZ_V1` | `authzEnabled: boolean` (default `true`). `fieldClassificationEnabled: boolean` (default `true`). `policyCacheTtlMs: number` (default `60_000`). **En producción, quitar los interruptores pass-through** (corrección mía). | — |
+| `apps/server/src/kernel/audit/store-store.ts` | `AUDIT_STORE_CLASSIFICATION_V1` | `AuditEntry.payload` acepta `field`, `classification`, `allowed`. No cambia la firma de `auditEntrySchema`. | `entry.ts`. |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/engine/policy/engine.ts` | `class PolicyEngine`, `async can(`. |
+| `packages/domain/src/agent.ts` | `interface AgentTask`, `interface AgentMemory`, `interface AgentArtifact`, `interface AgentNotification`. |
+| `apps/server/src/app.ts` | `app.use("/api/*"`, `c.set("ctx")`, `createApp`. |
+| `apps/server/src/kernel/audit/entry.ts` | `auditEntrySchema`. |
+| `apps/server/src/users.ts` | `userSchema`, `authProviderId`. |
+| `apps/server/src/engine/agents/governance.ts` | `canExecuteTool`, `canExecuteAction`, `Actor`. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`. Los handlers (van en `F2-routes`). `engine/assignments/` (F3). `engine/presence.ts`, `edit-lock.ts` (F5).
+
+### Bloqueos pendientes (del revisor senior)
+
+1. **A**: PDP puede permitir todo a un agente si construye `role = { id }`. → **Prohibido** en `pdp.ts`. Resuelve `AgentRole` real o deniega.
+2. **B**: PDP no aplica tenant. → **Aplica** en `pdp.ts`.
+3. **C**: `Policy` sin `effect`. → **Añadido** `effect` en `policy.ts`.
+4. **D**: `fieldClassification` por registro ambiguo. → **Por campo**, mapa servidor en `classification.ts`.
+5. **E**: `PolicyAction` sin `execute`. → **Añadido**.
+
+**Todos los bloqueos están resueltos en el diseño.** La IA ejecutora debe aplicarlos literalmente.
+
+---
+
+## 3.4. F2-routes — Wire de acceso (handlers, workers, streams)
+
+**Objetivo:** `withRead`/`withWrite` en handlers, workers, acciones internas, streams, rutas alternativas. `x-user-id` eliminado del wire.
+
+**Tamaño:** ~24 patchsets, ~900 KB. **Cabe justo. Si no, partir en `F2-routes-part1` (handlers de dominio: agent, threads, projects, rag, personas) y `F2-routes-part2` (admin, computer, files, notifications, integrations).**
+
+### MODIFY (server) — 14 ficheros de handlers
+
+| Ruta | Marca | Cambio |
+|---|---|---|
+| `apps/server/src/engine/routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /tasks/:id`, `GET /roles`, `GET /roles/public`, `GET /usage`, `GET /notifications`, `GET /search`, `GET /business-records`, `GET /worker-status`, `GET /tenant/cache-stats`, `GET /actions/:id/audit`. `withWrite` en `POST /tasks`, `POST /tasks/:id/control`, `POST /tasks/:id/reassign`, `POST /tasks/:id/escalate`, `POST /tasks/:id/input`, `POST /goals`, `POST /goals/:id/run`, `POST /goals/:id`, `POST /monitors`, `POST /monitors/:id/control`, `POST /ideas/refresh`, `POST /ideas/:id`, `POST /memories`, `POST /memories/:id`, `POST /memories/:id/forget`, `POST /roles`, `POST /identity`, `POST /notifications/direct`, `POST /notifications/:id/read`, `POST /actions/:id/reconcile`, `POST /actions/:id/force-cancel`, `POST /actions/:id/retry`, `POST /actions/:id/cancel`, `POST /feedback`, `POST /business-records`, `DELETE /business-records/:id`, `POST /business-records/import`, `POST /sample-page`, `POST /sample-business-records`. |
+| `apps/server/src/threads-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /:id`, `GET /:id/state`. `withWrite` en `POST /`, `PUT /:id`, `PATCH /:id`, `DELETE /:id`. |
+| `apps/server/src/projects-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /:id`. `withWrite` en `POST /`, `PATCH /:id`, `PUT /:id/blocks`, `POST /:id/link-*`, `POST /:id/unlink-*`, `DELETE /:id`. |
+| `apps/server/src/rag-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /sources`, `GET /status`, `GET /search`. `withWrite` en `POST /ingest`, `POST /reingest/:id`, `DELETE /source/:id`. |
+| `apps/server/src/admin-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en todos los `GET`. `withWrite` en todos los `POST`/`PUT`/`DELETE`. `requireAdmin` se sustituye por el PDP. |
+| `apps/server/src/admin-tenants.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /:tenantId`. `withWrite` en `POST /:tenantId/suspend`, `POST /:tenantId/resume`, `POST /`. `requireAdmin` se sustituye por el PDP. |
+| `apps/server/src/skills/routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /:id`. `withWrite` en `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/install`. |
+| `apps/server/src/skills/sop-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /:id`. `withWrite` en `POST /`, `PUT /:id`, `DELETE /:id`, `POST /:id/run`. |
+| `apps/server/src/computer-routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /files`, `POST /files/read`, `POST /files/export`. `withWrite` en `POST /start`, `POST /stop`, `POST /commands`, `POST /files/write`, `POST /files/mkdir`, `POST /files/import`. |
+| `apps/server/src/computer-tools.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `computer_status`, `list_computer_files`, `read_computer_file`, `export_computer_pdf`. `withWrite` en `start_computer`, `stop_computer`, `run_computer_command`, `write_computer_file`, `mkdir_computer`, `import_computer_pdf`. |
+| `apps/server/src/notification-prefs.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /prefs`. `withWrite` en `PUT /prefs`. |
+| `apps/server/src/notifications-stream.ts` | `WITH_READ_WIRE_V1` | `withRead` en el filtro por `assignedTo`. **SSE con `Last-Event-ID` es F5.** Filtro por `visibility` es F5. |
+| `apps/server/src/engine/agents/personas/routes.ts` | `WITH_READ_WIRE_V1`, `WITH_WRITE_WIRE_V1` | `withRead` en `GET /`, `GET /:id`, `GET /all/nodes`, `GET /:id/attention`, `GET /:a/attention-pairs/:b`, `GET /:id/node`, `GET /:id/activity`. `withWrite` en `POST /refresh-stats`. |
+| `apps/server/src/engine/worker.ts` | `WORKER_WITH_WRITE_V1` | `withWrite` en los writes de `tasks`, `run-events`, `activity`. El worker pasa por PDP con `executingActorId` como `actor`. **No usa `withRead`** (los reads internos del worker no son sensibles). |
+| `apps/server/src/actions.ts` | `ACTION_SERVICE_WITH_WRITE_V1` | `ActionService.propose`/`decide`/`retry`/`edit` con `withWrite`. `decide` recibe `userId` obligatorio (ya existe opcional). `PolicyEngine.can` se sustituye por el PDP. |
+| `apps/server/src/middleware/user-header.ts` | `USER_HEADER_REMOVED_V1` | `userHeaderMiddleware` ya no se monta. Se elimina del `app.use` de `app.ts`. Solo se mantiene para debugging local vía env `DEBUG_USER_HEADER=true`. |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| Todos los handlers listados | Anclas de `app.get`, `app.post`, `db.get`, `db.put`, `db.list`. |
+| `apps/server/src/engine/authz/*.ts` | Firmas de `withRead`, `withWrite`, `PDP`. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`. `engine/tenant.ts`. `engine/presence.ts`, `edit-lock.ts` (F5). `engine/assignments/` (F3). `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6).
+
+### Inconsistencias detectadas (mías)
+
+- **14 ficheros de handlers** prometidos, **13 listados**. Falta uno: probablemente `apps/server/src/engine/agents/personas/routes.ts` contado dos veces, o `apps/server/src/app.ts` contado como handler. **Corrección exigida:** o se listan 13 y se corrige el total, o se identifica el 14.º.
+- **32 patchsets prometidos, 33 filas** en la tabla. **Corrección exigida:** contar bien.
+
+---
+
+## 3.5. F3-core — Modelo de delegación (dominio + servicio)
+
+**Objetivo:** `Assignment` como interfaz de lectura, `Flow` desde `AgentPersona`, `AssignmentService`, `AssignmentRegistry`, 5 adapters, `executingActorId` vs `requestingActorId`, agente no escala, scope de tarea. **Sin wire en `AgentService`/`ActionService`/`sopRoutes` todavía.** Esto es lo que hace que F3 sea ejecutable sin romper `service.ts` de golpe.
+
+**Tamaño:** ~7 patchsets, ~700 KB. Cabe holgadamente.
+
+### CREATE (dominio)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/assignment.ts` | `ASSIGNMENT_MODEL_V1` | `Assignment`, `AssignmentKind`, `AssignmentStatus` (**unión de estados reales**, no intersección), `AssignmentPlan`, `AssignmentEvidence`, `AssignmentOutcome` (**reusa `outcomeStatusSchema` de `outcome.ts`**, no lo redefine), `assignmentSchema`. **`Assignment.id = `${kind}:${recordId}``** (corrección B-N1). **`metadata?` declarado y validado si se usa** (corrección 2.2 del revisor). | `zod`, `outcome.ts`. |
+| `packages/domain/src/flow.ts` | `FLOW_MODEL_V1` | `Flow`, `FlowRelation`. **Construido desde `AgentPersona.reportsTo`/`peers`**, no desde `AgentRole`. **`assigners`/`approvers`/`reviewers` no se persisten**; se resuelven desde `Policy`. **`FlowRelation` resuelve `persona.id` contra un `Actor` real del mismo tenant, valida tenant, rechaza cruces** (corrección 3 del revisor). | `zod`, `actor.ts`. |
+| `packages/domain/src/assignments/task.ts` | `ASSIGNMENT_IMPL_V1` | `AgentTask` como `Assignment` (kind `task`). **Sin `z.any()`** (corrección 2.1 del revisor). Convierte explícitamente `TaskStep[]`, `Evidence[]`, `Outcome`. | `assignment.ts`, `agent.ts`. |
+| `packages/domain/src/assignments/goal.ts` | `ASSIGNMENT_IMPL_V1` | `Goal` como `Assignment` (kind `goal`). **Sin `z.any()`**. | `assignment.ts`, `goal.ts`. |
+| `packages/domain/src/assignments/monitor.ts` | `ASSIGNMENT_IMPL_V1` | `Monitor` como `Assignment` (kind `monitor`). **Sin `z.any()`**. | `assignment.ts`, `agent.ts`. |
+| `packages/domain/src/assignments/approval.ts` | `ASSIGNMENT_IMPL_V1` | `ActionProposal` como `Assignment` (kind `approval`). **Sin `z.any()`**. | `assignment.ts`, `index.ts` (dominio). |
+| `packages/domain/src/assignments/sop.ts` | `ASSIGNMENT_IMPL_V1` | `SOP` como `Assignment` (kind `sop`). **Sin `z.any()`**. | `assignment.ts`, `sop.ts`. |
+
+### CREATE (server)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/assignments/registry.ts` | `ASSIGNMENT_REGISTRY_V1` | `AssignmentRegistry`. `Map<AssignmentKind, AssignmentAdapter>`. | `assignment.ts`. |
+| `apps/server/src/engine/assignments/adapters/task-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | `TaskAdapter`. `toAssignment(record)` normaliza. `applyAssignment(record, changes)` aplica solo campos autorizados. `applyStatus(record, status)` mapea. **Sin pérdida de datos**: campos específicos se conservan en el record original, no se reconstruyen. **Idempotente: misma entrada → misma salida**. | `agent.ts`, `assignment.ts`. |
+| `apps/server/src/engine/assignments/adapters/goal-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | `GoalAdapter`. Idem. | `goal.ts`, `assignment.ts`. |
+| `apps/server/src/engine/assignments/adapters/monitor-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | `MonitorAdapter`. Idem. | `agent.ts`, `assignment.ts`. |
+| `apps/server/src/engine/assignments/adapters/approval-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | `ApprovalAdapter`. Idem. | `index.ts` (dominio), `assignment.ts`. |
+| `apps/server/src/engine/assignments/adapters/sop-adapter.ts` | `ASSIGNMENT_ADAPTER_V1` | `SopAdapter`. Idem. | `sop.ts`, `assignment.ts`. |
+| `apps/server/src/engine/assignments/service.ts` | `ASSIGNMENT_SERVICE_V1` | `AssignmentService` con `assign`, `accept`, `reject`, `approve`, `escalate`, `reassign`, `complete`. **Firma: `assign(ctx: PolicyContext, kind, recordId, assignedTo, assignedBy)` donde `assignedBy = ctx.actor.id`** (corrección B-N4). **`P_efectivos = P_asignador ∩ P_ejecutor ∩ P_tarea ∩ P_tenant`** (corrección 1.1 del revisor). Cada método llama al PDP y a `withWrite`. Emite eventos al bus. **No crea un record `Assignment` paralelo.** | `registry.ts`, `adapters/*`, `pdp.ts`, `with-write.ts`. |
+
+### MODIFY (dominio)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/agent.ts` | `AGENT_TASK_ASSIGNED_BY_V1`, `MONITOR_ASSIGNED_BY_V1` | `AgentTask` gana `assignedBy?: string`, `assignmentKind: "task"`. **Sin `version`** (F4). **Sin `flow`** (se computa desde `AgentPersona`). `Monitor` gana `assignedBy?: string`, `assignmentKind: "monitor"`. | `assignment.ts`. |
+| `packages/domain/src/goal.ts` | `GOAL_ASSIGNED_BY_V1` | `Goal` gana `assignedBy?: string`, `assignmentKind: "goal"`. **Sin `version`** (F4). | `assignment.ts`. |
+| `packages/domain/src/sop.ts` | `SOP_ASSIGNED_BY_V1` | `SOP` gana `assignedBy?: string`, `assignmentKind: "sop"`. **Sin `version`** (F4). | `assignment.ts`. |
+| `packages/domain/src/index.ts` | `DOMAIN_INDEX_ASSIGNMENT_V1` | Re-exporta `assignment.ts`, `flow.ts`, `assignments/`. | — |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| `packages/domain/src/agent-persona.ts` | `reportsTo`, `peers`, `displayName`, `role`. |
+| `packages/domain/src/agent.ts` | `AgentTask`, `Monitor`. |
+| `packages/domain/src/goal.ts` | `Goal`. |
+| `packages/domain/src/sop.ts` | `SOP`. |
+| `packages/domain/src/outcome.ts` | `outcomeStatusSchema` (5 estados: `achieved`, `partial`, `blocked`, `failed`, `unknown`). |
+| `apps/server/src/engine/agents/personas/registry.ts` | `register`. |
+| `apps/server/src/engine/agents/personas/bootstrap.ts` | `bootstrapPersonas`. |
+
+### NO TOUCH
+
+`engine/service.ts`, `actions.ts`, `engine/routes.ts`, `skills/sop-routes.ts`, `engine/agents/personas/registry.ts`, `engine/agents/personas/routes.ts`, `app.ts`, `orchestrator.ts`. **Todos van en `F3-adapters`.**
+
+### Bloqueos resueltos en este diseño
+
+- **B-N1**: `Assignment.id = `${kind}:${recordId}``.
+- **B-N2**: `AssignmentStatus` unión de estados reales, no intersección.
+- **B-N3**: `AssignmentOutcome` reusa `outcomeStatusSchema`.
+- **B-N4**: `assign(ctx, ...)`, `assignedBy = ctx.actor.id`.
+- **B-N5**: `PolicyAction.execute` ya añadido en F2-core. F3-core declara `complete` para `task` como `update` o `execute` explícito. **Deuda heredada documentada.**
+- **B-N6**: `AgentActor.flow` se computa desde `AgentPersona` en el momento de construir el `Actor`. Sin caché en F3.
+- **B-N7**: `approval` sin `taskId` → se modela como asignación al owner con `assignedBy = null` explícito, o se exige `taskId` (decisión de contrato). **Recomendación: exigir `taskId` para `approval`; cambio en `actions.ts` documentado en F3-adapters.**
+- **1.1**: intersección de permisos.
+- **1.2**: `assignedBy ≠ owner`.
+- **2.1**: sin `z.any()`.
+- **2.2**: `toAssignment` / `applyAssignment` sin pérdida de datos.
+- **2.3**: `Assignment` sin destinatario explícito si aplica.
+- **3**: `Flow` resuelve identidad y tenant.
+- **4**: conteo corregido: **7 CREATE (dominio) + 7 CREATE (server) + 4 MODIFY (dominio) = 18 patchsets**, no 26.
+- **5**: tests. **Decisión: permitir tests de F3 en `tests/campaign-2/` (no congelados).** Si no, F3 se cierra como "NO VERIFICABLE".
+
+---
+
+## 3.6. F3-adapters — Adapters + routes + wire
+
+**Objetivo:** `assignmentsRoutes`, `AgentService` cablea `AssignmentService.assign`, `ActionService` cablea `AssignmentService.approve`/`reject`, `sopRoutes` cablea `AssignmentService.assign`, `PersonaRegistry` construye `Flow`, `personas/routes.ts` devuelve `flow`, `app.ts` instancia y cablea.
+
+**Tamaño:** ~7 patchsets, ~600 KB. Cabe holgadamente.
+
+### CREATE (server)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/assignments/routes.ts` | `ASSIGNMENT_ROUTES_V1` | `assignmentsRoutes`. `GET /api/assignments`, `GET /api/assignments/:kind/:id`, `POST /api/assignments/:kind/:id/accept`, `POST /api/assignments/:kind/:id/reject`, `POST /api/assignments/:kind/:id/approve`, `POST /api/assignments/:kind/:id/escalate`, `POST /api/assignments/:kind/:id/complete`, `POST /api/assignments/:kind/:id/reassign`. Todos con `withRead`/`withWrite` y PDP. **Cada handler carga el recurso, verifica tenant, autoriza transición, y solo entonces escribe** (corrección 1.3 del revisor). **No acepta `tenantId`, `assignedBy`, `status`, `kind` del body para saltarse restricciones** (corrección 1.3). | `service.ts`, `registry.ts`, `pdp.ts`, `with-read.ts`, `with-write.ts`. |
+
+### MODIFY (server)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/service.ts` | `AGENT_SERVICE_ASSIGNMENT_V1` | `AgentService.createTask`/`createGoal`/`createMonitor` llaman al `AssignmentService.assign` cuando hay `assignedTo`. `AgentService.escalateTask` llama al `AssignmentService.escalate`. `AgentService` recibe `AssignmentService` en el constructor. **`createTask` no exige `assignedBy` explícito; si no viene, `assignedBy = ctx.actor.id`** (corrección 1.2 del revisor). | `assignments/service.ts`. |
+| `apps/server/src/actions.ts` | `ACTION_SERVICE_ASSIGNMENT_V1` | `ActionService.propose` llama al `AssignmentService.assign` (kind `approval`). **`decide` llama al `AssignmentService.approve`/`reject` (kind `approval`)**. `ActionService` recibe `AssignmentService` en el constructor. **Si `approval` no tiene `taskId`, decisión de contrato: exigir `taskId` y documentarlo; o crear asignación con `assignedBy = null`** (corrección B-N7). | `assignments/service.ts`. |
+| `apps/server/src/engine/routes.ts` | `ENGINE_ROUTES_ASSIGNMENT_V1` | `POST /tasks/:id/reassign` y `POST /tasks/:id/escalate` cablean `AssignmentService`. **`POST /tasks/:id/input` sin cambio**. `POST /tasks`, `POST /goals`, `POST /monitors` se comportan como hoy; si el body trae `assignedTo`/`assignedBy`, se cablea en `AgentService` (F3.8). **El body incompleto no debe eludir el control nuevo: si `reassign`/`escalate` no traen `roleId`/`reason`, se sigue usando el `AssignmentService` con validación explícita** (corrección 4 del revisor). | `assignments/service.ts`. |
+| `apps/server/src/skills/sop-routes.ts` | `SOP_ROUTES_ASSIGNMENT_V1` | `POST /:id/run` cablea `AssignmentService.assign` (kind `sop`). **`SOP.assignedTo` se rellena. Propietario del SOP ≠ solicitante de la ejecución ≠ actor que la ejecuta** (corrección 4 del revisor). | `assignments/service.ts`. |
+| `apps/server/src/engine/agents/personas/registry.ts` | `PERSONA_REGISTRY_FLOW_V1` | `PersonaRegistry.register` construye `Flow` desde `AgentPersona.reportsTo`/`peers`. **`AgentActor.flow` se computa al construir el `Actor`**. | `flow.ts`. |
+| `apps/server/src/engine/agents/personas/routes.ts` | `PERSONA_ROUTES_FLOW_V1` | `GET /:id` devuelve `flow` estructurado (no solo `reportsTo`/`peers` sueltos). | `flow.ts`. |
+| `apps/server/src/app.ts` | `APP_ASSIGNMENT_WIRE_V1` | `createApp` instancia `AssignmentRegistry`, `AssignmentService`, `assignmentsRoutes`. `app.route("/api/assignments", assignmentsRoutes(...))`. Pasa `AssignmentService` a `AgentService` y `ActionService`. | `assignments/*`. |
+| `apps/server/src/engine/orchestrator/orchestrator.ts` | `ORCHESTRATOR_REQUESTING_ACTOR_V1` | `runGoal(ctx, goal)` propaga `ctx.actorId` y `ctx.requestingActorId` si están. Sin cambiar firma pública. | `execution-context.ts`. |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/engine/service.ts` | `async createTask`, `async createGoal`, `async createMonitor`, `async escalateTask`, `async control`, `async controlMonitor`. |
+| `apps/server/src/actions.ts` | `async propose`, `async decide`, `async retry`, `async edit`, `taskId`. |
+| `apps/server/src/skills/sop-routes.ts` | `app.post("/:id/run"`, `assignedTo`. |
+| `apps/server/src/engine/agents/personas/registry.ts` | `register(`, `AgentPersona`, `reportsTo`, `peers`. |
+| `apps/server/src/engine/agents/personas/routes.ts` | `app.get("/:id"`, `reportsTo`, `peers`, `flow`. |
+| `apps/server/src/app.ts` | `export async function createApp`, `const agent = new AgentService`, `const actions = new ActionService`, `app.route(`. |
+| `apps/server/src/engine/orchestrator/orchestrator.ts` | `runGoal`, `requestingActorId`, `actorId`. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`. `engine/tenant.ts`. `engine/presence.ts`, `edit-lock.ts` (F5). `engine/history/`, `engine/audit-trail/`, `engine/reconcile/` (F6). **`worker.ts`, `conversation.ts`, `kernel.ts` no se tocan más allá de F1.**
+
+### Conteo corregido
+
+**F3 total: 7 CREATE (dominio) + 7 CREATE (server) + 4 MODIFY (dominio) + 7 MODIFY (server) = 25 patchsets**, no 26. **24 restantes del anexo, no 23.**
+
+---
+
+## 3.7. F4 — Consistencia (version, CAS, diff, reconcile)
+
+**Objetivo:** `version` selectiva en `AgentTask`, `Goal`, `Monitor`, `SOP`, `Thread`, `Project`, `BusinessEntity`. `expectedVersion` obligatorio en writes compartidos. 409 con diff por campo. Reconcile por recurso. `ConflictDiff`, `ConflictVersion`, `ConflictResolution`.
+
+**Tamaño:** ~6 patchsets, ~500 KB. Cabe holgadamente.
+
+### CREATE (dominio)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/conflict.ts` | `CONFLICT_MODEL_V1` | `ConflictDiff`, `ConflictVersion`, `ConflictResolution`. | `zod`. |
+
+### MODIFY (dominio)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `packages/domain/src/agent.ts` | `AGENT_TASK_VERSION_V1`, `MONITOR_VERSION_V1` | `AgentTask.version: number` (default 1). `Monitor.version: number`. | — |
+| `packages/domain/src/goal.ts` | `GOAL_VERSION_V1` | `Goal.version: number`. | — |
+| `packages/domain/src/sop.ts` | `SOP_VERSION_V1` | `SOP.version: number` (decidir en F4 según flujos de edición compartida). | — |
+| `packages/domain/src/agent.ts` | `THREAD_VERSION_V1`, `PROJECT_VERSION_V1` | `Thread` gana `version: number` (ya tiene `updatedAt`; `version` para CAS explícito). `Project.version: number`. | — |
+| `packages/domain/src/business.ts` | `BUSINESS_ENTITY_VERSION_V1` | `BusinessEntity.version` ya existe (verificado). Solo se documenta. | — |
+| `packages/domain/src/index.ts` | `DOMAIN_INDEX_CONFLICT_V1` | Re-exporta `conflict.ts`. | — |
+
+### MODIFY (server)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/authz/with-write.ts` | `WITH_WRITE_CAS_V1` | `withWrite` aplica CAS con `expectedVersion` cuando el record lo declara. Si no, `put` sin CAS (comportamiento actual). Calcula `diff = { field: { before, after } }` cuando el CAS falla. El 409 devuelve `{ conflict: true, current, expected, diff }`. | `conflict.ts`, `db.ts` (`compareAndSwap`). |
+| `apps/server/src/threads-routes.ts` | `THREAD_CONFLICT_DIFF_V2` | `409` con `diff` por campo, no solo `current`/`expected`. | `conflict.ts`. |
+| `apps/server/src/projects-routes.ts` | `PROJECT_CONFLICT_DIFF_V2` | Idem. | `conflict.ts`. |
+| `apps/server/src/engine/routes.ts` | `TASK_RECONCILE_V1`, `GOAL_RECONCILE_V1` | `POST /tasks/:id/reconcile`, `POST /goals/:id/reconcile`. Cada handler conoce su schema y su `expectedVersion`. **No** `POST /:kind/:id/reconcile` genérico. | `conflict.ts`. |
+| `apps/server/src/projects-routes.ts` | `PROJECT_RECONCILE_V1` | `POST /projects/:id/reconcile`. | `conflict.ts`. |
+| `apps/server/src/threads-routes.ts` | `THREAD_RECONCILE_V1` | `POST /threads/:id/reconcile`. | `conflict.ts`. |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/db.ts` | `compareAndSwap`. |
+| `apps/server/src/threads-routes.ts` | `THREAD_CONFLICT_DIFF_V1`, `THREAD_EDIT_LOCK_V1`. |
+| `apps/server/src/projects-routes.ts` | `PROJECT_CONFLICT_DIFF_V1`. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`. `engine/tenant.ts`. `engine/presence.ts`, `edit-lock.ts` (F5). `engine/history/`, `engine/audit-trail/` (F6).
+
+### Bloqueos heredados
+
+- F4 depende de `PolicyAction.execute` (F2). Verificar antes de `complete`.
+- F4 depende de `withWrite` (F2). Verificar antes de CAS.
+
+---
+
+## 3.8. F5 — Coordinación (presence, lock, notifications, SSE)
+
+**Objetivo:** `PresenceService` y `EditLockService` sobre `Store` (condicional a multi-proceso), notificaciones dirigidas (`visibility`, `priority`), SSE con `Last-Event-ID` (condicional a reconexión), desactivación sin huérfanas.
+
+**Tamaño:** ~9 patchsets, ~700 KB. Cabe holgadamente.
+
+### CREATE (server)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/presence-store.ts` | `PRESENCE_STORE_V1` | `PresenceService` sobre `Store` con TTL y GC. **Solo si multi-proceso**. En clone-por-cliente con una instancia, in-memory es válido. | `db.ts`. |
+| `apps/server/src/engine/edit-lock-store.ts` | `EDIT_LOCK_STORE_V1` | `EditLockService` sobre `Store` con TTL y GC. Locks con caducidad y protección frente a propietarios obsoletos. **Solo si multi-proceso**. | `db.ts`. |
+| `apps/server/src/engine/events/replay-buffer.ts` | `SSE_REPLAY_BUFFER_V1` | `ReplayBuffer` por actor. `Last-Event-ID`. **Solo si el cliente reconecta**. | `events/subscriber.ts`. |
+
+### MODIFY (server)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `apps/server/src/notifications-stream.ts` | `NOTIF_VISIBILITY_V1`, `NOTIF_PRIORITY_V1`, `SSE_LAST_EVENT_ID_V1` | `Notification.visibility`: `private` / `tenant` / `shared`. `Notification.priority`: `low` / `normal` / `high` / `urgent`. SSE filtra por `actorId` + `visibility`. `Last-Event-ID` con `ReplayBuffer`. | `replay-buffer.ts`. |
+| `apps/server/src/notification-prefs.ts` | `NOTIF_PREFS_VISIBILITY_V1` | `notification-prefs` gana `visibility` y `priority`. | — |
+| `apps/server/src/users.ts` | `USER_DEACTIVATION_V1` | `User.active = false` no hace operación masiva ciega. Transición segura: revocar acceso, identificar asignaciones afectadas (`tasks` con `assignedTo = userId` en estados no terminales), marcar pendientes de reasignar o reasignar, registrar en `activity` con `actorId` del owner. | `tasks`, `activity`. |
+| `apps/server/src/engine/presence.ts` | `PRESENCE_STORE_WIRE_V1` | Si multi-proceso, `globalPresence` se sustituye por `PresenceStore`. Si no, se mantiene in-memory. | `presence-store.ts`. |
+| `apps/server/src/engine/edit-lock.ts` | `EDIT_LOCK_STORE_WIRE_V1` | Idem. | `edit-lock-store.ts`. |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/engine/presence.ts` | `PresenceService`. |
+| `apps/server/src/engine/edit-lock.ts` | `EditLock`. |
+| `apps/server/src/notifications-stream.ts` | SSE. |
+| `apps/server/src/notification-prefs.ts` | Preferencias. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`. `engine/tenant.ts`. `engine/history/`, `engine/audit-trail/` (F6).
+
+### Condiciones de activación
+
+- **I9** (presence/lock compartidos): solo si multi-proceso.
+- **I11** (SSE replay): solo si cliente reconecta.
+- **I10** (notificaciones dirigidas): obligatorio.
+
+---
+
+## 3.9. F6 — Trazabilidad (audit-trail, record-history)
+
+**Objetivo:** `AuditTrail` de reads sensibles (campos `restricted`/`secret` y accesos denegados), `RecordHistory` (condicional a `activity` no cubre), `conflict-version`.
+
+**Tamaño:** ~9 patchsets, ~600 KB. Cabe holgadamente.
+
+### CREATE (server)
+
+| Ruta | Marca | Contenido | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/audit-trail/service.ts` | `AUDIT_TRAIL_V1` | Escribe en `StoreAuditStore` cuando `withRead` detecta campo `restricted`/`secret` **y el acceso fue denegado**. No registra valores completos. Solo `{ actorId, action, resource, field, classification, allowed: false, timestamp }`. | `kernel/audit/store-store.ts`. |
+| `apps/server/src/engine/history/record-history.ts` | `RECORD_HISTORY_V1` | `RecordHistory` con `before`/`after`. **Solo si `activity` no cubre** con detalle y retención suficientes. | `db.ts`. |
+
+### MODIFY (server)
+
+| Ruta | Marca | Cambio | Dependencias |
+|---|---|---|---|
+| `apps/server/src/engine/authz/with-read.ts` | `WITH_READ_AUDIT_TRAIL_V1` | `withRead` escribe `AuditTrail` cuando el campo es `restricted`/`secret` y el acceso fue denegado. | `audit-trail/service.ts`. |
+| `apps/server/src/engine/authz/with-write.ts` | `WITH_WRITE_RECORD_HISTORY_V1` | `withWrite` escribe `RecordHistory` con `before`/`after`. **Solo si `activity` no cubre**. | `record-history.ts`. |
+| `apps/server/src/threads-routes.ts` | `THREAD_CONFLICT_VERSION_V1` | `GET /threads/:id/conflict`. Devuelve la versión del otro, actor y timestamp. Sin recargar. | `conflict.ts`. |
+| `apps/server/src/projects-routes.ts` | `PROJECT_CONFLICT_VERSION_V1` | `GET /projects/:id/conflict`. | `conflict.ts`. |
+| `apps/server/src/engine/routes.ts` | `TASK_CONFLICT_VERSION_V1` | `GET /tasks/:id/conflict`. | `conflict.ts`. |
+| `apps/server/src/actions.ts` | `ACTIONS_ACTOR_ID_V1` | `action-audit` gana `actorId`. | — |
+| `apps/server/src/engine/worker.ts` | `WORKER_ACTOR_ID_V1` | `run-events` gana `actorId`. | — |
+
+### READ
+
+| Fichero | Qué se verifica |
+|---|---|
+| `apps/server/src/kernel/audit/store-store.ts` | `append`, `payload`. |
+| `apps/server/src/kernel/audit/entry.ts` | `actor`. |
+| `apps/server/src/actions.ts` | `action-audit`. |
+
+### NO TOUCH
+
+`db.ts`, `db-tenant.ts`, `db-rls.ts`. `engine/tenant.ts`.
+
+### Condición de activación
+
+- **I12** (`RecordHistory`): solo si `activity` no cubre.
+- **I13** (`AuditTrail` de reads): obligatorio.
+
+---
+
+## 3.10. F7 — Cierre (tests, KNOWN_ISSUES, CIERRE-MVP)
+
+**Objetivo:** 14 tests obligatorios en verde, `KNOWN_ISSUES.md`, `CIERRE-MVP.md`.
+
+**Tamaño:** ~4 patchsets, ~300 KB. Cabe holgadamente.
+
+### CREATE (tests)
+
+| Ruta | Marca | Test | Fase |
+|---|---|---|---|
+| `tests/campaign-2/t1-jwt-required.test.ts` | `T1_JWT_REQUIRED_V1` | Request sin JWT → 401. | F1 |
+| `tests/campaign-2/t2-sub-no-user.test.ts` | `T2_SUB_NO_USER_V1` | `sub` sin `User` vinculado → 401; usuario sin pertenencia al tenant → 403. | F1 |
+| `tests/campaign-2/t3-ownership-read.test.ts` | `T3_OWNERSHIP_READ_V1` | Ownership: B lee `AgentTask` de A → 403. (**"doc" no existe**; usar `AgentTask` como recurso real). | F2 |
+| `tests/campaign-2/t4-acl-read-write.test.ts` | `T4_ACL_READ_WRITE_V1` | ACL: B lee doc compartido → 200, B escribe → 403. | F2 |
+| `tests/campaign-2/t5-classified-field.test.ts` | `T5_CLASSIFIED_FIELD_V1` | Campo clasificado sin permiso → `[REDACTED]` o 403. | F2 |
+| `tests/campaign-2/t6-concurrent-writes.test.ts` | `T6_CONCURRENT_WRITES_V1` | Dos writes concurrentes, uno 200, otro 409 con diff. | F4 |
+| `tests/campaign-2/t7-conflict-diff.test.ts` | `T7_CONFLICT_DIFF_V1` | 409 incluye diff por campo. | F4 |
+| `tests/campaign-2/t8-reconcile.test.ts` | `T8_RECONCILE_V1` | Reconcile sin recargar → 200. | F4 |
+| `tests/campaign-2/t9-presence-lock.test.ts` | `T9_PRESENCE_LOCK_V1` | Dos procesos, dos actores, presence y lock compartidos. **Condicional (multi-proceso)**. | F5 |
+| `tests/campaign-2/t10-notification-directed.test.ts` | `T10_NOTIFICATION_DIRECTED_V1` | Notificación dirigida: B no ve la de A. | F5 |
+| `tests/campaign-2/t11-sse-replay.test.ts` | `T11_SSE_REPLAY_V1` | SSE reconecta con `Last-Event-ID`, recibe los perdidos. **Condicional (reconexión)**. | F5 |
+| `tests/campaign-2/t12a-audit-write.test.ts
+He leído el fichero completo. Se corta exactamente en `tests/campaign-2/t12a-audit-write.test.ts`, a mitad de la tabla de tests de F7. Verifico contra lo que tengo en el hilo y contra lo que las fases F0–F6 dicen, y te doy el cierre del documento más las comprobaciones que el propio documento necesita.
+
+**Lo que he verificado contra las fases que ya están escritas en este chat:**
+
+| Elemento del maestro | ¿Coincide con F0–F6? | Corrección |
+|---|---|---|
+| F0: 6 docs CREATE, 0 MODIFY | Sí (F0 §6). | — |
+| F1: 15 patchsets, 4 CREATE + 11 MODIFY | Sí (F1 §7). | — |
+| F2-core: 8 CREATE + 5 MODIFY + 4 MODIFY dominio | Sí (F2 §6, §7). | — |
+| F2-routes: 24 patchsets, 14 ficheros de handlers | **No.** F2 §7 da 32 patchsets y 14 ficheros. El maestro dice "24 patchsets" y "13 listados". Contradicción ya detectada en el propio maestro. | Corregir a 24 patchsets (los de F2-routes, separados de F2-core) y a 14 ficheros (los 13 + `engine/worker.ts`, que el maestro cuenta aparte). |
+| F3-core: 18 patchsets, 7 CREATE dominio + 7 CREATE server + 4 MODIFY dominio | Sí (F3 §7, §10). | — |
+| F3-adapters: 25 patchsets totales | **No.** F3 §7 dice 26. El maestro dice 25. F3 v2 (la que escribí en este chat) dice 26 (14 CREATE + 12 MODIFY). | Corregir a 26 patchsets. Los 26 = 14 CREATE + 12 MODIFY. |
+| F4: 6 patchsets | **No.** F4 §7 dice 9 patchsets. El maestro dice 6. | Corregir a 9. |
+| F5: 9 patchsets | **No.** F5 §7 dice 10 patchsets. El maestro dice 9. | Corregir a 10. |
+| F6: 9 patchsets | Sí (F6 §7). | — |
+| F7: 4 patchsets | **No.** F7 necesita 17 tests + `KNOWN_ISSUES.md` + `CIERRE-MVP.md` + documento maestro cerrado. Son 19 patchsets, no 4. | Corregir a 19. |
+
+**Lo que falta en el maestro y que las fases F0–F6 ya tienen:**
+
+1. **El cierre de F7** (tests t12a–t17 + `KNOWN_ISSUES.md` + `CIERRE-MVP.md`). Se corta en t12a.
+2. **La matriz de dependencias entre fases** (§4 del maestro, anunciada pero no escrita).
+3. **Las reglas para futuras IA** (§5 del maestro, anunciadas pero no escritas).
+4. **Los ficheros que NUNCA se tocan** (§6 del maestro, anunciados pero no escritos).
+5. **La corrección de los conteos de F2-routes, F3-adapters, F4, F5 y F7** para que coincidan con las fases ya escritas.
+
+Voy a cerrar el documento. Empiezo donde se corta.
+
+---
+
+# Documento maestro de archivos por campaña — CIERRE
+
+## 3.10. F7 — Cierre (continuación desde `t12a`)
+
+### CREATE (tests, continuación)
+
+| Ruta | Marca | Test | Fase |
+|---|---|---|---|
+| `tests/campaign-2/t12a-audit-write.test.ts` | `T12A_AUDIT_WRITE_V1` | Write deja `audit-trail` con `actorId`. | F6 |
+| `tests/campaign-2/t12b-record-history.test.ts` | `T12B_RECORD_HISTORY_V1` | Write deja `record-history` con `before`/`after`. **Condicional (`recordHistoryEnabled`)**. | F6 |
+| `tests/campaign-2/t13-no-privilege-escalation.test.ts` | `T13_NO_PRIVILEGE_ESCALATION_V1` | Agente con tarea delegada no obtiene más permisos que el asignador. | F3 |
+| `tests/campaign-2/t14-deactivated-actor.test.ts` | `T14_DEACTIVATED_ACTOR_V1` | Actor desactivado pierde acceso en el siguiente request. | F1 |
+| `tests/campaign-2/t15-worker-attribution.test.ts` | `T15_WORKER_ATTRIBUTION_V1` | Worker atribuye `executingActorId` al agente correcto y `requestingActorId` al solicitante. | F1 |
+| `tests/campaign-2/t16-forbidden-no-leak.test.ts` | `T16_FORBIDDEN_NO_LEAK_V1` | Error 403 no revela contenido sensible (solo "Forbidden"). | F2 |
+| `tests/campaign-2/t17-reconcile-authz.test.ts` | `T17_RECONCILE_AUTHZ_V1` | Reconcile no salta autorización ni sobrescribe versión posterior. | F4 |
+
+### CREATE (docs)
+
+| Ruta | Marca | Contenido |
+|---|---|---|
+| `docs/miniaudits/04-multi-usuario-concurrente/KNOWN_ISSUES.md` | `KNOWN_ISSUES_MULTIUSUARIO_V1` | Deudas conocidas al cierre de la Campaña 2: `F5 multiProcess=false`, `F5 sseReplayEnabled=false`, `F6 recordHistoryEnabled=false`, `F4 worker sin withWrite`, `F3 approval sin taskId`, `F2 authzEnabled/fieldClassificationEnabled` en producción, `F1 authProviderId backfill`. |
+| `docs/miniaudits/04-multi-usuario-concurrente/CIERRE-MVP.md` | `CIERRE_MVP_MULTIUSUARIO_V1` | Criterios de cierre: 17 tests en verde (14 obligatorios + 3 condicionales), typecheck verde, `KNOWN_ISSUES.md` firmado, `git push` a `feat/multitenancy-campaign`. |
+
+### MODIFY (docs)
+
+| Ruta | Marca | Cambio |
+|---|---|---|
+| `docs/miniaudits/04-multi-usuario-concurrente/-pendientes.md` | `PENDIENTES_MULTIUSUARIO_V1` | Cerrar las deudas resueltas por F1–F6. Dejar abiertas las que van a otras campañas. |
+
+### Total F7
+
+**19 patchsets:** 17 tests CREATE + 2 docs CREATE + 1 doc MODIFY.
+
+### Verificación pre
+
+```powershell
+$checks = @{
+  "tests/campaign-2/t1-jwt-required.test.ts" = "T1_JWT_REQUIRED_V1"
+  # ... hasta t11
+  "tests/campaign-2/t11-sse-replay.test.ts" = "T11_SSE_REPLAY_V1"
+  "apps/server/src/engine/audit-trail/service.ts" = "AUDIT_TRAIL_V1"
+  "apps/server/src/engine/history/record-history.ts" = "RECORD_HISTORY_V1"
+  "apps/server/src/engine/assignments/service.ts" = "ASSIGNMENT_SERVICE_V1"
+  "apps/server/src/actors/service.ts" = "ACTOR_SERVICE_RESOLVE_V1"
+}
+foreach ($k in $checks.Keys) {
+  $c = Get-Content (Join-Path $repoRoot $k) -Raw -ErrorAction SilentlyContinue
+  if (-not $c) { throw ("FALTA FICHERO: " + $k) }
+  if ($c -notmatch [regex]::Escape($checks[$k])) { throw ("FALTA MARCA " + $checks[$k] + " en " + $k) }
+}
+Write-Host "F6 verificada" -ForegroundColor Green
+```
+
+### Typecheck, test, commit, push
+
+- Cline ejecuta `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`.
+- Cline ejecuta los 17 tests de `tests/campaign-2/`.
+- Commit: `feat(multiusuario): fase 7 — cierre [T1–T17, KNOWN_ISSUES, CIERRE-MVP]`.
+- Push: `git push origin feat/multitenancy-campaign`.
+
+### Checklist de cierre de F7
+
+- [ ] F6 verificada.
+- [ ] 17 tests creados con sus marcas.
+- [ ] `KNOWN_ISSUES.md` creado con `KNOWN_ISSUES_MULTIUSUARIO_V1`.
+- [ ] `CIERRE-MVP.md` creado con `CIERRE_MVP_MULTIUSUARIO_V1`.
+- [ ] `-pendientes.md` actualizado.
+- [ ] Typecheck verde.
+- [ ] `pnpm test` verde o fallos preexistentes anotados.
+- [ ] Los 14 tests obligatorios en verde.
+- [ ] Los 3 condicionales (T9, T11, T12b) en verde o anotados como `SKIP` con justificación de condición de activación.
+- [ ] `git add` selectivo de 19 ficheros.
+- [ ] `git commit` y `git push`.
+- [ ] Confirmación al humano: "Campaña 2 cerrada. Siguiente: Campaña 3."
+
+---
+
+## 4. Matriz de dependencias entre fases
+
+| Fase | Depende de | Bloquea a | Condición de activación |
+|---|---|---|---|
+| F0 | Campaña 1 cerrada | F1 | — |
+| F1 | F0 cerrada | F2–F7 | — |
+| F2-core | F1 cerrada | F2-routes, F3 | — |
+| F2-routes | F2-core cerrada | F3 | `authzEnabled`/`fieldClassificationEnabled` |
+| F3-core | F2 cerrada | F3-adapters | — |
+| F3-adapters | F3-core cerrada | F4 | — |
+| F4 | F3 cerrada | F5, F6 | `PolicyAction.execute` |
+| F5 | F4 cerrada | F6 | `multiProcess`, `sseReplayEnabled` |
+| F6 | F5 cerrada | F7 | `auditTrailEnabled`, `recordHistoryEnabled` |
+| F7 | F6 cerrada | Campaña 3 | — |
+
+**Regla:** si una fase no está `PASS`, la siguiente se aborta. No se saltan fases.
+
+---
+
+## 5. Reglas para futuras IA
+
+Estas son las reglas que cualquier IA debe seguir al aplicar una fase del maestro. Están derivadas del protocolo TypeScript v2 y del protocolo de campaña.
+
+**R1 — La fuente de verdad es el disco.** No el Repomix, no el maestro, no la memoria del chat. Si un fichero ha sido tocado por una fase anterior, el Repomix original es referencia histórica. Se lee con `Get-Content -Raw`.
+
+**R2 — Un patchset = un fichero + un propósito.** No se agrupan cambios independientes. No se refactoriza código ajeno al objetivo.
+
+**R3 — Ancla literal, no aproximada.** El `$old` se copia del fichero real, con indentación y line ending exactos. Si el ancla no coincide exactamente 1×, se aborta. No se improvisa.
+
+**R4 — Función envolvente, `throw` en comprobaciones.** Todo patchset va dentro de `function Invoke-F<X>_<Y> { ... }` y se llama. Las comprobaciones usan `throw`, no `return`. El `return` solo se usa para el `SKIP` por idempotencia.
+
+**R5 — Escritura atómica.** `[System.Text.UTF8Encoding]::new($false)` + `[System.IO.File]::WriteAllText`. Backup en `.tmp/patchset-backups/` antes de escribir.
+
+**R6 — Verificación post en disco.** Tras escribir, se relee el fichero, se cuenta la marca, se verifica que el `$old` ya no está y que el `$new` está.
+
+**R7 — `git diff` es la verificación final.** Si el diff no es exactamente el cambio esperado, se revierte con `Copy-Item $backup $file -Force` y se diagnostica.
+
+**R8 — Typecheck y test son obligatorios.** Se corre `pnpm --filter "@openmuse/server" exec tsc --noEmit` y `pnpm test`. Se distinguen errores nuevos de preexistentes. Si hay error nuevo, se revierte el fix.
+
+**R9 — No se declara `PASS` sin ejecutar.** La IA entrega el bloque. El humano lo ejecuta y pega el output. La IA no declara `PASS` si no ha visto el output.
+
+**R10 — Los misses van a `missed/_multiusuario_pendientes.md`.** La IA no lo escribe. El humano lo revisa.
+
+**R11 — Los tests de la campaña van a `tests/campaign-2/`.** No se congelan. Los tests ajenos a la campaña siguen congelados hasta F7.
+
+**R12 — Si falta un fichero, se pide.** No se inventa. El maestro declara `Select-String` como precondición cuando el fichero no está pegado.
+
+---
+
+## 6. Ficheros que NUNCA se tocan en la Campaña 2
+
+Estos ficheros están cerrados por Campaña 1 o son de otras campañas. Cualquier cambio necesario se documenta como deuda y se propone en otra campaña.
+
+| Fichero | Motivo |
+|---|---|
+| `apps/server/src/db-rls.ts` | Campaña 1 cerrada. `RLS_REQUIRED_IN_SHARED_V1` verificado. |
+| `apps/server/src/db.ts` | Campaña 1 cerrada. `compareAndSwap`, `claim`, `insertIfAbsent`, `listPaged`, `transaction` (con guard anti-anidación), `purgeOlderThan`, `scanByOwnerPrefix`, `scanByStatusWithCursor` ya existen. |
+| `apps/server/src/db-tenant.ts` | Campaña 1 cerrada. `TenantScopedStore` con peel, prefix scan, status cursor. |
+| `apps/server/src/engine/tenant.ts` | Campaña 1 cerrada. `TenantService` con cache TTL, `setMembership`, `invalidateAll`, `assertNotHardcodedTenantId`. |
+| `apps/server/src/backup-tenant.ts` | Campaña 1 cerrada. |
+| `scripts/audits/*` | Campaña 1 cerrada. |
+| `tests/tenant-http-e2e.test.ts` | Congelado. |
+| `apps/web/src/**` | No se toca en esta campaña. |
+| `apps/worker/src/**`, `apps/computer/src/**` | No se tocan en esta campaña. |
+| `clientes/**` | No se toca en esta campaña. |
+| `docs/audits/**` | No se toca en esta campaña. |
+
+**Excepción documentada:** F1 lee `engine/tenant.ts` (`tenantIdFor`) pero no lo modifica. F2 lee `assertNotHardcodedTenantId` en nuevas rutas pero no lo modifica.
+
+---
+
+## Correcciones de conteo aplicadas al maestro
+
+Estas son las correcciones que el maestro necesita para que coincida con las fases F0–F6 ya escritas:
+
+| Sección | El maestro decía | La fase dice | Corrección |
+|---|---|---|---|
+| F2-routes | "~24 patchsets, 13 ficheros de handlers" | F2 §7: 32 patchsets totales (8 CREATE + 24 MODIFY). Los 24 MODIFY son F2-routes. Los 14 ficheros incluyen `engine/worker.ts`. | **24 patchsets F2-routes, 14 ficheros de handlers** (los 13 + `engine/worker.ts`). El 14.º que faltaba era `engine/worker.ts`. |
+| F3-adapters | "25 patchsets totales" | F3 v2 §7: 26 patchsets (14 CREATE + 12 MODIFY). | **26 patchsets totales.** Los 26 = 14 CREATE (7 dominio + 7 server) + 12 MODIFY (4 dominio + 8 server). |
+| F4 | "~6 patchsets" | F4 §7: 9 patchsets (1 CREATE + 8 MODIFY). | **9 patchsets.** |
+| F5 | "~9 patchsets" | F5 §7: 10 patchsets (3 CREATE + 7 MODIFY). | **10 patchsets.** |
+| F6 | "~9 patchsets" | F6 §7: 9 patchsets (2 CREATE + 7 MODIFY). | **9 patchsets.** Correcto. |
+| F7 | "~4 patchsets" | F7 necesita 17 tests + 2 docs + 1 doc MODIFY. | **19 patchsets.** |
+
+**Nota importante:** el maestro dice "F2-routes: ~24 patchsets". Esos 24 son los MODIFY de F2. F2-core tiene 8 CREATE + 9 MODIFY (dominio + server). El total de F2 es **8 CREATE + 24 MODIFY = 32 patchsets**, que coincide con F2 §7. La separación `F2-core` / `F2-routes` es una división de lectura del maestro, no una división de patchsets. Los 32 patchsets de F2 se reparten así:
+- **F2-core:** 8 CREATE + 9 MODIFY = 17 patchsets.
+- **F2-routes:** 15 MODIFY = 15 patchsets.
+- **Total:** 17 + 15 = 32.
+
+**Corrección adicional:** el maestro dice "F2-routes: 14 ficheros de handlers". Los 14 son:
+1. `engine/routes.ts`
+2. `threads-routes.ts`
+3. `projects-routes.ts`
+4. `rag-routes.ts`
+5. `admin-routes.ts`
+6. `admin-tenants.ts`
+7. `skills/routes.ts`
+8. `skills/sop-routes.ts`
+9. `computer-routes.ts`
+10. `computer-tools.ts`
+11. `notification-prefs.ts`
+12. `notifications-stream.ts`
+13. `engine/agents/personas/routes.ts`
+14. `engine/worker.ts`
+
+El 14.º que faltaba era `engine/worker.ts`. El maestro lo contaba aparte, pero también es un handler (worker).
+
+---
+
+## Resumen del cierre
+
+**Lo que el maestro tiene ahora:**
+- F0–F6 completas (con las correcciones de conteo aplicadas).
+- F7 completa: 17 tests + `KNOWN_ISSUES.md` + `CIERRE-MVP.md` + `-pendientes.md` actualizado.
+- §4 Matriz de dependencias entre fases.
+- §5 Reglas para futuras IA (R1–R12).
+- §6 Ficheros que NUNCA se tocan.
+
+**Lo que falta para que el maestro sea 100 % ejecutable por 7 IAs sin acceso al repo completo:**
+- **Nada más.** Con las fases F0–F7 ya escritas en este chat (F0, F1, F2, F3 v2, F4, F5, F6) + este cierre del maestro, una IA puede aplicar cada fase sin leer el repo entero. Cada fase declara:
+  - Qué ficheros leer completos.
+  - Qué ficheros inspeccionar con `Select-String`.
+  - Qué ficheros NO tocar.
+  - Qué patchsets aplicar con `$old`/`$new` (o `Select-String` como precondición si el fichero no está pegado).
+  - Qué verificar post.
+  - Qué misses esperar.
+  - Qué checklist de cierre.
+
+**Lo que necesita cada IA ejecutora:**
+1. **La fase correspondiente** (F0, F1, F2, F3, F4, F5, F6 o F7).
+2. **El maestro cerrado** (este documento).
+3. **El repo en disco** (`C:\Users\Alfonso\Desktop\git hub repos\agente`).
+4. **El protocolo TypeScript v2** (`protocolo-typescript.md.txt`).
+5. **Las reglas PowerShell v2.1** (`reglas powershell.txt`).
+
+Con esos 5 elementos, cada IA puede aplicar su fase sin acceso al repo completo y sin quemar contexto. El maestro le dice exactamente qué ficheros leer, qué inspeccionar y qué no tocar. La fase le dice exactamente qué patchsets aplicar.
+
+**Lo que falta para que tú ejecutes las 7 fases con 7 IAs diferentes:**
+- **F0:** una IA. Docs-only. 6 documentos.
+- **F1:** una IA. 15 patchsets. Depende de F0.
+- **F2:** una IA. 32 patchsets. Depende de F1. Puede partirse en dos IAs (F2-core y F2-routes) si el contexto es limitado.
+- **F3:** una IA. 26 patchsets. Depende de F2. Puede partirse en dos IAs (F3-core y F3-adapters) si el contexto es limitado.
+- **F4:** una IA. 9 patchsets. Depende de F3.
+- **F5:** una IA. 10 patchsets. Depende de F4.
+- **F6:** una IA. 9 patchsets. Depende de F5.
+- **F7:** una IA. 19 patchsets. Depende de F6.
+
+**Son 7 IAs (o 9 si partes F2 y F3 en dos cada una).** Cada IA recibe su fase + el maestro cerrado + el protocolo + las reglas. No necesita el repo completo, solo los ficheros que su fase declara leer.
+
+**Lo que tú tienes que hacer entre fases:**
+1. Ejecutar los patchsets de la fase.
+2. Pegar el output a la IA.
+3. La IA declara `PASS`/`FAIL`/`BLOCKED` por patchset.
+4. Si todo `PASS`, pasas a la siguiente fase.
+5. Si algún `FAIL`, la IA diagnostica y propone corrección.
+
+**El maestro está cerrado. Las fases F0–F7 están escritas. El protocolo está aplicado. Las reglas están documentadas. Falta que tú ejecutes.**
+
+Si quieres, puedo escribir el **prompt de handoff para cada una de las 7 IAs** (uno por fase, autocontenido, con el contexto mínimo que cada IA necesita para arrancar sin leer el repo completo). Dime si lo quieres y lo escribo.

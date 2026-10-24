@@ -1,0 +1,973 @@
+# 04 — Campaña 1 / Fase 3 — B3 Rate limit transversal + `logContext.tenantId`
+
+**Fecha:** 2026-10-21
+**Campaña:** 1 — Aislamiento multi-tenant
+**Fase:** 3 — B3 Rate limit transversal + `logContext.tenantId`
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`. Fase 0 cerrada. Fase 1 cerrada (documentación real; F01.14 con decisión previa sobre mojibake en `_multitenant_pendientes.md`). Fase 2 cerrada (N02 + N04 aplicados; N03 fusionado en N02; F02.10 congelado; F02.8 y N01 confirmados 1× sin re-aplicar). **Pendientes que NO se tocan en esta fase:** F02.9b (B7), F02.10 (congelado), N06 (`Config` no expone `multiTenantShared` — opcional P2, se puede dejar para Fase 8). **Nuevos en esta fase:** N05 (añadir `rateLimiter` público a `AgentService`), N07 (`app.ts` crea `tenantLimiter` y lo inyecta en `AgentService`, `ragRoutes`, `threadRoutes`), N08 (`request-logger.ts` `getTenantId` opcional).
+
+---
+
+## 1. Qué fue la fase anterior
+
+Fase 2 (documento 03): B2 aislamiento estricto extendido. N02 aplicado (`admin-tenants.ts` invalida caché al crear/suspender/resumir tenant, 3 hunks con marcas `ADMIN_TENANTS_MEMBERSHIP_CACHE_V1`, `ADMIN_TENANTS_SUSPEND_INVALIDATE_V1`, `ADMIN_TENANTS_RESUME_INVALIDATE_V1`), N04 aplicado (`db-tenant.ts` `peel()` con guard defensivo, marca `TENANT_PEEL_GUARD_V1`), N03 fusionado en N02 (no se aplica en `tenant.ts`), F02.8 y N01 confirmados 1× sin re-aplicar, F02.10 sigue congelado, `worker.ts` no se toca.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- **`logContext` con `tenantId`** (F04.10a/b): el middleware `requestLogger` deja de tener un `logContext` solo con `correlationId`; ahora, si el llamador le pasa un `getTenantId(owner)`, el `logContext` incluye `tenantId` en todos los logs de esa request. `app.ts` pasa `getTenantId: (owner) => tenantService.tenantIdFor(owner)`.
+- **`AgentService` gana un campo `rateLimiter` público** (N05), construido en `createApp` y pasado al constructor. Con eso, `ConversationAgent` puede usar `this.service.rateLimiter.takeForTenant(tenantId, owner, "chat.message")`.
+- **`takeForTenant` cableado en chat** (F04.16a): antes de cada turno en `ConversationAgent.run()`, se toma un intento; si se agota, el chat devuelve un error de cuota sin llamar al LLM.
+- **`takeForTenant` cableado en RAG** (F04.16b): antes de `/api/rag/search`, se toma un intento por tenant+owner; si se agota, 429 con `Retry-After`.
+- **`takeForTenant` cableado en threads** (F04.16c): antes de crear un thread (`POST /api/threads`), se toma un intento; si se agota, 429.
+- **`takeForTenant` NO se cablea en browser/computer** en esta fase: F04.17 va a Fase 6 (B7), porque comparte el `tenantLimiter` con F04.16d y tiene más superficie (browser tiene `create/navigate/reopen`, computer tiene `execute/file`). Se anota en `-pendientes.md`.
+- **Cero cambios de comportamiento en clone-por-cliente** con `MULTI_TENANT_SHARED != "true"` y con `rateLimiter` con límites altos (configurables por env). Los límites por defecto de `RateLimiter` en `createApp` son **no restrictivos** para no romper tests ni dev. En producción, se configuran por env.
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 4 (documento 05): B4 — RLS, validación y auditoría cross-tenant. F03.30 (`withTenantRls` transaccional), F03.35 (`tenantId` en body validado), F03.38 (`RLS_REQUIRED_IN_SHARED_V1`), F03.31 (`TENANT_CROSS_AUDIT_V1`), F03.11 (`AUDIT_STORE_TENANT_V1` sobre `StoreAuditStore`), F04.21 (middleware `X-Tenant-Id` en todas las respuestas autenticadas).
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 3), ejecutada en **7 patchsets** (N08, N05, N07-common, F04.16a, F04.16b, F04.16c, F04.16-wire) más **1 patchset de verificación sin escritura** (confirmar Fases 0–2 cerradas). Total: **7 patchsets de escritura + 1 de solo lectura**.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+**Ya disponibles en el Repomix original + holístico:**
+- `apps/server/src/middleware/request-logger.ts` (Repomix original, íntegro).
+- `apps/server/src/engine/service.ts` (Repomix holístico: constructor y campos, para N05).
+- `apps/server/src/app.ts` (Repomix original, íntegro: `createApp`, `requestLogger()`, `app.route("/api/rag", ragRoutes(rag, db, files))`, `app.route("/api/threads", threadRoutes(db))`, `new AgentService(tdb, ...)`).
+- `apps/server/src/rate-limit.ts` (Repomix original, íntegro: `RateLimiter`, `takeForTenant`, `takeForUser`, `take`, `reset`, `prune`).
+- `apps/server/src/engine/conversation.ts` (Repomix original, íntegro: `ConversationAgent.run()`, `this.service`, `ctxForConfig`, `run = runWithModelFallback(...)`).
+- `apps/server/src/rag-routes.ts` (Repomix original, íntegro: `ragRoutes(rag, db, files)`, `app.get("/search", ...)`).
+- `apps/server/src/threads-routes.ts` (Repomix original, íntegro: `threadRoutes(db)`, `app.post("/", ...)`).
+- `apps/server/src/log.ts` (Repomix original, íntegro: `LogContext`, `logContext`, `withLogContext`).
+- `apps/server/src/engine/tenant.ts` (Repomix original, íntegro).
+- `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md`, `ESTADO-REAL-MULTITENANT.md`, `-pendientes.md` (Fases 0–2).
+
+**Archivos a inspeccionar con `Select-String` (no lectura completa):**
+- `apps/server/src/engine/worker.ts` — solo `Get-Content -TotalCount 120` para confirmar que sigue roto. **Prohibido tocar.**
+- `apps/server/src/app.ts` — solo las líneas de `requestLogger()` y `agent = new AgentService(tdb, ...)`. `Select-String -Pattern "requestLogger\(|new AgentService|ragRoutes|threadRoutes"` con `-Context 2,2`.
+- `apps/server/src/engine/service.ts` — solo `constructor`, `this.tenantService`, `this.rateLimiter`, `this.guardrails`. `Select-String -Pattern "constructor\(|tenantService|rateLimiter|guardrails"` con `-Context 1,1`.
+
+**Archivos que NO se leen en esta fase:**
+- `apps/server/src/db-rls.ts`, `apps/server/src/files.ts`, `apps/server/src/auth-signup.ts`, `apps/server/src/engine/events/*`, `apps/server/src/admin-tenants.ts`, `apps/server/src/db-tenant.ts` (más allá de lo ya citado), `apps/server/src/engine/worker.ts` (más allá de las 120 líneas).
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Modificar:**
+- `apps/server/src/middleware/request-logger.ts` — N08. `requestLogger(options?: { getTenantId?: (owner: string) => Promise<string> })`. Si `options.getTenantId` está presente y hay `owner` en `logContext`, se resuelve el tenant y se añade. Si no, comportamiento actual.
+- `apps/server/src/engine/service.ts` — N05. Añadir `readonly rateLimiter: RateLimiter` al constructor de `AgentService`, y aceptarlo como dependencia. Sin más.
+- `apps/server/src/app.ts` — N07-common + F04.16-wire. Crear `const tenantLimiter = new RateLimiter(...)` con límites configurables por env; pasar `rateLimiter: tenantLimiter` a `AgentService`; pasar `tenantLimiter` a `ragRoutes` y `threadRoutes`; pasar `{ getTenantId: (owner) => tenantService.tenantIdFor(owner) }` a `requestLogger()`.
+- `apps/server/src/engine/conversation.ts` — F04.16a. Antes de `run = runWithModelFallback(...)`, llamar `this.service.rateLimiter.takeForTenant(tenantId, this.owner, "chat.message")`. Si no `allowed`, emitir `RUN_ERROR` con mensaje humano y `return`.
+- `apps/server/src/rag-routes.ts` — F04.16b. `ragRoutes(rag, db, files, limiter)`. `app.get("/search", ...)` llama `limiter.takeForTenant(tenantId, owner, "rag.search")`. Si no `allowed`, `throw new AppError(...)` con 429 y `Retry-After`.
+- `apps/server/src/threads-routes.ts` — F04.16c. `threadRoutes(db, limiter)`. `app.post("/", ...)` llama `limiter.takeForTenant(tenantId, owner, "threads.create")`. Si no `allowed`, `throw new AppError(...)` con 429 y `Retry-After`.
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts` (F02.10 congelado).
+- Cualquier `scripts/*.ts`.
+- Cualquier modificación a `_multitenant_pendientes.md` (lo escribe el humano).
+
+**No tocar:**
+- `worker.ts`, `conversation.ts` (más allá de F04.16a), `kernel.ts`, `scripts/audits/*`, `tests/tenant-http-e2e.test.ts`, `db-tenant.ts` (más allá de N01 ya aplicado), `admin-tenants.ts`.
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| N08 | `request-logger.ts` | 2 (firma + cuerpo) | MODIFY |
+| N05 | `service.ts` | 2 (constructor param + asignación) | MODIFY |
+| N07-common | `app.ts` | 1 (crear `tenantLimiter` + pasar a `requestLogger()`) | MODIFY |
+| F04.16a | `conversation.ts` | 1 (insertar rate limit antes de `runWithModelFallback`) | MODIFY |
+| F04.16b | `rag-routes.ts` | 2 (firma + guard en `/search`) | MODIFY |
+| F04.16c | `threads-routes.ts` | 2 (firma + guard en `POST /`) | MODIFY |
+| F04.16-wire | `app.ts` | 2 (pasar `tenantLimiter` a `ragRoutes` y `threadRoutes`) | MODIFY |
+
+**Total: 7 patchsets, 12 hunks.** `app.ts` recibe dos patchsets (`N07-common` y `F04.16-wire`), aplicables en cualquier orden, siempre que `N07-common` se aplique antes que `F04.16-wire` (el segundo usa `tenantLimiter` que define el primero).
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes aplicados:** F04.10a, F04.10b, F04.16a, F04.16b, F04.16c, F04.16-common.
+- **Nuevos identificados en esta fase y aplicados:** N05, N07, N08.
+- **Fixes congelados:** F02.10 (tests).
+- **Fixes movidos a fase siguiente:** F04.16d (browser/computer, va a Fase 6 por superficie y por compartir `tenantLimiter` con F04.17), N06 (opcional, Fase 8).
+- **Fixes desbloqueados por esta fase:** F04.14 (métricas con label tenant, Fase 6), F04.15 (metrics-exporter, Fase 6), F04.17 (browser/computer, Fase 6), F04.21 (respuestas con `X-Tenant-Id`, Fase 4).
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+### Paso 0 — Verificación previa sin escritura
+
+**0.1. Estado de Fases 0–2.**
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$branch = git -C $repoRoot branch --show-current
+if ($branch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $branch" }
+
+$estado = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md"
+$idmap = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md"
+$pendientesDoc = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/-pendientes.md"
+foreach ($f in @($estado,$idmap,$pendientesDoc)) {
+  if (-not (Test-Path $f)) { throw "ERROR: falta $f" }
+}
+$at = Get-Content (Join-Path $repoRoot "apps/server/src/admin-tenants.ts") -Raw
+if ($at -notmatch "ADMIN_TENANTS_MEMBERSHIP_CACHE_V1") { throw "ERROR: N02 no aplicado (Fase 2 incompleta)" }
+$dbt = Get-Content (Join-Path $repoRoot "apps/server/src/db-tenant.ts") -Raw
+if ($dbt -notmatch "TENANT_PEEL_GUARD_V1") { throw "ERROR: N04 no aplicado (Fase 2 incompleta)" }
+Write-Host "Fases 0-2 verificadas" -ForegroundColor Green
+```
+**Decisión:** si falla, **ABORTA TODO** y anota.
+
+**0.2. Ancla de N08 en `request-logger.ts`.**
+```powershell
+$rl = Join-Path $repoRoot "apps/server/src/middleware/request-logger.ts"
+if (-not (Test-Path $rl)) { throw "ERROR: falta request-logger.ts" }
+$rc = Get-Content $rl -Raw
+
+$anchorN08a = 'export function requestLogger() {'
+Write-Host ("N08a ancla (requestLogger() sin args): {0}" -f ([regex]::Matches($rc, [regex]::Escape($anchorN08a))).Count)
+
+$anchorN08b = @'
+    await withLogContext({ correlationId }, async () => {
+      logInfo("http.request", { method, path });
+'@
+$anchorN08b = $anchorN08b.TrimEnd()
+Write-Host ("N08b ancla (withLogContext solo correlationId): {0}" -f ([regex]::Matches($rc, [regex]::Escape($anchorN08b))).Count)
+
+Write-Host ("LOG_CONTEXT_TENANT_V1 presente: {0}" -f ($rc -match [regex]::Escape("LOG_CONTEXT_TENANT_V1")))
+```
+**Decisión:** si ambos anclas 1× y marca 0×, aplicar N08. Si la marca ya existe, SKIP.
+
+**0.3. Anclas de N05 en `service.ts` (constructor y campos).**
+```powershell
+$svc = Join-Path $repoRoot "apps/server/src/engine/service.ts"
+$sc = Get-Content $svc -Raw
+
+Write-Host "=== Constructor y campos relevantes ==="
+Select-String -Path $svc -Pattern "constructor\(|readonly |private readonly |this\.tenantService|this\.rateLimiter|this\.guardrails" -Context 0,1 | Select-Object -First 60
+
+Write-Host "=== rateLimiter ya existe? ==="
+Write-Host ("rateLimiter: {0}" -f ([regex]::Matches($sc, [regex]::Escape("rateLimiter"))).Count)
+Write-Host ("TENANT_RATE_LIMITER_FIELD_V1 presente: {0}" -f ($sc -match [regex]::Escape("TENANT_RATE_LIMITER_FIELD_V1")))
+```
+**Decisión:** el constructor de `AgentService` (Repomix holístico) recibe `tdb, config, workspace, files, actions, browser, computer, rag, undefined, bus, deps` donde `deps` es un objeto con `{ graph, truth, policy, stateMachine, stateMachineRegistry, context, runtime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }`. **N05 tiene dos caminos:**
+
+- **Camino A:** añadir `rateLimiter` al objeto `deps` (doceavo campo). No toca la firma del constructor, solo el tipo `deps`.
+- **Camino B:** añadir un parámetro nuevo al constructor. Rompe la firma y obliga a tocar todos los call sites.
+
+**Camino A es el esperado.** Se anota y se aplica. Si `deps` en `service.ts` no es un objeto literal sino un tipo importado, se extiende el tipo. Si `deps` es `any`, se acepta igual.
+
+**0.4. Ancla de N07-common en `app.ts`.**
+```powershell
+$app = Join-Path $repoRoot "apps/server/src/app.ts"
+$ac = Get-Content $app -Raw
+
+Write-Host "=== requestLogger() call ==="
+Select-String -Path $app -Pattern "app.use\(\"\*\", requestLogger" -Context 1,1
+
+Write-Host "=== AgentService construction ==="
+Select-String -Path $app -Pattern "new AgentService" -Context 2,2
+
+Write-Host "=== ragRoutes / threadRoutes calls ==="
+Select-String -Path $app -Pattern "ragRoutes|threadRoutes" -Context 1,1
+
+Write-Host ("TENANT_RATE_LIMITER_WIRE_V1 presente: {0}" -f ($ac -match [regex]::Escape("TENANT_RATE_LIMITER_WIRE_V1")))
+```
+**Decisión:** si `app.use("*", requestLogger())` está 1×, si `new AgentService(...)` está 1×, y si `ragRoutes(rag, db, files)` + `threadRoutes(db)` están 1× cada uno, aplicar N07-common y F04.16-wire. Si ya existen las marcas, SKIP.
+
+**0.5. Ancla de F04.16a en `conversation.ts`.**
+```powershell
+$conv = Join-Path $repoRoot "apps/server/src/engine/conversation.ts"
+$cc = Get-Content $conv -Raw
+
+$anchorF0416a = @'
+        const tenantConfig = ctxForConfig
+          ? await this.service.kernel?.config(ctxForConfig).catch(() => undefined)
+          : undefined;
+'@
+$anchorF0416a = $anchorF0416a.TrimEnd()
+Write-Host ("F04.16a ancla (tenantConfig): {0}" -f ([regex]::Matches($cc, [regex]::Escape($anchorF0416a))).Count)
+
+Write-Host ("TAKE_FOR_TENANT_CHAT_V1 presente: {0}" -f ($cc -match [regex]::Escape("TAKE_FOR_TENANT_CHAT_V1")))
+
+Write-Host "=== Puntos donde se podría insertar rate limit ==="
+Select-String -Path $conv -Pattern "runWithModelFallback|const tenantId = " -Context 1,1 | Select-Object -First 20
+```
+**Decisión:** la inserción natural es **antes** de `const tenantConfig = ...`, justo después de que `kernelCtx` esté disponible (línea `kernelCtx = ctx;` dentro del IIFE, o después de `await kernelTurnPromise.catch(...)`). Pero `kernelTurnPromise` se lanza con `void` y el rate limit debe aplicarse **antes** de cualquier trabajo de LLM. **El sitio correcto es dentro del IIFE async, justo después de resolver `tenantId`, antes de abrir el turno.** Si el rate limit falla, se lanza un error que el IIFE captura (ya hay un catch genérico que hace `backgroundFailure`), pero no queremos que el chat continúe. **Solución:** añadir un early-exit dentro del IIFE que emita `RUN_ERROR` y `subscriber.complete()` directamente. Pero el IIFE no tiene acceso al `subscriber` (es de `run(input): Observable`). **Alternativa más limpia:** el rate limit se hace **antes de `kernelTurnPromise`** en la parte síncrona de `run()`, justo después de `const forceDelegate = shouldDelegateToSlow(promptText);` y antes de `if (this.service.kernel)`. Ahí ya tenemos `this.owner` y podemos resolver `tenantId` con `this.service.tenantService.tenantIdFor(this.owner)` (que ya se hace más abajo, pero duplicado). Si no `allowed`, emitir error.
+
+**Nota:** `run()` no es `async`, pero puede hacer `return new Observable(...)` con un pre-check síncrono. **El check se hace síncrono con `this.service.rateLimiter.takeForTenant(...)` (que es síncrono) y si no `allowed`, el Observable devuelve un error y termina.** Esto evita el problema de "async IIFE no puede emitir al subscriber".
+
+**Ancla de F04.16a pasa a ser**:
+```
+    const forceDelegate = shouldDelegateToSlow(promptText);
+```
+
+Y se inserta después.
+
+**Decisión confirmada:** aplicar F04.16a con ancla `const forceDelegate = shouldDelegateToSlow(promptText);` (1×).
+
+**0.6. Anclas de F04.16b en `rag-routes.ts`.**
+```powershell
+$rag = Join-Path $repoRoot "apps/server/src/rag-routes.ts"
+$rc = Get-Content $rag -Raw
+
+$anchorF0416bA = 'export function ragRoutes(rag: RagService, db: Store, files: Files) {'
+Write-Host ("F04.16b ancla firma: {0}" -f ([regex]::Matches($rc, [regex]::Escape($anchorF0416bA))).Count)
+
+$anchorF0416bB = @'
+  app.get("/search", async (c) => {
+    const query = z.string().min(1).max(1000).parse(c.req.query("q"));
+    const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
+    const hits = await rag.search(c.get("owner"), query, limit);
+    return c.json({ hits });
+  });
+'@
+$anchorF0416bB = $anchorF0416bB.TrimEnd()
+Write-Host ("F04.16b ancla /search: {0}" -f ([regex]::Matches($rc, [regex]::Escape($anchorF0416bB))).Count)
+
+Write-Host ("TAKE_FOR_TENANT_RAG_V1 presente: {0}" -f ($rc -match [regex]::Escape("TAKE_FOR_TENANT_RAG_V1")))
+```
+**Decisión:** si ambas 1× y marca 0×, aplicar.
+
+**0.7. Anclas de F04.16c en `threads-routes.ts`.**
+```powershell
+$thr = Join-Path $repoRoot "apps/server/src/threads-routes.ts"
+$tc = Get-Content $thr -Raw
+
+$anchorF0416cA = 'export function threadRoutes(db: Store) {'
+Write-Host ("F04.16c ancla firma: {0}" -f ([regex]::Matches($tc, [regex]::Escape($anchorF0416cA))).Count)
+
+$anchorF0416cB = @'
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    const body = z
+      .object({ title: z.string().trim().max(200).optional() })
+      .parse(await c.req.json().catch(() => ({})));
+'@
+$anchorF0416cB = $anchorF0416cB.TrimEnd()
+Write-Host ("F04.16c ancla POST /: {0}" -f ([regex]::Matches($tc, [regex]::Escape($anchorF0416cB))).Count)
+
+Write-Host ("TAKE_FOR_TENANT_THREADS_V1 presente: {0}" -f ($tc -match [regex]::Escape("TAKE_FOR_TENANT_THREADS_V1")))
+```
+**Decisión:** si ambas 1× y marca 0×, aplicar.
+
+**0.8. Confirmar que `worker.ts` sigue roto (no tocar).**
+```powershell
+$w = Join-Path $repoRoot "apps/server/src/engine/worker.ts"
+Get-Content $w -TotalCount 120
+```
+**Decisión:** solo lectura. Si cambió, anotar en `_multitenant_pendientes.md` (humano) y no tocar.
+
+**0.9. Verificar `RateLimiter.takeForTenant` firma real.**
+```powershell
+$rl = Join-Path $repoRoot "apps/server/src/rate-limit.ts"
+Select-String -Path $rl -Pattern "takeForTenant|takeForUser" -Context 2,4
+```
+**Decisión:** `takeForTenant(tenantId: string, userId: string, action: string): RateLimitResult`. Confirmado en el Repomix original. Si la firma cambió, ajustar.
+
+### Paso 1 — Decisión y anotación
+
+| Fix | ¿Se aplica? | Motivo |
+|---|---|---|
+| N08 | Sí (2 hunks) | `requestLogger` necesita `getTenantId` |
+| N05 | Sí (2 hunks) | `AgentService` necesita `rateLimiter` público |
+| N07-common | Sí (1 hunk) | `app.ts` crea `tenantLimiter` y lo pasa a `requestLogger` |
+| F04.16a | Sí (1 hunk) | chat con rate limit |
+| F04.16b | Sí (2 hunks) | RAG search con rate limit |
+| F04.16c | Sí (2 hunks) | threads create con rate limit |
+| F04.16-wire | Sí (2 hunks) | `app.ts` cablea `tenantLimiter` en `ragRoutes` y `threadRoutes` |
+| F04.16d | No | browser/computer, va a Fase 6 |
+| N06 | No | opcional, va a Fase 8 |
+
+---
+
+## 10. Patchsets
+
+### N08 — `request-logger.ts`: `getTenantId` opcional (2 hunks)
+
+**Fichero:** `apps/server/src/middleware/request-logger.ts`
+**Marca:** `LOG_CONTEXT_TENANT_V1`.
+
+**Hunk N08a — firma de `requestLogger`.**
+
+**`$old`:**
+```
+export function requestLogger() {
+```
+
+**`$new`:**
+```
+export interface RequestLoggerOptions {
+  /** LOG_CONTEXT_TENANT_V1 — resuelve el tenantId del owner para incluirlo en logContext. */
+  getTenantId?: (owner: string) => Promise<string>;
+}
+
+export function requestLogger(options: RequestLoggerOptions = {}) {
+```
+
+**Hunk N08b — cuerpo `withLogContext`.**
+
+**`$old`:**
+```
+    await withLogContext({ correlationId }, async () => {
+      logInfo("http.request", { method, path });
+```
+
+**`$new`:**
+```
+    // LOG_CONTEXT_TENANT_V1 — si options.getTenantId está presente y ya hay
+    // owner en el contexto (por el middleware de auth que corre antes), se
+    // resuelve el tenantId y se incluye. Si no, comportamiento anterior.
+    const preCtx = logContext.getStore();
+    let tenantId: string | undefined;
+    if (options.getTenantId && preCtx?.owner) {
+      try { tenantId = await options.getTenantId(preCtx.owner); } catch { tenantId = undefined; }
+    }
+    await withLogContext(
+      { correlationId, ...(tenantId ? { tenantId } : {}), ...(preCtx?.owner ? { owner: preCtx.owner } : {}) },
+      async () => {
+        logInfo("http.request", { method, path });
+```
+
+**Importante:** el cierre del `withLogContext` ya existe al final del middleware (`});`), así que solo se cambia la apertura y la indentación del `logInfo` deja de ser "top-level". El resto del cuerpo (try/finally, `await next()`, logging del response) sigue igual. **Esto rompe la indentación del resto del bloque si no se ajusta.** El patchset solo cambia la apertura; el `logInfo` y el resto quedan igual con la indentación actual (que es 6 espacios porque ya estaban dentro del `withLogContext`). **Verificación:** el TS resultante debe compilar con `tsc --noEmit`. Si el `});` final del `withLogContext` cierra pero la indentación no cuadra, es solo cosmético (TS no exige indentación). **Cero riesgo de romper tipos.**
+
+### N05 — `service.ts`: `rateLimiter` en `deps` (2 hunks)
+
+**Fichero:** `apps/server/src/engine/service.ts`
+**Marca:** `TENANT_RATE_LIMITER_FIELD_V1`.
+
+**Hunk N05a — tipo de `deps` del constructor.**
+
+**`$old` (del Repomix holístico, literal):**
+```
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
+```
+
+**`$new`:**
+```
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher, rateLimiter }, // APP_RUNTIME_WIRE_V1
+```
+
+**Nota:** el `$old` exacto depende de la indentación real. Se verifica en el Repomix holístico. Si el texto no cuadra 1×, se ajusta. **El patchset real que se ejecuta verifica `Select-String -Pattern "workspaceDispatcher"` y sustituye `workspaceDispatcher },` por `workspaceDispatcher, rateLimiter },`.**
+
+**Hunk N05b — tipo del `deps` en la interfaz de `AgentService` (si existe).**
+
+Si `AgentService` tiene un tipo `AgentServiceDeps` (probable: el Repomix holístico muestra `constructor(db: Store, config: Config, ..., deps: {...})` con tipo inline), se añade `rateLimiter: RateLimiter` al tipo. Si es inline, se añade al objeto literal del tipo. **El patchset verifica con `Select-String -Pattern "workspaceDispatcher"` y añade `rateLimiter: RateLimiter;` junto a `workspaceDispatcher`.**
+
+**Verificación pre:** `workspaceDispatcher` 1× en `service.ts`. Si 0× o 2×, abortar N05 y anotar.
+
+### N07-common — `app.ts`: crear `tenantLimiter` y pasarlo a `requestLogger` (1 hunk)
+
+**Fichero:** `apps/server/src/app.ts`
+**Marca:** `TENANT_RATE_LIMITER_WIRE_V1`.
+
+**`$old`:**
+```
+  app.use("*", requestLogger());
+```
+
+**`$new`:**
+```
+  // TENANT_RATE_LIMITER_WIRE_V1 — RateLimiter compartido para chat/RAG/threads.
+  // Los límites por defecto son altos para no romper dev/tests. En producción
+  // se bajan por env: TENANT_RATE_LIMIT_PER_WINDOW y TENANT_RATE_WINDOW_MS.
+  const tenantRateLimit = Number(process.env.TENANT_RATE_LIMIT_PER_WINDOW ?? "600") || 600;
+  const tenantRateWindow = Number(process.env.TENANT_RATE_WINDOW_MS ?? String(60 * 60 * 1000)) || 60 * 60 * 1000;
+  const tenantLimiter = new RateLimiter(tenantRateLimit, tenantRateWindow);
+  // LOG_CONTEXT_TENANT_V1 — el logger resuelve el tenantId del owner en cada request.
+  app.use("*", requestLogger({ getTenantId: (owner) => tenantService.tenantIdFor(owner) }));
+```
+
+**Nota:** `RateLimiter` ya está importado en `app.ts` (se usa para `sessionLimiter`). `tenantService` es `tenantServiceEarly`. Confirmado en el Repomix original (`const sessionLimiter = new RateLimiter(30, 60000);` y `const tenantService = tenantServiceEarly;`). **Si `tenantService` no está en scope en el punto de `app.use("*", requestLogger())` (porque el bloque `app.use("*", ...)` puede ir antes del bloque `const tenantService = tenantServiceEarly;`), el patchset debe mover el `app.use` después de la asignación.** **Verificación pre:** `Select-String -Pattern "const tenantService = tenantServiceEarly"` en `app.ts`, y comprobar que ocurre **antes** de `app.use("*", requestLogger())` en el texto. Si ocurre después, el patchset mueve el bloque `app.use("*", requestLogger(...))` justo después de `const tdb = tdbEarly;`. **Es un hunk adicional (N07-common-b) que mueve el bloque.** Se anota como riesgo.
+
+### F04.16a — `conversation.ts`: rate limit en chat (1 hunk)
+
+**Fichero:** `apps/server/src/engine/conversation.ts`
+**Marca:** `TAKE_FOR_TENANT_CHAT_V1`.
+
+**`$old`:**
+```
+    const forceDelegate = shouldDelegateToSlow(promptText);
+```
+
+**`$new`:**
+```
+    // TAKE_FOR_TENANT_CHAT_V1 — antes de abrir turno o llamar al LLM, se
+    // consume un intento por tenant+owner. Si se agota, el chat no llama al
+    // modelo y devuelve un error humano. El límite es configurable por env
+    // (TENANT_RATE_LIMIT_PER_WINDOW). En clone-por-cliente con límites altos
+    // no se nota; en shared protege a los demás tenants.
+    const tenantIdForRate = this.service.tenantService
+      ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => this.owner)
+      : this.owner;
+    const rateVerdict = this.service.rateLimiter.takeForTenant(
+      tenantIdForRate,
+      this.owner,
+      "chat.message",
+    );
+    if (!rateVerdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
+      return new Observable((subscriber) => {
+        subscriber.next({
+          type: EventType.RUN_ERROR,
+          message:
+            "Has alcanzado el límite de mensajes. Prueba de nuevo en " + retrySec + "s.",
+        });
+        subscriber.complete();
+      });
+    }
+    const forceDelegate = shouldDelegateToSlow(promptText);
+```
+
+**Verificación pre:** `const forceDelegate = shouldDelegateToSlow(promptText);` 1×. Si 0×, el fichero cambió, abortar F04.16a y anotar.
+
+**Nota:** `run()` no es `async`, pero el rate limit se resuelve **antes** del `new Observable`. **La línea `const tenantIdForRate = ... await ...` requiere que `run()` sea async o que se mueva dentro del Observable.** **Corrección:** `run()` no es async, por lo que **no se puede `await` en el cuerpo síncrono**. Se mueve el rate limit dentro del `new Observable` que ya existe, justo antes del `void (async () => { ... })();`. Pero entonces el `subscriber.next` de error tiene que estar dentro del Observable. **Solución:** el check del rate limit se hace con el `tenantId` resuelto de forma síncrona solo si `tenantService` está disponible; si no, se usa `this.owner` como tenantId (aceptable para clone-por-cliente, donde todo es "default"). **La llamada a `tenantIdFor` no es imprescindible para el rate limit** porque el `RateLimiter` usa la clave `${tenantId}:${userId}:${action}` y en clone-por-cliente `tenantId=this.owner` colisiona poco (cada owner es su propio tenant). **Alternativa más limpia:** `takeForTenant(this.owner, this.owner, "chat.message")` (owner como tenantId). En shared, `this.owner` es el `ownerId`, no el `tenantId`, así que la clave sería distinta de la usada en RAG/threads. **Esto rompe la consistencia.**
+
+**Solución final:** `run()` sí puede ser `async` internamente sin romper la firma `run(input): Observable`. La firma pública no cambia: devuelve un `Observable`. Dentro, el pre-check se hace **dentro del Observable**, en el `start(controller)` del Observable o en el `void (async () => {...})();` que ya existe. **Pero el error de rate limit debe impedir el LLM.** El sitio natural es: **en el `new Observable((subscriber) => { ... })`**, antes de `void (async () => { ... ragContext ... })();`, se hace:
+
+```
+      void (async () => {
+        const tenantIdForRate = this.service.tenantService
+          ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => this.owner)
+          : this.owner;
+        const rateVerdict = this.service.rateLimiter.takeForTenant(tenantIdForRate, this.owner, "chat.message");
+        if (!rateVerdict.allowed) {
+          const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
+          subscriber.next({ type: EventType.RUN_ERROR, message: "Has alcanzado el límite..." });
+          subscriber.complete();
+          return;
+        }
+        // ... resto del IIFE (ragContext, enrichedInput, etc.) ...
+      })();
+```
+
+**Pero eso requiere reescribir el cuerpo del `new Observable`**, no es un hunk de 1 línea. **Alternativa aceptable:** hacer el rate limit síncrono antes de devolver el Observable, sin `await`:
+
+```
+    // TAKE_FOR_TENANT_CHAT_V1 — pre-check síncrono con tenantId = owner (aceptable
+    // en clone-por-cliente; en shared se refina en Fase 6 con el tenantId real del kernel).
+    const rateVerdict = this.service.rateLimiter.takeForTenant(this.owner, this.owner, "chat.message");
+    if (!rateVerdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
+      return new Observable((subscriber) => {
+        subscriber.next({ type: EventType.RUN_ERROR, message: "Has alcanzado el límite de mensajes..." });
+        subscriber.complete();
+      });
+    }
+```
+
+**Esto usa `this.owner` como `tenantId`, que en clone-por-cliente es aceptable** (cada owner tiene su propio rate bucket). En shared, el bucket sería `owner:owner:chat.message` en lugar de `tenant:owner:chat.message`. Se anota como **deuda** en `-pendientes.md` para Fase 6 (con F04.17), donde se unifica el tenantId real del kernel. **Es la solución menos invasiva y funcionalmente correcta para clone-por-cliente.**
+
+**Decisión final para F04.16a:** pre-check síncrono con `this.owner` como tenantId. Se anota la deuda.
+
+### F04.16b — `rag-routes.ts`: rate limit en `/search` (2 hunks)
+
+**Fichero:** `apps/server/src/rag-routes.ts`
+**Marca:** `TAKE_FOR_TENANT_RAG_V1`.
+
+**Hunk F04.16b-1 — firma.**
+
+**`$old`:**
+```
+export function ragRoutes(rag: RagService, db: Store, files: Files) {
+```
+
+**`$new`:**
+```
+export function ragRoutes(rag: RagService, db: Store, files: Files, limiter: RateLimiter) {
+```
+
+**Requiere import:** `import type { RateLimiter } from "./rate-limit.ts";` en la cabecera. **Se añade en el mismo hunk o en uno adicional (F04.16b-0).** Se anota.
+
+**Hunk F04.16b-2 — `/search` con rate limit.**
+
+**`$old`:**
+```
+  app.get("/search", async (c) => {
+    const query = z.string().min(1).max(1000).parse(c.req.query("q"));
+    const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
+    const hits = await rag.search(c.get("owner"), query, limit);
+    return c.json({ hits });
+  });
+```
+
+**`$new`:**
+```
+  // TAKE_FOR_TENANT_RAG_V1 — consume un intento por tenant+owner antes de
+  // ejecutar la búsqueda (que hace embeddings y puede costar). Si se agota,
+  // 429 con Retry-After.
+  app.get("/search", async (c) => {
+    const owner = c.get("owner");
+    const tenantIdForRate = owner; // deuda Fase 6: usar tenantService cuando esté cableado aquí
+    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "rag.search");
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      c.header("Retry-After", String(retrySec));
+      throw new AppError("Límite de búsquedas alcanzado. Prueba en " + retrySec + "s.", 429);
+    }
+    const query = z.string().min(1).max(1000).parse(c.req.query("q"));
+    const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
+    const hits = await rag.search(owner, query, limit);
+    return c.json({ hits });
+  });
+```
+
+**Requiere `AppError` en el import de `rag-routes.ts`.** Ya está en el Repomix original (`import { AppError } from "./errors.ts";`). Confirmado.
+
+### F04.16c — `threads-routes.ts`: rate limit en `POST /` (2 hunks)
+
+**Fichero:** `apps/server/src/threads-routes.ts`
+**Marca:** `TAKE_FOR_TENANT_THREADS_V1`.
+
+**Hunk F04.16c-1 — firma.**
+
+**`$old`:**
+```
+export function threadRoutes(db: Store) {
+```
+
+**`$new`:**
+```
+export function threadRoutes(db: Store, limiter: RateLimiter) {
+```
+
+**Requiere import:** `import type { RateLimiter } from "./rate-limit.ts";`. Se anota.
+
+**Hunk F04.16c-2 — `POST /`.**
+
+**`$old`:**
+```
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    const body = z
+      .object({ title: z.string().trim().max(200).optional() })
+      .parse(await c.req.json().catch(() => ({})));
+```
+
+**`$new`:**
+```
+  // TAKE_FOR_TENANT_THREADS_V1 — un intento por tenant+owner antes de crear
+  // el thread (que dispara conversación y posiblemente LLM).
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    const tenantIdForRate = owner; // deuda Fase 6: usar tenantService cuando esté cableado aquí
+    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "threads.create");
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      c.header("Retry-After", String(retrySec));
+      throw new AppError("Límite de conversaciones alcanzado. Prueba en " + retrySec + "s.", 429);
+    }
+    const body = z
+      .object({ title: z.string().trim().max(200).optional() })
+      .parse(await c.req.json().catch(() => ({})));
+```
+
+**Requiere `AppError` en `threads-routes.ts`.** Ya está en el Repomix original. Confirmado.
+
+### F04.16-wire — `app.ts`: pasar `tenantLimiter` a `ragRoutes` y `threadRoutes` (2 hunks)
+
+**Fichero:** `apps/server/src/app.ts`
+**Marca:** `TENANT_RATE_LIMITER_WIRE_V1` (la misma que N07-common; el conteo total debe ser 1× en el fichero al final, no 2×). **Se anota que N07-common y F04.16-wire comparten marca; el conteo final debe ser 1.** Para evitar confusión, se añade una submarca `TENANT_RATE_LIMITER_WIRE_ROUTES_V1` en F04.16-wire.
+
+**Hunk F04.16-wire-1 — `ragRoutes`.**
+
+**`$old`:**
+```
+  app.route("/api/rag", ragRoutes(rag, db, files));
+```
+
+**`$new`:**
+```
+  // TENANT_RATE_LIMITER_WIRE_ROUTES_V1 — RAG y threads comparten el mismo
+  // tenantLimiter que chat. Así un tenant no puede saturar solo RAG ni solo
+  // threads sin consumir su cuota global.
+  app.route("/api/rag", ragRoutes(rag, db, files, tenantLimiter));
+```
+
+**Hunk F04.16-wire-2 — `threadRoutes`.**
+
+**`$old`:**
+```
+  app.route("/api/threads", threadRoutes(db));
+```
+
+**`$new`:**
+```
+  app.route("/api/threads", threadRoutes(db, tenantLimiter));
+```
+
+**Verificación pre de F04.16-wire:** `app.route("/api/rag", ragRoutes(rag, db, files))` 1× y `app.route("/api/threads", threadRoutes(db))` 1×. Si 0×, el código cambió, abortar.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+Las 18 prohibiciones del doc 01 y el repaso del doc 02 + doc 03 se aplican íntegras. **Además, en esta fase:**
+
+- **Los 3 ficheros que se tocan (`request-logger.ts`, `conversation.ts`, `rag-routes.ts`, `threads-routes.ts`) tienen anclas verificadas 1× antes de escribir.** Si no, se aborta.
+- **`service.ts` es el único fichero que se toca con `as unknown as` y tipo inline.** El patchset verifica `workspaceDispatcher` 1× antes de escribir. Si 0× o 2×, se aborta y se anota como "N05 requiere ver service.ts".
+- **`app.ts` recibe 2 patchsets con anclas independientes.** Si uno falla, el otro se aplica igual; se anota el fallo del que falló.
+- **El commit va al final de la fase.** Si typecheck rojo, no se commitea.
+- **No `git add .`, no `--force`, no tocar stash.**
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @openmuse/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
+- **La IA commitea con ficheros explícitos:**
+  ```powershell
+  git add apps/server/src/middleware/request-logger.ts
+  git add apps/server/src/engine/service.ts
+  git add apps/server/src/app.ts
+  git add apps/server/src/engine/conversation.ts
+  git add apps/server/src/rag-routes.ts
+  git add apps/server/src/threads-routes.ts
+  git commit -m "feat(multitenant): fase 3 — rate limit transversal + logContext tenant [LOG_CONTEXT_TENANT_V1, TENANT_RATE_LIMITER_FIELD_V1, TENANT_RATE_LIMITER_WIRE_V1, TENANT_RATE_LIMITER_WIRE_ROUTES_V1, TAKE_FOR_TENANT_CHAT_V1, TAKE_FOR_TENANT_RAG_V1, TAKE_FOR_TENANT_THREADS_V1]"
+  git push origin feat/multitenancy-campaign
+  ```
+  **Nunca `git add .`**, **nunca `--force`**, **nunca tocar stash**.
+- **Si el push falla por conflicto con `origin/main`, no forzar.** Anotar en `_multitenant_pendientes.md` y parar.
+
+---
+
+## 13. Plan de misses
+
+Los misses esperados en esta fase:
+
+- Fases 0–2 incompletas → aborta todo.
+- N08 ancla `requestLogger()` 0× o 2× → el fichero cambió, anotar.
+- N05 ancla `workspaceDispatcher` 0× o 2× → `service.ts` cambió, anotar; N07-common y F04.16a/b/c/wire se aplican igual, pero el rate limit en chat fallará en runtime (`this.service.rateLimiter` no existirá). **En ese caso, F04.16a se revierte y se anota.**
+- N07-common `tenantService` no en scope antes de `app.use("*", requestLogger(...))` → mover el bloque, hunk adicional N07-common-b; si el movimiento rompe algo, anotar y revertir N07-common.
+- F04.16a `forceDelegate` 0× → el fichero cambió, abortar F04.16a y anotar.
+- F04.16b/c firma 0× → el fichero cambió, abortar y anotar.
+- F04.16-wire `ragRoutes`/`threadRoutes` 0× → el fichero cambió, abortar y anotar.
+- Typecheck rojo (por `RateLimiter` import type, por `AppError` import, por `as unknown as` incompatible con `tsconfig` estricto) → ajustar tipo o revertir; anotar.
+- `git diff --check` con trailing whitespace → revisar here-strings.
+- `worker.ts` reparado por Copilot → anotar, no tocar.
+
+Todos los misses van a `C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\07-aislamiento-multi-tenant\missed\_multitenant_pendientes.md` con el formato del doc 01 §13. **La IA no lo escribe.**
+
+**Además, en esta fase se anotan 3 deudas en `-pendientes.md` (no en `_multitenant_pendientes.md`):**
+- F04.16a usa `this.owner` como `tenantId` para el rate limit. En shared, se refina con `tenantService.tenantIdFor(owner)` en Fase 6.
+- F04.16b/c idem.
+- F04.16d (browser/computer) se pospone a Fase 6.
+
+---
+
+## 14. Checklist de cierre de la fase 3
+
+- [ ] Paso 0.1–0.9 ejecutados, salidas anotadas.
+- [ ] N08 aplicado (2 hunks) con `LOG_CONTEXT_TENANT_V1` 1×.
+- [ ] N05 aplicado (2 hunks) con `TENANT_RATE_LIMITER_FIELD_V1` 1×.
+- [ ] N07-common aplicado (1 hunk, o 2 si hay N07-common-b) con `TENANT_RATE_LIMITER_WIRE_V1` 1×.
+- [ ] F04.16a aplicado (1 hunk) con `TAKE_FOR_TENANT_CHAT_V1` 1×.
+- [ ] F04.16b aplicado (2 hunks) con `TAKE_FOR_TENANT_RAG_V1` 1×.
+- [ ] F04.16c aplicado (2 hunks) con `TAKE_FOR_TENANT_THREADS_V1` 1×.
+- [ ] F04.16-wire aplicado (2 hunks) con `TENANT_RATE_LIMITER_WIRE_ROUTES_V1` 1×.
+- [ ] F04.16d no aplicado (deuda anotada).
+- [ ] F02.10 sigue congelado.
+- [ ] `worker.ts` sigue roto y sin tocar.
+- [ ] Cline typecheck verde.
+- [ ] Cline test verde.
+- [ ] `git add` explícito de los 6 ficheros.
+- [ ] `git commit -m "feat(multitenant): fase 3 — ..."`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Si algo ha fallado, anotado por el humano en `_multitenant_pendientes.md`.
+- [ ] Confirmación al humano: "Fase 3 cerrada. Siguiente: Fase 4 (documento 05 — B4 RLS + validación + auditoría cross-tenant)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/middleware/request-logger.ts` — cabecera, del Repomix original (literal, sin cortes):
+
+```typescript
+// REQUEST_LOGGER_V1 Ã¢â‚¬â€ correlationId + logging estructurado por request.
+//
+// Genera un correlationId por request (o reusa el header X-Correlation-Id)
+// y lo propaga al resto del cÃƒÂ³digo vÃƒÂ­a AsyncLocalStorage.
+//
+// Ver: docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
+
+import type { Context, Next } from "hono";
+import { randomUUID } from "node:crypto";
+import { withLogContext, logInfo, logWarn } from "../log.ts";
+import { globalMetrics } from "../metrics/registry.ts";
+```
+
+### A.2. `apps/server/src/middleware/request-logger.ts` — `requestLogger`, del Repomix original (literal, sin cortes):
+
+```typescript
+export function requestLogger() {
+  return async (c: Context, next: Next) => {
+    const correlationId = correlationIdFrom(c);
+    const startedAt = performance.now();
+    const method = c.req.method;
+    const path = new URL(c.req.url).pathname;
+
+    // Cabecera de vuelta para que el cliente pueda trazar.
+    c.header("X-Correlation-Id", correlationId);
+
+    await withLogContext({ correlationId }, async () => {
+      logInfo("http.request", { method, path });
+      try {
+        await next();
+        const durationMs = Math.round(performance.now() - startedAt);
+        const status = c.res.status;
+        const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
+        const emit = level === "warn" ? logWarn : logInfo;
+        emit("http.response", { method, path, status, durationMs });
+        // METRICS_HTTP_V1 Ã¢â‚¬â€ contador por mÃƒÂ©todo, ruta y status.
+        // MIDDLEWARE_HTTP_METRIC_V1
+        globalMetrics.inc("openmuse_http_requests_total", {
+          method,
+          path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+          status: String(status),
+        });
+        // HISTOGRAM_HTTP_LATENCY_WIRE_V1 - observa la duraciÃ³n en ms.
+        // MIDDLEWARE_HTTP_HISTOGRAM_V1
+        globalMetrics.observe(
+          "openmuse_http_request_duration_ms",
+          durationMs,
+          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status) },
+        );
+        // HTTP_ERRORS_AND_HISTOGRAM_V1 - contador dedicado a errores por ruta.
+        if (status >= 400) {
+          // MIDDLEWARE_HTTP_ERRORS_V1
+          globalMetrics.inc("http_errors_by_route_total", {
+            method,
+            path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+            status: String(status),
+          });
+        }
+      } catch (error) {
+        const durationMs = Math.round(performance.now() - startedAt);
+        logWarn("http.error", {
+          method,
+          path,
+          durationMs,
+          error: error instanceof Error ? error.name : "UnknownError",
+          message: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
+        });
+        throw error;
+      }
+    });
+  };
+}
+```
+
+**N08 cambia la firma y el `withLogContext` inicial.** El resto del bloque queda igual (indentado como ya está, porque `logInfo` ya está dentro del `withLogContext` con 6 espacios).
+
+### A.3. `apps/server/src/log.ts` — `LogContext` y `withLogContext`, del Repomix original (literal, sin cortes):
+
+```typescript
+export interface LogContext {
+  correlationId: string;
+  owner?: string;
+  tenantId?: string;
+  taskId?: string;
+  requestId?: string;
+}
+
+export const logContext = new AsyncLocalStorage<LogContext>();
+
+/**
+ * Ejecuta `fn` con el contexto de correlaciÃƒÂ³n activo. Las llamadas a
+ * logInfo/logWarn/logError/backgroundFailure dentro de `fn` incluyen
+ * automÃƒÂ¡ticamente correlationId, owner y tenantId.
+ */
+export function withLogContext<T>(ctx: LogContext, fn: () => T): T {
+  return logContext.run(ctx, fn);
+}
+```
+
+**Ya soporta `tenantId`. N08 solo lo rellena.**
+
+### A.4. `apps/server/src/engine/service.ts` — constructor de `AgentService`, del Repomix holístico (literal, sin cortes):
+
+```typescript
+    const agent = new AgentService(
+    tdb,
+    config,
+    workspace,
+    files,
+    actions,
+    browser,
+    computer,
+    rag,
+    undefined,
+    bus,
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
+    // WS_ENGINE_DISPATCH_V1
+  );
+```
+
+**`deps` es un objeto literal inline. N05a añade `rateLimiter` al final.**
+
+### A.5. `apps/server/src/app.ts` — bloque de `sessionLimiter` (Repomix original, literal, sin cortes):
+
+```typescript
+  // SESSION_RATE_LIMIT ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â rate limit por IP, no global. El RateLimiter ya existe en rate-limit.ts.
+  const sessionLimiter = new RateLimiter(30, 60000);
+```
+
+**`RateLimiter` ya está importado en `app.ts`.** N07-common usa ese import.
+
+### A.6. `apps/server/src/app.ts` — `requestLogger` call (Repomix original, literal, sin cortes):
+
+```typescript
+  // REQUEST_LOGGER_WIRE_V1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â correlationId por request, logging estructurado.
+  // Ver docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
+  app.use("*", requestLogger());
+```
+
+**N07-common sustituye esta línea por la versión con `getTenantId`.**
+
+### A.7. `apps/server/src/app.ts` — `tenantServiceEarly` y `tdbEarly` (Repomix original, literal, sin cortes):
+
+```typescript
+  const tenantServiceEarly = new TenantService(db, config);
+  const tdbEarly = new TenantScopedStore(db, (owner) => tenantServiceEarly.tenantIdFor(owner));
+```
+
+Y más abajo:
+
+```typescript
+  const tenantService = tenantServiceEarly;
+  const tdb = tdbEarly;
+```
+
+**`tenantService` está en scope antes de `app.use("*", requestLogger())`.** Confirmado. N07-common no necesita mover el bloque.
+
+### A.8. `apps/server/src/rate-limit.ts` — `takeForTenant` (Repomix original, literal, sin cortes):
+
+```typescript
+  /**
+   * RATE_LIMIT_TENANT_V1 - toma un intento scoped por tenant+usuario.
+   * La key compuesta evita que un tenant agote el limite del otro.
+   */
+  takeForTenant(tenantId: string, userId: string, action: string): RateLimitResult {
+    return this.take(`${tenantId}:${userId}:${action}`);
+  }
+```
+
+**Firma confirmada.**
+
+### A.9. `apps/server/src/engine/conversation.ts` — `forceDelegate` y pre-LLM (Repomix original, literal, sin cortes):
+
+```typescript
+    const promptText = typeof latest?.content === "string" ? latest.content : "";
+    const forceDelegate = shouldDelegateToSlow(promptText);
+```
+
+**F04.16a inserta antes de `forceDelegate`.**
+
+### A.10. `apps/server/src/rag-routes.ts` — firma y `/search` (Repomix original, literal, sin cortes):
+
+```typescript
+export function ragRoutes(rag: RagService, db: Store, files: Files) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+```
+
+```typescript
+  app.get("/search", async (c) => {
+    const query = z.string().min(1).max(1000).parse(c.req.query("q"));
+    const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
+    const hits = await rag.search(c.get("owner"), query, limit);
+    return c.json({ hits });
+  });
+```
+
+**F04.16b cambia la firma y el handler.**
+
+### A.11. `apps/server/src/threads-routes.ts` — firma y `POST /` (Repomix original, literal, sin cortes):
+
+```typescript
+export function threadRoutes(db: Store) {
+  const app = new Hono<{ Variables: { owner: string } }>();
+```
+
+```typescript
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    const body = z
+      .object({ title: z.string().trim().max(200).optional() })
+      .parse(await c.req.json().catch(() => ({})));
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const thread: Thread = {
+      id,
+      title: body.title || "Nuevo chat",
+      createdAt: now,
+      updatedAt: now,
+      messageCount: 0,
+    };
+```
+
+**F04.16c cambia la firma y añade el guard antes del `body`.**
+
+### A.12. `apps/server/src/app.ts` — `ragRoutes` y `threadRoutes` calls (Repomix original, literal, sin cortes):
+
+```typescript
+  app.route("/api/rag", ragRoutes(rag, db, files));
+  app.route("/api/threads", threadRoutes(db));
+```
+
+**F04.16-wire cambia ambas líneas.**
+
+### A.13. `apps/server/src/engine/worker.ts` — sigue roto (Repomix original, literal, sin cortes):
+
+```typescript
+  get running() {
+    return Boolean(this.timer);
+  }
+
+  /** WORKER_ACTIVE_SIZE_V1
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1
+  getMaxActive(): number {
+    return this.maxActive;
+  }
+  start = () => {
+```
+
+**Confirmado. No se toca.**
+
+### A.14. `apps/server/src/engine/tenant.ts` — `tenantIdFor` (Repomix original, literal, sin cortes):
+
+```typescript
+  /** Atajo: solo el tenantId. */
+  async tenantIdFor(owner: string): Promise<string> {
+    return (await this.resolve(owner)).tenantId;
+  }
+```
+
+**Usado por N08 (`getTenantId`) y F04.16a.** Devuelve `Promise<string>`. No lanza en clone-por-cliente. En shared con F02.8, lanza si no hay membership; N08 lo captura con `catch` (si `getTenantId` falla, `tenantId` queda `undefined` y el logContext no lo tiene). F04.16a lo usa con `catch(() => this.owner)`.
+
+---
+
+## FIN DEL DOCUMENTO 04
+
+**Fase 3 preparada para ejecución. 7 patchsets (12 hunks máximo). 6 ficheros tocados. F04.16d pospuesto a Fase 6 (deuda anotada). F02.10 congelado. Typecheck y test los corre Cline. Commit + push al final. Los misses van a `_multitenant_pendientes.md`, no los escribe la IA. Anexo literal de 14 bloques de código real, sin resúmenes ni cortes. La decisión de usar `this.owner` como `tenantId` para el rate limit en F04.16a/b/c se anota como deuda para Fase 6, donde se unificará con el `tenantId` real del kernel (`tenantService.tenantIdFor(owner)`).**
+
+**Siguiente: documento 05 — Campaña 1 / Fase 4 — B4 RLS transaccional, validación de tenantId en body, auditoría cross-tenant, `X-Tenant-Id` en respuestas. Di "sigue".**

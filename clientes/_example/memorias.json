@@ -1,0 +1,9 @@
+{
+  "memorias": [
+    { "text": "El tono con clientes es cercano y profesional. Tutear por defecto.", "category": "preferencia", "tags": ["tono", "comunicacion"] },
+    { "text": "Todas las propuestas incluyen 3 paquetes: basico, medio, premium.", "category": "proceso", "tags": ["propuestas"] },
+    { "text": "La factura se emite el primer dia laborable del mes.", "category": "proceso", "tags": ["facturacion"] },
+    { "text": "Antes de dar de alta a un cliente se valida el CIF.", "category": "proceso", "tags": ["alta-cliente"] },
+    { "text": "Las acciones sensibles (enviar email, publicar, cobrar) requieren aprobacion humana.", "category": "empresa", "tags": ["aprobaciones"] }
+  ]
+}

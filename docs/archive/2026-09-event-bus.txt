@@ -1,0 +1,325 @@
+# Informe de fases — Event Bus + Centro de Control
+
+> Contraste contra el repo real (`uniscrolliabrain-cloud-agente`, repodump `8a5edab`).
+> Sin asumir nada previo. Cada fase es un bloque cerrado, aplicable, con typecheck.
+> Horizonte: kernel Pydantic + Jev AI + k3s + OTel + Kafka. Hoy no se implementan, pero se deja el sitio.
+
+---
+
+## Principios que gobiernan todo el diseño
+
+1. **El bus no es un log, es un contrato.** Eventos con `id`, `schemaVersion`, `type` cerrado, `source`, `correlationId`, `causationId`, `payload` validado.
+2. **Append-only.** El bus solo `insertIfAbsent`. Nunca `put`, nunca `remove` en caliente. Purga por retención en `maintain`.
+3. **Validación al emitir, no al leer.** Zod hoy, kernel Pydantic/Jev AI mañana. El punto de validación existe desde el día uno.
+4. **Transporte pluggable.** `EventSink` como interfaz, `StoreSink` como implementación hoy, `KafkaSink` mañana.
+5. **Observabilidad separada del dominio.** Eventos de negocio y trazas OTel son dos canales. No se mezcla `traceId` con `taskId`.
+6. **El chat no ve el sistema, ve un resumen curado.** Máximo 800 tokens por turno, 5 items por tool, proactividad fuera del chat.
+
+---
+
+## Fase 0 — Auditoría (sin escribir código)
+
+**Objetivo**: confirmar que el repodump es la versión actual y que los ficheros a tocar coinciden con lo que el plan espera.
+
+**Ficheros a leer**:
+- `apps/server/src/db.ts` — contrato del store.
+- `apps/server/src/engine/worker.ts` — `checkpoint`, `event`, `run-events`, dedupe.
+- `apps/server/src/engine/service.ts` — `maintain`, `createTask`, `control`, `answer`, `finish`, `notify`, `snapshot`.
+- `apps/server/src/engine/sop-executor.ts` — bucle de pasos, `ctx.event`.
+- `apps/server/src/actions.ts` — `propose`, `decide`, `record`.
+- `apps/server/src/engine/conversation.ts` — array `tools`, prompt, `recall`.
+- `apps/server/src/engine/routes.ts` — endpoints de agent.
+- `apps/web/src/App.tsx` — union `AppView`, render.
+- `apps/web/src/components/ConversationsPanel.tsx` — nav.
+
+**Entregable**: informe de diferencias (ya hecho en el mensaje anterior, resumido aquí):
+- `db.ts` tiene `insertIfAbsent`, `purgeOlderThan`, `scanByStatus`, `backend`, `pgvectorReady`. **No hay que tocarlo** salvo índice nuevo.
+- `worker.ts` tiene dedupe **en memoria** scopeado por ejecución, no por owner. El bus necesita su propio dedupe.
+- `run-events` NO está scopeado por task en la clave: el `taskId` va dentro del `data`.
+- No existe `agent-status` como endpoint; es `GET /api/agent`.
+- `notifications`, `POST /:id/read`, `useNotifications` ya existen.
+- `MemoryService.recall()` se llama en cada turno → **no se toca**.
+- `CommandPalette` existe; `GET /api/agent/search` existe; la UI no lo consume.
+- `service.ts` es enorme (~1300 líneas) y está en zona de conflicto con Cline.
+
+**Ledger**: vacío (no se escribe).
+
+---
+
+## Fase 1 — Event Bus global
+
+**Objetivo**: crear el bus. No toca worker, ActionService, ni chat.
+
+**Ficheros nuevos**:
+
+| Fichero | Contenido |
+|---|---|
+| `apps/server/src/engine/events/types.ts` | `SystemEvent<T>`, `SystemEventType` (enum cerrado), `EventSource`, `EventSink`, `EventQuery`, `EventFilter`, `TimeWindow`, `Aggregate`. |
+| `apps/server/src/engine/events/ulid.ts` | Generador ULID sin dependencia (~30 líneas: timestamp base32 + random). |
+| `apps/server/src/engine/events/schema-registry.ts` | `EventSchema<T>`, `SchemaRegistry` con `register`, `get(type, version)`, `list()`. |
+| `apps/server/src/engine/events/schemas.ts` | Zod schemas por tipo. Empieza con los tipos de Fase 1 (task, sop, action, monitor, system, auth). |
+| `apps/server/src/engine/events/bus.ts` | `EventBus` con `emit`, construye el evento, valida contra registry, llama al sink. Dedupe en memoria + persistido en `records/dedupe-state` (LRU 64 entradas). |
+| `apps/server/src/engine/events/sinks/store.ts` | `StoreSink` con `write` (insertIfAbsent en `kind = "system-events"`) y `StoreQuery` con `recent`, `aggregate`. |
+| `apps/server/src/engine/events/index.ts` | Re-exports. |
+
+**Ficheros modificados**:
+
+| Fichero | Cambio |
+|---|---|
+| `apps/server/src/db.ts` | Índice `(owner, kind, (data->>'type'), updated_at DESC)` para `system-events`. Se añade en `createStore`, no cambia lógica. |
+| `apps/server/src/engine/worker.ts` | `ctx.event` llama **además** a `bus.emit` con `task.status`, `task.failed`, `task.completed`, `step`. No se sustituye `run-events`, se añade. |
+| `apps/server/src/engine/sop-executor.ts` | `sop.step.started`, `sop.step.completed`, `sop.step.skipped`, `sop.failed`. |
+| `apps/server/src/actions.ts` | `action.proposed`, `action.approved`, `action.denied`, `action.executed`, `action.failed`, `action.unknown`. **Los 5 puntos de salida de `decide`**. |
+| `apps/server/src/engine/service.ts` | `task.created`, `task.controlled`, `task.answered`, `system.maintenance`. `emit` en `createTask`, `control`, `answer`, `maintain`. Inyección del bus en el constructor. |
+
+**Tipos de evento (cerrado, `schemaVersion: "1.0"`)**:
+- `task.created`, `task.status`, `task.failed`, `task.completed`, `task.controlled`
+- `sop.step.started`, `sop.step.completed`, `sop.step.skipped`, `sop.failed`
+- `action.proposed`, `action.approved`, `action.denied`, `action.executed`, `action.failed`, `action.unknown`
+- `monitor.check`, `monitor.changed`, `monitor.failed`
+- `system.startup`, `system.error`, `system.maintenance`, `system.google_disconnected`
+- `auth.login`, `auth.login_failed`
+
+**Reglas**:
+- `emit` fire-and-forget controlado: no lanza, loguea con `backgroundFailure` si falla.
+- Eventos críticos (`task.failed`, `sop.failed`, `monitor.failed`, `action.unknown`, `system.error`) se emiten **antes** del checkpoint, no después.
+- Retención: `purgeOlderThan("system-events", 90)` ya en `maintain()`.
+- `correlationId` lo pasa el emisor, no lo genera el bus.
+- `EventSink` se separa en `EventSink` (write) + `EventQuery` (read).
+
+**Typecheck**: `pnpm typecheck`.
+
+**Ledger**:
+```
+NEW events/types.ts, events/ulid.ts, events/schema-registry.ts,
+    events/schemas.ts, events/bus.ts, events/sinks/store.ts, events/index.ts
+MOD db.ts (índice), worker.ts, sop-executor.ts, actions.ts, service.ts
+```
+
+**Verificación**: `pnpm test` + manual: crear tarea, `db.list(owner, "system-events")` devuelve eventos.
+
+---
+
+## Fase 2 — Endpoints del bus
+
+**Objetivo**: exponer el bus por HTTP para UI y chat.
+
+**Ficheros**:
+- **NUEVO** `apps/server/src/events-routes.ts`.
+- **MOD** `apps/server/src/app.ts` — `app.route("/api/events", eventsRoutes(bus))`.
+
+**Endpoints**:
+- `GET /api/events` — filtros `type`, `taskId`, `since`, `until`, `limit` (max 200).
+- `GET /api/events/aggregate` — contadores por tipo en ventana (`?hours=24`).
+- `GET /api/events/schemas` — catálogo del `SchemaRegistry`. **Esto es la mitad del trabajo de auditabilidad ya hecho**.
+- `GET /api/events/timeline` — timeline agrupado por hora.
+
+**Reglas**: scoped al owner, sin paginación compleja, agregado devuelve solo contadores.
+
+**Typecheck**: `pnpm typecheck`.
+
+**Ledger**:
+```
+NEW events-routes.ts
+MOD app.ts
+```
+
+**Verificación**: `curl` manual con token.
+
+---
+
+## Fase 3 — Centro de Control (UI)
+
+**Objetivo**: vista nueva que lee el bus y lo taxonomiza. No toca chat.
+
+**Ficheros**:
+- **NUEVO** `apps/web/src/api/events.ts` — cliente HTTP.
+- **NUEVO** `apps/web/src/hooks/useEvents.ts` — polling 10s.
+- **NUEVO** `apps/web/src/components/ControlCenterView.tsx`.
+- **MOD** `apps/web/src/App.tsx` — añadir `"control-center"` al union y render.
+- **MOD** `apps/web/src/components/ConversationsPanel.tsx` — item "Centro de control".
+- **MOD** `apps/web/src/components/CommandPalette.tsx` — opción + búsqueda global (`GET /api/agent/search`).
+
+**Estructura**:
+- Cabecera: filtros por tipo, usuario, proyecto.
+- Columna izquierda: timeline.
+- Columna derecha: agregados.
+- Buscador local.
+
+**Reglas**: solo lectura, eventos enlazan a `TaskDetailModal`.
+
+**Typecheck**: `pnpm --filter @openmuse/web typecheck` + `pnpm --filter @openmuse/web build`.
+
+**Ledger**:
+```
+NEW api/events.ts, hooks/useEvents.ts, components/ControlCenterView.tsx
+MOD App.tsx, ConversationsPanel.tsx, CommandPalette.tsx
+```
+
+**Verificación**: manual.
+
+---
+
+## Fase 4 — Chat con acceso al sistema (contrato)
+
+**Objetivo**: 4 tools de lectura, aditivas, con presupuesto de tokens.
+
+**Ficheros**:
+- **MOD** `apps/server/src/engine/conversation.ts` — añadir 4 tools al array.
+- **MOD** `apps/server/src/engine/service.ts` — `systemContext(owner)` que devuelve objeto tipado con topes declarados por campo.
+
+**Tools** (todas de lectura):
+1. `list_pending_approvals` — máx 5.
+2. `recent_events` — agregado últimas N horas, contadores + 3 ejemplos.
+3. `system_health` — 4 booleanos (`google`, `worker`, `computer`, `model`) + detalle.
+4. `who_is_doing_what` — máx 10 filas.
+
+**Inyección de contexto**:
+- En `conversation.ts`, antes del modelo, calcular `systemContext`.
+- Si hay ≥1 aprobación pendiente o ≥1 tarea fallida desde último turno → bloque de 3 líneas (máx 80 tokens).
+- Si no → nada.
+- Presupuesto total: 800 tokens, campos acotados por constante, verificable por construcción.
+
+**Reglas del prompt** (añadir al system prompt):
+- No ejecutes acciones proactivamente.
+- Si el usuario dice "haz lo que haga falta", pide que elija.
+- No repitas estado del sistema si no te lo piden.
+- Nunca más de 5 items por tool.
+
+**Typecheck**: `pnpm typecheck`.
+
+**Ledger**:
+```
+MOD engine/conversation.ts, engine/service.ts
+```
+
+**Verificación**: manual.
+
+---
+
+## Fase 5 — Notificaciones proactivas
+
+**Objetivo**: proactividad fuera del chat.
+
+**Ficheros**:
+- **MOD** `apps/server/src/engine/service.ts` — en `maintain`, emitir notificaciones para:
+  - Aprobaciones expiradas.
+  - SOPs fallidos última hora.
+  - Monitores con error.
+  - Google desconectado con tareas pendientes.
+- **MOD** `apps/server/src/engine/events/bus.ts` — flag `notify: true` escribe también en `notifications`.
+
+**Reglas**: máx 1 notificación por `kind:title` cada hora. Nunca en bucle.
+
+**Typecheck**: `pnpm typecheck`.
+
+**Ledger**:
+```
+MOD engine/service.ts, engine/events/bus.ts
+```
+
+**Verificación**: manual.
+
+---
+
+## Fase 6 — Taxonomía de procesos
+
+**Objetivo**: vincular eventos a proyecto/cliente/agente.
+
+**Ficheros**:
+- **MOD** `apps/server/src/engine/events/types.ts` — `payload` ya soporta campos opcionales, no hace falta cambiar el tipo raíz.
+- **MOD** `apps/server/src/engine/events/schemas.ts` — añadir `projectId`, `clientId`, `roleId` a los schemas que los soportan.
+- **MOD** `apps/server/src/engine/service.ts` — al emitir, rellenar desde `task.state`.
+- **MOD** `apps/web/src/components/ControlCenterView.tsx` — filtros.
+- **MOD** `apps/server/src/projects-routes.ts` — `GET /api/projects/:id/events`.
+
+**Reglas**: campos opcionales, sin heurística.
+
+**Typecheck**: `pnpm typecheck` + web.
+
+**Ledger**:
+```
+MOD engine/events/types.ts, engine/events/schemas.ts, engine/service.ts,
+    web/components/ControlCenterView.tsx, projects-routes.ts
+```
+
+---
+
+## Fase 7 — Stubs de futuro
+
+**Objetivo**: dejar el sitio, cero código.
+
+**Ficheros nuevos**:
+- `apps/server/src/engine/events/exporters/otel.ts` — interfaz vacía + comentario.
+- `apps/server/src/engine/events/exporters/kafka.ts` — interfaz vacía + comentario.
+
+**Reglas**: sin dependencias nuevas.
+
+**Typecheck**: `pnpm typecheck`.
+
+---
+
+## Resumen de ficheros por fase
+
+| Fase | NEW | MOD |
+|---|---|---|
+| 0 | — | — |
+| 1 | `events/types.ts`, `events/ulid.ts`, `events/schema-registry.ts`, `events/schemas.ts`, `events/bus.ts`, `events/sinks/store.ts`, `events/index.ts` | `db.ts`, `worker.ts`, `sop-executor.ts`, `actions.ts`, `service.ts` |
+| 2 | `events-routes.ts` | `app.ts` |
+| 3 | `api/events.ts`, `hooks/useEvents.ts`, `components/ControlCenterView.tsx` | `App.tsx`, `ConversationsPanel.tsx`, `CommandPalette.tsx` |
+| 4 | — | `engine/conversation.ts`, `engine/service.ts` |
+| 5 | — | `engine/service.ts`, `engine/events/bus.ts` |
+| 6 | — | `engine/events/types.ts`, `engine/events/schemas.ts`, `engine/service.ts`, `web/components/ControlCenterView.tsx`, `projects-routes.ts` |
+| 7 | `events/exporters/otel.ts`, `events/exporters/kafka.ts` | — |
+
+**Total**: 12 ficheros nuevos, 12 modificados, 0 dependencias nuevas.
+
+---
+
+## Lo que NO se toca
+
+- `apps/computer/`, `apps/worker/`.
+- `packages/integrations/src/google.ts`, `pdf.ts`, `vault.ts`.
+- `packages/domain/src/*` (excepto si hace falta un tipo nuevo para el bus — no hace falta).
+- `docs/HANDOFF.md`, `TODO.md`, `UI-REDESIGN.md`.
+- Motor durable (leases, CAS, `claim`).
+- `ActionService` (solo se le añade `emit`).
+- `run-events` (sigue existiendo en paralelo; duplicación controlada).
+
+---
+
+## Orden de ejecución
+
+1. Fase 0 → confirmar repo actual y que Cline ha parado.
+2. Fase 1 → bus. Bloque con ledger.
+3. Fase 2 → endpoints.
+4. Fase 3 → UI.
+5. Fase 4 → chat (con contrato).
+6. Fase 5 → notificaciones.
+7. Fase 6 → taxonomía.
+8. Fase 7 → stubs.
+
+Cada fase: bloque, typecheck al cierre, tú dices "OK" o "para".
+
+---
+
+## Contrato del chat (por escrito)
+
+1. Máx 800 tokens de contexto de sistema por turno.
+2. Nunca ejecuta sin confirmación.
+3. Máx 5 items por tool.
+4. Nunca habla del estado del sistema salvo urgencia.
+5. Proactividad vive en notificaciones y Centro de Control.
+6. "Haz lo que haga falta" → pregunta, no decide.
+
+---
+
+## Bloqueos abiertos
+
+1. **¿Cline ha parado?** `service.ts`, `conversation.ts`, `routes.ts`, `ChatPanel.tsx` están en su zona.
+2. **¿Repodump `8a5edab` es la versión actual?** `TODO.md` menciona merge a medias `85853b1`.
+3. **Dedupe del bus**: memoria + `records/dedupe-state` (recomendado) o solo memoria.
+
+---
+
+**Siguiente paso**: respóndeme a los 3 bloqueos. Con eso arranco Fase 0 en el siguiente mensaje (solo lectura, sin escribir) y, si confirma, Fase 1 completa en bloques de ≤40 líneas, un fichero por bloque, typecheck separado.

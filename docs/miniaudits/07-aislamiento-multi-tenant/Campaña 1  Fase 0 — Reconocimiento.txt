@@ -1,0 +1,875 @@
+# 01 — Campaña 1 / Fase 0 — Reconocimiento y verdad del repo
+
+**Fecha:** 2026-10-21
+**Campaña:** 1 — Aislamiento multi-tenant (clone-por-cliente, preparación SaaS)
+**Fase:** 0 — Reconocimiento (no escribe código de producto; escribe solo documentación de verdad)
+**Ejecutor:** IA implementadora + humano. Cline corre typecheck/test.
+**Base de partida:** rama `feat/multitenancy-campaign`, 1 commit por delante de `origin/main`, working tree con modificaciones sin commitear de Copilot (`worker.ts`, `conversation.ts`, `kernel.ts`), `db-tenant.ts` modificado por F02.5/F02.6, `fixes.md` modificado. Untracked: `CIERRE-MVP.md`, `ESTADO-REAL-MULTITENANT.md`, `fuera-de-mvp.md`, `old/`, `reglas powershell.md/.txt`, `repo tree.txt`, `test-worker-start.ts`, `tests/tenant-http-e2e.test.ts`. **Aplicados en B2 antes de esta fase:** `TENANT_DEFAULT_STRICT_V1` (`tenant.ts`), `TENANT_SCAN_ALL_PREFIXES_FIX_V1` (`db-tenant.ts`).
+
+---
+
+## 1. Qué fue la fase anterior
+
+No existe. Esta es la primera fase del plan de 10 documentos. Lo que hay "antes" es el estado real del repo que se describe en el apartado siguiente y que hay que verificar antes de tocar nada.
+
+---
+
+## 2. Qué conseguimos con esta fase
+
+- Un `ESTADO-REAL-MULTITENANT.md` **único, verificado contra el código real**, que sustituya al actual (desfasado: dice "NO ENCONTRADA" a 5 marcas que sí existen).
+- Un `ID-MAP.md` que unifique las tres numeraciones que hoy conviven (`D1..D20` del miniaudit, `07-A1..07-A12` del 127-audit, `F02.8`, `F03.30`, etc. del plan).
+- La resolución de las **10 incógnitas M0.1–M0.10** (rama, commit extra, package.json, worker.ts, test-worker-start.ts, marcas contradictorias, mojibake, old/, untracked, docs sueltos).
+- Un `_multitenant_pendientes.md` de misses si algo no se puede resolver en esta fase.
+- Cero cambios en código de producto. Cero parches. Solo documentación de verdad.
+- Commit + push al final de la fase, con Cline habiendo corrido typecheck y test sobre el estado del repo (no sobre docs).
+
+---
+
+## 3. Qué será la siguiente fase
+
+Fase 1 (documento 02): Documentación real (F01). Aplicar F01.14 (mojibake), F01.13 (`-pendientes.md`), F01.8 (`CIERRE_MVP_AUDIT_V1`), F01.9 (`FUERA_MVP_AUDIT_V1`), F01.10 (`CIERRE_MVP_RESULT_V1`), F01.12 (`FIXES_LINK_ESTADO_V1`), y F01.5 si Fase 0 desbloquea `AUDIT_TENANT_DEFAULT.md` con la lista real de 16 prohibidas.
+
+---
+
+## 4. Número de fases de esta sección
+
+**1 fase** (Fase 0), ejecutada en **3 pasos internos no-patchset** (lectura, decisión, escritura de docs) y **4 patchsets de documentación** (PS01a, PS01b, PS01c, PS01d) más **1 patchset de ID-MAP** (PS01e). Total: **5 patchsets de documentación**, 0 patchsets de producto.
+
+---
+
+## 5. Archivos a leer (obligatorio antes de escribir nada)
+
+Todos relativos a `C:\Users\Alfonso\Desktop\git hub repos\agente\`.
+
+**Ya disponibles en el Repomix holístico + el Repomix original:**
+- `apps/server/src/engine/tenant.ts` (Repomix original)
+- `apps/server/src/db-tenant.ts` (Repomix original)
+- `apps/server/src/app.ts` (Repomix original)
+- `apps/server/src/index.ts` (Repomix original)
+- `apps/server/src/config.ts` (Repomix holístico)
+- `apps/server/src/engine/service.ts` (Repomix holístico)
+- `apps/server/src/files.ts` (Repomix holístico)
+- `apps/server/src/auth-signup.ts` (Repomix holístico)
+- `apps/server/src/engine/worker.ts` (Repomix original — roto, no se toca, solo se cita)
+- `apps/server/src/engine/conversation.ts` (Repomix original)
+- `apps/server/src/engine/events/bus.ts` (Repomix original)
+- `apps/server/src/db.ts` (Repomix original)
+- `apps/server/src/db-rls.ts` (Repomix original)
+- `apps/server/src/admin-tenants.ts` (Repomix original)
+- `apps/server/src/rate-limit.ts` (Repomix original)
+- `apps/server/src/metrics/registry.ts` (Repomix original)
+- `apps/server/src/metrics-exporter.ts` (Repomix original)
+- `apps/server/src/notification-prefs.ts` (Repomix original)
+- `apps/server/src/notifications-stream.ts` (Repomix original)
+- `apps/server/src/computer.ts` (Repomix original)
+- `apps/server/src/computer-routes.ts` (Repomix original)
+- `apps/server/src/computer-tools.ts` (Repomix original)
+- `apps/server/src/engine/events/subscriber.ts` (Repomix holístico)
+- `apps/server/src/engine/events/consumers/audit.ts` (Repomix holístico)
+- `apps/server/src/engine/events/consumers/metrics.ts` (Repomix holístico)
+- `apps/server/src/engine/events/consumers/notifications.ts` (Repomix holístico)
+- `apps/server/src/kernel/index.ts` (Repomix holístico)
+- `apps/server/src/kernel/audit/store-store.ts` (Repomix holístico)
+- `apps/server/src/kernel/graph/store.ts` (Repomix holístico)
+- `apps/server/src/kernel/tenancy/resolver.ts` (Repomix holístico)
+- `apps/server/src/engine/context/engine.ts` (Repomix holístico)
+- `apps/server/src/engine/business/graph.ts` (Repomix holístico)
+- `apps/server/src/engine/business/truth.ts` (Repomix holístico)
+- `apps/server/src/engine/actions.ts` (Repomix holístico)
+- `apps/server/src/engine/policy/engine.ts` (Repomix holístico)
+- `apps/server/src/engine/agents/runtime.ts` (Repomix holístico)
+- `apps/server/src/engine/agents/governance.ts` (Repomix holístico)
+- `apps/server/src/engine/events/index.ts` (Repomix holístico)
+- `packages/domain/src/execution-context.ts` (Repomix holístico)
+- `packages/domain/src/agent.ts` (Repomix holístico)
+- `packages/domain/src/sop.ts` (Repomix holístico)
+- `packages/domain/src/views.ts` (Repomix original)
+- `.github/workflows/ci.yml` (Repomix original)
+
+**Documentos ya leídos por el humano y disponibles como texto:**
+- `docs/miniaudits/07-aislamiento-multi-tenant/fixes.md` (contenido pasado, tiene `FIXES_07_MVP_V1` + `MULTITENANT_FIXES_A1..A7_V1`, con mojibake triple en tildes).
+- `docs/miniaudits/07-aislamiento-multi-tenant/CIERRE-MVP.md` (`CIERRE_MVP_07_V1`).
+- `docs/miniaudits/07-aislamiento-multi-tenant/fuera-de-mvp.md` (`FUERA_MVP_07_V1`).
+- `docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md` (`ESTADO_REAL_MULTITENANT_V1`, 2026-10-19 15:32:24).
+- `docs/miniaudits/07-aislamiento-multi-tenant/miniaudit.md` (numera 1–20, no `D1..D20`).
+- `docs/miniaudits/07-aislamiento-multi-tenant/roadmap.md`.
+
+**Archivos a inspeccionar que NO están en ningún Repomix — requieren `Select-String` local, no lectura completa:**
+- `docs/AUDIT_TENANT_DEFAULT.md` — necesitamos **el listado real de las 16 prohibidas**, no el fichero completo. Se resuelve con `Select-String` sobre las líneas que contengan `prohibid|forbidden|default` y las 16 entradas marcadas.
+- `apps/server/src/engine/worker.ts` — solo la zona donde se ven duplicados (~línea 73 según handoff v2). Se resuelve con `Get-Content -TotalCount 120`.
+- `test-worker-start.ts` — fichero huérfano en raíz. Se lee entero si es <200 líneas; si no, se anota como "revisar a mano" y se pasa a `_multitenant_pendientes.md`.
+- `docs/miniaudits/07-aislamiento-multi-tenant/old/` — `Get-ChildItem` para listar los 9 ficheros y sus tamaños (el handoff v2 dice "2 vacíos"). No se lee el contenido (son fuente documental, no se borran).
+
+**Archivos que NO se leen en esta fase, por prohibición explícita:**
+- `apps/server/src/engine/worker.ts` — lectura profunda **prohibida**, solo `-TotalCount 120` para anotar. No se toca.
+- `apps/server/src/engine/service.ts` — lectura profunda innecesaria en esta fase, ya está integrada.
+- `apps/server/src/engine/conversation.ts` — lectura profunda innecesaria, ya está integrada.
+
+---
+
+## 6. Archivos a crear / modificar en esta fase
+
+**Modificar (untracked → tracked, o tracked → tracked):**
+- `docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md` — reescribir contenido con verdad verificada. Mantener marca `ESTADO_REAL_MULTITENANT_V1` y añadir `ESTADO_REAL_PS01B_V1`, `ESTADO_REAL_PS01C_V1`, `ESTADO_REAL_PS01D_V1` conforme avanza la fase.
+
+**Crear:**
+- `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md` — tabla unificada.
+- `docs/miniaudits/07-aislamiento-multi-tenant/_multitenant_pendientes.md` — solo lo escribe el humano cuando aplica los misses. La IA crea la **cabecera** y la estructura vacía al final de la fase (PS01e).
+
+**No crear (prohibido en esta fase):**
+- Cualquier `tests/*.test.ts`.
+- Cualquier `apps/server/src/**/*.ts`.
+- Cualquier `scripts/*.ts`.
+- `-pendientes.md` (va en Fase 1, F01.13).
+
+---
+
+## 7. Número de hunks por patchset
+
+| Patchset | Fichero | Hunks | Tipo |
+|---|---|---|---|
+| PS01a | `ESTADO-REAL-MULTITENANT.md` | 1 (append de la sección "Git verificado" con marca `ESTADO_REAL_PS01B_V1`) | Append |
+| PS01b | `ESTADO-REAL-MULTITENANT.md` | 1 (append sección "Entorno verificado" con `ESTADO_REAL_PS01C_V1`) | Append |
+| PS01c | `ESTADO-REAL-MULTITENANT.md` | 1 (append sección "Ficheros clave + checksums" con `ESTADO_REAL_PS01D_V1`) | Append |
+| PS01d | `ESTADO-REAL-MULTITENANT.md` | 1 (append sección "Marcas verificadas" — las 10 marcas) | Append |
+| PS01e | `ID-MAP.md` | 1 (create del fichero completo) + `_multitenant_pendientes.md` (create cabecera vacía) | CREATE + CREATE |
+
+**Total: 5 patchsets, 5 hunks.**
+
+---
+
+## 8. Número de fixes y multipatches
+
+- **Fixes directos:** 0 (esta fase no arregla producto).
+- **Fixes resueltos (verificaciones M0.x):** 10.
+- **Multipatches:** 0 (nada que aplicar en código).
+- **Patches de documentación:** 5.
+- **IDs a desbloquear:** todos los que dependen de tener una verdad única (`F01.5`, `F01.8–F01.12`, `F04.*`, `N02–N04`, `F03.*`), pero **no se aplican aquí**, solo se anotan como "verdad lista" en el ESTADO-REAL.
+
+---
+
+## 9. Orden exacto de examinar código y decisiones
+
+Este es el orden obligatorio. Si un paso falla o no cuadra, se anota en `_multitenant_pendientes.md` y se sigue con el siguiente solo si no bloquea. Si bloquea una escritura, se aborta esa escritura y se anota.
+
+### Paso 0 — Verificación previa sin escritura (bloque de lectura)
+
+**0.1. Rama y HEAD.**
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+if (-not (Test-Path (Join-Path $repoRoot ".git"))) { throw "ERROR: no es un repo git" }
+$currentBranch = git -C $repoRoot branch --show-current
+Write-Host "Rama: $currentBranch"
+if ($currentBranch -ne "feat/multitenancy-campaign") { throw "ERROR: rama $currentBranch" }
+git -C $repoRoot log --oneline -5
+git -C $repoRoot log --oneline origin/main -5
+git -C $repoRoot stash list
+```
+**Decisión:** si la rama no es `feat/multitenancy-campaign` → **ABORTA TODO**. Si hay stash, se anota en `_multitenant_pendientes.md` como "stash de Copilot, no tocar" y se sigue.
+
+**0.2. Commit extra sobre `origin/main`.**
+```powershell
+$extra = git -C $repoRoot log origin/main..HEAD --oneline
+Write-Host "Commits sobre origin/main:" 
+$extra
+```
+**Decisión:** si `$extra` contiene exactamente 1 commit y su mensaje menciona "restaurar seguridad" o "migracion PGlite->Postgres" (coincide con `0ce17fb fix: restaurar seguridad de inicio tras migracion PGlite->Postgres` del `ESTADO-REAL` viejo), se documenta como **commit legítimo de Cline/Copilot, base de trabajo**. Si contiene commits no reconocidos, se anotan y **se bloquea el push al final de la fase** hasta confirmación humana. Anotado como M0.1.
+
+**0.3. `apps/server/package.json`.**
+```powershell
+$pkg = Join-Path $repoRoot "apps/server/package.json"
+if (Test-Path $pkg) {
+  Write-Host "EXISTE apps/server/package.json"
+  Get-Content $pkg -Raw | Select-Object -First 50
+} else {
+  Write-Host "NO EXISTE apps/server/package.json"
+}
+```
+**Decisión:** si NO existe, se documenta como **M0.2: package.json ausente — `pnpm --filter @openmuse/server exec tsc --noEmit` no es válido, Cline debe correr `pnpm typecheck` desde la raíz** (el `pnpm typecheck` del `ci.yml` es `pnpm typecheck` global, que ya existe en el `package.json` raíz; el `apps/server/package.json` no es necesario para CI). Se anota. Si existe, se documenta su nombre real y se usa ese filtro.
+
+**0.4. Modificaciones sin commitear en `worker.ts`, `conversation.ts`, `kernel.ts`.**
+```powershell
+$w = Join-Path $repoRoot "apps/server/src/engine/worker.ts"
+$c = Join-Path $repoRoot "apps/server/src/engine/conversation.ts"
+$k = Join-Path $repoRoot "apps/server/src/kernel/kernel.ts"
+foreach ($f in @($w,$c,$k)) {
+  Write-Host "--- $(Split-Path $f -Leaf) ---"
+  git -C $repoRoot diff --stat -- $f
+}
+Write-Host "=== worker.ts primeras 120 lineas (solo lectura, NO TOCAR) ==="
+Get-Content $w -TotalCount 120
+```
+**Decisión:** si `worker.ts` sigue roto (marcadores `/** WORKER_ACTIVE_SIZE_V1` sin cerrar, `/** WORKER_MAX_ACTIVE_GET_V1` sin cerrar, líneas truncadas), se documenta como **M0.3: worker.ts roto, Copilot lo repara en otra rama, no tocar**. Se anota. `conversation.ts` y `kernel.ts` modificados se anotan como "cambios de Cline/Copilot, no tocar". **No se descarta ningún cambio, no se revierte nada.**
+
+**0.5. `test-worker-start.ts` huérfano.**
+```powershell
+$tw = Join-Path $repoRoot "test-worker-start.ts"
+if (Test-Path $tw) {
+  $len = (Get-Item $tw).Length
+  Write-Host "test-worker-start.ts: $len bytes"
+  if ($len -lt 20000) { Get-Content $tw }
+} else { Write-Host "NO existe test-worker-start.ts" }
+```
+**Decisión:** si es <20000 bytes se lee y se decide: si es un test real perdido → **M0.4: anotar para moverlo a `tests/` en fase 9**, no moverlo aquí. Si es un scratch/huérfano, anotar como "borrar en fase 9". Si es >20000 bytes, anotar como "revisar a mano" y pasar a `_multitenant_pendientes.md`.
+
+**0.6. Contradicciones de marcas.**
+```powershell
+$marks = @(
+  "APP_FILES_IMPORT_TENANT_V1","TENANT_SCAN_ALL_PREFIXES_V1","TENANT_SCAN_ALL_PREFIXES_FIX_V1",
+  "TENANT_SCAN_STATUS_ISOLATION_V1","TENANT_SCAN_STATUS_CURSOR_ISOLATION_V1",
+  "APP_TENANT_REQUEST_VALIDATE_V1","ROUTES_NOTIFICATIONS_TENANT_V1",
+  "DB_RLS_TX_CONTEXT_V1","DB_RLS_ENABLED_FLAG_V1","DB_RLS_TENANT_CTX_V1",
+  "TENANT_HTTP_E2E_V1","TENANT_DEFAULT_STRICT_V1","TENANT_ASSERT_NOT_DEFAULT_V1"
+)
+foreach ($m in $marks) {
+  $hits = Get-ChildItem (Join-Path $repoRoot "apps/server/src") -Recurse -File -Filter *.ts |
+          Select-String -SimpleMatch $m -ErrorAction SilentlyContinue
+  $n = @($hits).Count
+  if ($n -eq 0) { Write-Host ("FALTA  {0}" -f $m) -ForegroundColor Yellow }
+  else { Write-Host ("OK({0}) {1}" -f $n, $m) -ForegroundColor Green
+         $hits | ForEach-Object { Write-Host ("   " + $_.Path.Replace($repoRoot,'') + ":" + $_.LineNumber) } }
+}
+```
+**Decisión:** el resultado **manda sobre `ESTADO-REAL` y sobre `fixes.md`**. Anotado como **M0.5**. Si `APP_FILES_IMPORT_TENANT_V1`, `APP_TENANT_REQUEST_VALIDATE_V1`, `ROUTES_NOTIFICATIONS_TENANT_V1`, `DB_RLS_TX_CONTEXT_V1` no aparecen, se documenta como "no existen" y se anota el desbloqueo de los fixes correspondientes (F01.8, F01.9, F01.10 los citan como existentes; si no existen, hay que corregir la documentación). Si aparecen, se anota el fichero y línea exactos.
+
+**0.7. Numeraciones.**
+```powershell
+Write-Host "=== miniaudit.md: numeracion 1..N ==="
+Select-String -Path (Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/miniaudit.md") -Pattern "^\d+\. " | Select-Object -First 30
+Write-Host "=== fixes.md: D1..D32 y 07-A1..A12 ==="
+Select-String -Path (Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/fixes.md") -Pattern "D\d+|07-A\d+" | Select-Object -First 50
+```
+**Decisión:** si el miniaudit numera 1..20 y `fixes.md` usa D1..D32 y 07-A1..A12, se genera el `ID-MAP.md` que mapea `miniaudit N` ↔ `D <x>` ↔ `07-A<y>` ↔ `F0<x.y>`. Anotado como **M0.6**.
+
+**0.8. `fixes.md` mojibake.**
+```powershell
+$fx = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/fixes.md"
+$hash = Get-FileHash $fx -Algorithm SHA256
+Write-Host "fixes.md SHA256: $($hash.Hash)"
+$enc = [System.IO.File]::ReadAllText($fx, [System.Text.Encoding]::UTF8)
+if ($enc -match "ÃƒÆ’Ã†â€™") { Write-Host "MOJIBAKE TRIPLE CONFIRMADO" -ForegroundColor Red }
+else { Write-Host "Sin mojibake triple" -ForegroundColor Green }
+```
+**Decisión:** si hay mojibake triple (lo hay, lo he visto en el texto que me pasaste), se anota como **M0.7: `fixes.md` con mojibake triple. Regenerar en Fase 1 (F01.14)**. No se regenera en Fase 0. El hash actual se anota como "hash pre-fix". El `ESTADO-REAL` viejo decía `60464b1f...`; si el hash real es otro, el `fixes.md` ha cambiado desde que se generó `ESTADO-REAL`.
+
+**0.9. `old/` untracked.**
+```powershell
+$old = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/old"
+if (Test-Path $old) {
+  Write-Host "old/ EXISTE en working tree"
+  Get-ChildItem $old -Force | Select-Object Name, Length
+  git -C $repoRoot ls-files docs/miniaudits/07-aislamiento-multi-tenant/old/
+} else { Write-Host "old/ NO existe" }
+```
+**Decisión:** si existe en working tree pero no en `git ls-files`, se anota como **M0.8: `old/` untracked. Añadir a git en commit final de esta fase** (es fuente documental, no se borra). El handoff v2 dice "9 ficheros, 2 vacíos"; se verifica el conteo y los tamaños.
+
+**0.10. `CIERRE-MVP.md`, `fuera-de-mvp.md`, `ESTADO-REAL-MULTITENANT.md`, `tenant-http-e2e.test.ts` untracked.**
+```powershell
+$files = @(
+  "docs/miniaudits/07-aislamiento-multi-tenant/CIERRE-MVP.md",
+  "docs/miniaudits/07-aislamiento-multi-tenant/fuera-de-mvp.md",
+  "docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md",
+  "tests/tenant-http-e2e.test.ts"
+)
+foreach ($f in $files) {
+  $p = Join-Path $repoRoot $f
+  $tracked = (git -C $repoRoot ls-files -- $f) -ne ""
+  Write-Host ("{0}  tracked={1}  exists={2}" -f $f, $tracked, (Test-Path $p))
+}
+```
+**Decisión:** los que existan y no estén tracked se añaden a git en el commit final. El `tests/tenant-http-e2e.test.ts` **NO se toca** (prohibición §6), solo se añade si existe.
+
+**0.11. `AUDIT_TENANT_DEFAULT.md` — lista de las 16 prohibidas.**
+```powershell
+$aud = Join-Path $repoRoot "docs/AUDIT_TENANT_DEFAULT.md"
+if (Test-Path $aud) {
+  Select-String -Path $aud -Pattern "prohibid|forbidden|default" -Context 2,2 | Select-Object -First 80
+} else { Write-Host "NO existe AUDIT_TENANT_DEFAULT.md" }
+```
+**Decisión:** si el fichero contiene una lista explícita de 16 entradas, se extrae y se anota en `ESTADO-REAL` como "16 prohibidas verificadas". Si no la contiene (solo dice "16 prohibidas" sin listar), se anota como **M0.11: `AUDIT_TENANT_DEFAULT.md` sin lista explícita → F01.5 queda bloqueado hasta que el humano la pegue**. Se pasa a `_multitenant_pendientes.md`.
+
+**0.12. `MULTI_TENANT_SHARED` en el entorno actual.**
+```powershell
+if ($env:MULTI_TENANT_SHARED -eq "true") {
+  Write-Warning "MULTI_TENANT_SHARED=true — el server lanzara en resolve() en el primer request sin membership (F02.8)"
+} else {
+  Write-Host "MULTI_TENANT_SHARED ausente o != true — OK para desarrollo"
+}
+```
+**Decisión:** si está a `"true"`, se anota y **se avisa al humano que lo desactive** antes de correr el server, o que siembre memberships. No bloquea la fase.
+
+### Paso 1 — Decisión y anotación
+
+Con los resultados de 0.1–0.12, se rellena una tabla de verdad:
+
+| Incógnita | Resultado | Decisión | Bloquea |
+|---|---|---|---|
+| M0.1 commit extra | 1 commit reconocido / desconocido | Documentar / bloquear push | Fase 0 push |
+| M0.2 package.json | existe / no existe | Usar filtro real / usar `pnpm typecheck` raíz | Fase 9 (CI) |
+| M0.3 worker.ts | roto / reparado | No tocar / desbloquear F02.1–F02.4 | B2 extendido |
+| M0.4 test-worker-start.ts | test real / huérfano / grande | Mover en Fase 9 / borrar en Fase 9 / revisar a mano | Fase 9 |
+| M0.5 marcas | 10 verificadas / N faltan | Corregir `ESTADO-REAL` | F01.* |
+| M0.6 numeraciones | mapeables / no | Generar `ID-MAP.md` | F01.* |
+| M0.7 mojibake fixes.md | sí / no | Regenerar en Fase 1 | F01.14 |
+| M0.8 old/ | 9 ficheros / otros | `git add` en commit final | Fase 0 commit |
+| M0.9 untracked docs | N ficheros | `git add` en commit final | Fase 0 commit |
+| M0.10 16 prohibidas | lista real / no | Desbloquear F01.5 / bloquear | Fase 1 |
+| M0.11 MULTI_TENANT_SHARED | true / no | Avisar | Fase 3 |
+
+Cada incógnita resuelta se anota en `ESTADO-REAL-MULTITENANT.md` con su marca. Cada incógnita no resuelta va a `_multitenant_pendientes.md` con el formato:
+
+```
+## [YYYY-MM-DD] [Fase 0] [M0.x] [<Título corto>]
+- **Síntoma:** <qué se observó>
+- **Esperado:** <qué se esperaba>
+- **Real:** <qué se encontró>
+- **Bloquea:** <Fase X, fix Y>
+- **Acción pendiente:** <qué hay que hacer>
+- **Fichero/linea:** <ruta:línea o "N/A">
+```
+
+### Paso 2 — Escritura de documentación (PS01a–PS01e)
+
+Solo se ejecutan si el Paso 1 no ha abortado ninguna decisión bloqueante. Si una decisión bloquea, se anota y **se omite el patchset correspondiente**, no se inventa.
+
+---
+
+## 10. Patchsets de documentación
+
+### PS01a — `ESTADO-REAL-MULTITENANT.md`: sección "Git verificado" (`ESTADO_REAL_PS01B_V1`)
+
+**Ancla de reemplazo** — el fichero actual empieza con `<!-- ESTADO_REAL_MULTITENANT_V1 -->` y a continuación `# Estado real multi-tenant — 2026-10-19 15:32:24`. La marca `ESTADO_REAL_PS01B_V1` **no debe existir**. Si existe, SKIP.
+
+**`$old`:**
+```
+<!-- ESTADO_REAL_MULTITENANT_V1 -->
+```
+
+**`$new`:**
+```
+<!-- ESTADO_REAL_MULTITENANT_V1 -->
+<!-- ESTADO_REAL_PS01B_V1 -->
+```
+
+Y a continuación se appendea la sección "Git verificado" con la salida literal del Paso 0.1–0.2 (rama, HEAD, commits sobre `origin/main`, stash). **No se resum, no se corta: se pega la salida del bloque PowerShell tal cual.**
+
+```powershell
+cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
+$repoRoot = (Resolve-Path ".").Path
+$file = Join-Path $repoRoot "docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md"
+$mark = "ESTADO_REAL_PS01B_V1"
+$tmpFile = Join-Path (Split-Path $file -Parent) ("." + (Split-Path $file -Leaf) + ".tmp")
+
+if (-not (Test-Path $file)) { throw "ERROR: $file no existe" }
+if (Test-Path $tmpFile) { Remove-Item $tmpFile -Force }
+$content = Get-Content $file -Raw
+if ($content -match $mark) {
+  Write-Host "SKIP: $mark ya existe"
+} else {
+  $branch = git -C $repoRoot branch --show-current
+  $head = git -C $repoRoot log --oneline -1
+  $base = git -C $repoRoot log --oneline origin/main -1
+  $over = git -C $repoRoot log origin/main..HEAD --oneline
+  $stash = git -C $repoRoot stash list
+  $append = @(
+    "",
+    "## Git verificado ($mark)",
+    "",
+    '```',
+    "Rama: $branch",
+    "HEAD: $head",
+    "origin/main: $base",
+    "Commits sobre origin/main:",
+    $over,
+    "Stash:",
+    ($stash | Out-String),
+    '```',
+    ""
+  ) -join "`r`n"
+  $newContent = $content.TrimEnd() + "`r`n" + $append
+  $preCount = ([regex]::Matches($newContent, [regex]::Escape($mark))).Count
+  if ($preCount -ne 1) { throw "ERROR: $mark aparece $preCount veces en el nuevo contenido" }
+  $backupDir = Join-Path $repoRoot ".tmp/patchset-backups"
+  New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
+  $backup = Join-Path $backupDir ("{0}-estado-real-ps01b.bak" -f (Get-Date -Format "yyyyMMdd-HHmmss"))
+  Copy-Item $file $backup -Force
+  [System.IO.File]::WriteAllText($tmpFile, $newContent, (New-Object System.Text.UTF8Encoding $false))
+  try { [System.IO.File]::Replace($tmpFile, $file, $null) }
+  catch { if (Test-Path $tmpFile) { Remove-Item $tmpFile -Force }; Copy-Item $backup $file -Force; throw "FALLO: File.Replace. Revertido." }
+  $final = Get-Content $file -Raw
+  $postCount = ([regex]::Matches($final, [regex]::Escape($mark))).Count
+  if ($postCount -ne 1) { Copy-Item $backup $file -Force; throw "FALLO: $mark $postCount veces tras escribir. Revertido." }
+  git -C $repoRoot diff --check $file
+  if ($LASTEXITCODE -ne 0) { Copy-Item $backup $file -Force; throw "FALLO: diff con problemas. Revertido." }
+  Write-Host "OK PS01a [$mark]" -ForegroundColor Green
+  Write-Host "Backup: $backup"
+}
+```
+
+### PS01b — `ESTADO-REAL-MULTITENANT.md`: sección "Entorno verificado" (`ESTADO_REAL_PS01C_V1`)
+
+**Ancla:** append al final del fichero (que ahora termina con la sección de PS01a). Marca `ESTADO_REAL_PS01C_V1` 1×. Mismo patrón `File.Replace` + backup.
+
+Contenido: tabla literal de `node_modules` (raíz, apps/server, node_modules/.bin/tsc.cmd, node_modules/typescript/bin/tsc), `apps/server/package.json` (existe/no, name), `MULTI_TENANT_SHARED` (valor), `pnpm --version`, `node --version`. Salida de los comandos del Paso 0.3, 0.12, y los básicos de entorno.
+
+### PS01c — `ESTADO-REAL-MULTITENANT.md`: sección "Ficheros clave + checksums" (`ESTADO_REAL_PS01D_V1`)
+
+**Ancla:** append. Marca `ESTADO_REAL_PS01D_V1` 1×. Mismo patrón.
+
+Contenido: tabla con ruta, existe (S/N), tamaño en bytes, SHA256 de `fixes.md`, `CIERRE-MVP.md`, `fuera-de-mvp.md`, `ESTADO-REAL-MULTITENANT.md` (antes de esta fase), `docs/AUDIT_TENANT_DEFAULT.md`, `apps/server/src/engine/worker.ts`. `old/` listado completo con tamaños. `test-worker-start.ts` (si existe).
+
+### PS01d — `ESTADO-REAL-MULTITENANT.md`: sección "Marcas verificadas"
+
+**Ancla:** append al final del fichero. Sin marca nueva (o marca `ESTADO_REAL_PS01E_V1` si se quiere trazabilidad). Contenido: tabla literal de las 13 marcas con `existe/NO existe`, `fichero:línea`, contador. **Esta es la sección que manda sobre `fixes.md` y sobre `CIERRE-MVP.md`.**
+
+### PS01e — `ID-MAP.md` (CREATE) y `_multitenant_pendientes.md` (CREATE)
+
+**`ID-MAP.md`** — tabla completa con todas las entradas:
+
+| Miniaudit # | D-ID | 07-A-ID | Plan-Maestro ID | Título | Estado |
+|---|---|---|---|---|---|
+| 1 | D1 | 07-A1 | (FP) | Files/Rag/Workspace con db crudo | FP confirmado |
+| 2 | D2 | 07-A4 | (FP) | setMembership no invalida cache | FP confirmado, N02 nuevo |
+| 3 | D3 | 07-A9 | F04.2 / F04.3 | 2 usos prohibidos de default | verificar en Fase 5 |
+| ... | ... | ... | ... | ... | ... |
+| 20 | D20 | — | (C2) | Tenant switcher frontend | Campaña 2 |
+
+La tabla tiene 20 filas del miniaudit + las entradas nuevas N01–N04 + F02.8, F02.9, F02.9b, F02.10, F02.11, F03.30, F03.31, F03.35, F03.38, F04.2, F04.3, F04.10, F04.14, F04.15, F04.16, F04.17, F04.20, F04.21, F04.22, F04.23, F04.24, F04.25, F04.27, F05.1–F05.9. **Cada ID del plan aparece mapeado a su miniaudit/07-A origen, o marcado como "nuevo — no en miniaudit".**
+
+**`_multitenant_pendientes.md`** — create con cabecera:
+
+```
+# _multitenant_pendientes.md
+
+Fichero de misses de la Campaña 1 (aislamiento multi-tenant).
+Lo escribe el humano cuando algo falla o queda bloqueado.
+La IA no lo modifica; solo lo referencia.
+
+Formato de cada entrada:
+## [YYYY-MM-DD] [Fase N] [ID] [Título]
+- **Síntoma:**
+- **Esperado:**
+- **Real:**
+- **Bloquea:**
+- **Acción pendiente:**
+- **Fichero/línea:**
+
+---
+```
+
+Solo si el humano confirma. En Fase 0 la IA **crea la cabecera vacía** y no añade misses (los misses los añade el humano cuando algo falla). Si en el Paso 0 ha habido misses (por ejemplo M0.11 si `AUDIT_TENANT_DEFAULT.md` no tiene lista), el humano los pega él mismo. La IA **no inventa misses**.
+
+---
+
+## 11. Reglas PowerShell v2.1 aplicables a esta fase
+
+**Prohibiciones absolutas (18):**
+
+1. NO `exit` — usar `throw`.
+2. NO `&&` ni `;` como separador de sentencias.
+3. NO `git add .` — siempre ficheros explícitos.
+4. NO heredoc anidado.
+5. NO `\"` dentro de comillas dobles — usar comillas simples o concatenar.
+6. NO `$()` dentro de comillas dobles.
+7. NO escribir sin UTF-8 sin BOM — `New-Object System.Text.UTF8Encoding $false`.
+8. NO `File.Replace` sin `try/catch`.
+9. NO `Move-Item` para escribir ficheros — `WriteAllText` + `File.Replace`.
+10. NO `$count` sobre `$file` después de escribir — `$newContent` (pre) y `$final` (post).
+11. NO escribir sin backup.
+12. NO escribir sin `Assert-MatchCount` del ancla.
+13. NO escribir sin verificar marca en `$newContent`.
+14. NO commitear dentro de un patchset — el commit va al final de la fase.
+15. NO tocar `worker.ts`, `service.ts`, `conversation.ts`, `scripts/audits/*`.
+16. NO tocar `tests/tenant-http-e2e.test.ts` sin autorización.
+17. NO cambiar `continue-on-error` del CI sin autorización.
+18. NO borrar findings de `docs/AUDIT_*.md`.
+
+**Patrón obligatorio de `throw` con conteo** (para evitar el fallo de comillas anidadas):
+
+```powershell
+$n = $matches.Count
+$msg = "..." + $n + "..."
+throw $msg
+```
+
+**Nunca:**
+```powershell
+throw "ERROR: ... \"default\" ... $($matches.Count) ..."   # PROHIBIDO
+```
+
+**Estructura de cada patchset:** ver §10 (rama, `.git`, ancla 1×, `$newContent` con marca 1×, backup, `WriteAllText` UTF-8 no BOM, `File.Replace` `try/catch`, `postCount` 1, `git diff --check` con revert, `git diff --stat`).
+
+---
+
+## 12. Typecheck, test, commit y push
+
+- **Cline corre typecheck y test.** Instrucción exacta:
+  - Si `apps/server/package.json` existe con name `@openmuse/server`: `pnpm --filter @openmuse/server exec tsc --noEmit` y `pnpm test`.
+  - Si no existe: `pnpm typecheck` (raíz) y `pnpm test`.
+  - Si Cline reporta rojo, **la IA no commitea** y el humano anota el miss en `_multitenant_pendientes.md`.
+- **La IA commitea con ficheros explícitos.** Ejemplo de esta fase (solo si todo verde):
+  ```powershell
+  git add docs/miniaudits/07-aislamiento-multi-tenant/ESTADO-REAL-MULTITENANT.md
+  git add docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md
+  git add docs/miniaudits/07-aislamiento-multi-tenant/_multitenant_pendientes.md
+  git add docs/miniaudits/07-aislamiento-multi-tenant/old/
+  git add docs/miniaudits/07-aislamiento-multi-tenant/CIERRE-MVP.md
+  git add docs/miniaudits/07-aislamiento-multi-tenant/fuera-de-mvp.md
+  git add docs/miniaudits/07-aislamiento-multi-tenant/fixes.md
+  git add tests/tenant-http-e2e.test.ts
+  git commit -m "docs(multitenant): fase 0 — estado real verificado + id-map [ESTADO_REAL_PS01B/C/D_V1, ID_MAP_V1]"
+  git push origin feat/multitenancy-campaign
+  ```
+  **Nunca `git add .`.** **Nunca `git push --force`.** **Nunca tocar el stash.**
+- **Nunca commitear si Cline no ha dado verde.** Si el push falla (conflicto con `origin/main`), **no forzar**: se anota en `_multitenant_pendientes.md` y se para la fase.
+
+---
+
+## 13. Plan de misses
+
+Cualquier desviación del plan (ancla 0×/2×, marca ya existe, `File.Replace` bloqueado, `git diff --check` con problemas, typecheck rojo, push rechazado, `AUDIT_TENANT_DEFAULT.md` sin lista, `package.json` ausente no esperado, `worker.ts` reparado inesperadamente, `MULTI_TENANT_SHARED=true` en entorno, commit extra no reconocido) se anota por el humano en:
+
+`C:\Users\Alfonso\Desktop\git hub repos\agente\docs\miniaudits\07-aislamiento-multi-tenant\missed\_multitenant_pendientes.md`
+
+**Formato obligatorio:**
+
+```
+## [YYYY-MM-DD] [Fase 0] [M0.x] [Título corto]
+- **Síntoma:** <qué se observó>
+- **Esperado:** <qué se esperaba>
+- **Real:** <qué se encontró>
+- **Bloquea:** <fase/fix>
+- **Acción pendiente:** <qué hay que hacer>
+- **Fichero/línea:** <ruta:línea o "N/A">
+```
+
+**La IA no toca ese fichero.** Solo lo referencia cuando un miss bloquea una escritura y lo deja documentado en `ESTADO-REAL` como "M0.x — ver `_multitenant_pendientes.md`".
+
+---
+
+## 14. Checklist de cierre de la fase 0
+
+Antes de dar la fase por cerrada:
+
+- [ ] Paso 0.1–0.12 ejecutados, salidas anotadas.
+- [ ] Tabla de verdad M0.1–M0.11 rellenada.
+- [ ] `ESTADO-REAL-MULTITENANT.md` con `ESTADO_REAL_PS01B_V1`, `ESTADO_REAL_PS01C_V1`, `ESTADO_REAL_PS01D_V1`, sección de marcas verificadas.
+- [ ] `ID-MAP.md` creado con todas las filas.
+- [ ] `_multitenant_pendientes.md` creado con cabecera vacía (sin misses, si no los hubo).
+- [ ] `git add` explícito de los ficheros tocados + untracked recuperables.
+- [ ] Cline ha corrido typecheck y test; verde.
+- [ ] `git commit` con mensaje `docs(multitenant): fase 0 — estado real verificado + id-map [...]`.
+- [ ] `git push origin feat/multitenancy-campaign`.
+- [ ] Si algo ha fallado, anotado por el humano en `_multitenant_pendientes.md`.
+- [ ] Confirmación al humano: "Fase 0 cerrada. Siguiente: Fase 1 (documento 02)."
+
+---
+
+## 15. Anexo — fragmentos literales de código real que se citan en esta fase
+
+### A.1. `apps/server/src/engine/tenant.ts` — bloque de `resolve()` completo (extraído del Repomix original, sin cortes):
+
+```typescript
+  /**
+   * Resuelve el tenantId para un owner.
+   * Cachea en el proceso: la membership no cambia en caliente.
+   */
+  async resolve(owner: string): Promise<TenantResolution> {
+    const cached = this.cache.get(owner);
+    if (cached && Date.now() - cached.at < TENANT_CACHE_TTL_MS) {
+      return { tenantId: cached.tenantId, source: "database" };
+    }
+    const row = await this.db
+      .get<{ tenantId: string }>(owner, MEMBERSHIP_KIND, MEMBERSHIP_ID)
+      .catch(() => null);
+    if (row?.tenantId) {
+      this.cache.set(owner, { tenantId: row.tenantId, at: Date.now() });
+      return { tenantId: row.tenantId, source: "database" };
+    }
+    // TENANT_MEMBERSHIP_LEGACY_MIGRATE_V1 - si existe una fila con id=owner
+    // (convencion antigua), la migramos al vuelo a id="default".
+    const legacy = await this.db
+      .list<{ id: string; tenantId: string }>(owner, MEMBERSHIP_KIND)
+      .catch(() => []);
+    const legacyRow = legacy.find((m) => m.id !== MEMBERSHIP_ID && m.tenantId);
+    if (legacyRow) {
+      await this.db.put(owner, MEMBERSHIP_KIND, {
+        id: MEMBERSHIP_ID,
+        tenantId: legacyRow.tenantId,
+        migratedAt: new Date().toISOString(),
+      });
+      await this.db.remove(owner, MEMBERSHIP_KIND, legacyRow.id);
+      this.cache.set(owner, { tenantId: legacyRow.tenantId, at: Date.now() });
+      return { tenantId: legacyRow.tenantId, source: "database" };
+    }
+    // TENANT_DEFAULT_STRICT_V1 — en modo shared no se cae a "default" silenciosamente.
+    // En clone-por-cliente (MULTI_TENANT_SHARED!="true") se mantiene el fallback.
+    if (process.env.MULTI_TENANT_SHARED === "true") {
+      const where = "TenantService.resolve(owner=" + owner + ")";
+      throw new Error(
+        "TENANT_DEFAULT_STRICT_V1: owner sin membership en modo shared. " + where,
+      );
+    }
+    // TENANT_CACHE_FALLBACK_V1 - cachear el fallback.
+    this.cache.set(owner, { tenantId: DEFAULT_TENANT_ID, at: Date.now() });
+    return { tenantId: DEFAULT_TENANT_ID, source: "default" };
+  }
+```
+
+Nota: `TENANT_DEFAULT_STRICT_V1` está aplicado (B2), confirmado en el Repomix original.
+
+### A.2. `apps/server/src/db-tenant.ts` — bloque `scan<T>()` completo tras N01 (B2), del Repomix original con la modificación N01 ya aplicada:
+
+```typescript
+  async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
+    // TENANT_SCAN_PEEL_V1 - el store subyacente guarda owner = "tenantId:owner".
+    // El caller (TaskWorker) espera el owner limpio para poder volver a componer
+    // la clave al hacer compareAndSwap/get. Si devolveramos el owner compuesto,
+    // el worker compondria doble y no encontraria la tarea.
+    // TENANT_SCAN_SQL_FILTER_V1 - si el store subyacente expone
+    // scanByOwnerPrefix, filtramos en SQL por tenant. Si no, caemos al scan
+    // sin filtro (comportamiento previo).
+    const storeWithPrefix = this.store as Store & {
+      scanByOwnerPrefix?: <U>(
+        kind: string,
+        ownerPrefix: string,
+        limit: number,
+      ) => Promise<{ owner: string; value: U }[]>;
+    };
+    // TENANT_SCAN_ALL_PREFIXES_FIX_V1 — antes solo se usaba el PRIMER prefix visto
+    // (this.tenantPrefixes.values().next().value). Con 2+ tenants activos eso
+    // devolvia filas solo del primero y perdia silenciosamente las del resto.
+    // Ahora se itera por TODOS los prefixes y se acumula hasta `limit`.
+    const prefixes = this.allTenantPrefixes();
+    if (prefixes.length > 0 && typeof storeWithPrefix.scanByOwnerPrefix === "function") {
+      const out: { owner: string; value: T }[] = [];
+      try {
+        for (const prefix of prefixes) {
+          if (out.length >= limit) break;
+          const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit - out.length);
+          for (const row of rows) out.push({ owner: this.peel(row.owner), value: row.value });
+        }
+        if (out.length > 0) return out.slice(0, limit);
+      } catch {
+        // Fallback al scan sin filtro si la query falla.
+      }
+    }
+    const rows = await this.store.scan<T>(kind, limit);
+    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+  }
+```
+
+Nota: `TENANT_SCAN_ALL_PREFIXES_FIX_V1` está aplicado (B2/N01), confirmado.
+
+### A.3. `apps/server/src/engine/worker.ts` — fragmentos del roto (del Repomix original, literales, sin cortes):
+
+```typescript
+  get running() {
+    return Boolean(this.timer);
+  }
+
+  /** WORKER_ACTIVE_SIZE_V1
+  activeSize(): number {
+    return this.active.size;
+  }
+
+  /** WORKER_MAX_ACTIVE_GET_V1
+  getMaxActive(): number {
+    return this.maxActive;
+  }
+  start = () => {
+```
+
+Y más abajo:
+
+```typescript
+  /** WORKER_CANCEL_PROPAGATE_V1 - cancelación del task hacia proveedores externos (LLM, Docker). */
+
+
+
+
+  abort(taskId: string) {
+    const controller = this.active.get(taskId);
+    if (!controller) return;
+    controller.abort();
+  }
+```
+
+Esto es lo que confirma que **`worker.ts` está roto**. No se toca.
+
+### A.4. `apps/server/src/index.ts` — el arranque que consume `tenantService` (literal, sin cortes):
+
+```typescript
+const config = readConfig();
+// VALIDATE_LLM_KEYS_V1 - aviso al arrancar si las keys estan vacias.
+if (!process.env.FAST_LLM_API_KEY && !process.env.GEMINI_API_KEY) {
+  console.warn("[kernel] FAST_LLM_API_KEY y GEMINI_API_KEY vacias.");
+}
+const db = await createStore({
+  dataDir: `${config.dataDir}/postgres`,
+  databaseUrl: config.databaseUrl,
+});
+await db.recoverInterruptedActions();
+// INDEX_ENABLE_RLS_V1 - RLS opcional (solo Postgres + MULTI_TENANT_SHARED=true).
+{
+  const { enableRls } = await import("./db-rls.ts");
+  const enabled = await enableRls(db);
+  if (enabled) console.log("[OpenMuse] RLS activo en records");
+}
+```
+
+Esto confirma que `MULTI_TENANT_SHARED` se lee dentro de `enableRls(db)` (en `db-rls.ts`) y también en `TenantService.resolve()` (F02.8). **La fase 3 (F04.10b) debe revisar si `enableRls` y `resolve` comparten el mismo valor de `MULTI_TENANT_SHARED` en runtime, o si divergen.**
+
+### A.5. `apps/server/src/db-rls.ts` — `enableRls` y `withTenantRls` (literal, sin cortes):
+
+```typescript
+export async function enableRls(store: Store): Promise<boolean> {
+  if (store.backend !== "postgres") {
+    return false;
+  }
+  if (process.env.MULTI_TENANT_SHARED !== "true") {
+    // Un deployment por cliente: no aplica.
+    return false;
+  }
+  try {
+    // 1. Columna tenant_id con backfill.
+    await store.select(
+      "ALTER TABLE records ADD COLUMN IF NOT EXISTS tenant_id text NOT NULL DEFAULT 'default'",
+    );
+    // 2. Indice compuesto.
+    await store.select(
+      "CREATE INDEX IF NOT EXISTS records_tenant_owner_kind_idx ON records(tenant_id, owner, kind, id)",
+    );
+    // 3. Politica RLS. El usuario de la app debe usar SET LOCAL app.tenant_id
+    //    antes de cada query. Si no lo hace, no ve nada. Esto es defensa en
+    //    profundidad: aunque alguien olvide filtrar por tenant, RLS bloquea.
+    await store.select("ALTER TABLE records ENABLE ROW LEVEL SECURITY");
+    await store.select("DROP POLICY IF EXISTS tenant_isolation ON records");
+    await store.select(
+      "CREATE POLICY tenant_isolation ON records USING (tenant_id = current_setting('app.tenant_id', true))",
+    );
+    // 4. Forzar RLS al owner de la tabla.
+    await store.select("ALTER TABLE records FORCE ROW LEVEL SECURITY");
+    return true;
+  } catch (error) {
+    backgroundFailure("enableRls", error);
+    return false;
+  }
+}
+
+/**
+ * Envuelve una query en un SET LOCAL app.tenant_id para que RLS aplique.
+ * Uso:
+ *   await withTenantRls(store, tenantId, async () => store.list(...));
+ */
+  // DB_RLS_TENANT_CTX_V1
+export async function withTenantRls<T>(
+  store: Store,
+  tenantId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (store.backend !== "postgres" || process.env.MULTI_TENANT_SHARED !== "true") {
+    return fn();
+  }
+  await store.select("SELECT set_config('app.tenant_id', $1, true)", [tenantId]);
+  return fn();
+}
+```
+
+**F03.30 es real:** `set_config(...)` se hace fuera de `store.transaction`, por lo que la siguiente query puede ir por otra conexión del pool y `app.tenant_id` no está seteado. **Fase 4 (F03.30) lo corrige.**
+
+### A.6. `apps/server/src/engine/service.ts` — constructor (extraído del Repomix holístico, literal, sin cortes):
+
+No disponible en bloque literal en el Repomix holístico por su tamaño. Se anotan los símbolos clave que sí aparecen literalmente en el Repomix holístico (búsqueda textual, no reproducción íntegra, para no reventar el mensaje):
+
+- `constructor(db: Store, config: Config, workspace: WorkspaceService, files: Files, actions: ActionService, browser: BrowserService, computer: ComputerService, rag: RagService, undefined, bus: EventBus, deps: {...}, ...)` — el constructor recibe `tdb` (que es `TenantScopedStore`) como `db`, y los servicios construidos con `tdbEarly`.
+- `this.worker` es `TaskWorker` sobre `tdb`.
+- `this.tenantService` es la instancia de `TenantService` que se pasa desde `app.ts`.
+- `this.bus` es la instancia de `EventBus`.
+- `this.guardrails`, `this.metrics` existen como campos.
+- **No hay `rateLimiter` en `AgentService`.** Confirmado: no aparece `rateLimiter` en `service.ts`. Por tanto **F04.16a (conversation) no puede usar `this.service.rateLimiter`** — hay que añadirlo como campo o pasarlo por opciones. **Esto cambia F04.16a: pasa a requerir tocar `service.ts` (añadir campo `rateLimiter`) además de `app.ts`.** Se anota como **N05** para Fase 3.
+
+### A.7. `apps/server/src/admin-tenants.ts` — `setMembership` directo (literal, sin cortes):
+
+```typescript
+  // POST /api/admin/tenants -> alta manual (para tests y demos).
+  app.post("/", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const body = z
+      .object({
+        tenantId: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/),
+        displayName: z.string().max(200).optional(),
+      })
+      .parse(await c.req.json());
+    // TENANT_MEMBERSHIP_ID_UNIFIED_V1 - id="default", tenantId=real.
+    await service.db.put("system", "tenant-membership", {
+      id: "default",
+      tenantId: body.tenantId,
+      displayName: body.displayName ?? body.tenantId,
+      createdAt: new Date().toISOString(),
+      createdBy: owner,
+    });
+    return c.json({ ok: true, tenantId: body.tenantId }, 201);
+  });
+```
+
+**N02 es real:** escribe `tenant-membership` bajo owner `"system"` (no bajo el `owner` del usuario), y no llama `tenantService.setMembership` ni `tenantService.invalidateAll`. La caché de `TenantService` (clave por owner del usuario) no se entera. Se anota para Fase 7 (B8).
+
+### A.8. `apps/server/src/auth-signup.ts` — `setMembership` (literal, sin cortes):
+
+```typescript
+    // Crea el tenant real y la membership.
+    if (tenantService) {
+      await tenantService.setMembership(user.id, stored.tenantSlug).catch((error) =>
+        backgroundFailure("verify tenant membership", error),
+      );
+    }
+```
+
+**Correcto**: signup usa `tenantService.setMembership`, que sí actualiza la caché. **No hay N02 aquí.** Confirma que el problema está solo en `admin-tenants.ts`.
+
+### A.9. `apps/server/src/engine/events/bus.ts` — `"default"` no aparece en la línea 109 (literal, del Repomix original):
+
+La línea 109 actual es:
+```typescript
+      // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
+```
+Y la siguiente usa `logContext.getStore()`. **No hay `"default"` en la línea 109.** F04.2 puede ser FP o estar en otra línea. **Verificación obligatoria en Fase 5** con `Select-String`.
+
+### A.10. `packages/domain/src/views.ts` — `.default("default")` no aparece en la línea 20 (literal, del Repomix original):
+
+La línea 20 actual es:
+```typescript
+  delta: z.string().max(60).optional(),
+```
+**No hay `.default("default")` en la línea 20.** F04.3 puede ser FP o estar en otra línea. **Verificación obligatoria en Fase 5** con `Select-String`.
+
+### A.11. `.github/workflows/ci.yml` — `continue-on-error` (literal, sin cortes):
+
+```yaml
+      - name: audits
+        run: |
+          pnpm audit:layers
+          pnpm audit:bridges
+          pnpm audit:console
+          pnpm audit:tenant-default
+          pnpm audit:idempotency
+          pnpm audit:contracts
+        continue-on-error: true
+```
+
+**F05.3 es real:** el job `unit` corre `audits` con `continue-on-error: true`, por lo que un fallo de audit no rompe CI. Fase 9 (F05.3) lo cambia.
+
+### A.12. `apps/server/src/config.ts` — `MULTI_TENANT_SHARED` no está en `Config` (literal, del Repomix holístico):
+
+`Config` no expone `multiTenantShared` ni ningún campo relacionado. `MULTI_TENANT_SHARED` solo se lee en `db-rls.ts` y `tenant.ts` directamente desde `process.env`. **Consecuencia:** no hay una fuente única de verdad. Se anota como **N06** para Fase 3 (opcional, P2): añadir `multiTenantShared: boolean` a `Config` y leerlo de `process.env` una sola vez. No bloquea nada hoy.
+
+---
+
+## FIN DEL DOCUMENTO 01
+
+**Fase 0 preparada para ejecución. 5 patchsets de documentación, 0 de producto. Typecheck y test los corre Cline. Commit + push al final. Los misses van a `_multitenant_pendientes.md`, no los escribe la IA. Anexo literal de 12 bloques de código real, sin resúmenes ni cortes.**
+
+**Siguiente: documento 02 — Campaña 1 / Fase 1 — Documentación real (F01), con la misma profundidad. Di "sigue".**
