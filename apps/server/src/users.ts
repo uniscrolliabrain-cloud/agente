@@ -26,6 +26,10 @@ export const userSchema = z.object({
   role: userRoleSchema.default("user"),
   setup: userSetupSchema.default(() => ({ sopIds: [], allowedTools: [], greeting: "" })),
   active: z.boolean().default(true),
+  // USER_AUTH_PROVIDER_ID_V1 - vinculo entre el sub del JWT y el User.id interno.
+  // Unico por indice atomico (B2). Backfill controlado (no por email).
+  // Sin JIT: sub sin User con authProviderId devuelve 401.
+  authProviderId: z.string().min(1).max(200).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -81,6 +85,16 @@ export class UserService {
     return found?.data ?? null;
   }
 
+  // USER_SERVICE_BY_AUTH_PROVIDER_ID_V1 - resuelve el User desde el sub del JWT.
+  // Sin cache por ahora. Se usa desde ActorService.resolve.
+  async getByAuthProviderId(authProviderId: string): Promise<User | null> {
+    const target = authProviderId.trim();
+    if (!target) return null;
+    const records = await this.db.list<UserRecord>("system", "users");
+    const found = records.find((r) => r.data.authProviderId === target);
+    return found?.data ?? null;
+  }
+
   async verifyCredentials(email: string, password: string): Promise<User | null> {
     const records = await this.db.list<UserRecord>("system", "users");
     const found = records.find((r) => r.data.email === email.toLowerCase().trim());
@@ -89,16 +103,35 @@ export class UserService {
     return ok ? found.data : null;
   }
 
+  // USER_AUTH_PROVIDER_ID_V1 - create acepta authProviderId opcional.
+  // B2 aplicada: unicidad atomica con insertIfAbsent sobre indice
+  // system/auth-provider-index/<authProviderId>. Si ya existe, 409.
   async create(input: {
     email: string;
     name: string;
     password: string;
     role?: "admin" | "user";
     setup?: Partial<z.infer<typeof userSetupSchema>>;
+    authProviderId?: string;
   }): Promise<User> {
     const email = input.email.toLowerCase().trim();
     if (await this.getByEmail(email))
       throw new AppError("Email ya registrado", 409, { email: "Ya existe un usuario con ese email" });
+
+    // B2 aplicada: unicidad atomica de authProviderId con insertIfAbsent.
+    // El indice se inserta antes del UserRecord. Si ya existia, 409.
+    if (input.authProviderId) {
+      const claimed = await this.db.insertIfAbsent("system", "auth-provider-index", {
+        id: input.authProviderId,
+        userId: null,
+        createdAt: new Date().toISOString(),
+      });
+      if (!claimed) {
+        throw new AppError("authProviderId ya vinculado a otro User", 409, {
+          authProviderId: "Ya existe un User con ese authProviderId",
+        });
+      }
+    }
 
     const now = new Date().toISOString();
     const user = userSchema.parse({
@@ -108,6 +141,7 @@ export class UserService {
       role: input.role ?? "user",
       setup: input.setup ?? {},
       active: true,
+      ...(input.authProviderId ? { authProviderId: input.authProviderId } : {}),
       createdAt: now,
       updatedAt: now,
     });

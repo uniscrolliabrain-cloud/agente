@@ -16,6 +16,9 @@ export const executionContextSchema = z.object({
   taskId: z.string().max(200).optional(),
   threadId: z.string().max(200).optional(),
   turnId: z.string().max(200).optional(),
+  // EXECUTION_CONTEXT_ACTOR_V1 - opcional en F1, obligatorio en F2.
+  actorId: z.string().max(200).optional(),
+  sessionId: z.string().max(200).optional(),
 });
 
 export type ExecutionRole = z.infer<typeof executionRoleSchema>;

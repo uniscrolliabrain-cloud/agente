@@ -15,10 +15,12 @@ import type {
 interface RegisteredPersona {
   persona: AgentPersona;
   stats: AgentStats;
+  flow?: import("../../../../../../packages/domain/src/flow.ts").Flow;
 }
 
 export class PersonaRegistry {
   private readonly byTenant = new Map<string, Map<string, RegisteredPersona>>();
+  constructor(private readonly actors?: import("../../actors/service.ts").ActorService) {}
 
   register(tenantId: string, persona: AgentPersona, stats: AgentStats): void {
     let tenantMap = this.byTenant.get(tenantId);
@@ -26,7 +28,10 @@ export class PersonaRegistry {
       tenantMap = new Map();
       this.byTenant.set(tenantId, tenantMap);
     }
-    tenantMap.set(persona.id, { persona, stats });
+    const flow = persona.reportsTo || persona.peers.length > 0
+      ? { peers: persona.peers.map((p) => ({ actorId: p, personaId: p, kind: "agent" as const, role: "agent" as const, tenantId })) }
+      : undefined;
+    tenantMap.set(persona.id, { persona, stats, ...(flow ? { flow } : {}) });
   }
 
   get(tenantId: string, personaId: string): RegisteredPersona | undefined {

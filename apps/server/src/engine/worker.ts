@@ -145,7 +145,7 @@ export class TaskWorker {
       await new Promise((r) => setTimeout(r, 10));
     }
   }
-  /** WORKER_CANCEL_PROPAGATE_V1 - cancelación del task hacia proveedores externos (LLM, Docker). */
+  /** WORKER_CANCEL_PROPAGATE_V1 - cancelaciÃ³n del task hacia proveedores externos (LLM, Docker). */
 
 
 
@@ -359,7 +359,12 @@ export class TaskWorker {
       if (!bus) return;
       await guard();
       const source: SystemEventSource = { kind: "task", id: taskId };
-      await bus.emit(owner, type, source, { taskId, ...payload });
+      // WORKER_REQUESTING_ACTOR_V1 - actorId = executingActorId.
+      // B5: fallback a owner se marca como legacy, no identidad demostrada.
+      const executingActorId = (task.assignedTo ?? (task.state as { roleId?: string } | undefined)?.roleId ?? owner);
+      const requestingActorId = (task.assignedBy ?? owner);
+      const compat = task.assignedTo || task.assignedBy ? "real" : "legacy";
+      await bus.emit(owner, type, source, { taskId, actorId: executingActorId, requestingActorId, compat, ...payload });
     };
     // B105
     // Asi un run se puede trazar a su rol, a su runtime efimero y a la entidad que toco.
@@ -528,7 +533,10 @@ export class TaskWorker {
       // que un fallo de la notificaci
       // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
       try {
-        await this.options.settled(owner, settled);
+        // WORKER_REQUESTING_ACTOR_V1 - settled recibe executing y requesting.
+        const _execAct = (settled.assignedTo ?? (settled.state as { roleId?: string } | undefined)?.roleId ?? owner);
+        const _reqAct = (settled.assignedBy ?? owner);
+        await this.options.settled(owner, settled, { executingActorId: _execAct, requestingActorId: _reqAct });
       } catch (error) {
         backgroundFailure("settled callback", error);
       }

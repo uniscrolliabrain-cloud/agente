@@ -87,6 +87,7 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
         values: skin.persona.values,
         peers: skin.persona.peers,
         reportsTo: skin.persona.reportsTo ?? null,
+        flow: (skin as { flow?: unknown }).flow ?? undefined,
         avatar: skin.persona.avatar ?? null,
         language: skin.persona.language,
       },

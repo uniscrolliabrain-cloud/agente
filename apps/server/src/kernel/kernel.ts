@@ -72,6 +72,7 @@ export class Kernel {
   }
 
   // KERNEL_OPEN_TURN_HOOK_V1
+  // KERNEL_ACTOR_PROPAGATE_V1 - actor.id = ctx.actorId. owner se mantiene.
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
@@ -84,7 +85,7 @@ export class Kernel {
       tenantId,
       owner: ctx.owner,
       action: "turn.opened",
-      actor: { kind: ctx.role, id: ctx.owner },
+      actor: { kind: ctx.role, id: ctx.actorId },
       payload: { turnId: turn.id, trigger, requestId: ctx.requestId },
     });
     return turn;
@@ -115,7 +116,7 @@ export class Kernel {
           tenantId,
           owner: ctx.owner,
           action: "turn.opened",
-          actor: { kind: ctx.role, id: ctx.owner },
+          actor: { kind: ctx.role, id: ctx.actorId },
           payload: {
             turnId: matching.id,
             trigger,
@@ -136,7 +137,7 @@ export class Kernel {
       tenantId,
       owner: ctx.owner,
       action: "turn.opened",
-      actor: { kind: ctx.role, id: ctx.owner },
+      actor: { kind: ctx.role, id: ctx.actorId },
       payload: {
         turnId: turn.id,
         parentTurnId,
@@ -238,7 +239,7 @@ export class Kernel {
       tenantId,
       owner: ctx.owner,
       action: "turn.closed",
-      actor: { kind: ctx.role, id: ctx.owner },
+      actor: { kind: ctx.role, id: ctx.actorId },
       payload: { turnId, reason, closedBy, requestId: ctx.requestId },
     });
     return turn;

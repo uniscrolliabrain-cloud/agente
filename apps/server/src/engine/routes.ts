@@ -75,6 +75,7 @@ const parseCsv = (csv: string): string[][] => {
 export function agentRoutes(
   service: AgentService,
   authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  assignments?: import("./assignments/service.ts").AssignmentService,
 ): Hono<{ Variables: { owner: string } }> {
   const app = new Hono<{ Variables: { owner: string } }>();
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
@@ -236,9 +237,14 @@ export function agentRoutes(
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks/:id/reassign", async (c) => {
     const body = z
-      .object({ roleId: z.string().max(200).optional() })
+      .object({ roleId: z.string().max(200).optional(), assignedTo: z.string().max(200).optional() })
       .parse(await c.req.json());
-    if (!body.roleId) throw new AppError("roleId required", 422);
+    const target = body.assignedTo ?? body.roleId;
+    if (!target) throw new AppError("roleId or assignedTo required", 422);
+    if (assignments) {
+      const ctx = c.get("ctx");
+      return c.json(await assignments.reassign(ctx, "task", c.req.param("id"), target));
+    }
     const updated = await service.db.compareAndSwap<{
       id: string;
       assignedTo?: string;
@@ -248,7 +254,7 @@ export function agentRoutes(
       "tasks",
       c.req.param("id"),
       {},
-      { assignedTo: body.roleId, state: { roleId: body.roleId } },
+      { assignedTo: target, state: { roleId: body.roleId ?? target } },
     );
     if (!updated) throw new AppError("Task not found", 404);
     return c.json(updated);
@@ -267,6 +273,7 @@ export function agentRoutes(
         c.req.param("id"),
         body.toUserId,
         body.reason,
+      c.get("ctx"),
       ),
     );
   });

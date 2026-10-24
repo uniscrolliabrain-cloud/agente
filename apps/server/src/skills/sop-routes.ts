@@ -78,6 +78,8 @@ export function sopRoutes(
         input: { sopId: sop.id, ...userInput, trigger: { type: sop.trigger.type, forced } },
       },
       idempotencyKey ? `sop-api:${sop.id}:${idempotencyKey}` : undefined,
+      false,
+      c.get("ctx"),
     );
     return c.json(task, 201);
   });

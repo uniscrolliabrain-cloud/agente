@@ -49,6 +49,7 @@ export class ActionService {
     private readonly options: Options,
     bus?: EventBus,
     policy?: PolicyEngine,
+    private readonly assignments?: import("./engine/assignments/service.ts").AssignmentService,
   ) {
     this.bus = bus;
     this.policy = policy;
@@ -126,6 +127,7 @@ export class ActionService {
     raw: unknown,
     idempotencyKey?: string,
     taskId?: string,
+    ctx?: import("./engine/authz/pdp.ts").PolicyContext,
   ): Promise<ActionProposal> {
     const id =
       idempotencyKey === undefined
@@ -205,6 +207,7 @@ export class ActionService {
     hash: string,
     decision: "approve" | "deny",
     userId?: string,
+    ctx?: import("./engine/authz/pdp.ts").PolicyContext,
   ): Promise<ActionProposal> {
     // ACTION_SERVICE_DECIDE_USER_ID_V1
     const proposal = await this.db.get<ActionProposal>(owner, "actions", id);

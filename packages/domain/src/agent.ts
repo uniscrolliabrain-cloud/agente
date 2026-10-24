@@ -92,6 +92,11 @@ export interface Goal {
   category: string;
   status: "active" | "paused" | "completed";
   milestones: { id: string; title: string; done: boolean }[];
+  // GOAL_ASSIGNED_BY_V1 - delegante y ejecutor. Goal legacy (agent.ts), no goal.ts Zod (Business OS).
+  assignedBy?: string;
+  assignedTo?: string;
+  // GOAL_TIMESTAMPS_V1 - timestamps para Assignment.updatedAt.
+  updatedAt?: string;
   createdAt: string;
 }
 export interface Monitor {
@@ -107,6 +112,11 @@ export interface Monitor {
   lastCheckedAt?: string;
   lastValue?: string;
   lastHash?: string;
+  // MONITOR_ASSIGNED_BY_V1 - delegante. Separado de assignedTo (ejecutor).
+  assignedBy?: string;
+  // MONITOR_TIMESTAMPS_V1 - timestamps para Assignment.updatedAt.
+  createdAt?: string;
+  updatedAt?: string;
   error?: string;
   checks: number;
 }

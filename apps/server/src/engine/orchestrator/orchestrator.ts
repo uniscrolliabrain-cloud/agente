@@ -26,7 +26,7 @@ export interface OrchestratorDeps {
   context: {
     assemble(
       owner: string,
-      input: { roleId: string; entityId?: string; query: string },
+      input: { roleId: string; entityId?: string; query: string; actorId?: string; sessionId?: string },
     ): Promise<Record<string, unknown>>;
   };
   capabilities: { list(filter?: { tag?: string }): Promise<Array<{ id: string; kind: string }>> };
@@ -65,9 +65,12 @@ export class BusinessOSOrchestrator {
       };
     }
 
+    // ORCHESTRATOR_ACTOR_PROPAGATE_V1 - propaga actorId y sessionId si estan.
     const context = await this.deps.context.assemble(ctx.owner, {
       roleId: ctx.roleId ?? "default",
       query: goal.description || goal.title,
+      ...(ctx.actorId ? { actorId: ctx.actorId } : {}),
+      ...(ctx.sessionId ? { sessionId: ctx.sessionId } : {}),
     });
 
     const capabilities = await this.deps.capabilities.list();
@@ -80,7 +83,7 @@ export class BusinessOSOrchestrator {
     }
     const execution = await this.deps.executor.execute(ctx, plan);
 
-    // Por ahora sintetizamos un Outcome simple desde la ejecución.
+    // Por ahora sintetizamos un Outcome simple desde la ejecuciÃ³n.
     const outcome: import("../../../../../packages/domain/src/outcome.ts").Outcome = {
       status: execution.status === "succeeded" ? "achieved" : "failed",
       summary: `Ejecutados ${execution.steps.length} pasos`,
