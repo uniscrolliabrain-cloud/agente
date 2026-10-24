@@ -1,0 +1,25 @@
+apps/server/src/db-tenant.ts:81:  async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<{ owner: string; value: T }[]> {
+apps/server/src/db-tenant.ts:82:    return this.store.scanByStatus<T>(kind, statuses, limit);
+apps/server/src/db-tenant.ts:85:  async scanByStatusWithCursor<T>(
+apps/server/src/db-tenant.ts:92:    return this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId);
+apps/server/src/db.ts:185:  async scanByStatus<T>(
+apps/server/src/db.ts:204:  async scanByStatusWithCursor<T>(
+apps/server/src/engine/service.ts:278:      settled: (owner, task) => this.publishOutcome(owner, task),
+apps/server/src/engine/service.ts:295:    const rows = await this.db.scanByStatus<AgentTask>("tasks", ["running"], 5000);
+apps/server/src/engine/service.ts:345:      // Use scanByStatus for bounded passes: only non-terminal tasks need recovery.
+apps/server/src/engine/service.ts:346:      // MAINTAIN_TASKS_PAGE_V1 - paginar scanByStatus. Antes cargaba TODAS
+apps/server/src/engine/service.ts:352:      const pendingActions = await this.db.scanByStatus<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
+apps/server/src/engine/service.ts:388:        await this.publishOutcome(owner, value).catch((error) =>
+apps/server/src/engine/service.ts:392:      const monitorPage = await this.db.scanByStatus<Monitor>("monitors", ["active"], 500);
+apps/server/src/engine/service.ts:444:      for (const { owner, value } of await this.db.scanByStatus<Idea>("ideas", ["accepted"], 200))
+apps/server/src/engine/service.ts:672:    // para filtrar 5. Con scanByStatus el trabajo lo hace SQL.
+apps/server/src/engine/service.ts:675:      await this.db.scanByStatus<ActionProposal>("actions", ["awaiting_review"], 20)
+apps/server/src/engine/service.ts:681:      await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 50)
+apps/server/src/engine/service.ts:1857:    const failed = await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 200);
+apps/server/src/engine/service.ts:1899:    const page = await this.db.scanByStatusWithCursor<AgentTask>(
+apps/server/src/engine/service.ts:1907:      await this.publishOutcome(record.owner, record.value).catch((error) =>
+apps/server/src/engine/service.ts:1929:    const page = await this.db.scanByStatusWithCursor<AgentTask>(
+apps/server/src/engine/service.ts:1937:      await this.publishOutcome(record.owner, record.value).catch((error) =>
+apps/server/src/engine/service.ts:1952:  private async publishOutcome(owner: string, saved: AgentTask) {
+apps/server/src/engine/worker.ts:83:  // Con scanByStatus solo cargamos los estados que este tick procesa.
+apps/server/src/engine/worker.ts:85:  const records = await this.db.scanByStatus<AgentTask>(

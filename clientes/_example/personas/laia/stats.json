@@ -1,9 +1,0 @@
-{
-  "level": 7,
-  "archetype": "assistant",
-  "totalTasks": 0,
-  "precision": 0.95,
-  "avgTimeMs": 8000,
-  "uptime": 0.99,
-  "status": "online"
-}

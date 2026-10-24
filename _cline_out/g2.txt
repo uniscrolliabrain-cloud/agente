@@ -1,0 +1,425 @@
+✖ agent API requires a session and reports the actual worker state (181518.2596ms)
+✖ the main conversation thread survives reopening and concurrent initialization (10.118ms)
+✖ task detail and controls stay scoped to the authenticated owner (1.2274ms)
+✖ agent request validation rejects malformed input with useful JSON errors (0.8919ms)
+✖ goal updates validate milestones and pausing a goal pauses its task (0.684ms)
+✖ memories can be edited and forgotten while identity changes persist (0.6026ms)
+✖ idea dismissal survives refresh and concurrent acceptance creates one goal and task (0.6897ms)
+✖ sample monitor saves its baseline and deduplicates notifications for repeated changes (1.2237ms)
+✖ live mode rejects sample sources and hides the fixture mutation endpoint (2.2676ms)
+✖ API protects private data and rejects unrelated web origins (78271.5797ms)
+✖ sample workspace serves a real PDF and filling creates a new version (23.1179ms)
+✖ reviewed sample email persists a receipt, then revocation blocks another proposal (2.4645ms)
+✖ missing browser setup is explicit rather than a fictional browser session (0.732ms)
+✖ calendar ranges and complete sample mail threads survive navigation (0.7327ms)
+✖ sample agent streams actual AG-UI events without a model key (1.8807ms)
+✖ guided document delegation streams a rich tool result bound to its saved task (2.5994ms)
+✔ todo SystemEventType tiene schema y un payload minimo valido (297.5604ms)
+✔ EventBus.emit no lanza con ningun tipo del enum (22059.0163ms)
+✔ todo SystemEventType del enum aparece en algun bus.emit del repo (16577.2541ms)
+✖ CopilotKit model worker executes server tools and persists the confirmed outcome (69310.7277ms)
+✔ records de un tenant no son visibles desde otro (21541.5439ms)
+✔ scanByStatus no mezcla tenants (11703.2123ms)
+✔ TenantScopedStore aisla por tenantId:owner (11449.212ms)
+✖ document job runs without a client, waits for review, and resumes from its receipt (180506.2805ms)
+✖ ideas ignore sent replies while retaining unfinished incoming requests (14.8274ms)
+✖ cancelling a task denies its pending action (1.7921ms)
+✖ failed page checks back off, expose the error, and pause after repeated failures (1.245ms)
+✖ dismissal racing acceptance never creates work for a dismissed idea (1.0309ms)
+✖ C:\Users\Alfonso\Desktop\git hub repos\agente\tests\workflows.test.ts (2.0519ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 6
+ℹ fail 23
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 265100.1126
+
+✖ failing tests:
+
+test at tests\agent-api.test.ts:62:1
+✖ agent API requires a session and reports the actual worker state (181518.2596ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:80:1
+✖ the main conversation thread survives reopening and concurrent initialization (10.118ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:103:1
+✖ task detail and controls stay scoped to the authenticated owner (1.2274ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:140:1
+✖ agent request validation rejects malformed input with useful JSON errors (0.8919ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:171:1
+✖ goal updates validate milestones and pausing a goal pauses its task (0.684ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:189:1
+✖ memories can be edited and forgotten while identity changes persist (0.6026ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:227:1
+✖ idea dismissal survives refresh and concurrent acceptance creates one goal and task (0.6897ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:255:1
+✖ sample monitor saves its baseline and deduplicates notifications for repeated changes (1.2237ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\agent-api.test.ts:318:1
+✖ live mode rejects sample sources and hides the fixture mutation endpoint (2.2676ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:49:1
+✖ API protects private data and rejects unrelated web origins (78271.5797ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:60:1
+✖ sample workspace serves a real PDF and filling creates a new version (23.1179ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:90:1
+✖ reviewed sample email persists a receipt, then revocation blocks another proposal (2.4645ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:130:1
+✖ missing browser setup is explicit rather than a fictional browser session (0.732ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:139:1
+✖ calendar ranges and complete sample mail threads survive navigation (0.7327ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:179:1
+✖ sample agent streams actual AG-UI events without a model key (1.8807ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\api.test.ts:193:1
+✖ guided document delegation streams a rich tool result bound to its saved task (2.5994ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\model-worker.test.ts:12:1
+✖ CopilotKit model worker executes server tools and persists the confirmed outcome (69310.7277ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\workflows.test.ts:65:1
+✖ document job runs without a client, waits for review, and resumes from its receipt (180506.2805ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\workflows.test.ts:100:1
+✖ ideas ignore sent replies while retaining unfinished incoming requests (14.8274ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\workflows.test.ts:126:1
+✖ cancelling a task denies its pending action (1.7921ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\workflows.test.ts:137:1
+✖ failed page checks back off, expose the error, and pause after repeated failures (1.245ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\workflows.test.ts:160:1
+✖ dismissal racing acceptance never creates work for a dismissed idea (1.0309ms)
+  Error [ERR_MODULE_NOT_FOUND]: Cannot find module 'C:\Users\Alfonso\Desktop\git hub repos\agente\apps\packages\domain\src\signup.ts' imported from C:\Users\Alfonso\Desktop\git hub repos\agente\apps\server\src\auth-signup.ts
+      at finalizeResolution (node:internal/modules/esm/resolve:271:11)
+      at moduleResolve (node:internal/modules/esm/resolve:865:10)
+      at defaultResolve (node:internal/modules/esm/resolve:992:11)
+      at #cachedDefaultResolve (node:internal/modules/esm/loader:701:20)
+      at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:721:38)
+      at nextStep (node:internal/modules/customization_hooks:189:26)
+      at resolveBaseSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:11092)
+      at resolveDirectorySync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:12398)
+      at resolveTsPathsSync (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:13605)
+      at resolve (file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/node_modules/.pnpm/tsx@4.23.15/node_modules/tsx/dist/register-nyXW-TH3.mjs:2:16832) {
+    code: 'ERR_MODULE_NOT_FOUND',
+    url: 'file:///C:/Users/Alfonso/Desktop/git%20hub%20repos/agente/apps/packages/domain/src/signup.ts'
+  }
+
+test at tests\workflows.test.ts:28:1
+✖ C:\Users\Alfonso\Desktop\git hub repos\agente\tests\workflows.test.ts (2.0519ms)
+  TypeError: Cannot read properties of undefined (reading 'agent')
+      at TestContext.<anonymous> (C:\Users\Alfonso\Desktop\git hub repos\agente\tests\workflows.test.ts:29:16)
+      at TestHook.runInAsyncScope (node:async_hooks:227:14)
+      at TestHook.run (node:internal/test_runner/test:1325:25)
+      at TestHook.run (node:internal/test_runner/test:1669:18)
+      at TestHook.run (node:internal/util:581:20)
+      at Test.runHook (node:internal/test_runner/test:1212:20)
+      at after (node:internal/test_runner/test:1265:20)
+      at Test.run (node:internal/test_runner/test:1351:13)

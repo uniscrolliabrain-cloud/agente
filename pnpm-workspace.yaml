@@ -1,7 +1,0 @@
-packages:
-  - "apps/*"
-  - "packages/*"
-  - "workspaces/*"
-allowBuilds:
-  '@biomejs/biome': false
-  esbuild: false

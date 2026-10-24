@@ -1,0 +1,5 @@
+apps/server/src/auth-signup.ts(13,8): error TS2307: Cannot find module '../../packages/domain/src/signup.ts' or its corresponding type declarations.
+apps/server/src/auth-signup.ts(82,27): error TS2552: Cannot find name 'verifyEmailTemplate'. Did you mean 'emailTemplate'?
+apps/server/src/auth-signup.ts(87,26): error TS2304: Cannot find name 'sendEmail'.
+apps/server/src/engine/service.ts(383,38): error TS2304: Cannot find name 'taskStatusPage'.
+tests/load/fifty-tenants.test.ts(9,33): error TS2307: Cannot find module '../../apps/server/src/engine/schedule/service.ts' or its corresponding type declarations.

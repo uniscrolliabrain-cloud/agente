@@ -1,0 +1,20 @@
+apps/server/src/admin-routes.ts(162,23): error TS2304: Cannot find name 'createHash'.
+apps/server/src/app.ts(549,19): error TS2554: Expected 6 arguments, but got 4.
+apps/server/src/auth-signup.ts(82,27): error TS2552: Cannot find name 'verifyEmailTemplate'. Did you mean 'emailTemplate'?
+apps/server/src/auth-signup.ts(87,26): error TS2304: Cannot find name 'sendEmail'.
+apps/server/src/browser.ts(243,37): error TS2554: Expected 6 arguments, but got 4.
+apps/server/src/computer-routes.ts(47,31): error TS2554: Expected 6 arguments, but got 4.
+apps/server/src/computer-tools.ts(105,22): error TS2554: Expected 6 arguments, but got 4.
+apps/server/src/engine/form-builder.ts(6,46): error TS2307: Cannot find module '../../../packages/domain/src/form-spec.ts' or its corresponding type declarations.
+apps/server/src/engine/provenance.ts(4,37): error TS2307: Cannot find module '../../../packages/domain/src/business.ts' or its corresponding type declarations.
+apps/server/src/engine/provenance.ts(5,34): error TS2307: Cannot find module '../../../packages/domain/src/agent.ts' or its corresponding type declarations.
+apps/server/src/engine/provenance.ts(6,41): error TS2307: Cannot find module '../../../packages/domain/src/context-chips.ts' or its corresponding type declarations.
+apps/server/src/engine/service.ts(387,38): error TS2304: Cannot find name 'taskStatusPage'.
+apps/server/src/engine/verification/llm-verifier.ts(125,5): error TS2783: 'tenantId' is specified more than once, so this usage will be overwritten.
+apps/server/src/files.ts(85,5): error TS1016: A required parameter cannot follow an optional parameter.
+apps/server/src/files.ts(185,60): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/server/src/files.ts(200,17): error TS2554: Expected 6 arguments, but got 5.
+apps/server/src/workspace.ts(148,35): error TS2554: Expected 6 arguments, but got 4.
+apps/server/src/workspace.ts(542,35): error TS2554: Expected 6 arguments, but got 4.
+tests/load/fifty-tenants.test.ts(9,33): error TS2307: Cannot find module '../../apps/server/src/engine/schedule/service.ts' or its corresponding type declarations.

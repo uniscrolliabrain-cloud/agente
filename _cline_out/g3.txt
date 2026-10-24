@@ -1,0 +1,14 @@
+✔ todo SystemEventType tiene schema y un payload minimo valido (245.6595ms)
+✔ EventBus.emit no lanza con ningun tipo del enum (14885.2181ms)
+✔ todo SystemEventType del enum aparece en algun bus.emit del repo (1273.167ms)
+✔ records de un tenant no son visibles desde otro (14414.4539ms)
+✔ scanByStatus no mezcla tenants (8685.8419ms)
+✔ TenantScopedStore aisla por tenantId:owner (7767.882ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 36015.6646

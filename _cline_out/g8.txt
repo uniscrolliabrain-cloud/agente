@@ -1,0 +1,127 @@
+agent.ts
+business-schema.ts
+business.ts
+capability.ts
+computer.ts
+context-chips.ts
+entity-resolution.ts
+errors.ts
+execution-context.ts
+form-spec.ts
+goal.ts
+index.ts
+kernel.ts
+learning.ts
+messaging.ts
+outcome.ts
+plan.ts
+policy-context.ts
+reaction.ts
+runtime.ts
+signup.ts
+sop.ts
+truth.ts
+verification.ts
+workspace-spec.ts
+---GREP--- 
+apps/computer/workspace-template/skills/facturacion/SKILL.md:6:(ver packages/domain/src/sop.ts).
+apps/server/src/actions.ts:8:} from "../../../packages/domain/src/index.ts";
+apps/server/src/actions.ts:12:import type { AgentRole } from "../../../packages/domain/src/agent.ts";
+apps/server/src/admin-clients.ts:8:import type { AgentRole, AgentTask } from "../../../packages/domain/src/agent.ts";
+apps/server/src/admin-clients.ts:9:import type { SOP } from "../../../packages/domain/src/sop.ts";
+apps/server/src/admin-tenants.ts:5:import type { AgentRole, AgentTask } from "../../packages/domain/src/agent.ts";
+apps/server/src/app.ts:13:import { emailDraftSchema, proposalSchema } from "../../../packages/domain/src/index.ts";
+apps/server/src/auth-signup.ts:13:} from "../../packages/domain/src/signup.ts";
+apps/server/src/browser.ts:3:import type { BrowserSession } from "../../../packages/domain/src/index.ts";
+apps/server/src/business-routes.ts:8:import { businessEntitySchema } from "../../../packages/domain/src/business.ts";
+apps/server/src/computer.ts:9:} from "../../../packages/domain/src/computer.ts";
+apps/server/src/engine/agents/governance.ts:1:import type { AgentRole } from "../../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/business/graph.ts:10:} from "../../../../../packages/domain/src/business.ts";
+apps/server/src/engine/business/resolver.ts:4:import type { BusinessEntity } from "../../../../../packages/domain/src/business.ts";
+apps/server/src/engine/business/truth-resolver.ts:3:import type { TruthCandidate, TruthResolution } from "../../../../../packages/domain/src/truth.ts";
+apps/server/src/engine/business/truth.ts:2:import type { BusinessEntity } from "../../../../../packages/domain/src/business.ts";
+apps/server/src/engine/business/truth.ts:38:  resolveField(field: string, candidates: import("../../../../../packages/domain/src/truth.ts").TruthCandidate[]) {
+apps/server/src/engine/capabilities/registry.ts:3:import type { CapabilityContract } from "../../../../../packages/domain/src/capability.ts";
+apps/server/src/engine/context/engine.ts:1:import type { AgentMemory, AgentRole, MemoryCategory } from "../../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/context/engine.ts:2:import type { BusinessEntity, BusinessRelation } from "../../../../../packages/domain/src/business.ts";
+apps/server/src/engine/conversation.ts:12:} from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/execution/capability-runner.ts:3:import type { ExecutionContext, PlanStep } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/execution/executor.ts:4:import type { ExecutionContext, Plan } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/execution/executor.ts:14:    step: import("../../../../../packages/domain/src/plan.ts").PlanStep,
+apps/server/src/engine/execution/tool-executors.ts:6:import type { ExecutionContext } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/execution/tool-executors.ts:47:    const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
+apps/server/src/engine/execution/tool-executors.ts:89:    const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
+apps/server/src/engine/execution/tool-executors.ts:106:    const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
+apps/server/src/engine/form-builder.ts:6:import type { FormFieldSpec, FormSpec } from "../../../packages/domain/src/form-spec.ts";
+apps/server/src/engine/handoff/service.ts:6:import type { Handoff } from "../../../../../packages/domain/src/messaging.ts";
+apps/server/src/engine/learning.ts:1:import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/learning/observer.ts:10:} from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/memory.ts:4:import type { AgentMemory, MemoryCategory, Project } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/model.ts:7:import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/model.ts:8:import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
+apps/server/src/engine/model.ts:14:import type { AgentRole } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/orchestrator/orchestrator.ts:8:} from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/orchestrator/orchestrator.ts:22:      plan: import("../../../../../packages/domain/src/plan.ts").Plan;
+apps/server/src/engine/orchestrator/orchestrator.ts:23:      outcome: import("../../../../../packages/domain/src/outcome.ts").Outcome;
+apps/server/src/engine/orchestrator/orchestrator.ts:33:  planner: { plan(input: { goal: Goal; context: Record<string, unknown>; capabilities: Array<{ id: string; kind: string }> }): Promise<import("../../../../../packages/domain/src/plan.ts").Plan> };
+apps/server/src/engine/orchestrator/orchestrator.ts:37:      plan: import("../../../../../packages/domain/src/plan.ts").Plan,
+apps/server/src/engine/orchestrator/orchestrator.ts:41:    verify(goal: Goal, outcome: import("../../../../../packages/domain/src/outcome.ts").Outcome): Promise<import("../../../../../packages/domain/src/verification.ts").VerificationResult>;
+apps/server/src/engine/orchestrator/orchestrator.ts:46:      previousPlan: import("../../../../../packages/domain/src/plan.ts").Plan;
+apps/server/src/engine/orchestrator/orchestrator.ts:49:    }): Promise<import("../../../../../packages/domain/src/plan.ts").Plan | null>;
+apps/server/src/engine/orchestrator/orchestrator.ts:84:    const outcome: import("../../../../../packages/domain/src/outcome.ts").Outcome = {
+apps/server/src/engine/planner/llm-planner.ts:9:import type { Goal, Plan } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/planner/planner.ts:4:import type { Goal, Plan } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/planner/replanner.ts:8:import type { Goal, Plan } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/policy/engine.ts:44:    ctx: import("../../../../../packages/domain/src/policy-context.ts").PolicyContext,
+apps/server/src/engine/provenance.ts:4:import type { BusinessEntity } from "../../../packages/domain/src/business.ts";
+apps/server/src/engine/provenance.ts:5:import type { AgentMemory } from "../../../packages/domain/src/agent.ts";
+apps/server/src/engine/provenance.ts:6:import type { ProvenanceChipKind } from "../../../packages/domain/src/context-chips.ts";
+apps/server/src/engine/reactions/engine.ts:6:import type { ReactionDefinition } from "../../../../../packages/domain/src/reaction.ts";
+apps/server/src/engine/reactions/engine.ts:15:      ctx: import("../../../../../packages/domain/src/index.ts").ExecutionContext,
+apps/server/src/engine/reactions/executor.ts:3:import type { ExecutionContext } from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/routes.ts:8:} from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/routes.ts:10:import { agentRoleSchema } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/routes.ts:125:    const goal = await service.db.get<import("../../../../packages/domain/src/goal.ts").Goal>(owner, "goals", goalId);
+apps/server/src/engine/service.ts:33:} from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/service.ts:40:} from "../../../../packages/domain/src/index.ts";
+apps/server/src/engine/service.ts:106:import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
+apps/server/src/engine/service.ts:109:import type { SOP } from "../../../../packages/domain/src/sop.ts";
+apps/server/src/engine/sop-executor.ts:11:import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/sop-executor.ts:12:import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
+apps/server/src/engine/sop-executor.ts:13:import { sopSchema, type SOP, type SOPStep } from "../../../../packages/domain/src/sop.ts";
+apps/server/src/engine/sop-executor.ts:23:import type { KernelContext, KernelTurn } from "../../../../packages/domain/src/kernel.ts";
+apps/server/src/engine/sop-executor.ts:501:            .get<import("../../../../packages/domain/src/agent.ts").AgentRole>(
+apps/server/src/engine/sop-triggers.ts:1:import type { SOP } from "../../../../packages/domain/src/sop.ts";
+apps/server/src/engine/verification/disagreement.ts:6:import type { VerificationResult } from "../../../../../packages/domain/src/verification.ts";
+apps/server/src/engine/verification/llm-verifier.ts:15:} from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/verification/verifier.ts:7:} from "../../../../../packages/domain/src/index.ts";
+apps/server/src/engine/views/resolver.ts:4:import type { ViewSpec } from "../../../../../packages/domain/src/workspace-spec.ts";
+apps/server/src/engine/worker.ts:5:import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
+apps/server/src/engine/workspace/generator.ts:7:} from "../../../../../packages/domain/src/workspace-spec.ts";
+apps/server/src/errors.ts:1:export { AppError } from "../../../packages/domain/src/errors.ts";
+apps/server/src/files.ts:4:import type { Artifact } from "../../../packages/domain/src/index.ts";
+apps/server/src/metrics-exporter.ts:6:import type { AgentTask, AgentRole } from "../../../packages/domain/src/agent.ts";
+apps/server/src/projects-routes.ts:10:} from "../../../packages/domain/src/agent.ts";
+apps/server/src/skills/sop-routes.ts:2:import { sopSchema, type SOP } from "../../../../packages/domain/src/sop.ts";
+apps/server/src/workspace.ts:12:} from "../../../packages/domain/src/index.ts";
+apps/web/src/components/ProvenanceBadge.tsx:3:import type { ProvenanceChipKind } from "../../../../packages/domain/src/context-chips.ts";
+apps/web/src/forms/FormRenderer.tsx:5:import type { ProvenanceChipKind } from "../../../../packages/domain/src/context-chips.ts";
+tests/actions.test.ts:5:import { type ActionProposal, eventDraftSchema } from "../packages/domain/src/index.ts";
+tests/agent-api.test.ts:18:} from "../packages/domain/src/agent.ts";
+tests/api.test.ts:13:import type { ActionProposal, Artifact, Workspace } from "../packages/domain/src/index.ts";
+tests/auth.test.ts:9:import type { Workspace } from "../packages/domain/src/index.ts";
+tests/browser.test.ts:17:import type { BrowserSession } from "../packages/domain/src/index.ts";
+tests/business-os-contracts.test.ts:7:  const { goalSchema } = await import("../packages/domain/src/goal.ts");
+tests/business-os-contracts.test.ts:26:  const { outcomeSchema } = await import("../packages/domain/src/outcome.ts");
+tests/business-os-contracts.test.ts:38:  const { capabilityContractSchema } = await import("../packages/domain/src/capability.ts");
+tests/business-os-contracts.test.ts:60:  const { executionContextSchema } = await import("../packages/domain/src/execution-context.ts");
+tests/engine.test.ts:9:import type { AgentTask } from "../packages/domain/src/agent.ts";
+tests/google.test.ts:3:import { emailDraftSchema, eventDraftSchema } from "../packages/domain/src/index.ts";
+tests/model-worker.test.ts:8:import type { ActionProposal } from "../packages/domain/src/index.ts";
+tests/policy-engine.test.ts:38:  } as unknown as import("../packages/domain/src/agent.ts").AgentRole;
+tests/policy-engine.test.ts:47:  const role = { id: "comercial" } as unknown as import("../packages/domain/src/agent.ts").AgentRole;
+tests/sop-contract.test.ts:3:import { createTaskSchema } from "../packages/domain/src/agent.ts";
+tests/sop-contract.test.ts:4:import { sopSchema } from "../packages/domain/src/sop.ts";
+tests/sop-triggers.test.ts:6:import { sopStepSchema } from "../packages/domain/src/sop.ts";
+tests/workflows.test.ts:8:import type { AgentNotification, AgentTask, Idea, Monitor } from "../packages/domain/src/agent.ts";
+tests/workflows.test.ts:9:import type { ActionProposal } from "../packages/domain/src/index.ts";
