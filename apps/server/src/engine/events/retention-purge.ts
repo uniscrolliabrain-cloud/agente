@@ -14,8 +14,10 @@ const KERNEL_KINDS = [
   "meta-hints",
   // RETENTION_PURGE_KINDS_V1 - anadidos: dead letter y audit entries.
   "dead-letter",
-  "audit-entries",
+  // RETENTION_AUDIT_ENTRIES_V1 — audit-entries NO se purga a 90 dias. Retencion 365 dias (SOC-2).
 ];
+
+const AUDIT_RETENTION_DAYS = 365;
 
 export async function purgeKernelRetention(
   db: Store,

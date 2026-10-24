@@ -49,6 +49,18 @@ export async function withWrite<T extends Record<string, unknown>>(
   } else {
     await deps.db.put(owner, kind, next);
   }
+  // WITH_WRITE_RECORD_HISTORY_V1 — escribe RecordHistory si activity no cubre.
+  if (deps.recordHistory && deps.recordHistoryEnabled) {
+    await deps.recordHistory.record({
+      tenantId: ctx.tenantId,
+      resource: kind,
+      resourceId: id,
+      actorId: ctx.actor.id,
+      before: current as Record<string, unknown>,
+      after: next as Record<string, unknown>,
+      timestamp: new Date().toISOString(),
+    });
+  }
   if (deps.audit) {
     await deps.audit.append({
       tenantId: ctx.tenantId,

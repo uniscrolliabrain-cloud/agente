@@ -413,11 +413,13 @@ export class ActionService {
    * por cada transiciÃƒÂ³n de estado de la propuesta.
    * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
    */
-  private async audit(owner: string, action: ActionProposal, kind: string, detail: string) {
+  private async audit(owner: string, action: ActionProposal, kind: string, detail: string, actorId?: string) {
     await this.db.put(owner, "action-audit", {
       id: `audit-${action.id}-${Date.now()}`,
       actionId: action.id,
       taskId: action.taskId ?? null,
+      // ACTIONS_ACTOR_ID_V1 — actorId de quien ejecuta la transición.
+      actorId: actorId ?? null,
       kind,
       detail: detail.slice(0, 2000),
       status: action.status,

@@ -42,7 +42,17 @@ export async function withRead<T extends Record<string, unknown>>(
         },
       });
     }
-    throw new AppError("Forbidden", 403);
+      // WITH_READ_AUDIT_TRAIL_V1 — registra denegación de campo sensible.
+      if (field && (classification === "restricted" || classification === "secret")) {
+        await deps.audit?.append({
+          tenantId: ctx.tenantId,
+          owner: ctx.actor.id,
+          action: "audit.read.denied",
+          actor: { kind: ctx.actor.kind, id: ctx.actor.id },
+          payload: { resource: kind, field, classification, allowed: false, timestamp: new Date().toISOString() },
+        });
+      }
+      throw new AppError("Forbidden", 403);
   }
   const filtered = await deps.fieldFilter.filter(ctx, kind, record, target);
   return fn(filtered as T);

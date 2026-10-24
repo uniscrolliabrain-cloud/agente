@@ -43,6 +43,9 @@ export interface Config {
   workerUrl?: string;
   workerToken?: string;
   taskWorkerEnabled?: boolean;
+  // CONFIG_AUDIT_V1 — trazabilidad (F6).
+  auditTrailEnabled: boolean;
+  recordHistoryEnabled: boolean;
   computerEnabled?: boolean;
   computerImage?: string;
   computerDeploymentId?: string;
@@ -196,6 +199,9 @@ export function readConfig(): Config {
     authzEnabled: mode === "sample" ? process.env.AUTHZ_ENABLED !== "false" : true,
     fieldClassificationEnabled: mode === "sample" ? process.env.FIELD_CLASSIFICATION_ENABLED !== "false" : true,
     policyCacheTtlMs: Number(process.env.POLICY_CACHE_TTL_MS ?? "60000") || 60000,
+    // CONFIG_AUDIT_V1 — trazabilidad (F6).
+    auditTrailEnabled: process.env.AUDIT_TRAIL_ENABLED !== "false",
+    recordHistoryEnabled: process.env.RECORD_HISTORY_ENABLED === "true",
   };
   if (
     mode === "live" &&
