@@ -250,4 +250,6 @@ export * from "./jwt.ts";
 // DOMAIN_INDEX_ASSIGNMENT_V1 - exporta assignment.ts (F3.1) y flow.ts (F3.2).
 export * from "./assignment.ts";
 export * from "./flow.ts";
+// DOMAIN_INDEX_CONFLICT_V1 - exporta conflict.ts (F4).
+export * from "./conflict.ts";
 

@@ -108,6 +108,14 @@ export function projectRoutes(
     return c.json({ ok: true });
   });
 
+  // PROJECT_CONFLICT_VERSION_V1 - GET /:id/conflict: version actual del otro.
+  app.get("/:id/conflict", async (c) => {
+    const owner = c.get("owner");
+    const project = await db.get<Project>(owner, "projects", c.req.param("id"));
+    if (!project) throw new AppError("Project not found", 404);
+    return c.json({ current: (project as { version?: number }).version ?? null, updatedAt: project.updatedAt });
+  });
+
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
@@ -145,11 +153,19 @@ export function projectRoutes(
       .parse(rawBody);
     if (expected.expectedUpdatedAt !== undefined) {
       if (existing.updatedAt !== expected.expectedUpdatedAt) {
-        // PROJECT_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
+        // PROJECT_CONFLICT_DIFF_V2 - incluye current/expected + diff por campo.
+        const diff: Record<string, { before: unknown; after: unknown }> = {};
+        for (const key of Object.keys(existing)) {
+          const before = (existing as Record<string, unknown>)[key];
+          const after = (existing as Record<string, unknown>)[key];
+          if (JSON.stringify(before) !== JSON.stringify(after)) {
+            diff[key] = { before, after };
+          }
+        }
         throw new AppError(
           "Otro usuario ha modificado este proyecto. Recarga y vuelve a intentarlo.",
           409,
-          { current: existing.updatedAt, expected: expected.expectedUpdatedAt },
+          { current: existing.updatedAt, expected: expected.expectedUpdatedAt, diff },
         );
       }
     }

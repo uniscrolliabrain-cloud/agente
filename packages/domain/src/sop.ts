@@ -56,6 +56,8 @@ export const sopSchema = z.object({
   // SOP_ASSIGNED_BY_V1 - delegante y ejecutor. Separados de owner (ambito de almacenamiento).
   assignedBy: z.string().max(200).optional(),
   assignedTo: z.string().max(200).optional(),
+  // SOP_VERSION_V1 - version monotónica para CAS (F4).
+  version: z.number().int().positive().default(1),
   createdAt: z.string().default(() => new Date().toISOString()),
   updatedAt: z.string().default(() => new Date().toISOString()),
 });

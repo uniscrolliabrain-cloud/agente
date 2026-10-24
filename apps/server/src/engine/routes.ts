@@ -277,6 +277,48 @@ export function agentRoutes(
       ),
     );
   });
+  // TASK_RECONCILE_V1 - reconcile por recurso, sin recargar.
+  app.post("/tasks/:id/reconcile", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const body = z.object({ expectedVersion: z.number().int().positive(), resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]), note: z.string().max(2000).optional() }).parse(await c.req.json());
+    const current = await service.db.get<{ version?: number }>(owner, "tasks", id);
+    if (!current) throw new AppError("Task not found", 404);
+    if ((current.version ?? 1) !== body.expectedVersion) throw new AppError("Conflict", 409, { current: current.version ?? 1, expected: body.expectedVersion });
+    const updated = await service.db.compareAndSwap(owner, "tasks", id, { version: body.expectedVersion }, { version: body.expectedVersion + 1 });
+    if (!updated) throw new AppError("Conflict", 409);
+    return c.json({ ok: true, task: updated, resolution: body.resolution });
+  });
+
+  // TASK_CONFLICT_VERSION_V1 - GET /tasks/:id/conflict.
+  app.get("/tasks/:id/conflict", async (c) => {
+    const owner = c.get("owner");
+    const task = await service.db.get<{ version?: number; updatedAt: string }>(owner, "tasks", c.req.param("id"));
+    if (!task) throw new AppError("Task not found", 404);
+    return c.json({ current: task.version ?? null, updatedAt: task.updatedAt });
+  });
+
+  // GOAL_RECONCILE_V1 - reconcile por recurso.
+  app.post("/goals/:id/reconcile", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const body = z.object({ expectedVersion: z.number().int().positive(), resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]), note: z.string().max(2000).optional() }).parse(await c.req.json());
+    const current = await service.db.get<{ version?: number }>(owner, "goals", id);
+    if (!current) throw new AppError("Goal not found", 404);
+    if ((current.version ?? 1) !== body.expectedVersion) throw new AppError("Conflict", 409, { current: current.version ?? 1, expected: body.expectedVersion });
+    const updated = await service.db.compareAndSwap(owner, "goals", id, { version: body.expectedVersion }, { version: body.expectedVersion + 1 });
+    if (!updated) throw new AppError("Conflict", 409);
+    return c.json({ ok: true, goal: updated, resolution: body.resolution });
+  });
+
+  // GOAL_CONFLICT_VERSION_V1 - GET /goals/:id/conflict.
+  app.get("/goals/:id/conflict", async (c) => {
+    const owner = c.get("owner");
+    const goal = await service.db.get<{ version?: number; updatedAt?: string }>(owner, "goals", c.req.param("id"));
+    if (!goal) throw new AppError("Goal not found", 404);
+    return c.json({ current: goal.version ?? null, updatedAt: goal.updatedAt ?? null });
+  });
+
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/tasks/:id/input", async (c) => {
     const body = z

@@ -66,6 +66,8 @@ export interface AgentTask {
   question?: string;
   artifactIds: string[];
   assignedTo?: string;
+  // AGENT_TASK_VERSION_V1 - version monotónica para CAS (F4).
+  version?: number;
   // TASK_TENANT_REQUIRED_V1 - tenantId obligatorio. Backfill: 'default'.
   tenantId: string;
   threadId?: string;
@@ -94,6 +96,8 @@ export interface Goal {
   milestones: { id: string; title: string; done: boolean }[];
   // GOAL_ASSIGNED_BY_V1 - delegante y ejecutor. Goal legacy (agent.ts), no goal.ts Zod (Business OS).
   assignedBy?: string;
+  // GOAL_VERSION_V1 - version monotónica para CAS (F4).
+  version?: number;
   assignedTo?: string;
   // GOAL_TIMESTAMPS_V1 - timestamps para Assignment.updatedAt.
   updatedAt?: string;
@@ -114,6 +118,8 @@ export interface Monitor {
   lastHash?: string;
   // MONITOR_ASSIGNED_BY_V1 - delegante. Separado de assignedTo (ejecutor).
   assignedBy?: string;
+  // MONITOR_VERSION_V1 - version monotónica para CAS (F4).
+  version?: number;
   // MONITOR_TIMESTAMPS_V1 - timestamps para Assignment.updatedAt.
   createdAt?: string;
   updatedAt?: string;
@@ -368,6 +374,8 @@ export interface ProjectBlock {
 export interface Project {
   id: string;
   name: string;
+  // PROJECT_VERSION_V1 - version monotónica para CAS (F4).
+  version?: number;
   clientId?: string;
   description: string;
   status: ProjectStatus;

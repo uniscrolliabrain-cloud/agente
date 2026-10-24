@@ -11,6 +11,7 @@ import { globalEditLock } from "./engine/edit-lock.ts"; // TYPE_FIX_EDIT_LOCK_IM
 interface Thread {
   id: string;
   title: string;
+  version?: number;
   createdAt: string;
   updatedAt: string;
   messageCount: number;
@@ -89,6 +90,14 @@ export function threadRoutes(
   // Devuelve updatedAt + messages para comparar con lo que tenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
+  // THREAD_CONFLICT_VERSION_V1 - GET /:id/conflict: version actual del otro.
+  app.get("/:id/conflict", async (c) => {
+    const owner = c.get("owner");
+    const thread = await db.get<Thread>(owner, "threads", c.req.param("id"));
+    if (!thread) throw new AppError("Thread not found", 404);
+    return c.json({ current: thread.version ?? null, updatedAt: thread.updatedAt });
+  });
+
   app.get("/:id/state", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");

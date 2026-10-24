@@ -49,6 +49,8 @@ export const goalSchema = z.object({
   createdAt: z.iso.datetime({ offset: true }),
   updatedAt: z.iso.datetime({ offset: true }),
   achievedAt: z.iso.datetime({ offset: true }).optional(),
+  // GOAL_VERSION_V1 - version monotónica para CAS (F4).
+  version: z.number().int().positive().default(1),
 });
 
 export type GoalStatus = z.infer<typeof goalStatusSchema>;
