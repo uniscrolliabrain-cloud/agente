@@ -247,4 +247,7 @@ export * from "./classification.ts";
 // DOMAIN_INDEX_ACTOR_V1 - exporta actor.ts y jwt.ts (F1).
 export * from "./actor.ts";
 export * from "./jwt.ts";
+// DOMAIN_INDEX_ASSIGNMENT_V1 - exporta assignment.ts (F3.1) y flow.ts (F3.2).
+export * from "./assignment.ts";
+export * from "./flow.ts";
 

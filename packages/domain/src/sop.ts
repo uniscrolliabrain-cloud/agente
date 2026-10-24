@@ -53,6 +53,9 @@ export const sopSchema = z.object({
     .min(1),
   skillId: z.string().min(1).max(100).optional(),
   active: z.boolean().default(true),
+  // SOP_ASSIGNED_BY_V1 - delegante y ejecutor. Separados de owner (ambito de almacenamiento).
+  assignedBy: z.string().max(200).optional(),
+  assignedTo: z.string().max(200).optional(),
   createdAt: z.string().default(() => new Date().toISOString()),
   updatedAt: z.string().default(() => new Date().toISOString()),
 });

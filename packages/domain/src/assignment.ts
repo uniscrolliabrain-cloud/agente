@@ -91,3 +91,13 @@ export type AssignmentPlan = z.infer<typeof assignmentPlanSchema>;
 export type AssignmentEvidence = z.infer<typeof assignmentEvidenceSchema>;
 export type AssignmentOutcome = z.infer<typeof assignmentOutcomeSchema>;
 export type Assignment = z.infer<typeof assignmentSchema>;
+
+// ASSIGNMENT_ADAPTER_TYPE_V1 - contrato de adapter por kind (F3.4).
+export interface AssignmentAdapter<R = unknown> {
+  readonly kind: AssignmentKind;
+  toAssignment(record: R, tenantId: string): Assignment;
+  applyAssignment(record: R, changes: Partial<Assignment>): R;
+  applyStatus(record: R, status: AssignmentStatus): R;
+  toCanonicalStatus(native: string): AssignmentStatus;
+  toNativeStatus(canonical: AssignmentStatus): string;
+}
