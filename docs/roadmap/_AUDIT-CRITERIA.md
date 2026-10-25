@@ -2,40 +2,65 @@
 
 Este documento define **qué significa que una etapa esté hecha** y **cómo se demuestra contra el repo**. Es el contrato que cumplen todos los documentos de etapa.
 
-## Los 5 criterios de una etapa `OPERATIVA`
+## Los 3 ejes de una etapa
 
-Una etapa solo se marca `OPERATIVA` si cumple **los 5**:
+Una etapa no se reduce a una etiqueta única. Se evalúa en **3 ejes separados**, cada uno con su propia evidencia:
 
-| # | Criterio | Evidencia | Cómo se audita |
-|---|---|---|---|
-| 1 | **Existe** | Fichero + línea que implementa la capacidad. | `grep` / `Select-String` del fichero. |
-| 2 | **Conectado** | Inyectado en `app.ts` / `service.ts` / routes / worker. | `Select-String` del punto de inyección. |
-| 3 | **Invocado** | Ruta HTTP, worker tick, test E2E, CLI. | `Select-String` del call site. |
-| 4 | **Test verde** | `node --test` con nombre de fichero y caso. | Ejecutar el test, exit 0. |
-| 5 | **Artefacto consumible** | Schema, contrato, test, o datos que la siguiente etapa usa. | Verificar que la siguiente etapa lo referencia. |
-
-Si falta 1, es `PARCIAL`. Si faltan 3 o más, es `NO_EXISTE`. Si depende de decisión de producto, es `BLOQUEADA`.
-
-## Qué significa `OPERATIVA` vs `PARCIAL` vs `NO_EXISTE`
-
-| Estado | Definición | Cómo se detecta |
+| Eje | Pregunta | Cómo se audita |
 |---|---|---|
-| `OPERATIVA` | Los 5 criterios se cumplen con evidencia. | Script de auditoría exit 0. Test de aceptación verde. |
-| `PARCIAL` | 1–2 criterios faltan. | Script exit 1, con lista de criterios faltantes. |
-| `NO_EXISTE` | 3+ criterios faltan. No hay código que cubra la etapa. | Script exit 2. |
-| `BLOQUEADA` | Depende de decisión de producto o de etapa anterior sin cerrar. | Nota en el documento de etapa. |
+| **Implementación** | ¿Existe el código que cubre la capacidad? | `grep` / `Select-String` de fichero + línea. |
+| **Integración** | ¿Está conectado al arranque y se invoca en un flujo real? | `Select-String` del punto de inyección (`app.ts`, `service.ts`, routes, worker) y del call site. |
+| **Aceptación** | ¿El comportamiento esperado se ha demostrado con un test verde y produce un artefacto consumible por la siguiente etapa? | Ejecutar test, exit 0. Verificar que la siguiente etapa lo referencia. |
+
+**Una etapa puede estar implementada y conectada, pero no aceptada.** Eso da más información que una sola etiqueta.
+
+## Estados por eje
+
+Cada eje devuelve uno de estos estados:
+
+| Estado | Significado |
+|---|---|
+| `DONE` | El eje se cumple con evidencia. |
+| `PARTIAL` | Parte del eje se cumple, pero falta algo. |
+| `MISSING` | No hay evidencia del eje. |
+| `BLOCKED` | Depende de decisión de producto o de etapa anterior sin cerrar. |
+
+## Cómo se combinan los 3 ejes
+
+Una etapa es `OPERATIVA` **solo si los 3 ejes están `DONE`**. Si falta uno, la etapa es `PARCIAL`. Si faltan dos o más, `NO_EXISTE`. Si alguno es `BLOCKED`, la etapa es `BLOQUEADA`.
+
+| Implementación | Integración | Aceptación | Estado de la etapa |
+|---|---|---|---|
+| `DONE` | `DONE` | `DONE` | `OPERATIVA` |
+| `DONE` | `DONE` | `PARTIAL` / `MISSING` | `PARCIAL` |
+| `DONE` | `PARTIAL` / `MISSING` | cualquiera | `PARCIAL` |
+| `PARTIAL` / `MISSING` | cualquiera | cualquiera | `NO_EXISTE` |
+| `BLOCKED` (cualquiera) | — | — | `BLOQUEADA` |
+
+## Cómo audita cada eje: 2 niveles
+
+**Nivel 1 — Auditoría estática** (inventario). Busca implementaciones, registros, dependencias, llamadas, tests. **Señala dónde mirar.** No demuestra que funcione.
+
+**Nivel 2 — Verificación funcional** (demostración). Ejecuta un flujo y comprueba que cada componente recibe sus entradas y entrega los resultados que el siguiente necesita. **Demuestra que funciona.**
+
+**Regla**: el nivel 1 sin nivel 2 es ruido. El nivel 2 sin nivel 1 es caro. **Ambos son necesarios.** Una etapa no es `DONE` en el eje de aceptación solo porque el script estático diga que hay un test. **Tiene que ejecutarse y pasar.**
 
 ## Scripts de auditoría por etapa
 
 Cada etapa tiene un script en `scripts/audits/roadmap/etapa-NN.ts`. **No se crea hasta que la etapa tenga código.** El contrato del script está en el documento de la etapa; el script se implementa cuando hay algo que auditar.
 
-El script:
-1. Lee los ficheros de la etapa (los que el documento declara).
-2. Comprueba los 5 criterios.
-3. Devuelve un informe con `PASS` / `FAIL` / `PARTIAL` / `NOT_FOUND` por criterio.
-4. Exit 0 si todos PASS, 1 si alguno FAIL/PARTIAL, 2 si NOT_FOUND (no existe).
+El script **devuelve los 3 ejes por separado**, no una etiqueta única:
 
-**Nunca** un script de auditoría devuelve exit 0 si hay `FAIL`. Si lo hace, no es una barrera de CI.
+```
+{ implementation: "DONE"|"PARTIAL"|"MISSING", integration: "...", acceptance: "...", evidence: [...], missing: [...] }
+```
+
+Exit code:
+- 0 si los 3 ejes son `DONE` (`OPERATIVA`).
+- 1 si alguno es `PARTIAL`/`MISSING` (`PARCIAL` o `NO_EXISTE`).
+- 2 si no existe código (`NO_EXISTE`).
+
+**Nunca** un script devuelve exit 0 si hay `PARTIAL` o `MISSING`. Si lo hace, no es una barrera de CI.
 
 ## Tests de aceptación por etapa
 
@@ -61,7 +86,7 @@ Cuando una etapa se construye:
 2. Se crea el script de auditoría (`scripts/audits/roadmap/etapa-NN.ts`).
 3. Se crea el test de aceptación (`tests/roadmap/etapa-NN.test.ts`).
 4. Se añade a CI como bloqueante.
-5. Se cambia el estado en `README.md` de `PARCIAL`/`NO_EXISTE` a `OPERATIVA`.
+5. Se cambian los 3 ejes en `README.md` y el estado de la etapa.
 
 **El documento no se reescribe. Se actualiza la evidencia.** El contrato (objetivo, criterios, handoff) es estable.
 
@@ -71,5 +96,6 @@ Cuando una etapa se construye:
 - Un `test` verde no es una etapa `OPERATIVA` si no cubre el flujo real.
 - Un fichero que existe no es una etapa `OPERATIVA` si no está conectado.
 - Un componente conectado no es una etapa `OPERATIVA` si no se invoca en un flujo real.
+- Un componente invocado no es una etapa `OPERATIVA` si no produce un artefacto válido para la siguiente etapa.
 
-**Sin los 5 criterios, no es `OPERATIVA`.**
+**Sin los 3 ejes en `DONE`, no es `OPERATIVA`.**

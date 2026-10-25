@@ -4,19 +4,29 @@ Este folder es el **mapa macro** del producto. No es código. No es tests. Es el
 
 ## Cómo se usa
 
-1. Cada etapa tiene un documento (`01-...md` a `15-...md`) con el mismo contrato: objetivo, subsistemas, fases, criterios de auditoría, criterios de aceptación, evidencia actual en el repo, brecha, handoff.
-2. La **evidencia actual** se rellena cuando el código existe. Hoy muchas etapas dicen `NO_EXISTE`. Es correcto: el producto no está completo.
+1. Cada etapa tiene un documento (`01-...md` a `15-...md`) con el mismo contrato: objetivo, subsistemas, fases, **contratos existentes que se reutilizan antes de proponer nuevos**, criterios de auditoría (3 ejes), criterios de aceptación, evidencia actual en el repo, brecha, handoff (con contrato), miniroadmaps.
+2. La **evidencia actual** se rellena cuando el código existe. Hoy muchas etapas dicen `MISSING`. Es correcto: el producto no está completo.
 3. Cuando una etapa se construye, se actualiza su sección de evidencia con fichero + línea + test verde + marca `_V1`.
-4. Cada etapa puede tener **miniroadmaps internos** (subcarpetas o ficheros `-miniroadmap.md`) cuando se descompone en fases más pequeñas. El documento de etapa no se reescribe; se enlaza al miniroadmap.
+4. Cada etapa puede tener **miniroadmaps internos** (subcarpetas o ficheros `-miniroadmap.md`) cuando se descompone en fases más pequeñas.
 
-## Estados de etapa
+## Regla de iteración vertical
 
-| Estado | Significado |
-|---|---|
-| `OPERATIVA` | Existe código, está conectado al arranque, se invoca en un flujo real, tiene test de aceptación verde, produce artefacto consumible. |
-| `PARCIAL` | Existe parte del código o del cableado, pero falta al menos uno de los 5 criterios. |
-| `NO_EXISTE` | No hay código que cubra la etapa. |
-| `BLOQUEADA` | Depende de una decisión de producto o de una etapa anterior sin cerrar. |
+**Las etapas 02–09 no se desarrollan hasta su versión definitiva antes del piloto (etapa 10).**
+
+El primer piloto puede revelar que necesitas:
+- un conector CRM concreto,
+- una interfaz de supervisión determinada,
+- tres procesos esenciales,
+- pero **no** un editor visual completo de pipelines.
+
+Por tanto:
+- Las 15 etapas son el **mapa maestro**.
+- La construcción es **iteración vertical**: capacidad mínima → probar con el piloto → ampliar después.
+- Se evita invertir semanas en interfaces y abstracciones que el primer cliente no necesita.
+
+## Estados por etapa (3 ejes)
+
+Cada etapa tiene 3 ejes separados: **implementación**, **integración**, **aceptación**. Una etapa es `OPERATIVA` solo si los 3 están `DONE`. Si falta uno, es `PARCIAL`. Si faltan dos o más, `NO_EXISTE`. Si alguno es `BLOCKED`, es `BLOQUEADA`. Ver `_AUDIT-CRITERIA.md`.
 
 ## Las 15 etapas
 
@@ -79,10 +89,10 @@ Este folder es el **mapa macro** del producto. No es código. No es tests. Es el
 
 ## Documentos auxiliares
 
-- [`_TEMPLATE.md`](_TEMPLATE.md) — plantilla de cada etapa.
-- [`_AUDIT-CRITERIA.md`](_AUDIT-CRITERIA.md) — contrato de auditoría y test por etapa.
+- [`_TEMPLATE.md`](_TEMPLATE.md) — plantilla de cada etapa (con "contratos existentes primero" y 3 ejes).
+- [`_AUDIT-CRITERIA.md`](_AUDIT-CRITERIA.md) — contrato de auditoría con 3 ejes (implementación, integración, aceptación) y 2 niveles (estático + funcional).
 - [`00-BASELINE.md`](00-BASELINE.md) — estado real del repo hoy.
 
 ## Regla de oro
 
-Una etapa no se marca `OPERATIVA` porque exista un fichero. Se marca `OPERATIVA` cuando los 5 criterios de `_AUDIT-CRITERIA.md` se cumplen con evidencia. Sin evidencia, `NO_EXISTE` o `PARCIAL`.
+Una etapa no se marca `OPERATIVA` porque exista un fichero. Se marca `OPERATIVA` cuando los 3 ejes están `DONE` con evidencia. Sin evidencia, `NO_EXISTE` o `PARCIAL`.

@@ -26,23 +26,31 @@ Qué se hace, en qué orden, de qué depende.
 
 Si una fase es grande, se descompone en un miniroadmap dentro de la carpeta de la etapa (ej. `docs/roadmap/NN-titulo/`).
 
-## 4. Criterios de auditoría
+## 4. Contratos existentes que se reutilizan, amplían o sustituyen
 
-Cómo se comprueba que esta etapa está hecha. Concretos y verificables. Cada criterio debe poder ejecutarse con un comando o un script de auditoría.
+**Antes de proponer un contrato nuevo**, identificar qué contrato existente cubre total o parcialmente la necesidad.
 
-| # | Criterio | Cómo se audita | Comando / script |
+| Necesidad | Contrato existente | Decisión | Motivo |
 |---|---|---|---|
-| A1 | ... | ... | `scripts/audits/roadmap/etapa-NN.ts` |
-| A2 | ... | ... | ... |
+| ... | `packages/domain/src/...` | REUTILIZAR / AMPLIAR / SUSTITUIR / NUEVO | ... |
 
-El script `etapa-NN.ts` devuelve:
-- exit 0 si todos los criterios se cumplen (`OPERATIVA`).
-- exit 1 si faltan criterios (`PARCIAL`).
-- exit 2 si no existe código (`NO_EXISTE`).
+**Regla**: no se introduce un contrato nuevo si uno existente puede cumplir. No se mantienen dos representaciones de la misma empresa. Si hay que sustituir, se documenta la migración.
 
-## 5. Criterios de aceptación (tests)
+## 5. Criterios de auditoría
 
-Qué tests deben pasar para declarar la etapa cerrada. Nombres de fichero, casos, asserts.
+Cómo se comprueba que esta etapa está hecha. Concretos y verificables. **Cada criterio evalúa uno de los 3 ejes** (implementación, integración, aceptación). Ver `_AUDIT-CRITERIA.md`.
+
+| # | Criterio | Eje | Cómo se audita |
+|---|---|---|---|
+| A1 | ... | implementación | `scripts/audits/roadmap/etapa-NN.ts` |
+| A2 | ... | integración | ... |
+| A3 | ... | aceptación | ... |
+
+El script `etapa-NN.ts` devuelve los 3 ejes por separado (`implementation`, `integration`, `acceptance`) y exit 0/1/2.
+
+## 6. Criterios de aceptación (tests)
+
+Qué tests deben pasar para declarar el eje de aceptación `DONE`. Nombres de fichero, casos, asserts.
 
 | # | Test | Fichero | Casos | Aserción |
 |---|---|---|---|---|
@@ -51,30 +59,30 @@ Qué tests deben pasar para declarar la etapa cerrada. Nombres de fichero, casos
 
 **Regla**: los tests se implementan cuando el código de la etapa existe. No se crean `test.skip` vacíos. El contrato queda aquí; el test se escribe cuando hay algo que testear.
 
-## 6. Evidencia actual en el repo
+## 7. Evidencia actual en el repo
 
-Qué hay hoy. Para cada subsistema: `EXISTE` / `PARCIAL` / `NO_EXISTE`, con fichero + línea + marca.
+Qué hay hoy. Para cada subsistema: `DONE` / `PARTIAL` / `MISSING` / `BLOCKED`, con fichero + línea + marca.
 
-| Subsistema | Estado | Evidencia | Marca |
-|---|---|---|---|
-| ... | `EXISTE` / `PARCIAL` / `NO_EXISTE` | `fichero:línea` | `_V1` |
+| Subsistema | Implementación | Integración | Aceptación | Evidencia | Marca |
+|---|---|---|---|---|---|
+| ... | `DONE`/`PARTIAL`/`MISSING` | `DONE`/`PARTIAL`/`MISSING` | `DONE`/`PARTIAL`/`MISSING` | `fichero:línea` | `_V1` |
 
-## 7. Brecha
+## 8. Brecha
 
-Qué falta para que la etapa pase de `NO_EXISTE`/`PARCIAL` a `OPERATIVA`. Concreto.
+Qué falta para que los 3 ejes pasen a `DONE`. Concreto.
 
-- [ ] Falta X en `fichero:línea`.
-- [ ] Falta Y.
-- [ ] Falta Z.
+- [ ] Falta X en `fichero:línea` (implementación).
+- [ ] Falta Y (integración).
+- [ ] Falta Z (aceptación).
 
-## 8. Handoff
+## 9. Handoff
 
-Qué artefactos entrega esta etapa a la siguiente. Contratos, schemas, ficheros, tests.
+Qué artefactos entrega esta etapa a la siguiente. **Cada artefacto con su contrato explícito**: qué consume la siguiente etapa, con qué forma, con qué validación.
 
-- [ ] ...
-- [ ] ...
+- [ ] `Artefacto` (contrato: `packages/domain/src/...`) → consumido por etapa NN+1 en `...`.
+- [ ] Test `...` → reutilizable por etapa NN+1.
 
-## 9. Miniroadmaps internos
+## 10. Miniroadmaps internos
 
 Si la etapa se descompone en fases más pequeñas, se enlazan aquí.
 
