@@ -20,6 +20,8 @@ Documentación del primer vertical slice del producto: una agencia de IA que ven
 | [`03-SUPABASE-JWT.md`](03-SUPABASE-JWT.md) | Supabase Auth + Google OAuth + Custom Access Token Hook + tenant_id en JWT |
 | [`04-TEMPLATE-BUNDLE.md`](04-TEMPLATE-BUNDLE.md) | `clientes/_template/bundle.json`, `provision-client.ts`, cómo compilar un cliente |
 | [`05-METRICAS-PILOTO.md`](05-METRICAS-PILOTO.md) | Qué medir en el piloto (leads, citas, tiempo, coste) |
+| [`06-COMPILADOR-METODO.md`](06-COMPILADOR-METODO.md) | Método del compilador: cuestionario, 7 pasos, cajón versátil. Tú eres el cliente beta. |
+| [`07-CUESTIONARIO-EMPRESA.md`](07-CUESTIONARIO-EMPRESA.md) | 132 preguntas para compilar una empresa. Pendiente de responder. |
 
 ## Orden de lectura
 
@@ -29,6 +31,8 @@ Documentación del primer vertical slice del producto: una agencia de IA que ven
 4. `03-SUPABASE-JWT.md` — cómo entra el cliente y cómo se aísla.
 5. `04-TEMPLATE-BUNDLE.md` — cómo compilas un cliente.
 6. `05-METRICAS-PILOTO.md` — cómo mides si funciona.
+7. `06-COMPILADOR-METODO.md` — cómo compilas una empresa (tú eres el beta).
+8. `07-CUESTIONARIO-EMPRESA.md` — 132 preguntas para responder cuando puedas.
 
 ## Regla
 
