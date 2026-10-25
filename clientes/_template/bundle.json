@@ -1,0 +1,74 @@
+{
+  "version": "1.0.0",
+  "tenantId": "${TENANT_ID}",
+  "company": {
+    "name": "${COMPANY_NAME}",
+    "sector": "${SECTOR}",
+    "description": "${COMPANY_DESCRIPTION}",
+    "services": ${SERVICES_JSON},
+    "timezone": "${TIMEZONE}",
+    "language": "es"
+  },
+  "channels": {
+    "chat": { "enabled": true, "config": {} },
+    "whatsapp": { "enabled": ${WHATSAPP_ENABLED}, "provider": "cloud-api", "credentialsRef": "env:${TENANT_ID}_WHATSAPP_TOKEN", "config": {} },
+    "email": { "enabled": ${EMAIL_ENABLED}, "provider": "gmail", "credentialsRef": "env:${TENANT_ID}_GMAIL_CONNECTION_ID", "config": {} },
+    "telephony": { "enabled": false, "provider": "twilio", "config": {} }
+  },
+  "agents": [
+    {
+      "id": "atencion",
+      "name": "${AGENT_NAME}",
+      "tone": "warm",
+      "avatar": "sky",
+      "objetivo": "Atender leads por WhatsApp, email y telefono. Cualificar, agendar cita si procede, responder con la data de la empresa, crear briefing interno.",
+      "sops": ["responder-lead"],
+      "allowedTools": [
+        "search_mail", "read_mail_thread", "prepare_email",
+        "prepare_event", "search_drive_files", "read_drive_file",
+        "query_business", "transition_entity", "prepare_whatsapp",
+        "create_briefing", "lead.search", "lead.create",
+        "lead.update", "appointment.create", "ask_user"
+      ],
+      "memories": [
+        { "kind": "identidad", "text": "Eres ${AGENT_NAME}, asistente de ${COMPANY_NAME}. Tuteas, eres cercano, resuelves." },
+        { "kind": "dominio", "text": "${COMPANY_DESCRIPTION}. Servicios: ${SERVICES_TEXT}." },
+        { "kind": "preferencias", "text": "Responde en menos de 3 frases. Si el lead pide cita, agenda. Si no sabes algo, dilo y ofrece hablar con un humano." },
+        { "kind": "historial", "text": "Los leads que llegan por WhatsApp suelen pedir presupuesto. Los que llegan por email suelen pedir informacion." }
+      ]
+    }
+  ],
+  "processes": [
+    {
+      "id": "responder-lead",
+      "name": "Responder lead",
+      "sopFile": "sops/responder-lead.json",
+      "triggers": [
+        { "type": "whatsapp_message" },
+        { "type": "email_subject", "value": "presupuesto|informacion|consulta|cita" }
+      ]
+    }
+  ],
+  "capabilities": {
+    "enabled": [
+      "read_mail_thread", "search_mail", "prepare_email",
+      "prepare_event", "search_drive_files", "read_drive_file",
+      "query_business", "transition_entity", "prepare_whatsapp",
+      "create_briefing", "lead.search", "lead.create",
+      "lead.update", "appointment.create", "ask_user"
+    ],
+    "disabled": []
+  },
+  "config": {
+    "fast": { "provider": "google", "model": "gemini-2.0-flash" },
+    "slow": { "provider": "google", "model": "gemini-2.0-flash" },
+    "maxSteps": 6,
+    "quota": {
+      "tokensPerDay": 1000000,
+      "costEurPerDay": 20,
+      "fastCallsPerHour": 1000,
+      "slowCallsPerHour": 500
+    }
+  },
+  "crm": { "kind": "sheets", "config": {} }
+}

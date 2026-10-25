@@ -1,0 +1,15 @@
+{
+  "id": "${AGENT_ID}",
+  "name": "${AGENT_NAME}",
+  "tone": "${AGENT_TONE}",
+  "avatar": "${AGENT_AVATAR}",
+  "objetivo": "${AGENT_OBJETIVO}",
+  "sops": ${AGENT_SOPS_JSON},
+  "allowedTools": ${AGENT_TOOLS_JSON},
+  "memories": [
+    { "kind": "identidad", "text": "${AGENT_IDENTITY}" },
+    { "kind": "dominio", "text": "${AGENT_DOMAIN}" },
+    { "kind": "preferencias", "text": "${AGENT_PREFERENCES}" },
+    { "kind": "historial", "text": "${AGENT_HISTORY}" }
+  ]
+}

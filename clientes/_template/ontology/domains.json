@@ -1,0 +1,9 @@
+{
+  "tenantId": "${TENANT_ID}",
+  "domains": [
+    { "id": "captacion", "name": "Captacion", "description": "Captar leads por ads, redes, email, WhatsApp", "needs": ["leads", "canales", "propuestas"] },
+    { "id": "venta", "name": "Venta", "description": "Cualificar, proponer, cerrar", "needs": ["leads", "propuestas", "contratos"] },
+    { "id": "operacion", "name": "Operacion", "description": "Compilar y operar tenants", "needs": ["tenants", "metricas", "incidencias"] },
+    { "id": "soporte", "name": "Soporte", "description": "Atender dudas y problemas", "needs": ["tickets", "sla", "satisfaccion"] }
+  ]
+}

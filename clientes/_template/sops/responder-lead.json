@@ -1,0 +1,22 @@
+{
+  "id": "responder-lead",
+  "name": "Responder lead",
+  "category": "atencion",
+  "active": true,
+  "allowedTools": [
+    "ask_user", "lead.search", "lead.create", "lead.update",
+    "appointment.create", "prepare_event", "prepare_whatsapp",
+    "prepare_email", "search_drive_files", "read_drive_file",
+    "query_business", "create_briefing"
+  ],
+  "steps": [
+    { "id": "s1", "title": "Recibir mensaje del lead", "tool": "query_business", "params": { "source": "sheets", "query": "SELECT * FROM Leads WHERE phone = {{input.from}} OR email = {{input.from}}" }, "required": true },
+    { "id": "s2", "title": "Buscar lead existente", "tool": "lead.search", "params": { "phone": "{{input.from}}", "email": "{{input.from}}" }, "required": true },
+    { "id": "s3", "title": "Crear lead si no existe", "tool": "lead.create", "params": { "name": "{{results.s2.name || input.fromName}}", "phone": "{{input.from}}", "email": "{{input.fromEmail}}", "source": "{{input.channel}}", "status": "new" }, "required": true },
+    { "id": "s4", "title": "Cualificar lead", "tool": "ask_user", "params": { "question": "Que servicio te interesa y para cuando lo necesitas?" }, "required": false },
+    { "id": "s5", "title": "Agendar cita si procede", "tool": "appointment.create", "params": { "leadId": "{{results.s3.id}}", "date": "{{results.s4.date}}", "duration": 30, "notes": "{{results.s4.notes}}" }, "required": false },
+    { "id": "s6", "title": "Crear evento en Google Calendar", "tool": "prepare_event", "params": { "title": "Llamada con {{results.s3.name}}", "start": "{{results.s5.start}}", "end": "{{results.s5.end}}", "attendees": ["{{results.s3.email}}"] }, "required": false },
+    { "id": "s7", "title": "Responder al lead", "tool": "prepare_email", "params": { "to": "{{results.s3.email}}", "text": "Hola {{results.s3.name}}, soy ${AGENT_NAME} de ${COMPANY_NAME}. {{results.s4.answer}}." }, "required": true },
+    { "id": "s8", "title": "Crear briefing interno", "tool": "create_briefing", "params": { "title": "Lead {{results.s3.name}}", "summary": "Canal: {{input.channel}}. Servicio: {{results.s4.answer}}. Estado: {{results.s3.status}}.", "category": "cliente", "tags": ["lead", "{{input.channel}}"] }, "required": true }
+  ]
+}

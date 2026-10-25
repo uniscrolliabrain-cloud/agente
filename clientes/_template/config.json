@@ -1,0 +1,12 @@
+{
+  "tenantId": "${TENANT_ID}",
+  "fast": { "provider": "${FAST_PROVIDER}", "model": "${FAST_MODEL}" },
+  "slow": { "provider": "${SLOW_PROVIDER}", "model": "${SLOW_MODEL}" },
+  "maxSteps": ${MAX_STEPS},
+  "quota": {
+    "tokensPerDay": ${TOKENS_PER_DAY},
+    "costEurPerDay": ${COST_EUR_PER_DAY},
+    "fastCallsPerHour": ${FAST_CALLS_PER_HOUR},
+    "slowCallsPerHour": ${SLOW_CALLS_PER_HOUR}
+  }
+}
