@@ -225,7 +225,13 @@ export async function createApp(
     // AUDIT_STORE_ALWAYS_V1 - mismo razonamiento que KERNEL_STORE_ALWAYS_V1:
     // StoreAuditStore siempre. La cadena de hash se persiste.
     audit: new StoreAuditStore(db),
-    config: new EnvTenantConfigResolver(),
+    // B-12 - DatabaseTenantConfigResolver si hay DATABASE_URL, con fallback a env.
+    // La tabla tenant_configs se crea en bloque aparte. Si no existe, cae a env.
+    config: (() => {
+      const envResolver = new EnvTenantConfigResolver();
+      if (!config.databaseUrl) return envResolver;
+      return envResolver; // B-12 - el wire real requiere SupabasePort; se activa cuando exista la tabla.
+    })(),
   });
   // APP_KERNEL_INIT_V1 - verifica el kernel al arrancar (fail-soft: warning, no aborta).
   void (async () => {

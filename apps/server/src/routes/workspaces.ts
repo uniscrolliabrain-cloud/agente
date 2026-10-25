@@ -5,6 +5,10 @@ import type { WorkspaceModuleRegistry } from "../engine/workspaces/registry.ts";
 import type { WorkspaceDispatcher } from "../engine/workspaces/dispatcher.ts";
 import { workspaceCommandEnvelopeSchema, workspaceQueryEnvelopeSchema } from "../../../../packages/workspaces/src/contracts/index.ts";
 
+// B-25/B-26 - WorkspaceSpec (presentacion) vs WorkspaceModule (descubrimiento).
+// Esta ruta expone WorkspaceModule. WorkspaceSpec se usa en el frontend
+// para renderizar. No se fusionan: son dos contratos distintos.
+// Decision documentada en docs/roadmap/README.md.
 export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: WorkspaceDispatcher) {
   const app = new Hono<{ Variables: { owner: string; tenantId: string } }>();
 

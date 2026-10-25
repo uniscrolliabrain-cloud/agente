@@ -200,6 +200,19 @@ export class SOPExecutor {
         409,
       );
 
+    // B-16 - valida que cada tool del SOP exista en el CapabilityRegistry.
+    try {
+      const registered = new Set((await this.service.capabilities.list()).map((c) => c.id));
+      const unknownTools = sop.steps.map((s) => s.tool).filter((t) => !registered.has(t));
+      if (unknownTools.length > 0) {
+        throw new AppError(
+          `SOP ${sop.id} references unregistered capabilities: ${unknownTools.join(", ")}`,
+          422,
+        );
+      }
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+    }
     // Fail-closed: an empty allowlist is a configuration error, not "everything is allowed".
     if (!sop.allowedTools.length)
       throw new AppError(`SOP ${sop.id} has an empty allowedTools allowlist`, 422);

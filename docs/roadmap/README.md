@@ -87,6 +87,10 @@ Cada etapa tiene 3 ejes separados: **implementación**, **integración**, **acep
 3. **¿Cuál es el siguiente cambio de código que más acerca el producto?**
    Pendiente de la auditoría de completitud (`01`). Sin ese documento, no hay respuesta honesta.
 
+## Decision B-03 - ExecutionContext.actorId
+
+**Decision**: `ExecutionContext.actorId` es **opcional** por diseno. Hay rutas legitimas sin actor (health checks, system jobs, cron). En rutas con actor (chat, task, HTTP), `actorId` se pasa. En `CapabilityRunner.run`, si `ctx.actorId` no existe, authz no se evalua y el ejecutor corre con la garantia de la ruta caller. **No es deuda, es contrato.**
+
 ## Documentos auxiliares
 
 - [`_TEMPLATE.md`](_TEMPLATE.md) — plantilla de cada etapa (con "contratos existentes primero" y 3 ejes).

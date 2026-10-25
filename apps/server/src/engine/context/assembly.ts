@@ -16,9 +16,22 @@ const MAX_RECALL_HITS = 5;
 // feedback "useful" pesan mas, "not_useful" pesan menos. El multiplicador
 // se pasa como parametro opcional; sin el, comportamiento previo.
   // CONTEXT_ASSEMBLY_MULTIPLIERS_V1
+// B-05/B-27 - attention.matched eleva el score de una memoria si su nodo
+// coincide con el primary o con un matched del AttentionVector.
+function attentionBoost(memory: { text: string; category?: string }, attention?: { primary: string; matched: Array<{ node: string; weight: number }> }): number {
+  if (!attention) return 0;
+  const text = memory.text.toLowerCase();
+  let boost = 0;
+  if (text.includes(attention.primary.toLowerCase())) boost += 0.3;
+  for (const m of attention.matched) {
+    if (text.includes(m.node.toLowerCase())) boost += m.weight * 0.2;
+  }
+  return boost;
+}
+
 export function renderContext(
   pkg: ContextPackage,
-  options: { multipliers?: Record<string, number>; budget?: BudgetAllocation } = {},
+  options: { multipliers?: Record<string, number>; budget?: BudgetAllocation; attention?: { primary: string; matched: Array<{ node: string; weight: number }> } } = {},
 ): string {
   void options.multipliers;
   const parts: string[] = [];
@@ -26,16 +39,28 @@ export function renderContext(
   parts.push(`Objetivo: ${pkg.role.objetivo}`);
   if (pkg.role.memories.length > 0) {
     // CONTEXT_BUDGET_WIRE_V1 - ordenar por scoreItem.
+    // FIX 14 - scoreItem con semantica real:
+    //   - semantic: similitud con la query (substring simple, no embeddings).
+    //   - recency: 1 si fue creada hoy, decae con la edad.
+    //   - authority: 1 si es rol-* (canon del rol), 0.5 si es memoria general.
+    //   - roleMatch: 1 si roleId coincide, 0.5 si no.
+    const query = (pkg.role.name + " " + pkg.role.objetivo).toLowerCase();
+    const nowMs = Date.now();
     const scored = [...pkg.role.memories]
-      .map((m, i) => ({
-        m,
-        score: scoreItem({
-          semantic: 0.5,
-          recency: 0.5,
-          authority: m.category?.startsWith("rol-") ? 0.8 : 0.5,
-          roleMatch: 0.9,
-        }) + (pkg.role.memories.length - i) * 0.001,
-      }))
+      .map((m, i) => {
+        const text = m.text.toLowerCase();
+        const words = query.split(/\\s+/).filter((w) => w.length > 2);
+        const matches = words.filter((w) => text.includes(w)).length;
+        const semantic = words.length > 0 ? matches / words.length : 0;
+        const ageMs = nowMs - Date.parse(m.createdAt ?? new Date().toISOString());
+        const recency = Math.max(0, 1 - ageMs / (30 * 24 * 60 * 60 * 1000));
+        const authority = m.category?.startsWith("rol-") ? 1 : 0.5;
+        const roleMatch = m.roleId === pkg.role.id ? 1 : 0.5;
+        return {
+          m,
+          score: scoreItem({ semantic, recency, authority, roleMatch }) + (pkg.role.memories.length - i) * 0.001 + attentionBoost(m, options.attention),
+        };
+      })
       .sort((a, b) => b.score - a.score)
       .slice(0, MAX_ROLE_MEMORIES)
       .map((x) => x.m);

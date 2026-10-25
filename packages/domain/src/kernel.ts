@@ -28,15 +28,15 @@ export interface KernelContext {
   personaId?: string;
 }
 
-export interface KernelThought {
-  id: string;
-  role: string;
-  actor: { kind: string; id: string };
-  content: string | Record<string, unknown>;
-  provenance: { source: string; timestamp: string; parentId?: string };
-  edges: Array<{ toThoughtId: string; kind: string; weight: number; confidence: number }>;
-  context: { entities: string[]; policies: string[]; skills: string[]; priorThoughts: string[] };
-}
+/**
+ * FIX 03 - KernelThought es un alias minimo de Thought. La representacion
+ * canonica es `Thought` de apps/server/src/kernel/graph/thought.ts (Zod).
+ * Este tipo solo se mantiene para consumidores que no pueden importar Zod
+ * (tests aislados, contratos de dominio puro). Los campos son los mismos
+ * que el Thought publico: id, role, actor, content, provenance, edges, context.
+ * No es un segundo contrato: es la vista TypeScript del contrato Zod.
+ */
+export type KernelThought = import("./kernel-thought-view.ts").KernelThoughtView;
 
 export interface KernelTurn {
   id: string;

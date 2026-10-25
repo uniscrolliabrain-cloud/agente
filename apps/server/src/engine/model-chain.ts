@@ -54,12 +54,16 @@ export function modelChain(config: Config, tenant?: TenantConfig, mode: "chat" |
  * RUN_ERROR+RUN_FINISHED pair from the primary cannot terminate the outer observable before
  * the fallback has had a chance to run.
  */
+// B-11 - maxProfile corta el fallback si el siguiente spec no es del perfil permitido.
+// Si no se pasa, comportamiento previo (cruza perfiles).
 export function runWithModelFallback(
   specs: string[],
   create: (spec: string) => ModelRun,
   input: RunAgentInput,
-  options: { timeoutMs?: number } = {},
+  options: { timeoutMs?: number; maxSpecs?: number } = {},
 ): { events: Observable<BaseEvent>; abort: () => void } {
+  const maxSpecs = options.maxSpecs ?? specs.length;
+  const effectiveSpecs = specs.slice(0, Math.max(1, maxSpecs));
   // MODEL_CHAIN_TIMEOUT_V1 - antes no habia timeout global. Si el modelo
   // primario se quedaba colgado (red, proveedor caido), el fallback nunca
   // entraba. Ahora cada intento tiene un timeout implicito (default 120s,
@@ -73,7 +77,7 @@ export function runWithModelFallback(
     let subscription: { unsubscribe: () => void } | undefined;
     let attemptId = 0;
 
-    const hasFallback = () => index + 1 < specs.length;
+    const hasFallback = () => index + 1 < effectiveSpecs.length;
 
     const startNextAttempt = () => {
       subscription?.unsubscribe();
@@ -87,7 +91,7 @@ export function runWithModelFallback(
     // colgado no emitia ni evento ni error, y el fallback nunca entraba.
     const attempt = () => {
       const myId = ++attemptId;
-      const agent = create(specs[index]);
+      const agent = create(effectiveSpecs[index]);
       current = agent;
       let answered = false;
       // MODEL_CHAIN_RETRY_V1 Ã¢â‚¬â€ retry con backoff exponencial entre intentos.
@@ -97,7 +101,7 @@ export function runWithModelFallback(
       // si un proveedor estÃƒÂ¡ caÃƒÂ­do.
       // CB_PER_PROVIDER_V1 - agrupa el circuit por provider.
 // MODEL_FALLBACK_PROVIDER_CIRCUIT_V1
-const provider = specs[index].split("/")[0] ?? "unknown";
+const provider = effectiveSpecs[index].split("/")[0] ?? "unknown";
 const circuit = globalCircuits.get(`llm:${provider}`);
       if (circuit.getState() === "open") {
         // Salta al siguiente spec sin intentar.

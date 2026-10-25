@@ -16,8 +16,9 @@ export const executionContextSchema = z.object({
   taskId: z.string().max(200).optional(),
   threadId: z.string().max(200).optional(),
   turnId: z.string().max(200).optional(),
-  // EXECUTION_CONTEXT_ACTOR_V1 - opcional en F1, obligatorio en F2.
-  actorId: z.string().max(200).optional(),
+  // FIX 02+46 - actorId obligatorio. Sin actor, no hay authz efectiva.
+  // Si una ruta no tiene actor (health, system), usar owner como actor o systemContext.
+  actorId: z.string().min(1).max(200),
   sessionId: z.string().max(200).optional(),
 });
 

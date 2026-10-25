@@ -339,6 +339,16 @@ export class Kernel {
    * Cierra #197: conversation.ts puede reusar el turno abierto en vez de crear
    * uno nuevo por cada mensaje del usuario.
    */
+  // B-31 - listOpenTurnsForThread implementa el metodo de KernelPort.
+  async listOpenTurnsForThread(ctx: KernelContext): Promise<Turn[]> {
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const store = this.deps.store as TurnStore & {
+      listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
+    };
+    if (!store.listOpenTurnsForThread) return [];
+    return store.listOpenTurnsForThread(tenantId, ctx.owner);
+  }
+
   async findOpenTurnForThread(ctx: KernelContext): Promise<Turn | undefined> {
     if (!ctx.threadId) return undefined;
     const tenantId = await this.deps.tenants.resolve(ctx.owner);

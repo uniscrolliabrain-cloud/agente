@@ -16,12 +16,17 @@ export const computerInstructions =
 // COMPUTER_TOOLS_TENANT_V1 Ã¢â‚¬â€ recibe tenantIdPromise opcional para resolver
 // tenantId al importar PDFs. Se pasa desde conversation.ts, que ya tiene
 // acceso a tenantService. Si no se pasa, cae a "default".
+// B-30 - governance opcional: si se pasa, cada tool llama canExecuteTool antes.
 export function computerTools(
   computer: ComputerService,
   files: Files,
   owner: string,
   scope: string,
-  options: { before?: () => Promise<void>; signal?: AbortSignal } = {},
+  options: {
+    before?: () => Promise<void>;
+    signal?: AbortSignal;
+    governance?: { canExecuteTool: (tool: string) => Promise<{ allowed: boolean; reason?: string }> };
+  } = {},
   tenantIdPromise?: Promise<string>,
 ) {
   const tool = <T extends z.ZodType>(
@@ -36,6 +41,12 @@ export function computerTools(
       parameters,
       execute: async (args) => {
         try {
+          if (options.governance) {
+            const decision = await options.governance.canExecuteTool(name);
+            if (!decision.allowed) {
+              return { error: decision.reason ?? `Tool ${name} denied by governance` };
+            }
+          }
           await options.before?.();
           return await action(parameters.parse(args));
         } catch (error) {

@@ -8,7 +8,9 @@ import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
 // KERNEL_PROMOTER_IMPORT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â import del promoter. El uso viene en un bloque posterior.
+// B-01 - contrato publico del kernel en vez de implementaciones internas.
 import type { Promoter } from "../kernel/graph/promote.ts";
+import type { KernelContext as KernelContextPort } from "../../../../packages/domain/src/kernel.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
 import type { AgentGovernance } from "./agents/governance.ts";
 import type { AgentRole } from "../../../../packages/domain/src/agent.ts";
@@ -35,7 +37,8 @@ export async function executeModelTask(
   //   - Escribimos el prompt como intent, no como reasoning. El reasoning
   //     real lo escribe el slow LLM cuando termina.
   let kernelTurnId: string | undefined;
-  let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
+  // B-01 - usa KernelContextPort (dominio) en vez de la implementacion del kernel.
+let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | undefined;
   if (service.kernel) {
     try {
       const { kernelContextSchema, UserAuthor } = await import("../kernel/index.ts");
@@ -506,15 +509,21 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
   const roleChain = roleSpec?.apiKey && roleSpec.model
     ? [`${roleSpec.provider}/${roleSpec.model}`, ...baseChain]
     : baseChain;
-  // MODEL_SPEED_QUOTA_V1 - cuota por velocidad (slow) antes de inferir.
+  // FIX 24 - cuota antes de inferir (slow): tokens, coste y velocidad.
   if (service.guardrails) {
     try {
       const tenantIdForQuota = service.tenantService
         ? await service.tenantService.tenantIdFor(owner)
         : "default";
-      const usage = await service.db.list<{ date: string; speed?: string }>(owner, "llm-usage");
+      const usage = await service.db.list<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(owner, "llm-usage");
+      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const today = usage.filter((u) => u.date > dayAgo);
+      const tokensToday = today.reduce((sum, u) => sum + (u.inputTokens ?? 0) + (u.outputTokens ?? 0), 0);
+      const costToday = today.reduce((sum, u) => sum + (u.costEur ?? 0), 0);
       const callsThisHour = usage.filter((u) => u.speed === "slow" && u.date > hourAgo).length;
+      await service.guardrails.checkTokens(tenantIdForQuota, tokensToday);
+      await service.guardrails.checkCost(tenantIdForQuota, costToday);
       await service.guardrails.checkSpeedQuota(tenantIdForQuota, "slow", callsThisHour);
     } catch (error) {
       if (error instanceof Error && error.message.includes("limite de")) {

@@ -20,7 +20,9 @@ import { computerInstructions, computerTools } from "../computer-tools.ts";
 // CONVERSATION_META_INJECT_V1
 // CONVERSATION_META_EVALUATE_V1
 // KERNEL_PROMOTER_IMPORT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â import del promoter. El uso viene en un bloque posterior.
+// B-01 - contrato publico del kernel en vez de implementaciones internas.
 import type { Promoter } from "../kernel/graph/promote.ts";
+import type { KernelContext as KernelContextPort } from "../../../../packages/domain/src/kernel.ts";
 import type { Config } from "../config.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
 import type { AgentService } from "./service.ts";
@@ -105,7 +107,8 @@ export class ConversationAgent extends AbstractAgent {
     // AGENT_RUNTIME_WIRE_V2 - el runtime efimero se abre al arrancar el turno
     // y se cierra cuando el turno se cierra. Se publica al bus.
     let kernelTurnId: string | undefined;
-    let kernelCtx: import("../kernel/index.ts").KernelContext | undefined;
+    // B-01 - usa KernelContextPort (dominio) en vez de la implementacion del kernel.
+let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | undefined;
     // KERNEL_TURN_OPEN_V5_PROMISE_GATE - la IIFE original se descartaba con
     // `void`. Ahora guardamos la promesa y la esperamos dentro del Observable,
     // asi que kernelTurnId/kernelCtx estan garantizados cuando el subscriber
@@ -727,13 +730,19 @@ export class ConversationAgent extends AbstractAgent {
         } catch {
           // FAST_SLOW_CONFIG_WIRE_V1 - best-effort.
         }
-        // CONV_SPEED_QUOTA_V1 - cuota por velocidad (fast) antes de inferir.
+        // FIX 24 - cuota antes de inferir: tokens, coste y velocidad.
         if (this.service.guardrails) {
           try {
             const tenantIdForQuota = (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
-            const usage = await this.service.db.list<{ date: string; speed?: string }>(this.owner, "llm-usage");
+            const usage = await this.service.db.list<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(this.owner, "llm-usage");
+            const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
             const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const today = usage.filter((u) => u.date > dayAgo);
+            const tokensToday = today.reduce((sum, u) => sum + (u.inputTokens ?? 0) + (u.outputTokens ?? 0), 0);
+            const costToday = today.reduce((sum, u) => sum + (u.costEur ?? 0), 0);
             const callsThisHour = usage.filter((u) => u.speed === "chat" && u.date > hourAgo).length;
+            await this.service.guardrails.checkTokens(tenantIdForQuota, tokensToday);
+            await this.service.guardrails.checkCost(tenantIdForQuota, costToday);
             await this.service.guardrails.checkSpeedQuota(tenantIdForQuota, "fast", callsThisHour);
           } catch (error) {
             if (error instanceof Error && error.message.includes("limite de")) {
@@ -909,7 +918,12 @@ maxSteps: cfg?.maxSteps ?? Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxR
       presenterText = "";
     }
     void presenterText;
-    const result = await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
+    // B-13 - Promoter con memory+graph para escritura directa (ademas de persistPromotionDestinations).
+    const result = await new Promoter({
+      kernel: this.service.kernel,
+      memory: this.service.memory,
+      graph: this.service.graph,
+    }).promote(ctx, turnId);
     // CONVERSATION_META_EVALUATE_CALLSITE_V1
     try {
       const { Meta } = await import("../kernel/observers/meta.ts");

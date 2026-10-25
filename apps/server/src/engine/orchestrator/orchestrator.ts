@@ -81,6 +81,16 @@ export class BusinessOSOrchestrator {
     if (this.deps.guardrails) {
       await this.deps.guardrails.checkTaskCreation(ctx.tenantId, 0);
     }
+    // B-15 - valida capacidades y dependencias antes de ejecutar.
+    const availableCapabilities = new Set(capabilities.map((c) => c.id));
+    const planCapabilityIds = plan.steps.map((s) => s.capabilityId).filter(Boolean) as string[];
+    const missingCapabilities = planCapabilityIds.filter((id) => !availableCapabilities.has(id));
+    if (missingCapabilities.length > 0) {
+      return {
+        status: "blocked",
+        summary: `Plan invalido: capabilities no disponibles: ${missingCapabilities.join(", ")}`,
+      };
+    }
     const execution = await this.deps.executor.execute(ctx, plan);
 
     // ORCHESTRATOR_OUTCOME_EVIDENCE_V1 - outcome honesto: evidence como observation (no fact), blocked si all-skipped.
@@ -110,7 +120,8 @@ export class BusinessOSOrchestrator {
       outcome.verificationNote = verification.reason;
     }
 
-    // ORCHESTRATOR_LEARNING_WIRE_V1 - observar el resultado.
+    // B-29 - observer DESPUES de verification. Antes se llamaba antes y el
+    // LearningObserver guardaba "achieved" aunque el verifier no hubiera confirmado.
     if (this.deps.observer) {
       await this.deps.observer
         .observe({ tenantId: ctx.tenantId, goal, plan, outcome })
@@ -121,22 +132,65 @@ export class BusinessOSOrchestrator {
       return { status: "achieved", summary: verification.reason };
     }
 
-    // Replanificar
+    // FIX 33+34 - replanning acotado y ejecutado.
+    // 1. Ejecuta el plan revisado (no solo lo devuelve como partial).
+    // 2. Limita a 3 replans por goal.
+    // 3. Propaga previousPlanId y version.
     const failed = execution.steps.find((s) => s.status === "failed");
     if (failed) {
-      const nextPlan = await this.deps.replanner.replan({
-        goal,
-        previousPlan: plan,
-        failedStepId: failed.id,
-        error: "step failed",
-      });
-      if (nextPlan) {
-        // ORCHESTRATOR_BLOCKED_AND_HONEST_SUMMARY_V1 - el plan revisado NO se ejecuta automaticamente.
-        return {
-          status: "partial",
-          summary: `Plan revisado, pendiente de aprobacion: ${nextPlan.id}`,
+      let currentPlan = plan;
+      let currentError = failed.error ?? "step failed";
+      let currentFailedStepId = failed.id;
+      const MAX_REPLANS = 3;
+      for (let attempt = 0; attempt < MAX_REPLANS; attempt += 1) {
+        const nextPlan = await this.deps.replanner.replan({
+          goal,
+          previousPlan: currentPlan,
+          failedStepId: currentFailedStepId,
+          error: currentError,
+        });
+        if (!nextPlan) {
+          return { status: "blocked", summary: `Replanning agotado (${attempt + 1}/${MAX_REPLANS}): ${currentError}` };
+        }
+        // Valida el plan revisado antes de ejecutarlo.
+        const nextCapabilities = new Set(capabilities.map((c) => c.id));
+        const nextCapabilityIds = nextPlan.steps.map((s) => s.capabilityId).filter(Boolean) as string[];
+        const nextMissing = nextCapabilityIds.filter((id) => !nextCapabilities.has(id));
+        if (nextMissing.length > 0) {
+          return { status: "blocked", summary: `Plan revisado invalido: capabilities no disponibles: ${nextMissing.join(", ")}` };
+        }
+        const nextExecution = await this.deps.executor.execute(ctx, nextPlan);
+        const nextOutcome: import("../../../../../packages/domain/src/outcome.ts").Outcome = {
+          status: nextExecution.status === "blocked" ? "blocked" : nextExecution.status === "succeeded" ? "achieved" : "failed",
+          summary: `Ejecutados ${nextExecution.steps.length} pasos (replan ${attempt + 1})`,
+          evidence: nextExecution.steps.filter((s) => s.status === "succeeded").map((s) => ({
+            id: `step:${s.id}`,
+            kind: "observation" as const,
+            source: `step:${s.id}`,
+            timestamp: new Date().toISOString(),
+          })),
+          metrics: [],
+          verified: false,
         };
+        const nextVerification = await this.deps.verifier.verify(goal, nextOutcome);
+        if (nextVerification.verified) {
+          nextOutcome.verified = true;
+          nextOutcome.verifiedAt = new Date().toISOString();
+          nextOutcome.verificationNote = nextVerification.reason;
+          if (this.deps.observer) {
+            await this.deps.observer.observe({ tenantId: ctx.tenantId, goal, plan: nextPlan, outcome: nextOutcome }).catch(() => {});
+          }
+          return { status: "achieved", summary: `${nextVerification.reason} (replan ${attempt + 1})` };
+        }
+        const nextFailed = nextExecution.steps.find((s) => s.status === "failed");
+        if (!nextFailed) {
+          return { status: "partial", summary: `Replan ${attempt + 1} ejecutado pero no verificado: ${nextVerification.reason}` };
+        }
+        currentPlan = nextPlan;
+        currentFailedStepId = nextFailed.id;
+        currentError = nextFailed.error ?? "step failed";
       }
+      return { status: "blocked", summary: `Replanning agotado (${MAX_REPLANS}/${MAX_REPLANS}): ${currentError}` };
     }
 
     return { status: "blocked", summary: verification.reason };
