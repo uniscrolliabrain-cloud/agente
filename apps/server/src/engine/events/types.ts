@@ -126,6 +126,8 @@ export const SYSTEM_EVENT_TYPES = [
   "kernel.thought.delegation",
   // EVENTBUS_BUILD_APPLIED_TYPE_V1
   "build.applied",
+  // EVENTS_MESSAGE_EDITED_V1 - edicion de mensaje en chat.
+  "message.edited",
 ] as const;
 
 export type SystemEventType = (typeof SYSTEM_EVENT_TYPES)[number];

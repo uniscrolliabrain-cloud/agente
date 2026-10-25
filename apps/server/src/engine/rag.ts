@@ -174,7 +174,25 @@ export class RagService {
   private vectorReady: Promise<boolean> | null = null;
   // RAG_TENANT_STORE_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â acepta Store o TenantScopedStore explÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­citamente.
   // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
-  constructor(private readonly db: Store | TenantScopedStore) {}
+  // RAG_TENANT_EMBEDDINGS_V1 - resuelve TenantConfig.embeddings.apiKey por tenant.
+  constructor(
+    private readonly db: Store | TenantScopedStore,
+    private readonly tenantService?: { tenantIdFor(owner: string): Promise<string> },
+    private readonly configResolver?: { resolve(tenantId: string): Promise<{ embeddings?: { apiKey?: string } }> },
+  ) {}
+
+  // RAG_TENANT_EMBEDDINGS_V1 - helper: key del tenant o undefined.
+  private async apiKeyFor(owner: string): Promise<string | undefined> {
+    if (!this.tenantService || !this.configResolver) return undefined;
+    try {
+      const tenantId = await this.tenantService.tenantIdFor(owner);
+      const cfg = await this.configResolver.resolve(tenantId);
+      const key = cfg.embeddings?.apiKey?.trim();
+      return key || undefined;
+    } catch {
+      return undefined;
+    }
+  }
 
   /**
    * Postgres real **y** extension pgvector instalada. PGlite nunca llega aqui: su motor no
@@ -245,7 +263,8 @@ export class RagService {
     const all = chunkText(text);
     if (all.length === 0) return { chunks: 0, embedded: 0 };
     const chunks = all.slice(0, maxChunks);
-    const vectors = await embedTexts(chunks);
+    const apiKey = await this.apiKeyFor(owner);
+    const vectors = await embedTexts(chunks, undefined, apiKey);
     let embedded = 0;
     const now = new Date().toISOString();
     for (let i = 0; i < chunks.length; i += 1) {
@@ -290,7 +309,8 @@ export class RagService {
     limit = 5,
     options: { sourceId?: string } = {},
   ): Promise<RagHit[]> {
-    const queryVec = await embed(query);
+    const apiKey = await this.apiKeyFor(owner);
+    const queryVec = await embed(query, apiKey);
     const queryWords = query
       .toLowerCase()
       .split(/\\W+/)

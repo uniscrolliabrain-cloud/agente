@@ -122,6 +122,11 @@ export class ActionService {
     return reset;
   }
 
+  // ACTION_GET_APPROVAL_V1 - lectura de aprobacion para validacion real en CapabilityRunner.
+  async getApproval(owner: string, actionId: string): Promise<ActionProposal | null> {
+    return this.db.get<ActionProposal>(owner, "actions", actionId);
+  }
+
   async propose(
     owner: string,
     raw: unknown,

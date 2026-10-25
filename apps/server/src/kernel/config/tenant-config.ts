@@ -39,6 +39,8 @@ export const tenantConfigSchema = z.object({
   fastIdleMs: z.number().int().min(0).max(60_000).default(1_000),
   slowLongMs: z.number().int().min(0).max(300_000).default(30_000),
   maxThoughtsPerTurn: z.number().int().min(1).max(5_000).default(500),
+  // TENANT_CONFIG_MAX_STEPS_V1 - max steps por tenant.
+  maxSteps: z.number().int().min(1).max(100).default(6),
 });
 
 export type TenantCapabilities = z.infer<typeof tenantCapabilitiesSchema>;

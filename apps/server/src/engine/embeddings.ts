@@ -12,8 +12,9 @@ export function embeddingsConfigured(): boolean {
   return Boolean(apiKey());
 }
 
-export async function embed(text: string): Promise<number[] | null> {
-  const key = apiKey();
+// EMBEDDINGS_API_KEY_OVERRIDE_V1 - acepta apiKey por tenant (TenantConfig.embeddings).
+export async function embed(text: string, apiKeyOverride?: string): Promise<number[] | null> {
+  const key = apiKeyOverride?.trim() || apiKey();
   if (!key) return null;
   const trimmed = text.trim().slice(0, 10000);
   if (!trimmed) return null;

@@ -30,12 +30,13 @@ export interface ModelRun {
 // cadena completa es [fast, slow, global, fallback]. Si no, [global, fallback].
 import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 
-export function modelChain(config: Config, tenant?: TenantConfig): string[] {
+// MODEL_CHAIN_MODE_V1 — separa chat y tarea. Chat: [fast, global]. Tarea: [slow, global].
+export function modelChain(config: Config, tenant?: TenantConfig, mode: "chat" | "task" = "task"): string[] {
   const specs: string[] = [];
-  if (tenant?.fast?.apiKey && tenant.fast.model) {
+  if (mode === "chat" && tenant?.fast?.apiKey && tenant.fast.model) {
     specs.push(`${tenant.fast.provider}/${tenant.fast.model}`);
   }
-  if (tenant?.slow?.apiKey && tenant.slow.model) {
+  if (mode === "task" && tenant?.slow?.apiKey && tenant.slow.model) {
     specs.push(`${tenant.slow.provider}/${tenant.slow.model}`);
   }
   if (config.model?.trim()) specs.push(config.model.trim());

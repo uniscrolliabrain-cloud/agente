@@ -11,6 +11,9 @@ export interface TenantQuota {
   eventsPerDay: number;
   turnsActive: number;
   costEurPerDay: number;
+  // GUARDRAILS_SPEED_QUOTA_V1 - cuota por velocidad.
+  fastCallsPerHour: number;
+  slowCallsPerHour: number;
 }
 
 const DEFAULT_QUOTA: TenantQuota = {
@@ -20,6 +23,9 @@ const DEFAULT_QUOTA: TenantQuota = {
   eventsPerDay: 100_000,
   turnsActive: 100,
   costEurPerDay: 50,
+  // GUARDRAILS_SPEED_QUOTA_V1 - defaults.
+  fastCallsPerHour: 1_000,
+  slowCallsPerHour: 500,
 };
 
 export class GuardrailService {
@@ -60,6 +66,22 @@ export class GuardrailService {
     if (costToday >= q.costEurPerDay) {
       throw new AppError(
         `El tenant ha alcanzado el limite de ${q.costEurPerDay} EUR/dia`,
+        429,
+      );
+    }
+  }
+
+  // GUARDRAILS_SPEED_QUOTA_V1 - cuota por velocidad (fast/slow) por hora.
+  async checkSpeedQuota(
+    tenantId: string,
+    speed: "fast" | "slow",
+    callsThisHour: number,
+  ): Promise<void> {
+    const q = await this.quotaFor(tenantId);
+    const limit = speed === "fast" ? q.fastCallsPerHour : q.slowCallsPerHour;
+    if (callsThisHour >= limit) {
+      throw new AppError(
+        `El tenant ha alcanzado el limite de ${limit} llamadas ${speed}/hora`,
         429,
       );
     }

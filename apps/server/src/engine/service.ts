@@ -307,7 +307,15 @@ export class AgentService {
     // EXECUTOR_WIRE_V1 - el runner ejecuta capabilities del registry.
     // SERVICE_TOOL_EXECUTORS_V1 - executors reales.
     const toolExecutors = buildToolExecutors(this);
-    const capabilityRunner = new CapabilityRunner(this.capabilities, toolExecutors);
+    // SERVICE_CAPABILITY_RUNNER_WIRE_V1 - inyecta governance + getAgentRole en CapabilityRunner.
+    const capabilityRunner = new CapabilityRunner(
+      this.capabilities,
+      toolExecutors,
+      this.governance,
+      (tid: string, rid: string) => this.db.get<import("../../../../packages/domain/src/agent.ts").AgentRole>(tid, "agent-roles", rid),
+      // SERVICE_CAPABILITY_RUNNER_DB_V1 - db para idempotency claims.
+      this.db,
+    );
     this.executor = new Executor(capabilityRunner);
     this.learning = new LearningService(this.memory);
     this.sopExecutor = new SOPExecutor(this, this.bus, this.graph, this.stateMachineRegistry);

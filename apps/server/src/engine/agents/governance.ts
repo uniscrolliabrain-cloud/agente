@@ -35,7 +35,16 @@ export class AgentGovernance {
       });
       return { allowed: false, reason: `Tool ${tool} not allowed by role ${role.id}` };
     }
-    // AGENT_GOVERNANCE_PDP_V1 - Regla 2 con PDP si esta inyectado; fallback a PolicyEngine.can.`n    if (this.pdp) {`n      const policyCtx: PolicyContext = { tenantId: actor.tenantId, actor };`n      const target = { ownerId: owner };`n      const decision = await this.pdp.can(policyCtx, "execute", "action", undefined, target);`n      if (decision === "deny") return { allowed: false, reason: `"PDP denied tool ${tool}`" };`n      return { allowed: true };`n    }`n    const decision = await this.policy.can(owner, role, `tool:${tool}`, "execute");`n    return decision;
+    // AGENT_GOVERNANCE_PDP_V2 - Regla 2 con PDP si esta inyectado; fallback a PolicyEngine.can.
+    if (this.pdp) {
+      const policyCtx: PolicyContext = { tenantId: actor.tenantId, actor };
+      const target = { ownerId: owner };
+      const decision = await this.pdp.can(policyCtx, "execute", "action", undefined, target);
+      if (decision === "deny") return { allowed: false, reason: "PDP denied tool " + tool };
+      return { allowed: true };
+    }
+    const decision = await this.policy.can(owner, role, `tool:${tool}`, "execute");
+    return decision;
   }
 
   async canExecuteAction(
@@ -45,6 +54,14 @@ export class AgentGovernance {
     action: string,
     policyAction: PolicyAction,
   ): Promise<GovernanceDecision> {
-    // AGENT_GOVERNANCE_PDP_V1 - canExecuteAction con PDP si esta inyectado; fallback a PolicyEngine.can.`n    if (this.pdp) {`n      const policyCtx: PolicyContext = { tenantId: actor.tenantId, actor };`n      const target = { ownerId: owner };`n      const decision = await this.pdp.can(policyCtx, policyAction, "action", undefined, target);`n      if (decision === "deny") return { allowed: false, reason: `"PDP denied action ${action}`" };`n      return { allowed: true };`n    }`n    return this.policy.can(owner, role, `action:${action}`, policyAction);
+    // AGENT_GOVERNANCE_PDP_V2 - canExecuteAction con PDP si esta inyectado; fallback a PolicyEngine.can.
+    if (this.pdp) {
+      const policyCtx: PolicyContext = { tenantId: actor.tenantId, actor };
+      const target = { ownerId: owner };
+      const decision = await this.pdp.can(policyCtx, policyAction, "action", undefined, target);
+      if (decision === "deny") return { allowed: false, reason: "PDP denied action " + action };
+      return { allowed: true };
+    }
+    return this.policy.can(owner, role, `action:${action}`, policyAction);
   }
 }

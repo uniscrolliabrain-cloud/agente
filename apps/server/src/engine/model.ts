@@ -46,12 +46,15 @@ export async function executeModelTask(
       // ese id, se usa como personaId. Si no, el turno se abre sin persona.
       const stateRoleId =
         typeof initial.state.roleId === "string" ? initial.state.roleId : undefined;
+      // MODEL_ACTOR_V1 — actorId = actor delegado, no owner.
+      const taskActorId = (initial.assignedTo ?? (initial.state as { roleId?: string } | undefined)?.roleId ?? owner);
       kernelCtx = kernelContextSchema.parse({
         tenantId,
         owner,
         role: "agent",
         requestId: initial.id,
         correlationId: initial.id,
+        actorId: taskActorId,
         ...(stateRoleId ? { personaId: stateRoleId } : {}),
       });
       // MODEL_RUNTIME_WIRE_V1 - spawn runtime antes de abrir el turno de tarea.
@@ -498,9 +501,27 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
     tenantForRole = await service.kernel.config(kernelCtx).catch(() => undefined);
   }
   const roleSpec = roleId && tenantForRole?.roles?.[roleId];
+  // MODEL_CHAIN_TENANT_V1 — pasa tenantForRole a modelChain para que el slow entre.
+  const baseChain = modelChain(config, tenantForRole);
   const roleChain = roleSpec?.apiKey && roleSpec.model
-    ? [`${roleSpec.provider}/${roleSpec.model}`, ...modelChain(config)]
-    : modelChain(config);
+    ? [`${roleSpec.provider}/${roleSpec.model}`, ...baseChain]
+    : baseChain;
+  // MODEL_SPEED_QUOTA_V1 - cuota por velocidad (slow) antes de inferir.
+  if (service.guardrails) {
+    try {
+      const tenantIdForQuota = service.tenantService
+        ? await service.tenantService.tenantIdFor(owner)
+        : "default";
+      const usage = await service.db.list<{ date: string; speed?: string }>(owner, "llm-usage");
+      const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const callsThisHour = usage.filter((u) => u.speed === "slow" && u.date > hourAgo).length;
+      await service.guardrails.checkSpeedQuota(tenantIdForQuota, "slow", callsThisHour);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes("limite de")) {
+        return { status: "waiting_input", question: error.message };
+      }
+    }
+  }
   const run = runWithModelFallback(roleChain, createAgent, input); // FIX_6B_ROLE_MODEL_V1
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => {

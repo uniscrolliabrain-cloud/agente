@@ -130,6 +130,7 @@ export class ConversationAgent extends AbstractAgent {
             typeof (input.state as Record<string, unknown>)?.roleId === "string"
               ? String((input.state as Record<string, unknown>).roleId)
               : undefined;
+          // CONVERSATION_ACTOR_V1 — actorId desde owner (auth real llega en authMiddleware).
           const ctx = kernelContextSchema.parse({
             tenantId,
             owner,
@@ -137,6 +138,7 @@ export class ConversationAgent extends AbstractAgent {
             requestId: input.runId,
             threadId: input.threadId,
             correlationId: input.runId,
+            actorId: owner,
             ...(stateRoleId ? { personaId: stateRoleId } : {}),
           });
           // AGENT_RUNTIME_WIRE_V2 - spawn del runtime antes de abrir el turno.
@@ -694,13 +696,7 @@ export class ConversationAgent extends AbstractAgent {
         const tenantConfig = ctxForConfig
           ? await this.service.kernel?.config(ctxForConfig).catch(() => undefined)
           : undefined;
-        const fastSpec =
-          tenantConfig?.fast?.apiKey && tenantConfig.fast.model
-            ? `${tenantConfig.fast.provider}/${tenantConfig.fast.model}`
-            : undefined;
-        const chain = fastSpec
-          ? [fastSpec, ...modelChain(this.config).filter((m) => m !== fastSpec)]
-          : modelChain(this.config);
+        // CONVERSATION_CHAIN_V1 — fastSpec y chain eran codigo muerto. chatModelChain es la cadena real.
         // FAST_SLOW_CONFIG_WIRE_V1 - si hay kernel y tenant, usamos el modelo
         // FAST del TenantConfig para el chat. El slow se usa para tareas
         // durables (en model.ts). Si el kernel falla, caemos al chain global.
@@ -731,10 +727,27 @@ export class ConversationAgent extends AbstractAgent {
         } catch {
           // FAST_SLOW_CONFIG_WIRE_V1 - best-effort.
         }
+        // CONV_SPEED_QUOTA_V1 - cuota por velocidad (fast) antes de inferir.
+        if (this.service.guardrails) {
+          try {
+            const tenantIdForQuota = (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
+            const usage = await this.service.db.list<{ date: string; speed?: string }>(this.owner, "llm-usage");
+            const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const callsThisHour = usage.filter((u) => u.speed === "chat" && u.date > hourAgo).length;
+            await this.service.guardrails.checkSpeedQuota(tenantIdForQuota, "fast", callsThisHour);
+          } catch (error) {
+            if (error instanceof Error && error.message.includes("limite de")) {
+              subscriber.next({ type: EventType.RUN_ERROR, message: error.message });
+              subscriber.complete();
+              return;
+            }
+          }
+        }
         run = runWithModelFallback(
           chatModelChain,
           (model) => new BuiltInAgent({ model, // MAX_STEPS_CONFIG_V1 - configurable.
-maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
+// CONV_MAX_STEPS_TENANT_V1 - maxSteps por tenant (fallback env).
+maxSteps: cfg?.maxSteps ?? Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
           { timeoutMs: Number(process.env.CHAT_TIMEOUT_MS ?? "2000") || 2000 }, // FIX_11_A2_CHAT_TIMEOUT_V1
         );
@@ -900,7 +913,12 @@ maxSteps: Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools,
     // CONVERSATION_META_EVALUATE_CALLSITE_V1
     try {
       const { Meta } = await import("../kernel/observers/meta.ts");
-      const meta = new Meta();
+      // CONV_META_TENANT_CONFIG_V1 - fastIdleMs/slowLongMs desde TenantConfig.
+      const metaCfg = await this.service.kernel?.config(ctx).catch(() => undefined);
+      const meta = new Meta({
+        ...(metaCfg?.fastIdleMs !== undefined ? { fastIdleMs: metaCfg.fastIdleMs } : {}),
+        ...(metaCfg?.slowLongMs !== undefined ? { longNoOutputMs: metaCfg.slowLongMs } : {}),
+      });
       const thoughts = await this.service.kernel.thoughtsOf(ctx, turnId);
       const hints = meta.evaluate({ thoughts, now: new Date().toISOString() });
       // CONVERSATION_META_HINTS_LOG_V1

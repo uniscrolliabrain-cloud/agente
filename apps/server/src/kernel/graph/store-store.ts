@@ -191,6 +191,18 @@ export class StoreTurnStore implements TurnStore {
     reason: TurnCloseReason,
     closedBy: TurnClosedBy,
   ): Promise<Turn> {
+    // STORE_QUIESCENCE_MS_V1 - si reason es quiescence, esperar a que pase quiescenceMs desde quiescentAt.
+    if (reason === "quiescence") {
+      const rawTurn = await this.store.get(tenantId, TURNS_KIND, turnId);
+      if (rawTurn) {
+        const turnPre = turnSchema.parse(rawTurn);
+        if (turnPre.quiescentAt && turnPre.quiescenceMs > 0) {
+          const elapsed = Date.now() - Date.parse(turnPre.quiescentAt);
+          const wait = Math.min(turnPre.quiescenceMs - elapsed, 600_000);
+          if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+        }
+      }
+    }
     return this.store.transaction(async (tx) => {
       const raw = await tx.get(tenantId, TURNS_KIND, turnId);
       if (!raw) throw new AppError(`Turn not found: ${turnId}`, 404);

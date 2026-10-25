@@ -95,7 +95,8 @@ export async function createApp(
     files = new Files(tdbEarly, config, auth),
     google = new GoogleAuth(db, config),
     users = new UserService(db),
-    rag = new RagService(tdbEarly),
+    // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantServiceEarly + resolver para embeddings por tenant.
+  rag = new RagService(tdbEarly, tenantServiceEarly, new EnvTenantConfigResolver()),
     workspace = new WorkspaceService(tdbEarly, config, files, google, rag);
   // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
   // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
@@ -162,7 +163,6 @@ export async function createApp(
     void agentRuntime.sweep().catch(() => {});
   }, 60_000);
   runtimeSweepTimer.unref?.();
-  const governance = new AgentGovernance(policy, bus);
   const workspaceRegistry = new WorkspaceRegistry();
   const marketplace = new SkillMarketplace(db);
   const memory = new MemoryService(db, rag);
@@ -215,6 +215,8 @@ export async function createApp(
       db.transaction(() => fn(persistentStorePort as never)),
   };
   const kernel = new Kernel({
+    // APP_KERNEL_BUSINESS_GRAPH_V1 - Views puede consultar el grafo real.
+    businessGraph: graph,
     store: new StoreTurnStore(persistentStorePort),
     // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
     // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
@@ -225,6 +227,24 @@ export async function createApp(
     audit: new StoreAuditStore(db),
     config: new EnvTenantConfigResolver(),
   });
+  // APP_KERNEL_INIT_V1 - verifica el kernel al arrancar (fail-soft: warning, no aborta).
+  void (async () => {
+    try {
+      const { initKernel } = await import("./kernel/lifecycle.ts");
+      const report = await initKernel(kernel);
+      if (report.health !== "healthy") {
+        console.warn("[kernel] init health=" + report.health + " notes=" + report.notes.join("; "));
+      }
+    } catch (error) {
+      console.warn("[kernel] init fallo:", error instanceof Error ? error.message : error);
+    }
+  })();
+  // APP_KERNEL_BUS_EMITTER_V1 - emite kernel.turn.opened + kernel.thought.* al bus.
+  {
+    const { KernelBusEmitter } = await import("./kernel/subscribers/bus-emitter.ts");
+    const kernelBusEmitter = new KernelBusEmitter(kernel, bus);
+    kernelBusEmitter.attach();
+  }
   // WS_ENGINE_WIRE_V1 - cablea el catalogo de workspaces al engine.
   const workspaceModuleRegistry = new WorkspaceModuleRegistry();
   workspaceModuleRegistry.registerAll(ALL_WORKSPACES);
@@ -246,6 +266,11 @@ export async function createApp(
     { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
     // WS_ENGINE_DISPATCH_V1
   );
+  // APP_WORKSPACE_CAPABILITIES_WIRE_V1 - registra las capabilities de workspaces en agent.capabilities.
+  // Antes se construia workspaceCapabilityRegistry pero no se usaba en el runner.
+  for (const cap of await workspaceCapabilityRegistry.list()) {
+    agent.capabilities.register(cap);
+  }
   // ONTOLOGY_VALIDATE_WIRE_V1 - valida el vocabulario del tenant contra el
   // metamodelo. Fail-soft: si falla, se loguea y se sigue.
   try {
@@ -482,10 +507,20 @@ app.get("/api/health", async (c) => {
     const actorService = new ActorService({ users, tenants: tenantService });
     app.use("/api/*", verifyJwtMiddleware({ actorService }));
   }
-  // APP_AUTHZ_WIRE_V1 - PDP instanciado desde policies.ts. authzMiddleware no es la unica defensa.`n  const { PolicyDecisionPoint: PDPCtor } = await import("./engine/authz/pdp.ts");`n  const { authzMiddleware } = await import("./engine/authz/pep.ts");`n  const { defaultPolicies: defaultPols, buildPoliciesFromAgentRole: buildPols } = await import("./engine/authz/policies.ts");`n  const authzPolicies = [...defaultPols()];`n  const pdp = new PDPCtor(authzPolicies, { engine: policy, getAgentRole: async (tenantId: string, roleId: string) => db.get(tenantId, "agent-roles", roleId) });
+  // APP_AUTHZ_WIRE_V2 - PDP instanciado desde policies.ts. authzMiddleware no es la unica defensa.
+  const { PolicyDecisionPoint: PDPCtor } = await import("./engine/authz/pdp.ts");
+  const { authzMiddleware } = await import("./engine/authz/pep.ts");
+  const { defaultPolicies: defaultPols, buildPoliciesFromAgentRole: buildPols } = await import("./engine/authz/policies.ts");
+  const authzPolicies = [...defaultPols()];
+  const pdp = new PDPCtor(authzPolicies, { engine: policy, getAgentRole: async (tenantId: string, roleId: string) => db.get(tenantId, "agent-roles", roleId) });
+  // APP_GOVERNANCE_PDP_V2 - governance con pdp inyectado (antes se construia sin pdp).
+  const governance = new AgentGovernance(policy, bus, pdp);
   // APP_FIELD_FILTER_WIRE_V1 - instancia FieldFilter y lo pasa a handlers.
   const { FieldFilter } = await import("./engine/authz/field-filter.ts");
-  const fieldFilter = new FieldFilter(pdp);`n  app.use("/api/*", authzMiddleware(pdp));`n  app.use("/api/*", async (c, next) => {
+  const fieldFilter = new FieldFilter(pdp);
+  // APP_AUTHZ_MOUNT_V2 - authzMiddleware montado antes del ctx (orden critico).
+  app.use("/api/*", authzMiddleware(pdp));
+  app.use("/api/*", async (c, next) => {
     if (c.req.path === "/api/auth/login" || c.req.path === "/api/auth/logout") {
       await next();
       return;
@@ -505,7 +540,8 @@ app.get("/api/health", async (c) => {
     const _tenantIdForCtx = await tenantService.tenantIdFor(owner).catch(() => "default");
     c.set("ctx", {
       tenantId: _tenantIdForCtx,
-      // APP_AUTHZ_WIRE_V1 - actorId = actor.id si verifyJwtMiddleware lo puso; si no, owner.`n      actorId: (c.get("actor") as { id?: string } | undefined)?.id ?? owner,
+      // APP_CTX_ACTOR_V2 - actorId = actor.id si verifyJwtMiddleware lo puso; si no, owner.
+      actorId: (c.get("actor") as { id?: string } | undefined)?.id ?? owner,
       sessionId: undefined,
       owner,
       requestId: c.req.header("x-request-id") ?? "req-" + Date.now(),

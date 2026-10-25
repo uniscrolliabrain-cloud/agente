@@ -6,22 +6,25 @@
 import type { ExecutionContext } from "../../../../../packages/domain/src/index.ts";
 import type { AgentService } from "../service.ts";
 
+// TOOL_EXECUTORS_IDEMPOTENCY_V1 - firma opcional con idempotencyKey. Los executors que la usan la reciben; los que no, la ignoran.
 export interface ToolExecutor {
   run(
     ctx: ExecutionContext,
     capabilityId: string,
     inputs: Record<string, unknown>,
+    idempotencyKey?: import("../idempotency.ts").IdempotencyKey,
   ): Promise<unknown>;
 }
 
 export function buildToolExecutors(service: AgentService): Map<string, ToolExecutor> {
   const map = new Map<string, ToolExecutor>();
 
+  // TOOL_EXECUTORS_WRAP_IDEMPOTENCY_V1 - wrap acepta idempotencyKey opcional y la pasa a fn si la usa.
   const wrap = (
     id: string,
-    fn: (ctx: ExecutionContext, inputs: Record<string, unknown>) => Promise<unknown>,
+    fn: (ctx: ExecutionContext, inputs: Record<string, unknown>, idempotencyKey?: import("../idempotency.ts").IdempotencyKey) => Promise<unknown>,
   ) => {
-    map.set(id, { run: async (ctx, _cap, inputs) => fn(ctx, inputs) });
+    map.set(id, { run: async (ctx, _cap, inputs, key) => fn(ctx, inputs, key) });
   };
 
   wrap("read_mail_thread", async (ctx, inputs) => {
@@ -42,7 +45,8 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
     });
   });
 
-  wrap("save_artifact", async (ctx, inputs) => {
+  // TOOL_EXECUTORS_USE_IDEMPOTENCY_V1 - save_artifact usa key para deduplicar titulo.
+  wrap("save_artifact", async (ctx, inputs, key) => {
     if (!ctx.taskId) throw new Error("save_artifact requires taskId in ctx");
     const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
       ctx.owner,
@@ -71,12 +75,14 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
     return service.browser.observe(ctx.owner, url);
   });
 
-  wrap("computer_command", async (ctx, inputs) => {
+  // TOOL_EXECUTORS_USE_IDEMPOTENCY_V1 - computer_command pasa key al sandbox (si lo soporta).
+  wrap("computer_command", async (ctx, inputs, key) => {
     const command = String(inputs.command ?? "");
     if (!command) throw new Error("command required");
     return service.computer.execute(ctx.owner, {
       command,
       cwd: String(inputs.cwd ?? "/workspace"),
+      ...(key ? { idempotencyKey: key.key } : {}),
     });
   });
 
@@ -119,11 +125,13 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
   });
 
   // TOOL_EXECUTOR_LLM_GENERATE_V2 - llamada real al modelo con timeout.
-  wrap("llm_generate", async (_ctx, inputs) => {
+  // TOOL_EXECUTORS_USE_IDEMPOTENCY_V1 - llm_generate usa key para cache/dedupe textual.
+  wrap("llm_generate", async (_ctx, inputs, key) => {
     const { generateText } = await import("../model.ts");
     const instruction = String(inputs.instruction ?? inputs.prompt ?? "");
     if (!instruction) return { text: "" };
-    const text = await generateText(service.config, instruction, inputs.context ?? {});
+    const idempotentInstruction = key ? `[idem:${key.key.slice(0, 8)}] ${instruction}` : instruction;
+    const text = await generateText(service.config, idempotentInstruction, inputs.context ?? {});
     return { text: text.slice(0, 20000) };
   });
 

@@ -3,8 +3,9 @@
 
 import type { ExecutionContext, Plan } from "../../../../../packages/domain/src/index.ts";
 
+// EXECUTOR_STATUS_BLOCKED_V1 - status con "blocked" para all-skipped.
 export interface ExecutionResult {
-  status: "succeeded" | "failed";
+  status: "succeeded" | "failed" | "blocked";
   steps: Array<{ id: string; status: string; error?: string }>;
 }
 
@@ -80,6 +81,10 @@ export class Executor {
       }
     }
 
+    // EXECUTOR_STATUS_BLOCKED_V1 - si todos los steps son skipped, blocked (no failed).
+    if (results.length > 0 && results.every((r) => r.status === "skipped")) {
+      return { status: "blocked", steps: results };
+    }
     return { status: "succeeded", steps: results };
   }
 }

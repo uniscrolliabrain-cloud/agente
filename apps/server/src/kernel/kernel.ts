@@ -76,6 +76,12 @@ export class Kernel {
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
     const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    // KERNEL_SET_LIMIT_V1 — propaga maxThoughtsPerTurn al store si esta disponible.
+    try {
+      const cfg = await this.deps.config.resolve(tenantId);
+      const store = this.deps.store as TurnStore & { setLimitForTenant?: (t: string, n: number) => void };
+      store.setLimitForTenant?.(tenantId, cfg.maxThoughtsPerTurn);
+    } catch { /* nonfatal */ }
     // KERNEL_OPEN_TURN_PERSONA_V1 - propaga el personaId del contexto al store.
     const turn = await this.deps.store.openTurn(tenantId, ctx.owner, trigger, ctx.personaId);
     // KERNEL_APPEND_THOUGHT_FIRE_HOOK_V1 - disparar hook onTurnOpened.
