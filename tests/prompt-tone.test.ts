@@ -28,9 +28,9 @@ test("el prompt tiene las reglas 1-9 de tono", () => {
 });
 
 test("el prompt no tiene emojis", () => {
-  const match = SOURCE.match(/const prompt =[\\s\\S]*?computerInstructions/);
+  const match = SOURCE.match(/const prompt =[\s\S]*?computerInstructions/);
   const block = match?.[0] ?? "";
-  const emojiRegex = /[\\u{1F300}-\\u{1FAFF}]/u;
+  const emojiRegex = /[\u{1F300}-\u{1FAFF}]/u;
   assert.ok(!emojiRegex.test(block), "El prompt tiene emojis");
 });
 

@@ -1,7 +1,9 @@
 // SCRIPTS_AUDIT_NO_CONSOLE_V1
 import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import { detectConsoleUsage, type ConsoleAuditHit } from "../apps/server/src/engine/events/audits/no-console.ts";
+// AUDIT_CONSOLE_IMPORT_FIX_V1 - este script vive en scripts/audits/, un nivel
+// mas abajo que scripts/: el import necesita ../../ o el audit no arranca.
+import { detectConsoleUsage, type ConsoleAuditHit } from "../../apps/server/src/engine/events/audits/no-console.ts";
 
 const SEARCH_DIRS = ["apps/server/src"];
 const SKIP = new Set(["node_modules", "dist", ".git", "artifacts", "backups", ".openmuse", "demo"]);

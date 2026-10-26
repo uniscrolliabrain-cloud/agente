@@ -5,6 +5,7 @@ import { z } from "zod";
 import type { Store } from "./db.ts";
 // NOTIFICATION_PREFS_TENANT_V1 + TENANT_ASSERT_NOT_DEFAULT_WIRED_V1
 import { assertNotHardcodedTenantId } from "./engine/tenant.ts";
+import type { AuthzDeps } from "./engine/authz/pdp.ts";
 
 const prefsSchema = z.object({
   disabled: z.array(z.string().max(80)).max(50).default([]),
@@ -17,7 +18,7 @@ const prefsSchema = z.object({
 export function notificationPrefsRoutes(
   db: Store,
   tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 

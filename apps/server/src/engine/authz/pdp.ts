@@ -20,8 +20,37 @@ export interface PolicyTarget {
   classification?: "public" | "internal" | "confidential" | "restricted" | "secret";
 }
 
+// AUTHZ_DEPS_V1 - contrato unico de authz que reciben todas las rutas.
+// Antes cada modulo repetia un placeholder estructural
+// `{ can: (...args: unknown[]) => Promise<"allow"|"deny">, filter: ... }` que
+// NO era asignable desde PolicyDecisionPoint/FieldFilter reales (contravarianza
+// de parametros), asi que app.ts no compilaba al pasarlos. Con los tipos reales
+// de parametro, tanto las clases reales como los dobles de test siguen siendo
+// asignables. No usa las clases para no depender de sus campos privados.
+export interface AuthzDeps {
+  pdp: {
+    can(
+      ctx: PolicyContext,
+      action: PolicyAction,
+      resource: PolicyResource,
+      field: string | undefined,
+      target: PolicyTarget,
+    ): Promise<PolicyDecision>;
+  };
+  fieldFilter: {
+    filter<T extends Record<string, unknown>>(
+      ctx: PolicyContext,
+      resource: string,
+      record: T,
+      target: PolicyTarget,
+    ): Promise<T>;
+  };
+}
+
 export interface PolicyDeps {
-  engine?: { can: (owner: string, role: { id: string; permissions?: Array<{ resource: string; actions: string[] }> }, resource: string, action: string) => Promise<{ allowed: boolean; reason?: string }> };
+  // POLICY_DEPS_ENGINE_ACTION_V1 - `action` es PolicyAction, no string: PolicyEngine.can
+  // recibe el enum y con `string` el motor real no era asignable (contravarianza).
+  engine?: { can: (owner: string, role: { id: string; permissions?: Array<{ resource: string; actions: PolicyAction[] }> }, resource: string, action: PolicyAction) => Promise<{ allowed: boolean; reason?: string }> };
   getAgentRole?: (tenantId: string, roleId: string) => Promise<AgentRole | null>;
 }
 

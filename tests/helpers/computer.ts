@@ -4,7 +4,11 @@ import {
   type DockerRunner,
 } from "../../apps/server/src/computer.ts";
 import type { Config } from "../../apps/server/src/config.ts";
+import { readConfig } from "../../apps/server/src/config.ts";
 export const config: Config = {
+  // TEST_CONFIG_BASE_V1 - Config gano campos obligatorios; se parte del
+  // config real y el literal de abajo solo sobreescribe lo que el test necesita.
+  ...readConfig(),
   mode: "sample",
   port: 8787,
   host: "127.0.0.1",

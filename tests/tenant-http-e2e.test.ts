@@ -13,6 +13,7 @@ import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { TenantService } from "../apps/server/src/engine/tenant.ts";
 import { UserService } from "../apps/server/src/users.ts";
+import { testConfig } from "./helpers/config.ts";
 
 const ALICE = { email: "alice@tenant-a.local", password: "contrasena-larga-1", name: "Alice" };
 const BOB = { email: "bob@tenant-b.local", password: "contrasena-larga-2", name: "Bob" };
@@ -28,16 +29,7 @@ let bobId: string;
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-e2e-"));
   db = await createStore({ dataDir: join(directory, "db") });
-  server = await createApp(db, {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: directory,
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-  });
+  server = await createApp(db, testConfig({ dataDir: directory }));
   const users = new UserService(db);
   const alice = await users.create({ ...ALICE, role: "admin" });
   const bob = await users.create({ ...BOB, role: "admin" });

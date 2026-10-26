@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Store } from "../db.ts";
 import { AppError } from "../errors.ts";
+import type { AuthzDeps } from "../engine/authz/pdp.ts";
 
 const skillSchema = z.object({
   id: z.string().min(1).max(100),
@@ -17,7 +18,7 @@ const skillSchema = z.object({
 
 export function skillsRoutes(
   db: Store,
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter

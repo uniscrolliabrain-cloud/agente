@@ -121,8 +121,8 @@ export function computerTools(
         const { name, bytes } = await computer.pdfBytes(owner, path);
         // COMPUTER_TOOLS_TENANT_V1 Ã¢â‚¬â€ tenantId real si estÃƒÂ¡ disponible.
         const tenantId = tenantIdPromise
-          ? await tenantIdPromise.catch(() => "default")
-          : "default";
+          ? await tenantIdPromise.catch(() => "default") // FALLBACK_TENANT_V1
+          : "default"; // FALLBACK_TENANT_V1
         // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" es bug.
         if (process.env.MULTI_TENANT_SHARED === "true") {
           assertNotHardcodedTenantId(tenantId, "computer-tools export_computer_pdf");

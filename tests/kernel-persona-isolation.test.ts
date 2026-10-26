@@ -20,6 +20,7 @@ import {
 } from "../apps/server/src/kernel/index.ts";
 import { TenantService } from "../apps/server/src/engine/tenant.ts";
 import type { Config } from "../apps/server/src/config.ts";
+import { readConfig } from "../apps/server/src/config.ts";
 
 let db: Store;
 let kernel: Kernel;
@@ -29,6 +30,9 @@ before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-persona-isolation-"));
   db = await createStore({ dataDir: join(directory, "db") });
   const config: Config = {
+  // TEST_CONFIG_BASE_V1 - Config gano campos obligatorios; se parte del
+  // config real y el literal de abajo solo sobreescribe lo que el test necesita.
+  ...readConfig(),
     mode: "sample",
     port: 8787,
     host: "127.0.0.1",
@@ -68,6 +72,7 @@ test("listTurns aísla por personaId con el mismo owner", async () => {
   const ctxLaia = kernelContextSchema.parse({
     tenantId: "default",
     owner: "persona-test-owner",
+    actorId: "persona-test-owner",
     role: "user",
     requestId: "req-laia-1",
     personaId: "laia",
@@ -75,6 +80,7 @@ test("listTurns aísla por personaId con el mismo owner", async () => {
   const ctxLorenzo = kernelContextSchema.parse({
     tenantId: "default",
     owner: "persona-test-owner",
+    actorId: "persona-test-owner",
     role: "user",
     requestId: "req-lorenzo-1",
     personaId: "lorenzo",
@@ -108,12 +114,14 @@ test("listTurns sin personaId devuelve todos los turnos del owner", async () => 
   const ctxOwner = kernelContextSchema.parse({
     tenantId: "default",
     owner: "persona-test-owner-2",
+    actorId: "persona-test-owner-2",
     role: "user",
     requestId: "req-owner-1",
   });
   const ctxLaia = kernelContextSchema.parse({
     tenantId: "default",
     owner: "persona-test-owner-2",
+    actorId: "persona-test-owner-2",
     role: "user",
     requestId: "req-laia-2",
     personaId: "laia",
@@ -133,6 +141,7 @@ test("openTurn persiste personaId en el Turn", async () => {
   const ctx = kernelContextSchema.parse({
     tenantId: "default",
     owner: "persona-test-owner-3",
+    actorId: "persona-test-owner-3",
     role: "user",
     requestId: "req-persist-1",
     personaId: "laia",

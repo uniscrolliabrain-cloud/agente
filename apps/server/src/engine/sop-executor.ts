@@ -21,6 +21,7 @@ import type { BusinessGraph } from "./business/graph.ts";
 import type { StateMachineRegistry } from "./state-machines.ts";
 // SOP_THOUGHTS_V1 - escribir Thoughts por paso para que el kernel vea el SOP.
 import type { KernelContext, KernelTurn } from "../../../../packages/domain/src/kernel.ts";
+import { agentActor } from "../../../../packages/domain/src/actor.ts";
 
 const root = fileURLToPath(new URL("../../../../", import.meta.url));
 const interpolate = (value: unknown, task: AgentTask, results: Record<string, unknown>) => {
@@ -531,6 +532,13 @@ export class SOPExecutor {
             .catch(() => null);
           if (role) {
             const decision = await this.service.governance.canExecuteTool(
+              agentActor({
+                // SOP_ACTOR_TENANT_V1 - el tenant sale de la tarea; runStep no lo recibe.
+                tenantId: task.tenantId,
+                actorId: owner,
+                roleId: role.id,
+                name: role.name,
+              }),
               owner,
               role,
               "computer_command",

@@ -18,6 +18,7 @@ import type { AgentRole } from "../../../../packages/domain/src/agent.ts";
 // B9FIX_APPLIED
 import type { AgentService } from "./service.ts";
 import type { TaskContext } from "./worker.ts";
+import { agentActor } from "../../../../packages/domain/src/actor.ts";
 
 export async function executeModelTask(
   service: AgentService,
@@ -145,7 +146,19 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             };
           await ctx.guard();
           if (governance && activeRole) {
-            const decision = await governance.canExecuteTool(owner, activeRole, name);
+            const decision = await governance.canExecuteTool(
+              agentActor({
+                tenantId: kernelCtx?.tenantId ?? "default",
+                actorId: kernelCtx?.actorId ?? owner,
+                roleId: activeRole.id,
+                name: activeRole.name,
+                ...(kernelCtx?.personaId ? { personaId: kernelCtx.personaId } : {}),
+                ...(kernelTurnId ? { kernelTurnId } : {}),
+              }),
+              owner,
+              activeRole,
+              name,
+            );
             if (!decision.allowed) {
               const reason = decision.reason ?? `Tool ${name} not allowed for role ${activeRole.id}`;
               await ctx.event("error", `${name} denied by governance`, reason);
@@ -503,7 +516,9 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
   if (roleId && service.kernel && kernelCtx) {
     tenantForRole = await service.kernel.config(kernelCtx).catch(() => undefined);
   }
-  const roleSpec = roleId && tenantForRole?.roles?.[roleId];
+  // MODEL_ROLE_SPEC_TYPE_V1 - `roleId && roles[roleId]` produce "" | ProviderSpec
+  // (el literal de string vacio). Con ternario el tipo es ProviderSpec | undefined.
+  const roleSpec = roleId ? tenantForRole?.roles?.[roleId] : undefined;
   // MODEL_CHAIN_TENANT_V1 — pasa tenantForRole a modelChain para que el slow entre.
   const baseChain = modelChain(config, tenantForRole);
   const roleChain = roleSpec?.apiKey && roleSpec.model

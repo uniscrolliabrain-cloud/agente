@@ -8,8 +8,9 @@
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { tenantConfigSchema } from "../apps/server/src/kernel/config/tenant-config.ts";
 import { modelChain } from "../apps/server/src/engine/model-chain.ts";
-import { StoreTurnStore } from "../apps/server/src/kernel/graph/store-store.ts";
+import { StoreTurnStore, type StorePort } from "../apps/server/src/kernel/graph/store-store.ts";
 
 const baseConfig = {
   mode: "sample" as const,
@@ -43,10 +44,16 @@ test("modelChain sin tenant usa solo la cadena global", () => {
   assert.deepEqual(chain, ["openai/global-model", "openai/fallback-model"]);
 });
 
-test("modelChain con tenant prepende fast y slow", () => {
-  const chain = modelChain(baseConfig as never, tenantFixture() as never);
-  assert.deepEqual(chain, [
+// MODEL_CHAIN_MODE_V1 - la cadena depende del modo: chat usa fast, tarea usa
+// slow. Antes el test esperaba [fast, slow, global, fallback] en una sola
+// cadena, que no es el contrato.
+test("modelChain con tenant usa fast en chat y slow en tarea", () => {
+  assert.deepEqual(modelChain(baseConfig as never, tenantFixture() as never, "chat"), [
     "openai/fast-model",
+    "openai/global-model",
+    "openai/fallback-model",
+  ]);
+  assert.deepEqual(modelChain(baseConfig as never, tenantFixture() as never, "task"), [
     "openai/slow-model",
     "openai/global-model",
     "openai/fallback-model",
@@ -72,24 +79,21 @@ test("modelChain deduplica si fast y global coinciden", () => {
 });
 
 test("StoreTurnStore.setLimitForTenant se guarda por tenant", () => {
-  const store = new StoreTurnStore({
+  // STORE_PORT_FIXTURE_V1 - el doble implementa StorePort en vez de castear a
+  // `never`: asi el compilador comprueba la forma y no se cuelan implicit any.
+  const port: StorePort = {
     put: async () => {},
     get: async () => undefined,
     list: async () => [],
-    transaction: async (fn) => fn({
-      put: async () => {},
-      get: async () => undefined,
-      list: async () => [],
-      transaction: async (f2) => f2({} as never),
-    } as never),
-  } as never);
+    transaction: async (fn) => fn(port),
+  };
+  const store = new StoreTurnStore(port);
   assert.doesNotThrow(() => store.setLimitForTenant("t1", 200));
   assert.doesNotThrow(() => store.setLimitForTenant("t1", 0));
   assert.doesNotThrow(() => store.setLimitForTenant("t1", Number.NaN));
 });
 
 test("TenantConfig.roles es opcional y acepta provider specs", () => {
-  const { tenantConfigSchema } = require("../apps/server/src/kernel/config/tenant-config.ts");
   const parsed = tenantConfigSchema.safeParse(tenantFixture({
     roles: { legal: { provider: "anthropic", model: "claude-slow", apiKey: "sk-x" } },
   }));

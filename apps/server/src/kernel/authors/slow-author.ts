@@ -24,6 +24,8 @@ export interface SlowAuthorDeps {
 export interface SlowAuthorWriteInput {
   turnId: string;
   content: string;
+  /** SLOW_AUTHOR_ATTENTION_QUERY_V1 — consulta que origino la atencion. */
+  query?: string;
   intent?: string;
   confidence?: number;
   // AUTHOR_MATCHED_METADATA_V1 - metadata opcional para que el schema Zod la
@@ -73,7 +75,9 @@ export class SlowAuthor {
         author: "slow",
         primary: "reasoning",
         secondary: [],
-        query: "",
+        // SLOW_AUTHOR_ATTENTION_QUERY_V1 - thoughtSchema exige query de 1 a 500
+        // caracteres. Con "" el thought no parseaba y el autor fallaba siempre.
+        query: (input.query ?? input.content).slice(0, 500) || "slow.reasoning",
         // SLOW_AUTHOR_ATTENTION_V1
         matched: (input.matched ?? []).length > 0
           ? (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} }))
@@ -116,7 +120,9 @@ export class SlowAuthor {
         author: "slow",
         primary: "delegation",
         secondary: [],
-        query: "",
+        // SLOW_AUTHOR_ATTENTION_QUERY_V1 - thoughtSchema exige query de 1 a 500
+        // caracteres. Con "" el thought no parseaba y el autor fallaba siempre.
+        query: (input.query ?? input.content).slice(0, 500) || "slow.reasoning",
         // SLOW_AUTHOR_DELEGATION_ATTENTION_V1
         matched: (input.matched ?? []).length > 0
           ? (input.matched ?? []).map((m) => ({ ...m, metadata: m.metadata ?? {} }))

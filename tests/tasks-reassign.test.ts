@@ -6,6 +6,7 @@ import { after, before, test } from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import type { Config } from "../apps/server/src/config.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
+import { readConfig } from "../apps/server/src/config.ts";
 
 let db: Store;
 let server: Awaited<ReturnType<typeof createApp>>;
@@ -16,6 +17,9 @@ before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-tasks-"));
   db = await createStore({ dataDir: join(directory, "db") });
   const config: Config = {
+  // TEST_CONFIG_BASE_V1 - Config gano campos obligatorios; se parte del
+  // config real y el literal de abajo solo sobreescribe lo que el test necesita.
+  ...readConfig(),
     mode: "sample",
     port: 8787,
     host: "127.0.0.1",

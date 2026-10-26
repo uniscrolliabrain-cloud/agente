@@ -4,6 +4,7 @@ import type { ExecutionContext, PlanStep } from "../../../../../packages/domain/
 import type { CapabilityRegistry } from "../capabilities/registry.ts";
 import type { StepRunner } from "./executor.ts";
 import type { ToolExecutor } from "./tool-executors.ts";
+import { agentActor } from "../../../../../packages/domain/src/actor.ts";
 
 export class CapabilityRunner implements StepRunner {
   constructor(
@@ -13,7 +14,7 @@ export class CapabilityRunner implements StepRunner {
     private readonly governance?: { canExecuteTool: (actor: import("../../../../../packages/domain/src/actor.ts").Actor, owner: string, role: import("../../../../../packages/domain/src/agent.ts").AgentRole, tool: string) => Promise<{ allowed: boolean; reason?: string }>; canExecuteAction: (actor: import("../../../../../packages/domain/src/actor.ts").Actor, owner: string, role: import("../../../../../packages/domain/src/agent.ts").AgentRole, action: string, policyAction: import("../policy/engine.ts").PolicyAction) => Promise<{ allowed: boolean; reason?: string }> },
     private readonly getAgentRole?: (tenantId: string, roleId: string) => Promise<import("../../../../../packages/domain/src/agent.ts").AgentRole | null>,
     // CAPABILITY_RUNNER_DB_V1 - db para idempotency claims.
-    private readonly db?: { insertIfAbsent: (tenantId: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<boolean>; put: (tenantId: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<unknown>; get: (tenantId: string, kind: string, id: string) => Promise<unknown> },
+    private readonly db?: { insertIfAbsent: (tenantId: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<unknown>; put: (tenantId: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<unknown>; get: (tenantId: string, kind: string, id: string) => Promise<unknown> },
   ) {}
 
   async run(ctx: ExecutionContext, step: PlanStep): Promise<void> {
@@ -24,16 +25,14 @@ export class CapabilityRunner implements StepRunner {
     if (this.governance && this.getAgentRole && ctx.roleId && ctx.actorId) {
       const role = await this.getAgentRole(ctx.tenantId, ctx.roleId);
       if (!role) throw new Error(`AgentRole ${ctx.roleId} not found for authz`);
-      const actor: import("../../../../../packages/domain/src/actor.ts").Actor = {
-        kind: "agent",
-        id: ctx.runtimeId ?? ctx.actorId,
+      // ACTOR_AGENT_FACTORY_V1 - usa el constructor unico del dominio.
+      const actor = agentActor({
         tenantId: ctx.tenantId,
+        actorId: ctx.actorId,
         roleId: ctx.roleId,
-        runtimeId: ctx.runtimeId ?? ctx.actorId,
-        roles: ["agent"],
-        profile: { name: role.name ?? "agent", language: "es" },
-        active: true,
-      };
+        ...(role.name ? { name: role.name } : {}),
+        ...(ctx.runtimeId ? { runtimeId: ctx.runtimeId } : {}),
+      });
       const decision = capability.actionType
         ? await this.governance.canExecuteAction(actor, ctx.owner, role, capability.id, "execute")
         : await this.governance.canExecuteTool(actor, ctx.owner, role, capability.id);

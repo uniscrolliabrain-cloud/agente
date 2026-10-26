@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-export const policyActionSchema = z.enum([
+export const policyContextActionSchema = z.enum([
   "read",
   "create",
   "update",
@@ -16,7 +16,7 @@ export const policyContextSchema = z.object({
   owner: z.string().min(1).max(200),
   roleId: z.string().max(200).optional(),
   resource: z.string().min(1).max(200),
-  action: policyActionSchema,
+  action: policyContextActionSchema,
   entityId: z.string().max(200).optional(),
   entityType: z.string().max(100).optional(),
   entityState: z.string().max(100).optional(),
@@ -52,7 +52,7 @@ export const reactionRuleSchema = z.object({
   createdAt: z.iso.datetime({ offset: true }),
 });
 
-export type PolicyActionV2 = z.infer<typeof policyActionSchema>;
+export type PolicyActionV2 = z.infer<typeof policyContextActionSchema>;
 export type PolicyContext = z.infer<typeof policyContextSchema>;
 export type FieldPolicy = z.infer<typeof fieldPolicySchema>;
 export type ReactionCondition = z.infer<typeof reactionConditionSchema>;

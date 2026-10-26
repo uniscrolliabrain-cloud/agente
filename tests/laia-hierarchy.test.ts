@@ -42,6 +42,8 @@ test("LAIA_HIERARCHY_TEST_V1 - Laia ve turnos, atencion y notificaciones de los 
       const ctx = kernelContextSchema.parse({
         tenantId: "default",
         owner,
+        // KERNEL_CONTEXT_ACTOR_PORT_V1 - actorId es obligatorio.
+        actorId: owner,
         role: "user",
         requestId: `test:${personaId}`,
         personaId,
@@ -53,6 +55,7 @@ test("LAIA_HIERARCHY_TEST_V1 - Laia ve turnos, atencion y notificaciones de los 
     const laiaCtx = kernelContextSchema.parse({
       tenantId: "default",
       owner,
+      actorId: owner,
       role: "system",
       requestId: "test:laia",
       personaId: "laia",

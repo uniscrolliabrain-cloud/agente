@@ -61,7 +61,8 @@ function formatRecall(ragHits: RagHit[], memories: AgentMemory[]): string {
     for (const m of memories) {
       const cat = m.category ? `[${m.category}] ` : "";
       const tags = m.tags && m.tags.length > 0 ? ` (${m.tags.join(", ")})` : "";
-      // RECALL_TEXT_LIMIT ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â 500 chars como remember(); el formato no debe crecer sin control.      const text = m.text.length > 500 ? m.text.slice(0, 500) + "…[truncado]" : m.text; // FIX_12_9_TRUNCATE_VISIBLE_V2
+      // RECALL_TEXT_LIMIT ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â 500 chars como remember(); el formato no debe crecer sin control.
+      const text = m.text.length > 500 ? m.text.slice(0, 500) + "…[truncado]" : m.text; // FIX_12_9_TRUNCATE_VISIBLE_V2
       parts.push(`- ${cat}${text}${tags}`);
     }
   }

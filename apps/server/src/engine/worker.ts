@@ -48,7 +48,11 @@ export class TaskWorker {
       now?: () => number;
       leaseMs?: number;
       pollMs?: number;
-      settled?: (owner: string, task: AgentTask) => Promise<void>;
+      settled?: (
+        owner: string,
+        task: AgentTask,
+        actors: { executingActorId: string; requestingActorId: string },
+      ) => Promise<void>;
       bus?: EventBus;
       /** WORKER_MAX_ACTIVE_V1 */
       maxActive?: number;
@@ -83,12 +87,12 @@ export class TaskWorker {
     return Boolean(this.timer);
   }
 
-  /** WORKER_ACTIVE_SIZE_V1
+  // WORKER_ACTIVE_SIZE_V1
   activeSize(): number {
     return this.active.size;
   }
 
-  /** WORKER_MAX_ACTIVE_GET_V1
+  // WORKER_MAX_ACTIVE_GET_V1
   getMaxActive(): number {
     return this.maxActive;
   }
@@ -103,7 +107,7 @@ export class TaskWorker {
     );
     globalMetrics.counter(
       "openmuse_task_duration_seconds_count",
-      "N
+      "Numero de tareas ejecutadas",
     );
     globalMetrics.gauge("openmuse_worker_active", "Handlers concurrentes activos");
     globalMetrics.gauge("openmuse_worker_max_active", "Tope de handlers concurrentes");
@@ -247,14 +251,18 @@ export class TaskWorker {
     };
     if (previous.status === "running") expected.leaseUntil = previous.leaseUntil;
 
-    let task = await this.db.compareAndSwap<AgentTask>(owner, "tasks", previous.id, expected, {
+    const swapped = await this.db.compareAndSwap<AgentTask>(owner, "tasks", previous.id, expected, {
       status: "running",
       leaseId,
       leaseUntil: new Date(this.now() + leaseMs).toISOString(),
       updatedAt: new Date(this.now()).toISOString(),
       attempts: previous.attempts + 1,
     });
-    if (!task) return;
+    if (!swapped) return;
+    // WORKER_TASK_NONNULL_V1 - task se declara ya no-nulo: es `let` porque
+    // checkpoint() lo reasigna, y al ser capturado por closures TS volvia a
+    // verlo como AgentTask | null en cada uso (TS18047).
+    let task: AgentTask = swapped;
     const controller = new AbortController();
     this.active.set(task.id, controller);
     const taskId = task.id;

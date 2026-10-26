@@ -5,20 +5,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createStore } from "../apps/server/src/db.ts";
 import { TenantService } from "../apps/server/src/engine/tenant.ts";
-import type { Config } from "../apps/server/src/config.ts";
+import { testConfig } from "./helpers/config.ts";
 
-function makeConfig(): Config {
-  return {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: "/tmp/test",
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-  };
-}
+const makeConfig = () => testConfig({ dataDir: "/tmp/test" });
 
 test("cache devuelve el mismo resultado en menos de TTL", async () => {
   const db = await createStore();

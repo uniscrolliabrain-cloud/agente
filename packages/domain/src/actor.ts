@@ -58,3 +58,43 @@ export type ActorProfile = z.infer<typeof actorProfileSchema>;
 export type HumanActor = z.infer<typeof humanActorSchema>;
 export type AgentActor = z.infer<typeof agentActorSchema>;
 export type Actor = z.infer<typeof actorSchema>;
+
+/**
+ * ACTOR_AGENT_FACTORY_V1 - unica forma de construir un AgentActor para authz.
+ *
+ * Antes cada call site de governance.canExecuteTool/canExecuteAction armaba el
+ * objeto a mano (y dos de ellos ni lo pasaban, porque la firma gano `actor`
+ * como primer parametro y no se actualizaron). Centralizarlo evita que vuelvan
+ * a divergir: el actor de un agente se identifica por runtimeId, y si no hay
+ * runtime, cae al actorId del contexto.
+ */
+export function agentActor(input: {
+  /** tenant del contexto. */
+  tenantId: string;
+  /** id del actor delegado; fallback si no hay runtimeId. */
+  actorId: string;
+  /** rol funcional que ejecuta. */
+  roleId: string;
+  /** nombre legible del rol/persona, si se conoce. */
+  name?: string;
+  /** runtime efimero del agente, si existe. */
+  runtimeId?: string;
+  /** persona funcional, si existe. */
+  personaId?: string;
+  /** turno del kernel en el que se ejecuta, si existe. */
+  kernelTurnId?: string;
+}): AgentActor {
+  const runtimeId = input.runtimeId ?? input.actorId;
+  return {
+    kind: "agent",
+    id: runtimeId,
+    tenantId: input.tenantId,
+    roleId: input.roleId,
+    ...(input.personaId ? { personaId: input.personaId } : {}),
+    runtimeId,
+    ...(input.kernelTurnId ? { kernelTurnId: input.kernelTurnId } : {}),
+    roles: ["agent"],
+    profile: { name: input.name ?? input.roleId, language: "es" },
+    active: true,
+  };
+}

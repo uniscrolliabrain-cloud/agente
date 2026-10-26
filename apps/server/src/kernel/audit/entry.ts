@@ -22,14 +22,17 @@ export const auditActionSchema = z.enum([
   "cromo.deleted",
   "field.recalculated",
   "promotion.executed",
-  // KERNEL_AUDIT_ACTION_THOUGHT_PROMOTED_V1
-  "thought.promoted",
-  // KERNEL_AUDIT_ACTION_THOUGHT_DISCARDED_V1
-  "thought.discarded",
   // KERNEL_AUDIT_ACTION_BUILD_APPLIED_V1
   "build.applied",
   // KERNEL_AUDIT_ACTION_STATE_CHANGED_V1
   "state.changed",
+  // AUDIT_ACTION_AUTHZ_V1 - acciones que ya emiten withRead, withWrite y
+  // AuditTrail.recordDenied. Sin ellas en el enum, la capa de authz no podia
+  // escribir su propia auditoria (fallaba el parse en runtime).
+  "read.denied",
+  "write.denied",
+  "write.ok",
+  "audit.read.denied",
 ]);
 
 export const auditEntrySchema = z.object({

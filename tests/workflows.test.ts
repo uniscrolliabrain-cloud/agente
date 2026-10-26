@@ -8,6 +8,7 @@ import { createStore, type Store } from "../apps/server/src/db.ts";
 import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import type { AgentNotification, AgentTask, Idea, Monitor } from "../packages/domain/src/agent.ts";
 import type { ActionProposal } from "../packages/domain/src/index.ts";
+import { testConfig } from "./helpers/config.ts";
 
 let db: Store, tdb: TenantScopedStore, server: Awaited<ReturnType<typeof createApp>>, directory: string;
 const owner = "workflow-user";
@@ -17,16 +18,7 @@ before(async () => {
   // TEST_TENANT_SCOPE_V1 - mismo store que usa AgentService: TenantScopedStore
   // con tenantId "default". El test escribe y lee con la misma clave compuesta.
   tdb = new TenantScopedStore(db, async () => "default");
-  server = await createApp(db, {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: directory,
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-  });
+  server = await createApp(db, testConfig({ dataDir: directory }));
   await server.workspace.ensureSample(owner, server.actions);
 });
 after(async () => {

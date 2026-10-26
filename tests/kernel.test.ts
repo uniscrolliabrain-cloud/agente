@@ -21,6 +21,7 @@ import {
 } from "../apps/server/src/kernel/index.ts";
 import { TenantService } from "../apps/server/src/engine/tenant.ts";
 import type { Config } from "../apps/server/src/config.ts";
+import { readConfig } from "../apps/server/src/config.ts";
 
 let db: Store;
 let kernel: Kernel;
@@ -31,6 +32,9 @@ before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-kernel-"));
   db = await createStore({ dataDir: join(directory, "db") });
   const config: Config = {
+  // TEST_CONFIG_BASE_V1 - Config gano campos obligatorios; se parte del
+  // config real y el literal de abajo solo sobreescribe lo que el test necesita.
+  ...readConfig(),
     mode: "sample",
     port: 8787,
     host: "127.0.0.1",
@@ -62,6 +66,7 @@ before(async () => {
   ctx = kernelContextSchema.parse({
     tenantId: "default",
     owner: "kernel-test-owner",
+    actorId: "kernel-test-owner",
     role: "user",
     requestId: "req-1",
   });

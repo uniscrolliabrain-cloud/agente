@@ -1,5 +1,6 @@
 // F3_ASSIGNMENT_SERVICE_APPROVE_TEST_V1
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { AssignmentService } from "../../apps/server/src/engine/assignments/service.ts";
 import { defaultAssignmentRegistry } from "../../apps/server/src/engine/assignments/registry.ts";
 
@@ -26,6 +27,6 @@ describe("AssignmentService.approve", () => {
     const ctx = { tenantId: "t", actor: { kind: "human", id: "u1", tenantId: "t", userId: "u1", roles: ["employee"], profile: { name: "u", language: "es" }, active: true } } as never;
     let threw = false;
     try { await svc.approve(ctx, "task", "t1"); } catch { threw = true; }
-    expect(threw).toBe(true);
+    assert.equal(threw, true);
   });
 });

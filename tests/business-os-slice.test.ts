@@ -22,6 +22,7 @@ test("Goal con criterio de exito se verifica correctamente", async () => {
     constraints: [],
     priority: "high" as const,
     status: "active" as const,
+    version: 1,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };

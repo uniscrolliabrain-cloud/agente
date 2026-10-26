@@ -51,8 +51,8 @@ export class BrowserService {
   private async checkTenantRate(owner: string, action: string): Promise<void> {
     if (!this.limiter) return;
     const tenantId = this.tenantService
-      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
-      : "default";
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
     const verdict = this.limiter.takeForTenant(tenantId, owner, action);
     if (!verdict.allowed) {
       const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));

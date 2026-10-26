@@ -26,7 +26,7 @@ export class ActorService {
       throw new AppError("Actor is inactive", 403);
     }
 
-    const tenantId = await this.deps.tenants.tenantIdFor(user.id).catch(() => "default");
+    const tenantId = await this.deps.tenants.tenantIdFor(user.id).catch(() => "default"); // FALLBACK_TENANT_V1
     if (!tenantId) throw new AppError("Actor has no tenant", 401);
 
     return {
@@ -40,7 +40,9 @@ export class ActorService {
         email: user.email,
         language: "es",
       },
-      active: user.active !== false,
+      // ACTOR_ACTIVE_BOOL_V1 - user.active ya es boolean; la comparacion con
+      // `false` rompia cuando el tipo se estrecha a true.
+      active: Boolean(user.active),
     };
   }
 }

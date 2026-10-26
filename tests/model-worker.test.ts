@@ -8,6 +8,7 @@ import { createStore } from "../apps/server/src/db.ts";
 import type { ActionProposal } from "../packages/domain/src/index.ts";
 import { fixture as computerFixture } from "./helpers/computer.ts";
 import { modelFixture } from "./helpers/model.ts";
+import { testConfig } from "./helpers/config.ts";
 
 test("CopilotKit model worker executes server tools and persists the confirmed outcome", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "openmuse-model-"));
@@ -36,18 +37,12 @@ test("CopilotKit model worker executes server tools and persists the confirmed o
   const { requests } = await modelFixture(t, (index) => calls[index]);
   const server = await createApp(
     db,
-    {
-      mode: "sample",
-      port: 8787,
-      host: "127.0.0.1",
-      publicUrl: "http://localhost:8787",
+    testConfig({
       dataDir: directory,
       agentBackend: "model",
       model: "openai/fixture",
-      googleRedirectUri: "http://localhost:8787/api/google/callback",
-      allowedOrigins: [],
       computerEnabled: true,
-    },
+    }),
     { docker: computerFixture().runner },
   );
   try {

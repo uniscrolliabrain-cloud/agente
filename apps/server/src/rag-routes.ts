@@ -6,6 +6,7 @@ import type { Files } from "./files.ts";
 import { embeddingsConfigured } from "./engine/embeddings.ts";
 import { AppError } from "./errors.ts";
 import type { RateLimiter } from "./rate-limit.ts";
+import type { AuthzDeps } from "./engine/authz/pdp.ts";
 
 export function ragRoutes(
   rag: RagService,
@@ -13,7 +14,7 @@ export function ragRoutes(
   files: Files,
   limiter: RateLimiter,
   tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
@@ -65,8 +66,8 @@ export function ragRoutes(
     const owner = c.get("owner");
     // TAKE_FOR_TENANT_TENANTID_V1 â€” tenantId real, no owner.
     const tenantIdForRate = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default")
-      : "default";
+      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
     const verdict = limiter.takeForTenant(tenantIdForRate, owner, "rag.search");
     if (!verdict.allowed) {
       const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));

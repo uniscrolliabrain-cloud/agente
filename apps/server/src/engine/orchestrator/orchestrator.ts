@@ -35,7 +35,7 @@ export interface OrchestratorDeps {
     execute(
       ctx: ExecutionContext,
       plan: import("../../../../../packages/domain/src/plan.ts").Plan,
-    ): Promise<{ status: "succeeded" | "failed" | "blocked"; steps: Array<{ id: string; status: string }> }>;
+    ): Promise<{ status: "succeeded" | "failed" | "blocked"; steps: Array<{ id: string; status: string; error?: string }> }>;
   };
   verifier: {
     verify(goal: Goal, outcome: import("../../../../../packages/domain/src/outcome.ts").Outcome): Promise<import("../../../../../packages/domain/src/verification.ts").VerificationResult>;

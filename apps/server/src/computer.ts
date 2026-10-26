@@ -131,7 +131,7 @@ export const runDocker: DockerRunner = (args, options) =>
 // compartirÃ­an contenedor y volumen (colisiÃ³n). Con esto, aunque compartan
 // ownerId, cada tenant tiene su propio contenedor. En clone-por-cliente
 // tenantId="default", asÃ­ que la identidad es idÃ©ntica a antes.
-export function computerIdentity(config: Config, owner: string, tenantId: string = "default") {
+export function computerIdentity(config: Config, owner: string, tenantId: string = "default") { // FALLBACK_TENANT_V1
   const deployment = hash(config.computerDeploymentId ?? config.publicUrl).slice(0, 16);
   // COMPUTER_IDENTITY_TENANT_V1 â€” tenantHash y ownerHash separados.
   const tenantHash = hash("tenant:" + tenantId).slice(0, 12);
@@ -224,15 +224,37 @@ export class ComputerService {
     // COMPUTER_IDENTITY_TENANT_V1 â€” TenantService opcional para resolver
     // tenantId a partir del owner. Si no estÃ¡, todo va a "default".
     private readonly tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+    // TAKE_FOR_TENANT_COMPUTER_V1 - limiter compartido con chat/RAG/threads.
+    // Opcional para no romper tests existentes que instancian sin limiter.
+    private readonly limiter?: RateLimiter,
   ) {}
+
+  // TAKE_FOR_TENANT_COMPUTER_V1 - helper comun con BrowserService. Lanza un
+  // Error con status 429 si se agota la cuota del tenant para esta accion.
+  private async checkTenantRate(owner: string, action: string): Promise<void> {
+    if (!this.limiter) return;
+    const tenantId = this.tenantService
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
+    const verdict = this.limiter.takeForTenant(tenantId, owner, action);
+    if (!verdict.allowed) {
+      const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
+      const err = new Error(
+        "Limite alcanzado para " + action + ". Reintenta en " + retrySec + "s.",
+      ) as Error & { status?: number; retryAfter?: number };
+      err.status = 429;
+      err.retryAfter = retrySec;
+      throw err;
+    }
+  }
 
   // COMPUTER_IDENTITY_TENANT_V1 â€” helper Ãºnico que resuelve tenantId y
   // devuelve la identidad. Todos los call sites usan esto. Si tenantService
   // falla, cae a "default" (no rompe la operaciÃ³n por un fallo de resoluciÃ³n).
   private async identity(owner: string) {
     const tenantId = this.tenantService
-      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
-      : "default";
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
     return computerIdentity(this.config, owner, tenantId);
   }
   private enabled() {

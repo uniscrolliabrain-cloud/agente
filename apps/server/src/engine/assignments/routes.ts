@@ -2,7 +2,8 @@
 import { Hono } from "hono";
 import { AppError } from "../../errors.ts";
 import type { AssignmentService } from "./service.ts";
-import type { AssignmentKind } from "../../../../../../packages/domain/src/assignment.ts";
+import type { AssignmentKind } from "../../../../../packages/domain/src/assignment.ts";
+import type { PolicyContext } from "../authz/pdp.ts";
 
 export interface AssignmentRoutesDeps {
   service: AssignmentService;
@@ -16,7 +17,9 @@ function parseKind(raw: string): AssignmentKind {
 }
 
 export function assignmentsRoutes(deps: AssignmentRoutesDeps) {
-  const app = new Hono();
+  // ASSIGNMENT_ROUTES_CTX_V1 - tipa la variable "ctx" para que c.get("ctx")
+  // devuelva PolicyContext en vez de unknown (mismo patron que el resto de rutas).
+  const app = new Hono<{ Variables: { ctx: PolicyContext } }>();
   app.post("/:kind/:id/accept", async (c) => {
     const kind = parseKind(c.req.param("kind"));
     const ctx = c.get("ctx");

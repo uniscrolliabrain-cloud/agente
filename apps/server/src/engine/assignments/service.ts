@@ -1,6 +1,6 @@
 // ASSIGNMENT_SERVICE_V1 - delegacion controlada con PDP y withWrite.
 import type { PolicyContext, PolicyDecisionPoint, PolicyTarget } from "../authz/pdp.ts";
-import type { Assignment, AssignmentKind } from "../../../../../../packages/domain/src/assignment.ts";
+import type { Assignment, AssignmentKind } from "../../../../../packages/domain/src/assignment.ts";
 import type { Store } from "../../db.ts";
 import type { EventBus } from "../events/index.ts";
 import { AppError } from "../../errors.ts";
@@ -32,7 +32,11 @@ export class AssignmentService {
       recordId,
       (record) => {
         if (!record) throw new AppError("Not found", 404);
-        return adapter.applyAssignment(record as never, { assignedTo, assignedBy } as never);
+        // ASSIGN_WRITE_RETURN_V1 - withWrite espera un record, no el tipo del adapter.
+        return adapter.applyAssignment(record as never, { assignedTo, assignedBy } as never) as unknown as Record<
+          string,
+          unknown
+        >;
       },
     );
     return adapter.toAssignment(updated as never, ctx.tenantId);
@@ -71,7 +75,11 @@ export class AssignmentService {
       recordId,
       (record) => {
         if (!record) throw new AppError("Not found", 404);
-        return adapter.applyStatus(record as never, status as never);
+        // ASSIGN_WRITE_RETURN_V1 - withWrite espera un record, no el tipo del adapter.
+        return adapter.applyStatus(record as never, status as never) as unknown as Record<
+          string,
+          unknown
+        >;
       },
     );
     return adapter.toAssignment(updated as never, ctx.tenantId);

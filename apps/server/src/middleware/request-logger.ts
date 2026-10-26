@@ -84,7 +84,11 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
         // METRICS_HTTP_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â contador por mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©todo, ruta y status.
         // MIDDLEWARE_HTTP_METRIC_V1
         // METRICS_TENANT_LABEL_V1 — label `tenant` si hay tenantId.
-        const tenantLabels = tenantIdForLabels ? { tenant: tenantIdForLabels } : {};
+        // METRICS_LABELS_TYPE_V1 - Labels exige Record<string,string>; el ternario
+        // producia un union con {} que no encajaba en la firma.
+        const tenantLabels: Record<string, string> = tenantIdForLabels
+          ? { tenant: tenantIdForLabels }
+          : {};
         globalMetrics.inc("openmuse_http_requests_total", {
           method,
           path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),

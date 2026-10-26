@@ -3,13 +3,14 @@ import { sopSchema, type SOP } from "../../../../packages/domain/src/sop.ts";
 import type { Store } from "../db.ts";
 import type { AgentService } from "../engine/service.ts";
 import { AppError } from "../errors.ts";
+import type { AuthzDeps } from "../engine/authz/pdp.ts";
 
 const TERMINAL = new Set(["succeeded", "failed", "cancelled"]);
 
 export function sopRoutes(
   db: Store,
   agent: AgentService,
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
@@ -79,7 +80,6 @@ export function sopRoutes(
       },
       idempotencyKey ? `sop-api:${sop.id}:${idempotencyKey}` : undefined,
       false,
-      c.get("ctx"),
     );
     return c.json(task, 201);
   });

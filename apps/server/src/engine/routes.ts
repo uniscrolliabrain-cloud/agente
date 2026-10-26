@@ -10,6 +10,7 @@ import type {
 import { agentRoleSchema } from "../../../../packages/domain/src/agent.ts";
 import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
+import type { AuthzDeps, PolicyContext } from "./authz/pdp.ts";
 
 const text = z.string().trim().min(1).max(4000);
 // MEMORY_FULL_SCHEMA ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â la UI edita category y tags; el route debe aceptarlos.
@@ -74,10 +75,12 @@ const parseCsv = (csv: string): string[][] => {
 
 export function agentRoutes(
   service: AgentService,
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
   assignments?: import("./assignments/service.ts").AssignmentService,
-): Hono<{ Variables: { owner: string } }> {
-  const app = new Hono<{ Variables: { owner: string } }>();
+): Hono<{ Variables: { owner: string; ctx: PolicyContext } }> {
+  // APP_CTX_VARIABLE_V1 - `ctx` lo pone app.ts antes de montar estas rutas; sin
+  // declararlo en Variables, c.get("ctx") se inferia como unknown/string.
+  const app = new Hono<{ Variables: { owner: string; ctx: PolicyContext } }>();
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/", async (c) => c.json(await service.snapshot(c.get("owner"))));
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
@@ -273,7 +276,6 @@ export function agentRoutes(
         c.req.param("id"),
         body.toUserId,
         body.reason,
-      c.get("ctx"),
       ),
     );
   });
@@ -284,7 +286,7 @@ export function agentRoutes(
     const body = z.object({ expectedVersion: z.number().int().positive(), resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]), note: z.string().max(2000).optional() }).parse(await c.req.json());
     const current = await service.db.get<{ version?: number }>(owner, "tasks", id);
     if (!current) throw new AppError("Task not found", 404);
-    if ((current.version ?? 1) !== body.expectedVersion) throw new AppError("Conflict", 409, { current: current.version ?? 1, expected: body.expectedVersion });
+    if ((current.version ?? 1) !== body.expectedVersion) throw new AppError("Conflict", 409, { current: String(current.version ?? 1), expected: String(body.expectedVersion) });
     const updated = await service.db.compareAndSwap(owner, "tasks", id, { version: body.expectedVersion }, { version: body.expectedVersion + 1 });
     if (!updated) throw new AppError("Conflict", 409);
     return c.json({ ok: true, task: updated, resolution: body.resolution });
@@ -305,7 +307,7 @@ export function agentRoutes(
     const body = z.object({ expectedVersion: z.number().int().positive(), resolution: z.enum(["client-retry", "server-merge", "human-review", "discard"]), note: z.string().max(2000).optional() }).parse(await c.req.json());
     const current = await service.db.get<{ version?: number }>(owner, "goals", id);
     if (!current) throw new AppError("Goal not found", 404);
-    if ((current.version ?? 1) !== body.expectedVersion) throw new AppError("Conflict", 409, { current: current.version ?? 1, expected: body.expectedVersion });
+    if ((current.version ?? 1) !== body.expectedVersion) throw new AppError("Conflict", 409, { current: String(current.version ?? 1), expected: String(body.expectedVersion) });
     const updated = await service.db.compareAndSwap(owner, "goals", id, { version: body.expectedVersion }, { version: body.expectedVersion + 1 });
     if (!updated) throw new AppError("Conflict", 409);
     return c.json({ ok: true, goal: updated, resolution: body.resolution });
@@ -346,7 +348,8 @@ export function agentRoutes(
     if (!goal) throw new AppError("Goal not found", 404);
     const tenantId = await service.tenantService?.tenantIdFor(owner) ?? owner;
     const result = await service.orchestrator.runGoal(
-      { tenantId, owner, role: "user", requestId: "goal-run:" + goalId, goalId },
+      // GOAL_RUN_ACTOR_V1 - quien lanza el goal es el actor.
+      { tenantId, owner, role: "user", requestId: "goal-run:" + goalId, goalId, actorId: owner },
       goal,
     );
     return c.json(result);

@@ -1,18 +1,16 @@
 import { z } from "zod";
 import type { EventBus } from "../events/index.ts";
+import { policyActionSchema } from "../../../../../packages/domain/src/policy.ts";
 
 // POLICY_ENGINE_V1 — permisos declarativos por rol. Un rol sin `permissions`
 // definidos se comporta como hoy (todo permitido dentro de sus sops). Un rol
 // con `permissions` es una allowlist adicional.
 
-export const policyActionSchema = z.enum([
-  "read",
-  "create",
-  "update",
-  "delete",
-  "execute",
-  "approve",
-]);
+// POLICY_ENGINE_ACTION_ALIGN_V1 - el motor tenia su propia copia de
+// policyActionSchema con 6 acciones, mas estrecha que la del dominio (9).
+// Tener dos enums con el mismo nombre rompia la asignabilidad entre
+// PolicyEngine.can y PolicyDeps.engine. Se usa la del dominio como canonica.
+export { policyActionSchema };
 
 export const permissionSchema = z.object({
   resource: z.string().min(1).max(200),

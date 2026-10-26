@@ -23,7 +23,10 @@ interface Contract {
 }
 
 const DOMAIN_DIR = resolve("packages/domain/src");
-const SEARCH_DIRS = ["apps/server/src", "apps/web/src", "packages/catalog"];
+// CONTRACTS_SEARCH_SCOPE_V1 - el commit anterior solo miraba apps/ y
+// packages/catalog, asi que un contrato usado por otro paquete del monorepo
+// (o por el propio dominio desde otro fichero) contaba como huerfano.
+const SEARCH_DIRS = ["apps/server/src", "apps/web/src", "packages"];
 
 async function listFiles(dir: string, ext: string[]): Promise<string[]> {
   const out: string[] = [];
@@ -119,10 +122,19 @@ function extractContracts(file: string, source: string): Contract[] {
  * Se considera "implementado" si el nombre aparece en un fichero del
  * servidor o del frontend fuera de comentarios.
  */
-async function findImplementation(name: string, sources: Map<string, string>): Promise<string[]> {
+/**
+ * CONTRACTS_SELF_HIT_FIX_V1 - no cuenta el fichero donde se declara el
+ * contrato: si no, todo contrato estaria "implementado" por su definicion.
+ */
+async function findImplementation(
+  name: string,
+  sources: Map<string, string>,
+  ownFile: string,
+): Promise<string[]> {
   const found: string[] = [];
   const pattern = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
   for (const [file, source] of sources) {
+    if (file === ownFile) continue;
     // Excluir lineas de comentario puro para no confundir.
     const lines = source.split("\n").filter((l) => !/^\s*(\/\/|\*)/.test(l));
     if (lines.some((l) => pattern.test(l))) found.push(file);
@@ -147,16 +159,33 @@ async function main(): Promise<void> {
   for (const dir of SEARCH_DIRS) {
     const files = await listFiles(dir, [".ts", ".tsx"]);
     for (const file of files) {
-      implSources.set(file, await readFile(file, "utf8"));
+      // Clave absoluta: contract.file tambien lo es (DOMAIN_DIR = resolve(...)),
+      // si no, la exclusion del propio fichero no coincidia nunca.
+      implSources.set(resolve(file), await readFile(file, "utf8"));
     }
   }
   console.log(`[audit:contracts] Ficheros de implementacion: ${implSources.size}`);
 
+  // CONTRACTS_INFERRED_TYPE_V1 - un schema Zod se consume a traves de su tipo
+  // inferido (`export type X = z.infer<typeof xSchema>`). Sin resolver ese
+  // alias, un schema usado solo por su tipo contaba como huerfano.
+  const inferredTypeOf = new Map<string, string>();
+  for (const source of implSources.values()) {
+    for (const m of source.matchAll(/export\s+type\s+(\w+)\s*=\s*z\.infer<typeof\s+(\w+)>/g)) {
+      inferredTypeOf.set(m[2], m[1]);
+    }
+  }
+
   console.log("[audit:contracts] Buscando implementaciones...");
   for (const contract of contracts) {
-    const hits = await findImplementation(contract.name, implSources);
-    contract.implemented = hits.length > 0;
-    contract.implementedIn = hits.slice(0, 5);
+    const hits = await findImplementation(contract.name, implSources, contract.file);
+    const alias = inferredTypeOf.get(contract.name);
+    const aliasHits = alias
+      ? await findImplementation(alias, implSources, contract.file)
+      : [];
+    const all = [...new Set([...hits, ...aliasHits])];
+    contract.implemented = all.length > 0;
+    contract.implementedIn = all.slice(0, 5);
   }
 
   // Informe

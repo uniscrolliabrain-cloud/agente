@@ -5,10 +5,29 @@ import type { Store } from "../../db.ts";
 import type { StoreAuditStore } from "../../kernel/audit/store-store.ts";
 import { AppError } from "../../errors.ts";
 
+// WITH_WRITE_HISTORY_V1 - historial de cambios (antes/despues) por recurso.
+// Opcional: si no se inyecta, withWrite no escribe historial. El flag que lo
+// habilita es Config.recordHistoryEnabled.
+export interface RecordHistoryInput {
+  tenantId: string;
+  resource: string;
+  resourceId: string;
+  actorId: string;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface RecordHistoryStore {
+  record(input: RecordHistoryInput): Promise<void>;
+}
+
 export interface WithWriteDeps {
   pdp: PolicyDecisionPoint;
   db: Store;
   audit?: StoreAuditStore;
+  recordHistory?: RecordHistoryStore;
+  recordHistoryEnabled?: boolean;
 }
 
 export async function withWrite<T extends Record<string, unknown>>(
@@ -47,7 +66,8 @@ export async function withWrite<T extends Record<string, unknown>>(
     const updated = await deps.db.compareAndSwap<T>(owner, kind, id, {}, next as Record<string, unknown>);
     if (!updated) throw new AppError("Conflict", 409);
   } else {
-    await deps.db.put(owner, kind, next);
+    // WITH_WRITE_PUT_SHAPE_V1 - Store.put exige { id: string } ademas del payload.
+    await deps.db.put(owner, kind, next as T & { id: string });
   }
   // WITH_WRITE_RECORD_HISTORY_V1 — escribe RecordHistory si activity no cubre.
   if (deps.recordHistory && deps.recordHistoryEnabled) {

@@ -16,6 +16,7 @@ import type {
   Monitor,
   RunEvent,
 } from "../packages/domain/src/agent.ts";
+import { testConfig } from "./helpers/config.ts";
 
 let db: Store, server: Awaited<ReturnType<typeof createApp>>, directory: string, token: string;
 let config: Config;
@@ -34,16 +35,11 @@ async function read<T>(path: string, body?: unknown, status = 200): Promise<T> {
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-agent-api-"));
   db = await createStore({ dataDir: join(directory, "db") });
-  config = {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
+  config = testConfig({
     dataDir: directory,
     agentBackend: "model",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
     allowedOrigins: ["http://localhost:8081"],
-  };
+  });
   server = await createApp(db, config);
   const session = await server.app.request("/api/session", {
     method: "POST",

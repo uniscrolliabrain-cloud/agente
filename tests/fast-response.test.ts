@@ -12,8 +12,8 @@ const SOURCE = readFileSync(
 
 test("el chat configura timeoutMs a 2000 (o CHAT_TIMEOUT_MS)", () => {
   assert.ok(
-    /timeoutMs:\\s*Number\\(process\\.env\\.CHAT_TIMEOUT_MS \\?\\? "2000"\\)/.test(SOURCE) ||
-      /timeoutMs:\\s*2000/.test(SOURCE),
+    /timeoutMs:\s*Number\(process\.env\.CHAT_TIMEOUT_MS \?\? "2000"\)/.test(SOURCE) ||
+      /timeoutMs:\s*2000/.test(SOURCE),
     "El chat no configura timeoutMs",
   );
 });
@@ -24,7 +24,7 @@ test("model-chain usa firstByteMs en el setTimeout", () => {
     "utf8",
   );
   assert.ok(
-    /}, firstByteMs\\);/.test(chain),
+    /}, firstByteMs\);/.test(chain),
     "model-chain no usa firstByteMs en el setTimeout",
   );
 });

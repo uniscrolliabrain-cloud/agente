@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { Meta } from "../apps/server/src/kernel/observers/meta.ts";
-import { progressStep, readyResult } from "../apps/server/src/kernel/graph/progress.ts";
+import { failedResult, progressStep, readyResult } from "../apps/server/src/kernel/graph/progress.ts";
 
 test("Meta evaluateWithProgress devuelve slow_ready_fast_idle con ready + idle", () => {
   const meta = new Meta({ longNoOutputMs: 30_000 });
@@ -40,7 +40,6 @@ test("Meta detecta slow_long_no_output", () => {
 });
 
 test("Meta detecta slow_failed_urgent", () => {
-  const { failedResult } = require("../apps/server/src/kernel/graph/progress.ts");
   const meta = new Meta();
   const hints = meta.evaluateWithProgress({
     progress: [failedResult("error del slow")],

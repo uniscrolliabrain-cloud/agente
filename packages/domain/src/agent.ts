@@ -66,6 +66,10 @@ export interface AgentTask {
   question?: string;
   artifactIds: string[];
   assignedTo?: string;
+  // TASK_ASSIGNED_BY_V1 - delegante. Separado de assignedTo (ejecutor),
+  // igual que en Goal y Monitor. El worker lo usa para requestingActorId y
+  // para distinguir identidad real de fallback legacy.
+  assignedBy?: string;
   // AGENT_TASK_VERSION_V1 - version monotónica para CAS (F4).
   version?: number;
   // TASK_TENANT_REQUIRED_V1 - tenantId obligatorio. Backfill: 'default'.

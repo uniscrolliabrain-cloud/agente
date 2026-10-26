@@ -1553,7 +1553,9 @@ export class AgentService {
         // SERVICE_GOAL_ADAPTER_V2 - Goal de agent.ts y Goal de goal.ts son
         // tipos distintos con el mismo nombre. Adaptamos el primero al
         // shape del segundo para que el orquestador lo acepte.
-        const orchestratorGoal = {
+        const orchestratorGoal: import(
+          "../../../../packages/domain/src/goal.ts"
+        ).Goal = {
           id: saved.id,
           tenantId,
           owner,
@@ -1564,11 +1566,14 @@ export class AgentService {
           constraints: [],
           priority: "medium" as const,
           status: "active" as const,
+          // GOAL_VERSION_REQUIRED_V1 - goal.ts exige version (CAS optimista).
+          version: 1,
           createdAt: saved.createdAt,
           updatedAt: saved.createdAt,
         };
         await this.orchestrator.runGoal(
-          { tenantId, owner, role: "system", requestId: `goal-create:${goal.id}` },
+          // GOAL_CREATE_ACTOR_V1 - el goal se crea en nombre del owner.
+          { tenantId, owner, role: "system", requestId: `goal-create:${goal.id}`, actorId: owner },
           orchestratorGoal,
         );
       } catch (error) {

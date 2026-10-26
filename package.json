@@ -39,7 +39,7 @@
     "audit:idempotency": "tsx scripts/audits/idempotency.ts",
     "audit:anchors": "tsx scripts/audits/anchors.ts",
     "audit:tenant-default": "tsx scripts/audits/tenant-default.ts",
-    "audit:coherence": "pnpm audit:layers && pnpm audit:bridges && pnpm audit:console && pnpm audit:anchors && pnpm audit:contracts && pnpm audit:idempotency && pnpm audit:tenant-default",
+    "audit:coherence": "tsx scripts/audits/coherence.ts",
     "audit:layers": "tsx scripts/audits/layers.ts",
     "audit:bridges": "tsx scripts/audits/bridges.ts",
     "audit:console": "tsx scripts/audits/no-console.ts",

@@ -43,6 +43,8 @@ export class ReactionEngine {
         owner: tenantId,
         role: "system" as const,
         requestId: "reaction:" + rule.id,
+        // KERNEL_ACTOR_PORT_V1 - el motor de reacciones actua como sistema.
+        actorId: "system",
       };
       await this.executor(ctx, rule.actions).catch(() => {});
     }

@@ -14,6 +14,7 @@ import { resolveAllSkins, resolveSkin } from "./resolver.ts";
 import { activityForPersona } from "./activity.ts";
 import type { Store } from "../../../db.ts";
 import type { TenantService } from "../../tenant.ts";
+import type { AuthzDeps } from "../../authz/pdp.ts";
 
 // PERSONA_ROUTES_KERNEL_V1 - kernel para leer turns/thoughts de la persona.
 export interface PersonaRoutesDeps {
@@ -21,18 +22,18 @@ export interface PersonaRoutesDeps {
   db: Store;
   kernel?: import("../../../kernel/index.ts").Kernel;
   tenantService?: TenantService;
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } };
+  authz?: AuthzDeps;
 }
 
 export function personasRoutes(deps: PersonaRoutesDeps) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   const tenantIdFor = async (owner: string): Promise<string> => {
-    if (!deps.tenantService) return "default";
+    if (!deps.tenantService) return "default"; // FALLBACK_TENANT_V1
     try {
       return await deps.tenantService.tenantIdFor(owner);
     } catch {
-      return "default";
+      return "default"; // FALLBACK_TENANT_V1
     }
   };
 
@@ -161,6 +162,8 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
       owner,
       role: "system",
       requestId: `attention:${personaId}:${Date.now()}`,
+      // KERNEL_ACTOR_PORT_V1 - el actor es la persona consultada.
+      actorId: personaId,
       personaId,
     };
     // PERSONAS_ATTENTION_ENDPOINT_WIRE_V1
@@ -181,6 +184,8 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
       owner,
       role: "system",
       requestId: `attention-pairs:${a}:${b}:${Date.now()}`,
+      // KERNEL_ACTOR_PORT_V1 - lectura de sistema sobre pares: actor = owner.
+      actorId: owner,
     };
     const pairs = await deps.kernel.attentionPairs(ctx, a, b);
     return c.json({ a, b, pairs });

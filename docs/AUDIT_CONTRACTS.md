@@ -1,273 +1,341 @@
 # Auditoria de contratos del dominio
 
-> Generado por `scripts/audits/contracts.ts` el 2026-10-18T13:01:49.681Z.
+> Generado por `scripts/audits/contracts.ts` el 2026-10-26T15:02:29.489Z.
 
-- Contratos totales: **250**
-- Con implementacion real: **82**
+- Contratos totales: **318**
+- Con implementacion real: **154**
 - Marcados PENDING o STUB: **14**
-- Sin implementacion y sin marca: **154** (esto es lo que hay que arreglar)
+- Sin implementacion y sin marca: **150** (esto es lo que hay que arreglar)
 
 ## Sin implementacion y sin marca PENDING
 
 | Contrato | Fichero | Tipo |
 |---|---|---|
-| `actionSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `ActionType` | `/workspaces/agente/packages/domain/src/actions.ts` | type |
-| `actionTypeSchema` | `/workspaces/agente/packages/domain/src/actions.ts` | schema |
-| `AgentArchetype` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | type |
-| `agentArchetypeSchema` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | schema |
-| `AgentCapabilities` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | type |
-| `AgentFormality` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | type |
-| `agentFormalitySchema` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | schema |
-| `AgentGender` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | type |
-| `agentGenderSchema` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | schema |
-| `AgentMessage` | `/workspaces/agente/packages/domain/src/messaging.ts` | type |
-| `AgentMessageIntent` | `/workspaces/agente/packages/domain/src/messaging.ts` | type |
-| `AgentPersonality` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | type |
-| `AgentRoleInput` | `/workspaces/agente/packages/domain/src/agent.ts` | type |
-| `AgentRoleMemoryPolicy` | `/workspaces/agente/packages/domain/src/agent.ts` | interface |
-| `AgentRolePermission` | `/workspaces/agente/packages/domain/src/agent.ts` | interface |
-| `AgentRolePublic` | `/workspaces/agente/packages/domain/src/agent.ts` | interface |
-| `AgentRuntime` | `/workspaces/agente/packages/domain/src/runtime.ts` | type |
-| `agentRuntimeSchema` | `/workspaces/agente/packages/domain/src/runtime.ts` | schema |
-| `agentStatusSchema` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | schema |
-| `AgentValueRef` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | type |
-| `ApprovalRequest` | `/workspaces/agente/packages/domain/src/messaging.ts` | type |
-| `ApprovalStatus` | `/workspaces/agente/packages/domain/src/messaging.ts` | type |
-| `BaseVocabulary` | `/workspaces/agente/packages/domain/src/ontology-seed.ts` | type |
-| `BusinessEntityDecl` | `/workspaces/agente/packages/domain/src/business.ts` | type |
-| `businessEntityDeclSchema` | `/workspaces/agente/packages/domain/src/business.ts` | schema |
-| `BusinessEntityPublic` | `/workspaces/agente/packages/domain/src/business.ts` | interface |
-| `businessFieldSchema` | `/workspaces/agente/packages/domain/src/business.ts` | schema |
-| `BusinessRelationDecl` | `/workspaces/agente/packages/domain/src/business.ts` | type |
-| `businessRelationDeclSchema` | `/workspaces/agente/packages/domain/src/business.ts` | schema |
-| `BusinessSchema` | `/workspaces/agente/packages/domain/src/business.ts` | type |
-| `businessSchemaSchema` | `/workspaces/agente/packages/domain/src/business.ts` | schema |
-| `BusinessSchemaV2` | `/workspaces/agente/packages/domain/src/business-schema.ts` | type |
-| `businessSchemaV2Schema` | `/workspaces/agente/packages/domain/src/business-schema.ts` | schema |
-| `capabilityContractSchema` | `/workspaces/agente/packages/domain/src/capability.ts` | schema |
-| `CapabilityCost` | `/workspaces/agente/packages/domain/src/capability.ts` | type |
-| `capabilityCostSchema` | `/workspaces/agente/packages/domain/src/capability.ts` | schema |
-| `CapabilityRisk` | `/workspaces/agente/packages/domain/src/capability.ts` | type |
-| `capabilityRiskSchema` | `/workspaces/agente/packages/domain/src/capability.ts` | schema |
-| `CapabilitySideEffect` | `/workspaces/agente/packages/domain/src/capability.ts` | type |
-| `capabilitySideEffectSchema` | `/workspaces/agente/packages/domain/src/capability.ts` | schema |
-| `CapabilitySpec` | `/workspaces/agente/packages/domain/src/ontology.ts` | type |
-| `capabilitySpecSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | schema |
-| `cognitiveAttentionSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | schema |
-| `cognitivePresentationSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | schema |
-| `cognitiveProgressSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | schema |
-| `cognitivePromotionSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | schema |
-| `CognitiveSpec` | `/workspaces/agente/packages/domain/src/ontology.ts` | type |
-| `cognitiveSpecSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | schema |
-| `columnSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `CreateTaskInput` | `/workspaces/agente/packages/domain/src/agent.ts` | type |
-| `dataSourceSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `EmailDraft` | `/workspaces/agente/packages/domain/src/index.ts` | type |
-| `EntityCandidate` | `/workspaces/agente/packages/domain/src/entity-resolution.ts` | type |
-| `entityCandidateSchema` | `/workspaces/agente/packages/domain/src/entity-resolution.ts` | schema |
-| `EntityDefinition` | `/workspaces/agente/packages/domain/src/business-schema.ts` | type |
-| `entityDefinitionSchema` | `/workspaces/agente/packages/domain/src/business-schema.ts` | schema |
-| `EntityMatch` | `/workspaces/agente/packages/domain/src/entity-resolution.ts` | type |
-| `entityMatchSchema` | `/workspaces/agente/packages/domain/src/entity-resolution.ts` | schema |
-| `EventDraft` | `/workspaces/agente/packages/domain/src/index.ts` | type |
-| `ExecutionBackend` | `/workspaces/agente/packages/domain/src/index.ts` | interface |
-| `executionContextSchema` | `/workspaces/agente/packages/domain/src/execution-context.ts` | schema |
-| `ExecutionRole` | `/workspaces/agente/packages/domain/src/execution-context.ts` | type |
-| `executionRoleSchema` | `/workspaces/agente/packages/domain/src/execution-context.ts` | schema |
-| `FailureLesson` | `/workspaces/agente/packages/domain/src/learning.ts` | type |
-| `failureLessonSchema` | `/workspaces/agente/packages/domain/src/learning.ts` | schema |
-| `FieldDefinition` | `/workspaces/agente/packages/domain/src/business-schema.ts` | type |
-| `fieldDefinitionSchema` | `/workspaces/agente/packages/domain/src/business-schema.ts` | schema |
-| `FieldPolicy` | `/workspaces/agente/packages/domain/src/policy-context.ts` | type |
-| `fieldPolicySchema` | `/workspaces/agente/packages/domain/src/policy-context.ts` | schema |
-| `FieldType` | `/workspaces/agente/packages/domain/src/business-schema.ts` | type |
-| `fieldTypeSchema` | `/workspaces/agente/packages/domain/src/business-schema.ts` | schema |
-| `formFieldSpecSchema` | `/workspaces/agente/packages/domain/src/form-spec.ts` | schema |
-| `formFieldSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `formSpecSchema` | `/workspaces/agente/packages/domain/src/form-spec.ts` | schema |
-| `formSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `GoalConstraint` | `/workspaces/agente/packages/domain/src/goal.ts` | type |
-| `goalConstraintSchema` | `/workspaces/agente/packages/domain/src/goal.ts` | schema |
-| `GoalPriority` | `/workspaces/agente/packages/domain/src/goal.ts` | type |
-| `goalPrioritySchema` | `/workspaces/agente/packages/domain/src/goal.ts` | schema |
-| `goalSchema` | `/workspaces/agente/packages/domain/src/goal.ts` | schema |
-| `GoalStatus` | `/workspaces/agente/packages/domain/src/goal.ts` | type |
-| `goalStatusSchema` | `/workspaces/agente/packages/domain/src/goal.ts` | schema |
-| `Idea` | `/workspaces/agente/packages/domain/src/agent.ts` | interface |
-| `KernelPort` | `/workspaces/agente/packages/domain/src/kernel.ts` | interface |
-| `KernelThought` | `/workspaces/agente/packages/domain/src/kernel.ts` | interface |
-| `KernelWriterPort` | `/workspaces/agente/packages/domain/src/kernel.ts` | interface |
-| `KnowledgeKind` | `/workspaces/agente/packages/domain/src/truth.ts` | type |
-| `knowledgeKindSchema` | `/workspaces/agente/packages/domain/src/truth.ts` | schema |
-| `LearningFact` | `/workspaces/agente/packages/domain/src/learning.ts` | type |
-| `learningFactSchema` | `/workspaces/agente/packages/domain/src/learning.ts` | schema |
-| `LearningPattern` | `/workspaces/agente/packages/domain/src/learning.ts` | type |
-| `learningPatternSchema` | `/workspaces/agente/packages/domain/src/learning.ts` | schema |
-| `LiveKind` | `/workspaces/agente/packages/domain/src/live.ts` | type |
-| `MemoryContext` | `/workspaces/agente/packages/domain/src/agent.ts` | interface |
-| `Monitor` | `/workspaces/agente/packages/domain/src/agent.ts` | interface |
-| `OntologyBundle` | `/workspaces/agente/packages/domain/src/ontology.ts` | type |
-| `OutcomeEvidence` | `/workspaces/agente/packages/domain/src/outcome.ts` | type |
-| `outcomeEvidenceSchema` | `/workspaces/agente/packages/domain/src/outcome.ts` | schema |
-| `OutcomeMetric` | `/workspaces/agente/packages/domain/src/outcome.ts` | type |
-| `outcomeMetricSchema` | `/workspaces/agente/packages/domain/src/outcome.ts` | schema |
-| `outcomeSchema` | `/workspaces/agente/packages/domain/src/outcome.ts` | schema |
-| `OutcomeStatus` | `/workspaces/agente/packages/domain/src/outcome.ts` | type |
-| `outcomeStatusSchema` | `/workspaces/agente/packages/domain/src/outcome.ts` | schema |
-| `PlanStatus` | `/workspaces/agente/packages/domain/src/plan.ts` | type |
-| `PlanStepStatus` | `/workspaces/agente/packages/domain/src/plan.ts` | type |
-| `PolicyActionV2` | `/workspaces/agente/packages/domain/src/policy-context.ts` | type |
-| `policyContextSchema` | `/workspaces/agente/packages/domain/src/policy-context.ts` | schema |
-| `ProceduralLearning` | `/workspaces/agente/packages/domain/src/learning.ts` | type |
-| `proceduralLearningSchema` | `/workspaces/agente/packages/domain/src/learning.ts` | schema |
-| `ProvenanceChip` | `/workspaces/agente/packages/domain/src/context-chips.ts` | type |
-| `provenanceChipKindSchema` | `/workspaces/agente/packages/domain/src/context-chips.ts` | schema |
-| `provenanceChipSchema` | `/workspaces/agente/packages/domain/src/context-chips.ts` | schema |
-| `provenanceChipSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `provenanceSchema` | `/workspaces/agente/packages/domain/src/business.ts` | schema |
-| `ReactionAction` | `/workspaces/agente/packages/domain/src/policy-context.ts` | type |
-| `reactionActionSchema` | `/workspaces/agente/packages/domain/src/policy-context.ts` | schema |
-| `ReactionCondition` | `/workspaces/agente/packages/domain/src/policy-context.ts` | type |
-| `reactionConditionSchema` | `/workspaces/agente/packages/domain/src/policy-context.ts` | schema |
-| `reactionDefinitionSchema` | `/workspaces/agente/packages/domain/src/reaction.ts` | schema |
-| `ReactionRule` | `/workspaces/agente/packages/domain/src/policy-context.ts` | type |
-| `reactionRuleSchema` | `/workspaces/agente/packages/domain/src/policy-context.ts` | schema |
-| `ReactionTarget` | `/workspaces/agente/packages/domain/src/reaction.ts` | type |
-| `reactionTargetSchema` | `/workspaces/agente/packages/domain/src/reaction.ts` | schema |
-| `ReactionTrigger` | `/workspaces/agente/packages/domain/src/reaction.ts` | type |
-| `reactionTriggerSchema` | `/workspaces/agente/packages/domain/src/reaction.ts` | schema |
-| `RelationDefinition` | `/workspaces/agente/packages/domain/src/business-schema.ts` | type |
-| `relationDefinitionSchema` | `/workspaces/agente/packages/domain/src/business-schema.ts` | schema |
-| `RuntimeCheckpoint` | `/workspaces/agente/packages/domain/src/runtime.ts` | type |
-| `runtimeCheckpointSchema` | `/workspaces/agente/packages/domain/src/runtime.ts` | schema |
-| `RuntimePhase` | `/workspaces/agente/packages/domain/src/runtime.ts` | type |
-| `runtimePhaseSchema` | `/workspaces/agente/packages/domain/src/runtime.ts` | schema |
-| `Section` | `/workspaces/agente/packages/domain/src/index.ts` | type |
-| `SignupRequest` | `/workspaces/agente/packages/domain/src/signup.ts` | type |
-| `sopStepSchema` | `/workspaces/agente/packages/domain/src/sop.ts` | schema |
-| `StateDefinition` | `/workspaces/agente/packages/domain/src/business-schema.ts` | type |
-| `stateDefinitionSchema` | `/workspaces/agente/packages/domain/src/business-schema.ts` | schema |
-| `SuccessCriterion` | `/workspaces/agente/packages/domain/src/goal.ts` | type |
-| `successCriterionSchema` | `/workspaces/agente/packages/domain/src/goal.ts` | schema |
-| `TaxonomyFamily` | `/workspaces/agente/packages/domain/src/taxonomy.ts` | type |
-| `taxonomyFamilySchema` | `/workspaces/agente/packages/domain/src/taxonomy.ts` | schema |
-| `truthCandidateSchema` | `/workspaces/agente/packages/domain/src/truth.ts` | schema |
-| `truthResolutionSchema` | `/workspaces/agente/packages/domain/src/truth.ts` | schema |
-| `ValidateInput` | `/workspaces/agente/packages/domain/src/ontology.ts` | interface |
-| `ValidateResult` | `/workspaces/agente/packages/domain/src/ontology.ts` | interface |
-| `verificationResultSchema` | `/workspaces/agente/packages/domain/src/verification.ts` | schema |
-| `ViewKind` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | type |
-| `viewKindSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `ViewKpi` | `/workspaces/agente/packages/domain/src/views.ts` | type |
-| `ViewQueueItem` | `/workspaces/agente/packages/domain/src/views.ts` | type |
-| `viewSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `WorkspaceMode` | `/workspaces/agente/packages/domain/src/index.ts` | type |
-| `workspaceSectionSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
-| `workspaceSpecSchema` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | schema |
+| `ActionType` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actions.ts` | type |
+| `ActorKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | type |
+| `actorKindSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | schema |
+| `ActorProfile` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | type |
+| `actorProfileSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | schema |
+| `ActorRole` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | type |
+| `actorRoleSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | schema |
+| `actorRolesSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | schema |
+| `AgentActor` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | type |
+| `agentActorSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | schema |
+| `AgentArchetype` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | type |
+| `agentArchetypeSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | schema |
+| `AgentCapabilities` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | type |
+| `AgentFormality` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | type |
+| `agentFormalitySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | schema |
+| `AgentGender` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | type |
+| `agentGenderSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | schema |
+| `AgentMessage` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | type |
+| `AgentMessageIntent` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | type |
+| `AgentPersonality` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | type |
+| `AgentRoleInput` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | type |
+| `AgentRoleMemoryPolicy` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | interface |
+| `AgentRolePermission` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | interface |
+| `AgentRuntime` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/runtime.ts` | type |
+| `agentRuntimeSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/runtime.ts` | schema |
+| `AgentTaskAssignment` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/task.ts` | type |
+| `AgentValueRef` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | type |
+| `ApprovalAssignment` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/approval.ts` | type |
+| `ApprovalRequest` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | type |
+| `approvalSignerAssignmentSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/approval.ts` | schema |
+| `ApprovalStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | type |
+| `AssignmentEvidence` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | type |
+| `AssignmentOutcome` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | type |
+| `AssignmentPlan` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | type |
+| `BaseVocabulary` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology-seed.ts` | type |
+| `BusinessEntityDecl` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | type |
+| `businessEntityDeclSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | schema |
+| `BusinessEntityPublic` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | interface |
+| `businessFieldSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | schema |
+| `BusinessRelationDecl` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | type |
+| `businessRelationDeclSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | schema |
+| `BusinessSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | type |
+| `businessSchemaSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | schema |
+| `BusinessSchemaV2` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | type |
+| `businessSchemaV2Schema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | schema |
+| `CapabilityCost` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | type |
+| `capabilityCostSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | schema |
+| `CapabilityRisk` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | type |
+| `capabilityRiskSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | schema |
+| `CapabilitySideEffect` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | type |
+| `capabilitySideEffectSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | schema |
+| `CapabilitySpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | type |
+| `capabilitySpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | schema |
+| `ClassifiedField` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/classification.ts` | type |
+| `classifiedFieldSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/classification.ts` | schema |
+| `ClassifiedRecord` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/classification.ts` | type |
+| `classifiedRecordSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/classification.ts` | schema |
+| `cognitiveAttentionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | schema |
+| `cognitivePresentationSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | schema |
+| `cognitiveProgressSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | schema |
+| `cognitivePromotionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | schema |
+| `CognitiveSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | type |
+| `cognitiveSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | schema |
+| `ConflictDiff` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/conflict.ts` | type |
+| `conflictDiffSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/conflict.ts` | schema |
+| `ConflictResolution` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/conflict.ts` | type |
+| `conflictResolutionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/conflict.ts` | schema |
+| `ConflictVersion` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/conflict.ts` | type |
+| `conflictVersionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/conflict.ts` | schema |
+| `CreateTaskInput` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | type |
+| `EntityCandidate` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/entity-resolution.ts` | type |
+| `entityCandidateSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/entity-resolution.ts` | schema |
+| `EntityDefinition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | type |
+| `entityDefinitionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | schema |
+| `EntityMatch` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/entity-resolution.ts` | type |
+| `entityMatchSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/entity-resolution.ts` | schema |
+| `ExecutionBackend` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | interface |
+| `ExecutionRole` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/execution-context.ts` | type |
+| `executionRoleSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/execution-context.ts` | schema |
+| `FailureLesson` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | type |
+| `failureLessonSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | schema |
+| `FieldPolicy` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | type |
+| `fieldPolicySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | schema |
+| `FieldType` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | type |
+| `fieldTypeSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | schema |
+| `FlowRelation` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/flow.ts` | type |
+| `flowRelationSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/flow.ts` | schema |
+| `GoalAssignment` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/goal.ts` | type |
+| `GoalConstraint` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | type |
+| `goalConstraintSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | schema |
+| `GoalPriority` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | type |
+| `goalPrioritySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | schema |
+| `GoalStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | type |
+| `goalStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | schema |
+| `KernelPort` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | interface |
+| `KernelThought` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | type |
+| `KernelWriterPort` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | interface |
+| `KnowledgeKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/truth.ts` | type |
+| `knowledgeKindSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/truth.ts` | schema |
+| `LearningFact` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | type |
+| `learningFactSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | schema |
+| `LearningPattern` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | type |
+| `learningPatternSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | schema |
+| `LiveKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/live.ts` | type |
+| `MemoryContext` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | interface |
+| `MonitorAssignment` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/monitor.ts` | type |
+| `OntologyBundle` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | type |
+| `OutcomeMetric` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | type |
+| `outcomeMetricSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | schema |
+| `OutcomeStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | type |
+| `PlanStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | type |
+| `PlanStepStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | type |
+| `PolicyActionV2` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | type |
+| `policyContextActionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | schema |
+| `ProceduralLearning` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | type |
+| `proceduralLearningSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/learning.ts` | schema |
+| `ProvenanceChip` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/context-chips.ts` | type |
+| `provenanceSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | schema |
+| `ReactionAction` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | type |
+| `reactionActionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | schema |
+| `ReactionCondition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | type |
+| `reactionConditionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | schema |
+| `ReactionRule` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | type |
+| `reactionRuleSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | schema |
+| `ReactionTarget` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/reaction.ts` | type |
+| `reactionTargetSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/reaction.ts` | schema |
+| `ReactionTrigger` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/reaction.ts` | type |
+| `reactionTriggerSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/reaction.ts` | schema |
+| `RelationDefinition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | type |
+| `relationDefinitionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | schema |
+| `RuntimeCheckpoint` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/runtime.ts` | type |
+| `runtimeCheckpointSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/runtime.ts` | schema |
+| `RuntimePhase` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/runtime.ts` | type |
+| `runtimePhaseSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/runtime.ts` | schema |
+| `Section` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | type |
+| `SignupRequest` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/signup.ts` | type |
+| `SopAssignment` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/sop.ts` | type |
+| `sopStepAssignmentSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/sop.ts` | schema |
+| `StateDefinition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | type |
+| `stateDefinitionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | schema |
+| `SuccessCriterion` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | type |
+| `successCriterionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | schema |
+| `TaxonomyFamily` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/taxonomy.ts` | type |
+| `ValidateInput` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | interface |
+| `ValidateResult` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | interface |
+| `ViewKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | type |
+| `viewKindSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | schema |
+| `ViewKpi` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/views.ts` | type |
+| `ViewQueueItem` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/views.ts` | type |
+| `WorkspaceMode` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | type |
 
 ## Marcados PENDING o STUB
 
 | Contrato | Fichero | Tipo |
 |---|---|---|
-| `agentAvatarSchema` | `/workspaces/agente/packages/domain/src/agent.ts` | schema |
-| `agentMemoryKindSchema` | `/workspaces/agente/packages/domain/src/agent.ts` | schema |
-| `agentMessageIntentSchema` | `/workspaces/agente/packages/domain/src/messaging.ts` | schema |
-| `agentMessageSchema` | `/workspaces/agente/packages/domain/src/messaging.ts` | schema |
-| `agentRoleMemorySchema` | `/workspaces/agente/packages/domain/src/agent.ts` | schema |
-| `agentToneSchema` | `/workspaces/agente/packages/domain/src/agent.ts` | schema |
-| `approvalRequestSchema` | `/workspaces/agente/packages/domain/src/messaging.ts` | schema |
-| `approvalStatusSchema` | `/workspaces/agente/packages/domain/src/messaging.ts` | schema |
-| `handoffSchema` | `/workspaces/agente/packages/domain/src/messaging.ts` | schema |
-| `planSchema` | `/workspaces/agente/packages/domain/src/plan.ts` | schema |
-| `planStatusSchema` | `/workspaces/agente/packages/domain/src/plan.ts` | schema |
-| `planStepSchema` | `/workspaces/agente/packages/domain/src/plan.ts` | schema |
-| `planStepStatusSchema` | `/workspaces/agente/packages/domain/src/plan.ts` | schema |
-| `runtimeViewSpecSchema` | `/workspaces/agente/packages/domain/src/views.ts` | schema |
+| `agentMemoryKindSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | schema |
+| `agentMessageIntentSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | schema |
+| `agentMessageSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | schema |
+| `agentRoleMemorySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | schema |
+| `agentToneSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | schema |
+| `approvalRequestSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | schema |
+| `approvalStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | schema |
+| `assignmentEvidenceSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | schema |
+| `assignmentMetadataSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | schema |
+| `assignmentOutcomeSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | schema |
+| `assignmentPlanSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | schema |
+| `assignmentPlanStepSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | schema |
+| `planStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | schema |
+| `planStepStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | schema |
 
 ## Con implementacion real
 
 | Contrato | Fichero | Implementado en |
 |---|---|---|
-| `ActionProposal` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/actions.ts`, `apps/server/src/workspace.ts`, `apps/web/src/api/actions.ts`, `apps/web/src/api/index.ts`, `apps/web/src/components/ApprovalModal.tsx` |
-| `ActionSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/web/src/view/spec.ts` |
-| `ActivityEntry` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/workspace.ts` |
-| `AgentArtifact` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/projects-routes.ts`, `apps/web/src/api/index.ts`, `apps/web/src/types/api.ts` |
-| `AgentAvatar` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | `apps/web/src/api/agents.ts` |
-| `AgentAvatar` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/agents.ts` |
-| `AgentIdentity` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/routes.ts` |
-| `AgentMemory` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/agents/personas/node.ts`, `apps/server/src/engine/agents/personas/types.ts`, `apps/server/src/engine/context/engine.ts`, `apps/server/src/engine/memory.ts`, `apps/server/src/engine/provenance.ts` |
-| `AgentMemoryKind` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/agents.ts` |
-| `AgentNotification` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/routes.ts`, `apps/web/src/hooks/useNotifications.ts` |
-| `AgentPersona` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | `apps/server/src/engine/agents/personas/loader.ts`, `apps/server/src/engine/agents/personas/registry.ts`, `apps/server/src/engine/agents/personas/types.ts` |
-| `AgentRole` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/actions.ts`, `apps/server/src/admin-clients.ts`, `apps/server/src/admin-tenants.ts`, `apps/server/src/engine/agents/governance.ts`, `apps/server/src/engine/context/engine.ts` |
-| `AgentRoleMemory` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/agents.ts` |
-| `agentRoleSchema` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/routes.ts` |
-| `AgentStats` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | `apps/server/src/engine/agents/personas/loader.ts`, `apps/server/src/engine/agents/personas/registry.ts`, `apps/server/src/engine/agents/personas/stats.ts`, `apps/server/src/engine/agents/personas/types.ts` |
-| `AgentStatus` | `/workspaces/agente/packages/domain/src/agent-persona.ts` | `apps/server/src/engine/agents/personas/stats.ts` |
-| `AgentTask` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/admin-clients.ts`, `apps/server/src/admin-tenants.ts`, `apps/server/src/engine/agents/personas/activity.ts`, `apps/server/src/engine/agents/personas/stats.ts`, `apps/server/src/engine/dead-letter.ts` |
-| `AgentTone` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/agents.ts` |
-| `AgentWorkspace` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/index.ts`, `apps/web/src/api/tasks.ts`, `apps/web/src/types/api.ts` |
-| `Artifact` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/files.ts`, `apps/server/src/projects-routes.ts`, `apps/server/src/workspace.ts` |
-| `BrowserSession` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/browser.ts`, `apps/server/src/workspace.ts` |
-| `BusinessEntity` | `/workspaces/agente/packages/domain/src/business.ts` | `apps/server/src/engine/business/graph.ts`, `apps/server/src/engine/business/resolver.ts`, `apps/server/src/engine/business/truth.ts`, `apps/server/src/engine/context/engine.ts`, `apps/server/src/engine/provenance.ts` |
-| `businessEntitySchema` | `/workspaces/agente/packages/domain/src/business.ts` | `apps/server/src/business-routes.ts`, `apps/server/src/engine/business/graph.ts` |
-| `BusinessRelation` | `/workspaces/agente/packages/domain/src/business.ts` | `apps/server/src/engine/business/graph.ts`, `apps/server/src/engine/context/engine.ts`, `apps/web/src/api/business.ts` |
-| `CalendarEvent` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/actions.ts`, `apps/server/src/workspace.ts` |
-| `CapabilityContract` | `/workspaces/agente/packages/domain/src/capability.ts` | `apps/server/src/engine/capabilities/registry.ts` |
-| `ColumnSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/web/src/view/spec.ts` |
-| `ComputerCommand` | `/workspaces/agente/packages/domain/src/computer.ts` | `apps/server/src/computer.ts` |
-| `ComputerDirectory` | `/workspaces/agente/packages/domain/src/computer.ts` | `apps/server/src/computer.ts` |
-| `ComputerSnapshot` | `/workspaces/agente/packages/domain/src/computer.ts` | `apps/server/src/computer.ts` |
-| `Connection` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/engine/notifications-stream.ts`, `apps/server/src/events-routes.ts`, `apps/server/src/notifications-stream.ts` |
-| `createTaskSchema` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/conversation.ts` |
-| `DataSourceSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/web/src/view/spec.ts` |
-| `emailDraftSchema` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/app.ts`, `apps/server/src/engine/model.ts`, `apps/server/src/engine/sop-executor.ts` |
-| `Evidence` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/types/api.ts` |
-| `ExecutionContext` | `/workspaces/agente/packages/domain/src/execution-context.ts` | `apps/server/src/engine/execution/capability-runner.ts`, `apps/server/src/engine/execution/executor.ts`, `apps/server/src/engine/execution/tool-executors.ts`, `apps/server/src/engine/orchestrator/orchestrator.ts`, `apps/server/src/engine/reactions/engine.ts` |
-| `FormFieldSpec` | `/workspaces/agente/packages/domain/src/form-spec.ts` | `apps/server/src/engine/form-builder.ts` |
-| `FormFieldSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/server/src/engine/form-builder.ts` |
-| `FormSpec` | `/workspaces/agente/packages/domain/src/form-spec.ts` | `apps/server/src/engine/form-builder.ts`, `apps/web/src/forms/FormRenderer.tsx` |
-| `FormSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/server/src/engine/form-builder.ts`, `apps/web/src/forms/FormRenderer.tsx` |
-| `Goal` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/learning/observer.ts`, `apps/server/src/engine/orchestrator/orchestrator.ts`, `apps/server/src/engine/planner/llm-planner.ts`, `apps/server/src/engine/planner/planner.ts`, `apps/server/src/engine/planner/replanner.ts` |
-| `Goal` | `/workspaces/agente/packages/domain/src/goal.ts` | `apps/server/src/engine/learning/observer.ts`, `apps/server/src/engine/orchestrator/orchestrator.ts`, `apps/server/src/engine/planner/llm-planner.ts`, `apps/server/src/engine/planner/planner.ts`, `apps/server/src/engine/planner/replanner.ts` |
-| `goalInputSchema` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/conversation.ts` |
-| `Handoff` | `/workspaces/agente/packages/domain/src/messaging.ts` | `apps/server/src/engine/handoff/service.ts` |
-| `KernelContext` | `/workspaces/agente/packages/domain/src/kernel.ts` | `apps/server/src/engine/agents/personas/node.ts`, `apps/server/src/engine/agents/personas/routes.ts`, `apps/server/src/engine/conversation.ts`, `apps/server/src/engine/model.ts`, `apps/server/src/engine/sop-executor.ts` |
-| `KernelRole` | `/workspaces/agente/packages/domain/src/kernel.ts` | `apps/server/src/kernel/context/kernel-context.ts`, `apps/server/src/kernel/index.ts` |
-| `KernelTurn` | `/workspaces/agente/packages/domain/src/kernel.ts` | `apps/server/src/engine/sop-executor.ts` |
-| `LiveActivity` | `/workspaces/agente/packages/domain/src/live.ts` | `apps/web/src/components/LiveItem.tsx` |
-| `Mail` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/demo/model.ts`, `apps/server/src/engine/conversation.ts`, `apps/server/src/workspace.ts`, `apps/web/src/workspaces/02-whatsapp/components/ContextPanel.tsx` |
-| `MatchReason` | `/workspaces/agente/packages/domain/src/entity-resolution.ts` | `apps/server/src/kernel/graph/thought.ts` |
-| `matchReasonSchema` | `/workspaces/agente/packages/domain/src/entity-resolution.ts` | `apps/server/src/kernel/graph/thought.ts` |
-| `MemoryCategory` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/context/engine.ts`, `apps/server/src/engine/memory.ts` |
-| `ontologyBundleSchema` | `/workspaces/agente/packages/domain/src/ontology.ts` | `apps/server/src/app.ts` |
-| `Outcome` | `/workspaces/agente/packages/domain/src/outcome.ts` | `apps/server/src/engine/learning/observer.ts`, `apps/server/src/engine/orchestrator/orchestrator.ts`, `apps/server/src/engine/verification/llm-verifier.ts`, `apps/server/src/engine/verification/verifier.ts`, `apps/web/src/components/ApprovalModal.tsx` |
-| `Plan` | `/workspaces/agente/packages/domain/src/plan.ts` | `apps/server/src/engine/execution/executor.ts`, `apps/server/src/engine/learning/observer.ts`, `apps/server/src/engine/orchestrator/orchestrator.ts`, `apps/server/src/engine/planner/llm-planner.ts`, `apps/server/src/engine/planner/planner.ts` |
-| `PlanStep` | `/workspaces/agente/packages/domain/src/plan.ts` | `apps/server/src/engine/execution/capability-runner.ts`, `apps/server/src/engine/execution/executor.ts`, `apps/server/src/engine/planner/planner.ts` |
-| `policyActionSchema` | `/workspaces/agente/packages/domain/src/policy-context.ts` | `apps/server/src/engine/policy/engine.ts` |
-| `PolicyContext` | `/workspaces/agente/packages/domain/src/policy-context.ts` | `apps/server/src/engine/policy/engine.ts` |
-| `Project` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/memory.ts`, `apps/server/src/projects-routes.ts`, `apps/web/src/api/projects.ts`, `apps/web/src/hooks/useProjects.ts`, `apps/web/src/workspaces/35-centro-mando/components/ActiveProjectsPanel.tsx` |
-| `ProjectBlock` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/projects-routes.ts`, `apps/web/src/api/projects.ts`, `apps/web/src/components/ProjectsView.tsx`, `apps/web/src/hooks/useProjects.ts` |
-| `ProjectStatus` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/projects-routes.ts`, `apps/web/src/api/projects.ts`, `apps/web/src/components/ProjectsView.tsx`, `apps/web/src/hooks/useProjects.ts` |
-| `ProposalInput` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/actions.ts`, `apps/server/src/workspace.ts` |
-| `proposalSchema` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/actions.ts`, `apps/server/src/app.ts` |
-| `ProvenanceChipKind` | `/workspaces/agente/packages/domain/src/context-chips.ts` | `apps/server/src/engine/provenance.ts`, `apps/web/src/components/ProvenanceBadge.tsx`, `apps/web/src/forms/FormRenderer.tsx` |
-| `ReactionDefinition` | `/workspaces/agente/packages/domain/src/reaction.ts` | `apps/server/src/engine/reactions/engine.ts` |
-| `RunEvent` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/server/src/engine/worker.ts`, `apps/web/src/api/index.ts`, `apps/web/src/types/api.ts` |
-| `RuntimeViewSpec` | `/workspaces/agente/packages/domain/src/views.ts` | `apps/server/src/engine/views/resolver.ts`, `apps/web/src/components/ContextualPanel.tsx`, `apps/web/src/hooks/useViewResolver.ts`, `apps/web/src/templates/dashboard/DashboardTemplate.tsx`, `apps/web/src/templates/queue/QueueTemplate.tsx` |
-| `signupRequestSchema` | `/workspaces/agente/packages/domain/src/signup.ts` | `apps/server/src/auth-signup.ts` |
-| `SOP` | `/workspaces/agente/packages/domain/src/sop.ts` | `apps/server/src/admin-clients.ts`, `apps/server/src/engine/capabilities/bootstrap.ts`, `apps/server/src/engine/conversation.ts`, `apps/server/src/engine/sop-executor.ts`, `apps/server/src/engine/sop-triggers.ts` |
-| `sopSchema` | `/workspaces/agente/packages/domain/src/sop.ts` | `apps/server/src/engine/sop-executor.ts`, `apps/server/src/skills/sop-routes.ts` |
-| `SOPStep` | `/workspaces/agente/packages/domain/src/sop.ts` | `apps/server/src/engine/sop-executor.ts` |
-| `TaskStatus` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/index.ts`, `apps/web/src/types/api.ts` |
-| `TaskStep` | `/workspaces/agente/packages/domain/src/agent.ts` | `apps/web/src/api/index.ts`, `apps/web/src/components/TaskTimeline.tsx`, `apps/web/src/types/api.ts` |
-| `TruthCandidate` | `/workspaces/agente/packages/domain/src/truth.ts` | `apps/server/src/engine/business/truth-resolver.ts`, `apps/server/src/engine/business/truth.ts` |
-| `TruthResolution` | `/workspaces/agente/packages/domain/src/truth.ts` | `apps/server/src/engine/business/truth-resolver.ts` |
-| `VerificationResult` | `/workspaces/agente/packages/domain/src/verification.ts` | `apps/server/src/engine/orchestrator/orchestrator.ts`, `apps/server/src/engine/verification/disagreement.ts`, `apps/server/src/engine/verification/llm-verifier.ts`, `apps/server/src/engine/verification/verifier.ts` |
-| `VerificationToken` | `/workspaces/agente/packages/domain/src/signup.ts` | `apps/server/src/auth-signup.ts` |
-| `verificationTokenSchema` | `/workspaces/agente/packages/domain/src/signup.ts` | `apps/server/src/auth-signup.ts` |
-| `ViewSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/web/src/view/spec.ts` |
-| `Workspace` | `/workspaces/agente/packages/domain/src/index.ts` | `apps/server/src/engine/workspace/generator.ts`, `apps/server/src/workspace.ts`, `apps/web/src/components/Login.tsx`, `apps/web/src/components/ProfileModal.tsx`, `apps/web/src/workspaces/14-zendesk/components/ZendeskSidebar.tsx` |
-| `WorkspaceSection` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/server/src/engine/workspace/generator.ts` |
-| `WorkspaceSpec` | `/workspaces/agente/packages/domain/src/workspace-spec.ts` | `apps/server/src/engine/workspace/generator.ts` |
+| `ActionProposal` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/approval-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/actions.ts` |
+| `ActionSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `actionSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `actionTypeSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actions.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` |
+| `ActivityEntry` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts` |
+| `Actor` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `actorSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `AgentArtifact` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/projects-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/index.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/types/api.ts` |
+| `AgentAvatar` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/agents.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` |
+| `AgentAvatar` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/agents.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` |
+| `agentAvatarSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/agents.ts` |
+| `AgentIdentity` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `AgentMemory` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/node.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/types.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/context/engine.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/memory.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/provenance.ts` |
+| `AgentMemoryKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/agents.ts` |
+| `AgentNotification` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/hooks/useNotifications.ts` |
+| `AgentPersona` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/loader.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/registry.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/types.ts` |
+| `AgentRole` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/admin-clients.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/admin-tenants.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `AgentRoleMemory` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/agents.ts` |
+| `AgentRolePublic` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `agentRoleSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `AgentStats` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/loader.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/registry.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/stats.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/types.ts` |
+| `AgentStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/stats.ts` |
+| `agentStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent-persona.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/stats.ts` |
+| `AgentTask` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/admin-clients.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/admin-tenants.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/activity.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/stats.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/task-adapter.ts` |
+| `AgentTone` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/agents.ts` |
+| `AgentWorkspace` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/index.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/tasks.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/types/api.ts` |
+| `Artifact` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/files.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/projects-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts` |
+| `Assignment` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/service.ts` |
+| `AssignmentAdapter` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/approval-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/goal-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/monitor-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/sop-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/task-adapter.ts` |
+| `AssignmentKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/registry.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/service.ts` |
+| `assignmentKindSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/registry.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/service.ts` |
+| `assignmentSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/approval.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/goal.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/monitor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/sop.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignments/task.ts` |
+| `AssignmentStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/approval-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/goal-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/monitor-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/sop-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/task-adapter.ts` |
+| `assignmentStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/approval-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/goal-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/monitor-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/sop-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/task-adapter.ts` |
+| `BrowserSession` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/browser.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts` |
+| `BusinessEntity` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/graph.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/resolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/context/engine.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/provenance.ts` |
+| `businessEntitySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/business-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/graph.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/resolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/context/engine.ts` |
+| `BusinessRelation` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/graph.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/context/engine.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/business.ts` |
+| `CalendarEvent` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/integrations/src/google.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/06-google-calendar/src/domain/entities.ts` |
+| `CapabilityContract` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/capabilities/registry.ts` |
+| `capabilityContractSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/capabilities/registry.ts` |
+| `ColumnSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `columnSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `ComputerCommand` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/computer.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/computer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` |
+| `ComputerDirectory` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/computer.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/computer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` |
+| `ComputerSnapshot` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/computer.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/computer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` |
+| `Connection` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/notifications-stream.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/events-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/notifications-stream.ts` |
+| `createTaskSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/conversation.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `DataSourceSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `dataSourceSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `EmailDraft` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/integrations/src/google.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/01-gmail/src/domain/entities.ts` |
+| `emailDraftSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/model.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/sop-executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/integrations/src/google.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/01-gmail/src/domain/entities.ts` |
+| `EventDraft` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/integrations/src/google.ts` |
+| `Evidence` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/types/api.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/29-isms-online/src/domain/entities.ts` |
+| `ExecutionContext` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/execution-context.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/capability-runner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/tool-executors.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/reactions/engine.ts` |
+| `executionContextSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/execution-context.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/capability-runner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/tool-executors.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/reactions/engine.ts` |
+| `FieldClassification` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/classification.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/field-filter.ts` |
+| `fieldClassificationSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/classification.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/field-filter.ts` |
+| `FieldDefinition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/09-airtable/src/domain/entities.ts` |
+| `fieldDefinitionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/business-schema.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/09-airtable/src/domain/entities.ts` |
+| `Flow` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/flow.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/registry.ts` |
+| `flowSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/flow.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/registry.ts` |
+| `FormFieldSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` |
+| `FormFieldSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts` |
+| `formFieldSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts` |
+| `formFieldSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts` |
+| `FormSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/forms/FormRenderer.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` |
+| `FormSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/forms/FormRenderer.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts` |
+| `formSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/forms/FormRenderer.tsx` |
+| `formSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/form-builder.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/forms/FormRenderer.tsx` |
+| `Goal` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/goal-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/llm-planner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `Goal` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/goal-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/llm-planner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `goalInputSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/conversation.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `goalSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/goal.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/goal-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/llm-planner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `Handoff` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/handoff/service.ts` |
+| `handoffSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/messaging.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/handoff/service.ts` |
+| `HumanActor` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
+| `humanActorSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
+| `Idea` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `JwtPayload` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/jwt.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt.ts` |
+| `jwtPayloadSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/jwt.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
+| `KernelContext` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/node.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/conversation.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/model.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `KernelRole` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/kernel/context/kernel-context.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/kernel/index.ts` |
+| `KernelThoughtView` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel-thought-view.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` |
+| `KernelTurn` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/sop-executor.ts` |
+| `LiveActivity` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/live.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/LiveItem.tsx` |
+| `Mail` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/demo/model.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/conversation.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/workspaces/02-whatsapp/components/ContextPanel.tsx` |
+| `MatchReason` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/entity-resolution.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/kernel/graph/thought.ts` |
+| `matchReasonSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/entity-resolution.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/kernel/graph/thought.ts` |
+| `MemoryCategory` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/context/engine.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/memory.ts` |
+| `Monitor` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/monitor-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actions.ts` |
+| `ontologyBundleSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts` |
+| `Outcome` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/llm-verifier.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/verifier.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ApprovalModal.tsx` |
+| `OutcomeEvidence` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts` |
+| `outcomeEvidenceSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts` |
+| `outcomeSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/llm-verifier.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/verifier.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ApprovalModal.tsx` |
+| `outcomeStatusSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/outcome.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/assignment.ts` |
+| `Plan` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/llm-planner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `planSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/learning/observer.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/llm-planner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `PlanStep` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/capability-runner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `planStepSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/plan.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/capability-runner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/planner/planner.ts` |
+| `Policy` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/policies.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/29-isms-online/src/domain/entities.ts` |
+| `PolicyAction` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/policies.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/capability-runner.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/policy/engine.ts` |
+| `policyActionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/policy/engine.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/policies.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/execution/capability-runner.ts` |
+| `PolicyCondition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `policyConditionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `PolicyContext` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/service.ts` |
+| `policyContextSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy-context.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/governance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/service.ts` |
+| `PolicyDecision` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/policy/engine.ts` |
+| `policyDecisionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/policy/engine.ts` |
+| `PolicyEffect` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `policyEffectSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `PolicyResource` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/policies.ts` |
+| `policyResourceSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/policies.ts` |
+| `policySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/29-isms-online/src/domain/entities.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/policies.ts` |
+| `PolicySubject` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `policySubjectSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/policy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/authz/pdp.ts` |
+| `Project` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/memory.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/projects-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/projects.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/hooks/useProjects.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/workspaces/35-centro-mando/components/ActiveProjectsPanel.tsx` |
+| `ProjectBlock` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/projects-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/projects.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ProjectsView.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/hooks/useProjects.ts` |
+| `ProjectStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/projects-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/projects.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ProjectsView.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/hooks/useProjects.ts` |
+| `ProposalInput` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts` |
+| `proposalSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/actions.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/app.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts` |
+| `ProvenanceChipKind` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/context-chips.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/provenance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ProvenanceBadge.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/forms/FormRenderer.tsx` |
+| `provenanceChipKindSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/context-chips.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/form-spec.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/provenance.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ProvenanceBadge.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/forms/FormRenderer.tsx` |
+| `provenanceChipSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/context-chips.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` |
+| `provenanceChipSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/context-chips.ts` |
+| `ReactionDefinition` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/reaction.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/reactions/engine.ts` |
+| `reactionDefinitionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/reaction.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/reactions/engine.ts` |
+| `RunEvent` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/worker.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/index.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/types/api.ts` |
+| `RuntimeViewSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/views.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/views/resolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ContextualPanel.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/hooks/useViewResolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/templates/dashboard/DashboardTemplate.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/templates/queue/QueueTemplate.tsx` |
+| `runtimeViewSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/views.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/views/resolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ContextualPanel.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/hooks/useViewResolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/templates/dashboard/DashboardTemplate.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/templates/queue/QueueTemplate.tsx` |
+| `signupRequestSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/signup.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/auth-signup.ts` |
+| `SOP` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/sop.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/admin-clients.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/sop-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/capabilities/bootstrap.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/conversation.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
+| `sopSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/sop.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/sop-executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/skills/sop-routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/admin-clients.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/assignments/adapters/sop-adapter.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/capabilities/bootstrap.ts` |
+| `SOPStep` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/sop.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/sop-executor.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/17-process-street/src/domain/entities.ts` |
+| `sopStepSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/sop.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/workspaces/17-process-street/src/domain/entities.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/sop-executor.ts` |
+| `TaskStatus` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/index.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/types/api.ts` |
+| `TaskStep` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/api/index.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/TaskTimeline.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/types/api.ts` |
+| `taxonomyFamilySchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/taxonomy.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/capability.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/ontology.ts` |
+| `TruthCandidate` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/truth.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth-resolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth.ts` |
+| `truthCandidateSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/truth.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth-resolver.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth.ts` |
+| `TruthResolution` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/truth.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth-resolver.ts` |
+| `truthResolutionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/truth.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/business/truth-resolver.ts` |
+| `VerificationResult` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/verification.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/disagreement.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/llm-verifier.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/verifier.ts` |
+| `verificationResultSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/verification.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/orchestrator/orchestrator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/disagreement.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/llm-verifier.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/verification/verifier.ts` |
+| `VerificationToken` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/signup.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/auth-signup.ts` |
+| `verificationTokenSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/signup.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/auth-signup.ts` |
+| `ViewSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `viewSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/view/spec.ts` |
+| `Workspace` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/index.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/workspace/generator.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/workspace.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/Login.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/components/ProfileModal.tsx`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/web/src/workspaces/14-zendesk/components/ZendeskSidebar.tsx` |
+| `WorkspaceSection` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/workspace/generator.ts` |
+| `workspaceSectionSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/workspace/generator.ts` |
+| `WorkspaceSpec` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/workspace/generator.ts` |
+| `workspaceSpecSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/workspace-spec.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/workspace/generator.ts` |

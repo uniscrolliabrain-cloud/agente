@@ -153,6 +153,9 @@ function keepTop(top: RagHit[], hit: RagHit, limit: number): void {
 export async function embedTexts(
   texts: string[],
   concurrency = RAG_INGEST_CONCURRENCY,
+  // RAG_TENANT_EMBEDDINGS_KEY_V1 - key del tenant; la ingesta ya la resolvia
+  // pero embedTexts la descartaba y usaba la global.
+  apiKey?: string,
 ): Promise<(number[] | null)[]> {
   const vectors: (number[] | null)[] = new Array(texts.length).fill(null);
   let cursor = 0;
@@ -162,7 +165,7 @@ export async function embedTexts(
       for (;;) {
         const index = cursor++;
         if (index >= texts.length) return;
-        vectors[index] = await embed(texts[index]);
+        vectors[index] = await embed(texts[index], apiKey);
       }
     },
   );

@@ -148,7 +148,7 @@ export class StoreTurnStore implements TurnStore {
         const rows = await storeWithPrefix.scanByOwnerPrefix<Thought>(
           THOUGHTS_KIND,
           `${tenantId}:${turnId}:`,
-          MAX_THOUGHTS_PER_TURN,
+          this.limitFor(tenantId),
         );
         if (rows.length > 0) {
           const thoughts = rows

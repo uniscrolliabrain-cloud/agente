@@ -26,6 +26,16 @@ export interface KernelContext {
   /** KERNEL_PERSONA_V1 - persona funcional que habla en este turno. Opcional. */
   // DOMAIN_KERNEL_PERSONA_FORMAT_V1 - formato limpio.
   personaId?: string;
+
+  /**
+   * KERNEL_CONTEXT_ACTOR_PORT_V1 - actorId obligatorio, igual que el contrato
+   * real de apps/server/src/kernel/context/kernel-context.ts. Sin actor no hay
+   * authz efectiva, asi que el puerto no puede declararlo opcional: si falta,
+   * que falle en compilacion y no en runtime.
+   */
+  actorId: string;
+  /** KERNEL_CONTEXT_ACTOR_PORT_V1 - sessionId opcional, como en el kernel. */
+  sessionId?: string;
 }
 
 /**

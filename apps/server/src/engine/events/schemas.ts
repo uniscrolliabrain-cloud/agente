@@ -47,6 +47,8 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
   "monitor.failed": z.object({ ...base, url: z.string().max(2000), error: z.string().max(2000) }),
   "system.startup": z.object({ mode: z.enum(["sample", "live"]) }),
   "system.error": z.object({ message: z.string().max(2000), phase: z.string().max(100).optional() }),
+  // EVENTS_MESSAGE_EDITED_SCHEMA_V1 - payload del evento de edicion de mensaje.
+  "message.edited": z.object({ ...base, messageId: z.string().max(200), text: z.string().max(20000).optional() }),
   "system.maintenance": z.object({ tasks: z.number().int().nonnegative(), monitors: z.number().int().nonnegative() }),
   "system.google_disconnected": z.object({ owner: z.string().max(200) }),
   "auth.login": z.object({ userId: z.string().max(200) }),

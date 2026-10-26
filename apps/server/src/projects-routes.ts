@@ -11,6 +11,7 @@ import type {
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import { globalPresence } from "./engine/presence.ts";
+import type { AuthzDeps } from "./engine/authz/pdp.ts";
 
 const blockSchema: z.ZodType<ProjectBlock> = z.object({
   id: z.string().min(1).max(100).default(() => randomUUID()),
@@ -29,7 +30,7 @@ const statusSchema: z.ZodType<ProjectStatus> = z.enum([
 
 export function projectRoutes(
   db: Store,
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
@@ -156,8 +157,8 @@ export function projectRoutes(
         // PROJECT_CONFLICT_DIFF_V2 - incluye current/expected + diff por campo.
         const diff: Record<string, { before: unknown; after: unknown }> = {};
         for (const key of Object.keys(existing)) {
-          const before = (existing as Record<string, unknown>)[key];
-          const after = (existing as Record<string, unknown>)[key];
+          const before = (existing as unknown as Record<string, unknown>)[key];
+          const after = (existing as unknown as Record<string, unknown>)[key];
           if (JSON.stringify(before) !== JSON.stringify(after)) {
             diff[key] = { before, after };
           }
@@ -165,7 +166,8 @@ export function projectRoutes(
         throw new AppError(
           "Otro usuario ha modificado este proyecto. Recarga y vuelve a intentarlo.",
           409,
-          { current: existing.updatedAt, expected: expected.expectedUpdatedAt, diff },
+          // PROJECT_CONFLICT_DIFF_FIELDS_V1 - AppError.fields es Record<string,string>.
+          { current: existing.updatedAt, expected: expected.expectedUpdatedAt, diff: JSON.stringify(diff) },
         );
       }
     }

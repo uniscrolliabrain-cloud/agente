@@ -37,6 +37,8 @@ export async function loadAgentNode(
       owner,
       role: "system",
       requestId: `persona-node:${skin.personaId}:${Date.now()}`,
+      // KERNEL_ACTOR_PORT_V1 - el actor es la persona que lee sus turnos.
+      actorId: skin.personaId,
       personaId: skin.personaId,
     };
     turns = await kernel.listTurns(ctx, limit);

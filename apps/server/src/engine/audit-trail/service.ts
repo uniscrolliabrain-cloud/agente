@@ -3,6 +3,9 @@ import type { StoreAuditStore } from "../../kernel/audit/store-store.ts";
 
 export interface AuditTrailEntry {
   actorId: string;
+  /** AUDIT_TRAIL_TENANT_V1 — tenant del actor; sin el, la entrada cae al
+   *  tenant por defecto en vez de inventarse uno. */
+  tenantId?: string;
   action: string;
   resource: string;
   field: string;
@@ -16,7 +19,7 @@ export class AuditTrail {
 
   async recordDenied(entry: AuditTrailEntry): Promise<void> {
     await this.audit.append({
-      tenantId: "default",
+      tenantId: entry.tenantId ?? "default", // FALLBACK_TENANT_V1
       owner: entry.actorId,
       action: "audit.read.denied",
       actor: { kind: "user", id: entry.actorId },

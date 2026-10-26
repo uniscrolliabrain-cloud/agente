@@ -12,6 +12,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import type { AgentTask } from "../packages/domain/src/agent.ts";
+import { testConfig } from "./helpers/config.ts";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const repoRoot = join(here, "..");
@@ -25,11 +26,18 @@ before(async () => {
 });
 
 after(async () => {
-  await db.close();
+  // El test cierra `db` antes de lanzar el hijo (PGlite es mono-proceso) y
+  // Store.close no es idempotente: cerramos de nuevo sin romper el hook.
+  await db.close().catch(() => {});
   await rm(directory, { recursive: true, force: true });
 });
 
 const CRASH_TASK_ID = "crash-test-task";
+// CRASH_TASK_OWNER_V1 - el worker lee a traves de TenantScopedStore, que
+// compone la clave como `${tenantId}:${owner}` (DEFAULT_TENANT_ID = "default").
+// El seed y las probes van por el store crudo, asi que deben usar la misma
+// clave compuesta: si no, el worker no encuentra la tarea y nunca la toma.
+const CRASH_OWNER = "default:crash-owner";
 
 test("el proceso worker muere a mitad de tarea y la tarea queda running con lease", async () => {
   // 1. Creamos una tarea que el worker procesarÃ¡ y colgarÃ¡ a propÃ³sito.
@@ -51,7 +59,7 @@ test("el proceso worker muere a mitad de tarea y la tarea queda running con leas
     leaseUntil: null,
     artifactIds: [],
   };
-  await db.put("crash-owner", "tasks", task);
+  await db.put(CRASH_OWNER, "tasks", task);
   await db.close();
 
   // 2. Lanzamos un subproceso que hace el tick del worker con una tarea
@@ -61,51 +69,53 @@ test("el proceso worker muere a mitad de tarea y la tarea queda running con leas
   const child = spawn(process.execPath, ["--import", "tsx", workerScript], {
     cwd: repoRoot,
     stdio: "pipe",
-    env: { ...process.env, DATA_DIR: join(directory, "db") },
+    env: {
+      ...process.env,
+      DATA_DIR: join(directory, "db"),
+      CRASH_TASK_ID,
+      CRASH_TASK_OWNER: "crash-owner",
+    },
   });
 
   // 3. Esperamos a que la tarea pase a "running" (worker la ha tomado).
-  const deadline = Date.now() + 15000;
-  let running = false;
-  const probe = await createStore({ dataDir: join(directory, "db") });
-  while (Date.now() < deadline) {
-    const t = await probe.get<AgentTask>("crash-owner", "tasks", CRASH_TASK_ID);
-    if (t?.status === "running" && t.leaseId) { running = true; break; }
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  assert.ok(running, "la tarea debe estar running antes del kill");
+  // CRASH_RECOVERY_CLAIMED_MARKER_V1 - PGlite es un unico proceso sobre
+  // dataDir: mientras el hijo la tiene abierta, el sondeo del padre no ve
+  // nada y el test se quedaba en rojo. El hijo avisa por stdout cuando ya
+  // tomo la tarea con lease, y solo entonces leemos la DB.
+  const claimed = await new Promise<boolean>((resolve) => {
+    const timer = setTimeout(() => resolve(false), 15000);
+    child.stdout?.on("data", (chunk: Buffer) => {
+      if (chunk.toString().includes("CRASH_WORKER_CLAIMED")) {
+        clearTimeout(timer);
+        resolve(true);
+      }
+    });
+  });
+  assert.ok(claimed, "la tarea debe estar running antes del kill");
 
   // 4. Matamos el proceso con SIGKILL. Sin cleanup.
   child.kill("SIGKILL");
-  await new Promise((r) => setTimeout(r, 500));
+  await new Promise((resolve) => child.once("exit", resolve));
 
   // 5. Verificamos que la tarea sigue en running con lease (no se ha limpiado).
-  const afterKill = await probe.get<AgentTask>("crash-owner", "tasks", CRASH_TASK_ID);
+  const probe = await createStore({ dataDir: join(directory, "db") });
+  const afterKill = await probe.get<AgentTask>(CRASH_OWNER, "tasks", CRASH_TASK_ID);
   assert.equal(afterKill?.status, "running");
   assert.ok(afterKill?.leaseId);
 
   // 6. "Reiniciamos": recoverInterruptedTasks debe devolverla a queued.
   const { createApp } = await import("../apps/server/src/app.ts");
-  const app = await createApp(probe, {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: directory,
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-  });
+  const app = await createApp(probe, testConfig({ dataDir: directory }));
   // Forzamos que el lease estÃ© expirado para que recoverInterruptedTasks lo recoja.
   await probe.compareAndSwap<AgentTask>(
-    "crash-owner", "tasks", CRASH_TASK_ID,
+    CRASH_OWNER, "tasks", CRASH_TASK_ID,
     { status: "running" },
     { leaseUntil: new Date(Date.now() - 1000).toISOString() },
   );
   const recovered = await app.agent.recoverInterruptedTasks();
   assert.ok(recovered >= 1, "al menos esta tarea debe recuperarse");
 
-  const final = await probe.get<AgentTask>("crash-owner", "tasks", CRASH_TASK_ID);
+  const final = await probe.get<AgentTask>(CRASH_OWNER, "tasks", CRASH_TASK_ID);
   assert.equal(final?.status, "queued", "la tarea vuelve a queued sin duplicar");
   assert.equal(final?.attempts, 1, "los intentos no se duplican");
 

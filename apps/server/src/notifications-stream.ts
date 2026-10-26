@@ -3,6 +3,7 @@
 import { Hono } from "hono";
 import type { AgentService } from "./engine/service.ts";
 import { backgroundFailure } from "./log.ts";
+import type { AuthzDeps } from "./engine/authz/pdp.ts";
 
 // NOTIFICATIONS_STREAM_TENANT_V1 â€” recibe tenantService para filtrar el SSE
 // por tenant. Sin esto, un cliente del tenant A podÃ­a recibir notificaciones
@@ -10,7 +11,7 @@ import { backgroundFailure } from "./log.ts";
 export function notificationsStreamRoutes(
   service: AgentService,
   tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
-  authz?: { pdp: { can: (...args: unknown[]) => Promise<"allow" | "deny"> }; fieldFilter: { filter: (...args: unknown[]) => Promise<unknown> } },
+  authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
@@ -23,8 +24,8 @@ export function notificationsStreamRoutes(
     const userId = c.req.header("x-user-id") ?? owner;
     // NOTIFICATIONS_STREAM_TENANT_V1 â€” tenantId del request, para filtrar.
     const requestTenantId = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default")
-      : "default";
+      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
     c.header("Content-Type", "text/event-stream");
     c.header("Cache-Control", "no-cache");
     c.header("Connection", "keep-alive");

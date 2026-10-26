@@ -24,6 +24,8 @@ interface Mark {
   line: number;
   contextLines: number;
   bodyHash: string;
+  /** IDEMPOTENCY_DOC_MARKS_V1 - marca que documenta, no implementa. */
+  documented: boolean;
 }
 
 const SEARCH_DIRS = ["apps/server/src", "apps/web/src", "packages", "scripts"];
@@ -72,12 +74,24 @@ function extractMarks(file: string, source: string): Mark[] {
       realLines++;
     }
     const bodySource = lines.slice(i + 1, i + 30).join("\n").trim();
+    // IDEMPOTENCY_DOC_MARKS_V1 - hay marcas que documentan una retirada de
+    // codigo o anotan un re-export en un barrel (index.ts). No implementan un
+    // bloque, asi que no son huerfanas.
+    let commentBlock = "";
+    for (let j = i; j < Math.min(i + 15, lines.length); j++) {
+      const l = lines[j].trim();
+      if (!(l.startsWith("//") || l.startsWith("*") || l.startsWith("/*"))) break;
+      commentBlock += l + "\n";
+    }
+    const barrel = /(^|\/)index\.tsx?$/.test(file) && /^\s*export\b/m.test(source);
+    const documented = /eliminad|removed|deleted|retirad/i.test(commentBlock) || barrel;
     out.push({
       name: m[1],
       file,
       line: i + 1,
       contextLines: realLines,
       bodyHash: createHash("sha256").update(bodySource).digest("hex").slice(0, 16),
+      documented,
     });
   }
   return out;
@@ -113,7 +127,7 @@ async function main(): Promise<void> {
   }
 
   // 2. Marcas huerfanas (menos de 3 lineas de codigo real).
-  const orphan: Mark[] = marks.filter((m) => m.contextLines < 3);
+  const orphan: Mark[] = marks.filter((m) => !m.documented && m.contextLines < 3);
 
   // 3. Marcas repetidas en el mismo fichero (probable doble aplicacion).
   const sameFileDup: Array<{ file: string; name: string; count: number }> = [];

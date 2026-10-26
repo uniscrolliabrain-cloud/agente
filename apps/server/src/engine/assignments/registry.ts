@@ -1,5 +1,5 @@
 // ASSIGNMENT_REGISTRY_V1 - resuelve el adapter por kind.
-import type { AssignmentAdapter, AssignmentKind } from "../../../../../../packages/domain/src/assignment.ts";
+import type { AssignmentAdapter, AssignmentKind } from "../../../../../packages/domain/src/assignment.ts";
 import { createTaskAdapter } from "./adapters/task-adapter.ts";
 import { createGoalAdapter } from "./adapters/goal-adapter.ts";
 import { createMonitorAdapter } from "./adapters/monitor-adapter.ts";

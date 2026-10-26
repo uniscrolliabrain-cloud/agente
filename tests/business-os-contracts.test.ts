@@ -58,9 +58,11 @@ test("capabilityContractSchema parsea una capability", async () => {
 
 test("executionContextSchema parsea", async () => {
   const { executionContextSchema } = await import("../packages/domain/src/execution-context.ts");
+  // KERNEL_CONTEXT_ACTOR_PORT_V1 - actorId es obligatorio en el contexto.
   const parsed = executionContextSchema.parse({
     tenantId: "t1",
     owner: "o1",
+    actorId: "o1",
     role: "user",
     requestId: "req-1",
   });

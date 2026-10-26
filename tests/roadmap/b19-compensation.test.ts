@@ -24,7 +24,7 @@ test("B-19: fallo parcial dispara compensacion en orden inverso", async () => {
     updatedAt: new Date().toISOString(),
   };
   const result = await executor.execute(
-    { tenantId: "t1", owner: "o1", role: "user", requestId: "r1" },
+    { tenantId: "t1", owner: "o1", actorId: "o1", role: "user", requestId: "r1" },
     plan,
   );
   assert.equal(result.status, "failed");

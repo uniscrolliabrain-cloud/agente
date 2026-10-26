@@ -5,6 +5,7 @@ import type { Config } from "../apps/server/src/config.ts";
 import { createStore } from "../apps/server/src/db.ts";
 import { GoogleAuth } from "../apps/server/src/google-auth.ts";
 import { encryptSecret } from "../packages/integrations/src/vault.ts";
+import { testConfig } from "./helpers/config.ts";
 
 function deferred<T>() {
   let resolve: (value: T) => void = () => {
@@ -17,36 +18,20 @@ function deferred<T>() {
 }
 
 function oauthConfig(): Config {
-  return {
+  return testConfig({
     mode: "live",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: "unused",
     agentBackend: "model",
-    allowedOrigins: [],
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
     googleClientId: "synthetic-client",
     googleClientSecret: "synthetic-secret",
     encryptionKey: randomBytes(32).toString("base64"),
-  };
+  });
 }
 
 test("old refresh cannot overwrite a newly connected Google account", async (t) => {
   const db = await createStore();
   t.after(() => db.close());
   const key = randomBytes(32).toString("base64");
-  const config: Config = {
-    mode: "live",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: "unused",
-    agentBackend: "model",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-    encryptionKey: key,
-  };
+  const config: Config = testConfig({ mode: "live", agentBackend: "model", encryptionKey: key });
   const a = {
     connectionId: "connection-a",
     accessToken: "old-a",
@@ -95,16 +80,7 @@ test("old refresh cannot overwrite a newly connected Google account", async (t) 
 test("OAuth callbacks require a known, single-use state", async (t) => {
   const db = await createStore();
   t.after(() => db.close());
-  const config: Config = {
-    mode: "live",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: "unused",
-    agentBackend: "model",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-  };
+  const config: Config = testConfig({ mode: "live", agentBackend: "model" });
   const auth = new GoogleAuth(db, config);
   await assert.rejects(auth.callback("unknown-state", "untrusted-code"), /expired/);
   await db.put("system", "oauth", {

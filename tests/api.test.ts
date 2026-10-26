@@ -11,6 +11,7 @@ import { createStore, type Store } from "../apps/server/src/db.ts";
 import { ConversationAgent } from "../apps/server/src/engine/conversation.ts";
 import type { AgentService } from "../apps/server/src/engine/service.ts";
 import type { ActionProposal, Artifact, Workspace } from "../packages/domain/src/index.ts";
+import { testConfig } from "./helpers/config.ts";
 
 let db: Store,
   app: Awaited<ReturnType<typeof createApp>>["app"],
@@ -22,16 +23,7 @@ const headers = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "appl
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-api-"));
   db = await createStore();
-  config = {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: directory,
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: ["http://localhost:8081"],
-  };
+  config = testConfig({ dataDir: directory, allowedOrigins: ["http://localhost:8081"] });
   ({ app, agent } = await createApp(db, config));
   const response = await app.request("/api/session", {
     method: "POST",

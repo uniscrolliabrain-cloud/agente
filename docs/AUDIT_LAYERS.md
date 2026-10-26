@@ -1,6 +1,6 @@
 # Auditoria de capas
 
-> 2026-10-18T13:01:38.525Z
+> 2026-10-26T15:02:25.605Z
 
 - Violaciones: **0**
 

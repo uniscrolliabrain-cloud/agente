@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { CapabilityRunner } from "../../apps/server/src/engine/execution/capability-runner.ts";
+import type { AgentRole } from "../../packages/domain/src/agent.ts";
 
 test("E2E-05: governance deniega -> exec no se llama", async () => {
   const registry = { get: async () => ({ id: "cap-1", requiresApproval: false, idempotency: "idempotent", sideEffects: [] }) };
@@ -11,7 +12,9 @@ test("E2E-05: governance deniega -> exec no se llama", async () => {
     canExecuteTool: async () => ({ allowed: false, reason: "denied" }),
     canExecuteAction: async () => ({ allowed: false, reason: "denied" }),
   };
-  const getAgentRole = async () => ({ id: "r1", name: "r", allowedTools: [] });
+  // Doble de AgentRole: el runner solo consulta allowedTools.
+  const getAgentRole = async () =>
+    ({ id: "r1", name: "r", allowedTools: [] }) as unknown as AgentRole;
   const runner = new CapabilityRunner(registry as never, executors as never, governance, getAgentRole);
   await assert.rejects(
     () => runner.run(

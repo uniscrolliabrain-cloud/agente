@@ -57,6 +57,8 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
     relationType: "rel",
   },
   "relation.deleted": { relationId: "r" },
+  // email.received acepta payload vacio (todos los campos son opcionales).
+  "email.received": {},
   "policy.evaluated": { policyId: "p", decision: "allow", action: "read" },
   "policy.denied": { policyId: "p", action: "read", reason: "x" },
   "state.changed": { entityId: "e", stateMachine: "m", to: "b" },

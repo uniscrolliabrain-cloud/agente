@@ -20,6 +20,8 @@ import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
 import type { Config } from "./config.ts";
+import type { Actor } from "../../../packages/domain/src/actor.ts";
+import type { PolicyContext } from "./engine/authz/pdp.ts";
 import type { Store } from "./db.ts";
 import { agentRoutes } from "./engine/routes.ts";
 import { skillsRoutes } from "./skills/routes.ts";
@@ -216,7 +218,18 @@ export async function createApp(
   };
   const kernel = new Kernel({
     // APP_KERNEL_BUSINESS_GRAPH_V1 - Views puede consultar el grafo real.
-    businessGraph: graph,
+    // APP_KERNEL_GRAPH_ADAPTER_V1 - el kernel consulta (tenantId, params) y
+    // BusinessGraph expone neighborhood(owner, entityId, depth). Se adapta aqui:
+    // entities/timeline aun no existen en el grafo, y el puerto los declara
+    // opcionales, asi que Views cae a su placeholder honesto.
+    businessGraph: {
+      neighborhood: (tenantId: string, params: Record<string, unknown>) =>
+        graph.neighborhood(
+          tenantId,
+          String(params.entityId ?? params.id ?? ""),
+          Number(params.depth ?? 1),
+        ),
+    },
     store: new StoreTurnStore(persistentStorePort),
     // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
     // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
@@ -258,6 +271,18 @@ export async function createApp(
   const workspaceCapabilitiesCount = bridgeWorkspaceCapabilities(workspaceCapabilityRegistry, workspaceModuleRegistry.list());
   const workspaceDispatcher = new WorkspaceDispatcher({ db: tdb, bus });
   // log roto eliminado
+  // APP_AUTHZ_WIRE_V2 - PDP instanciado desde policies.ts. authzMiddleware no es la unica defensa.
+  const { PolicyDecisionPoint: PDPCtor } = await import("./engine/authz/pdp.ts");
+  const { authzMiddleware } = await import("./engine/authz/pep.ts");
+  const { defaultPolicies: defaultPols, buildPoliciesFromAgentRole: buildPols } = await import("./engine/authz/policies.ts");
+  const authzPolicies = [...defaultPols()];
+  const pdp = new PDPCtor(authzPolicies, { engine: policy, getAgentRole: async (tenantId: string, roleId: string) => db.get(tenantId, "agent-roles", roleId) });
+  // APP_GOVERNANCE_PDP_V2 - governance con pdp inyectado (antes se construia sin pdp).
+  const governance = new AgentGovernance(policy, bus, pdp);
+  // APP_FIELD_FILTER_WIRE_V1 - instancia FieldFilter y lo pasa a handlers.
+  const { FieldFilter } = await import("./engine/authz/field-filter.ts");
+  const fieldFilter = new FieldFilter(pdp);
+
     const agent = new AgentService(
     tdb,
     config,
@@ -313,7 +338,14 @@ export async function createApp(
   }
 
   const runtime = makeRuntime(config, agent, auth);
-  const app = new Hono<{ Variables: { owner: string } }>();
+  // APP_CTX_VARIABLES_V1 - app.ts pone `ctx` y `actor` como variables, pero solo
+  // `owner` estaba declarado, asi que c.set("ctx", ...) no tenia overload valido.
+  // AppCtx = ctx que consumen authz (PolicyContext) + los campos planos que ya
+  // usaban las rutas (owner, actorId).
+  type AppCtx = PolicyContext & { owner: string; actorId: string };
+  const app = new Hono<{
+    Variables: { owner: string; actor?: Actor; ctx: AppCtx };
+  }>();
   const origins = new Set([...config.allowedOrigins, new URL(config.publicUrl).origin]);
   /**
    * Prepara el workspace de un usuario ya autenticado. El sembrado de ejemplo vivia solo en
@@ -513,17 +545,6 @@ app.get("/api/health", async (c) => {
     const actorService = new ActorService({ users, tenants: tenantService });
     app.use("/api/*", verifyJwtMiddleware({ actorService }));
   }
-  // APP_AUTHZ_WIRE_V2 - PDP instanciado desde policies.ts. authzMiddleware no es la unica defensa.
-  const { PolicyDecisionPoint: PDPCtor } = await import("./engine/authz/pdp.ts");
-  const { authzMiddleware } = await import("./engine/authz/pep.ts");
-  const { defaultPolicies: defaultPols, buildPoliciesFromAgentRole: buildPols } = await import("./engine/authz/policies.ts");
-  const authzPolicies = [...defaultPols()];
-  const pdp = new PDPCtor(authzPolicies, { engine: policy, getAgentRole: async (tenantId: string, roleId: string) => db.get(tenantId, "agent-roles", roleId) });
-  // APP_GOVERNANCE_PDP_V2 - governance con pdp inyectado (antes se construia sin pdp).
-  const governance = new AgentGovernance(policy, bus, pdp);
-  // APP_FIELD_FILTER_WIRE_V1 - instancia FieldFilter y lo pasa a handlers.
-  const { FieldFilter } = await import("./engine/authz/field-filter.ts");
-  const fieldFilter = new FieldFilter(pdp);
   // APP_AUTHZ_MOUNT_V2 - authzMiddleware montado antes del ctx (orden critico).
   app.use("/api/*", authzMiddleware(pdp));
   app.use("/api/*", async (c, next) => {
@@ -543,11 +564,26 @@ app.get("/api/health", async (c) => {
     // APP_CTX_WIRE_V1 - ctx con actorId + sessionId + tenantId + owner.
     // actorId = owner hasta que Campana 2b anada verifyJwtMiddleware.
     // Cuando 2b llegue, actorId sera el sub resuelto del JWT.
-    const _tenantIdForCtx = await tenantService.tenantIdFor(owner).catch(() => "default");
+    const _tenantIdForCtx = await tenantService.tenantIdFor(owner).catch(() => "default"); // FALLBACK_TENANT_V1
+    // APP_CTX_ACTOR_V3 - el ctx lleva el Actor completo: authz (PolicyContext)
+    // lee ctx.actor.id, no un actorId plano. Si verifyJwtMiddleware no puso
+    // actor, se sintetiza un actor humano del owner.
+    const jwtActor = c.get("actor");
+    const ctxActor: Actor =
+      jwtActor ??
+      ({
+        kind: "human",
+        id: owner,
+        tenantId: _tenantIdForCtx,
+        userId: owner,
+        roles: ["employee"],
+        profile: { name: owner, language: "es" },
+        active: true,
+      } as Actor);
     c.set("ctx", {
       tenantId: _tenantIdForCtx,
-      // APP_CTX_ACTOR_V2 - actorId = actor.id si verifyJwtMiddleware lo puso; si no, owner.
-      actorId: (c.get("actor") as { id?: string } | undefined)?.id ?? owner,
+      actor: ctxActor,
+      actorId: ctxActor.id,
       sessionId: undefined,
       owner,
       requestId: c.req.header("x-request-id") ?? "req-" + Date.now(),

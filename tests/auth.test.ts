@@ -6,6 +6,7 @@ import { after, before, test } from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { UserService } from "../apps/server/src/users.ts";
+import { testConfig } from "./helpers/config.ts";
 import type { Workspace } from "../packages/domain/src/index.ts";
 
 const ADMIN = { email: "admin@ejemplo.local", password: "contrasena-larga-1", name: "Ana" };
@@ -17,16 +18,7 @@ let db: Store,
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-auth-"));
   db = await createStore({ dataDir: join(directory, "db") });
-  server = await createApp(db, {
-    mode: "sample",
-    port: 8787,
-    host: "127.0.0.1",
-    publicUrl: "http://localhost:8787",
-    dataDir: directory,
-    agentBackend: "sample",
-    googleRedirectUri: "http://localhost:8787/api/google/callback",
-    allowedOrigins: [],
-  });
+  server = await createApp(db, testConfig({ dataDir: directory }));
   await new UserService(db).create({ ...ADMIN, role: "admin" });
 });
 after(async () => {

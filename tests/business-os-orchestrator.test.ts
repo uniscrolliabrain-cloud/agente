@@ -38,7 +38,7 @@ test("orchestrator devuelve achieved si verifier verifica", async () => {
   });
 
   const result = await orch.runGoal(
-    { tenantId: "t1", owner: "o1", role: "user", requestId: "r1" },
+    { tenantId: "t1", owner: "o1", actorId: "o1", role: "user", requestId: "r1" },
     {
       id: "g1",
       tenantId: "t1",
@@ -50,6 +50,7 @@ test("orchestrator devuelve achieved si verifier verifica", async () => {
       constraints: [],
       priority: "medium",
       status: "active",
+      version: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
@@ -60,7 +61,7 @@ test("orchestrator devuelve achieved si verifier verifica", async () => {
 test("orchestrator devuelve blocked si no hay deps", async () => {
   const orch = new BusinessOSOrchestrator();
   const result = await orch.runGoal(
-    { tenantId: "t1", owner: "o1", role: "user", requestId: "r1" },
+    { tenantId: "t1", owner: "o1", actorId: "o1", role: "user", requestId: "r1" },
     {
       id: "g1",
       tenantId: "t1",
@@ -72,6 +73,7 @@ test("orchestrator devuelve blocked si no hay deps", async () => {
       constraints: [],
       priority: "medium",
       status: "active",
+      version: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PolicyEngine } from "../apps/server/src/engine/policy/engine.ts";
 import { AgentGovernance } from "../apps/server/src/engine/agents/governance.ts";
+import { agentActor } from "../packages/domain/src/actor.ts";
 
 test("rol sin permissions declarados: allowlist no activa", async () => {
   const policy = new PolicyEngine();
@@ -32,18 +33,21 @@ test("denegacion devuelve reason legible", async () => {
 test("AgentGovernance: rol con allowedTools rechaza tool no declarada", async () => {
   const policy = new PolicyEngine();
   const gov = new AgentGovernance(policy);
+  // AGENT_GOVERNANCE_ACTOR_V1 - canExecuteTool recibe el actor, no solo el owner.
+  const actor = agentActor({ tenantId: "t1", actorId: "owner", roleId: "contenido" });
   const role = {
     id: "contenido",
     allowedTools: ["run_computer_command", "save_artifact"],
   } as unknown as import("../packages/domain/src/agent.ts").AgentRole;
-  assert.equal((await gov.canExecuteTool("owner", role, "run_computer_command")).allowed, true);
-  assert.equal((await gov.canExecuteTool("owner", role, "save_artifact")).allowed, true);
-  assert.equal((await gov.canExecuteTool("owner", role, "send_email")).allowed, false);
+  assert.equal((await gov.canExecuteTool(actor, "owner", role, "run_computer_command")).allowed, true);
+  assert.equal((await gov.canExecuteTool(actor, "owner", role, "save_artifact")).allowed, true);
+  assert.equal((await gov.canExecuteTool(actor, "owner", role, "send_email")).allowed, false);
 });
 
 test("AgentGovernance: rol sin allowedTools deja pasar al PolicyEngine", async () => {
   const policy = new PolicyEngine();
   const gov = new AgentGovernance(policy);
+  const actor = agentActor({ tenantId: "t1", actorId: "owner", roleId: "comercial" });
   const role = { id: "comercial" } as unknown as import("../packages/domain/src/agent.ts").AgentRole;
-  assert.equal((await gov.canExecuteTool("owner", role, "cualquier_tool")).allowed, true);
+  assert.equal((await gov.canExecuteTool(actor, "owner", role, "cualquier_tool")).allowed, true);
 });

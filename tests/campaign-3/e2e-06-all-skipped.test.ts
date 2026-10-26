@@ -20,7 +20,7 @@ test("e2e-06: plan con todos skipped devuelve blocked", async () => {
     updatedAt: new Date().toISOString(),
   };
   const result = await executor.execute(
-    { tenantId: "t1", owner: "o1", role: "user", requestId: "r1" },
+    { tenantId: "t1", owner: "o1", actorId: "o1", role: "user", requestId: "r1" },
     plan,
   );
   assert.equal(result.status, "blocked");

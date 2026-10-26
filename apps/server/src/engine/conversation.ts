@@ -560,7 +560,14 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         const tenantIdForRate = this.service.tenantService
           ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => "default")
           : "default";
-        const rateVerdict = this.service.rateLimiter.takeForTenant(tenantIdForRate, this.owner, "chat.message");
+        // CHAT_RATE_LIMIT_PUBLIC_V1 - AgentService expone checkTenantRateLimit, no
+        // el limiter privado. Mismos limites que el limiter compartido (500/hora).
+        const rateVerdict = await this.service.checkTenantRateLimit(
+          this.owner,
+          "chat.message",
+          500,
+          3_600_000,
+        );
         if (!rateVerdict.allowed) {
           const retrySec = Math.max(1, Math.ceil(rateVerdict.retryAfterMs / 1000));
           subscriber.next({
@@ -710,7 +717,8 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             // CONV_CTX_FOR_CHAIN_V1 - mismo problema de unknown.
             const ctxForChain: import("../kernel/index.ts").KernelContext =
               (kernelCtx as import("../kernel/index.ts").KernelContext | undefined) ??
-              { tenantId, owner: this.owner, role: "user", requestId: input.runId };
+              // CONV_CTX_ACTOR_V1 - el contexto fallback necesita actorId.
+              { tenantId, owner: this.owner, role: "user", requestId: input.runId, actorId: this.owner };
             const cfg = await this.service.kernel
               .config(ctxForChain)
               .catch(() => undefined);
@@ -756,7 +764,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           chatModelChain,
           (model) => new BuiltInAgent({ model, // MAX_STEPS_CONFIG_V1 - configurable.
 // CONV_MAX_STEPS_TENANT_V1 - maxSteps por tenant (fallback env).
-maxSteps: cfg?.maxSteps ?? Number(process.env.AGENT_MAX_STEPS ?? "6") || 6, maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
+maxSteps: tenantConfig?.maxSteps ?? (Number(process.env.AGENT_MAX_STEPS ?? "6") || 6), maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
           { timeoutMs: Number(process.env.CHAT_TIMEOUT_MS ?? "2000") || 2000 }, // FIX_11_A2_CHAT_TIMEOUT_V1
         );

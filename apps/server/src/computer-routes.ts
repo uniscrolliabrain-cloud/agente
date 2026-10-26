@@ -57,8 +57,8 @@ export function computerRoutes(
     // COMPUTER_ROUTES_TENANT_V1 â€” tenantId real del owner. En clone-por-cliente
     // cae a "default", igual que antes.
     const tenantId = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default")
-      : "default";
+      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
     // TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 — en shared, "default" es bug.
     if (process.env.MULTI_TENANT_SHARED === "true") {
       assertNotHardcodedTenantId(tenantId, "computer-routes POST /files/export");

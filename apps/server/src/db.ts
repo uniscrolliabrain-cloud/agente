@@ -204,6 +204,11 @@ export class Store {
    * tenants. El prefijo se pasa ya compuesto (por ejemplo "tenant-1:").
    * Defensa: solo acepta prefijos sin caracteres de escape LIKE salvo el
    * propio ":". Si el prefijo contiene "%" o "_" los escapamos.
+   *
+   * STORE_SCAN_PREFIX_ESCAPE_FIX_V1 - `ESCAPE '\\'` en el literal TS llegaba
+   * al parser como dos caracteres (standard_conforming_strings=on) y Postgres
+   * respondia "invalid escape string": TODA llamada con prefijo fallaba. El
+   * escape LIKE correcto es un unico backslash.
    */
   // DB_RECORDS_SCAN_PREFIX_LIMIT_V1
   async scanByOwnerPrefix<T>(
@@ -211,10 +216,15 @@ export class Store {
     ownerPrefix: string,
     limit = 1000,
   ): Promise<{ owner: string; value: T }[]> {
+    // STORE_SCAN_PREFIX_VALIDATE_V1 - el prefijo viaja como parametro ligado,
+    // asi que no hay inyeccion posible; aun asi el contrato es fail-closed y
+    // rechaza comillas, comentarios SQL y espacios en lugar de "escaparlos".
+    if (/["'`;\\]|\/\*|--|\s/.test(ownerPrefix))
+      throw new Error(`Invalid owner prefix: ${ownerPrefix.slice(0, 40)}`);
     const effective = Math.min(Math.max(1, Math.floor(limit)), 50000);
     const escaped = ownerPrefix.replace(/[%_]/g, (m) => "\\" + m);
     const result = await this.db.query(
-      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND owner LIKE $2 ESCAPE '\\\\' ORDER BY updated_at ASC LIMIT $3",
+      "SELECT jsonb_build_object('owner',owner,'value',data) AS data FROM records WHERE kind=$1 AND owner LIKE $2 ESCAPE '\\' ORDER BY updated_at ASC LIMIT $3",
       [kind, escaped + "%", effective],
     );
     return result.rows.map((row) => row.data as { owner: string; value: T });
