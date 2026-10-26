@@ -86,6 +86,13 @@ export interface Config {
   allowedOrigins: string[];
   // CONFIG_AUTH_PROVIDER_V1 - proveedor de auth (Campana 2b anade Supabase).
   authProvider: "session" | "supabase";
+  // CONFIG_SUPABASE_JWT_V1 - verificacion criptografica del JWT.
+  // `jwtSecret` (SUPABASE_JWT_SECRET) habilita HS256; `supabaseUrl` habilita
+  // JWKS (RS256/ES256), que es lo que usa Supabase hoy. Si no hay ninguna de
+  // las dos, el middleware rechaza todo en vez de aceptar tokens sin firma.
+  supabaseUrl?: string;
+  supabaseJwtSecret?: string;
+  supabaseJwtAudience: string;
   // CONFIG_AUTHZ_V1 - authzEnabled y fieldClassificationEnabled solo false en sample.
   authzEnabled: boolean;
   fieldClassificationEnabled: boolean;
@@ -196,6 +203,13 @@ export function readConfig(): Config {
       .map((origin) => origin.trim())
       .filter(Boolean),
     authProvider: (process.env.AUTH_PROVIDER as "session" | "supabase") ?? "session",
+    ...(process.env.SUPABASE_URL?.trim()
+      ? { supabaseUrl: process.env.SUPABASE_URL.trim().replace(/\/+$/, "") }
+      : {}),
+    ...(process.env.SUPABASE_JWT_SECRET?.trim()
+      ? { supabaseJwtSecret: process.env.SUPABASE_JWT_SECRET.trim() }
+      : {}),
+    supabaseJwtAudience: process.env.SUPABASE_JWT_AUD?.trim() || "authenticated",
     authzEnabled: mode === "sample" ? process.env.AUTHZ_ENABLED !== "false" : true,
     fieldClassificationEnabled: mode === "sample" ? process.env.FIELD_CLASSIFICATION_ENABLED !== "false" : true,
     policyCacheTtlMs: Number(process.env.POLICY_CACHE_TTL_MS ?? "60000") || 60000,

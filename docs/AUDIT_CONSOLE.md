@@ -1,22 +1,22 @@
 # Auditoria de console.* en server
 
-> 2026-10-26T17:15:51.906Z
+> 2026-10-26T17:26:46.009Z
 
-- Ficheros revisados: **224**
+- Ficheros revisados: **226**
 - Ocurrencias: **24**
 
 | Fichero | Linea | Tipo | Snippet |
 |---|---|---|---|
-| apps/server/src/app.ts | 123 | console.log | console.log(`[personas] tenant default: ${loaded} cargadas, ${failed} fallidas`); |
-| apps/server/src/app.ts | 259 | console.warn | console.warn("[kernel] init health=" + report.health + " notes=" + report.notes.join("; ")); |
-| apps/server/src/app.ts | 262 | console.warn | console.warn("[kernel] init fallo:", error instanceof Error ? error.message : error); |
-| apps/server/src/app.ts | 322 | console.log | console.log(`[ontology] validado: ${caps.length} capabilities`); |
-| apps/server/src/app.ts | 324 | console.warn | console.warn("[ontology] validacion fallida:", error instanceof Error ? error.message : error); |
-| apps/server/src/app.ts | 338 | console.log | console.log(`[ontology] bundle cargado: ${parsed.entities?.length ?? 0} entidades`); |
-| apps/server/src/app.ts | 341 | console.warn | console.warn("[ontology] bundle no cargado:", error instanceof Error ? error.message : error); |
-| apps/server/src/app.ts | 414 | console.error | console.error(`[OpenMuse] ${error.name}`); |
-| apps/server/src/app.ts | 1002 | console.warn | console.warn( |
-| apps/server/src/app.ts | 1007 | console.warn | console.warn( |
+| apps/server/src/app.ts | 132 | console.log | console.log(`[personas] tenant default: ${loaded} cargadas, ${failed} fallidas`); |
+| apps/server/src/app.ts | 268 | console.warn | console.warn("[kernel] init health=" + report.health + " notes=" + report.notes.join("; ")); |
+| apps/server/src/app.ts | 271 | console.warn | console.warn("[kernel] init fallo:", error instanceof Error ? error.message : error); |
+| apps/server/src/app.ts | 331 | console.log | console.log(`[ontology] validado: ${caps.length} capabilities`); |
+| apps/server/src/app.ts | 333 | console.warn | console.warn("[ontology] validacion fallida:", error instanceof Error ? error.message : error); |
+| apps/server/src/app.ts | 347 | console.log | console.log(`[ontology] bundle cargado: ${parsed.entities?.length ?? 0} entidades`); |
+| apps/server/src/app.ts | 350 | console.warn | console.warn("[ontology] bundle no cargado:", error instanceof Error ? error.message : error); |
+| apps/server/src/app.ts | 423 | console.error | console.error(`[OpenMuse] ${error.name}`); |
+| apps/server/src/app.ts | 1039 | console.warn | console.warn( |
+| apps/server/src/app.ts | 1044 | console.warn | console.warn( |
 | apps/server/src/backup-tenant.ts | 127 | console.log | console.log(`Restore completo de tenant ${options.tenantId} desde ${manifest.createdAt}`); |
 | apps/server/src/db.ts | 394 | console.log | console.log(`[OpenMuse] DB: Postgres (${where}) - backend: postgres`); |
 | apps/server/src/engine/agents/personas/loader.ts | 34 | console.warn | console.warn( |

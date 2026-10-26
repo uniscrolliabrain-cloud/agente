@@ -1,11 +1,11 @@
 # Auditoria de idempotencia
 
-> Generado por `scripts/audits/idempotency.ts` el 2026-10-26T17:15:55.859Z.
+> Generado por `scripts/audits/idempotency.ts` el 2026-10-26T17:26:49.857Z.
 
-- Ficheros revisados: **813**
-- Marcas encontradas: **1909**
-- Marcas unicas: **1506**
-- Marcas duplicadas con cuerpo distinto: **156**
+- Ficheros revisados: **815**
+- Marcas encontradas: **1921**
+- Marcas unicas: **1517**
+- Marcas duplicadas con cuerpo distinto: **157**
 - Marcas huerfanas (sin codigo real debajo): **4**
 - Marcas repetidas en el mismo fichero: **138**
 
@@ -24,33 +24,35 @@ La misma marca aparece en varios sitios con contenido distinto. Una de las dos a
 | `LATENCY_P99_WIRE_V1` | `apps/server/src/alerts/definitions.ts:69` | a048280ceef64b86 |
 | `RESILIENCE_ALERTS_V1` | `apps/server/src/alerts/definitions.ts:21` | b08ebce43afcb9d6 |
 | `RESILIENCE_ALERTS_V1` | `apps/server/src/alerts/definitions.ts:73` | 9e898bd4b39a65a6 |
-| `APP_TENANT_DB_V1` | `apps/server/src/app.ts:17` | 42d4e1b46f971f1e |
-| `APP_TENANT_DB_V1` | `apps/server/src/app.ts:103` | 8098c82c924119f1 |
-| `WS_ENGINE_WIRE_V1` | `apps/server/src/app.ts:46` | 198b6bcd2b9bbaa0 |
-| `WS_ENGINE_WIRE_V1` | `apps/server/src/app.ts:271` | 5c5c81465e5528b0 |
+| `APP_TENANT_DB_V1` | `apps/server/src/app.ts:17` | d2cb4bd4266e2c1b |
+| `APP_TENANT_DB_V1` | `apps/server/src/app.ts:112` | 8098c82c924119f1 |
+| `TENANT_SCOPE_V1` | `apps/server/src/app.ts:19` | 1868dc5db263d13c |
+| `TENANT_SCOPE_V1` | `apps/server/src/tenant-scope.ts:1` | d42b46395049b869 |
+| `WS_ENGINE_WIRE_V1` | `apps/server/src/app.ts:48` | 198b6bcd2b9bbaa0 |
+| `WS_ENGINE_WIRE_V1` | `apps/server/src/app.ts:280` | 5c5c81465e5528b0 |
 | `WS_ENGINE_WIRE_V1` | `apps/server/src/engine/service.ts:138` | 472c7b28a5e5e5a9 |
-| `SERVICE_TENANT_RESOLVER_WIRE_V1` | `apps/server/src/app.ts:55` | f4d52db70b105a26 |
-| `SERVICE_TENANT_RESOLVER_WIRE_V1` | `apps/server/src/app.ts:238` | e4e3c3cd00325014 |
-| `ENGINE_TENANT_V1` | `apps/server/src/app.ts:59` | 5e0b855e1fec04d4 |
+| `SERVICE_TENANT_RESOLVER_WIRE_V1` | `apps/server/src/app.ts:57` | f4d52db70b105a26 |
+| `SERVICE_TENANT_RESOLVER_WIRE_V1` | `apps/server/src/app.ts:247` | e4e3c3cd00325014 |
+| `ENGINE_TENANT_V1` | `apps/server/src/app.ts:61` | 5e0b855e1fec04d4 |
 | `ENGINE_TENANT_V1` | `apps/server/src/engine/service.ts:76` | 4e89cb64c4a759f7 |
 | `ENGINE_TENANT_V1` | `apps/server/src/engine/service.ts:134` | e7bc3c93e74d43f1 |
 | `ENGINE_TENANT_V1` | `apps/server/src/engine/service.ts:172` | e098037b25cf60d8 |
 | `ENGINE_TENANT_V1` | `apps/server/src/engine/service.ts:239` | 5717cbfdd97399a5 |
-| `ENGINE_TENANT_V1` | `apps/server/src/engine/tenant.ts:1` | 2ca90b8f1df37e76 |
-| `SERVICE_TENANT_DB_V2` | `apps/server/src/app.ts:88` | 5183cba2e0ddf7aa |
-| `SERVICE_TENANT_DB_V2` | `apps/server/src/app.ts:105` | ca02b6401d727950 |
-| `PERSONAS_WIRE_V1` | `apps/server/src/app.ts:108` | 92028c759754945e |
-| `PERSONAS_WIRE_V1` | `apps/server/src/app.ts:678` | 2794be1157751f3b |
-| `POLICY_EARLY_V1` | `apps/server/src/app.ts:129` | 2253a4574ab056e7 |
-| `POLICY_EARLY_V1` | `apps/server/src/app.ts:161` | 72b1feaf758f60d8 |
-| `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` | `apps/server/src/app.ts:146` | 991942b7506eeeb3 |
-| `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` | `apps/server/src/app.ts:177` | aaa60f2e88053eb8 |
-| `HEALTH_DEEP_V2` | `apps/server/src/app.ts:457` | a1775fd9f2bcf7a7 |
-| `HEALTH_DEEP_V2` | `apps/server/src/app.ts:470` | 50d38c3d34692d5c |
-| `TENANT_LIMITER_WIRE_ROUTES_V1` | `apps/server/src/app.ts:673` | 0209b6a5b46a62f3 |
-| `TENANT_LIMITER_WIRE_ROUTES_V1` | `apps/server/src/app.ts:675` | 51c9b9121390e56e |
-| `TENANT_WIRE_NOTIFICATIONS_V1` | `apps/server/src/app.ts:721` | d2c244f56a00320d |
-| `TENANT_WIRE_NOTIFICATIONS_V1` | `apps/server/src/app.ts:727` | 18ef6c7383544643 |
+| `ENGINE_TENANT_V1` | `apps/server/src/engine/tenant.ts:1` | 4117ea95d49b0c0c |
+| `SERVICE_TENANT_DB_V2` | `apps/server/src/app.ts:90` | b2fa8d8a238e01e1 |
+| `SERVICE_TENANT_DB_V2` | `apps/server/src/app.ts:114` | ca02b6401d727950 |
+| `PERSONAS_WIRE_V1` | `apps/server/src/app.ts:117` | 92028c759754945e |
+| `PERSONAS_WIRE_V1` | `apps/server/src/app.ts:715` | 2794be1157751f3b |
+| `POLICY_EARLY_V1` | `apps/server/src/app.ts:138` | 2253a4574ab056e7 |
+| `POLICY_EARLY_V1` | `apps/server/src/app.ts:170` | 72b1feaf758f60d8 |
+| `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` | `apps/server/src/app.ts:155` | 991942b7506eeeb3 |
+| `TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1` | `apps/server/src/app.ts:186` | aaa60f2e88053eb8 |
+| `HEALTH_DEEP_V2` | `apps/server/src/app.ts:466` | a1775fd9f2bcf7a7 |
+| `HEALTH_DEEP_V2` | `apps/server/src/app.ts:479` | 50d38c3d34692d5c |
+| `TENANT_LIMITER_WIRE_ROUTES_V1` | `apps/server/src/app.ts:710` | 0209b6a5b46a62f3 |
+| `TENANT_LIMITER_WIRE_ROUTES_V1` | `apps/server/src/app.ts:712` | 51c9b9121390e56e |
+| `TENANT_WIRE_NOTIFICATIONS_V1` | `apps/server/src/app.ts:758` | d2c244f56a00320d |
+| `TENANT_WIRE_NOTIFICATIONS_V1` | `apps/server/src/app.ts:764` | 18ef6c7383544643 |
 | `SIGNUP_RATE_LIMIT_V1` | `apps/server/src/auth-signup.ts:39` | 67a2bd22c6ec98a7 |
 | `SIGNUP_RATE_LIMIT_V1` | `apps/server/src/auth-signup.ts:47` | b467a218d7f4acbc |
 | `TAKE_FOR_TENANT_BROWSER_V1` | `apps/server/src/browser.ts:10` | f9bc682af955fff4 |
@@ -80,9 +82,9 @@ La misma marca aparece en varios sitios con contenido distinto. Una de las dos a
 | `COMPUTER_IDENTITY_TENANT_V1` | `apps/server/src/computer.ts:224` | d0be0d6e85e6cc08 |
 | `COMPUTER_IDENTITY_TENANT_V1` | `apps/server/src/computer.ts:251` | 95176385bbc771b4 |
 | `CONFIG_AUDIT_V1` | `apps/server/src/config.ts:46` | 7cd96ed5cd5e8c4e |
-| `CONFIG_AUDIT_V1` | `apps/server/src/config.ts:202` | 40289e2bf4622c79 |
-| `TIMEOUTS_CONFIG_V1` | `apps/server/src/config.ts:73` | 2ea3a9e9967b612f |
-| `TIMEOUTS_CONFIG_V1` | `apps/server/src/config.ts:177` | 34e379f38804b248 |
+| `CONFIG_AUDIT_V1` | `apps/server/src/config.ts:216` | 40289e2bf4622c79 |
+| `TIMEOUTS_CONFIG_V1` | `apps/server/src/config.ts:73` | 918eeef0fe48ba1d |
+| `TIMEOUTS_CONFIG_V1` | `apps/server/src/config.ts:184` | 731dd1fa5164216d |
 | `TENANT_SCAN_SQL_FILTER_V1` | `apps/server/src/db-tenant.ts:79` | 71e2141d29fb6d66 |
 | `TENANT_SCAN_SQL_FILTER_V1` | `apps/server/src/db-tenant.ts:127` | df780272ec6d89bc |
 | `TENANT_SCAN_PEEL_V1` | `apps/server/src/db-tenant.ts:123` | 93abe23008bead0e |
@@ -364,8 +366,8 @@ La misma marca aparece en varios sitios con contenido distinto. Una de las dos a
 | `SOP_THOUGHT_STEP_V1` | `apps/server/src/engine/sop-executor.ts:411` | 0d1fbe55f89090d5 |
 | `SOP_OUTCOME_STRUCTURED_V1` | `apps/server/src/engine/sop-executor.ts:146` | caab453996a1ca61 |
 | `SOP_OUTCOME_STRUCTURED_V1` | `apps/server/src/engine/sop-executor.ts:160` | 8ab4c55da14412a6 |
-| `MEMBERSHIP_CACHE_INVALIDATE_V1` | `apps/server/src/engine/tenant.ts:100` | 24e2f332eba743ad |
-| `MEMBERSHIP_CACHE_INVALIDATE_V1` | `apps/server/src/engine/tenant.ts:106` | 28e6e4450873ad6e |
+| `MEMBERSHIP_CACHE_INVALIDATE_V1` | `apps/server/src/engine/tenant.ts:144` | 24e2f332eba743ad |
+| `MEMBERSHIP_CACHE_INVALIDATE_V1` | `apps/server/src/engine/tenant.ts:150` | 28e6e4450873ad6e |
 | `WORKER_MAX_ACTIVE_V1` | `apps/server/src/engine/worker.ts:39` | 2e224c07610d3895 |
 | `WORKER_MAX_ACTIVE_V1` | `apps/server/src/engine/worker.ts:57` | 1951f3bc419b4e11 |
 | `WORKER_MAX_ACTIVE_V1` | `apps/server/src/engine/worker.ts:233` | a2bc6b37ea33f9ac |
@@ -581,7 +583,7 @@ La marca aparece en un comentario pero debajo no hay codigo real. Probable marca
 
 | Marca | Fichero:linea | Lineas de codigo |
 |---|---|---|
-| `APP_EXPOSE_BROWSER_V1` | `apps/server/src/app.ts:1011` | 2 |
+| `APP_EXPOSE_BROWSER_V1` | `apps/server/src/app.ts:1048` | 2 |
 | `CIRCUIT_BREAKER_PER_PROVIDER_V1` | `apps/server/src/engine/circuit-breaker.ts:146` | 1 |
 | `LOG_STRUCTURED_INDEX_V1` | `apps/server/src/engine/log-reexport.ts:1` | 1 |
 | `FALLBACK_V1` | `apps/web/src/view/fallback.tsx:1` | 1 |

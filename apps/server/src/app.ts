@@ -16,6 +16,8 @@ import { agentConfigured, makeRuntime } from "./agent.ts";
 import { createAuth } from "./auth.ts";
 // APP_TENANT_DB_V1 - envuelve el store con aislamiento por tenant.
 import { TenantScopedStore } from "./db-tenant.ts";
+// TENANT_SCOPE_V1 - tenant activo de la peticion (AsyncLocalStorage).
+import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
@@ -92,7 +94,14 @@ export async function createApp(
   // Ver: docs/KNOWN_ISSUES.md FASE0_DEBT_FILES_TDB_V1 y
   // docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
   const tenantServiceEarly = new TenantService(db, config);
-  const tdbEarly = new TenantScopedStore(db, (owner) => tenantServiceEarly.tenantIdFor(owner));
+  // TENANT_SCOPE_RESOLVER_V1 - si la peticion trae un tenant fijado por el JWT
+  // (runInTenantScope), ese manda: el usuario puede estar en varias empresas y
+  // la membership unica no alcanza para decidir donde escribir. Sin scope
+  // (modo session) se resuelve como antes.
+  const tdbEarly = new TenantScopedStore(
+    db,
+    async (owner) => currentTenantScope()?.tenantId ?? tenantServiceEarly.tenantIdFor(owner),
+  );
   const auth = await createAuth(db, config),
     files = new Files(tdbEarly, config, auth),
     google = new GoogleAuth(db, config),
@@ -547,7 +556,20 @@ app.get("/api/health", async (c) => {
     const { verifyJwtMiddleware } = await import("./engine/auth/jwt.ts");
     const { ActorService } = await import("./engine/actors/service.ts");
     const actorService = new ActorService({ users, tenants: tenantService });
-    app.use("/api/*", verifyJwtMiddleware({ actorService }));
+    // JWT_VERIFY_WIRE_V1 - la firma se valida de verdad: HS256 con el secreto
+    // del proyecto o RS256/ES256 con la JWKS de Supabase.
+    app.use(
+      "/api/*",
+      verifyJwtMiddleware({
+        actorService,
+        ...(config.supabaseJwtSecret ? { secret: config.supabaseJwtSecret } : {}),
+        ...(config.supabaseUrl
+          ? { jwksUrl: `${config.supabaseUrl}/auth/v1/.well-known/jwks.json` }
+          : {}),
+        audience: config.supabaseJwtAudience,
+        ...(config.supabaseUrl ? { issuer: `${config.supabaseUrl}/auth/v1` } : {}),
+      }),
+    );
   }
   // APP_AUTHZ_MOUNT_V2 - authzMiddleware montado antes del ctx (orden critico).
   app.use("/api/*", authzMiddleware(pdp));
@@ -560,15 +582,23 @@ app.get("/api/health", async (c) => {
       /^\/api\/files\/[^/]+\/content$|^\/api\/browsers\/[^/]+\/(?:preview|console)$/.test(
         c.req.path,
       );
+    // APP_CTX_WIRE_V1 - ctx con actorId + sessionId + tenantId + owner.
+    // OWNER_FROM_ACTOR_V1 - en modo supabase el bearer es un JWT del proveedor,
+    // no una sesion local: auth.owner lo rechazaria ("Session expired") y toda
+    // la API quedaria inaccesible. Con actor verificado, el owner es su userId.
+    const jwtActorForTenant = c.get("actor") as Actor | undefined;
     const owner =
       signedRoute && c.req.query("signature")
         ? auth.verify(new URL(c.req.url))
-        : await auth.owner(c.req.header("authorization"));
+        : jwtActorForTenant
+          ? jwtActorForTenant.kind === "human"
+            ? jwtActorForTenant.userId
+            : jwtActorForTenant.id
+          : await auth.owner(c.req.header("authorization"));
     c.set("owner", owner);
-    // APP_CTX_WIRE_V1 - ctx con actorId + sessionId + tenantId + owner.
-    // actorId = owner hasta que Campana 2b anada verifyJwtMiddleware.
-    // Cuando 2b llegue, actorId sera el sub resuelto del JWT.
-    const resolvedTenant = await tenantService.tenantIdFor(owner).catch(() => "default"); // FALLBACK_TENANT_V1
+    const resolvedTenant =
+      jwtActorForTenant?.tenantId ??
+      (await tenantService.tenantIdFor(owner).catch(() => "default")); // FALLBACK_TENANT_V1
     // TENANT_QUERY_GUARD_V1 - pedir un tenant distinto del que el owner tiene
     // resuelto es un salto de tenant, no un filtro: 403. Ninguna ruta lee
     // `?tenantId=` hoy (el panel admin usa servicios, no query), asi que el
@@ -581,7 +611,7 @@ app.get("/api/health", async (c) => {
     // APP_CTX_ACTOR_V3 - el ctx lleva el Actor completo: authz (PolicyContext)
     // lee ctx.actor.id, no un actorId plano. Si verifyJwtMiddleware no puso
     // actor, se sintetiza un actor humano del owner.
-    const jwtActor = c.get("actor");
+    const jwtActor = jwtActorForTenant;
     const ctxActor: Actor =
       jwtActor ??
       ({
@@ -608,14 +638,21 @@ app.get("/api/health", async (c) => {
     }
     // RESPONSE_TENANT_HEADER_V1 | 2026-10-21 | applied
     try {
-      const tId = await tenantService.tenantIdFor(owner);
+      // TENANT_HEADER_FROM_CTX_V1 - la cabecera debe decir el tenant con el que
+      // se ha atendido (el del JWT si lo hay), no el de membership: si no,
+      // cliente y servidor discrepan sobre donde se escribio.
+      const tId = resolvedTenant;
       c.header("X-Tenant-Id", tId);
       const cur2 = logContext.getStore();
       if (cur2 && !cur2.tenantId) {
         logContext.enterWith({ ...cur2, tenantId: tId });
       }
     } catch { }
-    await next();
+    // TENANT_SCOPE_WIRE_V1 - todo lo que ocurre dentro del handler (incluido el
+    // servicio de ficheros, el engine y el workspace) ve el tenant de esta
+    // peticion a traves del AsyncLocalStorage. Es el punto donde multitenant
+    // deja de depender de que cada servicio recuerde pasar el tenantId.
+    return runInTenantScope({ tenantId: resolvedTenant, actorId: ctxActor.id }, () => next());
   });
   app.get("/api/workspace", async (c) => {
     const owner = c.get("owner");

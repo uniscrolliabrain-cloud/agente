@@ -1,6 +1,6 @@
 # Auditoria de contratos del dominio
 
-> Generado por `scripts/audits/contracts.ts` el 2026-10-26T17:15:55.489Z.
+> Generado por `scripts/audits/contracts.ts` el 2026-10-26T17:26:49.533Z.
 
 - Contratos totales: **318**
 - Con implementacion real: **154**
@@ -264,8 +264,8 @@
 | `HumanActor` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
 | `humanActorSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/actor.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
 | `Idea` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/agent.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
-| `JwtPayload` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/jwt.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt.ts` |
-| `jwtPayloadSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/jwt.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
+| `JwtPayload` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/jwt.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt-verify.ts` |
+| `jwtPayloadSchema` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/jwt.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/auth/jwt-verify.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/actors/service.ts` |
 | `KernelContext` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/node.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/agents/personas/routes.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/conversation.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/model.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/engine/service.ts` |
 | `KernelRole` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/kernel/context/kernel-context.ts`, `/workspace/chats/a7854b5670f02bdcf21c47a1/apps/server/src/kernel/index.ts` |
 | `KernelThoughtView` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel-thought-view.ts` | `/workspace/chats/a7854b5670f02bdcf21c47a1/packages/domain/src/kernel.ts` |

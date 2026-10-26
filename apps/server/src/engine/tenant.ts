@@ -17,6 +17,18 @@ import type { Config } from "../config.ts";
 const DEFAULT_TENANT_ID = "default";
 const MEMBERSHIP_KIND = "tenant-membership";
 const MEMBERSHIP_ID = "default";
+// TENANT_MEMBERSHIPS_V1 - una fila por (user, tenant). La membership unica de
+// arriba sigue existiendo para el modo single-tenant; esta lista es la que
+// permite que un usuario trabaje en varias empresas y que el JWT elija en cual.
+const MEMBERSHIPS_KIND = "user-tenants";
+
+export interface TenantMembership {
+  id: string;
+  tenantId: string;
+  userId: string;
+  role: "owner" | "admin" | "member";
+  createdAt: string;
+}
 
 export interface TenantResolution {
   tenantId: string;
@@ -83,6 +95,38 @@ export class TenantService {
   /** Atajo: solo el tenantId. */
   async tenantIdFor(owner: string): Promise<string> {
     return (await this.resolve(owner)).tenantId;
+  }
+
+  /** Todos los tenants a los que pertenece un usuario. */
+  async membershipsFor(userId: string): Promise<TenantMembership[]> {
+    const rows = await this.db
+      .list<TenantMembership>(userId, MEMBERSHIPS_KIND)
+      .catch(() => []);
+    return rows.filter((row) => typeof row.tenantId === "string" && row.tenantId.length > 0);
+  }
+
+  /**
+   * Alta idempotente de (user, tenant). No toca la membership unica del modo
+   * single-tenant: son mecanismos distintos y mezclarlos fue lo que dejo datos
+   * en "default" cuando ya habia multi-tenant.
+   */
+  async addMembership(
+    userId: string,
+    tenantId: string,
+    role: TenantMembership["role"] = "member",
+  ): Promise<TenantMembership> {
+    const existing = await this.db.get<TenantMembership>(userId, MEMBERSHIPS_KIND, tenantId);
+    if (existing) return existing;
+    const membership: TenantMembership = {
+      id: tenantId,
+      tenantId,
+      userId,
+      role,
+      createdAt: new Date().toISOString(),
+    };
+    await this.db.put(userId, MEMBERSHIPS_KIND, membership);
+    this.invalidate(userId);
+    return membership;
   }
 
   /**

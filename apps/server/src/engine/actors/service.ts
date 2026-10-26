@@ -1,8 +1,15 @@
-// ACTOR_SERVICE_RESOLVE_V1 - resuelve el Actor desde el JwtPayload verificado.
-// Fail-closed: sub sin User -> 401; User inactive -> 403; sin tenant -> 401.
-// El tenantId se resuelve via TenantService. Sin JIT provisioning.
+// ACTOR_SERVICE_RESOLVE_V2 - resuelve el Actor desde el JwtPayload VERIFICADO.
+//
+// Fail-closed: sub sin User -> 401; User inactive -> 403; JWT sin claim de
+// tenant -> 401; claim de un tenant del que no es miembro -> 403.
+//
+// V1 resolvia el tenant con la membership unica del owner, asi que el claim del
+// token se ignoraba: un usuario con acceso a dos empresas escribia siempre en la
+// primera. Ahora el tenant sale del token y la membership (`user-tenants`) es la
+// que autoriza. Primer login de un usuario sin ninguna fila: se materializa la
+// membership del claim (lo firma el proveedor de auth, no el cliente).
 import type { HumanActor } from "../../../../../packages/domain/src/actor.ts";
-import type { JwtPayload } from "../../../../../packages/domain/src/jwt.ts";
+import { tenantClaimOf, type JwtPayload } from "../../../../../packages/domain/src/jwt.ts";
 import type { User, UserService } from "../../users.ts";
 import type { TenantService } from "../tenant.ts";
 import { AppError } from "../../../../../packages/domain/src/errors.ts";
@@ -26,22 +33,42 @@ export class ActorService {
       throw new AppError("Actor is inactive", 403);
     }
 
-    const tenantId = await this.deps.tenants.tenantIdFor(user.id).catch(() => "default"); // FALLBACK_TENANT_V1
-    if (!tenantId) throw new AppError("Actor has no tenant", 401);
+    const claimedTenant = tenantClaimOf(jwtPayload);
+    if (!claimedTenant) {
+      // ACTOR_REQUIRE_TENANT_CLAIM_V1 - sin claim no hay zona. Caer a "default"
+      // es exactamente el fallback que mezcla empresas en produccion.
+      throw new AppError("JWT without tenant claim", 401);
+    }
+
+    const memberships = await this.deps.tenants.membershipsFor(user.id);
+    let membership = memberships.find((row) => row.tenantId === claimedTenant);
+    if (!membership) {
+      if (memberships.length > 0) {
+        throw new AppError("Actor is not a member of the claimed tenant", 403);
+      }
+      // Primer acceso: el claim viene firmado por el proveedor de auth.
+      membership = await this.deps.tenants.addMembership(
+        user.id,
+        claimedTenant,
+        user.role === "admin" ? "owner" : "member",
+      );
+    }
 
     return {
       kind: "human",
       id: user.id,
-      tenantId,
+      tenantId: membership.tenantId,
       userId: user.id,
-      roles: [user.role === "admin" ? "owner" : "employee"],
+      roles: [
+        membership.role === "owner" || membership.role === "admin" || user.role === "admin"
+          ? "owner"
+          : "employee",
+      ],
       profile: {
         name: user.name,
         email: user.email,
         language: "es",
       },
-      // ACTOR_ACTIVE_BOOL_V1 - user.active ya es boolean; la comparacion con
-      // `false` rompia cuando el tipo se estrecha a true.
       active: Boolean(user.active),
     };
   }

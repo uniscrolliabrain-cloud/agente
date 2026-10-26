@@ -20,6 +20,7 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     googleRedirectUri: `${publicUrl}/api/google/callback`,
     allowedOrigins: [],
     authProvider: "session",
+    supabaseJwtAudience: "authenticated",
     authzEnabled: true,
     fieldClassificationEnabled: true,
     policyCacheTtlMs: 60_000,
