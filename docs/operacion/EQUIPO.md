@@ -13,10 +13,15 @@
 ## 2. Fuente de verdad y ramas
 
 - `main` es la única fuente de verdad. **El agente nunca escribe en `main`.**
-- Cada línea de trabajo vive en una rama `dev/<slug>` corta (1 sesión, 1 objetivo).
+- Cada línea de trabajo vive en **una rama = una campaña o un feature**. Nombres:
+  - `campaign/<slug>` — tema transversal (ej. `campaign/authz-tenant`)
+  - `feat/<slug>` — capacidad nueva (ej. `feat/leads-workspace`)
+  - `fix/<slug>` — causa identificada (ej. `fix/jwt-signature`)
+  - `patch/<slug>` — cambio mínimo (ej. `patch/test-glob`)
+  - `docs/<slug>` — solo documentación
 - Ciclo:
   1. Founder pushea su trabajo (aunque esté en bruto) a `main`.
-  2. Agente hace `pull` de `main`, mide baseline, trabaja en `dev/<slug>`, commitea y pushea la rama.
+  2. Agente hace `pull` de `main`, mide baseline, trabaja en su rama (`campaign/`, `feat/`, `fix/` o `patch/`), commitea por unidad y pushea.
   3. Founder revisa el diff, mergea o pide cambios.
   4. Founder hace `pull` a local y sigue.
 - **Nunca** force push. Si hay divergencia, se resuelve sin descartar trabajo de nadie.
@@ -34,16 +39,18 @@
 
 Si necesitas un campo nuevo en una entidad, **añádelo en `packages/domain` y avísame**. Es el punto donde tu código en bruto y mi cableado se encuentran.
 
-## 4. Protocolo de sesión
+## 4. Protocolo de sesión (por unidades, no por horas)
 
 **Al empezar**, el agente reporta:
 - baseline medido: `pnpm typecheck`, `pnpm test`, `pnpm audit:coherence`;
-- qué está roto por el founder y qué por el repo (así no confundimos regresiones).
+- qué está roto por el founder y qué por el repo (así no confundimos regresiones);
+- la lista de unidades que va a intentar cerrar, con el gate de cada una.
 
 **Al terminar**, el agente entrega:
-- commit(s) por unidad lógica en la rama;
-- qué pasó y qué no (con el comando exacto);
-- qué necesita de ti para cerrar.
+- **cerradas**: unidades con su gate ejecutado y su cifra;
+- **abiertas**: en qué punto quedaron y qué las desbloquea;
+- **bloqueadas**: qué dato o decisión falta (una credencial, un merge, un criterio);
+- commit por unidad, no un commit por sesión.
 
 **Cómo reportar un bug**: rama, qué hiciste, qué esperabas, qué pasó, consola/red, y si es visual una captura. Sin eso, se investiga a ciegas y se gasta contexto.
 
@@ -87,8 +94,43 @@ Decisión propuesta: **multitenant** (un deployment, N tenants), porque abarata 
 - `MULTI_TENANT_SHARED=true` exige Postgres real (no PGlite) y RLS activo.
 - `docs/operacion/TODO-FOR-PROD.md` hay que reescribirlo cuando se apruebe.
 
-## 9. Presupuesto y ritmo
+## 9. Unidades de trabajo
 
-- Una campaña = un objetivo medible antes/después (como las 5 anteriores).
+El trabajo se nombra y se cierra por unidades. Una unidad está terminada cuando su **gate** está medido, no cuando "parece que va". **No planificamos en horas.**
+
+| Unidad | Qué es | Se cierra con | Vive en |
+|---|---|---|---|
+| **Etapa** | Objetivo de producto (0–15) | Criterio de aceptación del doc de etapa | `docs/roadmap/<NN>-*.md` |
+| **Fase** | Subdivisión de una etapa (1–7) | Checklist de la fase | `docs/roadmap/<NN>-*/` |
+| **Campaña** | Tema transversal que cruza capas | Métrica antes/después | rama `campaign/<slug>` |
+| **Subequipo** | Línea de ejecución dentro de una campaña | Su parte del gate | prefijo del commit |
+| **Feature** | Capacidad nueva observable | Test nuevo + contrato en `packages/domain` | rama `feat/<slug>` |
+| **Fix** | Comportamiento incorrecto con causa conocida | Test que falla antes y pasa después | rama `fix/<slug>` |
+| **Patch** | Cambio mínimo de superficie | El check afectado en verde | rama `patch/<slug>` |
+| **Hunk** | Un diff coherente y revisable | Revisión de 30 s: una sola intención | dentro de un commit |
+| **Audit** | Medición reproducible con número | `pnpm audit:*` con cifra | `scripts/audits/` |
+
+### Reglas de granularidad
+
+- **1 hunk = 1 intención.** Si arregla dos cosas, son dos hunks.
+- **1 commit = 1 unidad cerrada** (feature, fix, patch) con su gate ejecutado.
+- **1 rama = 1 campaña o 1 feature.** No se acumulan frentes.
+- **1 sesión = N unidades** cerradas, abiertas o bloqueadas. Se reporta eso, nunca horas.
+- Un feature no se cierra sin test; un audit no se cierra sin cifra; una campaña no se cierra sin comparación contra baseline.
 - Nada de refactors grandes sin número: si no hay métrica, no se toca.
-- El repo tiene deuda conocida y medida (`docs/AUDIT_*.md`). No se "limpia por limpiar".
+- La deuda conocida y medida (`docs/AUDIT_*.md`) no se "limpia por limpiar".
+
+### Subequipos (líneas de ejecución, no personas)
+
+`contratos` · `runtime` · `authz-tenant` · `canales` · `datos` · `ui` · `deploy` · `auditoría`
+
+Un commit declara campaña y subequipo: `fix(authz-tenant): ...`, `feat(canales): ...`, `patch(ui): ...`. Sirve para saber, con `git log`, quién tocó qué frente sin abrir el diff.
+
+### Vocabulario que no usamos
+
+| En vez de | Decimos |
+|---|---|
+| "esto son 2 horas" | "esto es 1 patch + 1 test" |
+| "ya casi está" | "gate X en verde, gate Y abierto" |
+| "lo dejamos para mañana" | "queda fuera de esta campaña, va a la siguiente" |
+| "ha tardado mucho" | "la unidad necesitó 3 iteraciones de gate" |

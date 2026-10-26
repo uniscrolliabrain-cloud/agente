@@ -8,7 +8,7 @@
 
 - **Variable**: el nombre exacto que espera el código (o que hay que añadir a `apps/server/src/config.ts`).
 - **Solo tú**: verificación que exige identidad/facturación del founder y no se puede delegar.
-- **Tiempo**: lo que tarda la plataforma, no lo que tardas tú.
+- **Latencia**: cuánto tarda la plataforma en aprobar (verificación, DNS, KYC). No es esfuerzo de trabajo: el trabajo se planifica en unidades (ver `EQUIPO.md` §9), la latencia externa solo marca en qué orden conviene abrir las cuentas.
 
 ---
 
@@ -31,7 +31,7 @@
 | `AUTH_PROVIDER=supabase` | `config.ts` (el middleware se monta solo con este valor) |
 
 **Solo tú**: ser owner del proyecto (no hace falta nada más aquí).
-**Tiempo**: 5 min. **Bloquea**: todo.
+**Latencia**: 5 min. **Bloquea**: todo.
 
 ### 0.2 Modelo LLM — Google AI Studio
 - [ ] Key en https://aistudio.google.com/apikey
@@ -44,7 +44,7 @@
 | `FAST_LLM_API_KEY` / `SLOW_LLM_API_KEY` | cuotas separadas por velocidad (opcional, cae a la global) |
 | `EMBEDDINGS_LLM_API_KEY` | RAG + memoria (`text-embedding-004`) |
 
-**Tiempo**: 2 min. **Bloquea**: chat, RAG, tests de conversación.
+**Latencia**: 2 min. **Bloquea**: chat, RAG, tests de conversación.
 
 ### 0.3 OpenRouter — fallback y respaldo
 - [ ] Cuenta y saldo en https://openrouter.ai/keys
@@ -55,7 +55,7 @@
 | `OPENROUTER_API_KEY` | `config.ts` deriva `OPENAI_API_KEY`/`OPENAI_BASE_URL` para la cadena de fallback |
 | `OPENROUTER_MODEL` | id del modelo en OpenRouter |
 
-**Tiempo**: 10 min (con crédito). **Bloquea**: nada crítico, pero sin esto un 429 de Gemini tumba el chat.
+**Latencia**: 10 min (con crédito). **Bloquea**: nada crítico, pero sin esto un 429 de Gemini tumba el chat.
 
 ### 0.4 Dominio y DNS
 - [ ] Dominio de la agencia (si aún no lo tienes, este es el momento)
@@ -69,7 +69,7 @@
 | `PUBLIC_API_URL` | callbacks de Google, webhooks de WhatsApp/Vapi/Stripe |
 | `ALLOWED_ORIGINS` | CORS del frontend |
 
-**Solo tú**: DNS. **Tiempo**: 15 min + propagación. **Bloquea**: todos los webhooks.
+**Solo tú**: DNS. **Latencia**: 15 min + propagación. **Bloquea**: todos los webhooks.
 
 ### 0.5 Fly.io
 - [ ] Cuenta en https://fly.io/dashboard (ya hay `fly.toml`, app `openmuse-api`, región `mad`)
@@ -80,7 +80,7 @@
 |---|---|
 | `FLY_API_TOKEN` | GitHub Actions (secret de CI, no del runtime) |
 
-**Solo tú**: método de pago. **Tiempo**: 15 min. **Bloquea**: deploy.
+**Solo tú**: método de pago. **Latencia**: 15 min. **Bloquea**: deploy.
 
 > Alternativa si prefieres VPS: un `docker compose` con Postgres + API + worker. Requiere que me lo digas, porque cambia el deploy y los backups.
 
@@ -117,7 +117,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 | `GOOGLE_CLIENT_SECRET` | `google-auth.ts` |
 
 **Aviso**: el código pide lectura siempre y, con `write=true`, `mail.google.com` + `gmail.send` + `gmail.modify` + `calendar` + `drive` completo (`google-auth.ts:110-131`). Son scopes **restringidos**: en modo test funcionan para tus test users; para producción con clientes exigen **verificación de Google** (semanas, y auditoría de seguridad si distribuyes a terceros). Arranca el trámite ya si vas a vender esto con Gmail/Drive.
-**Solo tú**: consent screen, política de privacidad, verificación. **Tiempo**: 20 min (test) / semanas (producción).
+**Solo tú**: consent screen, política de privacidad, verificación. **Latencia**: 20 min (test) / semanas (producción).
 
 ### 1.2 WhatsApp — elige uno
 
@@ -145,7 +145,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 | `WHATSAPP_WEBHOOK_TOKEN` | verificación del webhook |
 | `WHATSAPP_WEBHOOK_SECRET` | firma HMAC (`whatsapp-routes.ts:75` ya la valida) |
 
-**Solo tú**: Business verification, número, QR. **Tiempo**: 1–3 días (A) / 30 min (B).
+**Solo tú**: Business verification, número, QR. **Latencia**: 1–3 días (A) / 30 min (B).
 **Recomendación**: A para el primer cliente que pague; B solo para probar el flujo end-to-end esta semana.
 
 ### 1.3 Resend — email transaccional y de verificación
@@ -159,7 +159,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 | `EMAIL_FROM` | nuevo: remitente verificado |
 
 **Aviso cold outreach**: usa un **dominio distinto** del principal y caliéntalo 2–3 semanas. Si quemas el dominio de la agencia, pierdes también el correo comercial.
-**Solo tú**: DNS. **Tiempo**: 30 min + verificación DNS.
+**Solo tú**: DNS. **Latencia**: 30 min + verificación DNS.
 
 ### 1.4 Vapi — teléfono
 - [ ] Cuenta en https://dashboard.vapi.ai
@@ -174,7 +174,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 | `VAPI_PHONE_NUMBER_ID` | nuevo |
 | `VAPI_WEBHOOK_SECRET` | nuevo |
 
-**Solo tú**: pago del número, KYC si lo pide. **Tiempo**: 24 h (US) / 1–2 semanas (ES).
+**Solo tú**: pago del número, KYC si lo pide. **Latencia**: 24 h (US) / 1–2 semanas (ES).
 **Nota**: Vapi sustituye al plan Twilio + Whisper + TTS del doc 02. Más rápido y más barato de operar.
 
 ---
@@ -191,7 +191,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 |---|---|
 | `GOOGLE_MAPS_API_KEY` | nuevo: buscador de negocios locales (nombre, web, teléfono, reviews) |
 
-**Solo tú**: facturación. **Tiempo**: 15 min.
+**Solo tú**: facturación. **Latencia**: 15 min.
 **No scrapees Maps con Playwright**: bloqueo + violación de ToS. Places es la vía legítima.
 
 ### 2.2 Búsqueda web — elige uno
@@ -202,7 +202,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 | `SEARCH_API_KEY` | nuevo: descubrir webs y señales antes de calificar un lead |
 
 **Por qué**: `read_web` solo lee una URL que ya conoces. Sin buscador el agente SDR no descubre nada.
-**Tiempo**: 10 min.
+**Latencia**: 10 min.
 
 ### 2.3 Stripe — cobro a clientes
 - [ ] Cuenta en https://dashboard.stripe.com (empieza en **test mode**)
@@ -216,13 +216,13 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WO
 | `STRIPE_WEBHOOK_SECRET` | `billing-routes.ts:21` (firma ya implementada) |
 | `STRIPE_PRICE_*` | nuevo: ids de precio por plan |
 
-**Solo tú**: KYC y banco. **Tiempo**: 1 h (test) / 1–2 días (cobros reales).
+**Solo tú**: KYC y banco. **Latencia**: 1 h (test) / 1–2 días (cobros reales).
 
 ### 2.4 Google Business Profile (opcional, cliente 2)
 - [ ] Pedir acceso a **Business Profile APIs** (formulario de Google, aprobación manual)
 - [ ] `GMB_CLIENT_ID`, `GMB_API_KEY`
 
-**Tiempo**: días/semanas. No bloquea el MVP.
+**Latencia**: días/semanas. No bloquea el MVP.
 
 ---
 
