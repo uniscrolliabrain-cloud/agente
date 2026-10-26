@@ -40,6 +40,7 @@
     "audit:anchors": "tsx scripts/audits/anchors.ts",
     "audit:tenant-default": "tsx scripts/audits/tenant-default.ts",
     "audit:coherence": "tsx scripts/audits/coherence.ts",
+    "secrets:check": "tsx scripts/secrets-check.ts",
     "audit:layers": "tsx scripts/audits/layers.ts",
     "audit:bridges": "tsx scripts/audits/bridges.ts",
     "audit:console": "tsx scripts/audits/no-console.ts",

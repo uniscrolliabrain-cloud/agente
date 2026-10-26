@@ -1,0 +1,12 @@
+# DOPPLER_SETUP_V1 - vincula el repo con el proyecto de Doppler.
+#
+# Un unico proyecto con tres configs:
+#   dev   -> local, valores de prueba y claves de sandbox del proveedor
+#   stg   -> rama de staging (preview de Fly)
+#   prd   -> produccion (www.agntiapro.io)
+#
+# El CLI lee este fichero con `doppler setup` (sin flags) y deja el repo ligado
+# al config elegido. No hay secretos aqui: solo la ruta.
+setup:
+  - project: agntiapro
+    config: dev
