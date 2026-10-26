@@ -722,9 +722,15 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             const cfg = await this.service.kernel
               .config(ctxForChain)
               .catch(() => undefined);
-            if (cfg?.fast?.provider && cfg.fast.model) {
+            // CHAT_CHAIN_REQUIRES_KEY_V1 - EnvTenantConfigResolver SIEMPRE
+            // devuelve provider/model (default google/gemini) aunque
+            // FAST_LLM_API_KEY este vacia, asi que sin este guard el chat
+            // sustituia config.model por un modelo Google sin clave y fallaba
+            // con LoadAPIKeyError en cualquier despliegue sin fast key.
+            // modelChain() ya exigia apiKey; el override del kernel no.
+            if (cfg?.fast?.provider && cfg.fast.model && cfg.fast.apiKey) {
               chatModelChain = [`${cfg.fast.provider}/${cfg.fast.model}`];
-              if (cfg.slow?.provider && cfg.slow.model) {
+              if (cfg.slow?.apiKey && cfg.slow?.provider && cfg.slow.model) {
                 chatModelChain.push(`${cfg.slow.provider}/${cfg.slow.model}`);
               }
               // FIX_CHAIN_FALLBACK_V1 - si solo hay fast, anadimos el chain

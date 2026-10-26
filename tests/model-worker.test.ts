@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import { createStore } from "../apps/server/src/db.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import type { ActionProposal } from "../packages/domain/src/index.ts";
 import { fixture as computerFixture } from "./helpers/computer.ts";
 import { modelFixture } from "./helpers/model.ts";
@@ -13,6 +14,9 @@ import { testConfig } from "./helpers/config.ts";
 test("CopilotKit model worker executes server tools and persists the confirmed outcome", async (t) => {
   const directory = await mkdtemp(join(tmpdir(), "openmuse-model-"));
   const db = await createStore();
+  // MODEL_WORKER_TENANT_SCOPE_V1 - ActionService guarda con el store
+  // tenant-scoped; leer las acciones con el Store crudo devolvia null.
+  const tdb = new TenantScopedStore(db, async () => "default");
   const calls: { name: string; arguments: object }[] = [
     {
       name: "set_plan",
@@ -85,7 +89,7 @@ test("CopilotKit model worker executes server tools and persists the confirmed o
     const pending = await server.agent.getTask("owner", appointment.id);
     assert.equal(pending.status, "waiting_approval", pending.error ?? pending.question);
     assert.ok(pending.actionId);
-    const proposal = await db.get<ActionProposal>("owner", "actions", pending.actionId);
+    const proposal = await tdb.get<ActionProposal>("owner", "actions", pending.actionId);
     assert.ok(proposal);
     await server.actions.decide("owner", proposal.id, proposal.hash, "approve");
     requests.length = 0;
@@ -99,7 +103,7 @@ test("CopilotKit model worker executes server tools and persists the confirmed o
     assert.equal(finished.actionId, null);
     assert.ok(requests[0].body.includes("approvalResult"));
     assert.equal(
-      (await db.list<ActionProposal>("owner", "actions")).filter((a) => a.taskId === appointment.id)
+      (await tdb.list<ActionProposal>("owner", "actions")).filter((a) => a.taskId === appointment.id)
         .length,
       1,
     );

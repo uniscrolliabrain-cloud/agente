@@ -20,6 +20,9 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "task.controlled": { action: "pause" },
   "sop.step_started": { index: 0, title: "T" },
   "sop.step_completed": { index: 0, title: "T" },
+  // SOP_V2_EVENTS - variante con punto: mismo schema que sop.step_completed,
+  // pero el enum la declara aparte y necesita su propio payload minimo.
+  "sop.step.completed": { index: 0, title: "T" },
   "sop.step_skipped": { index: 0, title: "T" },
   "sop.failed": {},
   "action.proposed": { title: "T", kind: "email.send" },
@@ -74,6 +77,10 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "agent.runtime_failed": { runtimeId: "rt", roleId: "ro", taskId: "t", error: "x" },
   "verification.executed": { verified: true, method: "deterministic", confidence: 1 },
   "verification.disagreement": { deterministic: true, llm: false },
+  // KERNEL_BUILD_EVENTS_V1 - tipos con campos obligatorios fuera del sobre comun.
+  "kernel.turn.opened": { turnId: "t1" },
+  "build.applied": { buildId: "b1", kind: "workspace", target: "w1" },
+  "message.edited": { messageId: "m1" },
   "context.assembled": {
     entityCount: 0,
     relationCount: 0,
@@ -86,8 +93,13 @@ test("todo SystemEventType tiene schema y un payload minimo valido", () => {
   for (const type of SYSTEM_EVENT_TYPES) {
     const schema = payloadSchemas[type];
     assert.ok(schema, `falta schema para ${type}`);
-    const payload = minimalPayload[type];
-    assert.ok(payload, `falta payload minimo para ${type} en el test`);
+    // EVENTBUS_PAYLOAD_DEFAULT_V1 - los eventos de workspace declaran todos los
+    // campos opcionales (sobre comun + passthrough), asi que su payload minimo
+    // es `{}` y exigir una entrada por tipo obligaba a mantener a mano ~100
+    // lineas que solo repetian eso. Un tipo con campos obligatorios sigue
+    // rompiendo aqui con "payload minimo invalido" + las issues de zod, que es
+    // la senal que este test existe para dar.
+    const payload = minimalPayload[type] ?? {};
     const parsed = schema.safeParse(payload);
     assert.ok(
       parsed.success,

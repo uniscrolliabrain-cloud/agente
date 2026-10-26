@@ -6,6 +6,7 @@ import { after, before, test } from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import type { Config } from "../apps/server/src/config.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import type {
   AgentMemory,
   AgentNotification,
@@ -18,7 +19,7 @@ import type {
 } from "../packages/domain/src/agent.ts";
 import { testConfig } from "./helpers/config.ts";
 
-let db: Store, server: Awaited<ReturnType<typeof createApp>>, directory: string, token: string;
+let db: Store, tdb: TenantScopedStore, server: Awaited<ReturnType<typeof createApp>>, directory: string, token: string;
 let config: Config;
 const headers = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" });
 const request = (path: string, body?: unknown) =>
@@ -35,6 +36,9 @@ async function read<T>(path: string, body?: unknown, status = 200): Promise<T> {
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-agent-api-"));
   db = await createStore({ dataDir: join(directory, "db") });
+  // AGENT_API_TENANT_SCOPE_V1 - el engine escribe con TenantScopedStore; las
+  // aserciones directas contra la DB tienen que usar la misma clave.
+  tdb = new TenantScopedStore(db, async () => "default");
   config = testConfig({
     dataDir: directory,
     agentBackend: "model",
@@ -260,10 +264,11 @@ test("sample monitor saves its baseline and deduplicates notifications for repea
     },
     201,
   );
+  // NOTIF_TENANT_ENVELOPE_V1 - el endpoint devuelve { tenantId, notifications }.
   const notifications = async () =>
-    (await read<AgentNotification[]>("/notifications")).filter(
-      (item) => item.taskId === monitor.taskId,
-    );
+    (
+      await read<{ tenantId: string; notifications: AgentNotification[] }>("/notifications")
+    ).notifications.filter((item) => item.taskId === monitor.taskId);
   await server.agent.worker.tick();
   assert.equal(
     (await read<{ task: AgentTask }>(`/tasks/${monitor.taskId}`)).task.status,
@@ -303,10 +308,10 @@ test("sample monitor saves its baseline and deduplicates notifications for repea
     undefined,
     "private-notice",
   );
-  const privateNotification = (await db.list<AgentNotification>("other-user", "notifications"))[0];
+  const privateNotification = (await tdb.list<AgentNotification>("other-user", "notifications"))[0];
   assert.equal((await request(`/notifications/${privateNotification.id}/read`, {})).status, 404);
   assert.equal(
-    (await db.get<AgentNotification>("other-user", "notifications", privateNotification.id))?.read,
+    (await tdb.get<AgentNotification>("other-user", "notifications", privateNotification.id))?.read,
     false,
   );
 });
@@ -330,7 +335,7 @@ test("live mode rejects sample sources and hides the fixture mutation endpoint",
       body: JSON.stringify({ title: "Forbidden fixture", url: "sample://availability" }),
     });
     assert.equal(monitor.status, 422);
-    assert.deepEqual(await db.get("local-user", "sample-pages", "availability"), {
+    assert.deepEqual(await tdb.get("local-user", "sample-pages", "availability"), {
       id: "availability",
       text: "One table at 7 pm",
     });

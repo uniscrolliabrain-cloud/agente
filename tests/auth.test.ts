@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import { UserService } from "../apps/server/src/users.ts";
 import { testConfig } from "./helpers/config.ts";
 import type { Workspace } from "../packages/domain/src/index.ts";
@@ -74,9 +75,11 @@ test("the authenticated owner gets its own sample workspace seeded", async () =>
   assert.equal(workspace.events.length, 3);
   assert.ok(workspace.files.length >= 1);
   assert.ok(workspace.actions.length >= 1);
-  // ...y los datos son de ESE owner, no del owner generico.
-  assert.equal(await db.list(user.id, "mail").then((rows) => rows.length), 4);
-  assert.equal(await db.list("local-user", "mail").then((rows) => rows.length), 0);
+  // ...y los datos son de ESE owner, no del owner generico. La lectura va por
+  // el store tenant-scoped, que es donde escribe el workspace ("tenant:owner").
+  const tdb = new TenantScopedStore(db, async () => "default");
+  assert.equal((await tdb.list(user.id, "mail")).length, 4);
+  assert.equal((await tdb.list("local-user", "mail")).length, 0);
 });
 
 test("google status is readable so the UI can show the connect button", async () => {

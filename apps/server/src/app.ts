@@ -129,7 +129,11 @@ export async function createApp(
   // POLICY_EARLY_V1
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
-  const actions = new ActionService(db, {
+  // ACTIONS_TENANT_SCOPE_V1 - antes las acciones se guardaban con el owner
+  // crudo (db) mientras el worker, el maintenance y las rutas de aprobacion
+  // las leian con tdb ("tenant:owner"): aprobar una accion por HTTP no la
+  // encontraba nunca. Se unifica en tdb, que es la zona del resto del engine.
+  const actions = new ActionService(tdb, {
     execute: (owner, input, connectionId, targetVersion) =>
       workspace.execute(owner, input, connectionId, targetVersion),
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
@@ -564,7 +568,16 @@ app.get("/api/health", async (c) => {
     // APP_CTX_WIRE_V1 - ctx con actorId + sessionId + tenantId + owner.
     // actorId = owner hasta que Campana 2b anada verifyJwtMiddleware.
     // Cuando 2b llegue, actorId sera el sub resuelto del JWT.
-    const _tenantIdForCtx = await tenantService.tenantIdFor(owner).catch(() => "default"); // FALLBACK_TENANT_V1
+    const resolvedTenant = await tenantService.tenantIdFor(owner).catch(() => "default"); // FALLBACK_TENANT_V1
+    // TENANT_QUERY_GUARD_V1 - pedir un tenant distinto del que el owner tiene
+    // resuelto es un salto de tenant, no un filtro: 403. Ninguna ruta lee
+    // `?tenantId=` hoy (el panel admin usa servicios, no query), asi que el
+    // guard no rompe lecturas legitimas y cierra el hueco de /api/agent.
+    const requestedTenant = c.req.query("tenantId") ?? c.req.header("x-tenant-id");
+    if (requestedTenant && requestedTenant !== resolvedTenant) {
+      return c.json({ error: "tenant mismatch", code: "TENANT_MISMATCH" }, 403);
+    }
+    const _tenantIdForCtx = resolvedTenant;
     // APP_CTX_ACTOR_V3 - el ctx lleva el Actor completo: authz (PolicyContext)
     // lee ctx.actor.id, no un actorId plano. Si verifyJwtMiddleware no puso
     // actor, se sintetiza un actor humano del owner.
@@ -878,7 +891,11 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   app.post("/api/google/connect", async (c) => {
     const body = z.object({ capability: z.enum(["read", "write"]) }).parse(await c.req.json());
     if (config.mode === "sample") {
-      await db.put(c.get("owner"), "settings", {
+      // GOOGLE_SAMPLE_SETTINGS_TENANT_V1 - workspace.connected/connection leen
+      // `settings/google` con tdb ("tenant:owner"). Escribirlo con el Store crudo
+      // hacia que desconectar no desconectara nada: la accion preparada se
+      // aprobaba igual porque la lectura seguia viendo el seed enabled:true.
+      await tdb.put(c.get("owner"), "settings", {
         id: "google",
         enabled: true,
         connectionId: randomUUID(),
@@ -889,7 +906,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   });
   app.post("/api/google/disconnect", async (c) => {
     if (config.mode === "sample")
-      await db.put(c.get("owner"), "settings", { id: "google", enabled: false });
+      await tdb.put(c.get("owner"), "settings", { id: "google", enabled: false });
     else await google.disconnect(c.get("owner"));
     return c.json({ ok: true });
   });
@@ -991,6 +1008,10 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
       "[OpenMuse] BUSINESS_DATABASE_URL no esta definido: los SOPs con la tool query_business ejecutan su SQL contra DATABASE_URL, que es la misma base de datos donde viven los datos de todos los owners. Apunta BUSINESS_DATABASE_URL a un rol de solo lectura (GRANT SELECT) en otra base de datos.",
     );
 
-  return { app, auth, files, actions, workspace, agent, computer, users, bus };
+  // APP_EXPOSE_BROWSER_V1 - el browser es la frontera de red para monitors y
+  // browse_web. Los tests la sustituyen para probar backoff/reintentos sin
+  // depender de un browser worker real, en vez de inventar un modo de fallo
+  // en el producto.
+  return { app, auth, files, actions, workspace, agent, computer, users, bus, browser };
 }
 // IMPORTS_BACKEND_FIXED

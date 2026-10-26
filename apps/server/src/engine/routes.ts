@@ -410,13 +410,14 @@ export function agentRoutes(
     const patch: Record<string, unknown> = {};
     if (body.text !== undefined) patch.text = body.text;
     if (body.source !== undefined) patch.source = body.source;
-    if (body.category !== undefined) {
-      if (body.category === null) delete patch.category;
-      else patch.category = body.category;
-    }
+    // MEMORY_PATCH_NULL_CLEARS_V1 - antes `delete patch.category` borraba la
+    // clave del patch, no del registro: un patch {category:null} quedaba vacio y
+    // la ruta devolvia 422 "Empty memory patch" (el usuario no podia limpiar el
+    // campo). El CAS de Postgres hace merge jsonb (data || patch), asi que
+    // escribir null es la unica forma de limpiar sin una operacion nueva.
+    if (body.category !== undefined) patch.category = body.category;
     if (body.tags !== undefined) {
-      if (body.tags === null) delete patch.tags;
-      else patch.tags = [...new Set(body.tags.map((x) => x.toLowerCase()))];
+      patch.tags = body.tags === null ? null : [...new Set(body.tags.map((x) => x.toLowerCase()))];
     }
     if (Object.keys(patch).length === 0) {
       throw new AppError("Empty memory patch", 422);
@@ -477,9 +478,17 @@ export function agentRoutes(
     return c.json(identity);
   });
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
-  app.get("/notifications", async (c) =>
-    c.json((await service.snapshot(c.get("owner"))).notifications),
-  );
+  // NOTIF_TENANT_ENVELOPE_V1 - el panel tiene que poder verificar que la lista
+  // que pinta es del tenant con el que autentico. Un array suelto obligaba al
+  // cliente a fiarse de la cabecera X-Tenant-Id; el envelope lo hace explicito
+  // y sale del mismo ctx que resolvio el owner.
+  app.get("/notifications", async (c) => {
+    const ctx = c.get("ctx");
+    return c.json({
+      tenantId: ctx?.tenantId ?? null,
+      notifications: (await service.snapshot(c.get("owner"))).notifications,
+    });
+  });
   // NOTIF_ASSIGN_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â crear una notificaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n dirigida a un usuario concreto.
   // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS

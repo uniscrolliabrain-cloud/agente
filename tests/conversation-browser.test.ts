@@ -4,6 +4,7 @@ import test, { type TestContext } from "node:test";
 import { EventSchemas, EventType, type RunAgentInput } from "@ag-ui/core";
 import { lastValueFrom, toArray } from "rxjs";
 import { createApp } from "../apps/server/src/app.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import { ConversationAgent } from "../apps/server/src/engine/conversation.ts";
 import { browserFixture } from "./helpers/browser.ts";
 import { modelFixture } from "./helpers/model.ts";
@@ -50,6 +51,9 @@ async function chatFixture(t: TestContext, failure?: string) {
     ...fixture,
     ...server,
     browserCalls,
+    // CONV_BROWSER_TENANT_SCOPE_V1 - el engine y el workspace escriben con el
+    // store tenant-scoped; sembrar con el Store crudo hacia invisible el dato.
+    tdb: new TenantScopedStore(fixture.db, async () => "default"),
     conversation: new ConversationAgent(config, server.agent, "local-user"),
   };
 }
@@ -127,7 +131,9 @@ test("chat browse_web emits an honest completed error result when navigation fai
   assert.ok(result && result.type === EventType.TOOL_CALL_RESULT);
   assert.deepEqual(JSON.parse(result.content), { error: "Public page could not be opened" });
   assert.ok(requests[1].body.includes("Public page could not be opened"));
-  assert.deepEqual(fixture.browserCalls, ["/sessions"]);
+  // FIX_11_M_BROWSE_RETRY_V1 - browse_web reintenta una vez antes de rendirse:
+  // dos /sessions, sin /read, y el error se devuelve igual al modelo.
+  assert.deepEqual(fixture.browserCalls, ["/sessions", "/sessions"]);
   assert.equal((await fixture.db.list("local-user", "tasks")).length, 0);
 });
 
@@ -168,7 +174,7 @@ test("chat searches and reads actual owner mail without creating a task or sendi
   await fixture.workspace.ensureSample("another-owner", fixture.actions);
   const foreign = (await fixture.workspace.thread("another-owner", "trip-thread"))[0];
   const actionsBefore = await fixture.db.list("local-user", "actions");
-  await fixture.db.put("another-owner", "mail", {
+  await fixture.tdb.put("another-owner", "mail", {
     ...foreign,
     body: "PRIVATE FOREIGN AQUARIUM DETAILS",
   });
@@ -199,7 +205,7 @@ test("chat mail tools report disconnected mail and refuse another owner's thread
   await modelFixture(t, (index) => (index % 2 === 0 ? call : undefined));
   const fixture = await chatFixture(t);
   await fixture.workspace.ensureSample("another-owner", fixture.actions);
-  await fixture.db.put("local-user", "settings", { id: "google", enabled: false });
+  await fixture.tdb.put("local-user", "settings", { id: "google", enabled: false });
   async function toolError() {
     const events = (await lastValueFrom(fixture.conversation.run(runInput()).pipe(toArray()))).map(
       (event) => EventSchemas.parse(event),
@@ -209,7 +215,7 @@ test("chat mail tools report disconnected mail and refuse another owner's thread
     return JSON.parse(result.content).error;
   }
   assert.match(await toolError(), /disconnected/);
-  await fixture.db.put("local-user", "settings", { id: "google", enabled: true });
+  await fixture.tdb.put("local-user", "settings", { id: "google", enabled: true });
   call = { name: "read_mail_thread", arguments: { threadId: "trip-thread" } };
   assert.match(await toolError(), /not found/);
 });

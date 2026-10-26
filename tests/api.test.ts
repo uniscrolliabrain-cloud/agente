@@ -8,12 +8,14 @@ import { lastValueFrom, toArray } from "rxjs";
 import { createApp } from "../apps/server/src/app.ts";
 import type { Config } from "../apps/server/src/config.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import { ConversationAgent } from "../apps/server/src/engine/conversation.ts";
 import type { AgentService } from "../apps/server/src/engine/service.ts";
 import type { ActionProposal, Artifact, Workspace } from "../packages/domain/src/index.ts";
 import { testConfig } from "./helpers/config.ts";
 
 let db: Store,
+  tdb: TenantScopedStore,
   app: Awaited<ReturnType<typeof createApp>>["app"],
   agent: AgentService,
   config: Config,
@@ -23,6 +25,7 @@ const headers = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "appl
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-api-"));
   db = await createStore();
+  tdb = new TenantScopedStore(db, async () => "default");
   config = testConfig({ dataDir: directory, allowedOrigins: ["http://localhost:8081"] });
   ({ app, agent } = await createApp(db, config));
   const response = await app.request("/api/session", {
@@ -197,7 +200,7 @@ test("guided document delegation streams a rich tool result bound to its saved t
   assert.equal(result?.toolCallId, start?.toolCallId);
   assert.ok(result && typeof result.content === "string");
   const { id } = JSON.parse(result.content);
-  const task = await db.get<{ input: { messageId: string }; kind: string }>(
+  const task = await tdb.get<{ input: { messageId: string }; kind: string }>(
     "local-user",
     "tasks",
     id,

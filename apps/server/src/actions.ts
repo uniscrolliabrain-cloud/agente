@@ -15,6 +15,29 @@ import type { PolicyEngine } from "./engine/policy/engine.ts";
 import type { AgentRole } from "../../../packages/domain/src/agent.ts";
 import { AppError } from "./errors.ts";
 
+// ACTIONS_STORE_CONTRACT_V1 - ActionService solo usa estas cinco operaciones.
+// Declararlas aparte (en vez de pedir el Store completo) permite inyectar el
+// TenantScopedStore, que no implementa select/rawQuery/close. Y hace explicito
+// el contrato que importa aqui: la accion se guarda con la misma clave de
+// tenant que leen el worker y las rutas de aprobacion.
+export interface ActionsStore {
+  get<T = Record<string, unknown>>(owner: string, kind: string, id: string): Promise<T | null>;
+  put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T>;
+  insertIfAbsent<T extends { id: string }>(
+    owner: string,
+    kind: string,
+    value: T,
+  ): Promise<T | null>;
+  compareAndSwap<T>(
+    owner: string,
+    kind: string,
+    id: string,
+    expected: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ): Promise<T | null>;
+  claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null>;
+}
+
 interface Options {
   // TYPE_FIX_DEFERRED_V1 - campo deferred.
   deferred?: import("./actions-deferred.ts").DeferredActions;
@@ -45,7 +68,7 @@ export class ActionService {
   private readonly bus?: EventBus;
   private readonly policy?: PolicyEngine;
   constructor(
-    private readonly db: Store,
+    private readonly db: ActionsStore,
     private readonly options: Options,
     bus?: EventBus,
     policy?: PolicyEngine,

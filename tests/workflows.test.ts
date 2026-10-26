@@ -136,14 +136,27 @@ test("cancelling a task denies its pending action", async () => {
 });
 
 test("failed page checks back off, expose the error, and pause after repeated failures", async () => {
+  // MONITOR_TEST_V3 - el monitor sample://availability NUNCA falla: lee
+  // sample-pages y, si no existe, usa un texto por defecto. El test anterior
+  // sembraba la pagina para provocar un fallo que no podia ocurrir. El backoff
+  // se prueba donde de verdad se origina: en la frontera de red (browser.observe),
+  // sustituida aqui por un doble que falla siempre.
+  const originalObserve = server.browser.observe;
+  server.browser.observe = async () => {
+    throw new Error("page unreachable");
+  };
+  try {
+    await monitorBackoff();
+  } finally {
+    server.browser.observe = originalObserve;
+  }
+});
+
+async function monitorBackoff() {
   const monitor = await server.agent.createMonitor(owner, {
     title: "Public availability",
-    url: "sample://availability", // MONITOR_TEST_V1 - sample para no depender del browser worker
+    url: "https://example.com/availability",
   });
-  // El monitor se siembra con sample://availability. En modo sample,
-  // la primera observation ya marca un baseline y no falla. Para provocar
-  // fallo, sembramos una pagina que no existe.
-  await tdb.put(owner, "sample-pages", { id: "availability", text: "initial" });
   for (let i = 1; i <= 5; i++) {
     // MONITOR_TEST_V2 - leer el task INMEDIATAMENTE despues de que cambie de
     // estado, no en un loop que haga ticks extra. Un tick extra "observa" con
@@ -169,8 +182,10 @@ test("failed page checks back off, expose the error, and pause after repeated fa
         { nextRunAt: "2020-01-01T00:00:00Z" },
       );
   }
-  assert.equal((await db.get<Monitor>(owner, "monitors", monitor.id))?.status, "paused");
-});
+  // MONITOR_SCOPE_V1 - los monitores los escribe AgentService con el store
+  // tenant-scoped; leerlos con el Store crudo devolvia undefined.
+  assert.equal((await tdb.get<Monitor>(owner, "monitors", monitor.id))?.status, "paused");
+}
 
 test("dismissal racing acceptance never creates work for a dismissed idea", async () => {
   // Determinista: 4 iteraciones. En cada una, decidimos primero y luego intentamos

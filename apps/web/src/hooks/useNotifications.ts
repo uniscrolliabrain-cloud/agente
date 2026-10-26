@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch } from "../api/client";
+import { fetchNotifications } from "../api/notifications";
 
 export interface AgentNotification {
   id: string;
@@ -17,8 +18,8 @@ export function useNotifications(enabled: boolean, intervalMs = 8000) {
 
   const refresh = useCallback(async () => {
     try {
-      const list = await apiFetch<AgentNotification[]>("/api/agent/notifications");
-      setItems(list);
+      const { notifications } = await fetchNotifications<AgentNotification>();
+      setItems(notifications);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error cargando notificaciones");

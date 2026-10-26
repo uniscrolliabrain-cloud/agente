@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { apiFetch } from "../api/client";
+import { fetchNotifications } from "../api/notifications";
 
 interface Notif {
   id: string;
@@ -31,8 +32,8 @@ export default function NotificationsDropdown() {
 
   const load = async () => {
     try {
-      const list = await apiFetch<Notif[]>("/api/agent/notifications");
-      setItems(list);
+      const { notifications } = await fetchNotifications<Notif>();
+      setItems(notifications);
     } catch { /* silencio */ }
   };
 

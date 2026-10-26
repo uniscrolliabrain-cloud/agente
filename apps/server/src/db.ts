@@ -381,9 +381,17 @@ export async function createStore(
   let database: Database;
   if (options.databaseUrl) {
     const pool = createPool(options.databaseUrl);
-    console.log(
-      `[OpenMuse] DB: Postgres (url: ${options.databaseUrl}) Ã¢â‚¬â€ backend: postgres`,
-    );
+    // DB_LOG_NO_CREDENTIALS_V1 - antes se imprimia la connection string
+    // completa, con usuario y contrasena, en stdout/CI/logs. Ahora solo
+    // host:puerto/base, que es lo unico util para diagnosticar.
+    let where = "(url no parseable)";
+    try {
+      const { host, port, pathname } = new URL(options.databaseUrl);
+      where = `${host}:${port || "5432"}/${pathname.slice(1) || "?"}`;
+    } catch {
+      // Un DSN con formato host=... no es una URL; no se imprime nada de el.
+    }
+    console.log(`[OpenMuse] DB: Postgres (${where}) - backend: postgres`);
     database = { query: async (sql, params) => pool.query(sql, params), close: () => pool.end() };
   } else {
     // El directorio que guarda los datos es options.dataDir, no su padre: con

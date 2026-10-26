@@ -1,6 +1,6 @@
 # Auditoria de contratos del dominio
 
-> Generado por `scripts/audits/contracts.ts` el 2026-10-26T15:02:29.489Z.
+> Generado por `scripts/audits/contracts.ts` el 2026-10-26T17:15:55.489Z.
 
 - Contratos totales: **318**
 - Con implementacion real: **154**

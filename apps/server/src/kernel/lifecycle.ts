@@ -35,13 +35,12 @@ export async function checkKernelHealth(kernel: Kernel): Promise<KernelLifecycle
   let configResolverReady = false;
 
   try {
-    const { kernelContextSchema } = await import("./context/kernel-context.ts");
-    const ctx = kernelContextSchema.parse({
-      tenantId: "health",
-      owner: "health-check",
-      role: "system",
-      requestId: `health:${Date.now()}`,
-    });
+    // KERNEL_HEALTH_CTX_V2 - el health check usa systemContext(): desde que
+    // actorId es obligatorio en KernelContext, construir el objeto a mano hacia
+    // que el parse fallara SIEMPRE y el arranque reportera "unavailable" en
+    // todos los despliegues, tapando el estado real del store.
+    const { systemContext } = await import("./context/kernel-context.ts");
+    const ctx = systemContext("health", "health-check", `health:${Date.now()}`);
     try {
       await kernel.deps.tenants.resolve(ctx.owner);
       tenantsResolverReady = true;
