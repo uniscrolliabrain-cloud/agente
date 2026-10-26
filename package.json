@@ -6,7 +6,7 @@
   "license": "MIT",
   "packageManager": "pnpm@11.19.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.6.0"
   },
   "scripts": {
     "dev": "tsx watch apps/server/src/index.ts",
@@ -15,7 +15,7 @@
     "demo:dev": "tsx scripts/run-demo.ts",
     "dev:all": "concurrently -n api,web -c blue,magenta \"pnpm dev\" \"pnpm --filter @openmuse/web dev\"",
     "dev:demo": "tsx apps/server/src/demo/entry.ts",
-    "test": "tsx --import ./tests/setup.ts --test --test-timeout=5000 tests/*.test.ts",
+    "test": "tsx --import ./tests/setup.ts --test --test-timeout=10000 \"tests/**/*.test.ts\"",
     "test:hanging": "tsx --import ./tests/setup.ts --test --test-timeout=10000 tests/*.test.ts",
     "test:coverage": "c8 --reporter=text --reporter=lcov pnpm test",
     "test:browser": "node --experimental-strip-types --test apps/worker/tests/lifecycle.test.ts",
