@@ -14,7 +14,9 @@
 // Uso: pnpm exec tsx scripts/audits/idempotency.ts
 // Salida: docs/AUDIT_IDEMPOTENCY.md + exit 1 si hay huerfanas.
 
-import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+
+import { auditReportPath } from "./report-dir.ts";
 import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
 
@@ -199,9 +201,9 @@ async function main(): Promise<void> {
     lines.push("");
   }
 
-  await mkdir("docs", { recursive: true });
-  await writeFile("docs/AUDIT_IDEMPOTENCY.md", lines.join("\n"), "utf8");
-  console.log("[audit:idempotency] Informe escrito en docs/AUDIT_IDEMPOTENCY.md");
+  const reportPath = auditReportPath("AUDIT_IDEMPOTENCY.md");
+  await writeFile(reportPath, lines.join("\n"), "utf8");
+  console.log(`[audit:idempotency] Informe escrito en ${reportPath}`);
   console.log(
     `[audit:idempotency] DUPLICADAS: ${duplicatesWithConflict.length}   HUERFANAS: ${orphan.length}   REPETIDAS: ${sameFileDup.length}`,
   );

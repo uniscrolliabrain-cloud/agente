@@ -17,7 +17,9 @@
 //
 // Salida: docs/AUDIT_ANCHORS.md + exit 1 si hay anclajes rotos.
 
-import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+
+import { auditReportPath } from "./report-dir.ts";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -186,9 +188,9 @@ async function main(): Promise<void> {
     lines.push("");
   }
 
-  await mkdir("docs", { recursive: true });
-  await writeFile("docs/AUDIT_ANCHORS.md", lines.join("\n"), "utf8");
-  console.log("[audit:anchors] Informe escrito en docs/AUDIT_ANCHORS.md");
+  const reportPath = auditReportPath("AUDIT_ANCHORS.md");
+  await writeFile(reportPath, lines.join("\n"), "utf8");
+  console.log(`[audit:anchors] Informe escrito en ${reportPath}`);
   console.log(`[audit:anchors] OK: ${checks.length - missing.length}   ROTOS: ${missing.length}`);
 
   if (missing.length > 0) {

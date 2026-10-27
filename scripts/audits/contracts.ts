@@ -12,6 +12,8 @@
 import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 
+import { auditReportPath } from "./report-dir.ts";
+
 interface Contract {
   name: string;
   file: string;
@@ -237,29 +239,14 @@ async function main(): Promise<void> {
   }
   lines.push("");
 
-  if (!(await safeMkdir("docs"))) return;
-  await writeFile("docs/AUDIT_CONTRACTS.md", lines.join("\n"), "utf8");
-  console.log(`[audit:contracts] Informe escrito en docs/AUDIT_CONTRACTS.md`);
+  const reportPath = auditReportPath("AUDIT_CONTRACTS.md");
+  await writeFile(reportPath, lines.join("\n"), "utf8");
+  console.log(`[audit:contracts] Informe escrito en ${reportPath}`);
   console.log(`[audit:contracts] OK: ${ok.length}   PENDING: ${pending.length}   HUERFANOS: ${missing.length}`);
 
   if (missing.length > 0) {
     console.error(`[audit:contracts] Hay ${missing.length} contratos sin implementar y sin marca PENDING.`);
     process.exit(1);
-  }
-}
-
-async function safeMkdir(dir: string): Promise<boolean> {
-  try {
-    await readdir(dir);
-    return true;
-  } catch {
-    try {
-      const { mkdir } = await import("node:fs/promises");
-      await mkdir(dir, { recursive: true });
-      return true;
-    } catch {
-      return false;
-    }
   }
 }
 

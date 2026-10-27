@@ -189,14 +189,64 @@ qué no se pudo probar. Y `docs/operacion/GATE.md` enlazado desde `README.md`.
 
 | Fase | Estado | Antes | Después | Test |
 |---|---|---|---|---|
-| V0 gate único | pendiente | 3 listas distintas, sin JSON, informes en `docs/` | `pnpm gate` + `artifacts/gate/` | — |
+| V0 gate único | **hecho** | 3 listas distintas, sin JSON, informes en `docs/` | `pnpm gate`, `artifacts/gate/report.json`, `GATE.md`, registro único | `tests/gate/gate-report.test.ts` (9) |
 | V1 idempotencia real | pendiente | 157 / 4 / 138, exit 1 | 3 categorías + test de doble efecto | `tests/gate/idempotency-*.test.ts` |
 | V2 contratos | pendiente | 150 huérfanos, exit 1 | 0, con import real | `tests/gate/contracts-*.test.ts` |
 | V3 meta hints | pendiente | se calcula y se tira | cableado o borrado | `tests/gate/meta-*.test.ts` |
 | V4 docs:anchors | pendiente | no existe | verde + falla con fixture roto | `tests/gate/docs-anchors.test.ts` |
 | V5 gate en CI | pendiente | 6 audits vs coherence | `pnpm gate` en los tres | — |
 
-## 6. Fuera de alcance
+## 6. V0 cerrado (sesion del 2026-10-27)
+
+### Lo que se construyo
+
+| Pieza | Que hace |
+|---|---|
+| `scripts/gate-report.ts` (`pnpm gate`) | typecheck + typecheck del worker + suite + los 7 audits; `artifacts/gate/report.json` legible por maquina y `summary.txt` de una pantalla |
+| `scripts/audits/registry.ts` | **la lista unica** de auditorias, con `blocking` y los contadores que cada una publica. `coherence.ts` y el gate la importan: no pueden divergir |
+| `scripts/audits/report-dir.ts` (`AUDIT_REPORT_DIR`) | los informes de los audits salen de `docs/` y van a `artifacts/gate/audits/` |
+| [GATE.md](GATE.md) | que comprueba cada check, que significa fallarlo y **que no cubre** |
+| `tests/gate/gate-report.test.ts` | 9 tests: limite de 30 lineas del resumen, advisory vs bloqueante, contadores que no se inventan, el registro apunta a ficheros que existen |
+
+### Dos checks que no podian fallar
+
+Lo que mas importaba no era el JSON, era que dos de los siete audits eran decorativos:
+
+1. **`layers`** calculaba las violaciones, imprimia el numero y salia con 0. Solo el
+   `catch` devolvia 1: `0 violaciones` y `40 violaciones` eran indistinguibles para el
+   gate. Corregido (`AUDIT_LAYERS_EXIT_V1`) y probado en el registro con la linea que
+   decide.
+2. **`console`** tampoco falla nunca. Hoy hay **42 ocurrencias** en 226 ficheros de
+   `apps/server/src`. Convertirlo en error es cambiar el umbral a mano y despues
+   arreglar 42 sitios: eso es una campana, no un parche. Se declara `blocking: false`
+   y el gate lo publica como `advisory` — ni lo esconde ni finge que bloquea.
+
+### Los contadores miden el corpus, no el comportamiento (medido)
+
+Al escribir esta fase se movieron dos contadores **sin tocar una linea de aplicacion**:
+`audit:idempotency` paso de 815 a **820** ficheros revisados y de 4 a **9** huerfanas;
+`audit:tenant-default` de 492 a **497**. Los 5 ficheros de diferencia son exactamente
+los 5 ficheros nuevos aparecidos desde el snapshot (`registry.ts`, `report-dir.ts`,
+`gate-report.ts`, `CAMPANA-VERDAD.md`, `HANDOFF-CLINE.md`). Los dos audits recorren el
+arbol entero. Es la mejor prueba de por que V1 y V2 existen: hoy el gate se mueve al
+documentar.
+
+Queda **sin explicar** un delta que anoto aqui para no hacerlo pasar por bueno: el
+informe versionado `docs/AUDIT_CONSOLE.md` (2026-10-26) declara 24 ocurrencias sobre
+226 ficheros y el mismo audit sobre los mismos 226 ficheros cuenta hoy 42. No lo he
+atribuido a ninguna causa.
+
+### Lo que no se puede dar por hecho todavia
+
+- Los dos rojos de siempre siguen rojos: `contracts` (150 huerfanos) e `idempotency`
+  (157 duplicadas / 138 repetidas). V0 no los toca: les da un sitio donde medirse.
+- **El CI no usa el gate todavia.** `ci.yml` sigue con su lista de seis audits a mano y
+  `deploy.yml` con `audit:coherence`. Eso es V5, a proposito: un PR por fase.
+- Los 7 informes versionados en `docs/AUDIT_*.md` son fotografias ya obsoletas. Su
+  retirada es del corpus documental ([HANDOFF-CLINE.md](HANDOFF-CLINE.md)); esta campana
+  no borra ficheros de `docs/` que no le pertenecen.
+
+## 7. Fuera de alcance
 
 - **Coste, tokens, cuota y `llm-usage`**: F2 del mandato LLM. Yo no toco el dinero;
   solo dejo de contarlo mal donde me toca (si acaso, un PR aparte cuando F2 aterrice).
