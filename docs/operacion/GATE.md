@@ -95,13 +95,43 @@ check para ponerlo verde**. Se vacian con criterio en V1 (idempotencia) y V2
 | `typecheck:worker` | 2 s |
 | `audit:contracts` | 17 s |
 | resto de audits | 0,7 – 2,2 s |
-| `test` | **no termino en 32 min** (el mismo glob tarda ~151 s en el sandbox de referencia) |
+| `test` | **no termino en 33 min** y se corto la corrida (el mismo glob tarda ~151 s en el sandbox de referencia) |
 
 Consecuencia practica: **el gate completo no cabe en una sesion corta** en esta
 maquina. Para iterar, `pnpm gate --only=<step>`, que es para lo que existe el flag.
 
-La lentitud del step `test` (>13x el sandbox, con procesos hijos que van rotando: avanza
-por lotes, no esta colgado) **no tiene causa establecida**. No se ha medido si es el
-sistema de ficheros de Windows, el transform de `tsx` en frio o tests que esperan un
-timeout de red. Queda como campana propia, con el dato de que en CI (Linux) el mismo
-step tarda dos minutos y medio.
+### Causa medida del step `test` (no es un fichero colgado)
+
+No hay un test que se atasque: **todos los ficheros son caros, y por la base de datos**.
+Cada fichero llama a `createStore({ dataDir })` con un directorio temporal nuevo, y sin
+`DATABASE_URL` eso levantando un cluster **PGlite** desde cero. Sonda directa
+(`om-pglite-probe.ts`, ignorado por `.gitignore`) en esta maquina:
+
+| Operacion | Tiempo | CPU del proceso (todo el guion) |
+|---|---|---|
+| `createStore` con dataDir **nuevo** | **35,3 s** | user 0,23 s + sys 0,73 s para los 70 s del guion |
+| `createStore` con **otro** dataDir nuevo | **24,2 s** | idem |
+| `createStore` reabriendo el **mismo** dataDir | 3,7 s | idem |
+| `put` | 44 ms | |
+| 20 x `get` | 194 ms (10 ms cada uno) | |
+
+Es decir: **~70 s de reloj con menos de 1 s de CPU**. No es calculo, es espera de E/S
+(escritura del cluster: initdb en WASM escribe muchos ficheros pequenos). El candidato
+mas probable es el antivirus/filtro del sistema de ficheros de Windows, pero **eso no
+esta probado** y no se puede probar aqui (sin admin, sin Docker y sin `psql` en la
+maquina).
+
+Dos consecuencias duras:
+
+1. 111 ficheros de test x 25-35 s de base de datos por fichero = el step de 50+ minutos.
+   En CI (Linux) el mismo glob tarda 151 s.
+2. Varios tests **fallan** aqui con `test timed out after 10000ms`: su `before()` no cabe
+   en el presupuesto de 10 s porque levantar la base de datos ya se lo come entero
+   (`tests/agency-bootstrap.test.ts`, `tests/agent-api.test.ts`). Eso no es producto en
+   rojo, es entorno.
+
+Camino de salida, en orden de valor: (1) un Postgres real local o remoto via
+`DATABASE_URL`, que elimina el initdb por fichero —es el mismo Neon que hace falta para
+el despliegue—; (2) reutilizar un unico dataDir por corrida si se sigue con PGlite
+(3,7 s en vez de 35 s, a cambio de tocar el aislamiento entre tests); (3) hacer el
+timeout configurable para local, que es una adaptacion, no un arreglo.
