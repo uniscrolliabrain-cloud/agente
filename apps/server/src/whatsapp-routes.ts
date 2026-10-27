@@ -1,6 +1,6 @@
 // WHATSAPP_ROUTES_V1 - aprobacion y envio de WhatsApp.
 
-import { createHash } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AgentService } from "./engine/service.ts";
@@ -63,18 +63,35 @@ export function whatsappRoutes(service: AgentService) {
     return c.json({ ok: true });
   });
 
-  // POST /api/whatsapp/webhook -> recibe de Evolution.
+  // POST /api/whatsapp/webhook -> recibe de Evolution o de la Cloud API de Meta.
   // WHATSAPP_WEBHOOK_HMAC_V1
+  //
+  // WHATSAPP_WEBHOOK_HMAC_V2 - tres fallos de la version anterior:
+  //  1. leia WHATSAPP_WEBHOOK_SECRET, un nombre que no aparece en .env.example ni en
+  //     secrets-check. El usuario configuraba WHATSAPP_APP_SECRET (el documentado) y
+  //     `expected` quedaba undefined: el webhook aceptaba cualquier peticion.
+  //  2. calculaba sha256(raw + secret), que no es la firma que envia Meta
+  //     (HMAC-SHA256 con el app secret como clave). Nunca habria validado nada.
+  //  3. comparaba con !==, filtrando el resultado por tiempo.
+  // Ahora: nombre documentado, firma real y fail-closed sin secreto.
   app.post("/webhook", async (c) => {
-    const expected = process.env.WHATSAPP_WEBHOOK_SECRET;
+    const expected =
+      process.env.WHATSAPP_APP_SECRET?.trim() || process.env.WHATSAPP_WEBHOOK_SECRET?.trim();
+    if (!expected)
+      throw new AppError("WhatsApp webhook no configurado (falta WHATSAPP_APP_SECRET)", 503);
+    const raw = await c.req.text();
     const signature = c.req.header("x-hub-signature-256") ?? c.req.header("x-signature");
-    if (expected) {
-      const raw = await c.req.text();
-      const hmac = createHash("sha256").update(raw + expected).digest("hex");
-      if (signature !== `sha256=${hmac}` && signature !== hmac) {
-        throw new AppError("Invalid webhook signature", 401);
-      }
-    }
+    if (!signature) throw new AppError("Missing webhook signature", 401);
+    // Meta manda hex; Evolution manda base64. Se aceptan las dos formas.
+    const digest = createHmac("sha256", expected).update(raw).digest();
+    const provided = signature.replace(/^sha256=/, "").trim();
+    const candidates = [digest.toString("hex"), digest.toString("base64")];
+    const providedBuf = Buffer.from(provided);
+    const match = candidates.some((candidate) => {
+      const buf = Buffer.from(candidate);
+      return providedBuf.length === buf.length && timingSafeEqual(providedBuf, buf);
+    });
+    if (!match) throw new AppError("Invalid webhook signature", 401);
     const body = await c.req.json().catch(() => ({}));
     const from = (body as { data?: { key?: { remoteJid?: string }; message?: { conversation?: string } } }).data?.key?.remoteJid;
     const text = (body as { data?: { message?: { conversation?: string } } }).data?.message?.conversation;

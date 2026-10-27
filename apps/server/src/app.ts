@@ -432,7 +432,10 @@ export async function createApp(
     );
   });
   app.post("/api/whatsapp/incoming", async (c) => {
-    const expected = process.env.WHATSAPP_WEBHOOK_TOKEN;
+    // WHATSAPP_INCOMING_TOKEN_V1 - el nombre documentado es WHATSAPP_VERIFY_TOKEN;
+    // WHATSAPP_WEBHOOK_TOKEN queda como alias para instalaciones antiguas.
+    const expected =
+      process.env.WHATSAPP_WEBHOOK_TOKEN?.trim() || process.env.WHATSAPP_VERIFY_TOKEN?.trim();
     if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
     const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
     // WHATSAPP_RATE_LIMIT
