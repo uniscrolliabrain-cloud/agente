@@ -1,0 +1,32 @@
+# FLY_BROWSER_TOML_V1 - browser worker (Playwright) en la red privada de Fly.
+#
+# Solo lo alcanza el API por http://agntiapro-browser.internal:8790. Nunca se
+# expone a Internet: el worker navega con la sesion del cliente.
+#
+#   fly deploy -c fly.browser.toml -a agntiapro-browser
+app = "agntiapro-browser"
+primary_region = "mad"
+
+[build]
+  dockerfile = "apps/worker/Dockerfile"
+
+[env]
+  WORKER_HOST = "0.0.0.0"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2gb"
+
+# El perfil de navegador tiene que sobrevivir a un reinicio: sin volumen, el
+# cliente pierde las sesiones de Google/Meta y hay que reconectar cada vez.
+[[mounts]]
+  source = "agntiapro_browser_profiles"
+  destination = "/data"
+
+[checks.health]
+  type = "http"
+  port = 8790
+  path = "/health"
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "30s"

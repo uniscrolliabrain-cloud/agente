@@ -1,8 +1,11 @@
 # Despliegue de agntiapro.io
 
 > Estado: plan de la fase 1 (dogfooding: la agencia como primer tenant). Nada de
-> esto está desplegado todavía. Lo que ya existe en el repo es `Dockerfile`,
-> `fly.toml`, `infra/compose.yaml`, `scripts/secrets-check.ts` y `doppler.yaml`.
+> esto está desplegado todavía. Lo que ya existe en el repo: `Dockerfile` (build
+> del API **y** del panel), `fly.toml` (panel + API), `fly.worker.toml`,
+> `fly.browser.toml`, `apps/site` (landing de Vercel), `.github/workflows/deploy.yml`,
+> `scripts/secrets-check.ts`, `scripts/smoke-deploy.ts`, `doppler.yaml` y
+> `pnpm bootstrap:agency` (alta del tenant de la agencia).
 
 ## 1. Decisión de topología
 
@@ -26,10 +29,10 @@ cliente, CORS del origen de Vercel en el API, y verificar el stream.
 
 | Nombre | Apunta a | Uso |
 |---|---|---|
-| `agntiapro.io` | Vercel (A/CNAME) | redirección 308 a `www` |
-| `www.agntiapro.io` | Fly (`agntiapro-web`) | panel + API (fase 1) |
-| `api.agntiapro.io` | Fly (`agntiapro-api`) | API, para integraciones y webhooks de Meta/Vapi/Stripe |
-| `app.agntiapro.io` | Vercel | reservado: panel en fase 2 |
+| `agntiapro.io` | Vercel (A/CNAME) | sitio público (`apps/site`) |
+| `www.agntiapro.io` | Fly (`agntiapro-api`) | panel + API (fase 1) |
+| `api.agntiapro.io` | Fly (`agntiapro-api`, segundo certificado) | API para webhooks de Meta/Vapi/Stripe |
+| `app.agntiapro.io` | Vercel | reservado: panel separado en fase 2 |
 
 En Fly los certificados son automáticos una vez el CNAME está puesto. En Vercel,
 `www` y el apex se configuran en el proyecto; el apex solo puede ir a Vercel si
@@ -97,19 +100,22 @@ Reglas:
 Tres apps, un solo repo:
 
 ```bash
-fly launch --no-deploy -a agntiapro-web      # reusa el fly.toml actual
-fly volumes create agntiapro_data -a agntiapro-web -r mad -s 10
-fly deploy -a agntiapro-web
+fly launch --no-deploy -a agntiapro-api      # reusa el fly.toml actual
+fly volumes create agntiapro_data -a agntiapro-api -r mad -s 10
+fly deploy -a agntiapro-api
+fly certs add www.agntiapro.io -a agntiapro-api
+fly certs add api.agntiapro.io -a agntiapro-api
 ```
 
-`agntiapro-web` sirve API + panel en el mismo proceso (es el `fly.toml` actual
-con `OPENMUSE_PROCESS_ROLE=all`). A partir de ~3 tenants conviene separar:
+`agntiapro-api` sirve API + panel en el mismo proceso (es el `fly.toml` actual
+con `OPENMUSE_PROCESS_ROLE=all`; el Dockerfile construye `apps/web` y copia
+`apps/web/dist`, que `app.ts` sirve por `serveStatic`). Cuando haya tenants de
+pago, se separa el trabajo de fondo:
 
-- `agntiapro-api` → `OPENMUSE_PROCESS_ROLE=api`, con `http_service`.
-- `agntiapro-worker` → `OPENMUSE_PROCESS_ROLE=worker`, **sin** `http_service`
-  ni health check HTTP; se vigila con el log y `/api/health-deep` desde el API.
-- `agntiapro-browser` → `apps/worker` (Playwright), solo red interna,
-  `BROWSER_WORKER_URL=http://agntiapro-browser.internal:8790`.
+- `agntiapro-worker` → `fly.worker.toml`, `OPENMUSE_PROCESS_ROLE=worker`, **sin**
+  `http_service`; se vigila con el log y `/api/health-deep` desde el API.
+- `agntiapro-browser` → `fly.browser.toml` (`apps/worker`, Playwright), solo red
+  interna, `BROWSER_WORKER_URL=http://agntiapro-browser.internal:8790`.
 
 Notas de operación:
 
@@ -124,18 +130,19 @@ Notas de operación:
 
 ## 7. Vercel (sitio público)
 
-- Proyecto con *Root Directory* `apps/web` no: el sitio de marketing es estático
-  y puede vivir en `apps/site` (aún no existe). Mientras no exista, Vercel sirve
-  una landing mínima y el panel sigue en Fly.
-- Build: `pnpm --filter @openmuse/web build` solo sirve para previews del panel;
-  requiere `VITE_API_URL` (pendiente, ver §1).
+- Proyecto con *Root Directory* `apps/site`: landing estática, sin build. El
+  panel sigue en Fly.
+- Build del panel: `pnpm --filter @openmuse/web build`; en Fly lo hace el
+  Dockerfile. Para previews del panel en Vercel haría falta `VITE_API_URL`
+  (pendiente, ver §1): hoy el cliente llamal rutas relativas.
 - Nunca metas claves de Supabase **service role** ni `SUPABASE_JWT_SECRET` en
   Vercel: solo variables públicas.
 
 ## 8. CI/CD
 
-Lo que ya hay (`.github/workflows/ci.yml`): typecheck, tests, build, y dos jobs
-(worker, integración) en `continue-on-error`.
+Lo que ya hay: `.github/workflows/ci.yml` (typecheck, tests, audits, worker e
+integración) y `.github/workflows/deploy.yml` (tag `v*` → gate, import de
+secretos desde Doppler, deploy de API y worker, deploy del sitio y humo final).
 
 Gate mínimo antes de tocar `main` (campaña `deploy`):
 
@@ -153,12 +160,13 @@ son credenciales de la plataforma, no de la app).
 ## 9. Humo tras cada despliegue
 
 ```bash
+pnpm smoke:deploy --url=https://www.agntiapro.io --tenant=agntia
 curl -fsS https://www.agntiapro.io/api/health
 curl -fsS https://www.agntiapro.io/api/health-deep
 # login -> token; el panel debe pintar el workspace de su tenant
 # un JWT manipulado (un byte del payload) debe dar 401, no 200
 # ?tenantId=otro debe dar 403
-fly logs -a agntiapro-web | grep -E "kernel|error"
+fly logs -a agntiapro-api | grep -E "kernel|error"
 ```
 
 Gate de aceptación de la fase 1: los cinco puntos anteriores en verde con la
@@ -190,16 +198,18 @@ agencia como tenant `agntia`, y `X-Tenant-Id: agntia` en las respuestas del pane
 1. Cuentas y secretos en Doppler (`dev`), `pnpm secrets:check --mode=live` en verde.
 2. Neon + migraciones + `DATABASE_URL` en `prd`.
 3. Supabase + hook de claim + redirect URLs.
-4. `fly launch` del API, import de secretos, primer deploy.
-5. DNS `www` y `api`, certificados, vuelta al humo del §9.
-6. Vercel solo para el sitio público.
-7. Segunda pasada: separar worker y browser worker, subir `min_machines_running`.
+4. Alta del tenant de la agencia: `pnpm bootstrap:agency --admin=<tu email>`.
+5. `fly deploy` del API, import de secretos, certificados de `www` y `api`.
+6. DNS y vuelta al humo del §9 (con `X-Tenant-Id: agntia`).
+7. Vercel solo para el sitio público (apex).
+8. Segunda pasada: separar worker y browser worker, subir `min_machines_running`.
 
 ## 13. Lo que este documento todavía no cubre
 
-- `fly.toml` del worker y del browser worker (hoy hay uno solo, todo-en-uno).
-- `apps/site` para el sitio de Vercel.
-- El panel en Vercel (`VITE_API_URL` + CORS + verificación de SSE).
+- El panel en Vercel (`VITE_API_URL` + CORS + verificación de SSE). La fase 1 va
+  servida por Fly en el mismo origen.
+- Correr `pnpm bootstrap:agency` contra el deployment real y verificar el panel
+  con `X-Tenant-Id: agntia` (hoy solo está probado contra la app en proceso).
 - Campañas `leads` y `canales`: sin ellas el producto aún no busca leads ni
   habla por WhatsApp/teléfono, así que el despliegue sirve para el dogfooding
   de la agencia, no para vender todavía.

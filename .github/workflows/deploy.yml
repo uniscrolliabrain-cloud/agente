@@ -1,0 +1,89 @@
+name: Deploy
+
+# DEPLOY_WORKFLOW_V1 - el despliegue no sale de un push a main: sale de un tag.
+# main puede ir por delante (ramas de campana, fixes a medias); un tag `v*` es la
+# unica senal de "esto se publica".
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "preview o production"
+        required: true
+        default: "preview"
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: gate (typecheck + tests + audits)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.6"
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+        env:
+          ALLOW_NETWORK: "0"
+      - run: pnpm audit:coherence
+
+  fly:
+    name: fly (api + worker)
+    needs: gate
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      # Los secretos no viajan por el repo: Doppler los importa a la app antes
+      # del deploy (FLY_API_TOKEN y DOPPLER_TOKEN son secretos de GitHub).
+      - name: importar secretos desde Doppler
+        run: |
+          curl -sL https://cli.doppler.com/install.sh | sh
+          doppler secrets download --no-file --format docker --config prd \
+            | flyctl secrets import -a agntiapro-api --stage
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - run: flyctl deploy --remote-only -a agntiapro-api
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - run: flyctl deploy --remote-only -c fly.worker.toml -a agntiapro-worker
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: humo
+        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.io --tenant=agntia
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+
+  vercel:
+    name: vercel (sitio publico)
+    needs: gate
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.6"
+      - run: npm i -g vercel@latest
+      - name: deploy
+        working-directory: apps/site
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "preview" ]; then
+            vercel deploy --token "$VERCEL_TOKEN"
+          else
+            vercel deploy --prod --token "$VERCEL_TOKEN"
+          fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      - name: humo del sitio
+        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.io --site=https://agntiapro.io

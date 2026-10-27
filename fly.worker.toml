@@ -1,0 +1,38 @@
+# FLY_WORKER_TOML_V1 - worker de tareas durables, sin HTTP publico.
+#
+# Se despliega desde el mismo Dockerfile que el API (el entrypoint cambia con
+# OPENMUSE_PROCESS_ROLE). No lleva [http_service]: no atiende trafico, se vigila
+# por logs y por /api/health-deep del API.
+#
+#   fly deploy -c fly.worker.toml -a agntiapro-worker
+app = "agntiapro-worker"
+primary_region = "mad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  WORKSPACE_MODE = "live"
+  AGENT_BACKEND = "model"
+  OPENMUSE_PROCESS_ROLE = "worker"
+  DATA_DIR = "/data"
+  TASK_WORKER_ENABLED = "true"
+  COMPUTER_ENABLED = "false"
+  BACKUP_INTERVAL_HOURS = "24"
+  BACKUP_RETENTION_DAYS = "7"
+
+# Sin volumen: con DATABASE_URL no hay PGlite local que conservar. Los backups
+# los hace el worker del API sobre Postgres (BACKUP_INTERVAL_HOURS).
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+[checks.health]
+  # El rol worker no abre puerto HTTP; el chequeo real es el log de arranque y
+  # /api/health-deep desde el API. Se deja documentado, no configurado.
+  type = "script"
+  command = "test ! -f /tmp/worker-crashed"
+  interval = "60s"
+  timeout = "5s"
+  grace_period = "30s"

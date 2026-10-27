@@ -1,4 +1,7 @@
-app = "openmuse-api"
+# FLY_WEB_TOML_V1 - panel + API en el mismo proceso.
+# app.ts sirve apps/web/dist en el mismo origen, asi que el cliente puede seguir
+# llamando rutas relativas (/api/...) y el stream SSE del chat no cruza dominios.
+app = "agntiapro-api"
 primary_region = "mad"
 
 [build]
@@ -16,6 +19,9 @@ primary_region = "mad"
   COMPUTER_ENABLED = "false"
   BACKUP_INTERVAL_HOURS = "24"
   BACKUP_RETENTION_DAYS = "7"
+  # PUBLIC_API_URL deriva el redirect de Google OAuth y los enlaces firmados.
+  PUBLIC_API_URL = "https://www.agntiapro.io"
+  ALLOWED_ORIGINS = "https://www.agntiapro.io,https://api.agntiapro.io"
 
 [http_service]
   internal_port = 8787
@@ -35,7 +41,7 @@ primary_region = "mad"
   memory = "1gb"
 
 [[mounts]]
-  source = "openmuse_data"
+  source = "agntiapro_data"
   destination = "/data"
 
 [checks.health]

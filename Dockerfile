@@ -10,7 +10,10 @@ WORKDIR /app
 COPY . .
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
     pnpm install --frozen-lockfile
-RUN pnpm build:server
+# DOCKER_BUILD_WEB_V1 - el API sirve apps/web/dist en el mismo origen
+# (app.ts, serveStatic). Sin este build la imagen arranca solo con API y el
+# panel da 404, que es peor que un fallo de build visible.
+RUN pnpm build:server && pnpm --filter @openmuse/web build
 
 # ---------- runtime ----------
 FROM node:22-bookworm-slim AS runtime
@@ -21,6 +24,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# app.ts resuelve ../apps/web/dist desde dist/apps/server/src.
+COPY --from=build /app/apps/web/dist ./dist/apps/web/dist
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/apps/computer/workspace-template ./dist/apps/computer/workspace-template
 RUN mkdir -p /data && chown -R node:node /data
