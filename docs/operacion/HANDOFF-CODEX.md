@@ -26,9 +26,15 @@
 
 | Lane | Rama | Dueño | Rutas que puede escribir |
 |---|---|---|---|
-| 1 · canales/runtime | `campaign/canales-runtime` | Buffy | `apps/server/src/**`, `scripts/**`, `docs/operacion/**`, `tests/*.test.ts` (raíz) |
-| 2 · adaptadores de proveedor | `campaign/canales-adapters` | **Codex** | `packages/integrations/src/**`, `tests/adapters/**` |
-| 3 · panel (opcional) | `campaign/panel-drafts` | **Codex** | `apps/web/src/**`, `apps/web/docs/**` |
+| 1 · canales/runtime | `campaign/canales-runtime` | Buffy | `apps/server/src/app.ts`, `engine/service.ts`, `engine/model.ts`, `engine/sop-executor.ts`, `*-routes.ts`, `scripts/**`, `docs/operacion/**`, `tests/*.test.ts` (raíz) |
+| 2 · **LLM → workspace** (la campaña grande) | `campaign/llm-runtime` | **Codex** | `packages/integrations/src/llm/**`, `apps/server/src/engine/model-chain.ts`, `embeddings.ts`, `planner/**`, `execution/**`, `context/**`, `kernel/authors/**`, `tests/llm/**` — ver [HANDOFF-LLM.md](HANDOFF-LLM.md) |
+| 3 · adaptadores de proveedor | `campaign/canales-adapters` | **Codex** (después del lane 2) | `packages/integrations/src/adapters/**`, `packages/integrations/src/stubs/**`, `tests/adapters/**` |
+| 4 · panel (opcional) | `campaign/panel-drafts` | **Codex** | `apps/web/src/**`, `apps/web/docs/**` |
+
+El lane 2 lleva el peso: es el mandato de [HANDOFF-LLM.md](HANDOFF-LLM.md), con
+fases F0–F6 y el criterio final de una SOP de punta a punta con coste real y
+resultado visible en el panel. El lane 3 (salir hacia los proveedores) es lo de la
+sección 3 de este documento y no se solapa: vive en `packages/integrations/src/adapters/**`.
 
 `tests/` en la raíz es del lane 1; los tests de adaptadores viven en
 `tests/adapters/` para que el runner (`tests/**/*.test.ts`) los coja sin que un
@@ -61,7 +67,11 @@ Verificado en esta sesión sobre `c69e028`:
 
 **Pendiente y conocido** (no lo descubras de cero): `apps/worker` tiene su
 typecheck en `continue-on-error: true` porque arrastra errores previos; está
-asignado al lane 3, no lo arregles desde el lane 2.
+asignado al lane 4, no lo arregles desde el lane 2.
+
+**Auditoría del camino LLM en** [AUDITORIA-LLM-WORKSPACE.md](AUDITORIA-LLM-WORKSPACE.md):
+12 defectos con evidencia y la definición operativa de "profundo". Antes de tocar
+nada de la capa de modelos, léela.
 
 ## 3. Contratos congelados (lane 2)
 
