@@ -18,6 +18,7 @@ import type { Store } from "../../apps/server/src/db.ts";
 import { TenantScopedStore } from "../../apps/server/src/db-tenant.ts";
 import { TenantService } from "../../apps/server/src/engine/tenant.ts";
 import type { Config } from "../../apps/server/src/config.ts";
+import type { SOP } from "../../packages/domain/src/sop.ts";
 
 export interface AgencyPricingTier {
   name: string;
@@ -39,9 +40,16 @@ export interface AgencyProfile {
 }
 
 export interface BootstrapAction {
-  kind: "tenant-registry" | "membership" | "memory" | "business-schema" | "business-record";
+  kind: "tenant-registry" | "membership" | "memory" | "business-schema" | "business-record" | "sop";
   id: string;
   action: "created" | "updated" | "skipped";
+}
+
+export interface BootstrapOptions {
+  /** SOPs de la agencia. Sin esto el tenant queda con perfil pero sin operativa. */
+  sops?: SOP[];
+  /** Reescribe las SOPs existentes (por defecto se saltan: pueden estar editadas a mano). */
+  overwriteSops?: boolean;
 }
 
 export interface BootstrapResult {
@@ -134,6 +142,7 @@ export async function bootstrapAgency(
   config: Config,
   owner: string,
   profile: AgencyProfile,
+  options: BootstrapOptions = {},
 ): Promise<BootstrapResult> {
   if (!/^[a-z0-9-]{1,64}$/.test(profile.tenantId)) {
     throw new Error(`tenantId invalido: ${profile.tenantId}`);
@@ -196,6 +205,22 @@ export async function bootstrapAgency(
       id: row.id,
       action: existing ? "updated" : "created",
     });
+  }
+
+  // 6) SOPs. Se saltan si ya existen: una SOP editada desde el panel no debe
+  // volver al borrador del repo por relanzar el bootstrap.
+  for (const sop of options.sops ?? []) {
+    const existing = await scoped.get(owner, "sops", sop.id);
+    if (existing && !options.overwriteSops) {
+      actions.push({ kind: "sop", id: sop.id, action: "skipped" });
+      continue;
+    }
+    await scoped.put(owner, "sops", {
+      ...sop,
+      createdAt: (existing as { createdAt?: string } | null)?.createdAt ?? sop.createdAt ?? now,
+      updatedAt: now,
+    });
+    actions.push({ kind: "sop", id: sop.id, action: existing ? "updated" : "created" });
   }
 
   return { tenantId, owner, actions };

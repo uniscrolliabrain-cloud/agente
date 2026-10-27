@@ -4,6 +4,7 @@
 //   pnpm bootstrap:agency --admin=tu@agntiapro.io
 //   pnpm bootstrap:agency --admin=tu@agntiapro.io --profile=clientes/agntia/agency.json
 //   pnpm bootstrap:agency --admin=tu@agntiapro.io --dry-run
+//   pnpm bootstrap:agency --admin=tu@agntiapro.io --force   (reescribe las SOPs)
 //
 // Requiere el owner ya creado (pnpm admin:create o el primer login con Supabase)
 // y el API parado si usas PGlite: el proceso abre la misma base.
@@ -16,6 +17,7 @@ import { createStore } from "../apps/server/src/db.ts";
 import { UserService } from "../apps/server/src/users.ts";
 import { readConfig } from "../apps/server/src/config.ts";
 import { bootstrapAgency, type AgencyProfile } from "./lib/agency-bootstrap.ts";
+import { agencySops } from "../clientes/agntia/sops.ts";
 
 const args = new Map(
   process.argv.slice(2).map((arg) => {
@@ -55,7 +57,11 @@ try {
     process.exit(0);
   }
 
-  const result = await bootstrapAgency(db, config, user.id, profile);
+  const result = await bootstrapAgency(db, config, user.id, profile, {
+    sops: agencySops,
+    // --force reescribe las SOPs que ya existan (perderas las ediciones del panel).
+    overwriteSops: args.get("force") === "true",
+  });
   const counts = new Map<string, number>();
   for (const action of result.actions) {
     const key = `${action.kind}:${action.action}`;

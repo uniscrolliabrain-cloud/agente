@@ -18,6 +18,7 @@ import { createStore, type Store } from "../apps/server/src/db.ts";
 import { TenantService } from "../apps/server/src/engine/tenant.ts";
 import { UserService } from "../apps/server/src/users.ts";
 import { bootstrapAgency, type AgencyProfile } from "../scripts/lib/agency-bootstrap.ts";
+import { agencySops } from "../clientes/agntia/sops.ts";
 import { testConfig } from "./helpers/config.ts";
 
 let db: Store;
@@ -50,11 +51,30 @@ after(async () => {
   await rm(directory, { recursive: true, force: true });
 });
 
-test("el bootstrap crea el tenant, su perfil y la membership del owner", async () => {
-  const result = await bootstrapAgency(db, config, ownerId, profile);
+test("las SOPs de la agencia son ejecutables: schema, allowlist y capacidades", () => {
+  assert.ok(agencySops.length >= 8);
+  for (const sop of agencySops) {
+    assert.ok(sop.allowedTools.length > 0, `${sop.id} sin allowedTools`);
+    for (const step of sop.steps) {
+      assert.ok(
+        sop.allowedTools.includes(step.tool),
+        `${sop.id}: el paso ${step.id} usa ${step.tool} y no esta en allowedTools`,
+      );
+    }
+    // Fase 1 corre con COMPUTER_ENABLED=false: nada de sandbox Python.
+    assert.ok(
+      !sop.steps.some((step) => step.tool === "computer_command"),
+      `${sop.id} depende del computer, que esta apagado en el despliegue`,
+    );
+  }
+});
+
+test("el bootstrap crea el tenant, su perfil, sus SOPs y la membership del owner", async () => {
+  const result = await bootstrapAgency(db, config, ownerId, profile, { sops: agencySops });
   assert.equal(result.tenantId, "agntia");
   assert.ok(result.actions.some((a) => a.kind === "tenant-registry" && a.action === "created"));
   assert.ok(result.actions.some((a) => a.kind === "memory" && a.action === "created"));
+  assert.equal(result.actions.filter((a) => a.kind === "sop" && a.action === "created").length, agencySops.length);
 
   const registry = await db.get<{ id: string; tenantId: string; displayName: string }>(
     "system",
@@ -99,14 +119,23 @@ test("el bootstrap crea el tenant, su perfil y la membership del owner", async (
     "default",
   );
   assert.ok(schema?.entities.some((entity) => entity.type === "call"));
+
+  const sops = await db.list<{ id: string }>(`agntia:${ownerId}`, "sops");
+  assert.deepEqual(
+    sops.map((s) => s.id).sort(),
+    agencySops.map((s) => s.id).sort(),
+  );
 });
 
-test("el bootstrap es idempotente: repetirlo no duplica memorias", async () => {
+test("el bootstrap es idempotente: repetirlo no duplica memorias ni SOPs", async () => {
   const before = await db.list(`agntia:${ownerId}`, "memories");
-  const result = await bootstrapAgency(db, config, ownerId, profile);
+  const sopsBefore = await db.list(`agntia:${ownerId}`, "sops");
+  const result = await bootstrapAgency(db, config, ownerId, profile, { sops: agencySops });
   const afterRun = await db.list(`agntia:${ownerId}`, "memories");
   assert.equal(afterRun.length, before.length);
+  assert.equal((await db.list(`agntia:${ownerId}`, "sops")).length, sopsBefore.length);
   assert.ok(result.actions.filter((a) => a.kind === "memory").every((a) => a.action === "skipped"));
+  assert.ok(result.actions.filter((a) => a.kind === "sop").every((a) => a.action === "skipped"));
 });
 
 test("otro tenant no ve el perfil de la agencia", async () => {
