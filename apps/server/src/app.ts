@@ -462,6 +462,15 @@ export async function createApp(
     }), { maxAttempts: 3, baseMs: 200, maxMs: 2000 });
     return c.json({ ok: true });
   });
+  // APP_WHATSAPP_WEBHOOK_MOUNT_V1 - el webhook de Meta/Evolution se monta AQUI, antes de
+  // authzMiddleware: lo llama el proveedor, que no manda un Bearer, asi que detras
+  // del middleware de auth recibiria 401 y el canal quedaria muerto en produccion.
+  // Su autenticacion es la firma HMAC (WHATSAPP_APP_SECRET) y el handshake
+  // (WHATSAPP_VERIFY_TOKEN); sin ellas responde 503. Ver whatsapp-routes.ts.
+  {
+    const { whatsappWebhookRoutes } = await import("./whatsapp-routes.ts");
+    app.route("/api/whatsapp", whatsappWebhookRoutes(agent));
+  }
   // R16
   // que el bus pueda emitir, y el estado del worker. Devuelve 503 si algo falla,
   // para que Fly/Render sepan cuando reiniciar de verdad.
