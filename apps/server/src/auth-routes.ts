@@ -213,11 +213,24 @@ export function authRoutes(
     if (currentTenantId === null) {
       throw new AppError("SWITCH_TENANT_ENDPOINT_V1: el usuario no tiene membership", 403);
     }
-    // Validar que el usuario tiene acceso al tenantId solicitado.
-    // Hoy solo hay un tenant por usuario (id="default"), así que el switch
-    // solo funciona si tenantId === currentTenantId. Cuando haya multi-membership
-    // (Campaña 2), esto leerá de tenant_members.
-    if (body.tenantId !== currentTenantId) {
+    if (!/^[a-z0-9-]{1,64}$/.test(body.tenantId)) {
+      throw new AppError("tenantId invalido", 422);
+    }
+    // SWITCH_TENANT_MULTI_V1 - un usuario puede pertenecer a varias empresas
+    // (kind user-tenants). Antes solo se aceptaba el tenant unico de
+    // membership, asi que la agencia podia tener su tenant pero el panel nunca
+    // podia cambiar a el sin reescribir la membership a mano.
+    const memberships = await db
+      .list<{ tenantId?: string }>(owner, "user-tenants")
+      .catch(() => []);
+    const allowed = new Set<string>();
+    for (const membership of memberships) {
+      if (typeof membership.tenantId === "string" && membership.tenantId.length > 0) {
+        allowed.add(membership.tenantId);
+      }
+    }
+    if (currentTenantId) allowed.add(currentTenantId);
+    if (!allowed.has(body.tenantId)) {
       throw new AppError(
         "SWITCH_TENANT_ENDPOINT_V1: el usuario no tiene membership en " + body.tenantId,
         403,

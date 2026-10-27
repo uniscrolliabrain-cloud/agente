@@ -125,12 +125,22 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
         displayName: z.string().max(200).optional(),
       })
       .parse(await c.req.json());
-    // TENANT_MEMBERSHIP_ID_UNIFIED_V1 - id="default", tenantId=real.
+    // TENANT_REGISTRY_ID_V1 - el registro de tenants usa id=tenantId. Antes
+    // todas las filas se escribian con id="default" y se pisaban entre si: el
+    // panel solo podia listar un tenant aunque hubiera varios, y DELETE/PATCH
+    // (que buscan por tenantId) nunca encontraban la fila.
+    // La membership del usuario sigue siendo otra cosa: id="default" bajo su
+    // propio owner (ver TenantService.setMembership).
+    const existing = await service.db.get<{ createdAt?: string }>(
+      "system",
+      "tenant-membership",
+      body.tenantId,
+    );
     await service.db.put("system", "tenant-membership", {
-      id: "default",
+      id: body.tenantId,
       tenantId: body.tenantId,
       displayName: body.displayName ?? body.tenantId,
-      createdAt: new Date().toISOString(),
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
       createdBy: owner,
     });
     return c.json({ ok: true, tenantId: body.tenantId }, 201);

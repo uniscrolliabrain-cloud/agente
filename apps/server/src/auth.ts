@@ -49,6 +49,22 @@ export class Auth {
     return session.owner;
   }
 
+  // SESSION_TENANT_READ_V1 - el tenant que el usuario eligio en
+  // /api/auth/switch-tenant. Sin esto la eleccion se guardaba en la sesion y
+  // nadie la leia: el resolver seguia mirando la membership y el switch era
+  // decorativo (la cabecera X-Tenant-Id no cambiaba nunca).
+  async sessionTenant(authorization?: string): Promise<string | undefined> {
+    if (!authorization?.startsWith("Bearer ")) return undefined;
+    const session = await this.db.get<{ tenantId?: string }>(
+      "system",
+      "sessions",
+      digest(authorization.slice(7)).toString("hex"),
+    );
+    return typeof session?.tenantId === "string" && session.tenantId.length > 0
+      ? session.tenantId
+      : undefined;
+  }
+
   sign(owner: string, path: string) {
     const expires = String(Date.now() + 15 * 60 * 1000);
     const signature = createHmac("sha256", this.signingKey)

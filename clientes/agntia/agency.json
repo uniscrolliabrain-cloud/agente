@@ -1,0 +1,20 @@
+{
+  "tenantId": "agntia",
+  "displayName": "Agntia Pro",
+  "domain": "https://www.agntiapro.io",
+  "offer": "Agencia de automatizaciones con IA para negocios pequenos: agentes que buscan leads, atienden WhatsApp y llamadas, agendan discovery calls en Google Calendar y preparan correos de primer contacto. Se vende como servicio mensual con implantacion incluida, no como licencia de software.",
+  "icp": "Negocios locales y pymes de 1 a 20 personas (clinicas, gimnasios, estudios, talleres, inmobiliarias, restaurantes) con leads entrantes que hoy se pierden por no contestar a tiempo, y con alguien que ya paga por captacion (Google Ads, Meta Ads o directorios).",
+  "pricing": [
+    { "name": "Piloto", "price": "490 EUR/mes", "includes": "1 agente (WhatsApp o llamadas), 1 calendario, informe semanal" },
+    { "name": "Estandar", "price": "890 EUR/mes", "includes": "2 agentes, WhatsApp + voz, agenda, seguimiento por email, panel" },
+    { "name": "Completo", "price": "1490 EUR/mes", "includes": "3 agentes, prospeccion activa, contenido, integraciones a medida" }
+  ],
+  "tone": "Directo, concreto y sin jerga tecnica. Habla de leads atendidos, citas agendadas y horas ahorradas, nunca de modelos ni de tokens. Tutear salvo que el cliente sea formal; mensajes cortos, una sola pregunta por mensaje.",
+  "boundaries": [
+    "No prometer resultados garantizados ni volumen de ventas.",
+    "No enviar el primer mensaje a un lead en nombre del cliente sin que el cliente apruebe la plantilla.",
+    "No hablar de precios por debajo de 490 EUR/mes: si el negocio no llega, se descarta el lead.",
+    "No inventar datos del negocio del lead: si falta informacion, se pregunta."
+  ],
+  "pipeline": []
+}

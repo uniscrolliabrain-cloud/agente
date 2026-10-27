@@ -98,6 +98,34 @@ test("files.import usa el tenant del owner, no default", async () => {
   assert.ok(stored, "el fichero debe estar bajo tenant-a:owner, no default:owner");
 });
 
+// SWITCH_TENANT_MULTI_TEST_V1 - el switch deja de ser decorativo: acepta las
+// empresas donde el usuario es miembro y la siguiente peticion se atiende en
+// ese tenant (X-Tenant-Id), no en el de la membership.
+test("switch-tenant cambia la peticion al tenant elegido y rechaza los ajenos", async () => {
+  const tenantService = new TenantService(db, server.agent.config as never);
+  await tenantService.addMembership(aliceId, "tenant-a2", "owner");
+
+  const switched = await server.app.request("/api/auth/switch-tenant", {
+    method: "POST",
+    headers: { ...bearer(aliceToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ tenantId: "tenant-a2" }),
+  });
+  assert.equal(switched.status, 200);
+  const session = (await switched.json()) as { token: string; tenantId: string };
+  assert.equal(session.tenantId, "tenant-a2");
+
+  const next = await server.app.request("/api/agent", { headers: bearer(session.token) });
+  assert.equal(next.status, 200);
+  assert.equal(next.headers.get("x-tenant-id"), "tenant-a2");
+
+  const denied = await server.app.request("/api/auth/switch-tenant", {
+    method: "POST",
+    headers: { ...bearer(aliceToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ tenantId: "tenant-b" }),
+  });
+  assert.equal(denied.status, 403);
+});
+
 test("notifications incluye tenantId y no mezcla tenants", async () => {
   const a = (await (await server.app.request("/api/agent/notifications", { headers: bearer(aliceToken) })).json()) as { tenantId: string; notifications: unknown[] };
   const b = (await (await server.app.request("/api/agent/notifications", { headers: bearer(bobToken) })).json()) as { tenantId: string; notifications: unknown[] };

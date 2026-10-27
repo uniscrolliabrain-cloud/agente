@@ -596,9 +596,19 @@ app.get("/api/health", async (c) => {
             : jwtActorForTenant.id
           : await auth.owner(c.req.header("authorization"));
     c.set("owner", owner);
-    const resolvedTenant =
-      jwtActorForTenant?.tenantId ??
-      (await tenantService.tenantIdFor(owner).catch(() => "default")); // FALLBACK_TENANT_V1
+    // SESSION_TENANT_CHOICE_V1 - orden: JWT (si lo hay), tenant elegido en la
+    // sesion y, por ultimo, la membership. El tenant de la sesion solo vale si
+    // el usuario sigue siendo miembro: si le revocaron el acceso, cae a su
+    // membership en vez de seguir escribiendo en la empresa que dejo.
+    const membershipTenant = await tenantService.tenantIdFor(owner).catch(() => "default"); // FALLBACK_TENANT_V1
+    let resolvedTenant = jwtActorForTenant?.tenantId ?? membershipTenant;
+    if (!jwtActorForTenant?.tenantId) {
+      const sessionTenant = await auth.sessionTenant(c.req.header("authorization")).catch(() => undefined);
+      if (sessionTenant && sessionTenant !== membershipTenant) {
+        const memberships = await tenantService.membershipsFor(owner).catch(() => []);
+        if (memberships.some((m) => m.tenantId === sessionTenant)) resolvedTenant = sessionTenant;
+      }
+    }
     // TENANT_QUERY_GUARD_V1 - pedir un tenant distinto del que el owner tiene
     // resuelto es un salto de tenant, no un filtro: 403. Ninguna ruta lee
     // `?tenantId=` hoy (el panel admin usa servicios, no query), asi que el
