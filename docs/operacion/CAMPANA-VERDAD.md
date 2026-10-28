@@ -112,14 +112,24 @@ Tres cosas separadas, que hoy viven en un solo exit code:
    legítimas (barrel, re-export, cabecera de sección). **Sin motivo escrito, no hay
    allowlist.**
 3. **Idempotencia de verdad** (nuevo, y es lo que importa): un test que ejecuta tres
-   rutas con efecto (una capacidad de workspace con `messaging.send`, un
-   `transition_entity`, un `prepare_email`) **dos veces con la misma clave** y
-   demuestra que el efecto ocurre una vez y el segundo intento devuelve el mismo
-   resultado. Eso es idempotencia; lo de arriba es contabilidad.
-- **Hecho**: check verde con las tres categorías reportadas por separado, y los
-  tests de doble ejecución pasando. Ninguna marca borrada.
+   rutas con efecto **dos veces con la misma clave** y demuestra que el efecto
+   ocurre una vez. Implementado sobre `ActionService.propose`,
+   `ActionService.decide` y `CapabilityRunner` (`external_write`), cada una con su
+   control negativo. Eso es idempotencia; lo de arriba es contabilidad.
+- **Hecho** (2026-10-28): check verde (0 huérfanas, 0 pegadas sin revisar; 152
+  duplicadas y 141 repetidas como índice), allowlist con motivo y fecha en
+  `scripts/audits/idempotency-allowlist.json`, y **6/6** en
+  `tests/gate/idempotency-execution.test.ts` + **12/12** en
+  `tests/gate/idempotency-marks.test.ts`. No se borró ninguna marca aplicada: solo
+  se retiró una huérfana que no documentaba nada (`AUTHOR_MATCHED_METADATA_NORMALIZE_V1`,
+  al final de un barrel). Detalle en
+  [INFORME-IDEMPOTENCIA.md](../INFORME-IDEMPOTENCIA.md).
 
 ### V2 · `audit:contracts` vacía los 150 huérfanos con criterio
+
+> **Decisión del founder (2026-10-28): no borrar nada.** V2 entrega un informe en
+> la raíz de `docs/` ([INFORME-CONTRATOS.md](../INFORME-CONTRATOS.md)) y la decisión se
+> toma al revisarlo. El audit sigue en rojo a propósito.
 
 Triaje obligatorio de los 150 en tres cubos, cada uno con su salida:
 
@@ -133,16 +143,26 @@ Triaje obligatorio de los 150 en tres cubos, cada uno con su salida:
   (`from "@openmuse/domain"`) del símbolo, no mención textual: es la diferencia entre
   150 huérfanos y los que de verdad lo son. El número honesto puede bajar mucho; eso
   también hay que demostrarlo, no proclamarlo.
-- **Hecho**: exit 0 con los tres cubos a cero, y cada `PENDING` con motivo y fecha.
+- **Hecho (2026-10-28)**: informe entregado con los 150 medidos (74 son falso
+  positivo del criterio, 75 son superficie pública sin consumir, 122/150 salen por
+  el barrel del dominio). **No se ha borrado ni marcado ningún contrato.**
 
 ### V3 · El observador meta que se paga y se tira (D12)
 
-`conversation.ts` calcula hints y `metaHintsPromptBlock` devuelve `""`: el trabajo se
-hace, se paga en tokens y no llega al prompt. Decisión **medida**: cablearlo (y probar
-que el prompt cambia) o borrarlo (y probar que no se calcula). Lo que no puede quedar
-es una funcionalidad que parece existir.
-- **Hecho**: o hay test de que el bloque entra en el prompt, o el cálculo ya no se
-  ejecuta. Sin `TODO` en el medio.
+> **Corregido el 2026-10-28.** Lo de "se paga en tokens y se tira" era falso: `Meta`
+> es un motor de reglas (cero llamadas al modelo) y **sí hay una vía que llega al
+> prompt** (`systemContext` → `[Contexto urgente del sistema]`). Lo muerto es la vía
+> de hints diferidos (`pendingMetaHints`/`lastMetaHint`) y el getter
+> `metaHintsPromptBlock`, que devuelve `""` y no tiene lectores. Análisis completo, con
+> líneas y tres salidas: [INFORME-META-OBSERVADOR.md](../INFORME-META-OBSERVADOR.md).
+
+`conversation.ts` calcula hints y `metaHintsPromptBlock` devuelve `""`. Decisión
+**medida**: cablear la vía diferida (y probar que el prompt cambia) o borrarla (y
+probar que no se calcula), conservando la vía A. Lo que no puede quedar es una
+funcionalidad que parece existir.
+- **Hecho (2026-10-28)**: nota entregada para revisar. **No se ha tocado código.**
+  Falta el test que el actual no tiene: que el bloque `[Contexto urgente del sistema]`
+  aparezca en el prompt cuando hay un hint `high`.
 
 ### V4 · La documentación operativa, anclada al código
 
@@ -190,9 +210,9 @@ qué no se pudo probar. Y `docs/operacion/GATE.md` enlazado desde `README.md`.
 | Fase | Estado | Antes | Después | Test |
 |---|---|---|---|---|
 | V0 gate único | **hecho** | 3 listas distintas, sin JSON, informes en `docs/` | `pnpm gate`, `artifacts/gate/report.json`, `GATE.md`, registro único | `tests/gate/gate-report.test.ts` (9) |
-| V1 idempotencia real | pendiente | 157 / 4 / 138, exit 1 | 3 categorías + test de doble efecto | `tests/gate/idempotency-*.test.ts` |
-| V2 contratos | pendiente | 150 huérfanos, exit 1 | 0, con import real | `tests/gate/contracts-*.test.ts` |
-| V3 meta hints | pendiente | se calcula y se tira | cableado o borrado | `tests/gate/meta-*.test.ts` |
+| V1 idempotencia real | **hecho** | 157 / 4 / 138, exit 1 | check verde + test de doble efecto | `tests/gate/idempotency-*.test.ts` (18) |
+| V2 contratos | **nota entregada** | 150 huérfanos, exit 1 | informe con los 150 medidos; sin borrar nada | `docs/INFORME-CONTRATOS.md` |
+| V3 meta hints | **nota entregada** | se calcula y se tira | análisis con líneas; decisión pendiente | `docs/INFORME-META-OBSERVADOR.md` |
 | V4 docs:anchors | pendiente | no existe | verde + falla con fixture roto | `tests/gate/docs-anchors.test.ts` |
 | V5 gate en CI | pendiente | 6 audits vs coherence | `pnpm gate` en los tres | — |
 

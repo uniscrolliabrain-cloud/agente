@@ -76,7 +76,10 @@ export const AUDIT_CHECKS: readonly AuditCheck[] = [
     name: "idempotency",
     file: "idempotency.ts",
     blocking: true,
-    proves: "idempotency.ts — `const fatal = duplicatesWithConflict.length > 0 || sameFileDup.length > 0`",
+    // IDEMPOTENCY_MARKS_V2 - duplicadas/repetidas son indice (una campana se
+    // aplica en N call sites). Bloquean solo los defectos sin revisar: marca sin
+    // codigo detras y mismo bloque pegado dos veces.
+    proves: "idempotency.ts — `if (blocking > 0) process.exit(1)`",
     captures: {
       keys: ["duplicadas", "huerfanas", "repetidas"],
       re: /DUPLICADAS: (\d+)\s+HUERFANAS: (\d+)\s+REPETIDAS: (\d+)/,

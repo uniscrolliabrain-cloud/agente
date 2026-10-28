@@ -41,7 +41,7 @@ sucio y la copia versionada siempre estaba desfasada.
 | `audit:console` | ocurrencias de `console.*` en `apps/server/src` | nunca: es **advisory** (hoy 42) | logs en `packages/**` y `apps/web`. Convertirlo en error es otra campana, no un cambio de umbral |
 | `audit:anchors` | los anclajes de los bloques `.ps1` guardados existen en el arbol real | hay anclajes rotos | bloques que nadie ha pegado en `scripts/audits/blocks/` (hoy 0: el check no tiene nada que revisar) |
 | `audit:contracts` | contratos del dominio con implementacion real | hay contratos sin implementar y sin marca `PENDING` | que el contrato **se use**: su heuristica es "el nombre aparece en algun fichero" (V2 la endurece a import real) |
-| `audit:idempotency` | marcas `NOMBRE_V1`: aparcadas en dos sitios con cuerpo distinto o repetidas en el mismo fichero | cualquiera de las dos | **idempotencia**. No ejecuta nada: no comprueba que una operacion con la misma clave ocurra una vez (V1) |
+| `audit:idempotency` | marcas `NOMBRE_V1`: defectos reales (marca sin codigo detras, mismo bloque pegado dos veces) + indice informativo de duplicadas/repetidas | un defecto sin revisar en la allowlist | **idempotencia en runtime**. No ejecuta nada: eso lo mide `tests/gate/idempotency-execution.test.ts` (V1) |
 | `audit:tenant-default` | usos del tenant `default` fuera de lo permitido | alguna ocurrencia prohibida | que el aislamiento entre tenants funcione en runtime: eso son los tests de `tenant-http-e2e` |
 
 ## Los contadores miden el corpus, no el comportamiento
@@ -75,17 +75,23 @@ Dos consecuencias que conviene tener presentes al leer un numero:
 - **`pnpm lint`** (biome): **no es un gate**. Sale rojo repo-wide y queda como campana
   aparte; el formato de los ficheros que toca cada fase se aplica a mano.
 
-## Estado hoy (2026-10-27, `e3787a6` + V0)
+## Estado hoy (2026-10-28, `7ff1a77` + V1)
 
 Verde: `typecheck`, `typecheck:worker`, `test`, `audit:layers`, `audit:bridges`,
-`audit:anchors`, `audit:tenant-default`.
-Rojo: `audit:contracts` (154 implementados · 14 PENDING · **150 huerfanos**) y
-`audit:idempotency` (**157 duplicadas** · 9 huerfanas · **138 repetidas**).
-Advisory: `audit:console` (42 ocurrencias en 226 ficheros).
+`audit:anchors`, `audit:tenant-default` y **`audit:idempotency`** (0 huerfanas, 0
+pegadas sin revisar, 152 duplicadas y 141 repetidas como indice).
+Rojo: `audit:contracts` (154 implementados · 14 PENDING · **150 huerfanos**).
+Advisory: `audit:console`.
 
-Los dos rojos son de antes de esta campana y siguen ahi a proposito: **no se relaja un
-check para ponerlo verde**. Se vacian con criterio en V1 (idempotencia) y V2
-(contratos), cada uno con su test.
+`audit:idempotency` paso de rojo a verde con **criterio, no con un umbral**: su
+regla anterior fallaba por una campana aplicada en N call sites (`WITH_WRITE_WIRE_V1`
+esta 54 veces porque hay 54 rutas que escriben). Ahora bloquea solo dos defectos
+objetivos y cada excepcion se revisa en
+[`scripts/audits/idempotency-allowlist.json`](../../scripts/audits/idempotency-allowlist.json)
+con motivo y fecha. Detalle y numeros en [INFORME-IDEMPOTENCIA.md](../INFORME-IDEMPOTENCIA.md).
+
+`audit:contracts` sigue rojo a proposito: **no se relaja un check para ponerlo
+verde**. Se vacia en V2 con su informe, sin borrar contratos (decision del founder).
 
 ## Rendimiento medido (maquina del founder, 2026-10-27)
 
