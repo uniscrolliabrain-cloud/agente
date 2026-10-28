@@ -42,3 +42,11 @@ www.agntiapro.com no resuelve en DNS en la comprobación realizada. Cloudflare t
 ## Encargo documental para Cline
 
 Actualizar documentación a partir de rutas, pruebas y configuración verificables. Separar implementado, probado localmente, conectado a proveedor y desplegado. Mantener las instantáneas históricas como tales. No editar código ni sustituir evidencia por marcadores o recuentos de tests. No asumir que todos los servicios de la visión de producto ya están conectados.
+
+## Cierre de la comprobación
+
+La ejecución amplia diagnóstica local terminó con 464 tests: 410 pass, 37 fail, 4 cancelled y 13 skipped (32 min 59 s). Se inició antes de las últimas correcciones y no sustituye la validación dirigida del estado final. Muchos fallos son timeouts de arranque o sus errores derivados de limpieza. Hay un fallo funcional de correo conversacional: tests/conversation-browser.test.ts:189 esperaba dos TOOL_CALL_RESULT y obtuvo cero. Se repite en el diagnóstico con 60 segundos. No se atribuye a esta PR sin comparación con la base.
+
+CI de la PR: 450 tests, 435 pass, cero fail de aserción, 3 cancelled y 12 skipped. El job unit termina con error por timeout de 10 s en browser, business-graph y conversation-browser. El job worker falla por tsc no encontrado; el typecheck conjunto y el job web sí pasan. Los audits locales de contratos e idempotencia también requieren resolución.
+
+El diagnóstico adicional de recuperación se interrumpió tras quedar bloqueado; no se contabiliza como prueba funcional fallida ni como validación de recuperación. Se conserva el log. La PR permanece en borrador y main no se ha modificado. Siguiente paso: reproducir el fallo del correo contra c5a8c7c, aislar su causa y cerrar contexto de ejecución y salida por tenant antes de conectar clientes reales.
