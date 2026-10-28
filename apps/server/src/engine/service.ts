@@ -110,6 +110,7 @@ import { buildToolExecutors } from "./execution/tool-executors.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
+import { currentTenantScope } from "../tenant-scope.ts";
 import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
@@ -1232,7 +1233,7 @@ export class AgentService {
     const existing = await this.db.get<AgentTask>(owner, "tasks", id);
     if (existing) return existing;
     // GUARDRAILS_CHECK_TASK_V1 - limite duro por tenant, no por owner.
-    const tenantIdForGuard = await this.tenantService?.tenantIdFor(owner) ?? owner;
+    const tenantIdForGuard = currentTenantScope()?.tenantId ?? await this.tenantService?.tenantIdFor(owner) ?? owner;
     // CREATE_TASK_COUNT_SCOPED_FIX_V1 - antes db.list(owner, "tasks") sin limit
     // cargaba hasta 1000 tareas en memoria solo para contar las activas. Ahora
     // usamos scanByStatusWithCursor con 500 y contamos hasta el tope; si llega
@@ -1294,7 +1295,14 @@ export class AgentService {
       artifactIds: [],
     };
     await this.ensure(owner);
-    await this.db.insertIfAbsent(owner, "tasks", task);
+    const inserted = await this.db.insertIfAbsent(owner, "tasks", task);
+    // Only the insert winner announces a new task. Concurrent webhook retries
+    // must not emit duplicate task.created events for the same operation.
+    if (!inserted) {
+      const existingTask = await this.db.get<AgentTask>(owner, "tasks", id);
+      if (!existingTask) throw new AppError("Task insertion could not be confirmed", 503);
+      return existingTask;
+    }
     // FASE6_TAXONOMY: los campos opcionales vienen de task.state, nunca por heuristica.
     const taxonomy: Record<string, string> = {};
     if (typeof task.state.projectId === "string") taxonomy.projectId = task.state.projectId;

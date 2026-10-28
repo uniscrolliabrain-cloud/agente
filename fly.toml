@@ -20,8 +20,8 @@ primary_region = "mad"
   BACKUP_INTERVAL_HOURS = "24"
   BACKUP_RETENTION_DAYS = "7"
   # PUBLIC_API_URL deriva el redirect de Google OAuth y los enlaces firmados.
-  PUBLIC_API_URL = "https://www.agntiapro.io"
-  ALLOWED_ORIGINS = "https://www.agntiapro.io,https://api.agntiapro.io"
+  PUBLIC_API_URL = "https://www.agntiapro.com"
+  ALLOWED_ORIGINS = "https://www.agntiapro.com"
 
 [http_service]
   internal_port = 8787

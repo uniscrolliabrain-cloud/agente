@@ -4,7 +4,7 @@
 // publicos distintos, y esa separacion es el punto:
 //   whatsappWebhookRoutes -> lo llama el proveedor (Meta / Evolution), que no
 //     puede mandar un Bearer. Se monta en app.ts ANTES del middleware de auth y
-//     su unica autenticacion es la firma HMAC del cuerpo.
+//     Meta usa HMAC del cuerpo; Evolution una cabecera dedicada por instancia.
 //   whatsappRoutes        -> lo llama el panel. Requiere owner autenticado.
 // Antes el webhook vivia dentro de whatsappRoutes, es decir detras del middleware
 // de auth: en produccion Meta recibia 401 y el canal estaba muerto.
@@ -15,6 +15,8 @@ import { z } from "zod";
 import type { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
 import { RateLimiter } from "./rate-limit.ts";
+import { runInTenantScope } from "./tenant-scope.ts";
+import { bindingFor, enqueueIncoming, extractIncomingMessages, validateBinding, whatsappBindings, type InboundService, type WhatsAppProvider } from "./engine/whatsapp-inbound.ts";
 
 // WHATSAPP_TIMING_SAFE_V1 - comparacion sin filtrar el resultado por tiempo.
 function safeEqual(a: string, b: string): boolean {
@@ -23,66 +25,32 @@ function safeEqual(a: string, b: string): boolean {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === "object" ? (value as Record<string, unknown>) : null;
-}
-
 export interface IncomingWhatsApp {
   id: string;
   from: string;
   text: string;
 }
 
-/**
- * WHATSAPP_INBOUND_SHAPES_V1 - extrae el primer mensaje de texto de las dos formas
- * que llegan de verdad:
- *   Meta Cloud API: entry[].changes[].value.messages[] -> { from, id, text.body }
- *   Evolution API:  data.key.remoteJid + data.message.conversation
- * Devuelve null para todo lo que no sea un mensaje (statuses, acuses, JSON raro):
- * el webhook responde 200 e ignora, porque un 4xx hace que Meta reintente.
- */
+/** Compatibility helper; ingress always processes the entire validated batch. */
 export function extractIncomingMessage(body: unknown): IncomingWhatsApp | null {
-  const root = asRecord(body);
-  if (!root) return null;
-  const entries = root.entry;
-  if (Array.isArray(entries)) {
-    for (const rawEntry of entries) {
-      const changes = asRecord(rawEntry)?.changes;
-      if (!Array.isArray(changes)) continue;
-      for (const rawChange of changes) {
-        const messages = asRecord(asRecord(rawChange)?.value)?.messages;
-        if (!Array.isArray(messages)) continue;
-        for (const rawMessage of messages) {
-          const message = asRecord(rawMessage);
-          if (!message) continue;
-          const from = message.from;
-          const text = asRecord(message.text)?.body;
-          if (typeof from !== "string" || typeof text !== "string" || !text) continue;
-          const id = message.id;
-          return { id: typeof id === "string" && id ? id : `meta:${from}`, from, text };
-        }
-      }
-    }
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+  try {
+    const provider = "entry" in body ? "meta" : "evolution";
+    const first = extractIncomingMessages(body, provider)[0];
+    return first ? { id: first.id, from: first.from, text: first.text } : null;
+  } catch {
     return null;
   }
-  const data = asRecord(root.data);
-  const key = asRecord(data?.key);
-  const message = asRecord(data?.message);
-  const from = key?.remoteJid;
-  const text = message?.conversation ?? asRecord(message?.extendedTextMessage)?.text;
-  if (typeof from !== "string" || typeof text !== "string" || !text) return null;
-  const id = key?.id;
-  return { id: typeof id === "string" && id ? id : `evolution:${from}`, from, text };
 }
 
 /**
  * Router publico del proveedor. No lee c.get("owner") porque no hay sesion: la
- * firma HMAC es toda la autenticacion, y sin WHATSAPP_APP_SECRET falla cerrado.
+ * autenticacion del proveedor es obligatoria antes de crear tareas.
  */
-export function whatsappWebhookRoutes(service: AgentService) {
+export function whatsappWebhookRoutes(service: InboundService) {
   const app = new Hono();
-  // Endpoint publico: 30 llamadas por minuto y por IP.
-  const limiter = new RateLimiter(30, 60_000);
+  // Limite por cuenta de proveedor autenticada: 120 llamadas por minuto.
+  const limiter = new RateLimiter(120, 60_000);
 
   // GET /api/whatsapp/webhook -> handshake de la Cloud API de Meta.
   // Meta llama con hub.mode=subscribe y espera el hub.challenge en texto plano.
@@ -105,39 +73,45 @@ export function whatsappWebhookRoutes(service: AgentService) {
     const expected = process.env.WHATSAPP_APP_SECRET?.trim();
     if (!expected)
       throw new AppError("WhatsApp webhook no configurado (falta WHATSAPP_APP_SECRET)", 503);
-    const address = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() || "local";
-    if (!limiter.take(address).allowed) throw new AppError("Too many webhook calls", 429);
-    const raw = await c.req.text();
-    const signature = c.req.header("x-hub-signature-256") ?? c.req.header("x-signature");
+    const raw = Buffer.from(await c.req.arrayBuffer());
+    const signature = c.req.header("x-hub-signature-256");
     if (!signature) throw new AppError("Missing webhook signature", 401);
-    // Meta manda hex con prefijo sha256=; Evolution manda base64. Se aceptan las dos.
-    const digest = createHmac("sha256", expected).update(raw).digest();
-    const provided = signature.replace(/^sha256=/, "");
-    const valid = (["hex", "base64"] as const).some((encoding) =>
-      safeEqual(provided, digest.toString(encoding)),
-    );
-    if (!valid) throw new AppError("Invalid webhook signature", 401);
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return c.json({ ok: true, ignored: true });
-    }
-    const incoming = extractIncomingMessage(parsed);
-    if (!incoming) return c.json({ ok: true, ignored: true });
-    // Crea una tarea de SOP para responder. El owner es "system" (no hay sesion).
-    const task = await service.createTask("system", {
-      kind: "sop",
-      prompt: `Responder WhatsApp de ${incoming.from}: ${incoming.text.slice(0, 200)}`,
-      input: {
-        sopId: "responder-whatsapp",
-        from: incoming.from,
-        text: incoming.text,
-        providerMessageId: incoming.id,
-      },
-    });
-    return c.json({ ok: true, taskId: task.id });
+    const digest = `sha256=${createHmac("sha256", expected).update(raw).digest("hex")}`;
+    if (!/^sha256=[a-f0-9]{64}$/.test(signature) || !safeEqual(signature, digest)) throw new AppError("Invalid webhook signature", 401);
+    return c.json(await receive(JSON.parse(raw.toString("utf8")), "meta"));
   });
+
+  // Evolution uses a configured per-instance custom header, NOT Meta's GET token
+  // and NOT a presumed native base64 HMAC. Only inbound upserts are admitted.
+  app.post("/incoming", async (c) => {
+    const body: unknown = await c.req.json();
+    const instance = body && typeof body === "object" && "instance" in body ? body.instance : undefined;
+    if (typeof instance !== "string") throw new AppError("Evolution: instance requerida", 422);
+    const binding = bindingFor(whatsappBindings(), "evolution", instance);
+    const expected = binding.secretEnv ? process.env[binding.secretEnv]?.trim() : undefined;
+    if (!expected || expected.length < 32) throw new AppError("Configura un secreto dedicado de Evolution de al menos 32 caracteres", 503);
+    if (!safeEqual(c.req.header("x-webhook-secret") ?? "", expected)) throw new AppError("Invalid webhook secret", 401);
+    return c.json(await receive(body, "evolution"));
+  });
+
+  async function receive(body: unknown, provider: WhatsAppProvider) {
+    const messages = extractIncomingMessages(body, provider);
+    if (!messages.length) return { ok: true, ignored: true, taskIds: [] };
+    const bindings = whatsappBindings();
+    const selected = messages.map((m) => ({ message: m, binding: bindingFor(bindings, provider, m.accountId) }));
+    const channels = new Map(selected.map(({ binding }) => [JSON.stringify([provider, binding.accountId]), binding]));
+    // Validate the whole batch before any inbox/task write; known tasks are not
+    // acknowledged as delivered/sent, only durably queued for the configured SOP.
+    for (const [key, binding] of channels) {
+      if (!limiter.take(key).allowed) throw new AppError("Too many webhook calls", 429);
+      await runInTenantScope({ tenantId: binding.tenantId, actorId: binding.owner }, () => validateBinding(service, binding));
+    }
+    const taskIds: string[] = [];
+    for (const { message, binding } of selected) {
+      taskIds.push(await runInTenantScope({ tenantId: binding.tenantId, actorId: binding.owner }, () => enqueueIncoming(service, binding, message)));
+    }
+    return { ok: true, status: "queued", taskId: taskIds[0], taskIds };
+  }
 
   return app;
 }

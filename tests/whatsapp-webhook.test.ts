@@ -1,10 +1,10 @@
 // WHATSAPP_WEBHOOK_SECURITY_V1 — el webhook de Meta/Evolution no puede mandar un
-// Bearer (lo llama el proveedor, no un usuario), asi que la firma HMAC es toda su
-// autenticacion y la ruta tiene que estar montada ANTES del middleware de auth.
+// sesion de usuario. Meta usa HMAC y Evolution una cabecera dedicada por instancia.
+// Ambas rutas se montan ANTES del middleware de auth de usuarios.
 // Estos tests fijan las cuatro reglas:
 //   1. sin WHATSAPP_APP_SECRET no se procesa nada (fail-closed, 503);
 //   2. sin firma o con firma invalida -> 401 y ninguna tarea creada;
-//   3. con firma valida (hex de Meta y base64 de Evolution) -> 200 y una tarea;
+//   3. con autenticacion valida y binding/SOP provisionados -> 200 y una tarea;
 //   4. los eventos que no son mensajes (statuses de Meta) se ignoran, no revientan.
 // Ver: apps/server/src/whatsapp-routes.ts (WHATSAPP_WEBHOOK_HMAC_V2/V3).
 import assert from "node:assert/strict";
@@ -17,25 +17,42 @@ import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { extractIncomingMessage } from "../apps/server/src/whatsapp-routes.ts";
 import { testConfig } from "./helpers/config.ts";
+import { sopSchema } from "../packages/domain/src/sop.ts";
 
 const APP_SECRET = "test-app-secret-para-hmac";
 let app: Awaited<ReturnType<typeof createApp>>["app"],
+  agent: Awaited<ReturnType<typeof createApp>>["agent"],
   db: Store,
   directory: string,
   baselineTasks = 0;
+const owner = "webhook-owner", tenant = "webhook-test";
+const evolutionSecret = "dedicated-evolution-secret-at-least-32-chars";
 
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "openmuse-whatsapp-"));
   db = await createStore();
-  ({ app } = await createApp(db, testConfig({ dataDir: directory })));
+  await db.put(owner, "tenant-membership", { id: "default", tenantId: tenant });
+  await db.put(`${tenant}:${owner}`, "sops", sopSchema.parse({
+    id: "responder-whatsapp", name: "Revisar entrante", allowedTools: ["ask_user"],
+    steps: [{ id: "review", title: "Revisar", tool: "ask_user" }],
+  }));
+  process.env.WHATSAPP_WEBHOOK_BINDINGS = JSON.stringify([
+    { provider: "meta", accountId: "999", tenantId: tenant, owner, sopId: "responder-whatsapp" },
+    { provider: "evolution", accountId: "test-instance", tenantId: tenant, owner, sopId: "responder-whatsapp", secretEnv: "WHATSAPP_INBOUND_TEST_SECRET" },
+  ]);
+  process.env.WHATSAPP_INBOUND_TEST_SECRET = evolutionSecret;
+  ({ app, agent } = await createApp(db, testConfig({ dataDir: directory })));
   // Linea base: arrancar la app puede dejar tareas propias del modo sample.
-  baselineTasks = (await db.list("system", "tasks")).length;
+  baselineTasks = (await db.list(`${tenant}:${owner}`, "tasks")).length;
 });
 after(async () => {
+  await agent?.stop();
   await db.close();
   await rm(directory, { recursive: true, force: true });
   delete process.env.WHATSAPP_APP_SECRET;
   delete process.env.WHATSAPP_VERIFY_TOKEN;
+  delete process.env.WHATSAPP_WEBHOOK_BINDINGS;
+  delete process.env.WHATSAPP_INBOUND_TEST_SECRET;
 });
 beforeEach(() => {
   process.env.WHATSAPP_APP_SECRET = APP_SECRET;
@@ -62,6 +79,7 @@ const metaBody = JSON.stringify({
 });
 // Cuerpo con la forma de Evolution API.
 const evolutionBody = JSON.stringify({
+  event: "messages.upsert", instance: "test-instance",
   data: { key: { id: "ev-1", remoteJid: "34600333444@s.whatsapp.net" }, message: { conversation: "Hola" } },
 });
 
@@ -71,10 +89,10 @@ function signed(body: string, encoding: "hex" | "base64") {
   return encoding === "hex" ? `sha256=${digest.toString("hex")}` : digest.toString("base64");
 }
 
-function post(body: string, headers: Record<string, string> = {}) {
+function post(body: string, headers: Record<string, string> = {}, route = "webhook") {
   // Sin Authorization a proposito: si la ruta quedara detras del middleware de
   // auth, el proveedor recibiria 401 y el webhook seria inutil en produccion.
-  return app.request("/api/whatsapp/webhook", {
+  return app.request(`/api/whatsapp/${route}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
     body,
@@ -99,7 +117,7 @@ test("una firma invalida no crea tareas", async () => {
   const response = await post(evolutionBody, { "x-hub-signature-256": forged });
   assert.equal(response.status, 401);
   assert.match((await response.json()).error, /Invalid webhook signature/);
-  assert.equal((await db.list("system", "tasks")).length, baselineTasks);
+  assert.equal((await db.list(`${tenant}:${owner}`, "tasks")).length, baselineTasks);
 });
 
 test("una firma valida de Meta (hex) crea una tarea de SOP", async () => {
@@ -107,10 +125,25 @@ test("una firma valida de Meta (hex) crea una tarea de SOP", async () => {
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.ok(body.taskId, "el webhook debe devolver la tarea creada");
+  const task = await db.get<{ tenantId: string }>(`${tenant}:${owner}`, "tasks", body.taskId);
+  assert.equal(task?.tenantId, tenant);
+  assert.equal(await db.get("system", "tasks", body.taskId), null);
 });
 
-test("una firma valida de Evolution (base64) tambien se acepta", async () => {
-  const response = await post(evolutionBody, { "x-hub-signature-256": signed(evolutionBody, "base64") });
+test("reintentos concurrentes usan una tarea y emiten task.created una sola vez", async () => {
+  const parsed = JSON.parse(metaBody);
+  parsed.entry[0].changes[0].value.messages[0].id = "wamid.CONCURRENT";
+  const raw = JSON.stringify(parsed);
+  const responses = await Promise.all(Array.from({ length: 4 }, () => post(raw, { "x-hub-signature-256": signed(raw, "hex") })));
+  assert.ok(responses.every((response) => response.status === 200));
+  const bodies = await Promise.all(responses.map((response) => response.json()));
+  assert.equal(new Set(bodies.map((body) => body.taskId)).size, 1);
+  const events = await db.list<{ type: string; payload: { taskId?: string } }>(`${tenant}:${owner}`, "system-events");
+  assert.equal(events.filter((event) => event.type === "task.created" && event.payload.taskId === bodies[0].taskId).length, 1);
+});
+
+test("Evolution usa su cabecera dedicada y la misma cola aislada", async () => {
+  const response = await post(evolutionBody, { "x-webhook-secret": evolutionSecret }, "incoming");
   assert.equal(response.status, 200);
   assert.ok((await response.json()).taskId);
 });

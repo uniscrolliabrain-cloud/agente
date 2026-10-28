@@ -431,42 +431,11 @@ export async function createApp(
       502,
     );
   });
-  app.post("/api/whatsapp/incoming", async (c) => {
-    // WHATSAPP_INCOMING_TOKEN_V1 - el nombre documentado es WHATSAPP_VERIFY_TOKEN;
-    // WHATSAPP_WEBHOOK_TOKEN queda como alias para instalaciones antiguas.
-    const expected =
-      process.env.WHATSAPP_WEBHOOK_TOKEN?.trim() || process.env.WHATSAPP_VERIFY_TOKEN?.trim();
-    if (!expected) throw new AppError("WhatsApp webhook no esta configurado", 503);
-    const provided = c.req.header("apikey") ?? c.req.header("authorization")?.replace(/^Bearer /, "");
-    // WHATSAPP_RATE_LIMIT
-    const expectedBuf = Buffer.from(expected);
-    const providedBuf = Buffer.from(provided ?? "");
-    if (providedBuf.length !== expectedBuf.length || !timingSafeEqual(providedBuf, expectedBuf))
-      throw new AppError("Unauthorized", 401);
-    const waLimiter = (globalThis as { __waLimiter?: RateLimiter }).__waLimiter ??= new RateLimiter(30, 60000);
-    const waAddress = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
-    if (!waLimiter.take(waAddress).allowed)
-      throw new AppError("Too many webhook calls", 429);
-    const body = await c.req.json().catch(() => ({}));
-    const data = (body as { data?: { key?: { id?: string; remoteJid?: string }; message?: { conversation?: string } } }).data;
-    const id = data?.key?.id;
-    const from = data?.key?.remoteJid;
-    const text = data?.message?.conversation;
-    if (!id || !from || !text) return c.json({ ok: true, ignored: true });
-    const { retryWithBackoff } = await import("./engine/retry.ts");
-    await retryWithBackoff(() => db.put("system", "whatsapp-incoming", {
-      id,
-      from,
-      text: text.slice(0, 4000),
-      receivedAt: new Date().toISOString(),
-    }), { maxAttempts: 3, baseMs: 200, maxMs: 2000 });
-    return c.json({ ok: true });
-  });
   // APP_WHATSAPP_WEBHOOK_MOUNT_V1 - el webhook de Meta/Evolution se monta AQUI, antes de
   // authzMiddleware: lo llama el proveedor, que no manda un Bearer, asi que detras
   // del middleware de auth recibiria 401 y el canal quedaria muerto en produccion.
-  // Su autenticacion es la firma HMAC (WHATSAPP_APP_SECRET) y el handshake
-  // (WHATSAPP_VERIFY_TOKEN); sin ellas responde 503. Ver whatsapp-routes.ts.
+  // Meta usa HMAC; Evolution usa un secreto dedicado por instancia. Ambas
+  // entradas pasan por el mismo binding e inbox durable, nunca por system.
   {
     const { whatsappWebhookRoutes } = await import("./whatsapp-routes.ts");
     app.route("/api/whatsapp", whatsappWebhookRoutes(agent));

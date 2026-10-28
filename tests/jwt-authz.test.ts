@@ -145,7 +145,8 @@ test("el mismo usuario escribe en el tenant que declara el token", async () => {
     body: JSON.stringify({ title: "tarea-B", prompt: "x", kind: "agent" }),
   });
   assert.equal(created.status, 201);
-  const task = (await created.json()) as { id: string };
+  const task = (await created.json()) as { id: string; tenantId: string };
+  assert.equal(task.tenantId, "otra-empresa", "task metadata and storage must use the same active tenant");
 
   // La escritura cae bajo el tenant del token, no bajo el de la membership previa.
   assert.ok(await db.get(`otra-empresa:${userId}`, "tasks", task.id));

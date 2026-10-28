@@ -59,7 +59,7 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: humo
-        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.io --tenant=agntia
+        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.com --tenant=agntia
         env:
           SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
           SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
@@ -86,4 +86,4 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       - name: humo del sitio
-        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.io --site=https://agntiapro.io
+        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.com --site=https://agntiapro.com

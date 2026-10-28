@@ -63,10 +63,11 @@ const SECRETS: Secret[] = [
   { name: "GOOGLE_CLIENT_ID", need: "optional", group: "google", note: "Gmail/Calendar/Drive" },
   { name: "GOOGLE_CLIENT_SECRET", need: "optional", group: "google", note: "Gmail/Calendar/Drive" },
   { name: "RESEND_API_KEY", need: "optional", group: "email", note: "email transaccional y cold approach (campana canales)" },
-  { name: "WHATSAPP_TOKEN", need: "optional", group: "whatsapp", note: "Cloud API de Meta; sin esto el webhook responde 503 honesto" },
+  { name: "WHATSAPP_TOKEN", need: "optional", group: "whatsapp", note: "token de envio Cloud API; no autentica mensajes entrantes" },
   { name: "WHATSAPP_VERIFY_TOKEN", need: "optional", group: "whatsapp", note: "handshake del webhook" },
   { name: "WHATSAPP_APP_SECRET", need: "optional", group: "whatsapp", note: "firma X-Hub-Signature-256 del webhook" },
   { name: "WHATSAPP_PHONE_ID", need: "optional", group: "whatsapp", note: "phone number id del numero de la agencia" },
+  { name: "WHATSAPP_WEBHOOK_BINDINGS", need: "optional", group: "whatsapp", note: "JSON de canales, tenant, responsable primario y SOP; obligatorio para admitir mensajes" },
   { name: "VAPI_API_KEY", need: "optional", group: "vapi", note: "agente de voz; sin key el adaptador responde 503" },
   { name: "VAPI_ASSISTANT_ID", need: "optional", group: "vapi", note: "asistente que atiende llamadas" },
   { name: "STRIPE_API_KEY", need: "optional", group: "stripe", note: "cobros de la agencia" },
@@ -176,19 +177,12 @@ if (modelProvider && modelProvider !== "google" && !gatewayKey) {
     `MODEL=${modelSpec} sin OPENAI_API_KEY ni OPENROUTER_API_KEY: el chat arranca sin motor.`,
   );
 }
-// ALLOWED_ORIGINS es la allowlist de CORS y del panel: que no incluya el origen
-// publico es un 403 en produccion que no se ve hasta abrir el panel.
+// The API destination is not necessarily the browser's Origin. Validate the URL
+// without claiming a split-origin panel must include the API origin in CORS.
 const publicApiUrl = present("PUBLIC_API_URL");
-const allowedOrigins = present("ALLOWED_ORIGINS");
-if (mode === "live" && publicApiUrl && allowedOrigins) {
+if (mode === "live" && publicApiUrl) {
   try {
-    const origin = new URL(publicApiUrl).origin;
-    const list = allowedOrigins.split(",").map((value) => value.trim());
-    if (!list.includes(origin)) {
-      coherence.push(
-        `ALLOWED_ORIGINS no incluye ${origin} (el origen de PUBLIC_API_URL): el panel recibiria 403.`,
-      );
-    }
+    new URL(publicApiUrl);
   } catch {
     coherence.push(`PUBLIC_API_URL no es una URL valida: ${publicApiUrl}`);
   }
