@@ -50,3 +50,7 @@ La ejecución amplia diagnóstica local terminó con 464 tests: 410 pass, 37 fai
 CI de la PR: 450 tests, 435 pass, cero fail de aserción, 3 cancelled y 12 skipped. El job unit termina con error por timeout de 10 s en browser, business-graph y conversation-browser. El job worker falla por tsc no encontrado; el typecheck conjunto y el job web sí pasan. Los audits locales de contratos e idempotencia también requieren resolución.
 
 El diagnóstico adicional de recuperación se interrumpió tras quedar bloqueado; no se contabiliza como prueba funcional fallida ni como validación de recuperación. Se conserva el log. La PR permanece en borrador y main no se ha modificado. Siguiente paso: reproducir el fallo del correo contra c5a8c7c, aislar su causa y cerrar contexto de ejecución y salida por tenant antes de conectar clientes reales.
+
+## Decisión de integración — 2026-10-29
+
+Se integra esta entrega de recepción WhatsApp por indicación del propietario: se conservan los commits originales de Freebuff y las seis correcciones de la revisión. No se presenta como certificación del repositorio completo ni como despliegue. Los fallos generales de CI, los audits pendientes, el correo conversacional y el envío aprobado por tenant quedan explícitamente abiertos. No se eliminan ni rebajan controles para realizar la integración.
