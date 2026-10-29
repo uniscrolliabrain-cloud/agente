@@ -30,6 +30,9 @@ const SECRETS: Secret[] = [
   { name: "ALLOWED_ORIGINS", need: "live", group: "core", note: "CSV de origenes del panel (https://www.agntiapro.io)" },
   { name: "AUTH_PROVIDER", need: "live", group: "auth", note: "debe ser supabase para el modo multitenant con JWT" },
   { name: "DATA_DIR", need: "optional", group: "core", note: "directorio de datos (PGlite/backups); en Fly debe ser /data" },
+  { name: "BUSINESS_DATABASE_URL", need: "optional", group: "core", note: "base + rol read-only para query_business de las SOPs; sin ella las consultas corren contra la principal" },
+  { name: "OPENMUSE_PROCESS_ROLE", need: "optional", group: "core", note: "all | api | worker; en Fly se separan en dos apps" },
+  { name: "BACKUP_INTERVAL_HOURS", need: "optional", group: "core", note: "0 desactiva los backups automaticos" },
 
   // --- auth ---------------------------------------------------------------
   { name: "SUPABASE_URL", need: "live", group: "auth", note: "habilita la JWKS RS256/ES256 (https://<ref>.supabase.co)" },
@@ -47,14 +50,24 @@ const SECRETS: Secret[] = [
   { name: "OPENROUTER_API_KEY", need: "optional", group: "llm", note: "fallback OpenAI-compatible; tambien permite modelos gratuitos" },
   { name: "MODEL_FALLBACK", need: "optional", group: "llm", note: "segunda oportunidad cuando el primario falla antes de emitir texto" },
 
+  // --- kernel de dos velocidades ------------------------------------------
+  // env-resolver.ts lee estas para el chat (fast) y las tareas (slow); sin ellas
+  // el kernel cae a la cadena global y las dos velocidades comparten cuota.
+  { name: "FAST_LLM_API_KEY", need: "optional", group: "kernel", note: "key de la velocidad 'habla el usuario'; ideal una cuota aparte de la slow" },
+  { name: "SLOW_LLM_API_KEY", need: "optional", group: "kernel", note: "key de la velocidad 'razona en background'" },
+  { name: "EMBEDDINGS_LLM_API_KEY", need: "optional", group: "kernel", note: "embeddings de RAG; si falta usa la fast" },
+  { name: "WORKER_TOKEN", need: "optional", group: "worker", note: ">=32 chars; browser worker local" },
+  { name: "BROWSER_WORKER_URL", need: "optional", group: "worker", note: "debe ser loopback si el worker corre en el host" },
+
   // --- canales (campanas siguientes) --------------------------------------
   { name: "GOOGLE_CLIENT_ID", need: "optional", group: "google", note: "Gmail/Calendar/Drive" },
   { name: "GOOGLE_CLIENT_SECRET", need: "optional", group: "google", note: "Gmail/Calendar/Drive" },
   { name: "RESEND_API_KEY", need: "optional", group: "email", note: "email transaccional y cold approach (campana canales)" },
-  { name: "WHATSAPP_TOKEN", need: "optional", group: "whatsapp", note: "Cloud API de Meta; sin esto el webhook responde 503 honesto" },
+  { name: "WHATSAPP_TOKEN", need: "optional", group: "whatsapp", note: "token de envio Cloud API; no autentica mensajes entrantes" },
   { name: "WHATSAPP_VERIFY_TOKEN", need: "optional", group: "whatsapp", note: "handshake del webhook" },
   { name: "WHATSAPP_APP_SECRET", need: "optional", group: "whatsapp", note: "firma X-Hub-Signature-256 del webhook" },
   { name: "WHATSAPP_PHONE_ID", need: "optional", group: "whatsapp", note: "phone number id del numero de la agencia" },
+  { name: "WHATSAPP_WEBHOOK_BINDINGS", need: "optional", group: "whatsapp", note: "JSON de canales, tenant, responsable primario y SOP; obligatorio para admitir mensajes" },
   { name: "VAPI_API_KEY", need: "optional", group: "vapi", note: "agente de voz; sin key el adaptador responde 503" },
   { name: "VAPI_ASSISTANT_ID", need: "optional", group: "vapi", note: "asistente que atiende llamadas" },
   { name: "STRIPE_API_KEY", need: "optional", group: "stripe", note: "cobros de la agencia" },
@@ -120,6 +133,11 @@ if (authProvider === "supabase") {
 if (present("OPENMUSE_ACCESS_KEY") && present("OPENMUSE_ACCESS_KEY")!.length < 24) {
   coherence.push("OPENMUSE_ACCESS_KEY tiene menos de 24 caracteres: live mode no arranca.");
 }
+if (present("DATABASE_URL") && !present("BUSINESS_DATABASE_URL")) {
+  coherence.push(
+    "Sin BUSINESS_DATABASE_URL: query_business de las SOPs leera con el rol de escritura de la base principal.",
+  );
+}
 if (present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
   const main = present("DATABASE_URL")!;
   const business = present("BUSINESS_DATABASE_URL")!;
@@ -138,6 +156,36 @@ if (present("WHATSAPP_TOKEN") && !present("WHATSAPP_APP_SECRET")) {
   coherence.push(
     "WHATSAPP_TOKEN sin WHATSAPP_APP_SECRET: el webhook no podria verificar X-Hub-Signature-256 y cualquiera podria inyectar mensajes.",
   );
+}
+if (present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
+  coherence.push(
+    "WHATSAPP_APP_SECRET sin WHATSAPP_VERIFY_TOKEN: Meta no podria completar el handshake del webhook y el numero no quedaria suscrito.",
+  );
+}
+// MODEL es "<provider>/<modelo>": sin la key de ese proveedor el motor arranca
+// vacio y el chat no responde. Nadie relacionaba una variable con la otra.
+const modelSpec = present("MODEL") ?? "";
+const modelProvider = modelSpec.split("/")[0]?.trim().toLowerCase() ?? "";
+const gatewayKey = present("OPENROUTER_API_KEY") ?? present("OPENAI_API_KEY");
+if (modelProvider === "google" && !present("GEMINI_API_KEY") && !gatewayKey) {
+  coherence.push(
+    `MODEL=${modelSpec} sin GEMINI_API_KEY ni pasarela OpenAI-compatible: el chat arranca sin motor.`,
+  );
+}
+if (modelProvider && modelProvider !== "google" && !gatewayKey) {
+  coherence.push(
+    `MODEL=${modelSpec} sin OPENAI_API_KEY ni OPENROUTER_API_KEY: el chat arranca sin motor.`,
+  );
+}
+// The API destination is not necessarily the browser's Origin. Validate the URL
+// without claiming a split-origin panel must include the API origin in CORS.
+const publicApiUrl = present("PUBLIC_API_URL");
+if (mode === "live" && publicApiUrl) {
+  try {
+    new URL(publicApiUrl);
+  } catch {
+    coherence.push(`PUBLIC_API_URL no es una URL valida: ${publicApiUrl}`);
+  }
 }
 
 console.log(`\n[secrets:check] modo=${mode}${only ? ` grupos=${[...only].join(",")}` : ""}`);

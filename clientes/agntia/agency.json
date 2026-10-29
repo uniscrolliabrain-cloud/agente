@@ -1,7 +1,7 @@
 {
   "tenantId": "agntia",
   "displayName": "Agntia Pro",
-  "domain": "https://www.agntiapro.io",
+  "domain": "https://www.agntiapro.com",
   "offer": "Agencia de automatizaciones con IA para negocios pequenos: agentes que buscan leads, atienden WhatsApp y llamadas, agendan discovery calls en Google Calendar y preparan correos de primer contacto. Se vende como servicio mensual con implantacion incluida, no como licencia de software.",
   "icp": "Negocios locales y pymes de 1 a 20 personas (clinicas, gimnasios, estudios, talleres, inmobiliarias, restaurantes) con leads entrantes que hoy se pierden por no contestar a tiempo, y con alguien que ya paga por captacion (Google Ads, Meta Ads o directorios).",
   "pricing": [
