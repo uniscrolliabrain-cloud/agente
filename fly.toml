@@ -1,53 +1,55 @@
-# FLY_WEB_TOML_V1 - panel + API en el mismo proceso.
-# app.ts sirve apps/web/dist en el mismo origen, asi que el cliente puede seguir
-# llamando rutas relativas (/api/...) y el stream SSE del chat no cruza dominios.
-app = "agntiapro-api"
-primary_region = "mad"
+# fly.toml app configuration file generated for agente-eb4t4a on 2026-10-29T12:38:10Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'agente-eb4t4a'
+primary_region = 'ams'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  WORKSPACE_MODE = "live"
-  AGENT_BACKEND = "model"
-  HOST = "0.0.0.0"
-  PORT = "8787"
-  DATA_DIR = "/data"
-  GEMINI_MODEL = "gemini-3.6-flash"
-  OPENROUTER_MODEL = "google/gemini-3.6-flash"
-  TASK_WORKER_ENABLED = "true"
-  COMPUTER_ENABLED = "false"
-  BACKUP_INTERVAL_HOURS = "24"
-  BACKUP_RETENTION_DAYS = "7"
-  # PUBLIC_API_URL deriva el redirect de Google OAuth y los enlaces firmados.
-  PUBLIC_API_URL = "https://www.agntiapro.com"
-  ALLOWED_ORIGINS = "https://www.agntiapro.com"
+  AGENT_BACKEND = 'model'
+  ALLOWED_ORIGINS = 'https://www.agntiapro.com'
+  BACKUP_INTERVAL_HOURS = '24'
+  BACKUP_RETENTION_DAYS = '7'
+  COMPUTER_ENABLED = 'false'
+  DATA_DIR = '/data'
+  GEMINI_MODEL = 'gemini-3.6-flash'
+  HOST = '0.0.0.0'
+  OPENROUTER_MODEL = 'google/gemini-3.6-flash'
+  PORT = '8787'
+  PUBLIC_API_URL = 'https://www.agntiapro.com'
+  TASK_WORKER_ENABLED = 'true'
+  WORKSPACE_MODE = 'live'
+
+[[mounts]]
+  source = 'agntiapro_data'
+  destination = '/data'
 
 [http_service]
-  internal_port = 8787
+  internal_port = 8080
   force_https = true
-  auto_stop_machines = "stop"
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 1
-  processes = ["app"]
+  processes = ['app']
 
   [http_service.concurrency]
-    type = "requests"
+    type = 'requests'
     hard_limit = 100
     soft_limit = 80
 
+[checks]
+  [checks.health]
+    port = 8787
+    type = 'http'
+    interval = '30s'
+    timeout = '5s'
+    grace_period = '20s'
+    path = '/api/health'
+
 [[vm]]
-  size = "shared-cpu-1x"
-  memory = "1gb"
-
-[[mounts]]
-  source = "agntiapro_data"
-  destination = "/data"
-
-[checks.health]
-  type = "http"
-  port = 8787
-  path = "/api/health"
-  interval = "30s"
-  timeout = "5s"
-  grace_period = "20s"
+  size = 'shared-cpu-1x'
+  memory = '1gb'
