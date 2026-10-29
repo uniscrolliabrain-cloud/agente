@@ -258,3 +258,7 @@ Las correcciones de registros conservan trazabilidad: updated_at y nota de cambi
 Freebuff abre PR y entrega SHA -> Copilot verifica ese SHA y publica informe -> Cline registra implementación/verificación -> Codex revisa y remedia -> si cambia el código, Copilot comprueba el nuevo SHA con alcance proporcional -> Codex integra cuando procede -> Cline registra merge, pendientes y próxima fase. No bloquear un arreglo urgente por formalidades del índice: registrar la evidencia inmediatamente después.
 
 Para empezar ahora: Freebuff toma VS-01; Copilot prepara el entorno y el primer informe de base sin corregir código; Cline crea el registro inicial de main 83d20b2 y la campaña, diferenciando recepción integrada de funciones pendientes. Estos encargos quedan escritos para que Alfonso los pase a los agentes; no se han enviado desde este chat.
+
+## 10. Guía para preparar cuentas con el copiloto conversacional
+
+El inventario ampliado y el protocolo paso a paso están en [INVENTARIO-CONEXIONES-Y-GUIA-COPILOTO.md](./INVENTARIO-CONEXIONES-Y-GUIA-COPILOTO.md). Incluye servicios activos y futuros, contratos comprobados frente a nombres propuestos, Doppler, Better Auth y el seguimiento por entorno/tenant. El chat asesor usa esa guía sin sustituir los criterios de implementación de esta campaña. No se guardan valores secretos en ninguno de los dos documentos.
