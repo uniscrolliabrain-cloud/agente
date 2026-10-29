@@ -206,3 +206,55 @@ Alfonso puede completar VS-00 y las cuentas en paralelo; no debe bloquear la cor
 - Limitaciones y fallos de base que siguen abiertos:
 - Configuración pendiente de Alfonso (solo nombres/referencias):
 - Próxima fase habilitada y responsable:
+
+## 9. Reparto operativo entre agentes (mandato de Alfonso, 2026-10-29)
+
+Esta sección amplía el reparto anterior. Los agentes usan este archivo de main como documento rector; citan el SHA leído al comenzar y no tratan una copia antigua como estado vigente.
+
+| Responsable | Trabajo autorizado | Entrega |
+| --- | --- | --- |
+| Freebuff | Implementar la fase asignada en rama nueva desde main, con alcance y límites de esta campaña | PR de código y handoff concreto |
+| Codex | Revisar diseño/diff/aislamiento, remediar defectos y supervisar integración y cierre de ramas | Dictamen con hallazgos, correcciones y SHA integrado |
+| GitHub Copilot en Codespaces | Ejecutar tests y audits sobre commits identificados, analizar fallos y conservar evidencia; sin reparar código ni rebajar controles salvo nueva asignación | PR de informes bajo docs/verification/vertical/ |
+| Cline | Registrar el trabajo de los demás en el sistema documental nuevo, con metadatos buscables y enlaces a evidencia | PR documental, índice y registros de actividad; sin cambios de código |
+| Alfonso | Prioridades, recursos/cuentas, decisiones comerciales y autorizaciones externas necesarias | Decisiones referenciadas sin secretos |
+
+No hay acceso automático entre agentes por este documento. Alfonso entrega los handoffs o autoriza la coordinación concreta. No implica que Copilot esté ejecutándose ni que se haya creado una automatización. No usar las ramas ajenas como superficie de trabajo compartida.
+
+### 9.1 Estándar de verificación de Copilot
+
+Rama: verification/vs-NN-AAAAMMDD-identificador, desde main. La verificación se ejecuta en un checkout separado del SHA objetivo; los informes se commitean en la rama de informes, nunca sobre la rama de implementación de Freebuff. El SHA objetivo, el SHA base y el SHA del informe son distintos conceptos y deben quedar explícitos.
+
+Carpeta por ejecución: docs/verification/vertical/AAAAMMDD/vs-NN-identificador/. Entregar REPORT.md, manifest.json y logs redactados. No sobreescribir una ejecución anterior ni regenerar documentos generales de audits en la rama ajena. Si los scripts generan documentación, conservarla solo dentro de la evidencia de esa ejecución o informar qué cambió.
+
+Secuencia operacional:
+
+1. Registrar PR/rama/SHA objetivo exacto, SHA de main usado como base, fase, alcance del diff y fecha UTC. Confirmar checkout limpio y entorno sin secretos de producción. Inventariar Node, gestor de paquetes, OS y configuración relevante sin valores sensibles.
+2. Instalar desde el lockfile con el gestor declarado. Si no se puede, marcar fallo de preparación; no presentar tests no ejecutados como aprobados.
+3. Revisar scripts actuales antes de ejecutarlos. Ejecutar primero typecheck y pruebas dirigidas del cambio. Los audits relevantes y la suite amplia se ejecutan como comprobación central de la entrega, sin multiplicar ejecuciones idénticas en cada agente. Omitir redes reales/cargos/envíos: ALLOW_NETWORK=0 cuando corresponda; este flag no sustituye revisar herramientas que puedan tener efectos externos.
+4. Por cada comando: registrar comando exacto, inicio/fin UTC, exit code, timeout, estado y ruta de log. Ante fallo de instalación o requisito previo, marcar dependientes como blocked/not_run, no pass. Un timeout, cancelación, skip y aserción fallida son resultados diferentes.
+5. Comparar un fallo sospechoso con el SHA base bajo el mismo entorno y comando. Etiquetar preexistente solo con esa evidencia; en otro caso, origen sin determinar. No repetir una suite completa para cada fallo: aislar la prueba y documentar el motivo de cualquier repetición. No ampliar timeouts o desactivar assertions silenciosamente.
+6. Entregar un resumen de regresiones nuevas, fallos de base, riesgos del cambio, controles no ejecutados y pasos de reproducción. El agente no declara todo listo para producción por un único green; el dictamen de integración corresponde a Codex/Alfonso según el alcance.
+7. Redactar tokens, URLs con credenciales, datos personales y contenidos de clientes antes de publicar logs. No subir .env, dumps de entorno o bases de clientes. Referenciar artifacts de CI voluminosos en lugar de volcar megabytes al repositorio. La política de retención se acuerda antes de automatizar su borrado.
+
+Estados normalizados de comando: pass, fail, timeout, cancelled, skipped, blocked, not_run. REPORT.md debe incluir conclusión, tabla de comandos, clasificación de fallos, reproducción, límites y enlaces. manifest.json debe incluir al menos schema_version, run_id, phase, target_sha, baseline_sha, source_pr, agent, started_at, finished_at, environment, commands y findings. Cada elemento commands incluye command, status, exit_code (null si no existe), duration_ms y log_path. findings incluye severity, summary, classification (new/preexisting/undetermined), evidence y recommended_action.
+
+No incluir afirmaciones de cobertura sin medición. Un resultado cancelado no cuenta como aprobado. Los audits rojos conservan su salida y su significado; no se cambia el script para que el informe sea verde. Las comprobaciones con proveedor real necesitan entorno de prueba y alcance autorizado, y se registran separadas de la suite sin red.
+
+### 9.2 Estándar documental de Cline
+
+Cline mantiene registros nuevos y buscables, enlazando evidencias sin duplicarlas. Ubicación inicial acordada para esta campaña: docs/registro-agentes/entries/ para registros y docs/registro-agentes/index.jsonl para índice legible por máquina. Si el sistema nuevo usa otra ubicación, proponer y documentar la migración manteniendo enlaces; no ejecutar otra reorganización masiva por cuenta propia.
+
+Cada registro es Markdown con front matter YAML. Campos obligatorios: schema_version, id único, title, created_at en ISO 8601 con zona, updated_at, agent, phase, type, status, repository, branch, commit, source_pr, evidence y tags. Tipos: implementation, review, verification, decision, handoff, deployment, incident. Estados del registro: proposed, in_progress, blocked, completed, superseded. Campos no disponibles usan null con explicación, no datos inventados. Para verificación añadir target_sha y baseline_sha; para decisiones indicar quién decidió y referencia de la instrucción.
+
+El cuerpo contiene objetivo, cambios/resultado observado, pendientes, límites, siguiente responsable y enlaces. evidence y tags son listas. El índice JSONL contiene un objeto por registro con id, path, title, phase, agent, type, status, commit, source_pr, updated_at y tags. IDs únicos; no introducir rutas fuera del árbol documental. Metadatos con vocabulario consistente permiten buscar por fase, agente, SHA, PR, proveedor, estado y tema con herramientas de texto/JSON sin exigir un buscador nuevo.
+
+Un registro completed significa que terminó esa actividad, no que la fase o el producto estén desplegados. Una PR merged acredita integración, no conexión real. Conservar por separado estado de fase, estado de conexión y evidencia de despliegue. No deducir trabajo terminado porque exista un handoff. Registrar fallos y decisiones pendientes con la misma trazabilidad que los éxitos.
+
+Las correcciones de registros conservan trazabilidad: updated_at y nota de cambio; los sustituidos enlazan al sucesor y pasan a superseded. Cline revisa enlaces, front matter e índice antes de entregar. No copia passwords ni tokens, no reescribe conclusiones técnicas sin evidencia y no marca una revisión aprobada antes del dictamen de Codex.
+
+### 9.3 Circuito de entrega
+
+Freebuff abre PR y entrega SHA -> Copilot verifica ese SHA y publica informe -> Cline registra implementación/verificación -> Codex revisa y remedia -> si cambia el código, Copilot comprueba el nuevo SHA con alcance proporcional -> Codex integra cuando procede -> Cline registra merge, pendientes y próxima fase. No bloquear un arreglo urgente por formalidades del índice: registrar la evidencia inmediatamente después.
+
+Para empezar ahora: Freebuff toma VS-01; Copilot prepara el entorno y el primer informe de base sin corregir código; Cline crea el registro inicial de main 83d20b2 y la campaña, diferenciando recepción integrada de funciones pendientes. Estos encargos quedan escritos para que Alfonso los pase a los agentes; no se han enviado desde este chat.
