@@ -67,8 +67,8 @@ Reservas iniciales: el equipo NC escribe sus árboles nuevos; el equipo VS escri
 | apps/server/src/kernel/** existente | NC tras NC-P00 | Escritura solo en archivos enumerados en su manifiesto; conservar API e invariantes; avisar al vertical si cambia contrato |
 | engine/memory.ts y engine/rag.ts | NC tras NC-P00 | Reservar esos archivos al NC; no cambiar API legacy sin puente y aprobación |
 | Canal WhatsApp, Google/OAuth, Stripe, Vapi, leads y adaptadores externos existentes | VS | NC no modifica sus rutas, secretos, payloads ni implementaciones |
-| engine/service.ts, worker.ts, model.ts, model-chain.ts, conversation.ts, context/**, sop-executor.ts, task-plans.ts | Puente serial; prioridad VS para correcciones del piloto | NC propone cambios en un documento/patch aislado; no los edita en paralelo |
-| app.ts, config.ts, tenant-scope.ts, db.ts, db-tenant.ts, auth/tenant/users/permissions | Puente serial; prioridad VS para identidad y operación | No redefinir tenancy, cifrado, storage o login desde NC |
+| engine/service.ts, worker.ts, model.ts, model-chain.ts, conversation.ts, context/**, sop-executor.ts, task-plans.ts | Reserva inicial NC-P00; entrega y traspaso acordados con VS | NC propone cambios en un documento/patch aislado; no los edita en paralelo |
+| app.ts, config.ts, tenant-scope.ts, db.ts, db-tenant.ts, auth/tenant/users/permissions | Reserva inicial NC-P00; VS congela escrituras hasta traspaso | No redefinir tenancy, cifrado, storage o login desde NC |
 | engine/events/** existente; nueva durabilidad genérica; types/schemas/barrels | Puente serial | No apropiarse del bus con una subcarpeta nueva; outbox genérico se decide una sola vez |
 | packages/domain/src/agent.ts, kernel.ts, execution-context.ts, index.ts y otros contratos compartidos | Puente serial | NC puede proponer extensión compatible; un escritor y consumers revisados |
 | package.json, lockfiles, tsconfig*, .env.example, CI, fly/vercel, dependencias y flags globales | Puente serial | Ningún agente los edita incidentalmente para hacer compilar su módulo |
@@ -106,7 +106,7 @@ El jefe registra cada solicitud en docs/campaigns/NC-COORDINATION/BRIDGE-REQUEST
 
 Ciclo: propuesta -> acordada por responsables de ambos equipos -> reserva activa -> PR mínima -> integrada -> consumidores actualizados -> reserva liberada. Si no hay canal autorizado entre chats, Alfonso transmite la solicitud; no fingir que se ha obtenido acuerdo por esperar un tiempo. Antes de acuerdo NC sigue fuera de esos paths.
 
-En el periodo actual, Codex del vertical es integrador por defecto de service/worker/app/config y tenancy; Codex NC propone el hook y revisa su lado. El bus/DB genéricos también requieren una única PR de infraestructura revisada por ambos. Cambiar un contexto cognitivo no debe invalidar el caso de usuario en dos tenants que cierra VS-01.
+Decisión de Alfonso del 2026-10-30: el jefe NC dirige primero los fixes compartidos en NC-P00. El jefe VS aporta requisitos y revisa compatibilidad; el vertical no modifica los paths reservados hasta el traspaso. Bus/DB y contratos comunes se integran una sola vez bajo esa reserva. La entrega debe cubrir tanto los invariantes del núcleo como el caso de usuario en dos tenants del vertical. Ver el acuerdo NC-P00-SHARED-FOUNDATION.md.
 
 Ejemplo mínimo de ficha (campos propuestos, sin crear integración por este ejemplo):
 
@@ -115,13 +115,13 @@ id: NC-BR-001
 status: proposed
 base_sha: SHA_MAIN_COMPLETO
 requester: nc-lead
-integration_owner: vs-lead
+integration_owner: nc-lead
 paths: [apps/server/src/engine/service.ts]
 reason: inyectar puerto cognitivo opcional sin alterar ejecucion legacy
 producer: cognition-service
 consumer: agent-service
 compatibility: capacidad ausente mantiene la ruta anterior
-requires_vs: [VS-01]
+satisfies_vs: [VS-01-shared-foundation]
 acceptance: [tenant_context, disabled_equivalence, bounded_failure]
 rollback: desactivar montaje; conservar registros experimentales
 ```
@@ -164,11 +164,11 @@ No prometer cero conflictos. Si aparece uno: identificar autores y propósito, i
 | NC-P07 puente de runtime | 13 | integración A-H | 13 | contexto autorizado al Slow; ruta apagada equivalente y sin escritura duplicada |
 | NC-P08 observación/evaluación | 14-15 | métricas/calibración/ablaciones | 14-15 | inspectores autorizados, límites y capacidades aceptadas por evidencia |
 
-No esperar a NC-P07 para descubrir incompatibilidades: el puerto candidato se acuerda en P00/P01 y se valida en integración sintética. El montaje real en archivos compartidos se realiza cuando la reserva lo permita, después del arreglo de contexto VS-01 si ese puente lo necesita. Ninguna capacidad pasa de mock a conectada por inferencia.
+No esperar a NC-P07 para descubrir incompatibilidades: el puerto candidato se acuerda en P00/P01 y se valida en integración sintética. El montaje real en archivos compartidos se realiza cuando la reserva lo permita, después del cierre compartido de contexto NC-P00b, contabilizado también en VS-01, si ese puente lo necesita. Ninguna capacidad pasa de mock a conectada por inferencia.
 
 ### Primer encargo de ejecución para el nuevo jefe
 
-NC-P00: leer las fuentes y código relevante, registrar SHA y todos los paths que se pretenden cambiar. Entregar ARCHITECTURE-MAP.md, FILE-OWNERSHIP.md, BRIDGE-REQUESTS.md, CONTRACT-CANDIDATES.md y PATCHSETS.md dentro de NC-COORDINATION. No modificar runtime en ese primer patchset. Duración objetivo: una unidad revisable, no una exploración de semanas; separar desconocidos y dar el siguiente paso implementable.
+NC-P00: leer las fuentes y código relevante, registrar SHA y todos los paths que se pretenden cambiar. Entregar ARCHITECTURE-MAP.md, FILE-OWNERSHIP.md, BRIDGE-REQUESTS.md, CONTRACT-CANDIDATES.md y PATCHSETS.md dentro de NC-COORDINATION. NC-P00a entrega esos documentos; NC-P00b implementa y verifica los fixes comunes acordados antes de liberar archivos al vertical. No cerrar fase 0 solo con los documentos. Duración objetivo: una unidad revisable, no una exploración de semanas; separar desconocidos y dar el siguiente paso implementable.
 
 Después, publicar NC-P01 mínimo y dividir P02 entre los dos especialistas: datos con Store scoped y replay; semántica con baseline y validación de respuestas. El jefe integra las firmas comunes. El primer circuito puede operar sobre fixtures sintéticos y eventos persistidos de prueba sin esperar Jev ni claves de producción; declararlo como tal.
 
@@ -186,14 +186,19 @@ Flags y presupuestos cognitivos son propuestas hasta implementarse. Deben estar 
 
 ## 11. Límites para no duplicar trabajo del vertical
 
-VS-01 conserva identidad de tareas y conexiones; NC la consume. VS-02/03 conservan aprobaciones y efectos externos; NC solo propone/evalúa. VS-05 decide infraestructura, secretos y observabilidad operacional; NC aporta señales e inspectores de su subsistema sin cambiar exporter global. VS-04 gobierna el panel comercial; NC construye componentes aislados y pide montaje. Cline gobierna índices/metadatos; NC aporta evidencia. Copilot verifica por SHA; el jefe no convierte el gate en otra campaña paralela.
+NC-P00b cierra primero la base común de identidad/contexto en coordinación con VS-01; VS completa sus conexiones y NC consume el mismo contrato. VS-02/03 conservan aprobaciones y efectos externos; NC solo propone/evalúa. VS-05 decide infraestructura, secretos y observabilidad operacional; NC aporta señales e inspectores de su subsistema sin cambiar exporter global. VS-04 gobierna el panel comercial; NC construye componentes aislados y pide montaje. Cline gobierna índices/metadatos; NC aporta evidencia. Copilot verifica por SHA; el jefe no convierte el gate en otra campaña paralela.
 
 Si el núcleo descubre un defecto de seguridad compartido, informar con reproducción y parche mínimo propuesto; no dejarlo oculto ni arreglar a la vez todo el runtime sin reserva. Si el vertical necesita un cambio en un archivo reservado a NC, usar el mismo protocolo inverso. Los dos equipos pueden avanzar; no tienen permiso de pisarse por la urgencia de su fase.
 
 ## 12. Prompt de arranque para pegar en el otro chat de Codex
 
-Eres el jefe de la campaña cognitiva NC-01/02/03 de Agntia Pro. Alfonso te autoriza a dirigir un equipo de tres agentes en total (tú y dos especialistas), cada uno con worktree y branch propios. Lee docs/campaigns/NC-COORDINATION/HANDOFF-JEFE-NUCLEO.md desde origin/main y las tres especificaciones enlazadas. El otro squad está ejecutando el vertical comercial y tiene reservas sobre sus archivos.
+Eres el jefe de la campaña cognitiva NC-01/02/03 de Agntia Pro. Alfonso te autoriza a dirigir un equipo de tres agentes en total (tú y dos especialistas), cada uno con worktree y branch propios. Lee docs/campaigns/NC-COORDINATION/HANDOFF-JEFE-NUCLEO.md desde origin/main y las tres especificaciones enlazadas. El otro squad ejecuta el vertical comercial; Alfonso ha asignado al núcleo el cierre inicial de los archivos compartidos en NC-P00, con revisión y traspaso al vertical.
 
 Empieza por NC-P00: mapa real, ownership, puentes y contratos mínimos. No ejecutes los comandos del export ni cambies de rama en el checkout del Escritorio. No modifiques service/worker/app/config/DB/eventos/contratos compartidos sin una reserva acordada según el handoff. Distribuye los directorios exclusivos entre los otros dos agentes, conservando tú los contratos y la integración. No generes el árbol de módulos vacío ni reescribas el kernel. Conserva las tres campañas como arquitectura única y PRs pequeñas. Entrega primero el plan concreto de paths y el primer patchset revisable; después continúa por P01/P02 dentro del alcance autorizado. No necesitas secretos de producción para empezar.
 
 La coordinación entre chats se hace por PRs/manifiestos y mensajes que Alfonso autorice; no presupongas que el otro jefe ha recibido una propuesta o cedido un archivo. No marques integrado, conectado o desplegado por existir un documento. Prioriza resultados verificables y compatibilidad con el piloto.
+
+
+## 13. Cierre previo de la base compartida
+
+El acuerdo [NC-P00-SHARED-FOUNDATION.md](./NC-P00-SHARED-FOUNDATION.md) incorpora la decisión posterior de Alfonso y prevalece sobre la prioridad anterior de integración VS y sobre las instrucciones de fase 0 solo documental de las fuentes. NC-P00a documenta y acuerda; NC-P00b remedia, integra y entrega la base común. VS congela únicamente los archivos reservados, no toda su campaña.
