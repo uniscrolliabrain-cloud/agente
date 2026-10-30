@@ -104,7 +104,12 @@ export async function createApp(
   );
   const auth = await createAuth(db, config),
     files = new Files(tdbEarly, config, auth),
-    google = new GoogleAuth(db, config),
+    // VS01_CONNECTION_TENANT_V1 - GoogleAuth resuelve la membership primaria
+    // solo para el puente de credenciales legacy (sin tenantId). Las credenciales
+    // nuevas quedan selladas con la empresa en la que se autorizaron.
+    google = new GoogleAuth(db, config, {
+      primaryTenantFor: (owner: string) => tenantServiceEarly.tenantIdFor(owner),
+    }),
     users = new UserService(db),
     // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantServiceEarly + resolver para embeddings por tenant.
   rag = new RagService(tdbEarly, tenantServiceEarly, new EnvTenantConfigResolver()),

@@ -4,6 +4,7 @@ import { decryptSecret, encryptSecret } from "../../../packages/integrations/src
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
 
 const tokenSchema = z.object({
   access_token: z.string().min(1),
@@ -18,6 +19,13 @@ interface Tokens {
   expiresAt: number;
   scopes: string[];
   account: string;
+  /**
+   * VS01_CONNECTION_TENANT_V1 - empresa a la que se autorizo esta conexion.
+   * Ausente en credenciales escritas antes de existir este campo: se tratan
+   * como legacy y solo valen para la membership primaria del owner (ver
+   * `assertTenant`).
+   */
+  tenantId?: string;
 }
 interface OAuthState {
   id: string;
@@ -26,6 +34,8 @@ interface OAuthState {
   verifier: string;
   scopes: string[];
   generation: string;
+  /** Tenant en el que se inicio el consentimiento. */
+  tenantId?: string;
 }
 interface Credential {
   id: string;
@@ -38,14 +48,46 @@ export class GoogleAuth {
   constructor(
     private readonly db: Store,
     private readonly config: Config,
+    /**
+     * VS01_LEGACY_CONNECTION_BRIDGE_V1 - membership primaria del owner, usada
+     * SOLO para decidir si una credencial legacy (sin tenantId) puede seguir
+     * usandose. Sin resolver, una credencial legacy no se usa en peticiones
+     * con scope: se pide reconectar.
+     */
+    private readonly options: { primaryTenantFor?: (owner: string) => Promise<string> } = {},
   ) {}
   configured() {
     return Boolean(
       this.config.googleClientId && this.config.googleClientSecret && this.config.encryptionKey,
     );
   }
+  /**
+   * VS01_CONNECTION_TENANT_V1 - una conexion se usa en la empresa en la que se
+   * autorizo. Antes la credencial no llevaba tenant y se resolvia solo por
+   * owner: una peticion de la empresa B con el mismo usuario leia el token de
+   * la A y actuaba con la cuenta de correo de la otra empresa.
+   *
+   * Puente legacy explicito: una credencial sin tenantId se acepta solo si la
+   * empresa de la peticion es la membership primaria del owner (que es el
+   * unico caso que existia cuando esa credencial se escribio). Nunca para una
+   * empresa secundaria, y nunca en silencio: la primera escritura la sella.
+   */
+  private async assertTenant(owner: string, tokens: Tokens): Promise<void> {
+    const scopeTenant = currentTenantScope()?.tenantId;
+    if (!scopeTenant) return;
+    if (tokens.tenantId) {
+      if (tokens.tenantId !== scopeTenant)
+        throw new AppError("This Google connection belongs to another company", 403);
+      return;
+    }
+    const primary = await this.options.primaryTenantFor?.(owner).catch(() => undefined);
+    if (primary !== scopeTenant)
+      throw new AppError("This Google connection belongs to another company", 403);
+  }
   async tokens(owner: string): Promise<Tokens | null> {
-    return this.decodeTokens(await this.db.get<Credential>(owner, "credentials", "google"));
+    const tokens = this.decodeTokens(await this.db.get<Credential>(owner, "credentials", "google"));
+    if (tokens) await this.assertTenant(owner, tokens);
+    return tokens;
   }
   private decodeTokens(stored: Credential | null): Tokens | null {
     if (!stored?.secret) return null;
@@ -137,6 +179,9 @@ export class GoogleAuth {
       verifier,
       scopes,
       generation,
+      // VS01_CONNECTION_TENANT_V1 - el consentimiento recuerda la empresa en la
+      // que se inicio; el callback la sella en la credencial.
+      ...(currentTenantScope()?.tenantId ? { tenantId: currentTenantScope()!.tenantId } : {}),
     });
     const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
     url.search = new URLSearchParams({
@@ -194,6 +239,7 @@ export class GoogleAuth {
         expiresAt: Date.now() + token.expires_in * 1000,
         scopes: token.scope?.split(" ") ?? state.scopes,
         account: emailAddress,
+        ...(state.tenantId ? { tenantId: state.tenantId } : {}),
       },
       state.generation,
     );
