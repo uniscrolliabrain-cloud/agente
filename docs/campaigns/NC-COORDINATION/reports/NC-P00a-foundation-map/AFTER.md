@@ -6,7 +6,7 @@
 | Fecha | 2026-10-30 |
 | Base | `main` **4f81f22** |
 | Rama | `campaign/nc-p00a-foundation-map` |
-| Commit de la entrega | **pendiente**: este informe viaja en el mismo commit; no se inventa un SHA |
+| Commit de la entrega | `f5c7f7a` (documentos) + commit de este ajuste |
 | SHA probado | `4f81f22` (solo lectura; no hay código ejecutable modificado) |
 | Autor | Implementador Freebuff |
 | Estado | **`ready_for_review`** |
@@ -77,9 +77,9 @@ No hay aserciones de test que puedan fallar. No se presenta esta unidad como val
 
 ## 9. Entrega
 
-- Rama: `campaign/nc-p00a-foundation-map` (worktree `agente-nc-p00`).
-- PR: pendiente de publicación; se abrirá en borrador si Codex lo autoriza.
-- Recuperación: el commit contiene los 7 archivos; si el worktree se pierde antes de publicar, se puede regenerar desde este informe y el bundle que se cree al publicar.
+- Rama publicada: `origin/campaign/nc-p00a-foundation-map` (worktree `agente-nc-p00`).
+- PR en borrador: https://github.com/uniscrolliabrain-cloud/agente/pull/7
+- Recuperación: los commits `f5c7f7a` y el de este ajuste contienen los 7 archivos; la rama remota permite recrear el worktree.
 
 ## 10. Qué debe revisar Codex
 
