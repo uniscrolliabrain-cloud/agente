@@ -262,3 +262,7 @@ Para empezar ahora: Freebuff toma VS-01; Copilot prepara el entorno y el primer 
 ## 10. Guía para preparar cuentas con el copiloto conversacional
 
 El inventario ampliado y el protocolo paso a paso están en [INVENTARIO-CONEXIONES-Y-GUIA-COPILOTO.md](./INVENTARIO-CONEXIONES-Y-GUIA-COPILOTO.md). Incluye servicios activos y futuros, contratos comprobados frente a nombres propuestos, Doppler, Better Auth y el seguimiento por entorno/tenant. El chat asesor usa esa guía sin sustituir los criterios de implementación de esta campaña. No se guardan valores secretos en ninguno de los dos documentos.
+
+## 11. Coexistencia con la campaña cognitiva del núcleo
+
+Alfonso ejecutará NC-01/02/03 con otro equipo de tres agentes en worktrees separados. El protocolo conjunto y la matriz de archivos están en [HANDOFF-JEFE-NUCLEO.md](../campaigns/NC-COORDINATION/HANDOFF-JEFE-NUCLEO.md). Este equipo VS conserva la responsabilidad de canales, conexiones, aprobaciones y producto. Los nuevos módulos de cognition pertenecen al equipo NC. Los archivos de runtime, contexto, tenancy, DB, bus, configuración y contratos compartidos solo se modifican con reserva y PR de puente serializada; tener otro worktree no elimina los conflictos de integración. Leer la matriz antes de asignar cambios y usar el protocolo en ambos sentidos. El núcleo no es un requisito para lanzar el piloto y el piloto no cancela la campaña cognitiva.
