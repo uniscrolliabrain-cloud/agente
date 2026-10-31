@@ -20,9 +20,19 @@ const bindingSchema = z.object({
   owner: z.string().trim().min(1).max(200).refine((v) => v !== "system" && !v.includes(":")),
   sopId: z.string().trim().min(1).max(200),
   secretEnv: z.string().regex(/^WHATSAPP_[A-Z0-9_]+$/).optional(),
+  // WHATSAPP_CHANNEL_CREDENTIAL_ENV_V1: nombre de la variable con la apikey de ESTE
+  // canal. Antes toda respuesta salia con la WHATSAPP_API_KEY global, es decir
+  // por la instancia del proceso y no por la del tenant del borrador. Es el
+  // nombre, nunca el valor: el binding es configuracion, no un almacen de claves.
+  apiKeyEnv: z.string().regex(/^WHATSAPP_[A-Z0-9_]+$/).optional(),
 }).superRefine((b, ctx) => {
   if (b.provider === "evolution" && (!b.secretEnv || ["WHATSAPP_VERIFY_TOKEN", "WHATSAPP_WEBHOOK_TOKEN", "WHATSAPP_APP_SECRET"].includes(b.secretEnv))) {
     ctx.addIssue({ code: "custom", message: "Evolution requires a dedicated secretEnv" });
+  }
+  // Un mismo secreto no puede autenticar la entrada del proveedor y la salida
+  // hacia el proveedor: reutilizarlo filtra uno de los dos usos.
+  if (b.apiKeyEnv && (["WHATSAPP_VERIFY_TOKEN", "WHATSAPP_WEBHOOK_TOKEN", "WHATSAPP_APP_SECRET", "WHATSAPP_WEBHOOK_SECRET"].includes(b.apiKeyEnv) || b.apiKeyEnv === b.secretEnv)) {
+    ctx.addIssue({ code: "custom", message: "apiKeyEnv must be a dedicated outbound credential" });
   }
 });
 export type WhatsAppBinding = z.infer<typeof bindingSchema>;

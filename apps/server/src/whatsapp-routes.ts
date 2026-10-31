@@ -15,8 +15,9 @@ import { z } from "zod";
 import type { AgentService } from "./engine/service.ts";
 import { AppError } from "./errors.ts";
 import { RateLimiter } from "./rate-limit.ts";
-import { runInTenantScope } from "./tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
 import { bindingFor, enqueueIncoming, extractIncomingMessages, validateBinding, whatsappBindings, type InboundService, type WhatsAppProvider } from "./engine/whatsapp-inbound.ts";
+import { outboundClient, resolveOutboundChannel } from "./engine/whatsapp-outbound.ts";
 
 // WHATSAPP_TIMING_SAFE_V1 - comparacion sin filtrar el resultado por tiempo.
 function safeEqual(a: string, b: string): boolean {
@@ -116,6 +117,20 @@ export function whatsappWebhookRoutes(service: InboundService) {
   return app;
 }
 
+export interface WhatsAppDraft {
+  id: string;
+  to: string;
+  text: string;
+  status: string;
+  /** Canal por el que debe salir. Ausente = unico canal de la empresa. */
+  channelId?: string;
+  tenantId?: string;
+  providerId?: string;
+  sentAt?: string;
+  resolvedAt?: string;
+  error?: string;
+}
+
 /** Router autenticado del panel: aprobacion de borradores. */
 export function whatsappRoutes(service: AgentService) {
   const app = new Hono<{ Variables: { owner: string } }>();
@@ -131,24 +146,35 @@ export function whatsappRoutes(service: AgentService) {
   });
 
   // POST /api/whatsapp/drafts/:id/send -> aprueba y envia.
+  //
+  // WHATSAPP_DRAFT_CHANNEL_SEND_V1: antes se usaba `service.whatsapp`, el cliente
+  // global del proceso. Con dos empresas eso respondia por el numero de la
+  // empresa equivocada. Ahora el canal se resuelve con el tenant de la peticion
+  // (runInTenantScope, app.ts:651) y el `channelId` del borrador.
   app.post("/drafts/:id/send", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
-    const draft = await service.db.get<{ id: string; to: string; text: string; status: string }>(
-      owner,
-      "whatsapp-drafts",
-      id,
-    );
+    const draft = await service.db.get<WhatsAppDraft>(owner, "whatsapp-drafts", id);
     if (!draft) throw new AppError("Draft not found", 404);
     if (draft.status !== "awaiting_review") throw new AppError("Draft already resolved", 409);
-    if (!service.whatsapp.configured) throw new AppError("WhatsApp no configurado", 503);
+    const tenantId =
+      currentTenantScope()?.tenantId ?? (await service.tenantService?.tenantIdFor(owner));
+    if (!tenantId) throw new AppError("No se pudo resolver la empresa del borrador", 503);
+    // Resolver antes del envio: un canal ajeno o no provisionado no debe
+    // marcar el borrador como fallido, porque el mensaje nunca salio.
+    const channel = resolveOutboundChannel(tenantId, draft.channelId);
+    // Credenciales y forma del canal fuera del try: si faltan, el mensaje no
+    // salio y el borrador no puede quedar "failed", solo pendiente.
+    const sender = outboundClient(channel);
     try {
-      const result = await service.whatsapp.sendText(draft.to, draft.text);
+      const result = await sender.sendText(draft.to, draft.text);
       await service.db.put(owner, "whatsapp-drafts", {
         ...draft,
         status: result.accepted ? "sent" : "failed",
         sentAt: new Date().toISOString(),
         providerId: result.id,
+        channelId: channel.accountId,
+        tenantId,
       });
       return c.json({ ok: true, result });
     } catch (error) {

@@ -66,7 +66,11 @@ export class WhatsAppClient {
 
   async sendText(to: string, text: string, signal?: AbortSignal): Promise<WhatsAppSendResult> {
     const trimmed = to.trim();
-    if (!/^\\+?[0-9]{6,20}$/.test(trimmed)) throw new AppError("Numero de WhatsApp invalido", 422);
+    // WHATSAPP_PHONE_REGEX_V1 - estaba doblemente escapada (`\\+?` exige una
+    // barra invertida literal), asi que NINGUN numero normal pasaba y todo
+    // envio terminaba en 422. Un prefijo + opcional y 6-20 digitos es lo que
+    // acepta Evolution.
+    if (!/^\+?[0-9]{6,20}$/.test(trimmed)) throw new AppError("Numero de WhatsApp invalido", 422);
     if (!text.trim() || text.length > 4000) throw new AppError("Texto vacio o demasiado largo", 422);
     const result = (await this.request("sendText", { number: trimmed, text }, signal)) as {
       key?: { id?: string };
