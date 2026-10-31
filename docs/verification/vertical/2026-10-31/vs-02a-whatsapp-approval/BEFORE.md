@@ -9,3 +9,7 @@ Alcance exclusivo VS: whatsapp-routes.ts; nuevo engine/whatsapp-outbound.ts; ada
 Entrega: conexión cifrada por tenant/owner provisionada por operador, sin fallback global; aprobación vinculada a snapshot/revisión; registro persistente único de decisión/efecto; accepted distinto de delivered; sin reenvío automático ante respuesta ambigua; rechazo concurrente exclusivo; bandera global explícita y conexión habilitada, más allowlist de destinatarios del piloto.
 
 Pruebas: concurrencia y doble aprobación/rechazo; aislamiento del mismo usuario en dos tenants; cambio de contenido/conexión; desactivación; reinicio de Store; fallo antes/después de efecto/persistencia; errores HTTP y cuerpo inválido del adapter. Sin red real, cargos, mensajes o secretos productivos. Informar evidencia real vs simulada. Rollback: desactivar salida, conservar ledger y datos; nunca borrar registros para reintentar.
+
+### Continuación: respuesta manual desde inbox
+
+Se amplía la misma unidad para consumir la inbox persistente ya integrada, sin modificar su escritor ni el worker. La respuesta se liga al ID de inbox y al canal Evolution de origen; la persona no puede cambiar el destinatario al responder. Meta se muestra, pero no se ofrece respuesta hasta implementar su adaptador de salida. No se presenta como ejecución del SOP ni como respuesta automática LLM.

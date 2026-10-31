@@ -45,3 +45,11 @@ Se respetaron las reservas: sin cambios en service.ts, worker.ts, model.ts, mode
 Mantener salida apagada por defecto. Desactivar no borra el ledger ni retira efectos ya iniciados. No restaurar el antiguo envío directo sin revisar operaciones: permitiría duplicados. Para reintento tras estado desconocido, comprobar primero el proveedor; la reconciliación nunca reenvía automáticamente.
 
 Revisar especialmente las transiciones de ledger, los puntos de pérdida de confirmación, la revisión ligada a conexión/contenido y la migración de clientes legacy. Cline puede registrar esta actividad como implementación finalizada, manteniendo revisión/conexión/despliegue pendientes. Copilot puede verificar el SHA objetivo con el estándar de informes existente.
+
+## Continuación: entrada visible y respuesta manual
+
+La misma entrega incorpora inbox autenticada y preparación de respuestas vinculadas al mensaje original. El servidor fija el destinatario a partir del registro persistido y exige que coincidan proveedor e instancia de la conexión de salida. La revisión incluye inboxId, y no se acepta reutilizar una Idempotency-Key en otro mensaje. El panel permite leer la entrada y preparar la respuesta sin pasar por un productor legacy del chat.
+
+La prueba HTTP completa ha pasado con Store real y proveedor simulado: evento Evolution autenticado y reentregado -> una tarea encolada mediante fixture -> inbox -> borrador de respuesta -> tres aprobaciones concurrentes -> una sola llamada al adapter y confirmación persistida. No ejecuta el worker/SOP ni acredita credencial o número real. Meta permanece visible pero sin respuesta saliente mediante Evolution.
+
+El CI de la versión anterior de esta PR registró 465 tests: 446 pass, cero fail de aserción, 7 cancelled y 12 skipped; unit falla por timeouts de 10 s. El job worker falla por tsc no encontrado; web pasa. No se han modificado CI ni timeouts para ocultarlo. No se atribuyen todos los timeouts a la base sin una comparación ejecutada por SHA. Log original local: VS02-CI-failed.log; no se vuelca entero al repo.

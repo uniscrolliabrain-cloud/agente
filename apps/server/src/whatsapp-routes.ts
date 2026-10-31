@@ -143,6 +143,12 @@ export function whatsappRoutes(service: Pick<AgentService, "db" | "config" | "te
     encryptionKey: service.config.encryptionKey,
     enabled: service.config.mode === "live" && process.env.WHATSAPP_OUTBOUND_ENABLED === "true",
   });
+  app.get("/inbox", async (c) => c.json({ messages: await outbound().inbox(c.get("outboundIdentity")) }));
+  app.post("/inbox/:id/draft", async (c) => {
+    const body = await c.req.json().catch(() => { throw new AppError("JSON de respuesta requerido", 422); });
+    const draft = await outbound().createReply(c.get("outboundIdentity"), c.req.param("id"), body, c.req.header("Idempotency-Key") ?? "");
+    return c.json({ draft }, 201);
+  });
   app.get("/connection", async (c) => c.json(await outbound().connectionStatus(c.get("outboundIdentity"))));
   app.get("/drafts", async (c) => c.json({ drafts: await outbound().drafts(c.get("outboundIdentity")) }));
   app.post("/drafts", async (c) => {

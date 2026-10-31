@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, CheckCircle2, MessageCircle, RefreshCw, Send } from "lucide-react";
-import { decideWhatsApp, getWhatsAppConnection, listWhatsAppDrafts, prepareWhatsApp, reconcileWhatsApp,
-  type WhatsAppConnection, type WhatsAppDraft } from "../api/whatsapp";
+import { decideWhatsApp, getWhatsAppConnection, listWhatsAppDrafts, listWhatsAppInbox, prepareWhatsApp, prepareWhatsAppReply, reconcileWhatsApp,
+  type WhatsAppConnection, type WhatsAppDraft, type WhatsAppInboxMessage } from "../api/whatsapp";
 import "./WhatsAppView.css";
 
 const labels: Record<string, string> = { awaiting_review: "Pendiente de tu revisión", dispatching: "En proceso",
@@ -10,6 +10,8 @@ const message = (error: unknown) => error instanceof Error ? error.message : "No
 
 export default function WhatsAppView() {
   const [drafts, setDrafts] = useState<WhatsAppDraft[]>([]);
+  const [inbox, setInbox] = useState<WhatsAppInboxMessage[]>([]), [inboxError, setInboxError] = useState("");
+  const [replyTo, setReplyTo] = useState<WhatsAppInboxMessage | null>(null);
   const [connection, setConnection] = useState<WhatsAppConnection | null>(null);
   const [loading, setLoading] = useState(true), [error, setError] = useState("");
   const [connectionError, setConnectionError] = useState("");
@@ -21,12 +23,14 @@ export default function WhatsAppView() {
   const [evidenceRef, setEvidenceRef] = useState(""), [providerId, setProviderId] = useState("");
   const [checkedProvider, setCheckedProvider] = useState(false);
   const load = useCallback(async (signal?: AbortSignal) => {
-    const results = await Promise.allSettled([listWhatsAppDrafts(signal), getWhatsAppConnection(signal)]);
+    const results = await Promise.allSettled([listWhatsAppDrafts(signal), getWhatsAppConnection(signal), listWhatsAppInbox(signal)]);
     if (signal?.aborted) return;
     if (results[0].status === "fulfilled") { setDrafts(results[0].value.drafts); setError(""); }
     else setError(message(results[0].reason));
     if (results[1].status === "fulfilled") { setConnection(results[1].value); setConnectionError(""); }
     else { setConnection(null); setConnectionError(message(results[1].reason)); }
+    if (results[2].status === "fulfilled") { setInbox(results[2].value.messages); setInboxError(""); }
+    else setInboxError(message(results[2].reason));
     setLoading(false);
   }, []);
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => controller.abort(); }, [load]);
@@ -40,8 +44,9 @@ export default function WhatsAppView() {
     event.preventDefault(); if (busy) return;
     setBusy("prepare"); setError(""); setNotice("");
     try {
-      await prepareWhatsApp(to, text, intentKey.current);
-      setText(""); intentKey.current = crypto.randomUUID();
+      if (replyTo) await prepareWhatsAppReply(replyTo.id, text, intentKey.current);
+      else await prepareWhatsApp(to, text, intentKey.current);
+      setText(""); setReplyTo(null); intentKey.current = crypto.randomUUID();
       await load(); setNotice("Borrador preparado. Revisa el número y el mensaje antes de aprobar.");
     } catch (e) { setError(message(e)); } finally { setBusy(null); }
   };
@@ -65,7 +70,7 @@ export default function WhatsAppView() {
       await load(); setNotice("Comprobación registrada. No se ha enviado ningún mensaje adicional.");
     } catch (e) { setError(message(e)); } finally { setBusy(null); }
   };
-  const pending = drafts.filter((d) => d.status === "awaiting_review" && !d.needsReprepare).length;
+  const pending = drafts.filter((d) => d.status === "awaiting_review" && !d.needsReprepare && Boolean(d.expiresAt) && Date.parse(d.expiresAt!) > Date.now()).length;
   const unresolved = drafts.filter((d) => d.requiresReconciliation).length;
   return <section className="wa-view" aria-labelledby="wa-title">
     <header className="wa-header">
@@ -80,11 +85,22 @@ export default function WhatsAppView() {
     {(connectionError || (connection && (!connection.enabled || !connection.outboundEnabled))) && <div className="wa-banner"><AlertCircle size={18} /><div><strong>{connectionError ? "La conexión necesita revisión" : "Los envíos están pausados"}</strong><p>{connectionError || "Puedes revisar tus mensajes. La salida debe estar habilitada antes de aprobar un envío."}</p></div></div>}
     {error && <div className="wa-banner wa-error" role="alert"><AlertCircle size={18} /><span>{error}</span></div>}
     {notice && <div className="wa-banner wa-notice" role="status"><CheckCircle2 size={18} /><span>{notice}</span></div>}
+    <section className="wa-inbox" aria-labelledby="wa-inbox-title"><h2 id="wa-inbox-title">Mensajes recibidos</h2>
+      {inboxError ? <p className="wa-muted" role="status">{inboxError}</p> : !inbox.length ? <p className="wa-muted">{loading ? "Cargando entrada…" : "Todavía no hay mensajes recibidos. Actualiza para comprobar la entrada."}</p>
+        : <div className="wa-inbox-list">{inbox.map((item) => <article className="wa-card" key={item.id}>
+          <div className="wa-draft-heading"><strong>{item.from.includes("@") ? item.from : `+${item.from.replace(/^\+/, "")}`}</strong><span className="wa-muted">{Number.isFinite(Date.parse(item.receivedAt)) ? new Date(item.receivedAt).toLocaleString("es") : "Fecha no disponible"}</span></div>
+          <p className="wa-message-preview">{item.text.slice(0, 500)}{item.text.length > 500 ? "…" : ""}</p>
+          {item.text.length > 500 && <details><summary>Ver mensaje completo</summary><p className="wa-message-preview">{item.text}</p></details>}
+          <button className="wa-button" disabled={Boolean(busy) || !item.canReply} onClick={() => { setReplyTo(item); setTo(item.from); setText(""); intentKey.current = crypto.randomUUID(); setNotice("Escribe la respuesta y prepara el borrador para revisarlo."); }}>Preparar respuesta</button>
+          {!item.canReply && <p className="wa-muted">Este canal o destinatario todavía no tiene salida habilitada para el piloto.</p>}
+        </article>)}</div>}
+    </section>
     <div className="wa-layout">
       <form className="wa-card wa-compose" onSubmit={(event) => { void prepare(event); }}>
-        <h2>Preparar un mensaje</h2><p className="wa-muted">Crear un borrador no envía nada.</p>
+        <h2>{replyTo ? "Preparar una respuesta" : "Preparar un mensaje"}</h2><p className="wa-muted">Crear un borrador no envía nada.</p>
+        {replyTo && <div className="wa-reply-context"><p>Respuesta al mensaje recibido: {replyTo.text.slice(0, 180)}{replyTo.text.length > 180 ? "…" : ""}</p><button type="button" className="wa-button" disabled={Boolean(busy)} onClick={() => { setReplyTo(null); setTo(""); setText(""); intentKey.current = crypto.randomUUID(); }}>Cancelar respuesta</button></div>}
         <label htmlFor="wa-recipient">Destinatario del piloto</label>
-        <select id="wa-recipient" value={to} required disabled={!connection?.enabled || Boolean(busy)} onChange={(event) => { setTo(event.target.value); intentKey.current = crypto.randomUUID(); }}>
+        <select id="wa-recipient" value={to} required disabled={Boolean(replyTo) || !connection?.enabled || Boolean(busy)} onChange={(event) => { setTo(event.target.value); intentKey.current = crypto.randomUUID(); }}>
           <option value="">Selecciona un número</option>{connection?.allowedRecipients.map((number) => <option key={number} value={number}>+{number}</option>)}
         </select>
         <label htmlFor="wa-message">Mensaje</label>

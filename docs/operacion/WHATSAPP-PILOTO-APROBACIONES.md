@@ -89,3 +89,13 @@ No se ha provisionado una cuenta real ni enviado un mensaje real. La UI requiere
 ## Rollback
 
 Desactivar la bandera global de salida y/o la conexión. Conservar operaciones y credenciales cifradas. Una reversión de código no debe restaurar la ruta antigua de envío directo si ya hay operaciones reservadas: eso eliminaría la protección frente a duplicados. Revisar el ledger antes de cualquier migración o reintento manual.
+
+## Continuación: inbox y respuesta manual vinculada
+
+El panel incorpora Mensajes recibidos con contenido real de whatsapp-inbox, aislado por tenant/owner. GET /api/whatsapp/inbox no marca un mensaje como respondido por existir una tarea ni altera el estado del escritor de entrada. Solo ofrece respuesta si la conexión Evolution habilitada corresponde a la instancia original y el remitente es un teléfono permitido.
+
+POST /api/whatsapp/inbox/:id/draft admite únicamente text y la cabecera Idempotency-Key. El servidor deriva destinatario y canal desde el mensaje persistido; no acepta to ni parámetros de canal del cliente. El borrador y la operación guardan inboxId y su revisión incluye esa referencia. Reutilizar la clave con otro mensaje se rechaza, aunque texto y destinatario coincidan. Las revisiones de borradores manuales sin inboxId conservan su formato anterior.
+
+La comprobación dirigida atraviesa rutas HTTP reales y Store real: entrada Evolution autenticada -> persistencia/encolado -> inbox -> respuesta manual -> aprobación concurrente -> confirmación simulada del proveedor. El productor de tarea del test es una fixture y no ejecuta el worker/SOP. No acredita automatización LLM ni una conexión Evolution real.
+
+Los mensajes de Meta siguen siendo legibles, pero no se responden desde esta conexión Evolution; no se mezclan proveedores ni se reutilizan credenciales por coincidencia de número. La bandeja se actualiza al abrir y mediante Actualizar; no se anuncia tiempo real sin ese cableado.

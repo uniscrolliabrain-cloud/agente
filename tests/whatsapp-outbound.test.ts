@@ -9,7 +9,7 @@ import { createStore, type Store } from "../apps/server/src/db.ts";
 import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import { runInTenantScope, currentTenantScope } from "../apps/server/src/tenant-scope.ts";
 import { WhatsAppOutbound, provisionWhatsAppConnection, type OutboundIdentity } from "../apps/server/src/engine/whatsapp-outbound.ts";
-import { whatsappRoutes } from "../apps/server/src/whatsapp-routes.ts";
+import { whatsappRoutes, whatsappWebhookRoutes } from "../apps/server/src/whatsapp-routes.ts";
 import { AppError, OutcomeUnknownError } from "../packages/domain/src/errors.ts";
 
 let db: Store, directory: string;
@@ -301,4 +301,78 @@ test("HTTP output refuses a raw unscoped Store even with an authenticated identi
   app.use("*", async (c, next) => { c.set("owner", f.a.owner); await f.run(f.a, next); });
   app.route("/api/whatsapp", whatsappRoutes({ db, config: { encryptionKey, mode: "live" }, tenantService: undefined } as Parameters<typeof whatsappRoutes>[0]));
   assert.equal((await app.request("/api/whatsapp/drafts")).status, 503);
+});
+
+async function seedInbox(f: Awaited<ReturnType<typeof fixture>>, id = "inbox-001", identity = f.a, extra: Record<string, unknown> = {}) {
+  await f.run(identity, () => f.scoped.put(identity.owner, "whatsapp-inbox", { id, tenantId: identity.tenantId, owner: identity.owner,
+    provider: "evolution", accountId: identity.tenantId, providerMessageId: `provider-${id}`, from: `${recipient}@s.whatsapp.net`,
+    text: "¿Tenéis una cita mañana?", receivedAt: new Date().toISOString(), status: "queued", taskId: "task-inbox", ...extra }));
+}
+test("reply draft derives recipient and channel from inbox and binds the approved snapshot to its source", async () => {
+  const f = await fixture(); await seedInbox(f);
+  const messages = await f.run(f.a, () => f.client().inbox(f.a));
+  assert.equal(messages[0].canReply, true); assert.equal(messages[0].from, recipient);
+  const draft = await f.run(f.a, () => f.client().createReply(f.a, "inbox-001", { text: "Sí, a las diez." }, "reply-intent-001"));
+  assert.equal(draft.to, recipient); assert.equal(draft.inboxId, "inbox-001");
+  await f.approve(draft.id, draft.revision!);
+  assert.equal((await f.operation(draft.id))?.inboxId, "inbox-001");
+  assert.equal(f.calls[0].to, recipient); assert.equal(f.calls[0].text, "Sí, a las diez.");
+});
+test("reply rejects a caller-supplied recipient and idempotency cannot be reused for another inbox source", async () => {
+  const f = await fixture(); await seedInbox(f); await seedInbox(f, "inbox-002");
+  await assert.rejects(f.run(f.a, () => f.client().createReply(f.a, "inbox-001", { text: "Respuesta", to: "34999999999" }, "reply-intent-001")), /solo el texto/);
+  await f.run(f.a, () => f.client().createReply(f.a, "inbox-001", { text: "Respuesta" }, "reply-intent-001"));
+  await assert.rejects(f.run(f.a, () => f.client().createReply(f.a, "inbox-002", { text: "Respuesta" }, "reply-intent-001")), /Idempotency-Key/);
+  assert.equal(f.calls.length, 0);
+});
+test("inbox and reply cannot read another tenant, another channel or an unsupported sender", async () => {
+  const f = await fixture(); await seedInbox(f);
+  assert.deepEqual(await f.run(f.b, () => f.client().inbox(f.b)), []);
+  await assert.rejects(f.run(f.b, () => f.client().createReply(f.b, "inbox-001", { text: "No" }, "reply-intent-001")), /no encontrado/);
+  for (const extra of [{ accountId: "other-instance" }, { provider: "meta" }, { from: "12345@g.us" }]) {
+    await seedInbox(f, "wrong-channel", f.a, extra);
+    const messages = await f.run(f.a, () => f.client().inbox(f.a));
+    assert.equal(messages.find((m) => m.id === "wrong-channel")?.canReply, false);
+    await assert.rejects(f.run(f.a, () => f.client().createReply(f.a, "wrong-channel", { text: "No" }, "reply-intent-002")), /canal|respuesta/);
+  }
+  await seedInbox(f, "foreign", f.a, { tenantId: f.b.tenantId });
+  await assert.rejects(f.run(f.a, () => f.client().inbox(f.a)), /otra empresa/);
+});
+test("real HTTP ingress to manual reply and approval persists one effect; task execution remains outside this test", async (t) => {
+  const f = await fixture();
+  const savedEnv = new Map(["WHATSAPP_WEBHOOK_BINDINGS", "WHATSAPP_REPLY_TEST_SECRET", "WHATSAPP_OUTBOUND_ENABLED"].map((k) => [k, process.env[k]]));
+  t.after(() => { for (const [key, value] of savedEnv) { if (value === undefined) delete process.env[key]; else process.env[key] = value; } });
+  const inboundSecret = "whatsapp-inbound-secret-for-http-reply-at-least-32";
+  process.env.WHATSAPP_REPLY_TEST_SECRET = inboundSecret;
+  process.env.WHATSAPP_OUTBOUND_ENABLED = "true";
+  process.env.WHATSAPP_WEBHOOK_BINDINGS = JSON.stringify([{ provider: "evolution", accountId: f.a.tenantId, tenantId: f.a.tenantId,
+    owner: f.a.owner, sopId: "reply-review", secretEnv: "WHATSAPP_REPLY_TEST_SECRET" }]);
+  await f.run(f.a, () => f.scoped.put(f.a.owner, "sops", { id: "reply-review", name: "Review", active: true,
+    allowedTools: ["ask_user"], steps: [{ id: "review", title: "Review", tool: "ask_user" }] }));
+  let effects = 0, queued = 0;
+  t.mock.method(globalThis, "fetch", async (_url: unknown, init: RequestInit) => {
+    const payload = JSON.parse(init.body as string); assert.equal(payload.number, recipient);
+    assert.equal(payload.text, "Mañana a las diez. ¿Te viene bien?"); effects++;
+    return Response.json({ key: { id: "reply-provider-confirmation" } });
+  });
+  const app = new Hono<{ Variables: { owner: string } }>();
+  app.onError((e, c) => c.json({ error: e.message }, e instanceof AppError ? e.status : 500));
+  app.route("/api/whatsapp", whatsappWebhookRoutes({ db: f.scoped, tenantService: { tenantIdFor: async () => f.a.tenantId },
+    createTask: async (owner: string, input: unknown) => {
+      queued++; const task = { id: "http-inbound-queued", tenantId: f.a.tenantId, input };
+      await f.scoped.put(owner, "tasks", task); return task;
+    },
+  } as unknown as Parameters<typeof whatsappWebhookRoutes>[0]));
+  app.use("*", async (c, next) => { c.set("owner", f.a.owner); await f.run(f.a, next); });
+  app.route("/api/whatsapp", whatsappRoutes({ db: f.scoped, config: { encryptionKey, mode: "live" }, tenantService: undefined } as Parameters<typeof whatsappRoutes>[0]));
+  const body = { event: "messages.upsert", instance: f.a.tenantId, data: { key: { id: "incoming-provider-001", remoteJid: `${recipient}@s.whatsapp.net`, fromMe: false }, message: { conversation: "¿Tenéis una cita mañana?" } } };
+  const incoming = () => app.request("/api/whatsapp/incoming", { method: "POST", headers: { "Content-Type": "application/json", "x-webhook-secret": inboundSecret }, body: JSON.stringify(body) });
+  assert.equal((await incoming()).status, 200); assert.equal((await incoming()).status, 200); assert.equal(queued, 1);
+  const { messages } = await (await app.request("/api/whatsapp/inbox")).json();
+  assert.equal(messages.length, 1); assert.equal(messages[0].canReply, true);
+  const prepared = await app.request(`/api/whatsapp/inbox/${messages[0].id}/draft`, { method: "POST", headers: { "Content-Type": "application/json", "Idempotency-Key": "http-inbox-reply-001" }, body: JSON.stringify({ text: "Mañana a las diez. ¿Te viene bien?" }) });
+  assert.equal(prepared.status, 201); const { draft } = await prepared.json(); assert.equal(draft.inboxId, messages[0].id);
+  const approve = () => app.request(`/api/whatsapp/drafts/${draft.id}/send`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ revision: draft.revision }) });
+  await Promise.all([approve(), approve(), approve()]); assert.equal(effects, 1);
+  assert.equal((await f.operation(draft.id))?.providerId, "reply-provider-confirmation");
 });

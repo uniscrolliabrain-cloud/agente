@@ -9,6 +9,10 @@ import { WhatsAppClient, type WhatsAppSendResult } from "../../../../packages/in
 const CONNECTIONS = "whatsapp-connections";
 const DRAFTS = "whatsapp-drafts";
 const OPERATIONS = "whatsapp-outbound-operations";
+const INBOX = "whatsapp-inbox";
+const inboxSchema = z.object({ id: z.string().min(1), tenantId: z.string().min(1), owner: z.string().min(1),
+  provider: z.enum(["meta", "evolution"]), accountId: z.string().min(1), from: z.string().min(1), text: z.string().min(1).max(10000),
+  providerMessageId: z.string().min(1), receivedAt: z.string(), status: z.string(), taskId: z.string().optional() });
 const phone = z.string().trim().regex(/^\+?[0-9]{6,20}$/).transform((v) => v.replace(/^\+/, ""));
 const content = z.string().min(1).max(4000).refine((v) => v.trim().length > 0);
 const intent = z.string().min(8).max(200).regex(/^[A-Za-z0-9._:-]+$/);
@@ -33,12 +37,12 @@ export interface OutboundIdentity { tenantId: string; owner: string; actorId: st
 interface Draft {
   id: string; tenantId: string; owner: string; to: string; text: string;
   connectionGeneration: string; createdAt: string; expiresAt: string;
-  status: string;
+  status: string; inboxId?: string;
 }
 type OperationStatus = "dispatching" | "accepted" | "rejected" | "failed" | "outcome_unknown";
 interface Operation {
   id: string; draftId: string; tenantId: string; owner: string; actorId: string;
-  revision: string; to: string; text: string; connectionGeneration: string;
+  revision: string; to: string; text: string; connectionGeneration: string; inboxId?: string;
   status: OperationStatus; startedAt: string; attemptId: string;
   providerId?: string; resolvedAt?: string; errorCode?: string;
   reconciliation?: { result: string; evidenceRef: string; actorId: string; at: string; priorStatus: string };
@@ -72,8 +76,10 @@ function assertConnectionScope(connection: WhatsAppConnection, identity: Outboun
     throw new AppError("La conexion WhatsApp no pertenece a esta empresa y usuario", 403);
   }
 }
-function revisionFor(draft: Pick<Draft, "id" | "tenantId" | "owner" | "to" | "text" | "connectionGeneration" | "expiresAt">): string {
-  return sha([draft.id, draft.tenantId, draft.owner, draft.to, draft.text, draft.connectionGeneration, draft.expiresAt]);
+function revisionFor(draft: Pick<Draft, "id" | "tenantId" | "owner" | "to" | "text" | "connectionGeneration" | "expiresAt" | "inboxId">): string {
+  const fields = [draft.id, draft.tenantId, draft.owner, draft.to, draft.text, draft.connectionGeneration, draft.expiresAt];
+  if (draft.inboxId) fields.push(draft.inboxId);
+  return sha(fields);
 }
 
 /** Operator-only helper: never mounted as a public credential-writing endpoint. */
@@ -115,6 +121,9 @@ export class WhatsAppOutbound {
       enabled: connection.enabled, outboundEnabled: this.options.enabled, allowedRecipients: connection.allowedRecipients };
   }
   async createDraft(identity: OutboundIdentity, input: unknown, idempotencyKey: string) {
+    return this.prepareDraft(identity, input, idempotencyKey);
+  }
+  private async prepareDraft(identity: OutboundIdentity, input: unknown, idempotencyKey: string, inboxId?: string) {
     requireIdentity(identity);
     const parsed = whatsappDraftInput.safeParse(input);
     if (!parsed.success || !intent.safeParse(idempotencyKey).success) throw new AppError("Destinatario, texto o Idempotency-Key no validos", 422);
@@ -123,15 +132,52 @@ export class WhatsAppOutbound {
     if (!connection.allowedRecipients.includes(parsed.data.to)) throw new AppError("Destinatario fuera de la lista del piloto", 403);
     const candidate: Draft = { id: sha([identity.tenantId, identity.owner, idempotencyKey]),
       tenantId: identity.tenantId, owner: identity.owner, ...parsed.data, connectionGeneration: connection.generation,
-      createdAt: this.now().toISOString(), expiresAt: new Date(this.now().getTime() + 30 * 60_000).toISOString(), status: "awaiting_review" };
+      ...(inboxId ? { inboxId } : {}), createdAt: this.now().toISOString(), expiresAt: new Date(this.now().getTime() + 30 * 60_000).toISOString(), status: "awaiting_review" };
     const inserted = await this.db.insertIfAbsent(identity.owner, DRAFTS, candidate);
     const draft = inserted ?? await this.db.get<Draft>(identity.owner, DRAFTS, candidate.id);
     if (!draft) throw new AppError("No se pudo confirmar el borrador", 503);
     this.assertDraftScope(draft, identity);
-    if (draft.to !== candidate.to || draft.text !== candidate.text || draft.connectionGeneration !== connection.generation) {
+    if (draft.to !== candidate.to || draft.text !== candidate.text || draft.connectionGeneration !== connection.generation || draft.inboxId !== inboxId) {
       throw new AppError("Idempotency-Key ya utilizada con otro contenido o conexion", 409);
     }
     return this.view(identity, draft);
+  }
+  async inbox(identity: OutboundIdentity) {
+    requireIdentity(identity);
+    const rows = await this.db.list(identity.owner, INBOX, { limit: 100 });
+    let connection: WhatsAppConnection | undefined;
+    try { connection = await this.connection(identity); }
+    catch (error) { if (!(error instanceof AppError && error.status === 503)) throw error; }
+    return rows.map((row) => {
+      const parsed = inboxSchema.safeParse(row);
+      if (!parsed.success) throw new AppError("Mensaje de inbox sin formato verificable", 409);
+      const item = parsed.data;
+      if (item.tenantId !== identity.tenantId || item.owner !== identity.owner) throw new AppError("Mensaje de otra empresa o usuario", 403);
+      const recipient = this.replyRecipient(item.from, item.provider);
+      const canReply = Boolean(connection?.enabled && connection.provider === item.provider && connection.instance === item.accountId &&
+        recipient && connection.allowedRecipients.includes(recipient));
+      return { id: item.id, from: recipient ?? item.from, text: item.text, receivedAt: item.receivedAt,
+        provider: item.provider, status: item.status, taskId: item.taskId, canReply };
+    });
+  }
+  private replyRecipient(from: string, provider: string): string | undefined {
+    if (provider !== "evolution") return undefined;
+    const match = /^(\d{6,20})@s\.whatsapp\.net$/.exec(from);
+    return match?.[1];
+  }
+  async createReply(identity: OutboundIdentity, inboxId: string, input: unknown, idempotencyKey: string) {
+    requireIdentity(identity);
+    const parsedInput = whatsappDraftInput.pick({ text: true }).strict().safeParse(input);
+    if (!parsedInput.success) throw new AppError("La respuesta admite solo el texto; el destinatario procede de inbox", 422);
+    const parsed = inboxSchema.safeParse(await this.db.get(identity.owner, INBOX, inboxId));
+    if (!parsed.success) throw new AppError("Mensaje de inbox no encontrado o invalido", 404);
+    const item = parsed.data;
+    if (item.tenantId !== identity.tenantId || item.owner !== identity.owner) throw new AppError("Mensaje de otra empresa o usuario", 403);
+    const connection = await this.connection(identity);
+    if (connection.provider !== item.provider || connection.instance !== item.accountId) throw new AppError("El canal de salida no coincide con el mensaje recibido", 409);
+    const to = this.replyRecipient(item.from, item.provider);
+    if (!to) throw new AppError("Este mensaje no admite respuesta por el canal configurado", 409);
+    return this.prepareDraft(identity, { to, text: parsedInput.data.text }, idempotencyKey, inboxId);
   }
   async drafts(identity: OutboundIdentity) {
     requireIdentity(identity);
@@ -160,7 +206,7 @@ export class WhatsAppOutbound {
     const legacy = draft.tenantId !== identity.tenantId || draft.owner !== identity.owner || !draft.connectionGeneration || !draft.expiresAt;
     const operation = await this.db.get<Operation>(identity.owner, OPERATIONS, draft.id);
     if (operation && (operation.tenantId !== identity.tenantId || operation.owner !== identity.owner)) throw new AppError("Ambito de operacion no valido", 403);
-    return { id: draft.id, to: operation?.to ?? draft.to, text: operation?.text ?? draft.text,
+    return { id: draft.id, inboxId: operation?.inboxId ?? draft.inboxId, to: operation?.to ?? draft.to, text: operation?.text ?? draft.text,
       status: operation?.status ?? draft.status, createdAt: draft.createdAt, expiresAt: draft.expiresAt,
       revision: operation?.revision ?? (legacy ? null : revisionFor(draft)), needsReprepare: legacy && !operation,
       providerId: operation?.providerId, errorCode: operation?.errorCode, reconciliation: operation?.reconciliation,
@@ -168,7 +214,7 @@ export class WhatsAppOutbound {
   }
   private operation(identity: OutboundIdentity, draft: Draft, revision: string, status: OperationStatus): Operation {
     return { id: draft.id, draftId: draft.id, ...identity, revision, to: draft.to, text: draft.text,
-      connectionGeneration: draft.connectionGeneration, status, startedAt: this.now().toISOString(), attemptId: randomUUID() };
+      connectionGeneration: draft.connectionGeneration, ...(draft.inboxId ? { inboxId: draft.inboxId } : {}), status, startedAt: this.now().toISOString(), attemptId: randomUUID() };
   }
   private replay(operation: Operation, identity: OutboundIdentity, revision: string) {
     if (operation.tenantId !== identity.tenantId || operation.owner !== identity.owner || operation.revision !== revision) {
@@ -273,4 +319,5 @@ export class WhatsAppOutbound {
       });
     if (!saved) throw new AppError("La operacion cambio; vuelve a consultar su estado", 409);
     return { ...this.replay(saved, identity, parsed.data.revision), reconciled: true, replay: false };
-  }}
+  }
+}

@@ -23,3 +23,5 @@ node --import tsx --import ./tests/setup.ts --test --test-concurrency=1 --test-t
 ```
 
 El presupuesto local de 60 segundos es explícito; no se cambió el presupuesto de CI. No se presenta el resultado dirigido como suite completa verde.
+
+La continuación añade inbox y respuesta manual vinculada al origen. Evidencia nueva: INBOX-REPLY.md, tests-inbox.txt y manifest-inbox.json. Conserva las pruebas y SHA anteriores como fotografía de la primera entrega; no interpretar 31/31 como el recuento de la versión ampliada.

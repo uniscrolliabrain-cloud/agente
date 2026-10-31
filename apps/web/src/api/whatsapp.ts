@@ -1,6 +1,6 @@
 import { apiFetch } from "./client";
 export interface WhatsAppDraft {
-  id: string; to: string; text: string; status: string; revision: string | null;
+  id: string; inboxId?: string; to: string; text: string; status: string; revision: string | null;
   createdAt?: string; expiresAt?: string; providerId?: string; errorCode?: string;
   needsReprepare: boolean; requiresReconciliation: boolean;
   reconciliation?: { result: string; evidenceRef: string; actorId: string; at: string };
@@ -20,3 +20,11 @@ export const reconcileWhatsApp = (draft: WhatsAppDraft, result: "provider_accept
   apiFetch(`/api/whatsapp/drafts/${encodeURIComponent(draft.id)}/reconcile`, { method: "POST", body: {
     revision: draft.revision, result, evidenceRef, ...(providerId ? { providerId } : {}), providerChecked: true,
   } });
+
+export interface WhatsAppInboxMessage {
+  id: string; from: string; text: string; receivedAt: string;
+  provider: "meta" | "evolution"; status: string; taskId?: string; canReply: boolean;
+}
+export const listWhatsAppInbox = (signal?: AbortSignal) => apiFetch<{ messages: WhatsAppInboxMessage[] }>("/api/whatsapp/inbox", { signal });
+export const prepareWhatsAppReply = (inboxId: string, text: string, intentKey: string) => apiFetch<{ draft: WhatsAppDraft }>(
+  `/api/whatsapp/inbox/${encodeURIComponent(inboxId)}/draft`, { method: "POST", headers: { "Idempotency-Key": intentKey }, body: { text } });
