@@ -70,6 +70,11 @@ export interface AgentTask {
   // igual que en Goal y Monitor. El worker lo usa para requestingActorId y
   // para distinguir identidad real de fallback legacy.
   assignedBy?: string;
+  // TASK_REQUESTER_V1 - actor que originó la tarea (humano, agente o
+  // "system" en trabajos de mantenimiento). Opcional: los registros
+  // anteriores no lo tienen y se tratan como legacy. No se deriva del owner:
+  // eso convertiría un fallback en una identidad demostrada.
+  requestedBy?: string;
   // AGENT_TASK_VERSION_V1 - version monotónica para CAS (F4).
   version?: number;
   // TASK_TENANT_REQUIRED_V1 - tenantId obligatorio. Backfill: 'default'.

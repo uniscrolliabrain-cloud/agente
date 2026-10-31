@@ -110,7 +110,7 @@ import { buildToolExecutors } from "./execution/tool-executors.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
-import { currentTenantScope } from "../tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
 import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
@@ -343,29 +343,39 @@ export class AgentService {
     for (const { owner, value } of rows) {
       const leaseUntil = value.leaseUntil ? Date.parse(value.leaseUntil) : 0;
       if (!leaseUntil || leaseUntil > now) continue;
-      // RECOVER_CAS_V1 - CAS con expected explicito del lease para evitar
-      // que dos procesos reviertan la misma task a la vez.
-      const updated = await this.db.compareAndSwap<AgentTask>(
-        owner,
-        "tasks",
-        value.id,
-        { status: "running", leaseId: value.leaseId ?? null, leaseUntil: value.leaseUntil ?? null },
-        {
-          status: "queued",
-          leaseId: null,
-          leaseUntil: null,
-          updatedAt: new Date().toISOString(),
+      // RECOVER_TASK_SCOPE_V1 - scanByStatus devuelve la owner ya peelada, sin
+      // el tenant. Sin este scope, el CAS se resolvia por membership primaria y
+      // una tarea de otra empresa no se recuperaba (o se recuperaba en la
+      // empresa equivocada).
+      const updated = await runInTenantScope(
+        { tenantId: value.tenantId, actorId: value.requestedBy ?? owner },
+        async () => {
+          // RECOVER_CAS_V1 - CAS con expected explicito del lease para evitar
+          // que dos procesos reviertan la misma task a la vez.
+          const cas = await this.db.compareAndSwap<AgentTask>(
+            owner,
+            "tasks",
+            value.id,
+            { status: "running", leaseId: value.leaseId ?? null, leaseUntil: value.leaseUntil ?? null },
+            {
+              status: "queued",
+              leaseId: null,
+              leaseUntil: null,
+              updatedAt: new Date().toISOString(),
+            },
+          );
+          if (cas) {
+            // TASK_RECOVERED_EVENT_V1 - emite evento al recuperar.
+            await this.bus?.emit(owner, "task.status_changed", { kind: "task", id: value.id }, {
+              taskId: value.id,
+              from: "running",
+              to: "queued",
+            }).catch(() => {});
+          }
+          return cas;
         },
       );
-      if (updated) {
-        recovered++;
-        // TASK_RECOVERED_EVENT_V1 - emite evento al recuperar.
-        await this.bus?.emit(owner, "task.status_changed", { kind: "task", id: value.id }, {
-          taskId: value.id,
-          from: "running",
-          to: "queued",
-        }).catch(() => {});
-      }
+      if (updated) recovered++;
     }
     return recovered;
   }
@@ -1233,7 +1243,10 @@ export class AgentService {
     const existing = await this.db.get<AgentTask>(owner, "tasks", id);
     if (existing) return existing;
     // GUARDRAILS_CHECK_TASK_V1 - limite duro por tenant, no por owner.
-    const tenantIdForGuard = currentTenantScope()?.tenantId ?? await this.tenantService?.tenantIdFor(owner) ?? owner;
+    // TASK_REQUESTER_CONTEXT_V1 - el scope de la peticion aporta tenant y
+    // actor; se persisten ambos para que el worker no los reconstruya.
+    const scope = currentTenantScope();
+    const tenantIdForGuard = scope?.tenantId ?? (await this.tenantService?.tenantIdFor(owner)) ?? owner;
     // CREATE_TASK_COUNT_SCOPED_FIX_V1 - antes db.list(owner, "tasks") sin limit
     // cargaba hasta 1000 tareas en memoria solo para contar las activas. Ahora
     // usamos scanByStatusWithCursor con 500 y contamos hasta el tope; si llega
@@ -1277,6 +1290,8 @@ export class AgentService {
       kind: input.kind,
       goalId: input.goalId,
       assignedTo: input.assignedTo ?? owner,
+      // TASK_REQUESTER_V1 - solo si el scope trae un actor demostrado.
+      ...(scope?.actorId ? { requestedBy: scope.actorId } : {}),
       status: held ? "paused" : "queued",
       plan: titles.map((title, i) => ({ id: String(i), title, status: "pending" })),
       evidence: [],
