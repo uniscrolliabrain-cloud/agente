@@ -3,7 +3,7 @@ schema_version: 1
 id: agntia-inventario-conexiones-stepper
 title: Inventario completo y guía del copiloto de configuración
 created_at: '2026-10-29T13:04:18.3407360+00:00'
-updated_at: '2026-10-29T13:04:18.3407360+00:00'
+updated_at: '2026-10-31T11:50:57.7433070+00:00'
 agent: codex
 phase: VS-00
 type: handoff
