@@ -63,4 +63,3 @@ test("PS-01: el envelope de evento del worker mantiene tenant B", async () => {
     assert.equal(written[0].tenantId, "empresa-b", "ALS de Store no modifica el envelope de EventBus");
   } finally { await db.close(); }
 });
-
