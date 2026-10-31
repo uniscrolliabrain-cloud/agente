@@ -1,0 +1,8 @@
+contractBucketFromStringLiteral=code
+GATE · fixture (audit) · synthetic
+WARN audit:console  0.0s  (advisory, no bloquea)
+
+GATE OK · 1/1 steps en verde · 0.0s
+advisory en rojo (se publica, no bloquea): audit:console
+informe: artifacts/gate/report.json
+logs:    artifacts/gate/logs/    informes de audits: artifacts/gate/audits/

@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-31",
+  "status": "changes_required",
+  "baseline_sha": "4f81f2293b67048ec4f6a32801f5940439b832cf",
+  "targets": {
+    "codex": "38d7a81",
+    "nc_read_only": "9f32817",
+    "compiler_read_only": "eecafa0",
+    "freebuff_preserved": "c2d1f9fd3b3119d709d29372770bc08a2ff10af1",
+    "freebuff_runtime": "985b2c6"
+  },
+  "external_effects": false,
+  "checks": [
+    {
+      "log": "evidence/freebuff-runtime.txt",
+      "fail": 3,
+      "tests": 8,
+      "pass": 5,
+      "name": "freebuff_original_and_adversarial"
+    },
+    {
+      "log": "evidence/own-channel-race.txt",
+      "fail": 1,
+      "tests": 1,
+      "pass": 0,
+      "name": "codex_channel_rotation"
+    },
+    {
+      "log": "evidence/sse-isolation.txt",
+      "fail": 1,
+      "tests": 1,
+      "pass": 0,
+      "name": "shared_sse_registry"
+    },
+    {
+      "log": "evidence/gate-claims.txt",
+      "result": "incorrect classification and summary reproduced",
+      "name": "preserved_gate_probes"
+    }
+  ]
+}
