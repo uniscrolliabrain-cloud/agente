@@ -1,6 +1,6 @@
 # Continuación — inbox y respuesta manual
 
-Estado: ready_for_review. PR: https://github.com/uniscrolliabrain-cloud/agente/pull/10. Código: 8420138e80507f71583fced2d744c5a9bdc05277. Base: main 4f81f22. No se ha integrado ni desplegado.
+Estado: ready_for_review. PR: https://github.com/uniscrolliabrain-cloud/agente/pull/10. Código: 5a2852e44cd317fa5cc23aecf0abd5d2bc6d1e0f. Base: main 4f81f22. No se ha integrado ni desplegado.
 
 ## Resultado
 
@@ -12,7 +12,7 @@ Prueba integrada: Hono app.request (rutas montadas, sin servidor TCP) -> entrada
 
 | Comando/área | Resultado | Log |
 | --- | --- | --- |
-| Pruebas salida + adapter | 35/35, exit 0 | tests-inbox.txt |
+| Pruebas salida + adapter | 36/36, exit 0 | tests-inbox.txt |
 | Typecheck servidor + worker | exit 0 | typecheck-inbox-server-worker.txt |
 | Typecheck web | exit 0 | typecheck-inbox-web.txt |
 | Build web final | exit 0 | build-inbox-web.txt |
@@ -26,3 +26,5 @@ Los logs se normalizan solo en whitespace final; los originales se conservan en 
 Sin cambios en paths compartidos reservados. El jefe NC comunicó que PS-01 aún presenta fallos de solicitante, mutación de tenant por checkpoint y atribución de eventos; no los damos por corregidos ni liberamos esos archivos. La base de esa comunicación es su informe, no una repetición de sus tests desde este chat.
 
 La respuesta manual es una vía propia útil mientras se cierra el núcleo; no sustituye el futuro enlace chat/SOP. La salida continúa apagada por defecto, necesita conexión propia y aprobación y solo implementa Evolution. Revisiones manuales anteriores sin inboxId mantienen su algoritmo de hash. La métrica de pendientes excluye borradores ya caducados.
+
+La revisión final conserva el proveedor, la cuenta y el endpoint originales en el registro interno del intento, incluso tras rotar la conexión. El panel solo expone proveedor y cuenta. La prueba adicional verifica que investigar un resultado incierto no cause un reenvío.

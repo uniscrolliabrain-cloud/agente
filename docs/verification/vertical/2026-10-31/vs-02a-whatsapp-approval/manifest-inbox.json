@@ -2,12 +2,12 @@
   "schema_version": 1,
   "run_id": "vs02a-inbox-reply-20261031",
   "phase": "VS-02a",
-  "target_sha": "8420138e80507f71583fced2d744c5a9bdc05277",
+  "target_sha": "5a2852e44cd317fa5cc23aecf0abd5d2bc6d1e0f",
   "baseline_sha": "4f81f2293b67048ec4f6a32801f5940439b832cf",
   "source_pr": "https://github.com/uniscrolliabrain-cloud/agente/pull/10",
   "agent": "codex-vs-lead",
   "started_at": null,
-  "finished_at": "2026-10-31T12:39:41.7710377+00:00",
+  "finished_at": "2026-10-31T12:49:26.8458959+00:00",
   "timing_note": "Inicio exacto de comandos no capturado; duracion de prueba medida por Node",
   "environment": {
     "external_credentials": false,
@@ -19,7 +19,7 @@
   "commands": [
     {
       "status": "pass",
-      "duration_ms": 126176.5703,
+      "duration_ms": 56404.4494,
       "log_path": "tests-inbox.txt",
       "exit_code": 0,
       "command": "node --import tsx --import ./tests/setup.ts --test --test-concurrency=1 --test-timeout=60000 tests/whatsapp-outbound.test.ts tests/whatsapp-adapter.test.ts"
