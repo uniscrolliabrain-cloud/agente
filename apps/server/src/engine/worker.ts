@@ -7,6 +7,7 @@ import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
+import { runInTenantScope } from "../tenant-scope.ts";
 // WORKER_RETRY_V1
 import { defaultIsRetryable } from "./retry.ts";
 import { DeadLetterQueue } from "./dead-letter.ts";
@@ -161,11 +162,6 @@ export class TaskWorker {
   }
   async tick() {
     if (this.stopping) return;
-    if (this.running)
-      await this.db.put("system", "worker-status", {
-        id: "tasks",
-        lastTickAt: new Date(this.now()).toISOString(),
-      });
     if (this.ticking) return;
     this.ticking = true;
     this.lastTickAt = new Date(this.now()).toISOString();
@@ -182,6 +178,15 @@ export class TaskWorker {
       "tasks",
       ["queued", "scheduled", "running", "waiting_approval"],
     );
+    // WORKER_STATUS_AFTER_SCAN_V1 - el put de worker-status pasa por el
+    // resolver del TenantScopedStore y registra ese prefijo. Si se hace antes
+    // del scan, tras un reinicio el worker solo ve el tenant de la membership
+    // y no las tareas de otras empresas. Escaneamos primero.
+    if (this.running)
+      await this.db.put("system", "worker-status", {
+        id: "tasks",
+        lastTickAt: new Date(this.now()).toISOString(),
+      });
       const due = records.filter(
         ({ value: t }) =>
           !this.active.has(t.id) &&
@@ -240,6 +245,17 @@ export class TaskWorker {
     }
   }
   private async run(owner: string, previous: AgentTask) {
+    // TASK_SCOPE_RESTORE_V1 - el worker corre fuera de una peticion HTTP.
+    // Sin este scope, TenantScopedStore resuelve por membership primaria y
+    // una tarea creada en otra empresa escribe en la equivocada. El tenant
+    // se restaura desde la tarea, no desde el owner.
+    const actorId = previous.requestedBy ?? previous.assignedTo ?? owner;
+    return runInTenantScope({ tenantId: previous.tenantId, actorId }, () =>
+      this.runScoped(owner, previous),
+    );
+  }
+
+  private async runScoped(owner: string, previous: AgentTask) {
     if (this.stopping) return;
     // WORKER_METRICS_V1
     const runStartedAt = Date.now();
@@ -370,8 +386,11 @@ export class TaskWorker {
       // WORKER_REQUESTING_ACTOR_V1 - actorId = executingActorId.
       // B5: fallback a owner se marca como legacy, no identidad demostrada.
       const executingActorId = (task.assignedTo ?? (task.state as { roleId?: string } | undefined)?.roleId ?? owner);
-      const requestingActorId = (task.assignedBy ?? owner);
-      const compat = task.assignedTo || task.assignedBy ? "real" : "legacy";
+      // TASK_REQUESTER_ACTOR_V1 - el solicitante es un dato persistido, no
+      // assignedTo (que siempre cae a owner y es el ejecutor). compat solo es
+      // "real" cuando la tarea trae requestedBy; un fallback se declara legacy.
+      const requestingActorId = (task.requestedBy ?? task.assignedBy ?? owner);
+      const compat = task.requestedBy ? "real" : "legacy";
       await bus.emit(owner, type, source, { taskId, actorId: executingActorId, requestingActorId, compat, ...payload });
     };
     // B105

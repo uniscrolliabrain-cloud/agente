@@ -43,9 +43,12 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
   if (service.kernel) {
     try {
       const { kernelContextSchema, UserAuthor } = await import("../kernel/index.ts");
-      const tenantId = service.tenantService
-        ? await service.tenantService.tenantIdFor(owner)
-        : "default";
+      // MODEL_TASK_TENANT_V1 - la tarea manda. Reconstruir el tenant desde la
+      // membership metia el turno del kernel en otra empresa cuando el owner
+      // tiene varias. El fallback solo cubre registros sin tenantId.
+      const tenantId =
+        initial.tenantId ||
+        (service.tenantService ? await service.tenantService.tenantIdFor(owner) : "default");
       // MODEL_PERSONA_V1 - si la tarea tiene roleId y existe una persona con
       // ese id, se usa como personaId. Si no, el turno se abre sin persona.
       const stateRoleId =
@@ -527,9 +530,11 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
   // FIX 24 - cuota antes de inferir (slow): tokens, coste y velocidad.
   if (service.guardrails) {
     try {
-      const tenantIdForQuota = service.tenantService
-        ? await service.tenantService.tenantIdFor(owner)
-        : "default";
+      // MODEL_TASK_QUOTA_TENANT_V1 - misma regla: la cuota se carga al tenant
+      // de la tarea, no al de la membership primaria del owner.
+      const tenantIdForQuota =
+        initial.tenantId ||
+        (service.tenantService ? await service.tenantService.tenantIdFor(owner) : "default");
       const usage = await service.db.list<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(owner, "llm-usage");
       const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();

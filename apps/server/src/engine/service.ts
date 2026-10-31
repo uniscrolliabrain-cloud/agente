@@ -1233,7 +1233,10 @@ export class AgentService {
     const existing = await this.db.get<AgentTask>(owner, "tasks", id);
     if (existing) return existing;
     // GUARDRAILS_CHECK_TASK_V1 - limite duro por tenant, no por owner.
-    const tenantIdForGuard = currentTenantScope()?.tenantId ?? await this.tenantService?.tenantIdFor(owner) ?? owner;
+    // TASK_REQUESTER_CONTEXT_V1 - el scope de la peticion aporta tenant y
+    // actor; se persisten ambos para que el worker no los reconstruya.
+    const scope = currentTenantScope();
+    const tenantIdForGuard = scope?.tenantId ?? (await this.tenantService?.tenantIdFor(owner)) ?? owner;
     // CREATE_TASK_COUNT_SCOPED_FIX_V1 - antes db.list(owner, "tasks") sin limit
     // cargaba hasta 1000 tareas en memoria solo para contar las activas. Ahora
     // usamos scanByStatusWithCursor con 500 y contamos hasta el tope; si llega
@@ -1277,6 +1280,8 @@ export class AgentService {
       kind: input.kind,
       goalId: input.goalId,
       assignedTo: input.assignedTo ?? owner,
+      // TASK_REQUESTER_V1 - solo si el scope trae un actor demostrado.
+      ...(scope?.actorId ? { requestedBy: scope.actorId } : {}),
       status: held ? "paused" : "queued",
       plan: titles.map((title, i) => ({ id: String(i), title, status: "pending" })),
       evidence: [],
