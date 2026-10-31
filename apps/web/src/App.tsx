@@ -16,6 +16,7 @@ import MemoryView from "./components/MemoryView";
 import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
+import WhatsAppView from "./components/WhatsAppView";
 // APP_CENTRO_MANDO_V1
 import CentroMandoWorkspace from "./workspaces/35-centro-mando/CentroMandoWorkspace";
 // WS_UI_APP_SHELL_V1
@@ -175,6 +176,7 @@ export default function App() {
             />
           )}
           {view === "documents" && <DocumentsView files={files} />}
+          {view === "whatsapp" && <WhatsAppView />}
           {view === "memory" && <MemoryView memories={memories} />}
           {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
           {view === "control-center" && (

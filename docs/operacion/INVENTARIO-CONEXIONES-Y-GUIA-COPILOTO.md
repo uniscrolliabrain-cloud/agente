@@ -252,3 +252,7 @@ El catálogo puede crecer. Ningún listado garantiza adivinar herramientas aún 
 ## 11. Primer mensaje que debes dar al recibir este documento
 
 He cargado el inventario completo y conservaré también los servicios reservados para el futuro. Te ayudaré con un paso cada vez y mantendré el estado acumulado. No necesito que pegues claves aquí. Dime el proyecto/config de Doppler y el entorno con el que estás trabajando, y qué servicio tienes abierto ahora; si ya me lo has dicho en este chat, usaré esos datos y seguiré desde el último paso pendiente.
+
+## 12. Ampliación comprobada VS-02a: salida WhatsApp
+
+Contrato nuevo del runtime: WHATSAPP_OUTBOUND_ENABLED=true solo permite salida junto a modo live, conexión propia habilitada, allowlist y aprobación. Contrato nuevo del script de operador: WHATSAPP_PROVISION_API_KEY se lee al aplicar scripts/provision-whatsapp.ts y se cifra en la conexión; no es una key global de fallback. Guardar sin activar ni ejecutar --apply por preparar el inventario. TOKEN_ENCRYPTION_KEY conserva su función y no debe rotarse incidentalmente. Procedimiento y límites en WHATSAPP-PILOTO-APROBACIONES.md, en este mismo directorio.
