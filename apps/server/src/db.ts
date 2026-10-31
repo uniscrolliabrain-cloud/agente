@@ -74,7 +74,7 @@ export class Store {
     let sql = "SELECT data FROM records WHERE owner=$1 AND kind=$2";
     if (options.cursorUpdatedAt !== undefined && options.cursorId !== undefined) {
       params.push(options.cursorUpdatedAt, options.cursorId);
-      sql += ` AND (updated_at, id) < ($3::timestamptz, $4)`;
+      sql += ` AND (updated_at < $3::timestamptz OR (updated_at = $3::timestamptz AND id > $4))`;
     }
     sql += " ORDER BY updated_at DESC, id";
     // LIST_HARD_LIMIT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â sin options.limit, aplicamos 1000 filas como techo de seguridad.
@@ -96,10 +96,11 @@ export class Store {
     options: ListOptions = {},
   ): Promise<{ data: T; updatedAt: string }[]> {
     const params: unknown[] = [owner, kind];
-    let sql = "SELECT data, updated_at FROM records WHERE owner=$1 AND kind=$2";
+    // Cursor timestamps must retain PostgreSQL microseconds; JS Date truncates them.
+    let sql = `SELECT data, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated_at FROM records WHERE owner=$1 AND kind=$2`;
     if (options.cursorUpdatedAt !== undefined && options.cursorId !== undefined) {
       params.push(options.cursorUpdatedAt, options.cursorId);
-      sql += ` AND (updated_at, id) < ($3::timestamptz, $4)`;
+      sql += ` AND (updated_at < $3::timestamptz OR (updated_at = $3::timestamptz AND id > $4))`;
     }
     sql += " ORDER BY updated_at DESC, id";
     if (options.limit !== undefined) {
