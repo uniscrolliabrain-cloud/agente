@@ -1,0 +1,50 @@
+.wa-view { max-width: 1180px; margin: 0 auto; padding: 32px; color: var(--v2-text, #1a1a1a); }
+.wa-header, .wa-draft-heading, .wa-compose-footer, .wa-actions { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.wa-header { margin-bottom: 26px; }
+.wa-header h1 { font-size: 30px; letter-spacing: -.8px; margin: 8px 0; }
+.wa-header p, .wa-muted { color: var(--v2-text-2, #6b6b6b); font-size: 13px; line-height: 1.6; }
+.wa-eyebrow { display: flex; align-items: center; gap: 7px; color: #42705c; font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+.wa-summary { display: flex; flex-wrap: wrap; border: 1px solid var(--v2-border, #ede8e0); border-radius: 14px; margin-bottom: 24px; padding: 18px 22px; gap: 30px; background: var(--v2-bg-soft, #f5f2ed); }
+.wa-summary > div { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--v2-text-2, #6b6b6b); }
+.wa-summary strong { color: var(--v2-text, #1a1a1a); font-size: 23px; }
+.wa-connection-dot { width: 8px; height: 8px; border-radius: 50%; background: #b0a492; }
+.wa-connection-dot.enabled { background: #458063; }
+.wa-layout { display: grid; grid-template-columns: minmax(260px, .85fr) minmax(300px, 1.15fr); align-items: start; gap: 24px; }
+.wa-card { padding: 22px; border: 1px solid var(--v2-border, #ede8e0); background: var(--v2-bg-card, #fff); border-radius: 16px; margin-bottom: 16px; min-width: 0; }
+.wa-card h2, .wa-drafts > h2 { font-size: 16px; margin: 0 0 12px; }
+.wa-drafts > h2 { margin: 4px 0 18px; }
+.wa-view label { display: block; font-size: 12px; font-weight: 600; margin: 18px 0 8px; }
+.wa-view input:not([type=checkbox]), .wa-view select, .wa-view textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--v2-border-strong, #d7d1c7); background: var(--v2-bg, #faf9f6); color: inherit; border-radius: 9px; padding: 11px; font: inherit; font-size: 13px; margin-top: 7px; }
+.wa-view textarea { resize: vertical; line-height: 1.65; }
+.wa-view input:focus-visible, .wa-view select:focus-visible, .wa-view textarea:focus-visible, .wa-button:focus-visible { outline: 2px solid #467661; outline-offset: 3px; }
+.wa-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 1px solid var(--v2-border-strong, #d7d1c7); color: inherit; background: var(--v2-bg-card, #fff); padding: 10px 13px; border-radius: 9px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.wa-button.wa-primary { color: #fff; background: #315f4b; border-color: #315f4b; }
+.wa-button:disabled, .wa-view input:disabled, .wa-view textarea:disabled, .wa-view select:disabled { opacity: .5; cursor: not-allowed; }
+.wa-compose-footer { margin-top: 14px; }
+.wa-draft-heading { flex-wrap: wrap; gap: 10px; }
+.wa-draft-heading > strong { font-size: 14px; }
+.wa-status { font-size: 10px; font-weight: 600; border-radius: 999px; padding: 5px 9px; background: var(--v2-bg-soft, #f5f2ed); }
+.wa-accepted { color: #2d624a; background: #edf5ee; }
+.wa-outcome_unknown, .wa-dispatching { color: #855b22; background: #faf1df; }
+.wa-message-preview { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; line-height: 1.7; margin: 18px 0; }
+.wa-actions { justify-content: flex-end; border-top: 1px solid var(--v2-border, #ede8e0); padding-top: 16px; }
+.wa-banner { display: flex; gap: 12px; align-items: flex-start; background: #faf1df; color: #70552f; border: 1px solid #ead8b6; border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.6; margin-bottom: 18px; }
+.wa-banner svg { flex: 0 0 auto; margin-top: 2px; }
+.wa-banner p { margin: 3px 0 0; }
+.wa-error { background: #fff0ec; color: #923e32; border-color: #efd0c7; }
+.wa-notice { background: #edf5ee; color: #315f4b; border-color: #d0e3d4; }
+.wa-empty { text-align: center; padding: 38px 22px; color: var(--v2-text-2, #6b6b6b); }
+.wa-empty h3 { color: var(--v2-text, #1a1a1a); font-size: 15px; }
+.wa-empty p { font-size: 13px; line-height: 1.6; }
+.wa-reconciliation { padding-top: 4px; font-size: 12px; line-height: 1.6; }
+.wa-reconciliation .wa-checkbox { display: flex; align-items: start; gap: 8px; font-weight: 400; }
+.wa-checkbox input { margin-top: 3px; }
+.wa-view code { overflow-wrap: anywhere; }
+@media (max-width: 850px) { .wa-layout { grid-template-columns: 1fr; } .wa-view { padding: 20px 16px; } .wa-header { align-items: flex-start; } .wa-summary { gap: 16px; } }
+.wa-inbox { margin: 24px 0; }
+.wa-inbox h2 { font-size: 16px; margin-bottom: 14px; }
+.wa-inbox-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; max-height: 330px; overflow-y: auto; }
+.wa-inbox-list .wa-card { margin-bottom: 0; }
+.wa-inbox-list summary { cursor: pointer; font-size: 12px; margin-bottom: 12px; }
+.wa-reply-context { background: var(--v2-bg-soft, #f7f3ed); padding: 10px 12px; border-radius: 9px; font-size: 12px; overflow-wrap: anywhere; }
+.wa-reply-context p { margin: 0 0 10px; line-height: 1.6; }

@@ -13,9 +13,11 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { AgentService } from "./engine/service.ts";
+import { TenantScopedStore } from "./db-tenant.ts";
 import { AppError } from "./errors.ts";
 import { RateLimiter } from "./rate-limit.ts";
-import { runInTenantScope } from "./tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
+import { WhatsAppOutbound, whatsappApprovalInput, type OutboundIdentity } from "./engine/whatsapp-outbound.ts";
 import { bindingFor, enqueueIncoming, extractIncomingMessages, validateBinding, whatsappBindings, type InboundService, type WhatsAppProvider } from "./engine/whatsapp-inbound.ts";
 
 // WHATSAPP_TIMING_SAFE_V1 - comparacion sin filtrar el resultado por tiempo.
@@ -116,63 +118,60 @@ export function whatsappWebhookRoutes(service: InboundService) {
   return app;
 }
 
-/** Router autenticado del panel: aprobacion de borradores. */
-export function whatsappRoutes(service: AgentService) {
-  const app = new Hono<{ Variables: { owner: string } }>();
-
-  // GET /api/whatsapp/drafts -> drafts pendientes.
-  app.get("/drafts", async (c) => {
+/** Each approval names the exact revision and uses a tenant-scoped durable decision. */
+export function whatsappRoutes(service: Pick<AgentService, "db" | "config" | "tenantService">) {
+  const app = new Hono<{ Variables: { owner: string; outboundIdentity: OutboundIdentity } }>();
+  app.use("*", async (c, next) => {
     const owner = c.get("owner");
-    const drafts = await service.db.list<{ id: string; to: string; text: string; status: string }>(
-      owner,
-      "whatsapp-drafts",
-    );
-    return c.json({ drafts });
-  });
-
-  // POST /api/whatsapp/drafts/:id/send -> aprueba y envia.
-  app.post("/drafts/:id/send", async (c) => {
-    const owner = c.get("owner");
-    const id = c.req.param("id");
-    const draft = await service.db.get<{ id: string; to: string; text: string; status: string }>(
-      owner,
-      "whatsapp-drafts",
-      id,
-    );
-    if (!draft) throw new AppError("Draft not found", 404);
-    if (draft.status !== "awaiting_review") throw new AppError("Draft already resolved", 409);
-    if (!service.whatsapp.configured) throw new AppError("WhatsApp no configurado", 503);
-    try {
-      const result = await service.whatsapp.sendText(draft.to, draft.text);
-      await service.db.put(owner, "whatsapp-drafts", {
-        ...draft,
-        status: result.accepted ? "sent" : "failed",
-        sentAt: new Date().toISOString(),
-        providerId: result.id,
-      });
-      return c.json({ ok: true, result });
-    } catch (error) {
-      // OutcomeUnknownError: la peticion pudo haber salido.
-      const unknown = error instanceof Error && /outcome|network|timeout/i.test(error.message);
-      await service.db.put(owner, "whatsapp-drafts", {
-        ...draft,
-        status: unknown ? "outcome_unknown" : "failed",
-        error: error instanceof Error ? error.message : "unknown",
-        resolvedAt: new Date().toISOString(),
-      });
-      throw error;
+    if (!owner) throw new AppError("Sesion requerida", 401);
+    if (!(service.db instanceof TenantScopedStore)) throw new AppError("WhatsApp requiere almacenamiento aislado por empresa", 503);
+    const scope = currentTenantScope();
+    let tenantId = scope?.tenantId;
+    if (scope && scope.actorId !== owner) throw new AppError("Actor de aprobacion no valido", 403);
+    if (!tenantId) {
+      // Session mode must have an explicit, unambiguous membership; never use the default resolver.
+      const memberships = await service.tenantService?.membershipsFor(owner) ?? [];
+      const tenants = [...new Set(memberships.map((m) => m.tenantId))];
+      if (tenants.length !== 1) throw new AppError("Selecciona una empresa con una sesion autorizada", 409);
+      tenantId = tenants[0];
     }
+    const identity = { tenantId, owner, actorId: owner };
+    c.set("outboundIdentity", identity);
+    await runInTenantScope({ tenantId, actorId: owner }, next);
   });
-
-  // POST /api/whatsapp/drafts/:id/reject -> deniega.
+  const outbound = () => new WhatsAppOutbound(service.db, {
+    encryptionKey: service.config.encryptionKey,
+    enabled: service.config.mode === "live" && process.env.WHATSAPP_OUTBOUND_ENABLED === "true",
+  });
+  app.get("/inbox", async (c) => c.json({ messages: await outbound().inbox(c.get("outboundIdentity")) }));
+  app.post("/inbox/:id/draft", async (c) => {
+    const body = await c.req.json().catch(() => { throw new AppError("JSON de respuesta requerido", 422); });
+    const draft = await outbound().createReply(c.get("outboundIdentity"), c.req.param("id"), body, c.req.header("Idempotency-Key") ?? "");
+    return c.json({ draft }, 201);
+  });
+  app.get("/connection", async (c) => c.json(await outbound().connectionStatus(c.get("outboundIdentity"))));
+  app.get("/drafts", async (c) => c.json({ drafts: await outbound().drafts(c.get("outboundIdentity")) }));
+  app.post("/drafts", async (c) => {
+    const body = await c.req.json().catch(() => { throw new AppError("JSON no valido", 400); });
+    const draft = await outbound().createDraft(c.get("outboundIdentity"), body, c.req.header("Idempotency-Key") ?? "");
+    return c.json({ draft }, 201);
+  });
+  app.post("/drafts/:id/send", async (c) => {
+    const body = await c.req.json().catch(() => { throw new AppError("JSON de aprobacion requerido", 422); });
+    const approval = whatsappApprovalInput.safeParse(body);
+    if (!approval.success) throw new AppError("La aprobacion requiere la revision exacta del borrador", 422);
+    const result = await outbound().approve(c.get("outboundIdentity"), c.req.param("id"), approval.data.revision);
+    return c.json(result, result.status === "dispatching" ? 202 : 200);
+  });
   app.post("/drafts/:id/reject", async (c) => {
-    const owner = c.get("owner");
-    const id = c.req.param("id");
-    const draft = await service.db.get<{ status: string }>(owner, "whatsapp-drafts", id);
-    if (!draft) throw new AppError("Draft not found", 404);
-    await service.db.put(owner, "whatsapp-drafts", { ...draft, id, status: "rejected" });
-    return c.json({ ok: true });
+    const body = await c.req.json().catch(() => { throw new AppError("JSON de aprobacion requerido", 422); });
+    const approval = whatsappApprovalInput.safeParse(body);
+    if (!approval.success) throw new AppError("El rechazo requiere la revision exacta del borrador", 422);
+    return c.json(await outbound().reject(c.get("outboundIdentity"), c.req.param("id"), approval.data.revision));
   });
-
+  app.post("/drafts/:id/reconcile", async (c) => {
+    const body = await c.req.json().catch(() => { throw new AppError("JSON de reconciliacion requerido", 422); });
+    return c.json(await outbound().reconcile(c.get("outboundIdentity"), c.req.param("id"), body));
+  });
   return app;
 }

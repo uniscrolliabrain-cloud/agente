@@ -270,3 +270,11 @@ Alfonso ejecutará NC-01/02/03 con otro equipo de tres agentes en worktrees sepa
 ### 11.1. Decisión posterior: el núcleo cierra primero los solapamientos
 
 Por indicación de Alfonso (2026-10-30), la fase 0 de NC incluye los documentos de coordinación y los fixes comunes de las dos campañas antes de que VS modifique los archivos afectados. Rige [NC-P00-SHARED-FOUNDATION.md](../campaigns/NC-COORDINATION/NC-P00-SHARED-FOUNDATION.md): NC-P00a acuerda e inventaría; NC-P00b implementa, revisa e integra la base compartida. Jefe NC dirige esos cambios y jefe VS aporta requisitos y acepta el traspaso. VS congela solo los paths reservados y puede avanzar en el resto. El cierre lleva SHA, evidencia y acta de liberación; no es solo documentación. El contexto durable corregido en ese trabajo satisface la parte común de VS-01 y no debe volver a implementarse. Se preserva y revisa cualquier trabajo previo de Freebuff. Ambos equipos mantienen la comunicación de reservas, cambios de contrato y entregas; sin recepción/aceptación explícita no se presume el traspaso.
+
+## 12. Entrega independiente VS-02a — aprobación WhatsApp
+
+Se ha implementado en la rama campaign/vs-02-whatsapp-approval el circuito de borrador manual -> revisión -> decisión persistida -> adaptador Evolution -> estado/reconciliación, con vista de panel y provisionamiento cifrado por tenant/owner. Ver [WHATSAPP-PILOTO-APROBACIONES.md](./WHATSAPP-PILOTO-APROBACIONES.md) para activación, contrato y límites. El estado de integración se consulta en su PR e informe; este párrafo no acredita despliegue.
+
+No cierra VS-02 completo: sigue pendiente enlazar el tool del chat y la SOP entrante al esquema nuevo, consumir la base NC-P00 liberada y comprobar el proveedor real. Los archivos compartidos reservados siguen intactos. La presencia de una credencial no habilita envíos.
+
+La continuación de VS-02a ya conecta la inbox persistente con una respuesta manual revisable en el panel, ligando destinatario, canal e inboxId en servidor. Esto reduce la dependencia inmediata del chat para operar un piloto humano, pero no cierra el tramo de automatización por SOP ni habilita producción sin NC-P00 y proveedor real comprobados.

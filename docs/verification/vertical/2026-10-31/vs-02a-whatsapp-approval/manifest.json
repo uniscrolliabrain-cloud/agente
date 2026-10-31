@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "run_id": "vs-02a-whatsapp-approval-20261031",
+  "phase": "VS-02a",
+  "target_sha": "a3f77ac1fd0ca77184cfc313021bef4be5666578",
+  "baseline_sha": "4f81f2293b67048ec4f6a32801f5940439b832cf",
+  "source_pr": "https://github.com/uniscrolliabrain-cloud/agente/pull/10",
+  "agent": "codex-vs-lead",
+  "started_at": null,
+  "finished_at": "2026-10-31T12:52:29.4957294+01:00",
+  "timing_note": "No se capturo inicio exacto de todos los comandos; duration_ms null donde no se midio. La prueba registra su duracion en el log.",
+  "environment": {
+    "provider": "mock",
+    "storage": "PGlite real de test",
+    "shell": "PowerShell",
+    "external_credentials_used": false,
+    "os": "Windows"
+  },
+  "commands": [
+    {
+      "status": "pass",
+      "exit_code": 0,
+      "log_path": "tests-final.txt",
+      "duration_ms": 28125.4529,
+      "command": "node --import tsx --import ./tests/setup.ts --test --test-concurrency=1 --test-timeout=60000 tests/whatsapp-outbound.test.ts tests/whatsapp-adapter.test.ts"
+    },
+    {
+      "status": "pass",
+      "exit_code": 0,
+      "log_path": "typecheck-server-worker.txt",
+      "duration_ms": null,
+      "command": "pnpm typecheck"
+    },
+    {
+      "status": "pass",
+      "exit_code": 0,
+      "log_path": "typecheck-web.txt",
+      "duration_ms": null,
+      "command": "pnpm --filter @openmuse/web typecheck"
+    },
+    {
+      "status": "pass",
+      "exit_code": 0,
+      "log_path": "typecheck-provision.txt",
+      "duration_ms": null,
+      "command": "pnpm exec tsc --noEmit --target ES2023 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions --skipLibCheck --esModuleInterop --strict scripts/provision-whatsapp.ts"
+    },
+    {
+      "status": "pass",
+      "exit_code": 0,
+      "log_path": "build-web.txt",
+      "duration_ms": null,
+      "command": "pnpm --filter @openmuse/web build"
+    },
+    {
+      "status": "blocked",
+      "exit_code": null,
+      "log_path": null,
+      "duration_ms": null,
+      "command": "Browser Use: local UI fixture"
+    }
+  ],
+  "findings": [
+    {
+      "severity": "limitation",
+      "recommended_action": "Revisar vista activa/pausada/sin conexion antes de activar el piloto",
+      "summary": "Revision visual bloqueada por Browser Use",
+      "classification": "undetermined",
+      "evidence": "Webview attach timeout y net::ERR_NETWORK_IO_SUSPENDED"
+    },
+    {
+      "severity": "dependency",
+      "recommended_action": "Coordinar reserva y adaptar productor de borradores tras cierre NC-P00",
+      "summary": "Puente chat/SOP y base NC-P00 siguen pendientes",
+      "classification": "preexisting",
+      "evidence": "conversation.ts/sop-executor.ts no se modificaron y sus contratos no tienen este circuito"
+    }
+  ]
+}
