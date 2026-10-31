@@ -10,12 +10,15 @@
 // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
 
 import type { SystemEvent } from "./types.ts";
+import { currentTenantScope } from "../../tenant-scope.ts";
 
 export interface SubscriberHandle {
   unsubscribe(): void;
 }
 
 export interface SubscribeOptions {
+  /** Authorized tenant. Without a scope, legacy callers use owner as tenant. */
+  tenantId?: string;
   /** Filtro opcional por tipo. */
   types?: string[];
   /** Tope del buffer. Si se llena, descarta los mÃ¡s viejos. Default 200. */
@@ -31,31 +34,37 @@ export class EventSubscriberRegistry {
     onEvent: (event: SystemEvent) => void,
     options: SubscribeOptions = {},
   ): SubscriberHandle {
+    const tenantId = options.tenantId ?? currentTenantScope()?.tenantId ?? owner;
+    if (!tenantId.trim() || !owner.trim()) throw new Error("Event subscription requires tenant and owner");
+    const scope = currentTenantScope();
+    if (scope && scope.tenantId !== tenantId) throw new Error("Event subscription tenant mismatch");
+    const key = JSON.stringify([tenantId, owner]);
     const id = `sub-${++this.nextId}`;
     const sub: Subscriber = {
       id,
       onEvent,
       types: options.types ? new Set(options.types) : null,
     };
-    let set = this.subscribers.get(owner);
+    let set = this.subscribers.get(key);
     if (!set) {
       set = new Set();
-      this.subscribers.set(owner, set);
+      this.subscribers.set(key, set);
     }
     set.add(sub);
     return {
       unsubscribe: () => {
-        const s = this.subscribers.get(owner);
+        const s = this.subscribers.get(key);
         if (!s) return;
         s.delete(sub);
-        if (s.size === 0) this.subscribers.delete(owner);
+        if (s.size === 0) this.subscribers.delete(key);
       },
     };
   }
 
   /** Llamado por EventBus.emit tras persistir. Fire-and-forget. */
   publish(event: SystemEvent): void {
-    const set = this.subscribers.get(event.owner);
+    if (!event.tenantId?.trim() || !event.owner?.trim()) return;
+    const set = this.subscribers.get(JSON.stringify([event.tenantId, event.owner]));
     if (!set || set.size === 0) return;
     for (const sub of set) {
       if (sub.types && !sub.types.has(event.type)) continue;
@@ -67,8 +76,8 @@ export class EventSubscriberRegistry {
     }
   }
 
-  count(owner?: string): number {
-    if (owner) return this.subscribers.get(owner)?.size ?? 0;
+  count(owner?: string, tenantId?: string): number {
+    if (owner) return this.subscribers.get(JSON.stringify([tenantId ?? currentTenantScope()?.tenantId ?? owner, owner]))?.size ?? 0;
     let total = 0;
     for (const set of this.subscribers.values()) total += set.size;
     return total;

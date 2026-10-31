@@ -3,6 +3,13 @@ import { z } from "zod";
 import type { EventBus } from "./engine/events/index.ts";
 import { SYSTEM_EVENT_TYPES } from "./engine/events/index.ts";
 import { globalSubscribers } from "./engine/events/subscriber.ts";
+import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
+
+const eventContextSchema = z.object({
+  tenantId: z.string().trim().min(1).max(100),
+  owner: z.string().trim().min(1).max(200),
+  actorId: z.string().trim().min(1).max(200),
+});
 
 // A2_SINCE_V1 - sinceId para polling incremental. since (datetime) se mantiene.
 // EVENTS_SINCE_ID_V1 Ã¢â‚¬â€ el filtro now se aplica en el list de abajo.
@@ -17,7 +24,19 @@ import { globalSubscribers } from "./engine/events/subscriber.ts";
 });
 
 export function eventsRoutes(bus: EventBus) {
-  const app = new Hono<{ Variables: { owner: string } }>();
+  const app = new Hono<{ Variables: { owner: string; ctx: z.infer<typeof eventContextSchema> } }>();
+  // Context comes from authentication middleware, never a query/header tenant.
+  app.use("*", async (c, next) => {
+    const parsed = eventContextSchema.safeParse(c.get("ctx"));
+    if (!parsed.success || parsed.data.owner !== c.get("owner")) {
+      return c.json({ error: "Event access requires authenticated context" }, 403);
+    }
+    const scope = currentTenantScope();
+    if (scope && (scope.tenantId !== parsed.data.tenantId || scope.actorId !== parsed.data.actorId)) {
+      return c.json({ error: "Event context mismatch" }, 403);
+    }
+    return runInTenantScope(parsed.data, () => next());
+  });
 
   app.get("/", async (c) => {
     const filter = filterSchema.parse(c.req.query());
@@ -39,6 +58,7 @@ export function eventsRoutes(bus: EventBus) {
   // EVENTS_SSE_CONN_LIMIT_V1
   app.get("/stream", async (c) => {
     const owner = c.get("owner");
+    const tenantId = c.get("ctx").tenantId;
     // Filtro opcional por tipo, comma-separated.
     const typesParam = c.req.query("types");
     const types = typesParam
@@ -50,6 +70,7 @@ export function eventsRoutes(bus: EventBus) {
     c.header("Connection", "keep-alive");
     c.header("X-Accel-Buffering", "no");
 
+    let cleanup = () => {};
     const stream = new ReadableStream({
       start(controller) {
         const encoder = new TextEncoder();
@@ -79,19 +100,22 @@ export function eventsRoutes(bus: EventBus) {
               /* subscriber roto, el heartbeat lo limpiarÃƒÂ¡ */
             }
           },
-          types ? { types } : {},
+          { tenantId, ...(types ? { types } : {}) },
         );
 
-        c.req.raw.signal.addEventListener("abort", () => {
+        const abort = () => {
+          cleanup();
+          try { controller.close(); } catch { /* already closed */ }
+        };
+        cleanup = () => {
           clearInterval(heartbeat);
           handle.unsubscribe();
-          try {
-            controller.close();
-          } catch {
-            /* ya cerrado */
-          }
-        });
+          c.req.raw.signal.removeEventListener("abort", abort);
+        };
+        c.req.raw.signal.addEventListener("abort", abort, { once: true });
+        if (c.req.raw.signal.aborted) abort();
       },
+      cancel() { cleanup(); },
     });
 
     return new Response(stream, {
@@ -166,7 +190,7 @@ export function eventsRoutes(bus: EventBus) {
       generatedAt: new Date().toISOString(),
       aggregatesLast24h: aggregates,
       recentCount: recent.length,
-      subscribers: globalSubscribers.count(owner),
+      subscribers: globalSubscribers.count(owner, c.get("ctx").tenantId),
     });
   });
 

@@ -21,6 +21,7 @@ import type {
 } from "./types.ts";
 import { ulid } from "./ulid.ts";
 import { globalSubscribers } from "./subscriber.ts";
+import { currentTenantScope, runInTenantScope } from "../../tenant-scope.ts";
 
 const KIND = "system-events";
 const DEDUPE_KIND = "dedupe-state";
@@ -74,6 +75,28 @@ export class EventBus {
     payload: T,
     options: EmitOptions = {},
   ): Promise<void> {
+    const scope = currentTenantScope();
+    const tenantId = options.tenantId ?? scope?.tenantId ?? owner;
+    if (!tenantId.trim() || tenantId.length > 100 || !owner.trim()) {
+      throw new Error("Event emission requires tenant and owner");
+    }
+    if (scope && scope.tenantId !== tenantId) throw new Error("Event tenant mismatch");
+    if (!scope && options.tenantId === undefined && "allTenantPrefixes" in this.db) {
+      throw new Error("Scoped event emission requires an explicit tenant");
+    }
+    // An explicit background tenant must scope persistence as well as the envelope.
+    return runInTenantScope({ tenantId, actorId: scope?.actorId ?? owner }, () =>
+      this.emitScoped(owner, type, source, payload, { ...options, tenantId }),
+    );
+  }
+
+  private async emitScoped<T extends Record<string, unknown>>(
+    owner: string,
+    type: SystemEventType,
+    source: SystemEventSource,
+    payload: T,
+    options: EmitOptions & { tenantId: string },
+  ): Promise<void> {
     try {
       // EVENTS_BUS_EMIT_VALIDATES_TENANT_V1
       // EVENTBUS_METRIC_ERRORS_V1
@@ -87,7 +110,7 @@ export class EventBus {
       // el owner real y la key por separado.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_METRIC_V1
-        if (await this.isDuplicate(owner, options.dedupeKey)) return;
+        if (await this.isDuplicate(options.tenantId, owner, options.dedupeKey)) return;
       }
       // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
       const logCtx = (await import("../../log.ts")).logContext.getStore();
@@ -97,7 +120,7 @@ export class EventBus {
         id: ulid(),
         schemaVersion: "1.0",
         // EVENTS_BUS_TENANT_SCOPED_FALLBACK_V1
-        tenantId: options.tenantId ?? owner,
+        tenantId: options.tenantId,
         owner,
         type,
         emittedAt: new Date().toISOString(),
@@ -114,7 +137,7 @@ export class EventBus {
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.
-        await this.recordDedupe(owner, options.dedupeKey);
+        await this.recordDedupe(options.tenantId, owner, options.dedupeKey);
       }
       if (options.notify) {
         // BUS_NOTIFY_PREFS_V1 - antes el bus escribia siempre en
@@ -159,31 +182,32 @@ export class EventBus {
     return this.db.purgeOlderThan(KIND, days);
   }
 
-  // EVENTBUS_DEDUPE_CACHE_V1 - cache negativa en memoria, TTL corto.
-  private readonly negativeCache = new Map<string, number>();
+  // Tenant is included even with a raw Store, where owner alone is not scoped.
+  private dedupeId(tenantId: string, owner: string): string {
+    return `lru-${createHash("sha256").update(JSON.stringify([tenantId, owner])).digest("hex")}`;
+  }
 
-  private async isDuplicate(owner: string, key: string): Promise<boolean> {
+  private async isDuplicate(tenantId: string, owner: string, key: string): Promise<boolean> {
     const now = Date.now();
-    const negKey = `${owner}:${key}`;
-    const negAt = this.negativeCache.get(negKey);
-    if (negAt && now - negAt < 5000) return false;
+    const cacheKey = JSON.stringify([tenantId, owner, key]);
     // DEDUPE_DB_FIRST Ã¢â‚¬â€ consultamos la DB ANTES que el Map en memoria para que
     // multiples procesos compartan el dedupe. El Map es solo cache de lectura.
-    const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
+    const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, this.dedupeId(tenantId, owner));
     if (state) {
       const hit = state.seen.find((entry) => entry.key === key && now - entry.at < DEDUPE_TTL_MS);
       if (hit) {
-        this.inMemory.set(key, now);
+        this.inMemory.set(cacheKey, now);
         return true;
       }
     }
-    const cached = this.inMemory.get(key);
+    const cached = this.inMemory.get(cacheKey);
     return Boolean(cached && now - cached < DEDUPE_TTL_MS);
   }
 
-  private async recordDedupe(owner: string, key: string): Promise<void> {
+  private async recordDedupe(tenantId: string, owner: string, key: string): Promise<void> {
     const now = Date.now();
-    this.inMemory.set(key, now);
+    const id = this.dedupeId(tenantId, owner);
+    this.inMemory.set(JSON.stringify([tenantId, owner, key]), now);
     if (this.inMemory.size > DEDUPE_MAX_ENTRIES) {
       const oldest = [...this.inMemory.entries()].sort((a, b) => a[1] - b[1])[0];
       if (oldest) this.inMemory.delete(oldest[0]);
@@ -192,7 +216,7 @@ export class EventBus {
     // sin CAS. Dos emisiones concurrentes con la misma key se pisaban. Ahora
     // reintentamos con CAS sobre el `seen` actual hasta 3 veces.
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, "lru");
+      const state = await this.db.get<DedupeState>(owner, DEDUPE_KIND, id);
       const seen = state?.seen ?? [];
       const filtered = seen.filter((entry) => now - entry.at < DEDUPE_TTL_MS);
       if (filtered.some((entry) => entry.key === key)) return;
@@ -200,7 +224,7 @@ export class EventBus {
       const trimmed = filtered.slice(-DEDUPE_MAX_ENTRIES);
       if (!state) {
         const inserted = await this.db.insertIfAbsent(owner, DEDUPE_KIND, {
-          id: "lru",
+          id,
           seen: trimmed,
         } as { id: string } & Record<string, unknown>);
         if (inserted) return;
@@ -209,8 +233,8 @@ export class EventBus {
       const updated = await this.db.compareAndSwap<DedupeState>(
         owner,
         DEDUPE_KIND,
-        "lru",
-        { id: "lru", seen: state.seen },
+        id,
+        { id, seen: state.seen },
         { seen: trimmed },
       );
       if (updated) return;
