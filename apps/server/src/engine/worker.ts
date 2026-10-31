@@ -3,11 +3,11 @@
 // EVENTBUS_WORKER_V1
 import { randomUUID } from "node:crypto";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
-import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
+import { taskExecutionContextSchema, type TaskExecutionContext, canTransitionTask } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
-import type { TenantScopedStore } from "../db-tenant.ts";
+import type { TenantRecord, TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
-import { runInTenantScope } from "../tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
 // WORKER_RETRY_V1
 import { defaultIsRetryable } from "./retry.ts";
 import { DeadLetterQueue } from "./dead-letter.ts";
@@ -155,11 +155,51 @@ export class TaskWorker {
 
 
 
-  abort(taskId: string) {
-    const controller = this.active.get(taskId);
-    if (!controller) return;
-    controller.abort();
+  private identity(tenantId: string, owner: string, taskId: string): string {
+    return JSON.stringify([tenantId, owner, taskId]);
   }
+
+  abort(taskId: string, owner?: string, tenantId?: string) {
+    const scopedTenant = tenantId ?? currentTenantScope()?.tenantId;
+    const matches = [...this.active.entries()].filter(([key]) => {
+      const [tenant, activeOwner, id] = JSON.parse(key) as string[];
+      return id === taskId && (owner === undefined || owner === activeOwner) &&
+        (scopedTenant === undefined || scopedTenant === tenant);
+    });
+    // The legacy one-argument API is safe only when it identifies one run.
+    if (matches.length === 1) matches[0][1].abort();
+  }
+
+  private contextFor(record: TenantRecord<AgentTask>): TaskExecutionContext {
+    const task = record.value;
+    const snapshot = task.executionContext;
+    if (!("scanBackgroundByStatus" in this.db) && !snapshot) {
+      throw new Error("unscoped storage requires an explicit executionContext");
+    }
+    const context = taskExecutionContextSchema.parse(snapshot ?? {
+      tenantId: task.tenantId, owner: record.owner, actorId: task.requestedBy,
+    });
+    if (!context.tenantId.trim() || context.tenantId.includes(":") || !context.owner.trim() || !context.actorId.trim() ||
+      context.owner !== record.owner || context.tenantId !== task.tenantId ||
+      (task.requestedBy !== undefined && task.requestedBy !== context.actorId) ||
+      ("scanBackgroundByStatus" in this.db && (!record.tenantId || record.tenantId !== context.tenantId))) {
+      throw new Error("task identity does not match its physical storage origin");
+    }
+    return context;
+  }
+
+  private async quarantine(record: TenantRecord<AgentTask>, error: unknown): Promise<void> {
+    const reason = "TASK_CONTEXT_UNVERIFIED: " + (error instanceof Error ? error.message : "invalid context");
+    const expected = { status: record.value.status, ...(record.value.leaseId !== undefined ? { leaseId: record.value.leaseId } : {}) };
+    const patch = { status: "paused", error: reason, leaseId: null, leaseUntil: null, updatedAt: new Date(this.now()).toISOString() };
+    if ("compareAndSwapBackground" in this.db) {
+      await this.db.compareAndSwapBackground(record, "tasks", record.value.id, expected, patch);
+    } else {
+      await this.db.compareAndSwap(record.owner, "tasks", record.value.id, expected, patch);
+    }
+    backgroundFailure("task context rejected", new Error(reason));
+  }
+
   async tick() {
     if (this.stopping) return;
     if (this.ticking) return;
@@ -174,10 +214,10 @@ export class TaskWorker {
 // con scanByOwnerPrefix requiere conocer el tenant activo, que el worker
 // no tiene. Este comentario documenta la deuda y remite al bloque 07.
     // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
-    const records = await this.db.scanByStatus<AgentTask>(
-      "tasks",
-      ["queued", "scheduled", "running", "waiting_approval"],
-    );
+    const records: TenantRecord<AgentTask>[] = "scanBackgroundByStatus" in this.db
+      ? await this.db.scanBackgroundByStatus<AgentTask>("tasks", ["queued", "scheduled", "running", "waiting_approval"])
+      : (await this.db.scanByStatus<AgentTask>("tasks", ["queued", "scheduled", "running", "waiting_approval"]))
+        .map(record => ({ ...record, storageOwner: record.owner }));
     // WORKER_STATUS_AFTER_SCAN_V1 - el put de worker-status pasa por el
     // resolver del TenantScopedStore y registra ese prefijo. Si se hace antes
     // del scan, tras un reinicio el worker solo ve el tenant de la membership
@@ -188,8 +228,8 @@ export class TaskWorker {
         lastTickAt: new Date(this.now()).toISOString(),
       });
       const due = records.filter(
-        ({ value: t }) =>
-          !this.active.has(t.id) &&
+        ({ owner, tenantId, value: t }) =>
+          !this.active.has(this.identity(tenantId ?? t.tenantId, owner, t.id)) &&
           (t.status === "queued" ||
             (t.status === "scheduled" && Date.parse(t.nextRunAt ?? "") <= this.now()) ||
             (t.status === "running" && Date.parse(t.leaseUntil ?? "") <= this.now()) ||
@@ -206,32 +246,13 @@ export class TaskWorker {
         // El contador real se construye durante este loop.
       }
       for (const record of due) {
-        if (record.value.status === "waiting_approval") {
-          const action = record.value.actionId
-            ? await this.db.get<{ status: string; expiresAt?: string }>(
-                record.owner,
-                "actions",
-                record.value.actionId,
-              )
-            : null;
-          if (
-            record.value.actionId &&
-            action?.status === "awaiting_review" &&
-            Date.parse(action.expiresAt ?? "") <= this.now()
-          )
-            await this.db.compareAndSwap(
-              record.owner,
-              "actions",
-              record.value.actionId,
-              { status: "awaiting_review", expiresAt: action.expiresAt },
-              { status: "expired" },
-            );
-          else if (action && ["awaiting_review", "executing"].includes(action.status)) continue;
-        }
+        try { this.contextFor(record); }
+        catch (error) { await this.quarantine(record, error); continue; }
         // WORKER_OWNER_QUOTA_V1
-        const ownerCount = perOwnerCount.get(record.owner) ?? 0;
+        const ownerKey = JSON.stringify([record.tenantId ?? record.value.tenantId, record.owner]);
+        const ownerCount = perOwnerCount.get(ownerKey) ?? 0;
         if (ownerCount >= MAX_PER_OWNER) continue;
-        perOwnerCount.set(record.owner, ownerCount + 1);
+        perOwnerCount.set(ownerKey, ownerCount + 1);
         eligible.push(record);
         if (eligible.length === 20) break;
       }
@@ -239,30 +260,53 @@ export class TaskWorker {
     // Si ya hay maxActive handlers corriendo, no lanzamos m
     const available = Math.max(0, this.maxActive - this.active.size);
     const toRun = eligible.slice(0, available);
-    await Promise.all(toRun.map(({ owner, value }) => this.run(owner, value)));
+    await Promise.all(toRun.map(record => this.run(record)));
     } finally {
       this.ticking = false;
     }
   }
-  private async run(owner: string, previous: AgentTask) {
-    // TASK_SCOPE_RESTORE_V1 - el worker corre fuera de una peticion HTTP.
-    // Sin este scope, TenantScopedStore resuelve por membership primaria y
-    // una tarea creada en otra empresa escribe en la equivocada. El tenant
-    // se restaura desde la tarea, no desde el owner.
-    const actorId = previous.requestedBy ?? previous.assignedTo ?? owner;
-    return runInTenantScope({ tenantId: previous.tenantId, actorId }, () =>
-      this.runScoped(owner, previous),
-    );
+  private async run(record: TenantRecord<AgentTask>) {
+    const context = this.contextFor(record);
+    return runInTenantScope(context, () => this.runScoped(record, context));
   }
 
-  private async runScoped(owner: string, previous: AgentTask) {
+  private async runScoped(record: TenantRecord<AgentTask>, context: TaskExecutionContext) {
+    const { owner, value: previous } = record;
+    const identityExpected = {
+      tenantId: context.tenantId,
+      ...(previous.requestedBy !== undefined ? { requestedBy: previous.requestedBy } : {}),
+      ...(previous.executionContext !== undefined ? { executionContext: structuredClone(previous.executionContext) } : {}),
+    };
     if (this.stopping) return;
+        if (previous.status === "waiting_approval") {
+          const action = previous.actionId
+            ? await this.db.get<{ status: string; expiresAt?: string }>(
+                owner,
+                "actions",
+                previous.actionId,
+              )
+            : null;
+          if (
+            previous.actionId &&
+            action?.status === "awaiting_review" &&
+            Date.parse(action.expiresAt ?? "") <= this.now()
+          )
+            await this.db.compareAndSwap(
+              owner,
+              "actions",
+              previous.actionId,
+              { status: "awaiting_review", expiresAt: action.expiresAt },
+              { status: "expired" },
+            );
+          else if (action && ["awaiting_review", "executing"].includes(action.status)) return;
+        }
     // WORKER_METRICS_V1
     const runStartedAt = Date.now();
     const leaseId = randomUUID(),
       leaseMs = this.options.leaseMs ?? 60000;
     const expected: Record<string, unknown> = {
       status: previous.status,
+      ...identityExpected,
       leaseId: previous.leaseId ?? null,
     };
     if (previous.status === "running") expected.leaseUntil = previous.leaseUntil;
@@ -275,13 +319,20 @@ export class TaskWorker {
       attempts: previous.attempts + 1,
     });
     if (!swapped) return;
+    try {
+      const claimed = this.contextFor({ ...record, value: swapped });
+      if (claimed.actorId !== context.actorId || swapped.requestedBy !== previous.requestedBy || Boolean(swapped.executionContext) !== Boolean(previous.executionContext)) throw new Error("identity changed before claim");
+    } catch (error) { await this.quarantine({ ...record, value: swapped }, error); return; }
     // WORKER_TASK_NONNULL_V1 - task se declara ya no-nulo: es `let` porque
     // checkpoint() lo reasigna, y al ser capturado por closures TS volvia a
     // verlo como AgentTask | null en cada uso (TS18047).
     let task: AgentTask = swapped;
     const controller = new AbortController();
-    this.active.set(task.id, controller);
+    const activeKey = this.identity(context.tenantId, owner, task.id);
+    this.active.set(activeKey, controller);
     const taskId = task.id;
+    const originalRequester = previous.requestedBy;
+    const originalSnapshot = previous.executionContext;
     // WORKER_GUARD_CACHE_V1 - cache del ultimo guard. Antes cada ctx.guard()
     // leia la tarea entera de DB, y ctx.guard() se llama antes de cada tool y
     // cada ctx.event. En una tarea con 10 tools y 20 events, eran 30 reads
@@ -299,6 +350,11 @@ export class TaskWorker {
       guardCacheAt = now;
       if (controller.signal.aborted || latest?.leaseId !== leaseId || latest.status !== "running")
         throw new LostLeaseError();
+      try {
+        const latestContext = this.contextFor({ ...record, value: latest });
+        if (latestContext.actorId !== context.actorId || latest.requestedBy !== originalRequester ||
+          Boolean(latest.executionContext) !== Boolean(originalSnapshot)) throw new LostLeaseError();
+      } catch { throw new LostLeaseError(); }
     };
     // WORKER_GUARD_INVALIDATE_V1 - el heartbeat y el checkpoint invalidan la
     // cache para que el siguiente guard lea de DB.
@@ -306,13 +362,28 @@ export class TaskWorker {
       guardCacheAt = 0;
       // HEARTBEAT_ALWAYS_INVALIDATE_V1
     };
+    const assertIdentity = (patch: Partial<AgentTask>) => {
+      for (const field of ["id", "tenantId", "requestedBy"] as const) {
+        if (Object.prototype.hasOwnProperty.call(patch, field) && patch[field] !== ({ id: taskId, tenantId: context.tenantId, requestedBy: originalRequester })[field]) {
+          throw new Error("TASK_CONTEXT_IMMUTABLE: " + field);
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(patch, "executionContext")) {
+        const parsed = taskExecutionContextSchema.safeParse(patch.executionContext);
+        if (!parsed.success || parsed.data.tenantId !== context.tenantId || parsed.data.owner !== context.owner ||
+          parsed.data.actorId !== context.actorId || !originalSnapshot) {
+          throw new Error("TASK_CONTEXT_IMMUTABLE: executionContext");
+        }
+      }
+    };
     const checkpoint = async (patch: Partial<AgentTask>) => {
+      assertIdentity(patch);
       if (controller.signal.aborted) throw new LostLeaseError();
       const next = await this.db.compareAndSwap<AgentTask>(
         owner,
         "tasks",
         taskId,
-        { leaseId, status: "running" },
+        { leaseId, status: "running", ...identityExpected },
         { ...patch, updatedAt: new Date(this.now()).toISOString() },
       );
       if (!next) throw new LostLeaseError();
@@ -359,7 +430,7 @@ export class TaskWorker {
         owner,
         "tasks",
         taskId,
-        { leaseId, status: "running" },
+        { leaseId, status: "running", ...identityExpected },
         {
           state: {
             // task se reasigna dentro de guard(); TS lo ve como Task | null aqui.
@@ -389,9 +460,9 @@ export class TaskWorker {
       // TASK_REQUESTER_ACTOR_V1 - el solicitante es un dato persistido, no
       // assignedTo (que siempre cae a owner y es el ejecutor). compat solo es
       // "real" cuando la tarea trae requestedBy; un fallback se declara legacy.
-      const requestingActorId = (task.requestedBy ?? task.assignedBy ?? owner);
-      const compat = task.requestedBy ? "real" : "legacy";
-      await bus.emit(owner, type, source, { taskId, actorId: executingActorId, requestingActorId, compat, ...payload });
+      const requestingActorId = context.actorId;
+      const compat = "real";
+      await bus.emit(owner, type, source, { ...payload, taskId, actorId: executingActorId, requestingActorId, compat }, { tenantId: context.tenantId });
     };
     // B105
     // Asi un run se puede trazar a su rol, a su runtime efimero y a la entidad que toco.
@@ -419,7 +490,7 @@ export class TaskWorker {
             owner,
             "tasks",
             taskId,
-            { leaseId, status: "running" },
+            { leaseId, status: "running", ...identityExpected },
             { leaseUntil: new Date(this.now() + leaseMs).toISOString() },
           )
           .then((value) => {
@@ -483,7 +554,7 @@ export class TaskWorker {
           owner,
           "tasks",
           taskId,
-          { leaseId, status: "running" },
+          { leaseId, status: "running", ...identityExpected },
           { status: "queued", leaseId: null, leaseUntil: null },
         );
       } else {
@@ -499,7 +570,7 @@ export class TaskWorker {
           owner,
           "tasks",
           taskId,
-          { leaseId, status: "running" },
+          { leaseId, status: "running", ...identityExpected },
           {
             status: "failed",
             error: detail,
@@ -538,7 +609,7 @@ export class TaskWorker {
       );
     } finally {
       clearInterval(heartbeat);
-      this.active.delete(taskId);
+      this.active.delete(activeKey);
     }
     // WORKER_SETTLED_CHECK_V2 - llamamos a settled si la tarea llego a un
     // estado que el usuario debe conocer: terminales (succeeded, failed,
@@ -562,7 +633,7 @@ export class TaskWorker {
       try {
         // WORKER_REQUESTING_ACTOR_V1 - settled recibe executing y requesting.
         const _execAct = (settled.assignedTo ?? (settled.state as { roleId?: string } | undefined)?.roleId ?? owner);
-        const _reqAct = (settled.assignedBy ?? owner);
+        const _reqAct = context.actorId;
         await this.options.settled(owner, settled, { executingActorId: _execAct, requestingActorId: _reqAct });
       } catch (error) {
         backgroundFailure("settled callback", error);

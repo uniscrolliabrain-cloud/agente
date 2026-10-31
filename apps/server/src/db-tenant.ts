@@ -4,6 +4,14 @@
 // tenants distintos no colisionan. Todos los metodos del Store pasan por aqui.
 
 import type { ListOptions, Store } from "./db.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
+
+export interface TenantRecord<T> {
+  owner: string;
+  value: T;
+  storageOwner: string;
+  tenantId?: string;
+}
 
 export class TenantScopedStore {
   constructor(
@@ -15,7 +23,21 @@ export class TenantScopedStore {
   private async key(owner: string): Promise<string> {
     const tenantId = await this.resolver(owner);
     this.tenantPrefixes.add(tenantId);
-    return `${tenantId}:${owner}`;
+    return this.storageKey(tenantId, owner);
+  }
+
+  private storageKey(tenantId: string, owner: string): string {
+    if (!tenantId || tenantId.includes(":") || !owner) throw new Error("Invalid physical tenant/owner");
+    return tenantId + ":" + owner;
+  }
+  private origin<T>(row: { owner: string; value: T }): TenantRecord<T> {
+    const at = row.owner.indexOf(":");
+    return {
+      owner: at > 0 ? row.owner.slice(at + 1) : row.owner,
+      value: row.value,
+      storageOwner: row.owner,
+      ...(at > 0 ? { tenantId: row.owner.slice(0, at) } : {}),
+    };
   }
 
   async get<T = Record<string, unknown>>(owner: string, kind: string, id: string): Promise<T | null> {
@@ -56,6 +78,47 @@ export class TenantScopedStore {
     return this.store.compareAndSwap<T>(await this.key(owner), kind, id, expected, patch);
   }
 
+  async getInTenant<T = Record<string, unknown>>(
+    tenantId: string,
+    owner: string,
+    kind: string,
+    id: string,
+  ): Promise<T | null> {
+    return this.store.get<T>(this.storageKey(tenantId, owner), kind, id);
+  }
+  async listPagedInTenant<T = Record<string, unknown>>(
+    tenantId: string,
+    owner: string,
+    kind: string,
+    options: ListOptions = {},
+  ): Promise<{ data: T; updatedAt: string }[]> {
+    return this.store.listPaged<T>(this.storageKey(tenantId, owner), kind, options);
+  }
+  async putInTenant<T extends { id: string }>(tenantId: string, owner: string, kind: string, value: T): Promise<T> {
+    return this.store.put(this.storageKey(tenantId, owner), kind, value);
+  }
+  /** Server background operation: use the verified physical tenant, never a membership. */
+  async compareAndSwapInTenant<T>(
+    tenantId: string,
+    owner: string,
+    kind: string,
+    id: string,
+    expected: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ): Promise<T | null> {
+    return this.store.compareAndSwap<T>(this.storageKey(tenantId, owner), kind, id, expected, patch);
+  }
+  /** Quarantine a scanned record at its exact physical key, including unscoped legacy records. */
+  async compareAndSwapBackground<T>(
+    record: TenantRecord<unknown>,
+    kind: string,
+    id: string,
+    expected: Record<string, unknown>,
+    patch: Record<string, unknown>,
+  ): Promise<T | null> {
+    return this.store.compareAndSwap<T>(record.storageOwner, kind, id, expected, patch);
+  }
+
   async insertIfAbsent<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T | null> {
     return this.store.insertIfAbsent(await this.key(owner), kind, value);
   }
@@ -76,9 +139,7 @@ export class TenantScopedStore {
     return this.store.transaction(() => fn(this));
   }
 
-  // TENANT_SCAN_SQL_FILTER_V1 - registramos los prefijos de tenant vistos
-  // para poder filtrar en SQL. Antes scan traia filas de TODOS los tenants
-  // y el caller filtraba en memoria (50x trabajo con 50 tenants).
+  // Prefixes are diagnostic only; durable background discovery never depends on them.
   private readonly tenantPrefixes = new Set<string>();
 
   /**
@@ -91,133 +152,78 @@ export class TenantScopedStore {
     return [...this.tenantPrefixes];
   }
 
-  /**
-   * TENANT_SCAN_BY_PREFIX_V1 Ã¢â‚¬â€ scan explÃƒÂ­cito por un prefijo concreto.
-   * ÃƒÅ¡til en `maintain` cuando ya sabemos el tenant a mantener.
-   */
-  async scanByPrefix<T>(
+  async scanByPrefix<T>(kind: string, tenantId: string, limit = 500): Promise<TenantRecord<T>[]> {
+    this.storageKey(tenantId, "validation");
+    const rows = await this.store.scanByOwnerPrefix<T>(kind, tenantId + ":", limit);
+    return rows.map((row) => this.origin(row));
+  }
+  async scan<T>(kind: string, limit = 1000): Promise<TenantRecord<T>[]> {
+    const tenantId = currentTenantScope()?.tenantId;
+    if (tenantId) return this.scanByPrefix<T>(kind, tenantId, limit);
+    return (await this.store.scan<T>(kind, limit)).map((row) => this.origin(row));
+  }
+  /** Privileged scheduler scan, independent of observed prefixes and HTTP scopes. */
+  async scanBackgroundByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<TenantRecord<T>[]> {
+    return (await this.store.scanByStatus<T>(kind, statuses, limit)).map((row) => this.origin(row));
+  }
+  async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<TenantRecord<T>[]> {
+    const tenantId = currentTenantScope()?.tenantId;
+    if (!tenantId) return this.scanBackgroundByStatus<T>(kind, statuses, limit);
+    const rows = await this.statusRows<T>(kind, statuses, limit, tenantId);
+    return rows.map((row) => this.origin({ owner: row.owner, value: row.data }));
+  }
+  private async statusRows<T>(
     kind: string,
+    statuses: string[],
+    limit: number,
     tenantId: string,
-    limit = 500,
-  ): Promise<{ owner: string; value: T }[]> {
-    const storeWithPrefix = this.store as Store & {
-      scanByOwnerPrefix?: <U>(
-        kind: string,
-        ownerPrefix: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: U }[]>;
-    };
-    if (typeof storeWithPrefix.scanByOwnerPrefix !== "function") {
-      // Fallback: scan global y filtro en memoria.
-      const rows = await this.store.scan<T>(kind, limit * 4);
-      return rows
-        .filter((r) => r.owner.startsWith(`${tenantId}:`))
-        .map((r) => ({ owner: this.peel(r.owner), value: r.value }))
-        .slice(0, limit);
+    cursorUpdatedAt?: string,
+    cursorId?: string,
+  ): Promise<{ owner: string; data: T; updated_at: string | Date; id: string }[]> {
+    if (!statuses.length) return [];
+    this.storageKey(tenantId, "validation");
+    const prefix = tenantId + ":";
+    const params: unknown[] = [kind, prefix, statuses];
+    let sql =
+      "SELECT owner,data,updated_at,id FROM records WHERE kind=$1 AND left(owner,length($2))=$2 AND data->>'status'=ANY($3::text[])";
+    if (cursorUpdatedAt !== undefined && cursorId !== undefined) {
+      params.push(cursorUpdatedAt, cursorId);
+      sql += " AND (updated_at,id)>($4::timestamptz,$5)";
     }
-    const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${tenantId}:`, limit);
-    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+    params.push(Math.min(Math.max(1, Math.floor(limit)), 50000));
+    sql += " ORDER BY updated_at ASC,id ASC LIMIT $" + params.length;
+    return this.store.select(sql, params);
   }
-
-  async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
-    // TENANT_SCAN_PEEL_V1 - el store subyacente guarda owner = "tenantId:owner".
-    // El caller (TaskWorker) espera el owner limpio para poder volver a componer
-    // la clave al hacer compareAndSwap/get. Si devolveramos el owner compuesto,
-    // el worker compondria doble y no encontraria la tarea.
-    // TENANT_SCAN_SQL_FILTER_V1 - si el store subyacente expone
-    // scanByOwnerPrefix, filtramos en SQL por tenant. Si no, caemos al scan
-    // sin filtro (comportamiento previo).
-    const storeWithPrefix = this.store as Store & {
-      scanByOwnerPrefix?: <U>(
-        kind: string,
-        ownerPrefix: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: U }[]>;
-    };
-    const prefix = this.tenantPrefixes.values().next().value;
-    if (prefix && typeof storeWithPrefix.scanByOwnerPrefix === "function") {
-      try {
-        const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
-        return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-      } catch {
-        // Fallback al scan sin filtro si la query falla.
-      }
-    }
-    const rows = await this.store.scan<T>(kind, limit);
-    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-  }
-
-  // TENANT_SCAN_STATUS_ISOLATION_V1
-  // Antes llamaba a store.scanByStatus (crudo) sin filtrar por tenant.
-  // Ahora itera por cada prefix conocido y filtra en SQL por prefijo.
-  async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<{ owner: string; value: T }[]> {
-    const prefixes = this.allTenantPrefixes();
-    if (prefixes.length === 0) {
-      const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
-      return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-    }
-    const storeWithPrefix = this.store as Store & {
-      scanByOwnerPrefix?: <U>(
-        kind: string,
-        ownerPrefix: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: U }[]>;
-    };
-    if (typeof storeWithPrefix.scanByOwnerPrefix !== "function") {
-      const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
-      return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-    }
-    const out: { owner: string; value: T }[] = [];
-    for (const prefix of prefixes) {
-      const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
-      for (const row of rows) {
-        const status = (row.value as { status?: string }).status;
-        if (status && statuses.includes(status)) {
-          out.push({ owner: this.peel(row.owner), value: row.value });
-        }
-      }
-      if (out.length >= limit) break;
-    }
-    return out.slice(0, limit);
-  }
-
-  // TENANT_SCAN_STATUS_CURSOR_ISOLATION_V1
-  // Antes llamaba a store.scanByStatusWithCursor (crudo) sin filtrar por tenant.
-  // Ahora filtra en memoria por prefix de tenant. El cursor es por updatedAt/id,
-  // no por owner, así que no se puede usar scanByOwnerPrefix directamente.
   async scanByStatusWithCursor<T>(
     kind: string,
     statuses: string[],
     limit: number,
     cursorUpdatedAt?: string,
     cursorId?: string,
-  ) {
-    const rows = await this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId);
-    const prefixes = this.allTenantPrefixes();
-    const filtered = prefixes.length > 0
-      ? rows.filter((r) => prefixes.some((p) => r.owner.startsWith(`${p}:`)))
-      : rows;
-    return filtered.map((r) => ({ ...r, owner: this.peel(r.owner) }));
-  }
-
-  /**
-   * TENANT_SCAN_PEEL_V1 - quita el prefijo "tenantId:" de una clave compuesta.
-   * Si no hay prefijo (fila escrita sin tenant), devuelve el owner tal cual.
-   * El separador es el primero ":" que separa tenantId de owner.
-   * Como los tenantId no contienen ":", esto es seguro.
-   */
-  // DB_TENANT_PEEL_V1
-  private peel(composed: string): string {
-    const idx = composed.indexOf(":");
-    return idx >= 0 ? composed.slice(idx + 1) : composed;
+  ): Promise<(TenantRecord<T> & { updatedAt: string; id: string })[]> {
+    const tenantId = currentTenantScope()?.tenantId;
+    if (!tenantId)
+      return (await this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId)).map(
+        (row) => ({ ...this.origin(row), updatedAt: row.updatedAt, id: row.id }),
+      );
+    const rows = await this.statusRows<T>(kind, statuses, limit, tenantId, cursorUpdatedAt, cursorId);
+    return rows.map((row) => ({
+      ...this.origin({ owner: row.owner, value: row.data }),
+      updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
+      id: row.id,
+    }));
   }
 
   async purgeOlderThan(kind: string, days: number): Promise<number> {
     return this.store.purgeOlderThan(kind, days);
   }
 
-  get backend() { return this.store.backend; }
-  get pgvectorReady() { return this.store.pgvectorReady; }
+  get backend() {
+    return this.store.backend;
+  }
+  get pgvectorReady() {
+    return this.store.pgvectorReady;
+  }
 
   async select<T = Record<string, unknown>>(sql: string, params: unknown[] = []): Promise<T[]> {
     return this.store.select<T>(sql, params);
@@ -231,5 +237,7 @@ export class TenantScopedStore {
     return this.store.recoverInterruptedActions();
   }
 
-  close(): Promise<void> { return this.store.close(); }
+  close(): Promise<void> {
+    return this.store.close();
+  }
 }

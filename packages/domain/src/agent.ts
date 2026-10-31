@@ -1,4 +1,8 @@
 import { z } from "zod";
+import { executionContextSchema, type ExecutionContext } from "./execution-context.ts";
+
+export const taskExecutionContextSchema = executionContextSchema.pick({ tenantId: true, owner: true, actorId: true }).strict();
+export type TaskExecutionContext = Pick<ExecutionContext, "tenantId" | "owner" | "actorId">;
 
 export type TaskStatus =
   | "queued"
@@ -75,6 +79,8 @@ export interface AgentTask {
   // anteriores no lo tienen y se tratan como legacy. No se deriva del owner:
   // eso convertiría un fallback en una identidad demostrada.
   requestedBy?: string;
+  /** Authorized identity snapshot captured when the task is created. */
+  executionContext?: TaskExecutionContext;
   // AGENT_TASK_VERSION_V1 - version monotónica para CAS (F4).
   version?: number;
   // TASK_TENANT_REQUIRED_V1 - tenantId obligatorio. Backfill: 'default'.
