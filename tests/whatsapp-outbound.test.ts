@@ -376,3 +376,16 @@ test("real HTTP ingress to manual reply and approval persists one effect; task e
   await Promise.all([approve(), approve(), approve()]); assert.equal(effects, 1);
   assert.equal((await f.operation(draft.id))?.providerId, "reply-provider-confirmation");
 });
+
+test("an ambiguous attempt retains its original channel after connection rotation", async () => {
+  const f = await fixture(), draft = await f.create();
+  f.setSend(async () => { throw new OutcomeUnknownError(); });
+  await f.approve(draft.id, draft.revision!);
+  await f.provision(f.a, { instance: "new-company-channel", baseUrl: "https://new.example.test" });
+  const view = (await f.list())[0];
+  assert.equal(view.channel?.accountId, f.a.tenantId);
+  assert.equal((await f.operation(draft.id))?.channel && ((await f.operation(draft.id))!.channel as { baseUrl: string }).baseUrl, "https://evolution.example.test");
+  assert.equal("baseUrl" in view.channel!, false);
+  assert.equal((await f.approve(draft.id, draft.revision!)).status, "outcome_unknown");
+  assert.equal(f.calls.length, 1);
+});

@@ -3,6 +3,7 @@ export interface WhatsAppDraft {
   id: string; inboxId?: string; to: string; text: string; status: string; revision: string | null;
   createdAt?: string; expiresAt?: string; providerId?: string; errorCode?: string;
   needsReprepare: boolean; requiresReconciliation: boolean;
+  channel?: { provider: string; accountId: string };
   reconciliation?: { result: string; evidenceRef: string; actorId: string; at: string };
 }
 export interface WhatsAppConnection {

@@ -45,6 +45,7 @@ interface Operation {
   revision: string; to: string; text: string; connectionGeneration: string; inboxId?: string;
   status: OperationStatus; startedAt: string; attemptId: string;
   providerId?: string; resolvedAt?: string; errorCode?: string;
+  channel?: { provider: "evolution"; accountId: string; baseUrl: string };
   reconciliation?: { result: string; evidenceRef: string; actorId: string; at: string; priorStatus: string };
 }
 type OutboundStore = Pick<TenantScopedStore, "get" | "list" | "insertIfAbsent" | "compareAndSwap" | "put">;
@@ -209,6 +210,7 @@ export class WhatsAppOutbound {
     return { id: draft.id, inboxId: operation?.inboxId ?? draft.inboxId, to: operation?.to ?? draft.to, text: operation?.text ?? draft.text,
       status: operation?.status ?? draft.status, createdAt: draft.createdAt, expiresAt: draft.expiresAt,
       revision: operation?.revision ?? (legacy ? null : revisionFor(draft)), needsReprepare: legacy && !operation,
+      channel: operation?.channel ? { provider: operation.channel.provider, accountId: operation.channel.accountId } : undefined,
       providerId: operation?.providerId, errorCode: operation?.errorCode, reconciliation: operation?.reconciliation,
       requiresReconciliation: operation?.status === "outcome_unknown" || (operation?.status === "dispatching" && this.now().getTime() - Date.parse(operation.startedAt) > 60_000) };
   }
@@ -261,7 +263,8 @@ export class WhatsAppOutbound {
       apiKey = payload.apiKey;
     }
     catch { throw new AppError("No se pudo abrir la credencial de WhatsApp", 503); }
-    const operation = this.operation(identity, draft, revision, "dispatching");
+    const operation: Operation = { ...this.operation(identity, draft, revision, "dispatching"),
+      channel: { provider: connection.provider, accountId: connection.instance, baseUrl: connection.baseUrl } };
     const inserted = await this.db.insertIfAbsent(identity.owner, OPERATIONS, operation);
     if (!inserted) {
       const current = await this.db.get<Operation>(identity.owner, OPERATIONS, id);

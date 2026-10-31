@@ -99,3 +99,5 @@ POST /api/whatsapp/inbox/:id/draft admite únicamente text y la cabecera Idempot
 La comprobación dirigida atraviesa rutas HTTP reales y Store real: entrada Evolution autenticada -> persistencia/encolado -> inbox -> respuesta manual -> aprobación concurrente -> confirmación simulada del proveedor. El productor de tarea del test es una fixture y no ejecuta el worker/SOP. No acredita automatización LLM ni una conexión Evolution real.
 
 Los mensajes de Meta siguen siendo legibles, pero no se responden desde esta conexión Evolution; no se mezclan proveedores ni se reutilizan credenciales por coincidencia de número. La bandeja se actualiza al abrir y mediante Actualizar; no se anuncia tiempo real sin ese cableado.
+
+La operación conserva también una fotografía no secreta del canal usado (proveedor, instancia y URL interna) para reconciliar después de rotar la conexión. La vista muestra la cuenta original, sin publicar la URL interna. Nunca se consulta al canal nuevo como si fuera el que recibió el intento anterior.

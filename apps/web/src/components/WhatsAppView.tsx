@@ -114,6 +114,7 @@ export default function WhatsAppView() {
           return <article className="wa-card" key={draft.id}>
             <div className="wa-draft-heading"><strong>+{draft.to.replace(/^\+/, "")}</strong><span className={`wa-status wa-${draft.status}`}>{labels[draft.status] ?? draft.status}</span></div>
             <p className="wa-message-preview">{draft.text}</p>
+            {draft.channel && <p className="wa-muted">Cuenta de salida: {draft.channel.accountId}</p>}
             {draft.providerId && <p className="wa-muted">Referencia del proveedor: <code>{draft.providerId}</code></p>}
             {draft.needsReprepare && <p className="wa-muted">Este borrador es anterior al circuito de revisión. Prepara uno nuevo.</p>}
             {expired && draft.status === "awaiting_review" && <p className="wa-muted">La revisión ha caducado. Prepara un borrador nuevo.</p>}
