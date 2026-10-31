@@ -4,6 +4,86 @@
 // tenants distintos no colisionan. Todos los metodos del Store pasan por aqui.
 
 import type { ListOptions, Store } from "./db.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
+
+/**
+ * VS01_TENANT_KEY_V1 - el tenant de una fila es el prefijo de su clave fisica.
+ *
+ * La clave es lo unico que el store garantiza: se escribio bajo ese tenant y
+ * se lee bajo ese tenant. Por eso el contexto de una tarea en background sale
+ * de aqui y no de la membership del owner, que puede haber cambiado desde que
+ * la tarea se encolo (o puede ser su empresa primaria y no aquella en la que
+ * el trabajo se creo).
+ *
+ * Devuelve "" cuando la fila se escribio sin prefijo (registros anteriores al
+ * scoping multi-tenant): ese caso no se adivina, se trata aparte.
+ */
+export function tenantIdFromKey(composed: string): string {
+  const idx = composed.indexOf(":");
+  return idx > 0 ? composed.slice(0, idx) : "";
+}
+
+/** Fila con el tenant del que procede, ya separado del owner. */
+export interface ScopedRow<T> {
+  owner: string;
+  /** "" si la fila no tiene prefijo de tenant (legacy). */
+  tenantId: string;
+  value: T;
+}
+
+/** Fila paginada por cursor: conserva la posicion del cursor del store. */
+export interface ScopedCursorRow<T> extends ScopedRow<T> {
+  updatedAt: string;
+  id: string;
+}
+
+/**
+ * VS01_TENANT_OF_ROW_V1 - tenant de una fila venga del store que venga.
+ *
+ * `Service` acepta Store o TenantScopedStore: el primero no devuelve tenantId
+ * (no hay scoping), el segundo si. Este helper evita que cada call site tenga
+ * que distinguir, y cae al tenant persistido en la propia tarea cuando la fila
+ * no lo trae. Devuelve "" si no hay dato: el llamante decide (cuarentena), no
+ * se inventa un tenant.
+ */
+export function tenantOfRow(row: { tenantId?: string; value: unknown }): string {
+  const stored = (row.value as { tenantId?: string } | null | undefined)?.tenantId;
+  return row.tenantId || stored || "";
+}
+
+/** Contexto de una fila en un bucle de background. */
+export type BackgroundContext =
+  | { kind: "unscoped" }
+  | { kind: "scoped"; tenantId: string }
+  | { kind: "quarantine"; reason: "no-context" | "tenant-mismatch" };
+
+/**
+ * VS01_BACKGROUND_CONTEXT_V1 - de donde sale el tenant de una fila de fondo.
+ *
+ * Distingue tres casos que antes se confundian en uno:
+ *  - `unscoped`: el store no tiene scoping (un solo espacio de nombres). Se
+ *    ejecuta como siempre; no hay tenant que elegir.
+ *  - `scoped`: hay tenant, y sale de la clave fisica o del campo persistido.
+ *  - `quarantine`: la fila esta en un store scoped y no trae tenant, o trae dos
+ *    distintos. No se ejecuta bajo la membership: eso seria elegir por el
+ *    cliente con el unico dato que no acredita la empresa del trabajo.
+ */
+export function backgroundContext(record: {
+  tenantId?: string;
+  value?: unknown;
+}): BackgroundContext {
+  const keyTenant = (("tenantId" in record ? record.tenantId : undefined) ?? "").trim();
+  const fieldTenant = (
+    (record.value as { tenantId?: string } | null | undefined)?.tenantId ?? ""
+  ).trim();
+  if (keyTenant && fieldTenant && keyTenant !== fieldTenant)
+    return { kind: "quarantine", reason: "tenant-mismatch" };
+  if (keyTenant) return { kind: "scoped", tenantId: keyTenant };
+  if (fieldTenant) return { kind: "scoped", tenantId: fieldTenant };
+  return "tenantId" in record
+    ? { kind: "quarantine", reason: "no-context" }
+    : { kind: "unscoped" };
+}
 
 export class TenantScopedStore {
   constructor(
@@ -12,8 +92,15 @@ export class TenantScopedStore {
   ) {}
 
   // DB_TENANT_SCOPED_DEFAULT_V1
+  // VS01_SCOPE_PRECEDENCE_V1 - el scope de la peticion/tarea manda sobre la
+  // membership del owner. Antes este metodo preguntaba siempre al resolver, asi
+  // que cualquier consumidor de background solo estaba aislado si el resolver
+  // inyectado miraba el scope. Una tarea de la empresa B ejecutada por un
+  // worker cuyo resolver devolvia la primaria acababa escribiendo en la A. La
+  // composicion de clave es donde vive el aislamiento, no en cada llamante.
   private async key(owner: string): Promise<string> {
-    const tenantId = await this.resolver(owner);
+    const scoped = currentTenantScope()?.tenantId;
+    const tenantId = scoped || (await this.resolver(owner));
     this.tenantPrefixes.add(tenantId);
     return `${tenantId}:${owner}`;
   }
@@ -119,85 +206,68 @@ export class TenantScopedStore {
     return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
   }
 
-  async scan<T>(kind: string, limit = 1000): Promise<{ owner: string; value: T }[]> {
-    // TENANT_SCAN_PEEL_V1 - el store subyacente guarda owner = "tenantId:owner".
-    // El caller (TaskWorker) espera el owner limpio para poder volver a componer
-    // la clave al hacer compareAndSwap/get. Si devolveramos el owner compuesto,
-    // el worker compondria doble y no encontraria la tarea.
-    // TENANT_SCAN_SQL_FILTER_V1 - si el store subyacente expone
-    // scanByOwnerPrefix, filtramos en SQL por tenant. Si no, caemos al scan
-    // sin filtro (comportamiento previo).
-    const storeWithPrefix = this.store as Store & {
-      scanByOwnerPrefix?: <U>(
-        kind: string,
-        ownerPrefix: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: U }[]>;
-    };
-    const prefix = this.tenantPrefixes.values().next().value;
-    if (prefix && typeof storeWithPrefix.scanByOwnerPrefix === "function") {
-      try {
-        const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
-        return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-      } catch {
-        // Fallback al scan sin filtro si la query falla.
-      }
-    }
+  // VS01_SCAN_ALL_TENANTS_V1 - antes este scan se quedaba con UN prefijo: el
+  // primero que este proceso hubiera resuelto (`tenantPrefixes.values().next()`).
+  // Con dos empresas activas eso significaba que el mantenimiento, la
+  // recuperacion y el worker solo veian el trabajo de una de ellas, y cual era
+  // dependia del orden de llegada de las peticiones. Tras un reinicio, las
+  // tareas de una empresa sin trafico no se veian nunca.
+  //
+  // El aislamiento no se pierde por devolver todas las filas: se mantiene en
+  // (a) la composicion de clave al leer/escribir, y (b) el scope por fila que
+  // aplica cada consumidor de background con `row.tenantId`. Ocultar trabajo
+  // de un tenant no era aislamiento: era trabajo perdido.
+  async scan<T>(kind: string, limit = 1000): Promise<ScopedRow<T>[]> {
     const rows = await this.store.scan<T>(kind, limit);
-    return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+    return rows.map((r) => ({
+      owner: this.peel(r.owner),
+      tenantId: tenantIdFromKey(r.owner),
+      value: r.value,
+    }));
   }
 
-  // TENANT_SCAN_STATUS_ISOLATION_V1
-  // Antes llamaba a store.scanByStatus (crudo) sin filtrar por tenant.
-  // Ahora itera por cada prefix conocido y filtra en SQL por prefijo.
-  async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<{ owner: string; value: T }[]> {
-    const prefixes = this.allTenantPrefixes();
-    if (prefixes.length === 0) {
-      const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
-      return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-    }
-    const storeWithPrefix = this.store as Store & {
-      scanByOwnerPrefix?: <U>(
-        kind: string,
-        ownerPrefix: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: U }[]>;
-    };
-    if (typeof storeWithPrefix.scanByOwnerPrefix !== "function") {
-      const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
-      return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
-    }
-    const out: { owner: string; value: T }[] = [];
-    for (const prefix of prefixes) {
-      const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
-      for (const row of rows) {
-        const status = (row.value as { status?: string }).status;
-        if (status && statuses.includes(status)) {
-          out.push({ owner: this.peel(row.owner), value: row.value });
-        }
-      }
-      if (out.length >= limit) break;
-    }
-    return out.slice(0, limit);
+  // VS01_SCAN_ALL_TENANTS_V1 - mismo motivo que `scan`. Los consumidores son
+  // bucles de background (worker, recuperacion, mantenimiento): necesitan todas
+  // las empresas, no solo las que este proceso ya ha atendido. El filtro por
+  // prefijo se conserva solo en `scanByPrefix`, donde el tenant es explicito.
+  async scanByStatus<T>(
+    kind: string,
+    statuses: string[],
+    limit = 1000,
+  ): Promise<ScopedRow<T>[]> {
+    const rows = await this.store.scanByStatus<T>(kind, statuses, limit);
+    return rows.map((r) => ({
+      owner: this.peel(r.owner),
+      tenantId: tenantIdFromKey(r.owner),
+      value: r.value,
+    }));
   }
 
-  // TENANT_SCAN_STATUS_CURSOR_ISOLATION_V1
-  // Antes llamaba a store.scanByStatusWithCursor (crudo) sin filtrar por tenant.
-  // Ahora filtra en memoria por prefix de tenant. El cursor es por updatedAt/id,
-  // no por owner, así que no se puede usar scanByOwnerPrefix directamente.
+  // VS01_SCAN_ALL_TENANTS_V1 - el filtro por "prefijos vistos" tambien aqui
+  // escondia trabajo de empresas que este proceso aun no habia atendido: tras
+  // un reinicio, una tarea encolada en la empresa B no se recuperaba si el
+  // primer trafico habia sido de la A.
   async scanByStatusWithCursor<T>(
     kind: string,
     statuses: string[],
     limit: number,
     cursorUpdatedAt?: string,
     cursorId?: string,
-  ) {
-    const rows = await this.store.scanByStatusWithCursor<T>(kind, statuses, limit, cursorUpdatedAt, cursorId);
-    const prefixes = this.allTenantPrefixes();
-    const filtered = prefixes.length > 0
-      ? rows.filter((r) => prefixes.some((p) => r.owner.startsWith(`${p}:`)))
-      : rows;
-    return filtered.map((r) => ({ ...r, owner: this.peel(r.owner) }));
+  ): Promise<ScopedCursorRow<T>[]> {
+    const rows = await this.store.scanByStatusWithCursor<T>(
+      kind,
+      statuses,
+      limit,
+      cursorUpdatedAt,
+      cursorId,
+    );
+    return rows.map((r) => ({
+      owner: this.peel(r.owner),
+      tenantId: tenantIdFromKey(r.owner),
+      value: r.value,
+      updatedAt: r.updatedAt,
+      id: r.id,
+    }));
   }
 
   /**

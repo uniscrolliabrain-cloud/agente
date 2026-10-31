@@ -6,6 +6,7 @@ import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.
 import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
+import { runInTenantScope } from "../tenant-scope.ts";
 import { backgroundFailure } from "../log.ts";
 // WORKER_RETRY_V1
 import { defaultIsRetryable } from "./retry.ts";
@@ -31,6 +32,53 @@ export type TaskHandler = (
   task: AgentTask,
   context: TaskContext,
 ) => Promise<Partial<AgentTask>>;
+
+/**
+ * VS01_TASK_TENANT_RESOLUTION_V1 - de donde sale el tenant de una tarea.
+ *
+ * La regla es que salga del trabajo persistido, nunca de la membership actual
+ * del owner: un usuario puede estar en dos empresas, y su membership primaria
+ * no dice en cual se encolo esta tarea. Tampoco se adivina cuando no hay dato.
+ *
+ *  - key+field: ambos coinciden. Caso normal.
+ *  - key:       la fila tiene prefijo de tenant y el campo aun no (registro
+ *               escrito antes de que el campo existiera). El prefijo es prueba
+ *               de aislamiento, asi que se adopta y se persiste al reclamar.
+ *  - field:     fila sin prefijo (anterior al scoping) pero con tenantId. Es el
+ *               unico contexto durable que queda; no se inventa otro.
+ *  - quarantine: sin campo y sin prefijo, o con dos tenants en desacuerdo. No
+ *               se ejecuta: escribir bajo cualquiera de los dos seria elegir
+ *               por el cliente.
+ */
+export type TaskTenantResolution =
+  | { kind: "resolved"; tenantId: string; source: "key+field" | "key" | "field" }
+  | { kind: "quarantine"; reason: "no-context" | "tenant-mismatch" };
+
+export function resolveTaskTenant(
+  keyTenantId: string,
+  task: Pick<AgentTask, "tenantId">,
+): TaskTenantResolution {
+  const fromField = (task.tenantId ?? "").trim();
+  const fromKey = keyTenantId.trim();
+  if (fromKey && fromField && fromKey !== fromField)
+    return { kind: "quarantine", reason: "tenant-mismatch" };
+  if (fromKey && fromField) return { kind: "resolved", tenantId: fromKey, source: "key+field" };
+  if (fromKey) return { kind: "resolved", tenantId: fromKey, source: "key" };
+  if (fromField) return { kind: "resolved", tenantId: fromField, source: "field" };
+  return { kind: "quarantine", reason: "no-context" };
+}
+
+/**
+ * VS01_TASK_ACTOR_V1 - actor de la tarea, restaurado de lo persistido.
+ *
+ * `assignedBy` es el delegante (quien pidio el trabajo) y se persiste al
+ * crear la tarea; `assignedTo` es el ejecutor. Sin ninguno de los dos solo
+ * queda el owner, y ese fallback se marca como legacy en los eventos del bus
+ * (no se presenta como identidad demostrada).
+ */
+export function taskActor(task: Pick<AgentTask, "assignedBy" | "assignedTo">, owner: string): string {
+  return task.assignedBy ?? task.assignedTo ?? owner;
+}
 export class TaskWorker {
   private timer?: ReturnType<typeof setInterval>;
   private ticking = false;
@@ -111,6 +159,12 @@ export class TaskWorker {
     );
     globalMetrics.gauge("openmuse_worker_active", "Handlers concurrentes activos");
     globalMetrics.gauge("openmuse_worker_max_active", "Tope de handlers concurrentes");
+    // VS01_QUARANTINE_VISIBLE_V1 - tareas que el worker no ejecuta por falta de
+    // contexto de tenant. Debe ser 0; si sube, hay registros sin migrar.
+    globalMetrics.gauge(
+      "openmuse_tasks_quarantined",
+      "Tareas sin contexto de tenant que no se ejecutan",
+    );
     globalMetrics.set("openmuse_worker_max_active", this.maxActive);
     // WORKER_TICK_BACKOFF_V1 - backoff exponencial si el ultimo tick fallo.
     let consecutiveFailures = 0;
@@ -182,14 +236,62 @@ export class TaskWorker {
       "tasks",
       ["queued", "scheduled", "running", "waiting_approval"],
     );
-      const due = records.filter(
-        ({ value: t }) =>
-          !this.active.has(t.id) &&
-          (t.status === "queued" ||
+      // VS01_TASK_CONTEXT_V1 - cada fila trae el tenant del que procede. Se
+      // resuelve ANTES de mirar si toca ejecutarla: una tarea sin contexto no
+      // se ejecuta bajo el tenant de la membership, se queda fuera y se cuenta.
+      // `tenantId` ausente en la fila = Store sin scoping (modo de un solo
+      // espacio de nombres, el de los tests y el de `WORKSPACE_MODE=sample`).
+      // Ausente pero "" = store scoped con fila legacy sin prefijo.
+      const due: { owner: string; value: AgentTask; tenantId?: string }[] = [];
+      const quarantined: { id: string; owner: string; reason: string }[] = [];
+      for (const record of records) {
+        const scopedRow = "tenantId" in record;
+        if (!scopedRow) {
+          const t = record.value;
+          if (this.active.has(t.id)) continue;
+          if (
+            t.status === "queued" ||
             (t.status === "scheduled" && Date.parse(t.nextRunAt ?? "") <= this.now()) ||
             (t.status === "running" && Date.parse(t.leaseUntil ?? "") <= this.now()) ||
-            t.status === "waiting_approval"),
-      );
+            t.status === "waiting_approval"
+          )
+            due.push({ owner: record.owner, value: t, ...(t.tenantId ? { tenantId: t.tenantId } : {}) });
+          continue;
+        }
+        const resolution = resolveTaskTenant(record.tenantId, record.value);
+        if (resolution.kind === "quarantine") {
+          quarantined.push({ id: record.value.id, owner: record.owner, reason: resolution.reason });
+          continue;
+        }
+        const t = record.value;
+        if (this.active.has(t.id)) continue;
+        if (
+          t.status === "queued" ||
+          (t.status === "scheduled" && Date.parse(t.nextRunAt ?? "") <= this.now()) ||
+          (t.status === "running" && Date.parse(t.leaseUntil ?? "") <= this.now()) ||
+          t.status === "waiting_approval"
+        )
+          due.push({ owner: record.owner, value: t, tenantId: resolution.tenantId });
+      }
+      // VS01_QUARANTINE_VISIBLE_V1 - la cuarentena no puede ser silenciosa: sin
+      // esta senal, una tarea sin contexto simplemente "no avanza" y nadie sabe
+      // por que. El id del owner no se registra para no meter datos de cliente
+      // en logs; si la tarea.
+      // Se fija en cada tick, tambien a 0: un gauge que solo sube deja de
+      // describir la realidad en cuanto se migra el ultimo registro legacy.
+      globalMetrics.set("openmuse_tasks_quarantined", quarantined.length);
+      if (quarantined.length > 0) {
+        backgroundFailure(
+          "task context quarantine",
+          new Error(
+            `${quarantined.length} tarea(s) sin contexto de tenant no se ejecutan: ` +
+              quarantined
+                .slice(0, 10)
+                .map((q) => `${q.id}:${q.reason}`)
+                .join(", "),
+          ),
+        );
+      }
       const eligible = [];
       // WORKER_OWNER_QUOTA_V1
       // Sin esto, un owner con 1000 tareas queued monopoliza el worker.
@@ -202,26 +304,40 @@ export class TaskWorker {
       }
       for (const record of due) {
         if (record.value.status === "waiting_approval") {
-          const action = record.value.actionId
-            ? await this.db.get<{ status: string; expiresAt?: string }>(
-                record.owner,
-                "actions",
-                record.value.actionId,
-              )
-            : null;
-          if (
-            record.value.actionId &&
-            action?.status === "awaiting_review" &&
-            Date.parse(action.expiresAt ?? "") <= this.now()
-          )
-            await this.db.compareAndSwap(
-              record.owner,
-              "actions",
-              record.value.actionId,
-              { status: "awaiting_review", expiresAt: action.expiresAt },
-              { status: "expired" },
-            );
-          else if (action && ["awaiting_review", "executing"].includes(action.status)) continue;
+          // VS01_APPROVAL_RESUME_V1 - la aprobacion se lee en el tenant de la
+          // tarea. Sin el scope se resolvia con la membership y una aprobacion
+          // de la empresa B no se encontraba desde una tarea de un usuario cuya
+          // membership primaria es la A.
+          const resume = await runInTenantScope(
+            { tenantId: record.tenantId ?? "", actorId: taskActor(record.value, record.owner) },
+            async () => {
+              const action = record.value.actionId
+                ? await this.db.get<{ status: string; expiresAt?: string }>(
+                    record.owner,
+                    "actions",
+                    record.value.actionId,
+                  )
+                : null;
+              if (
+                record.value.actionId &&
+                action?.status === "awaiting_review" &&
+                Date.parse(action.expiresAt ?? "") <= this.now()
+              ) {
+                await this.db.compareAndSwap(
+                  record.owner,
+                  "actions",
+                  record.value.actionId,
+                  { status: "awaiting_review", expiresAt: action.expiresAt },
+                  { status: "expired" },
+                );
+                return "expired" as const;
+              }
+              return action && ["awaiting_review", "executing"].includes(action.status)
+                ? ("blocked" as const)
+                : ("ready" as const);
+            },
+          );
+          if (resume === "blocked") continue;
         }
         // WORKER_OWNER_QUOTA_V1
         const ownerCount = perOwnerCount.get(record.owner) ?? 0;
@@ -234,12 +350,30 @@ export class TaskWorker {
     // Si ya hay maxActive handlers corriendo, no lanzamos m
     const available = Math.max(0, this.maxActive - this.active.size);
     const toRun = eligible.slice(0, available);
-    await Promise.all(toRun.map(({ owner, value }) => this.run(owner, value)));
+    await Promise.all(toRun.map(({ owner, value, tenantId }) => this.run(owner, value, tenantId)));
     } finally {
       this.ticking = false;
     }
   }
-  private async run(owner: string, previous: AgentTask) {
+  /**
+   * VS01_TASK_SCOPE_V1 - toda la ejecucion de una tarea ocurre dentro del scope
+   * del tenant al que pertenece la fila.
+   *
+   * `run` no tenia scope: el TenantScopedStore resolvia la clave con la
+   * membership del owner. Con un usuario en dos empresas, el claim se hacia
+   * contra `empresaPrimaria:owner` mientras la tarea vivia en
+   * `otraEmpresa:owner`; el compareAndSwap no encontraba la fila y la tarea
+   * quedaba en cola para siempre, sin error. El scope hace que la clave se
+   * componga con el tenant persistido, que es el unico dato que no cambia.
+   */
+  private run(owner: string, previous: AgentTask, tenantId?: string) {
+    if (!tenantId) return this.runScoped(owner, previous);
+    return runInTenantScope({ tenantId, actorId: taskActor(previous, owner) }, () =>
+      this.runScoped(owner, previous, tenantId),
+    );
+  }
+
+  private async runScoped(owner: string, previous: AgentTask, tenantId?: string) {
     if (this.stopping) return;
     // WORKER_METRICS_V1
     const runStartedAt = Date.now();
@@ -251,12 +385,17 @@ export class TaskWorker {
     };
     if (previous.status === "running") expected.leaseUntil = previous.leaseUntil;
 
+    // VS01_TENANT_BACKFILL_V1 - si el campo tenantId faltaba (fila escrita antes
+    // del campo, con prefijo correcto en la clave), se persiste aqui. Es la
+    // migracion explicita: el dato sale de la clave, no de la membership, y una
+    // vez escrito la tarea ya no depende de reconstruir nada.
     const swapped = await this.db.compareAndSwap<AgentTask>(owner, "tasks", previous.id, expected, {
       status: "running",
       leaseId,
       leaseUntil: new Date(this.now() + leaseMs).toISOString(),
       updatedAt: new Date(this.now()).toISOString(),
       attempts: previous.attempts + 1,
+      ...(previous.tenantId || !tenantId ? {} : { tenantId }),
     });
     if (!swapped) return;
     // WORKER_TASK_NONNULL_V1 - task se declara ya no-nulo: es `let` porque
@@ -274,9 +413,9 @@ export class TaskWorker {
     let guardCacheAt = 0;
     // GUARD_CACHE_100_V1 - 100ms detecta robos de lease antes.
     const GUARD_CACHE_MS = Number(process.env.WORKER_GUARD_CACHE_MS ?? "100") || 100;
-    // WORKER_STEP_SIGNAL_V1 - expone el signal a los handlers.
-    const guard = async () => {
-      const now = Date.now();
+    // WORKER_STEP_SIGNAL_V1 - expone el signal a los handlers.
+    const guard = async () => {
+      const now = Date.now();
       if (controller.signal.aborted) throw new LostLeaseError();
       if (now - guardCacheAt < GUARD_CACHE_MS) return;
       const latest = await this.db.get<AgentTask>(owner, "tasks", taskId);
@@ -330,12 +469,12 @@ export class TaskWorker {
         );
         return;
       }
-      const id = randomUUID();
-      recentEvents.set(key, { id, date: now, count: 1 });
-      // RUN_EVENTS_CAP_V1 - tope de 100 eventos por task.
-      if (recentEvents.size > 100) {
-        const oldest = [...recentEvents.entries()].sort((a, b) => a[1].date - b[1].date)[0];
-        if (oldest) recentEvents.delete(oldest[0]);
+      const id = randomUUID();
+      recentEvents.set(key, { id, date: now, count: 1 });
+      // RUN_EVENTS_CAP_V1 - tope de 100 eventos por task.
+      if (recentEvents.size > 100) {
+        const oldest = [...recentEvents.entries()].sort((a, b) => a[1].date - b[1].date)[0];
+        if (oldest) recentEvents.delete(oldest[0]);
       }
       // WORKER_DEDUPE_PERSIST_CAS_V1
       // WORKER_DEDUPE_PERSIST_V1 - persistir el dedupe en task.state.
@@ -411,23 +550,23 @@ export class TaskWorker {
       Math.max(10, Math.floor(leaseMs / 3)),
     );
     try {
-      // WORKER_CTX_SIGNAL_V1 - timeout por task con TASK_TIMEOUT_MS.
-      const TASK_TIMEOUT_MS = this.taskTimeoutMs();
-      const taskTimeout = setTimeout(() => {
-        if (!controller.signal.aborted) controller.abort();
-      }, TASK_TIMEOUT_MS);
-      taskTimeout.unref?.();
-      let result: Partial<AgentTask>;
-      try {
-        result = await this.execute(owner, task, {
-          signal: controller.signal,
-          guard,
-          checkpoint,
-          event,
-          busEvent,
-        });
-      } finally {
-        clearTimeout(taskTimeout);
+      // WORKER_CTX_SIGNAL_V1 - timeout por task con TASK_TIMEOUT_MS.
+      const TASK_TIMEOUT_MS = this.taskTimeoutMs();
+      const taskTimeout = setTimeout(() => {
+        if (!controller.signal.aborted) controller.abort();
+      }, TASK_TIMEOUT_MS);
+      taskTimeout.unref?.();
+      let result: Partial<AgentTask>;
+      try {
+        result = await this.execute(owner, task, {
+          signal: controller.signal,
+          guard,
+          checkpoint,
+          event,
+          busEvent,
+        });
+      } finally {
+        clearTimeout(taskTimeout);
       }
       // WORKER_LAST_DURATION_V1 - persiste duracion.
       const durationMs = Date.now() - runStartedAt;

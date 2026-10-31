@@ -110,7 +110,8 @@ import { buildToolExecutors } from "./execution/tool-executors.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
 import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
-import { currentTenantScope } from "../tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
+import { backgroundContext } from "../db-tenant.ts";
 import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
 
@@ -325,6 +326,32 @@ export class AgentService {
       bus: this.bus,
     });
   }
+  /**
+   * VS01_BACKGROUND_SCOPE_V1 - ejecuta un paso de background con el tenant de
+   * la FILA, no con la membership del owner.
+   *
+   * Tres desenlaces: fila sin contexto en un store scoped (se deja fuera y se
+   * registra, nunca se adivina la empresa), store sin scoping (se ejecuta como
+   * antes) o tenant probado por la clave/campo (se ejecuta dentro del scope).
+   */
+  private async inRowScope<T>(
+    record: { tenantId?: string; value?: unknown },
+    actorId: string,
+    what: string,
+    fn: () => Promise<T>,
+  ): Promise<T | undefined> {
+    const ctx = backgroundContext(record);
+    if (ctx.kind === "quarantine") {
+      backgroundFailure(
+        `${what}: fila sin contexto de tenant (${ctx.reason})`,
+        new Error("background row without tenant context"),
+      );
+      return undefined;
+    }
+    if (ctx.kind === "unscoped") return fn();
+    return runInTenantScope({ tenantId: ctx.tenantId, actorId }, fn);
+  }
+
   // SERVICE_RECOVER_TASKS_V1 - recupera tareas running con lease expirado.
   // SERVICE_REACTIONS_LOAD_V1 - carga las rules de cada tenant activo.
   private async loadReactionsForAllTenants(): Promise<void> {
@@ -340,32 +367,44 @@ export class AgentService {
     const now = Date.now();
     const rows = await this.db.scanByStatus<AgentTask>("tasks", ["running"], 5000);
     let recovered = 0;
-    for (const { owner, value } of rows) {
+    for (const record of rows) {
+      const { owner, value } = record;
       const leaseUntil = value.leaseUntil ? Date.parse(value.leaseUntil) : 0;
       if (!leaseUntil || leaseUntil > now) continue;
-      // RECOVER_CAS_V1 - CAS con expected explicito del lease para evitar
-      // que dos procesos reviertan la misma task a la vez.
-      const updated = await this.db.compareAndSwap<AgentTask>(
-        owner,
-        "tasks",
-        value.id,
-        { status: "running", leaseId: value.leaseId ?? null, leaseUntil: value.leaseUntil ?? null },
-        {
-          status: "queued",
-          leaseId: null,
-          leaseUntil: null,
-          updatedAt: new Date().toISOString(),
+      // VS01_RECOVER_SCOPE_V1 - la recuperacion escribe con la clave del tenant
+      // de la tarea. Sin scope, el CAS se hacia contra la membership del owner
+      // y una tarea interrumpida de otra empresa no se recuperaba nunca (el CAS
+      // devolvia null y el contador no subia, sin error visible).
+      const recoveredId = await this.inRowScope(
+        record,
+        value.assignedBy ?? value.assignedTo ?? owner,
+        "recover task",
+        async () => {
+          // RECOVER_CAS_V1 - CAS con expected explicito del lease para evitar
+          // que dos procesos reviertan la misma task a la vez.
+          const updated = await this.db.compareAndSwap<AgentTask>(
+            owner,
+            "tasks",
+            value.id,
+            { status: "running", leaseId: value.leaseId ?? null, leaseUntil: value.leaseUntil ?? null },
+            {
+              status: "queued",
+              leaseId: null,
+              leaseUntil: null,
+              updatedAt: new Date().toISOString(),
+            },
+          );
+          if (!updated) return null;
+          // TASK_RECOVERED_EVENT_V1 - emite evento al recuperar.
+          await this.bus?.emit(owner, "task.status_changed", { kind: "task", id: value.id }, {
+            taskId: value.id,
+            from: "running",
+            to: "queued",
+          }).catch(() => {});
+          return updated.id;
         },
       );
-      if (updated) {
-        recovered++;
-        // TASK_RECOVERED_EVENT_V1 - emite evento al recuperar.
-        await this.bus?.emit(owner, "task.status_changed", { kind: "task", id: value.id }, {
-          taskId: value.id,
-          from: "running",
-          to: "queued",
-        }).catch(() => {});
-      }
+      if (recoveredId) recovered++;
     }
     return recovered;
   }
@@ -483,15 +522,29 @@ export class AgentService {
         ["queued", "scheduled", "running"],
         200,
       );
-      for (const { owner, value } of taskStatusPage) {
-        await this.publishOutcome(owner, value).catch((error) =>
-          backgroundFailure(`publish outcome ${value.id}`, error),
+      // VS01_MAINTAIN_SCOPE_V1 - el mantenimiento publica y activa por fila, con
+      // el tenant de la fila. Antes usaba el owner suelto y el store resolvia la
+      // membership: las tareas de una segunda empresa se publicaban contra la
+      // clave equivocada (o no se encontraban).
+      for (const record of taskStatusPage) {
+        const { owner, value } = record;
+        await this.inRowScope(
+          record,
+          value.assignedBy ?? value.assignedTo ?? owner,
+          "publish outcome",
+          () =>
+            this.publishOutcome(owner, value).catch((error) =>
+              backgroundFailure(`publish outcome ${value.id}`, error),
+            ),
         );
       }
       const monitorPage = await this.db.scanByStatus<Monitor>("monitors", ["active"], 500);
-      for (const { owner, value } of monitorPage) {
-        await this.activateMonitor(owner, value).catch((error) =>
-          backgroundFailure(`activate monitor ${value.id}`, error),
+      for (const record of monitorPage) {
+        const { owner, value } = record;
+        await this.inRowScope(record, owner, "activate monitor", () =>
+          this.activateMonitor(owner, value).catch((error) =>
+            backgroundFailure(`activate monitor ${value.id}`, error),
+          ),
         );
       }
       // SERVICE_MAINTAIN_MONITORS_V1
@@ -1277,6 +1330,10 @@ export class AgentService {
       kind: input.kind,
       goalId: input.goalId,
       assignedTo: input.assignedTo ?? owner,
+      // VS01_TASK_ACTOR_V1 - el delegante se persiste para que el actor no se
+      // reconstruya al reclamar la tarea. Antes solo existia `assignedTo` (el
+      // ejecutor) y el worker caia al owner, marcando la identidad como legacy.
+      assignedBy: currentTenantScope()?.actorId ?? owner,
       status: held ? "paused" : "queued",
       plan: titles.map((title, i) => ({ id: String(i), title, status: "pending" })),
       evidence: [],
@@ -2589,8 +2646,14 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
       cursor?.lastId,
     );
     for (const record of page) {
-      await this.publishOutcome(record.owner, record.value).catch((error) =>
-        backgroundFailure("publish outcome " + record.value.id, error),
+      await this.inRowScope(
+        record,
+        record.value.assignedBy ?? record.value.assignedTo ?? record.owner,
+        "publish outcome",
+        () =>
+          this.publishOutcome(record.owner, record.value).catch((error) =>
+            backgroundFailure("publish outcome " + record.value.id, error),
+          ),
       );
     }
     const last = page[page.length - 1];
@@ -2619,8 +2682,14 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
       cursor?.id,
     );
     for (const record of page) {
-      await this.publishOutcome(record.owner, record.value).catch((error) =>
-        backgroundFailure(`publish outcome ${record.value.id}`, error),
+      await this.inRowScope(
+        record,
+        record.value.assignedBy ?? record.value.assignedTo ?? record.owner,
+        "publish outcome",
+        () =>
+          this.publishOutcome(record.owner, record.value).catch((error) =>
+            backgroundFailure(`publish outcome ${record.value.id}`, error),
+          ),
       );
     }
     const last = page[page.length - 1];
