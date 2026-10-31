@@ -88,8 +88,36 @@ anteriores (formato en `model.ts:464-491`, `useTemplate` en
 líneas modificadas por este patchset; no se corrigieron para no ampliar el
 diff.
 
-No ejecutado: suite completa (`pnpm test`), typecheck `apps/worker`, y
-reinicio de proceso real. El límite está declarado en §5.
+### 3.1 Batería de regresión
+
+Ejecutada en serie (`--test-concurrency=1`) para no mezclar PGlite de varios
+archivos en el mismo equipo:
+
+| Archivo | Resultado |
+| --- | --- |
+| `tests/tenant-isolation.test.ts` | pasa (incluye «50 tenants con lectura cruzada imposible» y «scanByStatus no mezcla tenants») |
+| `tests/tenant-isolation-extended.test.ts` | pasa |
+| `tests/worker-concurrency.test.ts` | pasa (claims únicos, cancelación, leases caducados) |
+| `tests/worker-metrics.test.ts` | pasa |
+| `tests/task-plans.test.ts` | pasa |
+| `tests/engine.test.ts` | pasa |
+| `tests/crash-recovery.test.ts` | pasa aislado (45,5 s) |
+| `tests/tenant-http-e2e.test.ts` | pasa 5/5 (aislamiento HTTP, `switch-tenant`, `files.import`) |
+| `tests/context-engine.test.ts` | pasa 4/4 |
+| `tests/tasks-reassign.test.ts` | **falla**: `PORT must be an integer...` — previo |
+| `tests/model-worker.test.ts` | **falla**: mismo `PORT` — previo |
+
+Los dos fallos por `PORT=0` se reproducen igual en un worktree limpio de
+`4f81f22` sin este patchset: son de entorno, no de PS-01.
+
+`crash-recovery` falló en la primera pasada por concurrencia: el test deja vivo
+el subproceso `crash-worker` cuando el claim no llega en 15 s y `node --test`
+ejecuta varios archivos a la vez. Aislado pasa en la rama (45,5 s) y en el
+baseline (51,2 s). No es una regresión; queda anotado como flake del test en
+equipos cargados.
+
+No ejecutado: suite completa (`pnpm test`, 112 archivos), typecheck
+`apps/worker` y reinicio de proceso real. El límite está declarado en §5.
 
 ## 4. Comportamiento observable que cambia
 
