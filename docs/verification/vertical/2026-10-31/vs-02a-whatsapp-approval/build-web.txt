@@ -14,7 +14,7 @@ in "../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/regexes.js" cont
 
 in "../../node_modules/.pnpm/zod@4.6.5/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
 ✓ 1776 modules transformed.
-[plugin:vite:reporter] [plugin vite:reporter] 
+[plugin:vite:reporter] [plugin vite:reporter]
 (!) C:/Users/Alfonso/Documents/Codex/2026-10-27/co/work/agente-pilot-integration/apps/web/src/api/actions.ts is dynamically imported by C:/Users/Alfonso/Documents/Codex/2026-10-27/co/work/agente-pilot-integration/apps/web/src/components/ApprovalModal.tsx but also statically imported by C:/Users/Alfonso/Documents/Codex/2026-10-27/co/work/agente-pilot-integration/apps/web/src/components/ApprovalModal.tsx, dynamic import will not move module into another chunk.
 
 rendering chunks...

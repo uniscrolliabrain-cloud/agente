@@ -4,10 +4,10 @@
   "phase": "VS-02a",
   "target_sha": "a3f77ac1fd0ca77184cfc313021bef4be5666578",
   "baseline_sha": "4f81f2293b67048ec4f6a32801f5940439b832cf",
-  "source_pr": null,
+  "source_pr": "https://github.com/uniscrolliabrain-cloud/agente/pull/10",
   "agent": "codex-vs-lead",
   "started_at": null,
-  "finished_at": "2026-10-31T11:52:29.4957294+00:00",
+  "finished_at": "2026-10-31T12:52:29.4957294+01:00",
   "timing_note": "No se capturo inicio exacto de todos los comandos; duration_ms null donde no se midio. La prueba registra su duracion en el log.",
   "environment": {
     "provider": "mock",
