@@ -389,3 +389,31 @@ test("an ambiguous attempt retains its original channel after connection rotatio
   assert.equal((await f.approve(draft.id, draft.revision!)).status, "outcome_unknown");
   assert.equal(f.calls.length, 1);
 });
+
+test("reply creation rejects a connection rotation between channel validation and draft persistence", async (t) => {
+  const f = await fixture(); await seedInbox(f);
+  const original = f.scoped.get.bind(f.scoped); let reads = 0;
+  t.mock.method(f.scoped, "get", async (owner: string, kind: string, id: string) => {
+    if (kind === "whatsapp-connections" && ++reads === 2) await f.provision(f.a, { instance: "other-account" });
+    return original(owner, kind, id);
+  });
+  await assert.rejects(f.run(f.a, () => f.client().createReply(f.a, "inbox-001", { text: "Respuesta" }, "rotation-reply-key")), /conexion cambio/);
+  assert.equal((await f.list()).length, 0); assert.equal(f.calls.length, 0);
+});
+
+test("review exposes the exact channel and a changed source cannot be approved", async () => {
+  const f = await fixture(); await seedInbox(f);
+  const draft = await f.run(f.a, () => f.client().createReply(f.a, "inbox-001", { text: "Respuesta" }, "source-check-key"));
+  assert.deepEqual(draft.channel, { provider: "evolution", accountId: f.a.tenantId });
+  await seedInbox(f, "inbox-001", f.a, { accountId: "different-account" });
+  await assert.rejects(f.approve(draft.id, draft.revision!), /inbox cambio/);
+  assert.equal(await f.operation(draft.id), null); assert.equal(f.calls.length, 0);
+});
+
+test("channel metadata is part of the reviewed revision", async () => {
+  const f = await fixture(), draft = await f.create();
+  const stored = (await f.draft(draft.id))!;
+  await f.run(f.a, () => f.scoped.put(f.a.owner, "whatsapp-drafts", { ...stored, id: draft.id, channel: { provider: "evolution", accountId: "tampered" } }));
+  await assert.rejects(f.approve(draft.id, draft.revision!), /ha cambiado/);
+  assert.equal(f.calls.length, 0);
+});

@@ -38,6 +38,7 @@ interface Draft {
   id: string; tenantId: string; owner: string; to: string; text: string;
   connectionGeneration: string; createdAt: string; expiresAt: string;
   status: string; inboxId?: string;
+  channel?: { provider: "evolution"; accountId: string };
 }
 type OperationStatus = "dispatching" | "accepted" | "rejected" | "failed" | "outcome_unknown";
 interface Operation {
@@ -77,9 +78,10 @@ function assertConnectionScope(connection: WhatsAppConnection, identity: Outboun
     throw new AppError("La conexion WhatsApp no pertenece a esta empresa y usuario", 403);
   }
 }
-function revisionFor(draft: Pick<Draft, "id" | "tenantId" | "owner" | "to" | "text" | "connectionGeneration" | "expiresAt" | "inboxId">): string {
+function revisionFor(draft: Pick<Draft, "id" | "tenantId" | "owner" | "to" | "text" | "connectionGeneration" | "expiresAt" | "inboxId" | "channel">): string {
   const fields = [draft.id, draft.tenantId, draft.owner, draft.to, draft.text, draft.connectionGeneration, draft.expiresAt];
   if (draft.inboxId) fields.push(draft.inboxId);
+  if (draft.channel) fields.push("channel", draft.channel.provider, draft.channel.accountId);
   return sha(fields);
 }
 
@@ -124,15 +126,17 @@ export class WhatsAppOutbound {
   async createDraft(identity: OutboundIdentity, input: unknown, idempotencyKey: string) {
     return this.prepareDraft(identity, input, idempotencyKey);
   }
-  private async prepareDraft(identity: OutboundIdentity, input: unknown, idempotencyKey: string, inboxId?: string) {
+  private async prepareDraft(identity: OutboundIdentity, input: unknown, idempotencyKey: string, inboxId?: string, expectedConnection?: WhatsAppConnection) {
     requireIdentity(identity);
     const parsed = whatsappDraftInput.safeParse(input);
     if (!parsed.success || !intent.safeParse(idempotencyKey).success) throw new AppError("Destinatario, texto o Idempotency-Key no validos", 422);
     const connection = await this.connection(identity);
+    if (expectedConnection && connection.generation !== expectedConnection.generation) throw new AppError("La conexion cambio al preparar la respuesta; vuelve a revisar el canal", 409);
     if (!connection.enabled) throw new AppError("La conexion WhatsApp esta desactivada", 409);
     if (!connection.allowedRecipients.includes(parsed.data.to)) throw new AppError("Destinatario fuera de la lista del piloto", 403);
     const candidate: Draft = { id: sha([identity.tenantId, identity.owner, idempotencyKey]),
       tenantId: identity.tenantId, owner: identity.owner, ...parsed.data, connectionGeneration: connection.generation,
+      channel: { provider: connection.provider, accountId: connection.instance },
       ...(inboxId ? { inboxId } : {}), createdAt: this.now().toISOString(), expiresAt: new Date(this.now().getTime() + 30 * 60_000).toISOString(), status: "awaiting_review" };
     const inserted = await this.db.insertIfAbsent(identity.owner, DRAFTS, candidate);
     const draft = inserted ?? await this.db.get<Draft>(identity.owner, DRAFTS, candidate.id);
@@ -178,7 +182,7 @@ export class WhatsAppOutbound {
     if (connection.provider !== item.provider || connection.instance !== item.accountId) throw new AppError("El canal de salida no coincide con el mensaje recibido", 409);
     const to = this.replyRecipient(item.from, item.provider);
     if (!to) throw new AppError("Este mensaje no admite respuesta por el canal configurado", 409);
-    return this.prepareDraft(identity, { to, text: parsedInput.data.text }, idempotencyKey, inboxId);
+    return this.prepareDraft(identity, { to, text: parsedInput.data.text }, idempotencyKey, inboxId, connection);
   }
   async drafts(identity: OutboundIdentity) {
     requireIdentity(identity);
@@ -210,7 +214,7 @@ export class WhatsAppOutbound {
     return { id: draft.id, inboxId: operation?.inboxId ?? draft.inboxId, to: operation?.to ?? draft.to, text: operation?.text ?? draft.text,
       status: operation?.status ?? draft.status, createdAt: draft.createdAt, expiresAt: draft.expiresAt,
       revision: operation?.revision ?? (legacy ? null : revisionFor(draft)), needsReprepare: legacy && !operation,
-      channel: operation?.channel ? { provider: operation.channel.provider, accountId: operation.channel.accountId } : undefined,
+      channel: operation?.channel ? { provider: operation.channel.provider, accountId: operation.channel.accountId } : draft.channel,
       providerId: operation?.providerId, errorCode: operation?.errorCode, reconciliation: operation?.reconciliation,
       requiresReconciliation: operation?.status === "outcome_unknown" || (operation?.status === "dispatching" && this.now().getTime() - Date.parse(operation.startedAt) > 60_000) };
   }
@@ -254,6 +258,7 @@ export class WhatsAppOutbound {
     if (!this.options.enabled) throw new AppError("La salida WhatsApp no esta activada", 503);
     const connection = await this.connection(identity);
     if (!connection.enabled || connection.generation !== draft.connectionGeneration) throw new AppError("La conexion ha cambiado o esta desactivada; prepara otro borrador", 409);
+    await this.assertReplyChannel(identity, draft, connection);
     if (!connection.allowedRecipients.includes(draft.to)) throw new AppError("Destinatario fuera de la lista del piloto", 403);
     let apiKey: string;
     try {
@@ -278,6 +283,7 @@ export class WhatsAppOutbound {
       if (!latest.enabled || latest.generation !== connection.generation || !latest.allowedRecipients.includes(draft.to)) {
         throw new AppError("La conexion cambio antes del envio", 409);
       }
+      await this.assertReplyChannel(identity, draft, latest);
       const sender = this.options.sender?.(connection, apiKey) ?? new WhatsAppClient({ apiKey, baseUrl: connection.baseUrl, instance: connection.instance });
       const result: WhatsAppSendResult = await sender.sendText(operation.to, operation.text);
       if (!result.accepted || !result.id) throw new OutcomeUnknownError();
@@ -292,6 +298,18 @@ export class WhatsAppOutbound {
     if (!saved) throw new AppError("El resultado requiere reconciliacion; no reintentes el envio", 503);
     await this.cacheStatus(identity, draft, status);
     return { ok: status === "accepted", status, operationId: id, providerId, replay: false, requiresReconciliation: status === "outcome_unknown" };
+  }
+  private async assertReplyChannel(identity: OutboundIdentity, draft: Draft, connection: WhatsAppConnection): Promise<void> {
+    if (draft.channel && (draft.channel.provider !== connection.provider || draft.channel.accountId !== connection.instance)) {
+      throw new AppError("El canal no coincide con el borrador revisado", 409);
+    }
+    if (!draft.inboxId) return;
+    const source = inboxSchema.safeParse(await this.db.get(identity.owner, INBOX, draft.inboxId));
+    if (!source.success || source.data.tenantId !== identity.tenantId || source.data.owner !== identity.owner ||
+      source.data.provider !== connection.provider || source.data.accountId !== connection.instance ||
+      this.replyRecipient(source.data.from, source.data.provider) !== draft.to) {
+      throw new AppError("El canal o destinatario de inbox cambio; prepara otra respuesta", 409);
+    }
   }
   /** Records a human/provider check only; it never dispatches or clears the original operation. */
   async reconcile(identity: OutboundIdentity, id: string, input: unknown) {
