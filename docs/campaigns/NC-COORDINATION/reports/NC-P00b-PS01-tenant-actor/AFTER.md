@@ -43,6 +43,11 @@ Cambios, todos aditivos salvo la semántica de `compat`:
    `put` de `worker-status` pasa a ejecutarse después del `scanByStatus`. Antes,
    el resolver del store registraba el prefijo del tenant de membership antes
    del primer escaneo y `scanByStatus` filtraba por prefijos conocidos.
+7. **Reanudación** (`apps/server/src/engine/service.ts:339-380`):
+   `recoverInterruptedTasks` hacía el CAS con la owner ya peelada y sin scope,
+   así que el store lo resolvía por membership primaria: una tarea `running`
+   de otra empresa no se recuperaba y se quedaba colgada para siempre. Ahora el
+   CAS y su evento corren dentro del scope de `value.tenantId`.
 
 ## 2. Archivos tocados
 
@@ -53,9 +58,9 @@ Cambios, todos aditivos salvo la semántica de `compat`:
 - `tests/cognition/foundation/task-context.test.ts` (nuevo)
 - `docs/campaigns/NC-COORDINATION/reports/NC-P00b-PS01-tenant-actor/AFTER.md`
 
-Diff de código: **48 inserciones / 14 borrados** en cuatro archivos. No se tocó
-`app.ts`, `tenant-scope.ts`, `db.ts`, `db-tenant.ts`, `events/**`, `context/**`,
-kernel, auth ni canales.
+Diff de código: **+80 / −22** en cuatro archivos de código, más el archivo de
+pruebas. No se tocó `app.ts`, `tenant-scope.ts`, `db.ts`, `db-tenant.ts`,
+`events/**`, `context/**`, kernel, auth ni canales.
 
 ## 3. Pruebas
 
@@ -66,21 +71,25 @@ Archivo `tests/cognition/foundation/task-context.test.ts`, con Store real
 | --- | --- | --- |
 | Ejecuta y escribe en el tenant de la tarea | tarea en B, membership A: `run-events` en B, ninguno en A, `compat: "real"`, `requestingActorId` = solicitante, `actorId` = ejecutor | pasa |
 | Tarea sin `requestedBy` | se ejecuta en B y emite `compat: "legacy"` | pasa |
+| Reanudación | tarea `running` con lease caducado en B, membership A: `recoverInterruptedTasks` la devuelve a `queued` en B y no crea nada en A | pasa |
 | Arranque en frío | store nuevo sin prefijos vistos + worker nuevo descubren y ejecutan la tarea de B | pasa |
 
 Comandos y resultados:
 
 ```
-npx tsx --import ./tests/setup.ts --test --test-timeout=20000 \
+npx tsx --import ./tests/setup.ts --test --test-timeout=120000 \
   tests/cognition/foundation/task-context.test.ts
-# tests 3 / pass 3 / fail 0 (17,6 s)
+# tests 4 / pass 4 / fail 0
 
-npx tsc --noEmit
-# exit 0, sin diagnósticos
-
+npx tsc --noEmit          # exit 0 (incluye tests/**)
+npx tsc --noEmit          # apps/worker, exit 0
 npx biome check tests/cognition/foundation/task-context.test.ts
 # limpio
 ```
+
+La prueba de reanudación se validó en las dos direcciones: contra `4f81f22`
+sin el fix falla con `AssertionError: debe recuperar la tarea de tenant-b`;
+con el fix pasa.
 
 `biome check` sobre los cuatro archivos de código sigue reportando hallazgos
 anteriores (formato en `model.ts:464-491`, `useTemplate` en
@@ -116,8 +125,8 @@ ejecuta varios archivos a la vez. Aislado pasa en la rama (45,5 s) y en el
 baseline (51,2 s). No es una regresión; queda anotado como flake del test en
 equipos cargados.
 
-No ejecutado: suite completa (`pnpm test`, 112 archivos), typecheck
-`apps/worker` y reinicio de proceso real. El límite está declarado en §5.
+No ejecutado: suite completa (`pnpm test`, 112 archivos, con varios fallos
+previos de entorno) y reinicio de proceso real. El límite está declarado en §5.
 
 ## 4. Comportamiento observable que cambia
 
@@ -127,7 +136,10 @@ No ejecutado: suite completa (`pnpm test`, 112 archivos), typecheck
   todas se etiquetaban `"real"`.
 - La cuota de una tarea se imputa al tenant de la tarea. Un usuario con
   membership A ejecutando en B consume el límite de B.
-- `TaskWorker.run` ya no resuelve identidad por membership para abrir el scope.
+- `TaskWorker.run` y `recoverInterruptedTasks` ya no resuelven identidad por
+  membership para abrir el scope.
+- Una tarea de otra empresa que quedó `running` con el lease caducado ahora se
+  recupera; antes se quedaba colgada.
 
 ## 5. Límites conocidos y desviaciones del BEFORE
 
@@ -142,7 +154,10 @@ No ejecutado: suite completa (`pnpm test`, 112 archivos), typecheck
    los prefijos vistos (`db-tenant.ts:188-208`) y devuelve también filas de A
    con el owner ya peelado. Bajo scope B, `publishOutcome(owner)` resolvería
    `B:owner` para una fila de A. Hace falta un primitivo de scan por tenant en
-   `db-tenant.ts`, que está fuera de la allowlist. Se propone **PS-01b**.
+   `db-tenant.ts`, que está fuera de la allowlist. Se propone **PS-01b**. Lo
+   mismo aplica a los otros bucles de `maintain()` que hacen CAS o emiten con
+   owners peelados (`pendingActions`, `publishOutcome` en `taskStatusPage`):
+   siguen sin scope y entran en la misma unidad.
 3. **El filtrado por prefijos de `scanByStatus` sigue siendo estructural.**
    `db-tenant.ts:152-181` solo escanea prefijos ya resueltos por el proceso. En
    un proceso donde solo se ha resuelto A, una tarea de B no se descubre hasta

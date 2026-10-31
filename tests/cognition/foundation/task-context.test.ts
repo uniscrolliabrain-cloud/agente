@@ -6,13 +6,19 @@
 // restaurado desde la tarea, el worker escribe run-events y eventos en tenant-a.
 
 import assert from "node:assert/strict";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { test } from "node:test";
+import { createApp } from "../../../apps/server/src/app.ts";
 import { createStore } from "../../../apps/server/src/db.ts";
 import { TenantScopedStore } from "../../../apps/server/src/db-tenant.ts";
 import type { EventBus } from "../../../apps/server/src/engine/events/index.ts";
+import { TenantService } from "../../../apps/server/src/engine/tenant.ts";
 import { TaskWorker } from "../../../apps/server/src/engine/worker.ts";
 import { currentTenantScope, runInTenantScope } from "../../../apps/server/src/tenant-scope.ts";
 import type { AgentTask } from "../../../packages/domain/src/agent.ts";
+import { testConfig } from "../../helpers/config.ts";
 
 interface EmittedEvent {
   owner: string;
@@ -134,6 +140,41 @@ test("PS-01: una tarea sin requestedBy se ejecuta y se marca legacy", { timeout:
     assert.equal(statusEvent?.payload.requestingActorId, owner);
   } finally {
     await store.close();
+  }
+});
+
+test("PS-01: recupera la tarea running caducada en el tenant de la tarea", { timeout: 90000 }, async () => {
+  const store = await createStore();
+  // dataDir propio: testConfig() por defecto apunta a "unused" y createApp
+  // deja ahí la clave de sesión.
+  const dir = await mkdtemp(join(tmpdir(), "openmuse-ps01-rec-"));
+  const app = await createApp(store, testConfig({ dataDir: dir }));
+  try {
+    // Sin worker para que la tarea no cambie de estado durante la prueba.
+    await app.agent.stop();
+    const owner = "user-rec";
+    // membership primaria A: sin el scope de la tarea, el CAS se resuelve en A.
+    await new TenantService(store, app.agent.config as never).setMembership(owner, "tenant-a");
+    const task = makeTask({
+      id: "task-rec",
+      tenantId: "tenant-b",
+      requestedBy: owner,
+      status: "running",
+      leaseId: "lease-1",
+      leaseUntil: new Date(Date.now() - 60_000).toISOString(),
+    });
+    await runInTenantScope({ tenantId: "tenant-b", actorId: owner }, () => app.agent.db.put(owner, "tasks", task));
+
+    const recovered = await app.agent.recoverInterruptedTasks();
+    assert.ok(recovered >= 1, "debe recuperar la tarea de tenant-b");
+
+    const inB = await store.get<AgentTask>(`tenant-b:${owner}`, "tasks", task.id);
+    assert.equal(inB?.status, "queued");
+    assert.equal(inB?.leaseId, null);
+    assert.equal(await store.get(`tenant-a:${owner}`, "tasks", task.id), null);
+  } finally {
+    await store.close();
+    await rm(dir, { recursive: true, force: true });
   }
 });
 
