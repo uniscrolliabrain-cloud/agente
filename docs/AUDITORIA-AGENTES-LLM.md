@@ -152,3 +152,50 @@ git ls-tree -r --name-only 4f81f22 clientes | rg 'persona\.json|agentes\.json'
 git log --diff-filter=A --oneline 4f81f22 -- apps/server/src/kernel apps/server/src/engine/agents
 git diff --stat d3e39dc 4f81f22 -- apps/server/src/engine apps/server/src/kernel
 ```
+
+## 8. Trazabilidad desde la interfaz y estado real
+
+Esta ampliación distingue lo que tiene un camino de ejecución en el código, lo que depende de la configuración y lo que queda desconectado en la base auditada.
+
+| Qué eliges o ejecutas | Qué sucede realmente |
+|---|---|
+| Chat web sin rol | `useChat` llama a `/api/copilotkit/run`. Hono lo reescribe a `/api/copilotkit/agent/default/run`. En backend `model`, `ConversationAgent` llama a la cadena del chat. En `sample` ejecuta respuestas programadas. En `agui`, el registro usa el servicio remoto. `/api/conversation` GET/PUT es otra superficie, para guardar y leer mensajes. [Web](../apps/web/src/api/chat.ts#L34) · [Reescritura](../apps/server/src/app.ts#L994) · [Backend](../apps/server/src/agent.ts#L26) |
+| Alex, Leo, Sofia, Carmen, Victor, Bruno, Lola, Omar, Raul, Elena, Martin o Clara | Cada uno tiene perfil en disco y un ID de rol. Si el rol está activo en `GET /api/agent/roles`, el selector lo ofrece. Elegirlo envía `state.roleId` al mismo agente `default`. El servidor busca ese ID en `agent-roles` del propietario y, si lo encuentra, antepone contexto del rol al prompt. También usa el ID como etiqueta de persona del turno. La selección fast/global del chat sigue siendo compartida. [Selector](../apps/web/src/components/RoleSelector.tsx) · [Roles HTTP](../apps/server/src/engine/routes.ts#L442) · [Prompt](../apps/server/src/engine/conversation.ts#L645) |
+| Nico, Sara, Teo o Valeria | Figuran en el catálogo de roles y carecen del perfil empaquetado de los doce. Pueden pasar por el mismo selector y prompt si su rol activo se materializa en la base. `seedAgents` escribe roles y memorias iniciales por ID. El selector lee esa base, así que el inventario en disco por sí solo no prueba qué ofrece una instalación. [Catálogo](../clientes/_base/agentes.json) · [Seed](../apps/server/src/engine/service.ts#L908) |
+| Laia | Su archivo de ejemplo puede alimentar un `PersonaRegistry`. No aparece en el catálogo base de los 16 roles. El selector de chat consulta `/api/agent/roles`, no `/api/agent-personas`. Además, el registro de la API es distinto del registro del log de arranque y su ruta secundaria no apunta al ejemplo. No encontré un recorrido normal desde seleccionar el perfil de ejemplo de Laia hasta una inferencia como Laia. Un rol de Laia creado explícitamente en DB seguiría el mecanismo de rol compartido. [Perfil](../clientes/_example/personas/laia/persona.json) · [Registro de API](../apps/server/src/app.ts#L117) · [Arranque](../apps/server/src/index.ts#L47) |
+| Trabajo delegado desde el chat | La heurística de complejidad pide al modelo del chat usar `delegate_task`. La herramienta pasa los argumentos recibidos a `createTask`, sin copiar explícitamente el rol seleccionado en la UI. Si llega un `roleId`, la tarea puede conservar asignación y contexto. El worker recoge la tarea y el servicio decide entre SOP, caminos deterministas y `executeModelTask`. [Herramienta](../apps/server/src/engine/conversation.ts#L355) · [Heurística](../apps/server/src/engine/conversation.ts#L520) · [Despacho](../apps/server/src/engine/service.ts#L1948) |
+| Tarea con rol y modelo | `executeModelTask` puede seleccionar `roles[roleId]` delante del slow y de la cadena global si un resolver entrega esa entrada y hay contexto de kernel. El esquema admite el campo. Los resolutores estándar de entorno y DB revisados construyen fast/slow/embeddings sin rellenar un mapa de modelos por rol. El ejecutor calcula `rolePrompt`, pero el prompt final no lo interpola. Sí incorpora `contextBlock` cuando existe y usa el rol activo en controles de herramientas. [Ejecutor y prompt](../apps/server/src/engine/model.ts#L471) · [Cadena de tarea](../apps/server/src/engine/model.ts#L515) · [Resolutores](../apps/server/src/kernel/config) |
+| SOP, objetivo y generación auxiliar | Son caminos ejecutables con su propia entrada. Un paso `llm_generate` puede llamar a la cadena global. La ruta de objetivos usa planificador, verificador y, si hace falta, replanificador. La generación auxiliar tiene su propio caller. Cada camino tiene los requisitos descritos en la sección 2. [SOP](../apps/server/src/engine/sop-executor.ts#L721) · [Objetivo](../apps/server/src/engine/routes.ts#L350) · [Generación auxiliar](../apps/server/src/engine/execution/tool-executors.ts#L134) |
+
+### Fast y slow, paso a paso
+
+```mermaid
+flowchart TD
+    UI[Chat web y rol opcional] --> C[ConversationAgent default]
+    C --> F[Cadena de chat fast o global]
+    F --> SSE[Texto en directo al usuario]
+    C -->|si llama a delegate_task| T[Tarea guardada]
+    T --> W[Worker]
+    W --> S[Cadena de tarea slow o global según contexto]
+    W --> SOP[Procedimiento SOP]
+    C --> G[Grafo de turnos del kernel]
+    S --> G
+    SOP --> G
+    G --> P[Presenter y Meta]
+    G -->|hooks de apertura y escritura| B[Bus de eventos]
+    B --> I[Índices, auditoría, métricas y avisos]
+    B -. eventos de negocio con consumidor válido .-> G
+```
+
+Fast y slow son posiciones de configuración y etiquetas operativas. Pueden apuntar al mismo ID de modelo. Fast sirve el chat si la configuración pasa los controles. El chat puede usar slow como segundo intento si ambos specs están presentes. Una tarea de fondo es otra ejecución, con su propio ciclo y su propia cadena. Además, una etiqueta `fast` o `slow` en un `Thought` describe qué autor lo escribió. El ejecutor de SOP llama a `SlowAuthor` incluso para anotar resultados de pasos deterministas. Esas etiquetas por sí solas no identifican qué proveedor respondió. [Chat](../apps/server/src/engine/conversation.ts#L713) · [Tarea](../apps/server/src/engine/model.ts#L515) · [SOP](../apps/server/src/engine/sop-executor.ts#L108)
+
+### Quién lee el grafo y qué aparece en la pantalla
+
+1. **El usuario del chat recibe el stream del modelo.** Los eventos del modelo se pasan al cliente a medida que llegan. Al completarse, el servidor llama al Presenter en segundo plano, antes de escribir la respuesta del modelo al grafo. Si el Presenter selecciona un nodo ya existente, ese contenido puede sustituir al texto acumulado como dato persistido por `FastAuthor` y aparecer en el evento `view.resolved`. La segunda llamada a través de `presenter-sse.ts`, al cerrar el turno, calcula un texto que luego se descarta. Esto explica cómo la burbuja que vio el usuario puede diferir del registro cognitivo. [Fin del stream](../apps/server/src/engine/conversation.ts#L815) · [Cierre](../apps/server/src/engine/conversation.ts#L926)
+2. **Presenter y Meta sí leen nodos.** Presenter aplica un ranking determinista por rol, confianza y atención. Meta evalúa señales y el flujo puede promover contenido a memoria. Los modelos reciben el prompt y el contexto ensamblados para su ruta. El código permite que memorias e hints vuelvan al chat. No se observa una entrega general del grafo completo a cada rol o LLM. El grafo de negocio que guarda entidades y relaciones es otra capa. [Presenter](../apps/server/src/kernel/observers/presenter.ts) · [Meta y promoción](../apps/server/src/engine/conversation.ts#L935) · [Grafo de negocio](../apps/server/src/engine/business/graph.ts)
+3. **La inspección del grafo tiene API, con un fallo de contexto.** No encontré un visor del grafo de turnos en la interfaz web auditada. `GET /api/kernel/turns` comprueba admin. `GET /api/kernel/turns/:turnId` y `…/present` no llaman a ese guard en sus handlers. Las tres pasan por `ctxFor`, que valida un objeto sin el `actorId` obligatorio. En esta base, ese parse falla antes de leer el grafo. Si se repara, se debe probar por separado el acceso a detalle por ID dentro del tenant. [Rutas](../apps/server/src/kernel-routes.ts#L36) · [Esquema obligatorio](../apps/server/src/kernel/context/kernel-context.ts#L31) · [Lectura por turno](../apps/server/src/kernel/kernel.ts#L215)
+4. **El bus mueve eventos, no conversaciones entre personas.** Los hooks del kernel publican aperturas y escrituras de nodos. El bus persiste y distribuye a suscriptores por `event.owner`. Hay consumidores para índices, auditoría, métricas y avisos. En sentido inverso, `startKernelEventSubscriber` transforma eventos como tarea completada o política denegada en nodos de sistema, pero su `safeParse` también omite `actorId` y retorna antes de abrir el turno. Además, el arranque construye la lista de suscripción con IDs de tenant y el despacho usa `event.owner`. Cuando difieran, la entrega a esos consumidores requiere verificación. La escritura directa del chat al kernel tiene su propio camino. [Emisor](../apps/server/src/kernel/subscribers/bus-emitter.ts) · [Registro](../apps/server/src/engine/events/subscriber.ts) · [Arranque](../apps/server/src/index.ts#L200) · [Consumidor inverso](../apps/server/src/kernel/subscribers/events.ts#L35)
+
+### Qué comprobar en una instalación
+
+Con un proveedor simulado, capturar un turno sin rol, otro con `comercial`, una tarea asignada con ese rol y un SOP con generación. Para cada uno, registrar el rol recibido, el prompt efectivo, el modelo y endpoint realmente llamados, la fila de turno y los eventos emitidos. Después, comparar el catálogo de la API de roles con el de personas, consultar un turno como admin y comprobar si un `task.completed` produce el nodo de sistema esperado. Esta matriz separa disponibilidad de interfaz, ejecución de modelo, trazabilidad del grafo y entrega del bus. Los hallazgos de esta sección se verificaron por lectura del código, sin ejecutar esa matriz.
