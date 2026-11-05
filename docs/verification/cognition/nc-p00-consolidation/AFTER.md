@@ -41,7 +41,8 @@ La repetición dirigida pasó 6/6, con delegación, cuatro casos de contexto y e
 reinicio real. La prueba de modelos pasó 1/1 por separado. La primera comparación
 de API contra main (16/16) detectó una regresión de inicialización. Se corrigió el
 scope tras autenticar y se ajustó una fixture de alta directa para aportar el
-contexto de solicitante que ahora exige el contrato.
+contexto de solicitante que ahora exige el contrato. La repetición final pasó
+16/16 con el mismo conjunto de archivos que main.
 
 Auditorías locales comparadas con `4f81f22`: layers 0 violaciones, bridges 16/16,
 tenant-default 0 prohibidas y no-console 42 ocurrencias en ambos. Idempotency

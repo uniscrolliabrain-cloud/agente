@@ -8,13 +8,25 @@ import type { AgentTask } from "../../../packages/domain/src/agent.ts";
 test("task model credentials come from the authorized tenant and specialist", async () => {
   const owner = "same-user";
   const scope = { tenantId: "company-b", actorId: "requester" };
-  const task = {
+  const now = new Date().toISOString();
+  const task: AgentTask = {
     id: "work",
+    title: "Fixture",
+    prompt: "Fixture",
+    kind: "agent",
+    status: "queued",
+    createdAt: now,
+    updatedAt: now,
+    attempts: 0,
+    plan: [],
+    evidence: [],
+    input: {},
+    artifactIds: [],
     tenantId: scope.tenantId,
     requestedBy: scope.actorId,
     executionContext: { ...scope, owner },
     state: { roleId: "sales" },
-  } as AgentTask;
+  };
   const endpoint = process.env.GOOGLE_GENERATIVE_AI_BASE_URL;
   const sales = { provider: "google", model: "sales-model", apiKey: "fixture-sales", baseUrl: endpoint };
   const slow = { provider: "google", model: "slow-model", apiKey: "fixture-slow", baseUrl: endpoint };
