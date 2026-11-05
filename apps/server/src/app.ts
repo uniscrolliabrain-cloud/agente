@@ -775,6 +775,9 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     // APP_VOICE_WIRE_V1 - agente de telefono (Vapi) con scope de empresa.
     const { voiceRoutes } = await import("./voice-routes.ts");
     app.route("/api/voice", voiceRoutes(agent));
+    // APP_LEADS_WIRE_V1 - descubrimiento de leads (Google Places) por empresa.
+    const { leadsRoutes } = await import("./leads-routes.ts");
+    app.route("/api/leads", leadsRoutes(agent));
   }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {

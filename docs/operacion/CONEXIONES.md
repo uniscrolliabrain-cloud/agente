@@ -119,6 +119,7 @@ con el nombre corto. Ahora se normalizan **una sola vez al arrancar**
 | `VAPI_API_KEY` + `VAPI_ASSISTANT_ID` | `packages/integrations/src/vapi.ts` → `/api/voice/*` | 503 con causa; `VOICE_OUTBOUND_ENABLED` debe ser `true` para marcar |
 | `WHATSAPP_TOKEN` + `WHATSAPP_PHONE_ID` | `packages/integrations/src/meta-whatsapp.ts` → motor de aprobaciones | 503; el webhook sigue entrando pero no se puede responder |
 | `GOOGLE_CLIENT_ID`/`SECRET` + `TOKEN_ENCRYPTION_KEY` | `apps/server/src/google-auth.ts` | 503 al conectar Google |
+| `GOOGLE_MAPS_API_KEY` | `packages/integrations/src/google-maps.ts` → `POST /api/leads/discover` | 503; el resto del panel sigue funcionando |
 
 Cambios de fondo que trae esta rama:
 
@@ -130,6 +131,9 @@ Cambios de fondo que trae esta rama:
 - **WhatsApp Meta de salida**: el webhook ya entendía Meta, pero el motor de
   envío solo hablaba Evolution. Una conexión declara su proveedor y el motor
   elige el cliente; las conexiones antiguas siguen válidas.
+- **Leads**: no existía cliente de Places ni forma de poblar el tipo `lead` del
+  bootstrap. `POST /api/leads/discover` busca, normaliza y deduplica por
+  `placeId` bajo la empresa; repetir la búsqueda no duplica filas.
 - **Google por empresa**: `GoogleAuth` recibía el `Store` crudo, así que el mismo
   usuario en dos empresas compartía token. Las credenciales van ahora al store
   con scope; el `state` de OAuth se queda en el raíz porque el callback no trae

@@ -4,6 +4,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { OutcomeUnknownError } from "../packages/domain/src/errors.ts";
+import { GoogleMapsClient } from "../packages/integrations/src/google-maps.ts";
 import { MetaWhatsAppClient } from "../packages/integrations/src/meta-whatsapp.ts";
 import { ResendClient } from "../packages/integrations/src/resend.ts";
 import { VapiClient } from "../packages/integrations/src/vapi.ts";
@@ -107,6 +108,54 @@ test("Vapi crea la llamada con asistente, telefono y metadata del tenant", async
   assert.equal(body.assistantId, "asst_1");
   assert.equal(body.customer.number, "+34600111222");
   assert.equal(body.metadata.tenantId, "agntia");
+});
+
+test("Places normaliza el negocio y descarta lo que no tiene id o nombre", async () => {
+  const calls: { url?: string; init?: RequestInit }[] = [];
+  const places = {
+    places: [
+      {
+        id: "ChIJ_1",
+        displayName: { text: "Clinica Dental Sol" },
+        formattedAddress: "Calle Mayor 1, Madrid",
+        internationalPhoneNumber: "+34 910 000 000",
+        websiteUri: "https://dental.example",
+        rating: 4.6,
+        userRatingCount: 120,
+        googleMapsUri: "https://maps.google.com/?cid=1",
+      },
+      { id: "ChIJ_2" },
+      { displayName: { text: "Sin id" } },
+    ],
+  };
+  const client = new GoogleMapsClient({ apiKey: "maps_test", fetch: fakeFetch(200, places, calls) });
+  const leads = await client.searchLeads({ query: "clinicas dentales en Madrid", limit: 99 });
+  assert.equal(leads.length, 1);
+  assert.equal(leads[0]?.placeId, "ChIJ_1");
+  assert.equal(leads[0]?.phone, "+34 910 000 000");
+  const body = JSON.parse(String(calls[0]?.init?.body));
+  assert.equal(body.maxResultCount, 20, "Places no admite mas de 20 por pagina");
+  const headers = calls[0]?.init?.headers as Record<string, string>;
+  assert.ok(headers["X-Goog-FieldMask"].includes("places.displayName"));
+});
+
+test("Places convierte la API desactivada en un 502 con el motivo de Google", async () => {
+  const client = new GoogleMapsClient({
+    apiKey: "maps_test",
+    fetch: fakeFetch(403, { error: { message: "This API is not activated on your API project." } }),
+  });
+  await assert.rejects(
+    () => client.searchLeads({ query: "clinicas en Madrid" }),
+    (error: { status?: number; message?: string }) =>
+      error.status === 502 && Boolean(error.message?.includes("not activated")),
+  );
+});
+
+test("Places sin key responde 503 y no consulta", async () => {
+  await assert.rejects(
+    () => new GoogleMapsClient({}).searchLeads({ query: "clinicas en Madrid" }),
+    (error: { status?: number }) => error.status === 503,
+  );
 });
 
 test("Meta WhatsApp normaliza el numero y devuelve el id del mensaje", async () => {
