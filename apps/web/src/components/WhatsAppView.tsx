@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { AlertCircle, CheckCircle2, MessageCircle, RefreshCw, Send } from "lucide-react";
-import { decideWhatsApp, getWhatsAppConnection, listWhatsAppDrafts, listWhatsAppInbox, prepareWhatsApp, prepareWhatsAppReply, reconcileWhatsApp,
+import { decideWhatsApp, getWhatsAppConnection, getWhatsAppDraft, listWhatsAppDrafts, listWhatsAppInbox, prepareWhatsApp, prepareWhatsAppReply, reconcileWhatsApp,
   type WhatsAppConnection, type WhatsAppDraft, type WhatsAppInboxMessage } from "../api/whatsapp";
 import "./WhatsAppView.css";
 
@@ -11,6 +11,7 @@ const message = (error: unknown) => error instanceof Error ? error.message : "No
 export default function WhatsAppView() {
   const [drafts, setDrafts] = useState<WhatsAppDraft[]>([]);
   const [inbox, setInbox] = useState<WhatsAppInboxMessage[]>([]), [inboxError, setInboxError] = useState("");
+  const [draftsCursor, setDraftsCursor] = useState<string | null>(null), [inboxCursor, setInboxCursor] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<WhatsAppInboxMessage | null>(null);
   const [connection, setConnection] = useState<WhatsAppConnection | null>(null);
   const [loading, setLoading] = useState(true), [error, setError] = useState("");
@@ -25,11 +26,11 @@ export default function WhatsAppView() {
   const load = useCallback(async (signal?: AbortSignal) => {
     const results = await Promise.allSettled([listWhatsAppDrafts(signal), getWhatsAppConnection(signal), listWhatsAppInbox(signal)]);
     if (signal?.aborted) return;
-    if (results[0].status === "fulfilled") { setDrafts(results[0].value.drafts); setError(""); }
+    if (results[0].status === "fulfilled") { setDrafts(results[0].value.drafts); setDraftsCursor(results[0].value.nextCursor); setError(""); }
     else setError(message(results[0].reason));
     if (results[1].status === "fulfilled") { setConnection(results[1].value); setConnectionError(""); }
     else { setConnection(null); setConnectionError(message(results[1].reason)); }
-    if (results[2].status === "fulfilled") { setInbox(results[2].value.messages); setInboxError(""); }
+    if (results[2].status === "fulfilled") { setInbox(results[2].value.messages); setInboxCursor(results[2].value.nextCursor); setInboxError(""); }
     else setInboxError(message(results[2].reason));
     setLoading(false);
   }, []);
@@ -37,7 +38,13 @@ export default function WhatsAppView() {
   useEffect(() => {
     if (!drafts.some((d) => d.status === "dispatching")) return;
     const controller = new AbortController();
-    const interval = setInterval(() => { void load(controller.signal); }, 10_000);
+    const interval = setInterval(() => {
+      void Promise.allSettled(drafts.filter((draft) => draft.status === "dispatching").map((draft) => getWhatsAppDraft(draft.id, controller.signal))).then((results) => {
+        if (controller.signal.aborted) return;
+        const updates = new Map(results.flatMap((result) => result.status === "fulfilled" ? [[result.value.draft.id, result.value.draft] as const] : []));
+        setDrafts((current) => current.map((draft) => updates.get(draft.id) ?? draft));
+      });
+    }, 10_000);
     return () => { clearInterval(interval); controller.abort(); };
   }, [drafts, load]);
   const prepare = async (event: FormEvent) => {
@@ -71,6 +78,20 @@ export default function WhatsAppView() {
     } catch (e) { setError(message(e)); } finally { setBusy(null); }
   };
   const pending = drafts.filter((d) => d.status === "awaiting_review" && !d.needsReprepare && Boolean(d.expiresAt) && Date.parse(d.expiresAt!) > Date.now()).length;
+  const loadMore = async (kind: "drafts" | "inbox") => {
+    const cursor = kind === "drafts" ? draftsCursor : inboxCursor;
+    if (busy || !cursor) return;
+    setBusy(`${kind}-page`);
+    try {
+      if (kind === "drafts") {
+        const page = await listWhatsAppDrafts(undefined, cursor);
+        setDrafts((current) => [...new Map([...current, ...page.drafts].map((draft) => [draft.id, draft])).values()]); setDraftsCursor(page.nextCursor);
+      } else {
+        const page = await listWhatsAppInbox(undefined, cursor);
+        setInbox((current) => [...new Map([...current, ...page.messages].map((item) => [item.id, item])).values()]); setInboxCursor(page.nextCursor);
+      }
+    } catch (e) { if (kind === "drafts") setError(message(e)); else setInboxError(message(e)); } finally { setBusy(null); }
+  };
   const unresolved = drafts.filter((d) => d.requiresReconciliation).length;
   return <section className="wa-view" aria-labelledby="wa-title">
     <header className="wa-header">
@@ -78,8 +99,8 @@ export default function WhatsAppView() {
       <button className="wa-button" disabled={loading || Boolean(busy)} onClick={() => { setLoading(true); void load(); }}><RefreshCw size={15} /> Actualizar</button>
     </header>
     <div className="wa-summary">
-      <div><strong>{pending}</strong><span>Pendientes de revisión</span></div>
-      <div><strong>{unresolved}</strong><span>Por comprobar con el proveedor</span></div>
+      <div><strong>{pending}</strong><span>Pendientes en los mensajes cargados</span></div>
+      <div><strong>{unresolved}</strong><span>Por comprobar en los mensajes cargados</span></div>
       <div><span className={`wa-connection-dot ${connection?.enabled && connection?.outboundEnabled ? "enabled" : ""}`} /><span>{connection?.enabled ? connection.outboundEnabled ? "Salida habilitada" : "Salida pausada" : "Conexión pendiente"}</span></div>
     </div>
     {(connectionError || (connection && (!connection.enabled || !connection.outboundEnabled))) && <div className="wa-banner"><AlertCircle size={18} /><div><strong>{connectionError ? "La conexión necesita revisión" : "Los envíos están pausados"}</strong><p>{connectionError || "Puedes revisar tus mensajes. La salida debe estar habilitada antes de aprobar un envío."}</p></div></div>}
@@ -94,6 +115,7 @@ export default function WhatsAppView() {
           <button className="wa-button" disabled={Boolean(busy) || !item.canReply} onClick={() => { setReplyTo(item); setTo(item.from); setText(""); intentKey.current = crypto.randomUUID(); setNotice("Escribe la respuesta y prepara el borrador para revisarlo."); }}>Preparar respuesta</button>
           {!item.canReply && <p className="wa-muted">Este canal o destinatario todavía no tiene salida habilitada para el piloto.</p>}
         </article>)}</div>}
+      {inboxCursor && <button className="wa-button" disabled={Boolean(busy)} onClick={() => { void loadMore("inbox"); }}>Cargar mensajes anteriores</button>}
     </section>
     <div className="wa-layout">
       <form className="wa-card wa-compose" onSubmit={(event) => { void prepare(event); }}>
@@ -131,6 +153,7 @@ export default function WhatsAppView() {
             {draft.reconciliation && <p className="wa-muted">Comprobación registrada: {draft.reconciliation.evidenceRef}. No se reintentó el envío.</p>}
           </article>;
         })}
+        {draftsCursor && <button className="wa-button" disabled={Boolean(busy)} onClick={() => { void loadMore("drafts"); }}>Cargar borradores anteriores</button>}
       </section>
     </div>
   </section>;

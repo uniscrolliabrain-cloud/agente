@@ -10,8 +10,9 @@ export interface WhatsAppConnection {
   provider: string; instance: string; generation: string;
   enabled: boolean; outboundEnabled: boolean; allowedRecipients: string[];
 }
-export const listWhatsAppDrafts = (signal?: AbortSignal) => apiFetch<{ drafts: WhatsAppDraft[] }>("/api/whatsapp/drafts", { signal });
+export const listWhatsAppDrafts = (signal?: AbortSignal, cursor?: string) => apiFetch<{ drafts: WhatsAppDraft[]; nextCursor: string | null }>(`/api/whatsapp/drafts${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, { signal });
 export const getWhatsAppConnection = (signal?: AbortSignal) => apiFetch<WhatsAppConnection>("/api/whatsapp/connection", { signal });
+export const getWhatsAppDraft = (id: string, signal?: AbortSignal) => apiFetch<{ draft: WhatsAppDraft }>(`/api/whatsapp/drafts/${encodeURIComponent(id)}`, { signal });
 export const prepareWhatsApp = (to: string, text: string, intentKey: string) => apiFetch<{ draft: WhatsAppDraft }>("/api/whatsapp/drafts", {
   method: "POST", headers: { "Idempotency-Key": intentKey }, body: { to, text },
 });
@@ -26,6 +27,6 @@ export interface WhatsAppInboxMessage {
   id: string; from: string; text: string; receivedAt: string;
   provider: "meta" | "evolution"; status: string; taskId?: string; canReply: boolean;
 }
-export const listWhatsAppInbox = (signal?: AbortSignal) => apiFetch<{ messages: WhatsAppInboxMessage[] }>("/api/whatsapp/inbox", { signal });
+export const listWhatsAppInbox = (signal?: AbortSignal, cursor?: string) => apiFetch<{ messages: WhatsAppInboxMessage[]; nextCursor: string | null }>(`/api/whatsapp/inbox${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, { signal });
 export const prepareWhatsAppReply = (inboxId: string, text: string, intentKey: string) => apiFetch<{ draft: WhatsAppDraft }>(
   `/api/whatsapp/inbox/${encodeURIComponent(inboxId)}/draft`, { method: "POST", headers: { "Idempotency-Key": intentKey }, body: { text } });

@@ -417,3 +417,33 @@ test("channel metadata is part of the reviewed revision", async () => {
   await assert.rejects(f.approve(draft.id, draft.revision!), /ha cambiado/);
   assert.equal(f.calls.length, 0);
 });
+
+test("more than 100 drafts remain reachable including an old operation needing reconciliation", async () => {
+  const f = await fixture(), first = await f.create();
+  f.setSend(async () => { throw new OutcomeUnknownError(); }); await f.approve(first.id, first.revision!);
+  const stored = (await f.draft(first.id))!;
+  await f.run(f.a, async () => {
+    for (let index = 0; index < 105; index++) await f.scoped.put(f.a.owner, "whatsapp-drafts", { ...stored, id: `new-${String(index).padStart(3, "0")}`, status: "awaiting_review" });
+  });
+  await db.rawQuery("UPDATE records SET updated_at=$1::timestamptz WHERE owner=$2 AND kind=$3 AND id=$4", ["2020-01-01T00:00:00.000123Z", `${f.a.tenantId}:${f.a.owner}`, "whatsapp-drafts", first.id]);
+  const reviews: Awaited<ReturnType<typeof f.list>> = []; let cursor: string | null = null;
+  do {
+    const page = await f.run(f.a, () => f.client().draftsPage(f.a, { limit: 20, ...(cursor ? { cursor } : {}) }));
+    reviews.push(...page.drafts); cursor = page.nextCursor;
+    assert.ok(reviews.length <= 106);
+  } while (cursor);
+  assert.equal(reviews.length, 106); assert.equal(new Set(reviews.map((draft) => draft.id)).size, 106);
+  assert.equal(reviews.at(-1)?.id, first.id); assert.equal(reviews.at(-1)?.requiresReconciliation, true);
+  assert.equal((await f.run(f.a, () => f.client().review(f.a, first.id))).requiresReconciliation, true);
+  await assert.rejects(f.run(f.b, () => f.client().review(f.b, first.id)), /not found/);
+});
+
+test("page cursors cannot cross tenant, owner or collection and malformed limits are rejected", async () => {
+  const f = await fixture(); await f.create(f.a, "page-key-1"); await f.create(f.a, "page-key-2");
+  const first = await f.run(f.a, () => f.client().draftsPage(f.a, { limit: 1 })); assert.ok(first.nextCursor);
+  await assert.rejects(f.run(f.b, () => f.client().draftsPage(f.b, { cursor: first.nextCursor })), /otro ambito/);
+  await assert.rejects(f.run(f.a, () => f.client().inboxPage(f.a, { cursor: first.nextCursor })), /otro ambito/);
+  for (const input of [{ limit: 101 }, { limit: 0 }, { cursor: "invalid" }, { extra: "unexpected" }]) {
+    await assert.rejects(f.run(f.a, () => f.client().draftsPage(f.a, input)), /no valid/);
+  }
+});

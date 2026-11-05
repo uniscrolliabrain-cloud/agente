@@ -49,7 +49,9 @@ interface Operation {
   channel?: { provider: "evolution"; accountId: string; baseUrl: string };
   reconciliation?: { result: string; evidenceRef: string; actorId: string; at: string; priorStatus: string };
 }
-type OutboundStore = Pick<TenantScopedStore, "get" | "list" | "insertIfAbsent" | "compareAndSwap" | "put">;
+type OutboundStore = Pick<TenantScopedStore, "get" | "list" | "listPaged" | "insertIfAbsent" | "compareAndSwap" | "put">;
+const pageInput = z.object({ limit: z.coerce.number().int().min(1).max(100).default(50), cursor: z.string().min(1).max(2048).optional() }).strict();
+const cursorInput = z.object({ tenantId: z.string(), owner: z.string(), kind: z.string(), updatedAt: z.iso.datetime({ offset: true }), id: z.string().min(1).max(300) }).strict();
 type Sender = Pick<WhatsAppClient, "sendText">;
 interface OutboundOptions {
   encryptionKey?: string;
@@ -148,12 +150,31 @@ export class WhatsAppOutbound {
     return this.view(identity, draft);
   }
   async inbox(identity: OutboundIdentity) {
+    return (await this.inboxPage(identity)).messages;
+  }
+  private async page<T extends { id: string }>(identity: OutboundIdentity, kind: string, input: unknown) {
     requireIdentity(identity);
-    const rows = await this.db.list(identity.owner, INBOX, { limit: 100 });
+    const parsed = pageInput.safeParse(input);
+    if (!parsed.success) throw new AppError("Paginacion no valida", 422);
+    let cursor: z.infer<typeof cursorInput> | undefined;
+    if (parsed.data.cursor) {
+      try { cursor = cursorInput.parse(JSON.parse(Buffer.from(parsed.data.cursor, "base64url").toString("utf8"))); }
+      catch { throw new AppError("Cursor no valido", 422); }
+      if (cursor.tenantId !== identity.tenantId || cursor.owner !== identity.owner || cursor.kind !== kind) throw new AppError("Cursor de otro ambito", 403);
+    }
+    const rows = await this.db.listPaged<T>(identity.owner, kind, { limit: parsed.data.limit + 1,
+      ...(cursor ? { cursorUpdatedAt: cursor.updatedAt, cursorId: cursor.id } : {}) });
+    const data = rows.slice(0, parsed.data.limit), last = data.at(-1);
+    const nextCursor = rows.length > parsed.data.limit && last ? Buffer.from(JSON.stringify({ tenantId: identity.tenantId,
+      owner: identity.owner, kind, updatedAt: last.updatedAt, id: last.data.id })).toString("base64url") : null;
+    return { data: data.map((row) => row.data), nextCursor };
+  }
+  async inboxPage(identity: OutboundIdentity, input: unknown = {}) {
+    const page = await this.page<z.infer<typeof inboxSchema>>(identity, INBOX, input);
     let connection: WhatsAppConnection | undefined;
     try { connection = await this.connection(identity); }
     catch (error) { if (!(error instanceof AppError && error.status === 503)) throw error; }
-    return rows.map((row) => {
+    const messages = page.data.map((row) => {
       const parsed = inboxSchema.safeParse(row);
       if (!parsed.success) throw new AppError("Mensaje de inbox sin formato verificable", 409);
       const item = parsed.data;
@@ -164,6 +185,7 @@ export class WhatsAppOutbound {
       return { id: item.id, from: recipient ?? item.from, text: item.text, receivedAt: item.receivedAt,
         provider: item.provider, status: item.status, taskId: item.taskId, canReply };
     });
+    return { messages, nextCursor: page.nextCursor };
   }
   private replyRecipient(from: string, provider: string): string | undefined {
     if (provider !== "evolution") return undefined;
@@ -185,9 +207,17 @@ export class WhatsAppOutbound {
     return this.prepareDraft(identity, { to, text: parsedInput.data.text }, idempotencyKey, inboxId, connection);
   }
   async drafts(identity: OutboundIdentity) {
+    return (await this.draftsPage(identity)).drafts;
+  }
+  async draftsPage(identity: OutboundIdentity, input: unknown = {}) {
+    const page = await this.page<Draft>(identity, DRAFTS, input);
+    return { drafts: await Promise.all(page.data.map((draft) => this.view(identity, draft))), nextCursor: page.nextCursor };
+  }
+  async review(identity: OutboundIdentity, id: string) {
     requireIdentity(identity);
-    const rows = await this.db.list<Draft>(identity.owner, DRAFTS, { limit: 100 });
-    return Promise.all(rows.map((draft) => this.view(identity, draft)));
+    const draft = await this.db.get<Draft>(identity.owner, DRAFTS, id);
+    if (!draft) throw new AppError("Draft not found", 404);
+    return this.view(identity, draft);
   }
   private assertDraftScope(draft: Draft, identity: OutboundIdentity): void {
     if (draft.tenantId !== identity.tenantId || draft.owner !== identity.owner) {

@@ -101,3 +101,11 @@ La comprobación dirigida atraviesa rutas HTTP reales y Store real: entrada Evol
 Los mensajes de Meta siguen siendo legibles, pero no se responden desde esta conexión Evolution; no se mezclan proveedores ni se reutilizan credenciales por coincidencia de número. La bandeja se actualiza al abrir y mediante Actualizar; no se anuncia tiempo real sin ese cableado.
 
 La operación conserva también una fotografía no secreta del canal usado (proveedor, instancia y URL interna) para reconciliar después de rotar la conexión. La vista muestra la cuenta original, sin publicar la URL interna. Nunca se consulta al canal nuevo como si fuera el que recibió el intento anterior.
+
+## Seguimiento de operaciones antiguas
+
+El buzón y los borradores ofrecen páginas de 50 registros por defecto. La API acepta `limit` entre 1 y 100 y un `cursor` de la página anterior. El cursor conserva el orden por fecha e ID incluso si varias filas tienen la misma fecha. Cada cursor se valida contra la empresa, el propietario y la colección de la sesión.
+
+El panel permite cargar mensajes y borradores anteriores. Los contadores describen los registros cargados. Mientras un envío está en curso, el panel consulta su estado por ID y mantiene visibles las páginas cargadas.
+
+La preparación de respuestas verifica que la conexión siga siendo la misma desde la lectura del mensaje original. Los borradores nuevos muestran la cuenta de salida antes de aprobar. La aprobación comprueba de nuevo la cuenta y el destinatario contra el mensaje de origen.
