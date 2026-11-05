@@ -94,3 +94,7 @@ trazabilidad, no como referencia activa. Ver [archive/](./archive/)
 - `AUDITORIA_TENANT.ps1` → `scripts/`
 - `Vídeos - Acceso directo.lnk` → borrar del git
 
+
+## Reorganización documental
+
+La [propuesta de Cline](./INDICE-REORGANIZACION.md) recoge los borradores de octubre y su referencia de revisión. El [registro de agentes](./registro-agentes/index.jsonl) conserva el historial en formato buscable. La [auditoría de agentes y LLM](./AUDITORIA-AGENTES-LLM.md) describe el código en el SHA indicado en el informe.
