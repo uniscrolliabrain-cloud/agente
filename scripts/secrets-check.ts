@@ -62,14 +62,18 @@ const SECRETS: Secret[] = [
   // --- canales (campanas siguientes) --------------------------------------
   { name: "GOOGLE_CLIENT_ID", need: "optional", group: "google", note: "Gmail/Calendar/Drive" },
   { name: "GOOGLE_CLIENT_SECRET", need: "optional", group: "google", note: "Gmail/Calendar/Drive" },
-  { name: "RESEND_API_KEY", need: "optional", group: "email", note: "email transaccional y cold approach (campana canales)" },
+  { name: "RESEND_API_KEY", need: "optional", group: "email", note: "email transaccional y cold approach" },
+  { name: "EMAIL_FROM", need: "optional", group: "email", note: "remitente; debe ser de un dominio verificado en Resend" },
   { name: "WHATSAPP_TOKEN", need: "optional", group: "whatsapp", note: "token de envio Cloud API; no autentica mensajes entrantes" },
   { name: "WHATSAPP_VERIFY_TOKEN", need: "optional", group: "whatsapp", note: "handshake del webhook" },
   { name: "WHATSAPP_APP_SECRET", need: "optional", group: "whatsapp", note: "firma X-Hub-Signature-256 del webhook" },
   { name: "WHATSAPP_PHONE_ID", need: "optional", group: "whatsapp", note: "phone number id del numero de la agencia" },
   { name: "WHATSAPP_WEBHOOK_BINDINGS", need: "optional", group: "whatsapp", note: "JSON de canales, tenant, responsable primario y SOP; obligatorio para admitir mensajes" },
+  { name: "WHATSAPP_GRAPH_VERSION", need: "optional", group: "whatsapp", note: "default v21.0; subir cuando Meta deprecie la version" },
   { name: "VAPI_API_KEY", need: "optional", group: "vapi", note: "agente de voz; sin key el adaptador responde 503" },
   { name: "VAPI_ASSISTANT_ID", need: "optional", group: "vapi", note: "asistente que atiende llamadas" },
+  { name: "VAPI_PHONE_NUMBER_ID", need: "optional", group: "vapi", note: "numero emisor; sin el Vapi usa el del asistente" },
+  { name: "VOICE_OUTBOUND_ENABLED", need: "optional", group: "vapi", note: "true habilita POST /api/voice/calls; una llamada real cuesta dinero" },
   { name: "STRIPE_API_KEY", need: "optional", group: "stripe", note: "cobros de la agencia" },
   { name: "STRIPE_WEBHOOK_SECRET", need: "optional", group: "stripe", note: "verificacion de eventos de cobro" },
   { name: "GOOGLE_MAPS_API_KEY", need: "optional", group: "leads", note: "busqueda de negocios locales para leads" },
@@ -93,11 +97,23 @@ const only = args.get("only")
   ? new Set(args.get("only")!.split(",").map((g) => g.trim()).filter(Boolean))
   : null;
 
+// Doppler publica varios secretos con el nombre del proveedor. Estas son las
+// mismas equivalencias que normaliza apps/server/src/config.ts al arrancar; sin
+// ellas el contrato decia "falta WHATSAPP_TOKEN" con el token delante.
+const ALIASES: Record<string, string[]> = {
+  WHATSAPP_TOKEN: ["WHATSAPP_ACCESS_TOKEN"],
+  WHATSAPP_PHONE_ID: ["WHATSAPP_PHONE_NUMBER_ID"],
+  WHATSAPP_BUSINESS_ACCOUNT_ID: ["WHATSAPP_WABA_ID"],
+  GEMINI_API_KEY: ["GOOGLE_API_KEY"],
+  EMAIL_FROM: ["RESEND_FROM", "RESEND_FROM_EMAIL"],
+};
+
 function present(name: string): string | null {
-  const raw = process.env[name];
-  if (raw === undefined) return null;
-  const value = raw.trim();
-  return value.length > 0 ? value : null;
+  for (const candidate of [name, ...(ALIASES[name] ?? [])]) {
+    const value = process.env[candidate]?.trim();
+    if (value) return value;
+  }
+  return null;
 }
 
 function requiredIn(secret: Secret): boolean {
@@ -151,6 +167,12 @@ const googleId = present("GOOGLE_CLIENT_ID");
 const googleSecret = present("GOOGLE_CLIENT_SECRET");
 if (Boolean(googleId) !== Boolean(googleSecret)) {
   coherence.push("GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET deben ir juntas o ninguna.");
+}
+// El cliente de Resend exige key Y remitente: tener solo uno no envia nada.
+if (present("RESEND_API_KEY") && !present("EMAIL_FROM")) {
+  coherence.push(
+    "RESEND_API_KEY sin EMAIL_FROM: el adaptador exige remitente y no enviara el email de verificacion.",
+  );
 }
 if (present("WHATSAPP_TOKEN") && !present("WHATSAPP_APP_SECRET")) {
   coherence.push(

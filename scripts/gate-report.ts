@@ -130,7 +130,16 @@ export function checkSteps(root = process.cwd()): StepSpec[] {
         "--import",
         "./tests/setup.ts",
         "--test",
-        "--test-timeout=10000",
+        // GATE_TEST_TIMEOUT_V1 - 10 s mataba tests legitimos: el primero de
+        // tests/auth.test.ts tarda 13 s solo (hash de password) y bajo carga de
+        // suite completa pasa de 10 s. El fallo se veia como "test timed out",
+        // no como un fallo de comportamiento.
+        "--test-timeout=30000",
+        // GATE_TEST_FORCE_EXIT_V1 - sin esto el gate termina los tests y se
+        // queda colgado con handles abiertos (timers, pools, sockets de los
+        // dobles). No relaja nada: node sigue saliendo 1 si un test falla; solo
+        // deja de esperar a que se cierren recursos que no afectan al veredicto.
+        "--test-force-exit",
         "tests/**/*.test.ts",
       ],
       counters: { pairs: /#\s*(tests|pass|fail|skipped|cancelled|todo)\s+(\d+)/g },
