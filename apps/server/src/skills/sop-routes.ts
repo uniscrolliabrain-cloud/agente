@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { sopSchema, type SOP } from "../../../../packages/domain/src/sop.ts";
 import type { Store } from "../db.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import type { AgentService } from "../engine/service.ts";
 import { AppError } from "../errors.ts";
 import type { AuthzDeps } from "../engine/authz/pdp.ts";
@@ -8,7 +9,7 @@ import type { AuthzDeps } from "../engine/authz/pdp.ts";
 const TERMINAL = new Set(["succeeded", "failed", "cancelled"]);
 
 export function sopRoutes(
-  db: Store,
+  db: Store | TenantScopedStore,
   agent: AgentService,
   authz?: AuthzDeps,
 ) {
@@ -76,7 +77,7 @@ export function sopRoutes(
         title: sop.name,
         prompt: `API trigger for ${sop.name}`,
         // Records the SOP's real trigger so a forced run is not logged as an api trigger.
-        input: { sopId: sop.id, ...userInput, trigger: { type: sop.trigger.type, forced } },
+        input: { ...userInput, sopId: sop.id, trigger: { type: sop.trigger.type, forced } },
       },
       idempotencyKey ? `sop-api:${sop.id}:${idempotencyKey}` : undefined,
       false,

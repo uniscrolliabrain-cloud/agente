@@ -9,6 +9,7 @@
 // roadmap §8 ("3 consumidores reales además de ReactionEngine").
 
 import { globalSubscribers } from "../subscriber.ts";
+import type { TenantScopedStore } from "../../../db-tenant.ts";
 import type { Store } from "../../../db.ts";
 import type { SystemEvent } from "../types.ts";
 
@@ -34,10 +35,10 @@ export interface NotificationsConsumerHandle {
 
 export function startNotificationsConsumer(
   owners: string[],
-  db: Store,
+  db: Store | TenantScopedStore,
 ): NotificationsConsumerHandle {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       // EVENTS_CONSUMERS_NOTIFY_SKIP_KERNEL_V1
       const builder = NOTIFY_TYPES[event.type];
       if (!builder) return;

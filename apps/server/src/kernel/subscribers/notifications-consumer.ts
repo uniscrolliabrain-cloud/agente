@@ -1,4 +1,5 @@
 // KERNEL_NOTIFICATIONS_CONSUMER_V1
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import type { Store } from "../../db.ts";
 import type { SystemEvent } from "../../engine/events/types.ts";
 import { globalSubscribers } from "../../engine/events/subscriber.ts";
@@ -22,9 +23,9 @@ const NOTIFY: Record<string, (e: SystemEvent) => { title: string; body: string }
   },
 };
 
-export function startKernelNotificationsConsumer(owners: string[], db: Store): { stop(): void } {
+export function startKernelNotificationsConsumer(owners: string[], db: Store | TenantScopedStore): { stop(): void } {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       const builder = NOTIFY[event.type];
       if (!builder) return;
       const content = builder(event);

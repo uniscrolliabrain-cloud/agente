@@ -1,6 +1,7 @@
 import type { AgentMemory, AgentRole, MemoryCategory } from "../../../../../packages/domain/src/agent.ts";
 import type { BusinessEntity, BusinessRelation } from "../../../../../packages/domain/src/business.ts";
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import type { BusinessGraph } from "../business/graph.ts";
 import type { EventBus, SystemEvent } from "../events/index.ts";
 import type { MemoryService, RecallResult } from "../memory.ts";
@@ -50,7 +51,7 @@ const DEFAULT_EVENT_LIMIT = Number(process.env.CONTEXT_EVENT_LIMIT ?? "20") || 2
 
 export class ContextEngine {
   constructor(
-    private readonly db: Store,
+    private readonly db: Store | TenantScopedStore,
     private readonly graph: BusinessGraph,
     private readonly memory: MemoryService,
     private readonly bus?: EventBus,
@@ -92,6 +93,7 @@ export class ContextEngine {
       ? (await this.bus?.list(owner, { limit: input.eventLimit ?? DEFAULT_EVENT_LIMIT })) ?? []
       : [];
     const recall = await this.memory.recall(owner, input.query, {
+      roleId: input.roleId,
       ...(input.history ? { history: input.history } : {}),
     });
     // CONTEXT_INCLUDE_LEARNING_V1 - antes LearningObserver escribia en

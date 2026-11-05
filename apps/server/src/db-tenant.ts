@@ -11,6 +11,7 @@ export interface TenantRecord<T> {
   value: T;
   storageOwner: string;
   tenantId?: string;
+  storageId?: string;
 }
 
 export class TenantScopedStore {
@@ -21,7 +22,7 @@ export class TenantScopedStore {
 
   // DB_TENANT_SCOPED_DEFAULT_V1
   private async key(owner: string): Promise<string> {
-    const tenantId = await this.resolver(owner);
+    const tenantId = currentTenantScope()?.tenantId ?? await this.resolver(owner);
     this.tenantPrefixes.add(tenantId);
     return this.storageKey(tenantId, owner);
   }
@@ -116,7 +117,7 @@ export class TenantScopedStore {
     expected: Record<string, unknown>,
     patch: Record<string, unknown>,
   ): Promise<T | null> {
-    return this.store.compareAndSwap<T>(record.storageOwner, kind, id, expected, patch);
+    return this.store.compareAndSwap<T>(record.storageOwner, kind, record.storageId ?? id, expected, patch);
   }
 
   async insertIfAbsent<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T | null> {
@@ -164,7 +165,8 @@ export class TenantScopedStore {
   }
   /** Privileged scheduler scan, independent of observed prefixes and HTTP scopes. */
   async scanBackgroundByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<TenantRecord<T>[]> {
-    return (await this.store.scanByStatus<T>(kind, statuses, limit)).map((row) => this.origin(row));
+    const rows = await this.store.scanByStatusWithCursor<T>(kind, statuses, limit);
+    return rows.map((row) => ({ ...this.origin(row), storageId: row.id }));
   }
   async scanByStatus<T>(kind: string, statuses: string[], limit = 1000): Promise<TenantRecord<T>[]> {
     const tenantId = currentTenantScope()?.tenantId;
@@ -211,6 +213,31 @@ export class TenantScopedStore {
       ...this.origin({ owner: row.owner, value: row.data }),
       updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at,
       id: row.id,
+    }));
+  }
+
+  async scanOwnerByStatus<T>(
+    tenantId: string,
+    owner: string,
+    kind: string,
+    statuses: string[],
+    limit: number,
+    cursor?: { updatedAt: string; id: string },
+  ): Promise<(TenantRecord<T> & { updatedAt: string; storageId: string })[]> {
+    const params: unknown[] = [this.storageKey(tenantId, owner), kind, statuses];
+    let sql = "SELECT owner, data, updated_at::text AS updated_at, id FROM records " +
+      "WHERE owner=$1 AND kind=$2 AND data->>'status'=ANY($3::text[])";
+    if (cursor) {
+      params.push(cursor.updatedAt, cursor.id);
+      sql += " AND (updated_at,id)>($4::timestamptz,$5)";
+    }
+    params.push(limit);
+    sql += " ORDER BY updated_at ASC,id ASC LIMIT $" + params.length;
+    const rows = await this.store.select<{ owner: string; data: T; updated_at: string; id: string }>(sql, params);
+    return rows.map((row) => ({
+      ...this.origin({ owner: row.owner, value: row.data }),
+      updatedAt: row.updated_at,
+      storageId: row.id,
     }));
   }
 

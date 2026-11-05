@@ -32,7 +32,7 @@ export function startKernelEventSubscriber(
   owners: string[],
 ): { stop(): void } {
   const handles = owners.map((owner) =>
-    subscribers.subscribe(owner, (event: SystemEvent) => {
+    subscribers.subscribeInternal(owner, (event: SystemEvent) => {
       const mapping = MAPPING[event.type];
       if (!mapping) return;
       // LOG_KERNEL_SUBSCRIBERS_USED_V1
@@ -40,6 +40,7 @@ export function startKernelEventSubscriber(
       const parsed = kernelContextSchema.safeParse({
         tenantId: event.tenantId,
         owner: event.owner,
+        actorId: "bus-subscriber",
         role: "system",
         requestId: `kernel-subscriber:${event.id}`,
         ...(event.correlationId ? { correlationId: event.correlationId } : {}),

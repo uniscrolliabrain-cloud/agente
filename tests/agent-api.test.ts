@@ -7,6 +7,7 @@ import { createApp } from "../apps/server/src/app.ts";
 import type { Config } from "../apps/server/src/config.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
+import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import type {
   AgentMemory,
   AgentNotification,
@@ -108,7 +109,9 @@ test("task detail and controls stay scoped to the authenticated owner", async ()
   );
   assert.equal(task.status, "queued");
   assert.ok(task.plan.length > 0);
-  const hidden = await server.agent.createTask("other-user", { prompt: "Private task" });
+  const otherScope = { tenantId: "default", actorId: "other-user" };
+  const hidden = await runInTenantScope(otherScope, () =>
+    server.agent.createTask("other-user", { prompt: "Private task" }));
   assert.equal((await request(`/tasks/${hidden.id}`)).status, 404);
   assert.equal((await request(`/tasks/${hidden.id}/control`, { action: "cancel" })).status, 404);
   assert.equal((await request(`/tasks/${hidden.id}/input`, { answer: "Private" })).status, 404);
@@ -116,7 +119,7 @@ test("task detail and controls stay scoped to the authenticated owner", async ()
   assert.ok(snapshot.tasks.some((item) => item.id === task.id));
   assert.ok(!snapshot.tasks.some((item) => item.id === hidden.id));
   assert.equal((await server.agent.getTask("other-user", hidden.id)).status, "queued");
-  await server.agent.control("other-user", hidden.id, "cancel");
+  await runInTenantScope(otherScope, () => server.agent.control("other-user", hidden.id, "cancel"));
   assert.equal(
     (await read<AgentTask>(`/tasks/${task.id}/control`, { action: "pause" })).status,
     "paused",

@@ -35,10 +35,16 @@ test("PS-01: fila fisica B con payload A no reclama una fila A del mismo id", as
     await runInTenantScope({ tenantId: "empresa-b", actorId: "requester" }, () => scoped.get("u1", "settings", "warm"));
     await db.put("empresa-b:u1", "tasks", task("same-id", "empresa-a"));
     await db.put("empresa-a:u1", "tasks", task("same-id", "empresa-a"));
+    // Simulate a scheduler page containing only B. A remains eligible on a later page.
+    const scan = scoped.scanBackgroundByStatus.bind(scoped);
+    scoped.scanBackgroundByStatus = async <T>(kind: string, statuses: string[], limit?: number) =>
+      (await scan<T>(kind, statuses, limit)).filter((row) => row.tenantId === "empresa-b");
     let called = 0;
     const worker = new TaskWorker(scoped, async () => { called++; return { status: "succeeded" }; });
     await worker.tick();
-    assert.equal(called, 0, "el único scan fue de B: su contradicción no autoriza reclamar A");
+    assert.equal(called, 0, "la contradicción de B no autoriza ejecutar A");
+    assert.equal((await db.get<AgentTask>("empresa-a:u1", "tasks", "same-id"))?.status, "queued");
+    assert.equal((await db.get<AgentTask>("empresa-b:u1", "tasks", "same-id"))?.status, "paused");
   } finally { await db.close(); }
 });
 

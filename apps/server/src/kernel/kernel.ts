@@ -137,7 +137,7 @@ export class Kernel {
   }
 
   async openChildTurn(ctx: KernelContext, parentTurnId: string, trigger: string): Promise<Turn> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const turn = await this.deps.store.openChildTurn(tenantId, ctx.owner, parentTurnId, trigger);
     await this.deps.audit.append({
       tenantId,
@@ -213,7 +213,7 @@ export class Kernel {
   }
 
   async thoughtsOf(ctx: KernelContext, turnId: string): Promise<Thought[]> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const turn = await this.deps.store.getTurn(tenantId, turnId);
     if (!turn) return [];
     return this.deps.store.thoughtsOf(tenantId, turnId);
@@ -226,7 +226,7 @@ export class Kernel {
     reason: TurnCloseReason,
     closedBy: TurnClosedBy,
   ): Promise<Turn> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const turn = await this.deps.store.closeTurn(tenantId, turnId, reason, closedBy);
     // KERNEL_CLOSE_CHILDREN_V1 - si el store soporta cierre recursivo, lo usamos.
     // Cierra #198: los turnos hijos abiertos quedaban huerfanos.
@@ -252,7 +252,7 @@ export class Kernel {
   }
 
   async config(ctx: KernelContext) {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     return this.deps.config.resolve(tenantId);
   }
 
@@ -261,7 +261,7 @@ export class Kernel {
    * Cierra #203: no habia forma de listar turnos para debug.
    */
   async listTurns(ctx: KernelContext, limit = 50): Promise<Turn[]> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const store = this.deps.store as TurnStore & {
       listTurns?: (tenantId: string, limit: number) => Promise<Turn[]>;
     };
@@ -351,7 +351,7 @@ export class Kernel {
 
   async findOpenTurnForThread(ctx: KernelContext): Promise<Turn | undefined> {
     if (!ctx.threadId) return undefined;
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
     const store = this.deps.store as TurnStore & {
       listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
     };

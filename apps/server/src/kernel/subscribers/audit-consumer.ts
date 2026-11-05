@@ -15,7 +15,7 @@ const AUDITED = new Set([
   // KERNEL_AUDIT_INDEX_ROTATION_V1
 export function startKernelAuditConsumer(owners: string[], db: Store): { stop(): void } {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       if (!AUDITED.has(event.type)) return;
       // KERNEL_AUDIT_CONSUMER_DEDUPE_V1
       void db

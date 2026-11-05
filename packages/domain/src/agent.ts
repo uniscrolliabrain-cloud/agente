@@ -4,6 +4,20 @@ import { executionContextSchema, type ExecutionContext } from "./execution-conte
 export const taskExecutionContextSchema = executionContextSchema.pick({ tenantId: true, owner: true, actorId: true }).strict();
 export type TaskExecutionContext = Pick<ExecutionContext, "tenantId" | "owner" | "actorId">;
 
+export function readTaskExecutionContext(
+  owner: string,
+  task: Pick<AgentTask, "tenantId" | "requestedBy" | "executionContext">,
+): TaskExecutionContext | undefined {
+  const parsed = taskExecutionContextSchema.safeParse(task.executionContext ?? {
+    tenantId: task.tenantId, owner, actorId: task.requestedBy,
+  });
+  if (!parsed.success) return undefined;
+  const identity = parsed.data;
+  if (identity.owner !== owner || identity.tenantId !== task.tenantId || identity.tenantId.includes(":") ||
+    (task.requestedBy !== undefined && task.requestedBy !== identity.actorId)) return undefined;
+  return identity;
+}
+
 export type TaskStatus =
   | "queued"
   | "running"

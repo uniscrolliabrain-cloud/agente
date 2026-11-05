@@ -15,7 +15,7 @@ export function startKernelMetricsConsumer(owners: string[]): { stop(): void } {
   globalMetrics.counter("openmuse_kernel_thoughts_total", "Thoughts emitidos al bus por rol");
   globalMetrics.counter("openmuse_kernel_turns_total", "Turns abiertos al bus");
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       if (THOUGHT_TYPES.has(event.type)) {
         const role = (event.payload as Record<string, unknown>).role;
         globalMetrics.inc("openmuse_kernel_thoughts_total", { role: String(role ?? "unknown") });

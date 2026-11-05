@@ -8,7 +8,7 @@ export function startStateChangedConsumer(
   db: Store,
 ): { stop(): void } {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       if (event.type !== "state.changed") return;
       const p = event.payload as Record<string, unknown>;
       void db

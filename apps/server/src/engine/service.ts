@@ -33,7 +33,7 @@ import {
   // PUBLIC_ROLES_ENDPOINT: tipo de retorno de publicRoles (id, name, tone, avatar, objetivo, roi, identidad).
   type AgentRolePublic,
 } from "../../../../packages/domain/src/agent.ts";
-import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
+import { canTransitionTask, readTaskExecutionContext, taskExecutionContextSchema } from "../../../../packages/domain/src/agent.ts";
 import type {
   ActionProposal,
   Artifact,
@@ -47,7 +47,7 @@ import { ComputerService } from "../computer.ts";
 import type { Config } from "../config.ts";
 import type { Store } from "../db.ts";
 // SERVICE_TENANT_DB_V1 - el service acepta Store o TenantScopedStore.
-import type { TenantScopedStore } from "../db-tenant.ts";
+import { TenantScopedStore, type TenantRecord } from "../db-tenant.ts";
 import { AppError } from "../errors.ts";
 import { UserService } from "../users.ts";
 import type { Files } from "../files.ts";
@@ -121,6 +121,7 @@ const hash = (text: string) => createHash("sha256").update(text).digest("hex");
 const date = () => new Date().toISOString();
 const terminal = new Set(["succeeded", "failed", "cancelled"]);
 export interface BusinessOsServices {
+  memory?: MemoryService;
   graph?: BusinessGraph;
   truth?: BusinessTruth;
   policy?: PolicyEngine;
@@ -242,7 +243,7 @@ export class AgentService {
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
     // sea un rol de solo lectura sobre otra base de datos, separado de la de la app.
     this.business = new BusinessDataService(db, config.businessDatabaseUrl);
-    this.memory = new MemoryService(db, this.rag);
+    this.memory = business?.memory ?? new MemoryService(db, this.rag);
     this.guardrails = new GuardrailService(db);
     // CTOR_DUP_METRICS_FIX_V1 - metrics y feedback se instanciaban dos veces
     // seguidas (duplicado). El segundo par sobreescribia al primero sin
@@ -336,45 +337,65 @@ export class AgentService {
     }
   }
 
+  private taskIdentity(owner: string, task: AgentTask, physicalTenant?: string) {
+    const identity = readTaskExecutionContext(owner, task);
+    return identity && (physicalTenant === undefined || physicalTenant === identity.tenantId)
+      ? identity : undefined;
+  }
+
+  private async backgroundRows<T>(kind: string, statuses: string[], limit: number): Promise<TenantRecord<T>[]> {
+    if (this.db instanceof TenantScopedStore)
+      return this.db.scanBackgroundByStatus<T>(kind, statuses, limit);
+    const rows = await this.db.scanByStatusWithCursor<T>(kind, statuses, limit);
+    return rows.map((row) => ({ ...row, storageOwner: row.owner, storageId: row.id }));
+  }
+
+  private async withTaskRecord<T>(record: { owner: string; value: AgentTask; tenantId?: string; storageId?: string }, fn: () => Promise<T>): Promise<T | undefined> {
+    const identity = this.taskIdentity(record.owner, record.value, record.tenantId);
+    if (!identity || (this.db instanceof TenantScopedStore && !record.tenantId) ||
+      (record.storageId !== undefined && record.storageId !== record.value.id)) {
+      backgroundFailure("task context quarantine", new Error("TASK_CONTEXT_UNVERIFIED: " + record.value.id));
+      return undefined;
+    }
+    return runInTenantScope(identity, fn);
+  }
+
+  private async withBackgroundOwner<T>(
+    record: { owner: string; tenantId?: string },
+    fn: () => Promise<T>,
+  ): Promise<T | undefined> {
+    if (record.tenantId) return runInTenantScope({ tenantId: record.tenantId, actorId: "system" }, fn);
+    if (!(this.db instanceof TenantScopedStore)) return fn();
+    return undefined;
+  }
+
+  private async compareBackground<T>(record: TenantRecord<{ id: string }>,
+    kind: string, expected: Record<string, unknown>, patch: Record<string, unknown>) {
+    if (this.db instanceof TenantScopedStore) {
+      if (!record.tenantId || record.storageId !== record.value.id) return null;
+      return this.db.compareAndSwapBackground<T>(record, kind, record.value.id, expected, patch);
+    }
+    return this.db.compareAndSwap<T>(record.owner, kind, record.value.id, expected, patch);
+  }
+
   async recoverInterruptedTasks(): Promise<number> {
     const now = Date.now();
-    const rows = await this.db.scanByStatus<AgentTask>("tasks", ["running"], 5000);
+    const rows = await this.backgroundRows<AgentTask>("tasks", ["running"], 5000);
     let recovered = 0;
-    for (const { owner, value } of rows) {
+    for (const record of rows) {
+      const { owner, value } = record;
       const leaseUntil = value.leaseUntil ? Date.parse(value.leaseUntil) : 0;
       if (!leaseUntil || leaseUntil > now) continue;
-      // RECOVER_TASK_SCOPE_V1 - scanByStatus devuelve la owner ya peelada, sin
-      // el tenant. Sin este scope, el CAS se resolvia por membership primaria y
-      // una tarea de otra empresa no se recuperaba (o se recuperaba en la
-      // empresa equivocada).
-      const updated = await runInTenantScope(
-        { tenantId: value.tenantId, actorId: value.requestedBy ?? owner },
-        async () => {
-          // RECOVER_CAS_V1 - CAS con expected explicito del lease para evitar
-          // que dos procesos reviertan la misma task a la vez.
-          const cas = await this.db.compareAndSwap<AgentTask>(
-            owner,
-            "tasks",
-            value.id,
-            { status: "running", leaseId: value.leaseId ?? null, leaseUntil: value.leaseUntil ?? null },
-            {
-              status: "queued",
-              leaseId: null,
-              leaseUntil: null,
-              updatedAt: new Date().toISOString(),
-            },
-          );
-          if (cas) {
-            // TASK_RECOVERED_EVENT_V1 - emite evento al recuperar.
-            await this.bus?.emit(owner, "task.status_changed", { kind: "task", id: value.id }, {
-              taskId: value.id,
-              from: "running",
-              to: "queued",
-            }).catch(() => {});
-          }
-          return cas;
-        },
-      );
+      const updated = await this.withTaskRecord(record, async () => {
+        const cas = await this.db.compareAndSwap<AgentTask>(owner, "tasks", value.id,
+          { status: "running", leaseId: value.leaseId ?? null, leaseUntil: value.leaseUntil ?? null,
+            tenantId: value.tenantId, ...(value.requestedBy !== undefined ? { requestedBy: value.requestedBy } : {}), ...(value.executionContext ? { executionContext: value.executionContext } : {}) },
+          { status: "queued", leaseId: null, leaseUntil: null, updatedAt: date() });
+        if (cas) await this.bus?.emit(owner, "task.status_changed", { kind: "task", id: value.id },
+          { taskId: value.id, from: "running", to: "queued" }, { tenantId: value.tenantId })
+          .catch((error) => backgroundFailure("publish recovered task", error));
+        return cas;
+      });
       if (updated) recovered++;
     }
     return recovered;
@@ -427,41 +448,30 @@ export class AgentService {
       // STUCK_5MIN_V1 - baja de 10 a 5 min para reconciliar antes.
       const STUCK_MS = Number(process.env.OUTCOME_UNKNOWN_STUCK_MS ?? "300000") || 300000;
       const stuckCutoff = new Date(Date.now() - STUCK_MS).toISOString();
-      const stuckActions = await this.db.scanByStatus<{
+      const stuckActions = await this.backgroundRows<{
         id: string;
         status: string;
         updatedAt?: string;
       }>("actions", ["executing"], 200);
-      for (const { owner, value } of stuckActions) {
+      for (const record of stuckActions) {
+        const { value } = record;
         const lastUpdate = value.updatedAt ? Date.parse(value.updatedAt) : 0;
         if (lastUpdate && lastUpdate > Date.parse(stuckCutoff)) continue;
-        await this.db
-          .compareAndSwap(
-            owner,
-            "actions",
-            value.id,
-            { status: "executing" },
-            {
-              status: "outcome_unknown",
-              error:
-                "Action was executing for more than 10 minutes without resolution. " +
-                "Check the provider before retrying.",
-            },
-          )
+        await this.compareBackground(record, "actions", { status: "executing" }, {
+          status: "outcome_unknown",
+          error: "Action was executing without confirmation. Check provider before retrying.",
+        })
           .catch((error) => backgroundFailure("reconcile outcome_unknown", error));
       }
 
       const nowIso = new Date().toISOString();
-      const pendingActions = await this.db.scanByStatus<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
-      for (const { owner, value } of pendingActions) {
+      const pendingActions = await this.backgroundRows<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
+      for (const record of pendingActions) {
+        const { value } = record;
         if (value.expiresAt && value.expiresAt < nowIso) {
-          await this.db.compareAndSwap(
-            owner,
-            "actions",
-            value.id,
+          await this.compareBackground(record, "actions",
             { status: "awaiting_review", expiresAt: value.expiresAt },
-            { status: "expired" },
-          ).catch(() => {});
+            { status: "expired" }).catch(() => {});
         }
       }
 
@@ -488,21 +498,18 @@ export class AgentService {
           backgroundFailure(`alerts tenant ${tenant}`, error),
         );
       }
-      const taskStatusPage = await this.db.scanByStatusWithCursor<AgentTask>(
-        "tasks",
-        ["queued", "scheduled", "running"],
-        200,
-      );
-      for (const { owner, value } of taskStatusPage) {
-        await this.publishOutcome(owner, value).catch((error) =>
-          backgroundFailure(`publish outcome ${value.id}`, error),
-        );
+      const taskStatusPage = await this.backgroundRows<AgentTask>("tasks", ["queued", "scheduled", "running"], 200);
+      for (const record of taskStatusPage) {
+        await this.withTaskRecord(record, () => this.publishOutcome(record.owner, record.value)).catch((error) =>
+          backgroundFailure("publish outcome " + record.value.id, error));
       }
-      const monitorPage = await this.db.scanByStatus<Monitor>("monitors", ["active"], 500);
-      for (const { owner, value } of monitorPage) {
-        await this.activateMonitor(owner, value).catch((error) =>
-          backgroundFailure(`activate monitor ${value.id}`, error),
-        );
+      const monitorPage = await this.backgroundRows<Monitor>("monitors", ["active"], 500);
+      for (const record of monitorPage) {
+        const task = this.db instanceof TenantScopedStore
+          ? (record.tenantId ? await this.db.getInTenant<AgentTask>(record.tenantId, record.owner, "tasks", record.value.taskId) : null)
+          : await this.db.get<AgentTask>(record.owner, "tasks", record.value.taskId);
+        if (task && task.id === record.value.taskId && record.storageId === record.value.id) await this.withTaskRecord({ owner: record.owner, tenantId: record.tenantId, value: task }, () => this.activateMonitor(record.owner, record.value))
+          .catch((error) => backgroundFailure("activate monitor", error));
       }
       // SERVICE_MAINTAIN_MONITORS_V1
     // SERVICE_MAINTAIN_SOP_TRIGGERS_V1
@@ -568,35 +575,31 @@ export class AgentService {
       // MAINTAIN_EMBEDDINGS_V1 - retry de embeddings. Antes escaneaba 5000
       // chunks cada minuto. Ahora escanea 500 por pasada y rota el cursor,
       // cubriendo toda la tabla en ~10 pasadas sin cargarla de golpe.
-      const missingOwners = new Set<string>();
       const chunkPage = await this.db.scan<{ embedding: number[] | null }>("rag-chunks", 500);
-      for (const { owner, value } of chunkPage) {
-        if (!value.embedding || value.embedding.length === 0) missingOwners.add(owner);
-      }
-      for (const owner of missingOwners) {
-        await this.memory
-          .retryMissingEmbeddings(owner)
+      const missingOwners = new Map(chunkPage
+        .filter(({ value }) => !value.embedding?.length)
+        .map((record) => [JSON.stringify([("tenantId" in record ? record.tenantId : null), record.owner]), record]));
+      for (const record of missingOwners.values()) {
+        await this.withBackgroundOwner(record, () => this.memory.retryMissingEmbeddings(record.owner))
           .catch((error) => backgroundFailure("retry embeddings", error));
       }
 
-      // MAINTAIN_DEDUP_V1 - dedupe cada 5 min, tope de 500 owners por pasada.
       if (!this.lastDedupAt || Date.now() - this.lastDedupAt > 5 * 60 * 1000) {
         this.lastDedupAt = Date.now();
-        const memoryOwners = new Set<string>();
         const memoryPage = await this.db.scan<{ id: string }>("memories", 500);
-        for (const { owner } of memoryPage) memoryOwners.add(owner);
-        for (const owner of memoryOwners) {
-          await this.memory
-            .dedupMemories(owner)
+        const memoryOwners = new Map(memoryPage.map((record) =>
+          [JSON.stringify([("tenantId" in record ? record.tenantId : null), record.owner]), record]));
+        for (const record of memoryOwners.values()) {
+          await this.withBackgroundOwner(record, () => this.memory.dedupMemories(record.owner))
             .catch((error) => backgroundFailure("dedup memories", error));
         }
       }
-      for (const { owner, value } of await this.db.scanByStatus<Idea>("ideas", ["accepted"], 200))
-        if (
-          value.status === "accepted" &&
-          value.taskId &&
-          !(await this.db.get(owner, "tasks", value.taskId))
-        )
+
+      for (const record of await this.backgroundRows<Idea>("ideas", ["accepted"], 200)) {
+        const { owner, value } = record;
+        if (record.storageId !== value.id || !value.taskId) continue;
+        await this.withBackgroundOwner(record, async () => {
+          if (await this.db.get(owner, "tasks", value.taskId!)) return;
           await this.decideIdea(owner, value.id, "accept").catch(async (error) => {
             backgroundFailure("recover accepted idea", error);
             await this.notify(
@@ -607,67 +610,30 @@ export class AgentService {
               `idea-recovery:${value.id}`,
             );
           });
-      for (const { owner, value } of await this.db.scan<{ id: string; lastIdeasAt?: string }>(
-        "agent-settings",
-        5000,
-      )) {
-        if (value.id !== "identity") continue;
-        if (!value.lastIdeasAt || Date.now() - Date.parse(value.lastIdeasAt) > 15 * 60000)
-          await this.refreshIdeas(owner).catch(async () => {
-            await this.notify(
-              owner,
-              "Source refresh needs attention",
-              "Reconnect the source or refresh Ideas to see the error.",
-              undefined,
-              `source-error:${Math.floor(Date.now() / 3600000)}`,
-            );
-          });
-      }      // Evaluate declarative SOP triggers (cron + email_subject). Manual and api triggers
-      // are driven by their callers and never scanned here.
-      // MAINTAIN_SOPS_V1 - scan de SOPs con paginacion por keyset.
-      // Antes: scan("sops", 5000) cada minuto. Ahora: 200 por pagina con
-      // cursor (updatedAt, id) y tope de 3 paginas por pasada. Cubre 600
-      // SOPs por minuto sin cargar toda la tabla.
-      // MAINTAIN_SOPS_FIX_V1 - usamos scan() que ya devuelve {owner, value},
-      // en vez de listPaged que requiere owner en el argumento. Con 600 SOPs
-      // por pasada y tope real, no cargamos la tabla entera de golpe.
-      // MAINTAIN_SOPS_CURSOR_FIX_V1 - antes scan("sops", 600) traia siempre los
-      // primeros 600 ordenados por updated_at. Si un tenant tenia >600 SOPs,
-      // los ultimos nunca se evaluaban. Ahora paginamos por cursor: 200 por
-      // pasada, guardamos el cursor en "maintain-cursor" y rotamos. Con
-      // 1 pasada por minuto, 600 SOPs por tenant se cubren en 3 minutos.
-      const sopEvaluator = new SOPTriggerEvaluator(this);
-      const sopCursorKey = "sops-eval";
-      const sopCursor = await this.db
-        .get<{ lastUpdatedAt: string; lastId: string }>("system", "maintain-cursor", sopCursorKey)
-        .catch(() => null);
-      const sopPage = await this.db.scanByStatusWithCursor<SOP & { active?: boolean }>(
-        "sops",
-        ["true"], // no aplica, ver nota abajo
-        200,
-        sopCursor?.lastUpdatedAt,
-        sopCursor?.lastId,
-      ).catch(() => []);
-      // scanByStatusWithCursor filtra por data->>'status', que en SOPs no
-      // existe. Caemos a scan con rotacion de cursor manual.
-      const fallback = await this.db.scan<SOP>("sops", 200).catch(() => []);
-      const sopList = sopPage.length > 0 ? sopPage.map((r) => ({ owner: r.owner, value: r.value })) : fallback;
-      // MAINTAIN_SOPS_BY_OWNER_V1 - antes cada SOP se evaluaba bajo el owner
-      // del scan (el primero que apareciera en la pagina). En multi-tenant
-// eso significa que un SOP de un tenant se evala bajo el owner de otro
-      // si vienen mezclados en la misma pagina. Ahora resolvemos el owner real
-      // del SOP con resolveSopOwner y evaluamos bajo ese owner.
-      for (const record of sopList) {
-        const sop = record.value;
-        if (sop.active === false) continue;
-        const realOwner = (await this.resolveSopOwner(sop)) ?? record.owner;
-        try {
-          await sopEvaluator.evaluate(realOwner, sop);
-        } catch (error) {
-          backgroundFailure(`sop trigger ${sop.id}`, error);
-        }
+        });
       }
-      void sopCursorKey;
+
+      for (const record of await this.db.scan<{ id: string; lastIdeasAt?: string }>("agent-settings", 5000)) {
+        const { owner, value } = record;
+        if (value.id !== "identity" || (value.lastIdeasAt && Date.now() - Date.parse(value.lastIdeasAt) <= 15 * 60000))
+          continue;
+        await this.withBackgroundOwner(record, () => this.refreshIdeas(owner)).catch(async () => {
+          await this.withBackgroundOwner(record, () => this.notify(
+            owner,
+            "Source refresh needs attention",
+            "Reconnect the source or refresh Ideas to see the error.",
+            undefined,
+            `source-error:${Math.floor(Date.now() / 3600000)}`,
+          ));
+        });
+      }
+
+      const sopEvaluator = new SOPTriggerEvaluator(this);
+      for (const record of await this.db.scan<SOP>("sops", 200)) {
+        if (!record.value.active) continue;
+        await this.withBackgroundOwner(record, () => sopEvaluator.evaluate(record.owner, record.value))
+          .catch((error) => backgroundFailure(`sop trigger ${record.value.id}`, error));
+      }
       // EVENTBUS_DEDUPE_MAINTENANCE_V1 - system.maintenance se emite cada
       // minuto. Deduplicamos con key explicita para no escribir 1440 eventos
       // por dia por owner. Es la unica emision con dedupe en maintain().
@@ -676,7 +642,7 @@ export class AgentService {
         "system.maintenance",
         { kind: "system", id: "maintain" },
         { tasks: 0, monitors: 0 },
-        { dedupeKey: "system:maintenance:1m" },
+        { tenantId: "system", dedupeKey: "system:maintenance:1m" },
       );
       // META_LOOP_REAL_V2 - bucle de metaconsciencia con ProgressEvent real.
       // META_LOOP_V1 - bucle de metaconsciencia. Corre cada minuto desde
@@ -767,6 +733,7 @@ export class AgentService {
         const ctx = kernelContextSchema.parse({
           tenantId,
           owner: tenantId,
+          actorId: "system",
           role: "system",
           requestId: `consolidate:${Date.now()}`,
         });
@@ -788,7 +755,7 @@ export class AgentService {
               "system.maintenance",
               { kind: "system", id: "consolidate" },
               { tasks: 0, monitors: 0 },
-              { dedupeKey: `consolidate:${turn.id}` },
+              { tenantId, dedupeKey: `consolidate:${turn.id}` },
             );
           }
         }
@@ -814,7 +781,6 @@ export class AgentService {
     // tenant-membership, que ya tiene una fila por tenant, y dentro de cada
     // tenant los owners son los de agent-settings. Seguimos con el tope de
     // 50 por pasada, pero rotamos por tenant con el cursor de maintain.
-    const owners = new Set<string>();
     const tenants = await this.collectActiveTenants();
     const metaCursorKey = "meta-loop-cursor";
     const metaCursor = await this.db
@@ -825,37 +791,24 @@ export class AgentService {
     await this.db
       .put("system", "maintenance", { id: metaCursorKey, idx: (startIdx + 5) % Math.max(1, tenants.length) })
       .catch(() => {});
+
+    const owners: { tenantId: string; owner: string }[] = [];
     for (const tenantId of slice) {
-      // SERVICE_SCAN_OWNER_PREFIX_CAST_V1 - this.db puede ser Store o
-      // TenantScopedStore. Solo Store tiene scanByOwnerPrefix. Si no lo
-      // tiene, caemos al scan generico y filtramos en memoria.
-      const dbWithPrefix = this.db as unknown as {
-        scanByOwnerPrefix?: <T>(
-          kind: string,
-          ownerPrefix: string,
-          limit: number,
-        ) => Promise<{ owner: string; value: T }[]>;
-        scan?: <T>(kind: string, limit: number) => Promise<{ owner: string; value: T }[]>;
-      };
-      const tenantOwners = dbWithPrefix.scanByOwnerPrefix
-        ? await dbWithPrefix.scanByOwnerPrefix<{ id: string }>("agent-settings", `${tenantId}:`, 20)
-        : ((await dbWithPrefix.scan?.<{ id: string }>("agent-settings", 500)) ?? [])
-            .filter((r) => r.owner.startsWith(`${tenantId}:`))
-            .slice(0, 20);
+      const tenantOwners = this.db instanceof TenantScopedStore
+        ? await this.db.scanByPrefix<{ id: string }>("agent-settings", tenantId, 20)
+        : (await this.db.scan<{ id: string }>("agent-settings", 500)).filter((row) => row.owner === tenantId);
       for (const { owner } of tenantOwners) {
-        owners.add(owner);
-        if (owners.size >= 50) break;
+        owners.push({ tenantId, owner });
+        if (owners.length >= 50) break;
       }
-      if (owners.size >= 50) break;
+      if (owners.length >= 50) break;
     }
-    for (const owner of owners) {
+    for (const { tenantId, owner } of owners) {
       try {
-        const tenantId = this.tenantService
-          ? await this.tenantService.tenantIdFor(owner)
-          : "default";
         const ctx = kernelContextSchema.parse({
           tenantId,
           owner,
+          actorId: "system",
           role: "system",
           requestId: `meta-loop:${now.toISOString()}`,
         });
@@ -900,14 +853,14 @@ export class AgentService {
           // escribimos un run-event por turno con el hint real, que es
           // donde tiene sentido (el run-event tiene kind/title/detail).
           for (const hint of meaningful) {
-            await this.db.put(owner, "run-events", {
+            await runInTenantScope({ tenantId, actorId: "system" }, () => this.db.put(owner, "run-events", {
               id: randomUUID(),
               taskId: turn.id,
               kind: "observation",
               date: new Date().toISOString(),
               title: `meta:${hint.rule}`,
               detail: hint.message.slice(0, 500),
-            }).catch(() => {});
+            })).catch(() => {});
           }
         }
       } catch (error) {
@@ -981,6 +934,17 @@ export class AgentService {
       );
     }
     return roles;
+  }
+
+  async requireTaskRole(owner: string, roleId: string, sopId?: string): Promise<AgentRole> {
+    const parsed = agentRoleSchema.safeParse(await this.db.get(owner, "agent-roles", roleId));
+    if (!parsed.success || parsed.data.id !== roleId || !parsed.data.active) {
+      throw new AppError("The delegated role is unavailable", 403);
+    }
+    if (sopId && !parsed.data.sops.includes(sopId)) {
+      throw new AppError("The delegated role cannot execute this SOP", 403);
+    }
+    return parsed.data;
   }
 
   async ensure(owner: string) {
@@ -1231,6 +1195,9 @@ export class AgentService {
 
   // SERVICE_CREATE_TASK_TENANT_COUNT_V1
   async createTask(owner: string, raw: unknown, idempotencyKey?: string, held = false) {
+    const scope = currentTenantScope();
+    const identity = taskExecutionContextSchema.safeParse({ tenantId: scope?.tenantId, actorId: scope?.actorId, owner });
+    if (!identity.success) throw new AppError("TASK_CONTEXT_UNVERIFIED: explicit tenant and requester required", 403);
     const input = createTaskSchema.parse(raw);
     if (input.goalId && !(await this.db.get(owner, "goals", input.goalId)))
       throw new AppError("Goal not found", 404);
@@ -1245,8 +1212,7 @@ export class AgentService {
     // GUARDRAILS_CHECK_TASK_V1 - limite duro por tenant, no por owner.
     // TASK_REQUESTER_CONTEXT_V1 - el scope de la peticion aporta tenant y
     // actor; se persisten ambos para que el worker no los reconstruya.
-    const scope = currentTenantScope();
-    const tenantIdForGuard = scope?.tenantId ?? (await this.tenantService?.tenantIdFor(owner)) ?? owner;
+    const tenantIdForGuard = identity.data.tenantId;
     // CREATE_TASK_COUNT_SCOPED_FIX_V1 - antes db.list(owner, "tasks") sin limit
     // cargaba hasta 1000 tareas en memoria solo para contar las activas. Ahora
     // usamos scanByStatusWithCursor con 500 y contamos hasta el tope; si llega
@@ -1281,6 +1247,9 @@ export class AgentService {
     const resolvedRoleId =
       input.roleId ??
       (await this.pickRoleForTask(owner, input.kind, input.input));
+    if (resolvedRoleId) {
+      await this.requireTaskRole(owner, resolvedRoleId, input.kind === "sop" ? String(input.input.sopId) : undefined);
+    }
     const task: AgentTask = {
       id,
       // SERVICE_TASK_TENANT_V1 - tenantId obligatorio.
@@ -1291,7 +1260,8 @@ export class AgentService {
       goalId: input.goalId,
       assignedTo: input.assignedTo ?? owner,
       // TASK_REQUESTER_V1 - solo si el scope trae un actor demostrado.
-      ...(scope?.actorId ? { requestedBy: scope.actorId } : {}),
+      requestedBy: identity.data.actorId,
+      executionContext: identity.data,
       status: held ? "paused" : "queued",
       plan: titles.map((title, i) => ({ id: String(i), title, status: "pending" })),
       evidence: [],
@@ -1370,7 +1340,7 @@ export class AgentService {
     // mataba la ejecucion del otro sin motivo. Ahora abortamos solo tras
     // confirmar el cambio. El abort es best-effort: si el worker esta en otro
     // proceso, no llega, pero el lease queda limpio por el CAS.
-    this.worker.abort(taskId);
+    this.worker.abort(taskId, owner, task.tenantId);
     await this.db.put(owner, "run-events", {
       id: randomUUID(),
       taskId,
@@ -1402,6 +1372,8 @@ export class AgentService {
   async control(
     owner: string, id: string, action: "pause" | "resume" | "cancel" | "retry") {
     const task = await this.getTask(owner, id);
+    if ((action === "resume" || action === "retry") && !this.taskIdentity(owner, task, currentTenantScope()?.tenantId))
+      throw new AppError("TASK_CONTEXT_UNVERIFIED: cannot resume an ambiguous legacy task", 409);
     if (action === "cancel" && task.status === "succeeded")
       throw new AppError("This task is already complete", 409);
     if (action === "retry" && task.status !== "failed")
@@ -1448,7 +1420,7 @@ export class AgentService {
       },
     );
     if (!updated) throw new AppError("Task changed; refresh and try again", 409);
-    this.worker.abort(id);
+    this.worker.abort(id, owner, task.tenantId);
     if (task.kind === "monitor")
       await this.db.compareAndSwap(
         owner,
@@ -1695,7 +1667,7 @@ export class AgentService {
     if (action === "pause" || action === "stop")
       await this.control(owner, task.id, action === "pause" ? "pause" : "cancel");
     else {
-      this.worker.abort(task.id);
+      this.worker.abort(task.id, owner, task.tenantId);
       await this.db.compareAndSwap(
         owner,
         "tasks",
@@ -1987,6 +1959,9 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
         );
       else return { status: "waiting_approval" };
     }
+    if (typeof task.state.roleId === "string" && task.kind !== "sop") {
+      await this.requireTaskRole(owner, task.state.roleId);
+    }
     if (task.kind === "sop") return this.sopExecutor.execute(owner, task, context);
     if (task.kind === "document") return this.document(owner, task, context);
     if (task.kind === "monitor") {
@@ -2141,6 +2116,8 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
     outputChars: number,
     speed?: "fast" | "slow", // FIX_4A_RECORD_USAGE_SPEED_V1
   ) {
+    const metricsTenant = currentTenantScope()?.tenantId;
+    if (!metricsTenant) throw new AppError("Explicit tenant scope required for usage", 403);
     const id = randomUUID();
     const inputTokens = Math.ceil(inputChars / 4);
     const outputTokens = Math.ceil(outputChars / 4);
@@ -2159,7 +2136,6 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
     };
     await this.db.put(owner, "llm-usage", value);
     // SERVICE_METRICS_WIRE_V1 - registrar tokens y coste por tenant.
-    const metricsTenant = await this.tenantService?.tenantIdFor(owner) ?? owner;
 // METRICS_LLM_WIRE_V1 contadores acumulativos (no escaneo de DB).
     const speedLabel = speed ?? source; // FIX_4A_RECORD_USAGE_SPEED_V1
     globalMetrics.inc("openmuse_llm_calls_total", {
@@ -2174,7 +2150,7 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
     void this.metrics.record(metricsTenant, "llm.cost_eur", costEur, { source }).catch(() => {});
     // GUARDRAILS_CHECK_USAGE_V1 - verificar cuota despues de registrar.
     try {
-      const tenantIdForGuard = await this.tenantService?.tenantIdFor(owner) ?? owner;
+      const tenantIdForGuard = metricsTenant;
       const usage = await this.db.list<{ costEur: number; inputTokens: number; outputTokens: number; date: string }>(
         owner,
         "llm-usage",
@@ -2362,29 +2338,6 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
     };
   }
   /**
-   * MAINTAIN_SOP_OWNER_V1 - resuelve el owner de un SOP.
-   *
-   * Hoy hay un solo owner por deployment. Este helper aisla el problema:
-   * cuando multi-tenant llegue, se sustituye por una lectura real del owner
-   * del SOP (por ejemplo, el SOP guarda owner en su state).
-   *
-   * Devuelve undefined si no encuentra owner, y el caller salta el SOP.
-   */
-  // RESOLVE_SOP_OWNER_DOC_V1 - metodo legacy documentado.
-  private async resolveSopOwner(sop: SOP): Promise<string | undefined> {
-    // RESOLVE_SOP_OWNER_STATE_V1 - antes cogia el primer owner de
-    // agent-settings, lo cual en multi-tenant hace que todos los SOPs se
-// evalen bajo el mismo owner (el primero que aparezca). Ahora, si el
-// SOP lleva owner en su state (porque se provision con uno), se usa
-    // ese. Si no, se cae al comportamiento previo para no romper single-tenant.
-    const ownerFromState = (sop as unknown as { state?: { owner?: string } }).state?.owner;
-    if (typeof ownerFromState === "string" && ownerFromState.length > 0) {
-      return ownerFromState;
-    }
-    const first = await this.db.scan<{ id: string }>("agent-settings", 1);
-    return first[0]?.owner;
-  }
-  /**
    * KERNEL_PROMOTE_PERSIST_V1 - escribe los destinos "memory" de un PromotionResult.
    *
    * El kernel ya escribe audit internamente. Business graph se escribe desde
@@ -2483,174 +2436,91 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
   }
   // MAINTAIN_TENANT_CURSOR_V1 - devuelve tenants activos.
   private async collectActiveTenants(): Promise<string[]> {
-    // COLLECT_TENANTS_VIA_MEMBERSHIP_V1 - antes escaneaba agent-settings
-    // (hasta 2000 filas) y resolvia el tenant uno a uno. Con 5000 owners,
-    // se leian 2000 y se ignoraban 3000. Ahora leemos directamente de
-    // tenant-membership, que tiene una fila por tenant y es O(tenants).
-    const set = new Set<string>();
-    try {
-// COLLECT_TENANTS_PREFIX_V1 usa scanByOwnerPrefix si el store lo
-// soporta. En TenantScopedStore, el scan peela el prefijo, as
-      // el owner que devuelve ya es el tenantId limpio.
-      // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
-      const tenantScoped = this.db as unknown as {
-        allTenantPrefixes?: () => string[];
-      };
-      if (typeof tenantScoped.allTenantPrefixes === "function") {
-        for (const prefix of tenantScoped.allTenantPrefixes()) {
-          set.add(prefix);
-          if (set.size >= 1000) break;
-        }
-      }
-      const rows = await this.db.scan<{ tenantId?: string }>("tenant-membership", 5000);
-      for (const { value } of rows) {
-        if (typeof value.tenantId === "string" && value.tenantId.length > 0) {
-          set.add(value.tenantId);
-        }
-      }
-    } catch {
-      // Fallback al comportamiento previo si tenant-membership no existe.
-      for (const { owner } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
-        const tenantId = await this.tenantService?.tenantIdFor(owner) ?? "default";
-        set.add(tenantId);
-        if (set.size >= 500) break;
+    const tenants = new Set<string>();
+    for (const kind of ["user-tenants", "tenant-membership"]) {
+      for (const { value } of await this.db.scan<{ tenantId?: string }>(kind, 5000)) {
+        if (value.tenantId && !value.tenantId.includes(":")) tenants.add(value.tenantId);
       }
     }
-    if (set.size === 0) set.add("default");
-    return [...set];
+    if (this.db instanceof TenantScopedStore) {
+      const settings = await this.db.scan<{ id: string }>("agent-settings", 5000);
+      for (const { tenantId } of settings) {
+        if (tenantId) tenants.add(tenantId);
+      }
+    }
+    return tenants.size ? [...tenants].sort() : ["default"];
   }
 
-  // SERVICE_ALERTS_V1 - genera notificaciones cuando un tenant supera umbrales.
   private async checkTenantAlerts(tenantId: string): Promise<void> {
-    // CHECK_TENANT_ALERTS_OWNER_FIX_V1 - antes `owner = tenantId`, lo cual
-    // mezclaba conceptos: notify escribia bajo el tenantId como si fuera
-    // owner. Ahora notificamos a cada owner del tenant individualmente. El
-    // scan de owners se reutiliza y la alerta va a cada uno (los owners
-    // son los que reciben notificaciones en la app).
+    if (!(this.db instanceof TenantScopedStore)) return;
+    const db = this.db;
     const now = Date.now();
-    const failed = await this.db.scanByStatus<AgentTask>("tasks", ["failed"], 200);
-    const owners: string[] = [];
-    for (const { owner: o } of await this.db.scan<{ id: string }>("agent-settings", 500)) {
-      const oTenant = await this.tenantService?.tenantIdFor(o) ?? "default";
-      if (oTenant === tenantId) owners.push(o);
-      if (owners.length >= 50) break;
-    }
-    const myFailed = failed.filter((r) => owners.includes(r.owner));
-    const recentFailed = myFailed.filter(
-      (r) => now - Date.parse(r.value.updatedAt) < 3600000,
-    );
-    if (recentFailed.length >= 10) {
-      // Avisamos a cada owner del tenant por separado.
-      for (const targetOwner of owners) {
+    const scope = { tenantId, actorId: "system" };
+    await runInTenantScope(scope, async () => {
+      const failed = await db.scanByStatus<AgentTask>("tasks", ["failed"], 200);
+      const recentFailed = failed.filter(({ owner, value }) =>
+        this.taskIdentity(owner, value, tenantId) && now - Date.parse(value.updatedAt) < 3600000);
+      if (recentFailed.length < 10) return;
+      for (const { owner } of await db.scanByPrefix("agent-settings", tenantId, 50)) {
         await this.notify(
-          targetOwner,
+          owner,
           "Muchas tareas fallidas",
-`${recentFailed.length} tareas fallidas en tu tenant en laltima hora.`,
+          `${recentFailed.length} tareas fallidas en tu tenant en la última hora.`,
           undefined,
-          `alert-failed:${tenantId}:${targetOwner}:${Math.floor(now / 3600000)}`,
+          `alert-failed:${tenantId}:${owner}:${Math.floor(now / 3600000)}`,
         ).catch(() => {});
       }
-    }
+    });
   }
 
-  // MAINTAIN_TENANT_REAL_V1 - resuelve owners del tenant y pagina por cada uno.
   private async maintainTenant(tenantId: string): Promise<void> {
-// MAINTAIN_TENANT_PREFIX_V1 usa scanByPrefix si el store lo tiene.
-    // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
-    const owners: string[] = [];
-    const withPrefix = this.db as unknown as {
-      scanByPrefix?: <T>(
-        kind: string,
-        tenantId: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: T }[]>;
-    };
-    const rows =
-      typeof withPrefix.scanByPrefix === "function"
-        ? await withPrefix.scanByPrefix<{ id: string }>("agent-settings", tenantId, 50)
-        : await this.db.scan<{ id: string }>("agent-settings", 500).then((all) =>
-            all.filter((r) => r.owner.startsWith(`${tenantId}:`) || r.owner === tenantId),
-          );
-    for (const { owner } of rows) {
-      const ownerTenant = await this.tenantService?.tenantIdFor(owner) ?? "default";
-      if (ownerTenant === tenantId) owners.push(owner);
-      if (owners.length >= 50) break;
-    }
-    for (const owner of owners) {
-      await this.maintainOwner(owner).catch((error) =>
+    const settings = this.db instanceof TenantScopedStore
+      ? await this.db.scanByPrefix<{ id: string }>("agent-settings", tenantId, 50)
+      : (await this.db.scan<{ id: string }>("agent-settings", 500))
+        .filter((row) => row.owner === tenantId);
+    for (const { owner } of settings) {
+      await this.maintainOwner(tenantId, owner).catch((error) =>
         backgroundFailure("maintain owner " + owner, error),
       );
     }
   }
 
-  // MAINTAIN_TENANT_REAL_V1 - pagina tareas terminales por owner.
-  // MAINTAIN_CURSOR_KIND_FIX_V1 - antes se guardaba el cursor bajo "system"
-  // con un campo `id2` para no chocar con el `id` del record. Al leer,
-  // `cursor.id` devolvia la cursorKey, no el id real del ultimo record, y
-  // el cursor keyset no avanzaba: cada pasada volvia a empezar del mismo
-  // sitio. Ahora vive en su propio kind "maintain-cursor" con su id natural.
-  private async maintainOwner(owner: string): Promise<void> {
+  private async maintainOwner(tenantId: string, owner: string): Promise<void> {
     const cursorKey = "maintain-owner";
-    const cursor = await this.db.get<{ lastUpdatedAt: string; lastId: string }>(
-      owner,
-      "maintain-cursor",
-      cursorKey,
-    );
-    const page = await this.db.scanByStatusWithCursor<AgentTask>(
-      "tasks",
-      ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
-      200,
-      cursor?.lastUpdatedAt,
-      cursor?.lastId,
-    );
-    for (const record of page) {
-      await this.publishOutcome(record.owner, record.value).catch((error) =>
-        backgroundFailure("publish outcome " + record.value.id, error),
-      );
-    }
-    const last = page[page.length - 1];
-    if (last) {
-      await this.db.put(owner, "maintain-cursor", {
-        id: cursorKey,
-        lastUpdatedAt: last.updatedAt,
-        lastId: last.id,
-      });
-    }
-  }
+    const statuses = ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"];
+    const readPage = async () => {
+      if (this.db instanceof TenantScopedStore) {
+        const cursor = await this.db.getInTenant<{ updatedAt: string; taskId: string }>(
+          tenantId, owner, "maintain-cursor", cursorKey,
+        );
+        return this.db.scanOwnerByStatus<AgentTask>(
+          tenantId, owner, "tasks", statuses, 200,
+          cursor?.taskId ? { updatedAt: cursor.updatedAt, id: cursor.taskId } : undefined,
+        );
+      }
+      const rows = await this.db.scanByStatusWithCursor<AgentTask>("tasks", statuses, 200);
+      return rows.filter((row) => row.owner === owner)
+        .map((row) => ({ ...row, storageId: row.id, tenantId }));
+    };
 
-  private async maintainTenantLegacy(tenantId: string): Promise<void> {
-    const owner = tenantId;
-    const cursorKey = `maintain-cursor-${tenantId}`;
-    const cursor = await this.db.get<{ updatedAt: string; id: string }>(
-      "system",
-      "maintenance",
-      cursorKey,
-    );
-    const page = await this.db.scanByStatusWithCursor<AgentTask>(
-      "tasks",
-      ["succeeded", "failed", "waiting_input", "waiting_approval", "scheduled"],
-      200,
-      cursor?.updatedAt,
-      cursor?.id,
-    );
+    const page = await readPage();
     for (const record of page) {
-      await this.publishOutcome(record.owner, record.value).catch((error) =>
-        backgroundFailure(`publish outcome ${record.value.id}`, error),
-      );
+      await this.withTaskRecord(record, () => this.publishOutcome(owner, record.value));
     }
-    const last = page[page.length - 1];
-    if (last) {
-      await this.db.put("system", "maintenance", {
-        id: cursorKey,
-        updatedAt: last.updatedAt,
-        id2: last.id,
+    const last = page.at(-1);
+    if (last && this.db instanceof TenantScopedStore) {
+      await this.db.putInTenant(tenantId, owner, "maintain-cursor", {
+        id: cursorKey, updatedAt: last.updatedAt, taskId: last.storageId,
       });
     }
-    void owner;
   }
 
   private async publishOutcome(owner: string, saved: AgentTask) {
+    const scope = currentTenantScope();
+    const identity = this.taskIdentity(owner, saved, scope?.tenantId);
+    if (!scope || !identity || identity.actorId !== scope.actorId) return;
     const task = await this.getTask(owner, saved.id);
+    if (task.id !== saved.id || this.taskIdentity(owner, task, scope.tenantId)?.actorId !== scope.actorId) return;
     const bus = this.bus;
     if (bus) {
       const src = { kind: "task" as const, id: task.id };

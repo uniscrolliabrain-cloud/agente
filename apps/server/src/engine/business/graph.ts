@@ -9,6 +9,7 @@ import {
   businessRelationSchema,
 } from "../../../../../packages/domain/src/business.ts";
 import type { Store } from "../../db.ts";
+import type { TenantScopedStore } from "../../db-tenant.ts";
 import { AppError } from "../../errors.ts";
 import type { EventBus } from "../events/index.ts";
 import type { StateMachineRegistry } from "../state-machines.ts";
@@ -53,7 +54,7 @@ export interface Neighborhood {
 
 export class BusinessGraph {
   constructor(
-    private readonly db: Store,
+    private readonly db: Store | TenantScopedStore,
     private readonly bus?: EventBus,
     private readonly stateMachines?: StateMachineRegistry,
   ) {}

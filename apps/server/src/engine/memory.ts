@@ -4,7 +4,6 @@ import { createHash } from "node:crypto";
 import type { AgentMemory, MemoryCategory, Project } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
-import { embed } from "./embeddings.ts";
 import type { RagHit, RagService } from "./rag.ts";
 
 const DEFAULT_RAG_LIMIT = 5;
@@ -269,7 +268,7 @@ export class MemoryService {
     let fixed = 0;
     const batch = missing.slice(0, 50);
     for (const chunk of batch) {
-      const vec = await embed(chunk.text);
+      const vec = await this.rag.embedForOwner(owner, chunk.text);
       if (vec) {
         await this.db.put(owner, "rag-chunks", { ...chunk, embedding: vec });
         fixed += 1;

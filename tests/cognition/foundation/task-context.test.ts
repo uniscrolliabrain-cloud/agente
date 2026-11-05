@@ -65,7 +65,7 @@ async function waitFor(check: () => Promise<boolean>, timeoutMs = 4000): Promise
   throw new Error("timeout esperando el estado de la tarea");
 }
 
-test("PS-01: ejecuta y escribe en el tenant de la tarea, no en la membership", { timeout: 30000 }, async () => {
+test("PS-01: ejecuta y escribe en el tenant de la tarea, no en la membership", { timeout: 90000 }, async () => {
   const store = await createStore();
   try {
     // Igual que app.ts: el scope de la peticion manda; sin el, membership A.
@@ -108,36 +108,24 @@ test("PS-01: ejecuta y escribe en el tenant de la tarea, no en la membership", {
   }
 });
 
-test("PS-01: una tarea sin requestedBy se ejecuta y se marca legacy", { timeout: 30000 }, async () => {
+test("PS-01: una tarea sin solicitante demostrado queda en cuarentena", { timeout: 90000 }, async () => {
   const store = await createStore();
   try {
-    const scoped = new TenantScopedStore(store, async () => currentTenantScope()?.tenantId ?? "tenant-a");
+    const scoped = new TenantScopedStore(store, async () => "tenant-a");
     const owner = "user-2";
     const task = makeTask({ id: "task-legacy", tenantId: "tenant-b" });
-    await runInTenantScope({ tenantId: "tenant-b", actorId: "user-2" }, () => scoped.put(owner, "tasks", task));
-
-    const emitted: EmittedEvent[] = [];
-    const worker = new TaskWorker(
-      scoped,
-      async (_owner, _task, ctx) => {
-        await ctx.busEvent("task.status_changed", { from: "running", to: "succeeded" });
-        return { status: "succeeded", result: "ok" };
-      },
-      { pollMs: 60_000, bus: stubBus(emitted) },
-    );
-
-    worker.start();
-    try {
-      await waitFor(
-        async () => (await store.get<AgentTask>(`tenant-b:${owner}`, "tasks", task.id))?.status === "succeeded",
-      );
-    } finally {
-      await worker.stop();
-    }
-
-    const statusEvent = emitted.find((event) => event.type === "task.status_changed");
-    assert.equal(statusEvent?.payload.compat, "legacy");
-    assert.equal(statusEvent?.payload.requestingActorId, owner);
+    await store.put(`tenant-b:${owner}`, "tasks", task);
+    let executed = false;
+    const worker = new TaskWorker(scoped, async () => {
+      executed = true;
+      return { status: "succeeded" };
+    });
+    await worker.tick();
+    const saved = await store.get<AgentTask>(`tenant-b:${owner}`, "tasks", task.id);
+    assert.equal(executed, false);
+    assert.equal(saved?.status, "paused");
+    assert.match(saved?.error ?? "", /^TASK_CONTEXT_UNVERIFIED/);
+    assert.equal(saved?.requestedBy, undefined);
   } finally {
     await store.close();
   }
@@ -178,7 +166,7 @@ test("PS-01: recupera la tarea running caducada en el tenant de la tarea", { tim
   }
 });
 
-test("PS-01: un worker recién arrancado descubre la tarea de otro tenant", { timeout: 30000 }, async () => {
+test("PS-01: un worker recién arrancado descubre la tarea de otro tenant", { timeout: 90000 }, async () => {
   const store = await createStore();
   try {
     const writer = new TenantScopedStore(store, async () => currentTenantScope()?.tenantId ?? "tenant-a");

@@ -165,7 +165,7 @@ export async function createApp(
   const { SkillMarketplace } = await import("./engine/skills/marketplace.ts");
   const { MemoryService } = await import("./engine/memory.ts");
   const { StateMachineRegistry } = await import("./engine/state-machines.ts");
-  const graph = new BusinessGraph(db, bus);
+  const graph = new BusinessGraph(tdb, bus);
   const truth = new BusinessTruth(graph);
   // policy ya se creo arriba (POLICY_EARLY_V1).
   const stateMachine = new StateMachineEngine(bus, {
@@ -180,8 +180,8 @@ export async function createApp(
   runtimeSweepTimer.unref?.();
   const workspaceRegistry = new WorkspaceRegistry();
   const marketplace = new SkillMarketplace(db);
-  const memory = new MemoryService(db, rag);
-  const context = new ContextEngine(db, graph, memory, bus);
+  const memory = new MemoryService(tdb, rag);
+  const context = new ContextEngine(tdb, graph, memory, bus);
   const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   // TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1 — computer recibe tenantService + limiter.
   const computer = new ComputerService(db, config, options.docker, tenantService, tenantLimiterShared);
@@ -307,7 +307,7 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, memory, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
     // WS_ENGINE_DISPATCH_V1
   );
   // APP_WORKSPACE_CAPABILITIES_WIRE_V1 - registra las capabilities de workspaces en agent.capabilities.
@@ -368,9 +368,14 @@ export async function createApp(
    * carga del workspace sin coste repetido.
    */
   const ensureOwnerWorkspace = async (owner: string) => {
-    await workspace.ensureSample(owner, actions);
-    await agent.ensure(owner);
-    if (config.mode === "sample") await agent.refreshIdeas(owner);
+    const initialize = async () => {
+      await workspace.ensureSample(owner, actions);
+      await agent.ensure(owner);
+      if (config.mode === "sample") await agent.refreshIdeas(owner);
+    };
+    if (currentTenantScope()) return initialize();
+    const tenantId = await tenantService.tenantIdFor(owner);
+    return runInTenantScope({ tenantId, actorId: owner }, initialize);
   };
   // REQUEST_LOGGER_WIRE_V1
   // Ver docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
@@ -483,7 +488,7 @@ app.get("/api/health", async (c) => {
       checks.database = false;
     }
     try {
-      await bus.emit("system", "system.startup", { kind: "system", id: "health" }, { mode: config.mode });
+      await bus.emit("system", "system.startup", { kind: "system", id: "health" }, { mode: config.mode }, { tenantId: "system" });
       checks.bus = true;
     } catch {
       checks.bus = false;
@@ -686,7 +691,7 @@ app.post("/api/billing/customer", async (c) => {
   app.route("/api/agent", agentRoutes(agent, { pdp, fieldFilter }));
   app.route("/api/events", eventsRoutes(bus));
   app.route("/api/skills", skillsRoutes(db));
-  app.route("/api/sops", sopRoutes(db, agent));
+  app.route("/api/sops", sopRoutes(tdb, agent));
   app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }, bus));
   // APP_SIGNUP_ROUTES_V1 - endpoints publicos de signup y verify.
   {

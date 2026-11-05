@@ -9,7 +9,7 @@ export function startStateDeniedConsumer(
   db: Store,
 ): { stop(): void } {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       if (event.type !== "state.transition_denied") return;
       const p = event.payload as Record<string, unknown>;
       logWarn("state.transition_denied", {

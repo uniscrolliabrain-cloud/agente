@@ -19,6 +19,9 @@ const base = {
   projectId: z.string().max(200).optional(),
   clientId: z.string().max(200).optional(),
   roleId: z.string().max(200).optional(),
+  requestingActorId: z.string().max(200).optional(),
+  actorId: z.string().max(200).optional(),
+  compat: z.enum(["real", "legacy"]).optional(),
 };
 
 export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {

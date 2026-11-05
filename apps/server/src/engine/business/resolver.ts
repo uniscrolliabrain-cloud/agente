@@ -14,7 +14,7 @@ function normalize(value: string): string {
 }
 
 export class EntityResolver {
-  constructor(private readonly db: Store) {}
+  constructor(private readonly db: Pick<Store, "list">) {}
 
   async findCandidates(
     tenantId: string,

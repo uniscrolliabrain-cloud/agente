@@ -31,7 +31,7 @@ export function startAuditConsumer(
   db: Store,
 ): AuditConsumerHandle {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       // EVENTS_CONSUMERS_AUDIT_SKIP_KERNEL_V1
       if (!AUDITED_TYPES.has(event.type)) return;
       // Escritura best-effort: no bloquea el bus.

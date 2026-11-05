@@ -105,7 +105,7 @@ export function authRoutes(
       // AUTH_LOGIN_TENANT_CONTEXT_V1
       await bus?.emit("system", "auth.login_failed", { kind: "auth", id: "login" }, {
         email: body.email.toLowerCase().trim().slice(0, 300),
-      });
+      }, { tenantId: "system" });
       throw new AppError("Email o contrasena incorrectos", 401);
     }
     ipLimiter.reset(keys[0]);
@@ -114,7 +114,7 @@ export function authRoutes(
     const token = randomBytes(32).toString("base64url");
     await bus?.emit("system", "auth.login", { kind: "auth", id: user.id }, {
       userId: user.id,
-    });
+    }, { tenantId: "system" });
     await db.put("system", "sessions", {
       id: digest(token),
       owner: user.id,

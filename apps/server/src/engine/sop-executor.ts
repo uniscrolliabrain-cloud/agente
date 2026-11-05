@@ -12,9 +12,11 @@ import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
 import { sopSchema, type SOP, type SOPStep } from "../../../../packages/domain/src/sop.ts";
 import { AppError } from "../errors.ts";
-import { modelChain, runWithModelFallback } from "./model-chain.ts";
+import { currentTenantScope } from "../tenant-scope.ts";
+import { readTaskExecutionContext } from "../../../../packages/domain/src/agent.ts";
+import { runWithModelFallback } from "./model-chain.ts";
 import type { AgentService } from "./service.ts";
-import { generateText } from "./model.ts";
+import { resolveTaskModels } from "./model.ts";
 import { LostLeaseError, type TaskContext } from "./worker.ts";
 import type { EventBus } from "./events/index.ts";
 import type { BusinessGraph } from "./business/graph.ts";
@@ -82,13 +84,14 @@ export class SOPExecutor {
     if (!kernel) return undefined;
     try {
       const { kernelContextSchema } = await import("../kernel/index.ts");
-      const tenantId = this.service.tenantService
-        ? await this.service.tenantService.tenantIdFor(owner)
-        : "default";
+      const roleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
+      const tenantId = task.tenantId;
       const ctx = kernelContextSchema.parse({
         tenantId,
         owner,
         role: "agent",
+        actorId: roleId ?? task.assignedTo ?? owner,
+        ...(roleId ? { personaId: roleId } : {}),
         requestId: `sop:${task.id}`,
         correlationId: task.id,
       });
@@ -167,12 +170,22 @@ export class SOPExecutor {
   }
 
   async execute(owner: string, initial: AgentTask, ctx: TaskContext): Promise<Partial<AgentTask>> {
+    const identity = readTaskExecutionContext(owner, initial);
+    const scope = currentTenantScope();
+    if (!identity || identity.tenantId !== scope?.tenantId || identity.actorId !== scope?.actorId) {
+      throw new AppError("TASK_CONTEXT_UNVERIFIED: SOP requires validated task scope", 403);
+    }
     let task = initial;
     const sopId = String(task.state.sopId ?? task.input.sopId ?? "");
     if (!sopId) throw new AppError("SOP task is missing state.sopId", 422);
     const raw = await this.service.db.get(owner, "sops", sopId);
     if (!raw) throw new AppError(`SOP not found: ${sopId}`, 404);
     const sop = sopSchema.parse(raw);
+    if (typeof task.state.roleId === "string") {
+      const role = await this.service.requireTaskRole(owner, task.state.roleId, sop.id);
+      const denied = sop.steps.find((step) => role.allowedTools?.length && !role.allowedTools.includes(step.tool));
+      if (denied) throw new AppError(`Tool ${denied.tool} not allowed by role ${role.id}`, 403);
+    }
     // SOP_EXECUTOR_APPROVAL_RESULT_V1
     // SOP_EXECUTOR_THOUGHT_NONFATAL_V1
     // SOP_THOUGHTS_V1 - abrir turno del SOP para que el kernel vea la ejecucion.
@@ -535,7 +548,7 @@ export class SOPExecutor {
               agentActor({
                 // SOP_ACTOR_TENANT_V1 - el tenant sale de la tarea; runStep no lo recibe.
                 tenantId: task.tenantId,
-                actorId: owner,
+                actorId: role.id,
                 roleId: role.id,
                 name: role.name,
               }),
@@ -705,7 +718,7 @@ export class SOPExecutor {
         // Step params may override the interpolated prompt, but only with a real string.
         const override = typeof params.instruction === "string" ? params.instruction : undefined;
         const instruction = String(override ?? (prompt || step.title));
-        return this.generateWithModel(owner, instruction, {
+        return this.generateWithModel(owner, task, instruction, {
           sop: { id: sop.id, name: sop.name, category: sop.category },
           step: { id: step.id, title: step.title },
           task: { id: task.id, title: task.title, prompt: task.prompt, input: task.input },
@@ -723,11 +736,12 @@ export class SOPExecutor {
    */
   private async generateWithModel(
     owner: string,
+    task: AgentTask,
     prompt: string,
     context: Record<string, unknown>,
   ): Promise<string> {
-    const config = this.service.config;
-    if (!config.model)
+    const taskModels = await resolveTaskModels(this.service, owner, task);
+    if (!taskModels.configured)
       throw new AppError(
         "llm_generate requires a configured model. Set MODEL and its provider key on the server, then run this SOP again.",
         503,
@@ -752,10 +766,11 @@ export class SOPExecutor {
       forwardedProps: {},
     };
     const run = runWithModelFallback(
-      modelChain(config),
+      taskModels.chain,
       (model) =>
         new BuiltInAgent({
           model,
+          apiKey: taskModels.keyFor(model),
           maxSteps: 1,
           maxRetries: 0,
           tools: [],

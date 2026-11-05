@@ -3,7 +3,7 @@
 // EVENTBUS_WORKER_V1
 import { randomUUID } from "node:crypto";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
-import { taskExecutionContextSchema, type TaskExecutionContext, canTransitionTask } from "../../../../packages/domain/src/agent.ts";
+import { readTaskExecutionContext, taskExecutionContextSchema, type TaskExecutionContext, canTransitionTask } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import type { TenantRecord, TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
@@ -176,13 +176,9 @@ export class TaskWorker {
     if (!("scanBackgroundByStatus" in this.db) && !snapshot) {
       throw new Error("unscoped storage requires an explicit executionContext");
     }
-    const context = taskExecutionContextSchema.parse(snapshot ?? {
-      tenantId: task.tenantId, owner: record.owner, actorId: task.requestedBy,
-    });
-    if (!context.tenantId.trim() || context.tenantId.includes(":") || !context.owner.trim() || !context.actorId.trim() ||
-      context.owner !== record.owner || context.tenantId !== task.tenantId ||
-      (task.requestedBy !== undefined && task.requestedBy !== context.actorId) ||
-      ("scanBackgroundByStatus" in this.db && (!record.tenantId || record.tenantId !== context.tenantId))) {
+    const context = readTaskExecutionContext(record.owner, task);
+    if (!context || (record.storageId !== undefined && record.storageId !== task.id) ||
+      ("scanBackgroundByStatus" in this.db && record.tenantId !== context.tenantId)) {
       throw new Error("task identity does not match its physical storage origin");
     }
     return context;
@@ -275,6 +271,9 @@ export class TaskWorker {
     const identityExpected = {
       tenantId: context.tenantId,
       ...(previous.requestedBy !== undefined ? { requestedBy: previous.requestedBy } : {}),
+      ...(previous.assignedTo !== undefined ? { assignedTo: previous.assignedTo } : {}),
+      ...(previous.assignedBy !== undefined ? { assignedBy: previous.assignedBy } : {}),
+      ...(previous.state.roleId !== undefined ? { state: { roleId: previous.state.roleId } } : {}),
       ...(previous.executionContext !== undefined ? { executionContext: structuredClone(previous.executionContext) } : {}),
     };
     if (this.stopping) return;
@@ -353,6 +352,8 @@ export class TaskWorker {
       try {
         const latestContext = this.contextFor({ ...record, value: latest });
         if (latestContext.actorId !== context.actorId || latest.requestedBy !== originalRequester ||
+          latest.assignedTo !== previous.assignedTo || latest.assignedBy !== previous.assignedBy ||
+          latest.state.roleId !== previous.state.roleId ||
           Boolean(latest.executionContext) !== Boolean(originalSnapshot)) throw new LostLeaseError();
       } catch { throw new LostLeaseError(); }
     };
@@ -363,10 +364,19 @@ export class TaskWorker {
       // HEARTBEAT_ALWAYS_INVALIDATE_V1
     };
     const assertIdentity = (patch: Partial<AgentTask>) => {
-      for (const field of ["id", "tenantId", "requestedBy"] as const) {
-        if (Object.prototype.hasOwnProperty.call(patch, field) && patch[field] !== ({ id: taskId, tenantId: context.tenantId, requestedBy: originalRequester })[field]) {
+      for (const field of ["id", "tenantId", "requestedBy", "assignedTo", "assignedBy"] as const) {
+        if (Object.hasOwn(patch, field) && patch[field] !== previous[field]) {
           throw new Error("TASK_CONTEXT_IMMUTABLE: " + field);
         }
+      }
+      if (Object.hasOwn(patch, "state") && (
+        !patch.state || patch.state.roleId !== previous.state.roleId ||
+        (patch.state.sopId !== previous.state.sopId && patch.state.sopId !== previous.input.sopId)
+      )) {
+        throw new Error("TASK_CONTEXT_IMMUTABLE: role or SOP");
+      }
+      if (Object.hasOwn(patch, "leaseId") || Object.hasOwn(patch, "leaseUntil")) {
+        throw new Error("TASK_CONTEXT_IMMUTABLE: lease");
       }
       if (Object.prototype.hasOwnProperty.call(patch, "executionContext")) {
         const parsed = taskExecutionContextSchema.safeParse(patch.executionContext);
@@ -376,7 +386,7 @@ export class TaskWorker {
         }
       }
     };
-    const checkpoint = async (patch: Partial<AgentTask>) => {
+    const checkpoint = async (patch: Partial<AgentTask>, finish = false) => {
       assertIdentity(patch);
       if (controller.signal.aborted) throw new LostLeaseError();
       const next = await this.db.compareAndSwap<AgentTask>(
@@ -384,7 +394,11 @@ export class TaskWorker {
         "tasks",
         taskId,
         { leaseId, status: "running", ...identityExpected },
-        { ...patch, updatedAt: new Date(this.now()).toISOString() },
+        {
+          ...patch,
+          ...(finish ? { leaseId: null, leaseUntil: null } : {}),
+          updatedAt: new Date(this.now()).toISOString(),
+        },
       );
       if (!next) throw new LostLeaseError();
       task = next;
@@ -456,13 +470,14 @@ export class TaskWorker {
       const source: SystemEventSource = { kind: "task", id: taskId };
       // WORKER_REQUESTING_ACTOR_V1 - actorId = executingActorId.
       // B5: fallback a owner se marca como legacy, no identidad demostrada.
-      const executingActorId = (task.assignedTo ?? (task.state as { roleId?: string } | undefined)?.roleId ?? owner);
+      const roleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
+      const executingActorId = roleId ?? task.assignedTo ?? owner;
       // TASK_REQUESTER_ACTOR_V1 - el solicitante es un dato persistido, no
       // assignedTo (que siempre cae a owner y es el ejecutor). compat solo es
       // "real" cuando la tarea trae requestedBy; un fallback se declara legacy.
       const requestingActorId = context.actorId;
       const compat = "real";
-      await bus.emit(owner, type, source, { ...payload, taskId, actorId: executingActorId, requestingActorId, compat }, { tenantId: context.tenantId });
+      await bus.emit(owner, type, source, { ...payload, taskId, roleId, actorId: executingActorId, requestingActorId, compat }, { tenantId: context.tenantId });
     };
     // B105
     // Asi un run se puede trazar a su rol, a su runtime efimero y a la entidad que toco.
@@ -512,7 +527,8 @@ export class TaskWorker {
         result = await this.execute(owner, task, {
           signal: controller.signal,
           guard,
-          checkpoint,
+          checkpoint: (patch) => checkpoint(patch),
+
           event,
           busEvent,
         });
@@ -523,13 +539,11 @@ export class TaskWorker {
       const durationMs = Date.now() - runStartedAt;
       await checkpoint({
         ...result,
-        leaseId: null,
-        leaseUntil: null,
         state: {
           ...((result.state as Record<string, unknown> | undefined) ?? task.state ?? {}),
           lastRunDurationMs: durationMs,
         },
-      });
+      }, true);
       const finishMeta: { id: string } & Record<string, unknown> = {
         id: leaseId,
         taskId,
@@ -583,9 +597,14 @@ export class TaskWorker {
         // robo el lease o el estado cambio), no escribimos el run-event. La
         // tarea ya esta en un estado terminal controlado por otro. Cierra #141.
         if (failed) {
-          await event("error", "Task needs attention", detail).catch((error) =>
-            backgroundFailure("record task error", error),
-          );
+          await this.db.put(owner, "run-events", {
+            id: randomUUID(),
+            taskId,
+            date: new Date(this.now()).toISOString(),
+            kind: "error",
+            title: "Task needs attention",
+            detail,
+          }).catch((error) => backgroundFailure("record task error", error));
           // WORKER_DLQ_WIRE_V1
           // Ver: docs/audits/03-resiliencia/roadmap.md
           try {
@@ -632,7 +651,8 @@ export class TaskWorker {
       // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
       try {
         // WORKER_REQUESTING_ACTOR_V1 - settled recibe executing y requesting.
-        const _execAct = (settled.assignedTo ?? (settled.state as { roleId?: string } | undefined)?.roleId ?? owner);
+        const roleId = typeof settled.state.roleId === "string" ? settled.state.roleId : undefined;
+        const _execAct = roleId ?? settled.assignedTo ?? owner;
         const _reqAct = context.actorId;
         await this.options.settled(owner, settled, { executingActorId: _execAct, requestingActorId: _reqAct });
       } catch (error) {

@@ -7,6 +7,7 @@ import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
 import { backgroundFailure } from "../log.ts";
 import { embed } from "./embeddings.ts";
+import { currentTenantScope } from "../tenant-scope.ts";
 
 const CHUNK_SIZE = Number(process.env.RAG_CHUNK_SIZE ?? "900") || 900;
 const CHUNK_OVERLAP = Number(process.env.RAG_CHUNK_OVERLAP ?? "120") || 120; // FIX_12_6_CHUNK_CONFIG_V1
@@ -181,20 +182,31 @@ export class RagService {
   constructor(
     private readonly db: Store | TenantScopedStore,
     private readonly tenantService?: { tenantIdFor(owner: string): Promise<string> },
-    private readonly configResolver?: { resolve(tenantId: string): Promise<{ embeddings?: { apiKey?: string } }> },
+    private readonly configResolver?: { resolve(tenantId: string): Promise<{ tenantId?: string; embeddings?: { apiKey?: string } }> },
   ) {}
 
   // RAG_TENANT_EMBEDDINGS_V1 - helper: key del tenant o undefined.
-  private async apiKeyFor(owner: string): Promise<string | undefined> {
-    if (!this.tenantService || !this.configResolver) return undefined;
-    try {
-      const tenantId = await this.tenantService.tenantIdFor(owner);
-      const cfg = await this.configResolver.resolve(tenantId);
-      const key = cfg.embeddings?.apiKey?.trim();
-      return key || undefined;
-    } catch {
-      return undefined;
+  private async apiKeyFor(owner: string): Promise<string | undefined | null> {
+    const scope = currentTenantScope();
+    const scoped = "allTenantPrefixes" in this.db;
+    if (scoped && !scope?.tenantId) throw new Error("RAG requires an authorized tenant scope");
+    if (!this.configResolver) {
+      return scoped ? null : undefined;
     }
+    const tenantId = scope?.tenantId ?? await this.tenantService?.tenantIdFor(owner);
+    if (!tenantId?.trim()) throw new Error("RAG tenant context is missing");
+    const cfg = await this.configResolver.resolve(tenantId);
+    if (cfg.tenantId !== undefined && cfg.tenantId !== tenantId) throw new Error("RAG tenant configuration mismatch");
+    const key = cfg.embeddings?.apiKey?.trim();
+    return key || (scoped ? null : undefined);
+  }
+
+  /** select/rawQuery bypass the wrapper's key composition; scope SQL explicitly. */
+  private sqlOwner(owner: string): string {
+    if (!("allTenantPrefixes" in this.db)) return owner;
+    const tenantId = currentTenantScope()?.tenantId;
+    if (!tenantId?.trim()) throw new Error("RAG requires an authorized tenant scope");
+    return `${tenantId}:${owner}`;
   }
 
   /**
@@ -246,7 +258,7 @@ export class RagService {
             AND jsonb_array_length(data->'embedding') = $4 -- FIX_12_11_VECTOR_DIM_V1
           ORDER BY (data->'embedding')::vector <=> $2::vector
           LIMIT $3`,
-        [owner, JSON.stringify(queryVec), limit, VECTOR_DIMENSIONS], // FIX_12_11_VECTOR_DIM_V1
+        [this.sqlOwner(owner), JSON.stringify(queryVec), limit, VECTOR_DIMENSIONS], // FIX_12_11_VECTOR_DIM_V1
       );
       // pgvector devuelve distancia coseno (0 = identico, 2 = opuesto).
       return rows.map((row) => ({ ...row.data, score: 1 - row.distance }));
@@ -267,7 +279,7 @@ export class RagService {
     if (all.length === 0) return { chunks: 0, embedded: 0 };
     const chunks = all.slice(0, maxChunks);
     const apiKey = await this.apiKeyFor(owner);
-    const vectors = await embedTexts(chunks, undefined, apiKey);
+    const vectors = apiKey === null ? chunks.map(() => null) : await embedTexts(chunks, undefined, apiKey);
     let embedded = 0;
     const now = new Date().toISOString();
     for (let i = 0; i < chunks.length; i += 1) {
@@ -287,12 +299,17 @@ export class RagService {
         try {
           await this.db.rawQuery(
             "UPDATE records SET embedding = $1::vector WHERE owner = $2 AND kind = 'rag-chunks' AND id = $3",
-            [`[${vec.join(",")}]`, owner, chunk.id],
+            [`[${vec.join(",")}]`, this.sqlOwner(owner), chunk.id],
           );
         } catch { /* si el update falla, el chunk queda sin embedding nativo */ }
       }
     }
     return { chunks: chunks.length, embedded };
+  }
+
+  async embedForOwner(owner: string, text: string): Promise<number[] | null> {
+    const apiKey = await this.apiKeyFor(owner);
+    return apiKey === null ? null : embed(text, apiKey);
   }
 
   async removeSource(owner: string, sourceId: string) {
@@ -313,7 +330,7 @@ export class RagService {
     options: { sourceId?: string } = {},
   ): Promise<RagHit[]> {
     const apiKey = await this.apiKeyFor(owner);
-    const queryVec = await embed(query, apiKey);
+    const queryVec = apiKey === null ? null : await embed(query, apiKey);
     const queryWords = query
       .toLowerCase()
       .split(/\\W+/)

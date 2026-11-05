@@ -38,7 +38,15 @@ export class EventSubscriberRegistry {
     if (!tenantId.trim() || !owner.trim()) throw new Error("Event subscription requires tenant and owner");
     const scope = currentTenantScope();
     if (scope && scope.tenantId !== tenantId) throw new Error("Event subscription tenant mismatch");
-    const key = JSON.stringify([tenantId, owner]);
+    return this.register(JSON.stringify([tenantId, owner]), onEvent, options);
+  }
+
+  /** Server consumers process events for this owner in every tenant. HTTP uses subscribe. */
+  subscribeInternal(owner: string, onEvent: (event: SystemEvent) => void): SubscriberHandle {
+    return this.register(JSON.stringify([null, owner]), onEvent, {});
+  }
+
+  private register(key: string, onEvent: (event: SystemEvent) => void, options: SubscribeOptions): SubscriberHandle {
     const id = `sub-${++this.nextId}`;
     const sub: Subscriber = {
       id,
@@ -64,9 +72,9 @@ export class EventSubscriberRegistry {
   /** Llamado por EventBus.emit tras persistir. Fire-and-forget. */
   publish(event: SystemEvent): void {
     if (!event.tenantId?.trim() || !event.owner?.trim()) return;
-    const set = this.subscribers.get(JSON.stringify([event.tenantId, event.owner]));
-    if (!set || set.size === 0) return;
-    for (const sub of set) {
+    const scoped = this.subscribers.get(JSON.stringify([event.tenantId, event.owner]));
+    const internal = this.subscribers.get(JSON.stringify([null, event.owner]));
+    for (const sub of [...(scoped ?? []), ...(internal ?? [])]) {
       if (sub.types && !sub.types.has(event.type)) continue;
       try {
         sub.onEvent(event);

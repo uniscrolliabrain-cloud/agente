@@ -1,5 +1,6 @@
 import type { Store } from "../../../db.ts";
 import type { TenantScopedStore } from "../../../db-tenant.ts";
+import { currentTenantScope } from "../../../tenant-scope.ts";
 import type {
   EventAggregate,
   EventFilter,
@@ -48,33 +49,28 @@ export class StoreQuery implements EventQuery {
         ? filter.type
         : [filter.type]
       : undefined;
-    const selectFn = (this.db as unknown as {
-      select?: <T>(sql: string, params: unknown[]) => Promise<T[]>;
-    }).select;
-    // EVENTBUS_RECENT_SQL_V1
-    if (typeof selectFn === "function") {
-      try {
-        const params: unknown[] = [owner, KIND];
-        let sql = "SELECT data FROM records WHERE owner = $1 AND kind = $2";
-        if (filter.since) { params.push(filter.since); sql += ` AND (data->>'emittedAt') >= $${params.length}`; }
-        if (filter.until) { params.push(filter.until); sql += ` AND (data->>'emittedAt') <= $${params.length}`; }
-        if (filter.sourceId) { params.push(filter.sourceId); sql += ` AND (data->'source'->>'id') = $${params.length}`; }
-        if (filter.projectId) { params.push(filter.projectId); sql += ` AND (data->'payload'->>'projectId') = $${params.length}`; }
-        if (types && types.length > 0) {
-          params.push(types);
-          sql += ` AND (data->>'type') = ANY($${params.length}::text[])`;
-        }
-        params.push(limit);
-        sql += ` ORDER BY (data->>'emittedAt') DESC, id DESC LIMIT $${params.length}`;
-        const rows = await selectFn<{ data: SystemEvent }>(sql, params);
-        return rows.map((r) => r.data);
-      } catch {
-        // Fallback al filtrado en memoria si el SQL no esta soportado.
-      }
+    const { storageOwner, tenantId } = this.readScope(owner);
+    try {
+      const params: unknown[] = [storageOwner, KIND, owner];
+      let sql = "SELECT data FROM records WHERE owner = $1 AND kind = $2 AND data->>'owner' = $3";
+      if (tenantId) { params.push(tenantId); sql += ` AND data->>'tenantId' = $${params.length}`; }
+      if (filter.since) { params.push(filter.since); sql += ` AND (data->>'emittedAt') >= $${params.length}`; }
+      if (filter.until) { params.push(filter.until); sql += ` AND (data->>'emittedAt') <= $${params.length}`; }
+      if (filter.sourceId) { params.push(filter.sourceId); sql += ` AND (data->'source'->>'id') = $${params.length}`; }
+      if (filter.projectId) { params.push(filter.projectId); sql += ` AND (data->'payload'->>'projectId') = $${params.length}`; }
+      if (filter.sinceId) { params.push(filter.sinceId); sql += ` AND id > $${params.length}`; }
+      if (types?.length) { params.push(types); sql += ` AND (data->>'type') = ANY($${params.length}::text[])`; }
+      params.push(limit);
+      sql += ` ORDER BY (data->>'emittedAt') DESC, id DESC LIMIT $${params.length}`;
+      const rows = await this.db.select<{ data: SystemEvent }>(sql, params);
+      return rows.map((r) => r.data);
+    } catch {
+      // Some store backends use the bounded in-memory filter below.
     }
     const rows = await this.db.list<SystemEvent>(owner, KIND);
     return rows
       .filter((event) => {
+        if (event.owner !== owner || (tenantId && event.tenantId !== tenantId)) return false;
         if (types && !types.includes(event.type)) return false;
         if (filter.since && event.emittedAt < filter.since) return false;
         if (filter.until && event.emittedAt > filter.until) return false;
@@ -88,6 +84,7 @@ export class StoreQuery implements EventQuery {
   }
 
   async aggregate(owner: string, hours: number): Promise<EventAggregate[]> {
+    const { storageOwner, tenantId } = this.readScope(owner);
     const since = new Date(Date.now() - hours * 3600000).toISOString();
     // BUS_AGGREGATE_SQL_V1 - antes traia 5000 eventos a memoria y contaba en
     // JS. Con miles de eventos por hora, el agregado mentia (se truncaba) y
@@ -99,9 +96,10 @@ export class StoreQuery implements EventQuery {
         `SELECT data->>'type' AS type, count(*)::int AS count
            FROM records
           WHERE owner = $1 AND kind = $2 AND (data->>'emittedAt') >= $3
+            AND data->>'owner' = $4 AND ($5::text IS NULL OR data->>'tenantId' = $5)
           GROUP BY data->>'type'
           ORDER BY count DESC`,
-        [owner, KIND, since],
+        [storageOwner, KIND, since, owner, tenantId ?? null],
       );
       return rows.map((row) => ({ type: row.type as SystemEventType, count: row.count }));
     } catch {
@@ -110,12 +108,18 @@ export class StoreQuery implements EventQuery {
       const rows = await this.db.list<SystemEvent>(owner, KIND, { limit: 5000 });
       const counts = new Map<SystemEventType, number>();
       for (const event of rows) {
-        if (event.emittedAt < since) continue;
+        if (event.owner !== owner || (tenantId && event.tenantId !== tenantId) || event.emittedAt < since) continue;
         counts.set(event.type, (counts.get(event.type) ?? 0) + 1);
       }
       return [...counts]
         .map(([type, count]) => ({ type, count }))
         .sort((a, b) => b.count - a.count);
     }
+  }
+  private readScope(owner: string): { storageOwner: string; tenantId?: string } {
+    const tenantId = currentTenantScope()?.tenantId;
+    if (!("allTenantPrefixes" in this.db)) return { storageOwner: owner, tenantId };
+    if (!tenantId || tenantId.includes(":")) throw new Error("Scoped event queries require an authorized tenant");
+    return { storageOwner: `${tenantId}:${owner}`, tenantId };
   }
 }

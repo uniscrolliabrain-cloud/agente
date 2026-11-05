@@ -78,7 +78,7 @@ const { app, agent, bus } = await createApp(db, config);
     }
   }
 }
-await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mode: config.mode });
+await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mode: config.mode }, { tenantId: "system" });
 // PROCESS_SPLIT_V1 - API no arranca worker si se ejecuta como API-only.
 //   MODO=api: solo HTTP (el worker vive en otro proceso).
 //   MODO=worker: solo worker (ver worker-entry.ts).
@@ -197,14 +197,12 @@ const deferred = new DeferredActions(
   const { startAuditConsumer } = await import("./engine/events/consumers/audit.ts");
   const { startNotificationsConsumer } = await import("./engine/events/consumers/notifications.ts");
   // EVENTS_CONSUMERS_DYNAMIC_OWNERS_V1 - itera owners activos via scan.
-  const ownersWithConsumers = await db
-    .scan<{ tenantId: string }>("tenant-membership", 100)
-    .then((rows) => rows.map((r) => r.value.tenantId).filter((v) => typeof v === "string" && v.length > 0))
-    .catch(() => [] as string[]);
-  if (ownersWithConsumers.length === 0) ownersWithConsumers.push("local-user", "system");
+  const memberships = await db.scan<{ tenantId: string }>("tenant-membership", 100).catch(() => []);
+  const ownersWithConsumers = [...new Set(["local-user", "system", ...memberships.map((row) => row.owner)])];
+  const tenantsWithConsumers = [...new Set(memberships.map((row) => row.value.tenantId).filter(Boolean))];
   const metricsConsumer = startMetricsConsumer(ownersWithConsumers);
   const auditConsumer = startAuditConsumer(ownersWithConsumers, db);
-  const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, db);
+  const notificationsConsumer = startNotificationsConsumer(ownersWithConsumers, agent.db);
 
   // ALERTS_WIRE_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â instancia AlertService, registra las alertas y arranca.
 const { AlertService, LogAlertHandler } = await import("./alerts/service.ts");
@@ -262,12 +260,12 @@ alerts.start();
     const { startKernelNotificationsConsumer } = await import("./kernel/subscribers/notifications-consumer.ts");
     const kMetrics = startKernelMetricsConsumer(ownersWithConsumers);
     const kAudit = startKernelAuditConsumer(ownersWithConsumers, db);
-    const kNotif = startKernelNotificationsConsumer(ownersWithConsumers, db);
+    const kNotif = startKernelNotificationsConsumer(ownersWithConsumers, agent.db);
     // EVENTS_CONSUMERS_WIRE_STATE_V1
     const { startVerificationDisagreementConsumer } = await import("./engine/events/consumers/verification-disagreement.ts");
     const { startStateChangedConsumer } = await import("./engine/events/consumers/state-changed.ts");
     const { startStateDeniedConsumer } = await import("./engine/events/consumers/state-denied.ts");
-    const vdConsumer = startVerificationDisagreementConsumer(ownersWithConsumers, db);
+    const vdConsumer = startVerificationDisagreementConsumer(ownersWithConsumers, agent.db);
     const scConsumer = startStateChangedConsumer(ownersWithConsumers, db);
     const sdConsumer = startStateDeniedConsumer(ownersWithConsumers, db);
     process.on("SIGTERM", () => { vdConsumer.stop(); scConsumer.stop(); sdConsumer.stop(); });
@@ -279,7 +277,7 @@ alerts.start();
         try {
           const { MetaHintsStore } = await import("./engine/feedback/meta-hints-store.ts");
           const store = new MetaHintsStore(db);
-          for (const tenantId of ownersWithConsumers) {
+          for (const tenantId of tenantsWithConsumers) {
             await store.purgeOlderThan(tenantId, 10 * 60 * 1000).catch(() => 0);
           }
         } catch { /* noop */ }

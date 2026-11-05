@@ -30,7 +30,7 @@ export function startKernelThoughtConsumer(
   db: Store,
 ): { stop(): void } {
   const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
+    globalSubscribers.subscribeInternal(owner, (event: SystemEvent) => {
       if (!KERNEL_THOUGHT_TYPES.has(event.type)) return;
       const p = event.payload as Record<string, unknown>;
       const thoughtId = typeof p.thoughtId === "string" ? p.thoughtId : "";
