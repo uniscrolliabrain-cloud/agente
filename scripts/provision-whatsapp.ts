@@ -5,7 +5,7 @@ import { readConfig } from "../apps/server/src/config.ts";
 import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import { provisionWhatsAppConnection } from "../apps/server/src/engine/whatsapp-outbound.ts";
 
-const allowed = new Set(["tenant", "owner", "instance", "base-url", "recipients", "enable", "apply", "help"]);
+const allowed = new Set(["tenant", "owner", "provider", "instance", "base-url", "recipients", "enable", "apply", "help"]);
 const args = new Map<string, string>();
 for (const arg of process.argv.slice(2)) {
   const match = /^--([^=]+)(?:=(.*))?$/.exec(arg);
@@ -13,25 +13,34 @@ for (const arg of process.argv.slice(2)) {
   args.set(match[1], match[2] ?? "true");
 }
 if (args.has("help")) {
-  process.stdout.write("Uso: node --import tsx scripts/provision-whatsapp.ts --tenant=ID --owner=USER_ID --instance=NAME --base-url=https://HOST --recipients=NUMERO,NUMERO [--enable] [--apply]\nSin --apply solo muestra el plan y no abre la base. Credencial: WHATSAPP_PROVISION_API_KEY en entorno; cifrado: TOKEN_ENCRYPTION_KEY. --apply rota la generacion e invalida borradores anteriores. API parado si usa PGlite.\n");
+  process.stdout.write("Uso: node --import tsx scripts/provision-whatsapp.ts --tenant=ID --owner=USER_ID --instance=NAME --base-url=https://HOST --recipients=NUMERO,NUMERO [--provider=evolution|meta] [--enable] [--apply]\nSin --apply solo muestra el plan y no abre la base. Credencial: WHATSAPP_PROVISION_API_KEY en entorno; cifrado: TOKEN_ENCRYPTION_KEY. --apply rota la generacion e invalida borradores anteriores. API parado si usa PGlite.\n");
 } else {
   const tenantId = args.get("tenant") ?? "", owner = args.get("owner") ?? "";
+  const provider = args.get("provider") === "meta" ? "meta" : "evolution";
   const baseUrl = args.get("base-url") ?? "", instance = args.get("instance") ?? "";
   const allowedRecipients = (args.get("recipients") ?? "").split(",").map((v) => v.trim()).filter(Boolean);
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(tenantId) || !owner || owner.includes(":") || !instance || !allowedRecipients.length) {
     throw new Error("Faltan tenant, owner, instancia o destinatarios explicitos");
   }
-  let url: URL;
-  try { url = new URL(baseUrl); } catch { throw new Error("URL de Evolution no valida"); }
-  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) throw new Error("Usa URL HTTPS sin secretos ni query");
+  // En Meta el `instance` es el phone number id y no hay host propio que validar.
+  let url: URL | undefined;
+  if (provider === "evolution") {
+    try { url = new URL(baseUrl); } catch { throw new Error("URL de Evolution no valida"); }
+    if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) throw new Error("Usa URL HTTPS sin secretos ni query");
+  } else if (!/^[0-9]{6,30}$/.test(instance)) {
+    throw new Error("En Meta, --instance debe ser el phone number id numerico");
+  }
   if (allowedRecipients.some((value) => !/^\+?[0-9]{6,20}$/.test(value))) throw new Error("Destinatario no valido");
   if (args.get("apply") !== "true") {
-    process.stdout.write(JSON.stringify({ plan: true, tenantId, owner, instance, baseUrl: url.origin + url.pathname,
+    process.stdout.write(JSON.stringify({ plan: true, tenantId, owner, provider, instance, baseUrl: url ? url.origin + url.pathname : null,
       enabled: args.get("enable") === "true", recipientsCount: allowedRecipients.length,
       membershipVerified: false, note: "No se abrio la base ni se guardo la conexion. --apply rota la generacion." }) + "\n");
   } else {
     const config = readConfig();
-    const apiKey = process.env.WHATSAPP_PROVISION_API_KEY;
+    // Meta y Evolution no comparten formato de credencial: token de Graph vs api key de instancia.
+    const apiKey = provider === "meta"
+      ? process.env.WHATSAPP_TOKEN ?? process.env.WHATSAPP_ACCESS_TOKEN
+      : process.env.WHATSAPP_PROVISION_API_KEY;
     if (!apiKey?.trim() || !config.encryptionKey) throw new Error("Faltan credencial de provisionamiento o clave de cifrado en el entorno");
     const db = await createStore({ dataDir: `${config.dataDir}/postgres`, databaseUrl: config.databaseUrl });
     try {
@@ -41,7 +50,7 @@ if (args.has("help")) {
       }
       const scoped = new TenantScopedStore(db, async () => tenantId);
       const connection = await runInTenantScope({ tenantId, actorId: owner }, () => provisionWhatsAppConnection(scoped,
-        { tenantId, owner, actorId: owner }, { baseUrl, instance, apiKey, enabled: args.get("enable") === "true", allowedRecipients }, config.encryptionKey!));
+        { tenantId, owner, actorId: owner }, { provider, ...(url ? { baseUrl } : {}), instance, apiKey, enabled: args.get("enable") === "true", allowedRecipients }, config.encryptionKey!));
       process.stdout.write(JSON.stringify({ saved: true, tenantId, owner, provider: connection.provider, generation: connection.generation,
         enabled: connection.enabled, recipientsCount: connection.allowedRecipients.length }) + "\n");
     } finally { await db.close(); }

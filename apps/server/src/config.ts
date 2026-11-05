@@ -16,6 +16,25 @@ if (blank(process.env.OPENAI_API_KEY) && !blank(process.env.OPENROUTER_API_KEY))
   process.env.OPENAI_API_KEY = process.env.OPENROUTER_API_KEY?.trim();
   process.env.OPENAI_BASE_URL ??= "https://openrouter.ai/api/v1";
 }
+// ENV_ALIASES_V1 - Doppler publica varios secretos con el nombre del proveedor
+// (WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID) y el repo los lee con el
+// nombre corto. Sin esta traduccion el secreto existe y la app dice que falta.
+// Se normaliza al nombre canonico una sola vez, al importar config, para que
+// todos los lectores posteriores (rutas, worker, scripts) lo vean igual.
+function aliasEnv(target: string, ...sources: string[]): void {
+  if (!blank(process.env[target])) return;
+  for (const source of sources) {
+    if (!blank(process.env[source])) {
+      process.env[target] = process.env[source]!.trim();
+      return;
+    }
+  }
+}
+aliasEnv("WHATSAPP_TOKEN", "WHATSAPP_ACCESS_TOKEN");
+aliasEnv("WHATSAPP_PHONE_ID", "WHATSAPP_PHONE_NUMBER_ID");
+aliasEnv("WHATSAPP_BUSINESS_ACCOUNT_ID", "WHATSAPP_WABA_ID");
+aliasEnv("GEMINI_API_KEY", "GOOGLE_API_KEY");
+aliasEnv("EMAIL_FROM", "RESEND_FROM", "RESEND_FROM_EMAIL");
 
 export interface Config {
   mode: "sample" | "live";
@@ -52,6 +71,21 @@ export interface Config {
   whatsappApiKey?: string;
   whatsappBaseUrl?: string;
   whatsappInstance?: string;
+  // CONFIG_CHANNELS_V1 - canales con credencial propia (email, voz, Meta).
+  // Todos opcionales: sin credencial el adaptador responde 503 honesto y nunca
+  // simula un envio. Los valores llegan por Doppler, no por .env.
+  resendApiKey?: string;
+  emailFrom?: string;
+  vapiApiKey?: string;
+  vapiAssistantId?: string;
+  whatsappMeta: {
+    token?: string;
+    phoneId?: string;
+    businessAccountId?: string;
+    verifyToken?: string;
+    appSecret?: string;
+    graphVersion: string;
+  };
   stripeApiKey?: string;
   backupIntervalHours?: number;
   backupRetentionDays?: number;
@@ -167,6 +201,18 @@ export function readConfig(): Config {
     whatsappApiKey: process.env.WHATSAPP_API_KEY, // o EVOLUTION_API_KEY
     whatsappBaseUrl: process.env.WHATSAPP_BASE_URL, // ej: http://evolution:8080
     whatsappInstance: process.env.WHATSAPP_INSTANCE, // nombre de la instancia Evolution
+    resendApiKey: process.env.RESEND_API_KEY?.trim() || undefined,
+    emailFrom: process.env.EMAIL_FROM?.trim() || undefined,
+    vapiApiKey: process.env.VAPI_API_KEY?.trim() || undefined,
+    vapiAssistantId: process.env.VAPI_ASSISTANT_ID?.trim() || undefined,
+    whatsappMeta: {
+      token: process.env.WHATSAPP_TOKEN?.trim() || undefined,
+      phoneId: process.env.WHATSAPP_PHONE_ID?.trim() || undefined,
+      businessAccountId: process.env.WHATSAPP_BUSINESS_ACCOUNT_ID?.trim() || undefined,
+      verifyToken: process.env.WHATSAPP_VERIFY_TOKEN?.trim() || undefined,
+      appSecret: process.env.WHATSAPP_APP_SECRET?.trim() || undefined,
+      graphVersion: process.env.WHATSAPP_GRAPH_VERSION?.trim() || "v21.0",
+    },
     stripeApiKey: process.env.STRIPE_API_KEY,
     backupIntervalHours: Number(process.env.BACKUP_INTERVAL_HOURS ?? "24") || 0,
     backupRetentionDays: Number(process.env.BACKUP_RETENTION_DAYS ?? "7") || 0,

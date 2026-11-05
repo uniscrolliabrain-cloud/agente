@@ -104,7 +104,9 @@ export async function createApp(
   );
   const auth = await createAuth(db, config),
     files = new Files(tdbEarly, config, auth),
-    google = new GoogleAuth(db, config),
+    // GOOGLE_TENANT_CREDENTIALS_V1 - credenciales por empresa; el state de
+    // OAuth sigue en el store raiz porque el callback no trae sesion.
+    google = new GoogleAuth(tdbEarly, config, db),
     users = new UserService(db),
     // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantServiceEarly + resolver para embeddings por tenant.
   rag = new RagService(tdbEarly, tenantServiceEarly, new EnvTenantConfigResolver()),
@@ -770,6 +772,9 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     app.route("/api/gmb", gmbRoutes(agent));
     const { socialRoutes } = await import("./social-routes.ts");
     app.route("/api/social", socialRoutes(agent));
+    // APP_VOICE_WIRE_V1 - agente de telefono (Vapi) con scope de empresa.
+    const { voiceRoutes } = await import("./voice-routes.ts");
+    app.route("/api/voice", voiceRoutes(agent));
   }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {
