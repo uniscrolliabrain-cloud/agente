@@ -35,8 +35,7 @@ jobs:
           pnpm audit:idempotency
           pnpm audit:contracts
 
-  # CI_WORKER_TYPECHECK_WARN_V1 — worker.ts sigue roto (Copilot lo repara en
-  # otra rama). Este job es warn-only hasta que Copilot commitee el fix.
+    # Use the frozen workspace install for worker dependencies.
   worker:
     name: worker (typecheck)
     runs-on: ubuntu-latest
@@ -46,10 +45,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - working-directory: apps/worker
-        run: npm ci
-      - working-directory: apps/worker
-        run: npm run typecheck
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - run: pnpm --filter @openmuse/browser-worker --fail-if-no-match typecheck
 
   web:
     name: web (typecheck)
