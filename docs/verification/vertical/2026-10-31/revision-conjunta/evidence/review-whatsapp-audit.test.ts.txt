@@ -1,0 +1,64 @@
+import assert from "node:assert/strict";
+import { randomBytes, randomUUID } from "node:crypto";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { after, before, test } from "node:test";
+import { Hono } from "hono";
+import { createStore, type Store } from "../apps/server/src/db.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
+import { runInTenantScope, currentTenantScope } from "../apps/server/src/tenant-scope.ts";
+import { WhatsAppOutbound, provisionWhatsAppConnection, type OutboundIdentity } from "../apps/server/src/engine/whatsapp-outbound.ts";
+import { whatsappRoutes, whatsappWebhookRoutes } from "../apps/server/src/whatsapp-routes.ts";
+import { AppError, OutcomeUnknownError } from "../packages/domain/src/errors.ts";
+
+let db: Store, directory: string;
+const encryptionKey = randomBytes(32).toString("base64");
+const recipient = "34600111222";
+before(async () => { directory = await mkdtemp(join(tmpdir(), "wa-outbound-")); db = await createStore({ dataDir: join(directory, "db") }); });
+after(async () => { await db?.close(); await rm(directory, { recursive: true, force: true }); });
+function deferred<T>() { let resolve!: (v: T) => void; const promise = new Promise<T>((r) => { resolve = r; }); return { promise, resolve }; }
+async function fixture() {
+  const owner = randomUUID();
+  const a: OutboundIdentity = { tenantId: "company-a", owner, actorId: owner };
+  const b: OutboundIdentity = { tenantId: "company-b", owner, actorId: owner };
+  const scoped = new TenantScopedStore(db, async () => { const scope = currentTenantScope(); if (!scope) throw new Error("Missing test scope"); return scope.tenantId; });
+  const run = <T>(identity: OutboundIdentity, fn: () => T) => runInTenantScope({ tenantId: identity.tenantId, actorId: identity.actorId }, fn);
+  let now = new Date(), enabled = true;
+  const calls: Array<{ to: string; text: string; generation: string; apiKey: string }> = [];
+  let send: (to: string, text: string) => Promise<{ id: string; accepted: boolean; to: string }> = async (to) => ({ id: "provider-1", accepted: true, to });
+  const sender = (connection: { generation: string }, apiKey: string) => ({ sendText: async (to: string, text: string) => { calls.push({ to, text, generation: connection.generation, apiKey }); return send(to, text); } });
+  const client = () => new WhatsAppOutbound(scoped, { encryptionKey, enabled, now: () => now, sender });
+  const provision = (identity = a, opts: Partial<Parameters<typeof provisionWhatsAppConnection>[2]> = {}) => run(identity, () => provisionWhatsAppConnection(scoped, identity, {
+    baseUrl: "https://evolution.example.test", instance: identity.tenantId, apiKey: `private-key-${identity.tenantId}`, enabled: true, allowedRecipients: [recipient], ...opts,
+  }, encryptionKey));
+  await provision(a); await provision(b);
+  return { a, b, scoped, run, calls, provision, client, now: () => now,
+    setSend: (fn: typeof send) => { send = fn; }, setEnabled: (value: boolean) => { enabled = value; }, advance: (ms: number) => { now = new Date(now.getTime() + ms); },
+    create: (identity = a, key = "intent-0001", to = recipient, text = "Confirmar cita") => run(identity, () => client().createDraft(identity, { to, text }, key)),
+    approve: (id: string, revision: string, identity = a) => run(identity, () => client().approve(identity, id, revision)),
+    reject: (id: string, revision: string, identity = a) => run(identity, () => client().reject(identity, id, revision)),
+    list: (identity = a) => run(identity, () => client().drafts(identity)),
+    connection: (identity = a) => run(identity, () => scoped.get<Record<string, unknown>>(identity.owner, "whatsapp-connections", "whatsapp")),
+    draft: (id: string, identity = a) => run(identity, () => scoped.get<Record<string, unknown>>(identity.owner, "whatsapp-drafts", id)),
+    operation: (id: string, identity = a) => run(identity, () => scoped.get<Record<string, unknown>>(identity.owner, "whatsapp-outbound-operations", id)),
+  };
+}
+
+test("AUDIT: rotating the channel during reply creation must reject rather than bind the new channel", async () => {
+  const f = await fixture();
+  await f.run(f.a, () => f.scoped.put(f.a.owner, "whatsapp-inbox", { id: "audit-inbox", tenantId: f.a.tenantId, owner: f.a.owner, provider: "evolution", accountId: f.a.tenantId, from: `${recipient}@s.whatsapp.net`, text: "Hola", providerMessageId: "inbound-audit", receivedAt: new Date().toISOString(), status: "queued" }));
+  const original = f.scoped.get.bind(f.scoped); let reads = 0;
+  f.scoped.get = async (...args: Parameters<typeof original>) => {
+    if (args[1] === "whatsapp-connections" && ++reads === 2) await f.provision(f.a, { instance: "other-account" });
+    return original(...args);
+  };
+  await assert.rejects(f.run(f.a, () => f.client().createReply(f.a, "audit-inbox", { text: "Respuesta" }, "audit-reply-key")), /canal|conexion|cambi/i);
+});
+test("AUDIT: owner subscription must not receive another company event", async () => {
+  const { EventSubscriberRegistry } = await import("../apps/server/src/engine/events/subscriber.ts");
+  const registry = new EventSubscriberRegistry(); const received: unknown[]=[];
+  f: { const handle=await runInTenantScope({tenantId:"company-a",actorId:"same-user"},()=>registry.subscribe("same-user",event=>received.push(event)));
+    await runInTenantScope({tenantId:"company-b",actorId:"same-user"},()=>registry.publish({id:"event-b",owner:"same-user",tenantId:"company-b",type:"task.created",payload:{taskId:"secret-b"}} as never)); handle.unsubscribe(); }
+  assert.equal(received.length,0);
+});

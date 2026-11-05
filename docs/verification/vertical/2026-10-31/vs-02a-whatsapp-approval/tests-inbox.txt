@@ -1,0 +1,44 @@
+✔ WhatsApp adapter accepts E.164 digits and sends the exact approved payload once (240.6018ms)
+✔ WhatsApp validation fails before network for invalid numbers, text or missing configuration (6.1781ms)
+✔ transport errors, provider 5xx/408 and invalid confirmations have unknown outcome (16.5048ms)
+✔ provider rejection is definite and its private response body is not exposed (4.1625ms)
+✔ operator provisioning encrypts credentials, restricts URLs and never returns a secret (36372.4389ms)
+✔ draft creation is idempotent, normalizes phone and refuses changed content (189.0405ms)
+✔ concurrent approvals dispatch exactly one attempt and preserve the approved snapshot (1945.3828ms)
+✔ reject and approve race has one durable decision and never rejects an accepted attempt (213.2521ms)
+✔ rejection replay is stable and cannot be undone by approval (182.4493ms)
+✔ one user in two companies has isolated drafts, connection keys and decisions (438.4808ms)
+✔ unknown, copied or missing connection never falls back to the global client (66.7437ms)
+✔ content changes invalidate approval and old terminal ledger defeats a legacy overwrite (273.098ms)
+✔ rotation, disabling, allowlist and expiration block effects before approval (212.7746ms)
+✔ ambiguous transport failure is durable and retry never dispatches again (175.7187ms)
+✔ definite provider rejection becomes failed and also requires a new intent (178.5866ms)
+✔ crash after the effect and before result persistence does not permit another attempt (126.2251ms)
+✔ a persisted dispatch reservation before effect is never silently replayed (136.8592ms)
+✔ legacy drafts are visible but cannot be approved without explicit context and connection (66.1134ms)
+✔ closing and reopening the real Store retains the terminal decision (2604.6728ms)
+✔ HTTP routes require the reviewed revision and explicit authorized tenant (515.6951ms)
+✔ manual reconciliation requires provider evidence, records the actor and never resends (309.8116ms)
+✔ confirmed not sent closes ambiguity but cannot reuse the same approval to retry (193.1737ms)
+✔ credential ciphertext cannot be transplanted between tenants or connection generations (132.7018ms)
+✔ corrupted expiry cannot grant an unbounded approval (111.176ms)
+✔ live HTTP approval uses the exact reviewed revision and remains accepted rather than delivered (399.8594ms)
+✔ HTTP session mode refuses an implicit or ambiguous company (45.0551ms)
+✔ sample HTTP mode cannot activate real outbound even when the flag is present (89.6291ms)
+✔ a connection endpoint changed without rotating its encrypted binding is rejected (103.9254ms)
+✔ explicitly foreign draft metadata is refused rather than rendered as legacy content (61.3128ms)
+✔ outbound identity must match the active execution scope (35.985ms)
+✔ HTTP output refuses a raw unscoped Store even with an authenticated identity (34.85ms)
+✔ reply draft derives recipient and channel from inbox and binds the approved snapshot to its source (363.5376ms)
+✔ reply rejects a caller-supplied recipient and idempotency cannot be reused for another inbox source (186.848ms)
+✔ inbox and reply cannot read another tenant, another channel or an unsupported sender (277.443ms)
+✔ real HTTP ingress to manual reply and approval persists one effect; task execution remains outside this test (468.0462ms)
+✔ an ambiguous attempt retains its original channel after connection rotation (210.7402ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 56404.4494

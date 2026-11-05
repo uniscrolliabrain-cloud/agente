@@ -1,0 +1,6 @@
+import {classifyContract} from "./audits/contracts-criterion.ts";
+import {renderSummary} from "./gate-report.ts";
+const classification=classifyContract("Unused","own.ts",{code:new Map([["own.ts","export interface Unused {}"],["other.ts",'const unrelated = "Unused";']]),harness:new Map()});
+console.log("contractBucketFromStringLiteral="+classification.bucket);
+const report={gate:"audit",startedAt:"synthetic",finishedAt:"synthetic",durationMs:0,git:{branch:"audit",head:"fixture",dirty:0},auditReportDir:"unused",ok:true,failed:[],advisory:["audit:console"],steps:[{name:"audit:console",kind:"audit",blocking:false,command:"fixture",cwd:"fixture",exitCode:1,ok:false,durationMs:0,counters:{},tail:[],logFile:null}]};
+console.log(renderSummary(report as never));

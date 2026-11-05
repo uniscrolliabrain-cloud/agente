@@ -7,7 +7,7 @@ import LiveItem from "./LiveItem";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
-export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace" | "centro-mando";
+export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace" | "centro-mando" | "whatsapp";
 
 interface Props {
   activeView: AppView;
@@ -24,6 +24,7 @@ interface Props {
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "tasks", label: "Tareas", icon: LayoutDashboard },
+  { id: "whatsapp", label: "WhatsApp", icon: MessageSquare },
   { id: "documents", label: "Documentos", icon: Files },
   { id: "memory", label: "Conocimiento", icon: Brain },
   { id: "projects", label: "Proyectos", icon: FolderKanban },

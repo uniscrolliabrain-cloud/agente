@@ -1,0 +1,73 @@
+✔ VS-01: un usuario en dos empresas ejecuta cada tarea en la suya (8819.9257ms)
+✔ VS-01: tras reiniciar, la tarea encolada en B se ejecuta sin trafico de B (5639.7184ms)
+✔ VS-01: una aprobacion pendiente en B se reanuda desde el worker (3496.8799ms)
+{"ts":"2026-10-31T16:50:34.091Z","level":"error","event":"background_failure","phase":"task context quarantine","retryable":false,"error":"Error","message":"1 tarea(s) sin contexto de tenant no se ejecutan: legacy:no-context","stack":"Error: 1 tarea(s) sin contexto de tenant no se ejecutan: legacy:no-context\n    at TaskWorker.tick (C:\\Users\\Alfonso\\Documents\\Codex\\2026-10-27\\co\\work\\agente-freebuff-audit\\apps\\server\\src\\engine\\worker.ts:286:11)\n    at async TestContext.<anonymous> (C:\\Users\\Alfonso\\Documents\\Codex\\2026-10-27\\co\\work\\agente-freebuff-audit\\tests\\vs-01-tenant-runtime.test.ts:191:5)\n    at async Test.run (node:internal/test_runner/test:1332:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:911:7)"}
+✔ VS-01: politica explicita para tareas sin contexto de tenant (3475.7389ms)
+✔ VS-01: una conexion de otra empresa se rechaza (1648.1416ms)
+✖ AUDIT: task without proven requester must not execute as a delegated actor (1617.231ms)
+✖ AUDIT: checkpoint cannot rewrite the persisted tenant (2736.2108ms)
+✖ AUDIT: system event must retain company tenant, not owner (7079.2086ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 5
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38745.4365
+
+✖ failing tests:
+
+test at tests\vs-01-tenant-runtime.test.ts:1:6305
+✖ AUDIT: task without proven requester must not execute as a delegated actor (1617.231ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  1 !== 0
+
+      at TestContext.<anonymous> (C:\Users\Alfonso\Documents\Codex\2026-10-27\co\work\agente-freebuff-audit\tests\vs-01-tenant-runtime.test.ts:270:33)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\vs-01-tenant-runtime.test.ts:1:6807
+✖ AUDIT: checkpoint cannot rewrite the persisted tenant (2736.2108ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+
+  + 'empresa-a'
+  - 'empresa-b'
+             ^
+
+      at TestContext.<anonymous> (C:\Users\Alfonso\Documents\Codex\2026-10-27\co\work\agente-freebuff-audit\tests\vs-01-tenant-runtime.test.ts:279:33)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'empresa-a',
+    expected: 'empresa-b',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests\vs-01-tenant-runtime.test.ts:1:7386
+✖ AUDIT: system event must retain company tenant, not owner (7079.2086ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+    assert.ok(events.every(e=>e.tenantId==="empresa-b"))
+
+      at TestContext.<anonymous> (C:\Users\Alfonso\Documents\Codex\2026-10-27\co\work\agente-freebuff-audit\tests\vs-01-tenant-runtime.test.ts:290:138)
+      at async Test.run (node:internal/test_runner/test:1332:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:911:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

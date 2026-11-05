@@ -2,7 +2,7 @@
  * WhatsApp Business via Evolution API. Si no hay WHATSAPP_API_KEY + WHATSAPP_BASE_URL,
  * cada metodo lanza AppError 503 honesto. Nunca devuelve exito falso.
  */
-import { AppError } from "../../../domain/src/errors.ts";
+import { AppError, OutcomeUnknownError } from "../../../domain/src/errors.ts";
 
 export const WHATSAPP_NOT_CONFIGURED =
   "Falta WHATSAPP_API_KEY o WHATSAPP_BASE_URL. Configura la credencial y la URL de Evolution API en el servidor.";
@@ -55,22 +55,23 @@ export class WhatsAppClient {
         redirect: "error",
       });
     } catch {
-      throw new AppError("No se pudo contactar con Evolution API", 502);
+      throw new OutcomeUnknownError("Evolution no confirmo el resultado; revisa el proveedor antes de reintentar.");
     }
     if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      throw new AppError(`Evolution API respondio ${response.status}: ${text.slice(0, 200)}`, 502);
+      if (response.status >= 500 || response.status === 408) throw new OutcomeUnknownError();
+      throw new AppError("Evolution rechazo la solicitud", 422);
     }
-    return response.json().catch(() => ({}));
+    return response.json().catch(() => { throw new OutcomeUnknownError(); });
   }
 
   async sendText(to: string, text: string, signal?: AbortSignal): Promise<WhatsAppSendResult> {
     const trimmed = to.trim();
-    if (!/^\\+?[0-9]{6,20}$/.test(trimmed)) throw new AppError("Numero de WhatsApp invalido", 422);
+    if (!/^\+?[0-9]{6,20}$/.test(trimmed)) throw new AppError("Numero de WhatsApp invalido", 422);
     if (!text.trim() || text.length > 4000) throw new AppError("Texto vacio o demasiado largo", 422);
     const result = (await this.request("sendText", { number: trimmed, text }, signal)) as {
       key?: { id?: string };
     };
-    return { id: result.key?.id ?? "", accepted: Boolean(result.key?.id), to: trimmed };
+    if (!result || typeof result.key?.id !== "string" || !result.key.id.trim()) throw new OutcomeUnknownError();
+    return { id: result.key.id, accepted: true, to: trimmed };
   }
 }
