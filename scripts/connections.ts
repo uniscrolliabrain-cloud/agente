@@ -225,4 +225,11 @@ console.log(
 const failedRequiredProbe = strictProbe
   ? probeFailures.length > 0
   : probeFailures.some((row) => row.need === "required-live");
-process.exit(missingRequired.length > 0 || shellOnly.length > 0 || failedRequiredProbe ? 1 : 0);
+// En sample, una variable que solo vive en el shell es informacion, no fallo:
+// el aviso ya sale en las notas. En live sí bloquea, porque el contenedor no
+// hereda el entorno de la maquina.
+process.exit(
+  missingRequired.length > 0 || (mode === "live" && shellOnly.length > 0) || failedRequiredProbe
+    ? 1
+    : 0,
+);
