@@ -26,7 +26,7 @@ export interface ResolveSkinOptions {
   /** Si true, recalcula stats desde las tareas. */
   refreshStats?: boolean;
   /** Store para refreshStats. Obligatorio si refreshStats=true. */
-  db?: Store;
+  db?: Pick<Store, "list">;
   /** Owner de las tareas. */
   owner?: string;
 }

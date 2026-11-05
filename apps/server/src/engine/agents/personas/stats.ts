@@ -68,7 +68,7 @@ function computePrecision(tasks: AgentTask[]): number {
 }
 
 export async function computeStats(
-  db: Store,
+  db: Pick<Store, "list">,
   owner: string,
   personaId: string,
   archetype: AgentStats["archetype"],

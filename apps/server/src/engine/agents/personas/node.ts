@@ -12,7 +12,7 @@ import type { AgentNode, AgentSkin } from "./types.ts";
 
 // PERSONAS_NODE_KERNEL_V1 - lee turns y thoughts del kernel por personaId.
 export async function loadAgentNode(
-  db: Store,
+  db: Pick<Store, "list">,
   kernel: import("../../../kernel/index.ts").Kernel,
   tenantId: string,
   owner: string,

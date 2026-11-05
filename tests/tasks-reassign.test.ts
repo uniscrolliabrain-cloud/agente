@@ -1,3 +1,4 @@
+import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -46,7 +47,7 @@ after(async () => {
 
 const headers = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" });
 
-test("reassign cambia assignedTo y state.roleId", async () => {
+test("reassign cambia assignedTo y state.roleId", async () => runInTenantScope({ tenantId: "default", actorId: "local-user" }, async () => {
   const created = await server.agent.createTask("local-user", { prompt: "test reassign" });
   const res = await server.app.request(`/api/agent/tasks/${created.id}/reassign`, {
     method: "POST",
@@ -57,9 +58,9 @@ test("reassign cambia assignedTo y state.roleId", async () => {
   const updated = (await res.json()) as { assignedTo?: string; state?: { roleId?: string } };
   assert.equal(updated.assignedTo, "comercial");
   assert.equal(updated.state?.roleId, "comercial");
-});
+}));
 
-test("reassign sin roleId devuelve 422", async () => {
+test("reassign sin roleId devuelve 422", async () => runInTenantScope({ tenantId: "default", actorId: "local-user" }, async () => {
   const created = await server.agent.createTask("local-user", { prompt: "test reassign 2" });
   const res = await server.app.request(`/api/agent/tasks/${created.id}/reassign`, {
     method: "POST",
@@ -67,4 +68,4 @@ test("reassign sin roleId devuelve 422", async () => {
     body: JSON.stringify({}),
   });
   assert.equal(res.status, 422);
-});
+}));

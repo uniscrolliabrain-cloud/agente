@@ -8,6 +8,7 @@
 // El tenant se resuelve con el TenantService.
 
 import { Hono } from "hono";
+import { currentTenantScope } from "../../../tenant-scope.ts";
 import { AppError } from "../../../errors.ts";
 import type { PersonaRegistry } from "./registry.ts";
 import { resolveAllSkins, resolveSkin } from "./resolver.ts";
@@ -19,7 +20,7 @@ import type { AuthzDeps } from "../../authz/pdp.ts";
 // PERSONA_ROUTES_KERNEL_V1 - kernel para leer turns/thoughts de la persona.
 export interface PersonaRoutesDeps {
   registry: PersonaRegistry;
-  db: Store;
+  db: Pick<Store, "list">;
   kernel?: import("../../../kernel/index.ts").Kernel;
   tenantService?: TenantService;
   authz?: AuthzDeps;
@@ -29,6 +30,8 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   const tenantIdFor = async (owner: string): Promise<string> => {
+    const scope = currentTenantScope();
+    if (scope) return scope.tenantId;
     if (!deps.tenantService) return "default"; // FALLBACK_TENANT_V1
     try {
       return await deps.tenantService.tenantIdFor(owner);

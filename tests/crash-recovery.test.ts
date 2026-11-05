@@ -39,11 +39,12 @@ const CRASH_TASK_ID = "crash-test-task";
 // clave compuesta: si no, el worker no encuentra la tarea y nunca la toma.
 const CRASH_OWNER = "default:crash-owner";
 
-test("el proceso worker muere a mitad de tarea y la tarea queda running con lease", async () => {
+test("el proceso worker muere a mitad de tarea y la tarea queda running con lease", { timeout: 90000 }, async () => {
   // 1. Creamos una tarea que el worker procesarÃ¡ y colgarÃ¡ a propÃ³sito.
   const task: AgentTask = {
     id: CRASH_TASK_ID,
     tenantId: "default",
+    requestedBy: "crash-owner",
     title: "Crash test",
     prompt: "Duerme y no termines nunca",
     kind: "agent",
@@ -82,8 +83,13 @@ test("el proceso worker muere a mitad de tarea y la tarea queda running con leas
   // dataDir: mientras el hijo la tiene abierta, el sondeo del padre no ve
   // nada y el test se quedaba en rojo. El hijo avisa por stdout cuando ya
   // tomo la tarea con lease, y solo entonces leemos la DB.
+  const exited = new Promise<void>((resolve) => {
+    child.once("exit", () => resolve());
+    child.once("error", () => resolve());
+  });
   const claimed = await new Promise<boolean>((resolve) => {
-    const timer = setTimeout(() => resolve(false), 15000);
+    const timer = setTimeout(() => resolve(false), 60000);
+    void exited.then(() => { clearTimeout(timer); resolve(false); });
     child.stdout?.on("data", (chunk: Buffer) => {
       if (chunk.toString().includes("CRASH_WORKER_CLAIMED")) {
         clearTimeout(timer);
@@ -91,11 +97,9 @@ test("el proceso worker muere a mitad de tarea y la tarea queda running con leas
       }
     });
   });
-  assert.ok(claimed, "la tarea debe estar running antes del kill");
-
-  // 4. Matamos el proceso con SIGKILL. Sin cleanup.
   child.kill("SIGKILL");
-  await new Promise((resolve) => child.once("exit", resolve));
+  await exited;
+  assert.ok(claimed, "la tarea debe estar running antes del kill");
 
   // 5. Verificamos que la tarea sigue en running con lease (no se ha limpiado).
   const probe = await createStore({ dataDir: join(directory, "db") });

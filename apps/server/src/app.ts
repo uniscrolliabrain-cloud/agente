@@ -185,46 +185,21 @@ export async function createApp(
   const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   // TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1 — computer recibe tenantService + limiter.
   const computer = new ComputerService(db, config, options.docker, tenantService, tenantLimiterShared);
-  // KERNEL_WIRE_B_V1 - kernel cognitivo.
-  //
-  // Stores:
-  //   - Sin DATABASE_URL: in-memory (dev, tests, single-process).
-  //   - Con DATABASE_URL: StoreTurnStore + StoreAuditStore persistentes.
-  //     Esto es lo que necesita SOC-2 en produccion.
-  //
-  // El adapter StorePort mapea Store a la interfaz que esperan los stores
-  // del kernel. Asi el kernel no depende de la firma exacta de Store.
-  const usePersistentKernel = Boolean(config.databaseUrl);
-  const storePort = usePersistentKernel
-    ? {
-        put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
-          await db.put(tenantId, kind, data as { id: string });
-        },
-        get: async (tenantId: string, kind: string, id: string) => {
-          return db.get(tenantId, kind, id);
-        },
-        list: async (tenantId: string, kind: string, limit: number) => {
-          const rows = await db.listPaged<unknown>(tenantId, kind, { limit });
-          return rows.map((row) => ({ id: (row.data as { id: string }).id, data: row.data }));
-        },
-        transaction: async <T>(fn: (tx: never) => Promise<T>): Promise<T> =>
-          db.transaction(() => fn(storePort as never)),
-      }
-    : null;
-  // KERNEL_STORE_ALWAYS_V1 - antes el kernel usaba InMemoryTurnStore cuando
-  // no habia DATABASE_URL. Eso hacia que en dev/test/sample todo el trabajo
-  // del kernel (turnos, thoughts, audit) se perdiera al reiniciar, y que la
-  // vision de "kernel persistente" fuera falsa. Ahora SIEMPRE StoreTurnStore
-  // apoyado en el mismo Store que el resto del sistema. InMemoryTurnStore
-  // queda solo para tests que lo instancian a mano.
-  const persistentStorePort = storePort ?? {
+  // The kernel persists turns in both local and PostgreSQL deployments.
+  const persistentStorePort = {
     put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
       await db.put(tenantId, kind, data as { id: string });
     },
     get: async (tenantId: string, kind: string, id: string) => db.get(tenantId, kind, id),
     list: async (tenantId: string, kind: string, limit: number) => {
-      const rows = await db.listPaged<unknown>(tenantId, kind, { limit });
-      return rows.map((row) => ({ id: (row.data as { id: string }).id, data: row.data }));
+      // Older builds stored thought index entries alongside turns. Filter them
+      // before the limit so a long turn cannot hide other personas' turns.
+      return db.select<{ id: string; data: unknown }>(
+        `SELECT id, data FROM records WHERE owner = $1 AND kind = $2
+         AND ($2 <> 'cognitive-turns' OR NOT (data ? 'thoughtId' AND data ? 'turnId'))
+         ORDER BY updated_at DESC, id LIMIT $3`,
+        [tenantId, kind, limit],
+      );
     },
     transaction: async <T>(fn: (tx: never) => Promise<T>): Promise<T> =>
       db.transaction(() => fn(persistentStorePort as never)),
@@ -712,7 +687,7 @@ app.post("/api/billing/customer", async (c) => {
   // APP_PERSONAS_KERNEL_V1 - pasa el kernel a personasRoutes.
   app.route("/api/agent-personas", personasRoutes({
     registry: personaRegistry,
-    db,
+    db: tdb,
     kernel,
     ...(tenantService ? { tenantService } : {}),
     authz: { pdp, fieldFilter },

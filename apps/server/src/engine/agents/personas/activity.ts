@@ -72,7 +72,7 @@ function toEntry(task: AgentTask): AgentActivityEntry {
 }
 
 export async function activityForPersona(
-  db: Store,
+  db: Pick<Store, "list">,
   owner: string,
   personaId: string,
   limit = 20,

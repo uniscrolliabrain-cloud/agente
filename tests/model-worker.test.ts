@@ -1,3 +1,4 @@
+import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -11,7 +12,7 @@ import { fixture as computerFixture } from "./helpers/computer.ts";
 import { modelFixture } from "./helpers/model.ts";
 import { testConfig } from "./helpers/config.ts";
 
-test("CopilotKit model worker executes server tools and persists the confirmed outcome", async (t) => {
+test("CopilotKit model worker executes server tools and persists the confirmed outcome", async (t) => runInTenantScope({ tenantId: "default", actorId: "owner" }, async () => {
   const directory = await mkdtemp(join(tmpdir(), "openmuse-model-"));
   const db = await createStore();
   // MODEL_WORKER_TENANT_SCOPE_V1 - ActionService guarda con el store
@@ -112,5 +113,5 @@ test("CopilotKit model worker executes server tools and persists the confirmed o
     await db.close();
     await rm(directory, { recursive: true, force: true });
   }
-});
+}));
 

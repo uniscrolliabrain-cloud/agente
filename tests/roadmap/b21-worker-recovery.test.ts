@@ -8,6 +8,7 @@ import type { AgentTask } from "../../packages/domain/src/agent.ts";
 function makeTask(id: string): AgentTask {
   return {
     id, tenantId: "default", title: `Task ${id}`, prompt: "test", kind: "agent",
+    executionContext: { tenantId: "default", owner: "recovery-owner", actorId: "recovery-owner" },
     status: "queued", plan: [], evidence: [], input: {}, state: {},
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     attempts: 0, leaseId: null, leaseUntil: null, artifactIds: [],

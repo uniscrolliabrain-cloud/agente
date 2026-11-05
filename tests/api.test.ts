@@ -1,3 +1,4 @@
+import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -186,13 +187,15 @@ test("sample agent streams actual AG-UI events without a model key", async () =>
 });
 
 test("guided document delegation streams a rich tool result bound to its saved task", async () => {
-  const events = await lastValueFrom(
-    sampleRun(
-      "document-thread",
-      "document-run",
-      "document-request",
-      "Complete the permission slip",
-    ).pipe(toArray()),
+  const events = await runInTenantScope({ tenantId: "default", actorId: "local-user" }, () =>
+    lastValueFrom(
+      sampleRun(
+        "document-thread",
+        "document-run",
+        "document-request",
+        "Complete the permission slip",
+      ).pipe(toArray()),
+    ),
   );
   const start = events.find((event) => event.type === EventType.TOOL_CALL_START);
   const result = events.find((event) => event.type === EventType.TOOL_CALL_RESULT);

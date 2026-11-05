@@ -13,6 +13,7 @@ function task(id = "task1"): AgentTask {
     id,
     // TASK_TENANT_REQUIRED_V1 - tenantId paso a ser obligatorio en AgentTask.
     tenantId: "default",
+    executionContext: { tenantId: "default", owner: "owner", actorId: "owner" },
     title: "Check a source",
     prompt: "Check a source",
     kind: "agent",

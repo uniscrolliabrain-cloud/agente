@@ -111,17 +111,6 @@ export class StoreTurnStore implements TurnStore {
       if (turn.thoughtIds.length >= maxForTenant)
         throw new AppError(`Turn exceeds ${maxForTenant} thoughts`, 409);
       await tx.put(parsed.tenantId, THOUGHTS_KIND, parsed.id, parsed);
-      // STORE_APPEND_O1_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â antes hacÃƒÆ’Ã‚Â­amos push sobre el array completo
-      // (O(n) por append, O(nÃƒâ€šÃ‚Â²) por turno). Ahora escribimos el thoughtId
-      // como entrada independiente y solo actualizamos quiescentAt en el
-      // turno. thoughtsOf() reconstruye la lista desde las entradas.
-      // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (append lee turno entero).
-      await tx.put(
-        parsed.tenantId,
-        TURNS_KIND,
-        `${turn.id}:${parsed.id}`,
-        { id: `${turn.id}:${parsed.id}`, turnId: turn.id, thoughtId: parsed.id, tenantId: parsed.tenantId },
-      );
       // KERNEL_TURN_THOUGHTID_DEDUPE_V1
       turn.thoughtIds.push(parsed.id);
       turn.quiescentAt = new Date().toISOString();

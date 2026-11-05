@@ -1,3 +1,4 @@
+import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -19,7 +20,7 @@ before(async () => {
   // con tenantId "default". El test escribe y lee con la misma clave compuesta.
   tdb = new TenantScopedStore(db, async () => "default");
   server = await createApp(db, testConfig({ dataDir: directory }));
-  await server.workspace.ensureSample(owner, server.actions);
+  await runInTenantScope({ tenantId: "default", actorId: owner }, () => server.workspace.ensureSample(owner, server.actions));
 });
 after(async () => {
   await server.agent.stop();
@@ -63,7 +64,7 @@ async function documentTask() {
   return { task: reviewed.task, action, originalId: mail.attachments[0] };
 }
 
-test("document job runs without a client, waits for review, and resumes from its receipt", async () => {
+test("document job runs without a client, waits for review, and resumes from its receipt", async () => runInTenantScope({ tenantId: "default", actorId: owner }, async () => {
   const initialIdeas = await server.agent.refreshIdeas(owner);
   const originalIdea = initialIdeas.find((idea) => idea.kind === "document");
   assert.ok(originalIdea);
@@ -96,9 +97,9 @@ test("document job runs without a client, waits for review, and resumes from its
     refreshedIdeas.filter((idea) => idea.kind === "document" && idea.status === "new").length,
     0,
   );
-});
+}));
 
-test("ideas ignore sent replies while retaining unfinished incoming requests", async () => {
+test("ideas ignore sent replies while retaining unfinished incoming requests", async () => runInTenantScope({ tenantId: "default", actorId: owner }, async () => {
   const ideaOwner = "sent-reply-ideas";
   await server.workspace.ensureSample(ideaOwner, server.actions);
   const workspace = await server.workspace.snapshot(ideaOwner);
@@ -122,9 +123,9 @@ test("ideas ignore sent replies while retaining unfinished incoming requests", a
   assert.ok(sent);
   assert.ok(ideas.some((idea) => idea.input.messageId === incoming.id));
   assert.ok(!ideas.some((idea) => idea.input.messageId === sent.id));
-});
+}));
 
-test("cancelling a task denies its pending action", async () => {
+test("cancelling a task denies its pending action", async () => runInTenantScope({ tenantId: "default", actorId: owner }, async () => {
   const { task, action } = await documentTask();
   await server.agent.control(owner, task.id, "cancel");
   assert.equal(
@@ -133,9 +134,9 @@ test("cancelling a task denies its pending action", async () => {
   );
   await server.agent.worker.tick();
   assert.equal((await server.agent.getTask(owner, task.id)).status, "cancelled");
-});
+}));
 
-test("failed page checks back off, expose the error, and pause after repeated failures", async () => {
+test("failed page checks back off, expose the error, and pause after repeated failures", async () => runInTenantScope({ tenantId: "default", actorId: owner }, async () => {
   // MONITOR_TEST_V3 - el monitor sample://availability NUNCA falla: lee
   // sample-pages y, si no existe, usa un texto por defecto. El test anterior
   // sembraba la pagina para provocar un fallo que no podia ocurrir. El backoff
@@ -150,7 +151,7 @@ test("failed page checks back off, expose the error, and pause after repeated fa
   } finally {
     server.browser.observe = originalObserve;
   }
-});
+}));
 
 async function monitorBackoff() {
   const monitor = await server.agent.createMonitor(owner, {
@@ -187,7 +188,7 @@ async function monitorBackoff() {
   assert.equal((await tdb.get<Monitor>(owner, "monitors", monitor.id))?.status, "paused");
 }
 
-test("dismissal racing acceptance never creates work for a dismissed idea", async () => {
+test("dismissal racing acceptance never creates work for a dismissed idea", async () => runInTenantScope({ tenantId: "default", actorId: owner }, async () => {
   // Determinista: 4 iteraciones. En cada una, decidimos primero y luego intentamos
   // el opuesto. El segundo decideIdea debe ser no-op o devolver el estado ya fijado.
   for (let i = 0; i < 4; i++) {
@@ -235,5 +236,5 @@ test("dismissal racing acceptance never creates work for a dismissed idea", asyn
       assert.equal(afterAccept?.status, "dismissed", `iter ${i} accept tras dismiss`);
     }
   }
-});
+}));
 

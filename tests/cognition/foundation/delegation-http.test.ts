@@ -107,10 +107,18 @@ test("authenticated company B delegates a permitted SOP to its specialist and ke
     assert.equal(completed.plan[0]?.status, "succeeded");
     assert.equal(completed.state.roleId, "sales");
     assert.equal(completed.requestedBy, owner);
-    const turns = await db.list<{ personaId?: string; tenantId: string; triggers?: string[] }>("company-b", "cognitive-turns");
+    await db.put("company-b", "cognitive-turns", {
+      id: "legacy:thought", turnId: "legacy", thoughtId: "thought", tenantId: "company-b",
+    });
+    assert.ok(agent.kernel);
+    const supervisor = { tenantId: "company-b", owner, actorId: "laia", role: "agent", requestId: "inspect" } as const;
+    const nodes = await app.request("/api/agent-personas/all/nodes", { headers: headersB });
+    assert.equal(nodes.status, 200);
+    assert.equal((await nodes.json() as { tenantId: string }).tenantId, "company-b");
+    const turns = await agent.kernel.listTurnsAllPersonas(supervisor, 10);
     assert.ok(turns.some((turn) => turn.tenantId === "company-b" && turn.personaId === "sales" &&
-      turn.triggers?.includes("sop.qualify")), JSON.stringify(turns.map((turn) => Object.keys(turn))));
-    assert.equal((await db.list("company-a", "cognitive-turns")).length, 0);
+      turn.triggers?.includes("sop.qualify")));
+    assert.equal((await agent.kernel.listTurnsAllPersonas({ ...supervisor, tenantId: "company-a" }, 1)).length, 0);
     assert.equal(await db.get(`company-a:${owner}`, "tasks", completed.id), null);
     const blocked = await wait(rejected.id);
     assert.equal(blocked.status, "failed");
