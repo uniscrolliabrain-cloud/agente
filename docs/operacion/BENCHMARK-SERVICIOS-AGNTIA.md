@@ -30,3 +30,5 @@ Comparación por cercanía al servicio y madurez funcional visible en documentac
 ## Gate de calidad por servicio
 
 Antes de vender una capacidad como operativa, demostrar con datos controlados el recorrido normal, una excepción frecuente, caída del proveedor, reintento, derivación a una persona y reconciliación. En el piloto real medir frente a una línea base acordada con el cliente y conservar la evidencia por ejecución. La propuesta de valor a probar es implantación y operación para pymes en español, con una supervisora que explica la automatización con datos de la propia empresa. La ventaja comercial sigue siendo una hipótesis hasta medirla.
+
+[Especificación de servicios, pipelines y tarjetas de comunicación](./PROPUESTA-PLAYBOOKS-LAIA-Y-SERVICIOS.md)

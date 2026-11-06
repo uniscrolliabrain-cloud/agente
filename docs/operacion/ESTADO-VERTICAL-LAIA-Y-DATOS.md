@@ -68,3 +68,5 @@ El panel y la API comparten www.agntiapro.com. La comprobación de Fly de esta s
 Un cambio de producto se prueba en un worktree con datos sintéticos y pasa por revisión antes de producción. El procedimiento de release identifica qué componente cambia, quién lo despliega, el smoke de la empresa y la versión anterior recuperable. El workflow de la rama de Freebuff requiere separar preview de producción y acotar secretos por proceso. Los valores de Doppler quedan fuera de Git y del prompt.
 
 Actualizar este documento cuando cambie un contrato de datos, el alcance de un SOP o su criterio de aceptación. Añadir pruebas y resultados operativos con SHA y entorno al informe correspondiente. Las decisiones y cifras históricas de la campaña conservan su fecha.
+
+[Especificación de servicios, pipelines y tarjetas de comunicación](./PROPUESTA-PLAYBOOKS-LAIA-Y-SERVICIOS.md)
