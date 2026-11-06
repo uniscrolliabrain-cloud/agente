@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { AgentRole, AgentTask } from "../../../packages/domain/src/agent.ts";
 import type { AgentService } from "./engine/service.ts";
+import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
 import type { UserService } from "./users.ts";
 
@@ -33,7 +34,11 @@ const suspendBody = z.object({
   reason: z.string().min(3).max(500),
 });
 
-export function adminTenantsRoutes(service: AgentService, users: UserService) {
+// ADMIN_TENANTS_GLOBAL_STORE_V1 - el registro de tenants y su estado son
+// globales (`system/...`), no datos de un tenant. Con el store con scope, cada
+// lectura se prefijaba con el tenant del admin y el panel listaba cero empresas
+// aunque existieran en la base.
+export function adminTenantsRoutes(service: AgentService, users: UserService, global: Store) {
   const app = new Hono<{ Variables: { owner: string } }>();
 
   const requireAdmin = async (owner: string) => {
@@ -46,21 +51,29 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     const owner = c.get("owner");
     await requireAdmin(owner);
 
-    // Lista de tenants conocidos: los que tienen membership.
-    const memberships = await service.db.list<{ tenantId: string }>("system", "tenant-membership");
-    const tenants = new Map<string, { adminEmail: string | null; createdAt: string }>();
-    for (const m of memberships) {
-      if (!tenants.has(m.tenantId)) {
-        tenants.set(m.tenantId, { adminEmail: null, createdAt: new Date().toISOString() });
-      }
+    // Lista de tenants conocidos: los del registro. Antes el nombre visible era
+    // el propio id (`agntia`), ignorando el displayName guardado; y una fila sin
+    // tenantId aparecia como un tenant fantasma.
+    const registry = await global.list<{ tenantId?: string; displayName?: string; createdAt?: string }>(
+      "system",
+      "tenant-membership",
+    );
+    const tenants = new Map<string, { displayName: string; adminEmail: string | null; createdAt: string }>();
+    for (const row of registry) {
+      if (!row.tenantId) continue;
+      tenants.set(row.tenantId, {
+        displayName: row.displayName ?? row.tenantId,
+        adminEmail: null,
+        createdAt: row.createdAt ?? new Date().toISOString(),
+      });
     }
 
     const items: TenantListItem[] = [];
     for (const [tenantId, meta] of tenants) {
-      const health = await buildHealth(service, tenantId);
+      const health = await buildHealth(tenantId, global);
       items.push({
         tenantId,
-        displayName: tenantId,
+        displayName: meta.displayName,
         adminEmail: meta.adminEmail,
         createdAt: meta.createdAt,
         health,
@@ -77,7 +90,7 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     const tenantId = c.req.param("tenantId");
     // ADMIN_TENANTS_TENANT_ID_REGEX_V1
     if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
-    const health = await buildHealth(service, tenantId);
+    const health = await buildHealth(tenantId, global);
     return c.json({ tenantId, health });
   });
 
@@ -89,7 +102,7 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     // ADMIN_TENANTS_SUSPEND_REGEX_V1
     if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
     const body = suspendBody.parse(await c.req.json());
-    await service.db.put("system", "tenant-state", {
+    await global.put("system", "tenant-state", {
       id: tenantId,
       suspended: true,
       suspendedReason: body.reason,
@@ -106,7 +119,7 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     const tenantId = c.req.param("tenantId");
     // TENANT_BODY_VALIDATE_V1 - tenantId en path validado antes de tocar DB.
     if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
-    await service.db.put("system", "tenant-state", {
+    await global.put("system", "tenant-state", {
       id: tenantId,
       suspended: false,
       resumedAt: new Date().toISOString(),
@@ -131,12 +144,12 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     // (que buscan por tenantId) nunca encontraban la fila.
     // La membership del usuario sigue siendo otra cosa: id="default" bajo su
     // propio owner (ver TenantService.setMembership).
-    const existing = await service.db.get<{ createdAt?: string }>(
+    const existing = await global.get<{ createdAt?: string }>(
       "system",
       "tenant-membership",
       body.tenantId,
     );
-    await service.db.put("system", "tenant-membership", {
+    await global.put("system", "tenant-membership", {
       id: body.tenantId,
       tenantId: body.tenantId,
       displayName: body.displayName ?? body.tenantId,
@@ -144,6 +157,71 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
       createdBy: owner,
     });
     return c.json({ ok: true, tenantId: body.tenantId }, 201);
+  });
+
+  // TENANT_MEMBERSHIP_ROUTES_V1 - meter a un usuario en una empresa.
+  //
+  // Por que existe: POST /api/admin/tenants creaba el tenant, pero no habia
+  // ninguna forma de darle miembros, y /api/auth/switch-tenant exige una fila en
+  // `user-tenants`. Resultado: el tenant existia y era inaccesible (403 al
+  // cambiar), que es el multi-tenant "a medias".
+  app.get("/:tenantId/members", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    const tenantService = service.tenantService;
+    if (!tenantService) throw new AppError("TenantService no disponible", 503);
+    const all = await users.list();
+    const members: Array<{ userId: string; email: string; role: string }> = [];
+    for (const user of all) {
+      const memberships = await tenantService.membershipsFor(user.id);
+      const hit = memberships.find((m) => m.tenantId === tenantId);
+      if (hit) members.push({ userId: user.id, email: user.email, role: hit.role });
+    }
+    return c.json({ tenantId, members, count: members.length });
+  });
+
+  app.post("/:tenantId/members", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    const body = z
+      .object({
+        email: z.email().optional(),
+        userId: z.string().min(1).max(100).optional(),
+        role: z.enum(["owner", "admin", "member"]).optional(),
+      })
+      .parse(await c.req.json());
+    if (!body.email && !body.userId) throw new AppError("Falta email o userId", 422);
+    const tenantService = service.tenantService;
+    if (!tenantService) throw new AppError("TenantService no disponible", 503);
+
+    const user = body.userId ? await users.getById(body.userId) : await users.getByEmail(body.email ?? "");
+    if (!user) throw new AppError("Usuario no encontrado", 404);
+    // El tenant debe existir en el registro: si no, se crearia una membership
+    // hacia una empresa fantasma que luego no aparece en el panel.
+    const registry = await global.get<{ tenantId?: string }>("system", "tenant-membership", tenantId);
+    if (!registry) throw new AppError("Tenant no encontrado", 404);
+
+    const membership = await tenantService.addMembership(user.id, tenantId, body.role ?? "member");
+    return c.json({ ok: true, tenantId, userId: user.id, role: membership.role }, 201);
+  });
+
+  app.delete("/:tenantId/members/:userId", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const tenantId = c.req.param("tenantId");
+    const userId = c.req.param("userId");
+    if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
+    const tenantService = service.tenantService;
+    if (!tenantService) throw new AppError("TenantService no disponible", 503);
+    const existing = await global.get("system", "users", userId).catch(() => null);
+    if (!existing) throw new AppError("Usuario no encontrado", 404);
+    await global.remove(userId, "user-tenants", tenantId);
+    tenantService.invalidate(userId);
+    return c.json({ ok: true, tenantId, userId, removed: true });
   });
 
   // ADMIN_TENANTS_CRUD_V1 — borra un tenant. Elimina membership y state.
@@ -154,8 +232,8 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     await requireAdmin(owner);
     const tenantId = c.req.param("tenantId");
     if (!/^[a-z0-9-]{1,64}$/.test(tenantId)) throw new AppError("tenantId invalido", 422);
-    await service.db.remove("system", "tenant-membership", tenantId);
-    await service.db.remove("system", "tenant-state", tenantId);
+    await global.remove("system", "tenant-membership", tenantId);
+    await global.remove("system", "tenant-state", tenantId);
     // ADMIN_TENANTS_CRUD_V1 — invalidar caché de TenantService.
     const ts = (service as unknown as { tenantService?: { invalidateAll?: () => void } }).tenantService;
     ts?.invalidateAll?.();
@@ -172,13 +250,13 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
     if (body.displayName === undefined) {
       throw new AppError("Nada que actualizar (displayName)", 422);
     }
-    const existing = await service.db.get<{ id: string; tenantId: string; displayName?: string; createdAt: string; createdBy: string }>(
+    const existing = await global.get<{ id: string; tenantId: string; displayName?: string; createdAt: string; createdBy: string }>(
       "system",
       "tenant-membership",
       tenantId,
     );
     if (!existing) throw new AppError("Tenant no encontrado", 404);
-    await service.db.put("system", "tenant-membership", {
+    await global.put("system", "tenant-membership", {
       ...existing,
       displayName: body.displayName,
       updatedAt: new Date().toISOString(),
@@ -189,20 +267,26 @@ export function adminTenantsRoutes(service: AgentService, users: UserService) {
   return app;
 }
 
-async function buildHealth(service: AgentService, tenantId: string): Promise<TenantHealth> {
-  const roles = await service.db.list<AgentRole>(tenantId, "agent-roles", { limit: 200 }).catch(() => []);
-  const tasks = await service.db.list<AgentTask>(tenantId, "tasks", { limit: 5000 }).catch(() => []);
-  const sops = await service.db.list<unknown>(tenantId, "sops", { limit: 500 }).catch(() => []);
-  const builds = await service.db.list<unknown>(tenantId, "build-specs", { limit: 500 }).catch(() => []);
-  const usage = await service.db
-    .list<{ costEur: number; inputTokens: number; outputTokens: number; date: string }>(tenantId, "llm-usage")
-    .catch(() => []);
+// TENANT_HEALTH_SCAN_V1 - los datos del tenant viven bajo `tenantId:owner` y
+// aqui no se conoce el owner concreto. Listar con owner=tenantId devolvia cero
+// para todo, asi que el panel mostraba un tenant "sano" y vacio a la vez. El
+// scan por prefijo lee la zona entera del tenant sin inventarse un owner.
+async function buildHealth(tenantId: string, global: Store): Promise<TenantHealth> {
+  const prefix = `${tenantId}:`;
+  const scan = async <T>(kind: string, limit = 1000): Promise<T[]> =>
+    (await global.scanByOwnerPrefix<T>(kind, prefix, limit).catch(() => [])).map((row) => row.value);
+
+  const roles = await scan<AgentRole>("agent-roles", 500);
+  const tasks = await scan<AgentTask>("tasks", 5000);
+  const sops = await scan<unknown>("sops", 500);
+  const builds = await scan<unknown>("build-specs", 500);
+  const usage = await scan<{ costEur: number; inputTokens: number; outputTokens: number; date: string }>("llm-usage", 5000);
   const since = new Date(Date.now() - 30 * 86400000).toISOString();
   const recent = usage.filter((u) => u.date >= since);
   const costEur30d = recent.reduce((acc, u) => acc + (u.costEur ?? 0), 0);
   const tokens30d = recent.reduce((acc, u) => acc + (u.inputTokens ?? 0) + (u.outputTokens ?? 0), 0);
   const lastTask = tasks.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
-  const state = await service.db.get<{ suspended?: boolean; suspendedReason?: string; suspendedAt?: string }>(
+  const state = await global.get<{ suspended?: boolean; suspendedReason?: string; suspendedAt?: string }>(
     "system",
     "tenant-state",
     tenantId,

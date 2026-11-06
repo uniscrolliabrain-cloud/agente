@@ -34,6 +34,9 @@ primary_region = "fra"
   # el registrado en Google Cloud): https://www.agntiapro.com/api/google/callback
   PUBLIC_API_URL = "https://www.agntiapro.com"
   ALLOWED_ORIGINS = "https://www.agntiapro.com,https://agntiapro.com"
+  # OAUTH_ALLOWED_EMAILS - barandilla del login social: sin lista, cualquiera
+  # con cuenta de Google entraria. Debe contener el email del dueno.
+  OAUTH_ALLOWED_EMAILS = "uniscrolliabrain@gmail.com"
 
 [http_service]
   internal_port = 8787

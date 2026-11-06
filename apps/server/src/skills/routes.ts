@@ -16,8 +16,12 @@ const skillSchema = z.object({
   active: z.boolean().default(true),
 });
 
+// SKILLS_TENANT_SCOPED_V1 - mismo caso que las SOPs: se leen y escriben bajo
+// `tenantId:owner`, asi que la ruta tiene que recibir el store con scope.
+export type SkillsStore = Pick<Store, "get" | "list" | "put" | "remove">;
+
 export function skillsRoutes(
-  db: Store,
+  db: SkillsStore,
   authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();

@@ -303,3 +303,82 @@ mucho más lento.
 4. Crear el proyecto de Vercel (o pasarme `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID`).
 5. Decidir si movemos Neon a Europa o Fly a `us-east-2`.
 6. Decidir qué hacemos con el gate rojo: arreglarlo o desacoplarlo del release.
+
+## 7. Estado real medido el 2026-11-06 (login social + vertical slice)
+
+Todo lo de esta sección se comprobó con `curl` contra `https://www.agntiapro.com`
+y con una sesión efímera creada en la base de producción, no leyendo código.
+
+### 7.1 Lo que ya funciona
+
+| Comprobación | Resultado |
+|---|---|
+| `GET /` y `/api/health` en `www.agntiapro.com` | 200 |
+| Login Google (`/api/auth/oauth/google/start`) | 302 a `accounts.google.com`, `redirect_uri=https://www.agntiapro.com/api/auth/oauth/google/callback` |
+| Login GitHub (`/api/auth/oauth/github/start`) | 302 a `github.com/login/oauth/authorize`, mismo `redirect_uri` |
+| Usuario `uniscrolliabrain@gmail.com` | existe, `role=admin`, resuelve tenant `agntia` |
+| `GET /api/auth/me` | 200, cabecera `X-Tenant-Id: agntia` |
+| `GET /api/sops` | 200, **8 SOPs** de la agencia |
+| `GET /api/admin/tenants` | 1 tenant: `agntia / Agntia Pro / sops=8` |
+
+La pantalla de acceso del panel es ahora Google + GitHub. El formulario de
+contraseña sigue existiendo detrás de "Entrar con contraseña" para el admin
+local, no como camino principal.
+
+### 7.2 El vertical slice de la agencia, dentro
+
+`clientes/agntia/` (perfil + 8 SOPs) se materializa en la base con:
+
+```bash
+pnpm bootstrap:agency --admin=uniscrolliabrain@gmail.com   # tenant + memorias + SOPs
+```
+
+Es idempotente: relanzarlo no duplica SOPs ni memorias (`skipped`), y `--force`
+reescribe las SOPs. El alta previa de usuario/owner la hace
+`scripts/provision-agntia.ts` (también idempotente).
+
+SOPs creadas: `primer-contacto`, `follow-up-3-dias`, `agendar-discovery-call`,
+`auditar-web-lead`, `revisar-pipeline`, `recordar-pago-vencido`,
+`conciliacion-mensual`, `resumen-negocio`.
+
+### 7.3 Cinco fallos que solo aparecen con el despliegue delante
+
+Ninguno lo cubría un test; los cinco se arreglaron en esta rama:
+
+1. **El login social devolvía 401.** El middleware de `/api/*` solo eximía
+   `/api/auth/login` y `/logout`; `start` y `callback` morían en `auth.owner`.
+2. **El panel listaba 0 SOPs.** `/api/sops` y `/api/skills` se montaban con el
+   store crudo, pero los datos viven bajo `tenantId:owner`.
+3. **El panel de tenants leía el registro global con store con scope**, así que
+   cada consulta se prefijaba con el tenant del admin y devolvía cero empresas.
+4. **El health del tenant salía a cero** porque listaba con `owner=tenantId` en
+   vez de escanear la zona `tenantId:`. Ahora usa `scanByOwnerPrefix`.
+5. **El registro de tenants se corrompía al arrancar.** `TenantService`
+   interpretaba las filas de `system/tenant-membership` (id = tenantId) como
+   memberships "legacy" y las reescribía como `id=default`, borrando la original:
+   el tenant desaparecía del panel tras un reinicio. Guardado con
+   `TENANT_SYSTEM_NAMESPACE_GUARD_V1` y verificado reiniciando la máquina.
+
+### 7.4 Lo que sigue pendiente y por qué
+
+- **Registrar la callback en los dos proveedores.** En Google Cloud Console y en
+  la OAuth App de GitHub tiene que estar exactamente
+  `https://www.agntiapro.com/api/auth/oauth/google/callback` y
+  `.../github/callback`. No se puede hacer por API; sin eso el proveedor rechaza
+  el redirect aunque el `start` responda 302.
+- **Sitio de Vercel** (`apps/site`) y el registro `A @ -> 76.76.21.21`: hoy `www`
+  funciona y el apex no está desplegado.
+- **Región**: `fly.toml` dice `mad`, la máquina corre en `fra`, y Neon está en
+  `us-east-2`. Son ~100 ms por consulta en cada arranque.
+- **Fila fantasma `default`**: queda una membership histórica del usuario demo
+  (`default:e2f7…`) apuntando al tenant `default`, que no existe en el registro.
+  No rompe nada, pero aparece como una empresa vacía si se listan memberships
+  en crudo; se puede borrar cuando no haga falta el dato viejo.
+- **Resend / Maps / WhatsApp / ElevenLabs**: siguen como en el punto 3.6.
+
+### 7.5 Acceso con lista blanca
+
+`OAUTH_ALLOWED_EMAILS=uniscrolliabrain@gmail.com` está puesto en Fly: sin esa
+lista, cualquiera con cuenta de Google crearía un usuario en el deployment. Para
+añadir a un cliente, se amplía esa variable o se crea el usuario como admin y se
+le mete en su tenant con `POST /api/admin/tenants/<id>/members`.

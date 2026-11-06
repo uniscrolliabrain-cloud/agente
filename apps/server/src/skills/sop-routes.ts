@@ -7,8 +7,15 @@ import type { AuthzDeps } from "../engine/authz/pdp.ts";
 
 const TERMINAL = new Set(["succeeded", "failed", "cancelled"]);
 
+// SOP_TENANT_SCOPED_V1 - las SOPs son datos del tenant (`tenantId:owner`), no
+// globales. Aceptar el contrato minimo del store deja pasar tanto el store
+// crudo como el TenantScopedStore, y permite montar estas rutas con el segundo:
+// montadas con el crudo, el panel listaba 0 SOPs de un tenant ya provisionado
+// porque escribia en una zona y leia en otra.
+export type SopStore = Pick<Store, "get" | "list" | "put" | "remove">;
+
 export function sopRoutes(
-  db: Store,
+  db: SopStore,
   agent: AgentService,
   authz?: AuthzDeps,
 ) {
