@@ -5,6 +5,71 @@ tokens reales que ya están en Doppler (proyecto `agntiapro`, config
 `dev_campaign_transversal_leads_ia`). Todo lo que dice "medido" se comprobó
 ejecutando el comando, no leyendo documentación.
 
+> **ACTUALIZACIÓN 2026-11-06 — ESTO YA ESTÁ DESPLEGADO.** El análisis de abajo
+> se conserva como registro de la fase previa. El estado real está en la §0.
+
+## 0. Estado real tras el despliegue
+
+| Pieza | Estado | Evidencia medida |
+|---|---|---|
+| API + panel | **LIVE** en `agntiapro-api` (Fly, `fra`) | `https://www.agntiapro.com/api/health` → 200 en ~1,5 s |
+| Worker de tareas | **LIVE** en `agntiapro-worker` (Fly, `fra`) | máquina `started`, `/api/health-deep` → `worker:true` |
+| Base de datos | **Neon** PostgreSQL 18.6 con pgvector | `/api/health-deep` → `backend:"postgres"`, 235 capabilities |
+| TLS | **Let's Encrypt, verificado y activo** | `fly certs check` para `www` y apex |
+| DNS | apex + `www` → Fly, **DNS only** | 6 registros en la zona de Cloudflare |
+| Login | **funciona** por el dominio | `POST /api/auth/login` → 200, `role: admin` |
+| Correo saliente | **Resend verificado** (`agntiapro.com`) | dominio `verified`, 4/4 registros DNS |
+| Aislamiento | ruta protegida sin token → **401** | `/api/workspace` sin cabecera |
+
+Región: **`fra`**, no `mad` (Fly no tiene Madrid; regiones UE: `ams`, `fra`,
+`lhr`, `cdg`, `arn`). Se eligió Frankfurt por residencia de datos UE.
+
+### Bugs de producción que el despliegue destapó y quedan corregidos
+
+Ninguno de estos se veía en local ni en los tests: solo al correr el artefacto
+compilado contra un Postgres real y leer los logs.
+
+1. **`import` con alias no resoluble** (`engine/views/resolver.ts`) → `node dist/...`
+   moría con `ERR_MODULE_NOT_FOUND` antes de abrir puerto. Build verde, contenedor
+   en crash loop.
+2. **`[checks.health] type = "script"`** en `fly.worker.toml` → Fly solo acepta
+   `http`/`tcp`; el worker **nunca** podía desplegarse ("Missing or invalid check
+   type").
+3. **Cuatro loops de mantenimiento sin `actorId`** (consolidación de turnos,
+   consolidación por tenant, meta-loop, contexto meta) → `ZodError` en cada tick,
+   la consolidación de memoria **nunca** ocurría en producción.
+4. **Backup apuntando a `/app/dist/.openmuse`** → `runBackup` calculaba la ruta
+   desde el compilado e ignoraba `DATA_DIR`; fallaba cada 24 h. Ahora usa
+   `config.dataDir` y escribe en `/data/backups`.
+5. **`clientsDirFrom()` ignoraba `OPENMUSE_CLIENTS_DIR`** → el bootstrap del kernel
+   seguía buscando `/clientes` aunque la variable estuviera puesta.
+6. **El intervalo de 1 s de `deferredTick` no se paraba en `shutdown`** → escribía
+   contra el pool ya cerrado ("Cannot use a pool after calling end on the pool")
+   en cada redeploy.
+
+### Lo que sigue pendiente de verdad
+
+1. **El gate de CI sigue en rojo** (`test` y `audit:contracts`): el despliegue de
+   hoy se hizo con `flyctl deploy` directo, **saltándose el workflow**. Typecheck
+   está en 0.
+2. **Neon está en `us-east-2` y Fly en `fra`**: cada consulta cruza el Atlántico
+   (~100 ms; por eso crear 12 índices tardó 24 s). Mover el proyecto Neon a
+   `eu-central-1` no requiere tocar código.
+3. **`clientes/` no existe en la imagen** (`.dockerignore` lo excluye y el runtime
+   solo copia `dist`): personas y ontología arrancan vacías (`0 personas`). El
+   directorio ya apunta a `/data/clientes`, pero hay que sembrarlo o mover esa
+   configuración a la base de datos.
+4. **Google OAuth**: el redirect registrado debe ser exactamente
+   `https://www.agntiapro.com/api/google/callback`.
+5. **Cloudflare está en `DNS only`**: se gana WAF/caché poniendo `proxied`, pero el
+   proxy gratuito corta a los 100 s y el chat usa SSE; conviene decidirlo con el
+   stream en pruebas.
+6. **Vercel**: `apps/site` (landing estática) sigue sin proyecto.
+7. **`BUSINESS_DATABASE_URL` sin definir**: `query_business` corre contra la BD de
+   la app; hace falta un rol `SELECT` en otra base.
+8. **Jobs de 24 h** (`BACKUP_INTERVAL_HOURS=24`): el backup tarda hasta 24 h en
+   repetirse; el primero ya se verificó (`/data/backups/...`).
+
 ## 1. Topología prevista (ya está escrita en el repo)
 
 | Pieza | Destino | Config |

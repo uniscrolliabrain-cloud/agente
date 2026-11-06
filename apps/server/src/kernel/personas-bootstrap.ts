@@ -30,5 +30,10 @@ export async function wirePersonaBootstrap(
 }
 
 export function clientsDirFrom(dataDir: string): string {
-  return join(dataDir, "..", "clientes");
+  // CLIENTS_DIR_ENV_HONORED_V1 - app.ts ya lee OPENMUSE_CLIENTS_DIR, pero este
+  // helper lo ignoraba: en produccion el bootstrap del kernel seguia buscando
+  // /clientes (raiz de la imagen, inexistente) aunque la variable estuviera
+  // puesta. Sin la variable se mantiene el layout de desarrollo
+  // (DATA_DIR=.openmuse -> <repo>/clientes).
+  return process.env.OPENMUSE_CLIENTS_DIR ?? join(dataDir, "..", "clientes");
 }

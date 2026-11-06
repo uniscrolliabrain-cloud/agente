@@ -2,7 +2,12 @@
 # app.ts sirve apps/web/dist en el mismo origen, asi que el cliente puede seguir
 # llamando rutas relativas (/api/...) y el stream SSE del chat no cruza dominios.
 app = "agntiapro-api"
-primary_region = "mad"
+# FLY_REGION_FRA_V1 - `mad` no existe en Fly (regiones Europeas: ams, fra,
+# lhr, cdg, arn). Se elige fra por residencia de datos UE: los leads son datos
+# personales y el negocio vende a empresas espanolas. Consecuencia medida:
+# Neon esta en us-east-2, asi que cada consulta cruza el Atlantico (~100 ms).
+# Mover el proyecto Neon a eu-central-1 elimina esa latencia sin tocar codigo.
+primary_region = "fra"
 
 [build]
   dockerfile = "Dockerfile"
@@ -13,6 +18,11 @@ primary_region = "mad"
   HOST = "0.0.0.0"
   PORT = "8787"
   DATA_DIR = "/data"
+  # OPENMUSE_CLIENTS_DIR_V1 - en la imagen no existe `clientes/` (esta en
+  # .dockerignore y el runtime solo copia dist). Sin esto, personas y ontologia
+  # se buscan en /clientes, que no es escribible ni persiste. En el volumen, un
+  # tenant provisionado sobrevive a los despliegues.
+  OPENMUSE_CLIENTS_DIR = "/data/clientes"
   GEMINI_MODEL = "gemini-3.6-flash"
   OPENROUTER_MODEL = "google/gemini-3.6-flash"
   TASK_WORKER_ENABLED = "true"
@@ -20,8 +30,10 @@ primary_region = "mad"
   BACKUP_INTERVAL_HOURS = "24"
   BACKUP_RETENTION_DAYS = "7"
   # PUBLIC_API_URL deriva el redirect de Google OAuth y los enlaces firmados.
+  # PUBLIC_API_URL deriva el redirect de Google OAuth (debe coincidir exacto con
+  # el registrado en Google Cloud): https://www.agntiapro.com/api/google/callback
   PUBLIC_API_URL = "https://www.agntiapro.com"
-  ALLOWED_ORIGINS = "https://www.agntiapro.com"
+  ALLOWED_ORIGINS = "https://www.agntiapro.com,https://agntiapro.com"
 
 [http_service]
   internal_port = 8787

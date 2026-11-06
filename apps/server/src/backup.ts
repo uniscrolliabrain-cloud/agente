@@ -10,6 +10,10 @@ export interface BackupOptions {
   outDir?: string;
   sourceDir?: string;
   retentionDays?: number;
+  // BACKUP_DATA_DIR_V1 - en produccion el estado vive en DATA_DIR (/data en la
+  // imagen), no en <repo>/.openmuse: dentro del contenedor `repoRoot` resuelve a
+  // /app/dist y el backup fallaba con "No existe /app/dist/.openmuse".
+  dataDir?: string;
 }
 
 export interface BackupResult {
@@ -54,12 +58,16 @@ async function pruneOld(backupsDir: string, retentionDays: number): Promise<numb
 }
 
 export async function runBackup(options: BackupOptions = {}): Promise<BackupResult> {
-  const source = options.sourceDir ? resolve(options.sourceDir) : join(repoRoot, ".openmuse");
+  // BACKUP_DATA_DIR_V1 - el origen por defecto es DATA_DIR si se conoce.
+  const defaultSource = options.dataDir ? resolve(options.dataDir) : join(repoRoot, ".openmuse");
+  const source = options.sourceDir ? resolve(options.sourceDir) : defaultSource;
   if (!existsSync(source)) {
     throw new Error(`No existe ${source}. Nada que respaldar.`);
   }
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const backupsDir = join(repoRoot, "backups");
+  // BACKUP_DATA_DIR_V1 - los backups se guardan junto al dato, no en el
+  // directorio del compilado (que es de solo lectura y se pierde al desplegar).
+  const backupsDir = join(options.dataDir ? resolve(options.dataDir) : repoRoot, "backups");
   const out = options.outDir ? resolve(options.outDir) : join(backupsDir, stamp);
   await mkdir(out, { recursive: true });
 
