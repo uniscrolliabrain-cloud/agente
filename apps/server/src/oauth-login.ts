@@ -111,6 +111,59 @@ function htmlEscape(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// OAUTH_GOOGLE_PREFLIGHT_V1 - Google valida `client_id` + `redirect_uri` ANTES
+// de pedir credenciales: si el URI no esta dado de alta, el usuario aterriza en
+// la pagina de error de Google ("Error 400: redirect_uri_mismatch") sin ninguna
+// pista de que hay que tocar la consola. Se pregunta antes de redirigir y, si
+// Google lo va a rechazar, se explica aqui que falta y con que cadena exacta.
+// GitHub no se comprueba: valida despues del login, asi que su respuesta sin
+// sesion no distingue "bien configurado" de "mal configurado".
+const PREFLIGHT_TTL_MS = 5 * 60 * 1000;
+const preflightCache = new Map<string, { ok: boolean; reason: string | null; at: number }>();
+
+/** El `authError` es un protobuf en base64url; sus tramos imprimibles lo explican. */
+function decodeAuthError(raw: string): string {
+  try {
+    const buf = Buffer.from(raw.replace(/-/g, "+").replace(/_/g, "/"), "base64");
+    const parts = buf.toString("utf8").match(/[\x20-\x7e]{8,}/g) ?? [];
+    return parts.join(" ").slice(0, 400);
+  } catch {
+    return raw.slice(0, 200);
+  }
+}
+
+/**
+ * Pregunta a Google si aceptaria la ida y vuelta, sin seguir el redirect.
+ * Ante un fallo de red devuelve `ok` para no bloquear un login que quiza si
+ * funcionaria: la comprobacion es una mejora del mensaje, no un permiso.
+ */
+async function googleRedirectPreflight(
+  clientId: string,
+  redirectUriValue: string,
+): Promise<{ ok: boolean; reason: string | null }> {
+  const key = `${clientId}|${redirectUriValue}`;
+  const hit = preflightCache.get(key);
+  if (hit && Date.now() - hit.at < PREFLIGHT_TTL_MS) return { ok: hit.ok, reason: hit.reason };
+
+  const url = new URL(PROVIDERS.google.authorizeUrl);
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUriValue);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("scope", PROVIDERS.google.scope);
+
+  let result: { ok: boolean; reason: string | null } = { ok: true, reason: null };
+  try {
+    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(4000) });
+    const location = res.headers.get("location") ?? "";
+    const authError = new URL(location, "https://accounts.google.com").searchParams.get("authError");
+    if (authError) result = { ok: false, reason: decodeAuthError(authError) };
+  } catch {
+    return { ok: true, reason: null };
+  }
+  preflightCache.set(key, { ...result, at: Date.now() });
+  return result;
+}
+
 export function oauthLoginRoutes(db: Store, users: UserService, config: Config) {
   const app = new Hono();
 
@@ -123,6 +176,25 @@ export function oauthLoginRoutes(db: Store, users: UserService, config: Config) 
     if (!def) throw new AppError("Proveedor de login no soportado", 404);
     const clientId = def.clientId();
     if (!clientId) throw new AppError(`Falta configurar ${provider} para login (client id)`, 503);
+
+    if (provider === "google") {
+      const target = redirectUri(provider);
+      const check = await googleRedirectPreflight(clientId, target);
+      if (!check.ok) {
+        backgroundFailure(`oauth ${provider} preflight`, new Error(check.reason ?? "rechazado"));
+        return c.html(
+          page(
+            "Google no tiene registrada esta vuelta",
+            `El URI <code>${htmlEscape(target)}</code> no esta autorizado en el cliente OAuth ` +
+              `<code>${htmlEscape(clientId)}</code>.<br><br>` +
+              "Anadelo en Google Cloud Console &rarr; APIs y servicios &rarr; Credenciales &rarr; " +
+              "ese cliente &rarr; &laquo;URI de redireccionamiento autorizados&raquo;.<br><br>" +
+              `<small style="color:#6b7280">Google: ${htmlEscape(check.reason ?? "")}</small>`,
+          ),
+          503,
+        );
+      }
+    }
 
     const state = randomBytes(24).toString("base64url");
     // OAUTH_STATE_BINDING_V1 - el `state` se ata al navegador que inicia el
