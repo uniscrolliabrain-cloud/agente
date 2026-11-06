@@ -44,13 +44,20 @@ jobs:
       - uses: superfly/flyctl-actions/setup-flyctl@master
       # Los secretos no viajan por el repo: Doppler los importa a la app antes
       # del deploy (FLY_API_TOKEN y DOPPLER_TOKEN son secretos de GitHub).
+      # DEPLOY_DOPPLER_CONFIG_V1 - el config estaba hardcodeado a `prd`, que hoy
+      # no existe en el proyecto `agntiapro` (el unico config es el de la
+      # campana). En CI eso fallaba antes de llegar a Fly. Se lee de la variable
+      # de repo DOPPLER_CONFIG y, si no esta definida, se mantiene `prd`.
       - name: importar secretos desde Doppler
         run: |
           curl -sL https://cli.doppler.com/install.sh | sh
-          doppler secrets download --no-file --format docker --config prd \
+          doppler secrets download --no-file --format docker --config "$DOPPLER_CONFIG" \
             | flyctl secrets import -a agntiapro-api --stage
+          doppler secrets download --no-file --format docker --config "$DOPPLER_CONFIG" \
+            | flyctl secrets import -a agntiapro-worker --stage
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - run: flyctl deploy --remote-only -a agntiapro-api
         env:
@@ -75,15 +82,20 @@ jobs:
         with:
           node-version: "22.6"
       - run: npm i -g vercel@latest
+      # DEPLOY_VERCEL_NONINTERACTIVE_V1 - `vercel deploy` sin proyecto enlazado
+      # es interactivo y en CI se queda esperando input hasta el timeout. Con
+      # --yes y los ids de organizacion/proyecto no pide nada.
       - name: deploy
         working-directory: apps/site
         run: |
           if [ "${{ github.event.inputs.environment }}" = "preview" ]; then
-            vercel deploy --token "$VERCEL_TOKEN"
+            vercel deploy --yes --token "$VERCEL_TOKEN"
           else
-            vercel deploy --prod --token "$VERCEL_TOKEN"
+            vercel deploy --prod --yes --token "$VERCEL_TOKEN"
           fi
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
       - name: humo del sitio
         run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.com --site=https://agntiapro.com

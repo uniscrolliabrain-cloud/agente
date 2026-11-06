@@ -44,10 +44,14 @@ primary_region = "mad"
   source = "agntiapro_data"
   destination = "/data"
 
+# FLY_HEALTH_GRACE_45S_V1 - medido: con Postgres remoto (Neon en us-east-2) el
+# arranque tarda 20 s hasta /api/health 200, que era exactamente el grace_period
+# anterior: Fly mataba la maquina justo al quedar lista. 45 s da margen sin
+# ocultar un arranque realmente roto.
 [checks.health]
   type = "http"
   port = 8787
   path = "/api/health"
   interval = "30s"
   timeout = "5s"
-  grace_period = "20s"
+  grace_period = "45s"
