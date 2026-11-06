@@ -151,7 +151,33 @@ const google: Probe = async ({ read }) => {
     headers: { Authorization: `Bearer ${access}` },
   });
   const email = (user.body as { email?: string } | null)?.email;
-  return { ok: true, detail: email ? `refresh_token valido para ${email}` : "access_token obtenido" };
+  // GOOGLE_API_ENABLED_PROBE_V1 - el canje del token no prueba que el producto
+  // funcione: con las APIs deshabilitadas en el proyecto, ese mismo token
+  // responde 403 PERMISSION_DENIED en cada llamada y la sonda decia OK. Se
+  // sondean las tres APIs que usa packages/integrations/src/google.ts para que
+  // el verde signifique algo.
+  const apis = [
+    { name: "Gmail", url: "https://gmail.googleapis.com/gmail/v1/users/me/profile" },
+    {
+      name: "Calendar",
+      url: "https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1",
+    },
+    { name: "Drive", url: "https://www.googleapis.com/drive/v3/about?fields=user(displayName)" },
+  ];
+  const down: string[] = [];
+  for (const api of apis) {
+    const res = await httpJson(api.url, { headers: { Authorization: `Bearer ${access}` } });
+    if (res.status === 200) continue;
+    const message = (res.body as { error?: { message?: string } } | null)?.error?.message ?? "";
+    down.push(`${api.name} ${res.status}${message ? ` (${message.slice(0, 80)})` : ""}`);
+  }
+  if (down.length > 0) return { ok: false, detail: `token valido, pero ${down.join("; ")}` };
+  return {
+    ok: true,
+    detail: email
+      ? `refresh_token valido para ${email}; Gmail/Calendar/Drive operativos`
+      : "Gmail/Calendar/Drive operativos",
+  };
 };
 
 function graphVersion(read: ProbeContext["read"]): string {
@@ -476,7 +502,9 @@ export const CONNECTIONS: ConnectionSpec[] = [
     feature: "google",
     names: ["GOOGLE_CLIENT_ID"],
     need: "optional",
-    note: "El redirect debe estar registrado tal cual: PUBLIC_API_URL + /api/google/callback.",
+    // GOOGLE_TWO_REDIRECTS_V1 - hay dos vueltas distintas y las dos tienen que
+    // estar en el cliente OAuth; registrar solo una deja el otro flujo roto.
+    note: "Dos redirects a registrar tal cual: PUBLIC_API_URL + /api/google/callback (integraciones) y PUBLIC_API_URL + /api/auth/oauth/google/callback (login del panel).",
     probe: google,
   },
   {
