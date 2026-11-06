@@ -1,5 +1,7 @@
 # Piloto AGNTIA: revisión e integración
 
+> El [estado actualizado del vertical](./operacion/ESTADO-VERTICAL-LAIA-Y-DATOS.md) distingue el despliegue, el circuito manual de WhatsApp y las pruebas pendientes de extremo a extremo.
+
 Fecha: 2026-10-28. Base revisada: campaign/authz-tenant, c5a8c7c, sobre main c69e028.
 
 ## Dictamen

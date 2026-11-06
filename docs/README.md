@@ -1,5 +1,10 @@
 # Documentación de OpenMuse
 
+## Vertical comercial de Agntia
+
+- [Estado del piloto, Laia y flujo de datos](./operacion/ESTADO-VERTICAL-LAIA-Y-DATOS.md)
+- [Benchmark de servicios y criterios de calidad](./operacion/BENCHMARK-SERVICIOS-AGNTIA.md)
+
 > v1 · 2026-10-04 · Estado: current
 
 Índice de la documentación del repositorio. Cada entrada dice qué es,

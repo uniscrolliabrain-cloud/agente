@@ -1,5 +1,7 @@
 # Auditoría de agentes, LLM y kernel cognitivo
 
+> Para la propuesta posterior de integración de Laia en el piloto y el contexto del grafo, consulta [estado del vertical](./operacion/ESTADO-VERTICAL-LAIA-Y-DATOS.md). Esta auditoría conserva su SHA original.
+
 **Repositorio** `uniscrolliabrain-cloud/agente` · **Fecha** 4 de noviembre de 2026 · **Base** [`4f81f22`](https://github.com/uniscrolliabrain-cloud/agente/commit/4f81f2293b67048ec4f6a32801f5940439b832cf), rama `main`.
 
 ## Resumen

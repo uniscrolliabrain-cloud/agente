@@ -1,5 +1,7 @@
 # Campaña transversal AGNTIA: del repositorio al primer servicio operado
 
+> Actualización del 6 de noviembre de 2026. Consulta el [estado del vertical y flujo de Laia](./ESTADO-VERTICAL-LAIA-Y-DATOS.md) y el [benchmark](./BENCHMARK-SERVICIOS-AGNTIA.md). Las observaciones de infraestructura y pruebas fechadas en octubre son históricas.
+
 Fecha de referencia: 2026-10-29. Responsable de producto y autorizaciones: Alfonso. Implementación por fases: Freebuff. Revisión técnica e integración: Codex. Documentación e inventario: Cline, sin cambios de código salvo instrucción expresa de Alfonso.
 
 ## 1. Objetivo y límites
