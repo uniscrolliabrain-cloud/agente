@@ -143,6 +143,10 @@ export interface FailureContext {
   actionId?: string;
   monitorId?: string;
   sopId?: string;
+  /** LOG_FAILURE_PROVIDER_ID_V1 - id del objeto creado en un proveedor externo
+   * cuando el fallo ocurre DESPUES de que el proveedor aceptase la operacion
+   * (p.ej. una llamada de voz ya marcada cuyo registro no se pudo guardar). */
+  providerId?: string;
 }
 
 // LOG_RETRYABLE_V1 - importa la clasificacion de retry del motor.

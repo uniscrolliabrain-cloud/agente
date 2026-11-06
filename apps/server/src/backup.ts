@@ -2,6 +2,7 @@ import { mkdir, cp, readdir, stat, writeFile, readFile, rm } from "node:fs/promi
 import { existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { logWarn } from "./log.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../..");
@@ -21,6 +22,27 @@ export interface BackupResult {
   createdAt: string;
   bytes: number;
   pruned: number;
+}
+
+/**
+ * BACKUP_DATABASE_MODE_V1 - con DATABASE_URL remota el estado del negocio NO
+ * esta en DATA_DIR: PGlite solo se usa cuando no hay Postgres. Copiar
+ * DATA_DIR/postgres daba un backup de "0.00 MB" que parecia correcto y no
+ * contenia ni un tenant. Este es el aviso que faltaba.
+ */
+export function databaseMode(): {
+  mode: "embedded" | "external";
+  host: string | null;
+} {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) return { mode: "embedded", host: null };
+  try {
+    const host = new URL(url).hostname;
+    const local = host === "localhost" || host === "127.0.0.1" || host === "::1";
+    return { mode: local ? "embedded" : "external", host };
+  } catch {
+    return { mode: "embedded", host: null };
+  }
 }
 
 async function dirSize(path: string): Promise<number> {
@@ -71,7 +93,13 @@ export async function runBackup(options: BackupOptions = {}): Promise<BackupResu
   const out = options.outDir ? resolve(options.outDir) : join(backupsDir, stamp);
   await mkdir(out, { recursive: true });
 
-  const paths = ["postgres", "files", "session-signing-key"];
+  const database = databaseMode();
+  // Con base externa no hay ficheros de Postgres que copiar: el estado vive en
+  // el proveedor y su recuperacion es PITR/branch, no este directorio.
+  const paths =
+    database.mode === "external"
+      ? ["files", "session-signing-key"]
+      : ["postgres", "files", "session-signing-key"];
   let totalBytes = 0;
   for (const name of paths) {
     const from = join(source, name);
@@ -86,7 +114,27 @@ export async function runBackup(options: BackupOptions = {}): Promise<BackupResu
     createdAt: new Date().toISOString(),
     source,
     node: process.version,
+    bytes: totalBytes,
+    // BACKUP_DATABASE_MODE_V1 - el manifiesto declara explicitamente que la
+    // base no viaja aqui cuando es externa. Sin esto, un backup vacio se lee
+    // como un backup valido.
+    database: {
+      mode: database.mode,
+      host: database.host,
+      recovery:
+        database.mode === "external"
+          ? "La base de datos NO esta en este backup. Recuperacion: PITR/restore del proveedor (Neon). Ver docs/operacion/DESPLIEGUE.md#backup"
+          : "Postgres embebido (PGlite) en DATA_DIR/postgres.",
+    },
+    empty: totalBytes === 0,
   };
+  if (database.mode === "external") {
+    logWarn("backup.external_database", {
+      host: database.host,
+      bytes: totalBytes,
+      note: "Este backup cubre ficheros y clave de sesion; la base vive en el Postgres gestionado.",
+    });
+  }
   await writeFile(join(out, "manifest.json"), JSON.stringify(manifest, null, 2), "utf8");
 
   const pruned =

@@ -37,6 +37,18 @@ test("daily and weekly crons are unchanged", () => {
   assert.equal(weekly(at("2026-09-25T18:01:00Z")), false);
 });
 
+test("monthly:DD:HH:MM fires the closing SOP once a month", () => {
+  // SOP_CRON_MONTHLY_V1 - el SOP de conciliacion de la agencia usaba este
+  // formato y el parser lo rechazaba: el cierre mensual nunca se ejecutaba.
+  const monthly = parseCron("monthly:1:08:00");
+  assert.equal(monthly(at("2026-11-01T08:00:10Z")), true);
+  assert.equal(monthly(at("2026-11-01T08:01:00Z")), false);
+  assert.equal(monthly(at("2026-11-02T08:00:00Z")), false);
+  // 1-28: el dia 31 no existe en todos los meses.
+  assert.throws(() => parseCron("monthly:31:08:00"), AppError);
+  assert.throws(() => parseCron("monthly:1:25:00"), AppError);
+});
+
 test("an unsupported or out-of-range cron is a 422, not a silent never-fire", () => {
   assert.throws(() => parseCron("every:99m"), (error: unknown) => {
     assert.ok(error instanceof AppError);

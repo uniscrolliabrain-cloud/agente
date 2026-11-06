@@ -68,13 +68,14 @@ compilado contra un Postgres real y leer los logs.
 7. **`BUSINESS_DATABASE_URL` sin definir**: `query_business` corre contra la BD de
    la app; hace falta un rol `SELECT` en otra base.
 8. **Jobs de 24 h** (`BACKUP_INTERVAL_HOURS=24`): el backup tarda hasta 24 h en
-   repetirse; el primero ya se verificó (`/data/backups/...`).
+   repetirse. Ojo: el backup de `/data` cubre **ficheros y la clave de sesión**, no
+   la base de Neon (ver §7.6). El primero se verificó en `/data/backups/...`.
 
 ## 1. Topología prevista (ya está escrita en el repo)
 
 | Pieza | Destino | Config |
 |---|---|---|
-| API + panel (`/api/*`, SSE del chat, `apps/web/dist`) | **Fly.io** app `agntiapro-api` | `fly.toml` (región `mad`) |
+| API + panel (`/api/*`, SSE del chat, `apps/web/dist`) | **Fly.io** app `agntiapro-api` | `fly.toml` (región `fra`) |
 | Worker de tareas durables | **Fly.io** app `agntiapro-worker` | `fly.worker.toml` |
 | Browser worker (Playwright) | **Fly.io** app `agntiapro-browser` (opcional) | `fly.browser.toml` |
 | Sitio público de marketing | **Vercel** desde `apps/site` | `apps/site/index.html` |
@@ -237,9 +238,10 @@ Estos no impiden desplegar, pero dejan funciones muertas en producción:
 
 ## 4. Riesgos que hay que decidir antes de abrir al público
 
-### 4.1 Región: Fly en `mad`, Neon en `us-east-2`
+### 4.1 Región: Fly en `fra`, Neon en `us-east-2`
 
-`fly.toml` despliega en Madrid; el proyecto de Neon está en **Ohio**
+`fly.toml` despliega en Fráncfort (`fra`; `mad` no existe como región de Fly y la
+versión anterior de este documento lo decía mal). El proyecto de Neon está en **Ohio**
 (`ep-withered-waterfall-...us-east-2`). Cada consulta paga ~100 ms de ida y
 vuelta. Se nota ya en el arranque: crear/verificar los 12 índices tarda 24 s.
 
@@ -368,7 +370,7 @@ Ninguno lo cubría un test; los cinco se arreglaron en esta rama:
   el redirect aunque el `start` responda 302.
 - **Sitio de Vercel** (`apps/site`) y el registro `A @ -> 76.76.21.21`: hoy `www`
   funciona y el apex no está desplegado.
-- **Región**: `fly.toml` dice `mad`, la máquina corre en `fra`, y Neon está en
+- **Región**: `fly.toml` ya declara `fra` y la máquina corre ahí; Neon sigue en
   `us-east-2`. Son ~100 ms por consulta en cada arranque.
 - **Fila fantasma `default`**: queda una membership histórica del usuario demo
   (`default:e2f7…`) apuntando al tenant `default`, que no existe en el registro.
@@ -382,3 +384,42 @@ Ninguno lo cubría un test; los cinco se arreglaron en esta rama:
 lista, cualquiera con cuenta de Google crearía un usuario en el deployment. Para
 añadir a un cliente, se amplía esa variable o se crea el usuario como admin y se
 le mete en su tenant con `POST /api/admin/tenants/<id>/members`.
+
+Desde la auditoría externa del 2026-11-06 la lista se aplica **también a cuentas
+existentes**: antes `&& !existing` dejaba pasar a cualquier usuario creado antes de
+activarla. El login con contraseña de `ADMIN_EMAIL` queda como break-glass.
+
+### 7.6 Endurecimiento tras la auditoría externa
+
+Ver el detalle punto por punto en `AUDITORIA-EXTERNA-2026-11-06.md`. Resumen de lo
+que cambia el día a día del despliegue:
+
+- **`preview` ya no toca producción.** El workflow exige
+  `FLY_APP_API_PREVIEW` / `FLY_APP_WORKER_PREVIEW` y falla si no existen. Para tener
+  preview de verdad hay que crear esas dos apps y sus variables de repo.
+- **Los secretos de infraestructura no viajan a las apps.** El import desde Doppler
+  filtra `CLOUDFLARE_*`, `FLY_*`, `DOPPLER_*`, `VERCEL_*`, `NEON_*`, `GH_*`, `AWS_*`,
+  `AZURE_*`, `GCP_*`, `SUPABASE_ACCESS_*` y `GITHUB_TOKEN`. Se retiraron a mano de
+  `agntiapro-api` y `agntiapro-worker`. El token de Cloudflare sigue siendo válido:
+  **si se considera expuesto, hay que rotarlo**; quitarlo de las apps no lo invalida.
+- **Cada despliegue se identifica por SHA** (`--image-label`), y el humo corre en un
+  job con dependencias instaladas.
+
+#### Backup y recuperación con Neon
+
+`BACKUP_INTERVAL_HOURS=24` copia `/data/files` y `/data/session-signing-key` y deja un
+manifiesto que declara `database.mode: "external"`. **La base de datos no está en ese
+backup**: con `DATABASE_URL` remota, PGlite no se usa y no hay ficheros de Postgres
+que copiar. Un backup de `0.00 MB` es el resultado esperado de esta configuración, no
+un respaldo válido.
+
+Recuperación de la base (Neon):
+
+1. **PITR / restore** desde el panel de Neon o con `neonctl` sobre el mismo proyecto.
+2. **Branch de verificación**: crear un branch del punto en el tiempo y apuntar una
+   instancia aislada a su `DATABASE_URL` antes de tocar producción.
+3. Comprobar en ese branch: tenant `agntia` en el registro, su membership y los 8 SOPs
+   (`/api/sops` con sesión del owner).
+
+Pendiente: no hay `NEON_API_KEY` en Doppler, así que el paso 2 no se ha podido
+ejecutar todavía. Con esa clave se automatiza la verificación.

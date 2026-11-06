@@ -6,6 +6,7 @@ import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.
 import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
+import { runInTenantScope } from "../tenant-scope.ts";
 import { backgroundFailure } from "../log.ts";
 // WORKER_RETRY_V1
 import { defaultIsRetryable } from "./retry.ts";
@@ -178,10 +179,7 @@ export class TaskWorker {
 // con scanByOwnerPrefix requiere conocer el tenant activo, que el worker
 // no tiene. Este comentario documenta la deuda y remite al bloque 07.
     // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
-    const records = await this.db.scanByStatus<AgentTask>(
-      "tasks",
-      ["queued", "scheduled", "running", "waiting_approval"],
-    );
+    const records = await this.dueTasks();
       const due = records.filter(
         ({ value: t }) =>
           !this.active.has(t.id) &&
@@ -202,24 +200,27 @@ export class TaskWorker {
       }
       for (const record of due) {
         if (record.value.status === "waiting_approval") {
-          const action = record.value.actionId
-            ? await this.db.get<{ status: string; expiresAt?: string }>(
-                record.owner,
-                "actions",
-                record.value.actionId,
+          const actionId = record.value.actionId;
+          // WORKER_TENANT_ACTION_READ_V1 - la accion vive en el MISMO tenant que la
+          // tarea; sin el scope de la fila esta lectura resolvia la membership primaria.
+          const action = actionId
+            ? await this.inRowTenant(record, () =>
+                this.db.get<{ status: string; expiresAt?: string }>(record.owner, "actions", actionId),
               )
             : null;
           if (
-            record.value.actionId &&
+            actionId &&
             action?.status === "awaiting_review" &&
             Date.parse(action.expiresAt ?? "") <= this.now()
           )
-            await this.db.compareAndSwap(
-              record.owner,
-              "actions",
-              record.value.actionId,
-              { status: "awaiting_review", expiresAt: action.expiresAt },
-              { status: "expired" },
+            await this.inRowTenant(record, () =>
+              this.db.compareAndSwap(
+                record.owner,
+                "actions",
+                actionId,
+                { status: "awaiting_review", expiresAt: action.expiresAt },
+                { status: "expired" },
+              ),
             );
           else if (action && ["awaiting_review", "executing"].includes(action.status)) continue;
         }
@@ -234,11 +235,53 @@ export class TaskWorker {
     // Si ya hay maxActive handlers corriendo, no lanzamos m
     const available = Math.max(0, this.maxActive - this.active.size);
     const toRun = eligible.slice(0, available);
-    await Promise.all(toRun.map(({ owner, value }) => this.run(owner, value)));
+    await Promise.all(
+      toRun.map((row) => this.inRowTenant(row, () => this.run(row.owner, row.value))),
+    );
     } finally {
       this.ticking = false;
     }
   }
+
+  /**
+   * WORKER_TENANT_CLAIM_V1 - tareas con el tenant de cada fila.
+   *
+   * El worker corre fuera de una peticion, asi que no hay claim que diga en que
+   * empresa esta. Antes el scan devolvia solo el owner pelado y la reclamacion
+   * (compareAndSwap) resolvia la membership *primaria* del usuario: la tarea de
+   * su segunda empresa se buscaba en la primera, no aparecia y no se ejecutaba
+   * nunca. Ahora el tenant viaja con la fila y el tick fija el scope antes de
+   * reclamar.
+   */
+  private async dueTasks(): Promise<{ tenantId: string | null; owner: string; value: AgentTask }[]> {
+    const scoped = this.db as TenantScopedStore & {
+      scanByStatusWithTenant?: <U>(
+        kind: string,
+        statuses: string[],
+        limit?: number,
+      ) => Promise<{ tenantId: string | null; owner: string; value: U }[]>;
+    };
+    const statuses = ["queued", "scheduled", "running", "waiting_approval"];
+    if (typeof scoped.scanByStatusWithTenant === "function") {
+      return await scoped.scanByStatusWithTenant<AgentTask>("tasks", statuses);
+    }
+    const rows = await this.db.scanByStatus<AgentTask>("tasks", statuses);
+    return rows.map((row) => ({ tenantId: null, owner: row.owner, value: row.value }));
+  }
+
+  /**
+   * Ejecuta `fn` con el tenant de la fila fijado. Las filas sin tenant
+   * declarado (store crudo en tests, datos anteriores al scoping) conservan el
+   * comportamiento previo.
+   */
+  private async inRowTenant<T>(
+    row: { tenantId?: string | null; owner: string },
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    if (!row.tenantId) return fn();
+    return runInTenantScope({ tenantId: row.tenantId, actorId: row.owner }, fn);
+  }
+
   private async run(owner: string, previous: AgentTask) {
     if (this.stopping) return;
     // WORKER_METRICS_V1
@@ -274,9 +317,9 @@ export class TaskWorker {
     let guardCacheAt = 0;
     // GUARD_CACHE_100_V1 - 100ms detecta robos de lease antes.
     const GUARD_CACHE_MS = Number(process.env.WORKER_GUARD_CACHE_MS ?? "100") || 100;
-    // WORKER_STEP_SIGNAL_V1 - expone el signal a los handlers.
-    const guard = async () => {
-      const now = Date.now();
+    // WORKER_STEP_SIGNAL_V1 - expone el signal a los handlers.
+    const guard = async () => {
+      const now = Date.now();
       if (controller.signal.aborted) throw new LostLeaseError();
       if (now - guardCacheAt < GUARD_CACHE_MS) return;
       const latest = await this.db.get<AgentTask>(owner, "tasks", taskId);
@@ -330,12 +373,12 @@ export class TaskWorker {
         );
         return;
       }
-      const id = randomUUID();
-      recentEvents.set(key, { id, date: now, count: 1 });
-      // RUN_EVENTS_CAP_V1 - tope de 100 eventos por task.
-      if (recentEvents.size > 100) {
-        const oldest = [...recentEvents.entries()].sort((a, b) => a[1].date - b[1].date)[0];
-        if (oldest) recentEvents.delete(oldest[0]);
+      const id = randomUUID();
+      recentEvents.set(key, { id, date: now, count: 1 });
+      // RUN_EVENTS_CAP_V1 - tope de 100 eventos por task.
+      if (recentEvents.size > 100) {
+        const oldest = [...recentEvents.entries()].sort((a, b) => a[1].date - b[1].date)[0];
+        if (oldest) recentEvents.delete(oldest[0]);
       }
       // WORKER_DEDUPE_PERSIST_CAS_V1
       // WORKER_DEDUPE_PERSIST_V1 - persistir el dedupe en task.state.
@@ -411,23 +454,23 @@ export class TaskWorker {
       Math.max(10, Math.floor(leaseMs / 3)),
     );
     try {
-      // WORKER_CTX_SIGNAL_V1 - timeout por task con TASK_TIMEOUT_MS.
-      const TASK_TIMEOUT_MS = this.taskTimeoutMs();
-      const taskTimeout = setTimeout(() => {
-        if (!controller.signal.aborted) controller.abort();
-      }, TASK_TIMEOUT_MS);
-      taskTimeout.unref?.();
-      let result: Partial<AgentTask>;
-      try {
-        result = await this.execute(owner, task, {
-          signal: controller.signal,
-          guard,
-          checkpoint,
-          event,
-          busEvent,
-        });
-      } finally {
-        clearTimeout(taskTimeout);
+      // WORKER_CTX_SIGNAL_V1 - timeout por task con TASK_TIMEOUT_MS.
+      const TASK_TIMEOUT_MS = this.taskTimeoutMs();
+      const taskTimeout = setTimeout(() => {
+        if (!controller.signal.aborted) controller.abort();
+      }, TASK_TIMEOUT_MS);
+      taskTimeout.unref?.();
+      let result: Partial<AgentTask>;
+      try {
+        result = await this.execute(owner, task, {
+          signal: controller.signal,
+          guard,
+          checkpoint,
+          event,
+          busEvent,
+        });
+      } finally {
+        clearTimeout(taskTimeout);
       }
       // WORKER_LAST_DURATION_V1 - persiste duracion.
       const durationMs = Date.now() - runStartedAt;

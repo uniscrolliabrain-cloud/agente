@@ -42,34 +42,68 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      # Los secretos no viajan por el repo: Doppler los importa a la app antes
-      # del deploy (FLY_API_TOKEN y DOPPLER_TOKEN son secretos de GitHub).
-      # DEPLOY_DOPPLER_CONFIG_V1 - el config estaba hardcodeado a `prd`, que hoy
-      # no existe en el proyecto `agntiapro` (el unico config es el de la
-      # campana). En CI eso fallaba antes de llegar a Fly. Se lee de la variable
-      # de repo DOPPLER_CONFIG y, si no esta definida, se mantiene `prd`.
+      # DEPLOY_TARGET_RESOLVER_V1 - el workflow apuntaba a `agntiapro-api` y
+      # `agntiapro-worker` sin mirar el entorno: un dispatch con `preview`
+      # desplegaba sobre PRODUCCION, y el step de abajo ni lo avisaba. Ahora
+      # preview exige apps propias y falla en vez de tocar produccion.
+      - name: resolver destino
+        id: target
+        run: |
+          set -euo pipefail
+          ENV="${{ github.event.inputs.environment || 'production' }}"
+          if [ "$ENV" = "preview" ]; then
+            APP="${{ vars.FLY_APP_API_PREVIEW }}"
+            WORKER="${{ vars.FLY_APP_WORKER_PREVIEW }}"
+            if [ -z "$APP" ] || [ -z "$WORKER" ]; then
+              echo "::error::preview requiere las variables FLY_APP_API_PREVIEW y FLY_APP_WORKER_PREVIEW; no se despliega en produccion por accidente"
+              exit 1
+            fi
+          else
+            APP="${{ vars.FLY_APP_API || 'agntiapro-api' }}"
+            WORKER="${{ vars.FLY_APP_WORKER || 'agntiapro-worker' }}"
+          fi
+          echo "app=$APP" >> "$GITHUB_OUTPUT"
+          echo "worker=$WORKER" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Desplegando $ENV -> api=$APP worker=$WORKER"
+      # DEPLOY_SECRETS_DENYLIST_V1 - Doppler contiene tokens de infraestructura
+      # (Cloudflare, Fly, Doppler, GitHub, Vercel, Neon) que el runtime NO usa.
+      # Antes se importaba el config entero en las dos apps: cualquier bug de
+      # servidor ponia en la mano un token de zona DNS. La denegacion es por
+      # prefijo para que un token nuevo de esas familias no se cuele.
       - name: importar secretos desde Doppler
         run: |
+          set -euo pipefail
           curl -sL https://cli.doppler.com/install.sh | sh
-          doppler secrets download --no-file --format docker --config "$DOPPLER_CONFIG" \
-            | flyctl secrets import -a agntiapro-api --stage
-          doppler secrets download --no-file --format docker --config "$DOPPLER_CONFIG" \
-            | flyctl secrets import -a agntiapro-worker --stage
+          filter='to_entries[]
+            | select(.key | test("^(CLOUDFLARE_|FLY_|DOPPLER_|VERCEL_|NEON_|GH_|AWS_|AZURE_|GCP_|SUPABASE_ACCESS_)") | not)
+            | select(.key != "GITHUB_TOKEN")
+            | "\(.key)=\(.value)"'
+          doppler secrets download --no-file --format json --config "$DOPPLER_CONFIG" \
+            | jq -r "$filter" | flyctl secrets import -a "$APP" --stage
+          doppler secrets download --no-file --format json --config "$DOPPLER_CONFIG" \
+            | jq -r "$filter" | flyctl secrets import -a "$WORKER" --stage
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
           DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - run: flyctl deploy --remote-only -a agntiapro-api
+          APP: ${{ steps.target.outputs.app }}
+          WORKER: ${{ steps.target.outputs.worker }}
+      # DEPLOY_IMAGE_LABEL_V1 - el despliegue no dejaba rastro del commit que
+      # ejecutaba una maquina. Con la etiqueta, `flyctl image show` responde a
+      # "que SHA corre en produccion" sin adivinar.
+      - run: flyctl deploy --remote-only --image-label "${{ steps.target.outputs.sha }}" -a "${{ steps.target.outputs.app }}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - run: flyctl deploy --remote-only -c fly.worker.toml -a agntiapro-worker
+      - run: flyctl deploy --remote-only --image-label "${{ steps.target.outputs.sha }}" -c fly.worker.toml -a "${{ steps.target.outputs.worker }}"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-      - name: humo
-        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.com --tenant=agntia
+      - name: registrar que corre
+        run: |
+          echo "commit=${{ steps.target.outputs.sha }}"
+          flyctl image show -a "${{ steps.target.outputs.app }}" || true
         env:
-          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
-          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
   vercel:
     name: vercel (sitio publico)
@@ -97,5 +131,25 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      - name: humo del sitio
-        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.com --site=https://agntiapro.com
+
+  # DEPLOY_SMOKE_JOB_V1 - el humo vivia dentro del job de Fly, que no instala el
+  # workspace: `pnpm exec tsx` fallaba siempre (o pasaba por un tsx global que no
+  # era este repo) y el despliegue quedaba sin prueba real. Ahora es un job con
+  # dependencias instaladas y solo en produccion.
+  smoke:
+    name: humo en produccion
+    needs: [fly, vercel]
+    if: github.event.inputs.environment != 'preview'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.6"
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - name: humo
+        run: pnpm exec tsx scripts/smoke-deploy.ts --url=https://www.agntiapro.com --tenant=agntia --site=https://agntiapro.com
+        env:
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}

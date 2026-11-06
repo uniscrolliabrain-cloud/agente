@@ -134,17 +134,74 @@ export class TenantScopedStore {
         limit: number,
       ) => Promise<{ owner: string; value: U }[]>;
     };
-    const prefix = this.tenantPrefixes.values().next().value;
-    if (prefix && typeof storeWithPrefix.scanByOwnerPrefix === "function") {
+    // TENANT_SCAN_ALL_PREFIXES_V1 - antes esto usaba SOLO el primer prefijo
+    // visto. Con dos empresas en el mismo proceso, `scan` devolvia las filas de
+    // una y las de la otra desaparecian (no se filtraban: se omitian). Ahora
+    // se recorren todos los prefijos conocidos.
+    const prefixes = this.allTenantPrefixes();
+    if (prefixes.length > 0 && typeof storeWithPrefix.scanByOwnerPrefix === "function") {
       try {
-        const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
-        return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+        const out: { owner: string; value: T }[] = [];
+        for (const prefix of prefixes) {
+          const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${prefix}:`, limit);
+          for (const row of rows) out.push({ owner: this.peel(row.owner), value: row.value });
+        }
+        return out.slice(0, limit);
       } catch {
         // Fallback al scan sin filtro si la query falla.
       }
     }
     const rows = await this.store.scan<T>(kind, limit);
     return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
+  }
+
+  /**
+   * TENANT_SCAN_WITH_TENANT_V1 - scan que conserva el tenant de cada fila.
+   *
+   * Existe por el worker: sin contexto de peticion, `scan` devolvia el owner ya
+   * pelado (`tenantId:owner` -> `owner`) y la reclamacion volvia a resolver la
+   * membership *primaria* del usuario. Con un usuario en dos empresas, la tarea
+   * de la segunda se buscaba en la primera y no se reclamaba nunca. Aqui el
+   * tenant viaja con la fila para que el tick fije el scope correcto.
+   *
+   * Filas escritas sin scope (tests con store crudo, datos antiguos) devuelven
+   * `tenantId: null` y el caller mantiene el comportamiento anterior.
+   */
+  async scanByStatusWithTenant<T>(
+    kind: string,
+    statuses: string[],
+    limit = 1000,
+  ): Promise<{ tenantId: string | null; owner: string; value: T }[]> {
+    const prefixes = this.allTenantPrefixes();
+    const matches = (value: unknown) => {
+      const status = (value as { status?: string }).status;
+      return Boolean(status && statuses.includes(status));
+    };
+    if (prefixes.length > 0) {
+      const out: { tenantId: string; owner: string; value: T }[] = [];
+      for (const prefix of prefixes) {
+        const rows = await this.scanByPrefix<T>(kind, prefix, limit);
+        for (const row of rows) {
+          if (matches(row.value)) out.push({ tenantId: prefix, owner: row.owner, value: row.value });
+        }
+        if (out.length >= limit) break;
+      }
+      if (out.length > 0) return out.slice(0, limit);
+    }
+    // Sin prefijos conocidos (arranque del worker) se deriva el tenant de la
+    // propia clave compuesta, que es donde vive la verdad.
+    const rows = await this.store.scan<T>(kind, limit);
+    const out: { tenantId: string | null; owner: string; value: T }[] = [];
+    for (const row of rows) {
+      if (!matches(row.value)) continue;
+      const idx = row.owner.indexOf(":");
+      out.push({
+        tenantId: idx > 0 ? row.owner.slice(0, idx) : null,
+        owner: this.peel(row.owner),
+        value: row.value,
+      });
+    }
+    return out.slice(0, limit);
   }
 
   // TENANT_SCAN_STATUS_ISOLATION_V1

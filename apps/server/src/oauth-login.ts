@@ -20,6 +20,7 @@
 
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Hono } from "hono";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
@@ -54,8 +55,9 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
       if (!res.ok) return null;
       const body = (await res.json()) as { email?: string; email_verified?: boolean };
       if (!body.email) return null;
-      // El email sin verificar no sirve como identidad.
-      if (body.email_verified === false) return null;
+      // OAUTH_EMAIL_VERIFIED_STRICT_V1 - se exige `true`, no "distinto de
+      // false": si Google omitiera el campo, un email sin verificar pasaria.
+      if (body.email_verified !== true) return null;
       return body.email.toLowerCase().trim();
     },
   },
@@ -71,12 +73,10 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
         accept: "application/vnd.github+json",
         "user-agent": "openmuse",
       };
-      const me = await fetch("https://api.github.com/user", { headers });
-      if (!me.ok) return null;
-      const profile = (await me.json()) as { email?: string | null };
-      if (profile.email) return profile.email.toLowerCase().trim();
-      // El perfil publico puede no traer email: se pide la lista y se exige uno
-      // primario y verificado.
+      // OAUTH_GITHUB_VERIFIED_EMAIL_V1 - el email del perfil publico no prueba
+      // propiedad de la direccion. La unica fuente valida es /user/emails, que
+      // exige el scope `user:email` y distingue `verified`. Antes se aceptaba el
+      // del perfil sin comprobarlo.
       const emails = await fetch("https://api.github.com/user/emails", { headers });
       if (!emails.ok) return null;
       const list = (await emails.json()) as Array<{ email: string; primary: boolean; verified: boolean }>;
@@ -85,6 +85,11 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     },
   },
 };
+
+// OAUTH_STATE_COOKIE_V1 - cookie que ata el `state` al navegador que inicio el
+// flujo. Se limita a la ruta de OAuth y es HttpOnly: el JS del panel no la ve.
+const STATE_COOKIE = "om_oauth_binding";
+const STATE_COOKIE_PATH = "/api/auth/oauth";
 
 function allowedEmails(): Set<string> | null {
   const raw = process.env.OAUTH_ALLOWED_EMAILS?.trim();
@@ -120,11 +125,24 @@ export function oauthLoginRoutes(db: Store, users: UserService, config: Config) 
     if (!clientId) throw new AppError(`Falta configurar ${provider} para login (client id)`, 503);
 
     const state = randomBytes(24).toString("base64url");
+    // OAUTH_STATE_BINDING_V1 - el `state` se ata al navegador que inicia el
+    // flujo. Sin esto, un atacante empieza el login con SU cuenta y hace que la
+    // victima abra el callback: la sesion resultante es la del atacante sobre el
+    // navegador de la victima (login CSRF / fijacion de sesion).
+    const binding = randomBytes(32).toString("base64url");
     await db.put("system", "oauth-login-state", {
       id: digest(state),
       provider,
+      binding: digest(binding),
       createdAt: new Date().toISOString(),
       expiresAt: Date.now() + 10 * 60 * 1000,
+    });
+    setCookie(c, STATE_COOKIE, binding, {
+      path: STATE_COOKIE_PATH,
+      httpOnly: true,
+      sameSite: "Lax",
+      secure: config.publicUrl.startsWith("https://"),
+      maxAge: 10 * 60,
     });
 
     const url = new URL(def.authorizeUrl);
@@ -155,12 +173,26 @@ export function oauthLoginRoutes(db: Store, users: UserService, config: Config) 
     if (!code || !state) return c.html(page("Acceso invalido", "Faltan parametros de OAuth."), 400);
 
     const stateId = digest(state);
-    const stored = await db.get<{ provider: string; expiresAt: number }>("system", "oauth-login-state", stateId);
-    await db.remove("system", "oauth-login-state", stateId).catch(() => undefined);
+    const binding = getCookie(c, STATE_COOKIE);
+    deleteCookie(c, STATE_COOKIE, { path: STATE_COOKIE_PATH });
+    // OAUTH_STATE_ATOMIC_CONSUME_V1 - `take` es DELETE ... RETURNING: solo un
+    // callback puede canjear el state. Antes era get + remove, asi que dos
+    // peticiones simultaneas con el mismo state pasaban las dos.
+    const stored = await db.take<{ provider: string; binding?: string; expiresAt: number }>(
+      "system",
+      "oauth-login-state",
+      stateId,
+    );
     if (!stored) return c.html(page("Acceso invalido", "Estado de OAuth desconocido o ya usado."), 400);
     if (stored.provider !== provider) return c.html(page("Acceso invalido", "Proveedor no coincide."), 400);
     if (typeof stored.expiresAt === "number" && stored.expiresAt < Date.now()) {
       return c.html(page("Acceso caducado", "Vuelve a intentarlo."), 400);
+    }
+    if (!binding || !stored.binding || digest(binding) !== stored.binding) {
+      return c.html(
+        page("Acceso invalido", "El acceso se inicio en otro navegador. Vuelve a intentarlo."),
+        400,
+      );
     }
 
     const clientId = def.clientId();
@@ -196,9 +228,13 @@ export function oauthLoginRoutes(db: Store, users: UserService, config: Config) 
       return c.html(page("Sin email verificado", "La cuenta no expone un email verificado."), 403);
     }
 
+    // OAUTH_ALLOWLIST_ALL_USERS_V1 - la lista se aplica tambien a cuentas que ya
+    // existen. Antes `&& !existing` dejaba entrar a cualquier usuario creado
+    // antes de activar la lista, que es justo lo que la lista debia impedir.
+    // El acceso con contrasena de ADMIN_EMAIL sigue como break-glass.
     const allow = allowedEmails();
     const existing = await users.getByEmail(email);
-    if (allow && !allow.has(email) && !existing) {
+    if (allow && !allow.has(email)) {
       return c.html(page("Cuenta no autorizada", `El email ${htmlEscape(email)} no esta en la lista de acceso.`), 403);
     }
 
