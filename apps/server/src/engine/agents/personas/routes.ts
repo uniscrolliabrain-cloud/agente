@@ -8,6 +8,7 @@
 // El tenant se resuelve con el TenantService.
 
 import { Hono } from "hono";
+import { z } from "zod";
 import { AppError } from "../../../errors.ts";
 import type { PersonaRegistry } from "./registry.ts";
 import { resolveAllSkins, resolveSkin } from "./resolver.ts";
@@ -26,7 +27,7 @@ export interface PersonaRoutesDeps {
 }
 
 export function personasRoutes(deps: PersonaRoutesDeps) {
-  const app = new Hono<{ Variables: { owner: string } }>();
+  const app = new Hono<{ Variables: { owner: string; ctx?: { tenantId: string } } }>();
 
   const tenantIdFor = async (owner: string): Promise<string> => {
     if (!deps.tenantService) return "default"; // FALLBACK_TENANT_V1
@@ -36,6 +37,25 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
       return "default"; // FALLBACK_TENANT_V1
     }
   };
+
+  app.post("/laia/automations/:automationId/chat", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = c.get("ctx")?.tenantId;
+    if (!owner || !tenantId) return c.json({ error: "Session required" }, 401);
+
+    const automationId = c.req.param("automationId");
+    const automation = await deps.db.get(`${tenantId}:${owner}`, "sops", automationId);
+    if (!automation) return c.json({ error: "Automation access denied" }, 403);
+
+    if (!deps.registry.has(tenantId, "laia")) {
+      return c.json({ error: "Laia is not available for this tenant" }, 503);
+    }
+    const body = z.object({ threadId: z.string().trim().min(1).max(200) }).strict()
+      .safeParse(await c.req.json().catch(() => null));
+    if (!body.success) return c.json({ error: "A valid threadId is required" }, 400);
+
+    return c.json({ automationId, threadId: body.data.threadId, personaId: "laia" });
+  });
 
   // GET /api/agent-personas
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
