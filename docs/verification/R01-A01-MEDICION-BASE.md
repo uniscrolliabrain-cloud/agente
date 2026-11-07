@@ -43,3 +43,23 @@ El proyecto fija `pnpm@11.19.0`. El primer lanzador del PATH pasa por Corepack. 
 4. Revisa que el informe no exponga secretos. Añade explícitamente este archivo con `git add -- docs/verification/R01-A01-MEDICION-BASE.md` y revisa `git diff --cached --check`, `git diff --cached --stat` y el diff completo antes del commit. Si el gate queda medido, mensaje sugerido: `sprint(r01-a01): docs(verification): registra medición de la base`. Si solo se conserva evidencia parcial, usa `wip: r01-a01 registra medición parcial de la base` y deja la tarea abierta.
 
 El informe queda sin commit para la IA revisora.
+
+
+## Resultado recuperado al activar la beta
+
+El informe local `artifacts/gate/report.json` acredita la rama A01, HEAD `0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f` y árbol limpio. El runner completó 10 checks en 7283 segundos, con veredicto rojo. Esta evidencia sustituye el estado provisional anterior. El código del lanzador externo queda sin observación directa.
+
+| Check | Exit |
+| --- | ---: |
+| `typecheck` | 0 |
+| `typecheck:worker` | 0 |
+| `test` | 1 |
+| `audit:layers` | 0 |
+| `audit:bridges` | 0 |
+| `audit:console` | 0 |
+| `audit:anchors` | 0 |
+| `audit:contracts` | 1 |
+| `audit:idempotency` | 0 |
+| `audit:tenant-default` | 0 |
+
+El runner no registró contadores TAP y el log no contiene un resumen TAP con el formato esperado. Contracts informó 78 huérfanos. Conserva `artifacts/gate/{report.json,summary.txt,logs,audits}` y entrega el rojo de tests a A10 y el de contratos a A06.
