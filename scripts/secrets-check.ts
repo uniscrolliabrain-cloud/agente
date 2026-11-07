@@ -34,6 +34,9 @@ const SECRETS: Secret[] = [
   { name: "OPENMUSE_PROCESS_ROLE", need: "optional", group: "core", note: "all | api | worker; en Fly se separan en dos apps" },
   { name: "BACKUP_INTERVAL_HOURS", need: "optional", group: "core", note: "0 desactiva los backups automaticos" },
 
+  { name: "PUBLIC_SITE_URL", need: "optional", group: "core", note: "origen publico del sitio en Vercel" },
+  { name: "VITE_API_URL", need: "optional", group: "core", note: "destino del API para el panel desplegado por separado" },
+
   // --- auth ---------------------------------------------------------------
   { name: "SUPABASE_URL", need: "live", group: "auth", note: "habilita la JWKS RS256/ES256 (https://<ref>.supabase.co)" },
   { name: "SUPABASE_JWT_SECRET", need: "optional", group: "auth", note: "solo si el proyecto firma con HS256; con JWKS no hace falta" },
@@ -73,10 +76,11 @@ const SECRETS: Secret[] = [
   { name: "VAPI_API_KEY", need: "optional", group: "vapi", note: "agente de voz; sin key el adaptador responde 503" },
   { name: "VAPI_ASSISTANT_ID", need: "optional", group: "vapi", note: "asistente que atiende llamadas" },
   { name: "VAPI_PHONE_NUMBER_ID", need: "optional", group: "vapi", note: "numero emisor; sin el Vapi usa el del asistente" },
+  { name: "VAPI_WEBHOOK_SECRET", need: "optional", group: "vapi", note: "secreto del webhook de voz" },
   { name: "VOICE_OUTBOUND_ENABLED", need: "optional", group: "vapi", note: "true habilita POST /api/voice/calls; una llamada real cuesta dinero" },
   { name: "STRIPE_API_KEY", need: "optional", group: "stripe", note: "cobros de la agencia" },
   { name: "STRIPE_WEBHOOK_SECRET", need: "optional", group: "stripe", note: "verificacion de eventos de cobro" },
-  { name: "GOOGLE_MAPS_API_KEY", need: "optional", group: "leads", note: "busqueda de negocios locales para leads" },
+  { name: "GOOGLE_MAPS_API_KEY", need: "optional", group: "leads", note: "Google Places API: busqueda de negocios locales para leads" },
 ];
 
 const args = new Map(
