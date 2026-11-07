@@ -6,8 +6,8 @@
 
 | Paso | Acción | Comando / Herramienta |
 |------|--------|----------------------|
-| 1 | Desplegar instancia de OpenMuse para el cliente | Docker o servidor directo |
-| 2 | Configurar variables de entorno | `.env` con `OPENMUSE_ACCESS_KEY`, `TOKEN_ENCRYPTION_KEY`, `DATABASE_URL` |
+| 1 | Preparar la instancia del cliente | [Procedimiento de despliegue](DEPLOY.md) |
+| 2 | Configurar variables de entorno | [Variables de producción](DEPLOY.md#variables-críticas-para-producción) |
 | 3 | Crear usuario admin | `pnpm admin:create` |
 | 4 | Provisionar cliente | `pnpm provision-client` |
 | 5 | Registrar tenant del cliente | `TenantService.setMembership(owner, tenantId)` |

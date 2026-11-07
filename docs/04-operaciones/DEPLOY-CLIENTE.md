@@ -1,6 +1,6 @@
 # Deploy por Cliente
 
-> v1 · 2026-10-27 · Estado: current
+> Guía de aprovisionamiento por cliente. Sigue [DEPLOY.md](DEPLOY.md) para publicar y operar la instancia.
 
 ## Modelo
 
@@ -8,8 +8,8 @@
 
 ## Pasos de alta de cliente
 
-1. **Crear despliegue**: despliegue una instancia de OpenMuse para el cliente.
-2. **Configurar variables**: `OPENMUSE_ACCESS_KEY`, `TOKEN_ENCRYPTION_KEY`, `DATABASE_URL`, credenciales de Google, WhatsApp, Stripe.
+1. **Crear despliegue**: sigue el [procedimiento vigente](DEPLOY.md) para la instancia del cliente.
+2. **Configurar variables**: aplica las [variables de producción](DEPLOY.md#variables-críticas-para-producción) y las de las integraciones habilitadas.
 3. **Crear admin**: `pnpm admin:create`.
 4. **Provisionar**: `pnpm provision-client` (si se usa Supabase, instanciar el Store con cliente Supabase).
 5. **Registrar tenant**: `TenantService.setMembership(owner, tenantId)`.
