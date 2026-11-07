@@ -275,11 +275,13 @@ export class TaskWorker {
    * comportamiento previo.
    */
   private async inRowTenant<T>(
-    row: { tenantId?: string | null; owner: string },
+    row: { tenantId?: string | null; owner: string; value: AgentTask },
     fn: () => Promise<T>,
   ): Promise<T> {
     if (!row.tenantId) return fn();
-    return runInTenantScope({ tenantId: row.tenantId, actorId: row.owner }, fn);
+    // assignedBy is the durable requesting actor used in task events.
+    const actorId = row.value.assignedBy ?? row.owner;
+    return runInTenantScope({ tenantId: row.tenantId, actorId }, fn);
   }
 
   private async run(owner: string, previous: AgentTask) {
