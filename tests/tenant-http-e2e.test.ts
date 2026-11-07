@@ -102,7 +102,7 @@ test("la traza del kernel de A excluye el contenido de B y rechaza una consulta 
     });
   }
 
-  const route = "/api/kernel/audit";
+  const route = "/api/kernel/audit/by-action/turn.closed";
   const allowedB = await server.app.request(route, { headers: bearer(bobToken) });
   assert.equal(allowedB.status, 200);
   assert.ok((await allowedB.text()).includes(foreignContent));
