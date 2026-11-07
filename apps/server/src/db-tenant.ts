@@ -5,6 +5,13 @@
 
 import type { ListOptions, Store } from "./db.ts";
 
+function tenantPrefix(tenantId: string): string {
+  if (!tenantId || tenantId.includes(":")) {
+    throw new Error("Invalid tenant ID for storage prefix");
+  }
+  return `${tenantId}:`;
+}
+
 export class TenantScopedStore {
   constructor(
     private readonly store: Store,
@@ -14,8 +21,9 @@ export class TenantScopedStore {
   // DB_TENANT_SCOPED_DEFAULT_V1
   private async key(owner: string): Promise<string> {
     const tenantId = await this.resolver(owner);
+    const prefix = tenantPrefix(tenantId);
     this.tenantPrefixes.add(tenantId);
-    return `${tenantId}:${owner}`;
+    return prefix + owner;
   }
 
   async get<T = Record<string, unknown>>(owner: string, kind: string, id: string): Promise<T | null> {
@@ -100,22 +108,8 @@ export class TenantScopedStore {
     tenantId: string,
     limit = 500,
   ): Promise<{ owner: string; value: T }[]> {
-    const storeWithPrefix = this.store as Store & {
-      scanByOwnerPrefix?: <U>(
-        kind: string,
-        ownerPrefix: string,
-        limit: number,
-      ) => Promise<{ owner: string; value: U }[]>;
-    };
-    if (typeof storeWithPrefix.scanByOwnerPrefix !== "function") {
-      // Fallback: scan global y filtro en memoria.
-      const rows = await this.store.scan<T>(kind, limit * 4);
-      return rows
-        .filter((r) => r.owner.startsWith(`${tenantId}:`))
-        .map((r) => ({ owner: this.peel(r.owner), value: r.value }))
-        .slice(0, limit);
-    }
-    const rows = await storeWithPrefix.scanByOwnerPrefix<T>(kind, `${tenantId}:`, limit);
+    const prefix = tenantPrefix(tenantId);
+    const rows = await this.store.scanByOwnerPrefix<T>(kind, prefix, limit);
     return rows.map((r) => ({ owner: this.peel(r.owner), value: r.value }));
   }
 
