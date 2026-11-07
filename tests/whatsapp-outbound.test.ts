@@ -447,3 +447,31 @@ test("page cursors cannot cross tenant, owner or collection and malformed limits
     await assert.rejects(f.run(f.a, () => f.client().draftsPage(f.a, input)), /no valid/);
   }
 });
+
+test("changing the requested intent or channel cannot authorize a different approval actor", async () => {
+  const f = await fixture();
+  const draft = await f.create();
+  assert.ok(draft.revision);
+  const app = new Hono<{ Variables: { owner: string } }>();
+  app.onError((error, c) => c.json({ error: error.message }, error instanceof AppError ? error.status : 500));
+  app.use("*", async (c, next) => {
+    c.set("owner", f.a.owner);
+    await f.run({ ...f.a, actorId: randomUUID() }, next);
+  });
+  app.route("/api/whatsapp", whatsappRoutes({
+    db: f.scoped,
+    config: { encryptionKey, mode: "live" },
+    tenantService: undefined,
+  } as Parameters<typeof whatsappRoutes>[0]));
+
+  for (const override of [{}, { intent: "approved-intent" }, { channel: "meta" }]) {
+    const response = await app.request(`/api/whatsapp/drafts/${draft.id}/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ revision: draft.revision, ...override }),
+    });
+    assert.equal(response.status, 403);
+    assert.deepEqual(await response.json(), { error: "Actor de aprobacion no valido" });
+    assert.ok(!(await f.operation(draft.id)));
+  }
+});
