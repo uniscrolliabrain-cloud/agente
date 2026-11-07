@@ -3,6 +3,14 @@
 // Sin esto, los tests que llaman a Gemini reciben 429 del free tier
 // y el fallo se confunde con un bug real (ver docs/audits/01-tests/miniaudit.md).
 
+// Impide que las importaciones de la app carguen el .env local del operador.
+// Los tests todavía pueden cargar archivos de fixture por su nombre.
+const loadEnvFile = process.loadEnvFile;
+process.loadEnvFile = (path) => {
+  if (path === undefined || path === ".env" || path === "./.env") return;
+  loadEnvFile(path);
+};
+
 const REAL_FETCH = globalThis.fetch;
 
 const BLOCKED_HOSTS = [
