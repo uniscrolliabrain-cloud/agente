@@ -12,6 +12,7 @@ import { after, before, test } from "node:test";
 import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { TenantService } from "../apps/server/src/engine/tenant.ts";
+import { StoreAuditStore } from "../apps/server/src/kernel/audit/store-store.ts";
 import { UserService } from "../apps/server/src/users.ts";
 import { testConfig } from "./helpers/config.ts";
 
@@ -82,6 +83,41 @@ test("tenant mismatch en query devuelve 403", async () => {
     headers: bearer(aliceToken),
   });
   assert.equal(response.status, 403);
+});
+
+test("la traza del kernel de A excluye el contenido de B y rechaza una consulta explícita a B", async () => {
+  const audit = new StoreAuditStore(db);
+  const ownContent = "marcador-traza-propia-a";
+  const foreignContent = "marcador-traza-privada-b";
+  for (const [tenantId, owner, marker] of [
+    ["tenant-a", aliceId, ownContent],
+    ["tenant-b", bobId, foreignContent],
+  ]) {
+    await audit.append({
+      tenantId,
+      owner,
+      action: "turn.closed",
+      actor: { kind: "user", id: owner },
+      payload: { marker },
+    });
+  }
+
+  const route = "/api/kernel/audit";
+  const allowedB = await server.app.request(route, { headers: bearer(bobToken) });
+  assert.equal(allowedB.status, 200);
+  assert.ok((await allowedB.text()).includes(foreignContent));
+
+  const denied = await server.app.request(`${route}?tenantId=tenant-b`, {
+    headers: bearer(aliceToken),
+  });
+  assert.equal(denied.status, 403);
+  assert.deepEqual(await denied.json(), { error: "tenant mismatch", code: "TENANT_MISMATCH" });
+
+  const allowedA = await server.app.request(route, { headers: bearer(aliceToken) });
+  assert.equal(allowedA.status, 200);
+  const trace = await allowedA.text();
+  assert.ok(trace.includes(ownContent));
+  assert.ok(!trace.includes(foreignContent));
 });
 
 test("files.import usa el tenant del owner, no default", async () => {
