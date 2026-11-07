@@ -1,6 +1,6 @@
 # R01 · A01 — Medición de la base
 
-**Estado: bloqueada en el arranque de pnpm.** Medición parcial del 7 de noviembre de 2026.
+**Estado: medición recuperada, gate rojo.** Base del 7 de noviembre de 2026.
 
 - Worktree: `wt-r01-a01`.
 - Rama: `sprint/r01-a01-medir-base`.
@@ -62,4 +62,4 @@ El informe local `artifacts/gate/report.json` acredita la rama A01, HEAD `0c8fe8
 | `audit:idempotency` | 0 |
 | `audit:tenant-default` | 0 |
 
-El runner no registró contadores TAP y el log no contiene un resumen TAP con el formato esperado. Contracts informó 78 huérfanos. Conserva `artifacts/gate/{report.json,summary.txt,logs,audits}` y entrega el rojo de tests a A10 y el de contratos a A06.
+El parser del runner dejó los contadores vacíos. El resumen de Node en el log registra 550 tests, 455 aprobados, 72 fallidos, 10 cancelados y 13 omitidos. Contracts informó 78 huérfanos. Conserva `artifacts/gate/{report.json,summary.txt,logs,audits}` y entrega el rojo de tests a A10 y el de contratos a A06.
