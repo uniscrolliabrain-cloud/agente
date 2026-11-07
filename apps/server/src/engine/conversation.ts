@@ -545,7 +545,8 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
       "CITA LAS FUENTES: cuando uses contexto RAG, menciona el archivo. " +
       // STOP_SEQUENCES_V1 - prohibe texto de relleno.
 "Las aprobaciones pasan por la app, nunca por el chat. Si algo no esta conectado, dilo claramente; no finjas. " +
-      "Nunca generes texto de relleno. Si no sabes algo, dilo. " +
+      "Nunca generes texto de relleno. Si falta un dato verificable para responder, di: «Aún no puedo verificar ese dato». " +
+      "Omite las cifras, estimaciones y confirmaciones que dependan del dato ausente. " +
       computerInstructions;
 
     return new Observable((subscriber) => {
