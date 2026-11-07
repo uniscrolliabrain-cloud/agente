@@ -11,6 +11,10 @@ dónde vive y si está viva o archivada.
 - [Benchmark de servicios y criterios de calidad](./operacion/BENCHMARK-SERVICIOS-AGNTIA.md)
 - [Especificación de servicios, pipelines y tarjetas de comunicación](./operacion/PROPUESTA-PLAYBOOKS-LAIA-Y-SERVICIOS.md)
 
+## Desarrollo en paralelo
+
+- [Plan de 10 agentes y 10 rondas de sprint](./operacion/SPRINTS-10-AGENTES-10-RONDAS.md)
+
 ## Producto y visión
 
 | Fichero | Qué es |
