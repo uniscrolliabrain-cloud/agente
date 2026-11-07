@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createStore } from "../apps/server/src/db.ts";
+import { EventBus } from "../apps/server/src/engine/events/index.ts";
 import { BusinessGraph } from "../apps/server/src/engine/business/graph.ts";
 import { ContextEngine } from "../apps/server/src/engine/context/engine.ts";
 import { renderContext } from "../apps/server/src/engine/context/assembly.ts";
@@ -12,8 +13,9 @@ async function makeFixture() {
   const graph = new BusinessGraph(db);
   const rag = new RagService(db);
   const memory = new MemoryService(db, rag);
-  const context = new ContextEngine(db, graph, memory);
-  return { db, graph, memory, context };
+  const bus = new EventBus(db);
+  const context = new ContextEngine(db, graph, memory, bus);
+  return { db, graph, memory, context, bus };
 }
 
 test("assemble sin entidad devuelve rol con sus memorias", async () => {
@@ -83,4 +85,23 @@ test("assemble falla si el rol no existe", async () => {
       /Role not found/i,
     );
   } finally { await f.db.close(); }
+});
+
+test("assemble limits recent events to the selected entity before applying the limit", async () => {
+  const { db, graph, bus, context } = await makeFixture();
+  try {
+    const owner = "o1";
+    const roleId = "operaciones";
+    await db.put(owner, "agent-roles", {
+      id: roleId, name: "Omar", tone: "concise", objetivo: "Desbloquear",
+      sops: [], active: true, memories: [], createdAt: new Date().toISOString(),
+    });
+    const first = await graph.createEntity(owner, { id: "job-1", type: "job", name: "One", actor: "t", source: "s" });
+    const second = await graph.createEntity(owner, { id: "job-2", type: "job", name: "Two", actor: "t", source: "s" });
+    await bus.emit(owner, "entity.created", { kind: "entity", id: first.id }, { entityId: first.id, entityType: first.type, version: 1 });
+    await bus.emit(owner, "entity.created", { kind: "entity", id: second.id }, { entityId: second.id, entityType: second.type, version: 1 });
+
+    const pkg = await context.assemble(owner, { roleId, query: "estado", entityId: first.id, eventLimit: 1 });
+    assert.deepEqual(pkg.events.map((event) => event.source.id), [first.id]);
+  } finally { await db.close(); }
 });
