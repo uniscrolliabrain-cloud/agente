@@ -15,6 +15,15 @@ jobs:
         with:
           node-version: '22'
       - run: corepack enable
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: |
+          store_path="$(pnpm store path)"
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
       # CI_TYPECHECK_SERVER_V1 — typecheck explícito del server.
       - run: pnpm typecheck
@@ -39,13 +48,21 @@ jobs:
   worker:
     name: worker (typecheck)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: corepack enable
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: |
+          store_path="$(pnpm store path)"
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
       - run: pnpm --filter @openmuse/browser-worker --fail-if-no-match typecheck
 
@@ -58,6 +75,15 @@ jobs:
         with:
           node-version: '22'
       - run: corepack enable
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: |
+          store_path="$(pnpm store path)"
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
       - run: pnpm --filter @openmuse/web exec tsc --noEmit
   integration:
@@ -70,6 +96,15 @@ jobs:
         with:
           node-version: '22'
       - run: corepack enable
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: |
+          store_path="$(pnpm store path)"
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
       - run: pnpm test
         env:
@@ -86,6 +121,15 @@ jobs:
         with:
           node-version: '22'
       - run: corepack enable
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        run: |
+          store_path="$(pnpm store path)"
+          echo "path=$store_path" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
