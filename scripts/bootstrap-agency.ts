@@ -1,10 +1,10 @@
 // BOOTSTRAP_AGENCY_CLI_V1 - alta del tenant de la agencia en un deployment.
 //
 // Uso:
-//   pnpm bootstrap:agency --admin=tu@agntiapro.io
-//   pnpm bootstrap:agency --admin=tu@agntiapro.io --profile=clientes/agntia/agency.json
-//   pnpm bootstrap:agency --admin=tu@agntiapro.io --dry-run
-//   pnpm bootstrap:agency --admin=tu@agntiapro.io --force   (reescribe las SOPs)
+//   pnpm bootstrap:agency --admin=tu@agntiapro.com
+//   pnpm bootstrap:agency --admin=tu@agntiapro.com --profile=clientes/agntia/agency.json
+//   pnpm bootstrap:agency --admin=tu@agntiapro.com --dry-run
+//   pnpm bootstrap:agency --admin=tu@agntiapro.com --force   (reescribe las SOPs)
 //
 // Requiere el owner ya creado (pnpm admin:create o el primer login con Supabase)
 // y el API parado si usas PGlite: el proceso abre la misma base.
@@ -28,7 +28,7 @@ const args = new Map(
 
 const adminEmail = args.get("admin");
 if (!adminEmail) {
-  console.error("Falta --admin=<email del owner>. Ejemplo: pnpm bootstrap:agency --admin=yo@agntiapro.io");
+  console.error("Falta --admin=<email del owner>. Ejemplo: pnpm bootstrap:agency --admin=yo@agntiapro.com");
   process.exit(1);
 }
 const profilePath = resolve(args.get("profile") ?? "clientes/agntia/agency.json");

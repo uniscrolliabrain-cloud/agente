@@ -4,7 +4,12 @@
 // para todos. Ahora es una clase instanciable; el array vive por instancia.
 // La funcion `resolveView` de modulo sigue existiendo por compatibilidad
 // con los sitios que ya la importaban, y delega en una instancia singleton.
-import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@openmuse/domain/views";
+// VIEW_RESOLVER_BUILDABLE_IMPORT_V1 - antes importaba "@openmuse/domain/views",
+// que solo existe como alias de tsconfig (packages/domain no es un paquete npm).
+// tsc emite el especificador tal cual y `node dist/...` moria con
+// ERR_MODULE_NOT_FOUND al arrancar: el artefacto de produccion (Docker/Fly) no
+// levantaba. El resto del repo ya importa el dominio por ruta relativa.
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "../../../../../packages/domain/src/views.ts";
 
 export type ViewBuilder = (owner: string) => Promise<unknown>;
 

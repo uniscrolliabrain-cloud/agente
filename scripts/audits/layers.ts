@@ -1,6 +1,8 @@
 // SCRIPTS_AUDIT_LAYERS_V1
-import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+
+import { auditReportPath } from "./report-dir.ts";
 
 const LAYERS = {
   domain: "packages/domain/src",
@@ -68,9 +70,18 @@ async function main() {
     ...hits.map((h) => `| ${h.file} | ${h.line} | ${h.rule} | ${h.snippet.replace(/\|/g, "\\|")} |`),
     "",
   ];
-  await mkdir("docs", { recursive: true });
-  await writeFile("docs/AUDIT_LAYERS.md", report.join("\n"), "utf8");
+  const reportPath = auditReportPath("AUDIT_LAYERS.md");
+  await writeFile(reportPath, report.join("\n"), "utf8");
   console.log(`[audit:layers] ${hits.length} violaciones`);
+
+  // AUDIT_LAYERS_EXIT_V1 - hasta ahora este check no podia fallar: calculaba las
+  // violaciones, imprimia el numero y terminaba con exit 0. Solo el `catch` de
+  // abajo devolvia 1, asi que "0 violaciones" y "40 violaciones" eran
+  // indistinguibles para el gate. Hoy hay 0, pero el check ahora lo demuestra.
+  if (hits.length > 0) {
+    console.error(`[audit:layers] Hay ${hits.length} violaciones de capas.`);
+    process.exit(1);
+  }
 }
 
 void main().catch((e) => {

@@ -1,6 +1,10 @@
 # Piloto AGNTIA: revisión e integración
 
 > El [estado actualizado del vertical](./operacion/ESTADO-VERTICAL-LAIA-Y-DATOS.md) distingue el despliegue, el circuito manual de WhatsApp y las pruebas pendientes de extremo a extremo.
+>
+> **Actualización 2026-11-07.** El bloqueo de DNS que se describe más abajo ya no
+> existe: `www.agntiapro.com` resuelve y `/api/health` responde 200 con base de datos,
+> bus y worker en verde. El resto del documento se conserva como instantánea del 28-10.
 
 Fecha: 2026-10-28. Base revisada: campaign/authz-tenant, c5a8c7c, sobre main c69e028.
 

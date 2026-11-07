@@ -73,9 +73,19 @@ export class TenantService {
     }
     // TENANT_MEMBERSHIP_LEGACY_MIGRATE_V1 - si existe una fila con id=owner
     // (convencion antigua), la migramos al vuelo a id="default".
-    const legacy = await this.db
-      .list<{ id: string; tenantId: string }>(owner, MEMBERSHIP_KIND)
-      .catch(() => []);
+    //
+    // TENANT_SYSTEM_NAMESPACE_GUARD_V1 - el namespace `system` no contiene
+    // memberships: ahi vive el registro de tenants, cuyas filas tienen
+    // id=tenantId. Al resolver el tenant de "system" (lo hacia el store con
+    // scope al listar algo global) esta migracion tomaba el registro por una
+    // membership antigua, lo reescribia como id="default" y lo borraba: el
+    // tenant desaparecia del panel. En `system` no se migra nada.
+    const legacy =
+      owner === "system"
+        ? []
+        : await this.db
+            .list<{ id: string; tenantId: string }>(owner, MEMBERSHIP_KIND)
+            .catch(() => []);
     const legacyRow = legacy.find((m) => m.id !== MEMBERSHIP_ID && m.tenantId);
     if (legacyRow) {
       await this.db.put(owner, MEMBERSHIP_KIND, {

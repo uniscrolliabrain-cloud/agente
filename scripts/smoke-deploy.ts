@@ -5,8 +5,8 @@
 // el auth falla cerrado y si la cabecera de tenant es la esperada.
 //
 // Uso:
-//   OPENMUSE_URL=https://api.agntiapro.io pnpm smoke:deploy
-//   pnpm smoke:deploy --url=https://api.agntiapro.io --tenant=agntia
+//   OPENMUSE_URL=https://api.agntiapro.com pnpm smoke:deploy
+//   pnpm smoke:deploy --url=https://api.agntiapro.com --tenant=agntia
 //
 // Credenciales (opcionales, para la parte autenticada):
 //   SMOKE_EMAIL / SMOKE_PASSWORD  -> POST /api/auth/login

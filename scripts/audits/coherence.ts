@@ -10,31 +10,27 @@
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 
-// Nombre del check -> fichero. `console` se llama no-console.ts.
-const CHECKS = [
-  { name: "layers", file: "layers.ts" },
-  { name: "bridges", file: "bridges.ts" },
-  { name: "console", file: "no-console.ts" },
-  { name: "anchors", file: "anchors.ts" },
-  { name: "contracts", file: "contracts.ts" },
-  { name: "idempotency", file: "idempotency.ts" },
-  { name: "tenant-default", file: "tenant-default.ts" },
-] as const;
+// AUDIT_REGISTRY_ONE_LIST_V1 - la lista vive en registry.ts y la comparte con
+// `scripts/gate-report.ts`. Antes cada uno tenia la suya.
+import { AUDIT_CHECKS } from "./registry.ts";
 
 const root = process.cwd();
-const results: { name: string; ok: boolean }[] = [];
+const results: { name: string; ok: boolean; blocking: boolean }[] = [];
 
-for (const check of CHECKS) {
+for (const check of AUDIT_CHECKS) {
   const script = join(root, "scripts", "audits", check.file);
   const run = spawnSync(process.execPath, ["--import", "tsx", script], {
     cwd: root,
     stdio: "inherit",
   });
-  results.push({ name: check.name, ok: run.status === 0 });
+  results.push({ name: check.name, ok: run.status === 0, blocking: check.blocking });
 }
 
-const failed = results.filter((r) => !r.ok);
+const failed = results.filter((r) => !r.ok && r.blocking);
 console.log("\n[audit:coherence] resumen");
-for (const r of results) console.log(`  ${r.ok ? "OK  " : "FAIL"} ${r.name}`);
+for (const r of results) {
+  const tag = r.ok ? "OK  " : "FAIL";
+  console.log(`  ${tag} ${r.name}${r.blocking ? "" : "  (advisory, no bloquea)"}`);
+}
 console.log(`[audit:coherence] ${results.length - failed.length}/${results.length} checks OK`);
 if (failed.length > 0) process.exit(1);

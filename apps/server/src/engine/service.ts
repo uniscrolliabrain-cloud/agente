@@ -712,6 +712,10 @@ export class AgentService {
         owner: tenantId,
         role: "system",
         requestId: `consolidate-on-turn:${turnId}`,
+        // KERNEL_CONTEXT_ACTOR_BACKGROUND_V1 - actorId es obligatorio desde
+        // KERNEL_CONTEXT_ACTOR_V1; sin el, este loop moria con ZodError en cada
+        // tick y la consolidacion de turnos nunca ocurria en produccion.
+        actorId: tenantId,
       });
       const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
       if (thoughts.length < 2) return;
@@ -759,6 +763,9 @@ export class AgentService {
           owner: tenantId,
           role: "system",
           requestId: `consolidate:${Date.now()}`,
+          // KERNEL_CONTEXT_ACTOR_BACKGROUND_V1 - el loop de consolidacion corre
+          // sin humano; el actor es el propio tenant.
+          actorId: tenantId,
         });
         // CONSOLIDATE_SUPERVISOR_V1 - Laia consolida duplicados y contradicciones
         // entre los turnos de los 12 agentes.
@@ -848,6 +855,8 @@ export class AgentService {
           owner,
           role: "system",
           requestId: `meta-loop:${now.toISOString()}`,
+          // KERNEL_CONTEXT_ACTOR_BACKGROUND_V1 - idem meta-loop.
+          actorId: owner,
         });
         // META_LOOP_SUPERVISOR_V1 - Laia supervisa los turnos de los 12.
         const isSupervisor = owner === "laia";
@@ -1053,6 +1062,8 @@ export class AgentService {
           owner,
           role: "system",
           requestId: `meta-context:${Date.now()}`,
+          // KERNEL_CONTEXT_ACTOR_BACKGROUND_V1 - idem contexto meta.
+          actorId: owner,
         });
         const turns = await this.kernel.listTurns(ctx, 5);
         const openTurn = turns.find((tn) => tn.status === "open");

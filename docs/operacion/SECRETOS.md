@@ -21,7 +21,7 @@ Un **proyecto** (`agntiapro`, ya declarado en `doppler.yaml`) con tres configs:
 |---|---|---|
 | `dev` | tu portátil, `WORKSPACE_MODE=sample`, claves de sandbox de los proveedores | Postgres de producción |
 | `stg` | rama de staging / preview de Fly | datos reales de clientes |
-| `prd` | producción (`www.agntiapro.io`) | claves de sandbox |
+| `prd` | producción (`www.agntiapro.com`) | claves de sandbox |
 
 Compartimentación dentro de cada config: **el prefijo es el compartimento**. Los
 nombres ya están fijados por el código, así que no se inventan:
@@ -67,7 +67,7 @@ orden: no se puede verificar el login sin LLM, ni el despliegue sin base.
 | 3 | **Supabase** (free) | `SUPABASE_URL` (`https://<ref>.supabase.co`) | login multitenant con JWT real |
 | 4 | **Fly.io** (pay-as-you-go, tarjeta) | `FLY_API_TOKEN` → GitHub | API + panel online |
 | 5 | **Vercel** (hobby) | `VERCEL_TOKEN` → GitHub | sitio público |
-| 6 | **Registrador del dominio** (si `agntiapro.io` no es tuyo) | acceso DNS | `www`, `api`, apex |
+| 6 | **Registrador del dominio** (si `agntiapro.com` no es tuyo) | acceso DNS | `www`, `api`, apex |
 
 Neon: crea **dos bases** en el mismo proyecto (`agntia` y `agntia_business`) y un
 rol de solo lectura para la segunda. `BUSINESS_DATABASE_URL` apuntando al rol
@@ -112,7 +112,7 @@ Google ya guardados dejan de descifrarse y hay que reconectar la cuenta.
 |---|---|---|
 | Activar firma asimétrica (RS256/ES256) | Supabase → Auth → Settings | el API valida por JWKS; `SUPABASE_JWT_SECRET` sobra |
 | Hook *custom access token* que inyecte `app_metadata.tenant_id` | Supabase → Auth → Hooks | el tenant sale del token, no de un header que el cliente elige |
-| Redirect URL `https://www.agntiapro.io/auth/callback` | Supabase → Auth → URL Configuration | vuelta del login |
+| Redirect URL `https://www.agntiapro.com/auth/callback` | Supabase → Auth → URL Configuration | vuelta del login |
 | `AUTH_PROVIDER=supabase` | Doppler `prd` | con claim ausente: 401; tenant ajeno: 403 |
 
 Si el proyecto sigue en HS256, entonces `SUPABASE_JWT_SECRET` y **no**
@@ -125,7 +125,7 @@ tiene un límite bajo de emails por hora y las invitaciones se atascan).
 
 | # | Cuenta | Qué sacas | Ojo |
 |---|---|---|---|
-| 9 | **Google Cloud** (gratis) | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth client tipo *Web*; redirect **verbatim** `https://www.agntiapro.io/api/google/callback` |
+| 9 | **Google Cloud** (gratis) | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | OAuth client tipo *Web*; redirect **verbatim** `https://www.agntiapro.com/api/google/callback` |
 | 10 | Misma cuenta | consent screen + scopes | `gmail.readonly`, `gmail.send`, `calendar.events`, `drive.file`. En modo *Testing* funciona con hasta 100 usuarios de prueba sin revisión |
 
 **Empieza esta etapa pronto aunque no la uses aún.** `gmail.readonly` y
@@ -146,8 +146,8 @@ doppler secrets download --no-file --format docker --config prd \
 
 fly volumes create agntiapro_data -a agntiapro-api -r mad -s 10
 fly deploy -a agntiapro-api
-fly certs add www.agntiapro.io   -a agntiapro-api
-fly certs add api.agntiapro.io   -a agntiapro-api
+fly certs add www.agntiapro.com   -a agntiapro-api
+fly certs add api.agntiapro.com   -a agntiapro-api
 ```
 
 Y en GitHub → Settings → Secrets: `DOPPLER_TOKEN`, `FLY_API_TOKEN`,

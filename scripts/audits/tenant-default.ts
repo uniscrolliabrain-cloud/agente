@@ -1,4 +1,6 @@
-import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+
+import { auditReportPath } from "./report-dir.ts";
 import { join } from "node:path";
 
 interface Hit {
@@ -127,9 +129,9 @@ async function main(): Promise<void> {
       report.push("| " + h.file + " | " + h.line + " | " + safe + " |");
     }
   }
-  await mkdir("docs", { recursive: true });
-  await writeFile("docs/AUDIT_TENANT_DEFAULT.md", report.join("\n"), "utf8");
-  console.log("[audit:tenant-default] Informe en docs/AUDIT_TENANT_DEFAULT.md");
+  const reportPath = auditReportPath("AUDIT_TENANT_DEFAULT.md");
+  await writeFile(reportPath, report.join("\n"), "utf8");
+  console.log(`[audit:tenant-default] Informe en ${reportPath}`);
   console.log(
     "[audit:tenant-default] PERMITIDAS: " +
       (hits.length - forbidden.length) +

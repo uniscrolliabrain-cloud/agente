@@ -104,7 +104,9 @@ export async function createApp(
   );
   const auth = await createAuth(db, config),
     files = new Files(tdbEarly, config, auth),
-    google = new GoogleAuth(db, config),
+    // GOOGLE_TENANT_CREDENTIALS_V1 - credenciales por empresa; el state de
+    // OAuth sigue en el store raiz porque el callback no trae sesion.
+    google = new GoogleAuth(tdbEarly, config, db),
     users = new UserService(db),
     // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantServiceEarly + resolver para embeddings por tenant.
   rag = new RagService(tdbEarly, tenantServiceEarly, new EnvTenantConfigResolver()),
@@ -555,7 +557,14 @@ app.get("/api/health", async (c) => {
   // APP_AUTHZ_MOUNT_V2 - authzMiddleware montado antes del ctx (orden critico).
   app.use("/api/*", authzMiddleware(pdp));
   app.use("/api/*", async (c, next) => {
-    if (c.req.path === "/api/auth/login" || c.req.path === "/api/auth/logout") {
+    // OAUTH_LOGIN_PUBLIC_V1 - el login social ocurre antes de tener sesion: el
+    // start redirige al proveedor y el callback vuelve con un code. Si pasan por
+    // `auth.owner` responden 401 y el flujo nunca arranca.
+    if (
+      c.req.path === "/api/auth/login" ||
+      c.req.path === "/api/auth/logout" ||
+      /^\/api\/auth\/oauth\/[^/]+\/(?:start|callback)$/.test(c.req.path)
+    ) {
       await next();
       return;
     }
@@ -685,9 +694,17 @@ app.post("/api/billing/customer", async (c) => {
   });
   app.route("/api/agent", agentRoutes(agent, { pdp, fieldFilter }));
   app.route("/api/events", eventsRoutes(bus));
-  app.route("/api/skills", skillsRoutes(db));
-  app.route("/api/sops", sopRoutes(db, agent));
+  // SOP_SKILLS_TENANT_WIRE_V1 - skills y SOPs viven bajo `tenantId:owner`.
+  // Montadas con el store crudo, el panel de un tenant provisionado listaba 0.
+  app.route("/api/skills", skillsRoutes(tdb));
+  app.route("/api/sops", sopRoutes(tdb, agent));
   app.route("/api/auth", authRoutes(db, users, { config, afterLogin: ensureOwnerWorkspace }, bus));
+  // OAUTH_LOGIN_V1 - login con Google y GitHub. Se monta aparte de authRoutes
+  // porque sus endpoints son redirects completos del navegador, no JSON.
+  {
+    const { oauthLoginRoutes } = await import("./oauth-login.ts");
+    app.route("/api/auth/oauth", oauthLoginRoutes(db, users, config));
+  }
   // APP_SIGNUP_ROUTES_V1 - endpoints publicos de signup y verify.
   {
     const { signupRoutes } = await import("./auth-signup.ts");
@@ -741,7 +758,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   // APP_ADMIN_TENANTS_V1 - panel admin de tenants.
   {
     const { adminTenantsRoutes } = await import("./admin-tenants.ts");
-    app.route("/api/admin/tenants", adminTenantsRoutes(agent, users));
+    app.route("/api/admin/tenants", adminTenantsRoutes(agent, users, db));
   }
   // APP_NOTIF_STREAM_V1 - SSE de notificaciones.
   {
@@ -770,6 +787,12 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     app.route("/api/gmb", gmbRoutes(agent));
     const { socialRoutes } = await import("./social-routes.ts");
     app.route("/api/social", socialRoutes(agent));
+    // APP_VOICE_WIRE_V1 - agente de telefono (Vapi) con scope de empresa.
+    const { voiceRoutes } = await import("./voice-routes.ts");
+    app.route("/api/voice", voiceRoutes(agent));
+    // APP_LEADS_WIRE_V1 - descubrimiento de leads (Google Places) por empresa.
+    const { leadsRoutes } = await import("./leads-routes.ts");
+    app.route("/api/leads", leadsRoutes(agent));
   }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {

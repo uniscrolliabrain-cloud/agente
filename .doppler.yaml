@@ -1,0 +1,12 @@
+# DOPPLER_SETUP_V1 - `doppler setup` lee esto: el repo sabe a que proyecto y
+# config pertenece, sin que nadie recuerde el slug.
+#
+# No contiene secretos: el token de servicio se pasa por DOPPLER_TOKEN o por
+# `doppler login`. Los valores se inyectan con `doppler run --`.
+#
+# `pnpm dev:doppler` arranca el API con este entorno y `pnpm connections:probe`
+# comprueba cada conexion. Para produccion se cambia el config:
+#   doppler setup --config prd --no-interactive
+setup:
+  - project: agntiapro
+    config: dev_campaign_transversal_leads_ia

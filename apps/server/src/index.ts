@@ -129,6 +129,8 @@ function startBackupScheduler(): () => void {
       .then((mod) =>
         mod.runBackup({
           retentionDays: config.backupRetentionDays ?? 0,
+          // BACKUP_DATA_DIR_V1 - sin esto el backup busca /app/dist/.openmuse.
+          dataDir: config.dataDir,
         }),
       )
       .then((result) => {
@@ -321,6 +323,10 @@ const server = serveHttp
   : null;
 const shutdown = () => {
   stopBackupScheduler();
+  // SHUTDOWN_CLEAR_DEFERRED_V1 - el intervalo de 1 s no se paraba nunca: tras
+  // `db.close()` seguia despertando y escribiendo contra el pool cerrado, que es
+  // el "Cannot use a pool after calling end on the pool" de cada redeploy.
+  clearInterval(deferredTick);
   const DRAIN_MS = Number(process.env.SHUTDOWN_DRAIN_MS ?? "10000") || 10000;
   const forceExit = setTimeout(() => { console.warn("[OpenMuse] shutdown drain timeout"); process.exit(1); }, DRAIN_MS);
   forceExit.unref?.();

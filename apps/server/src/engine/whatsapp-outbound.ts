@@ -5,6 +5,10 @@ import { currentTenantScope } from "../tenant-scope.ts";
 import { AppError, OutcomeUnknownError } from "../../../../packages/domain/src/errors.ts";
 import { encryptSecret, decryptSecret } from "../../../../packages/integrations/src/vault.ts";
 import { WhatsAppClient, type WhatsAppSendResult } from "../../../../packages/integrations/src/stubs/whatsapp.ts";
+import { MetaWhatsAppClient } from "../../../../packages/integrations/src/meta-whatsapp.ts";
+
+// WHATSAPP_PROVIDERS_V1 - el webhook ya admitia Meta; la salida no. Una conexion
+// declara su proveedor y el motor elige el cliente al aprobar el envio.
 
 const CONNECTIONS = "whatsapp-connections";
 const DRAFTS = "whatsapp-drafts";
@@ -25,12 +29,17 @@ export const whatsappReconciliationInput = z.object({
   providerId: z.string().min(1).max(300).optional(),
   providerChecked: z.literal(true),
 }).strict().refine((v) => v.result !== "provider_accepted" || Boolean(v.providerId?.trim()));
+const providerSchema = z.enum(["meta", "evolution"]);
 const connectionSchema = z.object({
-  id: z.literal("whatsapp"), provider: z.literal("evolution"),
+  id: z.literal("whatsapp"), provider: providerSchema,
   tenantId: z.string().min(1), owner: z.string().min(1),
-  generation: z.string().uuid(), baseUrl: z.string().url(), instance: z.string().min(1).max(200),
+  generation: z.string().uuid(),
+  // Solo Evolution tiene host propio; en Meta el `instance` es el phone number id.
+  baseUrl: z.string().url().optional(), instance: z.string().min(1).max(200),
   secret: z.string().min(1), enabled: z.boolean(), allowedRecipients: z.array(phone).min(1).max(100),
   updatedAt: z.string(),
+}).refine((value) => value.provider === "meta" || Boolean(value.baseUrl), {
+  message: "Una conexion Evolution necesita baseUrl",
 });
 export type WhatsAppConnection = z.infer<typeof connectionSchema>;
 export interface OutboundIdentity { tenantId: string; owner: string; actorId: string }
@@ -38,7 +47,7 @@ interface Draft {
   id: string; tenantId: string; owner: string; to: string; text: string;
   connectionGeneration: string; createdAt: string; expiresAt: string;
   status: string; inboxId?: string;
-  channel?: { provider: "evolution"; accountId: string };
+  channel?: { provider: z.infer<typeof providerSchema>; accountId: string };
 }
 type OperationStatus = "dispatching" | "accepted" | "rejected" | "failed" | "outcome_unknown";
 interface Operation {
@@ -46,7 +55,7 @@ interface Operation {
   revision: string; to: string; text: string; connectionGeneration: string; inboxId?: string;
   status: OperationStatus; startedAt: string; attemptId: string;
   providerId?: string; resolvedAt?: string; errorCode?: string;
-  channel?: { provider: "evolution"; accountId: string; baseUrl: string };
+  channel?: { provider: z.infer<typeof providerSchema>; accountId: string; baseUrl?: string };
   reconciliation?: { result: string; evidenceRef: string; actorId: string; at: string; priorStatus: string };
 }
 type OutboundStore = Pick<TenantScopedStore, "get" | "list" | "listPaged" | "insertIfAbsent" | "compareAndSwap" | "put">;
@@ -89,18 +98,21 @@ function revisionFor(draft: Pick<Draft, "id" | "tenantId" | "owner" | "to" | "te
 
 /** Operator-only helper: never mounted as a public credential-writing endpoint. */
 export async function provisionWhatsAppConnection(db: OutboundStore, identity: OutboundIdentity, input: {
-  baseUrl: string; instance: string; apiKey: string; enabled: boolean; allowedRecipients: string[];
+  provider?: "meta" | "evolution";
+  baseUrl?: string; instance: string; apiKey: string; enabled: boolean; allowedRecipients: string[];
 }, encryptionKey: string): Promise<Omit<WhatsAppConnection, "secret">> {
   requireIdentity(identity);
-  const baseUrl = validateBaseUrl(input.baseUrl);
-  if (!input.apiKey.trim()) throw new AppError("Falta credencial de Evolution", 422);
+  const provider = input.provider ?? "evolution";
+  const baseUrl = provider === "evolution" ? validateBaseUrl(input.baseUrl ?? "") : undefined;
+  if (!input.apiKey.trim()) throw new AppError("Falta la credencial del proveedor de WhatsApp", 422);
   const generation = randomUUID();
   let secret: string;
-  try { secret = encryptSecret(JSON.stringify({ tenantId: identity.tenantId, owner: identity.owner, generation, baseUrl, instance: input.instance, apiKey: input.apiKey.trim() }), encryptionKey); }
+  try { secret = encryptSecret(JSON.stringify({ tenantId: identity.tenantId, owner: identity.owner, generation, provider,
+    ...(baseUrl ? { baseUrl } : {}), instance: input.instance, apiKey: input.apiKey.trim() }), encryptionKey); }
   catch { throw new AppError("Configura la clave de cifrado de credenciales", 503); }
   const connection = connectionSchema.parse({
-    id: "whatsapp", provider: "evolution", tenantId: identity.tenantId, owner: identity.owner,
-    generation, baseUrl, instance: input.instance, secret,
+    id: "whatsapp", provider, tenantId: identity.tenantId, owner: identity.owner,
+    generation, ...(baseUrl ? { baseUrl } : {}), instance: input.instance, secret,
     enabled: input.enabled, allowedRecipients: input.allowedRecipients, updatedAt: new Date().toISOString(),
   });
   await db.put(identity.owner, CONNECTIONS, connection);
@@ -117,13 +129,14 @@ export class WhatsAppOutbound {
     const parsed = connectionSchema.safeParse(await this.db.get(identity.owner, CONNECTIONS, "whatsapp"));
     if (!parsed.success) throw new AppError("Provisiona la conexion WhatsApp de esta empresa", 503);
     assertConnectionScope(parsed.data, identity);
-    validateBaseUrl(parsed.data.baseUrl);
+    if (parsed.data.provider === "evolution") validateBaseUrl(parsed.data.baseUrl ?? "");
     return parsed.data;
   }
   async connectionStatus(identity: OutboundIdentity) {
     const connection = await this.connection(identity);
-    return { provider: connection.provider, instance: connection.instance, generation: connection.generation,
-      enabled: connection.enabled, outboundEnabled: this.options.enabled, allowedRecipients: connection.allowedRecipients };
+    return { provider: connection.provider, instance: connection.instance, accountId: connection.instance,
+      generation: connection.generation, enabled: connection.enabled, outboundEnabled: this.options.enabled,
+      allowedRecipients: connection.allowedRecipients };
   }
   async createDraft(identity: OutboundIdentity, input: unknown, idempotencyKey: string) {
     return this.prepareDraft(identity, input, idempotencyKey);
@@ -188,6 +201,11 @@ export class WhatsAppOutbound {
     return { messages, nextCursor: page.nextCursor };
   }
   private replyRecipient(from: string, provider: string): string | undefined {
+    // Evolution manda `<telefono>@s.whatsapp.net`; Meta manda el telefono suelto.
+    if (provider === "meta") {
+      const digits = from.trim().replace(/\D/g, "");
+      return /^\d{6,20}$/.test(digits) ? digits : undefined;
+    }
     if (provider !== "evolution") return undefined;
     const match = /^(\d{6,20})@s\.whatsapp\.net$/.exec(from);
     return match?.[1];
@@ -292,14 +310,17 @@ export class WhatsAppOutbound {
     if (!connection.allowedRecipients.includes(draft.to)) throw new AppError("Destinatario fuera de la lista del piloto", 403);
     let apiKey: string;
     try {
-      const payload = z.object({ tenantId: z.string(), owner: z.string(), generation: z.string(), baseUrl: z.string(), instance: z.string(), apiKey: z.string().min(1) })
+      const payload = z.object({ tenantId: z.string(), owner: z.string(), generation: z.string(), provider: providerSchema.optional(), baseUrl: z.string().optional(), instance: z.string(), apiKey: z.string().min(1) })
         .parse(JSON.parse(decryptSecret(connection.secret, this.options.encryptionKey ?? "")));
-      if (payload.tenantId !== identity.tenantId || payload.owner !== identity.owner || payload.generation !== connection.generation || payload.baseUrl !== connection.baseUrl || payload.instance !== connection.instance) throw new Error("Credential scope mismatch");
+      // Las conexiones anteriores a WHATSAPP_PROVIDERS_V1 no llevan `provider`.
+      if (payload.tenantId !== identity.tenantId || payload.owner !== identity.owner || payload.generation !== connection.generation
+        || (payload.provider !== undefined && payload.provider !== connection.provider)
+        || payload.baseUrl !== connection.baseUrl || payload.instance !== connection.instance) throw new Error("Credential scope mismatch");
       apiKey = payload.apiKey;
     }
     catch { throw new AppError("No se pudo abrir la credencial de WhatsApp", 503); }
     const operation: Operation = { ...this.operation(identity, draft, revision, "dispatching"),
-      channel: { provider: connection.provider, accountId: connection.instance, baseUrl: connection.baseUrl } };
+      channel: { provider: connection.provider, accountId: connection.instance, ...(connection.baseUrl ? { baseUrl: connection.baseUrl } : {}) } };
     const inserted = await this.db.insertIfAbsent(identity.owner, OPERATIONS, operation);
     if (!inserted) {
       const current = await this.db.get<Operation>(identity.owner, OPERATIONS, id);
@@ -314,7 +335,9 @@ export class WhatsAppOutbound {
         throw new AppError("La conexion cambio antes del envio", 409);
       }
       await this.assertReplyChannel(identity, draft, latest);
-      const sender = this.options.sender?.(connection, apiKey) ?? new WhatsAppClient({ apiKey, baseUrl: connection.baseUrl, instance: connection.instance });
+      const sender = this.options.sender?.(connection, apiKey) ?? (connection.provider === "meta"
+        ? new MetaWhatsAppClient({ token: apiKey, phoneNumberId: connection.instance })
+        : new WhatsAppClient({ apiKey, baseUrl: connection.baseUrl, instance: connection.instance }));
       const result: WhatsAppSendResult = await sender.sendText(operation.to, operation.text);
       if (!result.accepted || !result.id) throw new OutcomeUnknownError();
       status = "accepted"; providerId = result.id;

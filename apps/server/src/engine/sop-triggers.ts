@@ -53,8 +53,25 @@ export function parseCron(value: string): (now: Date) => boolean {
     if (h > 23 || m > 59) throw new AppError("Cron 'weekly:DAY:HH:MM' requires valid time", 422);
     return (now) => now.getUTCDay() === dow && now.getUTCHours() === h && now.getUTCMinutes() === m;
   }
+  // SOP_CRON_MONTHLY_V1 - `monthly:DD:HH:MM`. El SOP de conciliacion de la
+  // agencia ya usaba este formato y el parser lo rechazaba en cada tick de
+  // mantenimiento ("Unsupported cron value…"): el cierre mensual no se habria
+  // ejecutado nunca, sin mas sintoma que un error en el log del worker. Se
+  // limita el dia a 1-28 para que exista en todos los meses.
+  const monthly = /^monthly:(\d{1,2}):(\d{2}):(\d{2})$/.exec(trimmed);
+  if (monthly) {
+    const day = Number(monthly[1]);
+    const h = Number(monthly[2]);
+    const m = Number(monthly[3]);
+    if (day < 1 || day > 28) {
+      throw new AppError("Cron 'monthly:DD:HH:MM' requires DD between 1 and 28", 422);
+    }
+    if (h > 23 || m > 59) throw new AppError("Cron 'monthly:DD:HH:MM' requires valid time", 422);
+    return (now) =>
+      now.getUTCDate() === day && now.getUTCHours() === h && now.getUTCMinutes() === m;
+  }
   throw new AppError(
-    `Unsupported cron value "${value}". Use every:Nm, every:Nh, daily:HH:MM or weekly:day:HH:MM`,
+    `Unsupported cron value "${value}". Use every:Nm, every:Nh, daily:HH:MM, weekly:day:HH:MM or monthly:DD:HH:MM`,
     422,
   );
 }

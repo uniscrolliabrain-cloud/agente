@@ -1,32 +1,102 @@
-// AUDIT_IDEMPOTENCY_V1 - audita las marcas de idempotencia del repo.
+// IDEMPOTENCY_MARKS_V2 - indice de marcas de campana + defectos reales.
 //
-// Recorre apps/server/src, apps/web/src, packages y scripts buscando
-// comentarios con forma de marca (XXX_V1, XXX_V2, XXX_V3) y comprueba
-// que la marca no esta huerfana: que el simbolo que menciona existe en
-// el fichero, o que el comentario no esta solo en una cabecera sin
-// implementacion real.
+// QUE CAMBIA RESPECTO DE V1 (y por que, medido)
 //
-// Detecta dos categorias:
-//   1. Marcas duplicadas: dos ficheros con la misma marca y contenido
-//      distinto (el caso tool-executors.ts vs worker.ts).
-//   2. Marcas huerfanas: una marca en cabecera sin codigo real debajo.
+// V1 fallaba si una misma marca (`NOMBRE_V1`) aparecia en dos ficheros con
+// cuerpo distinto (157 casos) o dos veces en el mismo fichero (138 casos). Eso
+// no es un defecto: una campana se aplica en N call sites. Medido en este repo:
+// `TAKE_FOR_TENANT_COMPUTER_V1` esta 7 veces en `computer.ts` porque el rate
+// limit por tenant se cablea en 7 sitios; `APP_TENANT_DB_V1` esta 2 veces en
+// `app.ts`. El audit convertia el libro de mantenimiento en una barrera de CI
+// que solo se podia poner verde borrando informacion.
 //
-// Uso: pnpm exec tsx scripts/audits/idempotency.ts
-// Salida: docs/AUDIT_IDEMPOTENCY.md + exit 1 si hay huerfanas.
+// V2 separa dos cosas que V1 mezclaba:
+//
+//   INDICE (informativo, no bloquea)
+//     - duplicadas con cuerpo distinto: la marca vive en varios sitios.
+//     - repetidas en el mismo fichero: la marca se aplico en N call sites.
+//   Se cuentan, se listan y se exportan. Un numero alto es normal.
+//
+//   DEFECTOS (bloquean, exit 1)
+//     - `orphan`: la marca esta en un comentario y despues no hay ni una linea
+//       de codigo en el resto del fichero. La marca afirma un cambio que no
+//       existe. V1 media "menos de 3 lineas", que daba falsos positivos en los
+//       barrel (`log-reexport.ts` es un `export {...}` de una linea: eso es
+//       implementacion, no hueco). V2 cuenta presencia, no volumen.
+//     - `double-paste`: misma marca, mismo fichero y **mismo cuerpo** dos veces.
+//       Eso si es el bloque pegado dos veces.
+//
+// `idempotency-allowlist.json` permite revisar un defecto con motivo y fecha.
+// Una entrada sin motivo (>= 10 caracteres) o sin fecha ISO tumba el audit: la
+// lista no puede convertirse en un silenciador.
+//
+// Uso: pnpm audit:idempotency
+// Salida: $AUDIT_REPORT_DIR/AUDIT_IDEMPOTENCY.md + idempotency.json (artifacts/
+// por defecto, fuera de git). Exit 1 solo si queda algun defecto sin revisar.
 
-import { readFile, readdir, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { join, resolve } from "node:path";
+import { readFile, readdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 
-interface Mark {
+import { auditReportPath } from "./report-dir.ts";
+
+// ---------------------------------------------------------------------------
+// Tipos
+// ---------------------------------------------------------------------------
+
+export interface Mark {
   name: string;
   file: string;
+  /** 1-based. */
   line: number;
-  contextLines: number;
+  /** Hash del bloque que sigue a la marca: detecta el pegado dos veces. */
   bodyHash: string;
-  /** IDEMPOTENCY_DOC_MARKS_V1 - marca que documenta, no implementa. */
+  /** Lineas de codigo real desde esta marca hasta el final del fichero. */
+  codeLinesAfter: number;
+  /** El comentario dice que el codigo se retiro: no es un hueco. */
   documented: boolean;
 }
+
+export type DefectKind = "orphan" | "double-paste";
+
+export interface AllowEntry {
+  mark: string;
+  /** Si se omite, vale para cualquier fichero. */
+  file?: string;
+  category: DefectKind;
+  /** Obligatorio: por que este caso es correcto. */
+  reason: string;
+  /** Obligatorio: ISO date (YYYY-MM-DD). */
+  date: string;
+}
+
+export interface DoublePaste {
+  file: string;
+  name: string;
+  bodyHash: string;
+  lines: number[];
+}
+
+export interface Classification {
+  marks: number;
+  uniqueMarks: number;
+  /** Indice (informativo): misma marca, cuerpos distintos. */
+  conflicts: { name: string; marks: Mark[] }[];
+  /** Indice (informativo): misma marca repetida en un fichero. */
+  sameFileRepeats: { file: string; name: string; count: number }[];
+  /** Defecto: mismo nombre + mismo cuerpo en el mismo fichero. */
+  doublePastes: DoublePaste[];
+  /** Defecto: marca sin codigo detras. */
+  orphans: Mark[];
+  /** Defectos cubiertos por la allowlist (revisados). */
+  allowed: { kind: DefectKind; mark: string; file: string; reason: string; date: string }[];
+  /** Defectos sin revisar: los unicos que tumban el audit. */
+  blocking: { doublePastes: DoublePaste[]; orphans: Mark[] };
+}
+
+// ---------------------------------------------------------------------------
+// Barrido
+// ---------------------------------------------------------------------------
 
 const SEARCH_DIRS = ["apps/server/src", "apps/web/src", "packages", "scripts"];
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "artifacts", "backups", ".openmuse", "audits"]);
@@ -49,60 +119,305 @@ async function listFiles(dir: string): Promise<string[]> {
   return out;
 }
 
+/** Una linea que no es codigo: vacia, `//`, o dentro de un bloque de comentario. */
+export function isCommentLine(line: string): boolean {
+  const t = line.trim();
+  return (
+    t === "" ||
+    t.startsWith("//") ||
+    t.startsWith("*") ||
+    t.startsWith("/*") ||
+    t.startsWith("*/") ||
+    t.startsWith("{/*")
+  );
+}
+
 /**
- * Extrae las marcas de un fichero. Una marca cuenta como "real" si esta en
- * una linea de comentario seguida de al menos 10 lineas de codigo no
- * comentado en las 100 lineas siguientes.
+ * Extrae las marcas de un fichero.
+ *
+ * `codeLinesAfter` cuenta codigo real **en el resto del fichero**. No se corta en
+ * la siguiente marca: varias marcas seguidas son cabeceras de bloque y su
+ * implementacion es el codigo de debajo (p. ej. la cabecera de `actions.ts`).
+ * Lo que distingue una marca huerfana es que no quede ni una linea de codigo
+ * despues: no que queden pocas.
  */
-function extractMarks(file: string, source: string): Mark[] {
+export function extractMarks(file: string, source: string): Mark[] {
   const lines = source.split("\n");
   const out: Mark[] = [];
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(MARK_RE);
     if (!m) continue;
-    // Solo cuenta si es comentario.
-    const trimmed = lines[i].trim();
-    if (!trimmed.startsWith("//") && !trimmed.startsWith("*") && !trimmed.startsWith("/*")) continue;
+    if (!isCommentLine(lines[i])) continue;
 
-    // Medir codigo real en las siguientes 100 lineas.
-    let realLines = 0;
-    const max = Math.min(i + 100, lines.length);
-    for (let j = i + 1; j < max && realLines < 20; j++) {
-      const l = lines[j].trim();
-      if (!l) continue;
-      if (l.startsWith("//") || l.startsWith("*") || l.startsWith("/*")) continue;
-      realLines++;
-    }
-    const bodySource = lines.slice(i + 1, i + 30).join("\n").trim();
-    // IDEMPOTENCY_DOC_MARKS_V1 - hay marcas que documentan una retirada de
-    // codigo o anotan un re-export en un barrel (index.ts). No implementan un
-    // bloque, asi que no son huerfanas.
+    // Comentario contiguo hacia delante: es lo que dice que la marca es una
+    // nota ("eliminado", "retirado") y no un bloque implementado.
     let commentBlock = "";
     for (let j = i; j < Math.min(i + 15, lines.length); j++) {
-      const l = lines[j].trim();
-      if (!(l.startsWith("//") || l.startsWith("*") || l.startsWith("/*"))) break;
-      commentBlock += l + "\n";
+      if (!isCommentLine(lines[j])) break;
+      commentBlock += `${lines[j].trim()}\n`;
     }
-    const barrel = /(^|\/)index\.tsx?$/.test(file) && /^\s*export\b/m.test(source);
-    const documented = /eliminad|removed|deleted|retirad/i.test(commentBlock) || barrel;
+
+    // Codigo real en el resto del fichero.
+    let codeLinesAfter = 0;
+    for (let j = i + 1; j < lines.length && codeLinesAfter < 500; j++) {
+      if (isCommentLine(lines[j])) continue;
+      codeLinesAfter++;
+    }
+
+    // Cuerpo del bloque: lo que hay entre esta marca y la siguiente. Se quitan
+    // comentarios y blancos para que dos pegados identicos den el mismo hash.
+    const block: string[] = [];
+    for (let j = i + 1; j < lines.length && j < i + 80; j++) {
+      if (MARK_RE.test(lines[j]) && isCommentLine(lines[j])) break;
+      if (isCommentLine(lines[j])) continue;
+      block.push(lines[j].trim());
+    }
     out.push({
       name: m[1],
       file,
       line: i + 1,
-      contextLines: realLines,
-      bodyHash: createHash("sha256").update(bodySource).digest("hex").slice(0, 16),
-      documented,
+      bodyHash: createHash("sha256").update(block.join("\n")).digest("hex").slice(0, 16),
+      codeLinesAfter,
+      documented: /eliminad|removed|deleted|retirad/i.test(commentBlock),
     });
   }
   return out;
 }
 
-async function main(): Promise<void> {
+// ---------------------------------------------------------------------------
+// Clasificacion
+// ---------------------------------------------------------------------------
+
+function allowEntryFor(
+  allow: AllowEntry[],
+  kind: DefectKind,
+  mark: string,
+  file: string,
+): AllowEntry | undefined {
+  return allow.find(
+    (e) => e.category === kind && e.mark === mark && (e.file === undefined || e.file === file),
+  );
+}
+
+export function classify(marks: Mark[], allow: AllowEntry[] = []): Classification {
+  const byName = new Map<string, Mark[]>();
+  for (const m of marks) {
+    const list = byName.get(m.name) ?? [];
+    list.push(m);
+    byName.set(m.name, list);
+  }
+
+  // INDICE 1: misma marca, cuerpos distintos.
+  const conflicts: { name: string; marks: Mark[] }[] = [];
+  for (const [name, list] of byName) {
+    if (list.length < 2) continue;
+    if (new Set(list.map((m) => m.bodyHash)).size > 1) conflicts.push({ name, marks: list });
+  }
+
+  // INDICE 2: misma marca repetida en un fichero.
+  const sameFileRepeats: { file: string; name: string; count: number }[] = [];
+  const perFile = new Map<string, Map<string, number>>();
+  for (const m of marks) {
+    const inner = perFile.get(m.file) ?? new Map<string, number>();
+    inner.set(m.name, (inner.get(m.name) ?? 0) + 1);
+    perFile.set(m.file, inner);
+  }
+  for (const [file, inner] of perFile) {
+    for (const [name, count] of inner) {
+      if (count > 1) sameFileRepeats.push({ file, name, count });
+    }
+  }
+
+  // DEFECTO 1: mismo nombre + mismo cuerpo + mismo fichero, dos veces.
+  const doublePastes: DoublePaste[] = [];
+  const perFileBody = new Map<string, { file: string; name: string; bodyHash: string; lines: number[] }>();
+  for (const m of marks) {
+    const key = `${m.file}\u0000${m.name}\u0000${m.bodyHash}`;
+    const entry = perFileBody.get(key) ?? {
+      file: m.file,
+      name: m.name,
+      bodyHash: m.bodyHash,
+      lines: [],
+    };
+    entry.lines.push(m.line);
+    perFileBody.set(key, entry);
+  }
+  for (const entry of perFileBody.values()) {
+    if (entry.lines.length > 1) doublePastes.push({ ...entry, lines: entry.lines.sort((a, b) => a - b) });
+  }
+
+  // DEFECTO 2: marca sin codigo detras.
+  const orphans = marks.filter((m) => !m.documented && m.codeLinesAfter === 0);
+
+  const allowed: Classification["allowed"] = [];
+  const blockingPastes: DoublePaste[] = [];
+  for (const dp of doublePastes) {
+    const hit = allowEntryFor(allow, "double-paste", dp.name, dp.file);
+    if (hit) allowed.push({ kind: hit.category, mark: dp.name, file: dp.file, reason: hit.reason, date: hit.date });
+    else blockingPastes.push(dp);
+  }
+  const blockingOrphans: Mark[] = [];
+  for (const o of orphans) {
+    const hit = allowEntryFor(allow, "orphan", o.name, o.file);
+    if (hit) allowed.push({ kind: hit.category, mark: o.name, file: o.file, reason: hit.reason, date: hit.date });
+    else blockingOrphans.push(o);
+  }
+
+  return {
+    marks: marks.length,
+    uniqueMarks: byName.size,
+    conflicts,
+    sameFileRepeats,
+    doublePastes,
+    orphans,
+    allowed,
+    blocking: { doublePastes: blockingPastes, orphans: blockingOrphans },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Allowlist
+// ---------------------------------------------------------------------------
+
+export const ALLOWLIST_PATH = join("scripts", "audits", "idempotency-allowlist.json");
+
+/**
+ * Lee y valida la allowlist. Una entrada sin motivo o sin fecha es un error,
+ * no una entrada ignorada: si alguien la deja a medias, el audit lo dice.
+ */
+export async function loadAllowlist(path = ALLOWLIST_PATH): Promise<AllowEntry[]> {
+  let raw: string;
+  try {
+    raw = await readFile(path, "utf8");
+  } catch {
+    return [];
+  }
+  const parsed = JSON.parse(raw) as { entries?: unknown };
+  if (!Array.isArray(parsed.entries)) throw new Error(`${path}: falta "entries"`);
+  return parsed.entries.map((value, i) => {
+    const e = value as Partial<AllowEntry>;
+    const where = `${path}: entries[${i}]`;
+    if (typeof e.mark !== "string" || !MARK_RE.test(e.mark)) throw new Error(`${where}: "mark" invalida`);
+    if (e.category !== "orphan" && e.category !== "double-paste")
+      throw new Error(`${where}: "category" debe ser orphan | double-paste`);
+    if (typeof e.reason !== "string" || e.reason.trim().length < 10)
+      throw new Error(`${where}: "reason" es obligatorio (>= 10 caracteres)`);
+    if (typeof e.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date))
+      throw new Error(`${where}: "date" debe ser YYYY-MM-DD`);
+    if (e.file !== undefined && typeof e.file !== "string") throw new Error(`${where}: "file" invalida`);
+    return { mark: e.mark, category: e.category, reason: e.reason, date: e.date, ...(e.file ? { file: e.file } : {}) };
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Informe
+// ---------------------------------------------------------------------------
+
+function reportMarkdown(files: number, c: Classification): string {
+  const lines: string[] = [
+    "# Auditoria de marcas de idempotencia",
+    "",
+    `> Generado por \`scripts/audits/idempotency.ts\` el ${new Date().toISOString()}.`,
+    "> Criterio: **IDEMPOTENCY_MARKS_V2** (indice informativo + defectos bloqueantes).",
+    "",
+    "## Resumen",
+    "",
+    `- Ficheros revisados: **${files}**`,
+    `- Marcas encontradas: **${c.marks}**`,
+    `- Marcas unicas: **${c.uniqueMarks}**`,
+    `- Indice · duplicadas con cuerpo distinto: **${c.conflicts.length}** (informativo)`,
+    `- Indice · repetidas en el mismo fichero: **${c.sameFileRepeats.length}** (informativo)`,
+    `- Defecto · bloques pegados dos veces: **${c.blocking.doublePastes.length}** (bloqueante)`,
+    `- Defecto · marcas sin codigo detras: **${c.blocking.orphans.length}** (bloqueante)`,
+    `- Revisadas en allowlist: **${c.allowed.length}**`,
+    "",
+    "## Como leer esto",
+    "",
+    "Una marca (`NOMBRE_V1`) identifica **un cambio**, no un sitio: un cambio se",
+    "aplica en N call sites. Por eso aparecer varias veces (en el mismo fichero o",
+    "en varios) es el caso normal y esta en el indice, sin veredicto.",
+    "Bloquean solo dos cosas que si son un error: una marca que no tiene codigo",
+    "detras (afirma un cambio inexistente) y el mismo bloque con el mismo cuerpo",
+    "pegado dos veces en el mismo fichero.",
+    "",
+    "Este audit **no comprueba idempotencia**: no ejecuta nada. Que una operacion",
+    "con la misma clave ocurra una sola vez lo mide",
+    "`tests/gate/idempotency-execution.test.ts`.",
+    "",
+  ];
+
+  if (c.blocking.orphans.length > 0) {
+    lines.push("## DEFECTO · marcas sin codigo detras", "");
+    lines.push("La marca esta en un comentario y no hay ninguna linea de codigo entre ella y la siguiente marca (o el final del fichero).");
+    lines.push("");
+    lines.push("| Marca | Fichero:linea |");
+    lines.push("|---|---|");
+    for (const m of c.blocking.orphans) lines.push(`| \`${m.name}\` | \`${m.file}:${m.line}\` |`);
+    lines.push("");
+  }
+
+  if (c.blocking.doublePastes.length > 0) {
+    lines.push("## DEFECTO · bloques pegados dos veces", "");
+    lines.push("Misma marca, mismo fichero y mismo cuerpo. Probable bloque aplicado dos veces.");
+    lines.push("");
+    lines.push("| Marca | Fichero | Lineas | Hash |");
+    lines.push("|---|---|---|---|");
+    for (const d of c.blocking.doublePastes)
+      lines.push(`| \`${d.name}\` | \`${d.file}\` | ${d.lines.join(", ")} | ${d.bodyHash} |`);
+    lines.push("");
+  }
+
+  if (c.allowed.length > 0) {
+    lines.push("## Revisadas (allowlist)", "");
+    lines.push("| Marca | Fichero | Categoria | Motivo | Fecha |");
+    lines.push("|---|---|---|---|---|");
+    for (const a of c.allowed)
+      lines.push(`| \`${a.mark}\` | \`${a.file}\` | ${a.kind} | ${a.reason} | ${a.date} |`);
+    lines.push("");
+  }
+
+  if (c.sameFileRepeats.length > 0) {
+    lines.push("## Indice · repetidas en el mismo fichero", "");
+    lines.push("La marca se aplico en varios call sites del mismo fichero. Informativo.");
+    lines.push("");
+    lines.push("| Marca | Fichero | Veces |");
+    lines.push("|---|---|---|");
+    for (const d of c.sameFileRepeats.slice(0, 200)) lines.push(`| \`${d.name}\` | \`${d.file}\` | ${d.count} |`);
+    if (c.sameFileRepeats.length > 200) lines.push(`\n_(+${c.sameFileRepeats.length - 200} mas en el JSON)_`);
+    lines.push("");
+  }
+
+  if (c.conflicts.length > 0) {
+    lines.push("## Indice · duplicadas con cuerpo distinto", "");
+    lines.push("La misma marca en varios sitios, cada uno con su bloque. Informativo.");
+    lines.push("");
+    lines.push("| Marca | Fichero:linea | Hash cuerpo |");
+    lines.push("|---|---|---|");
+    for (const { name, marks } of c.conflicts.slice(0, 100)) {
+      for (const m of marks) lines.push(`| \`${name}\` | \`${m.file}:${m.line}\` | ${m.bodyHash} |`);
+    }
+    if (c.conflicts.length > 100) lines.push(`\n_(+${c.conflicts.length - 100} marcas mas en el JSON)_`);
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Main
+// ---------------------------------------------------------------------------
+
+export interface AuditResult {
+  ok: boolean;
+  files: number;
+  classification: Classification;
+}
+
+export async function runAudit(options: { write?: boolean } = {}): Promise<AuditResult> {
+  const { write = true } = options;
   console.log("[audit:idempotency] Recorriendo ficheros...");
   const files: string[] = [];
-  for (const dir of SEARCH_DIRS) {
-    files.push(...(await listFiles(dir)));
-  }
+  for (const dir of SEARCH_DIRS) files.push(...(await listFiles(dir)));
   console.log(`[audit:idempotency] Ficheros: ${files.length}`);
 
   const marks: Mark[] = [];
@@ -110,110 +425,71 @@ async function main(): Promise<void> {
     const source = await readFile(file, "utf8");
     marks.push(...extractMarks(file, source));
   }
-  console.log(`[audit:idempotency] Marcas encontradas: ${marks.length}`);
+  const allow = await loadAllowlist();
+  const classification = classify(marks, allow);
+  console.log(`[audit:idempotency] Marcas encontradas: ${classification.marks}`);
 
-  // 1. Marcas duplicadas con body distinto.
-  const byName = new Map<string, Mark[]>();
-  for (const m of marks) {
-    const list = byName.get(m.name) ?? [];
-    list.push(m);
-    byName.set(m.name, list);
-  }
-  const duplicatesWithConflict: Array<{ name: string; marks: Mark[] }> = [];
-  for (const [name, list] of byName) {
-    if (list.length < 2) continue;
-    const hashes = new Set(list.map((m) => m.bodyHash));
-    if (hashes.size > 1) duplicatesWithConflict.push({ name, marks: list });
-  }
-
-  // 2. Marcas huerfanas (menos de 3 lineas de codigo real).
-  const orphan: Mark[] = marks.filter((m) => !m.documented && m.contextLines < 3);
-
-  // 3. Marcas repetidas en el mismo fichero (probable doble aplicacion).
-  const sameFileDup: Array<{ file: string; name: string; count: number }> = [];
-  const fileMap = new Map<string, Map<string, number>>();
-  for (const m of marks) {
-    const inner = fileMap.get(m.file) ?? new Map<string, number>();
-    inner.set(m.name, (inner.get(m.name) ?? 0) + 1);
-    fileMap.set(m.file, inner);
-  }
-  for (const [file, inner] of fileMap) {
-    for (const [name, count] of inner) {
-      if (count > 1) sameFileDup.push({ file, name, count });
-    }
-  }
-
-  // Informe
-  const lines: string[] = [
-    "# Auditoria de idempotencia",
-    "",
-    `> Generado por \`scripts/audits/idempotency.ts\` el ${new Date().toISOString()}.`,
-    "",
-    `- Ficheros revisados: **${files.length}**`,
-    `- Marcas encontradas: **${marks.length}**`,
-    `- Marcas unicas: **${byName.size}**`,
-    `- Marcas duplicadas con cuerpo distinto: **${duplicatesWithConflict.length}**`,
-    `- Marcas huerfanas (sin codigo real debajo): **${orphan.length}**`,
-    `- Marcas repetidas en el mismo fichero: **${sameFileDup.length}**`,
-    "",
-  ];
-
-  if (duplicatesWithConflict.length > 0) {
-    lines.push("## Duplicadas con cuerpo distinto");
-    lines.push("");
-    lines.push("La misma marca aparece en varios sitios con contenido distinto. Una de las dos aplicaciones puede ser erronea.");
-    lines.push("");
-    lines.push("| Marca | Fichero:linea | Hash cuerpo |");
-    lines.push("|---|---|---|");
-    for (const { name, marks: list } of duplicatesWithConflict) {
-      for (const m of list) {
-        lines.push(`| \`${name}\` | \`${m.file}:${m.line}\` | ${m.bodyHash} |`);
-      }
-    }
-    lines.push("");
+  const blocking = classification.blocking.doublePastes.length + classification.blocking.orphans.length;
+  if (write) {
+    const md = auditReportPath("AUDIT_IDEMPOTENCY.md");
+    await writeFile(md, reportMarkdown(files.length, classification), "utf8");
+    const json = auditReportPath("idempotency.json");
+    await writeFile(
+      json,
+      JSON.stringify(
+        {
+          criterion: "IDEMPOTENCY_MARKS_V2",
+          generatedAt: new Date().toISOString(),
+          files: files.length,
+          marks: classification.marks,
+          uniqueMarks: classification.uniqueMarks,
+          index: {
+            conflicts: classification.conflicts.length,
+            sameFileRepeats: classification.sameFileRepeats.length,
+          },
+          defects: {
+            doublePastes: classification.blocking.doublePastes,
+            orphans: classification.blocking.orphans.map((m) => ({
+              name: m.name,
+              file: m.file,
+              line: m.line,
+            })),
+          },
+          allowed: classification.allowed,
+          blocking,
+        },
+        null,
+        2,
+      ),
+      "utf8",
+    );
+    console.log(`[audit:idempotency] Informe escrito en ${md}`);
   }
 
-  if (orphan.length > 0) {
-    lines.push("## Huerfanas");
-    lines.push("");
-    lines.push("La marca aparece en un comentario pero debajo no hay codigo real. Probable marca puesta a mano sin aplicar el bloque.");
-    lines.push("");
-    lines.push("| Marca | Fichero:linea | Lineas de codigo |");
-    lines.push("|---|---|---|");
-    for (const m of orphan.slice(0, 200)) {
-      lines.push(`| \`${m.name}\` | \`${m.file}:${m.line}\` | ${m.contextLines} |`);
-    }
-    lines.push("");
-  }
-
-  if (sameFileDup.length > 0) {
-    lines.push("## Repetidas en el mismo fichero");
-    lines.push("");
-    lines.push("La misma marca aparece dos veces en el mismo fichero. Probable bloque aplicado dos veces.");
-    lines.push("");
-    lines.push("| Marca | Fichero | Veces |");
-    lines.push("|---|---|---|");
-    for (const d of sameFileDup.slice(0, 200)) {
-      lines.push(`| \`${d.name}\` | \`${d.file}\` | ${d.count} |`);
-    }
-    lines.push("");
-  }
-
-  await mkdir("docs", { recursive: true });
-  await writeFile("docs/AUDIT_IDEMPOTENCY.md", lines.join("\n"), "utf8");
-  console.log("[audit:idempotency] Informe escrito en docs/AUDIT_IDEMPOTENCY.md");
+  // La linea de contadores la parsea scripts/audits/registry.ts: no cambiar el
+  // formato sin cambiar alli.
   console.log(
-    `[audit:idempotency] DUPLICADAS: ${duplicatesWithConflict.length}   HUERFANAS: ${orphan.length}   REPETIDAS: ${sameFileDup.length}`,
+    `[audit:idempotency] DUPLICADAS: ${classification.conflicts.length}   HUERFANAS: ${classification.blocking.orphans.length}   REPETIDAS: ${classification.sameFileRepeats.length}`,
   );
+  console.log(`[audit:idempotency] PEGADAS_DOS_VECES: ${classification.blocking.doublePastes.length}`);
 
-  const fatal = duplicatesWithConflict.length > 0 || sameFileDup.length > 0;
-  if (fatal) {
-    console.error("[audit:idempotency] Hay marcas conflictivas o repetidas.");
-    process.exit(1);
+  if (blocking > 0) {
+    console.error(
+      `[audit:idempotency] ${blocking} defecto(s) sin revisar: marcas sin codigo o bloques pegados dos veces.`,
+    );
+    return { ok: false, files: files.length, classification };
   }
+  return { ok: true, files: files.length, classification };
 }
 
-void main().catch((error) => {
-  console.error("[audit:idempotency] FALLO:", error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+// Solo corre cuando se invoca como script (los tests importan las funciones).
+if (process.argv[1] && /idempotency\.ts$/.test(process.argv[1].replace(/\\/g, "/"))) {
+  void runAudit()
+    .then((result) => {
+      if (!result.ok) process.exit(1);
+    })
+    .catch((error) => {
+      console.error("[audit:idempotency] FALLO:", error instanceof Error ? error.message : error);
+      process.exit(1);
+    });
+}

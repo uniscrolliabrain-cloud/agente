@@ -18,6 +18,7 @@ import { AppError } from "./errors.ts";
 import { backgroundFailure } from "./log.ts";
 import type { TenantService } from "./engine/tenant.ts";
 import { UserService, hashPassword } from "./users.ts";
+import { ResendClient } from "../../../packages/integrations/src/resend.ts";
 
 const TOKEN_KIND = "signup-tokens";
 const HOUR = 60 * 60 * 1000;
@@ -84,14 +85,27 @@ export function signupRoutes({ db, config, users, tenantService }: SignupRoutesD
       org: body.organization,
       verifyUrl,
     });
-    const result = await sendEmail({
-      to: email,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text,
-    });
-    if (!result.ok && !result.skipped) {
-      backgroundFailure("signup email", new Error(result.error ?? "email send failed"));
+    // SIGNUP_EMAIL_REAL_V1 - el alta no falla si el email no sale (el token ya
+    // esta guardado y se puede reenviar), pero queda registrado con su causa.
+    // Sin RESEND_API_KEY el envio es imposible: se avisa, no se simula.
+    const mailer = new ResendClient({ apiKey: config.resendApiKey, from: config.emailFrom });
+    if (!mailer.configured) {
+      backgroundFailure(
+        "signup email",
+        new AppError("Email no configurado: faltan RESEND_API_KEY y/o EMAIL_FROM", 503),
+      );
+    } else {
+      try {
+        await mailer.send({
+          to: email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text,
+          idempotencyKey: `signup-verify-${id}`,
+        });
+      } catch (error) {
+        backgroundFailure("signup email", error);
+      }
     }
 
     return c.json({ ok: true, message: "Revisa tu email para confirmar la cuenta." });
@@ -172,11 +186,3 @@ function verifyEmailTemplate(input: VerifyEmailInput): { subject: string; html: 
   return { subject, html, text };
 }
 
-interface SendEmailInput { to: string; subject: string; html: string; text: string; }
-interface SendEmailResult { ok: boolean; skipped?: boolean; error?: string; }
-async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
-  const apiKey = process.env.SMTP_API_KEY?.trim();
-  if (!apiKey) return { ok: false, skipped: true, error: "SMTP_API_KEY no configurado" };
-  void input;
-  return { ok: false, skipped: true, error: "Envio de email no cableado" };
-}

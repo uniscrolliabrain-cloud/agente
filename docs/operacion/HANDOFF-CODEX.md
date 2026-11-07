@@ -4,7 +4,8 @@
 > pisarse. No es un plan de producto: es un contrato de propiedad de ficheros,
 > ramas y criterios de verificación.
 >
-> Base: `main` en `c69e028` (2026-10-27). Un "lane" = una rama = un agente.
+> Base: `main` en `c69e028` (2026-10-27); el lane 1 tiene además `campaign/authz-tenant`
+> en `c5a8c7c` (en revisión) y abre ramas por campaña. Un "lane" = una rama = un agente.
 
 ## 0. Reglas de oro
 
@@ -26,10 +27,11 @@
 
 | Lane | Rama | Dueño | Rutas que puede escribir |
 |---|---|---|---|
-| 1 · canales/runtime | `campaign/canales-runtime` | Buffy | `apps/server/src/app.ts`, `engine/service.ts`, `engine/model.ts`, `engine/sop-executor.ts`, `*-routes.ts`, `scripts/**`, `docs/operacion/**`, `tests/*.test.ts` (raíz) |
+| 1 · runtime + gate | `campaign/authz-tenant` (en revisión) · `campaign/verdad` (el gate) | Buffy | `apps/server/src/app.ts`, `engine/service.ts`, `engine/model.ts`, `engine/sop-executor.ts`, `engine/conversation.ts`, `*-routes.ts`, `scripts/**`, `docs/operacion/**`, `tests/*.test.ts` (raíz) y `tests/gate/**` — ver [CAMPANA-VERDAD.md](CAMPANA-VERDAD.md) |
 | 2 · **LLM → workspace** (la campaña grande) | `campaign/llm-runtime` | **Codex** | `packages/integrations/src/llm/**`, `apps/server/src/engine/model-chain.ts`, `embeddings.ts`, `planner/**`, `execution/**`, `context/**`, `kernel/authors/**`, `tests/llm/**` — ver [HANDOFF-LLM.md](HANDOFF-LLM.md) |
 | 3 · adaptadores de proveedor | `campaign/canales-adapters` | **Codex** (después del lane 2) | `packages/integrations/src/adapters/**`, `packages/integrations/src/stubs/**`, `tests/adapters/**` |
 | 4 · panel (opcional) | `campaign/panel-drafts` | **Codex** | `apps/web/src/**`, `apps/web/docs/**` |
+| 5 · **corpus documental** | `docs/auditoria-corpus` | **Cline** | solo `docs/**` (sin código): índice único, archivo con rastro, estado real, contradicciones resueltas — ver [HANDOFF-CLINE.md](HANDOFF-CLINE.md) |
 
 El lane 2 lleva el peso: es el mandato de [HANDOFF-LLM.md](HANDOFF-LLM.md), con
 fases F0–F6 y el criterio final de una SOP de punta a punta con coste real y

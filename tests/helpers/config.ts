@@ -26,6 +26,8 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
     policyCacheTtlMs: 60_000,
     auditTrailEnabled: true,
     recordHistoryEnabled: false,
+    // Sin credencial de Meta por defecto: los tests que la necesiten la pasan.
+    whatsappMeta: { graphVersion: "v21.0" },
     ...overrides,
   };
 }

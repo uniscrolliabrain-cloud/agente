@@ -1,5 +1,7 @@
 // SCRIPTS_AUDIT_BRIDGES_V1
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
+
+import { auditReportPath } from "./report-dir.ts";
 import { existsSync } from "node:fs";
 
 interface Bridge {
@@ -67,8 +69,8 @@ async function main() {
     ),
     "",
   ];
-  await mkdir("docs", { recursive: true });
-  await writeFile("docs/AUDIT_BRIDGES.md", lines.join("\n"), "utf8");
+  const reportPath = auditReportPath("AUDIT_BRIDGES.md");
+  await writeFile(reportPath, lines.join("\n"), "utf8");
   console.log(`[audit:bridges] ${wired}/${BRIDGES.length} wired`);
   if (wired < BRIDGES.length) process.exit(1);
 }

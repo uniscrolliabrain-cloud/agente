@@ -8,7 +8,7 @@ tags: [vertical, laia, tenant, contexto, grafo, sop]
 
 # Vertical comercial, Laia y flujo de datos
 
-Auditoría estática del checkout de escritorio en df18584 y contraste con la última entrega de despliegue revisada, 8df55c2 de Freebuff. El SHA de cada imagen Fly sigue por acreditar. La API y el panel responden. Los ocho SOPs visibles y el reinicio del registro son evidencia reportada por Freebuff. La ejecución comercial completa y el login con las dos cuentas reales siguen pendientes de evidencia independiente.
+Auditoría estática de `main` en a317d8d, ya fusionada la rama de despliegue `campaign/conexiones-doppler` (código de 2a475e9), de modo que los ficheros citados aquí existen en `main`. El SHA de cada imagen Fly sigue por acreditar. Comprobado el 2026-11-07: `www.agntiapro.com` responde 200 en `/api/health` con base de datos, bus y worker en verde y `browser` sin configurar; `agntiapro.io` no tiene DNS y ya no se usa en el repo. Los ocho SOPs visibles y el reinicio del registro son evidencia reportada por Freebuff. La ejecución comercial completa y el login con las dos cuentas reales siguen pendientes de evidencia independiente.
 
 ## Qué corre y dónde
 

@@ -3,7 +3,7 @@
 # Un unico proyecto con tres configs:
 #   dev   -> local, valores de prueba y claves de sandbox del proveedor
 #   stg   -> rama de staging (preview de Fly)
-#   prd   -> produccion (www.agntiapro.io)
+#   prd   -> produccion (www.agntiapro.com)
 #
 # El CLI lee este fichero con `doppler setup` (sin flags) y deja el repo ligado
 # al config elegido. No hay secretos aqui: solo la ruta.

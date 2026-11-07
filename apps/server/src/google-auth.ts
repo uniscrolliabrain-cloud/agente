@@ -4,6 +4,18 @@ import { decryptSecret, encryptSecret } from "../../../packages/integrations/src
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
+
+/**
+ * GOOGLE_CREDENTIAL_SCOPE_V1 - las credenciales de Google se guardan por
+ * empresa. Antes GoogleAuth recibia el Store crudo: el mismo usuario en dos
+ * empresas compartia token, y una accion en B leia el Gmail de A. Este tipo
+ * estrecho permite pasarle el TenantScopedStore sin arrastrar el Store entero.
+ */
+type GoogleStore = Pick<
+  Store,
+  "get" | "put" | "compareAndSwap" | "insertIfAbsent" | "take" | "updateCredential"
+>;
 
 const tokenSchema = z.object({
   access_token: z.string().min(1),
@@ -22,6 +34,8 @@ interface Tokens {
 interface OAuthState {
   id: string;
   owner: string;
+  /** Empresa que inicio el consentimiento; el callback no tiene sesion. */
+  tenantId?: string;
   expiresAt: number;
   verifier: string;
   scopes: string[];
@@ -36,8 +50,15 @@ interface Credential {
 export class GoogleAuth {
   private readonly refreshing = new Map<string, Promise<string>>();
   constructor(
-    private readonly db: Store,
+    private readonly db: GoogleStore,
     private readonly config: Config,
+    /**
+     * El `state` de OAuth vive fuera del scope: lo escribe la peticion
+     * autenticada y lo consume el callback de Google, que no trae sesion. Si se
+     * guardara en el store scoped, la clave cambiaria entre las dos y el
+     * consentimiento se perderia.
+     */
+    private readonly stateStore: GoogleStore = db,
   ) {}
   configured() {
     return Boolean(
@@ -130,9 +151,11 @@ export class GoogleAuth {
           : []),
       ]),
     );
-    await this.db.put("system", "oauth", {
+    const tenantId = currentTenantScope()?.tenantId;
+    await this.stateStore.put("system", "oauth", {
       id: state,
       owner,
+      ...(tenantId ? { tenantId } : {}),
       expiresAt: Date.now() + 10 * 60 * 1000,
       verifier,
       scopes,
@@ -154,9 +177,18 @@ export class GoogleAuth {
     return { url: url.toString() };
   }
   async callback(stateId: string, code: string) {
-    const state = await this.db.take<OAuthState>("system", "oauth", stateId);
+    const state = await this.stateStore.take<OAuthState>("system", "oauth", stateId);
     if (!state || state.expiresAt < Date.now())
       throw new AppError("Google sign-in expired. Connect again.", 400);
+    // GOOGLE_CALLBACK_TENANT_V1 - el callback no trae JWT: la empresa viaja en
+    // el state firmado por nosotros y se restaura para escribir la credencial
+    // en la misma zona donde se pidio el consentimiento.
+    const finish = () => this.finishCallback(state, code);
+    return state.tenantId
+      ? runInTenantScope({ tenantId: state.tenantId, actorId: state.owner }, finish)
+      : finish();
+  }
+  private async finishCallback(state: OAuthState, code: string) {
     const credential = await this.db.get<Credential>(state.owner, "credentials", "google");
     if (!state.generation || credential?.generation !== state.generation)
       throw new AppError("Google sign-in changed or was disconnected. Connect again.", 409);

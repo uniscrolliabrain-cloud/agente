@@ -1,9 +1,14 @@
-# Despliegue de agntiapro.io
+# Despliegue de agntiapro.com
 
-> Estado: plan de la fase 1 (dogfooding: la agencia como primer tenant). Nada de
-> esto está desplegado todavía. Lo que ya existe en el repo: `Dockerfile` (build
-> del API **y** del panel), `fly.toml` (panel + API), `fly.worker.toml`,
-> `fly.browser.toml`, `apps/site` (landing de Vercel), `.github/workflows/deploy.yml`,
+> **Histórico.** Este documento se escribió como plan antes de desplegar y su
+> estado ya no es cierto: la API corre hoy en Fly (`agntiapro-api`) y responde en
+> `https://www.agntiapro.com/api/health`. El procedimiento vigente está en
+> [04-operaciones/DEPLOY.md](../04-operaciones/DEPLOY.md). Se conserva por
+> trazabilidad de la decisión de topología, que sigue siendo la aplicada.
+>
+> Piezas que describe y que existen en el repo: `Dockerfile` (build del API **y**
+> del panel), `fly.toml` (panel + API), `fly.worker.toml`, `fly.browser.toml`,
+> `apps/site` (landing de Vercel), `.github/workflows/deploy.yml`,
 > `scripts/secrets-check.ts`, `scripts/smoke-deploy.ts`, `doppler.yaml` y
 > `pnpm bootstrap:agency` (alta del tenant de la agencia).
 
@@ -29,10 +34,10 @@ cliente, CORS del origen de Vercel en el API, y verificar el stream.
 
 | Nombre | Apunta a | Uso |
 |---|---|---|
-| `agntiapro.io` | Vercel (A/CNAME) | sitio público (`apps/site`) |
-| `www.agntiapro.io` | Fly (`agntiapro-api`) | panel + API (fase 1) |
-| `api.agntiapro.io` | Fly (`agntiapro-api`, segundo certificado) | API para webhooks de Meta/Vapi/Stripe |
-| `app.agntiapro.io` | Vercel | reservado: panel separado en fase 2 |
+| `agntiapro.com` | Vercel (A/CNAME) | sitio público (`apps/site`) |
+| `www.agntiapro.com` | Fly (`agntiapro-api`) | panel + API (fase 1) |
+| `api.agntiapro.com` | Fly (`agntiapro-api`, segundo certificado) | API para webhooks de Meta/Vapi/Stripe |
+| `app.agntiapro.com` | Vercel | reservado: panel separado en fase 2 |
 
 En Fly los certificados son automáticos una vez el CNAME está puesto. En Vercel,
 `www` y el apex se configuran en el proyecto; el apex solo puede ir a Vercel si
@@ -88,7 +93,7 @@ Reglas:
 3. Hook de *custom access token* que inyecte `app_metadata.tenant_id` con el
    tenant de la agencia (`agntia`). Es lo único que el API acepta como claim:
    `tenant_id` > `app_metadata.tenant_id` > `user_metadata.tenant_id`.
-4. Redirect URLs: `https://www.agntiapro.io/auth/callback`.
+4. Redirect URLs: `https://www.agntiapro.com/auth/callback`.
 5. `AUTH_PROVIDER=supabase` en el entorno. Con el claim ausente el API responde
    401; con un tenant ajeno, 403 (ver `tests/jwt-authz.test.ts`).
 6. Alta del primer usuario: por invitación de Supabase y después
@@ -103,8 +108,8 @@ Tres apps, un solo repo:
 fly launch --no-deploy -a agntiapro-api      # reusa el fly.toml actual
 fly volumes create agntiapro_data -a agntiapro-api -r mad -s 10
 fly deploy -a agntiapro-api
-fly certs add www.agntiapro.io -a agntiapro-api
-fly certs add api.agntiapro.io -a agntiapro-api
+fly certs add www.agntiapro.com -a agntiapro-api
+fly certs add api.agntiapro.com -a agntiapro-api
 ```
 
 `agntiapro-api` sirve API + panel en el mismo proceso (es el `fly.toml` actual
@@ -160,9 +165,9 @@ son credenciales de la plataforma, no de la app).
 ## 9. Humo tras cada despliegue
 
 ```bash
-pnpm smoke:deploy --url=https://www.agntiapro.io --tenant=agntia
-curl -fsS https://www.agntiapro.io/api/health
-curl -fsS https://www.agntiapro.io/api/health-deep
+pnpm smoke:deploy --url=https://www.agntiapro.com --tenant=agntia
+curl -fsS https://www.agntiapro.com/api/health
+curl -fsS https://www.agntiapro.com/api/health-deep
 # login -> token; el panel debe pintar el workspace de su tenant
 # un JWT manipulado (un byte del payload) debe dar 401, no 200
 # ?tenantId=otro debe dar 403
