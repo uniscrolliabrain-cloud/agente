@@ -43,6 +43,8 @@
     "audit:coherence": "tsx scripts/audits/coherence.ts",
     "// GATE_SINGLE_ENTRYPOINT_V1": "un solo comando para typecheck + tests + los 7 audits; escribe artifacts/gate/",
     "gate": "tsx scripts/gate-report.ts",
+    "// VERTICAL_SLICE_VERIFY_V1": "arranque + HTTP autenticado del vertical slice sin proveedores reales; no sustituye a gate",
+    "verify:slice": "tsx scripts/verify-vertical-slice.ts",
     "secrets:check": "tsx scripts/secrets-check.ts",
     "// CONNECTIONS_CLI_V1": "contrato + sondas en vivo de cada conexion; no imprime valores",
     "connections": "tsx scripts/connections.ts",

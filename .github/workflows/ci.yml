@@ -39,10 +39,16 @@ jobs:
         run: |
           pnpm audit:layers
           pnpm audit:bridges
+          pnpm audit:anchors
           pnpm audit:console
           pnpm audit:tenant-default
           pnpm audit:idempotency
           pnpm audit:contracts
+      # VERTICAL_SLICE_SMOKE_V1 - arranque real y HTTP autenticado sin
+      # proveedores. No sustituye al gate: typecheck y suite ya corrieron arriba,
+      # asi que aqui solo se ejecuta el smoke.
+      - name: vertical slice smoke
+        run: pnpm verify:slice --only smoke
 
     # Use the frozen workspace install for worker dependencies.
   worker:
