@@ -63,11 +63,17 @@ test("draft creation is idempotent, normalizes phone and refuses changed content
 });
 test("concurrent approvals dispatch exactly one attempt and preserve the approved snapshot", async () => {
   const f = await fixture(), draft = await f.create(), gate = deferred<void>();
-  f.setSend(async (to) => { await gate.promise; return { id: "actual-message", accepted: true, to }; });
-  const approvals = Array.from({ length: 16 }, () => f.approve(draft.id, draft.revision!));
-  while (!f.calls.length) await new Promise((r) => setTimeout(r, 5));
+  const started = deferred<void>();
+  f.setSend(async (to) => {
+    started.resolve();
+    await gate.promise;
+    return { id: "actual-message", accepted: true, to };
+  });
+  const approvals = Array.from({ length: 50 }, () => f.approve(draft.id, draft.revision!));
+  const completed = Promise.all(approvals);
+  await Promise.race([started.promise, completed]);
   gate.resolve();
-  const results = await Promise.all(approvals);
+  const results = await completed;
   assert.equal(f.calls.length, 1);
   assert.ok(results.every((r) => r.status === "accepted" || r.status === "dispatching"));
   assert.equal((await f.operation(draft.id))?.status, "accepted");
