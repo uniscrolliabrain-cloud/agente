@@ -577,6 +577,9 @@ app.get("/api/health", async (c) => {
       sessionTenant: () => auth.sessionTenant(c.req.header("authorization")).catch(() => undefined),
       membershipTenant: (o) => tenantService.resolveStrict(o),
       membershipsFor: (id) => tenantService.membershipsFor(id),
+      // TENANT_SUSPENSION_GUARD_V1 - el kill switch se comprueba en cada
+      // petición; antes sólo lo leía el panel de admin.
+      tenantState: (id) => tenantService.tenantState(id),
       ...(requestedTenant ? { requestedTenant } : {}),
       requestId: c.req.header("x-request-id") ?? "req-" + Date.now(),
     });

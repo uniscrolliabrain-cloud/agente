@@ -131,11 +131,17 @@ export function signupRoutes({ db, config, users, tenantService }: SignupRoutesD
     if (!consumed) throw new AppError("Token ya usado", 409);
 
     // Crea el usuario.
+    //
+    // AUTH_SIGNUP_NO_PLATFORM_ADMIN_V1 - el alta publica creaba el usuario con
+    // `role: "admin"`, que es el rol de PLATAFORMA: cualquier registro podia
+    // entrar en /api/admin/tenants y administrar otras empresas. El alta solo
+    // puede dar el rol por defecto; el privilegio de plataforma se concede por
+    // operador, nunca por formulario publico.
     const user = await users.create({
       email: stored.email,
       name: stored.name,
       password: "__from_token__",
-      role: "admin",
+      role: "user",
     });
     // Reemplaza el passwordHash por el que guardamos en el token.
     const record = await db.get<{ id: string; data: unknown; passwordHash: string }>(

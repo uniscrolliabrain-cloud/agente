@@ -19,7 +19,11 @@ import type { Actor } from "../../../packages/domain/src/actor.ts";
 // sus ficheros permitidos y con razon).
 import type { TenantResolution } from "./engine/tenant.ts";
 
-export type PrincipalFailureCode = "NO_MEMBERSHIP" | "DB_UNAVAILABLE" | "TENANT_MISMATCH";
+export type PrincipalFailureCode =
+  | "NO_MEMBERSHIP"
+  | "DB_UNAVAILABLE"
+  | "TENANT_MISMATCH"
+  | "TENANT_SUSPENDED";
 
 export interface TenantPrincipal {
   tenantId: string;
@@ -55,6 +59,12 @@ export interface TenantPrincipalDeps {
    */
   membershipTenant: (owner: string) => Promise<TenantResolution>;
   membershipsFor: (userId: string) => Promise<Array<{ tenantId: string }>>;
+  /**
+   * TENANT_SUSPENSION_GUARD_V1 - estado de la empresa ya resuelta. Sin este
+   * dep no se consulta (tests y modo legacy), pero app.ts siempre lo pasa: una
+   * empresa suspendida no opera ni con un token válido.
+   */
+  tenantState?: (tenantId: string) => Promise<{ suspended: boolean; reason?: string }>;
   requestedTenant?: string;
   requestId: string;
 }
@@ -147,6 +157,30 @@ export async function resolveTenantPrincipal(
       code: "TENANT_MISMATCH",
       message: "tenant mismatch",
     };
+  }
+
+  // TENANT_SUSPENSION_GUARD_V1 - el kill switch se consulta sobre el tenant ya
+  // elegido, no sobre la membership: un JWT con un tenant suspendido tampoco
+  // entra. Un fallo del store aquí es 503, igual que en la resolución.
+  if (deps.tenantState) {
+    try {
+      const state = await deps.tenantState(tenantId);
+      if (state.suspended) {
+        return {
+          ok: false,
+          status: 403,
+          code: "TENANT_SUSPENDED",
+          message: "Empresa suspendida",
+        };
+      }
+    } catch {
+      return {
+        ok: false,
+        status: 503,
+        code: "DB_UNAVAILABLE",
+        message: "No se pudo comprobar el estado de la empresa",
+      };
+    }
   }
 
   return {

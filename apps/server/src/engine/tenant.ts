@@ -35,6 +35,12 @@ export interface TenantResolution {
   source: "database" | "default";
 }
 
+/** TENANT_STATE_V1 - estado de la empresa para el kill switch. */
+export interface TenantState {
+  suspended: boolean;
+  reason?: string;
+}
+
 // TENANT_SERVICE_TTL_ENV_V1 - antes el TTL era 5 min hardcodeado. Si un admin
 // cambia la membership, el cache no se entera hasta 5 min despues, y el kernel
 // escribe en el tenant viejo durante ese tiempo. Ahora es configurable:
@@ -136,6 +142,46 @@ export class TenantService {
   /** Atajo: solo el tenantId. */
   async tenantIdFor(owner: string): Promise<string> {
     return (await this.resolve(owner)).tenantId;
+  }
+
+  /**
+   * TENANT_MEMBERSHIP_FRESH_V1 - lectura sin caché para decidir permisos.
+   * El caché enruta; no autoriza: una revocación debe cortar en la siguiente
+   * petición, no cuando expire el TTL.
+   */
+  async findMembership(userId: string, tenantId: string): Promise<TenantMembership | null> {
+    const row = await this.db.get<TenantMembership>(userId, MEMBERSHIPS_KIND, tenantId);
+    if (!row || row.tenantId !== tenantId) return null;
+    return row;
+  }
+
+  /**
+   * TENANT_REVOKE_V1 - retira la membership y corta el acceso en caliente.
+   * Devuelve si había algo que quitar, para que el panel distinga revocar de
+   * intentar revocar dos veces.
+   */
+  async removeMembership(userId: string, tenantId: string): Promise<boolean> {
+    const existing = await this.findMembership(userId, tenantId);
+    await this.db.remove(userId, MEMBERSHIPS_KIND, tenantId);
+    this.invalidate(userId);
+    return existing !== null;
+  }
+
+  /**
+   * TENANT_STATE_V1 - kill switch de la empresa. Vive en `system` porque el
+   * estado es de la plataforma: si estuviera en la zona del tenant, suspender
+   * exigiría conocer su owner.
+   */
+  async tenantState(tenantId: string): Promise<TenantState> {
+    const row = await this.db.get<{ suspended?: boolean; suspendedReason?: string }>(
+      "system",
+      "tenant-state",
+      tenantId,
+    );
+    return {
+      suspended: Boolean(row?.suspended),
+      ...(row?.suspendedReason ? { reason: row.suspendedReason } : {}),
+    };
   }
 
   /** Todos los tenants a los que pertenece un usuario. */
