@@ -123,3 +123,8 @@ gate exit=1
 
 - **04.P2 pendiente**: `MemoryService`, `BusinessGraph`, `ContextEngine` y `app.ts` siguen leyendo el `Store` crudo con la clave legacy `<tenant>:<userId>`. El contrato (`apps/server/src/engine/tenant-records.ts`) y la migración con diario están probados, pero sustituir esos cuatro accesos cambia la semántica de recall y grafo y necesita una tanda propia con red de seguridad, no un cambio de paso.
 - **Owners legacy sin reescribir**: pasar de `<tenant>:<userId>` a `<tenant>:u:<userId>` exige decidir el actor fila a fila. Hoy `planRecordMigration` los manda a `review` en vez de adivinar.
+
+## Campaña 05 · RLS real y enlaces (2026-11-08)
+
+- **05.P2 pendiente**: `withTenantRls()` aplica `SET LOCAL app.tenant_id`, pero no se ha podido acreditar contra un Postgres con `MULTI_TENANT_SHARED=true` y rol de staging. La sonda de Doppler sólo dio la config `dev` (Neon) y sin `BUSINESS_DATABASE_URL`: sembrar un segundo tenant ahí no es staging. Lo consumirá la campaña 11/20 cuando haya base de staging.
+- **`x-user-id` en presencia y locks** de `threads`/`projects`: sigue usándose como identidad de edición. No autoriza datos, pero retirarlo toca UI y API que consumen la 13 y la 20; se hace allí con su contrato.
