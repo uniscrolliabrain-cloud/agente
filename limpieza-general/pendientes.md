@@ -118,3 +118,8 @@ OK   audit:idempotency     duplicadas=156 huerfanas=0 repetidas=143
 OK   audit:tenant-default  permitidas=131 prohibidas=0
 gate exit=1
 ```
+
+## Campaña 04 · consumidores sin cablear (2026-11-08)
+
+- **04.P2 pendiente**: `MemoryService`, `BusinessGraph`, `ContextEngine` y `app.ts` siguen leyendo el `Store` crudo con la clave legacy `<tenant>:<userId>`. El contrato (`apps/server/src/engine/tenant-records.ts`) y la migración con diario están probados, pero sustituir esos cuatro accesos cambia la semántica de recall y grafo y necesita una tanda propia con red de seguridad, no un cambio de paso.
+- **Owners legacy sin reescribir**: pasar de `<tenant>:<userId>` a `<tenant>:u:<userId>` exige decidir el actor fila a fila. Hoy `planRecordMigration` los manda a `review` en vez de adivinar.
