@@ -8,6 +8,29 @@ import type { AuthzDeps } from "./engine/authz/pdp.ts";
 // NOTIFICATIONS_STREAM_TENANT_V1 â€” recibe tenantService para filtrar el SSE
 // por tenant. Sin esto, un cliente del tenant A podÃ­a recibir notificaciones
 // del tenant B si compartÃ­an userId.
+export interface NotificationRow {
+  id: string;
+  assignedTo?: string;
+  tenantId?: string;
+}
+
+export interface NotificationViewer {
+  userId: string;
+  tenantId: string;
+}
+
+/**
+ * PRINCIPAL_SSE_V1 - que avisos puede ver un viewer. Vive fuera del stream para
+ * poder probarlo sin abrir un ReadableStream: la autoridad es el principal, no
+ * una cabecera. Una fila legacy sin tenantId se asume del tenant actual.
+ */
+export function notificationVisible(item: NotificationRow, viewer: NotificationViewer): boolean {
+  const isSupervisor = viewer.userId === "laia";
+  if (!isSupervisor && item.assignedTo && item.assignedTo !== viewer.userId) return false;
+  const itemTenantId = item.tenantId ?? viewer.tenantId;
+  return itemTenantId === viewer.tenantId;
+}
+
 export function notificationsStreamRoutes(
   service: AgentService,
   tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
@@ -19,13 +42,18 @@ export function notificationsStreamRoutes(
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
   app.get("/stream", async (c) => {
     const owner = c.get("owner");
-    // NOTIF_USER_FILTER_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â filtrar por userId para no emitir notificaciones
-    // dirigidas a otro usuario. Ver: docs/audits/04-.../miniaudit.md.
-    const userId = c.req.header("x-user-id") ?? owner;
-    // NOTIFICATIONS_STREAM_TENANT_V1 â€” tenantId del request, para filtrar.
-    const requestTenantId = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
-      : "default"; // FALLBACK_TENANT_V1
+    // PRINCIPAL_SSE_V1 - el filtro sale del principal ya resuelto de la peticion,
+    // no de una cabecera: `x-user-id` era autoridad de facto y permitia leer
+    // avisos dirigidos a otro usuario del mismo tenant (campana 05.P3).
+    const ctx = (c.get as unknown as (key: string) => unknown)("ctx") as
+      | { tenantId?: string; actorId?: string; owner?: string }
+      | undefined;
+    const userId = ctx?.actorId ?? owner;
+    // NOTIFICATIONS_STREAM_TENANT_V1 - se usa el tenant del principal; el
+    // fallback solo queda para rutas montadas sin ctx (stream de kernel).
+    const requestTenantId =
+      ctx?.tenantId ??
+      (tenantService ? await tenantService.tenantIdFor(owner).catch(() => "default") : "default"); // FALLBACK_TENANT_V1
     c.header("Content-Type", "text/event-stream");
     c.header("Cache-Control", "no-cache");
     c.header("Connection", "keep-alive");
@@ -50,14 +78,8 @@ export function notificationsStreamRoutes(
                 { limit: 50 },
               );
             for (const item of items) {
-              // NOTIF_USER_FILTER_V1 ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â solo si es del usuario o general.
-              // NOTIF_SUPERVISOR_MODE_V1 - Laia (supervisora) ve las de todos.
-              const isSupervisor = userId === "laia";
-              if (!isSupervisor && item.assignedTo && item.assignedTo !== userId) continue;
-              // NOTIFICATIONS_STREAM_TENANT_V1 â€” solo notificaciones del mismo
-              // tenant. Si no trae tenantId (legacy), se asume del actual.
-              const itemTenantId = (item as { tenantId?: string }).tenantId ?? requestTenantId;
-              if (itemTenantId !== requestTenantId) continue;
+              // PRINCIPAL_SSE_V1 - filtro unico por principal (usuario + tenant).
+              if (!notificationVisible(item, { userId, tenantId: requestTenantId })) continue;
               if (lastSeen.has(item.id)) continue;
               lastSeen.add(item.id);
               push(item);

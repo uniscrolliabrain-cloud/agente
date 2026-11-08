@@ -181,7 +181,11 @@ export function readConfig(): Config {
     databaseUrl: process.env.DATABASE_URL,
     // `||` y no `??`: al copiar .env.example la variable viene vacia y debe caer a
     // DATABASE_URL igual que si no estuviera.
-    businessDatabaseUrl: process.env.BUSINESS_DATABASE_URL?.trim() || process.env.DATABASE_URL,
+    // BUSINESS_DATABASE_DEDICATED_V1 - antes caia a DATABASE_URL, que es la base
+    // de la app: el SQL arbitrario de query_business corria con el rol de
+    // escritura sobre las filas de todos los owners. Sin DSN dedicado no hay
+    // SQL real; la consulta cae al dataset local del owner (campana 05).
+    businessDatabaseUrl: process.env.BUSINESS_DATABASE_URL?.trim() || undefined,
     accessKey: process.env.OPENMUSE_ACCESS_KEY,
     encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
     model: readModel(),
