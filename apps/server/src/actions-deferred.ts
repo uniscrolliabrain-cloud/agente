@@ -19,6 +19,18 @@ export interface DeferredRecord {
   needed: number;
   executeAt: number | null;
   status: DeferredStatus;
+  /** DEFERRED_RECEIPT_GUARD_V1 - por qué falló, cuando falló. */
+  failureReason?: string;
+}
+
+/**
+ * DEFERRED_RECEIPT_GUARD_V1 - el despacho debe devolver un recibo explícito.
+ * Un `void` no es un recibo: antes el tick marcaba `executed` y emitía
+ * `action.executed` aunque el callback no hubiera hecho nada (campaña 06).
+ */
+export interface DeferredRunReceipt {
+  executed: boolean;
+  reason?: string;
 }
 
 export interface DeferredStore {
@@ -37,7 +49,7 @@ export type DeferredEmit = (
 export class DeferredActions {
   constructor(
     private store: DeferredStore,
-    private run: (owner: string, actionId: string) => Promise<void>,
+    private run: (owner: string, actionId: string) => Promise<DeferredRunReceipt | void>,
     private emit: DeferredEmit,
     private cfg: { windowMs?: number; dualAt?: number | null; now?: () => number } = {},
   ) {}
@@ -100,11 +112,19 @@ export class DeferredActions {
     for (const r of due) {
       if (!(await this.store.claim(r.actionId))) continue;
       try {
-        await this.run(r.owner, r.actionId);
-        await this.store.put({ ...r, status: "executed" });
-        this.emit("action.executed", { actionId: r.actionId });
+        const receipt = await this.run(r.owner, r.actionId);
+        // DEFERRED_RECEIPT_GUARD_V1 - sólo `{ executed: true }` cuenta como
+        // ejecución. Callback vacío o sin resultado deja la acción en `failed`.
+        if (!receipt || receipt.executed !== true) {
+          const reason = receipt?.reason ?? "sin_recibo";
+          await this.store.put({ ...r, status: "failed", failureReason: reason });
+          this.emit("action.failed", { actionId: r.actionId, error: reason });
+        } else {
+          await this.store.put({ ...r, status: "executed" });
+          this.emit("action.executed", { actionId: r.actionId });
+        }
       } catch (e) {
-        await this.store.put({ ...r, status: "failed" });
+        await this.store.put({ ...r, status: "failed", failureReason: String(e) });
         this.emit("action.failed", { actionId: r.actionId, error: String(e) });
       }
     }

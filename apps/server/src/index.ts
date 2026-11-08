@@ -173,12 +173,11 @@ const { DeferredActions, StoreDeferredStore } = await import("./actions-deferred
 const deferredStore = new StoreDeferredStore(db);
 const deferred = new DeferredActions(
   deferredStore,
-  async (_owner: string, actionId: string) => {
-    const action = await db.get<{ id: string; owner?: string }>("system", "actions", actionId);
-    void action;
-    // El run real lo hace `ActionService.execute` cuando se llama a `decide`
-    // con `run` (pendiente). Por ahora, marcamos la acciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n como ejecutada.
-  },
+  // DEFERRED_EMPTY_CALLBACK_V1 - este callback no despacha nada todavia. Antes
+  // no devolvia recibo y el tick marcaba la accion como `executed`: exito falso
+  // que ademas se emitia al bus. Ahora devuelve recibo negativo y queda `failed`
+  // con su motivo hasta que exista el despacho real (campaña 14).
+  async (_owner: string, _actionId: string) => ({ executed: false, reason: "deferred_dispatch_unwired" }),
   (type, payload) => {
     void bus.emit("system", "system.maintenance", { kind: "system", id: "deferred" }, {
       deferredType: type,
