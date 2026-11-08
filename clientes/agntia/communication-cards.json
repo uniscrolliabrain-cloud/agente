@@ -1,0 +1,273 @@
+[
+  {
+    "id": "laia-estado-operacion",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "panel"
+    ],
+    "roleIds": [
+      "laia"
+    ],
+    "intents": [
+      "laia-estado-operacion"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "guided",
+    "structure": [
+      "Estado actual",
+      "Causa acreditada",
+      "Evidencia con hora",
+      "Siguiente paso y responsable"
+    ],
+    "requiredFacts": [
+      "estado_operacion",
+      "referencia_ejecucion"
+    ],
+    "forbiddenClaims": [
+      "Atribuir una causa sin evidencia"
+    ],
+    "template": "",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "laia-resumen-metricas",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "panel"
+    ],
+    "roleIds": [
+      "laia"
+    ],
+    "intents": [
+      "laia-resumen-metricas"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "guided",
+    "structure": [
+      "Periodo y alcance",
+      "Cifras acreditadas",
+      "Incidencias",
+      "Decisión pendiente"
+    ],
+    "requiredFacts": [
+      "periodo",
+      "denominador",
+      "metricas_acreditadas"
+    ],
+    "forbiddenClaims": [
+      "Confundir citas propuestas, confirmadas y celebradas"
+    ],
+    "template": "",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "cita-propuesta",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "whatsapp",
+      "email"
+    ],
+    "roleIds": [
+      "recepcion"
+    ],
+    "intents": [
+      "cita-propuesta"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "fixed",
+    "structure": [
+      "Disponibilidad verificada",
+      "Pregunta de confirmación"
+    ],
+    "requiredFacts": [
+      "fecha_hora_local",
+      "disponibilidad_vigente"
+    ],
+    "forbiddenClaims": [
+      "Afirmar que la cita está reservada"
+    ],
+    "template": "Tengo disponible {{fecha_hora_local}}. ¿Te encaja?",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "cita-confirmada",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "whatsapp"
+    ],
+    "roleIds": [
+      "recepcion"
+    ],
+    "intents": [
+      "cita-confirmada"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "fixed",
+    "structure": [
+      "Confirmación",
+      "Referencia"
+    ],
+    "requiredFacts": [
+      "fecha_hora_local",
+      "referencia_cita",
+      "reserva_confirmada"
+    ],
+    "forbiddenClaims": [
+      "Confirmar una cita sin reserva persistida"
+    ],
+    "template": "Tu cita está confirmada para {{fecha_hora_local}}. Tu referencia es {{referencia_cita}}.",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "reactivacion-primer-toque",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "email",
+      "whatsapp"
+    ],
+    "roleIds": [
+      "laia"
+    ],
+    "intents": [
+      "reactivacion-primer-toque"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "guided",
+    "structure": [
+      "Relación anterior",
+      "Motivo actual",
+      "Pregunta breve"
+    ],
+    "requiredFacts": [
+      "relacion_anterior",
+      "elegibilidad"
+    ],
+    "forbiddenClaims": [
+      "Inventar urgencia o inferir información sensible"
+    ],
+    "template": "",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "objecion-sensible",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "panel"
+    ],
+    "roleIds": [
+      "laia"
+    ],
+    "intents": [
+      "objecion-sensible"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "guided",
+    "structure": [
+      "Reconocer la pregunta",
+      "Hechos verificables",
+      "Traspaso con contexto"
+    ],
+    "requiredFacts": [
+      "pregunta_original"
+    ],
+    "forbiddenClaims": [
+      "Prometer resultados o comunicar precios no aprobados"
+    ],
+    "template": "",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "entrega-lead",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "panel"
+    ],
+    "roleIds": [
+      "laia"
+    ],
+    "intents": [
+      "entrega-lead"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 50,
+    "mode": "guided",
+    "structure": [
+      "Quién es",
+      "Por qué encaja",
+      "Evidencia e incertidumbre",
+      "Siguiente acción"
+    ],
+    "requiredFacts": [
+      "fuente_verificable"
+    ],
+    "forbiddenClaims": [
+      "Presentar contacto sin verificar como fiable"
+    ],
+    "template": "",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  },
+  {
+    "id": "sin-evidencia",
+    "version": 1,
+    "status": "draft",
+    "locale": "es-ES",
+    "channels": [
+      "panel"
+    ],
+    "roleIds": [
+      "laia"
+    ],
+    "intents": [
+      "sin-evidencia"
+    ],
+    "sopIds": [],
+    "states": [],
+    "priority": 10,
+    "mode": "fixed",
+    "structure": [
+      "Declarar ausencia de evidencia",
+      "Ofrecer revisión"
+    ],
+    "requiredFacts": [],
+    "forbiddenClaims": [
+      "Inventar cifras o confirmaciones"
+    ],
+    "template": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "missingFactScript": "Aún no puedo verificar ese dato. Puedo indicarte dónde consultarlo o dejarlo pendiente de revisión.",
+    "fallback": "explain_missing"
+  }
+]

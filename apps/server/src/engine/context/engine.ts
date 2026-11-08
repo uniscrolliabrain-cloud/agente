@@ -89,7 +89,7 @@ export class ContextEngine {
       ? await this.graph.listRelations(owner, entity.id)
       : [];
     const events = entity
-      ? (await this.bus?.list(owner, { limit: input.eventLimit ?? DEFAULT_EVENT_LIMIT })) ?? []
+      ? (await this.bus?.list(owner, { sourceId: entity.id, limit: input.eventLimit ?? DEFAULT_EVENT_LIMIT })) ?? []
       : [];
     const recall = await this.memory.recall(owner, input.query, {
       ...(input.history ? { history: input.history } : {}),

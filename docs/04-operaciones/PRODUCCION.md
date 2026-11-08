@@ -1,32 +1,24 @@
 # Notas de Producción
 
-> v1 · 2026-10-27 · Estado: current
+> Runbook operativo. Sigue [DEPLOY.md](DEPLOY.md) para releases y configuración.
 
 ## Consideraciones de producción
 
 ### Modo `live`
 
-- Requiere `OPENMUSE_ACCESS_KEY` (24+ caracteres) y `TOKEN_ENCRYPTION_KEY` (32-byte base64).
-- `authzEnabled` y `fieldClassificationEnabled` son `true` por defecto.
-- HOST puede ser cualquier dirección (no solo loopback).
+Consulta los [modos y variables de despliegue](DEPLOY.md#modos-de-operación). En modo live, `authzEnabled` y `fieldClassificationEnabled` son true por defecto.
 
 ### Base de datos
 
-- Desarrollo: PGlite embebido.
-- Producción: Postgres real con `DATABASE_URL`.
-- RLS opcional con `MULTI_TENANT_SHARED=true`.
-- `runBackup` no es un dump de Postgres administrado; verificar backup/restore del backend elegido antes de ampliar clientes.
+Consulta los [requisitos y backups](DEPLOY.md#backups). Verifica el backup y restore del proveedor de Postgres antes de ampliar clientes. RLS opcional con `MULTI_TENANT_SHARED=true`.
 
 ### Worker separado
 
-- `worker-entry.ts` requiere `DATABASE_URL`.
-- PGlite embebido corre dentro del proceso de la API.
-- En Fly multi-machine, `RateLimiter` es por máquina (mover a Redis si se escala).
+Consulta [ejecución en producción](DEPLOY.md#ejecución-en-producción) y [release en Fly](DEPLOY.md#release-en-fly). PGlite embebido corre dentro del proceso de la API.
 
 ### Métricas y alertas
 
-- Parte del snapshot de alertas usa ceros fijos. No presentar como medidas reales.
-- `audit:console` termina verde aunque informe ocurrencias; los audits de marcas/contratos detectan convenciones, no reemplazan pruebas funcionales.
+Consulta [métricas y logs](DEPLOY.md#métricas-y-logs). El audit de consola informa ocurrencias aunque termine en verde. Los audits de marcas y contratos comprueban convenciones.
 
 ### Límites honestos
 

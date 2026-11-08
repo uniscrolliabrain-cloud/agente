@@ -31,6 +31,8 @@ dónde vive y si está viva o archivada.
 
 ## Arquitectura
 
+- [Contrato del contexto del chat](./operacion/CONTRATO-CONTEXTO-PROMPT.md)
+
 | Fichero | Qué es |
 |---|---|
 | [ARCHITECTURE.md](./03-arquitectura/ARCHITECTURE.md) | Capas del sistema (API, engine, kernel, computer) |

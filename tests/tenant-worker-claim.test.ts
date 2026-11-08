@@ -88,3 +88,41 @@ test("sin scopes guardados, el worker sigue reclamando filas sin prefijo", async
   assert.equal(ran, 1);
   assert.equal((await db.get<AgentTask>("owner", "tasks", "tarea-plana"))?.status, "succeeded");
 });
+
+test("50 workers compiten por la misma tarea del tenant secundario y solo uno la reclama", async (t) => {
+  const db = await createStore();
+  t.after(() => db.close());
+  const tdb = new TenantScopedStore(db, async () => currentTenantScope()?.tenantId ?? "empresa-a");
+  const tenantId = "empresa-b";
+  const taskId = "tarea-compartida";
+  await runInTenantScope({ tenantId, actorId: OWNER }, () =>
+    tdb.put(OWNER, "tasks", task(taskId, "contendida")),
+  );
+
+  // Todos ven la misma fila pendiente, como cuando los scans se solapan.
+  // La reclamación y sus escrituras siguen pasando por el Store real.
+  const snapshot = await tdb.scanByStatusWithTenant<AgentTask>("tasks", ["queued"]);
+  assert.equal(snapshot.length, 1);
+  t.mock.method(tdb, "scanByStatusWithTenant", async () => snapshot);
+  const compareAndSwap = tdb.compareAndSwap.bind(tdb);
+  const claims: boolean[] = [];
+  const scopes: (string | undefined)[] = [];
+  t.mock.method(tdb, "compareAndSwap", async (...args: Parameters<typeof compareAndSwap>) => {
+    const result = await compareAndSwap(...args);
+    if (args[4].status === "running") claims.push(result !== null);
+    return result;
+  });
+
+  await Promise.all(Array.from({ length: 50 }, () =>
+    new TaskWorker(tdb, async () => {
+      scopes.push(currentTenantScope()?.tenantId);
+      return { status: "succeeded" };
+    }).tick(),
+  ));
+
+  assert.equal(claims.length, 50);
+  assert.equal(claims.filter(Boolean).length, 1);
+  assert.deepEqual(scopes, [tenantId]);
+  assert.equal((await db.get<AgentTask>(`${tenantId}:${OWNER}`, "tasks", taskId))?.status, "succeeded");
+  assert.equal(await db.get(`empresa-a:${OWNER}`, "tasks", taskId), null);
+});

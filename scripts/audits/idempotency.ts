@@ -80,6 +80,7 @@ export interface DoublePaste {
 export interface Classification {
   marks: number;
   uniqueMarks: number;
+  locations: Record<string, { file: string; line: number }[]>;
   /** Indice (informativo): misma marca, cuerpos distintos. */
   conflicts: { name: string; marks: Mark[] }[];
   /** Indice (informativo): misma marca repetida en un fichero. */
@@ -266,6 +267,14 @@ export function classify(marks: Mark[], allow: AllowEntry[] = []): Classificatio
   return {
     marks: marks.length,
     uniqueMarks: byName.size,
+    locations: Object.fromEntries(
+      [...byName.keys()].sort().map((name) => [
+        name,
+        (byName.get(name) ?? [])
+          .map(({ file, line }) => ({ file, line }))
+          .sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line),
+      ]),
+    ),
     conflicts,
     sameFileRepeats,
     doublePastes,
@@ -446,6 +455,7 @@ export async function runAudit(options: { write?: boolean } = {}): Promise<Audit
           index: {
             conflicts: classification.conflicts.length,
             sameFileRepeats: classification.sameFileRepeats.length,
+            locations: classification.locations,
           },
           defects: {
             doublePastes: classification.blocking.doublePastes,

@@ -53,7 +53,7 @@ interface AllowlistEntry {
 
 const ROOT = resolve(".");
 const DOMAIN_DIR = resolve("packages/domain/src");
-const CODE_DIRS = ["apps/server/src", "apps/web/src", "packages"];
+const CODE_DIRS = ["apps/server/src", "apps/web/src", "apps/worker/src", "packages"];
 const HARNESS_DIRS = ["tests", "scripts"];
 const ALLOWLIST_PATH = resolve("scripts/audits/contracts-allowlist.json");
 
@@ -85,7 +85,9 @@ async function loadSources(dirs: string[]): Promise<Map<string, string>> {
 }
 
 function isValidDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 async function loadAllowlist(): Promise<{ entries: AllowlistEntry[]; problems: string[] }> {
@@ -99,13 +101,17 @@ async function loadAllowlist(): Promise<{ entries: AllowlistEntry[]; problems: s
       problems: [`No se pudo leer ${rel(ALLOWLIST_PATH)}: ${error instanceof Error ? error.message : String(error)}`],
     };
   }
-  const list = (raw as { entries?: unknown }).entries;
+  const list = (raw as { entries?: unknown } | null)?.entries;
   if (!Array.isArray(list)) return { entries: [], problems: ["contracts-allowlist.json sin array `entries`"] };
 
   const entries: AllowlistEntry[] = [];
   for (const [index, item] of list.entries()) {
-    const e = item as Partial<AllowlistEntry>;
     const where = `entries[${index}]`;
+    if (item === null || typeof item !== "object" || Array.isArray(item)) {
+      problems.push(`${where}: se esperaba un objeto`);
+      continue;
+    }
+    const e = item as Partial<AllowlistEntry>;
     // CONTRACTS_ALLOWLIST_NEEDS_REASON_V1 - una entrada sin motivo escrito y sin
     // fecha es una forma de silenciar el audit, no una decision. No se acepta.
     if (typeof e.file !== "string" || e.file.length === 0) {
@@ -121,7 +127,7 @@ async function loadAllowlist(): Promise<{ entries: AllowlistEntry[]; problems: s
       continue;
     }
     if (typeof e.fecha !== "string" || !isValidDate(e.fecha)) {
-      problems.push(`${where} (${e.file}): \`fecha\` debe ser YYYY-MM-DD`);
+      problems.push(`${where} (${e.file}): \`fecha\` debe ser una fecha de calendario válida (YYYY-MM-DD)`);
       continue;
     }
     entries.push({ file: e.file, contracts: e.contracts, motivo: e.motivo.trim(), fecha: e.fecha });
@@ -181,6 +187,10 @@ async function main(): Promise<void> {
         allowProblems.push(`allowlist: \`${name}\` no existe en \`${entry.file}\``);
         continue;
       }
+      if (claimed.has(key)) {
+        allowProblems.push(`allowlist: entrada duplicada para \`${name}\` en \`${entry.file}\``);
+        continue;
+      }
       claimed.add(key);
       contract.allow = { motivo: entry.motivo, fecha: entry.fecha };
     }
@@ -212,7 +222,7 @@ async function main(): Promise<void> {
     "# Auditoria de contratos del dominio",
     "",
     `> Generado por \`scripts/audits/contracts.ts\` (criterio V2) el ${new Date().toISOString()}.`,
-    "> Criterio: se mide **uso** del nombre en lineas de codigo, no su mencion en otro fichero.",
+    "> Criterio: se cuentan coincidencias del identificador en líneas de código. La resolución del símbolo y su consumo efectivo quedan fuera de esta medición.",
     "",
     `- Contratos totales: **${contracts.length}**`,
     `- Usados desde otro modulo (code): **${byBucket.code.length}**`,

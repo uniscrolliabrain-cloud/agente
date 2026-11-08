@@ -93,29 +93,24 @@ export async function createApp(
 // con clave `tenantId:owner`. Los artifacts no aparec
   // Ver: docs/KNOWN_ISSUES.md FASE0_DEBT_FILES_TDB_V1 y
   // docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
-  const tenantServiceEarly = new TenantService(db, config);
+  const tenantService = new TenantService(db, config);
   // TENANT_SCOPE_RESOLVER_V1 - si la peticion trae un tenant fijado por el JWT
   // (runInTenantScope), ese manda: el usuario puede estar en varias empresas y
   // la membership unica no alcanza para decidir donde escribir. Sin scope
   // (modo session) se resuelve como antes.
-  const tdbEarly = new TenantScopedStore(
+  const tdb = new TenantScopedStore(
     db,
-    async (owner) => currentTenantScope()?.tenantId ?? tenantServiceEarly.tenantIdFor(owner),
+    async (owner) => currentTenantScope()?.tenantId ?? tenantService.tenantIdFor(owner),
   );
   const auth = await createAuth(db, config),
-    files = new Files(tdbEarly, config, auth),
+    files = new Files(tdb, config, auth),
     // GOOGLE_TENANT_CREDENTIALS_V1 - credenciales por empresa; el state de
     // OAuth sigue en el store raiz porque el callback no trae sesion.
-    google = new GoogleAuth(tdbEarly, config, db),
+    google = new GoogleAuth(tdb, config, db),
     users = new UserService(db),
-    // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantServiceEarly + resolver para embeddings por tenant.
-  rag = new RagService(tdbEarly, tenantServiceEarly, new EnvTenantConfigResolver()),
-    workspace = new WorkspaceService(tdbEarly, config, files, google, rag);
-  // APP_TENANT_DB_V1 - store con aislamiento por tenant. Se crea antes que el bus
-  // porque el bus tambien escribe bajo este store y debe componer la clave de tenant.
-  // SERVICE_TENANT_DB_V2
-  const tenantService = tenantServiceEarly;
-  const tdb = tdbEarly;
+    // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantService + resolver para embeddings por tenant.
+    rag = new RagService(tdb, tenantService, new EnvTenantConfigResolver()),
+    workspace = new WorkspaceService(tdb, config, files, google, rag);
   // PERSONAS_WIRE_V1 - registry de personas del tenant. Se carga al arrancar
   // desde clientes/<tenant>/personas/*.json. Fail-soft: si un JSON no valida,
   // ese se salta.
@@ -189,37 +184,13 @@ export async function createApp(
   const computer = new ComputerService(db, config, options.docker, tenantService, tenantLimiterShared);
   // KERNEL_WIRE_B_V1 - kernel cognitivo.
   //
-  // Stores:
-  //   - Sin DATABASE_URL: in-memory (dev, tests, single-process).
-  //   - Con DATABASE_URL: StoreTurnStore + StoreAuditStore persistentes.
-  //     Esto es lo que necesita SOC-2 en produccion.
-  //
-  // El adapter StorePort mapea Store a la interfaz que esperan los stores
-  // del kernel. Asi el kernel no depende de la firma exacta de Store.
-  const usePersistentKernel = Boolean(config.databaseUrl);
-  const storePort = usePersistentKernel
-    ? {
-        put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
-          await db.put(tenantId, kind, data as { id: string });
-        },
-        get: async (tenantId: string, kind: string, id: string) => {
-          return db.get(tenantId, kind, id);
-        },
-        list: async (tenantId: string, kind: string, limit: number) => {
-          const rows = await db.listPaged<unknown>(tenantId, kind, { limit });
-          return rows.map((row) => ({ id: (row.data as { id: string }).id, data: row.data }));
-        },
-        transaction: async <T>(fn: (tx: never) => Promise<T>): Promise<T> =>
-          db.transaction(() => fn(storePort as never)),
-      }
-    : null;
   // KERNEL_STORE_ALWAYS_V1 - antes el kernel usaba InMemoryTurnStore cuando
   // no habia DATABASE_URL. Eso hacia que en dev/test/sample todo el trabajo
   // del kernel (turnos, thoughts, audit) se perdiera al reiniciar, y que la
   // vision de "kernel persistente" fuera falsa. Ahora SIEMPRE StoreTurnStore
   // apoyado en el mismo Store que el resto del sistema. InMemoryTurnStore
   // queda solo para tests que lo instancian a mano.
-  const persistentStorePort = storePort ?? {
+  const persistentStorePort = {
     put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
       await db.put(tenantId, kind, data as { id: string });
     },
