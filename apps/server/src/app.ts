@@ -18,6 +18,7 @@ import { createAuth } from "./auth.ts";
 import { TenantScopedStore } from "./db-tenant.ts";
 // TENANT_SCOPE_V1 - tenant activo de la peticion (AsyncLocalStorage).
 import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
+import { resolveTenantPrincipal } from "./tenant-principal.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
@@ -561,23 +562,31 @@ app.get("/api/health", async (c) => {
     // sesion y, por ultimo, la membership. El tenant de la sesion solo vale si
     // el usuario sigue siendo miembro: si le revocaron el acceso, cae a su
     // membership en vez de seguir escribiendo en la empresa que dejo.
-    const membershipTenant = await tenantService.tenantIdFor(owner).catch(() => "default"); // FALLBACK_TENANT_V1
-    let resolvedTenant = jwtActorForTenant?.tenantId ?? membershipTenant;
-    if (!jwtActorForTenant?.tenantId) {
-      const sessionTenant = await auth.sessionTenant(c.req.header("authorization")).catch(() => undefined);
-      if (sessionTenant && sessionTenant !== membershipTenant) {
-        const memberships = await tenantService.membershipsFor(owner).catch(() => []);
-        if (memberships.some((m) => m.tenantId === sessionTenant)) resolvedTenant = sessionTenant;
-      }
-    }
-    // TENANT_QUERY_GUARD_V1 - pedir un tenant distinto del que el owner tiene
-    // resuelto es un salto de tenant, no un filtro: 403. Ninguna ruta lee
-    // `?tenantId=` hoy (el panel admin usa servicios, no query), asi que el
-    // guard no rompe lecturas legitimas y cierra el hueco de /api/agent.
+    // TENANT_PRINCIPAL_V1 - resolucion unica de tenant, actor, membership y
+    // requestId. Antes un throw de la DB caia a "default" (FALLBACK_TENANT_V1)
+    // y la peticion escribia en el tenant equivocado; ahora se distingue "no es
+    // miembro" (403) de "la DB no responde" (503), y el fallback a default solo
+    // sobrevive en modo sample.
     const requestedTenant = c.req.query("tenantId") ?? c.req.header("x-tenant-id");
-    if (requestedTenant && requestedTenant !== resolvedTenant) {
-      return c.json({ error: "tenant mismatch", code: "TENANT_MISMATCH" }, 403);
+    const principalResolution = await resolveTenantPrincipal({
+      // TENANT_LEGACY_FALLBACK_ALLOWED_V1 - el fallback a "default" sólo
+      // sobrevive donde el modo single-tenant existe: sample o session.
+      legacyFallbackAllowed: config.mode === "sample" || config.authProvider === "session",
+      owner,
+      ...(jwtActorForTenant ? { jwtActor: jwtActorForTenant } : {}),
+      sessionTenant: () => auth.sessionTenant(c.req.header("authorization")).catch(() => undefined),
+      membershipTenant: (o) => tenantService.resolveStrict(o),
+      membershipsFor: (id) => tenantService.membershipsFor(id),
+      ...(requestedTenant ? { requestedTenant } : {}),
+      requestId: c.req.header("x-request-id") ?? "req-" + Date.now(),
+    });
+    if (!principalResolution.ok) {
+      return c.json(
+        { error: principalResolution.message, code: principalResolution.code },
+        principalResolution.status,
+      );
     }
+    const resolvedTenant = principalResolution.principal.tenantId;
     const _tenantIdForCtx = resolvedTenant;
     // APP_CTX_ACTOR_V3 - el ctx lleva el Actor completo: authz (PolicyContext)
     // lee ctx.actor.id, no un actorId plano. Si verifyJwtMiddleware no puso

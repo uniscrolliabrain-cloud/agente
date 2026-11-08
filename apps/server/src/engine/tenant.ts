@@ -50,6 +50,37 @@ export class TenantService {
   // TENANT_SERVICE_TTL_V1 - cache con TTL de 5 min.
   private readonly cache = new Map<string, { tenantId: string; at: number }>();
 
+  /**
+   * TENANT_RESOLVE_STRICT_V1 - lectura de membership sin tragarse el fallo del
+   * store. La campana 02 necesita distinguir "no es miembro" (403) de "la DB no
+   * responde" (503); `resolve()` devuelve "default" en ambos casos y por eso la
+   * peticion seguia escribiendo en el tenant equivocado.
+   */
+  private async readMembershipStrict(owner: string): Promise<TenantResolution> {
+    const row = await this.db.get<{ tenantId: string }>(owner, MEMBERSHIP_KIND, MEMBERSHIP_ID);
+    if (row?.tenantId) return { tenantId: row.tenantId, source: "database" };
+    // Misma regla que `resolve()`: en el namespace `system` no se busca una
+    // membership antigua, porque ahi vive el registro de tenants.
+    const legacy =
+      owner === "system"
+        ? []
+        : await this.db.list<{ id: string; tenantId: string }>(owner, MEMBERSHIP_KIND);
+    const legacyRow = legacy.find((m) => m.id !== MEMBERSHIP_ID && m.tenantId);
+    if (legacyRow) return { tenantId: legacyRow.tenantId, source: "database" };
+    return { tenantId: DEFAULT_TENANT_ID, source: "default" };
+  }
+
+  /** Membership durable con el cache del servicio; propaga el fallo del store. */
+  async resolveStrict(owner: string): Promise<TenantResolution> {
+    const cached = this.cache.get(owner);
+    if (cached && Date.now() - cached.at < TENANT_CACHE_TTL_MS) {
+      return { tenantId: cached.tenantId, source: "database" };
+    }
+    const resolution = await this.readMembershipStrict(owner);
+    this.cache.set(owner, { tenantId: resolution.tenantId, at: Date.now() });
+    return resolution;
+  }
+
   constructor(
     private readonly db: Store,
     private readonly config: Config,
