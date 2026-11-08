@@ -909,11 +909,15 @@ maxSteps: tenantConfig?.maxSteps ?? (Number(process.env.AGENT_MAX_STEPS ?? "6") 
       this.lastMetaHint = injected;
       // CONVERSATION_META_HINT_PERSIST_AWAIT_V1
       // CONVERSATION_META_HINTS_PERSIST_V1
+      // META_HINTS_SNAPSHOT_BEFORE_IMPORT_V1 (campana 10) - el IIFE leia
+      // `this.pendingMetaHints` DESPUES de dos await import(): el turno ya lo
+      // habia vaciado y se perdian los hints. Se capturan antes del import.
+      const hintsToPersist = this.pendingMetaHints.slice(0, 3);
       void (async () => {
         try {
           const { MetaHintsStore } = await import("./feedback/meta-hints-store.ts");
           const store = new MetaHintsStore(this.service.db as unknown as import("../db.ts").Store);
-          await store.persist(ctx.tenantId, ctx.owner, turnId, this.pendingMetaHints.slice(0, 3));
+          await store.persist(ctx.tenantId, ctx.owner, turnId, hintsToPersist);
         } catch {
           /* best-effort */
         }

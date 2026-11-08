@@ -36,6 +36,12 @@ export interface AssembleInput {
   query: string;
   eventLimit?: number;
   history?: string[];
+  /**
+   * CONTEXT_PRIVATE_RECALL_V1 (campana 10) - user id del humano que pregunta.
+   * Solo con el se recuperan sus recuerdos privados; el contexto de empresa
+   * sigue siendo el mismo para todos los humanos del tenant.
+   */
+  viewerId?: string;
   // CONTEXT_BUDGET_V1 - presupuesto opcional por fuente.
   budget?: {
     roleTokens?: number;
@@ -93,6 +99,7 @@ export class ContextEngine {
       : [];
     const recall = await this.memory.recall(owner, input.query, {
       ...(input.history ? { history: input.history } : {}),
+      ...(input.viewerId ? { privateOwner: input.viewerId } : {}),
     });
     // CONTEXT_INCLUDE_LEARNING_V1 - antes LearningObserver escribia en
     // learning-facts y learning-patterns pero nadie los leia. El contexto

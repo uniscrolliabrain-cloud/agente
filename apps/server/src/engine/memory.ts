@@ -17,6 +17,12 @@ export interface RecallOptions {
   memoryLimit?: number;
   history?: string[];
   categories?: MemoryCategory[];
+  /**
+   * MEMORY_PRIVATE_RECALL_V1 - scope del humano que pregunta. Sus recuerdos
+   * privados viven aparte y solo se recuperan con este campo: sin el, una
+   * persona de la misma empresa no los ve.
+   */
+  privateOwner?: string;
   /** R10 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â si se pasa, se prefieren memorias del rol (roleId coincidente) y se
    *  incluyen tambiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©n las globales (sin roleId). Sin roleId, comportamiento previo. */
   roleId?: string;
@@ -28,9 +34,90 @@ export interface RecallResult {
   query: string;
   ragHits: RagHit[];
   memories: AgentMemory[];
+  /** MEMORY_PROFILE_FACTS_V1 - hechos de empresa vigentes que tocan la query. */
+  facts: ProfileFact[];
+  /** MEMORY_PRIVATE_RECALL_V1 - solo los del humano que pregunta. */
+  privateMemories: AgentMemory[];
   text: string;
   lowConfidence: boolean;
   explanation: string;
+}
+
+// MEMORY_PROFILE_FACTS_V1 (campana 10) - hechos de perfil versionados: el
+// vigente es el de version mas alta por clave y conserva su origen. Nada se
+// sobrescribe: cada version queda como historico auditable.
+export const PROFILE_FACTS_COLLECTION = "profile-facts";
+// MEMORY_PRIVATE_COLLECTION_V1 - los recuerdos privados viven en OTRA
+// coleccion y bajo el scope del humano, no en la memoria de empresa.
+export const PRIVATE_MEMORIES_COLLECTION = "private-memories";
+
+export interface ProfileFact {
+  id: string;
+  key: string;
+  value: string;
+  version: number;
+  origin: string;
+  source: string;
+  createdAt: string;
+}
+
+export interface PublishFactInput {
+  key: string;
+  value: string;
+  version: number;
+  origin: string;
+  source?: string;
+}
+
+type MemoryDb = Store | TenantScopedStore;
+
+// MEMORY_PUBLISH_FACT_V1 - precedencia explicita: una version posterior gana;
+// la misma version con otro valor es un conflicto (no se pisa a ciegas); una
+// version vieja no degrada el hecho vigente.
+export async function publishProfileFact(
+  db: MemoryDb,
+  owner: string,
+  input: PublishFactInput,
+): Promise<{ fact: ProfileFact; created: boolean }> {
+  const key = input.key.trim().toLowerCase();
+  if (!key) throw new Error("Empty fact key");
+  const value = input.value.trim().slice(0, 500);
+  if (!value) throw new Error("Empty fact value");
+  const existing = await db.list<ProfileFact>(owner, PROFILE_FACTS_COLLECTION);
+  const current = existing
+    .filter((fact) => fact.key === key)
+    .sort((a, b) => b.version - a.version)[0];
+  if (current && current.version > input.version) {
+    return { fact: current, created: false };
+  }
+  if (current && current.version === input.version) {
+    if (current.value !== value) {
+      throw new Error(`FACT_VERSION_CONFLICT: ${key}@${input.version}`);
+    }
+    return { fact: current, created: false };
+  }
+  const fact: ProfileFact = {
+    id: `pf-${key}-${input.version}`,
+    key,
+    value,
+    version: input.version,
+    origin: input.origin,
+    source: input.source ?? "bootstrap",
+    createdAt: new Date().toISOString(),
+  };
+  await db.insertIfAbsent(owner, PROFILE_FACTS_COLLECTION, fact);
+  return { fact, created: true };
+}
+
+// MEMORY_CURRENT_FACTS_V1 - un hecho por clave: el de version mas alta.
+export async function currentProfileFacts(db: MemoryDb, owner: string): Promise<ProfileFact[]> {
+  const all = await db.list<ProfileFact>(owner, PROFILE_FACTS_COLLECTION);
+  const winners = new Map<string, ProfileFact>();
+  for (const fact of all) {
+    const seen = winners.get(fact.key);
+    if (!seen || fact.version > seen.version) winners.set(fact.key, fact);
+  }
+  return [...winners.values()].sort((a, b) => a.key.localeCompare(b.key));
 }
 
 // FIX_12_8_QUERY_REFORM_V1 - reformulacion con stopwords + ponderacion.
@@ -54,8 +141,27 @@ function reformulateQuery(query: string, history?: string[]): string {
   return unique.join(" ").slice(0, 1000);
 }
 
-function formatRecall(ragHits: RagHit[], memories: AgentMemory[]): string {
+function formatRecall(
+  ragHits: RagHit[],
+  memories: AgentMemory[],
+  facts: ProfileFact[] = [],
+  privateMemories: AgentMemory[] = [],
+): string {
   const parts: string[] = [];
+  if (facts.length > 0) {
+    parts.push("Hechos de empresa:");
+    for (const fact of facts) {
+      parts.push(`- ${fact.key}: ${fact.value} (v${fact.version}, origen ${fact.origin})`);
+    }
+  }
+  if (privateMemories.length > 0) {
+    if (parts.length > 0) parts.push("");
+    parts.push("Recuerdos privados de esta persona:");
+    for (const memory of privateMemories) {
+      const text = memory.text.length > 500 ? memory.text.slice(0, 500) + "…[truncado]" : memory.text;
+      parts.push(`- ${text}`);
+    }
+  }
   if (memories.length > 0) {
     parts.push("Hechos recordados:");
     for (const m of memories) {
@@ -89,22 +195,37 @@ export class MemoryService {
 
   async recall(owner: string, query: string, options: RecallOptions = {}): Promise<RecallResult> {
     const reformulated = reformulateQuery(query, options.history);
-    const [ragHits, memories] = await Promise.all([
+    const [ragHits, memories, facts, privateMemories] = await Promise.all([
       this.rag.search(owner, reformulated, options.ragLimit ?? DEFAULT_RAG_LIMIT).catch(() => [] as RagHit[]),
       this.searchMemories(owner, reformulated, options),
+      this.recallFacts(owner, reformulated),
+      options.privateOwner
+        ? this.privateMemories(options.privateOwner)
+        : Promise.resolve([] as AgentMemory[]),
     ]);
 
     const aboveThreshold = ragHits.filter((h) => h.score >= LOW_CONFIDENCE);
     const strong = ragHits.filter((h) => h.score >= HIGH_CONFIDENCE);
     const finalRag = (strong.length > 0 ? strong : aboveThreshold).slice(0, 5);
-    const lowConfidence = finalRag.length === 0 && memories.length === 0 && ragHits.length > 0;
-    const text = formatRecall(finalRag, memories);
+    const lowConfidence =
+      finalRag.length === 0 && memories.length === 0 && facts.length === 0 && ragHits.length > 0;
+    const text = formatRecall(finalRag, memories, facts, privateMemories);
+    const total = memories.length + facts.length + privateMemories.length;
     const explanation =
-      finalRag.length === 0 && memories.length === 0
+      finalRag.length === 0 && total === 0
         ? "Sin coincidencias relevantes en la memoria."
-        : `${finalRag.length} fragmento(s) + ${memories.length} hecho(s) recuperados.`;
+        : `${finalRag.length} fragmento(s) + ${total} hecho(s) recuperados.`;
 
-    return { query: reformulated, ragHits: finalRag, memories, text, lowConfidence, explanation };
+    return {
+      query: reformulated,
+      ragHits: finalRag,
+      memories,
+      facts,
+      privateMemories,
+      text,
+      lowConfidence,
+      explanation,
+    };
   }
 
   async searchMemories(
@@ -186,6 +307,72 @@ export class MemoryService {
     return filtered
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 3);
+  }
+
+  // MEMORY_RECALL_FACTS_V1 - hechos vigentes relevantes a la query. Sin
+  // palabras utiles se devuelven los mas recientes (tope 8).
+  async recallFacts(owner: string, query: string): Promise<ProfileFact[]> {
+    const facts = await currentProfileFacts(this.db, owner);
+    const words = query
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 2);
+    if (words.length === 0) return facts.slice(0, DEFAULT_MEMORY_LIMIT);
+    return facts
+      .map((fact) => {
+        const haystack = `${fact.key} ${fact.value}`.toLowerCase();
+        const score = words.reduce((sum, word) => sum + (haystack.includes(word) ? 1 : 0), 0);
+        return { fact, score };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, DEFAULT_MEMORY_LIMIT)
+      .map((entry) => entry.fact);
+  }
+
+  publishFact(owner: string, input: PublishFactInput): Promise<{ fact: ProfileFact; created: boolean }> {
+    return publishProfileFact(this.db, owner, input);
+  }
+
+  currentFacts(owner: string): Promise<ProfileFact[]> {
+    return currentProfileFacts(this.db, owner);
+  }
+
+  // MEMORY_REMEMBER_PRIVATE_V1 - recuerdo privado en su propia coleccion y
+  // bajo el scope del humano. `owner` aqui es el scope de la persona
+  // (`<tenantId>:<userId>` con el store directo; el userId con el store
+  // tenant-scoped), no el de la empresa.
+  async rememberPrivate(
+    owner: string,
+    text: string,
+    options: { source?: string; category?: MemoryCategory; tags?: string[] } = {},
+  ): Promise<{ memory: AgentMemory; created: boolean }> {
+    const trimmed = text.trim().slice(0, 500);
+    if (!trimmed) throw new Error("Empty memory");
+    const normalized = trimmed.toLowerCase().replace(/\s+/g, " ");
+    const hash = createHash("sha256").update(normalized).digest("hex").slice(0, 32);
+    const id = `priv-${hash}`;
+    const existing = await this.db.get<AgentMemory>(owner, PRIVATE_MEMORIES_COLLECTION, id);
+    if (existing) return { memory: existing, created: false };
+    const memory: AgentMemory = {
+      id,
+      text: trimmed,
+      source: options.source ?? "User",
+      ...(options.category ? { category: options.category } : {}),
+      ...(options.tags && options.tags.length > 0 ? { tags: options.tags } : {}),
+      createdAt: new Date().toISOString(),
+    };
+    await this.db.insertIfAbsent(owner, PRIVATE_MEMORIES_COLLECTION, memory);
+    const saved = await this.db.get<AgentMemory>(owner, PRIVATE_MEMORIES_COLLECTION, id);
+    return { memory: saved ?? memory, created: true };
+  }
+
+  async privateMemories(owner: string): Promise<AgentMemory[]> {
+    const all = await this.db.list<AgentMemory>(owner, PRIVATE_MEMORIES_COLLECTION);
+    return all
+      .filter((memory) => !memory.expiresAt || Date.parse(memory.expiresAt) > Date.now())
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, DEFAULT_MEMORY_LIMIT);
   }
 
   async remember(

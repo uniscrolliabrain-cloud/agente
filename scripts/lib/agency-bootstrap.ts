@@ -27,6 +27,7 @@ import {
   type AgentPersona,
 } from "../../packages/domain/src/agent-persona.ts";
 import type { PersonaActivation } from "../../apps/server/src/engine/agents/personas/registry.ts";
+import { publishProfileFact } from "../../apps/server/src/engine/memory.ts";
 import { parseVerticalSliceBundle, type VerticalSliceBundle } from "./vertical-slice-bundle.ts";
 
 export interface AgencyPricingTier {
@@ -239,6 +240,21 @@ export async function bootstrapAgency(
     actions.push({ kind: "memory", id: memory.id, action: "created" });
   }
 
+  // 3b) MEMORY_PROFILE_FACTS_V1 (campana 10) - el perfil tambien se publica
+  // como hechos versionados con su origen. Se siembran en el scope de cada
+  // humano de la empresa (el instalador completa los demas): asi dos personas
+  // de A comparten el hecho y B no lo ve.
+  if (options.bundle) {
+    await seedProfileFacts({
+      db,
+      tenantId,
+      owners: [owner],
+      profile,
+      version: options.bundle.version,
+      origin: options.bundle.template.id,
+    });
+  }
+
   // 4) Schema de negocio (lo leen query_business, el workspace y los formularios).
   await scoped.put(owner, "business-schemas", agencySchema(tenantId));
   actions.push({ kind: "business-schema", id: "default", action: "updated" });
@@ -306,6 +322,39 @@ export async function bootstrapAgency(
   }
 
   return { tenantId, owner, actions };
+}
+
+// SEED_PROFILE_FACTS_V1 (campana 10) - publica el perfil como hechos
+// versionados en el scope de cada humano indicado. Se puede repetir: la misma
+// version con el mismo valor no escribe nada.
+export async function seedProfileFacts(seed: {
+  db: Store;
+  tenantId: string;
+  owners: string[];
+  profile: AgencyProfile;
+  version: number;
+  origin: string;
+}): Promise<number> {
+  const facts: Array<{ key: string; value: string }> = [
+    { key: "nombre", value: seed.profile.displayName },
+    ...(seed.profile.offer ? [{ key: "oferta", value: seed.profile.offer }] : []),
+    ...(seed.profile.tone ? [{ key: "tono", value: seed.profile.tone }] : []),
+    ...(seed.profile.icp ? [{ key: "icp", value: seed.profile.icp }] : []),
+  ];
+  let published = 0;
+  for (const human of seed.owners) {
+    for (const fact of facts) {
+      await publishProfileFact(seed.db, `${seed.tenantId}:${human}`, {
+        key: fact.key,
+        value: fact.value,
+        version: seed.version,
+        origin: seed.origin,
+        source: `${seed.tenantId}/${seed.origin}`,
+      });
+      published += 1;
+    }
+  }
+  return published;
 }
 
 // PERSONA_TEMPLATE_COMPILE_V1 - la plantilla es la fuente de las personas; si
