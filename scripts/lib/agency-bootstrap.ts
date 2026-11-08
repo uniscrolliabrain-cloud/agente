@@ -19,6 +19,7 @@ import { TenantScopedStore } from "../../apps/server/src/db-tenant.ts";
 import { TenantService } from "../../apps/server/src/engine/tenant.ts";
 import type { Config } from "../../apps/server/src/config.ts";
 import type { SOP } from "../../packages/domain/src/sop.ts";
+import { parseVerticalSliceBundle, type VerticalSliceBundle } from "./vertical-slice-bundle.ts";
 
 export interface AgencyPricingTier {
   name: string;
@@ -50,6 +51,8 @@ export interface BootstrapOptions {
   sops?: SOP[];
   /** Reescribe las SOPs existentes (por defecto se saltan: pueden estar editadas a mano). */
   overwriteSops?: boolean;
+  /** BUNDLE_BOOTSTRAP_V1 - bundle versionado del que sale el alta (campaña 07). */
+  bundle?: VerticalSliceBundle;
 }
 
 export interface BootstrapResult {
@@ -149,6 +152,28 @@ export async function bootstrapAgency(
   }
   if (!owner.trim()) throw new Error("owner vacio: no hay usuario donde escribir el tenant");
 
+  // BUNDLE_BOOTSTRAP_V1 - si viene bundle, se valida antes de escribir nada y
+  // el registro del tenant deja constancia de plantilla y versión.
+  let bundleMeta: { templateId: string; bundleVersion: number; operationKey: string } | undefined;
+  if (options.bundle) {
+    const parsed = parseVerticalSliceBundle(options.bundle);
+    if (!parsed.ok) {
+      throw new Error(
+        `bundle invalido: ${parsed.errors.map((issue) => `${issue.code}: ${issue.message}`).join("; ")}`,
+      );
+    }
+    if (parsed.bundle.template.slug !== profile.tenantId) {
+      throw new Error(
+        `BUNDLE_TENANT_DIVERGENTE: el bundle es ${parsed.bundle.template.slug} y el alta es ${profile.tenantId}`,
+      );
+    }
+    bundleMeta = {
+      templateId: parsed.bundle.template.id,
+      bundleVersion: parsed.bundle.version,
+      operationKey: parsed.bundle.operationKey,
+    };
+  }
+
   const actions: BootstrapAction[] = [];
   const tenantId = profile.tenantId;
   const scoped = new TenantScopedStore(db, async () => tenantId);
@@ -163,6 +188,7 @@ export async function bootstrapAgency(
     displayName: profile.displayName,
     ...(profile.domain ? { domain: profile.domain } : {}),
     createdAt: registry?.createdAt ?? new Date().toISOString(),
+    ...(bundleMeta ?? {}),
     createdBy: "bootstrap-agency",
   });
   actions.push({ kind: "tenant-registry", id: registryId, action: registry ? "updated" : "created" });

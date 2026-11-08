@@ -2,7 +2,7 @@
 // Provisiona un cliente nuevo en un deployment ya arrancado.
 // Uso: pnpm provision-client clientes/empresa-x
 
-import { readFile, readdir, cp, mkdir } from "node:fs/promises";
+import { readFile, readdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,6 +10,28 @@ import { fileURLToPath } from "node:url";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
 const base = process.env.OPENMUSE_URL ?? "http://127.0.0.1:8787";
+
+// PROVISION_BUNDLE_PLAN_V1 - el plan se calcula antes de tocar el API: si está
+// bloqueado no se escribe nada (campaña 07, aserción "plan sin escrituras").
+async function runBundlePlan(path: string): Promise<void> {
+  const { parseVerticalSliceBundle, planVerticalSlice } = await import(
+    "./lib/vertical-slice-bundle.ts"
+  );
+  const raw: unknown = JSON.parse(await readFile(path, "utf8"));
+  const parsed = parseVerticalSliceBundle(raw);
+  if (!parsed.ok) {
+    console.error(`Bundle invalido: ${parsed.errors.map((e) => `${e.code}: ${e.message}`).join("; ")}`);
+    process.exit(1);
+  }
+  const plan = planVerticalSlice(parsed.bundle, {});
+  console.log(JSON.stringify(plan, null, 2));
+  if (plan.blocked) {
+    console.error("Plan bloqueado: no se aplica y no se ha escrito nada.");
+    process.exit(1);
+  }
+  console.log(`Plan OK (${plan.operations.length} operaciones). No se ha escrito nada.`);
+  process.exit(0);
+}
 
 interface ClientConfig {
   name: string;
@@ -31,6 +53,16 @@ async function http<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 async function main() {
+  const bundleIndex = process.argv.indexOf("--bundle");
+  if (bundleIndex !== -1) {
+    const requested = process.argv[bundleIndex + 1];
+    if (!requested) {
+      console.error("Uso: pnpm provision-client -- --bundle clientes/<cliente>/vertical-slice.json [--plan]");
+      process.exit(1);
+    }
+    await runBundlePlan(resolve(root, requested));
+    return;
+  }
   const dir = process.argv[2];
   if (!dir) {
     console.error("Uso: pnpm provision-client clientes/empresa-x");
@@ -75,18 +107,15 @@ async function main() {
     }
   }
 
+  // PROVISION_NO_GLOBAL_SKILL_COPY_V1 - las skills del cliente no se copian al
+  // template global: dos clientes dejaban de distinguirse. Se quedan en su
+  // carpeta y la imagen del computer se versiona con el bundle (campaña 07).
   const skillsDir = join(baseDir, "skills");
   if (existsSync(skillsDir)) {
-    const target = join(root, "apps", "computer", "workspace-template", "skills");
-    await mkdir(target, { recursive: true });
     const subs = await readdir(skillsDir);
     for (const sub of subs) {
-      const src = join(skillsDir, sub);
-      const dst = join(target, sub);
-      await cp(src, dst, { recursive: true });
-      console.log(`  + skill ${sub} (copia a workspace-template)`);
+      console.log(`  = skill ${sub} (queda en ${dir}/skills, sin copia global)`);
     }
-    console.log("  Recuerda rebuild la imagen Docker del computer si lo usas.");
   }
 
   const usersFile = join(baseDir, "users.json");

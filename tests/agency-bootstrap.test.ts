@@ -167,3 +167,38 @@ test("otro tenant no ve el perfil de la agencia", async () => {
   assert.equal(agencyProfile.text, otherProfile.text);
   assert.equal((await db.list(`default:${other.id}`, "memories")).length, 0);
 });
+
+test("BUNDLE_BOOTSTRAP_V1: el alta registra plantilla y versión, y rechaza un bundle roto", async () => {
+  const raw = JSON.parse(
+    await readFile(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "clientes", "_template", "vertical-slice.example.json"),
+      "utf8",
+    ),
+  );
+  const bundle = { ...raw, template: { ...raw.template, slug: "agntia" } };
+  const result = await bootstrapAgency(db, config, ownerId, profile, { sops: agencySops, bundle });
+  assert.equal(result.tenantId, "agntia");
+  const registry = await db.get<{ templateId?: string; bundleVersion?: number; operationKey?: string }>(
+    "system",
+    "tenant-membership",
+    "agntia",
+  );
+  assert.equal(registry?.templateId, bundle.template.id);
+  assert.equal(registry?.bundleVersion, bundle.version);
+  assert.equal(registry?.operationKey, bundle.operationKey);
+
+  const broken = {
+    ...bundle,
+    connections: [{ ...bundle.connections[0], token: "no-debe-viajar" }],
+  };
+  await assert.rejects(
+    () => bootstrapAgency(db, config, ownerId, profile, { sops: agencySops, bundle: broken }),
+    /SECRETO_EN_BUNDLE/,
+  );
+
+  const otherTenant = { ...bundle, template: { ...bundle.template, slug: "otra-agencia" } };
+  await assert.rejects(
+    () => bootstrapAgency(db, config, ownerId, profile, { sops: agencySops, bundle: otherTenant }),
+    /BUNDLE_TENANT_DIVERGENTE/,
+  );
+});

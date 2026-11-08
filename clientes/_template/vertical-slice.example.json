@@ -1,0 +1,42 @@
+{
+  "schema": "VERTICAL_SLICE_BUNDLE_V1",
+  "version": 1,
+  "template": {
+    "id": "tpl_9f2c41ab7de64c0e",
+    "slug": "agencia-ejemplo",
+    "name": "Agencia de ejemplo"
+  },
+  "operationKey": "op_5c1d8e0b93a74f26",
+  "zone": "eu-west",
+  "profile": {
+    "displayName": "Agencia Ejemplo",
+    "domain": "agencia-ejemplo.test",
+    "offer": "Captacion de leads locales para clinicas y estudios",
+    "icp": "Clinicas pequenas con 1-3 profesionales y sin comercial propio",
+    "pricing": [
+      { "name": "Starter", "price": "390 EUR/mes", "includes": "leads + seguimiento basico" },
+      { "name": "Pro", "price": "690 EUR/mes", "includes": "leads + citas + informe mensual" }
+    ],
+    "tone": "Directo, sin jerga, tuteo",
+    "boundaries": [
+      "No prometer resultados garantizados",
+      "No contactar fuera de horario laboral"
+    ]
+  },
+  "persons": [
+    { "id": "person_8a41c2d9", "name": "Fundador", "email": "fundador@agencia-ejemplo.test" },
+    { "id": "person_1b77e0c4", "name": "Operaciones", "email": "ops@agencia-ejemplo.test" }
+  ],
+  "memberships": [
+    { "personId": "person_8a41c2d9", "role": "owner" },
+    { "personId": "person_8a41c2d9", "role": "admin" },
+    { "personId": "person_1b77e0c4", "role": "member" }
+  ],
+  "automations": [
+    { "id": "auto_3d90f1c7", "sopId": "prospeccion-diaria", "trigger": "cron:0 8 * * 1-5" }
+  ],
+  "connections": [
+    { "id": "conn_gmail_primary", "provider": "google", "kind": "oauth", "required": true },
+    { "id": "conn_pipeline", "provider": "postgres", "kind": "dataset", "required": false }
+  ]
+}
