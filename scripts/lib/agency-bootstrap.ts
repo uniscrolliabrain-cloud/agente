@@ -53,6 +53,12 @@ export interface BootstrapOptions {
   overwriteSops?: boolean;
   /** BUNDLE_BOOTSTRAP_V1 - bundle versionado del que sale el alta (campaña 07). */
   bundle?: VerticalSliceBundle;
+  /**
+   * PROVISION_INCOMPLETE_V1 - estado visible del tenant durante un alta por
+   * pasos (campaña 08): el instalador lo deja `incomplete` mientras aplica y lo
+   * cierra a `complete`. Sin esto, un alta a medias parece terminada.
+   */
+  status?: "incomplete" | "complete";
 }
 
 export interface BootstrapResult {
@@ -189,6 +195,7 @@ export async function bootstrapAgency(
     ...(profile.domain ? { domain: profile.domain } : {}),
     createdAt: registry?.createdAt ?? new Date().toISOString(),
     ...(bundleMeta ?? {}),
+    ...(options.status ? { status: options.status } : {}),
     createdBy: "bootstrap-agency",
   });
   actions.push({ kind: "tenant-registry", id: registryId, action: registry ? "updated" : "created" });

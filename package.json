@@ -29,6 +29,7 @@
     "dev:browser": "node --env-file=.env --import tsx apps/worker/src/index.ts",
     "test:computer": "tsx --test apps/computer/smoke.test.ts",
     "provision-client": "tsx scripts/provision-client.ts",
+    "provision:slice": "tsx scripts/provision-vertical-slice.ts",
     "bootstrap:agency": "tsx scripts/bootstrap-agency.ts",
     "backup:create": "tsx scripts/backup.ts",
     "backup:tenant": "tsx scripts/backup-tenant.ts",
