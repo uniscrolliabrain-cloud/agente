@@ -18,7 +18,15 @@ import type { Store } from "../../apps/server/src/db.ts";
 import { TenantScopedStore } from "../../apps/server/src/db-tenant.ts";
 import { TenantService } from "../../apps/server/src/engine/tenant.ts";
 import type { Config } from "../../apps/server/src/config.ts";
+import { readFile, readdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import type { SOP } from "../../packages/domain/src/sop.ts";
+import {
+  agentPersonaSchema,
+  agentStatsSchema,
+  type AgentPersona,
+} from "../../packages/domain/src/agent-persona.ts";
+import type { PersonaActivation } from "../../apps/server/src/engine/agents/personas/registry.ts";
 import { parseVerticalSliceBundle, type VerticalSliceBundle } from "./vertical-slice-bundle.ts";
 
 export interface AgencyPricingTier {
@@ -41,7 +49,14 @@ export interface AgencyProfile {
 }
 
 export interface BootstrapAction {
-  kind: "tenant-registry" | "membership" | "memory" | "business-schema" | "business-record" | "sop";
+  kind:
+    | "tenant-registry"
+    | "membership"
+    | "memory"
+    | "business-schema"
+    | "business-record"
+    | "sop"
+    | "persona";
   id: string;
   action: "created" | "updated" | "skipped";
 }
@@ -256,5 +271,59 @@ export async function bootstrapAgency(
     actions.push({ kind: "sop", id: sop.id, action: existing ? "updated" : "created" });
   }
 
+  // 7) PERSONA_INSTANCES_V1 (campana 09): la compilacion de personas de la
+  // plantilla queda ligada a ESTA empresa, con las SOPs que trae el bundle.
+  // Laia nace encendida y Marcos apagado (metadata.enabled del JSON). Los
+  // humanos los rellena el instalador cuando crea las cuentas: sin humano
+  // detras, la persona no puede iniciar trabajo.
+  if (options.bundle) {
+    const templatePersonas = await loadTemplatePersonas();
+    const sopIds = [...new Set(options.bundle.automations.map((automation) => automation.sopId))];
+    for (const persona of templatePersonas) {
+      const instanceId = `${tenantId}:${persona.id}`;
+      const existing = await db.get<{ createdAt?: string; activation?: PersonaActivation }>(
+        "system",
+        "persona-instances",
+        instanceId,
+      );
+      await db.put("system", "persona-instances", {
+        id: instanceId,
+        tenantId,
+        personaId: persona.id,
+        persona,
+        stats: agentStatsSchema.parse({ archetype: "assistant", status: "idle" }),
+        activation: {
+          enabled: existing?.activation?.enabled ?? persona.metadata.enabled !== false,
+          sopIds,
+          owners: existing?.activation?.owners ?? [],
+        } satisfies PersonaActivation,
+        ...(bundleMeta ?? {}),
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      });
+      actions.push({ kind: "persona", id: instanceId, action: existing ? "updated" : "created" });
+    }
+  }
+
   return { tenantId, owner, actions };
+}
+
+// PERSONA_TEMPLATE_COMPILE_V1 - la plantilla es la fuente de las personas; si
+// un JSON no valida el alta falla en claro en vez de instalar media empresa.
+async function loadTemplatePersonas(): Promise<AgentPersona[]> {
+  const dir = fileURLToPath(new URL("../../clientes/_template/personas/", import.meta.url));
+  const entries = await readdir(dir).catch(() => [] as string[]);
+  const personas: AgentPersona[] = [];
+  for (const entry of entries.sort()) {
+    const raw = await readFile(`${dir}/${entry}/persona.json`, "utf8").catch(() => null);
+    if (!raw) continue;
+    const parsed = agentPersonaSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success) {
+      throw new Error(
+        `persona de plantilla invalida (${entry}): ${parsed.error.issues[0]?.message ?? "unknown"}`,
+      );
+    }
+    personas.push(parsed.data);
+  }
+  return personas;
 }

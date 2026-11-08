@@ -1,7 +1,13 @@
 // KERNEL_PERSONAS_BOOTSTRAP_REGISTRY_V1
 import { join } from "node:path";
-import { PersonaRegistry } from "../engine/agents/personas/registry.ts";
+import { PersonaRegistry, type PersonaActivation } from "../engine/agents/personas/registry.ts";
 import { bootstrapAllPersonas } from "../engine/agents/personas/bootstrap.ts";
+import {
+  agentPersonaSchema,
+  agentStatsSchema,
+  type AgentStats,
+} from "../../../../packages/domain/src/agent-persona.ts";
+import type { Store } from "../db.ts";
 
 export interface PersonaBootstrapReport {
   tenants: string[];
@@ -27,6 +33,50 @@ export async function wirePersonaBootstrap(
     );
   }
   return { tenants, loaded, failed, errors };
+}
+
+// PERSONA_INSTANCES_LOAD_V1 - las empresas instaladas no tienen carpeta en
+// `clientes/`: su compilacion de personas vive en el store. Se cargan en la
+// MISMA registry que consume el chat, con la activacion que fijo el alta.
+export interface InstalledPersonaRecord {
+  id: string;
+  tenantId: string;
+  personaId: string;
+  persona: unknown;
+  stats?: unknown;
+  activation?: Partial<PersonaActivation>;
+}
+
+export interface InstalledPersonaReport {
+  loaded: number;
+  skipped: number;
+  errors: string[];
+}
+
+export async function loadInstalledPersonas(
+  registry: PersonaRegistry,
+  db: Store,
+  tenants?: string[],
+): Promise<InstalledPersonaReport> {
+  const rows = await db.list<InstalledPersonaRecord>("system", "persona-instances");
+  const report: InstalledPersonaReport = { loaded: 0, skipped: 0, errors: [] };
+  for (const row of rows) {
+    if (tenants && !tenants.includes(row.tenantId)) {
+      report.skipped += 1;
+      continue;
+    }
+    const persona = agentPersonaSchema.safeParse(row.persona);
+    if (!persona.success) {
+      report.errors.push(`${row.id}: ${persona.error.issues[0]?.message ?? "persona invalida"}`);
+      continue;
+    }
+    const stats: AgentStats = agentStatsSchema.safeParse(row.stats).success
+      ? (agentStatsSchema.parse(row.stats))
+      : agentStatsSchema.parse({ archetype: "assistant", status: "idle" });
+    registry.register(row.tenantId, persona.data, stats, row.activation);
+    report.loaded += 1;
+  }
+  return report;
 }
 
 export function clientsDirFrom(dataDir: string): string {

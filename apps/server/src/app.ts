@@ -46,6 +46,7 @@ import { ragRoutes } from "./rag-routes.ts";
 import { threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
 import { PersonaRegistry, bootstrapPersonas } from "./engine/agents/personas/index.ts";
+import { loadInstalledPersonas } from "./kernel/personas-bootstrap.ts";
 // WS_ENGINE_WIRE_V1 - import del catalogo de workspaces y del engine de workspaces.
 import { ALL_WORKSPACES } from "../../../packages/workspaces/src/index.ts";
 import { WorkspaceModuleRegistry, bridgeWorkspaceCapabilities, WorkspaceDispatcher } from "./engine/workspaces/index.ts";
@@ -131,6 +132,18 @@ export async function createApp(
       }
     }).catch(() => {});
   }
+  // PERSONA_INSTANCES_WIRE_V1 (campana 09) - las empresas instaladas no tienen
+  // carpeta en `clientes/`: su compilacion de personas vive en el store. Se
+  // carga en la misma registry que consume el chat, con su activacion.
+  void loadInstalledPersonas(personaRegistry, db)
+    .then((report) => {
+      if (report.loaded > 0 || report.errors.length > 0) {
+        console.log(
+          `[personas] instaladas: ${report.loaded} cargadas, ${report.errors.length} errores`,
+        );
+      }
+    })
+    .catch(() => {});
   // BUSINESS_OS_FIXED_V1
   const bus = new EventBus(tdb);
   // POLICY_EARLY_V1

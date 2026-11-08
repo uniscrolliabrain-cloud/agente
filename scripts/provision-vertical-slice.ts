@@ -230,6 +230,41 @@ async function ensureActors(
  * Reanudable: un fallo a mitad no se arregla reescribiendo, se continua desde el
  * ultimo paso terminado.
  */
+// PERSONA_OWNERS_V1 (campana 09) - la persona instalada solo inicia trabajo si
+// detras hay un humano con membership en la empresa. El alta acaba de crear
+// esas cuentas, asi que aqui se enlazan con la activacion ya escrita por el
+// bootstrap. Reaplicar con los mismos actores no vuelve a escribir.
+async function attachPersonaOwners(
+  db: Store,
+  tenantId: string,
+  actors: Array<{ userId: string }>,
+): Promise<void> {
+  const owners = actors.map((actor) => actor.userId);
+  const rows = await db.list<{
+    id: string;
+    activation?: { enabled?: boolean; sopIds?: string[]; owners?: string[] };
+  }>("system", "persona-instances");
+  for (const row of rows) {
+    if (!row.id.startsWith(`${tenantId}:`)) continue;
+    const activation = row.activation ?? {};
+    if (
+      Array.isArray(activation.owners) &&
+      activation.owners.length === owners.length &&
+      activation.owners.every((owner, index) => owner === owners[index])
+    ) {
+      continue;
+    }
+    await db.put("system", "persona-instances", {
+      ...row,
+      activation: {
+        enabled: activation.enabled ?? true,
+        sopIds: activation.sopIds ?? [],
+        owners,
+      },
+    });
+  }
+}
+
 export async function applyProvision(
   db: Store,
   config: Config,
@@ -343,6 +378,9 @@ export async function applyProvision(
     actorsCreated = ensured.created;
     await markDone("actors", { actors: ensured.actors });
   }
+  // PERSONA_OWNERS_V1 (campana 09): una persona instalada solo puede iniciar
+  // trabajo si detras hay un humano de la empresa. El alta acaba de crearlos.
+  await attachPersonaOwners(db, tenantId, record.actors);
 
   // 4) Cierre: el registro del tenant y la instalacion dejan de estar incompletos.
   if (!record.steps.complete) {

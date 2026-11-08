@@ -27,6 +27,9 @@ COPY --from=build /app/dist ./dist
 # app.ts resuelve ../apps/web/dist desde dist/apps/server/src.
 COPY --from=build /app/apps/web/dist ./dist/apps/web/dist
 COPY --from=build /app/package.json ./package.json
+# PERSONAS_TEMPLATE_IN_IMAGE_V1 (campana 09) - el alta compila las personas de
+# la plantilla; sin ella en la imagen no hay Laia/Marcos que instalar.
+COPY --from=build /app/clientes/_template ./clientes/_template
 COPY --from=build /app/apps/computer/workspace-template ./dist/apps/computer/workspace-template
 RUN mkdir -p /data && chown -R node:node /data
 ENV DATA_DIR=/data
