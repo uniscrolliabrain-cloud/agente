@@ -5,6 +5,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
+import { AppError } from "../errors.ts";
 import { backgroundFailure } from "../log.ts";
 import { embed } from "./embeddings.ts";
 
@@ -33,6 +34,41 @@ export interface RagChunk {
 
 export interface RagHit extends RagChunk {
   score: number;
+  /** RAG_VERIFIED_CITATION_V1 - el chunk pertenece a una fuente vigente. */
+  verified?: boolean;
+  /** Revision de la fuente en el momento de la cita, si esta registrada. */
+  revision?: string;
+}
+
+/**
+ * RAG_SOURCE_REGISTRY_V1 (campana 12) - una fuente indexada es un registro:
+ * de que conexion viene, que revision se indexo y si el ultimo intento fallo.
+ * Antes solo habia chunks sueltos, asi que ni el panel ni la cita podian
+ * distinguir "documento vigente" de "restos de una version anterior".
+ */
+export interface RagSourceRecord {
+  id: string;
+  sourceId: string;
+  sourceName: string;
+  kind: "upload" | "drive";
+  connectionId?: string;
+  revision?: string;
+  status: "indexed" | "failed";
+  chunks: number;
+  embedded: number;
+  attempts: number;
+  indexedAt?: string;
+  updatedAt: string;
+  error?: string;
+}
+
+/** Procedencia minima con la que se selecciona una fuente para indexar. */
+export interface RagSourceInput {
+  sourceId: string;
+  sourceName: string;
+  kind: "upload" | "drive";
+  connectionId?: string;
+  revision?: string;
 }
 
 export function chunkText(text: string): string[] {
@@ -82,7 +118,7 @@ function cosine(a: number[], b: number[]): number {
  */
 function bm25Score(queryWords: string[], text: string): number {
   if (!queryWords.length) return 0;
-  const words = text.toLowerCase().split(/\\W+/).filter(Boolean);
+  const words = text.toLowerCase().split(/\W+/).filter(Boolean);
   if (!words.length) return 0;
   const tf = new Map<string, number>();
   for (const w of words) tf.set(w, (tf.get(w) ?? 0) + 1);
@@ -105,7 +141,7 @@ export function computeIdf(queryWords: string[], docs: string[]): Map<string, nu
   for (const q of queryWords) {
     let df = 0;
     for (const doc of docs) {
-      const words = doc.toLowerCase().split(/\\W+/).filter(Boolean);
+      const words = doc.toLowerCase().split(/\W+/).filter(Boolean);
       if (words.includes(q)) df += 1;
     }
     // IDF suavizado: log((N + 1) / (df + 1)) + 1
@@ -120,7 +156,7 @@ export function bm25WithIdf(
   idf: Map<string, number>,
 ): number {
   if (!queryWords.length) return 0;
-  const words = text.toLowerCase().split(/\\W+/).filter(Boolean);
+  const words = text.toLowerCase().split(/\W+/).filter(Boolean);
   if (!words.length) return 0;
   const tf = new Map<string, number>();
   for (const w of words) tf.set(w, (tf.get(w) ?? 0) + 1);
@@ -263,8 +299,32 @@ export class RagService {
     text: string,
     maxChunks = RAG_MAX_CHUNKS_PER_SOURCE,
   ) {
-    const all = chunkText(text);
-    if (all.length === 0) return { chunks: 0, embedded: 0 };
+    const record = await this.ingestSource(
+      owner,
+      { sourceId, sourceName, kind: "upload" },
+      text,
+      maxChunks,
+    );
+    return { chunks: record.chunks, embedded: record.embedded };
+  }
+
+  /**
+   * RAG_SELECT_TO_INDEX_V1 (campana 12) - ingesta con procedencia: fuente,
+   * conexion y revision quedan registradas junto a los chunks.
+   */
+  async ingestSource(
+    owner: string,
+    source: RagSourceInput,
+    text: string,
+    maxChunks = RAG_MAX_CHUNKS_PER_SOURCE,
+  ): Promise<RagSourceRecord> {
+    // Un documento admitido pero corto no llega al minimo de chunkText y antes
+    // se descartaba en silencio (0 chunks, ningun error): se guarda entero.
+    const normalized = text.trim();
+    const chunked = chunkText(text);
+    const all =
+      chunked.length > 0 ? chunked : normalized ? [normalized.slice(0, CHUNK_SIZE)] : [];
+    if (all.length === 0) throw new AppError("La fuente no tiene texto indexable", 422);
     const chunks = all.slice(0, maxChunks);
     const apiKey = await this.apiKeyFor(owner);
     const vectors = await embedTexts(chunks, undefined, apiKey);
@@ -274,9 +334,9 @@ export class RagService {
       const vec = vectors[i];
       if (vec) embedded += 1;
       const chunk: RagChunk = {
-        id: `${sourceId}-${i}`,
-        sourceId,
-        sourceName,
+        id: `${source.sourceId}-${i}`,
+        sourceId: source.sourceId,
+        sourceName: source.sourceName,
         chunkIndex: i,
         text: chunks[i],
         embedding: vec,
@@ -292,7 +352,81 @@ export class RagService {
         } catch { /* si el update falla, el chunk queda sin embedding nativo */ }
       }
     }
-    return { chunks: chunks.length, embedded };
+    // RAG_REINDEX_REPLACES_V1 - la revision nueva sustituye a la anterior: los
+    // chunks sobrantes de una version mas larga no se quedan citandose.
+    await this.pruneChunks(owner, source.sourceId, chunks.length);
+    const previous = await this.db.get<RagSourceRecord>(owner, "rag-sources", source.sourceId);
+    const record: RagSourceRecord = {
+      id: source.sourceId,
+      sourceId: source.sourceId,
+      sourceName: source.sourceName,
+      kind: source.kind,
+      ...(source.connectionId ? { connectionId: source.connectionId } : {}),
+      ...(source.revision ? { revision: source.revision } : {}),
+      status: "indexed",
+      chunks: chunks.length,
+      embedded,
+      attempts: (previous?.attempts ?? 0) + 1,
+      indexedAt: now,
+      updatedAt: now,
+    };
+    await this.db.put(owner, "rag-sources", record);
+    return record;
+  }
+
+  /** Quita los chunks de la revision anterior que la nueva ya no tiene. */
+  private async pruneChunks(owner: string, sourceId: string, keep: number) {
+    const all = await this.db.list<RagChunk>(owner, "rag-chunks", { limit: 20000 });
+    for (const chunk of all) {
+      if (chunk.sourceId === sourceId && chunk.chunkIndex >= keep)
+        await this.db.remove(owner, "rag-chunks", chunk.id);
+    }
+  }
+
+  /**
+   * RAG_INDEX_FAILURE_V1 (campana 12) - el intento fallido queda observable
+   * (estado, error y numero de intentos) y la fuente deja de citarse: no se
+   * sirve la revision vieja como si fuera la actual.
+   */
+  async recordSourceFailure(
+    owner: string,
+    source: RagSourceInput,
+    error: string,
+  ): Promise<RagSourceRecord> {
+    const previous = await this.db.get<RagSourceRecord>(owner, "rag-sources", source.sourceId);
+    const now = new Date().toISOString();
+    const record: RagSourceRecord = {
+      id: source.sourceId,
+      sourceId: source.sourceId,
+      sourceName: source.sourceName || previous?.sourceName || source.sourceId,
+      kind: source.kind,
+      ...(source.connectionId || previous?.connectionId
+        ? { connectionId: source.connectionId ?? previous?.connectionId }
+        : {}),
+      ...(source.revision || previous?.revision
+        ? { revision: source.revision ?? previous?.revision }
+        : {}),
+      status: "failed",
+      chunks: previous?.chunks ?? 0,
+      embedded: previous?.embedded ?? 0,
+      attempts: (previous?.attempts ?? 0) + 1,
+      ...(previous?.indexedAt ? { indexedAt: previous.indexedAt } : {}),
+      updatedAt: now,
+      error: error.slice(0, 500),
+    };
+    await this.db.put(owner, "rag-sources", record);
+    return record;
+  }
+
+  /** Registro de una fuente indexada, si existe. */
+  async source(owner: string, sourceId: string) {
+    return this.db.get<RagSourceRecord>(owner, "rag-sources", sourceId);
+  }
+
+  /** Fuentes indexadas, la mas reciente primero. */
+  async sources(owner: string) {
+    const all = await this.db.list<RagSourceRecord>(owner, "rag-sources", { limit: 20000 });
+    return all.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   async removeSource(owner: string, sourceId: string) {
@@ -304,25 +438,58 @@ export class RagService {
         await this.db.remove(owner, "rag-chunks", chunk.id);
       }
     }
+    // RAG_SOURCE_REMOVE_V1 - borrar la fuente borra tambien su registro: una
+    // cita verificada nunca apunta a algo que el usuario ya retiro.
+    await this.db.remove(owner, "rag-sources", sourceId);
   }
 
-  async search(
+  /**
+   * RAG_VERIFIED_CITATION_V1 (campana 12) - solo se citan fuentes registradas y
+   * vigentes. Un chunk de Drive sin registro, con la ultima ingesta fallida o
+   * revocado no se devuelve. Los chunks heredados de subidas, que nunca
+   * escribieron registro, se siguen citando (compatibilidad).
+   */
+  private citeable(chunk: RagChunk, registry: Map<string, RagSourceRecord>) {
+    const record = registry.get(chunk.sourceId);
+    if (!record)
+      return chunk.sourceId.startsWith("drive:") ? null : { verified: true as const };
+    return record.status === "indexed"
+      ? { verified: true as const, ...(record.revision ? { revision: record.revision } : {}) }
+      : null;
+  }
+
+  private async rank(
     owner: string,
     query: string,
-    limit = 5,
-    options: { sourceId?: string } = {},
-  ): Promise<RagHit[]> {
+    limit: number,
+    options: { sourceId?: string },
+  ): Promise<{ hits: RagHit[]; degraded: boolean }> {
     const apiKey = await this.apiKeyFor(owner);
     const queryVec = await embed(query, apiKey);
+    const degraded = !queryVec;
+    const registry = new Map(
+      (await this.db.list<RagSourceRecord>(owner, "rag-sources", { limit: 20000 })).map((entry) => [
+        entry.id,
+        entry,
+      ]),
+    );
     const queryWords = query
       .toLowerCase()
-      .split(/\\W+/)
+      .split(/\W+/)
       .filter((w) => w.length > 2);
-    if (!queryVec && !queryWords.length) return [];
+    if (!queryVec && !queryWords.length) return { hits: [], degraded };
     // Postgres con pgvector resuelve la busqueda en SQL; si no, el recorrido de abajo.
     if (queryVec && (await this.canUseVector())) {
-      const hits = await this.searchVector(owner, queryVec, limit);
-      if (hits) return hits;
+      const rows = await this.searchVector(owner, queryVec, limit);
+      if (rows) {
+        const hits: RagHit[] = [];
+        for (const row of rows) {
+          const cite = this.citeable(row, registry);
+          if (cite) hits.push({ ...row, ...cite });
+          if (hits.length === limit) break;
+        }
+        return { hits, degraded };
+      }
     }
     // Fallback (PGlite o Postgres sin pgvector): coseno + BM25 recorriendo por keyset.
     const top: RagHit[] = [];
@@ -341,6 +508,8 @@ export class RagService {
       for (const { data: chunk, updatedAt } of page) {
         // R12 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â si se filtra por sourceId, se descartan los chunks que no son de esa fuente.
         if (options.sourceId && chunk.sourceId !== options.sourceId) continue;
+        const cite = this.citeable(chunk, registry);
+        if (!cite) continue;
         const cosineScore =
           queryVec && Array.isArray(chunk.embedding) && chunk.embedding.length === queryVec.length
             ? cosine(queryVec, chunk.embedding)
@@ -348,7 +517,7 @@ export class RagService {
         const bm25 = queryWords.length ? bm25Score(queryWords, chunk.text) : 0;
         if (cosineScore <= 0 && bm25 <= 0) continue;
         if (bm25 > maxBm25) maxBm25 = bm25;
-        candidates.push({ hit: { ...chunk, score: 0 }, cosineScore, bm25 });
+        candidates.push({ hit: { ...chunk, score: 0, ...cite }, cosineScore, bm25 });
       }
       const last = page[page.length - 1];
       cursorUpdatedAt = last.updatedAt;
@@ -368,7 +537,27 @@ export class RagService {
       const hybrid = 0.7 * c.cosineScore + 0.3 * bm25Norm;
       keepTop(top, { ...c.hit, score: hybrid }, limit);
     }
-    return top;
+    return { hits: top, degraded };
+  }
+
+  /** Compatibilidad: los llamadores que solo quieren los hits. */
+  async search(
+    owner: string,
+    query: string,
+    limit = 5,
+    options: { sourceId?: string } = {},
+  ): Promise<RagHit[]> {
+    return (await this.rank(owner, query, limit, options)).hits;
+  }
+
+  /**
+   * RAG_SEARCH_REPORT_V1 (campana 12) - distingue "sin coincidencias" de
+   * "busqueda degradada" (no se pudo calcular el vector y solo hubo palabras
+   * clave). Antes ambos casos llegaban como la misma lista vacia.
+   */
+  async searchReport(owner: string, query: string, limit = 5) {
+    const { hits, degraded } = await this.rank(owner, query, limit, {});
+    return { hits, degraded, status: hits.length > 0 ? ("ok" as const) : ("no_match" as const) };
   }
   async stats(owner: string) {
     // R4d ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â tope 20000; contador aproximado. Si se supera, el conteo no es exacto

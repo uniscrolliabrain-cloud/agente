@@ -34,7 +34,24 @@ export function ragRoutes(
       if (existing) existing.chunks++;
       else grouped.set(chunk.sourceId, { sourceId: chunk.sourceId, sourceName: chunk.sourceName, chunks: 1, firstAt: chunk.createdAt });
     }
-    return c.json({ sources: [...grouped.values()].sort((a, b) => b.chunks - a.chunks) });
+    // RAG_DRIVE_SOURCES_V1 (campana 12) - el panel ve que documento de Drive
+    // esta indexado, con que revision y si el ultimo intento fallo.
+    const drive = (await rag.sources(owner))
+      .filter((source) => source.kind === "drive")
+      .map((source) => ({
+        sourceId: source.sourceId,
+        sourceName: source.sourceName,
+        status: source.status,
+        revision: source.revision ?? null,
+        connectionId: source.connectionId ?? null,
+        chunks: source.chunks,
+        embedded: source.embedded,
+        attempts: source.attempts,
+        indexedAt: source.indexedAt ?? null,
+        updatedAt: source.updatedAt,
+        error: source.error ?? null,
+      }));
+    return c.json({ sources: [...grouped.values()].sort((a, b) => b.chunks - a.chunks), drive });
   });
 
   // WITH_READ_WIRE_V1 - withRead aplica PDP + FieldFilter
@@ -76,8 +93,10 @@ export function ragRoutes(
     }
     const query = z.string().min(1).max(1000).parse(c.req.query("q"));
     const limit = Math.min(Number(c.req.query("limit") ?? "5") || 5, 20);
-    const hits = await rag.search(owner, query, limit);
-    return c.json({ hits });
+    // RAG_SEARCH_REPORT_V1 (campana 12) - "sin coincidencias" y "busqueda
+    // degradada" (sin vector) dejan de ser la misma lista vacia.
+    const report = await rag.searchReport(owner, query, limit);
+    return c.json(report);
   });
 
   // REINGEST_ENDPOINT ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â reingesta server-side sin round-trip al navegador.

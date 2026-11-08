@@ -1,5 +1,5 @@
 // WORKSPACE_FILES_TENANT_V2 - todos los this.files.import pasan tenantId.
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type {
   ActionProposal,
   ActivityEntry,
@@ -339,6 +339,9 @@ export class WorkspaceService {
   }
   /** The owner's Drive files: local artifacts in sample mode, live Google Drive otherwise. */
   async driveFiles(owner: string, query?: string): Promise<DriveFile[]> {
+    // DRIVE_REVOKE_CLEANUP_V1 (campana 12) - listar tambien reconcilia: una
+    // conexion revocada deja de aportar documentos al indice.
+    await this.reconcileDriveSources(owner);
     const connection = await this.connection(owner);
     if (!connection) throw new AppError("Google is disconnected", 409);
     if (this.config.mode === "sample") {
@@ -377,14 +380,83 @@ export class WorkspaceService {
         note: "Sample workspace files have no readable text. Connect Google in live mode to read Drive files.",
       };
     }
-    const result = await this.google(owner, connection.id).readDriveFile(fileId);
-    if (result.text && result.text.length > 20000) {
-      const sourceId = `drive:${fileId}`;
-      this.rag
-        .ingestText(owner, sourceId, result.file.name, result.text.slice(0, 200_000))
-        .catch(() => {});
+    // DRIVE_READ_NOT_INDEX_V1 (campana 12) - leer no indexa. Antes solo se
+    // autoingeria el texto de mas de 20000 caracteres, en segundo plano: un
+    // documento corto nunca entraba al indice y un fallo era invisible.
+    return this.google(owner, connection.id).readDriveFile(fileId);
+  }
+
+  /**
+   * DRIVE_SELECT_TO_INDEX_V1 (campana 12) - indexar es una seleccion explicita:
+   * se relee de Drive y se registran fuente, conexion, revision y estado.
+   */
+  async indexDriveFile(owner: string, fileId: string, options: { force?: boolean } = {}) {
+    const connection = await this.connection(owner);
+    if (!connection) throw new AppError("Google is disconnected", 409);
+    const base = {
+      sourceId: `drive:${fileId}`,
+      sourceName: fileId,
+      kind: "drive" as const,
+      connectionId: connection.id,
+    };
+    let read: Awaited<ReturnType<GoogleClient["readDriveFile"]>>;
+    try {
+      read = await this.google(owner, connection.id).readDriveFile(fileId);
+    } catch (error) {
+      // RAG_INDEX_FAILURE_V1 - el intento fallido queda visible y la fuente deja
+      // de citarse hasta que un reintento la vuelva a indexar.
+      await this.rag.recordSourceFailure(
+        owner,
+        base,
+        error instanceof Error ? error.message : String(error),
+      );
+      throw error;
     }
-    return result;
+    const text = read.text?.trim();
+    if (!text) throw new AppError(read.note ?? "This Drive file has no readable text", 422);
+    const revision = read.file.modifiedTime ?? read.file.createdTime ?? this.driveRevision(text);
+    const previous = await this.rag.source(owner, base.sourceId);
+    // Reindexar la misma revision no gasta embeddings ni invalida citas vivas.
+    if (!options.force && previous?.status === "indexed" && previous.revision === revision)
+      return { ...previous, unchanged: true };
+    const record = await this.rag.ingestSource(
+      owner,
+      { ...base, sourceName: read.file.name, revision },
+      text,
+    );
+    return { ...record, unchanged: false };
+  }
+
+  /** Revision de respaldo cuando Drive no informa modifiedTime. */
+  private driveRevision(text: string) {
+    return `sha256:${createHash("sha256").update(text).digest("hex").slice(0, 32)}`;
+  }
+
+  /** Fuentes de Drive indexadas, con revision y estado de la ultima ingesta. */
+  async driveSources(owner: string) {
+    await this.reconcileDriveSources(owner);
+    return (await this.rag.sources(owner)).filter((source) => source.kind === "drive");
+  }
+
+  /**
+   * DRIVE_REVOKE_CLEANUP_V1 (campana 12) - si la conexion cambio o se revoco,
+   * los chunks de sus documentos se retiran: sin acceso no se puede citar.
+   */
+  async reconcileDriveSources(owner: string) {
+    const current = (await this.connection(owner))?.id ?? null;
+    const removed: string[] = [];
+    for (const source of (await this.rag.sources(owner)).filter((item) => item.kind === "drive")) {
+      if (source.connectionId !== current) {
+        await this.rag.removeSource(owner, source.sourceId);
+        removed.push(source.sourceId);
+      }
+    }
+    return removed;
+  }
+
+  /** Retirar un documento del indice borra sus chunks y su registro. */
+  async forgetDriveSource(owner: string, fileId: string) {
+    await this.rag.removeSource(owner, `drive:${fileId}`);
   }
   async prepare(owner: string, input: ProposalInput, connectionId?: string) {
     if (input.kind === "email.send") {
