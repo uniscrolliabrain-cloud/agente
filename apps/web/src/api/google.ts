@@ -3,6 +3,12 @@ import { apiFetch } from "./client";
 export interface GoogleStatus {
   connected: boolean;
   account: string | null;
+  /** Proveedor de la conexion operativa. */
+  provider: "google";
+  /** Scopes concedidos: el panel muestra el minimo privilegio real. */
+  scopes: string[];
+  /** false cuando el consentimiento es de solo lectura. */
+  write: boolean;
   /** true cuando el deployment corre en modo sample (la conexion es simulada). */
   sample: boolean;
   /** false cuando faltan GOOGLE_CLIENT_ID/SECRET o TOKEN_ENCRYPTION_KEY en modo live. */

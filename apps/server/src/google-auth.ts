@@ -17,6 +17,57 @@ type GoogleStore = Pick<
   "get" | "put" | "compareAndSwap" | "insertIfAbsent" | "take" | "updateCredential"
 >;
 
+/**
+ * GOOGLE_CONNECTION_RECORD_V1 (campana 11) - una conexion operativa es un
+ * registro con empresa, proveedor, cuenta, scopes, generacion y autorizante.
+ * Antes solo habia tokens cifrados: ni el panel ni el gate podian decir a que
+ * empresa servia la cuenta ni quien habia autorizado el consentimiento.
+ */
+export interface GoogleConnection {
+  id: string;
+  tenantId: string | null;
+  provider: "google";
+  account: string;
+  scopes: string[];
+  /** true solo si el consentimiento incluye escritura. */
+  write: boolean;
+  generation: string | null;
+  authorizer: string;
+  connectedAt: string | null;
+}
+
+/** GOOGLE_SCOPES_READ_V1 - consentimiento operativo por defecto. */
+const READ_SCOPES = [
+  "https://www.googleapis.com/auth/gmail.readonly",
+  "https://www.googleapis.com/auth/calendar.events.readonly",
+  "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+  "https://www.googleapis.com/auth/drive.readonly",
+];
+/** GOOGLE_SCOPES_WRITE_V1 - solo cuando la operacion pide escritura. */
+const WRITE_SCOPES = [
+  // Full Gmail, full Calendar and full Drive: read, write, delete and sharing.
+  "https://mail.google.com/",
+  "https://www.googleapis.com/auth/gmail.send",
+  "https://www.googleapis.com/auth/gmail.modify",
+  "https://www.googleapis.com/auth/calendar",
+  "https://www.googleapis.com/auth/calendar.events",
+  "https://www.googleapis.com/auth/drive",
+  "openid",
+  "https://www.googleapis.com/auth/userinfo.email",
+  "https://www.googleapis.com/auth/userinfo.profile",
+];
+/** Marca de escritura: sin este scope no hay envio ni modificacion. */
+const WRITE_MARKER = "https://mail.google.com/";
+
+export interface GoogleAuthChecks {
+  /**
+   * GOOGLE_MEMBERSHIP_CHECK_V1 (campana 11) - membership fresca del autorizante
+   * en la empresa de la conexion. Debe PROPAGAR el fallo del store: un error
+   * de base no se convierte en "no es miembro".
+   */
+  membership?: (actorId: string, tenantId: string) => Promise<boolean>;
+}
+
 const tokenSchema = z.object({
   access_token: z.string().min(1),
   refresh_token: z.string().optional(),
@@ -30,10 +81,17 @@ interface Tokens {
   expiresAt: number;
   scopes: string[];
   account: string;
+  /** GOOGLE_CONNECTION_ATTRIBUTION_V1 - empresa y autorizante del consentimiento. */
+  tenantId?: string;
+  authorizer?: string;
+  provider?: "google";
+  connectedAt?: string;
 }
 interface OAuthState {
   id: string;
   owner: string;
+  /** Quien inicio el consentimiento, para atribuir la conexion. */
+  authorizer?: string;
   /** Empresa que inicio el consentimiento; el callback no tiene sesion. */
   tenantId?: string;
   expiresAt: number;
@@ -46,6 +104,9 @@ interface Credential {
   generation?: string;
   connectionId: string | null;
   secret: string | null;
+  /** Empresa a la que pertenece la credencial, si esta atribuida. */
+  tenantId?: string;
+  provider?: string;
 }
 export class GoogleAuth {
   private readonly refreshing = new Map<string, Promise<string>>();
@@ -59,6 +120,7 @@ export class GoogleAuth {
      * consentimiento se perderia.
      */
     private readonly stateStore: GoogleStore = db,
+    private readonly checks: GoogleAuthChecks = {},
   ) {}
   configured() {
     return Boolean(
@@ -85,13 +147,16 @@ export class GoogleAuth {
       {
         generation: randomUUID(),
         connectionId: tokens.connectionId,
+        provider: "google",
+        ...(tokens.tenantId ? { tenantId: tokens.tenantId } : {}),
         secret: encryptSecret(JSON.stringify(tokens), this.config.encryptionKey),
       },
     );
     if (!saved)
       throw new AppError("Google sign-in changed or was disconnected. Connect again.", 409);
   }
-  private async rotateGeneration(owner: string, disconnect = false) {
+  private async rotateGeneration(owner: string, disconnect = false, tenantId?: string) {
+    const attribution = tenantId ? { tenantId, provider: "google" } : {};
     const generation = randomUUID();
     for (;;) {
       const previous = await this.db.get<Credential>(owner, "credentials", "google");
@@ -101,6 +166,7 @@ export class GoogleAuth {
           generation,
           connectionId: null,
           secret: null,
+          ...attribution,
         });
         if (inserted) return { generation, previous: null };
       } else {
@@ -111,6 +177,7 @@ export class GoogleAuth {
           { ...previous },
           {
             generation,
+            ...attribution,
             ...(disconnect ? { connectionId: null, secret: null } : {}),
           },
         );
@@ -126,36 +193,19 @@ export class GoogleAuth {
       );
     const state = randomBytes(32).toString("base64url"),
       verifier = randomBytes(48).toString("base64url");
-    const { generation, previous } = await this.rotateGeneration(owner);
-    const existing = this.decodeTokens(previous);
-    const scopes = Array.from(
-      new Set([
-        "https://www.googleapis.com/auth/gmail.readonly",
-        "https://www.googleapis.com/auth/calendar.events.readonly",
-        "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
-        "https://www.googleapis.com/auth/drive.readonly",
-        ...(existing?.scopes ?? []),
-        ...(write
-          ? [
-              // Full Gmail, full Calendar and full Drive: read, write, delete and sharing.
-              "https://mail.google.com/",
-              "https://www.googleapis.com/auth/gmail.send",
-              "https://www.googleapis.com/auth/gmail.modify",
-              "https://www.googleapis.com/auth/calendar",
-              "https://www.googleapis.com/auth/calendar.events",
-              "https://www.googleapis.com/auth/drive",
-              "openid",
-              "https://www.googleapis.com/auth/userinfo.email",
-              "https://www.googleapis.com/auth/userinfo.profile",
-            ]
-          : []),
-      ]),
-    );
-    const tenantId = currentTenantScope()?.tenantId;
+    // GOOGLE_SCOPES_LEAST_PRIVILEGE_V1 (campana 11) - el consentimiento pide
+    // exactamente lo que la operacion necesita. Antes se arrastraban los scopes
+    // ya concedidos, asi que reconectar en solo lectura seguia pidiendo Gmail y
+    // Drive completos, y el minimo privilegio nunca se cumplia.
+    const scope = currentTenantScope();
+    const tenantId = scope?.tenantId;
+    const { generation } = await this.rotateGeneration(owner, false, tenantId);
+    const scopes = write ? [...READ_SCOPES, ...WRITE_SCOPES] : [...READ_SCOPES];
     await this.stateStore.put("system", "oauth", {
       id: state,
       owner,
       ...(tenantId ? { tenantId } : {}),
+      ...(scope?.actorId ? { authorizer: scope.actorId } : {}),
       expiresAt: Date.now() + 10 * 60 * 1000,
       verifier,
       scopes,
@@ -183,7 +233,13 @@ export class GoogleAuth {
     // GOOGLE_CALLBACK_TENANT_V1 - el callback no trae JWT: la empresa viaja en
     // el state firmado por nosotros y se restaura para escribir la credencial
     // en la misma zona donde se pidio el consentimiento.
-    const finish = () => this.finishCallback(state, code);
+    const finish = async () => {
+      // GOOGLE_CALLBACK_MEMBERSHIP_V1 (campana 11) - el consentimiento es de
+      // hace minutos: si al autorizante le quitaron la empresa, la credencial
+      // no se escribe. `take` ya consumio el state, asi que no hay reintento.
+      await this.assertMembership(state.owner, state.tenantId);
+      return this.finishCallback(state, code);
+    };
     return state.tenantId
       ? runInTenantScope({ tenantId: state.tenantId, actorId: state.owner }, finish)
       : finish();
@@ -226,6 +282,10 @@ export class GoogleAuth {
         expiresAt: Date.now() + token.expires_in * 1000,
         scopes: token.scope?.split(" ") ?? state.scopes,
         account: emailAddress,
+        provider: "google",
+        authorizer: state.authorizer ?? state.owner,
+        connectedAt: new Date().toISOString(),
+        ...(state.tenantId ? { tenantId: state.tenantId } : {}),
       },
       state.generation,
     );
@@ -243,8 +303,46 @@ export class GoogleAuth {
     this.refreshing.set(refreshKey, task);
     return task;
   }
+  /**
+   * GOOGLE_MEMBERSHIP_RECHECK_V1 (campana 11) - sin esta comprobacion un
+   * miembro expulsado seguia refrescando el token y operando con la cuenta de
+   * la empresa. Solo policia credenciales atribuidas: una conexion legacy sin
+   * empresa registrada no se adopta aqui, se atribuye al reconectar.
+   */
+  private async assertMembership(actorId: string, tenantId?: string) {
+    if (!tenantId || !this.checks.membership) return;
+    let member: boolean;
+    try {
+      member = await this.checks.membership(actorId, tenantId);
+    } catch {
+      throw new AppError("Could not verify the company of this Google connection", 503);
+    }
+    if (!member)
+      throw new AppError("You no longer belong to this company. Connect Google again.", 403);
+  }
+  /**
+   * GOOGLE_CONNECTION_RECORD_V1 (campana 11) - lee la conexion operativa con
+   * empresa, proveedor, cuenta, scopes, generacion y autorizante.
+   */
+  async connection(owner: string): Promise<GoogleConnection | null> {
+    const credential = await this.db.get<Credential>(owner, "credentials", "google");
+    const tokens = this.decodeTokens(credential);
+    if (!tokens) return null;
+    return {
+      id: tokens.connectionId,
+      tenantId: credential?.tenantId ?? tokens.tenantId ?? null,
+      provider: "google",
+      account: tokens.account,
+      scopes: tokens.scopes,
+      write: tokens.scopes.includes(WRITE_MARKER),
+      generation: credential?.generation ?? null,
+      authorizer: tokens.authorizer ?? owner,
+      connectedAt: tokens.connectedAt ?? null,
+    };
+  }
   private async refresh(owner: string, tokens: Tokens) {
     if (!tokens.refreshToken) throw new AppError("Google session expired. Connect again.", 401);
+    await this.assertMembership(owner, tokens.tenantId);
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

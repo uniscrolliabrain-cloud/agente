@@ -108,7 +108,13 @@ export async function createApp(
     files = new Files(tdb, config, auth),
     // GOOGLE_TENANT_CREDENTIALS_V1 - credenciales por empresa; el state de
     // OAuth sigue en el store raiz porque el callback no trae sesion.
-    google = new GoogleAuth(tdb, config, db),
+    google = new GoogleAuth(tdb, config, db, {
+      // GOOGLE_MEMBERSHIP_RECHECK_WIRE_V1 (campana 11) - lectura fresca de
+      // membership: un autorizante expulsado no completa el callback ni
+      // refresca el token de la empresa.
+      membership: async (actorId, tenantId) =>
+        Boolean(await tenantService.findMembership(actorId, tenantId)),
+    }),
     users = new UserService(db),
     // APP_RAG_TENANT_EMBEDDINGS_V1 - pasa tenantService + resolver para embeddings por tenant.
     rag = new RagService(tdb, tenantService, new EnvTenantConfigResolver()),
@@ -960,9 +966,16 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   app.get("/api/google/status", async (c) => {
     const owner = c.get("owner");
     const connection = await workspace.connection(owner);
+    // GOOGLE_STATUS_SCOPES_V1 (campana 11) - el panel necesita ver la cuenta y
+    // los scopes concedidos, no solo "conectado": un consentimiento de solo
+    // lectura no puede aprobar envios.
+    const live = config.mode === "sample" ? null : await google.connection(owner);
     return c.json({
       connected: Boolean(connection),
       account: connection?.account ?? null,
+      provider: "google" as const,
+      scopes: live?.scopes ?? [],
+      write: live ? live.write : Boolean(connection),
       sample: config.mode === "sample",
       configured: config.mode === "sample" ? true : google.configured(),
     });
