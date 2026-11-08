@@ -41,3 +41,11 @@ El código de apps/server/src/google-auth.ts solicita estos permisos por grupos.
 ## Criterio de reapertura
 
 El siguiente corte necesita un gate completo sobre un SHA fijo y evidencia de los recorridos de producto pendientes. R10 requiere resultados reales de CI, infraestructura y dominio para acreditar un release.
+
+## Relevo de ejecución · 8 de noviembre de 2026
+
+El operador da por terminado el experimento de coordinación en paralelo. Los pendientes de producto pasan a ejecución directa y mantienen sus criterios de aceptación.
+
+- El gate local finalizó con 8 de 10 pasos aprobados. Fallaron la suite de tests y la auditoría de contratos. Esta última registró 79 contratos sin uso ni decisión. El SHA del encabezado se leyó al escribir el informe, tras cambiar de commit durante la ejecución. Este resultado es diagnóstico y requiere una repetición sobre un SHA fijo.
+- En la ejecución CI 42480943283, integración, web y worker pasaron. Unit devolvió código 1 después de imprimir 555 aprobadas, 12 omitidas, 5 TODO y cero fallos o cancelaciones. El job de release quedó omitido por dependencia. El comando habitual adopta el cierre de proceso de node:test que ya usa el gate. El resultado de la CI posterior queda por comprobar.
+- Las dos pruebas focalizadas de tarjetas pasaron con el comando actualizado. Los pendientes de R05–R10 de la tabla siguen abiertos.
