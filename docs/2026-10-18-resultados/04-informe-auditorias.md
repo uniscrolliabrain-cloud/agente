@@ -15,11 +15,11 @@ Se invocaron directamente los seis scripts que ejecuta el job `unit` de CI. Los 
 
 ## Reportes generados por los scripts
 
-- [Layers](../../AUDIT_LAYERS.md)
-- [Bridges](../../AUDIT_BRIDGES.md)
-- [Console](../../AUDIT_CONSOLE.md)
-- [Tenant default](../../AUDIT_TENANT_DEFAULT.md)
-- [Idempotency](../../AUDIT_IDEMPOTENCY.md)
-- [Contracts](../../AUDIT_CONTRACTS.md)
+- [Layers](../AUDIT_LAYERS.md)
+- [Bridges](../AUDIT_BRIDGES.md)
+- [Console](../AUDIT_CONSOLE.md)
+- [Tenant default](../AUDIT_TENANT_DEFAULT.md)
+- [Idempotency](../AUDIT_IDEMPOTENCY.md)
+- [Contracts](../AUDIT_CONTRACTS.md)
 
 Los reportes de tenant-default, idempotency y contracts fueron regenerados con el checkout presente. El antiguo `AUDIT_TENANT_DEFAULT.md` de HEAD tenia 324 ficheros revisados y 2 findings; el nuevo recorre 458 ficheros y da 16. Revisar los 16 antes de clasificar falsos positivos o aceptar el gate.

@@ -314,7 +314,13 @@ export async function loadAllowlist(path = ALLOWLIST_PATH): Promise<AllowEntry[]
     if (typeof e.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(e.date))
       throw new Error(`${where}: "date" debe ser YYYY-MM-DD`);
     if (e.file !== undefined && typeof e.file !== "string") throw new Error(`${where}: "file" invalida`);
-    return { mark: e.mark, category: e.category, reason: e.reason, date: e.date, ...(e.file ? { file: e.file } : {}) };
+    // ALLOWLIST_PATH_SEPARATORS_V1 - las entradas escritas en Windows traen
+    // `apps\\server\\src\\...` y el barrido produce `apps/server/src/...`. La
+    // comparacion era exacta, asi que esas revisiones no casaban nunca y el
+    // audit las ignoraba en silencio: el defecto salia como bloqueante aunque
+    // estuviera revisado. Se normaliza al leer, para que valga en cualquier SO.
+    const file = e.file ? e.file.replace(/\\/g, "/") : undefined;
+    return { mark: e.mark, category: e.category, reason: e.reason, date: e.date, ...(file ? { file } : {}) };
   });
 }
 

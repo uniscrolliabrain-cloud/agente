@@ -4,40 +4,41 @@
     "Solo dos categorias: 'orphan' (marca sin codigo detras) y 'double-paste' (mismo bloque pegado dos veces).",
     "Cada entrada exige 'reason' (>= 10 caracteres) y 'date' (YYYY-MM-DD); sin eso el audit falla, para que esto no sea un silenciador.",
     "'file' es opcional: si se omite, la entrada vale para cualquier fichero.",
+    "Las rutas van con separadores POSIX: el audit normaliza las barras al leer, pero aqui se escriben como las produce el barrido.",
     "Una entrada NUEVA exige leer el codigo y escribir por que el caso es correcto; no se copia la razon de otra."
   ],
   "entries": [
     {
       "mark": "TENANT_SCAN_PEEL_V1",
-      "file": "apps\\server\\src\\db-tenant.ts",
+      "file": "apps/server/src/db-tenant.ts",
       "category": "double-paste",
       "reason": "dos marcas de cabecera (scan() y peel()); cada una antecede a otro bloque de comentarios y la implementacion son los metodos que siguen, no un bloque pegado dos veces",
       "date": "2026-10-28"
     },
     {
       "mark": "A1_MEMORY_PATCH_V2",
-      "file": "apps\\server\\src\\engine\\routes.ts",
+      "file": "apps/server/src/engine/routes.ts",
       "category": "double-paste",
       "reason": "la misma correccion aplicada a POST /memories y POST /memories/:id; son dos endpoints distintos, no el mismo bloque copiado",
       "date": "2026-10-28"
     },
     {
       "mark": "TENANT_CACHE_ENDPOINT_V1",
-      "file": "apps\\server\\src\\engine\\routes.ts",
+      "file": "apps/server/src/engine/routes.ts",
       "category": "double-paste",
       "reason": "el mismo cambio expuesto en /tenant/cache-stats y /tenant/cache-invalidate; dos rutas con el mismo criterio de cache",
       "date": "2026-10-28"
     },
     {
       "mark": "KERNEL_NONFATAL_V1",
-      "file": "apps\\server\\src\\engine\\conversation.ts",
+      "file": "apps/server/src/engine/conversation.ts",
       "category": "double-paste",
       "reason": "los dos catch son identicos a proposito: el kernel no puede romper el chat por ninguno de los dos caminos, y la marca documenta ese contrato en ambos",
       "date": "2026-10-28"
     },
     {
       "mark": "SLOW_AUTHOR_ATTENTION_QUERY_V1",
-      "file": "apps\\server\\src\\kernel\\authors\\slow-author.ts",
+      "file": "apps/server/src/kernel/authors/slow-author.ts",
       "category": "double-paste",
       "reason": "la misma correccion de query aplicada a los dos attention del autor (reasoning y delegation); comparten el arreglo pero no el bloque entero",
       "date": "2026-10-28"

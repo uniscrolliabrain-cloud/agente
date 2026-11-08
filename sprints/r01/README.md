@@ -69,8 +69,8 @@ Consecuencia: `pnpm gate` falla hoy por dos audits bloqueantes. Cualquier agente
 
 ## Tres hallazgos que cruzan carriles y no son de nadie en concreto
 
-1. **`renderContext` escapa de más** ([assembly.ts:52](apps/server/src/engine/context/assembly.ts#L52), [assembly.ts:77](apps/server/src/engine/context/assembly.ts#L77)): los saltos de línea del contexto son `\n` literales, no saltos. Afecta a todos los prompts, no solo a Laia. Dueño: **A02**.
-2. **El feedback del usuario no se usa** ([assembly.ts:36](apps/server/src/engine/context/assembly.ts#L36) `void options.multipliers`), aunque el comentario `FEEDBACK_SCORING_APPLIED_V1` afirme lo contrario. Dueño: **A02**, consumidor **A03**.
+1. **`renderContext` escapa de más** ([assembly.ts:52](../../apps/server/src/engine/context/assembly.ts#L52), [assembly.ts:77](../../apps/server/src/engine/context/assembly.ts#L77)): los saltos de línea del contexto son `\n` literales, no saltos. Afecta a todos los prompts, no solo a Laia. Dueño: **A02**.
+2. **El feedback del usuario no se usa** ([assembly.ts:36](../../apps/server/src/engine/context/assembly.ts#L36) `void options.multipliers`), aunque el comentario `FEEDBACK_SCORING_APPLIED_V1` afirme lo contrario. Dueño: **A02**, consumidor **A03**.
 3. **El CI no es el gate**: 6 audits a mano en un `run: |` (con `bash -e`, el primero en rojo oculta el resto), timeout de test de 10 s y un job `worker` que no bloquea. `pnpm gate` sí lo hace bien y nadie lo usa en CI. Dueño: **A10**.
 
 ## Reglas que no se negocian en esta ronda
