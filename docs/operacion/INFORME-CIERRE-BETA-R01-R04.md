@@ -24,3 +24,10 @@ En `main` quedaron incorporados los nueve historiales de trabajo mediante `4f80f
 3. Completar Laia con referencias validadas, respuesta determinista ante falta de evidencia, trazas aisladas y las cinco preguntas del vertical.
 4. Completar tarjetas con validación de las ocho semillas, modo guided, publicación autorizada y atómica, versionado inmutable y traza visible en el panel. Las semillas se entregan en borrador.
 5. Realizar el catch-up sobre el mismo SHA y asignar propietarios a los puntos de integración que cruzan carriles.
+
+## Verificación del cierre · 8 de noviembre de 2026
+
+- Typecheck local de raíz y worker: exit 0 en los logs del gate. El gate completo sigue sin veredicto en este corte.
+- La CI del merge registró vencimientos del límite de 10 segundos en la suite. El comando habitual de tests adopta los 30 segundos que ya usaba el gate.
+- La suite focalizada acreditó 22 pruebas, entre ellas el filtrado de eventos por entidad, el aislamiento del Store, la ausencia del token ficticio en el contexto, la autorización de entrada a Laia y el esquema de las ocho tarjetas en borrador. La prueba de reapertura del worker agotó el límite de 30 segundos en esa ejecución.
+- El cierre funcional queda abierto. La ruta de Laia acredita el acceso a la automatización, pero quedan cinco casos del vertical como TODO. Siguen pendientes la validación de referencias, la publicación autorizada y atómica de tarjetas, el modo guided y la traza del panel.
