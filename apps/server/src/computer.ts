@@ -7,6 +7,7 @@ import type {
   ComputerDirectory,
   ComputerSnapshot,
 } from "../../../packages/domain/src/computer.ts";
+import type { ExecutionBackend } from "../../../packages/domain/src/index.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import type { TenantScopedStore } from "./db-tenant.ts";
@@ -43,6 +44,21 @@ export type DockerRunner = (
 
 // The only host process this provider can launch is Docker. User input is an argv
 // element or stdin, never a host shell program. Do not add a shell fallback here.
+// EXECUTION_BACKEND_WIRE_V1 - el computer es el backend "standalone" del
+// contrato. `health` comprueba el daemon de verdad y se expone en /health.
+export const dockerExecutionBackend: ExecutionBackend = {
+  kind: "standalone",
+  capabilities: ["command", "files", "pdf"],
+  async health() {
+    const result = await runDocker(["version", "--format", "{{.Server.Version}}"], {
+      timeoutMs: controlTimeout,
+    });
+    return result.exitCode === 0
+      ? { available: true, detail: result.stdout.trim() }
+      : { available: false, detail: result.stderr.trim().slice(0, 200) };
+  },
+};
+
 export const runDocker: DockerRunner = (args, options) =>
   new Promise((resolve) => {
     const limit = Math.min(options.maxOutputBytes ?? outputLimit, 15 * 1024 * 1024);

@@ -1,6 +1,10 @@
 // TRUTH_RESOLVER_V1 - resuelve entre múltiples fuentes de verdad.
 
-import type { TruthCandidate, TruthResolution } from "../../../../../packages/domain/src/truth.ts";
+import type {
+  KnowledgeKind,
+  TruthCandidate,
+  TruthResolution,
+} from "../../../../../packages/domain/src/truth.ts";
 
 export class TruthResolver {
   resolve(field: string, candidates: TruthCandidate[]): TruthResolution {
@@ -16,6 +20,9 @@ export class TruthResolver {
       .sort((a, b) => b.score - a.score);
 
     const winner = scored[0];
+    // TRUTH_KIND_WIRE_V1 - el tipo de conocimiento viaja tipado; el resolver
+    // no inventa un cuarto kind.
+    const kind: KnowledgeKind = winner.kind;
     const conflicts = scored.slice(1).filter((c) => JSON.stringify(c.value) !== JSON.stringify(winner.value));
 
     return {
@@ -23,7 +30,7 @@ export class TruthResolver {
       value: winner.value,
       source: winner.source,
       confidence: winner.confidence,
-      kind: winner.kind,
+      kind,
       resolvedAt: new Date().toISOString(),
       conflicts: conflicts.slice(0, 10),
       wasConflict: conflicts.length > 0,

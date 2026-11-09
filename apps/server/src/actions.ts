@@ -14,6 +14,10 @@ import type { DeferredActions } from "./actions-deferred.ts";
 import type { PolicyEngine } from "./engine/policy/engine.ts";
 import type { AgentRole } from "../../../packages/domain/src/agent.ts";
 import { AppError } from "./errors.ts";
+import type {
+  ApprovalRequest,
+  ApprovalStatus,
+} from "../../../packages/domain/src/messaging.ts";
 import { currentTenantScope } from "./tenant-scope.ts";
 import type { TenantScopedStore } from "./db-tenant.ts";
 import {
@@ -310,12 +314,13 @@ export class ActionService {
         );
     }
     if (Date.parse(proposal.expiresAt) <= this.now()) {
+      const expiredStatus: ApprovalStatus = "expired";
       const expired = await this.db.compareAndSwap<ActionProposal>(
         owner,
         "actions",
         id,
         { status: "awaiting_review", hash, expiresAt: proposal.expiresAt },
-        { status: "expired" },
+        { status: expiredStatus },
       );
       if (!expired) {
         const current = await this.db.get<ActionProposal>(owner, "actions", id);
@@ -369,6 +374,25 @@ export class ActionService {
         throw error;
       }
     }
+    // APPROVAL_PRIMITIVE_WIRE_V1 - la decision deja de ser informal: se
+    // persiste el ApprovalRequest formal con su estado (approved/rejected).
+    const approvalStatus: ApprovalStatus = decision === "deny" ? "rejected" : "approved";
+    const approval: ApprovalRequest = {
+      id: proposal.id,
+      tenantId: owner,
+      owner,
+      ...(proposal.taskId ? { taskId: proposal.taskId } : {}),
+      capabilityId: `action:${proposal.kind}`,
+      reason: proposal.title.slice(0, 2000),
+      risk: "medium",
+      status: approvalStatus,
+      payload: { data: proposal.data, hash: proposal.hash, decision },
+      requestedAt: proposal.createdAt,
+      expiresAt: proposal.expiresAt,
+      decidedAt: new Date(this.now()).toISOString(),
+      ...(userId ? { decidedBy: userId } : {}),
+    };
+    await this.db.put(owner, "approval-requests", approval);
     const claimed = await this.db.claim<ActionProposal>(
       owner,
       id,

@@ -1,6 +1,7 @@
 // ASSIGNMENT_ADAPTER_V1 - ActionProposal como Assignment (kind approval).
 import type { ActionProposal } from "../../../../../../packages/domain/src/index.ts";
 import type { AssignmentAdapter, AssignmentStatus } from "../../../../../../packages/domain/src/assignment.ts";
+import type { ApprovalAssignment } from "../../../../../../packages/domain/src/assignments/approval.ts";
 
 const TO_CANONICAL: Record<string, AssignmentStatus> = {
   awaiting_review: "awaiting_review",
@@ -18,7 +19,7 @@ export function createApprovalAdapter(): AssignmentAdapter<ActionProposal> {
   return {
     kind: "approval",
     toAssignment(record, tenantId) {
-      return {
+      const assignment: ApprovalAssignment = {
         id: "approval:" + record.id,
         tenantId,
         kind: "approval",
@@ -27,9 +28,19 @@ export function createApprovalAdapter(): AssignmentAdapter<ActionProposal> {
         status: TO_CANONICAL[record.status] ?? "failed",
         nativeStatus: record.status,
         evidence: [],
+        hash: record.hash,
+        signers: (record.signers ?? []).map((userId) => ({
+          userId,
+          signedAt: record.createdAt,
+        })),
+        needed: record.needed ?? 1,
+        executeAt: record.executeAt ?? null,
+        ...(record.result !== undefined ? { result: record.result } : {}),
+        ...(record.error !== undefined ? { error: record.error } : {}),
         createdAt: record.createdAt,
         updatedAt: record.createdAt,
       };
+      return assignment;
     },
     applyAssignment(record) {
       return record;

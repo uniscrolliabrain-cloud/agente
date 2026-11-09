@@ -8,7 +8,12 @@
 // primera. Ahora el tenant sale del token y la membership (`user-tenants`) es la
 // que autoriza. Primer login de un usuario sin ninguna fila: se materializa la
 // membership del claim (lo firma el proveedor de auth, no el cliente).
-import type { HumanActor } from "../../../../../packages/domain/src/actor.ts";
+import type {
+  ActorKind,
+  ActorProfile,
+  ActorRole,
+  HumanActor,
+} from "../../../../../packages/domain/src/actor.ts";
 import { tenantClaimOf, type JwtPayload } from "../../../../../packages/domain/src/jwt.ts";
 import type { User, UserService } from "../../users.ts";
 import type { TenantService } from "../tenant.ts";
@@ -54,21 +59,24 @@ export class ActorService {
       );
     }
 
+    const kind: ActorKind = "human";
+    const roles: ActorRole[] = [
+      membership.role === "owner" || membership.role === "admin" || user.role === "admin"
+        ? "owner"
+        : "employee",
+    ];
+    const profile: ActorProfile = {
+      name: user.name,
+      email: user.email,
+      language: "es",
+    };
     return {
-      kind: "human",
+      kind,
       id: user.id,
       tenantId: membership.tenantId,
       userId: user.id,
-      roles: [
-        membership.role === "owner" || membership.role === "admin" || user.role === "admin"
-          ? "owner"
-          : "employee",
-      ],
-      profile: {
-        name: user.name,
-        email: user.email,
-        language: "es",
-      },
+      roles,
+      profile,
       active: Boolean(user.active),
     };
   }

@@ -6,8 +6,17 @@ import type {
   CapabilityRisk,
   CapabilitySideEffect,
 } from "../../../../../packages/domain/src/capability.ts";
-import { validateAgainstMetamodel } from "../../../../../packages/domain/src/ontology.ts";
-import { BASE_VOCABULARY } from "../../../../../packages/domain/src/ontology-seed.ts";
+import {
+  capabilitySpecSchema,
+  cognitiveSpecSchema,
+  validateAgainstMetamodel,
+  type CapabilitySpec,
+  type CognitiveSpec,
+} from "../../../../../packages/domain/src/ontology.ts";
+import {
+  BASE_VOCABULARY,
+  type BaseVocabulary,
+} from "../../../../../packages/domain/src/ontology-seed.ts";
 
 export function bootstrapCapabilities(registry: CapabilityRegistry): void {
   // Tools de SOP
@@ -70,6 +79,26 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
 
   // CAPABILITY_CONTRACT_WIRE_V1 - el coste vacio es el contrato del dominio.
   const NO_COST: CapabilityCost = {};
+
+  // ONTOLOGY_COGNITIVE_WIRE_V1 - la tabla de cognicion se valida contra
+  // CognitiveSpec en cada arranque: una prioridad o destino desconocido
+  // revienta aqui, no en el render.
+  const cognitive: Record<string, CognitiveSpec> = {};
+  for (const [id, spec] of Object.entries(cognitiveSpec)) {
+    cognitive[id] = cognitiveSpecSchema.parse({
+      attention: { focus: spec.focus },
+      promotion: { destination: spec.destination },
+      presentation: { priority: spec.priority },
+    });
+  }
+  const specs: CapabilitySpec[] = tools.map((t) =>
+    capabilitySpecSchema.parse({
+      id: t.id,
+      actionType: toolMeta[t.id]?.actionType ?? t.actionType,
+      family: toolMeta[t.id]?.family ?? t.family,
+      cognitive: cognitive[t.id] ?? {},
+    }),
+  );
 
   for (const t of tools) {
     const meta = toolMeta[t.id];
@@ -148,8 +177,9 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
   }
 
   // ONTOLOGY_VALIDATE_BOOTSTRAP_V1 - valida el vocabulario declarado contra el metamodelo. Fail-closed.
+  const baseVocabulary: BaseVocabulary = BASE_VOCABULARY;
   validateAgainstMetamodel({
-    capabilityKinds: tools.map((t) => t.id).concat(composites.map((c) => c.id)),
-    baseVocabulary: BASE_VOCABULARY,
+    capabilityKinds: specs.map((s) => s.id).concat(composites.map((c) => c.id)),
+    baseVocabulary,
   });
 }

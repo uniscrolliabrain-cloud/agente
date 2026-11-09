@@ -3,8 +3,16 @@
 import type { Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
 import type { EventBus } from "../events/index.ts";
+import type { ExecutionRole } from "../../../../../packages/domain/src/execution-context.ts";
+import {
+  reactionRuleSchema,
+  type ReactionAction,
+  type ReactionCondition,
+  type ReactionRule,
+} from "../../../../../packages/domain/src/policy-context.ts";
 import type {
   ReactionDefinition,
+  ReactionTarget,
   ReactionTrigger,
 } from "../../../../../packages/domain/src/reaction.ts";
 
@@ -37,7 +45,38 @@ export class ReactionEngine {
   // REACTION_LOAD_V1 - carga las rules del tenant desde la DB.
   async load(tenantId: string): Promise<void> {
     const stored = await this.db.list<ReactionDefinition>(tenantId, "reactions");
-    this.rules.set(tenantId, stored);
+    const rules = [...stored];
+    // REACTION_POLICY_RULES_V1 - el formato ReactionRule (policy-context) se
+    // normaliza al motor; antes solo se leia el formato ReactionDefinition.
+    const policyRows = await this.db
+      .list<ReactionRule>(tenantId, "reaction-rules")
+      .catch(() => [] as ReactionRule[]);
+    for (const row of policyRows) {
+      const parsed = reactionRuleSchema.safeParse(row);
+      if (parsed.success) rules.push(this.fromPolicyRule(parsed.data));
+    }
+    this.rules.set(tenantId, rules);
+  }
+
+  private fromPolicyRule(rule: ReactionRule): ReactionDefinition {
+    const condition: ReactionCondition | undefined = rule.condition;
+    const actions: ReactionAction[] = rule.actions;
+    return {
+      id: rule.id,
+      tenantId: rule.tenantId,
+      name: rule.id,
+      enabled: rule.enabled,
+      trigger: { eventType: rule.eventType, filter: {} },
+      ...(condition
+        ? { condition: condition.kind === "expression" ? condition.expression ?? "" : condition.kind }
+        : {}),
+      actions: actions.map((action) => ({
+        kind: action.kind === "emit_event" ? "notify" : action.kind,
+        params: action.params,
+      })),
+      targets: [],
+      createdAt: rule.createdAt,
+    };
   }
 
   async register(tenantId: string, rule: ReactionDefinition): Promise<void> {
@@ -55,15 +94,35 @@ export class ReactionEngine {
       if (!matchesTrigger(rule.trigger, eventType, payload)) continue;
       if (rule.condition && !this.matches(rule.condition, payload)) continue;
       if (!this.executor || rule.actions.length === 0) continue;
+      const role: ExecutionRole = "system";
       const ctx = {
         tenantId,
         owner: tenantId,
-        role: "system" as const,
+        role,
         requestId: "reaction:" + rule.id,
         // KERNEL_ACTOR_PORT_V1 - el motor de reacciones actua como sistema.
         actorId: "system",
       };
       await this.executor(ctx, rule.actions).catch(() => {});
+      await this.deliverToTargets(tenantId, rule);
+    }
+  }
+
+  // REACTION_TARGET_WIRE_V1 - los destinos declarados por la regla se
+  // materializan: antes `targets` se validaba en el schema y se ignoraba.
+  private async deliverToTargets(tenantId: string, rule: ReactionDefinition): Promise<void> {
+    for (const target of rule.targets as ReactionTarget[]) {
+      const delivery = {
+        id: `reaction-${rule.id}-${target.kind}-${target.id}-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}`,
+        tenantId,
+        ruleId: rule.id,
+        kind: target.kind,
+        targetId: target.id,
+        createdAt: new Date().toISOString(),
+      };
+      await this.db.put(tenantId, "reaction-deliveries", delivery).catch(() => {});
     }
   }
 

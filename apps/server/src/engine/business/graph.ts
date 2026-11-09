@@ -14,7 +14,14 @@ import {
   type EntityDefinition,
   type FieldDefinition,
   type FieldType,
+  type RelationDefinition,
+  type StateDefinition,
 } from "../../../../../packages/domain/src/business-schema.ts";
+import type {
+  ConflictDiff,
+  ConflictResolution,
+  ConflictVersion,
+} from "../../../../../packages/domain/src/conflict.ts";
 import type { Store } from "../../db.ts";
 import { AppError } from "../../errors.ts";
 import type { EventBus } from "../events/index.ts";
@@ -38,6 +45,9 @@ export interface CreateEntityInput {
 }
 
 export interface UpdateEntityInput {
+  // GRAPH_OPTIMISTIC_LOCK_V1 - version esperada por el cliente. Si no
+  // coincide, se devuelve 409 con el diff por campo en vez de pisar el cambio.
+  version?: number;
   name?: string;
   status?: string;
   properties?: Record<string, unknown>;
@@ -124,6 +134,28 @@ export class BusinessGraph {
   async updateEntity(owner: string, id: string, patch: UpdateEntityInput): Promise<BusinessEntity> {
     const current = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, id);
     if (!current) throw new AppError(`Entity not found: ${id}`, 404);
+    if (patch.version !== undefined && patch.version !== current.version) {
+      const version: ConflictVersion = {
+        current: current.version,
+        expected: patch.version,
+        actorId: patch.actor,
+        at: new Date().toISOString(),
+      };
+      const diff: ConflictDiff = Object.fromEntries(
+        Object.entries(patch.properties ?? {}).map(([key, after]) => [
+          key,
+          { before: current.properties[key], after },
+        ]),
+      );
+      const resolution: ConflictResolution = {
+        kind: "client-retry",
+        note: `entity ${id} changed between reads`,
+      };
+      throw new AppError(
+        `Entity conflict (${resolution.kind}): v${version.current} != v${version.expected}; fields=${Object.keys(diff).join(",")}`,
+        409,
+      );
+    }
     // B101b — si la entidad declara stateMachineId y este patch cambia status,
     // validamos la transicion via StateMachineRegistry. Sin stateMachineId o sin
     // registry, comportamiento previo.
@@ -206,6 +238,22 @@ export class BusinessGraph {
     }
     if (!schema?.entities) return;
     const def: EntityDefinition | undefined = schema.entities.find((e) => e.type === entityType);
+    // BUSINESS_SCHEMA_STATES_V1 - un schema con dos estados iniciales es
+    // ambiguo; fail-closed en la validacion, no en el primer update.
+    const states: readonly StateDefinition[] = def?.states ?? [];
+    if (states.filter((s) => s.initialState).length > 1) {
+      throw new AppError(`Entity ${entityType} declares more than one initial state`, 422);
+    }
+    // BUSINESS_SCHEMA_RELATIONS_V1 - una relacion que apunta a un tipo que el
+    // schema no declara se detecta al leer, no al pintar el grafo.
+    const relations: readonly RelationDefinition[] = schema.relations ?? [];
+    for (const relation of relations) {
+      if (relation.fromType !== entityType && relation.toType !== entityType) continue;
+      const known = relation.fromType === entityType ? relation.toType : relation.fromType;
+      if (!schema.entities.some((e) => e.type === known)) {
+        throw new AppError(`Relation ${relation.type} references unknown entity ${known}`, 422);
+      }
+    }
     if (!def) return;
     const fields: readonly FieldDefinition[] = def.fields ?? [];
     for (const field of fields) {

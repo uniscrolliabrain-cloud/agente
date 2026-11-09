@@ -1,6 +1,7 @@
 // ASSIGNMENT_ADAPTER_V1 - Monitor como Assignment (kind monitor).
 import type { Monitor } from "../../../../../../packages/domain/src/agent.ts";
 import type { AssignmentAdapter, AssignmentStatus } from "../../../../../../packages/domain/src/assignment.ts";
+import type { MonitorAssignment } from "../../../../../../packages/domain/src/assignments/monitor.ts";
 
 const TO_CANONICAL: Record<string, AssignmentStatus> = {
   active: "active",
@@ -12,7 +13,7 @@ export function createMonitorAdapter(): AssignmentAdapter<Monitor> {
   return {
     kind: "monitor",
     toAssignment(record, tenantId) {
-      return {
+      const assignment: MonitorAssignment = {
         id: "monitor:" + record.id,
         tenantId,
         kind: "monitor",
@@ -21,9 +22,19 @@ export function createMonitorAdapter(): AssignmentAdapter<Monitor> {
         status: TO_CANONICAL[record.status] ?? "failed",
         nativeStatus: record.status,
         evidence: [],
+        url: record.url,
+        condition: record.condition,
+        value: record.value,
+        intervalMinutes: record.intervalMinutes,
+        nextCheckAt: record.nextCheckAt,
+        ...(record.lastCheckedAt ? { lastCheckedAt: record.lastCheckedAt } : {}),
+        ...(record.lastValue ? { lastValue: record.lastValue } : {}),
+        ...(record.lastHash ? { lastHash: record.lastHash } : {}),
+        checks: record.checks ?? 0,
         createdAt: record.createdAt ?? record.nextCheckAt,
         updatedAt: record.updatedAt ?? record.lastCheckedAt ?? record.nextCheckAt,
       };
+      return assignment;
     },
     applyAssignment(record, changes) {
       return {

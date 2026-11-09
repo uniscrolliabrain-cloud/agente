@@ -29,3 +29,14 @@ export const DEFAULT_CLASSIFICATION: Record<string, Record<string, FieldClassifi
   businessEntity: { properties: "internal" },
   sop: { steps: "internal" },
 };
+// CLASSIFIED_RECORD_WIRE_V1 - vista tipada del mapa por defecto. El filter la
+// usa para recorrer campos ya validados contra classifiedFieldSchema.
+export function classifyRecord(
+  entries: Record<string, FieldClassification>,
+): ClassifiedRecord {
+  const fields: ClassifiedField[] = Object.entries(entries).map(([field, classification]) => ({
+    field,
+    classification,
+  }));
+  return classifiedRecordSchema.parse({ fields });
+}

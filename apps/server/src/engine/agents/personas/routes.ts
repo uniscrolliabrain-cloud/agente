@@ -11,6 +11,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { AppError } from "../../../errors.ts";
 import type { PersonaRegistry } from "./registry.ts";
+import type {
+  AgentCapabilities,
+  AgentFormality,
+  AgentGender,
+  AgentPersonality,
+  AgentValueRef,
+} from "../../../../../../packages/domain/src/agent-persona.ts";
 import { resolveAllSkins, resolveSkin } from "./resolver.ts";
 import { activityForPersona } from "./activity.ts";
 import type { Store } from "../../../db.ts";
@@ -135,10 +142,11 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
         displayName: skin.persona.displayName,
         role: skin.persona.role,
         age: skin.persona.age ?? null,
-        gender: skin.persona.gender ?? null,
-        personality: skin.persona.personality,
-        capabilities: skin.persona.capabilities,
-        values: skin.persona.values,
+        gender: (skin.persona.gender ?? null) satisfies AgentGender | null,
+        personality: skin.persona.personality satisfies AgentPersonality,
+        formality: skin.persona.personality.formality satisfies AgentFormality,
+        capabilities: skin.persona.capabilities satisfies AgentCapabilities,
+        values: skin.persona.values satisfies AgentValueRef[],
         peers: skin.persona.peers,
         reportsTo: skin.persona.reportsTo ?? null,
         flow: (skin as { flow?: unknown }).flow ?? undefined,

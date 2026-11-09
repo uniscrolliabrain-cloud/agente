@@ -34,3 +34,32 @@ cualquier evento del mismo tipo. `matchesTrigger` aplica el filtro y hay test.
 
 Ver la salida de `tsc --noEmit`, `audit:contracts`, `audit:coherence` y
 `tests/contracts-wiring.test.ts` en el mensaje de cierre.
+
+## Segunda pasada: 55 -> 0
+
+Tras cablear los 21 contratos del primer corte quedaban 55 `PENDING`. En esta
+pasada se conectaron al codigo que ya existe y **no queda ninguno**:
+
+- `BusinessSchema`, `BusinessEntityDecl`, `BusinessRelationDecl` -> `workspace/generator` (y vista de relaciones).
+- `StateDefinition`, `RelationDefinition` -> validacion del schema en `business/graph`.
+- `AssignmentPlan`, `AssignmentEvidence`, `AssignmentOutcome` y las 5 variantes
+  (`GoalAssignment`, `MonitorAssignment`, `SopAssignment`, `ApprovalAssignment`,
+  `AgentTaskAssignment`) -> adapters de assignments.
+- `AgentMessage`, `AgentMessageIntent` -> `HandoffService.create` publica el mensaje;
+  `ApprovalRequest`, `ApprovalStatus` -> `ActionService.decide` persiste la aprobacion formal.
+- `ReactionTarget` -> `ReactionEngine.deliverToTargets`.
+- `ReactionRule`, `ReactionCondition`, `ReactionAction` -> `ReactionEngine.load` normaliza el formato policy.
+- `FieldPolicy`, `PolicyActionV2` -> `FieldFilter` (politica derivada de la clasificacion).
+- `RuntimeCheckpoint` -> `AgentRuntimeManager` persiste el cierre de runtime.
+- `ExecutionRole` -> contexto del motor de reacciones.
+- `ExecutionBackend` -> `dockerExecutionBackend` + `GET /computer/health`.
+- `KernelWriterPort` -> `Kernel implements KernelWriterPort`.
+- `ViewSpec` -> `WorkspaceSpec.views` materializadas en el generator.
+- `FlowRelation`, `KnowledgeKind`, `ClassifiedRecord`, `ClassifiedField`,
+  `CommunicationCard`, `CapabilitySpec`, `CognitiveSpec`, `BaseVocabulary`,
+  `ActorKind`, `ActorRole`, `ActorProfile`, `AgentRoleInput`, y los tipos de
+  persona -> consumidos en actores, personas, verdad, renderer y bootstrap.
+
+Bug de comportamiento anadido en esta pasada: `updateEntity` acepta
+`expectedVersion` y devuelve 409 con `ConflictVersion`/`ConflictDiff` en vez de
+pisar el cambio.

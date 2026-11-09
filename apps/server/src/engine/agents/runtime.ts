@@ -2,8 +2,10 @@ import { randomUUID } from "node:crypto";
 import type { EventBus } from "../events/index.ts";
 import type {
   AgentRuntime,
+  RuntimeCheckpoint,
   RuntimePhase,
 } from "../../../../../packages/domain/src/runtime.ts";
+import type { Store } from "../../db.ts";
 
 // AGENT_RUNTIME_V1 Ã¢â‚¬â€ runtime efimero por ejecucion. No se persiste.
 // El historial durable vive en el event bus. El runtime solo da identidad
@@ -25,7 +27,10 @@ export type EphemeralRuntime = Pick<
 export class AgentRuntimeManager {
   private readonly active = new Map<string, EphemeralRuntime>();
 
-  constructor(private readonly bus?: EventBus) {}
+  constructor(
+    private readonly bus?: EventBus,
+    private readonly db?: Store,
+  ) {}
 
   async spawn(input: {
     // RUNTIME_TENANT_V1
@@ -69,6 +74,7 @@ export class AgentRuntimeManager {
   async complete(runtimeId: string, durationMs: number): Promise<void> {
     const runtime = this.active.get(runtimeId);
     if (!runtime) return;
+    await this.persistCheckpoint(runtime, "completed", { durationMs });
     await this.bus?.emit(
       runtime.owner,
       "agent.runtime_completed",
@@ -87,6 +93,7 @@ export class AgentRuntimeManager {
   async fail(runtimeId: string, error: string): Promise<void> {
     const runtime = this.active.get(runtimeId);
     if (!runtime) return;
+    await this.persistCheckpoint(runtime, "failed", { error: error.slice(0, 2000) });
     await this.bus?.emit(
       runtime.owner,
       "agent.runtime_failed",
@@ -100,6 +107,27 @@ export class AgentRuntimeManager {
       { correlationId: runtime.correlationId },
     );
     this.active.delete(runtimeId);
+  }
+
+  // RUNTIME_CHECKPOINT_WIRE_V1 - el cierre de un runtime deja checkpoint
+  // persistido; antes solo viajaba el evento y se perdia el estado final.
+  private async persistCheckpoint(
+    runtime: EphemeralRuntime,
+    phase: RuntimePhase,
+    state: Record<string, unknown>,
+  ): Promise<void> {
+    if (!this.db) return;
+    const checkpoint: RuntimeCheckpoint = {
+      runtimeId: runtime.runtimeId,
+      tenantId: runtime.tenantId,
+      owner: runtime.owner,
+      phase,
+      state,
+      updatedAt: new Date().toISOString(),
+    };
+    await this.db
+      .put(runtime.tenantId, "runtime-checkpoints", { id: checkpoint.runtimeId, ...checkpoint })
+      .catch(() => {});
   }
 
   activeCount(owner: string): number {

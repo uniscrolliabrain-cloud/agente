@@ -1,4 +1,3 @@
-// PENDING(2027-03-31) puerto de escritores del kernel sin implementacion: KernelWriterPort.
 // DOMAIN_KERNEL_V1 - contrato del kernel para el dominio.
 //
 // Por que existe este fichero:

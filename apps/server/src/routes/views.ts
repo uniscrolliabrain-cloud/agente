@@ -1,6 +1,10 @@
 // FIX_02_ROUTES_VIEWS_V3 - endpoint resolve real.
 import { Hono } from "hono";
 import { z } from "zod";
+import type {
+  ViewKpi,
+  ViewQueueItem,
+} from "../../../../packages/domain/src/views.ts";
 import { resolveView } from "../engine/views/resolver.ts";
 
 // VIEW_INTENTS_V1 - intenciones reales del resolver.
@@ -15,12 +19,12 @@ function registerDefaultIntents() {
       { label: "Tareas activas", value: 0 },
       { label: "Completadas hoy", value: 0 },
       { label: "Fallos recientes", value: 0 },
-    ],
+    ] satisfies ViewKpi[],
   }));
   registerIntent(/\b(cola|queue|pendientes|bandeja)\b/, async () => ({
     kind: "queue",
     title: "Pendientes",
-    items: [],
+    items: [] satisfies ViewQueueItem[],
   }));
   registerIntent(/\b(tabla|listado|lista)\b/, async () => ({
     kind: "table",

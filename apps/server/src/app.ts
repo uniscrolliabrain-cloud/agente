@@ -188,7 +188,7 @@ export async function createApp(
   const stateMachine = new StateMachineEngine(bus, {
     getStatus: async (owner, entityId) => (await graph.getEntity(owner, entityId))?.status,
   });
-  const agentRuntime = new AgentRuntimeManager(bus);
+  const agentRuntime = new AgentRuntimeManager(bus, db);
   // RUNTIME_SWEEP_WIRE_V1 - cablea AgentRuntimeManager.sweep (RUNTIME_SWEEP_V1):
   // cada 60s cierra runtimes activos con mas de 5 min sin completarse.
   const runtimeSweepTimer = setInterval(() => {

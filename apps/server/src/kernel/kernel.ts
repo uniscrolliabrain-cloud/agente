@@ -10,6 +10,10 @@
 import { randomUUID } from "node:crypto";
 import type { AuditStore } from "./audit/store.ts";
 import type { KernelContext } from "./context/kernel-context.ts";
+import type {
+  KernelThought,
+  KernelWriterPort,
+} from "../../../../packages/domain/src/kernel.ts";
 import type { TenantConfigResolver } from "./config/tenant-config.ts";
 import { thoughtSchema, type Thought } from "./graph/thought.ts";
 import type { TurnStore } from "./graph/store.ts";
@@ -51,7 +55,7 @@ globalMetrics.counter(
   "Thoughts agregados por el kernel",
 );
 
-export class Kernel {
+export class Kernel implements KernelWriterPort {
   // KERNEL_DEPS_PUBLIC_V1 - deps publico para que kernel-routes, views y
   // debug endpoints puedan leer store, tenants y audit sin cast.
   // KERNEL_DEPS_PUBLIC_V1 - deps publico para kernel-routes, views y debug.
@@ -347,6 +351,14 @@ export class Kernel {
     };
     if (!store.listOpenTurnsForThread) return [];
     return store.listOpenTurnsForThread(tenantId, ctx.owner);
+  }
+
+  /**
+   * KERNEL_WRITER_PORT_WIRE_V1 - el kernel es un writer del puerto del dominio:
+   * un autor escribe sin saber si el store es in-memory o persistente.
+   */
+  async write(ctx: KernelContext, input: unknown): Promise<KernelThought> {
+    return this.appendThought(ctx as never, input as never) as Promise<KernelThought>;
   }
 
   async findOpenTurnForThread(ctx: KernelContext): Promise<Turn | undefined> {

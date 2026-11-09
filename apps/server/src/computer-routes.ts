@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   type ComputerService,
   computerCommandSchema,
+  dockerExecutionBackend,
   computerPathSchema,
   computerWriteSchema,
 } from "./computer.ts";
@@ -20,6 +21,11 @@ export function computerRoutes(
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
   app.get("/", async (c) => c.json(await computer.snapshot(c.get("owner"))));
+  app.get("/health", async (c) => {
+    const backend = dockerExecutionBackend.kind;
+    const health = await dockerExecutionBackend.health();
+    return c.json({ backend, ...health });
+  });
   app.post("/start", async (c) => c.json(await computer.start(c.get("owner"))));
   app.post("/stop", async (c) => c.json(await computer.stop(c.get("owner"))));
   app.post("/commands", async (c) =>

@@ -11,6 +11,10 @@ import type {
   AgentPersona,
   AgentStats,
 } from "../../../../../../packages/domain/src/agent-persona.ts";
+import type {
+  Flow,
+  FlowRelation,
+} from "../../../../../../packages/domain/src/flow.ts";
 
 interface RegisteredPersona {
   persona: AgentPersona;
@@ -57,9 +61,14 @@ export class PersonaRegistry {
       tenantMap = new Map();
       this.byTenant.set(tenantId, tenantMap);
     }
-    const flow = persona.reportsTo || persona.peers.length > 0
-      ? { peers: persona.peers.map((p) => ({ actorId: p, personaId: p, kind: "agent" as const, role: "agent" as const, tenantId })) }
-      : undefined;
+    const peers: FlowRelation[] = persona.peers.map((p) => ({
+      actorId: p,
+      personaId: p,
+      kind: "agent",
+      role: "agent",
+      tenantId,
+    }));
+    const flow: Flow | undefined = peers.length > 0 ? { peers } : undefined;
     // PERSONA_ACTIVATION_V1 - sin activacion explicita manda el propio JSON
     // (`metadata.enabled`); una persona sin humanos asignados no trabaja igual.
     const resolved: PersonaActivation = {

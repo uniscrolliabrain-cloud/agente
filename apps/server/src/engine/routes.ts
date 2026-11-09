@@ -7,7 +7,7 @@ import type {
   AgentNotification,
 } from "../../../../packages/domain/src/agent.ts";
 // AGENT_ROLE_V2_ROUTE ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â el schema vive en el dominio para que ruta y tipo no divergan.
-import { agentRoleSchema } from "../../../../packages/domain/src/agent.ts";
+import { agentRoleSchema, type AgentRoleInput } from "../../../../packages/domain/src/agent.ts";
 import { AppError } from "../errors.ts";
 import type { AgentService } from "./service.ts";
 import type { AuthzDeps, PolicyContext } from "./authz/pdp.ts";
@@ -447,7 +447,7 @@ export function agentRoutes(
     // el inline solo aceptaba id/name/objetivo/sops/active, asi que un rol creado por aqui se
     // guardaba sin tone/avatar/memories mientras AgentRole los exige. Con el schema compartido,
     // la ruta y el tipo no pueden volver a divergir.
-    const body = agentRoleSchema.parse(await c.req.json());
+    const body: AgentRoleInput = agentRoleSchema.parse(await c.req.json());
     const owner = c.get("owner");
     const existing = await service.db.get(owner, "agent-roles", body.id);
     if (existing) throw new AppError("Agent role ya existe", 409);

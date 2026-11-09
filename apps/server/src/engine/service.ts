@@ -1,3 +1,9 @@
+import type {
+  GoalConstraint,
+  GoalPriority,
+  GoalStatus,
+  SuccessCriterion,
+} from "../../../../packages/domain/src/goal.ts";
 // BUG05_ASSIGNEDTO_V2 - createTask puebla assignedTo con roleId.
 // C1_ASSIGNEDTO_V1 - createTask puebla assignedTo con roleId si viene.
 // NOTIFY_GROUP_TASK_V1 - las notificaciones se agrupan por taskId.
@@ -1640,6 +1646,10 @@ export class AgentService {
         // SERVICE_GOAL_ADAPTER_V2 - Goal de agent.ts y Goal de goal.ts son
         // tipos distintos con el mismo nombre. Adaptamos el primero al
         // shape del segundo para que el orquestador lo acepte.
+        const successCriteria: SuccessCriterion[] = [];
+        const constraints: GoalConstraint[] = [];
+        const priority: GoalPriority = "medium";
+        const status: GoalStatus = "active";
         const orchestratorGoal: import(
           "../../../../packages/domain/src/goal.ts"
         ).Goal = {
@@ -1649,10 +1659,10 @@ export class AgentService {
           title: saved.title,
           description: saved.description,
           desiredState: {},
-          successCriteria: [],
-          constraints: [],
-          priority: "medium" as const,
-          status: "active" as const,
+          successCriteria,
+          constraints,
+          priority,
+          status,
           // GOAL_VERSION_REQUIRED_V1 - goal.ts exige version (CAS optimista).
           version: 1,
           createdAt: saved.createdAt,

@@ -1,4 +1,3 @@
-// PENDING(2027-03-31) politicas y reacciones no implementadas; decidir V1/V2 antes de consumir: FieldPolicy, PolicyActionV2, ReactionAction, ReactionCondition, ReactionRule.
 // POLICY_CONTEXT_V1 - contexto rico para evaluacion de politicas.
 
 import { z } from "zod";

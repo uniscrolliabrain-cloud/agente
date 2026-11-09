@@ -3,7 +3,11 @@
 
 import type { Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
-import type { Handoff } from "../../../../../packages/domain/src/messaging.ts";
+import type {
+  AgentMessage,
+  AgentMessageIntent,
+  Handoff,
+} from "../../../../../packages/domain/src/messaging.ts";
 
 export class HandoffService {
   constructor(private readonly db: Store | TenantScopedStore) {}
@@ -11,6 +15,26 @@ export class HandoffService {
   // HANDOFF_CREATE_V1
   async create(handoff: Handoff): Promise<Handoff> {
     await this.db.put(handoff.tenantId, "handoffs", handoff);
+    // MESSAGING_CONTRACT_WIRE_V1 - el handoff tambien se publica como
+    // AgentMessage (intent handoff) para que la bandeja del rol lo vea sin
+    // reimplementar la forma.
+    const intent: AgentMessageIntent = "handoff";
+    const message: AgentMessage = {
+      id: `msg-${handoff.id}`,
+      tenantId: handoff.tenantId,
+      fromRoleId: handoff.fromRoleId,
+      toRoleId: handoff.toRoleId,
+      ...(handoff.goalId ? { goalId: handoff.goalId } : {}),
+      ...(handoff.taskId ? { taskId: handoff.taskId } : {}),
+      intent,
+      payload: {
+        handoffId: handoff.id,
+        ...(handoff.contextSummary ? { contextSummary: handoff.contextSummary } : {}),
+        ...(handoff.requiredOutcome ? { requiredOutcome: handoff.requiredOutcome } : {}),
+      },
+      createdAt: handoff.createdAt,
+    };
+    await this.db.put(handoff.tenantId, "agent-messages", message);
     return handoff;
   }
 
@@ -21,6 +45,12 @@ export class HandoffService {
     const updated: Handoff = { ...existing, acceptedAt: new Date().toISOString() };
     await this.db.put(tenantId, "handoffs", updated);
     return updated;
+  }
+
+  // MESSAGING_INBOX_V1 - bandeja del rol con el contrato AgentMessage.
+  async messages(tenantId: string, roleId: string): Promise<AgentMessage[]> {
+    const all = await this.db.list<AgentMessage>(tenantId, "agent-messages");
+    return all.filter((m) => m.toRoleId === roleId);
   }
 
   async listForRole(tenantId: string, roleId: string): Promise<Handoff[]> {

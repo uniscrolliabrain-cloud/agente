@@ -1,4 +1,3 @@
-// PENDING(2027-03-31) spec de workspace; convive con RuntimeViewSpec y falta elegir canonico: ViewKind, ViewSpec.
 // WORKSPACE_SPEC_V1 - especificacion de workspace derivada del schema.
 
 import { z } from "zod";
@@ -90,6 +89,9 @@ export const workspaceSpecSchema = z.object({
   roleId: z.string().max(200).optional(),
   title: z.string().min(1).max(300),
   sections: z.array(workspaceSectionSchema).max(50).default([]),
+  // WORKSPACE_VIEWS_V1 - vistas materializadas por seccion, con el contrato
+  // ViewSpec; antes el generator solo devolvia secciones.
+  views: z.array(viewSpecSchema).max(200).default([]),
   defaultView: viewKindSchema.default("dashboard"),
   createdAt: z.iso.datetime({ offset: true }),
 });

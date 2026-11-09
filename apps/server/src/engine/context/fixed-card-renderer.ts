@@ -1,3 +1,4 @@
+import type { CommunicationCard } from "../../../../../packages/domain/src/communication-card.ts";
 import {
   assertCardBinding,
   type CardBinding,
@@ -15,15 +16,18 @@ const channelLimits = {
 
 type FixedCardChannel = keyof typeof channelLimits;
 
-export interface RenderableCard {
-  mode: "fixed" | "guided";
-  status: "draft" | "approved" | "retired";
-  channels: readonly FixedCardChannel[];
+// COMMUNICATION_CARD_CONTRACT_V1 - la tarjeta renderizable es la parte de
+// CommunicationCard que el renderer necesita; si el contrato cambia, rompe aqui.
+export type RenderableCard = Omit<
+  Pick<
+    CommunicationCard,
+    "mode" | "status" | "requiredFacts" | "template" | "missingFactScript" | "fallback"
+  >,
+  "requiredFacts"
+> & {
   requiredFacts: readonly string[];
-  template: string;
-  missingFactScript: string;
-  fallback: "explain_missing" | "ask" | "escalate";
-}
+  channels: readonly FixedCardChannel[];
+};
 
 const slotPattern = /\{\{([a-zA-Z][a-zA-Z0-9_-]*)\}\}/g;
 
