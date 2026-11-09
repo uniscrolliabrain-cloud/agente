@@ -13,7 +13,7 @@ import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
 import { sopSchema, type SOP, type SOPStep } from "../../../../packages/domain/src/sop.ts";
 import { AppError } from "../errors.ts";
-import { modelChain, runWithModelFallback } from "./model-chain.ts";
+import { envApiKeyFor, modelChain, runWithModelFallback } from "./model-chain.ts";
 import type { AgentService } from "./service.ts";
 import { generateText } from "./model.ts";
 import { LostLeaseError, type TaskContext } from "./worker.ts";
@@ -757,6 +757,7 @@ export class SOPExecutor {
       (model) =>
         new BuiltInAgent({
           model,
+          apiKey: envApiKeyFor(model),
           maxSteps: 1,
           maxRetries: 0,
           tools: [],

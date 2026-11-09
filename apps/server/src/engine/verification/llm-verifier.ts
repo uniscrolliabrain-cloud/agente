@@ -6,7 +6,7 @@
 import { EventType, type RunAgentInput } from "@ag-ui/core";
 import { randomUUID } from "node:crypto";
 import { BuiltInAgent } from "@copilotkit/runtime/v2";
-import { modelChain, runWithModelFallback } from "../model-chain.ts";
+import { envApiKeyFor, modelChain, runWithModelFallback } from "../model-chain.ts";
 import type { Config } from "../../config.ts";
 import type {
   Goal,
@@ -51,6 +51,7 @@ export class LlmVerifier implements Verifier {
     const createAgent = (model: string) =>
       new BuiltInAgent({
         model,
+        apiKey: envApiKeyFor(model),
         maxSteps: 1,
         maxRetries: 0,
         tools: [],

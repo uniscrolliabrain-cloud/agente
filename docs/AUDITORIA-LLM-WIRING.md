@@ -403,3 +403,77 @@ grep -n "bootstrapPersonas\|personasRoutes" apps/server/src/app.ts
 grep -n "releaseBulkhead\|complete: () =>" apps/server/src/engine/model-chain.ts
 grep -n "void metaHint\|pendingMetaHints" apps/server/src/engine/conversation.ts
 ```
+
+## 11. Reauditoría de funcionamiento LLM (2026-11-09)
+
+### Veredicto
+
+Los dos caminos reales (chat de Laia y tareas/SOP de Marcos) estaban
+estructuralmente bien: usan `BuiltInAgent`, la misma cadena de fallback, lease
+durable y herramientas tipadas. La reauditoría encontró seis defectos de
+cableado que impedían que una configuración *documentada* funcionase. Ya están
+corregidos y cubiertos por tests; no se cambió ningún contrato de SSE, lease,
+idempotencia ni aislamiento por tenant.
+
+### P0 corregidos
+
+1. **Las claves `FAST_LLM_API_KEY` / `SLOW_LLM_API_KEY` / `EMBEDDINGS_LLM_API_KEY`
+   no llegaban al modelo.** `EnvTenantConfigResolver` las leía y `modelChain`
+   exigía su presencia, pero `BuiltInAgent` se construía sin `apiKey` y caía a
+   `GOOGLE_API_KEY`/`OPENAI_API_KEY`. Un deployment que siguiera `.env.example`
+   fallaba con `LoadAPIKeyError`. Ahora cada intento recibe su clave (rol,
+   fast/slow del tenant o variable de entorno del proveedor) mediante
+   `credentialFor`/`envApiKeyFor`.
+2. **`openrouter` estaba permitido por el contrato y rechazado por el runtime.**
+   `ProviderSpec` y `.env.example` aceptan `openrouter/<modelo>`, pero
+   `resolveModel` del runtime solo resuelve `openai|anthropic|google|minimax|vertex`.
+   `normalizeModelSpec` lo traduce a `openai/<modelo>` y `envApiKeyFor` usa
+   `OPENROUTER_API_KEY` (con el alias de `config.ts`).
+3. **Fuga del bulkhead.** Solo se liberaba en error/timeout. Tras
+   `LLM_BULKHEAD_PER_PROVIDER` respuestas correctas, todo el tráfico saltaba al
+   fallback para siempre. Ahora se libera exactamente una vez al completar, al
+   fallar, al saltar de intento y al cancelar.
+4. **Timeout de primer byte de 2 s en el chat y ningún timeout total.** El chat
+   pasaba `timeoutMs: 2000`, insuficiente para proveedores reales, y una
+   respuesta que se colgaba después del primer token no se cortaba nunca. Ahora
+   `CHAT_FIRST_BYTE_MS` (8 s) y `CHAT_TOTAL_MS` (45 s) son independientes; el
+   total corta con error si ya hubo salida (nunca reinicia media respuesta).
+5. **Embeddings ignoraban su configuración documentada.** `embeddings.ts` solo
+   leía `GOOGLE_API_KEY`/`GEMINI_API_KEY` y un modelo fijo. Ahora usa
+   `EMBEDDINGS_LLM_API_KEY`, `EMBEDDINGS_LLM_MODEL` y
+   `EMBEDDINGS_LLM_BASE_URL`, y el resolver cae a fast y luego a slow.
+6. **El `rolePrompt` de las tareas era código muerto.** Se calculaba con
+   objetivo, tono, SOPs y memorias del rol y nunca entraba en el prompt. Ahora
+   se inyecta antes del contexto de empresa. Además `recordUsage` registra el
+   modelo que realmente respondió (incluido el del rol), no `config.model`.
+
+### P1 pendientes (no bloquean chat ni tareas)
+
+- `FAST_LLM_BASE_URL` / `SLOW_LLM_BASE_URL` siguen sin llegar al runtime:
+  `BuiltInAgent` acepta `apiKey` pero no `baseUrl` por intento. Funciona el
+  `baseUrl` global de cada proveedor (`OPENAI_BASE_URL`,
+  `GOOGLE_GENERATIVE_AI_BASE_URL`, `ANTHROPIC_BASE_URL`).
+- `LlmPlanner`, `LlmVerifier`, `generateText` y el paso `llm_generate` de los
+  SOP usan solo la cadena global (`MODEL`/`MODEL_FALLBACK`). Un deployment con
+  únicamente `FAST_LLM_*`/`SLOW_LLM_*` y sin `MODEL` habilita chat y tareas,
+  pero no esas rutas auxiliares.
+- Embeddings solo implementa el endpoint de Google; otro
+  `EMBEDDINGS_LLM_PROVIDER` no está soportado.
+- El chat puede recuperar memoria dos veces (recall directo y
+  `ContextEngine.assemble`), lo que añade latencia pero no rompe nada.
+- Los `persona.json` de Laia/Marcos no inyectan instrucciones: el contrato
+  `AgentPersona` no tiene ese campo y los prompts siguen siendo código. La
+  identidad y el tono sí están cableados (Laia chat, Marcos tarea/SOP).
+
+### Verificación ejecutada
+
+- `./node_modules/.bin/tsc --noEmit` → 0.
+- `npm --prefix apps/worker run typecheck` → 0.
+- `npm run build:server` → 0.
+- `tests/model-chain-resilience.test.ts` (nuevo, 6 casos): openrouter, claves,
+  bulkhead, fallback por primer byte, timeout total y error sin fallback → 6/6.
+- `fast-slow-llm`, `model-worker`, `demo-model` + nuevos → 19/19.
+- Bateria ampliada de chat, tareas, SOP, RAG, memoria y contexto → 51/51.
+- No hay claves de proveedor en este entorno, así que no se hizo una llamada
+  real a OpenAI/Anthropic/Google. La verificación es de cableado, tipos y
+  comportamiento de la cadena con runs simulados y el modelo mock del repo.

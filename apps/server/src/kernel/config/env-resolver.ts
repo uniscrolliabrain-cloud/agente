@@ -66,7 +66,7 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
       console.warn(`[kernel/env-resolver] tenant ${tenantId}: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.`);
     }
     const embeddingsKey =
-      process.env.EMBEDDINGS_LLM_API_KEY?.trim() ?? fastKey ?? "";
+      process.env.EMBEDDINGS_LLM_API_KEY?.trim() || fastKey || slowKey || "";
 
     const capabilities: TenantCapabilities = {
       fastChain: boolEnv("FAST_CHAIN", true),

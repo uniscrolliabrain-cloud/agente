@@ -1,11 +1,27 @@
-
 // Cliente de embeddings. Usa la API de Google (Gemini).
 // Devuelve null si no hay API key o si falla la llamada.
 
-const MODEL = "text-embedding-004";
+const DEFAULT_MODEL = "text-embedding-004";
+const DEFAULT_BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
+// EMBEDDINGS_ENV_WIRE_V1 - .env.example documenta EMBEDDINGS_LLM_API_KEY,
+// EMBEDDINGS_LLM_MODEL y EMBEDDINGS_LLM_BASE_URL, pero este modulo solo leia
+// GOOGLE_API_KEY/GEMINI_API_KEY y un modelo hardcodeado. Un deployment que
+// siguiera la documentacion se quedaba sin RAG en silencio.
 function apiKey(): string | undefined {
-  return process.env.GOOGLE_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim();
+  return (
+    process.env.EMBEDDINGS_LLM_API_KEY?.trim() ||
+    process.env.GEMINI_API_KEY?.trim() ||
+    process.env.GOOGLE_API_KEY?.trim()
+  );
+}
+
+function modelName(): string {
+  return (process.env.EMBEDDINGS_LLM_MODEL?.trim() || DEFAULT_MODEL).replace(/^models\//, "");
+}
+
+function baseUrl(): string {
+  return (process.env.EMBEDDINGS_LLM_BASE_URL?.trim() || DEFAULT_BASE_URL).replace(/\/+$/, "");
 }
 
 export function embeddingsConfigured(): boolean {
@@ -18,14 +34,15 @@ export async function embed(text: string, apiKeyOverride?: string): Promise<numb
   if (!key) return null;
   const trimmed = text.trim().slice(0, 10000);
   if (!trimmed) return null;
+  const model = modelName();
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:embedContent?key=${key}`,
+      `${baseUrl()}/models/${encodeURIComponent(model)}:embedContent?key=${encodeURIComponent(key)}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: `models/${MODEL}`,
+          model: `models/${model}`,
           content: { parts: [{ text: trimmed }] },
         }),
         signal: AbortSignal.timeout(15000),

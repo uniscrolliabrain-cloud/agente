@@ -24,7 +24,7 @@ import { computerInstructions, computerTools } from "../computer-tools.ts";
 import type { Promoter } from "../kernel/graph/promote.ts";
 import type { KernelContext as KernelContextPort } from "../../../../packages/domain/src/kernel.ts";
 import type { Config } from "../config.ts";
-import { modelChain, runWithModelFallback } from "./model-chain.ts";
+import { envApiKeyFor, modelChain, normalizeModelSpec, runWithModelFallback } from "./model-chain.ts";
 import { LEAD_INVESTIGATION_SOP, leadInvestigationInputSchema } from "./worker.ts";
 import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import type { ActionProposal } from "../../../../packages/domain/src/index.ts";
@@ -990,6 +990,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // FAST_SLOW_CONFIG_WIRE_V1 - si hay kernel y tenant, usamos el modelo
         // FAST del TenantConfig para el chat. El slow se usa para tareas
         // durables (en model.ts). Si el kernel falla, caemos al chain global.
+        const modelApiKeys = new Map<string, string>();
         let chatModelChain: string[] = modelChain(this.config);
         try {
           if (this.service.kernel) {
@@ -1009,9 +1010,21 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             // con LoadAPIKeyError en cualquier despliegue sin fast key.
             // modelChain() ya exigia apiKey; el override del kernel no.
             if (cfg?.fast?.provider && cfg.fast.model && cfg.fast.apiKey) {
-              chatModelChain = [`${cfg.fast.provider}/${cfg.fast.model}`];
+              const fastSpec = normalizeModelSpec(`${cfg.fast.provider}/${cfg.fast.model}`);
+              chatModelChain = [fastSpec];
+              modelApiKeys.set(fastSpec, cfg.fast.apiKey);
               if (cfg.slow?.apiKey && cfg.slow?.provider && cfg.slow.model) {
-                chatModelChain.push(`${cfg.slow.provider}/${cfg.slow.model}`);
+                const slowSpec = normalizeModelSpec(`${cfg.slow.provider}/${cfg.slow.model}`);
+                chatModelChain.push(slowSpec);
+                modelApiKeys.set(slowSpec, cfg.slow.apiKey);
+              }
+              // MODEL_ROLE_CHAT_V1 - el chat tambien respeta el modelo propio
+              // del rol, igual que las tareas durables.
+              const roleSpec = roleId ? cfg.roles?.[roleId] : undefined;
+              if (roleSpec?.apiKey && roleSpec.model) {
+                const roleModel = normalizeModelSpec(`${roleSpec.provider}/${roleSpec.model}`);
+                if (!chatModelChain.includes(roleModel)) chatModelChain.unshift(roleModel);
+                modelApiKeys.set(roleModel, roleSpec.apiKey);
               }
               // FIX_CHAIN_FALLBACK_V1 - si solo hay fast, anadimos el chain
               // global como red de seguridad. Antes se quedaba en [fast] y si
@@ -1046,13 +1059,32 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             }
           }
         }
+        let activeModel = chatModelChain[0] ?? this.config.model ?? "";
         run = runWithModelFallback(
           chatModelChain,
-          (model) => new BuiltInAgent({ model, // MAX_STEPS_CONFIG_V1 - configurable.
-// CONV_MAX_STEPS_TENANT_V1 - maxSteps por tenant (fallback env).
-maxSteps: tenantConfig?.maxSteps ?? (Number(process.env.AGENT_MAX_STEPS ?? "6") || 6), maxRetries: 0, tools, prompt: finalPromptWithUrgent }),
+          (model) => {
+            activeModel = model;
+            const apiKey = modelApiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model);
+            return new BuiltInAgent({
+              model, // MAX_STEPS_CONFIG_V1 - configurable.
+              ...(apiKey ? { apiKey } : {}),
+              // CONV_MAX_STEPS_TENANT_V1 - maxSteps por tenant (fallback env).
+              maxSteps:
+                tenantConfig?.maxSteps ??
+                (Number(process.env.AGENT_MAX_STEPS ?? "6") || 6),
+              maxRetries: 0,
+              tools,
+              prompt: finalPromptWithUrgent,
+            });
+          },
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
-          { timeoutMs: Number(process.env.CHAT_TIMEOUT_MS ?? "2000") || 2000 }, // FIX_11_A2_CHAT_TIMEOUT_V1
+          {
+            // FIX_11_A2_CHAT_TIMEOUT_V1 - 2s para el primer byte fallaba en
+            // proveedores reales; ahora 8s de primer byte y 45s totales,
+            // ambos configurables.
+            firstByteMs: Number(process.env.CHAT_FIRST_BYTE_MS ?? "8000") || 8000,
+            totalMs: Number(process.env.CHAT_TOTAL_MS ?? "45000") || 45000,
+          },
         );
         // RECORD_USAGE_CHAT_V1 - contamos caracteres de entrada y salida del stream.
         // Ademas, KERNEL_FAST_RESPONSE_V1: al terminar, escribimos la respuesta
@@ -1093,7 +1125,7 @@ maxSteps: tenantConfig?.maxSteps ?? (Number(process.env.AGENT_MAX_STEPS ?? "6") 
             },
             complete: () => {
               void this.service
-                .recordUsage(this.owner, "chat", this.config.model, inputChars, outputChars)
+                .recordUsage(this.owner, "chat", activeModel, inputChars, outputChars)
                 .catch(() => {});
               // PRESENTER_WIRE_V1 Ã¢â‚¬â€ pregunta al Presenter quÃƒÂ©
               // Antes se emit

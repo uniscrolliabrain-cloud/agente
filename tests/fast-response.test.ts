@@ -1,5 +1,6 @@
-// FIX_11_N_TIMEOUT_TEST_V1 - test del timeout 2s del chat.
-// Verifica que el chat pasa timeoutMs: 2000 a runWithModelFallback.
+// CHAT_TIMEOUT_TWO_CLOCKS_V1 - el chat ya no usa un unico timeout de 2s:
+// separa el primer byte (para saltar al fallback) del total (para cortar una
+// respuesta colgada). Ambos son configurables.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -10,12 +11,10 @@ const SOURCE = readFileSync(
   "utf8",
 );
 
-test("el chat configura timeoutMs a 2000 (o CHAT_TIMEOUT_MS)", () => {
-  assert.ok(
-    /timeoutMs:\s*Number\(process\.env\.CHAT_TIMEOUT_MS \?\? "2000"\)/.test(SOURCE) ||
-      /timeoutMs:\s*2000/.test(SOURCE),
-    "El chat no configura timeoutMs",
-  );
+test("el chat configura primer byte y total por separado", () => {
+  assert.match(SOURCE, /CHAT_FIRST_BYTE_MS \?\? "8000"/);
+  assert.match(SOURCE, /CHAT_TOTAL_MS \?\? "45000"/);
+  assert.doesNotMatch(SOURCE, /CHAT_TIMEOUT_MS \?\? "2000"/);
 });
 
 test("model-chain usa firstByteMs en el setTimeout", () => {
@@ -28,5 +27,3 @@ test("model-chain usa firstByteMs en el setTimeout", () => {
     "model-chain no usa firstByteMs en el setTimeout",
   );
 });
-
-// FIX_11_N_TIMEOUT_TEST_V1_END

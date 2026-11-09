@@ -1,6 +1,5 @@
 import { type BaseEvent, EventType, type RunAgentInput } from "@ag-ui/core";
 import { Observable } from "rxjs";
-import { retryWithBackoff, defaultIsRetryable } from "./retry.ts";
 import { globalCircuits } from "./circuit-breaker.ts";
 import type { Config } from "../config.ts";
 
@@ -22,6 +21,32 @@ export interface ModelRun {
 }
 
 /**
+ * The runtime resolves openai, anthropic and google specs. An "openrouter/..."
+ * spec is an OpenAI-compatible endpoint, so it is normalized to openai/... and
+ * served by OPENROUTER_API_KEY (config.ts aliases OPENAI_API_KEY/BASE_URL when
+ * the OpenAI key is empty).
+ */
+export function normalizeModelSpec(spec: string): string {
+  const trimmed = spec.trim();
+  const [provider, ...rest] = trimmed.split("/");
+  if (provider?.toLowerCase() === "openrouter" && rest.length > 0) {
+    return `openai/${rest.join("/")}`;
+  }
+  return trimmed;
+}
+
+/** API key for a spec, from the same environment names config.ts publishes. */
+export function envApiKeyFor(spec: string): string | undefined {
+  const provider = normalizeModelSpec(spec).split("/")[0]?.toLowerCase();
+  const read = (name: string) => process.env[name]?.trim() || undefined;
+  if (provider === "openai") return read("OPENAI_API_KEY") ?? read("OPENROUTER_API_KEY");
+  if (provider === "anthropic") return read("ANTHROPIC_API_KEY");
+  if (provider === "google" || provider === "gemini") return read("GOOGLE_API_KEY") ?? read("GEMINI_API_KEY");
+  if (provider === "minimax") return read("MINIMAX_API_KEY");
+  return undefined;
+}
+
+/**
  * Ordered model specifiers: the primary model first, then the configured fallback.
  * "openai/unconfigured" preserves the previous behaviour when no model is configured at all.
  */
@@ -34,13 +59,13 @@ import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 export function modelChain(config: Config, tenant?: TenantConfig, mode: "chat" | "task" = "task"): string[] {
   const specs: string[] = [];
   if (mode === "chat" && tenant?.fast?.apiKey && tenant.fast.model) {
-    specs.push(`${tenant.fast.provider}/${tenant.fast.model}`);
+    specs.push(normalizeModelSpec(`${tenant.fast.provider}/${tenant.fast.model}`));
   }
   if (mode === "task" && tenant?.slow?.apiKey && tenant.slow.model) {
-    specs.push(`${tenant.slow.provider}/${tenant.slow.model}`);
+    specs.push(normalizeModelSpec(`${tenant.slow.provider}/${tenant.slow.model}`));
   }
-  if (config.model?.trim()) specs.push(config.model.trim());
-  if (config.modelFallback?.trim()) specs.push(config.modelFallback.trim());
+  if (config.model?.trim()) specs.push(normalizeModelSpec(config.model));
+  if (config.modelFallback?.trim()) specs.push(normalizeModelSpec(config.modelFallback));
   return specs.length ? [...new Set(specs)] : ["openai/unconfigured"];
 }
 
@@ -60,15 +85,23 @@ export function runWithModelFallback(
   specs: string[],
   create: (spec: string) => ModelRun,
   input: RunAgentInput,
-  options: { timeoutMs?: number; maxSpecs?: number } = {},
+  options: { timeoutMs?: number; firstByteMs?: number; totalMs?: number; maxSpecs?: number } = {},
 ): { events: Observable<BaseEvent>; abort: () => void } {
   const maxSpecs = options.maxSpecs ?? specs.length;
   const effectiveSpecs = specs.slice(0, Math.max(1, maxSpecs));
-  // MODEL_CHAIN_TIMEOUT_V1 - antes no habia timeout global. Si el modelo
-  // primario se quedaba colgado (red, proveedor caido), el fallback nunca
-  // entraba. Ahora cada intento tiene un timeout implicito (default 120s,
-  // configurable). Al expirar, se aborta el intento y entra el fallback.
-  const timeoutMs = options.timeoutMs ?? 120_000;
+  // MODEL_CHAIN_TIMEOUT_V1 - cada intento tiene dos relojes: el primer byte
+  // (para saltar a un fallback antes de ensenar nada) y el total (para cortar
+  // una respuesta que se queda colgada despues de empezar).
+  // MODEL_CHAIN_FIRST_BYTE_ENV_V1 - el valor por defecto sale de config.ts, no
+  // de un 2s hardcodeado en el chat.
+  const firstByteMs =
+    options.firstByteMs ??
+    options.timeoutMs ??
+    (Number(process.env.LLM_FIRST_BYTE_MS ?? "45000") || 45000);
+  const totalMs =
+    options.totalMs ??
+    options.timeoutMs ??
+    (Number(process.env.LLM_GLOBAL_MS ?? "120000") || 120000);
   let current: ModelRun | undefined;
   const events = new Observable<BaseEvent>((subscriber) => {
     let index = 0;
@@ -76,90 +109,146 @@ export function runWithModelFallback(
     let stopped = false;
     let subscription: { unsubscribe: () => void } | undefined;
     let attemptId = 0;
+    let releaseCurrent: (() => void) | undefined;
 
     const hasFallback = () => index + 1 < effectiveSpecs.length;
 
     const startNextAttempt = () => {
       subscription?.unsubscribe();
+      releaseCurrent?.();
+      releaseCurrent = undefined;
       index += 1;
       announceStart = false;
       attempt();
     };
 
-    // MODEL_CHAIN_NETWORK_TIMEOUT_V1 - timeout duro por intento. Si el modelo
-    // no emite output en 45s, abortamos y pasamos al fallback. Antes un fetch
-    // colgado no emitia ni evento ni error, y el fallback nunca entraba.
+    // MODEL_CHAIN_NETWORK_TIMEOUT_V1 - timeout duro por intento: si el modelo
+    // no emite output, se aborta y entra el fallback; si ya emitio, se corta
+    // con error para no reiniciar una respuesta a medias.
     const attempt = () => {
       const myId = ++attemptId;
-      const agent = create(effectiveSpecs[index]);
+      const spec = effectiveSpecs[index] ?? "openai/unconfigured";
+      const agent = create(spec);
       current = agent;
       let answered = false;
-      // MODEL_CHAIN_RETRY_V1 Ã¢â‚¬â€ retry con backoff exponencial entre intentos.
-      // Ver: docs/audits/03-resiliencia/miniaudit.md ("Sin retry con backoff").
-      // No reintentamos dentro del mismo spec: dejamos que el fallback haga su
-      // trabajo. Pero sÃƒÂ­ aplicamos circuit breaker por spec para cortar rÃƒÂ¡pido
-      // si un proveedor estÃƒÂ¡ caÃƒÂ­do.
-      // CB_PER_PROVIDER_V1 - agrupa el circuit por provider.
-// MODEL_FALLBACK_PROVIDER_CIRCUIT_V1
-const provider = effectiveSpecs[index].split("/")[0] ?? "unknown";
-const circuit = globalCircuits.get(`llm:${provider}`);
+      let finished = false;
+      const provider = spec.split("/")[0] ?? "unknown";
+      const circuit = globalCircuits.get(`llm:${provider}`);
       if (circuit.getState() === "open") {
         // Salta al siguiente spec sin intentar.
-        if (hasFallback()) { startNextAttempt(); return; }
+        if (hasFallback()) {
+          startNextAttempt();
+          return;
+        }
       }
-      // MODEL_FIRST_BYTE_CONFIG_V1
-      const firstByteMs = options.timeoutMs ?? (Number(process.env.LLM_FIRST_BYTE_MS ?? "45000") || 45000); // FIX_11_A1_FIRST_BYTE_TIMEOUT_V1
       const bulkheadKey = "__llm_bulkhead__";
-      const bulkhead = ((globalThis as Record<string, unknown>)[bulkheadKey] as Map<string, number>) ?? new Map<string, number>();
+      const bulkhead =
+        ((globalThis as Record<string, unknown>)[bulkheadKey] as Map<string, number>) ??
+        new Map<string, number>();
       (globalThis as Record<string, unknown>)[bulkheadKey] = bulkhead;
       // MODEL_BULKHEAD_PER_PROVIDER_V1
       const BULKHEAD_MAX = Number(process.env.LLM_BULKHEAD_PER_PROVIDER ?? "10") || 10;
-      const providerKey = specs[index].split("/")[0] ?? "unknown";
-      const running = bulkhead.get(providerKey) ?? 0;
-      if (running >= BULKHEAD_MAX && hasFallback()) { startNextAttempt(); return; }
-      bulkhead.set(providerKey, running + 1);
-      const releaseBulkhead = () => { const cur = bulkhead.get(providerKey) ?? 1; if (cur <= 1) bulkhead.delete(providerKey); else bulkhead.set(providerKey, cur - 1); };
-      const firstByteTimeout = setTimeout(() => {
+      const running = bulkhead.get(provider) ?? 0;
+      if (running >= BULKHEAD_MAX && hasFallback()) {
+        startNextAttempt();
+        return;
+      }
+      bulkhead.set(provider, running + 1);
+      // MODEL_BULKHEAD_RELEASE_V1 - antes solo se liberaba en error/timeout.
+      // Un run correcto dejaba el contador incrementado para siempre y, tras
+      // N llamadas, todo el trafico saltaba al fallback. Se libera una sola vez.
+      let released = false;
+      const releaseBulkhead = () => {
+        if (released) return;
+        released = true;
+        const cur = bulkhead.get(provider) ?? 1;
+        if (cur <= 1) bulkhead.delete(provider);
+        else bulkhead.set(provider, cur - 1);
+      };
+      releaseCurrent = releaseBulkhead;
+      const clearTimers = () => {
+        clearTimeout(firstByteTimeout);
+        clearTimeout(totalTimeout);
+      };
+      const failWithoutOutput = (message: string) => {
+        if (finished) return;
+        finished = true;
+        clearTimers();
         releaseBulkhead();
-        if (myId !== attemptId) return;
-        if (!answered && hasFallback()) {
-          try { agent.abortRun(); } catch { /* noop */ }
-          startNextAttempt();
-        } else if (!answered) {
-          try { agent.abortRun(); } catch { /* noop */ }
-          subscriber.error(new Error(`Model did not respond within ${Math.round(firstByteMs / 1000)} seconds`)); // FIX_11_A1_FIRST_BYTE_TIMEOUT_V1
+        subscriber.error(new Error(message));
+      };
+      const firstByteTimeout = setTimeout(() => {
+        if (myId !== attemptId || finished) return;
+        try {
+          agent.abortRun();
+        } catch {
+          /* noop */
         }
-      }, firstByteMs); // FIX_11_A1_FIRST_BYTE_TIMEOUT_V1
+        if (!answered && hasFallback()) {
+          clearTimers();
+          releaseBulkhead();
+          startNextAttempt();
+          return;
+        }
+        failWithoutOutput(
+          `Model did not respond within ${Math.round(firstByteMs / 1000)} seconds`,
+        );
+      }, firstByteMs);
+      const totalTimeout = setTimeout(() => {
+        if (myId !== attemptId || finished) return;
+        try {
+          agent.abortRun();
+        } catch {
+          /* noop */
+        }
+        if (!answered && hasFallback()) {
+          clearTimers();
+          releaseBulkhead();
+          startNextAttempt();
+          return;
+        }
+        failWithoutOutput(
+          answered
+            ? `Model run exceeded ${Math.round(totalMs / 1000)} seconds`
+            : `Model did not respond within ${Math.round(totalMs / 1000)} seconds`,
+        );
+      }, totalMs);
       subscription = agent.run(input).subscribe({
         next: (event) => {
-          if (myId !== attemptId) return;
+          if (myId !== attemptId || finished) return;
           if (producedOutput.has(event.type)) {
             answered = true;
             clearTimeout(firstByteTimeout);
           }
           if (event.type === EventType.RUN_STARTED && !announceStart) return;
           if (event.type === EventType.RUN_ERROR && !answered && hasFallback()) {
-            clearTimeout(firstByteTimeout);
+            clearTimers();
+            releaseBulkhead();
             startNextAttempt();
             return;
           }
           subscriber.next(event);
         },
         error: (error) => {
-          if (myId !== attemptId) return;
-          clearTimeout(firstByteTimeout);
+          if (myId !== attemptId || finished) return;
+          clearTimers();
           releaseBulkhead();
           if (stopped) return;
           if (!answered && hasFallback()) {
             startNextAttempt();
             return;
           }
+          finished = true;
           subscriber.error(error);
         },
         complete: () => {
-          if (myId !== attemptId) return;
-          clearTimeout(firstByteTimeout);
-          if (!stopped) subscriber.complete();
+          if (myId !== attemptId || finished) return;
+          clearTimers();
+          releaseBulkhead();
+          if (!stopped) {
+            finished = true;
+            subscriber.complete();
+          }
         },
       });
     };
@@ -167,7 +256,14 @@ const circuit = globalCircuits.get(`llm:${provider}`);
     attempt();
     return () => {
       stopped = true;
-      if (typeof current !== "undefined") { try { current?.abortRun(); } catch { /* noop */ } }
+      releaseCurrent?.();
+      if (typeof current !== "undefined") {
+        try {
+          current?.abortRun();
+        } catch {
+          /* noop */
+        }
+      }
       subscription?.unsubscribe();
     };
   });
