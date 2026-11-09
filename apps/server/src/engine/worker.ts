@@ -2,11 +2,15 @@
 // B105FIX_APPLIED
 // EVENTBUS_WORKER_V1
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
 import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
+import type { AgentService } from "./service.ts";
+import { LeadsService, type LeadFicha } from "./leads.ts";
+import type { GoogleMapsClient } from "../../../../packages/integrations/src/google-maps.ts";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
-import { runInTenantScope } from "../tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
 import { backgroundFailure } from "../log.ts";
 // WORKER_RETRY_V1
 import { defaultIsRetryable } from "./retry.ts";
@@ -598,3 +602,270 @@ export class TaskWorker {
 }
 
 
+
+// LEAD_INVESTIGATION_V1 (campana 18) - delegacion tipada de Laia a Marcos.
+//
+// El trabajo `investigar-leads` declara entrada validada, version de SOP,
+// agente autorizado y salida tipada: una ficha revisable por campo. Places no
+// devuelve contacto, asi que el contacto ausente se declara como ausente; el
+// trabajo nunca lo inventa.
+
+export const LEAD_INVESTIGATION_SOP = "investigar-leads";
+export const LEAD_INVESTIGATION_VERSION = 1;
+export const LEAD_INVESTIGATION_AGENT = "marcos";
+
+export const leadInvestigationCriteriaSchema = z.object({
+  sector: z.string().trim().max(120).default(""),
+  city: z.string().trim().max(120).default(""),
+  keywords: z.array(z.string().trim().min(1).max(60)).max(20).default([]),
+  minRating: z.number().min(0).max(5).default(4),
+  minReviews: z.number().int().nonnegative().default(10),
+});
+export type LeadInvestigationCriteria = z.infer<typeof leadInvestigationCriteriaSchema>;
+
+export const leadInvestigationInputSchema = z.object({
+  // Referencias del pipeline. Vacio = todas las fichas aceptadas de la empresa.
+  leadRefs: z.array(z.string().trim().min(1).max(120)).max(50).default([]),
+  criteria: leadInvestigationCriteriaSchema.default({
+    sector: "",
+    city: "",
+    keywords: [],
+    minRating: 4,
+    minReviews: 10,
+  }),
+});
+export type LeadInvestigationInput = z.infer<typeof leadInvestigationInputSchema>;
+
+const leadFieldSchema = z.object({
+  value: z.union([z.string(), z.number()]).nullable(),
+  verified: z.boolean(),
+  source: z.enum(["google_places", "derived"]).nullable(),
+});
+export type LeadField = z.infer<typeof leadFieldSchema>;
+
+const leadReviewSchema = z.object({
+  ref: z.string(),
+  placeId: z.string(),
+  name: z.string(),
+  score: z.number().int().min(0).max(100),
+  fit: z.enum(["alto", "medio", "bajo"]),
+  criteriaMatched: z.array(z.string()),
+  criteriaMissed: z.array(z.string()),
+  fields: z.object({
+    name: leadFieldSchema,
+    address: leadFieldSchema,
+    phone: leadFieldSchema,
+    website: leadFieldSchema,
+    domain: leadFieldSchema,
+    rating: leadFieldSchema,
+    reviews: leadFieldSchema,
+    businessStatus: leadFieldSchema,
+    contactName: leadFieldSchema,
+    contactEmail: leadFieldSchema,
+  }),
+  missing: z.array(z.string()),
+  nextStep: z.string(),
+  source: z.object({
+    provider: z.literal("google_places"),
+    placeId: z.string(),
+    query: z.string(),
+    discoveredAt: z.string(),
+  }),
+});
+export type LeadReview = z.infer<typeof leadReviewSchema>;
+
+export const leadInvestigationOutputSchema = z.object({
+  schema: z.literal("LEAD_FICHA_V1"),
+  work: z.literal(LEAD_INVESTIGATION_SOP),
+  sop: z.object({
+    id: z.literal(LEAD_INVESTIGATION_SOP),
+    version: z.number().int().positive(),
+  }),
+  // El resultado conserva quien delego y quien ejecuto: no se deduce del owner.
+  requestedBy: z.string(),
+  agent: z.string(),
+  leads: z.array(leadReviewSchema),
+  missingContact: z.array(z.string()),
+});
+export type LeadInvestigationOutput = z.infer<typeof leadInvestigationOutputSchema>;
+
+const fieldOf = (
+  value: string | number | undefined,
+  source: "google_places" | "derived" = "google_places",
+): LeadField =>
+  value === undefined || value === ""
+    ? { value: null, verified: false, source: null }
+    : { value, verified: true, source };
+
+function scoreLead(ficha: LeadFicha, criteria: LeadInvestigationCriteria) {
+  const matched: string[] = [];
+  const missed: string[] = [];
+  let score = 0;
+  if (ficha.rating === undefined) missed.push("rating");
+  else if (ficha.rating >= criteria.minRating) {
+    score += 25;
+    matched.push(`rating>=${criteria.minRating}`);
+  } else missed.push(`rating>=${criteria.minRating}`);
+  if (ficha.reviews === undefined) missed.push("resenas");
+  else if (ficha.reviews >= criteria.minReviews) {
+    score += 20;
+    matched.push(`resenas>=${criteria.minReviews}`);
+  } else missed.push(`resenas>=${criteria.minReviews}`);
+  if (ficha.website) {
+    score += 15;
+    matched.push("web");
+  } else missed.push("web");
+  if (ficha.phone) {
+    score += 15;
+    matched.push("telefono");
+  } else missed.push("telefono");
+  const tokens = [criteria.sector, criteria.city, ...criteria.keywords]
+    .flatMap((value) => value.toLowerCase().split(/[^\p{L}\p{N}]+/u))
+    .filter((token) => token.length > 1);
+  const text = `${ficha.name} ${ficha.address} ${ficha.notes} ${ficha.domain ?? ""}`.toLowerCase();
+  if (tokens.length === 0) {
+    score += 25;
+    matched.push("sin criterios de texto");
+  } else {
+    const hits = tokens.filter((token) => text.includes(token));
+    score += Math.round((hits.length / tokens.length) * 25);
+    matched.push(...hits.map((token) => `texto:${token}`));
+    missed.push(
+      ...tokens.filter((token) => !hits.includes(token)).map((token) => `texto:${token}`),
+    );
+  }
+  const total = Math.max(0, Math.min(100, score));
+  const fit: "alto" | "medio" | "bajo" = total >= 70 ? "alto" : total >= 40 ? "medio" : "bajo";
+  return { score: total, fit, criteriaMatched: matched, criteriaMissed: missed };
+}
+
+function buildReview(ficha: LeadFicha, criteria: LeadInvestigationCriteria): LeadReview {
+  const { score, fit, criteriaMatched, criteriaMissed } = scoreLead(ficha, criteria);
+  const fields = {
+    name: fieldOf(ficha.name),
+    address: fieldOf(ficha.address),
+    phone: fieldOf(ficha.phone),
+    website: fieldOf(ficha.website),
+    domain: fieldOf(ficha.domain, "derived"),
+    rating: fieldOf(ficha.rating),
+    reviews: fieldOf(ficha.reviews),
+    businessStatus: fieldOf(ficha.businessStatus),
+    // Places no devuelve persona ni correo de contacto: se declaran ausentes.
+    contactName: fieldOf(undefined),
+    contactEmail: fieldOf(undefined),
+  };
+  const missing = [
+    ...(fields.phone.value === null ? ["telefono"] : []),
+    ...(fields.website.value === null ? ["web"] : []),
+    ...(fields.address.value === null ? ["direccion"] : []),
+    ...(fields.rating.value === null ? ["rating"] : []),
+    ...(fields.businessStatus.value === null ? ["estado del negocio"] : []),
+    "contacto",
+  ];
+  const nextStep =
+    fields.businessStatus.value !== null && fields.businessStatus.value !== "OPERATIONAL"
+      ? "Comprobar si el negocio sigue abierto antes de contactar."
+      : fit === "bajo"
+        ? "Revisar el encaje antes de invertir tiempo: faltan criterios de la empresa."
+        : "Pedir el contacto antes de escribir: Places no lo trae.";
+  return {
+    ref: ficha.ref,
+    placeId: ficha.placeId,
+    name: ficha.name,
+    score,
+    fit,
+    criteriaMatched,
+    criteriaMissed,
+    fields,
+    missing,
+    nextStep,
+    source: { ...ficha.source },
+  };
+}
+
+// El trabajo nunca consulta Places: opera sobre fichas ya aceptadas en el
+// pipeline. El stub deja el contrato del constructor explicito.
+const UNAVAILABLE_MAPS = {
+  searchLeads: async () => {
+    throw new Error("investigar-leads no busca en Places: trabaja sobre fichas aceptadas");
+  },
+} as unknown as GoogleMapsClient;
+
+export function isLeadInvestigation(task: AgentTask): boolean {
+  return task.kind === "sop" && task.input.sopId === LEAD_INVESTIGATION_SOP;
+}
+
+export async function executeLeadInvestigation(
+  service: AgentService,
+  owner: string,
+  task: AgentTask,
+  ctx: TaskContext,
+): Promise<Partial<AgentTask>> {
+  const input = leadInvestigationInputSchema.parse(task.input);
+  // Sin empresa resuelta no se cualifica: nada de caer a un tenant por defecto.
+  const tenantId =
+    currentTenantScope()?.tenantId ??
+    (await service.tenantService?.tenantIdFor(owner).catch(() => undefined));
+  if (!tenantId) {
+    throw new Error("investigar-leads necesita una empresa resuelta para leer su pipeline");
+  }
+  const pipeline = new LeadsService(service.db as TenantScopedStore, UNAVAILABLE_MAPS);
+  const accepted = await pipeline.list(tenantId);
+  const fichas = accepted.filter(
+    (ficha) => input.leadRefs.length === 0 || input.leadRefs.includes(ficha.ref),
+  );
+  const agent =
+    task.assignedTo ??
+    (typeof task.state.roleId === "string" ? task.state.roleId : LEAD_INVESTIGATION_AGENT);
+  const requestedBy = task.assignedBy ?? owner;
+  if (fichas.length === 0) {
+    await ctx.event("status", "Sin fichas aceptadas que cualificar");
+    return {
+      status: "waiting_input",
+      question:
+        "No hay fichas aceptadas en el pipeline de esta empresa con esas referencias. Acepta una ficha en Places y vuelve a delegar el trabajo.",
+    };
+  }
+  const leads = fichas.map((ficha) => buildReview(ficha, input.criteria));
+  const output = leadInvestigationOutputSchema.parse({
+    schema: "LEAD_FICHA_V1",
+    work: LEAD_INVESTIGATION_SOP,
+    sop: { id: LEAD_INVESTIGATION_SOP, version: LEAD_INVESTIGATION_VERSION },
+    requestedBy,
+    agent,
+    leads,
+    missingContact: leads
+      .filter((lead) => lead.fields.contactEmail.value === null)
+      .map((lead) => lead.ref),
+  });
+  await ctx.event("step", `Cualificando ${leads.length} ficha(s) aceptada(s)`);
+  const summary = `${leads.length} ficha(s) cualificada(s); ${output.missingContact.length} sin contacto que pedir antes de escribir`;
+  const artifact = await service.artifactFromSource(
+    owner,
+    `task:${task.id}`,
+    "report",
+    `Cualificacion de ${agent}`,
+    summary,
+    output as unknown as Record<string, unknown>,
+    "lead-ficha",
+  );
+  await ctx.event("result", "Ficha revisable lista", summary);
+  return {
+    status: "succeeded",
+    result: summary,
+    artifactIds: [artifact.id],
+    evidence: fichas.map((ficha) => ({
+      id: ficha.ref,
+      kind: "web" as const,
+      title: `Places: ${ficha.source.query || ficha.placeId}`,
+      excerpt: `${ficha.source.provider} · ${ficha.source.discoveredAt}`,
+      ...(ficha.website ? { url: ficha.website } : {}),
+    })),
+    state: {
+      ...task.state,
+      work: { id: LEAD_INVESTIGATION_SOP, version: LEAD_INVESTIGATION_VERSION },
+      workOutput: output,
+      workArtifactId: artifact.id,
+    },
+  };
+}

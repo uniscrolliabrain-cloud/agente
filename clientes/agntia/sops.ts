@@ -349,6 +349,52 @@ const discoveryCall = sopSchema.parse({
   ],
 });
 
+// LEAD_INVESTIGATION_SOP_V1 (campana 18) - contrato versionado del trabajo
+// tipado. `service.execute` enruta por este id al executor del worker, que
+// valida la entrada, puntua el encaje y acredita la fuente de cada campo. Los
+// pasos describen el contrato para el catalogo; el ejecutor es el unico camino.
+const investigateLeads = sopSchema.parse({
+  id: "investigar-leads",
+  name: "Cualificar fichas aceptadas",
+  description:
+    "Normaliza y puntua el encaje de las fichas aceptadas, acredita la fuente de cada campo " +
+    "y devuelve la ficha revisable con los datos que faltan y el siguiente paso.",
+  category: "Ventas",
+  trigger: { type: "api", value: "" },
+  allowedTools: ["recall_memory", "llm_generate", "save_artifact"],
+  assignedTo: "marcos",
+  version: 1,
+  steps: [
+    {
+      id: "contexto",
+      title: "Leer las fichas aceptadas de la empresa",
+      tool: "recall_memory",
+      params: { query: "fichas aceptadas Places {{input.leadRefs}}" },
+    },
+    {
+      id: "ficha",
+      title: "Cualificar y verificar por campo",
+      tool: "llm_generate",
+      params: {
+        instruction:
+          "Contrasta la ficha con los criterios de la empresa. No inventes contacto ni datos ausentes: " +
+          "declara lo que falta. Criterios: {{input.criteria}}",
+      },
+    },
+    {
+      id: "guardar",
+      title: "Guardar la ficha revisable",
+      tool: "save_artifact",
+      params: {
+        kind: "report",
+        title: "Ficha comercial cualificada",
+        summary: "Encaje y verificacion por campo",
+        data: { ficha: "{{ficha}}" },
+      },
+    },
+  ],
+});
+
 export const agencySops: SOP[] = [
   draft,
   followUp,
@@ -358,4 +404,5 @@ export const agencySops: SOP[] = [
   monthly,
   auditWeb,
   discoveryCall,
+  investigateLeads,
 ];

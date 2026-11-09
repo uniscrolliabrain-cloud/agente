@@ -25,6 +25,7 @@ import type { Promoter } from "../kernel/graph/promote.ts";
 import type { KernelContext as KernelContextPort } from "../../../../packages/domain/src/kernel.ts";
 import type { Config } from "../config.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
+import { LEAD_INVESTIGATION_SOP, leadInvestigationInputSchema } from "./worker.ts";
 import type { AgentService } from "./service.ts";
 
 export class ConversationAgent extends AbstractAgent {
@@ -491,9 +492,21 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
       defineTool({
         name: "delegate_task",
         description:
-          "Hand a whole job to the durable server worker. It continues when the app closes and pauses for user input or approval. Use document for a selected email form, finance for imported CSV, plan for a goal plan, agent for other jobs.",
+          "Hand a whole job to the durable server worker. It continues when the app closes and pauses for user input or approval. Use document for a selected email form, finance for imported CSV, plan for a goal plan, sop for a named process, agent for other jobs. To qualify accepted commercial fichas use kind sop with input.sopId investigar-leads plus the company criteria; the authorised commercial agent runs it and returns a reviewable ficha with every field's source and the missing data declared.",
         parameters: createTaskSchema,
-        execute: async (args) => this.service.createTask(this.owner, args, key("task", args)),
+        execute: async (args) => {
+          // LEAD_INVESTIGATION_CHAT_V1 - el chat no inventa fichas ni contactos:
+          // el trabajo tipado solo lleva referencias del pipeline y criterios.
+          if (args.kind === "sop" && args.input.sopId === LEAD_INVESTIGATION_SOP) {
+            const parsed = leadInvestigationInputSchema.safeParse(args.input);
+            if (!parsed.success) {
+              return {
+                error: `investigar-leads: ${parsed.error.issues[0]?.message ?? "entrada invalida"}`,
+              };
+            }
+          }
+          return this.service.createTask(this.owner, args, key("task", args));
+        },
       }),
       defineTool({
         name: "agent_status",

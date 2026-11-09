@@ -109,7 +109,17 @@ import { CapabilityRunner } from "./execution/capability-runner.ts";
 import { buildToolExecutors } from "./execution/tool-executors.ts";
 // SERVICE_KERNELCONTEXT_IMPORT_V1 - tipo del contexto del kernel.
 import type { KernelContext } from "../../../../packages/domain/src/kernel.ts";
-import { LostLeaseError, type TaskContext, TaskWorker } from "./worker.ts";
+import {
+  LEAD_INVESTIGATION_AGENT,
+  LEAD_INVESTIGATION_SOP,
+  LEAD_INVESTIGATION_VERSION,
+  LostLeaseError,
+  type TaskContext,
+  TaskWorker,
+  executeLeadInvestigation,
+  isLeadInvestigation,
+  leadInvestigationInputSchema,
+} from "./worker.ts";
 import { currentTenantScope } from "../tenant-scope.ts";
 import type { EventBus } from "./events/index.ts";
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
@@ -1230,6 +1240,33 @@ export class AgentService {
     return limiter.takeForTenant(tenantId, owner, action);
   }
 
+  /**
+   * LEAD_INVESTIGATION_AUTH_V1 - un trabajo tipado solo lo ejecuta el agente
+   * autorizado y activo de la empresa. La fuente es `agent-roles`, la misma que
+   * usa pickRoleForTask para elegir ejecutor.
+   */
+  private async assertAgentCanWork(
+    owner: string,
+    agentId: string,
+    sopId: string,
+  ): Promise<void> {
+    const role = await this.db
+      .get<AgentRole>(owner, "agent-roles", agentId)
+      .catch(() => null);
+    if (!role) {
+      throw new AppError(`El agente ${agentId} no esta autorizado en esta empresa`, 422);
+    }
+    if (!role.active) {
+      throw new AppError(`El agente ${agentId} esta deshabilitado en esta empresa`, 409);
+    }
+    if (!role.sops.includes(sopId)) {
+      throw new AppError(
+        `El agente ${agentId} no tiene autorizado el trabajo ${sopId}`,
+        422,
+      );
+    }
+  }
+
   // SERVICE_CREATE_TASK_TENANT_COUNT_V1
   async createTask(owner: string, raw: unknown, idempotencyKey?: string, held = false) {
     const input = createTaskSchema.parse(raw);
@@ -1240,6 +1277,25 @@ export class AgentService {
     // VALIDATE_DOCUMENT_KIND_V1 - document requiere messageId.
     if (input.kind === "document" && typeof input.input.messageId !== "string")
       throw new AppError("document tasks require input.messageId (an email with a PDF)", 422);
+    // LEAD_INVESTIGATION_CREATE_V1 (campana 18) - el trabajo tipado valida su
+    // entrada y su agente antes de encolar: un rol deshabilitado no crea tarea.
+    const typedLeadWork = input.kind === "sop" && input.input.sopId === LEAD_INVESTIGATION_SOP;
+    let leadWork: ReturnType<typeof leadInvestigationInputSchema.parse> | undefined;
+    if (typedLeadWork) {
+      const parsed = leadInvestigationInputSchema.safeParse(input.input);
+      if (!parsed.success) {
+        throw new AppError(
+          `investigar-leads: ${parsed.error.issues[0]?.message ?? "entrada invalida"}`,
+          422,
+        );
+      }
+      leadWork = parsed.data;
+      await this.assertAgentCanWork(
+        owner,
+        input.roleId ?? input.assignedTo ?? LEAD_INVESTIGATION_AGENT,
+        LEAD_INVESTIGATION_SOP,
+      );
+    }
     const id = idempotencyKey ? hash(`task:${idempotencyKey}`) : randomUUID();
     const existing = await this.db.get<AgentTask>(owner, "tasks", id);
     if (existing) return existing;
@@ -1287,7 +1343,12 @@ export class AgentService {
       prompt: input.prompt,
       kind: input.kind,
       goalId: input.goalId,
-      assignedTo: input.assignedTo ?? owner,
+      // LEAD_INVESTIGATION_ASSIGN_V1 - el agente autorizado ejecuta; sin el, el
+      // owner. assignedBy conserva al solicitante en la tarea y en el resultado.
+      assignedTo: typedLeadWork
+        ? (input.roleId ?? input.assignedTo ?? LEAD_INVESTIGATION_AGENT)
+        : (input.assignedTo ?? owner),
+      assignedBy: owner,
       status: held ? "paused" : "queued",
       plan: titles.map((title, i) => ({ id: String(i), title, status: "pending" })),
       evidence: [],
@@ -1296,6 +1357,12 @@ export class AgentService {
         connectionId: (await this.workspace.connection(owner))?.id ?? null,
         ...(resolvedRoleId ? { roleId: resolvedRoleId } : {}),
         ...(input.kind === "sop" ? { sopId: input.input.sopId, sopStepIndex: 0, sopResults: {}, sopStack: [input.input.sopId] } : {}),
+        ...(typedLeadWork && leadWork
+          ? {
+              work: { id: LEAD_INVESTIGATION_SOP, version: LEAD_INVESTIGATION_VERSION },
+              workInput: leadWork,
+            }
+          : {}),
         ...(held && input.kind === "monitor" ? { initializingMonitor: true } : {}),
       },
       createdAt: date(),
@@ -1983,7 +2050,12 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
         );
       else return { status: "waiting_approval" };
     }
-    if (task.kind === "sop") return this.sopExecutor.execute(owner, task, context);
+    if (task.kind === "sop") {
+      // LEAD_INVESTIGATION_DISPATCH_V1 - el SOP tipado no pasa por el executor
+      // generico: entrada, salida y verificacion por campo viven en el worker.
+      if (isLeadInvestigation(task)) return executeLeadInvestigation(this, owner, task, context);
+      return this.sopExecutor.execute(owner, task, context);
+    }
     if (task.kind === "document") return this.document(owner, task, context);
     if (task.kind === "monitor") {
       try {

@@ -104,6 +104,9 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
     requiresApproval: boolean;
   }> = [
     { id: "run_sop", kind: "composite", actionType: "Execute", family: "AUTOMATION", description: "Ejecuta un SOP registrado", risk: "low", sideEffects: [], requiresApproval: false },
+    // LEAD_INVESTIGATION_CAPABILITY_V1 (campana 18) - trabajo tipado: entrada
+    // validada, agente autorizado y ficha revisable por campo.
+    { id: "investigar-leads", kind: "composite", actionType: "Transform", family: "DATA", description: "Cualifica fichas aceptadas y devuelve una ficha revisable con la fuente de cada campo", risk: "low", sideEffects: [], requiresApproval: false },
     { id: "send_email", kind: "composite", actionType: "Communicate", family: "COMMUNICATION", description: "EnvÃƒÂ­a email (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "email", reversible: false }], requiresApproval: true },
     { id: "send_whatsapp", kind: "composite", actionType: "Communicate", family: "COMMUNICATION", description: "EnvÃƒÂ­a WhatsApp (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "whatsapp", reversible: false }], requiresApproval: true },
     { id: "create_calendar_event", kind: "composite", actionType: "Create", family: "AUTOMATION", description: "Crea evento (preparado + aprobado)", risk: "medium", sideEffects: [{ kind: "external_write", target: "calendar", reversible: false }], requiresApproval: true },
