@@ -66,5 +66,5 @@ Revertir el commit elimina la programación, la guarda de aprobación/despacho y
 
 ## SHA por patchset
 
-- **19.P1 + 19.P2 + 19.P3:** pendiente de commit (producto y pruebas sobre `de170b5`).
+- **19.P1 + 19.P2 + 19.P3:** `18c313d` (producto y pruebas en un unico commit sobre `de170b5`).
 - **Punto de rollback:** `de170b5`.
