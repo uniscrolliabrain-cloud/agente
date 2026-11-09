@@ -21,6 +21,13 @@ import type { Files } from "./files.ts";
 import type { GoogleAuth } from "./google-auth.ts";
 import type { RagService } from "./engine/rag.ts";
 
+// GMAIL_REPLY_GUARD_V1 (campana 15) - direcciones canonicas de una cabecera.
+// El texto del correo es dato, no instruccion: solo se responde a quien ya
+// participa en el hilo revisado.
+function addressesIn(value: string | undefined): string[] {
+  return (value ?? "").toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g) ?? [];
+}
+
 export class WorkspaceService {
   private seeding = new Map<string, Promise<void>>();
   constructor(
@@ -470,6 +477,36 @@ export class WorkspaceService {
   async prepare(owner: string, input: ProposalInput, connectionId?: string) {
     if (input.kind === "email.send") {
       for (const id of input.data.attachmentIds) await this.files.get(owner, id);
+      const draft = input.data;
+      // GMAIL_REPLY_GUARD_V1 - una respuesta nace de un hilo ya leido: el
+      // destinatario se valida contra sus participantes y el asunto se deriva
+      // del mensaje origen, de modo que una instruccion incrustada en el correo
+      // no puede redirigir el envio ni cambiar lo que el usuario revisa.
+      if (draft.threadId || draft.replyToMessageId) {
+        if (!draft.threadId || !draft.replyToMessageId)
+          throw new AppError("A reply needs both threadId and replyToMessageId", 409);
+        const messages = await this.thread(owner, draft.threadId);
+        const source = messages.find((message) => message.id === draft.replyToMessageId);
+        if (!source)
+          throw new AppError("The source message is not in the reviewed thread", 409);
+        const participants = new Set(
+          messages.flatMap((message) => [
+            ...addressesIn(message.from),
+            ...addressesIn(message.sender),
+            ...message.to.flatMap((address) => addressesIn(address)),
+          ]),
+        );
+        for (const recipient of [...draft.to, ...draft.cc, ...draft.bcc])
+          if (!participants.has(addressesIn(recipient)[0] ?? ""))
+            throw new AppError(
+              "A reply can only go to participants of the reviewed thread",
+              409,
+            );
+        const subject = /^re:\s*/i.test(draft.subject)
+          ? draft.subject
+          : `Re: ${source.subject}`;
+        return { input: { kind: "email.send", data: { ...draft, subject } } as ProposalInput };
+      }
       return { input };
     }
     if (input.kind === "drive.trash" || input.kind === "drive.rename") {
@@ -597,7 +634,10 @@ export class WorkspaceService {
         }),
       );
       const receipt = await providerWrite(() => google.sendEmail(input.data, attachments));
-      return `Gmail sent message · ${receipt.id}`;
+      // GMAIL_SEND_RECEIPT_V1 - el recibo conserva el hilo real que devuelve el
+      // proveedor, no solo el id: es lo que Laia relee como evidencia.
+      const sentThread = receipt.threadId ?? input.data.threadId;
+      return `Gmail sent message · ${receipt.id}${sentThread ? ` · thread ${sentThread}` : ""}`;
     }
     if (input.kind === "drive.trash") {
       await providerWrite(() => google.trashDriveFile(input.data.fileId));
@@ -623,6 +663,12 @@ export class WorkspaceService {
     );
     await this.db.put(owner, "events", event);
     return `Google Calendar event · ${event.id}`;
+  }
+  /** GMAIL_RECEIPT_EVIDENCE_V1 (campana 15) - evidencia minima del envio real. */
+  async emailReceipt(owner: string, messageId: string) {
+    const connection = await this.connection(owner);
+    if (!connection) throw new AppError("Google is disconnected", 409);
+    return this.google(owner, connection.id).messageReceipt(messageId);
   }
   async importAttachment(owner: string, reference: string): Promise<Artifact> {
     const connection = await this.connection(owner);

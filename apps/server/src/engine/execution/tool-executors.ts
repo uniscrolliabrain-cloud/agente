@@ -98,13 +98,35 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
       ctx.taskId,
     );
     if (!task) throw new Error("prepare_email requires an existing task");
+    // GMAIL_REPLY_PROVENANCE_V1 (campana 15) - el hilo y el mensaje origen
+    // viajan con el borrador; WorkspaceService.prepare valida destinatarios y
+    // deriva el asunto del hilo revisado.
+    const threadId = typeof inputs.threadId === "string" ? inputs.threadId : undefined;
+    const replyToMessageId =
+      typeof inputs.replyToMessageId === "string" ? inputs.replyToMessageId : undefined;
     const proposal = await service.actions.propose(
       ctx.owner,
-      { kind: "email.send", data: inputs as never },
+      {
+        kind: "email.send",
+        data: {
+          to: (inputs.to as string[]) ?? [],
+          cc: (inputs.cc as string[]) ?? [],
+          bcc: (inputs.bcc as string[]) ?? [],
+          subject: String(inputs.subject ?? ""),
+          body: String(inputs.body ?? ""),
+          attachmentIds: (inputs.attachmentIds as string[]) ?? [],
+          ...(threadId ? { threadId } : {}),
+          ...(replyToMessageId ? { replyToMessageId } : {}),
+        },
+      },
       undefined,
       ctx.taskId,
     );
-    return { actionId: proposal.id, status: proposal.status };
+    return {
+      actionId: proposal.id,
+      status: proposal.status,
+      ...(threadId ? { threadId } : {}),
+    };
   });
 
   wrap("prepare_event", async (ctx, inputs) => {

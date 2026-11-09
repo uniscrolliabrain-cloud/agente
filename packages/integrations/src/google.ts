@@ -856,6 +856,16 @@ export class GoogleClient {
     return parsed.data;
   }
 
+  // GMAIL_MESSAGE_RECEIPT_V1 (campana 15) - evidencia minima del mensaje real:
+  // el id y el hilo que el proveedor reconoce, sin cuerpo ni cabeceras privadas.
+  async messageReceipt(messageId: string): Promise<{ id: string; threadId: string }> {
+    const message = z
+      .object({ id: z.string().min(1), threadId: z.string().min(1) })
+      .parse(await this.request(`${GMAIL}/messages/${idPath(messageId)}?format=minimal`));
+    if (message.id !== messageId) throw new OutcomeUnknownError();
+    return message;
+  }
+
   async createEvent(input: EventDraft): Promise<CalendarEvent> {
     const draft = eventDraftSchema.parse(input);
     const result = await this.request(
