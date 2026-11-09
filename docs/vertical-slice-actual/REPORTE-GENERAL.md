@@ -77,9 +77,9 @@ Nada de lo pendiente se ha maquillado: no se subieron timeouts, no se añadieron
 
 ## Estado de ramas y publicación
 
-- `main` = `9358d80` antes de este reporte; todo el trabajo de las campañas 01–20 está integrado en `main`.
-- `origin/campaign/conexiones-doppler` = `2a475e9`, **ya contenido en `main`** (`merge-base --is-ancestor` = 0): se elimina sin pérdida de commits.
-- `pendiente/no-integrable` = `dc0bc47` («Initial cloud project»), rama local no ancestral de `main` y sin trabajo del slice: se registra su SHA y se elimina.
+- `main` = `1762e49` con este reporte; todo el trabajo de las campañas 01–20 está integrado en `main` (base del reporte: `9358d80`).
+- `pendiente/no-integrable` = `dc0bc47` («Initial cloud project»), rama local no ancestral de `main` y sin trabajo del slice: **eliminada** (SHA registrado aquí).
+- `origin/campaign/conexiones-doppler` = `2a475e9`, **ya contenido en `main`** (`merge-base --is-ancestor` = 0), así que borrarla no pierde commits. **Sigue en el remoto**: el `git` del terminal no tiene credenciales y `gh` no está autenticado; `cloud_git` no borra refs. Para cerrarla, usar la UI de GitHub (Branches → delete) o ejecutar `git push origin --delete campaign/conexiones-doppler` en un entorno autenticado.
 - No se toca ninguna rama de otro chat ni configuración compartida de Git.
 
 ## Cómo verificar este reporte
