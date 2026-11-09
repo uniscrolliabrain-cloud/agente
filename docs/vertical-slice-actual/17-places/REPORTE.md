@@ -66,5 +66,5 @@ Revertir este commit restaura `POST /discover` persistente y elimina `/accept`, 
 
 ## SHA por patchset
 
-- **17.P1 + 17.P2 + 17.P3:** pendiente de commit (producto y pruebas en un único commit sobre `2facb52`).
+- **17.P1 + 17.P2 + 17.P3:** `ec0ad10` (producto y pruebas en un único commit sobre `2facb52`).
 - **Punto de rollback:** `2facb52`.
