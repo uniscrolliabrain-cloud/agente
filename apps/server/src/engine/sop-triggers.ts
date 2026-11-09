@@ -1,5 +1,14 @@
 import type { SOP } from "../../../../packages/domain/src/sop.ts";
+import type { TenantScopedStore } from "../db-tenant.ts";
 import { AppError } from "../errors.ts";
+import {
+  LeadsService,
+  detectFollowUpReply,
+  looksLikeOptOut,
+  type InboundFollowUpMessage,
+} from "./leads.ts";
+import type { GoogleMapsClient } from "../../../../packages/integrations/src/google-maps.ts";
+import { currentTenantScope } from "../tenant-scope.ts";
 import { backgroundFailure } from "../log.ts";
 import type { AgentService } from "./service.ts";
 
@@ -76,16 +85,63 @@ export function parseCron(value: string): (now: Date) => boolean {
   );
 }
 
+// El seguimiento no busca en Places: opera sobre fichas ya aceptadas.
+const READ_ONLY_MAPS = {
+  searchLeads: async () => {
+    throw new Error("El seguimiento no busca en Places");
+  },
+} as unknown as GoogleMapsClient;
+
 export class SOPTriggerEvaluator {
   constructor(private readonly service: AgentService) {}
 
   async evaluate(owner: string, sop: SOP): Promise<number> {
     if (!sop.active) return 0;
+    // Una respuesta o una baja cierra el seguimiento antes del siguiente paso.
+    await this.sweepFollowUps(owner).catch((error) =>
+      backgroundFailure("seguimiento respuesta", error),
+    );
     if (sop.trigger.type === "cron") return this.evaluateCron(owner, sop);
     if (sop.trigger.type === "email_subject") return this.evaluateEmail(owner, sop);
     if (sop.trigger.type === "email_body_match")
       return this.evaluateEmail(owner, sop, "body");
     return 0;
+  }
+
+  /**
+   * Detecta respuestas del contacto en el hilo del seguimiento. Se exige la
+   * identidad del remitente y una fecha posterior al envio: una palabra suelta
+   * en otra conversacion no cancela nada.
+   */
+  async sweepFollowUps(owner: string): Promise<number> {
+    const tenantId =
+      currentTenantScope()?.tenantId ??
+      (await this.service.tenantService?.tenantIdFor(owner).catch(() => undefined));
+    if (!tenantId) return 0;
+    const pipeline = new LeadsService(this.service.db as TenantScopedStore, READ_ONLY_MAPS);
+    const open = (await pipeline.followUps(tenantId)).filter(
+      (followUp) =>
+        followUp.status === "scheduled" ||
+        followUp.status === "awaiting_approval" ||
+        followUp.status === "sent",
+    );
+    if (open.length === 0) return 0;
+    const mail = await this.service.db
+      .list<InboundFollowUpMessage>(owner, "mail")
+      .catch(() => [] as InboundFollowUpMessage[]);
+    let detected = 0;
+    for (const followUp of open) {
+      const reply = detectFollowUpReply(followUp, mail);
+      if (!reply) continue;
+      await pipeline.recordInbound(tenantId, followUp.ref, {
+        messageId: reply.id,
+        from: reply.from,
+        at: reply.date,
+        optOut: looksLikeOptOut(`${reply.subject ?? ""} ${reply.body ?? ""}`),
+      });
+      detected += 1;
+    }
+    return detected;
   }
 
   private async state(owner: string, sopId: string): Promise<TriggerState> {

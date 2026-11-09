@@ -14,6 +14,15 @@ import type { DeferredActions } from "./actions-deferred.ts";
 import type { PolicyEngine } from "./engine/policy/engine.ts";
 import type { AgentRole } from "../../../packages/domain/src/agent.ts";
 import { AppError } from "./errors.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
+import type { TenantScopedStore } from "./db-tenant.ts";
+import {
+  LeadsService,
+  detectFollowUpReply,
+  looksLikeOptOut,
+  type InboundFollowUpMessage,
+} from "./engine/leads.ts";
+import type { GoogleMapsClient } from "../../../packages/integrations/src/google-maps.ts";
 
 // ACTIONS_STORE_CONTRACT_V1 - ActionService solo usa estas cinco operaciones.
 // Declararlas aparte (en vez de pedir el Store completo) permite inyectar el
@@ -36,7 +45,25 @@ export interface ActionsStore {
     patch: Record<string, unknown>,
   ): Promise<T | null>;
   claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null>;
+  // LEAD_FOLLOW_UP_V1 - la guarda del seguimiento necesita releer el hilo cuando
+  // el store lo permite; el resto de acciones no depende de esta lectura.
+  list?<T = Record<string, unknown>>(owner: string, kind: string): Promise<T[]>;
 }
+
+const NO_PLACES = {
+  searchLeads: async () => {
+    throw new Error("El seguimiento no busca en Places");
+  },
+} as unknown as GoogleMapsClient;
+
+type FollowUpMeta = {
+  ref: string;
+  step: number;
+  threadId: string;
+  to: string;
+  baseline: string;
+};
+type ActionWithFollowUp = ActionProposal & { followUp?: FollowUpMeta };
 
 interface Options {
   // TYPE_FIX_DEFERRED_V1 - campo deferred.
@@ -236,6 +263,10 @@ export class ActionService {
       revision,
       ...(connection?.generation ? { connectionGeneration: connection.generation } : {}),
     } as ActionProposal;
+    // LEAD_FOLLOW_UP_V1 - la clave del seguimiento ata el borrador al paso y al
+    // hilo; la aprobacion revalida ese vinculo antes de tocar el proveedor.
+    const followUpMeta = await this.followUpMeta(owner, idempotencyKey, input, id);
+    if (followUpMeta) (proposal as ActionWithFollowUp).followUp = followUpMeta;
     const saved =
       idempotencyKey === undefined
         ? await this.db.put(owner, "actions", proposal)
@@ -327,6 +358,15 @@ export class ActionService {
           const verdict = await this.policy.can(owner, role, `action:${proposal.kind}`, "approve");
           if (!verdict.allowed) throw new AppError(verdict.reason ?? "Action denied by policy", 403);
         }
+      }
+    }
+    if (decision === "approve") {
+      try {
+        await this.assertFollowUpSendable(owner, proposal);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "seguimiento cancelado";
+        await this.denyFollowUpAction(owner, proposal, reason);
+        throw error;
       }
     }
     const claimed = await this.db.claim<ActionProposal>(
@@ -462,6 +502,7 @@ export class ActionService {
       } as unknown as ActionProposal;
     }
     await this.db.put(owner, "actions", finished);
+    if (finished.status === "succeeded") await this.markFollowUpSent(owner, finished);
     // APPROVAL_SYNC_V2 - reflejar el estado final en approval-requests.
     const finalStatus =
       finished.status === "succeeded"
@@ -523,6 +564,13 @@ export class ActionService {
       return { executed: false, reason: "reconcile_previous_outcome" };
     if (proposal.status !== "scheduled")
       return { executed: false, reason: `invalid_state:${proposal.status}` };
+    try {
+      await this.assertFollowUpSendable(owner, proposal);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "seguimiento cancelado";
+      await this.denyFollowUpAction(owner, proposal, reason);
+      return { executed: false, reason };
+    }
     if (this.options.connection) {
       const connection = await this.options.connection(owner).catch(() => null);
       const proposedGeneration =
@@ -559,6 +607,133 @@ export class ActionService {
     return finished.status === "succeeded"
       ? { executed: true }
       : { executed: false, reason: finished.error ?? finished.status };
+  }
+
+  private async followUpDomain(): Promise<{ tenantId: string; service: LeadsService }> {
+    const scope = currentTenantScope();
+    if (!scope?.tenantId) throw new AppError("El seguimiento necesita una empresa resuelta", 409);
+    return {
+      tenantId: scope.tenantId,
+      service: new LeadsService(this.db as unknown as TenantScopedStore, NO_PLACES),
+    };
+  }
+
+  private async followUpMeta(
+    owner: string,
+    idempotencyKey: string | undefined,
+    input: ProposalInput,
+    proposalId: string,
+  ): Promise<FollowUpMeta | undefined> {
+    if (!idempotencyKey?.startsWith("lead-follow-up:")) return undefined;
+    const [, ref, rawStep] = idempotencyKey.split(":");
+    const step = Number(rawStep);
+    if (!ref || !Number.isInteger(step)) throw new AppError("Seguimiento invalido", 422);
+    if (input.kind !== "email.send")
+      throw new AppError("Un seguimiento solo prepara un correo", 422);
+    const { tenantId, service } = await this.followUpDomain();
+    const record = (await service.followUps(tenantId, ref)).find((item) => item.step === step);
+    if (!record) throw new AppError("El seguimiento no esta programado", 409);
+    if (record.status !== "scheduled" && record.status !== "awaiting_approval")
+      throw new AppError(`El seguimiento ya no esta abierto (${record.status})`, 409);
+    if (record.threadId !== input.data.threadId)
+      throw new AppError("El borrador no responde al hilo del seguimiento", 409);
+    if ((input.data.to[0] ?? "").toLowerCase() !== record.to.toLowerCase())
+      throw new AppError("El borrador no va al contacto del seguimiento", 409);
+    if (record.status === "scheduled")
+      await service.markFollowUp(
+        tenantId,
+        ref,
+        step,
+        { status: "awaiting_approval", actionId: proposalId },
+        "scheduled",
+      );
+    return {
+      ref,
+      step,
+      threadId: record.threadId,
+      to: record.to,
+      baseline: record.sentAt ?? record.createdAt,
+    };
+  }
+
+  /** Ningun envio de seguimiento sale si el contacto ya respondio o pidio la baja. */
+  private async assertFollowUpSendable(
+    owner: string,
+    proposal: ActionProposal,
+  ): Promise<void> {
+    const meta = (proposal as ActionWithFollowUp).followUp;
+    if (!meta) return;
+    const { tenantId, service } = await this.followUpDomain();
+    const record = (await service.followUps(tenantId, meta.ref)).find(
+      (item) => item.step === meta.step,
+    );
+    if (!record) throw new AppError("El seguimiento ya no existe", 409);
+    if (
+      record.status !== "scheduled" &&
+      record.status !== "awaiting_approval" &&
+      record.status !== "sent"
+    )
+      throw new AppError(
+        `El seguimiento esta cancelado (${record.cancelledReason ?? record.status})`,
+        409,
+      );
+    if (await service.opposition(tenantId, meta.ref))
+      throw new AppError("El contacto pidio la baja: no se envia el seguimiento", 409);
+    if (typeof this.db.list !== "function") return;
+    const mail = await this.db.list<InboundFollowUpMessage>(owner, "mail");
+    const reply = detectFollowUpReply(record, mail);
+    if (!reply) return;
+    const optOut = looksLikeOptOut(`${reply.subject ?? ""} ${reply.body ?? ""}`);
+    await service.recordInbound(tenantId, meta.ref, {
+      messageId: reply.id,
+      from: reply.from,
+      at: reply.date,
+      optOut,
+    });
+    throw new AppError(
+      optOut
+        ? "El contacto pidio la baja durante el seguimiento: no se envia"
+        : "El contacto respondio durante el seguimiento: no se envia",
+      409,
+    );
+  }
+
+  private async denyFollowUpAction(
+    owner: string,
+    proposal: ActionProposal,
+    reason: string,
+  ): Promise<void> {
+    if (proposal.status !== "awaiting_review" && proposal.status !== "scheduled") return;
+    await this.db.compareAndSwap(owner, "actions", proposal.id, { status: proposal.status }, {
+      status: "denied",
+      error: reason.slice(0, 2000),
+      errorKind: "business",
+    });
+  }
+
+  private async markFollowUpSent(owner: string, proposal: ActionProposal): Promise<void> {
+    const meta = (proposal as ActionWithFollowUp).followUp;
+    if (!meta) return;
+    try {
+      const { tenantId, service } = await this.followUpDomain();
+      const record = (await service.followUps(tenantId, meta.ref)).find(
+        (item) => item.step === meta.step,
+      );
+      if (!record || record.status !== "awaiting_approval") return;
+      await service.markFollowUp(
+        tenantId,
+        meta.ref,
+        meta.step,
+        {
+          status: "sent",
+          sentAt: new Date(this.now()).toISOString(),
+          actionId: proposal.id,
+        },
+        "awaiting_approval",
+      );
+    } catch {
+      // El correo ya salio: no se convierte un fallo de contabilidad en reenvio.
+    }
   }
 
   private async audit(owner: string, action: ActionProposal, kind: string, detail: string, actorId?: string) {

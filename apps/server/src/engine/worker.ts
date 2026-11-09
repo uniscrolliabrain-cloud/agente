@@ -6,7 +6,12 @@ import { z } from "zod";
 import type { AgentTask, RunEvent } from "../../../../packages/domain/src/agent.ts";
 import { canTransitionTask } from "../../../../packages/domain/src/agent.ts";
 import type { AgentService } from "./service.ts";
-import { LeadsService, type LeadFicha } from "./leads.ts";
+import {
+  LeadsService,
+  MAX_FOLLOW_UP_STEPS,
+  type LeadFicha,
+  type LeadFollowUp,
+} from "./leads.ts";
 import type { GoogleMapsClient } from "../../../../packages/integrations/src/google-maps.ts";
 import type { Store } from "../db.ts";
 import type { TenantScopedStore } from "../db-tenant.ts";
@@ -867,5 +872,81 @@ export async function executeLeadInvestigation(
       workOutput: output,
       workArtifactId: artifact.id,
     },
+  };
+}
+
+
+// LEAD_FOLLOW_UP_V1 (campana 19) - preparacion durable del seguimiento.
+//
+// El paso se programa por lead y por hilo antes de redactar: reintentar la
+// preparacion usa la misma clave y no duplica ni reinicia la cuenta. El
+// borrador se revisa como cualquier correo; la aprobacion revalida el hilo.
+
+export const FOLLOW_UP_WORK = "seguimiento-leads";
+export const FOLLOW_UP_DRAFT_VERSION = 1;
+
+export const followUpDraftInputSchema = z.object({
+  ref: z.string().trim().min(1).max(120),
+  step: z.number().int().min(1).max(MAX_FOLLOW_UP_STEPS),
+  threadId: z.string().trim().min(1).max(500),
+  replyToMessageId: z.string().trim().min(1).max(500),
+  to: z.email(),
+  subject: z.string().trim().min(1).max(200).optional(),
+  scheduledFor: z.iso.datetime({ offset: true }),
+});
+export type FollowUpDraftInput = z.infer<typeof followUpDraftInputSchema>;
+
+export function followUpIdempotencyKey(ref: string, step: number): string {
+  return `lead-follow-up:${ref}:${step}`;
+}
+
+export function followUpEmail(ficha: LeadFicha, input: FollowUpDraftInput) {
+  const subject = input.subject ?? `Seguimiento: ${ficha.name}`;
+  const lines = ["Hola,", "", `Te escribo de nuevo sobre ${ficha.name}.`];
+  if (ficha.notes) lines.push(`Contexto: ${ficha.notes}`);
+  lines.push(
+    "",
+    "Si no quieres recibir mas mensajes, responde BAJA y no volveremos a escribirte.",
+  );
+  return {
+    kind: "email.send" as const,
+    data: {
+      to: [input.to],
+      cc: [],
+      bcc: [],
+      subject: /^re:\s*/i.test(subject) ? subject : `Re: ${subject}`,
+      threadId: input.threadId,
+      replyToMessageId: input.replyToMessageId,
+      attachmentIds: [],
+      body: lines.join("\n"),
+    },
+  };
+}
+
+export async function prepareFollowUpDraft(
+  service: AgentService,
+  owner: string,
+  raw: unknown,
+): Promise<{
+  followUp: LeadFollowUp;
+  draft: ReturnType<typeof followUpEmail>;
+  idempotencyKey: string;
+}> {
+  const input = followUpDraftInputSchema.parse(raw);
+  const tenantId =
+    currentTenantScope()?.tenantId ??
+    (await service.tenantService?.tenantIdFor(owner).catch(() => undefined));
+  if (!tenantId) throw new Error("seguimiento-leads necesita una empresa resuelta");
+  const pipeline = new LeadsService(service.db as TenantScopedStore, UNAVAILABLE_MAPS);
+  const ficha = (await pipeline.list(tenantId)).find((item) => item.ref === input.ref);
+  if (!ficha) throw new Error("La ficha no esta aceptada en esta empresa");
+  const { followUp } = await pipeline.scheduleFollowUp(tenantId, {
+    ...input,
+    subject: input.subject ?? `Seguimiento: ${ficha.name}`,
+  });
+  return {
+    followUp,
+    draft: followUpEmail(ficha, input),
+    idempotencyKey: followUpIdempotencyKey(input.ref, input.step),
   };
 }

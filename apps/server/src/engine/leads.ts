@@ -129,6 +129,152 @@ export const leadAcceptInput = z
 export type LeadAcceptInput = z.input<typeof leadAcceptInput>;
 export type LeadAcceptRequest = z.infer<typeof leadAcceptInput>;
 
+// LEAD_FOLLOW_UP_V1 (campana 19) - seguimiento supervisado por lead e hilo.
+// El seguimiento no vive en la cabeza de un comercial: se guarda por empresa,
+// lead y paso, con su hilo, su fecha y el estado que lo cancela.
+const FOLLOW_UP_KIND = "lead-follow-ups";
+const OPPOSITION_KIND = "lead-oppositions";
+export const MAX_FOLLOW_UP_STEPS = 3;
+
+export type LeadFollowUpStatus =
+  | "scheduled"
+  | "awaiting_approval"
+  | "sent"
+  | "replied"
+  | "booked"
+  | "opted_out"
+  | "suspended"
+  | "cancelled";
+
+export interface LeadFollowUp {
+  id: string;
+  ref: string;
+  tenantId: string;
+  step: number;
+  status: LeadFollowUpStatus;
+  threadId: string;
+  replyToMessageId: string;
+  to: string;
+  subject: string;
+  scheduledFor: string;
+  actionId?: string;
+  sentAt?: string;
+  sentMessageId?: string;
+  replyMessageId?: string;
+  repliedAt?: string;
+  cancelledReason?: string;
+  cancelledAt?: string;
+  appointment?: { receiptId: string; eventId: string; startsAt: string; threadId: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type OppositionReason = "baja" | "respuesta" | "suspension" | "resultado_ambiguo" | "manual";
+
+export interface LeadOpposition {
+  id: string;
+  ref: string;
+  tenantId: string;
+  reason: OppositionReason;
+  source: string;
+  createdAt: string;
+}
+
+export interface FollowUpEligibility {
+  eligible: boolean;
+  reasons: string[];
+}
+
+export interface InboundFollowUpMessage {
+  id: string;
+  threadId: string;
+  from: string;
+  subject?: string;
+  body?: string;
+  date: string;
+}
+
+const normEmail = (value: string) => {
+  const match = /<([^>]+)>/.exec(value);
+  return (match?.[1] ?? value).trim().toLowerCase();
+};
+
+const isOpenFollowUp = (status: LeadFollowUpStatus) =>
+  status === "scheduled" || status === "awaiting_approval" || status === "sent";
+
+/**
+ * Elegibilidad explicita: un paso solo nace si hay contacto, hilo, fecha futura
+ * y el paso anterior se envio. La lista de oposicion manda sobre todo lo demas.
+ */
+export function followUpEligibility(input: {
+  ficha: LeadFicha;
+  step: number;
+  contactEmail: string;
+  threadId: string;
+  replyToMessageId: string;
+  scheduledFor: string;
+  followUps: LeadFollowUp[];
+  opposed: boolean;
+  now?: string;
+}): FollowUpEligibility {
+  const reasons: string[] = [];
+  const now = input.now ?? new Date().toISOString();
+  const own = input.followUps.filter((followUp) => followUp.ref === input.ficha.ref);
+  if (input.ficha.status !== "accepted") reasons.push("ficha no aceptada");
+  if (input.ficha.businessStatus && input.ficha.businessStatus !== "OPERATIONAL")
+    reasons.push("negocio no operativo");
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(input.contactEmail)) reasons.push("contacto ausente");
+  if (!input.threadId.trim()) reasons.push("hilo ausente");
+  if (!input.replyToMessageId.trim()) reasons.push("mensaje de origen ausente");
+  if (input.opposed) reasons.push("el contacto pidio la baja");
+  if (!Number.isInteger(input.step) || input.step < 1 || input.step > MAX_FOLLOW_UP_STEPS)
+    reasons.push("paso fuera de rango");
+  if (
+    !Number.isFinite(Date.parse(input.scheduledFor)) ||
+    Date.parse(input.scheduledFor) <= Date.parse(now)
+  )
+    reasons.push("fecha de envio en el pasado");
+  if (own.some((followUp) => isOpenFollowUp(followUp.status)))
+    reasons.push("ya hay un seguimiento abierto");
+  if (own.some((followUp) => followUp.status === "replied")) reasons.push("el contacto ya respondio");
+  if (own.some((followUp) => followUp.status === "booked")) reasons.push("ya hay una cita");
+  if (own.some((followUp) => followUp.step === input.step)) reasons.push("paso ya preparado");
+  if (
+    input.step > 1 &&
+    !own.some(
+      (followUp) =>
+        followUp.step === input.step - 1 &&
+        (followUp.status === "sent" ||
+          followUp.status === "replied" ||
+          followUp.status === "booked"),
+    )
+  )
+    reasons.push("el paso anterior no se envio");
+  return { eligible: reasons.length === 0, reasons };
+}
+
+/** Respuesta del contacto en el hilo, posterior al seguimiento y con su identidad. */
+export function detectFollowUpReply(
+  followUp: LeadFollowUp,
+  messages: InboundFollowUpMessage[],
+): InboundFollowUpMessage | undefined {
+  const baseline = followUp.sentAt ?? followUp.createdAt;
+  return messages
+    .filter(
+      (message) =>
+        message.threadId === followUp.threadId &&
+        normEmail(message.from) === normEmail(followUp.to) &&
+        Date.parse(message.date) > Date.parse(baseline),
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+}
+
+export function looksLikeOptOut(text: string): boolean {
+  return /\b(baja|dar de baja|date de baja|unsubscribe|dejar de escribir|no me escrib|remove me)\b/i.test(
+    text,
+  );
+}
+
 export class LeadsService {
   constructor(
     private readonly db: TenantScopedStore,
@@ -236,6 +382,211 @@ export class LeadsService {
     // ficha nueva, con sus notas y su origen ya preservados.
     if (legacy) await this.db.remove(legacy.owner, KIND, legacy.value.id);
     return { lead: inserted as LeadFicha, created: true };
+  }
+
+  /** Seguimientos de la empresa, opcionalmente de un lead. */
+  async followUps(tenantId: string, ref?: string): Promise<LeadFollowUp[]> {
+    const rows = await this.db.scanByPrefix<LeadFollowUp>(FOLLOW_UP_KIND, tenantId, 2000);
+    return rows
+      .map(({ value }) => value)
+      .filter((followUp) => followUp.tenantId === tenantId && (!ref || followUp.ref === ref))
+      .sort((a, b) => a.ref.localeCompare(b.ref) || a.step - b.step);
+  }
+
+  async opposition(tenantId: string, ref: string): Promise<LeadOpposition | null> {
+    const row = await this.db.get<LeadOpposition>(PIPELINE_OWNER, OPPOSITION_KIND, ref);
+    return row && row.tenantId === tenantId ? row : null;
+  }
+
+  /**
+   * Baja o suspension: la lista de oposicion manda sobre cualquier paso abierto.
+   * Repetirla no duplica el seguimiento ni lo reabre.
+   */
+  async oppose(
+    tenantId: string,
+    ref: string,
+    input: { reason: OppositionReason; source: string; at?: string },
+  ): Promise<{ opposition: LeadOpposition; cancelled: LeadFollowUp[] }> {
+    const at = input.at ?? new Date().toISOString();
+    const opposition: LeadOpposition = {
+      id: ref,
+      ref,
+      tenantId,
+      reason: input.reason,
+      source: input.source,
+      createdAt: at,
+    };
+    await this.db.put(PIPELINE_OWNER, OPPOSITION_KIND, opposition);
+    const status: LeadFollowUpStatus =
+      input.reason === "suspension"
+        ? "suspended"
+        : input.reason === "resultado_ambiguo"
+          ? "cancelled"
+          : "opted_out";
+    const cancelled: LeadFollowUp[] = [];
+    for (const followUp of (await this.followUps(tenantId, ref)).filter((item) =>
+      isOpenFollowUp(item.status),
+    )) {
+      const next = await this.markFollowUp(
+        tenantId,
+        ref,
+        followUp.step,
+        { status, cancelledReason: input.reason, cancelledAt: at },
+        followUp.status,
+      );
+      if (next) cancelled.push(next);
+    }
+    return { opposition, cancelled };
+  }
+
+  async markFollowUp(
+    tenantId: string,
+    ref: string,
+    step: number,
+    patch: Partial<LeadFollowUp>,
+    expectedStatus?: LeadFollowUpStatus,
+  ): Promise<LeadFollowUp | null> {
+    const id = `${ref}:${step}`;
+    const current = await this.db.get<LeadFollowUp>(PIPELINE_OWNER, FOLLOW_UP_KIND, id);
+    if (!current || current.tenantId !== tenantId) return null;
+    if (expectedStatus && current.status !== expectedStatus) return null;
+    return this.db.compareAndSwap<LeadFollowUp>(
+      PIPELINE_OWNER,
+      FOLLOW_UP_KIND,
+      id,
+      { status: current.status },
+      { ...patch, updatedAt: new Date().toISOString() },
+    );
+  }
+
+  /**
+   * Programa un paso durable por lead. La clave incluye lead y paso, asi que
+   * reintentar la preparacion no duplica el seguimiento ni reinicia la cuenta.
+   */
+  async scheduleFollowUp(
+    tenantId: string,
+    input: {
+      ref: string;
+      step: number;
+      threadId: string;
+      replyToMessageId: string;
+      to: string;
+      subject: string;
+      scheduledFor: string;
+    },
+  ): Promise<{ followUp: LeadFollowUp; created: boolean; eligibility: FollowUpEligibility }> {
+    const id = `${input.ref}:${input.step}`;
+    const existing = await this.db.get<LeadFollowUp>(PIPELINE_OWNER, FOLLOW_UP_KIND, id);
+    if (existing && existing.tenantId === tenantId) {
+      return {
+        followUp: existing,
+        created: false,
+        eligibility: { eligible: true, reasons: [] },
+      };
+    }
+    const ficha = (await this.list(tenantId)).find((item) => item.ref === input.ref);
+    if (!ficha) throw new AppError("La ficha no esta aceptada en esta empresa", 404);
+    const followUps = await this.followUps(tenantId);
+    const opposed = Boolean(await this.opposition(tenantId, input.ref));
+    const eligibility = followUpEligibility({
+      ficha,
+      step: input.step,
+      contactEmail: input.to,
+      threadId: input.threadId,
+      replyToMessageId: input.replyToMessageId,
+      scheduledFor: input.scheduledFor,
+      followUps,
+      opposed,
+    });
+    if (!eligibility.eligible)
+      throw new AppError(
+        `No se puede programar el seguimiento: ${eligibility.reasons.join(", ")}`,
+        422,
+      );
+    const now = new Date().toISOString();
+    const followUp: LeadFollowUp = {
+      id,
+      ref: input.ref,
+      tenantId,
+      step: input.step,
+      status: "scheduled",
+      threadId: input.threadId,
+      replyToMessageId: input.replyToMessageId,
+      to: input.to,
+      subject: input.subject,
+      scheduledFor: input.scheduledFor,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const inserted = await this.db.insertIfAbsent(PIPELINE_OWNER, FOLLOW_UP_KIND, followUp);
+    if (!inserted) {
+      const raced = await this.db.get<LeadFollowUp>(PIPELINE_OWNER, FOLLOW_UP_KIND, id);
+      if (!raced) throw new AppError("El seguimiento no se pudo guardar; reintenta", 409);
+      return { followUp: raced, created: false, eligibility };
+    }
+    return { followUp: inserted, created: true, eligibility };
+  }
+
+  /**
+   * Respuesta del contacto. La identidad se comprueba aqui, no en la UI: un
+   * mensaje de otro remitente en el mismo hilo no responde por el lead.
+   */
+  async recordInbound(
+    tenantId: string,
+    ref: string,
+    input: { messageId: string; from: string; at: string; optOut: boolean },
+  ): Promise<LeadFollowUp | null> {
+    const followUp = (await this.followUps(tenantId, ref))
+      .filter((item) => isOpenFollowUp(item.status))
+      .sort((a, b) => b.step - a.step)[0];
+    if (!followUp) return null;
+    if (normEmail(input.from) !== normEmail(followUp.to))
+      throw new AppError("El remitente no es el contacto del seguimiento", 409);
+    if (input.optOut) {
+      await this.oppose(tenantId, ref, {
+        reason: "baja",
+        source: `mail:${input.messageId}`,
+        at: input.at,
+      });
+      return (await this.followUps(tenantId, ref)).find((item) => item.step === followUp.step) ?? null;
+    }
+    return this.markFollowUp(
+      tenantId,
+      ref,
+      followUp.step,
+      { status: "replied", replyMessageId: input.messageId, repliedAt: input.at },
+      followUp.status,
+    );
+  }
+
+  /** Una cita solo existe despues de una respuesta y con el recibo del proveedor. */
+  async bookAppointment(
+    tenantId: string,
+    ref: string,
+    input: { receiptId: string; eventId: string; startsAt: string; threadId?: string },
+  ): Promise<LeadFollowUp> {
+    const followed = (await this.followUps(tenantId, ref)).find((item) => item.status === "replied");
+    if (!followed) throw new AppError("Solo se agenda una cita despues de una respuesta", 409);
+    if (!input.receiptId.trim()) throw new AppError("La cita necesita el recibo del envio", 409);
+    if (!input.eventId.trim() || !Number.isFinite(Date.parse(input.startsAt)))
+      throw new AppError("La cita necesita evento y hora", 422);
+    const updated = await this.markFollowUp(
+      tenantId,
+      ref,
+      followed.step,
+      {
+        status: "booked",
+        appointment: {
+          receiptId: input.receiptId,
+          eventId: input.eventId,
+          startsAt: input.startsAt,
+          threadId: input.threadId ?? followed.threadId,
+        },
+      },
+      "replied",
+    );
+    if (!updated) throw new AppError("El seguimiento cambio; revisa la respuesta", 409);
+    return updated;
   }
 
   private async merge(
