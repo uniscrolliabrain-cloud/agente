@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) contrato de mensajeria y aprobacion; la 14 usa su propia forma y debe migrar a estos tipos: AgentMessage, AgentMessageIntent, ApprovalRequest, ApprovalStatus.
 // MESSAGING_V1 - mensajeria entre roles y aprobaciones primitivas.
 
 import { z } from "zod";

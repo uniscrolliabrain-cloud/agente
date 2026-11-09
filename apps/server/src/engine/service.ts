@@ -21,6 +21,7 @@ import {
   type AgentTask,
   type AgentWorkspace,
   createTaskSchema,
+  type CreateTaskInput,
   type Evidence,
   type Goal,
   goalInputSchema,
@@ -1269,7 +1270,7 @@ export class AgentService {
 
   // SERVICE_CREATE_TASK_TENANT_COUNT_V1
   async createTask(owner: string, raw: unknown, idempotencyKey?: string, held = false) {
-    const input = createTaskSchema.parse(raw);
+    const input: CreateTaskInput = createTaskSchema.parse(raw);
     if (input.goalId && !(await this.db.get(owner, "goals", input.goalId)))
       throw new AppError("Goal not found", 404);
     if (input.kind === "sop" && typeof input.input.sopId !== "string")

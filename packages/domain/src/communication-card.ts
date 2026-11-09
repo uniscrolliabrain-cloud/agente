@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) la tarjeta se valida en tests; la 19 aun no la usa para redactar: CommunicationCard.
 import { z } from "zod";
 
 export const communicationCardSchema = z.object({

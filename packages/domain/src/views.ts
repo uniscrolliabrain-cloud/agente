@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) piezas de la vista runtime; el renderer no las tipa: ViewKpi, ViewQueueItem.
 // FIX_02_VIEWS_RENAME_V1 - nombres distintos a workspace-spec.ts para no colisionar.
 import { z } from "zod";
 

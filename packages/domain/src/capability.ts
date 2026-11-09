@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) partes de CapabilityContract; el catalogo aun no las consume: CapabilityRisk, CapabilitySideEffect, CapabilityCost.
 // CAPABILITY_V1 - capacidad ejecutable del sistema (tool, skill, SOP).
 
 import { z } from "zod";

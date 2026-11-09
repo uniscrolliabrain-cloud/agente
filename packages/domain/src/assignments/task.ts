@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) variante tipada por kind; el motor usa Assignment generico y la union no esta cableada: AgentTaskAssignment.
 // ASSIGNMENT_IMPL_V1 - AgentTask como Assignment (kind task).
 // 2.1: sin z.any(). Tipos reales del dominio, declarados localmente
 //      porque TaskStep y Evidence son interface, no schema Zod.

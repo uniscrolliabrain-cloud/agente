@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) variante tipada por kind; el motor usa Assignment generico y la union no esta cableada: SopAssignment.
 // ASSIGNMENT_IMPL_V1 - SOP como Assignment (kind sop).
 // 2.1: sin z.any(). Tipos reales del dominio.
 import { z } from "zod";

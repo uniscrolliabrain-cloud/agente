@@ -9,6 +9,7 @@ import {
   signupRequestSchema,
   slugify,
   verificationTokenSchema,
+  type SignupRequest,
   type VerificationToken,
 } from "../../../packages/domain/src/signup.ts";
 import type { Config } from "./config.ts";
@@ -53,7 +54,7 @@ export function signupRoutes({ db, config, users, tenantService }: SignupRoutesD
       c.header("Retry-After", String(Math.max(1, Math.ceil(verdict.retryAfterMs / 1000))));
       throw new AppError("Demasiadas cuentas creadas desde esta IP. Prueba mas tarde.", 429);
     }
-    const body = signupRequestSchema.parse(await c.req.json());
+    const body: SignupRequest = signupRequestSchema.parse(await c.req.json());
     const email = body.email.toLowerCase().trim();
 
     // Anti-enumeracion: si el email ya existe, respondemos lo mismo y no

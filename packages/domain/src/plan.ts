@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) estados del plan; el planificador usa literales: PlanStatus, PlanStepStatus.
 // PLAN_VERSIONING_V2 - version monotona + previousPlanId.
 // PLAN_V1 - plan versionado de ejecucion.
 

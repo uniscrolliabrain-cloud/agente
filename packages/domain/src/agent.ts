@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) tipo de entrada de rol; el alta normaliza con agentRoleSchema pero no anota la entrada: AgentRoleInput.
 import { z } from "zod";
 
 export type TaskStatus =

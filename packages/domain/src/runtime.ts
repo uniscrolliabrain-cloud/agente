@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) runtime persistente declarado y no implementado: AgentRuntime, RuntimeCheckpoint, RuntimePhase.
 // RUNTIME_V1 - runtime efimero de un agente durante una ejecucion.
 
 import { z } from "zod";

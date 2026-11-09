@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) metamodelo v1; candidato a retirada cuando v2 se cablee en el instalador: BusinessSchema, BusinessEntityDecl, BusinessRelationDecl.
 // B101_APPLIED
 import { z } from "zod";
 

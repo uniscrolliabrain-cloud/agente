@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) metamodelo cognitivo declarado y no implementado: CapabilitySpec, CognitiveSpec.
 // ONTOLOGY_V1 - bundle de ontologia por tenant + capability specs + validador.
 //
 // Un OntologyBundle es una foto auditable, congelada y versionada del

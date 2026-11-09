@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) partes del assignment que el motor pasa sin tipar: AssignmentPlan, AssignmentEvidence, AssignmentOutcome.
 // ASSIGNMENT_MODEL_V1 - interfaz de lectura unificada de asignación.
 // AgentTask (task), Goal (goal), Monitor (monitor), ActionProposal (approval),
 // SOP (sop) son implementaciones. NO se persiste como entidad propia.

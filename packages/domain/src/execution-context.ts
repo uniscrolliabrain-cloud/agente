@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) rol de ejecucion; el contexto se construye sin anotar el rol: ExecutionRole.
 // EXECUTION_CONTEXT_V1 - contexto unificado que viaja por todas las APIs internas.
 
 import { z } from "zod";

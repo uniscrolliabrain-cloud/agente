@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) resolucion de conflictos declarada y no implementada: ConflictDiff, ConflictVersion, ConflictResolution.
 // CONFLICT_MODEL_V1 - tipos de conflicto para CAS y diff por campo.
 import { z } from "zod";
 

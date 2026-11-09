@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) alias z.infer de schemas usados dentro del propio modulo; se conserva como vocabulario y no hay paquete publicado: ActorKind, ActorRole, ActorProfile.
 // ACTOR_MODEL_V1 - actor como vista derivada del JWT + User.
 // Sin persistencia. Sin ActorRegistry. Se computa en cada request.
 // HumanActor desde User. AgentActor desde AgentRole.

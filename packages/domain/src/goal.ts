@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) subtipos de Goal; la UI escribe literales: GoalStatus, GoalPriority, SuccessCriterion, GoalConstraint.
 // GOAL_V1 - objetivo empresarial con estado deseado y criterios de exito.
 
 import { z } from "zod";

@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) partes de Outcome; el verificador no las tipa: OutcomeStatus, OutcomeMetric.
 // OUTCOME_V1 - resultado estructurado de una ejecucion.
 
 import { z } from "zod";

@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) tipo de conocimiento; la resolucion de verdad no lo anota: KnowledgeKind.
 // TRUTH_V1 - resolucion de verdad entre fuentes.
 
 import { z } from "zod";

@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) clasificacion de ficha; el endpoint no devuelve el registro tipado: ClassifiedField, ClassifiedRecord.
 // FIELD_CLASSIFICATION_V1 - clasificacion por campo, mapa servidor.
 // No se guarda en el registro. El FieldFilter consulta este mapa.
 import { z } from "zod";

@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) alias typeof del vocabulario base; nadie importa el tipo: BaseVocabulary.
 // ONTOLOGY_SEED_V1 - vocabulario base del kernel.
 
 export const BASE_VOCABULARY = {

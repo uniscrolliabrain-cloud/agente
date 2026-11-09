@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) spec de workspace; convive con RuntimeViewSpec y falta elegir canonico: ViewKind, ViewSpec.
 // WORKSPACE_SPEC_V1 - especificacion de workspace derivada del schema.
 
 import { z } from "zod";

@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) frontera standalone/openbot; el computer no implementa el puerto: ExecutionBackend.
 import { z } from "zod";
 
 export type WorkspaceMode = "sample" | "live";

@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) relacion de organigrama; solo el test de la campana 2 la usa: FlowRelation.
 // FLOW_MODEL_V1 - estructura formal de flujo organizacional.
 // Construido desde AgentPersona.reportsTo y AgentPersona.peers.
 // NO desde AgentRole (AgentRole no tiene reportsTo ni peers).

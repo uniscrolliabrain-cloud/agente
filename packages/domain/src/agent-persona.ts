@@ -1,3 +1,4 @@
+// PENDING(2027-03-31) tipos de persona para editor e instalador; el editor aun tipa la forma a mano: AgentCapabilities, AgentFormality, AgentGender, AgentPersonality, AgentValueRef.
 // AGENT_PERSONA_V1 - schema base de personas funcionales del sistema.
 //
 // Una AgentPersona NO es un prompt. Es la descripcion estatica de una
