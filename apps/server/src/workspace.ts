@@ -6,6 +6,7 @@ import type {
   Artifact,
   BrowserSession,
   CalendarEvent,
+  EventDraft,
   Mail,
   ProposalInput,
   Workspace,
@@ -28,8 +29,42 @@ function addressesIn(value: string | undefined): string[] {
   return (value ?? "").toLowerCase().match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/g) ?? [];
 }
 
+// CALENDAR_SLOT_API_V1 (campana 16) - la zona declarada debe ser IANA: un
+// nombre suelto produciria horas equivocadas en el siguiente cambio de hora.
+function ianaZone(value: string): string {
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value });
+    return value;
+  } catch {
+    throw new AppError("Use a valid IANA time zone for the calendar", 422);
+  }
+}
+
+// CALENDAR_LOCAL_TIME_V1 - instante -> hora local con offset explicito, para
+// que dos huecos a los lados de un cambio de hora no compartan offset.
+function zonedIso(instant: number, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZoneName: "longOffset",
+  }).formatToParts(new Date(instant));
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  const name = get("timeZoneName");
+  const offset = name === "GMT" ? "+00:00" : /^GMT([+-]\d{2}:\d{2})$/.exec(name)?.[1];
+  if (!offset) throw new AppError("The calendar time zone has no usable offset", 422);
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return `${get("year")}-${get("month")}-${get("day")}T${hour}:${get("minute")}:${get("second")}${offset}`;
+}
+
 export class WorkspaceService {
   private seeding = new Map<string, Promise<void>>();
+  private calendarLocks = new Map<string, Promise<void>>();
   constructor(
     // WORKSPACE_TENANT_STORE_V1 — acepta Store o TenantScopedStore.
     // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md.
@@ -39,6 +74,26 @@ export class WorkspaceService {
     private readonly googleAuth: GoogleAuth,
     private readonly rag: RagService,
   ) {}
+
+  /**
+   * CALENDAR_WRITE_LOCK_V1 (campana 16) - la revalidacion y la escritura de un
+   * calendario propio no se solapan: dos aprobaciones simultaneas del mismo
+   * hueco no pueden crear dos eventos.
+   */
+  private async serialized<T>(key: string, work: () => Promise<T>): Promise<T> {
+    const previous = this.calendarLocks.get(key);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    this.calendarLocks.set(key, gate);
+    await previous;
+    try {
+      return await work();
+    } finally {
+      release();
+      if (this.calendarLocks.get(key) === gate) this.calendarLocks.delete(key);
+    }
+  }
+
   google(owner: string, connectionId?: string) {
     return new GoogleClient({
       getAccessToken: () => this.googleAuth.accessToken(owner, connectionId),
@@ -102,6 +157,115 @@ export class WorkspaceService {
       )
       .sort((a, b) => a.start.localeCompare(b.start));
   }
+
+  /**
+   * CALENDAR_AUTHORIZED_V1 (campana 16) - solo se escribe en un calendario que
+   * la conexion lista y con permiso de escritura; el id que proponga el modelo
+   * nunca basta.
+   */
+  private async writableCalendar(
+    owner: string,
+    connectionId: string | undefined,
+    calendarId: string,
+  ): Promise<{ id: string; timeZone: string }> {
+    if (this.config.mode === "sample") {
+      if (calendarId !== "primary")
+        throw new AppError("Choose a calendar you can write to", 409);
+      return { id: "primary", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone };
+    }
+    const calendars = await this.google(owner, connectionId).listCalendars();
+    const calendar = calendars.find((entry) => entry.id === calendarId);
+    if (!calendar) throw new AppError("Choose a calendar you can write to", 409);
+    if (calendar.accessRole === "reader" || calendar.accessRole === "freeBusyReader")
+      throw new AppError("That calendar is read-only; choose one you can write to", 409);
+    return { id: calendar.id, timeZone: ianaZone(calendar.timeZone) };
+  }
+
+  /**
+   * CALENDAR_CONFLICT_V1 (campana 16) - un hueco solo vale si sigue libre en
+   * este momento: se consulta al preparar y otra vez, ya serializado, justo
+   * antes de escribir.
+   */
+  private async busyEvent(owner: string, data: EventDraft): Promise<CalendarEvent | null> {
+    const events = await this.events(owner, {
+      calendarId: data.calendarId,
+      timeMin: data.allDay ? `${data.start}T00:00:00Z` : data.start,
+      timeMax: data.allDay ? `${data.end}T23:59:59Z` : data.end,
+    });
+    const from = data.allDay ? Date.parse(`${data.start}T00:00:00Z`) : Date.parse(data.start);
+    const to = data.allDay ? Date.parse(`${data.end}T00:00:00Z`) : Date.parse(data.end);
+    return (
+      events.find((event) => {
+        if (data.allDay) {
+          const day = event.start.slice(0, 10);
+          return day >= data.start && day < data.end;
+        }
+        return Date.parse(event.start) < to && Date.parse(event.end) > from;
+      }) ?? null
+    );
+  }
+
+  /**
+   * CALENDAR_AVAILABILITY_V1 (campana 16) - huecos reales de al menos la
+   * duracion pedida dentro de una ventana acotada, en la zona del calendario y
+   * con el offset que corresponde a cada lado de un cambio de hora.
+   */
+  async availability(
+    owner: string,
+    options: {
+      calendarId?: string;
+      timeMin: string;
+      timeMax: string;
+      durationMinutes?: number;
+    },
+  ) {
+    const connection = await this.connection(owner);
+    if (!connection) throw new AppError("Google is disconnected", 409);
+    const calendar = await this.writableCalendar(
+      owner,
+      connection.id,
+      options.calendarId ?? "primary",
+    );
+    const timestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+    if (!timestamp.test(options.timeMin) || !timestamp.test(options.timeMax))
+      throw new AppError("Use a date-time with an explicit offset", 422);
+    const from = Date.parse(options.timeMin);
+    const to = Date.parse(options.timeMax);
+    if (!(to > from) || to - from > 31 * 24 * 60 * 60 * 1000)
+      throw new AppError("Choose a window between one moment and 31 days", 422);
+    const durationMinutes = options.durationMinutes ?? 30;
+    if (!Number.isInteger(durationMinutes) || durationMinutes < 5 || durationMinutes > 480)
+      throw new AppError("Choose a duration between 5 and 480 minutes", 422);
+    const events = await this.events(owner, {
+      calendarId: calendar.id,
+      timeMin: options.timeMin,
+      timeMax: options.timeMax,
+    });
+    const busy = events
+      .map((event) => [Date.parse(event.start), Date.parse(event.end)] as const)
+      .filter(([start, end]) => Number.isFinite(start) && Number.isFinite(end));
+    const step = 15 * 60 * 1000;
+    const length = durationMinutes * 60 * 1000;
+    const slots: { start: string; end: string }[] = [];
+    const limit = Math.ceil(from / step) * step;
+    for (let start = limit; start + length <= to && slots.length < 20; start += step) {
+      const end = start + length;
+      if (busy.some(([busyStart, busyEnd]) => busyStart < end && busyEnd > start)) continue;
+      slots.push({
+        start: zonedIso(start, calendar.timeZone),
+        end: zonedIso(end, calendar.timeZone),
+      });
+    }
+    return {
+      calendarId: calendar.id,
+      timeZone: calendar.timeZone,
+      timeMin: zonedIso(from, calendar.timeZone),
+      timeMax: zonedIso(to, calendar.timeZone),
+      durationMinutes,
+      slots,
+    };
+  }
+
   private async cacheMail(owner: string, mail: Mail[], connectionId: string) {
     const imports = await this.db.list<{ id: string; artifactId: string; connectionId?: string }>(
       owner,
@@ -534,7 +698,19 @@ export class WorkspaceService {
         } as const,
       };
     }
-    if (input.kind === "calendar.create" || this.config.mode === "sample") return { input };
+    if (input.kind === "calendar.create") {
+      const calendar = await this.writableCalendar(owner, connectionId, input.data.calendarId);
+      ianaZone(input.data.timeZone);
+      const busy = await this.busyEvent(owner, { ...input.data, calendarId: calendar.id });
+      if (busy) throw new AppError(`That slot is already busy: ${busy.title}`, 409);
+      return {
+        input: {
+          kind: "calendar.create",
+          data: { ...input.data, calendarId: calendar.id },
+        } as ProposalInput,
+      };
+    }
+    if (this.config.mode === "sample") return { input };
     const reviewed = await this.google(owner, connectionId).reviewEvent(
       input.data.calendarId,
       input.data.eventId,
@@ -649,6 +825,23 @@ export class WorkspaceService {
       );
       return `Renamed Google Drive file · ${file.name}`;
     }
+    if (input.kind === "calendar.create") {
+      const calendar = await this.writableCalendar(owner, connectionId, input.data.calendarId);
+      const event = await this.serialized(`calendar:${owner}:${calendar.id}`, async () => {
+        // CALENDAR_REVALIDATE_V1 - entre la revision y la aprobacion el hueco
+        // pudo ocuparse: se comprueba dentro del turno serializado.
+        const busy = await this.busyEvent(owner, { ...input.data, calendarId: calendar.id });
+        if (busy) throw new AppError(`That slot was taken before writing: ${busy.title}`, 409);
+        const created = await providerWrite(() =>
+          google.createEvent({ ...input.data, calendarId: calendar.id }),
+        );
+        // CALENDAR_EVENT_LINK_V1 - el evento y su enlace quedan persistidos; el
+        // recibo puede releerse con eventReceipt si el proveedor no responde.
+        await this.db.put(owner, "events", created);
+        return created;
+      });
+      return `Google Calendar event · ${event.id}${event.link ? ` · ${event.link}` : ""}`;
+    }
     if (input.kind === "calendar.delete") {
       await providerWrite(() =>
         google.deleteEvent(input.data.calendarId, input.data.eventId, targetVersion),
@@ -657,9 +850,7 @@ export class WorkspaceService {
       return `Deleted Google Calendar event · ${input.data.eventId}`;
     }
     const event = await providerWrite(() =>
-      input.kind === "calendar.create"
-        ? google.createEvent(input.data)
-        : google.updateEvent(input.data.eventId, input.data, targetVersion),
+      google.updateEvent(input.data.eventId, input.data, targetVersion),
     );
     await this.db.put(owner, "events", event);
     return `Google Calendar event · ${event.id}`;
@@ -669,6 +860,17 @@ export class WorkspaceService {
     const connection = await this.connection(owner);
     if (!connection) throw new AppError("Google is disconnected", 409);
     return this.google(owner, connection.id).messageReceipt(messageId);
+  }
+  /** CALENDAR_EVENT_RECEIPT_V1 (campana 16) - evidencia minima del evento real. */
+  async eventReceipt(owner: string, calendarId: string, eventId: string) {
+    if (this.config.mode === "sample")
+      throw new AppError(
+        "Calendar evidence requires live mode with a connected Google account",
+        409,
+      );
+    const connection = await this.connection(owner);
+    if (!connection) throw new AppError("Google is disconnected", 409);
+    return this.google(owner, connection.id).eventReceipt(calendarId, eventId);
   }
   async importAttachment(owner: string, reference: string): Promise<Artifact> {
     const connection = await this.connection(owner);

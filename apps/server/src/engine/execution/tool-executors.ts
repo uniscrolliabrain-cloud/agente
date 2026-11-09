@@ -129,6 +129,9 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
     };
   });
 
+  // CALENDAR_SLOT_EXECUTOR_V1 (campana 16) - el borrador se construye campo a
+  // campo; WorkspaceService.prepare resuelve el calendario autorizado, valida
+  // la zona y rechaza un hueco ya ocupado antes de crear la propuesta.
   wrap("prepare_event", async (ctx, inputs) => {
     if (!ctx.taskId) throw new Error("prepare_event requires taskId");
     const task = await service.db.get<import("../../../../../packages/domain/src/agent.ts").AgentTask>(
@@ -137,13 +140,32 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
       ctx.taskId,
     );
     if (!task) throw new Error("prepare_event requires an existing task");
+    const { eventDraftSchema } = await import("../../../../../packages/domain/src/index.ts");
+    const data = eventDraftSchema.parse({
+      calendarId: typeof inputs.calendarId === "string" ? inputs.calendarId : "primary",
+      title: String(inputs.title ?? ""),
+      start: String(inputs.start ?? ""),
+      end: String(inputs.end ?? ""),
+      allDay: inputs.allDay === true,
+      ...(typeof inputs.timeZone === "string" ? { timeZone: inputs.timeZone } : {}),
+      location: typeof inputs.location === "string" ? inputs.location : "",
+      description: typeof inputs.description === "string" ? inputs.description : "",
+      attendees: Array.isArray(inputs.attendees) ? (inputs.attendees as string[]) : [],
+    });
     const proposal = await service.actions.propose(
       ctx.owner,
-      { kind: "calendar.create", data: inputs as never },
+      { kind: "calendar.create", data },
       undefined,
       ctx.taskId,
     );
-    return { actionId: proposal.id, status: proposal.status };
+    return {
+      actionId: proposal.id,
+      status: proposal.status,
+      calendarId: data.calendarId,
+      start: data.start,
+      end: data.end,
+      timeZone: data.timeZone,
+    };
   });
 
   // TOOL_EXECUTOR_LLM_GENERATE_V2 - llamada real al modelo con timeout.

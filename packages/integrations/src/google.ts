@@ -97,6 +97,7 @@ const messageSchema = z.object({
 const googleEventSchema = z.object({
   id: z.string().min(1),
   etag: z.string().optional(),
+  htmlLink: z.string().optional(),
   recurrence: z.array(z.string()).optional(),
   recurringEventId: z.string().optional(),
   summary: z.string().default("(Untitled event)"),
@@ -366,7 +367,11 @@ function mapMessage(message: z.infer<typeof messageSchema>): Mail {
     attachments,
   };
 }
-function mapEvent(value: unknown, calendarId: string, calendarTimeZone = "UTC"): CalendarEvent {
+function mapEvent(
+  value: unknown,
+  calendarId: string,
+  calendarTimeZone = "UTC",
+): CalendarEvent & { link?: string } {
   const event = googleEventSchema.parse(value);
   const allDay = Boolean(event.start.date);
   const start = allDay ? event.start.date : event.start.dateTime;
@@ -384,6 +389,7 @@ function mapEvent(value: unknown, calendarId: string, calendarTimeZone = "UTC"):
     location: event.location,
     description: event.description,
     attendees: event.attendees.map((attendee) => attendee.email),
+    ...(event.htmlLink ? { link: event.htmlLink } : {}),
   };
 }
 function eventBody(draft: EventDraft, patch = false) {
@@ -866,7 +872,24 @@ export class GoogleClient {
     return message;
   }
 
-  async createEvent(input: EventDraft): Promise<CalendarEvent> {
+  // CALENDAR_EVENT_RECEIPT_V1 (campana 16) - evidencia minima del evento real:
+  // id, calendario, ventana y enlace, sin descripcion ni invitados.
+  async eventReceipt(
+    calendarId: string,
+    eventId: string,
+  ): Promise<{ id: string; calendarId: string; start: string; end: string; link?: string }> {
+    const current = await this.readSingleEvent(calendarId, eventId);
+    const event = mapEvent(current, calendarId, current.start.timeZone ?? "UTC");
+    return {
+      id: event.id,
+      calendarId,
+      start: event.start,
+      end: event.end,
+      ...(event.link ? { link: event.link } : {}),
+    };
+  }
+
+  async createEvent(input: EventDraft): Promise<CalendarEvent & { link?: string }> {
     const draft = eventDraftSchema.parse(input);
     const result = await this.request(
       `${calendarPath(draft.calendarId)}?sendUpdates=all`,
