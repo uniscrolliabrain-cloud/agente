@@ -67,5 +67,5 @@ Revertir el commit devuelve `investigar-leads` al executor genérico de SOPs (o 
 
 ## SHA por patchset
 
-- **18.P1 + 18.P2 + 18.P3:** pendiente de commit (producto y pruebas en un único commit sobre `4d34906`).
+- **18.P1 + 18.P2 + 18.P3:** `9f12282` (producto y pruebas en un único commit sobre `4d34906`).
 - **Punto de rollback:** `4d34906`.
