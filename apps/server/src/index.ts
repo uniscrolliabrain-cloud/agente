@@ -66,6 +66,11 @@ if (process.env.AGENTE_KERNEL_STORE !== "memory") {
   }
 }
 const { app, agent, bus } = await createApp(db, config);
+// KERNEL_LISTENERS_SINGLE_WIRE_V1 - un solo registro por proceso. createApp
+// puede instanciarse varias veces en tests; suscribir alli duplicaba
+// consumidores y hacia que un kernel viejo procesara eventos de otro.
+const kernelListeners = await agent.registerKernelListeners().catch(() => 0);
+if (kernelListeners > 0) console.log(`[kernel] listeners registrados: ${kernelListeners}`);
 // INDEX_AUDIT_VERIFY_V1 - verifica el hash chain del audit al arranque.
 {
   const kernelDeps = (agent.kernel as unknown as { deps?: { audit?: { verify?: (tenantId: string) => Promise<boolean> } } })?.deps;
@@ -241,29 +246,12 @@ for (const def of buildAlertDefinitions({
 }
 alerts.start();
 
-// EVENTS_KERNEL_SUBSCRIBER_WIRE_V1
+// KERNEL_LISTENERS_V2 - los listeners del kernel se registran una sola vez en
+// createApp (registerKernelListeners), no aqui, para que tests y despliegues
+// tengan el mismo comportamiento.
 {
-  const { startKernelEventSubscriber } = await import("./kernel/subscribers/events.ts");
-  const { globalSubscribers } = await import("./engine/events/subscriber.ts");
   const kernelInstance = (agent as unknown as { kernel?: import("./kernel/index.ts").Kernel }).kernel;
   if (kernelInstance) {
-    const sub = startKernelEventSubscriber(kernelInstance, globalSubscribers, ownersWithConsumers);
-    process.on("SIGTERM", () => sub.stop());
-
-    // EVENTS_CONSUMERS_WIRE_THOUGHT_V1
-    const { startKernelThoughtConsumer } = await import("./kernel/subscribers/thought-consumer.ts");
-    const { startKernelTurnConsumer } = await import("./kernel/subscribers/turn-consumer.ts");
-    const thoughtConsumer = startKernelThoughtConsumer(ownersWithConsumers, db);
-    const turnConsumer = startKernelTurnConsumer(ownersWithConsumers, db);
-    process.on("SIGTERM", () => { thoughtConsumer.stop(); turnConsumer.stop(); });
-
-    // EVENTS_KERNEL_CONSUMERS_WIRE_V2
-    const { startKernelMetricsConsumer } = await import("./kernel/subscribers/metrics-consumer.ts");
-    const { startKernelAuditConsumer } = await import("./kernel/subscribers/audit-consumer.ts");
-    const { startKernelNotificationsConsumer } = await import("./kernel/subscribers/notifications-consumer.ts");
-    const kMetrics = startKernelMetricsConsumer(ownersWithConsumers);
-    const kAudit = startKernelAuditConsumer(ownersWithConsumers, db);
-    const kNotif = startKernelNotificationsConsumer(ownersWithConsumers, db);
     // EVENTS_CONSUMERS_WIRE_STATE_V1
     const { startVerificationDisagreementConsumer } = await import("./engine/events/consumers/verification-disagreement.ts");
     const { startStateChangedConsumer } = await import("./engine/events/consumers/state-changed.ts");
@@ -303,11 +291,6 @@ alerts.start();
       })();
     }, 60 * 60 * 1000);
     retentionPurge.unref?.();
-    process.on("SIGTERM", () => { kMetrics.stop(); kAudit.stop(); kNotif.stop(); });
-    // KERNEL_SUBSCRIBERS_GRACEFUL_SHUTDOWN_V1
-    process.on("SIGINT", () => {
-      try { kMetrics.stop(); kAudit.stop(); kNotif.stop(); } catch { /* noop */ }
-    });
   }
 }
 const deferredTick = setInterval(() => {

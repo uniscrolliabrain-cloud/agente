@@ -76,6 +76,7 @@ import type { AgentGovernance } from "./agents/governance.ts";
 import type { WorkspaceRegistry } from "./workspace/registry.ts";
 import type { SkillMarketplace } from "./skills/marketplace.ts";
 import type { Kernel } from "../kernel/index.ts";
+import type { CognitionCardStore } from "../kernel/cognition/card-store.ts";
 import { RagService } from "./rag.ts";
 import { WhatsAppClient } from "../../../../packages/integrations/src/stubs/whatsapp.ts";
 import { MemoryService } from "./memory.ts";
@@ -153,6 +154,8 @@ export interface BusinessOsServices {
   tenantService?: TenantService;
 // KERNEL_WIRE_A_V1 kernel cognitivo opcional. Sin esto, el repo funciona igual.
   kernel?: Kernel;
+  // COGNITION_CARD_WIRE_V1 - store de tarjetas cognitivas (slow -> chat).
+  cards?: CognitionCardStore;
   // WS_ENGINE_WIRE_V1 - catalogo y dispatcher de workspaces (inyectados en app.ts).
   workspaceModuleRegistry?: import("./workspaces/registry.ts").WorkspaceModuleRegistry;
   workspaceDispatcher?: import("./workspaces/dispatcher.ts").WorkspaceDispatcher;
@@ -187,6 +190,8 @@ export class AgentService {
   // ENGINE_KERNEL_EXPOSE_V1 - kernel expuesto como readonly publico para que
   // conversation.ts, sop-executor.ts y kernel-routes lean deps sin cast.
   readonly kernel?: Kernel;
+  // COGNITION_CARD_PUBLIC_V1 - el chat consume tarjetas del slow.
+  readonly cards?: CognitionCardStore;
   // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
   readonly tenantService?: TenantService;
   // GUARDRAILS_V1 - limites duros por tenant.
@@ -254,6 +259,7 @@ export class AgentService {
     this.workspaceRegistry = business?.workspaceRegistry;
     this.marketplace = business?.marketplace;
     this.kernel = business?.kernel;
+    this.cards = business?.cards;
     // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
     this.tenantService = business?.tenantService;
     // `query_business` ejecuta la query que escribe el SOP contra este DSN. Lo normal es que
@@ -538,6 +544,9 @@ export class AgentService {
 // Ver: auditora profunda 09.
         { kind: "cognitive-turns", days: 30 },
         { kind: "cognitive-thoughts", days: 30 },
+        // COGNITION_CARD_RETENTION_V1 - las tarjetas expiran a los 7 dias;
+        // se purgan a los 30 para dejar margen de auditoria.
+        { kind: "cognition-cards", days: 30 },
         // PURGE_DEAD_LETTER_V1 - dead letter queue con retencion de 90 dias.
         { kind: "dead-letter", days: 90 },
         // PURGE_DEFERRED_V1 - purga acciones diferidas terminales.
@@ -756,17 +765,28 @@ export class AgentService {
   // una sola vez. Antes se hacia desde index.ts; aqui queda a disposicion del
   // service para que app.ts tambien pueda llamarlo.
   kernelListenersRegistered = false;
-  async registerKernelListeners(owners: string[]): Promise<number> {
+  async registerKernelListeners(_owners: string[] = []): Promise<number> {
     if (this.kernelListenersRegistered || !this.kernel) return 0;
     const { globalSubscribers } = await import("./events/subscriber.ts");
     const { startKernelEventSubscriber } = await import("../kernel/subscribers/events.ts");
     const { startKernelThoughtConsumer } = await import("../kernel/subscribers/thought-consumer.ts");
     const { startKernelTurnConsumer } = await import("../kernel/subscribers/turn-consumer.ts");
-    startKernelEventSubscriber(this.kernel, globalSubscribers, owners);
-    startKernelThoughtConsumer(owners, this.db as Store);
-    startKernelTurnConsumer(owners, this.db as Store);
+    const { startKernelMetricsConsumer } = await import("../kernel/subscribers/metrics-consumer.ts");
+    const { startKernelAuditConsumer } = await import("../kernel/subscribers/audit-consumer.ts");
+    const { startKernelNotificationsConsumer } = await import("../kernel/subscribers/notifications-consumer.ts");
+    // KERNEL_LISTENERS_GLOBAL_V1 - subscribeAll por tenant, no una lista de
+    // owners congelada al arrancar. Los handles se mantienen vivos mientras
+    // viva el proceso (el service no tiene shutdown propio).
+    const handles = [
+      startKernelEventSubscriber(this.kernel, globalSubscribers),
+      startKernelThoughtConsumer(this.db as Store),
+      startKernelTurnConsumer(this.db as Store),
+      startKernelMetricsConsumer(),
+      startKernelAuditConsumer(this.db as Store),
+      startKernelNotificationsConsumer(this.db as Store),
+    ];
     this.kernelListenersRegistered = true;
-    return owners.length;
+    return handles.length;
   }
 
   private async runConsolidateLoop(): Promise<void> {
@@ -1363,6 +1383,11 @@ export class AgentService {
       state: {
         connectionId: (await this.workspace.connection(owner))?.id ?? null,
         ...(resolvedRoleId ? { roleId: resolvedRoleId } : {}),
+        // CREATE_TASK_THREAD_V1 - conserva el hilo del chat que delego para
+        // que la tarjeta del slow vuelva a ese hilo, no a uno inventado.
+        ...(typeof input.input.threadId === "string" && input.input.threadId.trim()
+          ? { threadId: input.input.threadId.trim() }
+          : {}),
         ...(input.kind === "sop" ? { sopId: input.input.sopId, sopStepIndex: 0, sopResults: {}, sopStack: [input.input.sopId] } : {}),
         ...(typedLeadWork && leadWork
           ? {

@@ -1,5 +1,6 @@
 import type { ContextPackage } from "./engine.ts";
 import { scoreItem, estimateTokens, selectWithinBudget, allocationWithDefaults, type BudgetAllocation } from "./budget.ts";
+import { nodeMentions } from "../../../../../packages/domain/src/node-ref.ts";
 
 // CONTEXT_ASSEMBLY_V1 - renderiza el ContextPackage a texto listo para
 // inyectar en el prompt. Presupuesto por campo para no explotar tokens.
@@ -28,11 +29,13 @@ const NL = "\n";
 // coincide con el primary o con un matched del AttentionVector.
 function attentionBoost(memory: { text: string; category?: string }, attention?: { primary: string; matched: Array<{ node: string; weight: number }> }): number {
   if (!attention) return 0;
-  const text = memory.text.toLowerCase();
+  // CONTEXT_ATTENTION_CANONICAL_V1 - antes comparaba substring del texto
+  // crudo: `entity:acme` nunca casaba con "Acme". nodeMentions normaliza
+  // acentos/mayusculas y acepta el id sin prefijo.
   let boost = 0;
-  if (text.includes(attention.primary.toLowerCase())) boost += 0.3;
+  if (nodeMentions(memory.text, attention.primary)) boost += 0.3;
   for (const m of attention.matched) {
-    if (text.includes(m.node.toLowerCase())) boost += m.weight * 0.2;
+    if (nodeMentions(memory.text, m.node)) boost += m.weight * 0.2;
   }
   return boost;
 }

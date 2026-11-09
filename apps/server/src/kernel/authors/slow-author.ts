@@ -15,7 +15,7 @@ import { randomUUID } from "node:crypto";
 import type { KernelContext } from "../context/kernel-context.ts";
 import type { Thought } from "../graph/thought.ts";
 import type { Kernel } from "../kernel.ts";
-import { progressStep } from "../graph/progress.ts";
+import { progressStep, readyResult } from "../graph/progress.ts";
 
 export interface SlowAuthorDeps {
   kernel: Kernel;
@@ -49,6 +49,8 @@ export interface SlowAuthorWriteInput {
   policies?: string[];
   skills?: string[];
   parentThoughtId?: string;
+  /** SLOW_AUTHOR_READY_V1 - "ready" cuando el slow ya termino; "start" por defecto. */
+  progress?: "start" | "ready";
 }
 
 export class SlowAuthor {
@@ -61,7 +63,10 @@ export class SlowAuthor {
     // que descartaba el evento. Ahora lo persistimos como un thought de rol
     // "display" con el ProgressEvent dentro, para que Meta y el Presenter
     // puedan leerlo sin reconstruirlo desde strings.
-    const progressEvent = progressStep(0, 1, "slow.reasoning.start");
+    const ready = input.progress === "ready";
+    const progressEvent = ready
+      ? readyResult("slow.reasoning.ready")
+      : progressStep(0, 1, "slow.reasoning.start");
     return this.deps.kernel.appendThought(ctx, {
       turnId: input.turnId,
       actor: { kind: "slow-llm", id: "slow" },
@@ -109,7 +114,10 @@ export class SlowAuthor {
     // SLOW_AUTHOR_DELEGATION_PROGRESS_V2 - writeReasoning ya tenia
     // progressEvent local; writeDelegation lo usaba sin declararlo. Lo
     // creamos aqui con un mensaje propio de delegacion.
-    const progressEvent = progressStep(0, 1, "slow.delegation.start");
+    const ready = input.progress === "ready";
+    const progressEvent = ready
+      ? readyResult("slow.delegation.ready")
+      : progressStep(0, 1, "slow.delegation.start");
     return this.deps.kernel.appendThought(ctx, {
       turnId: input.turnId,
       actor: { kind: "slow-llm", id: "slow" },

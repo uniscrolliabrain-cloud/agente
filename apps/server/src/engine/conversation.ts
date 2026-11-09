@@ -590,7 +590,13 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
               };
             }
           }
-          return this.service.createTask(this.owner, args, key("task", args));
+          // CHAT_TASK_THREAD_V1 - la tarea durable vuelve al hilo que la pidio;
+          // sin esto, la tarjeta del slow nace en un hilo que el chat no lee.
+          return this.service.createTask(
+            this.owner,
+            { ...args, input: { ...args.input, threadId: input.threadId } },
+            key("task", args),
+          );
         },
       }),
       defineTool({
@@ -827,6 +833,10 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
       let run: { events: Observable<BaseEvent>; abort: () => void } | undefined;
       let subscription: { unsubscribe: () => void } | undefined;
       let cancelled = false;
+      // COGNITION_CARD_RELEASE_V1 - si el proveedor falla despues de reclamar
+      // una tarjeta, hay que devolverla a pendiente para el siguiente turno.
+      let injectedCognitionCardIds: string[] = [];
+      let injectedCognitionTenantId: string | undefined;
 
       void (async () => {
         // TAKE_FOR_TENANT_TENANTID_V1 — resuelve tenantId real y consume un
@@ -854,6 +864,9 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           return;
         }
         let ragContext = "";
+        // CONTEXT_SINGLE_RECALL_V1 - el mismo recall alimenta el bloque RAG y
+        // el ContextEngine; antes se ejecutaba dos veces por mensaje.
+        let precomputedRecall: import("./memory.ts").RecallResult | undefined;
         try {
           const userMessages = input.messages.filter(
             (m) => m.role === "user" && typeof m.content === "string",
@@ -868,6 +881,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
               { history },
             );
             ragContext = result.text;
+            precomputedRecall = result;
           }
         } catch {
           /* ignore rag lookup errors */
@@ -952,6 +966,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
               ...(automationBinding?.executionId
                 ? { executionId: automationBinding.executionId }
                 : {}),
+              ...(precomputedRecall ? { recall: precomputedRecall } : {}),
             });
             const { renderContext } = await import("./context/assembly.ts");
             contextBlock = renderContext(pkg);
@@ -968,6 +983,43 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             `\n\n` + prompt
           : prompt;
         const finalPromptWithUrgent = finalPrompt + urgentBlock + delegateHint; // SHOULD_DELEGATE_SLOW_WIRE_V1
+        // COGNITION_CARD_CHAT_INJECT_V1 - las tarjetas del slow entran como
+        // datos del turno siguiente. Se reclaman una sola vez antes de pintar.
+        let cognitionBlock = "";
+        try {
+          const { assembleCognitionCards } = await import("./context/cognition-cards.ts");
+          const cognition = await assembleCognitionCards(
+            { cards: this.service.cards },
+            {
+              tenantId: tenantIdForRate,
+              owner: this.owner,
+              threadId: input.threadId,
+              query: typeof latest?.content === "string" ? latest.content : "",
+            },
+          );
+          cognitionBlock = cognition.block;
+          injectedCognitionCardIds = cognition.cards.map((card) => card.id);
+          injectedCognitionTenantId =
+            cognition.cards.length > 0 ? tenantIdForRate : undefined;
+          if (cognition.cards.length > 0) {
+            await this.service.bus
+              ?.emit(
+                this.owner,
+                "cognition.card.injected",
+                { kind: "context", id: input.threadId },
+                {
+                  cardIds: cognition.cards.map((card) => card.id),
+                  threadId: input.threadId,
+                },
+              )
+              .catch(() => undefined);
+          }
+        } catch {
+          // COGNITION_NONFATAL_V1 - sin tarjetas el chat sigue igual.
+          cognitionBlock = "";
+        }
+        const finalPromptWithCognition =
+          finalPromptWithUrgent + (cognitionBlock ? `\n\n${cognitionBlock}` : "");
 
         // KERNEL_TURN_OPEN_V5_PROMISE_GATE - esperamos a que la IIFE haya
         // asignado kernelTurnId y kernelCtx antes de arrancar el modelo.
@@ -1074,7 +1126,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
                 (Number(process.env.AGENT_MAX_STEPS ?? "6") || 6),
               maxRetries: 0,
               tools,
-              prompt: finalPromptWithUrgent,
+              prompt: finalPromptWithCognition,
             });
           },
           { ...enrichedInput, tools: input.tools.filter((t) => t.name === "open_workspace") },
@@ -1107,6 +1159,18 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
               sub.next(event);
             },
             error: (error) => {
+              // COGNITION_CARD_RELEASE_ON_ERROR_V1 - el modelo no llego a usar
+              // las tarjetas: vuelven a propuestas y no se pierden.
+              if (injectedCognitionCardIds.length > 0 && injectedCognitionTenantId && this.service.cards) {
+                const ids = injectedCognitionCardIds;
+                const tenantId = injectedCognitionTenantId;
+                injectedCognitionCardIds = [];
+                injectedCognitionTenantId = undefined;
+                const cardStore = this.service.cards;
+                void Promise.all(
+                  ids.map((id) => cardStore.release(tenantId, this.owner, id)),
+                ).catch(() => undefined);
+              }
               // KERNEL_FAST_RESPONSE_ERROR_V1 - si el fast falla, cerramos el
               // turno con reason "timeout" para que no quede huerfano.
               if (kernelTurnId && kernelCtx) {

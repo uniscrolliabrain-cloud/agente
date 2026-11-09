@@ -10,6 +10,8 @@ import { Hono, type Context } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { z } from "zod";
+// KERNEL_GRAPH_NODE_REF_V1 - refs canonicos compartidos con atencion.
+import { parseNodeRef } from "../../../packages/domain/src/node-ref.ts";
 import { emailDraftSchema, proposalSchema } from "../../../packages/domain/src/index.ts";
 import { ActionService } from "./actions.ts";
 import { agentConfigured, makeRuntime } from "./agent.ts";
@@ -151,7 +153,11 @@ export async function createApp(
     })
     .catch(() => {});
   // BUSINESS_OS_FIXED_V1
-  const bus = new EventBus(tdb);
+  // EVENTBUS_TENANT_RESOLVER_V1 - fuera de una peticion no hay scope; el bus
+  // resuelve el tenant real del owner en vez de usar owner como tenant.
+  const bus = new EventBus(tdb, undefined, undefined, {
+    tenantForOwner: (owner) => tenantService.tenantIdFor(owner),
+  });
   // POLICY_EARLY_V1
   const { PolicyEngine: PolicyEngineEarly } = await import("./engine/policy/engine.ts");
   const policy = new PolicyEngineEarly(bus);
@@ -183,6 +189,28 @@ export async function createApp(
   const { MemoryService } = await import("./engine/memory.ts");
   const { StateMachineRegistry } = await import("./engine/state-machines.ts");
   const graph = new BusinessGraph(db, bus);
+  // KERNEL_GRAPH_PORT_WIRE_V1 - adapta BusinessGraph al puerto tipado. timeline
+  // devuelve [] de forma honesta: el grafo de negocio aun no guarda historial.
+  const kernelGraph: import("./kernel/graph/port.ts").GraphPort = {
+    resolveNode: async (tenantId, ref) => {
+      const node = parseNodeRef(typeof ref === "string" ? ref : `${ref.kind}:${ref.id}`);
+      if (node.kind !== "entity" && node.kind !== "unknown") {
+        return { id: node.id, kind: node.kind };
+      }
+      const entity = await graph.getEntity(tenantId, node.id).catch(() => null);
+      return entity ? { id: entity.id, kind: "entity", label: entity.name } : undefined;
+    },
+    neighbors: async (tenantId, ref, depth = 1) => {
+      const node = parseNodeRef(typeof ref === "string" ? ref : `${ref.kind}:${ref.id}`);
+      const hood = await graph.neighborhood(tenantId, node.id, depth).catch(() => undefined);
+      return (hood?.entities ?? []).map((entity) => ({
+        id: entity.id,
+        kind: entity.type,
+        label: entity.name,
+      }));
+    },
+    timeline: async () => [],
+  };
   const truth = new BusinessTruth(graph);
   // policy ya se creo arriba (POLICY_EARLY_V1).
   const stateMachine = new StateMachineEngine(bus, {
@@ -199,6 +227,9 @@ export async function createApp(
   const marketplace = new SkillMarketplace(db);
   const memory = new MemoryService(db, rag);
   const context = new ContextEngine(db, graph, memory, bus);
+  // COGNITION_CARD_APP_WIRE_V1 - store persistente de tarjetas del slow.
+  const { CognitionCardStore } = await import("./kernel/cognition/card-store.ts");
+  const cognitionCards = new CognitionCardStore(db);
   const stateMachines = new StateMachineRegistry(db, stateMachine, bus);
   // TENANT_LIMITER_WIRE_BROWSER_COMPUTER_V1 — computer recibe tenantService + limiter.
   const computer = new ComputerService(db, config, options.docker, tenantService, tenantLimiterShared);
@@ -236,6 +267,8 @@ export async function createApp(
           Number(params.depth ?? 1),
         ),
     },
+    // KERNEL_GRAPH_PORT_WIRE_V1
+    graph: kernelGraph,
     store: new StoreTurnStore(persistentStorePort),
     // SERVICE_TENANT_RESOLVER_WIRE_V1 - en vez de DefaultTenantResolver, usamos
     // ServiceTenantResolver que delega en TenantService. Sin esto, el kernel
@@ -300,7 +333,7 @@ export async function createApp(
     rag,
     undefined,
     bus,
-    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
+    { graph, truth, policy, stateMachine, stateMachineRegistry: stateMachines, context, runtime: agentRuntime, governance, workspaceRegistry, marketplace, kernel, tenantService, cards: cognitionCards, workspaceModuleRegistry, workspaceDispatcher }, // APP_RUNTIME_WIRE_V1
     // WS_ENGINE_DISPATCH_V1
   );
   // APP_WORKSPACE_CAPABILITIES_WIRE_V1 - registra las capabilities de workspaces en agent.capabilities.
@@ -795,6 +828,11 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     // APP_LEADS_WIRE_V1 - descubrimiento de leads (Google Places) por empresa.
     const { leadsRoutes } = await import("./leads-routes.ts");
     app.route("/api/leads", leadsRoutes(agent));
+  }
+  // COGNITION_ROUTES_WIRE_V1 - tarjetas del slow por owner y tenant.
+  {
+    const { cognitionRoutes } = await import("./cognition-routes.ts");
+    app.route("/api/cognition", cognitionRoutes(cognitionCards));
   }
   // KERNEL_ROUTES_WIRE_V1 - endpoints de debug del kernel.
   {

@@ -20,6 +20,7 @@ import type { TurnStore } from "./graph/store.ts";
 import type { Turn, TurnCloseReason, TurnClosedBy } from "./graph/turn.ts";
 import type { TenantResolver } from "./tenancy/resolver.ts";
 import { globalMetrics } from "../metrics/registry.ts";
+import type { GraphPort } from "./graph/port.ts";
 
 export interface KernelDeps {
   // KERNEL_DEPS_EXTEND_V1 - hooks de append y open para que bus-emitter
@@ -38,6 +39,10 @@ export interface KernelDeps {
     neighborhood?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
     timeline?: (tenantId: string, params: Record<string, unknown>) => Promise<unknown>;
   };
+
+  // KERNEL_GRAPH_PORT_WIRE_V1 - puerto tipado hacia el grafo de negocio.
+  // businessGraph se mantiene por compatibilidad; graph es el contrato nuevo.
+  graph?: GraphPort;
 }
 
 // KERNEL_METRICS_V1
@@ -61,6 +66,14 @@ export class Kernel implements KernelWriterPort {
   // KERNEL_DEPS_PUBLIC_V1 - deps publico para kernel-routes, views y debug.
   constructor(readonly deps: KernelDeps) {}
 
+  // KERNEL_TENANT_SINGLE_SOURCE_V1 - un unico lugar resuelve el tenant.
+  // Antes openTurn/appendThought respetaban ctx.tenantId y closeTurn/thoughtsOf
+  // volvian a resolver por owner: con un cambio de membership entre medias el
+  // cierre buscaba el turno en otro tenant.
+  private async tenantOf(ctx: KernelContext): Promise<string> {
+    return ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+  }
+
   // KERNEL_ATTENTION_BY_PERSONA_V1
   // KERNEL_LIST_TURNS_FOR_OWNER_V1
   // KERNEL_ATTENTION_PAIRS_EXPORT_V1
@@ -79,7 +92,7 @@ export class Kernel implements KernelWriterPort {
   // KERNEL_ACTOR_PROPAGATE_V1 - actor.id = ctx.actorId. owner se mantiene.
   async openTurn(ctx: KernelContext, trigger: string): Promise<Turn> {
     // KERNEL_CTX_TENANT_V1 - si el ctx trae tenantId ya resuelto, se usa.
-    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const tenantId = await this.tenantOf(ctx);
     // KERNEL_SET_LIMIT_V1 — propaga maxThoughtsPerTurn al store si esta disponible.
     try {
       const cfg = await this.deps.config.resolve(tenantId);
@@ -107,7 +120,7 @@ export class Kernel implements KernelWriterPort {
    * Ver: auditor
    */
   async openTurnIdempotent(ctx: KernelContext, trigger: string): Promise<Turn> {
-    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const tenantId = await this.tenantOf(ctx);
     const store = this.deps.store as TurnStore & {
       listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
     };
@@ -141,7 +154,7 @@ export class Kernel implements KernelWriterPort {
   }
 
   async openChildTurn(ctx: KernelContext, parentTurnId: string, trigger: string): Promise<Turn> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = await this.tenantOf(ctx);
     const turn = await this.deps.store.openChildTurn(tenantId, ctx.owner, parentTurnId, trigger);
     await this.deps.audit.append({
       tenantId,
@@ -171,7 +184,7 @@ export class Kernel implements KernelWriterPort {
     // de tenant (por TTL de cache) entre openTurn y appendThought, el thought
     // apunta a otro tenant y el append falla con Tenant mismatch. Ahora
     // respetamos ctx.tenantId cuando viene.
-    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const tenantId = await this.tenantOf(ctx);
     // KERNEL_APPEND_THOUGHT_PERSONA_V1 - si el ctx trae personaId, se persiste en el actor.
     const baseActor = { ...(input as { actor?: Record<string, unknown> }).actor } as Record<string, unknown>;
     const enrichedActor = ctx.personaId
@@ -217,7 +230,7 @@ export class Kernel implements KernelWriterPort {
   }
 
   async thoughtsOf(ctx: KernelContext, turnId: string): Promise<Thought[]> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = await this.tenantOf(ctx);
     const turn = await this.deps.store.getTurn(tenantId, turnId);
     if (!turn) return [];
     return this.deps.store.thoughtsOf(tenantId, turnId);
@@ -230,7 +243,7 @@ export class Kernel implements KernelWriterPort {
     reason: TurnCloseReason,
     closedBy: TurnClosedBy,
   ): Promise<Turn> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = await this.tenantOf(ctx);
     const turn = await this.deps.store.closeTurn(tenantId, turnId, reason, closedBy);
     // KERNEL_CLOSE_CHILDREN_V1 - si el store soporta cierre recursivo, lo usamos.
     // Cierra #198: los turnos hijos abiertos quedaban huerfanos.
@@ -256,7 +269,7 @@ export class Kernel implements KernelWriterPort {
   }
 
   async config(ctx: KernelContext) {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = await this.tenantOf(ctx);
     return this.deps.config.resolve(tenantId);
   }
 
@@ -265,7 +278,7 @@ export class Kernel implements KernelWriterPort {
    * Cierra #203: no habia forma de listar turnos para debug.
    */
   async listTurns(ctx: KernelContext, limit = 50): Promise<Turn[]> {
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = await this.tenantOf(ctx);
     const store = this.deps.store as TurnStore & {
       listTurns?: (tenantId: string, limit: number) => Promise<Turn[]>;
     };
@@ -294,7 +307,7 @@ export class Kernel implements KernelWriterPort {
   ): Promise<{
     personaId: string;
     totalThoughts: number;
-    topMatched: Array<{ node: string; weight: number; reason: string }>;
+    topMatched: Array<{ node: string; weight: number; reason: string; resolved?: boolean }>;
     ignored: Array<{ node: string; reason: string }>;
     totalAttention: number;
   }> {
@@ -315,18 +328,31 @@ export class Kernel implements KernelWriterPort {
       }
     }
     const top = [...byNode.values()].sort((a, b) => b.weight - a.weight).slice(0, 10);
+    // KERNEL_ATTENTION_RESOLVE_V1 - si hay GraphPort, cada nodo dice si existe
+    // de verdad en el grafo. Un nodo inventado por el LLM ya no se presenta
+    // como evidencia sin marcar.
+    const tenantId = await this.tenantOf(ctx);
+    const resolved = await Promise.all(
+      top.map(async (entry) => {
+        if (!this.deps.graph) return entry;
+        const node = await this.deps.graph
+          .resolveNode(tenantId, entry.node)
+          .catch(() => undefined);
+        return { ...entry, resolved: Boolean(node) };
+      }),
+    );
     const total = vectors.reduce((acc, v) => acc + totalAttention(v), 0);
     return {
       personaId,
       totalThoughts: thoughts.length,
-      topMatched: top,
+      topMatched: resolved,
       ignored: allIgnored.map((i) => ({ node: i.node, reason: String(i.reason) })),
       totalAttention: total,
     };
   }
 
   async listTurnsAllPersonas(ctx: KernelContext, limit = 200): Promise<Turn[]> {
-    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const tenantId = await this.tenantOf(ctx);
     const store = this.deps.store as TurnStore & {
       listTurnsForOwner?: (tenantId: string, owner: string, limit: number) => Promise<Turn[]>;
     };
@@ -345,12 +371,65 @@ export class Kernel implements KernelWriterPort {
    */
   // B-31 - listOpenTurnsForThread implementa el metodo de KernelPort.
   async listOpenTurnsForThread(ctx: KernelContext): Promise<Turn[]> {
-    const tenantId = ctx.tenantId ?? (await this.deps.tenants.resolve(ctx.owner));
+    const tenantId = await this.tenantOf(ctx);
     const store = this.deps.store as TurnStore & {
       listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
     };
     if (!store.listOpenTurnsForThread) return [];
     return store.listOpenTurnsForThread(tenantId, ctx.owner);
+  }
+
+  /** KERNEL_GRAPH_RESOLVE_V1 - resuelve una referencia contra el grafo real. */
+  async resolveNode(
+    ctx: KernelContext,
+    ref: string,
+  ): Promise<{ id: string; kind: string; label?: string } | undefined> {
+    const tenantId = await this.tenantOf(ctx);
+    return this.deps.graph?.resolveNode(tenantId, ref);
+  }
+
+  /** KERNEL_GRAPH_NEIGHBORS_V1 - vecinos de una entidad con profundidad. */
+  async graphNeighbors(
+    ctx: KernelContext,
+    ref: string,
+    depth = 1,
+  ): Promise<Array<{ id: string; kind: string; label?: string }>> {
+    const tenantId = await this.tenantOf(ctx);
+    if (!this.deps.graph) return [];
+    return this.deps.graph.neighbors(tenantId, ref, Math.min(Math.max(1, depth), 5));
+  }
+
+  /** KERNEL_GRAPH_TIMELINE_V1 - historial del nodo, vacio si no hay adapter. */
+  async graphTimeline(
+    ctx: KernelContext,
+    ref: string,
+    limit = 50,
+  ): Promise<Array<{ id: string; at: string; type: string }>> {
+    const tenantId = await this.tenantOf(ctx);
+    if (!this.deps.graph) return [];
+    return this.deps.graph.timeline(tenantId, ref, Math.min(Math.max(1, limit), 200));
+  }
+
+  /**
+   * KERNEL_TURN_RECONCILE_V1 - cierra turnos abiertos que superaron su TTL.
+   * Sin esto, un proceso que muere entre open y close deja turnos huerfanos
+   * para siempre y `attentionOfPersona` los sigue contando.
+   */
+  async reconcileOpenTurns(
+    ctx: KernelContext,
+    olderThanMs = 15 * 60_000,
+  ): Promise<{ scanned: number; closed: number; turnIds: string[] }> {
+    const turns = await this.listTurnsAllPersonas(ctx, 200);
+    const cutoff = Date.now() - Math.max(0, olderThanMs);
+    const stale = turns.filter(
+      (turn) => turn.status === "open" && Date.parse(turn.startedAt) < cutoff,
+    );
+    const turnIds: string[] = [];
+    for (const turn of stale) {
+      await this.closeTurn(ctx, turn.id, "timeout", "system");
+      turnIds.push(turn.id);
+    }
+    return { scanned: turns.length, closed: turnIds.length, turnIds };
   }
 
   /**
@@ -363,7 +442,7 @@ export class Kernel implements KernelWriterPort {
 
   async findOpenTurnForThread(ctx: KernelContext): Promise<Turn | undefined> {
     if (!ctx.threadId) return undefined;
-    const tenantId = await this.deps.tenants.resolve(ctx.owner);
+    const tenantId = await this.tenantOf(ctx);
     const store = this.deps.store as TurnStore & {
       listOpenTurnsForThread?: (tenantId: string, owner: string) => Promise<Turn[]>;
     };

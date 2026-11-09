@@ -1,6 +1,10 @@
-// KERNEL_THOUGHT_CONSUMER_V1
+// KERNEL_THOUGHT_CONSUMER_V2 - indice global por tenant.
+//
+// Antes se suscribia por cada owner de una lista fija. Con owner != tenantId
+// (usuario != empresa) el evento no llegaba y el indice quedaba vacio.
+// Ahora subscribeAll + event.tenantId: no depende del arranque.
+
 import type { Store } from "../../db.ts";
-import type { StoreSink, StoreQuery } from "../../engine/events/sinks/store.ts";
 import type { SystemEvent } from "../../engine/events/types.ts";
 import { globalSubscribers } from "../../engine/events/subscriber.ts";
 
@@ -12,8 +16,7 @@ const KERNEL_THOUGHT_TYPES = new Set([
   "kernel.thought.delegation",
 ]);
 
-  // KERNEL_THOUGHT_INDEX_RETENTION_V1
-  // KERNEL_THOUGHT_INDEX_LRU_V1 - LRU real en memoria por tenant, 500 entradas.
+// KERNEL_THOUGHT_INDEX_LRU_V1 - LRU en memoria por tenant, 500 entradas.
 const THOUGHT_LRU_MAX = 500;
 const thoughtLru = new Map<string, true>();
 function thoughtLruTouch(key: string): boolean {
@@ -25,36 +28,32 @@ function thoughtLruTouch(key: string): boolean {
   }
   return true;
 }
+
 export function startKernelThoughtConsumer(
-  owners: string[],
   db: Store,
+  _owners: string[] = [],
 ): { stop(): void } {
-  const handles = owners.map((owner) =>
-    globalSubscribers.subscribe(owner, (event: SystemEvent) => {
-      if (!KERNEL_THOUGHT_TYPES.has(event.type)) return;
-      const p = event.payload as Record<string, unknown>;
-      const thoughtId = typeof p.thoughtId === "string" ? p.thoughtId : "";
-      if (!thoughtId) return;
-      // KERNEL_THOUGHT_INDEX_DEDUPE_V1 + LRU.
-      if (!thoughtLruTouch(`${event.tenantId}:${thoughtId}`)) return;
-      // db.put ya es idempotente por (tenantId, kind, id)
-      // KERNEL_THOUGHT_INDEX_TENANT_FILTER_V1
-      void db
-        .put(event.tenantId, "kernel-thought-index", {
-          id: thoughtId,
-          tenantId: event.tenantId,
-          owner: event.owner,
-          type: event.type,
-          turnId: typeof p.turnId === "string" ? p.turnId : "",
-          role: typeof p.role === "string" ? p.role : "",
-          indexedAt: new Date().toISOString(),
-        })
-        .catch(() => {});
-    }),
-  );
+  const handle = globalSubscribers.subscribeAll((event: SystemEvent) => {
+    if (!KERNEL_THOUGHT_TYPES.has(event.type)) return;
+    const p = event.payload as Record<string, unknown>;
+    const thoughtId = typeof p.thoughtId === "string" ? p.thoughtId : "";
+    if (!thoughtId) return;
+    if (!thoughtLruTouch(`${event.tenantId}:${thoughtId}`)) return;
+    void db
+      .put(event.tenantId, "kernel-thought-index", {
+        id: thoughtId,
+        tenantId: event.tenantId,
+        owner: event.owner,
+        type: event.type,
+        turnId: typeof p.turnId === "string" ? p.turnId : "",
+        role: typeof p.role === "string" ? p.role : "",
+        indexedAt: new Date().toISOString(),
+      })
+      .catch(() => {});
+  });
   return {
     stop() {
-      for (const h of handles) h.unsubscribe();
+      handle.unsubscribe();
     },
   };
 }

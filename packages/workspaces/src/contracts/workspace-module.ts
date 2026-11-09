@@ -40,7 +40,7 @@ export interface WorkspaceBusLike {
       dedupeKey?: string;
       tenantId?: string;
     },
-  ): Promise<void>;
+  ): Promise<unknown>;
 }
 
 export interface WorkspaceServices {

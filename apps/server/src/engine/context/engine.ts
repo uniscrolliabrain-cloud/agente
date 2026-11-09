@@ -53,6 +53,12 @@ export interface AssembleInput {
    * sigue siendo el mismo para todos los humanos del tenant.
    */
   viewerId?: string;
+  /**
+   * CONTEXT_SINGLE_RECALL_V1 - recall ya calculado por el caller. El chat
+   * recuperaba memoria una vez para el bloque RAG y otra dentro de assemble.
+   * Pasar el resultado evita la segunda llamada (embedding + busqueda).
+   */
+  recall?: RecallResult;
   // CONTEXT_BUDGET_V1 - presupuesto opcional por fuente.
   budget?: {
     roleTokens?: number;
@@ -121,10 +127,12 @@ export class ContextEngine {
     const events = entity
       ? (await this.bus?.list(owner, { sourceId: entity.id, limit: input.eventLimit ?? DEFAULT_EVENT_LIMIT })) ?? []
       : [];
-    const recall = await this.memory.recall(owner, input.query, {
-      ...(input.history ? { history: input.history } : {}),
-      ...(input.viewerId ? { privateOwner: input.viewerId } : {}),
-    });
+    const recall =
+      input.recall ??
+      (await this.memory.recall(owner, input.query, {
+        ...(input.history ? { history: input.history } : {}),
+        ...(input.viewerId ? { privateOwner: input.viewerId } : {}),
+      }));
     // CONTEXT_INCLUDE_LEARNING_V1 - antes LearningObserver escribia en
     // learning-facts y learning-patterns pero nadie los leia. El contexto
     // ahora incluye los hechos aprendidos relevantes (facts con source

@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import type { Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
 import { backgroundFailure } from "../../log.ts";
+// BUS_TENANT_SCOPE_V1 - el tenant de la peticion manda sobre owner.
+import { currentTenantScope } from "../../tenant-scope.ts";
 import { payloadSchemas } from "./schemas.ts";
 // EVENTBUS_SCHEMA_REGISTRY_V1 - registry consultable.
 import { SchemaRegistry } from "./schema-registry.ts";
@@ -54,6 +56,16 @@ export interface EmitOptions {
   notify?: { title: string; body: string; key: string };
 }
 
+/** Resultado de una emision: persistido y cuantos subscribers lo recibieron. */
+export interface EmitResult {
+  id: string;
+  tenantId: string;
+  persisted: boolean;
+  delivered: number;
+  duplicate?: boolean;
+  error?: string;
+}
+
 interface DedupeState {
   id: string;
   seen: { key: string; at: number }[];
@@ -65,6 +77,10 @@ export class EventBus {
     private readonly db: Store | TenantScopedStore,
     private readonly sink: EventSink = new StoreSink(db),
     private readonly query: EventQuery = new StoreQuery(db),
+    private readonly options: {
+      /** Resuelve el tenant real de un owner cuando no hay scope de peticion. */
+      tenantForOwner?: (owner: string) => Promise<string>;
+    } = {},
   ) {}
 
   async emit<T extends Record<string, unknown>>(
@@ -73,12 +89,17 @@ export class EventBus {
     source: SystemEventSource,
     payload: T,
     options: EmitOptions = {},
-  ): Promise<void> {
+  ): Promise<EmitResult> {
     try {
       // EVENTS_BUS_EMIT_VALIDATES_TENANT_V1
       // EVENTBUS_METRIC_ERRORS_V1
       const schema = payloadSchemas[type];
       const parsed = schema.parse(payload) as T;
+      // EVENTBUS_TENANT_RESOLVE_V1 - owner es el usuario; tenantId es la
+      // empresa. Antes se hacia `tenantId: options.tenantId ?? owner`, asi que
+      // todo evento sin tenant explicito quedaba atribuido al usuario y el
+      // subscriber del kernel abria turnos en un tenant fantasma.
+      const tenantId = await this.resolveTenant(owner, options.tenantId);
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
       // EVENTBUS_DEDUPE_OWNER_FIX_V1 - antes pasabamos `${owner}:${dedupeKey}`
@@ -87,7 +108,9 @@ export class EventBus {
       // el owner real y la key por separado.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_METRIC_V1
-        if (await this.isDuplicate(owner, options.dedupeKey)) return;
+        if (await this.isDuplicate(owner, options.dedupeKey)) {
+          return { id: "", tenantId, persisted: false, delivered: 0, duplicate: true };
+        }
       }
       // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
       const logCtx = (await import("../../log.ts")).logContext.getStore();
@@ -97,7 +120,7 @@ export class EventBus {
         id: ulid(),
         schemaVersion: "1.0",
         // EVENTS_BUS_TENANT_SCOPED_FALLBACK_V1
-        tenantId: options.tenantId ?? owner,
+        tenantId,
         owner,
         type,
         emittedAt: new Date().toISOString(),
@@ -110,7 +133,7 @@ export class EventBus {
       // EVENTS_BUS_PUBLISH_V1 Ã¢â‚¬â€ publicar a subscribers en vivo (SSE, mÃƒÂ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
       // EVENTBUS_PUBLISH_SUBSCRIBERS_V1
-      globalSubscribers.publish(event);
+      const delivered = globalSubscribers.publish(event);
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.
@@ -138,13 +161,75 @@ export class EventBus {
           });
         }
       }
+      return { id: event.id, tenantId, persisted: true, delivered };
     } catch (error) {
       // EVENTBUS_ERROR_METRIC_V1 - contador de errores.
       import("../../metrics/registry.ts")
         .then(({ globalMetrics }) => { globalMetrics.inc("event_bus_errors_total", { type }); })
         .catch(() => {});
       backgroundFailure(`event emit ${type}`, error);
+      return {
+        id: "",
+        tenantId: options.tenantId ?? currentTenantScope()?.tenantId ?? owner,
+        persisted: false,
+        delivered: 0,
+        error: error instanceof Error ? error.message : "unknown",
+      };
     }
+  }
+
+  /**
+   * EVENTBUS_RESOLVE_TENANT_V1 - prioridad: explicito, scope de la peticion,
+   * resolver inyectado y, solo como ultimo recurso, owner. El fallback deja
+   * metrica para que un evento mal etiquetado no pase desapercibido.
+   */
+  private async resolveTenant(owner: string, explicit?: string): Promise<string> {
+    if (explicit) return explicit;
+    const scoped = currentTenantScope()?.tenantId;
+    if (scoped) return scoped;
+    if (this.options.tenantForOwner && owner !== "system") {
+      const resolved = await this.options.tenantForOwner(owner).catch(() => undefined);
+      if (resolved) return resolved;
+    }
+    if (owner !== "system") {
+      import("../../metrics/registry.ts")
+        .then(({ globalMetrics }) => { globalMetrics.inc("event_bus_missing_tenant_total", {}); })
+        .catch(() => {});
+    }
+    return owner;
+  }
+
+  /**
+   * EVENTBUS_REPLAY_TENANT_V1 - relee el log persistido de un tenant. Es la
+   * base para consumidores con cursor: si el proceso pierde el evento en vivo,
+   * puede recuperarlo del store en vez de perderlo para siempre.
+   */
+  async replayTenant(
+    tenantId: string,
+    filter: EventFilter,
+    handler: (event: SystemEvent) => void | Promise<void>,
+  ): Promise<number> {
+    const db = this.db as unknown as {
+      scanByPrefix?: <U>(
+        kind: string,
+        tenantId: string,
+        limit?: number,
+      ) => Promise<{ owner: string; value: U }[]>;
+    };
+    if (typeof db.scanByPrefix !== "function") return 0;
+    const limit = Math.min(Math.max(1, filter.limit ?? 200), 200);
+    const rows = await db.scanByPrefix<SystemEvent>("system-events", tenantId, limit);
+    const events = rows
+      .map((row) => row.value)
+      .filter((event) => event && event.tenantId === tenantId)
+      .filter((event) => !filter.type || (Array.isArray(filter.type) ? filter.type.includes(event.type) : event.type === filter.type))
+      .filter((event) => !filter.sinceId || event.id > filter.sinceId)
+      .filter((event) => !filter.since || event.emittedAt >= filter.since)
+      .filter((event) => !filter.until || event.emittedAt <= filter.until)
+      .sort((a, b) => a.emittedAt.localeCompare(b.emittedAt) || a.id.localeCompare(b.id))
+      .slice(0, limit);
+    for (const event of events) await handler(event);
+    return events.length;
   }
 
   async list(owner: string, filter: EventFilter = {}): Promise<SystemEvent[]> {
@@ -173,17 +258,20 @@ export class EventBus {
     if (state) {
       const hit = state.seen.find((entry) => entry.key === key && now - entry.at < DEDUPE_TTL_MS);
       if (hit) {
-        this.inMemory.set(key, now);
+        this.inMemory.set(`${owner}:${key}`, now);
         return true;
       }
     }
-    const cached = this.inMemory.get(key);
+    // EVENTBUS_DEDUPE_TENANT_KEY_V1 - la cache en memoria tambien se indexa
+    // por owner: antes solo por key y dos empresas con la misma clave se
+    // suprimian entre si.
+    const cached = this.inMemory.get(`${owner}:${key}`);
     return Boolean(cached && now - cached < DEDUPE_TTL_MS);
   }
 
   private async recordDedupe(owner: string, key: string): Promise<void> {
     const now = Date.now();
-    this.inMemory.set(key, now);
+    this.inMemory.set(`${owner}:${key}`, now);
     if (this.inMemory.size > DEDUPE_MAX_ENTRIES) {
       const oldest = [...this.inMemory.entries()].sort((a, b) => a[1] - b[1])[0];
       if (oldest) this.inMemory.delete(oldest[0]);

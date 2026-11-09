@@ -253,4 +253,6 @@ export * from "./assignment.ts";
 export * from "./flow.ts";
 // DOMAIN_INDEX_CONFLICT_V1 - exporta conflict.ts (F4).
 export * from "./conflict.ts";
+// COGNITION_CARD_INDEX_V1 - tarjeta cognitiva separada de las tarjetas fijas.
+export * from "./cognition-card.ts";
 

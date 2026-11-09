@@ -12,4 +12,4 @@ export { ulid } from "./ulid.ts";
 export { SchemaRegistry, type EventSchema } from "./schema-registry.ts";
 export { payloadSchemas } from "./schemas.ts";
 export { StoreSink, StoreQuery } from "./sinks/store.ts";
-export { EventBus, type EmitOptions } from "./bus.ts";
+export { EventBus, type EmitOptions, type EmitResult } from "./bus.ts";

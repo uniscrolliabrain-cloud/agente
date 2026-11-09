@@ -1,12 +1,26 @@
-// KERNEL_SUBSCRIBER_EVENTS_V1
+// KERNEL_SUBSCRIBER_EVENTS_V2
+//
+// V2 corrige dos fallos:
+//   - El contexto se construia sin actorId, que es obligatorio en
+//     kernelContextSchema. El safeParse fallaba SIEMPRE y el subscriber no
+//     hacia nada: la cognicion del kernel por bus estaba muerta.
+//   - Se suscribia por owner y solo para los tenants enumerados al arrancar.
+//     Ahora usa subscribeAll y el tenant real del evento, asi que un tenant
+//     nuevo funciona sin reiniciar.
+//
+// Ademas el flujo pasa por runCognitionCycle (fases y cierre idempotente).
+
 import type { Kernel } from "../kernel.ts";
 import { kernelContextSchema } from "../context/kernel-context.ts";
 import type { EventSubscriberRegistry } from "../../engine/events/subscriber.ts";
 import type { SystemEvent } from "../../engine/events/types.ts";
-// LOG_KERNEL_SUBSCRIBERS_V1
-import { logInfo } from "../../log.ts";
+import { logInfo, logWarn } from "../../log.ts";
+import { runCognitionCycle } from "../cognition/cycle.ts";
 
-const MAPPING: Record<string, { role: string; content: (e: SystemEvent) => Record<string, unknown> }> = {
+const MAPPING: Record<
+  string,
+  { role: string; content: (e: SystemEvent) => Record<string, unknown> }
+> = {
   "entity.created": { role: "observation", content: (e) => ({ kind: "entity.created", payload: e.payload }) },
   "entity.updated": { role: "observation", content: (e) => ({ kind: "entity.updated", payload: e.payload }) },
   "entity.deleted": { role: "observation", content: (e) => ({ kind: "entity.deleted", payload: e.payload }) },
@@ -29,29 +43,46 @@ const MAPPING: Record<string, { role: string; content: (e: SystemEvent) => Recor
 export function startKernelEventSubscriber(
   kernel: Kernel,
   subscribers: EventSubscriberRegistry,
-  owners: string[],
+  _owners: string[] = [],
 ): { stop(): void } {
-  const handles = owners.map((owner) =>
-    subscribers.subscribe(owner, (event: SystemEvent) => {
-      const mapping = MAPPING[event.type];
-      if (!mapping) return;
-      // LOG_KERNEL_SUBSCRIBERS_USED_V1
-      logInfo("kernel.subscriber.received", { eventType: event.type, sourceId: event.source.id });
-      const parsed = kernelContextSchema.safeParse({
+  const handle = subscribers.subscribeAll((event: SystemEvent) => {
+    // KERNEL_SUBSCRIBER_NO_LOOP_V1 - los eventos del propio kernel no vuelven
+    // a abrir turnos: seria realimentacion infinita.
+    if (event.type.startsWith("kernel.")) return;
+    const mapping = MAPPING[event.type];
+    if (!mapping) return;
+
+    logInfo("kernel.subscriber.received", {
+      eventType: event.type,
+      sourceId: event.source.id,
+      tenantId: event.tenantId,
+    });
+
+    const parsed = kernelContextSchema.safeParse({
+      tenantId: event.tenantId,
+      owner: event.owner,
+      role: "system",
+      requestId: `kernel-subscriber:${event.id}`,
+      actorId: "bus-subscriber",
+      ...(event.correlationId ? { correlationId: event.correlationId } : {}),
+    });
+    if (!parsed.success) {
+      // KERNEL_SUBSCRIBER_CONTEXT_LOG_V1 - antes se salia en silencio.
+      logWarn("kernel.subscriber.invalid_context", {
+        eventType: event.type,
         tenantId: event.tenantId,
-        owner: event.owner,
-        role: "system",
-        requestId: `kernel-subscriber:${event.id}`,
-        ...(event.correlationId ? { correlationId: event.correlationId } : {}),
+        issues: parsed.error.issues.map((issue) => issue.path.join(".")).join(","),
       });
-      if (!parsed.success) return;
-      void (async () => {
-        try {
-          const turn = await kernel.openTurn(parsed.data, `bus:${event.type}:${event.id}`);
-          const now = new Date().toISOString();
-          await kernel.appendThought(parsed.data, {
-            turnId: turn.id,
-            actor: { kind: "system", id: "bus-subscriber" },
+      return;
+    }
+
+    void (async () => {
+      try {
+        const now = new Date().toISOString();
+        await runCognitionCycle(kernel, {
+          ctx: parsed.data,
+          trigger: `bus:${event.type}:${event.id}`,
+          observation: {
             role: mapping.role as never,
             content: mapping.content(event),
             attention: {
@@ -60,7 +91,14 @@ export function startKernelEventSubscriber(
               primary: event.source.id,
               secondary: [],
               query: `event:${event.type}`,
-              matched: [{ node: event.source.id, weight: 1, reason: "event source", metadata: {} }],
+              matched: [
+                {
+                  node: event.source.id,
+                  weight: 1,
+                  reason: "explicit_reference",
+                  metadata: {},
+                },
+              ],
               ignored: [],
               intent: event.type,
               confidence: 1,
@@ -68,24 +106,22 @@ export function startKernelEventSubscriber(
               timestamp: now,
               metadata: { eventId: event.id, sourceKind: event.source.kind },
             },
-            context: { entities: [], policies: [], skills: [], priorThoughts: [] },
-            edges: [],
-            provenance: { source: "bus.subscriber", timestamp: now, ...(event.correlationId ? { correlationId: event.correlationId } : {}) },
-          });
-          // KERNEL_EVENTS_CLOSE_GUARD_V1 - solo cerrar si sigue abierto.
-          const stillOpen = await kernel.deps.store.getTurn(parsed.data.tenantId, turn.id).catch(() => undefined);
-          if (stillOpen && stillOpen.status === "open") {
-            await kernel.closeTurn(parsed.data, turn.id, "quiescence", "system");
-          }
-        } catch {
-          /* best-effort */
-        }
-      })();
-    }),
-  );
+          },
+          close: { reason: "quiescence", closedBy: "system" },
+        });
+      } catch (error) {
+        logWarn("kernel.subscriber.failed", {
+          eventType: event.type,
+          tenantId: event.tenantId,
+          error: error instanceof Error ? error.message : "unknown",
+        });
+      }
+    })();
+  });
+
   return {
     stop() {
-      for (const h of handles) h.unsubscribe();
+      handle.unsubscribe();
     },
   };
 }

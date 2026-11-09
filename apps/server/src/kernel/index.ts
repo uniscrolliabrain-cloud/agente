@@ -142,6 +142,31 @@ export {
 } from "./graph/views.ts";
 
 export { cromoSchema, type Cromo } from "./cromos/cromo.ts";
+// COGNITION_CARD_KERNEL_EXPORT_V1 - contrato, store, builder y captura del slow.
+export {
+  cognitionCardSchema,
+  cognitionCardKindSchema,
+  cognitionCardScopeSchema,
+  cognitionCardStatusSchema,
+  type CognitionCard,
+  type CognitionCardKind,
+  type CognitionCardScope,
+  type CognitionCardStatus,
+} from "../../../../packages/domain/src/cognition-card.ts";
+export {
+  CognitionCardStore,
+  rankCognitionCards,
+  type CognitionCardPersistence,
+  type CognitionCardPendingOptions,
+  type CognitionCardSaveResult,
+} from "./cognition/card-store.ts";
+export { buildCognitionCard, type BuildCognitionCardInput } from "./cognition/card-builder.ts";
+export {
+  captureSlowCognition,
+  type CaptureSlowCognitionDeps,
+  type CaptureSlowCognitionInput,
+  type CaptureSlowCognitionResult,
+} from "./cognition/capture.ts";
 // KERNEL_INDEX_EXPORT_STATUS_V1
 export { wirePersonaBootstrap, clientsDirFrom, type PersonaBootstrapReport } from "./personas-bootstrap.ts";
 export { LOGIC_AXIOMS, checkContradiction } from "./cromos/logic/axioms.ts";

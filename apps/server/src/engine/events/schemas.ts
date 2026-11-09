@@ -49,6 +49,21 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
   "system.error": z.object({ message: z.string().max(2000), phase: z.string().max(100).optional() }),
   // EVENTS_MESSAGE_EDITED_SCHEMA_V1 - payload del evento de edicion de mensaje.
   "message.edited": z.object({ ...base, messageId: z.string().max(200), text: z.string().max(20000).optional() }),
+  // COGNITION_CARD_EVENT_SCHEMAS_V1 - creada por el slow / inyectada en chat.
+  "cognition.card.created": z.object({
+    ...base,
+    cardId: z.string().max(200),
+    thoughtId: z.string().max(100),
+    turnId: z.string().max(100),
+    threadId: z.string().max(200).nullable().optional(),
+    kind: z.string().max(40),
+    confidence: z.number().min(0).max(1),
+  }),
+  "cognition.card.injected": z.object({
+    ...base,
+    cardIds: z.array(z.string().max(200)).min(1).max(3),
+    threadId: z.string().max(200),
+  }),
   "system.maintenance": z.object({ tasks: z.number().int().nonnegative(), monitors: z.number().int().nonnegative() }),
   "system.google_disconnected": z.object({ owner: z.string().max(200) }),
   "auth.login": z.object({ userId: z.string().max(200) }),

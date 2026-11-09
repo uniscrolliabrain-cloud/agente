@@ -81,6 +81,15 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
   "kernel.turn.opened": { turnId: "t1" },
   "build.applied": { buildId: "b1", kind: "workspace", target: "w1" },
   "message.edited": { messageId: "m1" },
+  // COGNITION_CARD_EVENTS_V1 - payloads minimos de la tarjeta cognitiva.
+  "cognition.card.created": {
+    cardId: "card-1",
+    thoughtId: "thought-1",
+    turnId: "turn-1",
+    kind: "insight",
+    confidence: 0.8,
+  },
+  "cognition.card.injected": { cardIds: ["card-1"], threadId: "thread-1" },
   "context.assembled": {
     entityCount: 0,
     relationCount: 0,

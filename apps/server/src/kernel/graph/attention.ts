@@ -5,6 +5,8 @@
 // significa" vive en los autores y el presenter.
 
 import { attentionVectorSchema, type AttentionVector, type IgnoredNode, type MatchedNode } from "./thought.ts";
+// NODE_REF_ATTENTION_V1 - comparacion canonica entre autores y capas.
+import { canonicalNode, sameNode } from "../../../../../packages/domain/src/node-ref.ts";
 
 export function topMatched(vector: AttentionVector, n = 3): MatchedNode[] {
   return vector.matched.slice().sort((a, b) => b.weight - a.weight).slice(0, n);
@@ -18,12 +20,15 @@ export function normalizedWeights(vector: AttentionVector): Record<string, numbe
   const total = totalAttention(vector);
   if (total <= 0) return {};
   const out: Record<string, number> = {};
-  for (const m of vector.matched) out[m.node] = m.weight / total;
+  for (const m of vector.matched) {
+    const key = canonicalNode(m.node);
+    out[key] = (out[key] ?? 0) + m.weight / total;
+  }
   return out;
 }
 
 export function matchScore(vector: AttentionVector, node: string): number {
-  const found = vector.matched.find((m) => m.node === node);
+  const found = vector.matched.find((m) => sameNode(m.node, node));
   return found ? found.weight : 0;
 }
 
@@ -32,21 +37,23 @@ export function isFocusedOn(vector: AttentionVector, node: string, threshold = 0
 }
 
 export function attentionOverlap(a: AttentionVector, b: AttentionVector): number {
-  const wa = normalizedWeights(a);
-  const wb = normalizedWeights(b);
-  const keysA = Object.keys(wa);
-  const keysB = Object.keys(wb);
-  if (keysA.length === 0 || keysB.length === 0) return 0;
-  const all = new Set([...keysA, ...keysB]);
-  let num = 0;
-  let den = 0;
-  for (const k of all) {
-    const va = wa[k] ?? 0;
-    const vb = wb[k] ?? 0;
-    num += Math.min(va, vb);
-    den += Math.max(va, vb);
+  // ATTENTION_OVERLAP_CANONICAL_V1 - antes comparaba claves de texto
+  // normalizadas: `entity:acme` y `ACME` producian claves distintas y dos
+  // autores hablando del mismo nodo parecian divergentes. Ahora empareja por
+  // sameNode (kind + id) y aplica Jaccard ponderado.
+  if (a.matched.length === 0 || b.matched.length === 0) return 0;
+  const used = new Set<number>();
+  let intersection = 0;
+  for (const left of a.matched) {
+    const index = b.matched.findIndex(
+      (right, position) => !used.has(position) && sameNode(left.node, right.node),
+    );
+    if (index < 0) continue;
+    used.add(index);
+    intersection += Math.min(left.weight, b.matched[index].weight);
   }
-  return den > 0 ? num / den : 0;
+  const union = totalAttention(a) + totalAttention(b) - intersection;
+  return union > 0 ? intersection / union : 0;
 }
 
   // ATTENTION_PAIRS_EXPORT_V1

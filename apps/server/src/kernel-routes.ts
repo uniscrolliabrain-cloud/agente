@@ -422,5 +422,26 @@ export function kernelRoutes(
     }
   });
 
+  // KERNEL_TURN_RECONCILE_V1 - cierra turnos abiertos que superaron su TTL.
+  app.post("/turns/reconcile", async (c) => {
+    const owner = c.get("owner");
+    await requireAdmin(owner);
+    const body = await c.req.json().catch(() => ({}));
+    const parsed = z
+      .object({ olderThanMs: z.coerce.number().int().min(1_000).max(86_400_000).default(900_000) })
+      .parse(body ?? {});
+    const ctx = await ctxFor(owner, `kernel-routes:reconcile:${Date.now()}`);
+    return c.json(await kernel.reconcileOpenTurns(ctx, parsed.olderThanMs));
+  });
+
+  // KERNEL_GRAPH_NEIGHBORS_ROUTE_V1 - expone el GraphPort tipado.
+  app.get("/graph/neighbors", async (c) => {
+    const owner = c.get("owner");
+    const ref = z.string().min(1).max(300).parse(c.req.query("ref"));
+    const depth = z.coerce.number().int().min(1).max(5).default(1).parse(c.req.query("depth"));
+    const ctx = await ctxFor(owner, `kernel-routes:graph:${Date.now()}`);
+    return c.json({ ref, depth, nodes: await kernel.graphNeighbors(ctx, ref, depth) });
+  });
+
   return app;
 }

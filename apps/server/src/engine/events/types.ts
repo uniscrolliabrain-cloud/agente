@@ -128,6 +128,9 @@ export const SYSTEM_EVENT_TYPES = [
   "build.applied",
   // EVENTS_MESSAGE_EDITED_V1 - edicion de mensaje en chat.
   "message.edited",
+  // COGNITION_CARD_EVENTS_V1 - tarjeta del slow creada e inyectada en contexto.
+  "cognition.card.created",
+  "cognition.card.injected",
 ] as const;
 
 export type SystemEventType = (typeof SYSTEM_EVENT_TYPES)[number];

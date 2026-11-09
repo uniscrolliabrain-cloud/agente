@@ -51,6 +51,12 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
       // ese id, se usa como personaId. Si no, el turno se abre sin persona.
       const stateRoleId =
         typeof initial.state.roleId === "string" ? initial.state.roleId : undefined;
+      // MODEL_TASK_THREAD_V1 - la tarea hereda el hilo del chat que la delego;
+      // si no existe, su propio id es un hilo estable para la tarjeta.
+      const originThreadId =
+        typeof initial.state.threadId === "string" && initial.state.threadId.trim()
+          ? initial.state.threadId.trim()
+          : initial.id;
       // MODEL_ACTOR_V1 — actorId = actor delegado, no owner.
       const taskActorId = (initial.assignedTo ?? (initial.state as { roleId?: string } | undefined)?.roleId ?? owner);
       kernelCtx = kernelContextSchema.parse({
@@ -58,6 +64,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         owner,
         role: "agent",
         requestId: initial.id,
+        threadId: originThreadId,
         correlationId: initial.id,
         actorId: taskActorId,
         ...(stateRoleId ? { personaId: stateRoleId } : {}),
@@ -635,23 +642,78 @@ await service.recordUsage(owner, "task", activeModel, promptChars, text.length, 
   } catch { /* best-effort */ }
   if (text) await ctx.event("step", "Agent update", text.slice(0, 12000));
 
-  // KERNEL_TASK_CLOSE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â cierra turno de tarea y promueve. No rompe la tarea.
+  // KERNEL_TASK_CLOSE_V1 — cierra turno de tarea y promueve. No rompe la tarea.
   if (kernelTurnId && kernelCtx && service.kernel) {
     try {
+      // MODEL_SLOW_CAPTURE_BEFORE_CLOSE_V1 - el store persistente no permite
+      // abrir un hijo sobre un padre cerrado. Capturamos el slow en un turno
+      // hijo mientras el padre sigue abierto y solo despues cerramos el padre.
+      if (text.trim() && service.cards) {
+        let childId: string | undefined;
+        try {
+          const child = await service.kernel.openChildTurn(
+            kernelCtx,
+            kernelTurnId,
+            `slow.done:${initial.id}`,
+          );
+          childId = child.id;
+          const { captureSlowCognition } = await import("../kernel/cognition/capture.ts");
+          const capture = await captureSlowCognition(
+            { kernel: service.kernel, cards: service.cards },
+            {
+              ctx: kernelCtx,
+              turnId: child.id,
+              content: text,
+              query: initial.prompt,
+              intent: "reason",
+              confidence: 0.8,
+              entities:
+                typeof initial.state.entityId === "string"
+                  ? [initial.state.entityId]
+                  : [],
+              threadId:
+                typeof initial.state.threadId === "string" && initial.state.threadId.trim()
+                  ? initial.state.threadId.trim()
+                  : initial.id,
+              // MODEL_CARD_DEDUPE_V1 - un reintento de la misma tarea reusa la
+              // tarjeta; el thought nuevo queda como evidencia adicional.
+              dedupeKey: `task:${initial.id}`,
+              model: activeModel,
+            },
+          );
+          if (capture.created) {
+            await service.bus
+              ?.emit(
+                owner,
+                "cognition.card.created",
+                { kind: "kernel", id: capture.card.id },
+                {
+                  cardId: capture.card.id,
+                  thoughtId: capture.thought.id,
+                  turnId: child.id,
+                  threadId: capture.card.threadId ?? null,
+                  kind: capture.card.kind,
+                  confidence: capture.card.confidence,
+                },
+              )
+              .catch(() => undefined);
+          }
+          await service.kernel.closeTurn(kernelCtx, child.id, "response", "system");
+        } catch {
+          // Una tarjeta fallida no puede impedir cerrar la tarea.
+          if (childId) {
+            await service.kernel
+              .closeTurn(kernelCtx, childId, "timeout", "system")
+              .catch(() => undefined);
+          }
+        }
+      }
       // MODEL_CLOSETURN_FIX_V2 - anadido closedBy "system" a la firma V2 del kernel.
       await service.kernel.closeTurn(kernelCtx, kernelTurnId, "promotion", "system");
       const { Promoter } = await import("../kernel/index.ts");
       await new Promoter({ kernel: service.kernel }).promote(kernelCtx, kernelTurnId);
-      // MODEL_OPEN_CHILD_TURN_V1 - si el slow termina tras cerrar el padre,
-      // abrimos un turno hijo para que el resultado quede registrado.
-      const parent = await service.kernel.deps.store.getTurn(kernelCtx.tenantId, kernelTurnId).catch(() => undefined);
-      if (parent && parent.status === "closed") {
-        await service.kernel
-          .openChildTurn(kernelCtx, kernelTurnId, `slow.done:${initial.id}`)
-          .catch(() => {});
-      }
     } catch {
-      // KERNEL_NONFATAL_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â el kernel no puede romper la tarea.
+      // KERNEL_NONFATAL_V1 — el kernel no puede romper la tarea.
     }
   }
   return (
