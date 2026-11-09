@@ -24,6 +24,11 @@ const FIELDS = [
   "places.businessStatus",
 ].join(",");
 
+// PLACES_FIELD_BUDGET_V1 (campana 17) - el FieldMask es el presupuesto: se
+// piden solo los campos que la ficha usa y se limita cada pagina a 20.
+export const PLACES_FIELD_MASK = FIELDS;
+export const PLACES_MAX_RESULTS = 20;
+
 export interface PlaceLead {
   placeId: string;
   name: string;
@@ -33,6 +38,9 @@ export interface PlaceLead {
   rating?: number;
   reviews?: number;
   mapsUrl?: string;
+  /** Estado del negocio en Google (OPERATIONAL, CLOSED...). */
+  businessStatus?: string;
+  /** Alias del estado, conservado para callers previos a la campana 17. */
   status?: string;
 }
 
@@ -67,7 +75,7 @@ export class GoogleMapsClient {
     if (query.length < 3 || query.length > 500) {
       throw new AppError("La busqueda necesita entre 3 y 500 caracteres", 422);
     }
-    const limit = Math.min(Math.max(input.limit ?? 20, 1), 20);
+    const limit = Math.min(Math.max(input.limit ?? PLACES_MAX_RESULTS, 1), PLACES_MAX_RESULTS);
 
     let response: Response;
     try {
@@ -76,7 +84,7 @@ export class GoogleMapsClient {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": this.options.apiKey!.trim(),
-          "X-Goog-FieldMask": FIELDS,
+          "X-Goog-FieldMask": PLACES_FIELD_MASK,
           Accept: "application/json",
         },
         body: JSON.stringify({
@@ -122,7 +130,9 @@ export class GoogleMapsClient {
           ...(typeof row.rating === "number" ? { rating: row.rating } : {}),
           ...(typeof row.userRatingCount === "number" ? { reviews: row.userRatingCount } : {}),
           ...(typeof row.googleMapsUri === "string" ? { mapsUrl: row.googleMapsUri } : {}),
-          ...(typeof row.businessStatus === "string" ? { status: row.businessStatus } : {}),
+          ...(typeof row.businessStatus === "string"
+            ? { businessStatus: row.businessStatus, status: row.businessStatus }
+            : {}),
         },
       ];
     });
