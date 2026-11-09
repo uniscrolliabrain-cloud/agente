@@ -83,5 +83,5 @@ Revertir el commit elimina la vista, la herramienta de briefing y la validación
 
 ## SHA por patchset
 
-- **20.P1 + 20.P2 + 20.P3:** pendiente de commit (producto y pruebas sobre `a62bff0`).
+- **20.P1 + 20.P2 + 20.P3:** `3a43cdf` (producto y pruebas en un unico commit sobre `a62bff0`).
 - **Punto de rollback:** `a62bff0`.
