@@ -19,7 +19,7 @@ test("entity resolver encuentra por CIF", async () => {
       cif: "B12345678",
     });
     assert.equal(matches.length, 1);
-    assert.equal(matches[0].entityId, "c1");
+    assert.equal(matches[0].existingId, "c1");
   } finally {
     await db.close();
   }

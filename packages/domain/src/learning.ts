@@ -1,4 +1,3 @@
-// PENDING(2027-03-31) aprendizaje declarado y no implementado: FailureLesson, LearningFact, LearningPattern, ProceduralLearning.
 // LEARNING_V1 - aprendizaje real: hechos, patrones, fallos, procedural.
 
 import { z } from "zod";

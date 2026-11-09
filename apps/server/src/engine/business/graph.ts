@@ -8,10 +8,20 @@ import {
   businessEntitySchema,
   businessRelationSchema,
 } from "../../../../../packages/domain/src/business.ts";
+import {
+  fieldTypeSchema,
+  type BusinessSchemaV2,
+  type EntityDefinition,
+  type FieldDefinition,
+  type FieldType,
+} from "../../../../../packages/domain/src/business-schema.ts";
 import type { Store } from "../../db.ts";
 import { AppError } from "../../errors.ts";
 import type { EventBus } from "../events/index.ts";
 import type { StateMachineRegistry } from "../state-machines.ts";
+
+// BUSINESS_SCHEMA_FIELD_TYPE_V1 - tipos de campo que el metamodelo reconoce.
+const KNOWN_FIELD_TYPES: ReadonlySet<FieldType> = new Set(fieldTypeSchema.options);
 
 const ENTITY_KIND = "business-entities";
 const RELATION_KIND = "business-relations";
@@ -68,13 +78,15 @@ export class BusinessGraph {
       try {
         const { EntityResolver } = await import("./resolver.ts");
         const matches = await new EntityResolver(this.db).findCandidates(owner, owner, input.type, {
+          id,
+          type: input.type,
           ...(input.name ? { name: input.name } : {}),
           ...(typeof input.properties?.email === "string" ? { email: input.properties.email } : {}),
           ...(typeof input.properties?.cif === "string" ? { cif: input.properties.cif } : {}),
         });
         const strong = matches.find((m) => m.confidence >= 0.8);
         if (strong) {
-          const found = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, strong.entityId);
+          const found = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, strong.existingId);
           if (found) return found;
         }
       } catch {
@@ -186,16 +198,25 @@ export class BusinessGraph {
     entityType: string,
     payload: Record<string, unknown>,
   ): Promise<void> {
-    let schema: { entities?: Array<{ type: string; fields?: Array<{ name: string; required?: boolean; type?: string; enumValues?: string[] }> }> } | null = null;
+    let schema: BusinessSchemaV2 | null = null;
     try {
-      schema = await this.db.get(owner, "business-schemas", "default");
+      schema = await this.db.get<BusinessSchemaV2>(owner, "business-schemas", "default");
     } catch {
       return;
     }
     if (!schema?.entities) return;
-    const def = schema.entities.find((e) => e.type === entityType);
+    const def: EntityDefinition | undefined = schema.entities.find((e) => e.type === entityType);
     if (!def) return;
-    for (const field of def.fields ?? []) {
+    const fields: readonly FieldDefinition[] = def.fields ?? [];
+    for (const field of fields) {
+      // BUSINESS_SCHEMA_FIELD_TYPE_V1 - un schema guardado con un tipo que el
+      // metamodelo ya no conoce falla fail-closed, no se ignora.
+      if (!KNOWN_FIELD_TYPES.has(field.type)) {
+        throw new AppError(
+          `Entity ${entityType} field ${field.name} has unknown type ${String(field.type)}`,
+          422,
+        );
+      }
       const value = payload[field.name];
       if (field.required && (value === undefined || value === null)) {
         throw new AppError(`Entity ${entityType} requires field ${field.name}`, 422);

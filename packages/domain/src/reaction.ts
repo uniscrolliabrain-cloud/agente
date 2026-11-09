@@ -1,4 +1,4 @@
-// PENDING(2027-03-31) reacciones declaradas y no implementadas: ReactionTarget, ReactionTrigger.
+// PENDING(2027-03-31) destino de la reaccion aun no despachado por el motor: ReactionTarget.
 // REACTION_V1 - motor de reacciones a eventos.
 
 import { z } from "zod";

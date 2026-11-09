@@ -1,3 +1,4 @@
+import type { OutcomeStatus } from "../../../../packages/domain/src/outcome.ts";
 // B102_APPLIED
 // R19_APPLIED
 // EVENTBUS_SOP_EMIT_V1
@@ -145,7 +146,7 @@ export class SOPExecutor {
     reason: "promotion" | "timeout" | "response",
     // SOP_OUTCOME_STRUCTURED_V1 - opcional: outcome estructurado del SOP.
     outcome?: {
-      status: "achieved" | "partial" | "blocked" | "failed" | "unknown";
+      status: OutcomeStatus;
       summary: string;
       metrics?: Array<{ key: string; value: number }>;
     },

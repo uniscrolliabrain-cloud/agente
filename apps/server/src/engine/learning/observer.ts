@@ -8,6 +8,12 @@ import type {
   Outcome,
   Plan,
 } from "../../../../../packages/domain/src/index.ts";
+import type {
+  FailureLesson,
+  LearningFact,
+  LearningPattern,
+  ProceduralLearning,
+} from "../../../../../packages/domain/src/learning.ts";
 
 export interface Observation {
   tenantId: string;
@@ -25,7 +31,7 @@ export class LearningObserver {
 
     // Hecho: resumen del resultado.
     if (input.outcome.status === "achieved") {
-      await this.db.put(tenantId, "learning-facts", {
+      const fact: LearningFact = {
         id: `fact-${input.goal.id}-${Date.now()}`,
         tenantId,
         text: `Goal "${input.goal.title}" logrado con plan ${input.plan.id}`,
@@ -35,22 +41,23 @@ export class LearningObserver {
         timesUsed: 0,
         successRate: 1,
         createdAt: now,
-      });
+      };
+      await this.db.put(tenantId, "learning-facts", fact);
     }
 
     // Patron: misma firma de plan.
     const signature = input.plan.steps.map((s) => s.capabilityId ?? s.id).join(">");
-    const existing = await this.db.get<{
-      id: string;
-      successCount: number;
-      failureCount: number;
-    }>(tenantId, "learning-patterns", `pattern-${signature}`);
+    const existing = await this.db.get<LearningPattern>(
+      tenantId,
+      "learning-patterns",
+      `pattern-${signature}`,
+    );
     if (existing) {
       existing.successCount += input.outcome.status === "achieved" ? 1 : 0;
       existing.failureCount += input.outcome.status === "failed" ? 1 : 0;
-      await this.db.put(tenantId, "learning-patterns", existing as unknown as { id: string });
+      await this.db.put(tenantId, "learning-patterns", existing);
     } else {
-      await this.db.put(tenantId, "learning-patterns", {
+      const pattern: LearningPattern = {
         id: `pattern-${signature}`,
         tenantId,
         goalKind: input.goal.title.slice(0, 100),
@@ -61,25 +68,27 @@ export class LearningObserver {
         proposedAsSop: false,
         createdAt: now,
         updatedAt: now,
-      });
+      };
+      await this.db.put(tenantId, "learning-patterns", pattern);
     }
 
     // LEARNING_OBSERVER_V2 - fallo: acumula ocurrencias.
     if (input.outcome.status === "failed" || input.outcome.status === "blocked") {
       const sig = input.outcome.summary.slice(0, 200);
       const lessonId = `lesson-${sig}`;
-      const existing = await this.db.get<{ occurrences: number }>(tenantId, "failure-lessons", lessonId);
+      const existing = await this.db.get<FailureLesson>(tenantId, "failure-lessons", lessonId);
       if (existing) {
-        await this.db.put(tenantId, "failure-lessons", {
+        const lesson: FailureLesson = {
           ...existing,
           id: lessonId,
           tenantId,
           errorSignature: sig,
           occurrences: (existing.occurrences ?? 0) + 1,
           lastSeenAt: now,
-        });
+        };
+        await this.db.put(tenantId, "failure-lessons", lesson);
       } else {
-        await this.db.put(tenantId, "failure-lessons", {
+        const lesson: FailureLesson = {
           id: lessonId,
           tenantId,
           errorSignature: sig,
@@ -88,25 +97,27 @@ export class LearningObserver {
           occurrences: 1,
           createdAt: now,
           lastSeenAt: now,
-        });
+        };
+        await this.db.put(tenantId, "failure-lessons", lesson);
       }
     }
 
     // LEARNING_OBSERVER_V2 - promueve patrón a SOP propuesto si supera umbral.
-    const patternRow = await this.db.get<{ successCount: number; proposedAsSop: boolean; planSignature: string }>(
+    const patternRow = await this.db.get<LearningPattern>(
       tenantId,
       "learning-patterns",
       `pattern-${signature}`,
     );
     if (patternRow && patternRow.successCount >= 5 && !patternRow.proposedAsSop) {
-      await this.db.put(tenantId, "procedural-learning", {
+      const procedural: ProceduralLearning = {
         id: `proc-${signature}`,
         tenantId,
         sourcePatternId: `pattern-${signature}`,
         proposedSop: { signature: patternRow.planSignature },
         status: "proposed",
         createdAt: now,
-      });
+      };
+      await this.db.put(tenantId, "procedural-learning", procedural);
       await this.db.put(tenantId, "learning-patterns", {
         ...patternRow,
         id: `pattern-${signature}`,

@@ -1,7 +1,14 @@
 // ENTITY_RESOLVER_V1 - resuelve entidades candidatas por email/name/cif.
+// ENTITY_RESOLUTION_WIRE_V1 - devuelve el contrato EntityMatch del dominio y
+// sus MatchReason, en vez de una forma local paralela.
 
 import type { Store } from "../../db.ts";
 import type { BusinessEntity } from "../../../../../packages/domain/src/business.ts";
+import type {
+  EntityCandidate,
+  EntityMatch,
+  MatchReason,
+} from "../../../../../packages/domain/src/entity-resolution.ts";
 
 function normalize(value: string): string {
   return value
@@ -20,14 +27,14 @@ export class EntityResolver {
     tenantId: string,
     owner: string,
     type: string,
-    candidate: { name?: string; email?: string; cif?: string },
-  ): Promise<Array<{ entityId: string; confidence: number; reasons: string[] }>> {
+    candidate: Partial<EntityCandidate>,
+  ): Promise<EntityMatch[]> {
     const all = await this.db.list<BusinessEntity>(owner, "business-entities");
     const typed = all.filter((e) => e.type === type);
-    const matches: Array<{ entityId: string; confidence: number; reasons: string[] }> = [];
+    const matches: EntityMatch[] = [];
 
     for (const entity of typed) {
-      const reasons: string[] = [];
+      const reasons: MatchReason[] = [];
       const props = entity.properties as Record<string, unknown>;
 
       if (candidate.email && props.email && String(props.email).toLowerCase() === candidate.email.toLowerCase()) {
@@ -41,10 +48,13 @@ export class EntityResolver {
       }
 
       if (reasons.length > 0) {
+        const confidence = Math.min(1, reasons.length * 0.4);
         matches.push({
-          entityId: entity.id,
-          confidence: Math.min(1, reasons.length * 0.4),
+          candidateId: candidate.id ?? `candidate:${type}`,
+          existingId: entity.id,
+          confidence,
           reasons,
+          decision: confidence >= 0.8 ? "auto_merge" : "propose_merge",
         });
       }
     }

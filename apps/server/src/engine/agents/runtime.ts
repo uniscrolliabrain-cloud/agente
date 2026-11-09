@@ -1,20 +1,26 @@
 import { randomUUID } from "node:crypto";
 import type { EventBus } from "../events/index.ts";
+import type {
+  AgentRuntime,
+  RuntimePhase,
+} from "../../../../../packages/domain/src/runtime.ts";
 
 // AGENT_RUNTIME_V1 Ã¢â‚¬â€ runtime efimero por ejecucion. No se persiste.
 // El historial durable vive en el event bus. El runtime solo da identidad
 // a cada ejecucion de agente (spawn + complete/fail + destroy).
 
-export interface EphemeralRuntime {
-  runtimeId: string;
-  // RUNTIME_TENANT_V1
-  tenantId: string;
-  owner: string;
-  roleId: string;
-  taskId?: string;
+// RUNTIME_CONTRACT_WIRE_V1 - el runtime efimero declara el contrato del
+// dominio (AgentRuntime) y su fase (RuntimePhase). Lo propio del runtime
+// efimero es la correlacion y el createdAt que viaja al bus.
+export type EphemeralRuntime = Pick<
+  AgentRuntime,
+  "runtimeId" | "tenantId" | "owner" | "roleId" | "taskId"
+> & {
+  phase: RuntimePhase;
+  startedAt: string;
   correlationId: string;
   createdAt: string;
-}
+};
 
 export class AgentRuntimeManager {
   private readonly active = new Map<string, EphemeralRuntime>();
@@ -29,6 +35,7 @@ export class AgentRuntimeManager {
     taskId?: string;
     correlationId?: string;
   }): Promise<EphemeralRuntime> {
+    const startedAt = new Date().toISOString();
     const runtime: EphemeralRuntime = {
       runtimeId: randomUUID(),
       tenantId: input.tenantId,
@@ -36,7 +43,9 @@ export class AgentRuntimeManager {
       roleId: input.roleId,
       ...(input.taskId ? { taskId: input.taskId } : {}),
       correlationId: input.correlationId ?? randomUUID(),
-      createdAt: new Date().toISOString(),
+      phase: "created",
+      startedAt,
+      createdAt: startedAt,
     };
     this.active.set(runtime.runtimeId, runtime);
     await this.bus?.emit(

@@ -1,4 +1,3 @@
-// PENDING(2027-03-31) deduplicacion de entidades declarada y no implementada: EntityCandidate, EntityMatch, MatchReason.
 // ENTITY_RESOLUTION_V1 - resolucion de entidades duplicadas.
 
 import { z } from "zod";

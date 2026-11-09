@@ -3,7 +3,24 @@
 import type { Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
 import type { EventBus } from "../events/index.ts";
-import type { ReactionDefinition } from "../../../../../packages/domain/src/reaction.ts";
+import type {
+  ReactionDefinition,
+  ReactionTrigger,
+} from "../../../../../packages/domain/src/reaction.ts";
+
+// REACTION_TRIGGER_WIRE_V1 - un trigger del dominio filtra por eventType y por
+// los campos declarados en `filter`. Antes el filtro se ignoraba y la regla
+// disparaba con cualquier payload del mismo tipo.
+export function matchesTrigger(
+  trigger: ReactionTrigger,
+  eventType: string,
+  payload: Record<string, unknown>,
+): boolean {
+  if (trigger.eventType !== eventType) return false;
+  return Object.entries(trigger.filter).every(
+    ([key, expected]) => JSON.stringify(payload[key]) === JSON.stringify(expected),
+  );
+}
 
 export class ReactionEngine {
   private readonly rules = new Map<string, ReactionDefinition[]>();
@@ -35,7 +52,7 @@ export class ReactionEngine {
     const list = this.rules.get(tenantId) ?? [];
     for (const rule of list) {
       if (!rule.enabled) continue;
-      if (rule.trigger.eventType !== eventType) continue;
+      if (!matchesTrigger(rule.trigger, eventType, payload)) continue;
       if (rule.condition && !this.matches(rule.condition, payload)) continue;
       if (!this.executor || rule.actions.length === 0) continue;
       const ctx = {

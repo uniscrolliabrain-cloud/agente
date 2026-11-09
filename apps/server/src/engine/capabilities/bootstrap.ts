@@ -1,12 +1,17 @@
 // CAPABILITIES_BOOTSTRAP_V1 - registra las capabilities del sistema al arrancar.
 
 import { CapabilityRegistry } from "./registry.ts";
+import type {
+  CapabilityCost,
+  CapabilityRisk,
+  CapabilitySideEffect,
+} from "../../../../../packages/domain/src/capability.ts";
 import { validateAgainstMetamodel } from "../../../../../packages/domain/src/ontology.ts";
 import { BASE_VOCABULARY } from "../../../../../packages/domain/src/ontology-seed.ts";
 
 export function bootstrapCapabilities(registry: CapabilityRegistry): void {
   // Tools de SOP
-  const tools: Array<{ id: string; actionType: string; family: string; risk: string; sideEffects: Array<{ kind: string; target: string; reversible: boolean }>; requiresApproval: boolean }> = [
+  const tools: Array<{ id: string; actionType: string; family: string; risk: CapabilityRisk; sideEffects: CapabilitySideEffect[]; requiresApproval: boolean }> = [
     { id: "read_mail_thread", actionType: "Read", family: "COMMUNICATION", risk: "low", sideEffects: [{ kind: "read", target: "email", reversible: true }], requiresApproval: false },
     { id: "read_workspace", actionType: "Read", family: "DATA", risk: "low", sideEffects: [{ kind: "read", target: "workspace", reversible: true }], requiresApproval: false },
     { id: "import_pdf", actionType: "Retrieve", family: "DOCUMENTS", risk: "low", sideEffects: [{ kind: "read", target: "files", reversible: true }], requiresApproval: false },
@@ -63,6 +68,9 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
     transition_entity:     { actionType: "Update",      family: "DATA" },
   };
 
+  // CAPABILITY_CONTRACT_WIRE_V1 - el coste vacio es el contrato del dominio.
+  const NO_COST: CapabilityCost = {};
+
   for (const t of tools) {
     const meta = toolMeta[t.id];
     registry.register({
@@ -75,15 +83,15 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
       outputs: {},
       preconditions: [],
       sideEffects: t.sideEffects.map((s) => ({
-        kind: s.kind as "read" | "write" | "external_write" | "notification",
+        kind: s.kind,
         target: s.target,
         reversible: s.reversible,
       })),
       permissions: [],
       actionType: (meta?.actionType ?? t.actionType) as "Read" | "Write" | "Execute" | "Retrieve" | "Communicate" | "Create" | "Update" | "Transform",
       family: (meta?.family ?? t.family) as "COMMUNICATION" | "DATA" | "DOCUMENTS" | "AUTOMATION" | "WEB" | "SOFTWARE" | "CONTENT",
-      risk: t.risk as "low" | "medium" | "high" | "critical",
-      cost: {},
+      risk: t.risk,
+      cost: NO_COST,
       idempotency: "idempotent",
       retryable: false,
       compensatable: false,
@@ -99,8 +107,8 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
     actionType: string;
     family: string;
     description: string;
-    risk: "low" | "medium" | "high" | "critical";
-    sideEffects: Array<{ kind: string; target: string; reversible: boolean }>;
+    risk: CapabilityRisk;
+    sideEffects: CapabilitySideEffect[];
     requiresApproval: boolean;
   }> = [
     { id: "run_sop", kind: "composite", actionType: "Execute", family: "AUTOMATION", description: "Ejecuta un SOP registrado", risk: "low", sideEffects: [], requiresApproval: false },
@@ -122,7 +130,7 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
       outputs: {},
       preconditions: [],
       sideEffects: c.sideEffects.map((s) => ({
-        kind: s.kind as "read" | "write" | "external_write" | "notification",
+        kind: s.kind,
         target: s.target,
         reversible: s.reversible,
       })),
@@ -130,7 +138,7 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
       actionType: c.actionType as "Read" | "Write" | "Execute" | "Retrieve" | "Communicate" | "Create" | "Update" | "Transform",
       family: c.family as "COMMUNICATION" | "DATA" | "DOCUMENTS" | "AUTOMATION" | "WEB" | "SOFTWARE" | "CONTENT",
       risk: c.risk,
-      cost: {},
+      cost: NO_COST,
       idempotency: "idempotent",
       retryable: false,
       compensatable: false,

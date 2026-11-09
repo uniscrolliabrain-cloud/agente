@@ -5,6 +5,7 @@ import type {
   Outcome,
   VerificationResult,
 } from "../../../../../packages/domain/src/index.ts";
+import type { OutcomeMetric } from "../../../../../packages/domain/src/outcome.ts";
 
 export interface Verifier {
   verify(goal: Goal, outcome: Outcome): Promise<VerificationResult>;
@@ -17,7 +18,7 @@ export class DeterministicVerifier implements Verifier {
     const missing: string[] = [];
 
     for (const criterion of goal.successCriteria) {
-      const metric = outcome.metrics.find((m) => m.key === criterion.key);
+      const metric: OutcomeMetric | undefined = outcome.metrics.find((m) => m.key === criterion.key);
       if (!metric) {
         missing.push(criterion.key);
         continue;

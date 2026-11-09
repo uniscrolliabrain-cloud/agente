@@ -1,4 +1,4 @@
-// PENDING(2027-03-31) metamodelo v2; pendiente cablearlo en el instalador y retirar v1: BusinessSchemaV2, EntityDefinition, FieldDefinition, RelationDefinition, StateDefinition, FieldType.
+// PENDING(2027-03-31) estados y relaciones v2 aun no persistidos en el instalador: StateDefinition, RelationDefinition.
 // BUSINESS_SCHEMA_V1 - definicion declarativa de tipos de entidad.
 
 import { z } from "zod";
