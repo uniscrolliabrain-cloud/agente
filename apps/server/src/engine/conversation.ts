@@ -26,7 +26,92 @@ import type { KernelContext as KernelContextPort } from "../../../../packages/do
 import type { Config } from "../config.ts";
 import { modelChain, runWithModelFallback } from "./model-chain.ts";
 import { LEAD_INVESTIGATION_SOP, leadInvestigationInputSchema } from "./worker.ts";
+import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
+import type { ActionProposal } from "../../../../packages/domain/src/index.ts";
+import { publishCardVersion, type OperationsCard } from "./published-card.ts";
+import { renderAuthorizedCard } from "./context/fixed-card-renderer.ts";
 import type { AgentService } from "./service.ts";
+
+
+/** Un registro real del dia, con empresa e id para poder citarlo. */
+export interface BriefingRecord {
+  readonly tenantId: string;
+  readonly kind: "task" | "action" | "lead" | "connection";
+  readonly id: string;
+  readonly title: string;
+  readonly status: string;
+  readonly at: string;
+}
+
+/**
+ * Explicacion del dia anterior sobre una tarjeta fija aprobada. No resume
+ * "lo hablado": cita ids, estados y horas de los registros recibidos y rechaza
+ * cualquier registro de otra empresa. Sin registros no inventa una respuesta.
+ */
+export function buildDailyBriefing(
+  records: readonly BriefingRecord[],
+  options: { tenantId: string; owner: string; at?: Date; cardId?: string },
+) {
+  const foreign = records.find((record) => record.tenantId !== options.tenantId);
+  if (foreign) throw new Error("Un registro de otra empresa no entra en el briefing");
+  const sorted = [...records].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+  if (sorted.length === 0) {
+    return {
+      status: "empty" as const,
+      text: "No hay registros de ese dia: no hay nada que explicar.",
+      records: [] as const,
+    };
+  }
+  const count = (kind: BriefingRecord["kind"]) => sorted.filter((record) => record.kind === kind).length;
+  const latest = sorted[0];
+  const references = sorted.slice(0, 20).map((record) => ({ kind: record.kind, id: record.id }));
+  const card: OperationsCard = {
+    id: options.cardId ?? "daily-operations",
+    title: "Explicacion del dia anterior",
+    mode: "fixed",
+    status: "approved",
+    channels: ["panel"],
+    requiredFacts: ["tasks", "revisions", "receipts", "incidents", "reference", "status", "at"],
+    template:
+      "Ayer quedaron {{tasks}} trabajos, {{revisions}} revisiones, {{receipts}} recibos y " +
+      "{{incidents}} incidencias. El ultimo registro fue {{reference}} ({{status}}) a las {{at}}.",
+    missingFactScript: "Faltan registros verificados para explicar el dia anterior.",
+    fallback: "explain_missing",
+    references,
+  };
+  const binding = publishCardVersion(null, card, {
+    tenantId: options.tenantId,
+    approvedBy: options.owner,
+    approvedAt: options.at ?? new Date(),
+    version: 1,
+    actorTenantId: options.tenantId,
+    permissions: ["cards.publish"],
+  });
+  const rendered = renderAuthorizedCard(
+    binding,
+    "panel",
+    {
+      tasks: String(count("task")),
+      revisions: String(sorted.filter((record) => record.kind === "action" &&
+        (record.status === "awaiting_review" || record.status === "scheduled")).length),
+      receipts: String(sorted.filter((record) => record.kind === "action" && record.status === "succeeded").length),
+      incidents: String(sorted.filter((record) =>
+        record.status === "failed" || record.status === "outcome_unknown" || record.status === "expired").length),
+      reference: `${latest.kind}:${latest.id}`,
+      status: latest.status,
+      at: latest.at,
+    },
+    {
+      tenantId: options.tenantId,
+      version: 1,
+      authorizedReferences: references.map((reference) => `${reference.kind}:${reference.id}`),
+    },
+  );
+  return {
+    ...rendered,
+    records: sorted.map((record) => ({ kind: record.kind, id: record.id, at: record.at })),
+  };
+}
 
 export class ConversationAgent extends AbstractAgent {
   // CONVERSATION_PENDING_HINTS_FIELD_V1
@@ -649,6 +734,43 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             byUser.set(key, (byUser.get(key) ?? 0) + 1);
           }
           return { rows: [...byUser].slice(0, 10).map(([user, count]) => ({ user, count })) };
+        },
+      }),
+      defineTool({
+        name: "explain_previous_day",
+        description:
+          "Explica el dia anterior con registros reales de esta empresa: trabajos, revisiones, recibos e incidencias, citando ids, estados y horas. No inventa: si no hay registros lo dice. No cambia nada.",
+        parameters: z.object({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }),
+        execute: async ({ day }) => {
+          const tenantId = await this.service.tenantService?.tenantIdFor(this.owner);
+          if (!tenantId) return { error: "No hay una empresa resuelta para explicar el dia" };
+          const target = day ?? new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+          const [tasks, actions] = await Promise.all([
+            this.service.db.list<AgentTask>(this.owner, "tasks", { limit: 200 }),
+            this.service.db.list<ActionProposal>(this.owner, "actions", { limit: 200 }),
+          ]);
+          try {
+            return buildDailyBriefing([
+              ...tasks.filter((task) => task.createdAt.startsWith(target)).map((task) => ({
+                tenantId,
+                kind: "task" as const,
+                id: task.id,
+                title: task.title,
+                status: task.status,
+                at: task.createdAt,
+              })),
+              ...actions.filter((action) => action.createdAt.startsWith(target)).map((action) => ({
+                tenantId,
+                kind: "action" as const,
+                id: action.id,
+                title: action.title,
+                status: action.status,
+                at: action.createdAt,
+              })),
+            ], { tenantId, owner: this.owner });
+          } catch (error) {
+            return { error: error instanceof Error ? error.message : "No se pudo construir el briefing" };
+          }
         },
       }),
       defineTool({         name: "create_briefing",         description:           "Crea un briefing o artifact persistente a partir de lo hablado en esta conversacion. Usa el resumen real, no inventes. Devuelve el artifact creado.",         parameters: z.object({           title: z.string().min(1).max(160),           summary: z.string().min(1).max(4000),           data: z.record(z.string(), z.unknown()).default({}),           category: z             .enum(["empresa", "cliente", "proceso", "preferencia", "rrhh", "producto", "otro"])             .optional(),           tags: z.array(z.string().max(60)).max(20).default([]),         }),         execute: async ({ title, summary, data, category, tags }) => {           const artifact = await this.service.artifactFromSource(             this.owner,             `chat:${input.threadId}`,             "report",             title,             summary,             data,             title,           );           await this.service.memory.remember(this.owner, `${title}: ${summary}`, {             source: `chat:${input.threadId}`,             ...(category ? { category } : {}),             tags: ["briefing", ...tags],           });           return artifact;         },       }),

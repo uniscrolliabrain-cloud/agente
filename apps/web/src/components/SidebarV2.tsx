@@ -1,13 +1,13 @@
 // B3_SIDEBAR_LIVE_V1 - LiveItem disponible para usar en la lista de recientes.
 // B1_SIDEBAR_V1
-import { Activity, Bot, Brain, Files, FolderKanban, LayoutDashboard, MessageSquare, Search, Settings, UserCog } from "lucide-react";
+import { Activity, Bot, Brain, ClipboardList, Files, FolderKanban, LayoutDashboard, MessageSquare, Search, Settings, UserCog } from "lucide-react";
 import type { Thread } from "../api/threads";
 // WIRE_SIDEBAR_LIVEITEM_V1
 import LiveItem from "./LiveItem";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
-export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace" | "centro-mando" | "whatsapp";
+export type AppView = "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "agents" | "workspace" | "centro-mando" | "whatsapp" | "operations";
 
 interface Props {
   activeView: AppView;
@@ -29,6 +29,7 @@ const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
   { id: "memory", label: "Conocimiento", icon: Brain },
   { id: "projects", label: "Proyectos", icon: FolderKanban },
   { id: "control-center", label: "Centro de control", icon: Activity },
+  { id: "operations", label: "Operaciones", icon: ClipboardList },
   { id: "agents", label: "Agentes", icon: Bot },
   // WS_UI_SIDEBAR_ITEM_V1
   { id: "workspace", label: "Workspaces", icon: FolderKanban },

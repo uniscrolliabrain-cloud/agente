@@ -1,3 +1,10 @@
+import {
+  assertCardBinding,
+  type CardBinding,
+  type CardChannel,
+  type OperationsCard,
+} from "../published-card.ts";
+
 // Application budgets in UTF-16 code units, checked on the emitted text.
 const channelLimits = {
   panel: 1200,
@@ -8,7 +15,7 @@ const channelLimits = {
 
 type FixedCardChannel = keyof typeof channelLimits;
 
-interface RenderableCard {
+export interface RenderableCard {
   mode: "fixed" | "guided";
   status: "draft" | "approved" | "retired";
   channels: readonly FixedCardChannel[];
@@ -93,4 +100,36 @@ export function renderFixedCard(
   return missing.length > 0
     ? { status: "missing-facts" as const, format, text, missing, fallback: card.fallback }
     : { status: "rendered" as const, format, text };
+}
+
+/**
+ * Renderiza solo una tarjeta aprobada, de la version y empresa correctas, y
+ * solo si cada referencia apunta a un registro autorizado de esa empresa. La
+ * cita viaja con el texto para que la respuesta se pueda auditar.
+ */
+export function renderAuthorizedCard(
+  binding: CardBinding<OperationsCard>,
+  channel: CardChannel,
+  facts: Readonly<Record<string, unknown>>,
+  access: { tenantId: string; version: number; authorizedReferences: readonly string[] },
+) {
+  assertCardBinding(binding, { tenantId: access.tenantId, version: access.version });
+  const card = binding.card.card;
+  for (const reference of card.references) {
+    if (!access.authorizedReferences.includes(`${reference.kind}:${reference.id}`)) {
+      throw new Error(`Referencia no autorizada: ${reference.kind}`);
+    }
+  }
+  const rendered = renderFixedCard(card, channel, facts);
+  return {
+    ...rendered,
+    citation: {
+      cardId: card.id,
+      version: binding.version,
+      contentHash: binding.card.contentHash,
+      approvedBy: binding.card.approvedBy,
+      approvedAt: binding.card.approvedAt,
+      references: card.references.map((reference) => `${reference.kind}:${reference.id}`),
+    },
+  };
 }
