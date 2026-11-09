@@ -66,4 +66,5 @@ Revertir este commit retira `check_availability`/`prepare_event` del chat y su p
 
 ## SHA por patchset
 
-Los tres patchsets se integran en un único commit de producto y pruebas sobre `a669f9a`; su SHA queda registrado al pushear (ver commit `feat(calendar)`).
+- **16.P1 + 16.P2 + 16.P3:** `a3af62b` (producto y pruebas en un único commit sobre `a669f9a`).
+- **Punto de rollback:** `a669f9a`; revertir `a3af62b` deja las campañas 01–15 intactas.
