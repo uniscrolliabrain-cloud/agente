@@ -6,8 +6,9 @@
 import { EventType, type RunAgentInput } from "@ag-ui/core";
 import { randomUUID } from "node:crypto";
 import { BuiltInAgent } from "@copilotkit/runtime/v2";
-import { envApiKeyFor, modelChain, runWithModelFallback } from "../model-chain.ts";
+import { chainApiKeys, envApiKeyFor, modelChain, normalizeModelSpec, runWithModelFallback } from "../model-chain.ts";
 import type { Config } from "../../config.ts";
+import type { TenantConfig } from "../../kernel/config/tenant-config.ts";
 import type {
   Goal,
   Outcome,
@@ -19,13 +20,20 @@ export class LlmVerifier implements Verifier {
   constructor(
     private readonly config: Config,
     private readonly inner: Verifier,
+    private readonly tenantConfigFor?: (tenantId: string) => Promise<TenantConfig | undefined>,
   ) {}
 
   async verify(goal: Goal, outcome: Outcome): Promise<VerificationResult> {
     const base = await this.inner.verify(goal, outcome);
     if (base.verified) return base;
     if (outcome.evidence.length === 0) return base;
-    if (!this.config.model) return base;
+    let tenant: TenantConfig | undefined;
+    if (this.tenantConfigFor) {
+      tenant = await this.tenantConfigFor(goal.tenantId).catch(() => undefined);
+    }
+    const chain = modelChain(this.config, tenant, "task");
+    if (chain.length === 1 && chain[0] === "openai/unconfigured") return base;
+    const apiKeys = chainApiKeys(chain, tenant);
 
     const instruction = [
       "Evalua si el Outcome satisface el Goal. Responde SOLO JSON:",
@@ -51,7 +59,7 @@ export class LlmVerifier implements Verifier {
     const createAgent = (model: string) =>
       new BuiltInAgent({
         model,
-        apiKey: envApiKeyFor(model),
+        apiKey: apiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model),
         maxSteps: 1,
         maxRetries: 0,
         tools: [],
@@ -60,7 +68,7 @@ export class LlmVerifier implements Verifier {
 
     let text = "";
     try {
-      const run = runWithModelFallback(modelChain(this.config), createAgent, runInput);
+      const run = runWithModelFallback(chain, createAgent, runInput);
       await new Promise<void>((resolve, reject) => {
         const timeout = setTimeout(() => {
           run.abort();

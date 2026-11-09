@@ -453,10 +453,10 @@ idempotencia ni aislamiento por tenant.
   `BuiltInAgent` acepta `apiKey` pero no `baseUrl` por intento. Funciona el
   `baseUrl` global de cada proveedor (`OPENAI_BASE_URL`,
   `GOOGLE_GENERATIVE_AI_BASE_URL`, `ANTHROPIC_BASE_URL`).
-- `LlmPlanner`, `LlmVerifier`, `generateText` y el paso `llm_generate` de los
-  SOP usan solo la cadena global (`MODEL`/`MODEL_FALLBACK`). Un deployment con
-  únicamente `FAST_LLM_*`/`SLOW_LLM_*` y sin `MODEL` habilita chat y tareas,
-  pero no esas rutas auxiliares.
+- Las rutas auxiliares ya resuelven la configuracion del tenant y su clave
+  (`tenantConfigFor` + `chainApiKeys`): `LlmPlanner`, `LlmVerifier`,
+  `generateText` y el paso `llm_generate` de los SOP funcionan tambien con
+  `FAST_LLM_*`/`SLOW_LLM_*` sin `MODEL` global.
 - Embeddings solo implementa el endpoint de Google; otro
   `EMBEDDINGS_LLM_PROVIDER` no está soportado.
 - El chat puede recuperar memoria dos veces (recall directo y
@@ -473,7 +473,7 @@ idempotencia ni aislamiento por tenant.
 - `tests/model-chain-resilience.test.ts` (nuevo, 6 casos): openrouter, claves,
   bulkhead, fallback por primer byte, timeout total y error sin fallback → 6/6.
 - `fast-slow-llm`, `model-worker`, `demo-model` + nuevos → 19/19.
-- Bateria ampliada de chat, tareas, SOP, RAG, memoria y contexto → 51/51.
+- Bateria ampliada de chat, tareas, SOP, RAG, memoria y contexto → 52/52.
 - No hay claves de proveedor en este entorno, así que no se hizo una llamada
   real a OpenAI/Anthropic/Google. La verificación es de cableado, tipos y
   comportamiento de la cadena con runs simulados y el modelo mock del repo.

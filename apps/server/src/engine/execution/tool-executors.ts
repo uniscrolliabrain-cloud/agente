@@ -170,12 +170,15 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
 
   // TOOL_EXECUTOR_LLM_GENERATE_V2 - llamada real al modelo con timeout.
   // TOOL_EXECUTORS_USE_IDEMPOTENCY_V1 - llm_generate usa key para cache/dedupe textual.
-  wrap("llm_generate", async (_ctx, inputs, key) => {
+  wrap("llm_generate", async (ctx, inputs, key) => {
     const { generateText } = await import("../model.ts");
     const instruction = String(inputs.instruction ?? inputs.prompt ?? "");
     if (!instruction) return { text: "" };
     const idempotentInstruction = key ? `[idem:${key.key.slice(0, 8)}] ${instruction}` : instruction;
-    const text = await generateText(service.config, idempotentInstruction, inputs.context ?? {});
+    const tenant = await service.tenantConfigFor(ctx.owner).catch(() => undefined);
+    const text = await generateText(service.config, idempotentInstruction, inputs.context ?? {}, {
+      tenant,
+    });
     return { text: text.slice(0, 20000) };
   });
 

@@ -280,9 +280,9 @@ export class AgentService {
     // PLANNER_WIRE_V1 - LLM planner como primera capa, stub como fallback.
     // PLANNER_VERIFIER_TYPES_FIX_V1 - sin cast. Los tipos declarados ya son
     // las interfaces, asi que las instancias concretas encajan sin `as unknown as`.
-    this.planner = new LlmPlanner(config, new StubPlanner());
+    this.planner = new LlmPlanner(config, new StubPlanner(), (tenantId) => this.tenantConfigForTenant(tenantId));
     const deterministic = new DeterministicVerifier();
-    this.verifier = new LlmVerifier(config, deterministic);
+    this.verifier = new LlmVerifier(config, deterministic, (tenantId) => this.tenantConfigForTenant(tenantId));
     // ORCHESTRATOR_DEPS_WIRE_V1 - el orquestador recibe las deps.
     this.orchestrator = new BusinessOSOrchestrator({
       context: {
@@ -2167,6 +2167,37 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
   // pasara solo el owner emitia bajo el tenant equivocado en multi-tenant.
   async busTenantFor(owner: string): Promise<string> {
     return (await this.tenantService?.tenantIdFor(owner)) ?? owner;
+  }
+
+  // SERVICE_TENANT_CONFIG_AUX_V1 - configuracion LLM del tenant para las rutas
+  // auxiliares (planner, verificador, llm_generate y SOPs). Antes solo se
+  // resolvia para chat/tareas y esas rutas exigian MODEL global.
+  async tenantConfigForTenant(
+    tenantId: string,
+  ): Promise<import("../kernel/config/tenant-config.ts").TenantConfig | undefined> {
+    if (!this.kernel) return undefined;
+    try {
+      const { kernelContextSchema } = await import("../kernel/index.ts");
+      const ctx = kernelContextSchema.parse({
+        tenantId,
+        owner: tenantId,
+        role: "agent",
+        requestId: `aux:${Date.now()}`,
+        actorId: tenantId,
+      });
+      return await this.kernel.config(ctx);
+    } catch {
+      return undefined;
+    }
+  }
+
+  async tenantConfigFor(
+    owner: string,
+  ): Promise<import("../kernel/config/tenant-config.ts").TenantConfig | undefined> {
+    const tenantId = this.tenantService
+      ? await this.tenantService.tenantIdFor(owner).catch(() => "default")
+      : "default";
+    return this.tenantConfigForTenant(tenantId);
   }
 
   // SERVICE_BUILD_APPLY_ROUTE_HELPER_V1 - aplica un build aprobado. Lo usan

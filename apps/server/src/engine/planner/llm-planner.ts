@@ -4,8 +4,9 @@
 import { EventType, type RunAgentInput } from "@ag-ui/core";
 import { randomUUID } from "node:crypto";
 import { BuiltInAgent } from "@copilotkit/runtime/v2";
-import { envApiKeyFor, modelChain, runWithModelFallback } from "../model-chain.ts";
+import { chainApiKeys, envApiKeyFor, modelChain, normalizeModelSpec, runWithModelFallback } from "../model-chain.ts";
 import type { Config } from "../../config.ts";
+import type { TenantConfig } from "../../kernel/config/tenant-config.ts";
 import type { Goal, Plan } from "../../../../../packages/domain/src/index.ts";
 import type { Planner, PlannerInput } from "./planner.ts";
 import { parsePlannerResponse } from "./planner.ts";
@@ -14,13 +15,20 @@ export class LlmPlanner implements Planner {
   constructor(
     private readonly config: Config,
     private readonly fallback?: Planner,
+    private readonly tenantConfigFor?: (tenantId: string) => Promise<TenantConfig | undefined>,
   ) {}
 
   async plan(input: PlannerInput): Promise<Plan> {
-    if (!this.config.model) {
+    let tenant: TenantConfig | undefined;
+    if (this.tenantConfigFor) {
+      tenant = await this.tenantConfigFor(input.goal.tenantId).catch(() => undefined);
+    }
+    const chain = modelChain(this.config, tenant, "task");
+    if (chain.length === 1 && chain[0] === "openai/unconfigured") {
       if (this.fallback) return this.fallback.plan(input);
       throw new Error("No model configured and no fallback");
     }
+    const apiKeys = chainApiKeys(chain, tenant);
 
     const capabilities = input.capabilities
       .map((c) => `- ${c.id} (${c.kind})`)
@@ -51,7 +59,7 @@ export class LlmPlanner implements Planner {
     const createAgent = (model: string) =>
       new BuiltInAgent({
         model,
-        apiKey: envApiKeyFor(model),
+        apiKey: apiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model),
         maxSteps: 1,
         maxRetries: 0,
         tools: [],
@@ -59,7 +67,7 @@ export class LlmPlanner implements Planner {
       });
 
     let text = "";
-    const run = runWithModelFallback(modelChain(this.config), createAgent, runInput);
+    const run = runWithModelFallback(chain, createAgent, runInput);
     await new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
         run.abort();

@@ -13,7 +13,7 @@ import type { AgentTask } from "../../../../packages/domain/src/agent.ts";
 import { emailDraftSchema, eventDraftSchema } from "../../../../packages/domain/src/index.ts";
 import { sopSchema, type SOP, type SOPStep } from "../../../../packages/domain/src/sop.ts";
 import { AppError } from "../errors.ts";
-import { envApiKeyFor, modelChain, runWithModelFallback } from "./model-chain.ts";
+import { chainApiKeys, envApiKeyFor, modelChain, normalizeModelSpec, runWithModelFallback } from "./model-chain.ts";
 import type { AgentService } from "./service.ts";
 import { generateText } from "./model.ts";
 import { LostLeaseError, type TaskContext } from "./worker.ts";
@@ -728,11 +728,14 @@ export class SOPExecutor {
     context: Record<string, unknown>,
   ): Promise<string> {
     const config = this.service.config;
-    if (!config.model)
+    const tenant = await this.service.tenantConfigFor(owner).catch(() => undefined);
+    const chain = modelChain(config, tenant, "task");
+    if (chain.length === 1 && chain[0] === "openai/unconfigured")
       throw new AppError(
-        "llm_generate requires a configured model. Set MODEL and its provider key on the server, then run this SOP again.",
+        "llm_generate requires a configured model. Set MODEL or the tenant FAST/SLOW model and its provider key on the server, then run this SOP again.",
         503,
       );
+    const apiKeys = chainApiKeys(chain, tenant);
     const instruction = prompt.trim() || "Summarise the supplied context.";
     const messageId = randomUUID();
     const input: RunAgentInput = {
@@ -753,11 +756,11 @@ export class SOPExecutor {
       forwardedProps: {},
     };
     const run = runWithModelFallback(
-      modelChain(config),
+      chain,
       (model) =>
         new BuiltInAgent({
           model,
-          apiKey: envApiKeyFor(model),
+          apiKey: apiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model),
           maxSteps: 1,
           maxRetries: 0,
           tools: [],

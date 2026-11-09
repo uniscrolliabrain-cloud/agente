@@ -1,5 +1,6 @@
 import "../config.ts";
 import type { Config } from "../config.ts";
+import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { EventType, type RunAgentInput } from "@ag-ui/core";
 import { BuiltInAgent, defineTool } from "@copilotkit/runtime/v2";
@@ -11,7 +12,7 @@ import { computerInstructions, computerTools } from "../computer-tools.ts";
 // B-01 - contrato publico del kernel en vez de implementaciones internas.
 import type { Promoter } from "../kernel/graph/promote.ts";
 import type { KernelContext as KernelContextPort } from "../../../../packages/domain/src/kernel.ts";
-import { envApiKeyFor, modelChain, normalizeModelSpec, runWithModelFallback } from "./model-chain.ts";
+import { chainApiKeys, envApiKeyFor, modelChain, normalizeModelSpec, runWithModelFallback } from "./model-chain.ts";
 import type { AgentGovernance } from "./agents/governance.ts";
 import type { AgentRole } from "../../../../packages/domain/src/agent.ts";
 // B9FIX_APPLIED
@@ -672,6 +673,7 @@ export async function generateText(
   config: Config,
   instruction: string,
   context: unknown,
+  options: { tenant?: TenantConfig } = {},
 ): Promise<string> {
   const input: RunAgentInput = {
     threadId: `llm-generate-${randomUUID()}`,
@@ -692,10 +694,14 @@ export async function generateText(
     context: [],
     forwardedProps: {},
   };
+  const chain = modelChain(config, options.tenant, "task");
+  if (chain.length === 1 && chain[0] === "openai/unconfigured")
+    throw new Error("llm_generate requires a configured model or tenant model");
+  const apiKeys = chainApiKeys(chain, options.tenant);
   const createAgent = (model: string) =>
     new BuiltInAgent({
       model,
-      apiKey: envApiKeyFor(model),
+      apiKey: apiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model),
       maxSteps: 1,
       maxRetries: 0,
       tools: [],
@@ -707,7 +713,7 @@ export async function generateText(
   // MODEL_SLOW_CHAIN_OUT_OF_SCOPE_V1 - SLOW_LLM_WIRE_V1 estaba dentro de
   // generateText (que no tiene `service` ni `kernelCtx`). Aqui solo podemos
   // usar modelChain(config). El slow real se aplica en executeModelTask.
-  const run = runWithModelFallback(modelChain(config), createAgent, input);
+  const run = runWithModelFallback(chain, createAgent, input);
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => {
       run.abort();

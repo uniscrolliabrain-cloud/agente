@@ -55,6 +55,25 @@ export function envApiKeyFor(spec: string): string | undefined {
 // cadena completa es [fast, slow, global, fallback]. Si no, [global, fallback].
 import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 
+/** Per-spec API keys from a TenantConfig, keyed by the normalized spec. */
+export function chainApiKeys(chain: string[], tenant?: TenantConfig): Map<string, string> {
+  const keys = new Map<string, string>();
+  for (const spec of chain) {
+    const normalized = normalizeModelSpec(spec);
+    for (const candidate of [tenant?.slow, tenant?.fast]) {
+      if (
+        candidate?.apiKey &&
+        candidate.model &&
+        normalizeModelSpec(`${candidate.provider}/${candidate.model}`) === normalized
+      ) {
+        keys.set(normalized, candidate.apiKey);
+        break;
+      }
+    }
+  }
+  return keys;
+}
+
 // MODEL_CHAIN_MODE_V1 — separa chat y tarea. Chat: [fast, global]. Tarea: [slow, global].
 export function modelChain(config: Config, tenant?: TenantConfig, mode: "chat" | "task" = "task"): string[] {
   const specs: string[] = [];

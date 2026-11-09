@@ -7,6 +7,7 @@ import { test } from "node:test";
 import { EventType, type BaseEvent, type RunAgentInput } from "@ag-ui/core";
 import { Observable } from "rxjs";
 import {
+  chainApiKeys,
   envApiKeyFor,
   modelChain,
   normalizeModelSpec,
@@ -59,6 +60,20 @@ test("normaliza openrouter al proveedor OpenAI-compatible", () => {
     modelChain({ model: "openrouter/google/gemini-2.5-flash", modelFallback: "openrouter/meta/llama" } as never),
     ["openai/google/gemini-2.5-flash", "openai/meta/llama"],
   );
+});
+
+test("chainApiKeys asigna la clave del tenant al spec normalizado", () => {
+  const tenant = {
+    slow: { provider: "openrouter", model: "google/gemini-2.5-flash", apiKey: "sk-slow" },
+    fast: { provider: "openai", model: "fast-model", apiKey: "sk-fast" },
+  };
+  const keys = chainApiKeys(
+    ["openai/google/gemini-2.5-flash", "openai/fast-model", "openai/global"],
+    tenant as never,
+  );
+  assert.equal(keys.get("openai/google/gemini-2.5-flash"), "sk-slow");
+  assert.equal(keys.get("openai/fast-model"), "sk-fast");
+  assert.equal(keys.has("openai/global"), false);
 });
 
 test("envApiKeyFor resuelve la clave del proveedor real", () => {
