@@ -28,7 +28,7 @@ let ownerId: string;
 let profile: AgencyProfile;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-agency-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-agency-"));
   db = await createStore({ dataDir: join(directory, "db") });
   config = testConfig({ dataDir: directory });
   profile = JSON.parse(

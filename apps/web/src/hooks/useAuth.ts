@@ -40,7 +40,7 @@ export function useAuth() {
     me()
       .then((fresh) => {
         if (cancelled) return;
-        localStorage.setItem("openmuse_user", JSON.stringify(fresh));
+        localStorage.setItem("agente_user", JSON.stringify(fresh));
         setState({ isAuthenticated: true, mode: session.mode, user: fresh });
       })
       .catch(() => {

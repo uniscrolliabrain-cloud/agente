@@ -17,7 +17,7 @@ Fase 7 (documento 08): B8 recortado. Se aplicaron F04.14c (`invalidateAll` en `s
 ## 2. Qué conseguimos con esta fase
 
 - **CI falla cuando los audits fallan** (F05.3): en `.github/workflows/ci.yml`, el job `audits` deja de tener `continue-on-error: true`. Si un audit (layers, bridges, console, tenant-default, idempotency, contracts) devuelve rojo, el PR no pasa.
-- **CI ejecuta typecheck del server** (F05.5): el job `unit` añade `pnpm --filter @openmuse/server exec tsc --noEmit` (o `pnpm typecheck` desde raíz si `apps/server/package.json` no existe). Si hay errores de tipo, el PR no pasa.
+- **CI ejecuta typecheck del server** (F05.5): el job `unit` añade `pnpm --filter @agente/server exec tsc --noEmit` (o `pnpm typecheck` desde raíz si `apps/server/package.json` no existe). Si hay errores de tipo, el PR no pasa.
 - **CI ejecuta typecheck del worker** (F05.9): el job `worker` ya corre `npm run typecheck` en `apps/worker`. Se anota que **`apps/server/src/engine/worker.ts` sigue roto** y **no se puede arreglar en esta fase** (Copilot lo repara en otra rama). **CI seguirá en rojo por `worker.ts` hasta que Copilot lo arregle**, así que **el job `unit` no debe bloquear el merge por `worker.ts` todavía**. Se anota `F05.9` como bloqueado por Copilot y se marca el job como "warn-only" para `worker.ts` hasta que Copilot commitee. **Riesgo asumido:** el CI en `main` seguirá en rojo por `worker.ts`, pero **`feat/multitenancy-campaign` no empeora la situación**. Se anota en `-pendientes.md`.
 - **`CIERRE-MVP.md` actualizado** con secciones:
   - `CIERRE_MVP_AUDIT_V1` (ya existe de Fase 1, corregido).
@@ -84,7 +84,7 @@ Fase 7 (documento 08): B8 recortado. Se aplicaron F04.14c (`invalidateAll` en `s
 ## 6. Archivos a crear / modificar en esta fase
 
 **Modificar:**
-- `.github/workflows/ci.yml` — F05.3 + F05.5 + F05.9. Quitar `continue-on-error: true` del job `audits`; añadir `pnpm --filter @openmuse/server exec tsc --noEmit` (o `pnpm typecheck`) al job `unit`; anotar `worker.ts` como warn-only (no bloquea merge hasta que Copilot lo arregle). Marcas en comentarios: `CI_AUDITS_ENFORCED_V1`, `CI_TYPECHECK_SERVER_V1`, `CI_WORKER_TYPECHECK_WARN_V1`.
+- `.github/workflows/ci.yml` — F05.3 + F05.5 + F05.9. Quitar `continue-on-error: true` del job `audits`; añadir `pnpm --filter @agente/server exec tsc --noEmit` (o `pnpm typecheck`) al job `unit`; anotar `worker.ts` como warn-only (no bloquea merge hasta que Copilot lo arregle). Marcas en comentarios: `CI_AUDITS_ENFORCED_V1`, `CI_TYPECHECK_SERVER_V1`, `CI_WORKER_TYPECHECK_WARN_V1`.
 - `docs/miniaudits/07-aislamiento-multi-tenant/CIERRE-MVP.md` — append `CIERRE_MVP_CAMPAIGN1_FINAL_V1` con resumen de las 8 fases y traspaso a Campaña 2.
 - `docs/miniaudits/07-aislamiento-multi-tenant/-pendientes.md` — consolidar los 13 bloqueados + deudas de Fases 2–8. **Reescribir el fichero entero** (no append), porque la lista cambia mucho.
 - `docs/miniaudits/07-aislamiento-multi-tenant/ID-MAP.md` — append `ID_MAP_FINAL_V1` con tabla completa.
@@ -190,7 +190,7 @@ $pkg = Join-Path $repoRoot "apps/server/package.json"
 Write-Host ("apps/server/package.json existe: {0}" -f (Test-Path $pkg))
 ```
 **Decisión:**
-- Si existe con `name: "@openmuse/server"`, F05.5 usa `pnpm --filter @openmuse/server exec tsc --noEmit`.
+- Si existe con `name: "@agente/server"`, F05.5 usa `pnpm --filter @agente/server exec tsc --noEmit`.
 - Si no existe, F05.5 usa `pnpm typecheck` (raíz). **Comando alternativo:** `corepack pnpm typecheck` en el job `unit`. Se anota en `-pendientes.md` que `apps/server/package.json` no existe (deuda del repo).
 
 **0.4. Confirmar `worker.ts` sigue roto.**
@@ -325,7 +325,7 @@ else {
       - run: pnpm typecheck
       - name: typecheck server (filter)
         if: hashFiles('apps/server/package.json') != ''
-        run: pnpm --filter @openmuse/server exec tsc --noEmit
+        run: pnpm --filter @agente/server exec tsc --noEmit
       - run: pnpm test
         env:
           ALLOW_NETWORK: "0"
@@ -536,7 +536,7 @@ if ($content -match [regex]::Escape("MULTITENANT_PENDIENTES_FINAL_V1")) {
 - **F04.16a/b/c-refinamiento** (aplicado en Fase 6): el rate limit se hace dentro del IIFE async. **Deuda menor: pre-check síncrono antes del IIFE no existe.** Se anota para Campaña 2.
 - **F04.21** (aplicado): `X-Tenant-Id` se añade al response. **Deuda menor: si `tenantService.tenantIdFor(owner)` falla, el header no se añade.** Correcto. Se anota.
 - **F04.23** (aplicado): SSE filtra por tenant. **Deuda menor: notificaciones legacy sin `tenantId` se asumen del tenant actual.** Backfill en Campaña 2.
-- **Migración de nombres de contenedor computer** (F04.24): contenedores viejos con nombre sin `tenantHash` quedan huérfanos. **Deuda operativa.** El humano limpia con `docker rm -f openmuse-*` en dev.
+- **Migración de nombres de contenedor computer** (F04.24): contenedores viejos con nombre sin `tenantHash` quedan huérfanos. **Deuda operativa.** El humano limpia con `docker rm -f agente-*` en dev.
 - **`getMaxActive` / `activeSize` en `worker.ts`**: rotos por comentarios sin cerrar. **Deuda de Copilot.**
 
 ## Traspaso a Campaña 2
@@ -686,7 +686,7 @@ Los misses esperados en esta fase:
         continue-on-error: true
 ```
 
-**F05.3 quita `continue-on-error: true`. F05.5 añade `pnpm --filter @openmuse/server exec tsc --noEmit` (condicional al `package.json`).**
+**F05.3 quita `continue-on-error: true`. F05.5 añade `pnpm --filter @agente/server exec tsc --noEmit` (condicional al `package.json`).**
 
 ### A.2. `.github/workflows/ci.yml` — job `worker` completo (Repomix original, literal, sin cortes):
 
@@ -958,7 +958,7 @@ export function assertNotHardcodedTenantId(value: string, where: string): void {
   const { enableRls } = await import("./db-rls.ts");
   const enabled = await enableRls(db);
   if (enabled) {
-    console.log("[OpenMuse] RLS activo en records");
+    console.log("[Laia] RLS activo en records");
   } else if (process.env.MULTI_TENANT_SHARED === "true") {
     if (db.backend === "postgres") {
       throw new Error(

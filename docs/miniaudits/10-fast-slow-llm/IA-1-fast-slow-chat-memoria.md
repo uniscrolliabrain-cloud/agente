@@ -36,7 +36,7 @@
 | T-10-04 | Sin caché de `TenantConfig`: cada `kernel.config(ctx)` recalcula | `kernel/kernel.ts` | Cachea por `tenantId` con TTL | Test: misma ctx 2 veces → mismo objeto |
 | T-10-05 | Sin fallback fast→slow: si fast falla salta al global | `engine/model.ts` | Cadena: fast(tenant) → slow(tenant) → global | Test: fast mock lanza → se llama slow del tenant |
 | T-10-06 | Sin fallback slow→global ordenado | `engine/model.ts` | Cadena explícita slow(tenant) → global | Test: slow mock lanza → se llama global |
-| T-10-07 | Sin latencia por velocidad: `recordUsage` no distingue fast/slow | `engine/model.ts` + `metrics/registry.ts` | Añade label `speed` a `openmuse_llm_calls_total` | Test: llamada fast → métrica con `speed="fast"` |
+| T-10-07 | Sin latencia por velocidad: `recordUsage` no distingue fast/slow | `engine/model.ts` + `metrics/registry.ts` | Añade label `speed` a `agente_llm_calls_total` | Test: llamada fast → métrica con `speed="fast"` |
 | T-10-08 | Sin cuotas por velocidad: cuota agotada en fast sigue permitiendo slow | `engine/model.ts` | Consulta cuota antes de elegir slow | Test: cuota fast=0 → llamada slow rechazada |
 | T-10-09 | `shouldDelegateToSlow` con regex olvida idiomas/contexto | `engine/conversation.ts` | Palabras clave multi-idioma + señal de complejidad | Test: "analyze this" y "analiza" delegan; "hola" no |
 | T-10-10 | Sin cambio dinámico fast→slow a mitad de turno | `engine/conversation.ts` | Si fast no puede resolver, reintenta en slow | Test: fast mock "no puedo" → reintento en slow |

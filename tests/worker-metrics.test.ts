@@ -48,9 +48,9 @@ test("ejecutar una tarea incrementa task_duration_seconds_count", { timeout: 100
 
     const after = globalMetrics.render();
     // El contador debe aparecer en el render.
-    assert.match(after, /openmuse_task_duration_seconds_count/);
-    assert.match(after, /openmuse_worker_active/);
-    assert.match(after, /openmuse_worker_max_active/);
+    assert.match(after, /agente_task_duration_seconds_count/);
+    assert.match(after, /agente_worker_active/);
+    assert.match(after, /agente_worker_max_active/);
     void before;
   } finally {
     await db.close();

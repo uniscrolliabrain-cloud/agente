@@ -14,7 +14,7 @@ Un deployment por cliente. Nunca multitenancy.
   - `AGENT_BACKEND=model`
   - `HOST=0.0.0.0`
   - `PUBLIC_API_URL=https://api.<cliente>.com`
-  - `OPENMUSE_ACCESS_KEY` (24+ chars)
+  - `AGENTE_ACCESS_KEY` (24+ chars)
   - `TOKEN_ENCRYPTION_KEY` (32-byte base64)
   - `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`
   - `GEMINI_API_KEY` (o el provider elegido)
@@ -56,7 +56,7 @@ Alternativa manual si se prefiere control:
 
 Desde la raiz del repo, apuntando al API del cliente:
 
-    $env:OPENMUSE_URL = "https://api.<cliente>.com"
+    $env:AGENTE_URL = "https://api.<cliente>.com"
     pnpm provision-client clientes/<nombre>
 
 Esto hace, por orden:

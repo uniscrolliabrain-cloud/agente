@@ -9,7 +9,7 @@ export const skillPackageSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().max(4000).default(""),
   version: z.string().max(40).default("1.0.0"),
-  author: z.string().max(200).default("openmuse"),
+  author: z.string().max(200).default("agente"),
   /** Skills concretas que aporta este paquete. */
   skillIds: z.array(z.string().max(100)).max(50).default([]),
   /** Role ids que puede aportar. Opcional. */

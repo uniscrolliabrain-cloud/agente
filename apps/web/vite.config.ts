@@ -1,4 +1,4 @@
-// BUG04_VITE_ALIAS_V1 - alias @openmuse/domain/* al paquete local.
+// BUG04_VITE_ALIAS_V1 - alias @agente/domain/* al paquete local.
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@openmuse/domain": fileURLToPath(new URL("../../packages/domain/src", import.meta.url)),
+      "@agente/domain": fileURLToPath(new URL("../../packages/domain/src", import.meta.url)),
     },
   },
   server: {

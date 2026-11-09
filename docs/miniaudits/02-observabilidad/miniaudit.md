@@ -34,7 +34,7 @@ Los tests no muestran tracing. Los errores 429 de Gemini no se distinguen de err
 6. **Sin `LOG_LEVEL` respetado en todos los sitios**: algunos logs son hardcoded, otros respetan el nivel. Inconsistente.
 7. **Sin log de HTTP bodies**: cuando un request falla, no hay forma de saber qué envió el cliente sin tocar el código.
 8. **Sin contador de errores por ruta**: `/metrics` no expone `http_errors_by_route_total`. Saber qué endpoint falla más es manual.
-9. **Sin histograma de latencia**: `openmuse_http_requests_total` no tiene versión histogram. No hay p50/p95/p99.
+9. **Sin histograma de latencia**: `agente_http_requests_total` no tiene versión histogram. No hay p50/p95/p99.
 10. **`metrics-exporter.ts` recalcula todo en cada GET**: con 50 tenants son 50×4 list = 200 queries por request a /metrics.
 11. **Sin `metrics_flush` a storage**: las métricas viven solo en memoria. Reinicio = pierde histórico.
 12. **Sin dashboards predefinidos**: ni Grafana, ni JSON de dashboards, ni nada.

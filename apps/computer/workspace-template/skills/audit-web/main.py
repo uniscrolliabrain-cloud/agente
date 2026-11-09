@@ -52,7 +52,7 @@ def audit_remote(domain: str) -> dict:
     result: dict = {"domain": domain}
     try:
         request = urllib.request.Request(
-            domain, method="GET", headers={"User-Agent": "OpenMuse-Audit/1.0"}
+            domain, method="GET", headers={"User-Agent": "Laia-Audit/1.0"}
         )
         started = time.monotonic()
         with urllib.request.urlopen(request, timeout=10) as response:

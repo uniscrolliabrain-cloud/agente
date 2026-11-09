@@ -4,7 +4,7 @@
 
 ## Estrategia de tests
 
-OpenMuse usa **Vitest** (vía `tsx --test`) para tests de integración. El script principal es:
+Laia usa **Vitest** (vía `tsx --test`) para tests de integración. El script principal es:
 
 ```
 pnpm test          # tsx --import ./tests/setup.ts --test --test-timeout=5000 tests/*.test.ts
@@ -40,7 +40,7 @@ pnpm test          # tsx --import ./tests/setup.ts --test --test-timeout=5000 te
 | Script | Comando |
 |--------|---------|
 | `pnpm typecheck` | `tsc --noEmit && npm --prefix apps/worker run typecheck` |
-| `pnpm --filter @openmuse/web exec tsc --noEmit` | Typecheck del paquete web |
+| `pnpm --filter @agente/web exec tsc --noEmit` | Typecheck del paquete web |
 
 **Nota**: El typecheck raíz puede interrumpirse sin diagnóstico. No se declara verde ni rojo por defecto.
 

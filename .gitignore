@@ -1,6 +1,6 @@
 node_modules/
 dist/
-.openmuse/
+.agente/
 .env
 .env.*
 !.env.example
@@ -34,7 +34,7 @@ Yellow
 *.log
 *.tsbuildinfo
 
-.openmuse.bak-*/
+.agente.bak-*/
 *.bak.*
 repomix-*.md
 scripts/fixes/*.ps1

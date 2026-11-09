@@ -140,7 +140,7 @@ Triaje obligatorio de los 150 en tres cubos, cada uno con su salida:
 | **Declarar PENDING** | contrato de una etapa futura, consciente | `// PENDING(<motivo>, <fecha>)`, no un `PENDING` suelto |
 
 - La heurística "el nombre aparece en algún fichero" se endurece a **import real**
-  (`from "@openmuse/domain"`) del símbolo, no mención textual: es la diferencia entre
+  (`from "@agente/domain"`) del símbolo, no mención textual: es la diferencia entre
   150 huérfanos y los que de verdad lo son. El número honesto puede bajar mucho; eso
   también hay que demostrarlo, no proclamarlo.
 - **Hecho (2026-10-28)**: informe entregado con los 150 medidos (74 son falso

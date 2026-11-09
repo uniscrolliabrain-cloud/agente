@@ -5,7 +5,7 @@
 import { listGoodReleases, rollbackToRelease } from "../apps/server/src/rollback.ts";
 
 async function main() {
-  const dataDir = process.env.DATA_DIR ?? ".openmuse";
+  const dataDir = process.env.DATA_DIR ?? ".agente";
   const args = process.argv.slice(2);
   if (args.includes("--list") || args.length === 0) {
     const releases = await listGoodReleases(dataDir);

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.7
-# Imagen del API de OpenMuse (backend + packages compartidos).
+# Imagen del API de Laia (backend + packages compartidos).
 # El browser worker (Playwright) y el computer (Docker Linux) son contenedores aparte.
 
 # ---------- build ----------
@@ -13,7 +13,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 # DOCKER_BUILD_WEB_V1 - el API sirve apps/web/dist en el mismo origen
 # (app.ts, serveStatic). Sin este build la imagen arranca solo con API y el
 # panel da 404, que es peor que un fallo de build visible.
-RUN pnpm build:server && pnpm --filter @openmuse/web build
+RUN pnpm build:server && pnpm --filter @agente/web build
 
 # ---------- runtime ----------
 FROM node:22-bookworm-slim AS runtime

@@ -4,7 +4,7 @@
 
 ## Arquitectura
 
-OpenMuse se integra con **Gmail, Google Calendar y Google Drive** mediante OAuth 2.0 con PKCE. Los tokens se almacenan cifrados con AES-256-GCM.
+Laia se integra con **Gmail, Google Calendar y Google Drive** mediante OAuth 2.0 con PKCE. Los tokens se almacenan cifrados con AES-256-GCM.
 
 ## Clientes
 
@@ -70,5 +70,5 @@ Provee acceso unificado a Google por owner:
 
 - Lectura de Drive: máximo 2 MiB de texto por archivo.
 - Binarios en Drive: se devuelve nota, no contenido.
-- Eventos recurrentes: no modificables desde OpenMuse.
+- Eventos recurrentes: no modificables desde Laia.
 - Adjuntos de Gmail: máximo 10 MB por PDF, 20 MB total.

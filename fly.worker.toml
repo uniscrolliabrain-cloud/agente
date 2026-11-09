@@ -1,7 +1,7 @@
 # FLY_WORKER_TOML_V1 - worker de tareas durables, sin HTTP publico.
 #
 # Se despliega desde el mismo Dockerfile que el API (el entrypoint cambia con
-# OPENMUSE_PROCESS_ROLE). No lleva [http_service]: no atiende trafico, se vigila
+# AGENTE_PROCESS_ROLE). No lleva [http_service]: no atiende trafico, se vigila
 # por logs y por /api/health-deep del API.
 #
 #   fly deploy -c fly.worker.toml -a agntiapro-worker
@@ -16,10 +16,10 @@ primary_region = "fra"
 [env]
   WORKSPACE_MODE = "live"
   AGENT_BACKEND = "model"
-  OPENMUSE_PROCESS_ROLE = "worker"
+  AGENTE_PROCESS_ROLE = "worker"
   DATA_DIR = "/data"
-  # OPENMUSE_CLIENTS_DIR_V1 - mismo directorio que el API (ver fly.toml).
-  OPENMUSE_CLIENTS_DIR = "/data/clientes"
+  # AGENTE_CLIENTS_DIR_V1 - mismo directorio que el API (ver fly.toml).
+  AGENTE_CLIENTS_DIR = "/data/clientes"
   TASK_WORKER_ENABLED = "true"
   COMPUTER_ENABLED = "false"
   BACKUP_INTERVAL_HOURS = "24"

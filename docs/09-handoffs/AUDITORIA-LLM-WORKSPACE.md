@@ -4,7 +4,7 @@
 
 ## Propósito
 
-Auditoría de la relación entre el modelo LLM y el workspace en OpenMuse. Cubre cómo el LLM accede a los datos del workspace, qué herramientas puede usar, y cómo se auditan sus acciones.
+Auditoría de la relación entre el modelo LLM y el workspace en Laia. Cubre cómo el LLM accede a los datos del workspace, qué herramientas puede usar, y cómo se auditan sus acciones.
 
 ## Flujo LLM → Workspace
 

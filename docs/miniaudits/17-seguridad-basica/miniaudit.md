@@ -76,7 +76,7 @@ SECURITY.md con boundaries. bodyLimit 12MB. CORS por origin. Zod en rutas. CSP n
 12. **Sin bug bounty**: no hay incentivo para reportar.
 13. **Sin WAF**: ataques comunes (SQLi, XSS) dependen de validación propia.
 14. **Sin DDoS protection**: capa 7 vulnerable.
-15. **`OPENMUSE_ACCESS_KEY` solo validación en modo live**: en sample, no.
+15. **`AGENTE_ACCESS_KEY` solo validación en modo live**: en sample, no.
 16. **`TOKEN_ENCRYPTION_KEY` sin rotación**: si se filtra, hay que re-encriptar todo manualmente.
 17. **Sin cifrado en reposo de la DB**: si alguien accede al disco, lee todo.
 18. **Sin separación de secretos por servicio**: misma env para API y worker.

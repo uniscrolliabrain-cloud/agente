@@ -1,4 +1,4 @@
-# @openmuse/workspaces
+# @agente/workspaces
 
 Catalogo de los 34 workspaces de negocio del sistema.
 

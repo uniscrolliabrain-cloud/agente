@@ -17,9 +17,9 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@openmuse/domain/live": ["../../packages/domain/src/live.ts"],
-      "@openmuse/domain/views": ["../../packages/domain/src/views.ts"],
-      "@openmuse/domain/*": ["../../packages/domain/src/*"]
+      "@agente/domain/live": ["../../packages/domain/src/live.ts"],
+      "@agente/domain/views": ["../../packages/domain/src/views.ts"],
+      "@agente/domain/*": ["../../packages/domain/src/*"]
     }
   },
   "include": ["src"]

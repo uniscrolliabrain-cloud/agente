@@ -667,7 +667,7 @@ Las 18 prohibiciones del doc 01 y el repaso del doc 02 se aplican íntegras. **A
 
 ## 12. Typecheck, test, commit y push
 
-- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @openmuse/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
+- **Cline corre typecheck y test** al final de la fase. `pnpm typecheck` desde raíz (o `pnpm --filter @agente/server exec tsc --noEmit` si `apps/server/package.json` existe) y `pnpm test`. Si rojo, la IA no commitea.
 - **La IA commitea con ficheros explícitos:**
   ```powershell
   git add apps/server/src/admin-tenants.ts

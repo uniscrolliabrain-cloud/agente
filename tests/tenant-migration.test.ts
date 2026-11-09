@@ -127,7 +127,7 @@ let db: Store;
 let directory: string;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-migrate-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-migrate-"));
   db = await createStore({ dataDir: join(directory, "db") });
 });
 

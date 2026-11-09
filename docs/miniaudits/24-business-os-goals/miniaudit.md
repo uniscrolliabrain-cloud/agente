@@ -55,4 +55,4 @@ Ciclo se ejecuta en bucle sin salida. LLM planifica mal y el executor falla. Nad
 
 ## Tipo de fixes
 
-LearningObserver que promueva patrones a SOPs tras N éxitos. Métrica openmuse_goals_total{status}. Test end-to-end con 1 goal persistido. Goal cancelable. Goal persistente. Validación de plan antes de ejecutar. Step timeout.
+LearningObserver que promueva patrones a SOPs tras N éxitos. Métrica agente_goals_total{status}. Test end-to-end con 1 goal persistido. Goal cancelable. Goal persistente. Validación de plan antes de ejecutar. Step timeout.

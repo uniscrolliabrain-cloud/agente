@@ -1,8 +1,8 @@
 /**
- * Aceptación del chat de OpenMuse en un navegador real.
+ * Aceptación del chat de Laia en un navegador real.
  *
  * Requisitos: backend en http://127.0.0.1:8787 (`pnpm dev`) y Vite en http://127.0.0.1:5173
- * (`pnpm --filter @openmuse/web dev`). Uso:
+ * (`pnpm --filter @agente/web dev`). Uso:
  *
  *   node apps/worker/om-chat-acceptance.mjs
  *   OM_CHANNEL=msedge node apps/worker/om-chat-acceptance.mjs   # otro navegador instalado

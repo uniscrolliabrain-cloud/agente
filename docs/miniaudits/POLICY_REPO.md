@@ -33,7 +33,7 @@
 - No borrar codigo huerfano sin marcarlo PENDING durante 1 release.
 - No mergear a main sin typecheck y test verdes.
 - No cambiar packages/domain sin avisar a bloques 04-06.
-- No subir .bak-fase0*, artifacts/, backups/, .openmuse/ al repo.
+- No subir .bak-fase0*, artifacts/, backups/, .agente/ al repo.
 - No usar console.log directo en codigo de servidor.
 - No hardcodear timeouts, modelos, paths, keys.
 - No dejar catch {} vacios.

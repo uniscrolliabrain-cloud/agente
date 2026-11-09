@@ -34,7 +34,7 @@ async function read<T>(path: string, body?: unknown, status = 200): Promise<T> {
 }
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-agent-api-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-agent-api-"));
   db = await createStore({ dataDir: join(directory, "db") });
   // AGENT_API_TENANT_SCOPE_V1 - el engine escribe con TenantScopedStore; las
   // aserciones directas contra la DB tienen que usar la misma clave.
@@ -73,7 +73,7 @@ test("agent API requires a session and reports the actual worker state", async (
   );
   const workspace = await read<AgentWorkspace>("");
   assert.equal(workspace.worker.running, false);
-  assert.equal(workspace.identity.name, "OpenMuse");
+  assert.equal(workspace.identity.name, "Laia");
   assert.equal(workspace.identity.tone, "warm");
 });
 
@@ -153,7 +153,7 @@ test("agent request validation rejects malformed input with useful JSON errors",
     ["/monitors/missing/control", { action: "delete" }],
     ["/ideas/missing", { action: "accept", prompt: " " }],
     ["/memories", { text: " " }],
-    ["/identity", { name: "OpenMuse", tone: "angry" }],
+    ["/identity", { name: "Laia", tone: "angry" }],
     ["/sample-page", { text: "a".repeat(100001) }],
   ] satisfies [string, unknown][]) {
     const response = await request(path, body);

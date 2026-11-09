@@ -5,12 +5,12 @@
 // el auth falla cerrado y si la cabecera de tenant es la esperada.
 //
 // Uso:
-//   OPENMUSE_URL=https://api.agntiapro.com pnpm smoke:deploy
+//   AGENTE_URL=https://api.agntiapro.com pnpm smoke:deploy
 //   pnpm smoke:deploy --url=https://api.agntiapro.com --tenant=agntia
 //
 // Credenciales (opcionales, para la parte autenticada):
 //   SMOKE_EMAIL / SMOKE_PASSWORD  -> POST /api/auth/login
-//   OPENMUSE_ACCESS_KEY           -> POST /api/session (sample mode)
+//   AGENTE_ACCESS_KEY           -> POST /api/session (sample mode)
 // Sin credenciales el script hace los checks publicos y marca el resto como
 // "skipped", nunca como verde.
 
@@ -21,7 +21,7 @@ const args = new Map(
   }),
 );
 
-const base = (args.get("url") ?? process.env.OPENMUSE_URL ?? "http://127.0.0.1:8787").replace(
+const base = (args.get("url") ?? process.env.AGENTE_URL ?? "http://127.0.0.1:8787").replace(
   /\/$/,
   "",
 );
@@ -80,11 +80,11 @@ if (email && password) {
   } else {
     record("POST /api/auth/login", "fail", `${login?.status ?? "no response"}`);
   }
-} else if (process.env.OPENMUSE_ACCESS_KEY) {
+} else if (process.env.AGENTE_ACCESS_KEY) {
   const session = await fetch(`${base}/api/session`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ accessKey: process.env.OPENMUSE_ACCESS_KEY }),
+    body: JSON.stringify({ accessKey: process.env.AGENTE_ACCESS_KEY }),
   }).catch(() => null);
   if (session?.ok) {
     token = ((await session.json()) as { token: string }).token;
@@ -93,7 +93,7 @@ if (email && password) {
     record("POST /api/session", "fail", `${session?.status ?? "no response"}`);
   }
 } else {
-  record("login", "skipped", "define SMOKE_EMAIL/SMOKE_PASSWORD o OPENMUSE_ACCESS_KEY");
+  record("login", "skipped", "define SMOKE_EMAIL/SMOKE_PASSWORD o AGENTE_ACCESS_KEY");
 }
 
 if (token) {

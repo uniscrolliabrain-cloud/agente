@@ -1,7 +1,7 @@
 // WORKSPACE_SHELL_V1 - contenedor de un workspace activo.
 import { getWorkspace } from "./registry.ts";
 import ViewRenderer from "../view/ViewRenderer.tsx";
-import type { RuntimeViewSpec } from "@openmuse/domain/views";
+import type { RuntimeViewSpec } from "@agente/domain/views";
 
 interface Props {
   workspaceId: string | null;

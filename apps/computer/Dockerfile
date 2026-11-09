@@ -3,11 +3,11 @@ FROM node:22.22.0-bookworm-slim
 RUN apt-get update \
     && apt-get install -y --no-install-recommends bash python3 python3-pip git coreutils \
     && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /opt/openmuse /opt/wheels /workspace \
+    && mkdir -p /opt/agente /opt/wheels /workspace \
     && chown 1000:1000 /workspace
 
-COPY files.py /opt/openmuse/files.py
-RUN chmod 0555 /opt/openmuse/files.py
+COPY files.py /opt/agente/files.py
+RUN chmod 0555 /opt/agente/files.py
 
 # Offline wheels for skill dependencies. Add .whl files to apps/computer/wheels/ and
 # rebuild; ensureSkill installs them with pip install --no-index --find-links=/opt/wheels.

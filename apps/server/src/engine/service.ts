@@ -1002,7 +1002,7 @@ export class AgentService {
   async ensure(owner: string) {
     await this.db.insertIfAbsent(owner, "agent-settings", {
       id: "identity",
-      name: "OpenMuse",
+      name: "Laia",
       tone: "warm",
     });
     // SERVICE_ENSURE_TENANT_V1 - asegura membership del tenant.
@@ -1158,7 +1158,7 @@ export class AgentService {
       memories,
       artifacts,
       notifications,
-      identity: identity ?? { name: "OpenMuse", tone: "warm" },
+      identity: identity ?? { name: "Laia", tone: "warm" },
       worker: {
         running:
           this.worker.running ||
@@ -2241,11 +2241,11 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
     const metricsTenant = await this.tenantService?.tenantIdFor(owner) ?? owner;
 // METRICS_LLM_WIRE_V1 contadores acumulativos (no escaneo de DB).
     const speedLabel = speed ?? source; // FIX_4A_RECORD_USAGE_SPEED_V1
-    globalMetrics.inc("openmuse_llm_calls_total", {
+    globalMetrics.inc("agente_llm_calls_total", {
       speed: speedLabel,
       model: model ?? "unknown",
     });
-    globalMetrics.inc("openmuse_llm_tokens_total", {
+    globalMetrics.inc("agente_llm_tokens_total", {
       speed: speedLabel,
       model: model ?? "unknown",
     }, inputTokens + outputTokens);

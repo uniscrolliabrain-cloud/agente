@@ -1358,7 +1358,7 @@ const FILTERS: Array<{ id: "all" | AgentArchetype; label: string }> = [
 export default function AgentSquad({ selected, onSelect }: Props) {
   const [filter, setFilter] = useState<"all" | AgentArchetype>("all");
   const withoutPrincipal = useMemo(() => {
-    const base = AGENTS.filter((a) => a.id !== "openmuse");
+    const base = AGENTS.filter((a) => a.id !== "agente");
     return filter === "all" ? base : base.filter((a) => a.archetype === filter);
   }, [filter]);
 
@@ -1516,7 +1516,7 @@ export default function LaiaFloatingWindow({
 
   const style = maximized ? undefined : { left: position.x, top: position.y };
 
-  const otherAgents = AGENTS.filter((a) => a.id !== "laia" && a.id !== "openmuse");
+  const otherAgents = AGENTS.filter((a) => a.id !== "laia" && a.id !== "agente");
 
   return (
     <div className={className} style={style} onPointerDown={onFocus} role="dialog" aria-label={`Ventana de ${agent.name}`}>
@@ -1698,7 +1698,7 @@ export default function LaiaFloatingWindow({
             onKeyDown={(e) => {
               if (e.key === "Enter" && input.trim()) {
                 // Notifica al padre para enviar al chat global.
-                window.dispatchEvent(new CustomEvent("openmuse:chat", {
+                window.dispatchEvent(new CustomEvent("agente:chat", {
                   detail: { message: input.trim(), personaId: agent.id },
                 }));
                 setInput("");
@@ -1708,7 +1708,7 @@ export default function LaiaFloatingWindow({
           />
           <button type="button" onClick={() => {
             if (input.trim()) {
-              window.dispatchEvent(new CustomEvent("openmuse:chat", {
+              window.dispatchEvent(new CustomEvent("agente:chat", {
                 detail: { message: input.trim(), personaId: agent.id },
               }));
               setInput("");
@@ -1730,12 +1730,12 @@ export default function LaiaFloatingWindow({
 //
 // Este archivo NO toca el backend. Solo define:
 //   - AgentUI: la forma que consume el frontend.
-//   - Mock data de los 7 agentes (OpenMuse + 6 del squad).
+//   - Mock data de los 7 agentes (Laia + 6 del squad).
 //   - Helpers de color/label por status y arquetipo.
 //   - Adaptador toAgentUI(persona, stats) listo para conectar al backend
 //     en una fase posterior.
 
-export type AgentId = "openmuse" | "laia" | "lorenzo" | "juan" | "manu" | "marta" | "ana";
+export type AgentId = "agente" | "laia" | "lorenzo" | "juan" | "manu" | "marta" | "ana";
 
 export type AgentArchetype =
   | "orchestrator"
@@ -1780,8 +1780,8 @@ export interface RuntimeLog {
 
 export const AGENTS: AgentUI[] = [
   {
-    id: "openmuse",
-    name: "OpenMuse",
+    id: "agente",
+    name: "Laia",
     role: "Agente principal",
     archetype: "orchestrator",
     rarity: "Ã‰PICO",
@@ -1812,7 +1812,7 @@ export const AGENTS: AgentUI[] = [
       "Convivo con Lorenzo. Superviso runtime, backend y a todo el squad. Mi trabajo es que todo funcione antes de que tengas que vigilarlo.",
     personality: ["cercana", "resolutiva", "guardiana"],
     capabilities: ["supervisiÃ³n", "runtime", "backend", "memoria", "coordinaciÃ³n"],
-    reportsTo: "openmuse",
+    reportsTo: "agente",
     currentTask: "Supervisando runtime del squad",
   },
   {
@@ -1903,12 +1903,12 @@ export const AGENTS: AgentUI[] = [
 ];
 
 export const RUNTIME_LOGS: RuntimeLog[] = [
-  { time: "12:49", message: "delegate_task â†’ OpenMuse â†’ OK", type: "ok" },
+  { time: "12:49", message: "delegate_task â†’ Laia â†’ OK", type: "ok" },
   { time: "12:50", message: "Lorenzo bloqueÃ³ IP sospechosa", type: "warn" },
   { time: "12:51", message: "LAIA: memoria sincronizada Â· 12 embeddings", type: "ok" },
   { time: "12:52", message: "Queue: 3 tareas delegadas a Juan", type: "info" },
   { time: "12:53", message: "Tarea fallida recuperada #4821", type: "ok" },
-  { time: "12:54", message: "OpenMuse HP: 100% Â· todo estable", type: "ok" },
+  { time: "12:54", message: "Laia HP: 100% Â· todo estable", type: "ok" },
 ];
 
 // ---------------------------------------------------------------------
@@ -2055,14 +2055,14 @@ import type { AgentTask } from "./types/api";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem("openmuse_theme");
+    const saved = localStorage.getItem("agente_theme");
     if (saved === "dark") return true;
     if (saved === "light") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    localStorage.setItem("openmuse_theme", dark ? "dark" : "light");
+    localStorage.setItem("agente_theme", dark ? "dark" : "light");
   }, [dark]);
   return { dark, toggle: () => setDark((v) => !v) };
 }
@@ -2231,7 +2231,7 @@ export default function App() {
         <ProfileModal
           user={auth.user}
           onClose={() => setProfileOpen(false)}
-          onSaved={(u) => { localStorage.setItem("openmuse_user", JSON.stringify(u)); }}
+          onSaved={(u) => { localStorage.setItem("agente_user", JSON.stringify(u)); }}
         />
       )}
 

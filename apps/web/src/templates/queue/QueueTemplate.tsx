@@ -1,5 +1,5 @@
 // D3_QUEUE_V1 - template queue real.
-import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 
 interface Props {
   spec: Extract<RuntimeViewSpec, { kind: "queue" }>;

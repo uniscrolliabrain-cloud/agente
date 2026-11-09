@@ -7,7 +7,7 @@ import {
   type Thread,
 } from "../api/threads";
 
-const ACTIVE_KEY = "openmuse_active_thread";
+const ACTIVE_KEY = "agente_active_thread";
 
 export function useThreads(enabled: boolean) {
   const [threads, setThreads] = useState<Thread[]>([]);

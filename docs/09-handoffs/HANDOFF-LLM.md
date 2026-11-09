@@ -4,11 +4,11 @@
 
 ## Propósito
 
-Documento de handoff para el trabajo relacionado con LLM en OpenMuse. Cubre la configuración de modelos, transporte de LLM, y la auditoría LLM→workspace.
+Documento de handoff para el trabajo relacionado con LLM en Laia. Cubre la configuración de modelos, transporte de LLM, y la auditoría LLM→workspace.
 
 ## Configuración de modelos
 
-OpenMuse usa dos velocidades de LLM:
+Laia usa dos velocidades de LLM:
 
 | Velocidad | Uso | Variables |
 |-----------|-----|-----------|

@@ -56,7 +56,7 @@ docs/
 
 ### 1. `whitepaper.md` (raíz, nuevo)
 Visión ejecutiva para stakeholders. Contenido:
-- Qué es OpenMuse: OS agentico para PYMEs y agencias
+- Qué es Laia: OS agentico para PYMEs y agencias
 - Problema que resuelve: automatización de negocio con ROI medible
 - Diferencial competitivo: SOPs deterministas, memoria de empresa, tareas durables, kernel cognitivo, UI servida
 - Modelo de negocio: 1.200 € instalación + 850 €/mes mantenimiento por cliente

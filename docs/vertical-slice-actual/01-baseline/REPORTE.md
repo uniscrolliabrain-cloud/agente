@@ -46,8 +46,8 @@ pnpm build:server   -> exit=0   (tsc -p tsconfig.build.json)
 ### Clasificación del modo live
 
 ```
-env -u OPENMUSE_ACCESS_KEY -u TOKEN_ENCRYPTION_KEY WORKSPACE_MODE=live node --import tsx -e 'readConfig()'
-ERROR: Live mode requires OPENMUSE_ACCESS_KEY (24+ characters) and TOKEN_ENCRYPTION_KEY (32-byte base64)
+env -u AGENTE_ACCESS_KEY -u TOKEN_ENCRYPTION_KEY WORKSPACE_MODE=live node --import tsx -e 'readConfig()'
+ERROR: Live mode requires AGENTE_ACCESS_KEY (24+ characters) and TOKEN_ENCRYPTION_KEY (32-byte base64)
 exit=1
 ```
 

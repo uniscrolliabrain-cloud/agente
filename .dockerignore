@@ -4,7 +4,7 @@ node_modules
 **/node_modules
 dist
 **/dist
-.openmuse
+.agente
 artifacts
 backups
 clientes

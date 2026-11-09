@@ -2,7 +2,7 @@
 
 > v1 · 2026-10-27 · Estado: current
 
-OpenMuse incluye un catálogo de **34 workspaces** definidos en `packages/workspaces/src/index.ts`. Cada workspace es un módulo de integración con una aplicación externa.
+Laia incluye un catálogo de **34 workspaces** definidos en `packages/workspaces/src/index.ts`. Cada workspace es un módulo de integración con una aplicación externa.
 
 ## Lista de workspaces
 
@@ -55,4 +55,4 @@ Todos los 34 manifests tienen estado `scaffold`. Esto significa que están defin
 
 ## Uso
 
-El dispatcher de workspaces permite ejecutar commands y queries contra cada aplicación integrada, con bridge entre las capacidades del workspace y el runtime de OpenMuse.
+El dispatcher de workspaces permite ejecutar commands y queries contra cada aplicación integrada, con bridge entre las capacidades del workspace y el runtime de Laia.

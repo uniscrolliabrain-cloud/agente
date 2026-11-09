@@ -13,7 +13,7 @@ import { testConfig } from "./helpers/config.ts";
 let db: Store, tdb: TenantScopedStore, server: Awaited<ReturnType<typeof createApp>>, directory: string;
 const owner = "workflow-user";
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-workflows-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-workflows-"));
   db = await createStore({ dataDir: join(directory, "db") });
   // TEST_TENANT_SCOPE_V1 - mismo store que usa AgentService: TenantScopedStore
   // con tenantId "default". El test escribe y lee con la misma clave compuesta.

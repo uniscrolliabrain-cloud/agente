@@ -4,7 +4,7 @@
 
 ## Arquitectura
 
-OpenMuse usa **Evolution API** como proveedor de WhatsApp Business para el piloto AGNTIA. No es un cliente Meta Cloud directo, aunque el webhook puede recibir mensajes con formato de Meta.
+Laia usa **Evolution API** como proveedor de WhatsApp Business para el piloto AGNTIA. No es un cliente Meta Cloud directo, aunque el webhook puede recibir mensajes con formato de Meta.
 
 El panel y la API comparten `https://www.agntiapro.com` como destino acordado.
 

@@ -78,7 +78,7 @@ La tabla cubre lo mencionado por Alfonso y los candidatos adicionales del checkl
 | PostgreSQL en Fly | Recurso concreto y responsabilidad, si se conserva | No sustituir Neon por tener cuenta; registrar conexión y destino por separado |
 | Supabase | Proyecto y función: auth, DB o storage; issuer/JWKS | SUPABASE_URL/JWT_SECRET/JWT_AUD y AUTH_PROVIDER: C; no exportar service role al cliente |
 | Cloudflare R2 / S3 | Bucket, endpoint, región si procede, prefijos y retención | S3_BUCKET/ENDPOINT/ACCESS_KEY_ID/SECRET_ACCESS_KEY: P; contrato del adaptador pendiente |
-| Sesiones/cifrado actuales | Responsable, entorno, claves existentes y procedimiento de rotación | TOKEN_ENCRYPTION_KEY/OPENMUSE_ACCESS_KEY: C; no sustituir por SESSION_SECRET/ENCRYPTION_KEY genéricos |
+| Sesiones/cifrado actuales | Responsable, entorno, claves existentes y procedimiento de rotación | TOKEN_ENCRYPTION_KEY/AGENTE_ACCESS_KEY: C; no sustituir por SESSION_SECRET/ENCRYPTION_KEY genéricos |
 | Better Auth | Variante/producto usado, decisión de adopción, DB, rutas y proveedores de login | BETTER_AUTH_SECRET/URL: estándar del producto, P para este repositorio; no está integrado por preparar las claves |
 | Composio | Workspace, región si aplica, conectores, auth configs y conexiones por tenant | COMPOSIO_API_KEY: P; verificar nombres y separación de usuarios antes de uso |
 | Backups | Fuente, destino, cifrado, retención, acceso y restore | BACKUP_INTERVAL_HOURS/RETENTION_DAYS: C/E; credenciales del destino según adaptador |
@@ -220,7 +220,7 @@ Antes de activar Better Auth: decidir migración/convivencia con sesiones/Supaba
 | Checklist genérico | Contrato actual / decisión |
 | --- | --- |
 | APP_URL / API_BASE_URL | PUBLIC_API_URL es C; distinguir origen del panel si se separa |
-| SESSION_SECRET / ENCRYPTION_KEY | No reemplazan TOKEN_ENCRYPTION_KEY/OPENMUSE_ACCESS_KEY |
+| SESSION_SECRET / ENCRYPTION_KEY | No reemplazan TOKEN_ENCRYPTION_KEY/AGENTE_ACCESS_KEY |
 | GOOGLE_REDIRECT_URI | El conector actual deriva callback desde PUBLIC_API_URL |
 | WHATSAPP_ACCESS_TOKEN / META_APP_SECRET | No equivalen automáticamente a WHATSAPP_TOKEN/APP_SECRET |
 | STRIPE_SECRET_KEY | El servidor actual lee STRIPE_API_KEY |

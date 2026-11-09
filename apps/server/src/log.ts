@@ -53,7 +53,7 @@ const SENSITIVE_KEYS = new Set([
   "cookie",
   "set-cookie",
   "x-access-key",
-  "openmuse_access_key",
+  "agente_access_key",
 ]);
 
 const REDACTED = "[REDACTED]";

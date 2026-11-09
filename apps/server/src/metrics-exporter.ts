@@ -25,12 +25,12 @@ export function metricsRoutes(service: AgentService, users: UserService) {
     // METRICS_WORKER_GAUGE_V1 Ã¢â‚¬â€ el worker no cambia en runtime, es un gauge
     // de estado que se setea al vuelo (no escanea DB).
     // WORKER_METRICS_GAUGE_V1
-    globalMetrics.set("openmuse_worker_running", service.worker.running ? 1 : 0);
+    globalMetrics.set("agente_worker_running", service.worker.running ? 1 : 0);
 
     // METRICS_P99_EXPOSE_V1 - expone p99 HTTP derivado del histograma.
     // METRICS_HTTP_P99_GAUGE_V1
-    const p99 = globalMetrics.quantile("openmuse_http_request_duration_ms", 0.99);
-    if (p99 !== undefined) globalMetrics.set("openmuse_http_latency_p99_ms", p99);
+    const p99 = globalMetrics.quantile("agente_http_request_duration_ms", 0.99);
+    if (p99 !== undefined) globalMetrics.set("agente_http_latency_p99_ms", p99);
 
     // METRICS_EXPORTER_TENANT_V1 — ?tenant=X filtra las métricas por tenant.
     // Admin-only (ya verificado arriba).

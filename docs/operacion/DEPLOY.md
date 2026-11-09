@@ -65,7 +65,7 @@ doppler secrets get PUBLIC_SITE_URL --plain --config prd \
 Reglas:
 
 - **Ningún secreto en la imagen ni en el repo.** `doppler.yaml` solo tiene la ruta.
-- `TOKEN_ENCRYPTION_KEY`, `OPENMUSE_ACCESS_KEY`, `SUPABASE_JWT_SECRET`,
+- `TOKEN_ENCRYPTION_KEY`, `AGENTE_ACCESS_KEY`, `SUPABASE_JWT_SECRET`,
   `STRIPE_WEBHOOK_SECRET`, `WHATSAPP_APP_SECRET` son de servidor: solo Fly.
 - Vercel recibe únicamente variables `PUBLIC_*`/`VITE_*` (nada que sirva para
   firmar o descifrar).
@@ -113,11 +113,11 @@ fly certs add api.agntiapro.com -a agntiapro-api
 ```
 
 `agntiapro-api` sirve API + panel en el mismo proceso (es el `fly.toml` actual
-con `OPENMUSE_PROCESS_ROLE=all`; el Dockerfile construye `apps/web` y copia
+con `AGENTE_PROCESS_ROLE=all`; el Dockerfile construye `apps/web` y copia
 `apps/web/dist`, que `app.ts` sirve por `serveStatic`). Cuando haya tenants de
 pago, se separa el trabajo de fondo:
 
-- `agntiapro-worker` → `fly.worker.toml`, `OPENMUSE_PROCESS_ROLE=worker`, **sin**
+- `agntiapro-worker` → `fly.worker.toml`, `AGENTE_PROCESS_ROLE=worker`, **sin**
   `http_service`; se vigila con el log y `/api/health-deep` desde el API.
 - `agntiapro-browser` → `fly.browser.toml` (`apps/worker`, Playwright), solo red
   interna, `BROWSER_WORKER_URL=http://agntiapro-browser.internal:8790`.
@@ -137,7 +137,7 @@ Notas de operación:
 
 - Proyecto con *Root Directory* `apps/site`: landing estática, sin build. El
   panel sigue en Fly.
-- Build del panel: `pnpm --filter @openmuse/web build`; en Fly lo hace el
+- Build del panel: `pnpm --filter @agente/web build`; en Fly lo hace el
   Dockerfile. Para previews del panel en Vercel haría falta `VITE_API_URL`
   (pendiente, ver §1): hoy el cliente llamal rutas relativas.
 - Nunca metas claves de Supabase **service role** ni `SUPABASE_JWT_SECRET` en

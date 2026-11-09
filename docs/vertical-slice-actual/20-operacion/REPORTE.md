@@ -37,8 +37,8 @@
 | Comprobación | Resultado |
 | --- | --- |
 | `tsc --noEmit` (raíz) | 0 errores |
-| `@openmuse/web` typecheck | 0 errores |
-| `@openmuse/web` build | correcto (1777 módulos) |
+| `@agente/web` typecheck | 0 errores |
+| `@agente/web` build | correcto (1777 módulos) |
 | Gate 20: `published-card`, `fixed-card-renderer`, `laia-vertical-acceptance`, `vertical-slice-dogfood` | **9 pass, 0 fail, 5 TODO heredados** |
 | Regresión: marcos, leads, approval, workflows, agency-bootstrap, personas, worker-identity, sop-triggers | **38/38 pass, 0 fail** |
 | Audits `idempotency`, `anchors`, `tenant-default`, `layers`, `bridges`, `no-console` | 0 |
@@ -71,7 +71,7 @@ Por el criterio del CAMPAIGN.md, **la 20 sigue abierta** hasta ejecutar esa matr
 ## Runbook de promoción
 
 1. `pnpm typecheck`, gate de la campaña 20 y regresión; exigir exit 0.
-2. `pnpm --filter @openmuse/web build` y arrancar API + web; entrar como una cuenta de A y otra de B.
+2. `pnpm --filter @agente/web build` y arrancar API + web; entrar como una cuenta de A y otra de B.
 3. En A: aprobar una acción, comprobar recibo e incidencia en el panel; preguntar «¿por qué se paró ayer?» y verificar que la cita incluye id, estado y hora reales.
 4. En B: comprobar que no aparecen ids, fichas, acciones ni conexiones de A; abrir un enlace de tarea solo de B.
 5. Reiniciar la API y repetir el punto 3: la evidencia debe seguir citando los mismos registros.

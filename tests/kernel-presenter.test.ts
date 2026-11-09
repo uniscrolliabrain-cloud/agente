@@ -28,7 +28,7 @@ let directory: string;
 let ctx: ReturnType<typeof kernelContextSchema.parse>;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-presenter-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-presenter-"));
   db = await createStore({ dataDir: join(directory, "db") });
   const config: Config = {
   // TEST_CONFIG_BASE_V1 - Config gano campos obligatorios; se parte del

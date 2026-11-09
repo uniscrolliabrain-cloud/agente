@@ -13,7 +13,7 @@ interface Hit {
 
 const SEARCH_DIRS = ["apps/server/src", "apps/web/src", "packages/domain/src", "scripts"];
 const SKIP_DIRS = new Set([
-  "node_modules", "dist", ".git", "artifacts", "backups", ".openmuse",
+  "node_modules", "dist", ".git", "artifacts", "backups", ".agente",
   "audits", "e2e", "load",
 ]);
 

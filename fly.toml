@@ -18,11 +18,11 @@ primary_region = "fra"
   HOST = "0.0.0.0"
   PORT = "8787"
   DATA_DIR = "/data"
-  # OPENMUSE_CLIENTS_DIR_V1 - en la imagen no existe `clientes/` (esta en
+  # AGENTE_CLIENTS_DIR_V1 - en la imagen no existe `clientes/` (esta en
   # .dockerignore y el runtime solo copia dist). Sin esto, personas y ontologia
   # se buscan en /clientes, que no es escribible ni persiste. En el volumen, un
   # tenant provisionado sobrevive a los despliegues.
-  OPENMUSE_CLIENTS_DIR = "/data/clientes"
+  AGENTE_CLIENTS_DIR = "/data/clientes"
   GEMINI_MODEL = "gemini-3.6-flash"
   OPENROUTER_MODEL = "google/gemini-3.6-flash"
   TASK_WORKER_ENABLED = "true"

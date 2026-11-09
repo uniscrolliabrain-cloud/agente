@@ -54,7 +54,7 @@ function makeBundle(suffix: string, displayName: string): VerticalSliceBundle {
 }
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-personas-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-personas-"));
   db = await createStore({ dataDir: join(directory, "db") });
   config = testConfig({ dataDir: directory });
   const owner = await new UserService(db).create({

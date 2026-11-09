@@ -124,7 +124,7 @@ test("EventBus.emit no lanza con ningun tipo del enum", async () => {
 
 test("todo SystemEventType del enum aparece en algun bus.emit del repo", async () => {
   const root = process.cwd();
-  const skipDirs = new Set(["node_modules", ".git", "dist", "artifacts", "backups", ".openmuse"]);
+  const skipDirs = new Set(["node_modules", ".git", "dist", "artifacts", "backups", ".agente"]);
   const files: string[] = [];
   async function walk(dir: string) {
     for (const entry of await readdir(dir, { withFileTypes: true })) {

@@ -124,7 +124,7 @@ export async function createApp(
   // ese se salta.
   const personaRegistry = new PersonaRegistry();
   {
-    const clientsDir = process.env.OPENMUSE_CLIENTS_DIR ?? "clientes";
+    const clientsDir = process.env.AGENTE_CLIENTS_DIR ?? "clientes";
     // LAIA_BOOTSTRAP_EXAMPLE_V1 - carga tambien el tenant _example para que
     // Laia (que vive ahi) entre en el registry bajo "default".
     void Promise.all([
@@ -331,7 +331,7 @@ export async function createApp(
     const { readFile: readOntologyFile } = await import("node:fs/promises");
     const { join: joinOntology } = await import("node:path");
     // ONTOLOGY_BUNDLE_CLIENTSDIR_FIX_V1 - clientsDir vive en otro bloque; se recalcula aqui.
-    const ontologyPath = joinOntology(process.env.OPENMUSE_CLIENTS_DIR ?? "clientes", "default", "ontology.json");
+    const ontologyPath = joinOntology(process.env.AGENTE_CLIENTS_DIR ?? "clientes", "default", "ontology.json");
     const raw = await readOntologyFile(ontologyPath, "utf8").catch(() => null);
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -413,7 +413,7 @@ export async function createApp(
     if (error.name === "PdfError" || error.name === "RecurringEventError")
       return c.json({ error: error.message }, 422);
     if (error instanceof SyntaxError) return c.json({ error: "Invalid request data" }, 400);
-    console.error(`[OpenMuse] ${error.name}`);
+    console.error(`[Laia] ${error.name}`);
     return c.json(
       {
         error:
@@ -515,13 +515,13 @@ app.get("/api/health", async (c) => {
   });
   app.get("/api/google/callback", async (c) => {
     if (c.req.query("error"))
-      return c.html("<h1>Google connection cancelled</h1><p>You can return to OpenMuse.</p>", 400);
+      return c.html("<h1>Google connection cancelled</h1><p>You can return to Laia.</p>", 400);
     const state = c.req.query("state"),
       code = c.req.query("code");
     if (!state || !code) throw new AppError("Google callback is incomplete");
     await google.callback(state, code);
     return c.html(
-      "<h1>Google is connected</h1><p>Return to OpenMuse and refresh your workspace.</p>",
+      "<h1>Google is connected</h1><p>Return to Laia and refresh your workspace.</p>",
     );
   });
   // APP_JWT_WIRE_V1 - verifyJwtMiddleware antes que auth.owner. Coexisten.
@@ -1051,7 +1051,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   ].find((dir) => existsSync(dir));
   if (webDist) app.use("/*", serveStatic({ root: webDist }));
   app.get("/", (c) =>
-    c.json({ name: "OpenMuse", app: "http://localhost:8081", health: "/api/health" }),
+    c.json({ name: "Laia", app: "http://localhost:8081", health: "/api/health" }),
   );
   const adminEmail = process.env.ADMIN_EMAIL?.trim();
   const adminPassword = process.env.ADMIN_PASSWORD?.trim();
@@ -1060,12 +1060,12 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     await users.ensureAdmin(adminEmail, adminPassword, adminName);
   } else if ((await users.list()).length === 0) {
     console.warn(
-      "[OpenMuse] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password \"...\"`.",
+      "[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password \"...\"`.",
     );
   }
   if (config.databaseUrl && !process.env.BUSINESS_DATABASE_URL?.trim())
     console.warn(
-      "[OpenMuse] BUSINESS_DATABASE_URL no esta definido: los SOPs con la tool query_business ejecutan su SQL contra DATABASE_URL, que es la misma base de datos donde viven los datos de todos los owners. Apunta BUSINESS_DATABASE_URL a un rol de solo lectura (GRANT SELECT) en otra base de datos.",
+      "[Laia] BUSINESS_DATABASE_URL no esta definido: los SOPs con la tool query_business ejecutan su SQL contra DATABASE_URL, que es la misma base de datos donde viven los datos de todos los owners. Apunta BUSINESS_DATABASE_URL a un rol de solo lectura (GRANT SELECT) en otra base de datos.",
     );
 
   // APP_EXPOSE_BROWSER_V1 - el browser es la frontera de red para monitors y

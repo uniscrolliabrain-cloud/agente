@@ -20,7 +20,7 @@ let db: Store;
 let directory: string;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-slice5-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-slice5-"));
   db = await createStore({ dataDir: join(directory, "db") });
   await db.put("tenant-a:t", "business-records", { id: "lead-1", type: "lead", name: "Uno", cif: "B1" });
   await db.put("tenant-a:t", "business-records", { id: "lead-2", type: "lead", name: "Dos", cif: "B2" });

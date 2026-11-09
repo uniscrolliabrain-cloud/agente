@@ -53,7 +53,7 @@ if (!databaseUrl) {
 const store = await createStore({ databaseUrl });
 const users = new UserService(store);
 // TenantService recibe Config por contrato pero no lee ningun campo: pasar el
-// entorno real obligaria a tener PORT/OPENMUSE_ACCESS_KEY en este script, que
+// entorno real obligaria a tener PORT/AGENTE_ACCESS_KEY en este script, que
 // solo escribe membresias.
 const tenants = new TenantService(store, {} as Config);
 const now = new Date().toISOString();

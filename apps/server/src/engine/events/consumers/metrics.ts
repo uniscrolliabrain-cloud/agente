@@ -18,11 +18,11 @@ export interface MetricsConsumerHandle {
 export function startMetricsConsumer(owners: string[]): MetricsConsumerHandle {
   // Contadores por tipo de evento.
   globalMetrics.counter(
-    "openmuse_events_total",
+    "agente_events_total",
     "Eventos emitidos por tipo y owner",
   );
   globalMetrics.counter(
-    "openmuse_event_failures_total",
+    "agente_event_failures_total",
     "Eventos con payload inválido (no debería ocurrir)",
   );
 
@@ -30,12 +30,12 @@ export function startMetricsConsumer(owners: string[]): MetricsConsumerHandle {
     globalSubscribers.subscribe(owner, (event: SystemEvent) => {
       // EVENTS_CONSUMERS_METRICS_SKIP_KERNEL_V1
       try {
-        globalMetrics.inc("openmuse_events_total", {
+        globalMetrics.inc("agente_events_total", {
           type: event.type,
           source: event.source.kind,
         });
       } catch {
-        globalMetrics.inc("openmuse_event_failures_total", { type: event.type });
+        globalMetrics.inc("agente_event_failures_total", { type: event.type });
       }
     }),
   );

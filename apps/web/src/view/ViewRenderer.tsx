@@ -1,5 +1,5 @@
 // D3_VIEWRENDERER_V2 - discriminated union + assertNever.
-import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 import DashboardTemplate from "../templates/dashboard/DashboardTemplate";
 import QueueTemplate from "../templates/queue/QueueTemplate";
 

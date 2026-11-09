@@ -1,7 +1,7 @@
 // D3_USE_VIEW_RESOLVER_V1 - resuelve un intent contra el backend.
 import { useCallback, useState } from "react";
 import { apiFetch } from "../api/client";
-import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 
 export function useViewResolver() {
   const [spec, setSpec] = useState<RuntimeViewSpec | null>(null);

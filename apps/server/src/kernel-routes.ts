@@ -161,7 +161,7 @@ export function kernelRoutes(
     const owner = c.get("owner");
     await requireAdmin(owner);
     const { globalMetrics } = await import("./metrics/registry.ts");
-    const p99 = globalMetrics.quantile("openmuse_http_request_duration_ms", 0.99) ?? 0;
+    const p99 = globalMetrics.quantile("agente_http_request_duration_ms", 0.99) ?? 0;
     return c.json({ httpLatencyP99Ms: p99, generatedAt: new Date().toISOString() });
   });
 

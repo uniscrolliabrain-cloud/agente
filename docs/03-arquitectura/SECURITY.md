@@ -6,7 +6,7 @@
 
 ### Autenticación
 
-- **Access key**: `OPENMUSE_ACCESS_KEY` (24+ caracteres en modo `live`). Validación con `timingSafeEqual` contra hash SHA-256.
+- **Access key**: `AGENTE_ACCESS_KEY` (24+ caracteres en modo `live`). Validación con `timingSafeEqual` contra hash SHA-256.
 - **Sesiones**: token aleatorio de 32 bytes (base64url), almacenado en `records/system/sessions` con TTL configurable (`SESSION_TTL_MS`, default 7 días).
 - **URLs firmadas**: HMAC SHA-256 con `owner\npath\nexpirations`. Expiración a 15 minutos. Verificación con `timingSafeEqual`.
 - **Google OAuth**: códigos de autorización con PKCE (`code_verifier`), state con generación para detección de replay. Tokens cifrados con AES-256-GCM (`TOKEN_ENCRYPTION_KEY`).

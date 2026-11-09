@@ -33,14 +33,14 @@ import type { AgentTask } from "./types/api";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem("openmuse_theme");
+    const saved = localStorage.getItem("agente_theme");
     if (saved === "dark") return true;
     if (saved === "light") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    localStorage.setItem("openmuse_theme", dark ? "dark" : "light");
+    localStorage.setItem("agente_theme", dark ? "dark" : "light");
   }, [dark]);
   return { dark, toggle: () => setDark((v) => !v) };
 }
@@ -216,7 +216,7 @@ export default function App() {
         <ProfileModal
           user={auth.user}
           onClose={() => setProfileOpen(false)}
-          onSaved={(u) => { localStorage.setItem("openmuse_user", JSON.stringify(u)); }}
+          onSaved={(u) => { localStorage.setItem("agente_user", JSON.stringify(u)); }}
         />
       )}
 

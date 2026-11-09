@@ -107,7 +107,7 @@ let rootToken: string;
 let aliceId: string;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-perms-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-perms-"));
   db = await createStore({ dataDir: join(directory, "db") });
   server = await createApp(db, testConfig({ dataDir: directory }));
   const users = new UserService(db);

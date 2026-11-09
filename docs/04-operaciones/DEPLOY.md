@@ -21,13 +21,13 @@ Copiar `.env.example` a `.env`. Mínimo para desarrollo:
 WORKSPACE_MODE=sample
 PORT=8787
 HOST=127.0.0.1
-DATA_DIR=.openmuse
+DATA_DIR=.agente
 ```
 
 Variables obligatorias en modo `live`:
 
 ```
-OPENMUSE_ACCESS_KEY=<24+ caracteres>
+AGENTE_ACCESS_KEY=<24+ caracteres>
 TOKEN_ENCRYPTION_KEY=<32-byte base64>
 DATABASE_URL=<postgres://...>
 ```
@@ -60,14 +60,14 @@ pnpm start:worker
 | Variable | Valor | Descripción |
 |----------|-------|-------------|
 | `WORKSPACE_MODE` | `sample` | Modo local, sin credenciales reales. HOST debe ser loopback. |
-| `WORKSPACE_MODE` | `live` | Modo producción. Requiere `OPENMUSE_ACCESS_KEY` y `TOKEN_ENCRYPTION_KEY`. |
+| `WORKSPACE_MODE` | `live` | Modo producción. Requiere `AGENTE_ACCESS_KEY` y `TOKEN_ENCRYPTION_KEY`. |
 
 ## Docker
 
 El [Dockerfile](../../Dockerfile) construye el servidor y el panel. Fly sirve ambos desde el mismo origen.
 
 ```bash
-docker build -t openmuse-server .
+docker build -t agente-server .
 ```
 
 ## Release en Fly
@@ -76,7 +76,7 @@ El [workflow Deploy](../../.github/workflows/deploy.yml) se activa con un tag `v
 
 1. Antes de publicar, ejecuta `pnpm release:check`. El workflow aplica su propio gate de tipado, tests y coherencia antes de desplegar.
 2. Comprueba el entorno y las aplicaciones de destino. El workflow importa los secretos de runtime desde Doppler y etiqueta las imágenes de API y worker con el SHA corto de la release.
-3. Comprueba el resultado del smoke del workflow y ejecuta `pnpm release:verify` con `OPENMUSE_URL` apuntando al destino. Revisa `/api/health` y `/api/health-deep`. Confirma el worker con el diagnóstico de la API y sus logs.
+3. Comprueba el resultado del smoke del workflow y ejecuta `pnpm release:verify` con `AGENTE_URL` apuntando al destino. Revisa `/api/health` y `/api/health-deep`. Confirma el worker con el diagnóstico de la API y sus logs.
 4. Registra el SHA y la imagen desplegada de cada aplicación. Si falla la verificación, restaura las imágenes de la última release sana en las aplicaciones afectadas y repite las comprobaciones. Si hubo migraciones, verifica antes la compatibilidad de esa versión con la base de datos.
 
 | Componente | Configuración |
@@ -91,7 +91,7 @@ Consulta las [notas de operación](PRODUCCION.md) para incidentes y el [alta de 
 
 | Variable | Por qué es crítica |
 |----------|-------------------|
-| `OPENMUSE_ACCESS_KEY` | Autenticación de acceso en modo live. |
+| `AGENTE_ACCESS_KEY` | Autenticación de acceso en modo live. |
 | `TOKEN_ENCRYPTION_KEY` | Cifrado de tokens de Google y credenciales. |
 | `DATABASE_URL` | Postgres real para producción y multi-tenant. |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth de Google. |

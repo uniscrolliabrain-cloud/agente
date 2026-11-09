@@ -100,7 +100,7 @@ export interface Classification {
 // ---------------------------------------------------------------------------
 
 const SEARCH_DIRS = ["apps/server/src", "apps/web/src", "packages", "scripts"];
-const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "artifacts", "backups", ".openmuse", "audits"]);
+const SKIP_DIRS = new Set(["node_modules", "dist", ".git", "artifacts", "backups", ".agente", "audits"]);
 
 const MARK_RE = /\b([A-Z][A-Z0-9_]{2,}_V\d+)\b/;
 

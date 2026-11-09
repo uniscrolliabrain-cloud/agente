@@ -24,7 +24,7 @@ const PERSONAS = [
 ] as const;
 
 test("LAIA_HIERARCHY_TEST_V1 - Laia ve turnos, atencion y notificaciones de los 12", async () => {
-  const dir = await mkdtemp(join(tmpdir(), "openmuse-laia-"));
+  const dir = await mkdtemp(join(tmpdir(), "agente-laia-"));
   process.env.DATA_DIR = dir;
   process.env.WORKSPACE_MODE = "sample";
   process.env.AGENT_BACKEND = "sample";

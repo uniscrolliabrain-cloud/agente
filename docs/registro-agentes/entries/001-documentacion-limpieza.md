@@ -1,7 +1,7 @@
 ---
 schema_version: "1.0"
 id: doc-limpieza-001
-title: Campaña de Documentación OpenMuse
+title: Campaña de Documentación Laia
 created_at: 2026-10-29T00:00:00+00:00
 updated_at: 2026-10-29T00:00:00+00:00
 agent: Cline
@@ -22,11 +22,11 @@ tags:
   - reorganizacion
 ---
 
-# Registro: Campaña de Documentación OpenMuse
+# Registro: Campaña de Documentación Laia
 
 ## Objetivo
 
-Renovar toda la documentación del repositorio OpenMuse para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Un doc viejo no se corrige: se archiva y se escribe el nuevo (v2 con metadata).
+Renovar toda la documentación del repositorio Laia para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Un doc viejo no se corrige: se archiva y se escribe el nuevo (v2 con metadata).
 
 ## Cambios / resultado observado
 

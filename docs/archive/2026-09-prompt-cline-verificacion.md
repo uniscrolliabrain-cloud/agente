@@ -13,7 +13,7 @@ Se ha hecho un pase grande de parches sobre el repositorio (repodump `8a5edab`).
 Los cambios están escritos y aplicados. La mayor parte del typecheck backend ya
 pasa limpio, pero queda trabajo de verificación y corrección para ti:
 
-1. `pnpm --filter @openmuse/web typecheck` - arreglar los 61 errores preexistentes del frontend.
+1. `pnpm --filter @agente/web typecheck` - arreglar los 61 errores preexistentes del frontend.
 2. `pnpm test` - investigar el timeout de 305s y arreglar los tests que asuman firma vieja.
 3. Reparar el bug conocido en `seedAgents` de `service.ts`.
 4. Confirmar que `pnpm typecheck` sigue en 0 tras tus cambios.
@@ -25,7 +25,7 @@ pasa limpio, pero queda trabajo de verificación y corrección para ti:
 |---|---|
 | `pnpm typecheck` (backend + domain, 110 ficheros) | OK, 0 errores, 23.5s |
 | `pnpm typecheck` (worker) | OK, 0 errores |
-| `pnpm --filter @openmuse/web typecheck` | 61 errores preexistentes |
+| `pnpm --filter @agente/web typecheck` | 61 errores preexistentes |
 | `pnpm test` | Timeout de 305s, sin fallos en los que corrieron |
 
 ---
@@ -171,7 +171,7 @@ Ejecutar y confirmar:
 
 ```
 pnpm typecheck                              # debe dar exit 0
-pnpm --filter @openmuse/web typecheck       # debe dar exit 0 tras tus arreglos
+pnpm --filter @agente/web typecheck       # debe dar exit 0 tras tus arreglos
 pnpm test                                   # debe dar exit 0 sin timeout
 ```
 
@@ -188,7 +188,7 @@ Crear `docs/RESULTADO-VERIFICACION.md` con esta estructura:
 
 ## Typecheck
 - `pnpm typecheck`: OK / falla (con detalle)
-- `pnpm --filter @openmuse/web typecheck`: OK / falla (con detalle)
+- `pnpm --filter @agente/web typecheck`: OK / falla (con detalle)
 
 ## Tests
 - `pnpm test`: X pass / Y fail / Z skip
@@ -211,7 +211,7 @@ Crear `docs/RESULTADO-VERIFICACION.md` con esta estructura:
 ## Verificacion final
 - `git status -sb`: limpio / con cambios
 - `pnpm typecheck`: OK / fallo
-- `pnpm --filter @openmuse/web typecheck`: OK / fallo
+- `pnpm --filter @agente/web typecheck`: OK / fallo
 - `pnpm test`: OK / fallo
 ```
 
@@ -237,7 +237,7 @@ Crear `docs/RESULTADO-VERIFICACION.md` con esta estructura:
 3. Arreglar el bug de `seedAgents` (Tarea 2).
 4. Ejecutar `pnpm typecheck`. Confirmar 0.
 5. Arreglar los 61 errores del frontend (Tarea 1).
-6. Ejecutar `pnpm --filter @openmuse/web typecheck`. Confirmar 0.
+6. Ejecutar `pnpm --filter @agente/web typecheck`. Confirmar 0.
 7. Ejecutar `pnpm test`. Investigar timeout (Tarea 3).
 8. Arreglar tests con firma vieja (Tarea 4).
 9. Ejecutar `pnpm test` de nuevo. Confirmar sin timeout.

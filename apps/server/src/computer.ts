@@ -152,15 +152,15 @@ export function computerIdentity(config: Config, owner: string, tenantId: string
   // COMPUTER_IDENTITY_TENANT_V1 â€” tenantHash y ownerHash separados.
   const tenantHash = hash("tenant:" + tenantId).slice(0, 12);
   const ownerHash = hash("owner:" + owner).slice(0, 24);
-  const name = `openmuse-${deployment}-${tenantHash}-${ownerHash}`;
+  const name = `agente-${deployment}-${tenantHash}-${ownerHash}`;
   return {
     container: `${name}-computer`,
     volume: `${name}-workspace`,
     labels: {
-      "dev.openmuse.managed": "computer-v1",
-      "dev.openmuse.deployment": deployment,
-      "dev.openmuse.tenant": tenantHash,
-      "dev.openmuse.owner": ownerHash,
+      "dev.agente.managed": "computer-v1",
+      "dev.agente.deployment": deployment,
+      "dev.agente.tenant": tenantHash,
+      "dev.agente.owner": ownerHash,
     } as Record<string, string>,
   };
 }
@@ -281,7 +281,7 @@ export class ComputerService {
       );
   }
   private image() {
-    const image = this.config.computerImage ?? "openmuse-computer:local";
+    const image = this.config.computerImage ?? "agente-computer:local";
     if (!/^[a-zA-Z0-9][a-zA-Z0-9._/:@-]{0,250}$/.test(image))
       throw new AppError("COMPUTER_IMAGE is invalid", 503);
     return image;
@@ -860,7 +860,7 @@ export class ComputerService {
           "8s",
           "/usr/bin/python3",
           "-I",
-          "/opt/openmuse/files.py",
+          "/opt/agente/files.py",
         ],
         {
           timeoutMs: 10000,

@@ -1,5 +1,5 @@
 // B3_LIVEITEM_V1 - item de sidebar con franja 18px y 9 estados.
-import { alertUrgency, pickPrimary, type LiveActivity } from "@openmuse/domain/live";
+import { alertUrgency, pickPrimary, type LiveActivity } from "@agente/domain/live";
 import { fmtDur, useNow } from "../hooks/useNow";
 
 interface Props {

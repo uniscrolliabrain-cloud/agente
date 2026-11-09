@@ -1,5 +1,5 @@
 ﻿// WORKSPACES_ENGINE_BRIDGE_V1 - registra las capacidades de los 34 workspaces.
-import type { WorkspaceModule } from "@openmuse/workspaces";
+import type { WorkspaceModule } from "@agente/workspaces";
 import type { CapabilityRegistry } from "../capabilities/registry.ts";
 
 export function bridgeWorkspaceCapabilities(

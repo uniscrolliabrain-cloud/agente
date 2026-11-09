@@ -795,7 +795,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         ? "\n\nINSTRUCCION: Este mensaje pide trabajo complejo. Responde solo con un acuse corto y llama a delegate_task con el trabajo completo. No intentes resolverlo tu. // FIX_11_J_DELEGATE_CONDITIONAL_V1\n"
         : "";
     const prompt =
-      "Eres OpenMuse, el asistente personal del dueno de este negocio. Hablas como una persona competente, no como un manual tecnico. " +
+      "Eres Laia, la asistente personal del dueno de este negocio. Hablas como una persona competente, no como un manual tecnico. " +
       "REGLAS DE TONO: " +
       "(1) Responde en 1-3 frases. Solo te extiendes si el usuario pide detalle. " +
       "(2) Nunca uses terminos internos (capability, workflow, SOP, kernel, runtime, thought, promotion, meta). El usuario no sabe que existen. " +

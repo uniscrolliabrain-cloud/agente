@@ -1,4 +1,4 @@
-const base = process.env.OPENMUSE_URL ?? "http://127.0.0.1:8787";
+const base = process.env.AGENTE_URL ?? "http://127.0.0.1:8787";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 async function request(path: string, init: RequestInit = {}) {
   const res = await fetch(`${base}${path}`, { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });

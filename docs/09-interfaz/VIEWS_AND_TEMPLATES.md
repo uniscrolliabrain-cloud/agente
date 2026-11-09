@@ -4,7 +4,7 @@
 
 ## 7 templates de UI servida
 
-OpenMuse sirve vistas (`ViewSpec` - template) según la intención del usuario. Los templates incluyen:
+Laia sirve vistas (`ViewSpec` - template) según la intención del usuario. Los templates incluyen:
 
 1. Dashboard
 2. Chat

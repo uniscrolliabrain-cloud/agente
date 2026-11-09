@@ -235,7 +235,7 @@ Hoy `api.ts` es un mock en memoria. Para conectar:
 
 ```powershell
 pnpm typecheck
-pnpm --filter @openmuse/web exec tsc --noEmit
+pnpm --filter @agente/web exec tsc --noEmit
 ```
 
 Ambos deben estar verdes.

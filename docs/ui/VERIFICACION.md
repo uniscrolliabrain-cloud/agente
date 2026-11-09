@@ -14,7 +14,7 @@
 Al cerrar cada branch, estos 3 comandos deben pasar:
 
 1. `pnpm typecheck` → debe dar 0.
-2. `pnpm --filter @openmuse/web typecheck` → debe dar 0.
+2. `pnpm --filter @agente/web typecheck` → debe dar 0.
 3. `pnpm test` → debe pasar (con los tests nuevos).
 
 Si alguno falla, el branch no se cierra.
@@ -164,7 +164,7 @@ Al cerrar un branch:
 Antes de decir "HECHO":
 
 - [ ] Typecheck backend: `pnpm typecheck` → 0.
-- [ ] Typecheck frontend: `pnpm --filter @openmuse/web typecheck` → 0.
+- [ ] Typecheck frontend: `pnpm --filter @agente/web typecheck` → 0.
 - [ ] Tests: `pnpm test` → verde.
 - [ ] Manual (si aplica): comprobado en navegador.
 - [ ] Console: sin errores.

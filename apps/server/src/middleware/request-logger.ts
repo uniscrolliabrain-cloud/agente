@@ -89,7 +89,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
         const tenantLabels: Record<string, string> = tenantIdForLabels
           ? { tenant: tenantIdForLabels }
           : {};
-        globalMetrics.inc("openmuse_http_requests_total", {
+        globalMetrics.inc("agente_http_requests_total", {
           method,
           path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
           status: String(status),
@@ -99,7 +99,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
         // MIDDLEWARE_HTTP_HISTOGRAM_V1
         // METRICS_TENANT_LABEL_V1 — idem para el histograma.
         globalMetrics.observe(
-          "openmuse_http_request_duration_ms",
+          "agente_http_request_duration_ms",
           durationMs,
           { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status), ...tenantLabels },
         );

@@ -36,14 +36,14 @@
       "duration_ms": null,
       "log_path": "typecheck-inbox-web.txt",
       "exit_code": 0,
-      "command": "pnpm --filter @openmuse/web typecheck"
+      "command": "pnpm --filter @agente/web typecheck"
     },
     {
       "status": "pass",
       "duration_ms": null,
       "log_path": "build-inbox-web.txt",
       "exit_code": 0,
-      "command": "pnpm --filter @openmuse/web build"
+      "command": "pnpm --filter @agente/web build"
     }
   ],
   "findings": [

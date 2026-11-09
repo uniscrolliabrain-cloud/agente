@@ -1,4 +1,4 @@
-// Restore script. Copia un backup de vuelta a .openmuse/. El backend debe estar parado.
+// Restore script. Copia un backup de vuelta a .agente/. El backend debe estar parado.
 // Uso: pnpm exec tsx scripts/restore.ts --from DIR
 
 import { cp, readFile, rm } from "node:fs/promises";
@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
-const target = join(root, ".openmuse");
+const target = join(root, ".agente");
 
 async function main() {
   const args = process.argv.slice(2);
@@ -19,7 +19,7 @@ async function main() {
   }
   const from = resolve(args[fromIdx + 1]);
   if (!existsSync(join(from, "manifest.json"))) {
-    console.error(`No hay manifest en ${from}. Asegurate de que es un backup de OpenMuse.`);
+    console.error(`No hay manifest en ${from}. Asegurate de que es un backup de Laia.`);
     process.exit(1);
   }
   const manifest = JSON.parse(await readFile(join(from, "manifest.json"), "utf8"));

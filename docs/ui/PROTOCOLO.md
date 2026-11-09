@@ -111,7 +111,7 @@ Verificar que la marca del parche ya no aparece.
 ## 10. Verificación
 
 - `pnpm typecheck` → 0.
-- `pnpm --filter @openmuse/web typecheck` → 0.
+- `pnpm --filter @agente/web typecheck` → 0.
 - `pnpm test` → verde.
 
 Al cerrar cada branch: los 3 en verde.

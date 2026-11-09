@@ -17,7 +17,7 @@ const { agent } = await createApp(db, config);
 const recoveredCount = await agent.recoverInterruptedTasks().catch(() => 0);
 if (recoveredCount > 0) console.log(`[worker] ${recoveredCount} tareas recuperadas`);
 agent.start();
-console.log("OpenMuse task worker running");
+console.log("Laia task worker running");
 let stopping = false;
 const stop = async () => {
   if (stopping) return;

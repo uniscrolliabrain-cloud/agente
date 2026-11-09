@@ -26,12 +26,12 @@ const SECRETS: Secret[] = [
   { name: "DATABASE_URL", need: "live", group: "core", note: "Postgres durable (Neon). Sin esto cae a PGlite y las DB se corrompen al cortar el proceso" },
   { name: "PUBLIC_API_URL", need: "live", group: "core", note: "origen publico del API; de aqui se deriva el redirect de Google" },
   { name: "TOKEN_ENCRYPTION_KEY", need: "live", group: "core", note: "32 bytes base64; cifra los tokens OAuth de Google en reposo" },
-  { name: "OPENMUSE_ACCESS_KEY", need: "live", group: "core", note: ">=24 chars; live mode no arranca sin ella" },
+  { name: "AGENTE_ACCESS_KEY", need: "live", group: "core", note: ">=24 chars; live mode no arranca sin ella" },
   { name: "ALLOWED_ORIGINS", need: "live", group: "core", note: "CSV de origenes del panel (https://www.agntiapro.com)" },
   { name: "AUTH_PROVIDER", need: "live", group: "auth", note: "debe ser supabase para el modo multitenant con JWT" },
   { name: "DATA_DIR", need: "optional", group: "core", note: "directorio de datos (PGlite/backups); en Fly debe ser /data" },
   { name: "BUSINESS_DATABASE_URL", need: "optional", group: "core", note: "base + rol read-only para query_business de las SOPs; sin ella las consultas corren contra la principal" },
-  { name: "OPENMUSE_PROCESS_ROLE", need: "optional", group: "core", note: "all | api | worker; en Fly se separan en dos apps" },
+  { name: "AGENTE_PROCESS_ROLE", need: "optional", group: "core", note: "all | api | worker; en Fly se separan en dos apps" },
   { name: "BACKUP_INTERVAL_HOURS", need: "optional", group: "core", note: "0 desactiva los backups automaticos" },
 
   { name: "PUBLIC_SITE_URL", need: "optional", group: "core", note: "origen publico del sitio en Vercel" },
@@ -150,8 +150,8 @@ if (authProvider === "supabase") {
     );
   }
 }
-if (present("OPENMUSE_ACCESS_KEY") && present("OPENMUSE_ACCESS_KEY")!.length < 24) {
-  coherence.push("OPENMUSE_ACCESS_KEY tiene menos de 24 caracteres: live mode no arranca.");
+if (present("AGENTE_ACCESS_KEY") && present("AGENTE_ACCESS_KEY")!.length < 24) {
+  coherence.push("AGENTE_ACCESS_KEY tiene menos de 24 caracteres: live mode no arranca.");
 }
 if (present("DATABASE_URL") && !present("BUSINESS_DATABASE_URL")) {
   coherence.push(

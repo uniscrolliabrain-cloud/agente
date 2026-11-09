@@ -11,7 +11,7 @@ import { test } from "node:test";
 import { runBackup } from "../apps/server/src/backup.ts";
 
 test("backup conserva todos los archivos y su contenido íntegro", async () => {
-  const root = await mkdtemp(join(tmpdir(), "openmuse-bkp-"));
+  const root = await mkdtemp(join(tmpdir(), "agente-bkp-"));
   try {
     const source = join(root, "data");
     await mkdir(join(source, "files"), { recursive: true });
@@ -40,7 +40,7 @@ test("backup conserva todos los archivos y su contenido íntegro", async () => {
 });
 
 test("backup sobre source vacío devuelve bytes=0 sin fallar", async () => {
-  const root = await mkdtemp(join(tmpdir(), "openmuse-bkp-empty-"));
+  const root = await mkdtemp(join(tmpdir(), "agente-bkp-empty-"));
   try {
     const source = join(root, "data");
     await mkdir(source, { recursive: true });

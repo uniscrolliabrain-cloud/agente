@@ -82,7 +82,7 @@ function memoryCount(tenantId: string): Promise<number> {
 }
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-provision-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-provision-"));
   db = await createStore({ dataDir: join(directory, "db") });
   config = testConfig({ dataDir: directory });
   const owner = await new UserService(db).create({

@@ -5,7 +5,7 @@
 import { listGoodReleases, rollbackToRelease } from "../apps/server/src/rollback.ts";
 
 async function main() {
-  const dataDir = process.env.DATA_DIR ?? ".openmuse";
+  const dataDir = process.env.DATA_DIR ?? ".agente";
   const args = process.argv.slice(2);
   if (args.includes("--list") || args.length === 0) {
     const releases = await listGoodReleases(dataDir);
@@ -35,11 +35,11 @@ void main();
 
 ## I.1. Para quién es este documento
 
-Este tomo está escrito para quien decide comprar, invertir o vender. Se lee sin saber código. Explica qué es OpenMuse, qué son los 16 empleados digitales, qué es el Arquitecto, cuánto cuesta, cómo se contrata, cómo se opera. Si eres técnico y quieres el detalle, salta al Tomo II. Si eres comercial y quieres el pitch, ve directamente a I.8.
+Este tomo está escrito para quien decide comprar, invertir o vender. Se lee sin saber código. Explica qué es Laia, qué son los 16 empleados digitales, qué es el Arquitecto, cuánto cuesta, cómo se contrata, cómo se opera. Si eres técnico y quieres el detalle, salta al Tomo II. Si eres comercial y quieres el pitch, ve directamente a I.8.
 
-## I.2. Qué NO es OpenMuse
+## I.2. Qué NO es Laia
 
-No es un wrapper de ChatGPT. No es un CRM. No es un ERP. No es Zapier. No es un copiloto. OpenMuse **ejecuta trabajo real** dentro de una empresa, con aprobaciones humanas, con auditoria verificable, y con un aprendizaje que se acumula. La conversacion es la interfaz, pero no es el producto. El producto es el equipo digital que trabaja.
+No es un wrapper de ChatGPT. No es un CRM. No es un ERP. No es Zapier. No es un copiloto. Laia **ejecuta trabajo real** dentro de una empresa, con aprobaciones humanas, con auditoria verificable, y con un aprendizaje que se acumula. La conversacion es la interfaz, pero no es el producto. El producto es el equipo digital que trabaja.
 
 ## I.3. El problema real de la PYME
 
@@ -67,7 +67,7 @@ Cada empleado digital tiene un contrato explicito: 15h/dia, lunes a viernes, con
 
 ## I.9. Comparativa honesta
 
-Comparado con ChatGPT, OpenMuse tiene runtime durable, memoria estructurada, aprobaciones, audit trail y un grafo de negocio. Comparado con Copilot o los asistentes de Microsoft, no depende de Windows ni de Office. Comparado con Zapier o Make, no es un orquestador de conectores: es un runtime con contratos, verificacion y aprendizaje. Comparado con Notion AI, no vive dentro de una nota: vive dentro de un pipeline con side effects reales. Comparado con Relevance AI, no vende agentes sin contrato: cada capability declara su riesgo, su coste y si requiere aprobacion. La ventaja competitiva que ninguna solucion SaaS multi-tenant puede dar: **el cliente es dueno del deployment**. Los datos viven en su servidor, las claves se cifran con su clave, los backups son suyos, y si manana quiere irse, se lleva el Postgres entero.
+Comparado con ChatGPT, Laia tiene runtime durable, memoria estructurada, aprobaciones, audit trail y un grafo de negocio. Comparado con Copilot o los asistentes de Microsoft, no depende de Windows ni de Office. Comparado con Zapier o Make, no es un orquestador de conectores: es un runtime con contratos, verificacion y aprendizaje. Comparado con Notion AI, no vive dentro de una nota: vive dentro de un pipeline con side effects reales. Comparado con Relevance AI, no vende agentes sin contrato: cada capability declara su riesgo, su coste y si requiere aprobacion. La ventaja competitiva que ninguna solucion SaaS multi-tenant puede dar: **el cliente es dueno del deployment**. Los datos viven en su servidor, las claves se cifran con su clave, los backups son suyos, y si manana quiere irse, se lleva el Postgres entero.
 
 ## I.10. Estado real de este tomo
 
@@ -78,7 +78,7 @@ El producto esta disenado y la mayor parte esta construida. Los 16 roles existen
 
 ## II.1. Las 4 apps y los 4 packages
 
-OpenMuse vive en un monorepo pnpm. Cuatro apps y tres packages mas un catalogo. Las apps son: server, el API Hono con el motor durable y el kernel cognitivo; web, el frontend React + Vite; worker, el browser aislado con Playwright; computer, el sandbox Docker con Python. Los packages son: domain, con todos los contratos Zod que respetan las demas capas; integrations, con Google, PDF, vault y stubs; backends, con el adapter de OpenBot; catalog, con la libreria de templates del Arquitecto.
+Laia vive en un monorepo pnpm. Cuatro apps y tres packages mas un catalogo. Las apps son: server, el API Hono con el motor durable y el kernel cognitivo; web, el frontend React + Vite; worker, el browser aislado con Playwright; computer, el sandbox Docker con Python. Los packages son: domain, con todos los contratos Zod que respetan las demas capas; integrations, con Google, PDF, vault y stubs; backends, con el adapter de OpenBot; catalog, con la libreria de templates del Arquitecto.
 El domain no depende de nadie. El server depende del domain y del catalog. El web depende del domain para los tipos. El worker y el computer son independientes.
 
 ## II.2. Diagrama de bloques
@@ -106,7 +106,7 @@ El usuario escribe en el chat. El ConversationAgent abre un turno en el kernel, 
 Si el usuario pidio algo durable, el chat llama a createTask. El TaskWorker reclama la tarea con un lease, la ejecuta paso a paso, y emite eventos al bus en cada transicion. Si un paso genera side effects externos, se crea un ActionProposal que el usuario aprueba. Cuando la tarea termina, el DeterministicVerifier comprueba si el Outcome satisface los criterios del Goal. Si no, el LlmVerifier da una segunda opinion. El LearningObserver guarda el resultado. Y si el verificador fallo, el LlmReplanner genera un plan nuevo.
 ## II.5. Multi-proceso
 
-Hay cuatro roles de proceso. El API sirve HTTP y no ejecuta tareas si OPENMUSE_PROCESS_ROLE=api. El worker ejecuta tareas durables y no sirve HTTP si OPENMUSE_PROCESS_ROLE=worker. El browser worker es un proceso Playwright con su propio token. El computer es un contenedor Docker por owner. Los cuatro hablan por la base de datos y por el bus de eventos. Un API puede reiniciarse sin perder tareas porque el worker sigue corriendo. Un worker puede reiniciarse sin perder trabajo porque el lease expira y otro worker lo reclama.
+Hay cuatro roles de proceso. El API sirve HTTP y no ejecuta tareas si AGENTE_PROCESS_ROLE=api. El worker ejecuta tareas durables y no sirve HTTP si AGENTE_PROCESS_ROLE=worker. El browser worker es un proceso Playwright con su propio token. El computer es un contenedor Docker por owner. Los cuatro hablan por la base de datos y por el bus de eventos. Un API puede reiniciarse sin perder tareas porque el worker sigue corriendo. Un worker puede reiniciarse sin perder trabajo porque el lease expira y otro worker lo reclama.
 
 ## II.6. Multi-tenant: un deployment por cliente
 
@@ -166,7 +166,7 @@ El StoreSink escribe con insertIfAbsent en el kind system-events, bajo la clave 
 
 El SchemaRegistry existe aunque hoy solo haya una version por tipo. Manana, cuando un tipo evolucione a 1.1, ambos registros conviviran y los eventos viejos seguiran validando contra 1.0.
 
-Los exporters de futuro (Kafka, OTel) estan declarados como interfaces vacias. Cuando entre Kafka, implementa EventSink y publica en topic openmuse.events.<owner>. La firma HMAC se anade ahi, no en el bus. OTel es un consumidor: lee del sink y convierte cada evento en un span, con traceId generado en el exporter, no en el evento.
+Los exporters de futuro (Kafka, OTel) estan declarados como interfaces vacias. Cuando entre Kafka, implementa EventSink y publica en topic agente.events.<owner>. La firma HMAC se anade ahi, no en el bus. OTel es un consumidor: lee del sink y convierte cada evento en un span, con traceId generado en el exporter, no en el evento.
 ## III.6. Store y TenantScopedStore: la persistencia
 
 El Store es la unica capa que habla con la base de datos. Usa una tabla unica: records con PK compuesta (owner, kind, id) y columna data jsonb. No hay tablas especificas por entidad. Un Goal, una tarea, un SOP, una memoria, un Thought, una entidad de negocio: todo vive en records con un kind distinto.
@@ -344,7 +344,7 @@ La rejilla se refresca cada 10 segundos. El estado de cada empleado se calcula e
 
 ## V.5. El Arquitecto: construir SOPs, skills y pipelines
 
-El Arquitecto es un servicio del sistema, no un empleado del tenant. No aparece en la rejilla del cliente. Vive en el plano de operacion de OpenMuse y se activa cuando el cliente pide algo que ninguno de los 16 sabe hacer.
+El Arquitecto es un servicio del sistema, no un empleado del tenant. No aparece en la rejilla del cliente. Vive en el plano de operacion de Laia y se activa cuando el cliente pide algo que ninguno de los 16 sabe hacer.
 
 El cliente pide desde el chat: 'Necesito un proceso para recordar pagos fraccionados a clientes con mas de 5 facturas al ano.' El chat llama a create_build, que crea un BuildSpec con status queued. El worker reclama la tarea con kind=build y llama al BuildService.run. El BuildService hace el ciclo: consulta el catalogo por RAG, elige el template mas parecido, rellena los huecos con el LLM, valida con Zod, escribe y testea en el sandbox, itera hasta 5 veces, y produce un BuildArtifact con payload, tests, logs, iteraciones, coste y duracion. Cuando converge, el BuildSpec pasa a ready_for_review y el cliente ve un modal con el artefacto, los tests que han pasado, y un boton 'Aprobar y activar'. Si el cliente aprueba, el artefacto se aplica al tenant (el SOP se registra, la capability se anade al registry, la vista se sirve).
 
@@ -389,7 +389,7 @@ Cuando un patron alcanza 5 exitos, se promueve a procedural-learning con status 
 Cuando un fallo alcanza 3 ocurrencias, se propone una regla de prevencion: 'esto falla siempre por la misma razon, quieres anadir un paso de validacion?'. El cliente decide. Esto es lo que hace que el equipo digital mejore con el uso sin que el cliente tenga que programar nada.
 ## V.11. El operador: rol humano en el sistema
 
-El operador es el humano que esta detras de OpenMuse. No es un empleado del cliente. Es quien garantiza que el Arquitecto no la lía, quien resuelve escalaciones, quien da de alta tenants nuevos, y quien vigila la salud del sistema. En un deployment pequeño, el operador es una sola persona. En uno grande, es un equipo.
+El operador es el humano que esta detras de Laia. No es un empleado del cliente. Es quien garantiza que el Arquitecto no la lía, quien resuelve escalaciones, quien da de alta tenants nuevos, y quien vigila la salud del sistema. En un deployment pequeño, el operador es una sola persona. En uno grande, es un equipo.
 
 El operador tiene acceso al panel /api/admin/clients, que lista todos los clientes del repo, su estado real en la DB del tenant, y su configuracion. Puede dar de alta un cliente nuevo con provision-client, ver las escalaciones abiertas, resolverlas, aprobar o rechazar builds que no convergen, y ver el estado general del sistema.
 
@@ -602,7 +602,7 @@ Total para cerrar lo siguiente: ~1 semana de trabajo enfocado.
 
 **Escalation**: cuando un build no converge. Razon, detalle, email al operador.
 
-**Operador**: humano detras de OpenMuse. Resuelve escalaciones, da de alta tenants, vigila el sistema.
+**Operador**: humano detras de Laia. Resuelve escalaciones, da de alta tenants, vigila el sistema.
 
 **Template**: plantilla del catalogo. 5 tipos: sop, capability, schema, skill, view.
 

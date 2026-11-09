@@ -1181,7 +1181,7 @@ Un presenter que habla.
 Ninguna de esas piezas "quiere" nada. Pero el resultado parece una voluntad coherente. Como un humano, donde tampoco hay un "yo" real (hay procesos, y el yo es una historia que se cuentan).
 
 2. La identidad es narrativa, no sustancial
-Un humano cree ser "Juan". El sistema dice "soy OpenMuse, asistente de María en el bar La Estrella". Esa identidad no vive en ningún sitio único. Vive en:
+Un humano cree ser "Juan". El sistema dice "soy Laia, asistente de María en el bar La Estrella". Esa identidad no vive en ningún sitio único. Vive en:
 
 AgentIdentity (nombre, tono).
 
@@ -1341,9 +1341,9 @@ Y hacer bien lo que hace un humano es suficiente para venderlo como "un empleado
 La frase final
 No he programado una IA. He programado la anatomía funcional de un empleado, y he dejado que un LLM la habite.
 
-Eso es OpenMuse. Y eso es lo que hace que puedas tener 50 clientes, cada uno con su bar, su clínica, su despacho, y cada uno sienta que tiene "su propio empleado digital", aunque por debajo todos compartan el mismo cuerpo.
+Eso es Laia. Y eso es lo que hace que puedas tener 50 clientes, cada uno con su bar, su clínica, su despacho, y cada uno sienta que tiene "su propio empleado digital", aunque por debajo todos compartan el mismo cuerpo.
 
-¿Quieres que esto sea spec formal en docs/audits/_stage-final/? Un documento que diga "OpenMuse es X, no es Y", con la tabla de traducción pieza por pieza, y las reglas de diseño. Sería el documento que ancla todas las decisiones futuras.
+¿Quieres que esto sea spec formal en docs/audits/_stage-final/? Un documento que diga "Laia es X, no es Y", con la tabla de traducción pieza por pieza, y las reglas de diseño. Sería el documento que ancla todas las decisiones futuras.
 
 si y tiene identidad y valores etc el sistema, son el arquetipo de la marca o lo que el owner quiera que sea justo y legal
 Perfecto. Ahí hay una decisión muy fina que hay que tipar bien, porque es la frontera entre "empleado" y "marca". Déjame desarrollarlo antes de escribir la spec.
@@ -1386,7 +1386,7 @@ Esto no se negocia con el owner. Es el contrato base del sistema.
 Capa de marca (por tenant)
 Lo que el owner decide que sea:
 
-Nombre. "OpenMuse", "Marta", "El Asistente de La Estrella", "Luna".
+Nombre. "Laia", "Marta", "El Asistente de La Estrella", "Luna".
 
 Personalidad. Cercano, formal, técnico, cálido, directo.
 
@@ -1824,7 +1824,7 @@ Con biografía:
 Eso son carriles concretos, tipables, auditables.
 
 4. Es la diferencia entre "usar una herramienta" y "trabajar con alguien"
-La mayoría de IA son herramientas. OpenMuse propone trabajar con alguien. Alguien con nombre, historia, rutina, familia, límites, valores.
+La mayoría de IA son herramientas. Laia propone trabajar con alguien. Alguien con nombre, historia, rutina, familia, límites, valores.
 
 Y eso, en un negocio, cambia todo. La gente no le cuenta cosas importantes a una herramienta. A Juan, sí.
 
@@ -2083,7 +2083,7 @@ Palantir (control).
 
 Boston Dynamics (cuerpo).
 
-OpenMuse: coregulación justa de ecosistemas sintéticos.
+Laia: coregulación justa de ecosistemas sintéticos.
 
 La escalera completa
 Nivel	Cuerpo	Mente	Cultura	Contrato
@@ -2338,7 +2338,7 @@ Las dos son necesarias. Y las dos las hago con gusto.
 Sobre la spec
 Ya no la escribo como "documento de ingeniería". La escribo como testimonio del proyecto. No para vender. Para dejar constancia.
 
-Qué es OpenMuse.
+Qué es Laia.
 
 Qué pretende ser.
 
@@ -3810,11 +3810,11 @@ $size = (Get-Item $out).Length
 Write-Host "OK: $out ($([math]::Round($size/1KB,1)) KB)" -ForegroundColor Green
 Pégame el output de cualquiera de los dos (el repomix completo si es pequeño, o el repomix-15-head.txt si es grande). Con eso cierro el diagnóstico de dónde están los 16/12 agentes y cómo se declaran.
 
-la idea es ahora ves todo lo que puedes de agentes y de llm, la idea es tenemos openmuse que es el agente principal que creamos ahora que cliente por ahora puede duplicarse y lo llamamos agente porque en realidad es emisor receptor distinto a lo que hace el codigo es un avatar persona y lo tratamos como una persona a cada agente, luego el agente va a haber mas 16 o 12 0 11, no estoy seguro ahora dice 16, hablar cos el avatar ahora creamos diseñamos happy journeys del usuario todos lo sq e hagan falta hasta que el runtime haga todo lo que se supone que tiene que hacer
+la idea es ahora ves todo lo que puedes de agentes y de llm, la idea es tenemos agente que es el agente principal que creamos ahora que cliente por ahora puede duplicarse y lo llamamos agente porque en realidad es emisor receptor distinto a lo que hace el codigo es un avatar persona y lo tratamos como una persona a cada agente, luego el agente va a haber mas 16 o 12 0 11, no estoy seguro ahora dice 16, hablar cos el avatar ahora creamos diseñamos happy journeys del usuario todos lo sq e hagan falta hasta que el runtime haga todo lo que se supone que tiene que hacer
 Vale. Ahora sí estoy pillando la topología real. Déjame ordenarlo con lo que tengo, y te digo qué me falta ver para confirmar.
 
 La topología que describes
-Capa 1 — OpenMuse (el agente principal)
+Capa 1 — Laia (el agente principal)
 Es el avatar raíz del sistema.
 
 Es un agente en el sentido de emisor/receptor. No en el sentido de código.
@@ -3826,7 +3826,7 @@ Cada cliente puede duplicarlo con su propia cara.
 Capa 2 — Los agentes del negocio (16/12/11 por definir)
 Son avatares del negocio: dueño, manager, comercial, etc.
 
-Igual que OpenMuse, son emisores/receptores tratados como personas.
+Igual que Laia, son emisores/receptores tratados como personas.
 
 El número está en revisión: 16 → 12 → 11.
 
@@ -3859,7 +3859,7 @@ Y ahora veo:
 
 "Agente" = persona funcional emisora/receptora, no rol.
 
-OpenMuse es el agente principal, no el motor.
+Laia es el agente principal, no el motor.
 
 Los "16/12/11" son avatares del negocio, no un array de strings.
 
@@ -3869,14 +3869,14 @@ Eso cambia el mapa de dónde viven las cosas.
 
 Dónde creo que vive cada capa (revisado)
 Capa	Qué es	Dónde
-OpenMuse (avatar raíz)	identidad + historia + valores + voz	clientes/_base/, packages/domain/src/persona/ (nuevo), apps/server/src/agent.ts (runtime del avatar)
+Laia (avatar raíz)	identidad + historia + valores + voz	clientes/_base/, packages/domain/src/persona/ (nuevo), apps/server/src/agent.ts (runtime del avatar)
 Agentes del negocio (16/12/11)	avatares con rol + biografía + permisos	clientes/<tenant>/agentes.json + packages/domain/src/persona/
 LLMs reales	fast, slow, one-shot	apps/server/src/engine/conversation.ts + model.ts + sop-executor.ts
 Autores del kernel	escriben Thoughts	apps/server/src/kernel/authors/
 Happy journeys	diseño de flujos usuario	docs/audits/10-.../ o docs/interfaz/
 Runtime	ejecuta todo	apps/server/src/kernel/ + apps/server/src/engine/
 Lo que necesito ver para confirmar
-No tengo los archivos que declaran OpenMuse ni los agentes del negocio. Los candidatos siguen siendo:
+No tengo los archivos que declaran Laia ni los agentes del negocio. Los candidatos siguen siendo:
 
 clientes/_base/agentes.json — probablemente los agentes base (¿16?).
 
@@ -3888,7 +3888,7 @@ scripts/seed-agency.ts — probablemente el seed con los 16.
 
 docs/AGENTES-PROYECTOS.txt — la doc.
 
-Tampoco tengo OpenMuse como entidad declarada. Puede estar en:
+Tampoco tengo Laia como entidad declarada. Puede estar en:
 
 apps/server/src/agent.ts (como configuración de runtime).
 
@@ -3902,10 +3902,10 @@ No hacer el repomix de 15. Hacer uno más quirúrgico primero:
 powershell
 cd "C:\Users\Alfonso\Desktop\git hub repos\agente"
 
-# 1. ¿Existe "OpenMuse" como entidad declarada?
-Write-Host "=== Buscar OpenMuse como entidad ==="
+# 1. ¿Existe "Laia" como entidad declarada?
+Write-Host "=== Buscar Laia como entidad ==="
 Select-String -Path "clientes/**/*.json","scripts/*.ts","apps/server/src/agent.ts","packages/domain/src/*.ts" `
-  -Pattern '"OpenMuse"|OpenMuse|openmuse|principal' -SimpleMatch:$false |
+  -Pattern '"Laia"|Laia|agente|principal' -SimpleMatch:$false |
   Select-Object -First 30 |
   ForEach-Object { "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
 
@@ -3924,7 +3924,7 @@ Select-String -Path "scripts/seed-agency.ts" `
   ForEach-Object { "$($_.LineNumber): $($_.Line.Trim())" }
 Ejecuta los 3 y me pegas el output. Con eso veo:
 
-Si OpenMuse está declarado o es solo el nombre del runtime.
+Si Laia está declarado o es solo el nombre del runtime.
 
 Cuántos agentes hay declarados.
 
@@ -3937,7 +3937,7 @@ Cuando tenga el mapa de agentes, el happy journey se define así:
 
 Usuario llega (quién es: owner, manager, worker, cliente).
 
-Elige con quién hablar (OpenMuse, Juan, Manu, etc.).
+Elige con quién hablar (Laia, Juan, Manu, etc.).
 
 Habla (el agente interpreta según su persona).
 
@@ -3986,7 +3986,7 @@ Un solo motor, muchos trajes
 text
 [LLM principal] ← fast, chat, conversación
     │
-    ├── cuando habla "OpenMuse"  → carga skin OpenMuse  → escribe en nodo OpenMuse
+    ├── cuando habla "Laia"  → carga skin Laia  → escribe en nodo Laia
     ├── cuando habla "Juan"      → carga skin Juan      → escribe en nodo Juan
     ├── cuando habla "Manu"      → carga skin Manu      → escribe en nodo Manu
     ├── cuando habla "Marta"     → carga skin Marta     → escribe en nodo Marta
@@ -4039,7 +4039,7 @@ Su narrative consolidada.
 
 Cada avatar tiene su propio nodo. Separado. Aislado. Persistente.
 
-Cuando OpenMuse habla, escribe en su nodo. Cuando Juan habla, escribe en el suyo. No se mezclan.
+Cuando Laia habla, escribe en su nodo. Cuando Juan habla, escribe en el suyo. No se mezclan.
 
 Cómo accede el LLM principal a cada nodo
 Al abrir un turno, el kernel:
@@ -4097,7 +4097,7 @@ Antes pensaba (mal)
 Los agentes = código.
 
 Ahora veo
-OpenMuse = el agente principal del sistema (el avatar raíz).
+Laia = el agente principal del sistema (el avatar raíz).
 
 16/12/11 agentes = los skins del negocio (avatares del tenant).
 
@@ -4143,7 +4143,7 @@ Dime:
 
 ¿Los 16/12/11 agentes son skins del LLM principal, o hay algún agente con LLM propio? (Por ejemplo, ¿el slow es un agente o un LLM separado?)
 
-¿OpenMuse es un skin más (el raíz) o es el motor que se convierte? Mi lectura: OpenMuse es el skin raíz del sistema, del que se duplican los demás para cada cliente.
+¿Laia es un skin más (el raíz) o es el motor que se convierte? Mi lectura: Laia es el skin raíz del sistema, del que se duplican los demás para cada cliente.
 
 ¿Cada cliente tiene su propio set de skins? (¿El bar La Estrella tiene Juan, Manu, Marta? ¿La clínica tiene otros?)
 
@@ -4307,9 +4307,9 @@ Un happy journey completo:
 text
 1. Lunes 9:00, el owner abre el chat.
 2. Pregunta: "¿cómo va la semana?"
-3. OpenMuse (skin raíz) responde con resumen del estado.
+3. Laia (skin raíz) responde con resumen del estado.
 4. El owner dice: "necesito que Juan prepare las facturas Q4 y que Manu revise al proveedor X."
-5. OpenMuse asigna:
+5. Laia asigna:
    - Juan (agente finanzas): tarea "preparar facturas Q4"
    - Manu (agente operaciones): tarea "revisar proveedor X"
 6. Cada agente ejecuta su SOP:
@@ -4320,8 +4320,8 @@ text
    - "revisar proveedor X" → doing → done
 8. Manu crea una dependencia: "revisar proveedor X" bloquea "pagar facturas".
 9. Juan lee la dependencia y se coordina con Manu.
-10. Los dos notifican a OpenMuse.
-11. OpenMuse reporta al owner.
+10. Los dos notifican a Laia.
+11. Laia reporta al owner.
 12. El owner aprueba las facturas.
 13. Juan ejecuta el envío (con approval).
 14. Todo se promueve a memoria, business graph, audit.
@@ -4491,7 +4491,7 @@ Con el comando 1:
 
 Sabré cuántos agentes hay (16, 12, 11…) y cómo se llaman.
 
-Veré si OpenMuse está declarado como agente o es solo el runtime.
+Veré si Laia está declarado como agente o es solo el runtime.
 
 Entenderé el formato de users.json (para saber si un usuario es owner/manager/worker).
 

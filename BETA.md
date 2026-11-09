@@ -17,7 +17,7 @@
 
 ## Smoke
 pnpm beta:smoke
-docker build -t openmuse-computer:local apps/computer
+docker build -t agente-computer:local apps/computer
 COMPUTER_ENABLED=true pnpm beta:vertical
 
 ## Limites honestos

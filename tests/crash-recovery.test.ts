@@ -21,7 +21,7 @@ let directory: string;
 let db: Store;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-crash-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-crash-"));
   db = await createStore({ dataDir: join(directory, "db") });
 });
 

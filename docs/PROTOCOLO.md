@@ -87,7 +87,7 @@ logica no probada, o si se toco mas de un fichero sin decidirlo.
 Al cerrar cada wave:
 
 - pnpm typecheck da 0.
-- pnpm --filter @openmuse/web typecheck da 0.
+- pnpm --filter @agente/web typecheck da 0.
 - pnpm test pasa.
 
 ## Comunicacion
@@ -112,7 +112,7 @@ Al cerrar cada wave:
 
 ## Referencias
 
-- PRODUCT.md - que es OpenMuse.
+- PRODUCT.md - que es Laia.
 - README.md - indice.
 - ui/PROTOCOLO.md - protocolo especifico de la campana UI.
 

@@ -11,13 +11,13 @@ Catálogo completo de variables de entorno leídas por `apps/server/src/config.t
 | `WORKSPACE_MODE` | `sample` | `sample` \| `live`. Sample es local-only (HOST loopback). |
 | `PORT` | `8787` | Puerto del servidor. |
 | `HOST` | `127.0.0.1` | Host del servidor. |
-| `DATA_DIR` | `.openmuse` | Directorio de datos locales. |
+| `DATA_DIR` | `.agente` | Directorio de datos locales. |
 
 ## Obligatorias en modo `live`
 
 | Variable | Descripción |
 |----------|-------------|
-| `OPENMUSE_ACCESS_KEY` | 24+ caracteres. Validado con timingSafeEqual. |
+| `AGENTE_ACCESS_KEY` | 24+ caracteres. Validado con timingSafeEqual. |
 | `TOKEN_ENCRYPTION_KEY` | Clave de 32 bytes base64 para cifrado de tokens/credenciales. |
 | `DATABASE_URL` | DSN de Postgres real (requerido para worker separado y multi-tenant). |
 
@@ -76,7 +76,7 @@ Catálogo completo de variables de entorno leídas por `apps/server/src/config.t
 | Variable | Default | Descripción |
 |----------|---------|-------------|
 | `COMPUTER_ENABLED` | `false` | Habilitar contenedor Docker aislado. |
-| `COMPUTER_IMAGE` | `openmuse-computer:local` | Imagen Docker del computer. |
+| `COMPUTER_IMAGE` | `agente-computer:local` | Imagen Docker del computer. |
 | `COMPUTER_DEPLOYMENT_ID` | — | ID de despliegue del computer. |
 | `COMPUTER_COMMAND_MS` | `30000` | Timeout de comando en computer. |
 | `COMPUTER_CLIENT_MS` | `35000` | Timeout cliente de computer. |

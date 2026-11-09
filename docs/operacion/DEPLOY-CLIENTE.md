@@ -6,12 +6,12 @@ Un deployment por cliente. Nunca multitenancy. Pasos:
 2. Configurar .env:
    - WORKSPACE_MODE=live
    - ADMIN_EMAIL / ADMIN_PASSWORD
-   - OPENMUSE_ACCESS_KEY (24+ chars)
+   - AGENTE_ACCESS_KEY (24+ chars)
    - TOKEN_ENCRYPTION_KEY (32-byte base64)
    - GEMINI_API_KEY
    - DATABASE_URL
    - ALLOWED_ORIGINS
-   - OPENMUSE_PROCESS_ROLE=api (si worker en otro proceso)
+   - AGENTE_PROCESS_ROLE=api (si worker en otro proceso)
 3. pnpm install
 4. pnpm build:server
 5. pnpm migrate:tenant-scope (una vez)

@@ -1,4 +1,4 @@
-// Contratos compartidos del paquete @openmuse/workspaces.
+// Contratos compartidos del paquete @agente/workspaces.
 export * from "./workspace-context.ts";
 export * from "./workspace-command.ts";
 export * from "./workspace-query.ts";

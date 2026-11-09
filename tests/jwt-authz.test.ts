@@ -58,7 +58,7 @@ let userId: string;
 let tenants: TenantService;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-jwt-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-jwt-"));
   db = await createStore({ dataDir: join(directory, "db") });
   const config = testConfig({
     dataDir: directory,

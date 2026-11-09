@@ -46,7 +46,7 @@ User → user-author (intent primario, owner)
 | Worker | Ubicación | Qué hace |
 |--------|-----------|----------|
 | Scheduler de tareas durables | `apps/server/src/engine/worker.ts` | Lease, CAS, checkpoint, DLQ, recuperación |
-| Proceso separado del scheduler | `apps/server/src/worker-entry.ts` | Requiere `DATABASE_URL`, `OPENMUSE_PROCESS_ROLE` |
+| Proceso separado del scheduler | `apps/server/src/worker-entry.ts` | Requiere `DATABASE_URL`, `AGENTE_PROCESS_ROLE` |
 | Browser worker Playwright | `apps/worker` | Navegación, capturas, lectura, interacción, descargas |
 
 ## Cuarto entorno

@@ -4,7 +4,7 @@
 
 ## Resumen
 
-Esta campaña renueva toda la documentación del repositorio OpenMuse para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Se ejecutó íntegramente en la rama `limpieza-docu`, sin tocar `main` ni ninguna otra rama de trabajo.
+Esta campaña renueva toda la documentación del repositorio Laia para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Se ejecutó íntegramente en la rama `limpieza-docu`, sin tocar `main` ni ninguna otra rama de trabajo.
 
 **Rama**: `limpieza-docu`
 **Rama base**: `campaign/authz-tenant` (c5a8c7c)

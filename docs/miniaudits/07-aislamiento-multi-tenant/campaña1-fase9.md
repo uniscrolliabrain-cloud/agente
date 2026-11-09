@@ -436,7 +436,7 @@ Si decisión 4 = Type II:
 2. **CC6.2 — Registro de accesos:** `tenant_audit_events`, `audit-entries`, hash chain.
 3. **CC6.3 — Restricción de accesos:** RLS FORCE, `assertNotHardcodedTenantId`.
 4. **CC6.6 — Autorización:** `PolicyEngine`, `AgentGovernance`.
-5. **CC7.1 — Detección:** `metrics/registry`, `openmuse_cross_tenant_attempts_total`, `http_errors_by_route_total`.
+5. **CC7.1 — Detección:** `metrics/registry`, `agente_cross_tenant_attempts_total`, `http_errors_by_route_total`.
 6. **CC7.2 — Monitorización:** dashboard compliance, alertas.
 7. **CC7.3 — Respuesta a incidentes:** runbook (documento 14 de Campaña 2 si se arranca).
 8. **A1.2 — Disponibilidad:** backups por tenant, `runTenantBackup` (F04.27 desbloqueado).
@@ -509,7 +509,7 @@ Los tests congelados en Campaña 1 se desbloquean aquí:
 **Plan:**
 1. Copilot commitea el fix en `main` (o en su rama).
 2. Se rebasa `feat/multitenancy-campaign` sobre `main`.
-3. Se verifica `worker.ts` arreglado: `pnpm --filter @openmuse/server exec tsc --noEmit` verde.
+3. Se verifica `worker.ts` arreglado: `pnpm --filter @agente/server exec tsc --noEmit` verde.
 4. Se quita `continue-on-error: true` del job `worker` en CI (marca `CI_WORKER_TYPECHECK_WARN_V1` → `CI_WORKER_TYPECHECK_ENFORCED_V1`).
 5. Se desbloquean F02.7, F02.12, F04.8, F04.9, F05.4, F05.9.
 

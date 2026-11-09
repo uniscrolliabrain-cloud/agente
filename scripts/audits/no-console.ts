@@ -8,7 +8,7 @@ import { auditReportPath } from "./report-dir.ts";
 import { detectConsoleUsage, type ConsoleAuditHit } from "../../apps/server/src/engine/events/audits/no-console.ts";
 
 const SEARCH_DIRS = ["apps/server/src"];
-const SKIP = new Set(["node_modules", "dist", ".git", "artifacts", "backups", ".openmuse", "demo"]);
+const SKIP = new Set(["node_modules", "dist", ".git", "artifacts", "backups", ".agente", "demo"]);
 
 async function walk(dir: string, out: string[]): Promise<void> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);

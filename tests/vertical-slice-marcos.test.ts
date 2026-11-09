@@ -31,7 +31,7 @@ const AGENT = "marcos";
 type Server = Awaited<ReturnType<typeof createApp>>;
 
 async function harness(t: TestContext) {
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-marcos-"));
+  const directory = await mkdtemp(join(tmpdir(), "agente-marcos-"));
   const db: Store = await createStore({ dataDir: join(directory, "db") });
   const server = await createApp(db, testConfig({ dataDir: directory }));
   t.after(async () => {

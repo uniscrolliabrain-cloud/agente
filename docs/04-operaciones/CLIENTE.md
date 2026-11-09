@@ -2,9 +2,9 @@
 
 > v1 · 2026-10-27 · Estado: current
 
-## Qué es OpenMuse
+## Qué es Laia
 
-OpenMuse es tu sistema operativo de negocio con IA. Te ayuda a:
+Laia es tu sistema operativo de negocio con IA. Te ayuda a:
 - Gestionar tareas y procedimientos de tu empresa.
 - Conectar tus herramientas (Gmail, Drive, Calendar, WhatsApp, Stripe, etc.).
 - Automatizar procesos con aprobaciones humanas antes de acciones externas.
@@ -12,7 +12,7 @@ OpenMuse es tu sistema operativo de negocio con IA. Te ayuda a:
 
 ## Tu panel
 
-Accede a tu panel privado en la URL que te proporcionó tu proveedor de OpenMuse. Desde allí puedes:
+Accede a tu panel privado en la URL que te proporcionó tu proveedor de Laia. Desde allí puedes:
 - Ver tus tareas y su estado.
 - Revisar y aprobar acciones preparadas por el agente.
 - Conectar tus cuentas de Google, WhatsApp, etc.

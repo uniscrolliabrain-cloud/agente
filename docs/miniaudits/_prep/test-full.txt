@@ -681,7 +681,7 @@ test at tests\agent-api.test.ts:318:1
 
 test at tests\agent-api.test.ts:56:1
 Ô£û C:\Users\Alfonso\Desktop\git hub repos\agente\tests\agent-api.test.ts (3973.1007ms)
-  [Error: ENOTEMPTY: directory not empty, rmdir 'C:\Users\Alfonso\AppData\Local\Temp\openmuse-agent-api-TSLbub'] { errno: -4051, code: 'ENOTEMPTY', syscall: 'rmdir', path: 'C:\\Users\\Alfonso\\AppData\\Local\\Temp\\openmuse-agent-api-TSLbub' }
+  [Error: ENOTEMPTY: directory not empty, rmdir 'C:\Users\Alfonso\AppData\Local\Temp\agente-agent-api-TSLbub'] { errno: -4051, code: 'ENOTEMPTY', syscall: 'rmdir', path: 'C:\\Users\\Alfonso\\AppData\\Local\\Temp\\agente-agent-api-TSLbub' }
 
 test at tests\api.test.ts:49:1
 Ô£û API protects private data and rejects unrelated web origins (34542.5787ms)

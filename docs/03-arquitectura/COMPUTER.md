@@ -38,7 +38,7 @@ El computer es un contenedor Docker Linux de un solo owner gestionado por la API
 ## Construcción y activación
 
 ```bash
-docker build -t openmuse-computer:local apps/computer
+docker build -t agente-computer:local apps/computer
 COMPUTER_ENABLED=true
 ```
 
@@ -53,7 +53,7 @@ El `apps/worker` (Playwright) es un servicio HTTP separado para navegación web.
 | Variable | Default | Descripción |
 |----------|---------|-------------|
 | `COMPUTER_ENABLED` | `false` | Habilitar computer. |
-| `COMPUTER_IMAGE` | `openmuse-computer:local` | Imagen Docker. |
+| `COMPUTER_IMAGE` | `agente-computer:local` | Imagen Docker. |
 | `COMPUTER_DEPLOYMENT_ID` | — | ID de despliegue. |
 | `COMPUTER_COMMAND_MS` | `30000` | Timeout de comando. |
 | `COMPUTER_CLIENT_MS` | `35000` | Timeout cliente. |

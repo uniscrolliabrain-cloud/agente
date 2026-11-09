@@ -17,12 +17,12 @@ try {
 
   say("[3] antes de createStore");
   const db = await createStore({
-    dataDir: process.env.DATA_DIR ?? ".openmuse",
+    dataDir: process.env.DATA_DIR ?? ".agente",
     databaseUrl: process.env.DATABASE_URL,
   });
   say("[4] createStore OK");
 
-  say("DATA_DIR     : " + (process.env.DATA_DIR ?? ".openmuse"));
+  say("DATA_DIR     : " + (process.env.DATA_DIR ?? ".agente"));
   say("DATABASE_URL : " + (process.env.DATABASE_URL ? "(definida -> Postgres remoto)" : "(vacia -> PGlite embebido)"));
   const adminEmail = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "";

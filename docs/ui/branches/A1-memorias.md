@@ -133,7 +133,7 @@ necesita hacerlo.
     let directory: string;
 
     before(async () => {
-      directory = await mkdtemp(join(tmpdir(), "openmuse-memory-"));
+      directory = await mkdtemp(join(tmpdir(), "agente-memory-"));
       db = await createStore({ dataDir: join(directory, "db") });
       const config: Config = {
         mode: "sample",
@@ -243,7 +243,7 @@ necesita hacerlo.
 ## Criterio de aceptación
 
 - `pnpm typecheck` en 0.
-- `pnpm --filter @openmuse/web typecheck` en 0.
+- `pnpm --filter @agente/web typecheck` en 0.
 - `pnpm test`: los 5 tests nuevos pasan.
 - Manual: en `MemoryView`, editar una memoria, borrar la categoría, guardar, recargar. La categoría ya no aparece.
 - Manual: editar una memoria, borrar los tags, guardar, recargar. Los tags ya no aparecen.

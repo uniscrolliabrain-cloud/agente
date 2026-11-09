@@ -1,8 +1,8 @@
-# Documentación de OpenMuse
+# Documentación de Laia
 
 > v2 · 2026-10-29 · Estado: draft
 
-Índice de la documentación del repositorio OpenMuse. Cada entrada dice qué es,
+Índice de la documentación del repositorio Laia. Cada entrada dice qué es,
 dónde vive y su estado (`current` | `draft` | `archived`). Referencia documental:
 SHA `83d20b2` de `main` (PR #1), commits Freebuff `c5a8c7c` / `9082fba`.
 
@@ -20,7 +20,7 @@ SHA `83d20b2` de `main` (PR #1), commits Freebuff `c5a8c7c` / `9082fba`.
 | Fichero | Qué es | Estado |
 |---------|--------|--------|
 | [`whitepaper.md`](../whitepaper.md) | Visión ejecutiva para stakeholders | draft |
-| [`02-producto/PRODUCT.md`](./02-producto/PRODUCT.md) | Qué es OpenMuse, a dónde va, qué no es | draft |
+| [`02-producto/PRODUCT.md`](./02-producto/PRODUCT.md) | Qué es Laia, a dónde va, qué no es | draft |
 | [`02-producto/ROADMAP.md`](./02-producto/ROADMAP.md) | Trabajo planeado por fases con fechas y criterios | draft |
 | [`08-auditorias/gate-estado.md`](./08-auditorias/gate-estado.md) | Estado de los 7 audits, contratos huérfanos, duplicados | draft |
 

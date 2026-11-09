@@ -16,7 +16,7 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-const USER_KEY = "openmuse_user";
+const USER_KEY = "agente_user";
 
 export async function loginWithCredentials(
   email: string,

@@ -66,7 +66,7 @@ cerrar el tipo de bug que lo rompiÃ³, para que no vuelva a pasar.
   `engine/events/retention-purge.ts`. Ya corregidos.
 - `kernel/subscribers/events.ts`: usaba `kernel.getTurn(...)` (no existe) â†’ `kernel.deps.store.getTurn(...)`. Ya corregido.
 - `engine/conversation.ts`: variable `hints` fuera de Ã¡mbito â†’ `this.pendingMetaHints`. Ya corregido.
-- `tsconfig.json`: faltaba `"@openmuse/workspaces": ["./packages/workspaces/src/index.ts"]` en `paths`. Ya aÃ±adido.
+- `tsconfig.json`: faltaba `"@agente/workspaces": ["./packages/workspaces/src/index.ts"]` en `paths`. Ya aÃ±adido.
 - `engine/events/schemas.ts`: `"verification.disagreement"` nunca se cerraba y engullÃ­a ~132 eventos;
   habÃ­a un `verification.executed` duplicado y faltaban `sop.step.completed`, `sop.completed`, `build.applied`. Ya corregido.
 
@@ -435,14 +435,14 @@ El cliente se entera de los incidentes antes que el sistema.
 - `apps/server/src/alerts/definitions.ts` (quÃ© alertas usan cada mÃ©trica)
 
 **Tarea de la IA-5:** alimenta cada mÃ©trica con su contador real. El `http5xx/httpTotal`
-ya da el patrÃ³n (lee `alertMetrics.counters.get("openmuse_http_requests_total")` y suma
+ya da el patrÃ³n (lee `alertMetrics.counters.get("agente_http_requests_total")` y suma
 samples). Repite ese patrÃ³n para las demÃ¡s. Antes, **verifica** quÃ© contadores existen ya
 en `registry.ts` y si alguno se incrementa de verdad; si no existe, crÃ©alo en el punto
 donde ocurre el hecho (p. ej. `taskFailuresLastHour` al completar una tarea como `failed`,
 `deadLetterCount` consultando la cola de dead-letter, `circuitOpenCount` del circuit
 breaker). Ejemplo del patrÃ³n:
 ```ts
-const deadCounter = (alertMetrics as ...).counters?.get("openmuse_dead_letter_total");
+const deadCounter = (alertMetrics as ...).counters?.get("agente_dead_letter_total");
 let deadLetterCount = 0;
 if (deadCounter) for (const s of deadCounter.samples.values()) deadLetterCount += s.value;
 ```

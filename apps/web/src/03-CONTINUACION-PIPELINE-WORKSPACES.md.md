@@ -336,7 +336,7 @@ filtrar y quedarse solo con los de `apps/web/`.
 Para chequear solo el frontend:
 
 ```powershell
-pnpm --filter @openmuse/web exec tsc --noEmit
+pnpm --filter @agente/web exec tsc --noEmit
 ```
 
 ---
@@ -401,7 +401,7 @@ La IA no escribe codigo hasta tener todo esto:
 
 ## 12. Checklist antes de dar por terminado un workspace
 
-- [ ] `pnpm --filter @openmuse/web exec tsc --noEmit` verde.
+- [ ] `pnpm --filter @agente/web exec tsc --noEmit` verde.
 - [ ] `pnpm typecheck` verde (o errores solo del worker).
 - [ ] El contenedor del workspace se ve en el navegador (si se monto).
 - [ ] `index.ts` del workspace exporta el contenedor.

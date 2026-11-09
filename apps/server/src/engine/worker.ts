@@ -112,16 +112,16 @@ export class TaskWorker {
     // WORKER_METRICS_V1
     // Ver: docs/audits/05-motor-tareas-durable/roadmap.md
     globalMetrics.counter(
-      "openmuse_task_duration_seconds_sum",
+      "agente_task_duration_seconds_sum",
       "Suma de duraciones de tareas en segundos",
     );
     globalMetrics.counter(
-      "openmuse_task_duration_seconds_count",
+      "agente_task_duration_seconds_count",
       "Numero de tareas ejecutadas",
     );
-    globalMetrics.gauge("openmuse_worker_active", "Handlers concurrentes activos");
-    globalMetrics.gauge("openmuse_worker_max_active", "Tope de handlers concurrentes");
-    globalMetrics.set("openmuse_worker_max_active", this.maxActive);
+    globalMetrics.gauge("agente_worker_active", "Handlers concurrentes activos");
+    globalMetrics.gauge("agente_worker_max_active", "Tope de handlers concurrentes");
+    globalMetrics.set("agente_worker_max_active", this.maxActive);
     // WORKER_TICK_BACKOFF_V1 - backoff exponencial si el ultimo tick fallo.
     let consecutiveFailures = 0;
     const baseMs = this.options.pollMs ?? 1000;

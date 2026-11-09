@@ -1,10 +1,10 @@
-# Campaña de Documentación OpenMuse
+# Campaña de Documentación Laia
 
 > v1 · 2026-10-27 · Estado: current
 
 ## Objetivo
 
-Renovar toda la documentación del repositorio OpenMuse para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Un doc viejo no se corrige: se archiva y se escribe el nuevo (v2 con metadata).
+Renovar toda la documentación del repositorio Laia para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Un doc viejo no se corrige: se archiva y se escribe el nuevo (v2 con metadata).
 
 ## Alcance
 
@@ -15,7 +15,7 @@ Renovar toda la documentación del repositorio OpenMuse para que refleje el cód
 
 ## Contexto del negocio (vertical slice)
 
-OpenMuse es un OS agentico para PYMEs y agencias pequeñas. El modelo de monetización es:
+Laia es un OS agentico para PYMEs y agencias pequeñas. El modelo de monetización es:
 
 - **Instalación por cliente**: ~1.200 €
 - **Mantenimiento mensual**: ~850 €/mes

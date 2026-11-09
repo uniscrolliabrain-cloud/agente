@@ -12,8 +12,8 @@ export interface BackupOptions {
   sourceDir?: string;
   retentionDays?: number;
   // BACKUP_DATA_DIR_V1 - en produccion el estado vive en DATA_DIR (/data en la
-  // imagen), no en <repo>/.openmuse: dentro del contenedor `repoRoot` resuelve a
-  // /app/dist y el backup fallaba con "No existe /app/dist/.openmuse".
+  // imagen), no en <repo>/.agente: dentro del contenedor `repoRoot` resuelve a
+  // /app/dist y el backup fallaba con "No existe /app/dist/.agente".
   dataDir?: string;
 }
 
@@ -81,7 +81,7 @@ async function pruneOld(backupsDir: string, retentionDays: number): Promise<numb
 
 export async function runBackup(options: BackupOptions = {}): Promise<BackupResult> {
   // BACKUP_DATA_DIR_V1 - el origen por defecto es DATA_DIR si se conoce.
-  const defaultSource = options.dataDir ? resolve(options.dataDir) : join(repoRoot, ".openmuse");
+  const defaultSource = options.dataDir ? resolve(options.dataDir) : join(repoRoot, ".agente");
   const source = options.sourceDir ? resolve(options.sourceDir) : defaultSource;
   if (!existsSync(source)) {
     throw new Error(`No existe ${source}. Nada que respaldar.`);

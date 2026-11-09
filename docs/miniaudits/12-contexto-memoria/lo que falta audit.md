@@ -34,7 +34,7 @@ El `RagService` recibe una query, la convierte a embedding (un vector de 768 nú
 
 **Lo que le falta:**
 
-- **No hay IDF real.** BM25 sin IDF es como un buscador que no sabe qué palabras son comunes y cuáles raras. "el" y "OpenMuse" pesan igual. Eso hace que fragmentos irrelevantes ganen a relevantes.
+- **No hay IDF real.** BM25 sin IDF es como un buscador que no sabe qué palabras son comunes y cuáles raras. "el" y "Laia" pesan igual. Eso hace que fragmentos irrelevantes ganen a relevantes.
 - **`SEARCH_PAGE_SIZE = 500`.** Con 100.000 chunks, son 200 páginas por búsqueda. Lento.
 - **`CHUNK_SIZE = 900` y `CHUNK_OVERLAP = 120` hardcodeados.** Un PDF legal y un chat necesitan chunks distintos.
 - **`RAG_MAX_CHUNKS_PER_SOURCE = 1000` hardcodeado.** Un PDF de 500 páginas se trunca sin avisar.

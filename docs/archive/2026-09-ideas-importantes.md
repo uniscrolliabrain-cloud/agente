@@ -546,7 +546,7 @@ Prueba, dime qué chirría, y en el siguiente bloque meto el **typewriter del ch
 
 Tienes tres opciones, de más rápida a más integrada:
 
-**1. En tu propio repo (OpenMuse), que es para lo que está pensado**
+**1. En tu propio repo (Laia), que es para lo que está pensado**
 Guarda los dos archivos en `apps/web/src/playground/` (`LiveItem.tsx` y `Playground.tsx`), arranca el servidor con `npm run dev` y abre `http://localhost:5173/?playground=1`.
 
 Eso solo funciona si tu `main.tsx` ya tiene el interruptor que renderiza `<Playground />` cuando existe `?playground=1`. Ese paso venía del setup anterior, así que si no lo tienes, dímelo y te lo escribo.
@@ -596,7 +596,7 @@ Ya está publicado como artifact con los 6 estados funcionando y los arreglos de
 - **Visualmente es limpio pero no memorable.** Fondo crema, acento violeta y tipografía 13.5/11 son correctos, pero se parecen a cualquier app de productividad. Para el "DJ feel" le falta algo más distintivo: por ejemplo, un micro-sparkline en el estado `counter`, o que la barra de progreso tenga un brillo que la recorra.
 - **Pega con el producto, pero no es el producto.** Funciona como componente, pero un wow de verdad vendrá de verlo con datos reales de tus agentes.
 
-Nota: el código original no estaba listo para producción, sobre todo por el timer roto y los estilos duplicados. Si lo llevas a OpenMuse, usa la lógica de esta versión y mueve el CSS a una hoja única. Si quieres, te lo porto de vuelta a React/TSX ya limpio.
+Nota: el código original no estaba listo para producción, sobre todo por el timer roto y los estilos duplicados. Si lo llevas a Laia, usa la lógica de esta versión y mueve el CSS a una hoja única. Si quieres, te lo porto de vuelta a React/TSX ya limpio.
 
 #### 📦 Artifact: liveitem
 **Type:** code | **Language:** html
@@ -607,7 +607,7 @@ Nota: el código original no estaba listo para producción, sobre todo por el ti
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>LiveItem · OpenMuse</title>
+<title>LiveItem · Laia</title>
 <style>
 :root{--bg:#F3F0EB;--panel:rgba(255,255,255,.4);--card:#fff;--line:#EDE8E0;--text:#1A1A1A;--mute:#6F6A63;--accent:#5B4DF1;--accent-hi:#7C6FFF;--warn:#FF6B2C;--warnText:#8A5A00;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}

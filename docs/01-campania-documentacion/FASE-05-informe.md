@@ -4,7 +4,7 @@
 
 ## Resumen ejecutivo
 
-Esta campaña renueva toda la documentación del repositorio OpenMuse para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Se ejecuta íntegramente en la rama `limpieza-docu`, sin tocar `main` ni ninguna otra rama de trabajo.
+Esta campaña renueva toda la documentación del repositorio Laia para que refleje el código real, esté organizada profesionalmente y sea útil y manejable. Se ejecuta íntegramente en la rama `limpieza-docu`, sin tocar `main` ni ninguna otra rama de trabajo.
 
 ## Métricas antes y después
 

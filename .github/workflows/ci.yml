@@ -29,7 +29,7 @@ jobs:
       - run: pnpm typecheck
       - name: typecheck server (filter)
         if: hashFiles('apps/server/package.json') != ''
-        run: pnpm --filter @openmuse/server exec tsc --noEmit
+        run: pnpm exec tsc --noEmit
       - run: pnpm test
         env:
           ALLOW_NETWORK: "0"
@@ -70,7 +70,7 @@ jobs:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
-      - run: pnpm --filter @openmuse/browser-worker --fail-if-no-match typecheck
+      - run: pnpm --filter @agente/browser-worker --fail-if-no-match typecheck
 
   web:
     name: web (typecheck)
@@ -91,7 +91,7 @@ jobs:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-${{ runner.arch }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
       - run: corepack pnpm install --frozen-lockfile
-      - run: pnpm --filter @openmuse/web exec tsc --noEmit
+      - run: pnpm --filter @agente/web exec tsc --noEmit
   integration:
     name: integration (network + Docker, main only)
     if: github.ref == 'refs/heads/main'

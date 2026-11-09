@@ -375,7 +375,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     id: "access-key",
     label: "Clave de acceso del API",
     feature: "core",
-    names: ["OPENMUSE_ACCESS_KEY"],
+    names: ["AGENTE_ACCESS_KEY"],
     need: "required-live",
     note: ">=24 caracteres; live no arranca sin ella.",
   },

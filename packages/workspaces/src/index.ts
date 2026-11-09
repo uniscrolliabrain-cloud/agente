@@ -1,4 +1,4 @@
-// WORKSPACES_BARREL_V1 - punto de entrada del paquete @openmuse/workspaces.
+// WORKSPACES_BARREL_V1 - punto de entrada del paquete @agente/workspaces.
 
 export * from "./contracts/index.ts";
 

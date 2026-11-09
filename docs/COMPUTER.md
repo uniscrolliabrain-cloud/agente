@@ -2,7 +2,7 @@
 
 The computer is a single-owner Docker Linux container managed by the API. It is optional
 and disabled by default (`COMPUTER_ENABLED=false`). When enabled, the API creates a
-container from `COMPUTER_IMAGE` (default `openmuse-computer:local`) with:
+container from `COMPUTER_IMAGE` (default `agente-computer:local`) with:
 
 - UID/GID 1000, read-only root filesystem
 - All capabilities dropped, no-new-privileges
@@ -20,7 +20,7 @@ passed to `/bin/bash` inside the container. There is no fallback to a host shell
 Build the image before enabling:
 
 ```
-docker build -t openmuse-computer:local apps/computer
+docker build -t agente-computer:local apps/computer
 ```
 
 Set `COMPUTER_ENABLED=true` and restart the API.

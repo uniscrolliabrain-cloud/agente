@@ -7,7 +7,7 @@
 - 31 componentes `.tsx`, 43 ficheros con `fetch(` o `/api/`.
 - Vistas con nombre de producto: `ControlCenterView`, `TasksView`, `ProjectsView`, `DocumentsView`, `MemoryView`, `UsersView`, `WhatsAppView`.
 - `apps/server/src/app.ts` registra **68** rutas. El panel no tiene tests.
-- El CI compila el panel (`pnpm --filter @openmuse/web exec tsc --noEmit`) pero **no comprueba que llame a endpoints existentes**.
+- El CI compila el panel (`pnpm --filter @agente/web exec tsc --noEmit`) pero **no comprueba que llame a endpoints existentes**.
 
 ## El riesgo concreto
 

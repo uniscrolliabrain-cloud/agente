@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, "..");
-const base = process.env.OPENMUSE_URL ?? "http://127.0.0.1:8787";
+const base = process.env.AGENTE_URL ?? "http://127.0.0.1:8787";
 
 // PROVISION_BUNDLE_PLAN_V1 - el plan se calcula antes de tocar el API: si está
 // bloqueado no se escribe nada (campaña 07, aserción "plan sin escrituras").

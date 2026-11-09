@@ -6,7 +6,7 @@ import { createStore } from "../apps/server/src/db.ts";
 
 async function main() {
   const db = await createStore({
-    dataDir: process.env.DATA_DIR ?? ".openmuse",
+    dataDir: process.env.DATA_DIR ?? ".agente",
     databaseUrl: process.env.DATABASE_URL,
   });
   try {

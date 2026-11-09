@@ -392,11 +392,11 @@ export async function createStore(
     } catch {
       // Un DSN con formato host=... no es una URL; no se imprime nada de el.
     }
-    console.log(`[OpenMuse] DB: Postgres (${where}) - backend: postgres`);
+    console.log(`[Laia] DB: Postgres (${where}) - backend: postgres`);
     database = { query: async (sql, params) => pool.query(sql, params), close: () => pool.end() };
   } else {
     // El directorio que guarda los datos es options.dataDir, no su padre: con
-    // dataDir=".openmuse/postgres" un dirname() creaba ".openmuse" y dejaba el
+    // dataDir=".agente/postgres" un dirname() creaba ".agente" y dejaba el
     // PGDATA sin restringir. Ahi viven los hashes de contrasena.
     if (options.dataDir) await mkdir(options.dataDir, { recursive: true, mode: 0o700 });
     const embedded = new PGlite(options.dataDir);

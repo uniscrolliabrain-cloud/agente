@@ -1,7 +1,7 @@
 ﻿// WORKSPACE_MODULE_REGISTRY_V1 — descubre los 34 WorkspaceModule del paquete.
 // Importa por barrel, no carga YAML en runtime.
 
-import type { WorkspaceModule, WorkspaceFamily } from "@openmuse/workspaces";
+import type { WorkspaceModule, WorkspaceFamily } from "@agente/workspaces";
 
 export class WorkspaceModuleRegistry {
   private readonly modules = new Map<string, WorkspaceModule>();

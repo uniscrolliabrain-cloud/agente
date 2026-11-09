@@ -117,7 +117,7 @@ solo en joins, no dentro de lineas del array.
 ### 2.8. Variables de entorno
 
 ```powershell
-$env:OPENMUSE_CLIENTS_DIR = "clientes"
+$env:AGENTE_CLIENTS_DIR = "clientes"
 pnpm dev
 ```
 

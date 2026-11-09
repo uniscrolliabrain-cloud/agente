@@ -12,7 +12,7 @@ import { modelFixture } from "./helpers/model.ts";
 import { testConfig } from "./helpers/config.ts";
 
 test("CopilotKit model worker executes server tools and persists the confirmed outcome", async (t) => {
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-model-"));
+  const directory = await mkdtemp(join(tmpdir(), "agente-model-"));
   const db = await createStore();
   // MODEL_WORKER_TENANT_SCOPE_V1 - ActionService guarda con el store
   // tenant-scoped; leer las acciones con el Store crudo devolvia null.

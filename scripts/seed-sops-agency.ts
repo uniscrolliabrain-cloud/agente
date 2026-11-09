@@ -6,19 +6,19 @@
 // duplicado dentro de este fichero.
 //
 // Uso:
-//   OPENMUSE_URL=http://localhost:8787 pnpm exec tsx scripts/seed-sops-agency.ts
+//   AGENTE_URL=http://localhost:8787 pnpm exec tsx scripts/seed-sops-agency.ts
 //
-// Autenticacion: OPENMUSE_ACCESS_KEY (modo live, POST /api/session) o
-// OPENMUSE_EMAIL + OPENMUSE_PASSWORD (login normal). Sin una de las dos, el
+// Autenticacion: AGENTE_ACCESS_KEY (modo live, POST /api/session) o
+// AGENTE_EMAIL + AGENTE_PASSWORD (login normal). Sin una de las dos, el
 // script sale en vez de adivinar.
 
 import { agencySops } from "../clientes/agntia/sops.ts";
 
-const base = process.env.OPENMUSE_URL ?? "http://localhost:8787";
+const base = process.env.AGENTE_URL ?? "http://localhost:8787";
 const headersJson = { "content-type": "application/json" };
 
 async function login(): Promise<string> {
-  const accessKey = process.env.OPENMUSE_ACCESS_KEY;
+  const accessKey = process.env.AGENTE_ACCESS_KEY;
   if (accessKey) {
     const res = await fetch(`${base}/api/session`, {
       method: "POST",
@@ -28,8 +28,8 @@ async function login(): Promise<string> {
     if (!res.ok) throw new Error(`POST /api/session -> ${res.status} ${await res.text()}`);
     return ((await res.json()) as { token: string }).token;
   }
-  const email = process.env.OPENMUSE_EMAIL;
-  const password = process.env.OPENMUSE_PASSWORD;
+  const email = process.env.AGENTE_EMAIL;
+  const password = process.env.AGENTE_PASSWORD;
   if (email && password) {
     const res = await fetch(`${base}/api/auth/login`, {
       method: "POST",
@@ -39,7 +39,7 @@ async function login(): Promise<string> {
     if (!res.ok) throw new Error(`POST /api/auth/login -> ${res.status} ${await res.text()}`);
     return ((await res.json()) as { token: string }).token;
   }
-  throw new Error("Define OPENMUSE_ACCESS_KEY o OPENMUSE_EMAIL + OPENMUSE_PASSWORD.");
+  throw new Error("Define AGENTE_ACCESS_KEY o AGENTE_EMAIL + AGENTE_PASSWORD.");
 }
 
 const token = await login();

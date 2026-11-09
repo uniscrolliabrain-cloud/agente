@@ -70,7 +70,7 @@ test("cancellation invalidates a stale worker before its next effect", async () 
   }
 });
 test("expired leases recover saved checkpoints after the database restarts", async () => {
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-engine-"));
+  const directory = await mkdtemp(join(tmpdir(), "agente-engine-"));
   try {
     let db = await createStore({ dataDir: join(directory, "db") });
     await db.put("owner", "tasks", {

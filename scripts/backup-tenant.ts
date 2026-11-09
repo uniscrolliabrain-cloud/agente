@@ -14,7 +14,7 @@ async function main() {
     console.error("Uso: tsx scripts/backup-tenant.ts --tenant <id> [--retention N] [--restore <stamp>]");
     process.exit(1);
   }
-  const dataDir = process.env.DATA_DIR ?? ".openmuse";
+  const dataDir = process.env.DATA_DIR ?? ".agente";
   if (restoreIdx >= 0 && args[restoreIdx + 1]) {
     await runTenantRestore({ dataDir, tenantId: tenant, backupStamp: args[restoreIdx + 1] });
     console.log("Restore completado.");

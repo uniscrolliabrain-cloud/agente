@@ -8,7 +8,7 @@ import { UserService } from "../apps/server/src/users.ts";
 import type { AgentRole } from "../packages/domain/src/agent.ts";
 
 const OWNER = "demo";
-const ADMIN_EMAIL = "demo@openmuse.local";
+const ADMIN_EMAIL = "demo@agente.local";
 const ADMIN_PASSWORD = "demo-password-2026";
 const ADMIN_NAME = "Alfonso (demo)";
 
@@ -279,7 +279,7 @@ async function seedBusinessRecords(db: Store): Promise<number> {
 }
 async function main() {
   const root = (await import("node:path")).resolve(process.cwd());
-  const dbPath = `${process.env.DATA_DIR ?? ".openmuse"}/postgres`;
+  const dbPath = `${process.env.DATA_DIR ?? ".agente"}/postgres`;
 
   if (existsSync(".env")) process.loadEnvFile(".env");
 

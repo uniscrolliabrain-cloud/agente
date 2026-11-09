@@ -36,4 +36,4 @@ Tareas durables, memoria curada.
 ## 8. Cómo se verifica el cierre
 - Test end-to-end Goal → Outcome persistido.
 - LearningObserver que promueva patrones a SOPs tras N éxitos.
-- Métrica openmuse_goals_total{status}.
+- Métrica agente_goals_total{status}.

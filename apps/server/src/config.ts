@@ -177,7 +177,7 @@ export function readConfig(): Config {
     port,
     host: process.env.HOST ?? "127.0.0.1",
     publicUrl,
-    dataDir: resolve(process.env.DATA_DIR ?? ".openmuse"),
+    dataDir: resolve(process.env.DATA_DIR ?? ".agente"),
     databaseUrl: process.env.DATABASE_URL,
     // `||` y no `??`: al copiar .env.example la variable viene vacia y debe caer a
     // DATABASE_URL igual que si no estuviera.
@@ -186,7 +186,7 @@ export function readConfig(): Config {
     // escritura sobre las filas de todos los owners. Sin DSN dedicado no hay
     // SQL real; la consulta cae al dataset local del owner (campana 05).
     businessDatabaseUrl: process.env.BUSINESS_DATABASE_URL?.trim() || undefined,
-    accessKey: process.env.OPENMUSE_ACCESS_KEY,
+    accessKey: process.env.AGENTE_ACCESS_KEY,
     encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
     model: readModel(),
     modelFallback: readModelFallback(),
@@ -200,7 +200,7 @@ export function readConfig(): Config {
     workerToken: process.env.WORKER_TOKEN,
     taskWorkerEnabled: process.env.TASK_WORKER_ENABLED !== "false",
     computerEnabled: process.env.COMPUTER_ENABLED === "true",
-    computerImage: process.env.COMPUTER_IMAGE ?? "openmuse-computer:local",
+    computerImage: process.env.COMPUTER_IMAGE ?? "agente-computer:local",
     computerDeploymentId: process.env.COMPUTER_DEPLOYMENT_ID,
     whatsappApiKey: process.env.WHATSAPP_API_KEY, // o EVOLUTION_API_KEY
     whatsappBaseUrl: process.env.WHATSAPP_BASE_URL, // ej: http://evolution:8080
@@ -272,7 +272,7 @@ export function readConfig(): Config {
     (!config.accessKey || config.accessKey.length < 24 || !config.encryptionKey)
   )
     throw new Error(
-      "Live mode requires OPENMUSE_ACCESS_KEY (24+ characters) and TOKEN_ENCRYPTION_KEY (32-byte base64)",
+      "Live mode requires AGENTE_ACCESS_KEY (24+ characters) and TOKEN_ENCRYPTION_KEY (32-byte base64)",
     );
   if (mode === "sample" && !["127.0.0.1", "localhost", "::1"].includes(config.host))
     throw new Error("Sample workspace is local-only. HOST must be a loopback address.");

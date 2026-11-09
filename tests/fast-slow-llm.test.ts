@@ -17,7 +17,7 @@ const baseConfig = {
   port: 8787,
   host: "127.0.0.1",
   publicUrl: "http://localhost:8787",
-  dataDir: ".openmuse-test",
+  dataDir: ".agente-test",
   agentBackend: "sample" as const,
   googleRedirectUri: "http://localhost:8787/api/google/callback",
   allowedOrigins: [],

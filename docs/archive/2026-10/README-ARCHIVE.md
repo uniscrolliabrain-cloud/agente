@@ -1,4 +1,4 @@
-# Archive de Documentación OpenMuse
+# Archive de Documentación Laia
 
 > v1 · 2026-10-27 · Estado: current
 

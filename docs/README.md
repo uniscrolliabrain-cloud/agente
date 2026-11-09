@@ -1,4 +1,4 @@
-# Documentación de OpenMuse
+# Documentación de Laia
 
 > v2 · 2026-11-07 · Estado: current
 
@@ -19,7 +19,7 @@ dónde vive y si está viva o archivada.
 
 | Fichero | Qué es |
 |---|---|
-| [PRODUCT.md](./02-producto/PRODUCT.md) | Qué es OpenMuse, a dónde va, qué no es, fases hasta 1.0 |
+| [PRODUCT.md](./02-producto/PRODUCT.md) | Qué es Laia, a dónde va, qué no es, fases hasta 1.0 |
 | [ROADMAP.md](./02-producto/ROADMAP.md) | Trabajo planeado por fases |
 | [KNOWN_ISSUES.md](./estado/KNOWN_ISSUES.md) | Issues abiertos del repo |
 

@@ -23,7 +23,7 @@ let db: Store,
   directory: string;
 const headers = () => ({ Authorization: `Bearer ${token}`, "Content-Type": "application/json" });
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-api-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-api-"));
   db = await createStore();
   tdb = new TenantScopedStore(db, async () => "default");
   config = testConfig({ dataDir: directory, allowedOrigins: ["http://localhost:8081"] });

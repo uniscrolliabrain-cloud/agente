@@ -11,7 +11,7 @@
 //      -> canjea el code, lee el email, encuentra o crea el usuario y emite una
 //         sesion igual que /api/auth/login.
 //   3. Devuelve una pagina minima que escribe la sesion en localStorage y
-//      vuelve al panel. El panel ya guarda `openmuse_auth` y `openmuse_user`,
+//      vuelve al panel. El panel ya guarda `agente_auth` y `agente_user`,
 //      asi que no hay que tocar el cliente.
 //
 // OAUTH_ALLOWED_EMAILS - si esta definida (lista separada por comas), solo esos
@@ -71,7 +71,7 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
       const headers = {
         authorization: `Bearer ${accessToken}`,
         accept: "application/vnd.github+json",
-        "user-agent": "openmuse",
+        "user-agent": "agente",
       };
       // OAUTH_GITHUB_VERIFIED_EMAIL_V1 - el email del perfil publico no prueba
       // propiedad de la direccion. La unica fuente valida es /user/emails, que
@@ -371,7 +371,7 @@ function page(title: string, message: string): string {
 
 /**
  * Escribe la sesion en localStorage con las mismas claves que usa el panel
- * (`openmuse_auth`, `openmuse_user`) y vuelve a la raiz. Asi el login social no
+ * (`agente_auth`, `agente_user`) y vuelve a la raiz. Asi el login social no
  * necesita ningun cambio en el cliente.
  */
 function sessionPage(payload: {
@@ -389,8 +389,8 @@ function sessionPage(payload: {
 <p>Entrando en Agntia Pro...</p>
 <script>
 try {
-  localStorage.setItem("openmuse_auth", ${safe(JSON.stringify(auth))});
-  localStorage.setItem("openmuse_user", ${safe(JSON.stringify(user))});
+  localStorage.setItem("agente_auth", ${safe(JSON.stringify(auth))});
+  localStorage.setItem("agente_user", ${safe(JSON.stringify(user))});
 } catch (e) {
   document.body.textContent = "No se pudo guardar la sesion en este navegador.";
 }

@@ -36,7 +36,7 @@
       "exit_code": 0,
       "log_path": "typecheck-web.txt",
       "duration_ms": null,
-      "command": "pnpm --filter @openmuse/web typecheck"
+      "command": "pnpm --filter @agente/web typecheck"
     },
     {
       "status": "pass",
@@ -50,7 +50,7 @@
       "exit_code": 0,
       "log_path": "build-web.txt",
       "duration_ms": null,
-      "command": "pnpm --filter @openmuse/web build"
+      "command": "pnpm --filter @agente/web build"
     },
     {
       "status": "blocked",

@@ -1,5 +1,5 @@
 {
-  "name": "openmuse",
+  "name": "agente",
   "version": "0.2.0-beta.1",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "// DEMO_SCRIPTS_V1": "scripts de demo",
     "demo:seed": "tsx scripts/seed-demo.ts",
     "demo:dev": "tsx scripts/run-demo.ts",
-    "dev:all": "concurrently -n api,web -c blue,magenta \"pnpm dev\" \"pnpm --filter @openmuse/web dev\"",
+    "dev:all": "concurrently -n api,web -c blue,magenta \"pnpm dev\" \"pnpm --filter @agente/web dev\"",
     "dev:demo": "tsx apps/server/src/demo/entry.ts",
     "test": "tsx --import ./tests/setup.ts --test --test-timeout=30000 --test-force-exit \"tests/**/*.test.ts\"",
     "test:hanging": "tsx --import ./tests/setup.ts --test --test-timeout=10000 \"tests/**/*.test.ts\"",

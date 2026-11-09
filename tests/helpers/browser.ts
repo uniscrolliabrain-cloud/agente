@@ -28,7 +28,7 @@ export async function browserFixture(
   await once(server, "listening");
   const address = server.address();
   assert(address && typeof address !== "string");
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-browser-service-"));
+  const directory = await mkdtemp(join(tmpdir(), "agente-browser-service-"));
   const db = await createStore();
   const config: Config = {
   // TEST_CONFIG_BASE_V1 - Config gano campos obligatorios; se parte del

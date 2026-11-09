@@ -8,7 +8,7 @@ import {
 } from "@copilotkit/aimock";
 import { z } from "zod";
 
-export const demoModel = "openai/openmuse-browser-demo";
+export const demoModel = "openai/agente-browser-demo";
 
 const pageSchema = z.object({
   sessionId: z.string().min(1),
@@ -110,7 +110,7 @@ function parseResult(message: ChatMessage): unknown {
 }
 
 function demoMailResponse(request: ChatCompletionRequest, turn: ChatMessage[]): FixtureResponse {
-  const read = turnResult(turn, "read_mail_thread", "call_openmuse_demo_mail_read_");
+  const read = turnResult(turn, "read_mail_thread", "call_agente_demo_mail_read_");
   if (read) {
     const parsed = z
       .object({
@@ -133,7 +133,7 @@ function demoMailResponse(request: ChatCompletionRequest, turn: ChatMessage[]): 
       content: `From ${message.sender}:\n“${message.subject}”\n\n${paragraphs.join("\n\n")}\n\nI can look up the aquarium next.`,
     };
   }
-  const search = turnResult(turn, "search_mail", "call_openmuse_demo_mail_search_");
+  const search = turnResult(turn, "search_mail", "call_agente_demo_mail_search_");
   if (search) {
     const parsed = z
       .object({ matches: z.array(z.object({ threadId: z.string(), subject: z.string() })) })
@@ -150,7 +150,7 @@ function demoMailResponse(request: ChatCompletionRequest, turn: ChatMessage[]): 
       content: "I found the school’s reminder. I’ll read the details.",
       toolCalls: [
         {
-          id: `call_openmuse_demo_mail_read_${randomUUID()}`,
+          id: `call_agente_demo_mail_read_${randomUUID()}`,
           name: "read_mail_thread",
           arguments: JSON.stringify({ threadId: match.threadId }),
         },
@@ -163,7 +163,7 @@ function demoMailResponse(request: ChatCompletionRequest, turn: ChatMessage[]): 
     content: "I’ll check your inbox for the school trip.",
     toolCalls: [
       {
-        id: `call_openmuse_demo_mail_search_${randomUUID()}`,
+        id: `call_agente_demo_mail_search_${randomUUID()}`,
         name: "search_mail",
         arguments: JSON.stringify({ query: "aquarium" }),
       },
@@ -198,7 +198,7 @@ export function demoResponse(request: ChatCompletionRequest): FixtureResponse {
       message.role === "tool" &&
       message.tool_call_id &&
       (calls.has(message.tool_call_id) ||
-        message.tool_call_id.startsWith("call_openmuse_demo_browse_")),
+        message.tool_call_id.startsWith("call_agente_demo_browse_")),
   );
   if (result) return summarizePage(result);
   if (!request.tools?.some((tool) => tool.function.name === "browse_web"))
@@ -211,7 +211,7 @@ export function demoResponse(request: ChatCompletionRequest): FixtureResponse {
         : "I’ll open CopilotKit and read the page.",
     toolCalls: [
       {
-        id: `call_openmuse_demo_browse_${randomUUID()}`,
+        id: `call_agente_demo_browse_${randomUUID()}`,
         name: "browse_web",
         arguments: JSON.stringify({ url }),
       },
@@ -234,7 +234,7 @@ export function createDemoModel(
     strict: true,
     logLevel: "silent",
     journalMaxEntries: 100,
-  }).on({ model: "openmuse-browser-demo" }, demoResponse, {
+  }).on({ model: "agente-browser-demo" }, demoResponse, {
     streamingProfile: { ttft: firstByteDelay },
   });
 }

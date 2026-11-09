@@ -29,7 +29,7 @@ const owner = "webhook-owner", tenant = "webhook-test";
 const evolutionSecret = "dedicated-evolution-secret-at-least-32-chars";
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-whatsapp-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-whatsapp-"));
   db = await createStore();
   await db.put(owner, "tenant-membership", { id: "default", tenantId: tenant });
   await db.put(`${tenant}:${owner}`, "sops", sopSchema.parse({

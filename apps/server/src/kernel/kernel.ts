@@ -43,15 +43,15 @@ export interface KernelDeps {
 // KERNEL_METRICS_V1
 // Ver: auditor
 globalMetrics.counter(
-  "openmuse_kernel_turns_opened_total",
+  "agente_kernel_turns_opened_total",
   "Turnos abiertos por el kernel",
 );
 globalMetrics.counter(
-  "openmuse_kernel_turns_closed_total",
+  "agente_kernel_turns_closed_total",
   "Turnos cerrados",
 );
 globalMetrics.counter(
-  "openmuse_kernel_thoughts_appended_total",
+  "agente_kernel_thoughts_appended_total",
   "Thoughts agregados por el kernel",
 );
 
@@ -90,7 +90,7 @@ export class Kernel implements KernelWriterPort {
     const turn = await this.deps.store.openTurn(tenantId, ctx.owner, trigger, ctx.personaId);
     // KERNEL_APPEND_THOUGHT_FIRE_HOOK_V1 - disparar hook onTurnOpened.
     try { this.deps.onTurnOpened?.(turn); } catch { /* nonfatal */ }
-    globalMetrics.inc("openmuse_kernel_turns_opened_total", {});
+    globalMetrics.inc("agente_kernel_turns_opened_total", {});
     await this.deps.audit.append({
       tenantId,
       owner: ctx.owner,

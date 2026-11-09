@@ -4,7 +4,7 @@
 
 ## Modelo
 
-**Un deployment por cliente.** Cada cliente tiene su propio despliegue de OpenMuse con su propio tenant, datos y credenciales.
+**Un deployment por cliente.** Cada cliente tiene su propio despliegue de Laia con su propio tenant, datos y credenciales.
 
 ## Pasos de alta de cliente
 

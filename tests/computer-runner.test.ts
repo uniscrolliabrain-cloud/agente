@@ -20,23 +20,23 @@ const scriptBody = [
   'if (mode === "hang") setInterval(() => {}, 1000);',
   'else if (mode === "output") { process.stdout.write("x".repeat(500000)); process.stderr.write("y".repeat(500000)); }',
   'else if (mode === "fail") { process.stderr.write("failure"); process.exitCode = 17; }',
-  'else process.stdout.write(JSON.stringify({ args: process.argv.slice(2), secret: process.env.OPENMUSE_TEST_SECRET }));',
+  'else process.stdout.write(JSON.stringify({ args: process.argv.slice(2), secret: process.env.AGENTE_TEST_SECRET }));',
 ].join("\n");
 
 test(
   "Docker subprocess uses literal argv, strips provider credentials, caps output and bounds hangs",
   { skip: skipOnWindows },
   async () => {
-    const directory = await mkdtemp(join(tmpdir(), "openmuse-docker-runner-"));
+    const directory = await mkdtemp(join(tmpdir(), "agente-docker-runner-"));
     const previousPath = process.env.PATH;
-    const previousKey = process.env.OPENMUSE_TEST_SECRET;
+    const previousKey = process.env.AGENTE_TEST_SECRET;
     // POSIX only. A shebang script is directly executable there.
     await writeFile(join(directory, "docker"), `#!${process.execPath}\n${scriptBody}\n`, {
       mode: 0o700,
     });
     const sep = ":";
     process.env.PATH = previousPath ? `${directory}${sep}${previousPath}` : directory;
-    process.env.OPENMUSE_TEST_SECRET = "must-not-reach-docker-process";
+    process.env.AGENTE_TEST_SECRET = "must-not-reach-docker-process";
     try {
       const literal = "$(touch /must-not-run) ; echo $HOME";
       const args = await runDocker(["exec", literal], { timeoutMs: 3000 });
@@ -58,8 +58,8 @@ test(
     } finally {
       if (previousPath === undefined) delete process.env.PATH;
       else process.env.PATH = previousPath;
-      if (previousKey === undefined) delete process.env.OPENMUSE_TEST_SECRET;
-      else process.env.OPENMUSE_TEST_SECRET = previousKey;
+      if (previousKey === undefined) delete process.env.AGENTE_TEST_SECRET;
+      else process.env.AGENTE_TEST_SECRET = previousKey;
       await rm(directory, { recursive: true, force: true });
     }
   },

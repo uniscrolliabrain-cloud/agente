@@ -148,7 +148,7 @@ MOD app.ts
 
 **Reglas**: solo lectura, eventos enlazan a `TaskDetailModal`.
 
-**Typecheck**: `pnpm --filter @openmuse/web typecheck` + `pnpm --filter @openmuse/web build`.
+**Typecheck**: `pnpm --filter @agente/web typecheck` + `pnpm --filter @agente/web build`.
 
 **Ledger**:
 ```

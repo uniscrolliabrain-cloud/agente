@@ -12,18 +12,18 @@ const THOUGHT_TYPES = new Set([
 ]);
 
 export function startKernelMetricsConsumer(owners: string[]): { stop(): void } {
-  globalMetrics.counter("openmuse_kernel_thoughts_total", "Thoughts emitidos al bus por rol");
-  globalMetrics.counter("openmuse_kernel_turns_total", "Turns abiertos al bus");
+  globalMetrics.counter("agente_kernel_thoughts_total", "Thoughts emitidos al bus por rol");
+  globalMetrics.counter("agente_kernel_turns_total", "Turns abiertos al bus");
   const handles = owners.map((owner) =>
     globalSubscribers.subscribe(owner, (event: SystemEvent) => {
       if (THOUGHT_TYPES.has(event.type)) {
         const role = (event.payload as Record<string, unknown>).role;
-        globalMetrics.inc("openmuse_kernel_thoughts_total", { role: String(role ?? "unknown") });
+        globalMetrics.inc("agente_kernel_thoughts_total", { role: String(role ?? "unknown") });
         return;
       }
       // KERNEL_METRICS_BY_OWNER_V1
       if (event.type === "kernel.turn.opened") {
-        globalMetrics.inc("openmuse_kernel_turns_total", { owner: event.owner });
+        globalMetrics.inc("agente_kernel_turns_total", { owner: event.owner });
       }
     }),
   );

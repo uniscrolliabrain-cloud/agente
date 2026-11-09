@@ -47,7 +47,7 @@ async function main() {
   await new Promise<void>((resolve) => seed.on("close", () => resolve()));
 
   log("demo", "Arrancando frontend...");
-  const web = spawn("pnpm", ["--filter", "@openmuse/web", "dev"], {
+  const web = spawn("pnpm", ["--filter", "@agente/web", "dev"], {
     cwd: root,
     stdio: "inherit",
     shell: true,

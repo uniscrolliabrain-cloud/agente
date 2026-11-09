@@ -2,7 +2,7 @@
 
 > v2 · 2026-10-27 · Estado: current
 
-## Qué es OpenMuse
+## Qué es Laia
 
 Runtime de agentes durables alrededor de: Tasks - SOPs - Skills - Tools - Validation - Learning. Asistente personal que sabe cosas de tu empresa y hace cosas de verdad, con aprobaciones para todo lo externo.
 

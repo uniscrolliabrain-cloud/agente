@@ -1,4 +1,4 @@
-# OpenMuse
+# Laia
 
 Asistente de negocio con kernel cognitivo durable, tareas multi-tenant y runtime LLM. Hono + TypeScript + PGlite/Postgres.
 
@@ -33,9 +33,9 @@ Copiar .env.example a .env. Minimo:
 WORKSPACE_MODE=sample
 PORT=8787
 HOST=127.0.0.1
-DATA_DIR=.openmuse
+DATA_DIR=.agente
 
-Live: DATABASE_URL, OPENMUSE_ACCESS_KEY, TOKEN_ENCRYPTION_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
+Live: DATABASE_URL, AGENTE_ACCESS_KEY, TOKEN_ENCRYPTION_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET.
 
 ## Comandos
 
@@ -45,7 +45,7 @@ Live: DATABASE_URL, OPENMUSE_ACCESS_KEY, TOKEN_ENCRYPTION_KEY, GOOGLE_CLIENT_ID,
 - pnpm build - build de produccion
 - pnpm beta:smoke - smoke test
 
-Typecheck por paquete: pnpm --filter @openmuse/server exec tsc --noEmit
+Typecheck por paquete: pnpm --filter @agente/server exec tsc --noEmit
 Test por fichero: pnpm test -- tests/tenant-isolation.test.ts
 
 ## Variables clave

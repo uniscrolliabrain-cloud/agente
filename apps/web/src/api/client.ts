@@ -1,4 +1,4 @@
-const AUTH_KEY = "openmuse_auth";
+const AUTH_KEY = "agente_auth";
 
 export interface AuthSession {
   token: string;

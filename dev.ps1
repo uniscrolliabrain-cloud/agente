@@ -1,4 +1,4 @@
-# dev.ps1 — arranque limpio de OpenMuse
+# dev.ps1 — arranque limpio de Laia
 # Uso:  .\dev.ps1        (arranque normal)
 #       .\dev.ps1 -Reset (borra la DB y re-siembra)
 
@@ -15,7 +15,7 @@ Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorActio
 Start-Sleep -Seconds 2
 
 Write-Host "`n=== 2. Comprobando DB ===" -ForegroundColor Cyan
-$dbPath = Join-Path $root ".openmuse\postgres"
+$dbPath = Join-Path $root ".agente\postgres"
 if ($Reset -and (Test-Path $dbPath)) {
   $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
   Rename-Item $dbPath "postgres.broken-$stamp"
@@ -49,7 +49,7 @@ $existingSops = (Invoke-RestMethod "http://127.0.0.1:8787/api/sops" -Headers $he
 if ($existingSops -lt 12) {
   Write-Host "  Sembrando business-records y SOPs..." -ForegroundColor Yellow
   & pnpm exec tsx scripts/seed-agency.ts | Out-Host
-  $env:OPENMUSE_ACCESS_KEY = $accessKey
+  $env:AGENTE_ACCESS_KEY = $accessKey
   & pnpm exec tsx scripts/seed-sops-agency.ts | Out-Host
 } else {
   Write-Host "  Ya hay $existingSops SOPs, no se resiembra" -ForegroundColor DarkGray
@@ -79,7 +79,7 @@ if ($existingSkills -lt 6) {
 }
 
 Write-Host "`n=== 6. Arrancando frontend ===" -ForegroundColor Cyan
-Start-Process cmd -ArgumentList "/k","cd /d `"$root`" && pnpm --filter @openmuse/web dev" -WindowStyle Normal
+Start-Process cmd -ArgumentList "/k","cd /d `"$root`" && pnpm --filter @agente/web dev" -WindowStyle Normal
 Start-Sleep -Seconds 6
 
 Write-Host "`n=== LISTO ===" -ForegroundColor Green

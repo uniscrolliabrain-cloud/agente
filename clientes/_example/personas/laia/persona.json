@@ -22,7 +22,6 @@
     { "id": "cuidado", "weight": 0.9 },
     { "id": "orden", "weight": 0.7 }
   ],
-  "reportsTo": "openmuse",
   "peers": ["juan", "manu", "marta"],
   "avatar": {
     "kind": "generated-portrait",

@@ -13,7 +13,7 @@ const browseTool = {
   function: { name: "browse_web", parameters: {} },
 };
 const request = (messages: ChatMessage[]): ChatCompletionRequest => ({
-  model: "openmuse-browser-demo",
+  model: "agente-browser-demo",
   messages,
   tools: [browseTool],
 });
@@ -32,7 +32,7 @@ test("aquarium research distinguishes exhibit entries from navigation and only q
       { role: "user", content: "Research Monterey Bay Aquarium" },
       {
         role: "tool",
-        tool_call_id: "call_openmuse_demo_browse_aquarium",
+        tool_call_id: "call_agente_demo_browse_aquarium",
         content: JSON.stringify({
           sessionId: "aquarium",
           url: "https://www.montereybayaquarium.org/visit/exhibits",
@@ -97,7 +97,7 @@ test("the email demo handles no matches and disconnected mail without inventing 
         { role: "user", content: "Check my emails for the school trip" },
         {
           role: "tool",
-          tool_call_id: "call_openmuse_demo_mail_search_failure",
+          tool_call_id: "call_agente_demo_mail_search_failure",
           content: JSON.stringify(result),
         },
       ]),
@@ -143,7 +143,7 @@ test("demo reports missing or failed browser evidence without inventing a summar
       { role: "user", content: "Summarize copilotkit.ai" },
       {
         role: "tool",
-        tool_call_id: "call_openmuse_demo_browse_failure",
+        tool_call_id: "call_agente_demo_browse_failure",
         content: '{"error":"Worker unavailable"}',
       },
     ]),

@@ -1,5 +1,5 @@
 ﻿// WORKSPACES_DISPATCHER_V1 - resuelve y ejecuta commands y queries.
-import type { WorkspaceModule, WorkspaceContext, WorkspaceCommandEnvelope, WorkspaceQueryEnvelope, WorkspaceServices, CommandResult, QueryResult } from "@openmuse/workspaces";
+import type { WorkspaceModule, WorkspaceContext, WorkspaceCommandEnvelope, WorkspaceQueryEnvelope, WorkspaceServices, CommandResult, QueryResult } from "@agente/workspaces";
 
 export class WorkspaceDispatcher {
   private readonly services: WorkspaceServices;

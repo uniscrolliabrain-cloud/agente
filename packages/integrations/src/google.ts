@@ -812,7 +812,7 @@ export class GoogleClient {
       ...(draft.bcc.length ? [`Bcc: ${draft.bcc.join(",\r\n ")}`] : []),
       `Subject: ${encodedSubject(draft.subject)}`,
       `Date: ${new Date().toUTCString()}`,
-      `Message-ID: <${randomUUID()}@openmuse.invalid>`,
+      `Message-ID: <${randomUUID()}@agente.invalid>`,
       ...replyHeaders,
       "MIME-Version: 1.0",
     ];
@@ -825,7 +825,7 @@ export class GoogleClient {
     let mime: string;
     if (!attachments.length) mime = [...mimeHeaders, textPart].join("\r\n");
     else {
-      const boundary = `openmuse_${randomUUID()}`;
+      const boundary = `agente_${randomUUID()}`;
       const parts = [
         textPart,
         ...attachments.map((attachment) => {

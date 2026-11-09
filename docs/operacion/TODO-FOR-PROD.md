@@ -6,7 +6,7 @@
 ## Antes de onboardear
 
 - [ ] Deployment dedicado (un cliente = un deployment, sin multitenancy).
-- [ ] Dominio + HTTPS + `.env` con `ADMIN_*`, `OPENMUSE_ACCESS_KEY`, `TOKEN_ENCRYPTION_KEY`, `GEMINI_API_KEY`, `DATABASE_URL`.
+- [ ] Dominio + HTTPS + `.env` con `ADMIN_*`, `AGENTE_ACCESS_KEY`, `TOKEN_ENCRYPTION_KEY`, `GEMINI_API_KEY`, `DATABASE_URL`.
 - [ ] Backups automaticos activos (`BACKUP_INTERVAL_HOURS` > 0).
 - [ ] Browser worker desplegado (si el cliente lo usa).
 - [ ] Computer Docker desplegado (si el cliente usa skills Python).

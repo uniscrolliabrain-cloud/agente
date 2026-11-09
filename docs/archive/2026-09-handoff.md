@@ -1,4 +1,4 @@
-# OpenMuse — Handoff
+# Laia — Handoff
 
 > Documento para retomar el trabajo sin contexto previo.
 > Verdad: este fichero + TODO.md + el repo actualizado del usuario.
@@ -84,7 +84,7 @@ Siempre UTF-8 sin BOM.
 
 ### 0.8. Verificación
 
-- **Typecheck**: al cerrar cada wave, no después de cada fichero. `pnpm typecheck` + `pnpm --filter @openmuse/web typecheck`.
+- **Typecheck**: al cerrar cada wave, no después de cada fichero. `pnpm typecheck` + `pnpm --filter @agente/web typecheck`.
 - **Tests**: solo antes de PR a main. `pnpm test`.
 - **Manual**: probar el flujo afectado si es UI.
 
@@ -176,7 +176,7 @@ Un here-string @'...'@ de mas de ~40 lineas puede cortarse al pegar en PowerShel
 El array no se corta aunque sean 200 lineas.
 
 ---
-## 1. Que es OpenMuse
+## 1. Que es Laia
 
 Runtime de agentes durables alrededor de Tasks → SOPs → Skills → Tools →
 Validation → Learning.
@@ -363,7 +363,7 @@ Embeddings Gemini (text-embedding-004). Coseno en JS hoy. pgvector cuando
 escale.
 
 Los archivos se pierden al reiniciar?
-En local no (.openmuse/files/). En deploy depende del hosting.
+En local no (.agente/files/). En deploy depende del hosting.
 
 Que hago si un bloque de PowerShell falla?
 Releer el fichero en el repo actualizado. Ver line ending e indentacion reales.

@@ -796,7 +796,7 @@ export interface LoginResponse {
   user: AuthUser;
 }
 
-const USER_KEY = "openmuse_user";
+const USER_KEY = "agente_user";
 
 export async function loginWithCredentials(
   email: string,
@@ -1103,7 +1103,7 @@ export async function streamChat(
 
 ## File: api/client.ts
 ````typescript
-const AUTH_KEY = "openmuse_auth";
+const AUTH_KEY = "agente_auth";
 
 export interface AuthSession {
   token: string;
@@ -1311,7 +1311,7 @@ export async function eventTimeline(hours = 24): Promise<TimelineBucket[]> {
 
     const connect = () => {
       if (cancelled) return;
-      const session = localStorage.getItem("openmuse_auth");
+      const session = localStorage.getItem("agente_auth");
       const token = session ? (JSON.parse(session).token as string) : "";
       const url = new URL("/api/events/stream", window.location.origin);
       if (options.types?.length) url.searchParams.set("types", options.types.join(","));
@@ -1947,7 +1947,7 @@ export default function LaiaFloatingWindow({
 
   const style = maximized ? undefined : { left: position.x, top: position.y };
 
-  const otherAgents = AGENTS.filter((a) => a.id !== "laia" && a.id !== "openmuse");
+  const otherAgents = AGENTS.filter((a) => a.id !== "laia" && a.id !== "agente");
 
   return (
     <div className={className} style={style} onPointerDown={onFocus} role="dialog" aria-label={`Ventana de ${agent.name}`}>
@@ -2129,7 +2129,7 @@ export default function LaiaFloatingWindow({
             onKeyDown={(e) => {
               if (e.key === "Enter" && input.trim()) {
                 // Notifica al padre para enviar al chat global.
-                window.dispatchEvent(new CustomEvent("openmuse:chat", {
+                window.dispatchEvent(new CustomEvent("agente:chat", {
                   detail: { message: input.trim(), personaId: agent.id },
                 }));
                 setInput("");
@@ -2139,7 +2139,7 @@ export default function LaiaFloatingWindow({
           />
           <button type="button" onClick={() => {
             if (input.trim()) {
-              window.dispatchEvent(new CustomEvent("openmuse:chat", {
+              window.dispatchEvent(new CustomEvent("agente:chat", {
                 detail: { message: input.trim(), personaId: agent.id },
               }));
               setInput("");
@@ -3494,7 +3494,7 @@ const FILTERS: Array<{ id: "all" | AgentArchetype; label: string }> = [
 export default function AgentSquad({ selected, onSelect }: Props) {
   const [filter, setFilter] = useState<"all" | AgentArchetype>("all");
   const withoutPrincipal = useMemo(() => {
-    const base = AGENTS.filter((a) => a.id !== "openmuse");
+    const base = AGENTS.filter((a) => a.id !== "agente");
     return filter === "all" ? base : base.filter((a) => a.archetype === filter);
   }, [filter]);
 
@@ -3554,12 +3554,12 @@ export default function AgentSquad({ selected, onSelect }: Props) {
 //
 // Este archivo NO toca el backend. Solo define:
 //   - AgentUI: la forma que consume el frontend.
-//   - Mock data de los 7 agentes (OpenMuse + 6 del squad).
+//   - Mock data de los 7 agentes (Laia + 6 del squad).
 //   - Helpers de color/label por status y arquetipo.
 //   - Adaptador toAgentUI(persona, stats) listo para conectar al backend
 //     en una fase posterior.
 
-export type AgentId = "openmuse" | "laia" | "lorenzo" | "juan" | "manu" | "marta" | "ana";
+export type AgentId = "agente" | "laia" | "lorenzo" | "juan" | "manu" | "marta" | "ana";
 
 export type AgentArchetype =
   | "orchestrator"
@@ -3604,8 +3604,8 @@ export interface RuntimeLog {
 
 export const AGENTS: AgentUI[] = [
   {
-    id: "openmuse",
-    name: "OpenMuse",
+    id: "agente",
+    name: "Laia",
     role: "Agente principal",
     archetype: "orchestrator",
     rarity: "ÉPICO",
@@ -3636,7 +3636,7 @@ export const AGENTS: AgentUI[] = [
       "Convivo con Lorenzo. Superviso runtime, backend y a todo el squad. Mi trabajo es que todo funcione antes de que tengas que vigilarlo.",
     personality: ["cercana", "resolutiva", "guardiana"],
     capabilities: ["supervisión", "runtime", "backend", "memoria", "coordinación"],
-    reportsTo: "openmuse",
+    reportsTo: "agente",
     currentTask: "Supervisando runtime del squad",
   },
   {
@@ -3727,12 +3727,12 @@ export const AGENTS: AgentUI[] = [
 ];
 
 export const RUNTIME_LOGS: RuntimeLog[] = [
-  { time: "12:49", message: "delegate_task → OpenMuse → OK", type: "ok" },
+  { time: "12:49", message: "delegate_task → Laia → OK", type: "ok" },
   { time: "12:50", message: "Lorenzo bloqueó IP sospechosa", type: "warn" },
   { time: "12:51", message: "LAIA: memoria sincronizada · 12 embeddings", type: "ok" },
   { time: "12:52", message: "Queue: 3 tareas delegadas a Juan", type: "info" },
   { time: "12:53", message: "Tarea fallida recuperada #4821", type: "ok" },
-  { time: "12:54", message: "OpenMuse HP: 100% · todo estable", type: "ok" },
+  { time: "12:54", message: "Laia HP: 100% · todo estable", type: "ok" },
 ];
 
 // ---------------------------------------------------------------------
@@ -5264,7 +5264,7 @@ export default function CommandPalette({ open, onClose, onSelectView, onNewChat 
 ## File: components/ContextualPanel.tsx
 ````typescript
 // D3_CONTEXTUALPANEL_V2 - panel que renderiza ViewSpec servido por el sistema.
-import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 import ViewRenderer from "../view/ViewRenderer";
 
 interface Props {
@@ -5957,7 +5957,7 @@ export default function KpiCard({ label, value, meta, icon = "purple", series }:
 ## File: components/LiveItem.tsx
 ````typescript
 // B3_LIVEITEM_V1 - item de sidebar con franja 18px y 9 estados.
-import { alertUrgency, pickPrimary, type LiveActivity } from "@openmuse/domain/live";
+import { alertUrgency, pickPrimary, type LiveActivity } from "@agente/domain/live";
 import { fmtDur, useNow } from "../hooks/useNow";
 
 interface Props {
@@ -6066,7 +6066,7 @@ export default function Login({ onLogin, error }: Props) {
           <div className="logo-grad">AI</div>
           <div>
             <div className="logo-title">Agente IA Pro</div>
-            <div className="logo-sub">OpenMuse Workspace</div>
+            <div className="logo-sub">Laia Workspace</div>
           </div>
         </div>
 
@@ -6109,7 +6109,7 @@ export default function Login({ onLogin, error }: Props) {
           {busy ? "Entrando..." : "Entrar"}
         </button>
 
-        <div className="login-footer">OpenMuse - v0.2.0-beta.1</div>
+        <div className="login-footer">Laia - v0.2.0-beta.1</div>
       </div>
     </div>
   );
@@ -7062,7 +7062,7 @@ const STEPS: Step[] = [
   { id: "task",     title: "Crea tu primera tarea",     hint: "Pidele al asistente algo concreto" },
 ];
 
-const STORAGE_KEY = "openmuse_onboarding_done";
+const STORAGE_KEY = "agente_onboarding_done";
 
 export default function Onboarding() {
   const [done, setDone] = useState<Set<string>>(new Set());
@@ -9248,7 +9248,7 @@ export function useAuth() {
     me()
       .then((fresh) => {
         if (cancelled) return;
-        localStorage.setItem("openmuse_user", JSON.stringify(fresh));
+        localStorage.setItem("agente_user", JSON.stringify(fresh));
         setState({ isAuthenticated: true, mode: session.mode, user: fresh });
       })
       .catch(() => {
@@ -10060,7 +10060,7 @@ import {
   type Thread,
 } from "../api/threads";
 
-const ACTIVE_KEY = "openmuse_active_thread";
+const ACTIVE_KEY = "agente_active_thread";
 
 export function useThreads(enabled: boolean) {
   const [threads, setThreads] = useState<Thread[]>([]);
@@ -10245,7 +10245,7 @@ export function useTypewriter(target: string, streamDone: boolean): {
 // D3_USE_VIEW_RESOLVER_V1 - resuelve un intent contra el backend.
 import { useCallback, useState } from "react";
 import { apiFetch } from "../api/client";
-import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 
 export function useViewResolver() {
   const [spec, setSpec] = useState<RuntimeViewSpec | null>(null);
@@ -10396,7 +10396,7 @@ import { z } from "zod";
 ## File: lib/applyEvent.ts
 ````typescript
 // A2_APPLY_EVENT_V1 - reducer puro SystemEvent -> LiveActivity.
-import type { LiveActivity } from "@openmuse/domain/live";
+import type { LiveActivity } from "@agente/domain/live";
 
 export interface BusEvent {
   id: string;
@@ -10666,7 +10666,7 @@ export function toolsReducer(state: ToolCall[], action: ToolsAction): ToolCall[]
 ## File: templates/dashboard/DashboardTemplate.tsx
 ````typescript
 // D3_DASHBOARD_V2 - template dashboard real.
-import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 
 interface Props {
   spec: Extract<RuntimeViewSpec, { kind: "dashboard" }>;
@@ -10766,7 +10766,7 @@ export default function ListTemplate({ spec }: { spec: ViewSpec }) {
 ## File: templates/queue/QueueTemplate.tsx
 ````typescript
 // D3_QUEUE_V1 - template queue real.
-import type { RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 
 interface Props {
   spec: Extract<RuntimeViewSpec, { kind: "queue" }>;
@@ -11077,7 +11077,7 @@ export type ViewSpec=z.infer<typeof viewSpec>;export type ColumnSpec=z.infer<typ
 ## File: view/ViewRenderer.tsx
 ````typescript
 // D3_VIEWRENDERER_V2 - discriminated union + assertNever.
-import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@openmuse/domain/views"; // FIX_02_D
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
 import DashboardTemplate from "../templates/dashboard/DashboardTemplate";
 import QueueTemplate from "../templates/queue/QueueTemplate";
 
@@ -12381,7 +12381,7 @@ Hoy `api.ts` es un mock en memoria. Para conectar:
 
 ```powershell
 pnpm typecheck
-pnpm --filter @openmuse/web exec tsc --noEmit
+pnpm --filter @agente/web exec tsc --noEmit
 ```
 
 Ambos deben estar verdes.
@@ -16330,7 +16330,7 @@ NO esta montado. No hay excepcion en WorkspaceShell.tsx.
 
 Ejecutar en la raiz del repo:
 
-pnpm --filter @openmuse/web exec tsc --noEmit
+pnpm --filter @agente/web exec tsc --noEmit
 
 Si hay errores, arreglarlos uno a uno.
 
@@ -16402,7 +16402,7 @@ Sin && ni ;. Un comando por linea. git add selectivo por fichero.
 
 ## 6. Definicion de terminado
 
-- pnpm --filter @openmuse/web exec tsc --noEmit verde.
+- pnpm --filter @agente/web exec tsc --noEmit verde.
 - El workspace se ve en el navegador (montado por Opcion B).
 - README.md con mapa completo.
 - docs/04-handoff-v2.md (este fichero).
@@ -23829,7 +23829,7 @@ export function listByFamily(family: WorkspaceFamily): readonly WorkspaceFronten
 // WORKSPACE_SHELL_V1 - contenedor de un workspace activo.
 import { getWorkspace } from "./registry.ts";
 import ViewRenderer from "../view/ViewRenderer.tsx";
-import type { RuntimeViewSpec } from "@openmuse/domain/views";
+import type { RuntimeViewSpec } from "@agente/domain/views";
 
 interface Props {
   workspaceId: string | null;
@@ -24316,7 +24316,7 @@ solo en joins, no dentro de lineas del array.
 ### 2.8. Variables de entorno
 
 ```powershell
-$env:OPENMUSE_CLIENTS_DIR = "clientes"
+$env:AGENTE_CLIENTS_DIR = "clientes"
 pnpm dev
 ```
 
@@ -24984,7 +24984,7 @@ filtrar y quedarse solo con los de `apps/web/`.
 Para chequear solo el frontend:
 
 ```powershell
-pnpm --filter @openmuse/web exec tsc --noEmit
+pnpm --filter @agente/web exec tsc --noEmit
 ```
 
 ---
@@ -25049,7 +25049,7 @@ La IA no escribe codigo hasta tener todo esto:
 
 ## 12. Checklist antes de dar por terminado un workspace
 
-- [ ] `pnpm --filter @openmuse/web exec tsc --noEmit` verde.
+- [ ] `pnpm --filter @agente/web exec tsc --noEmit` verde.
 - [ ] `pnpm typecheck` verde (o errores solo del worker).
 - [ ] El contenedor del workspace se ve en el navegador (si se monto).
 - [ ] `index.ts` del workspace exporta el contenedor.
@@ -26020,14 +26020,14 @@ import type { AgentTask } from "./types/api";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
-    const saved = localStorage.getItem("openmuse_theme");
+    const saved = localStorage.getItem("agente_theme");
     if (saved === "dark") return true;
     if (saved === "light") return false;
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "dark" : "light";
-    localStorage.setItem("openmuse_theme", dark ? "dark" : "light");
+    localStorage.setItem("agente_theme", dark ? "dark" : "light");
   }, [dark]);
   return { dark, toggle: () => setDark((v) => !v) };
 }
@@ -26196,7 +26196,7 @@ export default function App() {
         <ProfileModal
           user={auth.user}
           onClose={() => setProfileOpen(false)}
-          onSaved={(u) => { localStorage.setItem("openmuse_user", JSON.stringify(u)); }}
+          onSaved={(u) => { localStorage.setItem("agente_user", JSON.stringify(u)); }}
         />
       )}
 

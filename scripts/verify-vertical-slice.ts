@@ -109,7 +109,7 @@ async function smoke(): Promise<StepResult> {
   process.env.TASK_WORKER_ENABLED = "false";
   process.env.ALLOW_NETWORK = "0";
 
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-slice-"));
+  const directory = await mkdtemp(join(tmpdir(), "agente-slice-"));
   process.env.DATA_DIR = directory;
 
   const cleanup: Array<() => Promise<unknown> | unknown> = [];

@@ -27,7 +27,7 @@ await db.recoverInterruptedActions();
   const { enableRls } = await import("./db-rls.ts");
   const enabled = await enableRls(db);
   if (enabled) {
-    console.log("[OpenMuse] RLS activo en records");
+    console.log("[Laia] RLS activo en records");
   } else if (process.env.MULTI_TENANT_SHARED === "true") {
     if (db.backend === "postgres") {
       throw new Error(
@@ -41,8 +41,8 @@ await db.recoverInterruptedActions();
   }
 }
 // KERNEL_STORE_TURN_PERSISTENT_V1
-if (process.env.OPENMUSE_KERNEL_STORE !== "memory") {
-  process.env.OPENMUSE_KERNEL_STORE = "store";
+if (process.env.AGENTE_KERNEL_STORE !== "memory") {
+  process.env.AGENTE_KERNEL_STORE = "store";
 }
 // KERNEL_PERSONAS_BOOTSTRAP_WIRE_V1
 {
@@ -73,8 +73,8 @@ const { app, agent, bus } = await createApp(db, config);
     const tenants = await db.list<{ tenantId: string }>("system", "tenant-membership").catch(() => []);
     for (const t of Array.from(new Set(tenants.map((x) => x.tenantId)))) {
       const valid = await kernelDeps.audit.verify(t).catch(() => false);
-      if (!valid) console.warn(`[OpenMuse] audit chain INVALIDO en tenant ${t}`);
-      else console.log(`[OpenMuse] audit chain OK en tenant ${t}`);
+      if (!valid) console.warn(`[Laia] audit chain INVALIDO en tenant ${t}`);
+      else console.log(`[Laia] audit chain OK en tenant ${t}`);
     }
   }
 }
@@ -83,7 +83,7 @@ await bus.emit("system", "system.startup", { kind: "system", id: "boot" }, { mod
 //   MODO=api: solo HTTP (el worker vive en otro proceso).
 //   MODO=worker: solo worker (ver worker-entry.ts).
 //   undefined: comportamiento previo (todo en uno).
-const processRole = process.env.OPENMUSE_PROCESS_ROLE ?? "all";
+const processRole = process.env.AGENTE_PROCESS_ROLE ?? "all";
 if (config.taskWorkerEnabled && processRole !== "api") agent.start();
 // PROCESS_SPLIT_V2 - "worker" no debe servir HTTP. index.ts es el entry de
 // API (y de "all"); para "worker" puro se usa worker-entry.ts. Si aun asi
@@ -92,7 +92,7 @@ if (config.taskWorkerEnabled && processRole !== "api") agent.start();
 const serveHttp = processRole !== "worker";
 // INDEX_RECOVER_TASKS_V1 - recuperar tareas running huerfanas.
 void agent.recoverInterruptedTasks().then((n) => {
-  if (n > 0) console.log(`[OpenMuse] ${n} tareas recuperadas`);
+  if (n > 0) console.log(`[Laia] ${n} tareas recuperadas`);
 });
 
 // BACKUP_TENANT_SCHEDULER_V1 - backups por tenant independientes.
@@ -105,10 +105,10 @@ async function backupAllTenants(retentionDays: number): Promise<number> {
     try {
       const result = await runTenantBackup({ dataDir: config.dataDir, tenantId, retentionDays });
       const mb = (result.bytes / 1024 / 1024).toFixed(2);
-      console.log(`[OpenMuse] backup tenant ${tenantId}: ${mb} MB`);
+      console.log(`[Laia] backup tenant ${tenantId}: ${mb} MB`);
       ok++;
     } catch (error) {
-      console.warn(`[OpenMuse] backup tenant ${tenantId} fallo: ${error instanceof Error ? error.message : error}`);
+      console.warn(`[Laia] backup tenant ${tenantId} fallo: ${error instanceof Error ? error.message : error}`);
     }
   }
   return ok;
@@ -129,13 +129,13 @@ function startBackupScheduler(): () => void {
       .then((mod) =>
         mod.runBackup({
           retentionDays: config.backupRetentionDays ?? 0,
-          // BACKUP_DATA_DIR_V1 - sin esto el backup busca /app/dist/.openmuse.
+          // BACKUP_DATA_DIR_V1 - sin esto el backup busca /app/dist/.agente.
           dataDir: config.dataDir,
         }),
       )
       .then((result) => {
         const mb = (result.bytes / 1024 / 1024).toFixed(2);
-        console.log(`[OpenMuse] Backup automatico ok: ${result.outDir} (${mb} MB, ${result.pruned} antiguos borrados)`);
+        console.log(`[Laia] Backup automatico ok: ${result.outDir} (${mb} MB, ${result.pruned} antiguos borrados)`);
       })
       .catch((error) => backgroundFailure("automatic backup", error))
       .finally(() => {
@@ -160,7 +160,7 @@ const stopBackupScheduler = startBackupScheduler();
   if (await hasRollbackRequested(config.dataDir)) {
     const releases = await listGoodReleases(config.dataDir);
     console.warn(
-      `[OpenMuse] ROLLBACK_REQUESTED detectado. Ultimas releases buenas: ${releases.slice(0, 3).map((r) => r.stamp).join(", ") || "ninguna"}`,
+      `[Laia] ROLLBACK_REQUESTED detectado. Ultimas releases buenas: ${releases.slice(0, 3).map((r) => r.stamp).join(", ") || "ninguna"}`,
     );
   }
 }
@@ -214,7 +214,7 @@ const { globalMetrics: alertMetrics } = await import("./metrics/registry.ts");
 const alerts = new AlertService([new LogAlertHandler()]);
 for (const def of buildAlertDefinitions({
   metricsSnapshot: () => {
-    const httpCounter = (alertMetrics as unknown as { counters?: Map<string, { samples: Map<string, { labels: Record<string,string>; value: number }> }> }).counters?.get("openmuse_http_requests_total");
+    const httpCounter = (alertMetrics as unknown as { counters?: Map<string, { samples: Map<string, { labels: Record<string,string>; value: number }> }> }).counters?.get("agente_http_requests_total");
     let http5xx = 0;
     let httpTotal = 0;
     if (httpCounter) {
@@ -233,7 +233,7 @@ for (const def of buildAlertDefinitions({
       circuitOpenCount: 0,
       deadLetterCount: 0,
       outcomeUnknownCount: 0,
-      httpLatencyP99Ms: alertMetrics.quantile("openmuse_http_request_duration_ms", 0.99) ?? 0,
+      httpLatencyP99Ms: alertMetrics.quantile("agente_http_request_duration_ms", 0.99) ?? 0,
     };
   },
 })) {
@@ -317,7 +317,7 @@ deferredTick.unref?.();
 
 const server = serveHttp
   ? serve({ fetch: app.fetch, port: config.port, hostname: config.host }, () =>
-      console.log(`OpenMuse ${config.mode} API ready at ${config.publicUrl}`),
+      console.log(`Laia ${config.mode} API ready at ${config.publicUrl}`),
     )
   : null;
 const shutdown = () => {
@@ -327,7 +327,7 @@ const shutdown = () => {
   // el "Cannot use a pool after calling end on the pool" de cada redeploy.
   clearInterval(deferredTick);
   const DRAIN_MS = Number(process.env.SHUTDOWN_DRAIN_MS ?? "10000") || 10000;
-  const forceExit = setTimeout(() => { console.warn("[OpenMuse] shutdown drain timeout"); process.exit(1); }, DRAIN_MS);
+  const forceExit = setTimeout(() => { console.warn("[Laia] shutdown drain timeout"); process.exit(1); }, DRAIN_MS);
   forceExit.unref?.();
   server?.close(() => {
     void agent

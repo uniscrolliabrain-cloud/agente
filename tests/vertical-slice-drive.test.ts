@@ -42,7 +42,7 @@ function vectorFor(text: string) {
 }
 
 async function harness(t: TestContext, docs: Map<string, DriveDoc>) {
-  const directory = await mkdtemp(join(tmpdir(), "openmuse-drive-"));
+  const directory = await mkdtemp(join(tmpdir(), "agente-drive-"));
   const dataDir = join(directory, "db");
   const db: Store = await createStore({ dataDir });
   t.after(async () => {

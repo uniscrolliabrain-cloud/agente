@@ -79,7 +79,7 @@ Si necesitas un campo nuevo en una entidad, **añádelo en `packages/domain` y a
 Reglas:
 - Claves de desarrollo: **test mode**, proyecto dedicado, revocables. Si se filtran, se rotan y ya.
 - El agente nunca escribe un secreto dentro de un fichero del repo. Si hace falta uno para un test, va por entorno o por fixture falsa.
-- `TOKEN_ENCRYPTION_KEY`, `OPENMUSE_ACCESS_KEY`, `WORKER_TOKEN`, `ADMIN_PASSWORD`: los generas tú, no los pides a nadie.
+- `TOKEN_ENCRYPTION_KEY`, `AGENTE_ACCESS_KEY`, `WORKER_TOKEN`, `ADMIN_PASSWORD`: los generas tú, no los pides a nadie.
 
 ## 7. Límites reales del equipo dev (para que no esperes magia)
 

@@ -38,10 +38,10 @@ compilado contra un Postgres real y leer los logs.
 3. **Cuatro loops de mantenimiento sin `actorId`** (consolidación de turnos,
    consolidación por tenant, meta-loop, contexto meta) → `ZodError` en cada tick,
    la consolidación de memoria **nunca** ocurría en producción.
-4. **Backup apuntando a `/app/dist/.openmuse`** → `runBackup` calculaba la ruta
+4. **Backup apuntando a `/app/dist/.agente`** → `runBackup` calculaba la ruta
    desde el compilado e ignoraba `DATA_DIR`; fallaba cada 24 h. Ahora usa
    `config.dataDir` y escribe en `/data/backups`.
-5. **`clientsDirFrom()` ignoraba `OPENMUSE_CLIENTS_DIR`** → el bootstrap del kernel
+5. **`clientsDirFrom()` ignoraba `AGENTE_CLIENTS_DIR`** → el bootstrap del kernel
    seguía buscando `/clientes` aunque la variable estuviera puesta.
 6. **El intervalo de 1 s de `deferredTick` no se paraba en `shutdown`** → escribía
    contra el pool ya cerrado ("Cannot use a pool after calling end on the pool")
@@ -101,20 +101,20 @@ el job `gate` (typecheck + tests + audits).
 | `pnpm build:server` (`tsc -p tsconfig.build.json`) | **exit 0**, `dist/apps/server/src/index.js` |
 | Artefacto compilado contra Neon | **`/api/health` 200 en 20 s**, cero errores |
 | Entorno exacto de `fly.toml` (`WORKSPACE_MODE=live`, `AGENT_BACKEND=model`) | **`/api/health` 200 en 20 s**, `database:true`, `agentConfigured:true` |
-| Doppler | **61 variables**, `GEMINI`/`OPENROUTER`/`GROQ`, `MODEL`, `PUBLIC_API_URL`, `TOKEN_ENCRYPTION_KEY`, `OPENMUSE_ACCESS_KEY`, `ADMIN_*` presentes con valor |
+| Doppler | **61 variables**, `GEMINI`/`OPENROUTER`/`GROQ`, `MODEL`, `PUBLIC_API_URL`, `TOKEN_ENCRYPTION_KEY`, `AGENTE_ACCESS_KEY`, `ADMIN_*` presentes con valor |
 | Tokens de despliegue | Fly válido (app-scoped), Vercel válido, Cloudflare válido |
 | Zona Cloudflare | `agntiapro.com` **active**, NS `angelina`/`cleo` |
 
 ### Un bug de producción que estaba abierto y ya está corregido
 
-`apps/server/src/engine/views/resolver.ts` importaba `@openmuse/domain/views`.
+`apps/server/src/engine/views/resolver.ts` importaba `@agente/domain/views`.
 Ese especificador **solo existe como alias de `tsconfig`** (`packages/domain` no
 es un paquete npm: no tiene `package.json`). `tsc` lo emitía sin reescribir, así
 que `node dist/apps/server/src/index.js` —lo que ejecuta el `CMD` del
 Dockerfile— moría con `ERR_MODULE_NOT_FOUND` antes de abrir el puerto. Es decir:
 **la imagen de Fly se habría construido bien y habría crasheado al arrancar**.
 Ahora importa por ruta relativa, como el resto del repo, y `dist` no contiene
-ningún `@openmuse/*` ejecutable.
+ningún `@agente/*` ejecutable.
 
 ## 3. Lo que falta, en orden de bloqueo
 

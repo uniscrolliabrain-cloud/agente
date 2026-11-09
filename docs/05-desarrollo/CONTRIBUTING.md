@@ -1,4 +1,4 @@
-# Contribuir a OpenMuse
+# Contribuir a Laia
 
 > v2 · 2026-10-27 · Estado: current
 

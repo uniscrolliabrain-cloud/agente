@@ -17,7 +17,7 @@ let db: Store,
   directory: string;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-auth-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-auth-"));
   db = await createStore({ dataDir: join(directory, "db") });
   server = await createApp(db, testConfig({ dataDir: directory }));
   await new UserService(db).create({ ...ADMIN, role: "admin" });

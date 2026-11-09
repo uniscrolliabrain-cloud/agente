@@ -70,7 +70,7 @@ export async function eventTimeline(hours = 24): Promise<TimelineBucket[]> {
 
     const connect = () => {
       if (cancelled) return;
-      const session = localStorage.getItem("openmuse_auth");
+      const session = localStorage.getItem("agente_auth");
       const token = session ? (JSON.parse(session).token as string) : "";
       const url = new URL("/api/events/stream", window.location.origin);
       if (options.types?.length) url.searchParams.set("types", options.types.join(","));

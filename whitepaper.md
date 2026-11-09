@@ -1,10 +1,10 @@
-# OpenMuse — Whitepaper
+# Laia — Whitepaper
 
 > v1 · 2026-10-27 · Estado: current
 
 ## Resumen ejecutivo
 
-OpenMuse es un **OS agentico para PYMEs y agencias pequeñas**: un sistema operativo de negocio que recibe encargos, lee contexto y datos de empresa, ejecuta procedimientos deterministas, prepara acciones para revisión humana y conserva tareas, artefactos, eventos y memoria. Todo con aislamiento multi-tenant y aprobaciones explícitas para cualquier efecto externo.
+Laia es un **OS agentico para PYMEs y agencias pequeñas**: un sistema operativo de negocio que recibe encargos, lee contexto y datos de empresa, ejecuta procedimientos deterministas, prepara acciones para revisión humana y conserva tareas, artefactos, eventos y memoria. Todo con aislamiento multi-tenant y aprobaciones explícitas para cualquier efecto externo.
 
 ## El problema
 
@@ -15,9 +15,9 @@ Las PYMEs y agencias pequeñas necesitan automatización de negocio pero las her
 - Tareas durables que sobreviven reinicios
 - Un chat conversacional por empresa que prepare emails y gestione la operación
 
-## La solución: OpenMuse
+## La solución: Laia
 
-OpenMuse es un **runtime de agentes durables** construido alrededor de cuatro pilares:
+Laia es un **runtime de agentes durables** construido alrededor de cuatro pilares:
 
 | Pilar | Qué hace |
 |-------|----------|

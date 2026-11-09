@@ -1,4 +1,4 @@
-# Log maestro - Campana UI/UX OpenMuse
+# Log maestro - Campana UI/UX Laia
 
 > **UI_CAMPAIGN_LOG_MAESTRO_V1**
 >
@@ -11,7 +11,7 @@
 
 ## 1. Que es esta campana
 
-Reconstruir la UI/UX de OpenMuse para que el sistema no solo navegue pantallas,
+Reconstruir la UI/UX de Laia para que el sistema no solo navegue pantallas,
 sino que sirva vistas. Dos modos conviven:
 
 1. **Modo navegacion** - el usuario clica en Chat, Tareas, Documentos, etc.
@@ -165,7 +165,7 @@ Cerrar los flujos secundarios.
   - `apps/server/src/engine/routes.ts` (schema + handler).
   - `apps/web/src/components/MemoryView.tsx` (saveEdit).
   - `tests/memory.test.ts` (5 casos).
-- **Verificar**: `pnpm typecheck` + `pnpm --filter @openmuse/web typecheck` + `pnpm test`.
+- **Verificar**: `pnpm typecheck` + `pnpm --filter @agente/web typecheck` + `pnpm test`.
 
 ### Proximo despues
 

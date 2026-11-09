@@ -27,7 +27,7 @@ Compartimentación dentro de cada config: **el prefijo es el compartimento**. Lo
 nombres ya están fijados por el código, así que no se inventan:
 
 ```
-core       DATABASE_URL, PUBLIC_API_URL, TOKEN_ENCRYPTION_KEY, OPENMUSE_ACCESS_KEY,
+core       DATABASE_URL, PUBLIC_API_URL, TOKEN_ENCRYPTION_KEY, AGENTE_ACCESS_KEY,
            ALLOWED_ORIGINS, DATA_DIR
 auth       AUTH_PROVIDER, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_JWT_AUD
 bootstrap  ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME
@@ -92,7 +92,7 @@ SOPs no convencen, no tiene sentido abrir Meta ni Vapi.
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"   # TOKEN_ENCRYPTION_KEY
 
 # >= 24 chars — live mode no arranca sin ella
-node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))" # OPENMUSE_ACCESS_KEY
+node -e "console.log(require('crypto').randomBytes(24).toString('base64url'))" # AGENTE_ACCESS_KEY
 
 # el handshake del webhook de WhatsApp, lo eliges tú (cadena larga aleatoria)
 node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"      # WHATSAPP_VERIFY_TOKEN
@@ -209,7 +209,7 @@ registrador, el acceso al banco de Stripe y la contraseña maestra de Doppler.
 
 - [ ] 1 Doppler · [ ] 2 Neon · [ ] 3 Supabase · [ ] 4 Fly · [ ] 5 Vercel · [ ] 6 DNS
 - [ ] 7 Gemini (×2) · [ ] 8 OpenRouter
-- [ ] 3 secretos generados (`TOKEN_ENCRYPTION_KEY`, `OPENMUSE_ACCESS_KEY`, `WHATSAPP_VERIFY_TOKEN`)
+- [ ] 3 secretos generados (`TOKEN_ENCRYPTION_KEY`, `AGENTE_ACCESS_KEY`, `WHATSAPP_VERIFY_TOKEN`)
 - [ ] claim de tenant + redirects en Supabase
 - [ ] 9 Google OAuth client
 - [ ] deploy + certificados + humo

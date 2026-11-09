@@ -6,7 +6,7 @@
 
 ## Resumen
 
-OpenMuse sigue entrando por `ConversationAgent`, en el archivo que recordabas. OpenMuse es el nombre del asistente y una identidad por defecto en los prompts. El modelo real sale de configuración y puede variar entre conversación, tarea, rol y fallback.
+Laia sigue entrando por `ConversationAgent`, en el archivo que recordabas. Laia es el nombre del asistente y una identidad por defecto en los prompts. El modelo real sale de configuración y puede variar entre conversación, tarea, rol y fallback.
 
 | Unidad auditada | Cantidad en la base | Cómo interpretarla |
 |---|---:|---|
@@ -25,7 +25,7 @@ Los 16 roles incluyen las 12 personas empaquetadas. Los siete puntos de inferenc
 
 ## 1. Origen y evolución
 
-El [OpenMuse de CopilotKit](https://github.com/CopilotKit/openmuse) ofrece chat AG-UI, tareas persistentes y herramientas para navegador, documentos y ordenador. El primer commit del repo auditado, [`d3e39dc`](https://github.com/uniscrolliabrain-cloud/agente/commit/d3e39dc368b3433f31302adeca22771591490c44), ya se describe como una reconstrucción Enterprise. Esa raíz sirve de línea base para atribuir cambios internos. El historial disponible carece de un ancestro de CopilotKit que permita atribuir con precisión cada línea del snapshot inicial.
+El [el proyecto original de CopilotKit](https://github.com/CopilotKit) ofrece chat AG-UI, tareas persistentes y herramientas para navegador, documentos y ordenador. El primer commit del repo auditado, [`d3e39dc`](https://github.com/uniscrolliabrain-cloud/agente/commit/d3e39dc368b3433f31302adeca22771591490c44), ya se describe como una reconstrucción Enterprise. Esa raíz sirve de línea base para atribuir cambios internos. El historial disponible carece de un ancestro de CopilotKit que permita atribuir con precisión cada línea del snapshot inicial.
 
 | Hito | Evidencia |
 |---|---|

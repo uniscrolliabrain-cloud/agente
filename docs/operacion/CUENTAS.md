@@ -74,8 +74,8 @@
 **Solo tú**: DNS. **Latencia**: 15 min + propagación. **Bloquea**: todos los webhooks.
 
 ### 0.5 Fly.io
-- [ ] Cuenta en https://fly.io/dashboard (ya hay `fly.toml`, app `openmuse-api`, región `mad`)
-- [ ] Volumen `openmuse_data` (5 GB) para `/data`
+- [ ] Cuenta en https://fly.io/dashboard (ya hay `fly.toml`, app `agente-api`, región `mad`)
+- [ ] Volumen `agente_data` (5 GB) para `/data`
 - [ ] Token de deploy para CI: `fly tokens create deploy`
 
 | Variable | Uso |
@@ -89,11 +89,11 @@
 ### 0.6 Genera tú (no se piden a nadie)
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"  # TOKEN_ENCRYPTION_KEY
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # OPENMUSE_ACCESS_KEY (>=24)
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # AGENTE_ACCESS_KEY (>=24)
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"    # WORKER_TOKEN (>=32)
 ```
 - [ ] `TOKEN_ENCRYPTION_KEY` — cifra tokens OAuth en reposo. **Si se pierde, todos los tokens de clientes hay que reconectarlos.**
-- [ ] `OPENMUSE_ACCESS_KEY` — obligatoria en `WORKSPACE_MODE=live`
+- [ ] `AGENTE_ACCESS_KEY` — obligatoria en `WORKSPACE_MODE=live`
 - [ ] `WORKER_TOKEN` — compartido entre API y browser worker
 - [ ] `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` — primer admin (login da 401 sin esto)
 

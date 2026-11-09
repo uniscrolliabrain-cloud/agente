@@ -63,7 +63,7 @@ Si falta un fichero, se pide. No se inventa.
 
 ```powershell
 Set-Location $repoRoot
-$tc = pnpm --filter "@openmuse/server" exec tsc --noEmit 2>&1 | Out-String
+$tc = pnpm --filter "@agente/server" exec tsc --noEmit 2>&1 | Out-String
 $errs = ($tc -split "`n" | Where-Object { $_ -match "error TS" })
 Write-Host ("errores TS: " + @($errs).Count)
 $errs | Select-Object -First 20

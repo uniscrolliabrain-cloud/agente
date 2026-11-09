@@ -15,7 +15,7 @@ Ahora sí veo exactamente qué quieres. Y es mucho más ambicioso de lo que yo t
   - Descripción: "Coordinador central. Delega y supervisa a todo el squad."
   - Stats: `TAREAS 1247`, `PRECISIÓN 98.2%`, `TIEMPO MEDIO 12s`, `UPTIME 99.9%`
   - Botones: "Delegar tareas", "Redacción comercial", "Gestión operativa", "Email pro"
-  - Caja "LO QUE SABE DE TU NEGOCIO": "OpenMuse, sistema operativo, workflows ventas, tono de marca, 47 playbooks" (`47%`)
+  - Caja "LO QUE SABE DE TU NEGOCIO": "Laia, sistema operativo, workflows ventas, tono de marca, 47 playbooks" (`47%`)
   - Botones: "Hablar con él", "Ver logs", "Configurar"
   - Estado: `En línea`
 
@@ -31,7 +31,7 @@ Ahora sí veo exactamente qué quieres. Y es mucho más ambicioso de lo que yo t
   - Tip al pie: `Tip: Escribe "llama al agente" para invocar en chat`
 
 - **Activity log** (con `LIVE`):
-  - Ventas completó: Generar 10 versiones del correo comercial de OpenMuse `[420e674a]` — `SUCCESS · ahora`
+  - Ventas completó: Generar 10 versiones del correo comercial de Laia `[420e674a]` — `SUCCESS · ahora`
   - Marketing está trabajando en: Calendario de contenidos Semana 47 + copies LinkedIn — `WORKING · hace 3m`
   - Soporte falló: Responder ticket #8921 - reintento en 2m — `FAILED · hace 5m`
   - Ops sincronizó: Base de datos Notion > 124 registros actualizados — `SUCCESS · hace 12m [420e674a]`

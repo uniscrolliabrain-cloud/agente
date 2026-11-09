@@ -27,7 +27,7 @@ NO esta montado. No hay excepcion en WorkspaceShell.tsx.
 
 Ejecutar en la raiz del repo:
 
-pnpm --filter @openmuse/web exec tsc --noEmit
+pnpm --filter @agente/web exec tsc --noEmit
 
 Si hay errores, arreglarlos uno a uno.
 
@@ -99,7 +99,7 @@ Sin && ni ;. Un comando por linea. git add selectivo por fichero.
 
 ## 6. Definicion de terminado
 
-- pnpm --filter @openmuse/web exec tsc --noEmit verde.
+- pnpm --filter @agente/web exec tsc --noEmit verde.
 - El workspace se ve en el navegador (montado por Opcion B).
 - README.md con mapa completo.
 - docs/04-handoff-v2.md (este fichero).

@@ -11,7 +11,7 @@ From any machine with network access:
 
 Then commit the resulting .whl files here and rebuild the computer image:
 
-    docker build -t openmuse-computer:local apps/computer
+    docker build -t agente-computer:local apps/computer
 
 ## How it is used
 

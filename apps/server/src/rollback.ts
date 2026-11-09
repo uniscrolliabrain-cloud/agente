@@ -1,5 +1,5 @@
 // ROLLBACK_V1 - rollback automatico cuando release:verify falla.
-// Guarda el ultimo deploy bueno en .openmuse/releases/<stamp>/
+// Guarda el ultimo deploy bueno en .agente/releases/<stamp>/
 // y permite volver a el con un comando.
 
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";

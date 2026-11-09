@@ -28,7 +28,7 @@ let aliceId: string;
 let bobId: string;
 
 before(async () => {
-  directory = await mkdtemp(join(tmpdir(), "openmuse-e2e-"));
+  directory = await mkdtemp(join(tmpdir(), "agente-e2e-"));
   db = await createStore({ dataDir: join(directory, "db") });
   server = await createApp(db, testConfig({ dataDir: directory }));
   const users = new UserService(db);

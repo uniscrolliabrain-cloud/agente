@@ -50,7 +50,7 @@ Ejecutando `secrets:check --mode=live` faltan exactamente estas:
 |---|---|
 | `PUBLIC_API_URL` | sin ella el redirect de Google se deriva de `localhost` y el consentimiento falla en producción |
 | `TOKEN_ENCRYPTION_KEY` | 32 bytes base64; sin ella Google no guarda tokens y los endpoints dan 503 |
-| `OPENMUSE_ACCESS_KEY` | >=24 caracteres; live no arranca |
+| `AGENTE_ACCESS_KEY` | >=24 caracteres; live no arranca |
 | `ALLOWED_ORIGINS` | sin el, el panel en otro host no puede llamar al API con credenciales |
 | `AUTH_PROVIDER` | debe ser `supabase` para el multitenant con JWT |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | sin ellos no hay primer admin y el login da 401 |
@@ -60,7 +60,7 @@ Generar las dos claves:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"  # TOKEN_ENCRYPTION_KEY
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"     # OPENMUSE_ACCESS_KEY
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"     # AGENTE_ACCESS_KEY
 ```
 
 ## Lo que está roto, no ausente

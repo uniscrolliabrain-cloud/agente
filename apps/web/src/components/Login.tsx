@@ -105,7 +105,7 @@ export default function Login({ onLogin, error }: Props) {
           </button>
         )}
 
-        <div className="login-footer">Agntia Pro · OpenMuse</div>
+        <div className="login-footer">Agntia Pro · Laia</div>
       </div>
     </div>
   );
