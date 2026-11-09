@@ -49,7 +49,16 @@ export class WorkspaceService {
         : { id: value?.connectionId ?? "sample-google", account: "alex@example.com" };
     }
     const tokens = await this.googleAuth.tokens(owner);
-    return tokens ? { id: tokens.connectionId, account: tokens.account } : null;
+    // APPROVAL_CONNECTION_GENERATION_V1 - la generacion de la credencial permite
+    // invalidar una revision preparada antes de rotar la conexion.
+    const generation = (tokens as { generation?: string } | null)?.generation;
+    return tokens
+      ? {
+          id: tokens.connectionId,
+          account: tokens.account,
+          ...(generation ? { generation } : {}),
+        }
+      : null;
   }
   async connected(owner: string) {
     return this.config.mode === "sample"
@@ -552,6 +561,25 @@ export class WorkspaceService {
     if (tokens.connectionId !== connectionId)
       throw new AppError("Google account or connection changed. Prepare a new action.", 409);
     const google = this.google(owner, connectionId);
+    // PROVIDER_OUTCOME_V1 (campana 14) - un 5xx o un timeout no confirman ni
+    // niegan la escritura: se marca ambigua para conciliar, nunca para reintentar
+    // en silencio. Un 4xx es un rechazo definitivo y se propaga tal cual.
+    const providerWrite = async <T>(call: () => Promise<T>): Promise<T> => {
+      try {
+        return await call();
+      } catch (error) {
+        if (error instanceof AppError && error.status < 500) throw error;
+        const status = (error as { status?: number })?.status;
+        if (typeof status === "number" && status >= 400 && status < 500) throw error;
+        throw Object.assign(
+          new AppError(
+            "The provider did not confirm the write; its outcome is uncertain. Check it there before retrying.",
+            502,
+          ),
+          { outcomeUnknown: true, code: "outcome_unknown" },
+        );
+      }
+    };
     if ((input.kind === "calendar.update" || input.kind === "calendar.delete") && !targetVersion)
       throw new AppError(
         "This calendar review predates target-version checks. Prepare a new review.",
@@ -568,26 +596,31 @@ export class WorkspaceService {
           };
         }),
       );
-      const receipt = await google.sendEmail(input.data, attachments);
+      const receipt = await providerWrite(() => google.sendEmail(input.data, attachments));
       return `Gmail sent message · ${receipt.id}`;
     }
     if (input.kind === "drive.trash") {
-      await google.trashDriveFile(input.data.fileId);
+      await providerWrite(() => google.trashDriveFile(input.data.fileId));
       return `Moved Google Drive file to trash · ${input.data.name}`;
     }
     if (input.kind === "drive.rename") {
-      const file = await google.renameDriveFile(input.data.fileId, input.data.name);
+      const file = await providerWrite(() =>
+        google.renameDriveFile(input.data.fileId, input.data.name),
+      );
       return `Renamed Google Drive file · ${file.name}`;
     }
     if (input.kind === "calendar.delete") {
-      await google.deleteEvent(input.data.calendarId, input.data.eventId, targetVersion);
+      await providerWrite(() =>
+        google.deleteEvent(input.data.calendarId, input.data.eventId, targetVersion),
+      );
       await this.db.remove(owner, "events", input.data.eventId);
       return `Deleted Google Calendar event · ${input.data.eventId}`;
     }
-    const event =
+    const event = await providerWrite(() =>
       input.kind === "calendar.create"
-        ? await google.createEvent(input.data)
-        : await google.updateEvent(input.data.eventId, input.data, targetVersion);
+        ? google.createEvent(input.data)
+        : google.updateEvent(input.data.eventId, input.data, targetVersion),
+    );
     await this.db.put(owner, "events", event);
     return `Google Calendar event · ${event.id}`;
   }

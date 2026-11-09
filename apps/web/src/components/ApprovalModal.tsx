@@ -79,6 +79,25 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
                 #{action.hash.slice(0, 12)}
               </div>
             )}
+            {/* APPROVAL_PROVIDER_V1 (campana 14) - proveedor y recibo visibles. */}
+            {action && (action as { provider?: string }).provider && (
+              <div className="modal-sub" style={{ color: "var(--v2-text-3)" }}>
+                Proveedor: {(action as { provider?: string }).provider}
+                {(action as { providerResult?: string }).providerResult
+                  ? ` · ${(action as { providerResult?: string }).providerResult}`
+                  : ""}
+              </div>
+            )}
+            {action && action.status === "expired" && (
+              <div className="modal-sub" style={{ color: "var(--v2-warn-text)" }}>
+                Revisión caducada: no se puede aprobar. Crea una propuesta nueva.
+              </div>
+            )}
+            {action && action.status === "failed" && (
+              <div className="modal-sub" style={{ color: "var(--v2-warn-text)" }}>
+                Falló: {action.error ?? "sin detalle"}
+              </div>
+            )}
             {/* DUAL_SIGN_VISIBLE_V1 â€” firmas requeridas si es doble firma. */}
             {action && action.needed && action.needed > 1 && (
               <div className="modal-sub" style={{ color: "var(--v2-warn-text)" }}>
@@ -134,6 +153,10 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
                 <b>Outcome incierto.</b> La operaciÃ³n pudo haber salido al proveedor.
                 Comprueba en Google (o el proveedor correspondiente) si se ejecutÃ³ e
                 indica el resultado:
+                {/* APPROVAL_NO_AUTO_RESEND_V1 - no hay reenvio automatico. */}
+                <div style={{ fontSize: 11, marginTop: 6 }}>
+                  No se reintenta automáticamente: primero se concilia.
+                </div>
               </div>
               <textarea
                 className="v2-pill"
@@ -152,7 +175,15 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
               </div>
             </>
           )}
-          {action && action.status !== "outcome_unknown" && (
+          {/* APPROVAL_TERMINAL_STATES_V1 - caducada o fallida no se aprueba. */}
+          {action && (action.status === "expired" || action.status === "failed") && (
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+              <button className="v2-pill" disabled={busy} onClick={onClose}>
+                Cerrar
+              </button>
+            </div>
+          )}
+          {action && action.status !== "outcome_unknown" && action.status !== "expired" && action.status !== "failed" && (
             <>
               <div className="v2-suggestion-card" style={{ cursor: "default", marginBottom: 12 }}>
                 <div className="v2-suggestion-icon">!</div>

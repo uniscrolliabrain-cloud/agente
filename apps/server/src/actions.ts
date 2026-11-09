@@ -57,7 +57,11 @@ interface Options {
     targetVersion?: string;
   }>;
   connected: (owner: string) => Promise<boolean>;
-  connection?: (owner: string) => Promise<{ id: string; account: string } | null>;
+  // APPROVAL_CONNECTION_GENERATION_V1 (campana 14) - la generacion de la
+  // credencial viaja con la propuesta: si rota, la revision vieja no despacha.
+  connection?: (
+    owner: string,
+  ) => Promise<{ id: string; account: string; generation?: string } | null>;
   now?: () => number;
 }
 // APPROVAL_REQUEST_PRIMITIVE_V1 - la propuesta actual es un ApprovalRequest
@@ -119,6 +123,17 @@ export class ActionService {
   async retry(owner: string, actionId: string): Promise<ActionProposal> {
     const action = await this.db.get<ActionProposal>(owner, "actions", actionId);
     if (!action) throw new AppError("Action not found", 404);
+    // APPROVAL_RETRY_AMBIGUOUS_V1 - un resultado incierto no se reintenta: se
+    // concilia. Va antes del filtro de estados para no confundirlo con un fallo.
+    if (
+      action.status === "outcome_unknown" ||
+      (action as { errorKind?: string }).errorKind === "outcome_unknown"
+    ) {
+      throw new AppError(
+        "Cannot retry an action with uncertain outcome. Reconcile it first.",
+        409,
+      );
+    }
     // RETRY_DENIED_V1 - permite reintentar failed y denied.
     if (action.status !== "failed" && action.status !== "denied") {
       throw new AppError(
@@ -126,6 +141,7 @@ export class ActionService {
         409,
       );
     }
+    // APPROVAL_RETRY_TEXT_V1 - el texto legacy sigue bloqueando el reintento.
     if (action.error && /outcome_unknown|uncertain/i.test(action.error)) {
       throw new AppError(
         "Cannot retry an action with uncertain outcome. Reconcile it first.",
@@ -182,7 +198,14 @@ export class ActionService {
               ? `Rename file to Ã¢â‚¬Å“${input.data.name}Ã¢â‚¬Â`
               : `${input.kind === "calendar.create" ? "Create" : "Update"} ${input.data.title}`;
     const createdAt = new Date(this.now()).toISOString();
-    const proposal: ActionProposal = {
+    // APPROVAL_PRINCIPAL_REVISION_V1 (campana 14) - la propuesta queda atada al
+    // principal que la pidio, al proveedor y a la revision exacta del payload
+    // (sin la conexion, que tiene su propio campo) y a la generacion de la
+    // credencial con la que se reviso.
+    const revision = createHash("sha256")
+      .update(JSON.stringify({ input, target: prepared?.target, targetVersion: prepared?.targetVersion }))
+      .digest("hex");
+    const proposal = {
       id,
       taskId,
       title,
@@ -208,7 +231,11 @@ export class ActionService {
       expiresAt: new Date(
         this.now() + (Number(process.env.ACTION_EXPIRES_MS ?? "1800000") || 1800000),
       ).toISOString(),
-    };
+      principal: ctx?.actor ?? owner,
+      provider: "google" as const,
+      revision,
+      ...(connection?.generation ? { connectionGeneration: connection.generation } : {}),
+    } as ActionProposal;
     const saved =
       idempotencyKey === undefined
         ? await this.db.put(owner, "actions", proposal)
@@ -277,6 +304,15 @@ export class ActionService {
       )
         throw new AppError(
           "Google account or connection changed. Prepare a new action for the connected account.",
+          409,
+        );
+      // APPROVAL_GENERATION_CHECK_V1 - reconectar rota la generacion: la
+      // revision anterior no puede ejecutarse contra la credencial nueva.
+      const proposedGeneration =
+        (proposal as { connectionGeneration?: string }).connectionGeneration ?? null;
+      if ((connection.generation ?? null) !== proposedGeneration)
+        throw new AppError(
+          "Google connection rotated. Review a fresh proposal for the current connection.",
           409,
         );
     }
@@ -364,6 +400,19 @@ export class ActionService {
         return (await this.db.get<ActionProposal>(owner, "actions", claimed.id)) ?? claimed;
       }
     }
+    return this.run(owner, claimed, userId ?? owner);
+  }
+
+  /**
+   * APPROVAL_RUN_V1 (campana 14) - la unica puerta al proveedor. Persiste el
+   * proveedor, el recibo confirmado o la ambiguedad, y nunca reintenta solo.
+   */
+  private async run(
+    owner: string,
+    claimed: ActionProposal,
+    decidedBy?: string,
+  ): Promise<ActionProposal> {
+    const executedAt = new Date(this.now()).toISOString();
     let finished: ActionProposal;
     try {
       const input = proposalSchema.parse({ kind: claimed.kind, data: claimed.data });
@@ -373,7 +422,16 @@ export class ActionService {
         claimed.connectionId,
         claimed.targetVersion,
       );
-      finished = { ...claimed, status: "succeeded", result };
+      finished = {
+        ...claimed,
+        status: "succeeded",
+        result,
+        provider: "google",
+        providerResult: result,
+        settledAt: new Date(this.now()).toISOString(),
+        executedAt,
+        ...(decidedBy ? { approvedBy: decidedBy } : {}),
+      } as unknown as ActionProposal;
     } catch (error) {
       const unknown =
         error instanceof Error &&
@@ -391,8 +449,17 @@ export class ActionService {
         ...claimed,
         status: unknown ? "outcome_unknown" : "failed",
         error: message,
-        ...(errorKind !== "outcome_unknown" ? { errorKind } : {}),
-      } as ActionProposal;
+        provider: "google",
+        executedAt,
+        ...(decidedBy ? { approvedBy: decidedBy } : {}),
+        // APPROVAL_AMBIGUOUS_V1 - un resultado incierto exige conciliacion
+        // humana: no hay recibo y no se reenvia automaticamente.
+        ...(unknown
+          ? { reconciliationRequired: true, errorKind: "outcome_unknown" as const }
+          : errorKind !== "outcome_unknown"
+            ? { errorKind }
+            : {}),
+      } as unknown as ActionProposal;
     }
     await this.db.put(owner, "actions", finished);
     // APPROVAL_SYNC_V2 - reflejar el estado final en approval-requests.
@@ -441,6 +508,59 @@ export class ActionService {
    * por cada transiciÃƒÂ³n de estado de la propuesta.
    * Ver: docs/audits/06-aprobaciones-acciones/miniaudit.md.
    */
+  /**
+   * APPROVAL_DISPATCH_V1 (campana 14) - despacho de una accion programada
+   * (ventana de undo). Revalida la conexion ANTES de reservar con CAS y, si
+   * la credencial cambio, falla cerrado: no se llama al proveedor.
+   */
+  async dispatchScheduled(
+    owner: string,
+    actionId: string,
+  ): Promise<{ executed: boolean; reason?: string }> {
+    const proposal = await this.db.get<ActionProposal>(owner, "actions", actionId);
+    if (!proposal) return { executed: false, reason: "action_not_found" };
+    if (proposal.status === "outcome_unknown")
+      return { executed: false, reason: "reconcile_previous_outcome" };
+    if (proposal.status !== "scheduled")
+      return { executed: false, reason: `invalid_state:${proposal.status}` };
+    if (this.options.connection) {
+      const connection = await this.options.connection(owner).catch(() => null);
+      const proposedGeneration =
+        (proposal as { connectionGeneration?: string }).connectionGeneration ?? null;
+      if (
+        !connection ||
+        connection.id !== proposal.connectionId ||
+        connection.account !== proposal.account ||
+        (connection.generation ?? null) !== proposedGeneration
+      ) {
+        await this.db.compareAndSwap<ActionProposal>(
+          owner,
+          "actions",
+          actionId,
+          { status: "scheduled" },
+          {
+            status: "failed",
+            error: "Google connection changed before dispatch. Prepare a new action.",
+            errorKind: "business",
+          },
+        );
+        return { executed: false, reason: "connection_changed" };
+      }
+    }
+    const claimed = await this.db.compareAndSwap<ActionProposal>(
+      owner,
+      "actions",
+      actionId,
+      { status: "scheduled" },
+      { status: "executing", executeAt: null },
+    );
+    if (!claimed) return { executed: false, reason: "already_dispatched" };
+    const finished = await this.run(owner, claimed);
+    return finished.status === "succeeded"
+      ? { executed: true }
+      : { executed: false, reason: finished.error ?? finished.status };
+  }
+
   private async audit(owner: string, action: ActionProposal, kind: string, detail: string, actorId?: string) {
     await this.db.put(owner, "action-audit", {
       id: `audit-${action.id}-${Date.now()}`,
