@@ -5,6 +5,15 @@ import { getThread, saveThreadMessages } from "../api/threads";
 import { toolsReducer, type ToolCall } from "../lib/toolsReducer";
 import type { ChatAttachment, ChatMessage } from "../types/api";
 
+// AUTOMATION_THREAD_PANEL_V1 (campana 13) - el panel muestra a que automatizacion
+// y ejecucion esta vinculado el hilo que esta mirando.
+interface ThreadAutomation {
+  automationId: string;
+  personaId: string;
+  executionId?: string;
+  entityId?: string;
+}
+
 function uid(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -22,12 +31,14 @@ export function useChat(
   const [streamBuf, setStreamBuf] = useState("");
   const [tools, setTools] = useState<ToolCall[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [automation, setAutomation] = useState<ThreadAutomation | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const loadedThreadRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled || !threadId) {
       setMessages([]);
+      setAutomation(null);
       loadedThreadRef.current = null;
       return;
     }
@@ -39,6 +50,7 @@ export function useChat(
         const thread = await getThread(threadId);
         if (cancelled) return;
         setMessages(thread.messages ?? []);
+        setAutomation((thread as { automation?: ThreadAutomation | null }).automation ?? null);
         setError(null);
       } catch (err) {
         if (cancelled) return;
@@ -167,6 +179,7 @@ export function useChat(
     streamBuf,
     tools,
     error,
+    automation,
     send,
     cancel,
     threadId,

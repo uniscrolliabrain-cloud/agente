@@ -91,6 +91,32 @@ export class ConversationAgent extends AbstractAgent {
     const promptText = typeof latest?.content === "string" ? latest.content : "";
     const forceDelegate = shouldDelegateToSlow(promptText);
 
+    // AUTOMATION_THREAD_BINDING_V1 (campana 13) - al iniciar el stream se lee el
+    // vinculo del hilo: entidad y ejecucion viajan al contexto para que la
+    // respuesta cite el trabajo concreto y no otra ejecucion de la empresa.
+    let automationBinding: { entityId?: string; executionId?: string } | undefined;
+    const automationBindingPromise = (async () => {
+      try {
+        const { AutomationThreads } = await import("./automation-thread.ts");
+        const tenantId = this.service.tenantService
+          ? await this.service.tenantService.tenantIdFor(this.owner)
+          : "default";
+        const link = await new AutomationThreads(this.service.db).get(
+          { tenantId, actorId: this.owner },
+          input.threadId,
+        );
+        if (link) {
+          automationBinding = {
+            ...(link.entityId ? { entityId: link.entityId } : {}),
+            ...(link.executionId ? { executionId: link.executionId } : {}),
+          };
+        }
+      } catch {
+        // AUTOMATION_NONFATAL_V1 - sin vinculo el chat funciona como antes.
+        automationBinding = undefined;
+      }
+    })();
+
     // KERNEL_TURN_OPEN_V2 - si hay kernel, abrimos turno o reusamos el abierto
     // del thread actual, y escribimos el mensaje del usuario como Thought(intent).
     //
@@ -669,10 +695,15 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         const roleMemories = roleContext?.memories ?? [];
         let contextBlock = "";
         if (roleContext && this.service.context) {
+          await automationBindingPromise;
           try {
             const pkg = await this.service.context.assemble(this.owner, {
               roleId: roleId!,
               query: typeof latest?.content === "string" ? latest.content : "",
+              ...(automationBinding?.entityId ? { entityId: automationBinding.entityId } : {}),
+              ...(automationBinding?.executionId
+                ? { executionId: automationBinding.executionId }
+                : {}),
             });
             const { renderContext } = await import("./context/assembly.ts");
             contextBlock = renderContext(pkg);

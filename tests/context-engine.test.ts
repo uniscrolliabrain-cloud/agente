@@ -105,3 +105,35 @@ test("assemble limits recent events to the selected entity before applying the l
     assert.deepEqual(pkg.events.map((event) => event.source.id), [first.id]);
   } finally { await db.close(); }
 });
+
+// CONTEXT_EXECUTION_TEST_V1 (campana 13) - la consulta de un hilo vinculado cita
+// su ejecucion y resuelve su entidad; sin vinculo no se inventa ninguna.
+test("assemble resuelve la ejecucion vinculada y su entidad", async () => {
+  const { db, graph, context } = await makeFixture();
+  try {
+    const owner = "o1";
+    await db.put(owner, "agent-roles", {
+      id: "operaciones", name: "Omar", tone: "concise", objetivo: "Desbloquear",
+      sops: [], active: true, memories: [], createdAt: new Date().toISOString(),
+    });
+    await graph.createEntity(owner, { id: "job-1", type: "job", name: "Fontaneria", actor: "t", source: "s" });
+    const now = new Date().toISOString();
+    await db.put(owner, "tasks", {
+      id: "exec-1", tenantId: owner, title: "Reactivacion", prompt: "reactivar",
+      kind: "sop", status: "waiting_input", assignedTo: "marta", plan: [], evidence: [],
+      input: {}, state: { entityId: "job-1", sopId: "sop-react" },
+      createdAt: now, updatedAt: now, attempts: 0, leaseId: null, leaseUntil: null, artifactIds: [],
+    });
+
+    const pkg = await context.assemble(owner, {
+      roleId: "operaciones", query: "por que se paro", executionId: "exec-1", entityId: "job-1",
+    });
+    assert.deepEqual(pkg.execution, {
+      id: "exec-1", title: "Reactivacion", status: "waiting_input", sopId: "sop-react", entityId: "job-1",
+    });
+    assert.equal(pkg.entity?.id, "job-1");
+
+    const plain = await context.assemble(owner, { roleId: "operaciones", query: "hola" });
+    assert.equal(plain.execution, undefined);
+  } finally { await db.close(); }
+});

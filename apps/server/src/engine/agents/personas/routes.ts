@@ -16,6 +16,7 @@ import { activityForPersona } from "./activity.ts";
 import type { Store } from "../../../db.ts";
 import type { TenantService } from "../../tenant.ts";
 import type { AuthzDeps } from "../../authz/pdp.ts";
+import { AutomationThreads } from "../../automation-thread.ts";
 
 // PERSONA_ROUTES_KERNEL_V1 - kernel para leer turns/thoughts de la persona.
 export interface PersonaRoutesDeps {
@@ -24,6 +25,8 @@ export interface PersonaRoutesDeps {
   kernel?: import("../../../kernel/index.ts").Kernel;
   tenantService?: TenantService;
   authz?: AuthzDeps;
+  // AUTOMATION_THREAD_WIRE_V1 (campana 13)
+  automationThreads?: AutomationThreads;
 }
 
 export function personasRoutes(deps: PersonaRoutesDeps) {
@@ -50,11 +53,41 @@ export function personasRoutes(deps: PersonaRoutesDeps) {
     if (!deps.registry.has(tenantId, "laia")) {
       return c.json({ error: "Laia is not available for this tenant" }, 503);
     }
-    const body = z.object({ threadId: z.string().trim().min(1).max(200) }).strict()
+    // AUTOMATION_THREAD_BODY_V1 - sin threadId se abre uno nuevo; la ejecucion
+    // es opcional pero, si viene, tiene que ser de esta empresa y de este proceso.
+    const body = z
+      .object({
+        threadId: z.string().trim().min(1).max(200).optional(),
+        executionId: z.string().trim().min(1).max(200).optional(),
+      })
+      .strict()
       .safeParse(await c.req.json().catch(() => null));
     if (!body.success) return c.json({ error: "A valid threadId is required" }, 400);
 
-    return c.json({ automationId, threadId: body.data.threadId, personaId: "laia" });
+    const threads = deps.automationThreads ?? new AutomationThreads(deps.db);
+    const scope = { tenantId, actorId: owner };
+    try {
+      const link = await threads.open(scope, {
+        ...(body.data.threadId ? { threadId: body.data.threadId } : {}),
+        personaId: "laia",
+        automationId,
+        ...(body.data.executionId ? { executionId: body.data.executionId } : {}),
+      });
+      const references = await threads.references(scope, link.id);
+      return c.json({
+        automationId,
+        threadId: link.id,
+        personaId: link.personaId,
+        executionId: link.executionId ?? null,
+        entityId: link.entityId ?? null,
+        references,
+      });
+    } catch (error) {
+      if (error instanceof AppError) {
+        return c.json({ error: error.message }, error.status);
+      }
+      throw error;
+    }
   });
 
   // GET /api/agent-personas

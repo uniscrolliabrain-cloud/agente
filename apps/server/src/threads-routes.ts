@@ -7,6 +7,7 @@ import type { RateLimiter } from "./rate-limit.ts";
 import { globalPresence } from "./engine/presence.ts";
 import { globalEditLock } from "./engine/edit-lock.ts"; // TYPE_FIX_EDIT_LOCK_IMPORT_V1
 import type { AuthzDeps } from "./engine/authz/pdp.ts";
+import { AutomationThreads } from "./engine/automation-thread.ts";
 // THREADS_EDIT_LOCK_FIX_V1
 
 interface Thread {
@@ -119,7 +120,13 @@ export function threadRoutes(
     const thread = await db.get<Thread>(owner, "threads", id);
     if (!thread) throw new AppError("Thread not found", 404);
     const conv = await db.get<{ messages: unknown[] }>(owner, "conversations", id);
-    return c.json({ ...thread, messages: conv?.messages ?? [] });
+    // AUTOMATION_THREAD_EXPOSE_V1 (campana 13) - el panel ve a que automatizacion
+    // y ejecucion esta vinculado el hilo, para enlazar la evidencia.
+    const tenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
+    const automation = await new AutomationThreads(db).get({ tenantId, actorId: owner }, id);
+    return c.json({ ...thread, messages: conv?.messages ?? [], automation });
   });
 
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
@@ -210,6 +217,11 @@ export function threadRoutes(
     const id = c.req.param("id");
     await db.remove(owner, "threads", id);
     await db.remove(owner, "conversations", id);
+    // AUTOMATION_FORGET_V1 - un hilo borrado no deja vinculo reanudable.
+    const tenantId = tenantService
+      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
+      : "default"; // FALLBACK_TENANT_V1
+    await new AutomationThreads(db).forget({ tenantId, actorId: owner }, id);
     return c.json({ ok: true });
   });
 

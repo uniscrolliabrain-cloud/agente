@@ -20,6 +20,15 @@ export interface ContextPackage {
   };
   entity?: BusinessEntity;
   relations: BusinessRelation[];
+  // CONTEXT_EXECUTION_V1 (campana 13) - ejecucion vinculada al hilo: la
+  // consulta puede citar el trabajo concreto y no la empresa entera.
+  execution?: {
+    id: string;
+    title: string;
+    status: string;
+    sopId: string | null;
+    entityId: string | null;
+  };
   events: SystemEvent[];
   recall: RecallResult;
   // FIX_LEARNING_IN_PKG_V1 - facts aprendidos por LearningObserver.
@@ -34,6 +43,8 @@ export interface AssembleInput {
   roleId: string;
   entityId?: string;
   query: string;
+  // CONTEXT_EXECUTION_INPUT_V1 (campana 13)
+  executionId?: string;
   eventLimit?: number;
   history?: string[];
   /**
@@ -91,6 +102,19 @@ export class ContextEngine {
     const entity = input.entityId
       ? await this.graph.getEntity(owner, input.entityId)
       : null;
+    // CONTEXT_EXECUTION_RESOLVE_V1 - solo la ejecucion del propio owner; una
+    // ejecucion de otra empresa no se resuelve y el contexto sigue sin ella.
+    const execution = input.executionId
+      ? await this.db
+          .get<{
+            id: string;
+            title: string;
+            status: string;
+            tenantId?: string;
+            state: Record<string, unknown>;
+          }>(owner, "tasks", input.executionId)
+          .catch(() => null)
+      : null;
     const relations = entity
       ? await this.graph.listRelations(owner, entity.id)
       : [];
@@ -140,6 +164,18 @@ export class ContextEngine {
         memories: roleMemories,
       },
       ...(entity ? { entity } : {}),
+      ...(execution
+        ? {
+            execution: {
+              id: execution.id,
+              title: execution.title,
+              status: execution.status,
+              sopId: typeof execution.state.sopId === "string" ? execution.state.sopId : null,
+              entityId:
+                typeof execution.state.entityId === "string" ? execution.state.entityId : null,
+            },
+          }
+        : {}),
       relations,
       events,
       recall,
@@ -152,6 +188,7 @@ export class ContextEngine {
       relationCount: relations.length,
       knowledgeCount: roleMemories.length + events.length,
       policyCount: 0,
+      ...(execution ? { executionId: execution.id } : {}),
     });
     return pkg;
   }
