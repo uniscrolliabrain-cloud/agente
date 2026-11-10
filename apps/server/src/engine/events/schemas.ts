@@ -81,13 +81,6 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
     actionId: z.string().max(200),
     by: z.string().max(200),
   }),
-  // D2_VIEW_RESOLVED_V1 - spec servido por el agente.
-  "view.resolved": z.object({
-    ...base,
-    kind: z.enum(["dashboard", "queue"]),
-    title: z.string().max(300),
-    spec: z.record(z.string(), z.unknown()),
-  }),
   // SCHEMAS_V2 â€” business graph, policy, state machine, agent runtime, context.
   "entity.created": z.object({
     ...base,

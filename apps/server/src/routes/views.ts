@@ -1,59 +1,128 @@
-// FIX_02_ROUTES_VIEWS_V3 - endpoint resolve real.
+// VIEWS_ROUTE_V2 - un unico endpoint devuelve ViewEnvelope.
+// - con workspaceId: ejecuta la query real del modulo y adapta el resultado.
+// - sin workspaceId: mantiene el resolver legacy como fallback explicito.
+// No hay builders por defecto: un intent sin vista devuelve null y el
+// frontend conserva la vista actual en vez de borrarla.
+import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
 import type {
-  ViewKpi,
-  ViewQueueItem,
-} from "../../../../packages/domain/src/views.ts";
+  WorkspaceContext,
+  WorkspaceQueryEnvelope,
+  WorkspaceViewDeclaration,
+} from "@agente/workspaces";
+import type { RuntimeViewSpec } from "../../../../packages/domain/src/views.ts";
+import type { ViewEnvelope } from "../../../../packages/domain/src/view-envelope.ts";
+import { adaptWorkspaceView } from "../engine/views/workspace-adapter.ts";
 import { resolveView } from "../engine/views/resolver.ts";
+import type { WorkspaceModuleRegistry } from "../engine/workspaces/registry.ts";
+import type { WorkspaceDispatcher } from "../engine/workspaces/dispatcher.ts";
 
-// VIEW_INTENTS_V1 - intenciones reales del resolver.
-import { registerIntent, clearIntents } from "../engine/views/resolver.ts";
-
-function registerDefaultIntents() {
-  clearIntents();
-  registerIntent(/\b(dashboard|panel|resumen|kpis)\b/, async () => ({
-    kind: "dashboard",
-    title: "Panel",
-    kpis: [
-      { label: "Tareas activas", value: 0 },
-      { label: "Completadas hoy", value: 0 },
-      { label: "Fallos recientes", value: 0 },
-    ] satisfies ViewKpi[],
-  }));
-  registerIntent(/\b(cola|queue|pendientes|bandeja)\b/, async () => ({
-    kind: "queue",
-    title: "Pendientes",
-    items: [] satisfies ViewQueueItem[],
-  }));
-  registerIntent(/\b(tabla|listado|lista)\b/, async () => ({
-    kind: "table",
-    title: "Listado",
-    columns: [{ key: "name", label: "Nombre", type: "text", align: "left" }],
-    rows: [],
-  }));
-  registerIntent(/\b(detalle|ficha)\b/, async () => ({
-    kind: "detail",
-    title: "Detalle",
-    properties: [],
-  }));
-  registerIntent(/\b(formulario|alta|crear)\b/, async () => ({
-    kind: "form",
-    title: "Formulario",
-    entityType: "entity",
-    fields: [],
-    submitLabel: "Guardar",
-  }));
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
-registerDefaultIntents();
+function findDeclaration(
+  views: readonly WorkspaceViewDeclaration[],
+  intent: string | undefined,
+): WorkspaceViewDeclaration | undefined {
+  if (!intent) return views[0];
+  const needle = normalize(intent);
+  return (
+    views.find((view) => {
+      const haystack = normalize(`${view.id} ${view.title} ${view.intent}`);
+      return haystack.includes(needle) || needle.includes(normalize(view.title));
+    }) ?? views[0]
+  );
+}
 
-export function viewsRoutes() {
-  const app = new Hono<{ Variables: { owner: string } }>();
+function legacyView(tenantId: string, spec: RuntimeViewSpec): ViewEnvelope {
+  const generatedAt = new Date().toISOString();
+  return {
+    id: `legacy:${randomUUID()}`,
+    tenantId,
+    spec,
+    provenance: [{ source: "legacy-resolver", label: spec.title, asOf: generatedAt }],
+    freshness: { generatedAt, stale: true },
+    permissions: { canView: true, canAct: [] },
+    source: { provider: "legacy" },
+    generatedAt,
+  };
+}
+
+export function viewsRoutes(registry: WorkspaceModuleRegistry, dispatcher: WorkspaceDispatcher) {
+  const app = new Hono<{
+    Variables: { owner: string; ctx: { tenantId: string } };
+  }>();
+
   app.post("/resolve", async (c) => {
-    const body = z.object({ intent: z.string().min(1).max(1000) }).parse(await c.req.json());
-    const spec = await resolveView(c.get("owner"), body.intent);
-    return c.json({ spec });
+    const body = z
+      .object({
+        intent: z.string().max(1000).optional(),
+        workspaceId: z.string().min(1).max(100).optional(),
+        viewId: z.string().min(1).max(200).optional(),
+        entityId: z.string().max(200).optional(),
+        messageId: z.string().max(200).optional(),
+        threadId: z.string().max(200).optional(),
+      })
+      .refine((value) => Boolean(value.intent || value.workspaceId), {
+        message: "intent o workspaceId es obligatorio",
+      })
+      .parse(await c.req.json());
+
+    if (body.viewId && !body.workspaceId) {
+      return c.json({ error: "viewId requiere workspaceId" }, 422);
+    }
+
+    const owner = c.get("owner");
+    const tenantId = c.get("ctx")?.tenantId ?? owner;
+
+    if (body.workspaceId) {
+      const module = registry.get(body.workspaceId);
+      if (!module) return c.json({ error: "workspace not found" }, 404);
+      const declaration = body.viewId
+        ? module.views.find((view) => view.id === body.viewId)
+        : findDeclaration(module.views, body.intent);
+      if (!declaration) return c.json({ error: "view not found" }, 404);
+
+      const context: WorkspaceContext = {
+        workspaceId: module.manifest.id,
+        tenantId,
+        owner,
+        actorId: owner,
+        actorKind: "user",
+        permissions: [],
+        correlationId: body.messageId ?? randomUUID(),
+      };
+      const envelope: WorkspaceQueryEnvelope = {
+        id: randomUUID(),
+        workspaceId: module.manifest.id,
+        query: declaration.query,
+        version: 1,
+        parameters: body.entityId ? { entityId: body.entityId } : {},
+        limit: 50,
+      };
+      const result = await dispatcher.dispatchQuery(module, context, envelope);
+      if (result.status === "forbidden") {
+        return c.json({ error: "No tienes permiso para ver esta vista" }, 403);
+      }
+      const view = adaptWorkspaceView({
+        tenantId,
+        workspaceId: module.manifest.id,
+        declaration,
+        result,
+        ...(body.entityId ? { entityId: body.entityId } : {}),
+      });
+      if (!view) return c.json({ error: "La vista no se pudo normalizar" }, 422);
+      return c.json({ view });
+    }
+
+    const spec = body.intent ? await resolveView(owner, body.intent) : null;
+    return c.json({ view: spec ? legacyView(tenantId, spec) : null });
   });
+
   return app;
 }

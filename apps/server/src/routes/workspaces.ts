@@ -1,14 +1,35 @@
-// WS_ROUTES_V1 - endpoints del catalogo de workspaces.
+// WS_ROUTES_V2 - catalogo y ejecucion de vistas de workspace.
+import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
+import type {
+  WorkspaceContext,
+  WorkspaceQueryEnvelope,
+  WorkspaceViewDeclaration,
+} from "../../../../packages/workspaces/src/contracts/index.ts";
 import type { WorkspaceModuleRegistry } from "../engine/workspaces/registry.ts";
 import type { WorkspaceDispatcher } from "../engine/workspaces/dispatcher.ts";
 import { workspaceCommandEnvelopeSchema, workspaceQueryEnvelopeSchema } from "../../../../packages/workspaces/src/contracts/index.ts";
+import { adaptWorkspaceView } from "../engine/views/workspace-adapter.ts";
 
-// B-25/B-26 - WorkspaceSpec (presentacion) vs WorkspaceModule (descubrimiento).
-// Esta ruta expone WorkspaceModule. WorkspaceSpec se usa en el frontend
-// para renderizar. No se fusionan: son dos contratos distintos.
-// Decision documentada en docs/roadmap/README.md.
+function normalize(text: string): string {
+  return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function findView(
+  views: readonly WorkspaceViewDeclaration[],
+  intent: string | undefined,
+): WorkspaceViewDeclaration | undefined {
+  if (!intent) return views[0];
+  const needle = normalize(intent);
+  return (
+    views.find((view) => {
+      const haystack = normalize(`${view.id} ${view.title} ${view.intent}`);
+      return haystack.includes(needle) || needle.includes(normalize(view.title));
+    }) ?? views[0]
+  );
+}
+
 export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: WorkspaceDispatcher) {
   const app = new Hono<{ Variables: { owner: string; tenantId: string } }>();
 
@@ -29,9 +50,60 @@ export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: 
       manifest: m.manifest,
       capabilities: m.capabilities.map((x) => x.id),
       views: m.views.map((x) => x.id),
+      viewDefinitions: m.views,
       commands: Object.keys(m.commands),
       queries: Object.keys(m.queries),
     });
+  });
+
+  // WS_VIEW_EXEC_V1 - ejecuta una declaracion real y devuelve ViewEnvelope.
+  app.post("/:id/view", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = c.get("tenantId") ?? owner;
+    const m = registry.get(c.req.param("id"));
+    if (!m) return c.json({ error: "workspace not found" }, 404);
+    const body = z
+      .object({
+        viewId: z.string().min(1).max(200).optional(),
+        intent: z.string().max(500).optional(),
+        entityId: z.string().max(200).optional(),
+      })
+      .parse(await c.req.json().catch(() => ({})));
+    const declaration = body.viewId
+      ? m.views.find((view) => view.id === body.viewId)
+      : findView(m.views, body.intent);
+    if (!declaration) return c.json({ error: "view not found" }, 404);
+
+    const context: WorkspaceContext = {
+      workspaceId: m.manifest.id,
+      tenantId,
+      owner,
+      actorId: owner,
+      actorKind: "user",
+      permissions: [],
+      correlationId: randomUUID(),
+    };
+    const envelope: WorkspaceQueryEnvelope = {
+      id: randomUUID(),
+      workspaceId: m.manifest.id,
+      query: declaration.query,
+      version: 1,
+      parameters: body.entityId ? { entityId: body.entityId } : {},
+      limit: 50,
+    };
+    const result = await dispatcher.dispatchQuery(m, context, envelope);
+    if (result.status === "forbidden") {
+      return c.json({ error: "No tienes permiso para ver esta vista" }, 403);
+    }
+    const view = adaptWorkspaceView({
+      tenantId,
+      workspaceId: m.manifest.id,
+      declaration,
+      result,
+      ...(body.entityId ? { entityId: body.entityId } : {}),
+    });
+    if (!view) return c.json({ error: "La vista no se pudo normalizar" }, 422);
+    return c.json({ view });
   });
 
   app.post("/:id/command", async (c) => {

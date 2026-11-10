@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -72,15 +72,21 @@ export default function App() {
   const { memories, files } = useWorkspaceData(auth.isAuthenticated);
   useNotifications(auth.isAuthenticated);
   useTheme();
-  const viewResolver = useViewResolver();
+  const {
+    view: resolvedView,
+    loading: viewLoading,
+    error: viewError,
+    resolve: resolveView,
+    clear: clearView,
+  } = useViewResolver();
 
   const [view, setView] = useState<AppView>("chat");
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [activeWorkspaceId] = useState<string | null>(null);
-  const { workspaces: _workspaces } = useWorkspaces(auth.isAuthenticated);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  const { workspaces } = useWorkspaces(auth.isAuthenticated);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -119,6 +125,16 @@ export default function App() {
 
   const openTask = (t: AgentTask) => setOpenTaskId(t.id);
   const reviewTask = (t: AgentTask) => setReviewTaskId(t.id);
+  const handleResolveView = useCallback(
+    (intent: string, messageId?: string) => {
+      void resolveView(intent, {
+        ...(messageId ? { messageId } : {}),
+        ...(activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {}),
+        ...(threads.activeId ? { threadId: threads.activeId } : {}),
+      });
+    },
+    [resolveView, activeWorkspaceId, threads.activeId],
+  );
   const handleNewChat = () => {
     setView("chat");
     void threads.createNew();
@@ -149,12 +165,14 @@ export default function App() {
     />
   );
 
-  const panel = (
+  const panel = resolvedView || viewLoading || viewError ? (
     <ContextualPanel
-      spec={viewResolver.spec}
-      onClose={viewResolver.clear}
+      view={resolvedView}
+      loading={viewLoading}
+      error={viewError}
+      onClose={clearView}
     />
-  );
+  ) : undefined;
 
   return (
     <>
@@ -167,7 +185,7 @@ export default function App() {
         />
 
         <div className="v2-content">
-          {view === "chat" && <ChatPanel chat={chat} onResolveView={(intent) => void viewResolver.resolve(intent)} />} {/* APP_CONNECT_VIEWRESOLVER_V1 */}
+          {view === "chat" && <ChatPanel chat={chat} onResolveView={handleResolveView} />}
           {view === "tasks" && (
             <TasksView
               tasks={tasks.tasks}
@@ -191,7 +209,13 @@ export default function App() {
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
           {view === "agents" && <div className="v2-tasks-view"><h1 className="v2-tasks-title">Agentes</h1><div className="v2-tasks-meta">En construccion</div></div>}
-          {view === "workspace" && <WorkspaceShell workspaceId={activeWorkspaceId} spec={viewResolver.spec} />}
+          {view === "workspace" && (
+            <WorkspaceShell
+              workspaces={workspaces}
+              workspaceId={activeWorkspaceId}
+              onSelectWorkspace={setActiveWorkspaceId}
+            />
+          )}
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
         </div>

@@ -17,7 +17,7 @@ export default function QueueTemplate({ spec, onAction }: Props) {
               <b className="tpl-queue__title">{i.title}</b>
               {i.subtitle && <small className="tpl-queue__sub">{i.subtitle}</small>}
             </div>
-            {i.actions.length > 0 && (
+            {onAction && i.actions.length > 0 && (
               <div className="tpl-queue__actions">
                 {i.actions.map((a) => (
                   <button

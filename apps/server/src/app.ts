@@ -847,7 +847,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   // cableado y usa la instancia del resolver del proceso.
   {
     const { viewsRoutes } = await import("./routes/views.ts");
-    app.route("/api/views", viewsRoutes());
+    app.route("/api/views", viewsRoutes(workspaceModuleRegistry, workspaceDispatcher));
   // WS_ROUTES_WIRE_V1 - endpoints del catalogo de workspaces.
   {
     const { workspacesRoutes } = await import("./routes/workspaces.ts");

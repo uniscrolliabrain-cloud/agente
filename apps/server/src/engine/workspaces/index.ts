@@ -2,3 +2,4 @@
 export { WorkspaceModuleRegistry } from "./registry.ts";
 export { bridgeWorkspaceCapabilities } from "./bridge.ts";
 export { WorkspaceDispatcher } from "./dispatcher.ts";
+export { defaultWorkspaceView, withDefaultViews } from "./default-views.ts";

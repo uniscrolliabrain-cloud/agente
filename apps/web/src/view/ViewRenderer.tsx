@@ -1,7 +1,12 @@
-// D3_VIEWRENDERER_V2 - discriminated union + assertNever.
-import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
+// VIEW_RENDERER_V3 - los 7 kinds tienen componente.
+import { parseRuntimeViewSpec, type RuntimeViewSpec } from "@agente/domain/views";
 import DashboardTemplate from "../templates/dashboard/DashboardTemplate";
 import QueueTemplate from "../templates/queue/QueueTemplate";
+import InboxTemplate from "../templates/inbox/InboxTemplate";
+import BoardTemplate from "../templates/board/BoardTemplate";
+import TableTemplate from "../templates/table/TableTemplate";
+import DetailTemplate from "../templates/detail/DetailTemplate";
+import FormTemplate from "../templates/form/FormTemplate";
 
 interface Props {
   spec: unknown;
@@ -24,9 +29,6 @@ export default function ViewRenderer({ spec: raw, onAction }: Props) {
   return <Render spec={spec} onAction={onAction} />;
 }
 
-// VIEWRENDERER_SEVEN_KINDS_V1 - el renderer acepta los 7 kinds del schema
-// ampliado. Los que no tienen componente propio muestran un fallback honesto
-// en vez de reventar con assertNever.
 function Render({ spec, onAction }: { spec: RuntimeViewSpec; onAction?: (id: string, a: string) => void }) {
   switch (spec.kind) {
     case "dashboard":
@@ -34,17 +36,15 @@ function Render({ spec, onAction }: { spec: RuntimeViewSpec; onAction?: (id: str
     case "queue":
       return <QueueTemplate spec={spec} onAction={onAction} />;
     case "inbox":
+      return <InboxTemplate spec={spec} onAction={onAction} />;
     case "board":
+      return <BoardTemplate spec={spec} />;
     case "table":
+      return <TableTemplate spec={spec} />;
     case "detail":
+      return <DetailTemplate spec={spec} />;
     case "form":
-      // Pendiente de componente propio. Mostramos un placeholder honesto.
-      return (
-        <div className="card" role="region" aria-label={spec.title}>
-          <b>{spec.title}</b>
-          <p>Este tipo de vista ({spec.kind}) se sirve pero aun no tiene template dedicado.</p>
-        </div>
-      );
+      return <FormTemplate spec={spec} />;
     default:
       return assertNever(spec);
   }

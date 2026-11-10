@@ -2,12 +2,13 @@
 // Importa por barrel, no carga YAML en runtime.
 
 import type { WorkspaceModule, WorkspaceFamily } from "@agente/workspaces";
+import { withDefaultViews } from "./default-views.ts";
 
 export class WorkspaceModuleRegistry {
   private readonly modules = new Map<string, WorkspaceModule>();
 
   register(module: WorkspaceModule): void {
-    this.modules.set(module.manifest.id, module);
+    this.modules.set(module.manifest.id, withDefaultViews(module));
   }
 
   registerAll(modules: readonly WorkspaceModule[]): void {

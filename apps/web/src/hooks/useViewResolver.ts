@@ -1,32 +1,59 @@
-// D3_USE_VIEW_RESOLVER_V1 - resuelve un intent contra el backend.
-import { useCallback, useState } from "react";
+// VIEW_RESOLVER_HOOK_V2 - una peticion viva, respuesta correlacionada y
+// envelope completo. Un intent sin vista no borra la vista actual.
+import { useCallback, useRef, useState } from "react";
+import type { ViewEnvelope } from "@agente/domain/view-envelope";
 import { apiFetch } from "../api/client";
-import type { RuntimeViewSpec } from "@agente/domain/views"; // FIX_02_D
+
+export interface ResolveViewOptions {
+  workspaceId?: string;
+  viewId?: string;
+  entityId?: string;
+  messageId?: string;
+  threadId?: string;
+}
 
 export function useViewResolver() {
-  const [spec, setSpec] = useState<RuntimeViewSpec | null>(null);
+  const [view, setView] = useState<ViewEnvelope | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const sequence = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const resolve = useCallback(async (intent: string) => {
+  const resolve = useCallback(async (intent: string, options: ResolveViewOptions = {}) => {
+    const requestId = ++sequence.current;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch<{ spec: RuntimeViewSpec | null }>("/api/views/resolve", {
+      const res = await apiFetch<{ view: ViewEnvelope | null }>("/api/views/resolve", {
         method: "POST",
-        body: { intent },
+        body: { intent, ...options },
+        signal: controller.signal,
       });
-      setSpec(res.spec);
-      return res.spec;
+      if (requestId !== sequence.current) return null;
+      if (res.view) setView(res.view);
+      return res.view;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo resolver la vista");
+      if (controller.signal.aborted) return null;
+      if (requestId === sequence.current) {
+        setError(err instanceof Error ? err.message : "No se pudo resolver la vista");
+      }
       return null;
     } finally {
-      setLoading(false);
+      if (requestId === sequence.current) setLoading(false);
     }
   }, []);
 
-  const clear = useCallback(() => setSpec(null), []);
+  const clear = useCallback(() => {
+    sequence.current += 1;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setView(null);
+    setLoading(false);
+    setError(null);
+  }, []);
 
-  return { spec, loading, error, resolve, clear };
+  return { view, spec: view?.spec ?? null, loading, error, resolve, clear };
 }

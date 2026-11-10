@@ -1,6 +1,5 @@
-// BUG05_RESOLVEVIEW_V2 - llamar a resolveView antes del LLM.
-// WIRE_RESOLVEVIEW_CONV_V1 - llamar a resolveView en el turno del chat.
-// D2_RESOLVEVIEW_WIRE_V1 - llamar a resolveView antes del LLM y emitir view.resolved.
+// VIEW_RESOLUTION_HTTP_V1 - las vistas se resuelven por HTTP; el turno del
+// chat no emite specs de vista ni eventos view.resolved.
 import "../config.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { AbstractAgent } from "@ag-ui/client";
@@ -1209,26 +1208,6 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
                   // PRESENTER_USE_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â el Presenter decide qu
                   // Ver: docs/audits/09-kernel-cognitivo/roadmap.md
                   const presenterText = await this.presentText(ctx, turnId);
-                  // PRESENTER_EMIT_VIEW_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â publica al bus que el Presenter
-                  // decidi
-                  if (presenterText) {
-                    try {
-                      await this.service.bus?.emit(
-                        this.owner,
-                        "view.resolved",
-                        { kind: "context", id: turnId },
-                        {
-                          kind: "dashboard",
-                          title: presenterText.slice(0, 200),
-                          spec: {},
-                        },
-                        { dedupeKey: `view.resolved:${turnId}` },
-                      );
-                    } catch (error) {
-                      const { backgroundFailure } = await import("../log.ts");
-                      backgroundFailure("presenter.emitViewResolved", error);
-                    }
-                  }
                   const textToPersist = presenterText ?? response;
                   try {
                     if (textToPersist.trim()) {

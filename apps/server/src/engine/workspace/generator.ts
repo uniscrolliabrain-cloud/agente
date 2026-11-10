@@ -84,7 +84,7 @@ export class WorkspaceGenerator {
       title: "Workspace",
       sections,
       views,
-      defaultView: "dashboard",
+      defaultView: sections[0]?.viewKind ?? "dashboard",
       createdAt: new Date().toISOString(),
     };
   }

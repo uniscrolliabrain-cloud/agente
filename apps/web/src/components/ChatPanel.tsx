@@ -1,8 +1,7 @@
-// CHATPANEL_RESOLVEVIEW_V1 - el panel contextual se rellena cuando el usuario
-// pide una vista. Antes solo se rellenaba si el backend emitia view.resolved
-// al bus, que no ocurre en la practica. Ahora disparamos resolveView cuando
-// el usuario envia un mensaje y pasamos el spec al viewResolver.
-import { useEffect, useState } from "react";
+// CHATPANEL_RESOLVEVIEW_V2 - el panel se rellena una vez por mensaje de
+// usuario; el backend devuelve un ViewEnvelope y el frontend conserva la
+// vista si el intent no produce ninguna.
+import { useEffect, useRef, useState } from "react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import SuggestionChips from "./SuggestionChips";
@@ -25,7 +24,7 @@ interface ChatState {
 
 interface Props {
   chat: ChatState;
-  onResolveView?: (intent: string) => void;
+  onResolveView?: (intent: string, messageId?: string) => void;
 }
 
 const CHIPS_DEFAULT = [
@@ -60,16 +59,21 @@ const CHIPS_BY_ROLE: Record<string, { id: string; label: string; prompt: string 
 
 export default function ChatPanel({ chat, onResolveView }: Props) {
   const [seed, setSeed] = useState("");
+  const lastResolvedRef = useRef<string | null>(null);
   const isEmpty = chat.messages.length === 0 && !chat.streaming;
 
-  // CHATPANEL_RESOLVEVIEW_V1 - cada vez que el usuario manda un mensaje
-  // nuevo, intentamos resolverlo como intencion de vista.
+  // CHATPANEL_RESOLVEVIEW_V2 - una sola resolucion por mensaje de usuario.
+  // La clave incluye thread e id para que el streaming o un re-render no
+  // vuelvan a pedir la misma vista.
   useEffect(() => {
     if (!onResolveView) return;
     const lastUser = [...chat.messages].reverse().find((m) => m.role === "user");
     if (!lastUser?.content) return;
-    onResolveView(lastUser.content);
-  }, [chat.messages, onResolveView]);
+    const key = `${chat.threadId ?? "no-thread"}:${lastUser.id}`;
+    if (lastResolvedRef.current === key) return;
+    lastResolvedRef.current = key;
+    onResolveView(lastUser.content, lastUser.id);
+  }, [chat.messages, chat.threadId, onResolveView]);
 
   if (isEmpty) {
     return (
