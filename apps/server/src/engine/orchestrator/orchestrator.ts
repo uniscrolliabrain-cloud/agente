@@ -66,12 +66,21 @@ export class BusinessOSOrchestrator {
     }
 
     // ORCHESTRATOR_ACTOR_PROPAGATE_V1 - propaga actorId y sessionId si estan.
-    const context = await this.deps.context.assemble(ctx.owner, {
-      roleId: ctx.roleId ?? "default",
-      query: goal.description || goal.title,
-      ...(ctx.actorId ? { actorId: ctx.actorId } : {}),
-      ...(ctx.sessionId ? { sessionId: ctx.sessionId } : {}),
-    });
+    // ORCHESTRATOR_CONTEXT_BLOCKED_V1 - un rol inexistente o un contexto que
+    // no se puede montar devolvia una excepcion y la tarea moria sin outcome.
+    // El ciclo debe declarar `blocked` con el motivo, no romperse.
+    let context: Record<string, unknown>;
+    try {
+      context = await this.deps.context.assemble(ctx.owner, {
+        roleId: ctx.roleId ?? "default",
+        query: goal.description || goal.title,
+        ...(ctx.actorId ? { actorId: ctx.actorId } : {}),
+        ...(ctx.sessionId ? { sessionId: ctx.sessionId } : {}),
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : "contexto no disponible";
+      return { status: "blocked", summary: `Contexto no disponible: ${detail}` };
+    }
 
     const capabilities = await this.deps.capabilities.list();
 
