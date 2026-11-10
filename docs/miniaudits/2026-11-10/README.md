@@ -102,3 +102,7 @@ Aplicados en `main`, con typecheck y pruebas en foco en verde:
 | Contexto del orquestador | 10-1 | un rol inexistente devuelve `blocked` con el motivo en vez de lanzar y dejar la tarea sin outcome | `d009dee` |
 
 Revisados y **no aplicables** tal como están escritos: `actions.ts` fija `provider: "google"` porque ese servicio sólo propone acciones de Google (el proveedor real viaja en la conexión); y `backup-tenant.ts` ya copia `files` y `browser-profiles` por tenant, así que el hallazgo de backup se reduce a incluir el dump de Postgres, que es de despliegue y no de este módulo.
+
+## Anexo de trabajo
+
+[ANEXO-ORDEN-DE-TRABAJO.md](ANEXO-ORDEN-DE-TRABAJO.md) ordena los 321 hallazgos restantes en ocho fases (A–H) por lo que hace falta para poder cerrarlos: qué hay que comprobar en cada una y qué permisos, cuentas y servicios hay que conseguir antes de empezar. La fase A no necesita nada externo; la E (Google con scopes mínimos) es la de calendario más largo y conviene lanzarla en paralelo.
