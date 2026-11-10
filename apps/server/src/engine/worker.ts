@@ -514,13 +514,41 @@ export class TaskWorker {
       await this.db.put(owner, "runs", finishMeta);
     } catch (error) {
       if (error instanceof LostLeaseError || controller.signal.aborted) {
-        await this.db.compareAndSwap(
+        // WORKER_ATTEMPT_CEILING_V1 - un lease perdido reencolaba la tarea sin
+        // techo: si el intento moria siempre por timeout, la tarea volvia a la
+        // cola indefinidamente y el coste lo pagaba el tenant. Ahora, agotado
+        // el presupuesto, termina en `failed` y va al dead-letter. Un apagado
+        // ordenado (aborted) no consume presupuesto: se reencola igual.
+        const maxAttempts = Number(process.env.TASK_MAX_ATTEMPTS ?? "5") || 5;
+        const exhausted = !controller.signal.aborted && task.attempts >= maxAttempts;
+        const settledRow = await this.db.compareAndSwap(
           owner,
           "tasks",
           taskId,
           { leaseId, status: "running" },
-          { status: "queued", leaseId: null, leaseUntil: null },
+          exhausted
+            ? {
+                status: "failed",
+                error: `Reintentos agotados (${task.attempts}/${maxAttempts})`,
+                leaseId: null,
+                leaseUntil: null,
+                updatedAt: new Date(this.now()).toISOString(),
+              }
+            : { status: "queued", leaseId: null, leaseUntil: null },
         );
+        if (exhausted && settledRow) {
+          try {
+            await event("error", "Task needs attention", `Reintentos agotados (${task.attempts}/${maxAttempts})`);
+          } catch (eventError) {
+            backgroundFailure("record exhausted task", eventError);
+          }
+          try {
+            const latest = await this.db.get<AgentTask>(owner, "tasks", taskId);
+            if (latest) await new DeadLetterQueue(this.db).enqueue(latest, latest.error ?? "attempts exhausted", owner);
+          } catch (dlqError) {
+            backgroundFailure("dead-letter enqueue (attempts)", dlqError);
+          }
+        }
       } else {
         const detail = error instanceof Error ? error.message : "Task execution failed";
         // WORKER_ERROR_CAS_FIRST_V1 - CAS a failed ANTES de escribir el event.

@@ -28,12 +28,19 @@ export class DeterministicVerifier implements Verifier {
       else failed.push(criterion.id);
     }
 
-    const verified = failed.length === 0 && missing.length === 0;
+    // VERIFIER_CRITERIA_REQUIRED_V1 - un goal sin criterios no se puede
+    // verificar. Antes el bucle vacio dejaba `failed` y `missing` a cero y el
+    // veredicto era `verified: true`: el ciclo del Business OS firmaba exito
+    // sin haber comprobado nada.
+    const hasCriteria = goal.successCriteria.length > 0;
+    const verified = hasCriteria && failed.length === 0 && missing.length === 0;
     return {
       verified,
-      reason: verified
-        ? `Se cumplen ${satisfied.length} criterios`
-        : `Fallan ${failed.length} y faltan ${missing.length} criterios`,
+      reason: !hasCriteria
+        ? "El goal no declara criterios de exito: no se puede verificar"
+        : verified
+          ? `Se cumplen ${satisfied.length} criterios`
+          : `Fallan ${failed.length} y faltan ${missing.length} criterios`,
       missing,
       satisfiedCriteria: satisfied,
       failedCriteria: failed,

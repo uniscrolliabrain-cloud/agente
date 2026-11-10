@@ -55,7 +55,7 @@ function legacyView(tenantId: string, spec: RuntimeViewSpec): ViewEnvelope {
 
 export function viewsRoutes(registry: WorkspaceModuleRegistry, dispatcher: WorkspaceDispatcher) {
   const app = new Hono<{
-    Variables: { owner: string; ctx: { tenantId: string } };
+    Variables: { owner: string; ctx?: { tenantId?: string } };
   }>();
 
   app.post("/resolve", async (c) => {
@@ -78,7 +78,14 @@ export function viewsRoutes(registry: WorkspaceModuleRegistry, dispatcher: Works
     }
 
     const owner = c.get("owner");
-    const tenantId = c.get("ctx")?.tenantId ?? owner;
+    // VIEWS_TENANT_FROM_CTX_V1 - el tenant sale del principal resuelto por
+    // app.ts, nunca del owner ni de la peticion. Caer a `owner` producia un
+    // envelope con el uuid del usuario como empresa; es el mismo agujero que
+    // E17 cerro en /api/workspaces.
+    const tenantId = c.get("ctx")?.tenantId;
+    if (!tenantId) {
+      return c.json({ error: "Sesion sin empresa resuelta", code: "TENANT_REQUIRED" }, 403);
+    }
 
     if (body.workspaceId) {
       const module = registry.get(body.workspaceId);
