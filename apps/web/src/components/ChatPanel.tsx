@@ -25,6 +25,15 @@ interface ChatState {
 interface Props {
   chat: ChatState;
   onResolveView?: (intent: string, messageId?: string) => void;
+  /** Nombre de la persona para el saludo de la portada. */
+  userName?: string;
+}
+
+function greetingFor(name?: string): string {
+  const hour = new Date().getHours();
+  const salutation = hour < 6 || hour >= 21 ? "Buenas noches" : hour < 13 ? "Buenos días" : "Buenas tardes";
+  const firstName = (name ?? "").trim().split(" ")[0];
+  return firstName ? `${salutation}, ${firstName}` : salutation;
 }
 
 const CHIPS_DEFAULT = [
@@ -57,7 +66,7 @@ const CHIPS_BY_ROLE: Record<string, { id: string; label: string; prompt: string 
   ],
 };
 
-export default function ChatPanel({ chat, onResolveView }: Props) {
+export default function ChatPanel({ chat, onResolveView, userName }: Props) {
   const [seed, setSeed] = useState("");
   const lastResolvedRef = useRef<string | null>(null);
   const isEmpty = chat.messages.length === 0 && !chat.streaming;
@@ -78,8 +87,8 @@ export default function ChatPanel({ chat, onResolveView }: Props) {
   if (isEmpty) {
     return (
       <div className="v2-home">
-        <div className="v2-greeting">âœ¦ Buenas tardes, Alfonso</div>
-        <h1 className="v2-hero-title">Â¿En quÃ© te ayudo hoy?</h1>
+        <div className="v2-greeting">✦ {greetingFor(userName)}</div>
+        <h1 className="v2-hero-title">¿En qué te ayudo hoy?</h1>
         <ChatInput
           onSend={chat.send}
           onCancel={chat.cancel}

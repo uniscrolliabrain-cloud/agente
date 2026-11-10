@@ -17,6 +17,8 @@ import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
 import WhatsAppView from "./components/WhatsAppView";
+import AgentsView from "./components/AgentsView";
+import { isDemoSession } from "./api/client";
 import VerticalSliceOperationsView from "./components/VerticalSliceOperationsView";
 // APP_CENTRO_MANDO_V1
 import CentroMandoWorkspace from "./workspaces/35-centro-mando/CentroMandoWorkspace";
@@ -107,6 +109,17 @@ export default function App() {
     else void threads.createNew();
   }, [auth.isAuthenticated, threads]);
 
+  const handleResolveView = useCallback(
+    (intent: string, messageId?: string) => {
+      void resolveView(intent, {
+        ...(messageId ? { messageId } : {}),
+        ...(activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {}),
+        ...(threads.activeId ? { threadId: threads.activeId } : {}),
+      });
+    },
+    [resolveView, activeWorkspaceId, threads.activeId],
+  );
+
   if (auth.booting) {
     return (
       <div className="boot-screen">
@@ -120,21 +133,11 @@ export default function App() {
   }
 
   if (!auth.isAuthenticated) {
-    return <Login onLogin={auth.login} error={auth.error} />;
+    return <Login onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />;
   }
 
   const openTask = (t: AgentTask) => setOpenTaskId(t.id);
   const reviewTask = (t: AgentTask) => setReviewTaskId(t.id);
-  const handleResolveView = useCallback(
-    (intent: string, messageId?: string) => {
-      void resolveView(intent, {
-        ...(messageId ? { messageId } : {}),
-        ...(activeWorkspaceId ? { workspaceId: activeWorkspaceId } : {}),
-        ...(threads.activeId ? { threadId: threads.activeId } : {}),
-      });
-    },
-    [resolveView, activeWorkspaceId, threads.activeId],
-  );
   const handleNewChat = () => {
     setView("chat");
     void threads.createNew();
@@ -162,6 +165,10 @@ export default function App() {
       userName={auth.user?.name ?? "Usuario"}
       userRole={auth.user?.role ?? "user"}
       onOpenProfile={() => setProfileOpen(true)}
+      demo={{
+        active: isDemoSession(),
+        onExit: () => { void auth.logout(); },
+      }}
     />
   );
 
@@ -180,12 +187,19 @@ export default function App() {
         <TopBarV2
           status={status}
           statusLabel={statusLabel}
+          contextLabel={isDemoSession() ? "Interfaz" : "MI"}
           onNewChat={handleNewChat}
           onOpenPalette={() => setPaletteOpen(true)}
         />
 
         <div className="v2-content">
-          {view === "chat" && <ChatPanel chat={chat} onResolveView={handleResolveView} />}
+          {view === "chat" && (
+            <ChatPanel
+              chat={chat}
+              onResolveView={handleResolveView}
+              userName={auth.user?.name}
+            />
+          )}
           {view === "tasks" && (
             <TasksView
               tasks={tasks.tasks}
@@ -208,7 +222,7 @@ export default function App() {
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "agents" && <div className="v2-tasks-view"><h1 className="v2-tasks-title">Agentes</h1><div className="v2-tasks-meta">En construccion</div></div>}
+          {view === "agents" && <AgentsView />}
           {view === "workspace" && (
             <WorkspaceShell
               workspaces={workspaces}

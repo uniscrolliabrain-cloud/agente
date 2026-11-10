@@ -1,3 +1,6 @@
+import { demoRequest } from "../demo/router";
+import { DEMO_TOKEN } from "../demo/tenant";
+
 const AUTH_KEY = "agente_auth";
 
 export interface AuthSession {
@@ -21,6 +24,11 @@ export function getSession(): AuthSession | null {
 
 export function setSession(session: AuthSession): void {
   localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+}
+
+/** El tenant demo se reconoce por su token: no hay otro estado que limpiar. */
+export function isDemoSession(): boolean {
+  return getSession()?.token === DEMO_TOKEN;
 }
 
 export function clearSession(): void {
@@ -60,6 +68,9 @@ interface FetchOptions extends Omit<RequestInit, "body"> {
 }
 
 export async function apiFetch<T = unknown>(path: string, options: FetchOptions = {}): Promise<T> {
+  // DEMO_TENANT_V1 - el tenant demo responde desde fixtures en el navegador.
+  if (isDemoSession()) return demoRequest<T>(path, options);
+
   const session = getSession();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

@@ -19,6 +19,8 @@ interface Props {
   userName: string;
   userRole: string;
   onOpenProfile: () => void;
+  /** DEMO_TENANT_V1 - aviso y salida del tenant sintetico. */
+  demo?: { active: boolean; onExit: () => void };
 }
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
@@ -46,6 +48,7 @@ export default function SidebarV2({
   userName,
   userRole,
   onOpenProfile,
+  demo,
 }: Props) {
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   const recent = threads.slice(0, 3);
@@ -65,6 +68,19 @@ export default function SidebarV2({
           <span className="v2-sidebar-brand-name">AGNTia OS</span>
           <span className="v2-sidebar-brand-beta">BETA</span>
         </button>
+
+        {demo?.active && (
+          <div className="v2-demo-notice" role="status">
+            <span className="v2-demo-dot" aria-hidden="true" />
+            <div style={{ minWidth: 0 }}>
+              <div className="v2-demo-title">Tenant demo · Interfaz</div>
+              <div className="v2-demo-sub">Datos sintéticos</div>
+            </div>
+            <button type="button" className="v2-demo-exit" onClick={demo.onExit}>
+              Salir
+            </button>
+          </div>
+        )}
 
         <div className="v2-sidebar-sections">
           <div>

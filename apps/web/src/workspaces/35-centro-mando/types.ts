@@ -51,4 +51,15 @@ export type Insight = {
 };
 
 export type MessageRow = { name: string; msgs: number; pct: number };
+
+export type BarRow = { name: string; value: number; pct: number };
+
+export type PendingAction = {
+  id: string;
+  title: string;
+  meta: string;
+  badge: string;
+  tone: 'warn' | 'info' | 'danger';
+};
+
 export type PipelineStage = { label: string; val: number; w: string };

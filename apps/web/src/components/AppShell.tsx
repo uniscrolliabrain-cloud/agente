@@ -2,6 +2,7 @@
 // D3_APPSHELL_PANEL_V1 - panel prop puede recibir ContextualPanel con ViewSpec.
 // B1_APPSHELL_V1 - shell 3 columnas con grid-template-columns.
 import type { ReactNode } from "react";
+import { X } from "lucide-react";
 import { usePanel } from "../hooks/usePanel";
 
 interface Props {
@@ -14,10 +15,25 @@ export default function AppShell({ sidebar, children, panel }: Props) {
   const [left, setLeft] = usePanel("ui.left", true);
   const [right, setRight] = usePanel("ui.right", false);
   const rightVisible = right && Boolean(panel);
+  const closeLeft = () => setLeft(false);
 
   return (
     <div className="shell" data-left={left} data-right={rightVisible}>
+      <button
+        type="button"
+        className="shell__backdrop"
+        aria-label="Cerrar menú"
+        onClick={closeLeft}
+      />
       <aside className="shell__left" aria-hidden={!left}>
+        <button
+          type="button"
+          className="shell__mobile-close"
+          aria-label="Cerrar menú"
+          onClick={closeLeft}
+        >
+          <X size={16} aria-hidden="true" />
+        </button>
         {sidebar}
       </aside>
       <main className="shell__main">

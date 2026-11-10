@@ -16,8 +16,8 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
   const [action, setAction] = useState<ActionProposal | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // RECONCILE_MODAL_V1 â€” estado del modal de reconciliaciÃ³n.
-  // Ver: docs/audits/06-aprobaciones-acciones/roadmap.md Â§8.
+  // RECONCILE_MODAL_V1 — estado del modal de reconciliación.
+  // Ver: docs/audits/06-aprobaciones-acciones/roadmap.md §8.
   const [reconcileNote, setReconcileNote] = useState("");
 
   useEffect(() => {
@@ -25,10 +25,10 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
       try {
         const ws = await getWorkspace();
         const found = ws.actions.find((a) => a.taskId === taskId && a.status === "awaiting_review");
-        if (!found) setError("No hay acciÃ³n pendiente para esta tarea");
+        if (!found) setError("No hay acción pendiente para esta tarea");
         else setAction(found);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error cargando acciÃ³n");
+        setError(err instanceof Error ? err.message : "Error cargando acción");
       }
     })();
   }, [taskId]);
@@ -47,7 +47,7 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
     }
   };
 
-  // RECONCILE_MODAL_V1 â€” handler de reconciliaciÃ³n.
+  // RECONCILE_MODAL_V1 — handler de reconciliación.
   const reconcile = async (outcome: "executed" | "not_executed") => {
     if (!action) return;
     setBusy(true);
@@ -67,7 +67,7 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
       <div className="modal small" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <div>
-            <div className="modal-title">RevisiÃ³n requerida</div>
+            <div className="modal-title">Revisión requerida</div>
             {action && <div className="modal-sub">Action {action.id.slice(0, 10)}</div>}
             {action && action.expiresAt && (
               <div className="modal-sub" style={{ color: "var(--v2-text-3)" }}>
@@ -98,7 +98,7 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
                 Falló: {action.error ?? "sin detalle"}
               </div>
             )}
-            {/* DUAL_SIGN_VISIBLE_V1 â€” firmas requeridas si es doble firma. */}
+            {/* DUAL_SIGN_VISIBLE_V1 — firmas requeridas si es doble firma. */}
             {action && action.needed && action.needed > 1 && (
               <div className="modal-sub" style={{ color: "var(--v2-warn-text)" }}>
                 Doble firma: {action.signers?.length ?? 0}/{action.needed}
@@ -109,17 +109,17 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
         </div>
         <div className="modal-body">
           {error && <div className="chat-error">{error}</div>}
-          {!action && !error && <div className="muted">Cargandoâ€¦</div>}
+          {!action && !error && <div className="muted">Cargando⬦</div>}
 {action && action.status === "scheduled" && action.executeAt && (
             <>
-              {/* UNDO_COUNTDOWN_V1 â€” cuenta atrÃ¡s de la ventana de undo. */}
+              {/* UNDO_COUNTDOWN_V1 — cuenta atrás de la ventana de undo. */}
               <div className="v2-suggestion-card" style={{ cursor: "default", marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>AcciÃ³n programada</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Acción programada</div>
                 <div style={{ fontSize: 12, color: "var(--v2-text-2)", marginTop: 6 }}>
-                  Se ejecutarÃ¡ en{" "}
+                  Se ejecutará en{" "}
                   <b>{Math.max(0, Math.ceil((Date.parse(action.executeAt) - Date.now()) / 1000))}s</b>
                   {action.needed && action.needed > 1
-                    ? ` Â· firmas ${action.signers?.length ?? 0}/${action.needed}`
+                    ? ` · firmas ${action.signers?.length ?? 0}/${action.needed}`
                     : ""}
                 </div>
               </div>
@@ -148,10 +148,10 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
           )}
           {action && action.status === "outcome_unknown" && (
             <>
-              {/* RECONCILE_UI_V1 â€” UI de reconciliaciÃ³n. */}
+              {/* RECONCILE_UI_V1 — UI de reconciliación. */}
               <div className="chat-error" style={{ marginBottom: 12 }}>
-                <b>Outcome incierto.</b> La operaciÃ³n pudo haber salido al proveedor.
-                Comprueba en Google (o el proveedor correspondiente) si se ejecutÃ³ e
+                <b>Outcome incierto.</b> La operación pudo haber salido al proveedor.
+                Comprueba en Google (o el proveedor correspondiente) si se ejecutó e
                 indica el resultado:
                 {/* APPROVAL_NO_AUTO_RESEND_V1 - no hay reenvio automatico. */}
                 <div style={{ fontSize: 11, marginTop: 6 }}>
@@ -167,10 +167,10 @@ export default function ApprovalModal({ taskId, onClose, onChanged }: Props) {
               />
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
                 <button className="v2-pill" disabled={busy} onClick={() => reconcile("not_executed")}>
-                  No se ejecutÃ³
+                  No se ejecutó
                 </button>
                 <button className="v2-need-action-btn" disabled={busy} onClick={() => reconcile("executed")}>
-                  SÃ­ se ejecutÃ³
+                  Sí se ejecutó
                 </button>
               </div>
             </>

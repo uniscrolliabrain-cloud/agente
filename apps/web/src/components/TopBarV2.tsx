@@ -7,9 +7,17 @@ interface Props {
   statusLabel: string;
   onNewChat: () => void;
   onOpenPalette: () => void;
+  /** Etiqueta corta del espacio activo (tenant). Por defecto, "MI". */
+  contextLabel?: string;
 }
 
-export default function TopBarV2({ status, statusLabel, onNewChat, onOpenPalette }: Props) {
+export default function TopBarV2({
+  status,
+  statusLabel,
+  onNewChat,
+  onOpenPalette,
+  contextLabel = "MI",
+}: Props) {
   const dotColor =
     status === "working" ? "var(--v2-purple)" : status === "ok" ? "var(--v2-green)" : "var(--v2-text-3)";
 
@@ -18,17 +26,17 @@ export default function TopBarV2({ status, statusLabel, onNewChat, onOpenPalette
       <div className="v2-topbar-left">
         <span className="v2-status-pill">
           <span style={{ width: 8, height: 8, borderRadius: 999, background: dotColor }} />
-          MI · {statusLabel}
+          {contextLabel} · {statusLabel}
         </span>
       </div>
       <div className="v2-topbar-right">
         <NotificationsDropdown />
-        <button className="v2-search-pill" onClick={onOpenPalette}>
+        <button className="v2-search-pill" onClick={onOpenPalette} aria-label="Buscar">
           <Search size={14} />
           Buscar
           <span className="v2-search-kbd">⌘K</span>
         </button>
-        <button className="v2-btn-new" onClick={onNewChat}>
+        <button className="v2-btn-new" onClick={onNewChat} aria-label="Nuevo chat">
           <Plus size={16} />
           Nuevo chat
         </button>

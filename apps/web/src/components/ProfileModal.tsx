@@ -84,7 +84,7 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
     } finally { setBusy(false); }
   };
 
-  const base: React.CSSProperties = { width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5, outline: "none", fontFamily: "inherit" };
+  const base: React.CSSProperties = { width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "var(--v2-bg-card)", color: "var(--v2-text)", fontSize: 12.5, outline: "none", fontFamily: "inherit" };
   const fstyle = (f: string): React.CSSProperties => ({ ...base, borderColor: fieldErrors[f] ? "#fca5a5" : "var(--v2-border)", boxShadow: fieldErrors[f] ? "0 0 0 3px #fca5a51a" : "none" });
   const FE = ({ field }: { field: string }) => fieldErrors[field] ? (<div className="field-error"><AlertCircle size={12} /><span>{fieldErrors[field]}</span></div>) : null;
 

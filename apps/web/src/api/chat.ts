@@ -1,5 +1,6 @@
 // CHAT_RUN_ROLE_STATE_V1 - roleId viaja en state.
-import { getSession, handleUnauthorized } from "./client";
+import { streamDemoChat } from "../demo/chat";
+import { getSession, handleUnauthorized, isDemoSession } from "./client";
 
 export interface RunInput {
   threadId: string;
@@ -28,6 +29,12 @@ export async function streamChat(
   onEvent: (event: AgUiEvent) => void,
   signal: AbortSignal,
 ): Promise<void> {
+  // DEMO_TENANT_V1 - respuesta guionizada, mismos eventos que el runtime.
+  if (isDemoSession()) {
+    await streamDemoChat(input, onEvent, signal);
+    return;
+  }
+
   const session = getSession();
   if (!session) throw new Error("No hay sesión activa");
 

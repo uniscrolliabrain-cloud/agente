@@ -2,13 +2,15 @@ import { useState } from "react";
 
 interface Props {
   onLogin: (email: string, password: string) => Promise<void>;
+  onEnterDemo?: () => Promise<void>;
   error: string | null;
 }
 
-export default function Login({ onLogin, error }: Props) {
+export default function Login({ onLogin, onEnterDemo, error }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
   // OAUTH_FIRST_UI_V1 - el acceso normal es la cuenta de Google o GitHub. El
   // formulario de contrasena sigue existiendo, pero detras de un enlace: sirve
   // para el admin local y para entrar si el proveedor no esta configurado.
@@ -21,6 +23,16 @@ export default function Login({ onLogin, error }: Props) {
       await onLogin(email.trim(), password);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const enterDemo = async () => {
+    if (!onEnterDemo || demoBusy) return;
+    setDemoBusy(true);
+    try {
+      await onEnterDemo();
+    } finally {
+      setDemoBusy(false);
     }
   };
 
@@ -60,6 +72,23 @@ export default function Login({ onLogin, error }: Props) {
             Continuar con GitHub
           </a>
         </div>
+
+        {onEnterDemo && (
+          <>
+            <div className="login-divider"><span>o con datos de ejemplo</span></div>
+            <button
+              type="button"
+              className="login-demo-btn"
+              onClick={() => void enterDemo()}
+              disabled={demoBusy}
+            >
+              {demoBusy ? "Preparando el demo..." : "Entrar al tenant demo · Interfaz"}
+            </button>
+            <p className="login-demo-hint">
+              Datos sintéticos, sin backend. Todas las pestañas con contenido y salida libre.
+            </p>
+          </>
+        )}
 
         {showPassword ? (
           <>

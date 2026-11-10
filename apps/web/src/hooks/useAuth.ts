@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   cachedUser,
+  loginDemo as loginDemoTenant,
   loginWithCredentials,
   logoutServer,
   me,
@@ -75,5 +76,12 @@ export function useAuth() {
     setState({ isAuthenticated: false, mode: null, user: null });
   }, []);
 
-  return { ...state, error, booting, login, logout };
+  // DEMO_TENANT_LOGIN_V1 - entra al tenant sintetico sin backend.
+  const loginDemo = useCallback(async () => {
+    setError(null);
+    const res = await loginDemoTenant();
+    setState({ isAuthenticated: true, mode: res.mode, user: res.user });
+  }, []);
+
+  return { ...state, error, booting, login, loginDemo, logout };
 }

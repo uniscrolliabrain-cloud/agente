@@ -57,9 +57,15 @@ export default function UsersView({ currentUserId }: Props) {
   return (
     <div className="v2-tasks-view" style={{ maxWidth: 1000 }}>
       <div className="v2-tasks-header">
-        <h1 className="v2-tasks-title">Equipo</h1>
-        <div className="v2-tasks-meta">{users.length} cuentas</div>
-        <button className="v2-need-action-btn" style={{ marginLeft: "auto" }} onClick={openCreate}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+          <h1 className="v2-tasks-title">Equipo</h1>
+          <div className="v2-tasks-meta">{users.length} cuentas</div>
+        </div>
+        <button
+          className="v2-need-action-btn"
+          style={{ marginLeft: "auto", whiteSpace: "nowrap" }}
+          onClick={openCreate}
+        >
           <Plus size={14} /> Nuevo usuario
         </button>
       </div>
@@ -118,7 +124,7 @@ export default function UsersView({ currentUserId }: Props) {
                 </div>
 
                 {(u.setup.sopIds.length > 0 || u.setup.greeting) && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 10px", background: "#FFF", border: "1px solid var(--v2-border)", borderRadius: 8, fontSize: 10.5, color: "var(--v2-text-2)", width: "100%" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 3, padding: "8px 10px", background: "var(--v2-bg-soft)", border: "1px solid var(--v2-border)", borderRadius: 8, fontSize: 10.5, color: "var(--v2-text-2)", width: "100%" }}>
                     {u.setup.sopIds.length > 0 && (
                       <span><b style={{ color: "var(--v2-text)" }}>{u.setup.sopIds.length}</b> SOP{u.setup.sopIds.length !== 1 ? "s" : ""} asignado{u.setup.sopIds.length !== 1 ? "s" : ""}</span>
                     )}

@@ -1,3 +1,5 @@
+import { DEMO_TOKEN } from "../demo/tenant";
+import { demoUser } from "../demo/fixtures";
 import { apiFetch, clearSession, setSession } from "./client";
 
 export interface AuthUser {
@@ -39,6 +41,18 @@ export async function loginWithCredentials(
   setSession({ token: data.token, mode: data.mode ?? "live" });
   localStorage.setItem(USER_KEY, JSON.stringify(data.user));
   return data;
+}
+
+/**
+ * DEMO_TENANT_LOGIN_V1 - entra al tenant sintetico "Interfaz".
+ * Escribe la misma sesion que un login real, con un token marcado: apiFetch,
+ * el chat y las subidas lo detectan y responden desde fixtures.
+ */
+export async function loginDemo(): Promise<LoginResponse> {
+  const session = { token: DEMO_TOKEN, mode: "sample" as const };
+  setSession(session);
+  localStorage.setItem(USER_KEY, JSON.stringify(demoUser));
+  return { ...session, user: demoUser };
 }
 
 export async function logoutServer(): Promise<void> {

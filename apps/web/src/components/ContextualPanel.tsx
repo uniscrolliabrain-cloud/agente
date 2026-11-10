@@ -1,5 +1,6 @@
 // CONTEXTUAL_PANEL_V3 - recibe un ViewEnvelope, no un spec suelto.
 import type { ViewEnvelope } from "@agente/domain/view-envelope";
+import { X } from "lucide-react";
 import ViewRenderer from "../view/ViewRenderer";
 
 interface Props {
@@ -29,16 +30,20 @@ export default function ContextualPanel({
         {onClose && (
           <button
             type="button"
-            className="icon-btn"
+            className="ctx-panel__close"
             onClick={onClose}
             aria-label="Cerrar panel"
           >
-            ×
+            <X size={15} aria-hidden="true" />
           </button>
         )}
       </div>
-      <div className="ctx-panel__body">
-        {loading && <div className="ctx-panel__loading">Resolviendo vista...</div>}
+      <div className="ctx-panel__body" aria-busy={loading}>
+        {loading && (
+          <div className="ctx-panel__loading" role="status">
+            Resolviendo vista...
+          </div>
+        )}
         {error && (
           <div className="ctx-panel__error" role="alert">
             {error}

@@ -1,4 +1,5 @@
-import { getSession, handleUnauthorized } from "./client";
+import { addDemoFile } from "../demo/fixtures";
+import { getSession, handleUnauthorized, isDemoSession } from "./client";
 
 export interface UploadedFile {
   id: string;
@@ -10,6 +11,19 @@ export interface UploadedFile {
 }
 
 export async function uploadFile(file: File): Promise<UploadedFile> {
+  if (isDemoSession()) {
+    await new Promise((resolve) => setTimeout(resolve, 240));
+    const entry = addDemoFile({ name: file.name, size: file.size });
+    return {
+      id: entry.id,
+      name: entry.name,
+      size: entry.size ?? file.size,
+      pageCount: entry.pageCount ?? 1,
+      url: entry.url ?? "",
+      createdAt: entry.createdAt ?? new Date().toISOString(),
+    };
+  }
+
   const session = getSession();
   if (!session) throw new Error("No hay sesión activa");
   const form = new FormData();
@@ -35,6 +49,21 @@ export function uploadFileWithProgress(
   file: File,
   onProgress: (pct: number) => void,
 ): Promise<UploadedFile> {
+  if (isDemoSession()) {
+    return new Promise((resolve) => {
+      onProgress(100);
+      const entry = addDemoFile({ name: file.name, size: file.size });
+      resolve({
+        id: entry.id,
+        name: entry.name,
+        size: entry.size ?? file.size,
+        pageCount: entry.pageCount ?? 1,
+        url: entry.url ?? "",
+        createdAt: entry.createdAt ?? new Date().toISOString(),
+      });
+    });
+  }
+
   const session = getSession();
   if (!session) return Promise.reject(new Error("No hay sesión activa"));
   return new Promise((resolve, reject) => {

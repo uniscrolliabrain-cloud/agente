@@ -16,10 +16,11 @@ export default function TableTemplate({ spec }: { spec: TableSpec }) {
       ) : (
         <div className="tpl-table-wrap">
           <table className="tpl-table">
+            <caption className="sr-only">{spec.title}</caption>
             <thead>
               <tr>
                 {spec.columns.map((column) => (
-                  <th key={column.key} style={{ textAlign: column.align }}>
+                  <th key={column.key} scope="col" style={{ textAlign: column.align }}>
                     {column.label}
                   </th>
                 ))}

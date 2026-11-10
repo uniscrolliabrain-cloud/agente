@@ -57,8 +57,8 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <div>
-            <div className="modal-title">{task?.title ?? "Cargandoâ€¦"}</div>
-            <div className="modal-sub">{task?.id.slice(0, 12)} Â· {task?.status}</div>
+            <div className="modal-title">{task?.title ?? "Cargando⬦"}</div>
+            <div className="modal-sub">{task?.id.slice(0, 12)} · {task?.status}</div>
           </div>
           <button className="ghost-icon-button" onClick={onClose}><X size={17} /></button>
         </div>
@@ -71,7 +71,7 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
 
         <div className="modal-body">
           {error && <div className="chat-error">{error}</div>}
-          {!detail && !error && <div className="muted">Cargandoâ€¦</div>}
+          {!detail && !error && <div className="muted">Cargando⬦</div>}
 
           {detail && tab === "plan" && (
             <div className="plan-list">
@@ -89,10 +89,10 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
               {/* WIRE_TASKDETAIL_TIMELINE_V1 */}
               <TaskTimeline plan={task!.plan} />
               <div className="control-row">
-                <button className="ctrl-btn" onClick={() => control("pause")}>â¸ Pausar</button>
-                <button className="ctrl-btn" onClick={() => control("resume")}>â–¶ Reanudar</button>
-                <button className="ctrl-btn danger" onClick={() => control("cancel")}>âœ• Cancelar</button>
-                <button className="ctrl-btn" onClick={() => control("retry")}>â†» Reintentar</button>
+                <button className="ctrl-btn" onClick={() => control("pause")}>Pausar</button>
+                <button className="ctrl-btn" onClick={() => control("resume")}>Reanudar</button>
+                <button className="ctrl-btn danger" onClick={() => control("cancel")}>Cancelar</button>
+                <button className="ctrl-btn" onClick={() => control("retry")}>Reintentar</button>
               </div>
               {task!.status === "waiting_input" && (
                 <div className="answer-box">
@@ -111,7 +111,7 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
               {detail.events.map((ev) => (
                 <div key={ev.id} className="plan-item">
                   <span className="plan-num" style={{ fontSize: 8 }}>{new Date(ev.date).toLocaleTimeString().slice(0, 5)}</span>
-                  <span><b>{ev.title}</b>{ev.detail ? ` â€” ${ev.detail}` : ""}</span>
+                  <span><b>{ev.title}</b>{ev.detail ? ` — ${ev.detail}` : ""}</span>
                 </div>
               ))}
               {detail.events.length === 0 && <div className="muted">Sin eventos</div>}
@@ -122,7 +122,7 @@ export default function TaskDetailModal({ taskId, onClose, onChanged }: Props) {
             <div className="plan-list">
               {detail.artifacts.map((a) => (
                 <div key={a.id} className="plan-item">
-                  <span className="plan-num" style={{ fontSize: 10 }}>ðŸ“„</span>
+                  <span className="plan-num" style={{ fontSize: 10 }}>📄</span>
                   <span>{a.title}</span>
                   <span className="plan-check">{a.kind}</span>
                 </div>

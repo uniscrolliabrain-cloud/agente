@@ -152,7 +152,7 @@ export default function MemoryView({ memories }: Props) {
               key={m.id}
               style={{
                 padding: 14,
-                background: "#FFF",
+                background: "var(--v2-bg-card)",
                 border: "1px solid var(--v2-border)",
                 borderRadius: 12,
               }}
@@ -197,13 +197,13 @@ export default function MemoryView({ memories }: Props) {
                 value={editText}
                 onChange={(e) => setEditText(e.target.value)}
                 rows={4}
-                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5, fontFamily: "inherit", resize: "vertical" }}
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "var(--v2-bg-card)", color: "var(--v2-text)", fontSize: 12.5, fontFamily: "inherit", resize: "vertical" }}
               />
               <label className="modal-label" style={{ marginTop: 14 }}>Categoria</label>
               <select
                 value={editCategory}
                 onChange={(e) => setEditCategory(e.target.value as Category | "")}
-                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5 }}
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "var(--v2-bg-card)", color: "var(--v2-text)", fontSize: 12.5 }}
               >
                 <option value="">(sin categoria)</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -213,7 +213,7 @@ export default function MemoryView({ memories }: Props) {
                 type="text"
                 value={editTags}
                 onChange={(e) => setEditTags(e.target.value)}
-                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "#FFF", color: "var(--v2-text)", fontSize: 12.5 }}
+                style={{ width: "100%", padding: "9px 11px", border: "1px solid var(--v2-border)", borderRadius: 8, background: "var(--v2-bg-card)", color: "var(--v2-text)", fontSize: 12.5 }}
               />
               <div className="control-row" style={{ justifyContent: "flex-end", marginTop: 16 }}>
                 <button className="v2-pill" onClick={() => setEditing(null)} disabled={busy}>Cerrar</button>

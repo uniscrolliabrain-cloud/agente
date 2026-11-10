@@ -89,7 +89,7 @@ export default function UserModal({ editing, onClose, onSaved }: Props) {
     padding: "9px 11px",
     border: "1px solid var(--v2-border)",
     borderRadius: 8,
-    background: "#FFF",
+    background: "var(--v2-bg-card)",
     color: "var(--v2-text)",
     fontSize: 12.5,
     outline: "none",
