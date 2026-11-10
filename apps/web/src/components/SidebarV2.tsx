@@ -21,6 +21,8 @@ interface Props {
   onOpenProfile: () => void;
   /** DEMO_TENANT_V1 - aviso y salida del tenant sintetico. */
   demo?: { active: boolean; onExit: () => void };
+  /** SESSION_TENANT_NOTICE_V1 - empresa resuelta por /api/auth/me para esta sesion. */
+  tenant?: { id: string } | null;
 }
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
@@ -49,6 +51,7 @@ export default function SidebarV2({
   userRole,
   onOpenProfile,
   demo,
+  tenant,
 }: Props) {
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   const recent = threads.slice(0, 3);
@@ -79,6 +82,16 @@ export default function SidebarV2({
             <button type="button" className="v2-demo-exit" onClick={demo.onExit}>
               Salir
             </button>
+          </div>
+        )}
+
+        {!demo?.active && tenant?.id && (
+          <div className="v2-demo-notice" role="status">
+            <span className="v2-demo-dot" aria-hidden="true" />
+            <div style={{ minWidth: 0 }}>
+              <div className="v2-demo-title">Empresa · {tenant.id.toUpperCase()}</div>
+              <div className="v2-demo-sub">Sesión verificada</div>
+            </div>
           </div>
         )}
 

@@ -76,7 +76,8 @@ export function authRoutes(
   options: AuthRouteOptions = {},
   bus?: EventBus,
 ) {
-  const app = new Hono<{ Variables: { owner: string } }>();
+  // `ctx` lo deja el middleware de auth de app.ts con el tenant resuelto.
+  const app = new Hono<{ Variables: { owner: string; ctx?: { tenantId?: string } } }>();
   // RATE_LIMIT_TENANT_WIRE_V1 - limite por IP + por email + por tenant.
   // El takeForTenant ya existe en RateLimiter. Cuando el login sea por tenant
   // (subdominio o campo), se usa ese mÃ©todo en vez de take.
@@ -252,12 +253,16 @@ export function authRoutes(
   app.get("/me", async (c) => {
     const user = await users.getById(c.get("owner"));
     if (!user) throw new AppError("Usuario no encontrado", 404);
+    // SESSION_TENANT_NOTICE_V1 - la empresa con la que el middleware atendio
+    // esta peticion. La UI etiqueta la sesion con esto, nunca con el token.
+    const tenantId = c.get("ctx")?.tenantId ?? null;
     return c.json({
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
       setup: user.setup,
+      tenantId,
     });
   });
 

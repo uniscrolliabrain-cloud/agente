@@ -1,9 +1,12 @@
-// CENTRO_MANDO_DATA_V1 - el panel se alimenta del tenant activo.
-// Hoy la unica fuente con datos es el tenant demo "Interfaz"; cuando exista el
-// backend de analitica esta capa es la unica que hay que cambiar.
-import { useMemo } from 'react';
-import { demoStore } from '../../../demo/fixtures';
-import type { AgentTask } from '../../../types/api';
+// CENTRO_MANDO_DATA_V2 (E19) - el panel del tenant activo.
+//
+// Sesion real: GET /api/analytics/overview (tenant-scoped) y se pinta lo que
+// hay. Sandbox: los fixtures de "Interfaz" siguen en useDemoCentroMandoData.
+// No se inventan metricas: la confianza de los agentes es un dato (AgentMetric)
+// que el seed no tiene, asi que la lista sale vacia en vez de con una formula.
+import { useEffect, useMemo, useState } from "react";
+import { isDemoSession } from "../../../api/client";
+import { fetchAnalyticsOverview, type AnalyticsOverview } from "../../../api/analytics";
 import type {
   Agent,
   BarRow,
@@ -15,29 +18,56 @@ import type {
   PipelineStage,
   Project,
   Ticket,
-} from '../types';
-
-const TENANT = 'Interfaz Studio';
+} from "../types";
+import { useDemoCentroMandoData } from "./useDemoCentroMandoData";
 
 const OPEN_STATUSES = new Set([
-  'queued',
-  'running',
-  'waiting_approval',
-  'waiting_input',
-  'paused',
-  'scheduled',
+  "queued",
+  "running",
+  "waiting_approval",
+  "waiting_input",
+  "paused",
+  "scheduled",
 ]);
 
-const RANGE_DAYS: Record<DateRange, number> = { '7d': 7, '30d': 30, '90d': 90 };
+const PURPLE = "#5E4FF1";
+const ORANGE = "#FF6B2C";
+const GREEN = "#22C55E";
 
-const PURPLE = '#5E4FF1';
-const ORANGE = '#FF6B2C';
-const GREEN = '#22C55E';
+const ATTENTION: Record<string, { badge: string; badgeColor: string; urgency: string; dot: string }> = {
+  waiting_approval: {
+    badge: "Aprobación",
+    badgeColor: "bg-[#FEF3C7] text-amber-800",
+    urgency: "ALTA",
+    dot: "bg-amber-400",
+  },
+  waiting_input: {
+    badge: "Falta un dato",
+    badgeColor: "bg-[#DBEAFE] text-blue-700",
+    urgency: "MEDIA",
+    dot: "bg-[#5E4FF1]",
+  },
+  failed: {
+    badge: "Fallo",
+    badgeColor: "bg-[#FFE4E6] text-red-700",
+    urgency: "URGENCIA",
+    dot: "bg-red-500",
+  },
+};
+
+const ACTION_BADGE: Record<string, { label: string; tone: PendingAction["tone"] }> = {
+  awaiting_review: { label: "Revisar", tone: "warn" },
+  scheduled: { label: "Programada", tone: "info" },
+  outcome_unknown: { label: "Sin confirmar", tone: "danger" },
+  failed: { label: "Fallida", tone: "danger" },
+};
+
+const PIPELINE_STATUSES = ["riesgo", "oportunidad", "estable", "ganado"] as const;
 
 function relative(iso?: string): string {
-  if (!iso) return '—';
+  if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
-  if (!Number.isFinite(diff) || diff < 0) return 'ahora';
+  if (!Number.isFinite(diff) || diff < 0) return "ahora";
   const minutes = Math.round(diff / 60_000);
   if (minutes < 60) return `${minutes} min`;
   const hours = Math.round(minutes / 60);
@@ -50,172 +80,92 @@ function initials(name: string): string {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
-function stateOf(task: AgentTask): Record<string, unknown> {
-  return (task.state ?? {}) as Record<string, unknown>;
+function eur(value: number | null | undefined): string {
+  if (typeof value !== "number") return "Sin importe";
+  return `${value.toLocaleString("es-ES")} €`;
 }
 
-const users = demoStore.users;
-const agents = demoStore.agents;
-
-const userById = new Map(users.map((user) => [user.id, user]));
-
-
-function ownerName(task: AgentTask): string {
-  const ownerId = stateOf(task).ownerId;
-  if (typeof ownerId === 'string') {
-    const user = userById.get(ownerId);
-    if (user) return user.name;
-  }
-  return 'Interfaz Studio';
+function clientStatus(status: string | undefined): ClientStatus {
+  return status === "riesgo" ? "riesgo" : status === "oportunidad" ? "oportunidad" : "estable";
 }
 
-/* ------------------------------------------------------------- clientes */
+function mapOverview(overview: AnalyticsOverview | null) {
+  const empty = {
+    tenant: "—",
+    clients: [] as Client[],
+    projects: [] as Project[],
+    tickets: [] as Ticket[],
+    agents: [] as Agent[],
+    insights: [] as Insight[],
+    pending: [] as PendingAction[],
+    load: [] as BarRow[],
+    pipeline: [] as PipelineStage[],
+    topAgent: undefined as Agent | undefined,
+    kpis: {
+      openTasks: 0,
+      running: 0,
+      awaitingDecision: 0,
+      failed: 0,
+      done: 0,
+      newToday: 0,
+      pending: 0,
+      pendingAmount: "—",
+      leads: 0,
+      activeProjects: 0,
+    },
+    lastSync: "—",
+  };
+  if (!overview) return empty;
 
-const LEAD_META: Record<
-  string,
-  { ltv: string; status: ClientStatus; next: string; action: string; detail: string; amount: string }
-> = {
-  'estudio-lumen': {
-    ltv: '8.400 €',
-    status: 'estable',
-    next: 'Recordatorio de la propuesta el día 25',
-    action: 'Revisar propuesta',
-    detail: 'Paga a 30 días y siempre pide la factura antes del día 25.',
-    amount: '8.400 € enviados',
-  },
-  'casa-botanica': {
-    ltv: '6.200 €',
-    status: 'oportunidad',
-    next: 'Propuesta en PDF con resumen de una página',
-    action: 'Preparar propuesta',
-    detail: 'Prefiere recibir las propuestas en PDF y con un resumen de una página.',
-    amount: 'Propuesta en preparación',
-  },
-  'talleres-norte': {
-    ltv: '—',
-    status: 'oportunidad',
-    next: 'Cualificar necesidad y presupuesto',
-    action: 'Cualificar',
-    detail: 'Contacto inicial: todavía no hay brief ni importe cerrado.',
-    amount: 'Sin importe',
-  },
-  'verde-oficina': {
-    ltv: '—',
-    status: 'riesgo',
-    next: 'Reactivar con un caso de referencia',
-    action: 'Reactivar',
-    detail: 'En espera desde hace 6 días y no responde al último correo.',
-    amount: 'Sin respuesta',
-  },
-};
+  const clientName = new Map(overview.clients.map((row) => [row.id, row.name ?? row.id]));
+  const agentName = new Map(overview.agents.map((row) => [row.id, row.name ?? row.id]));
+  const ownerOf = (assignedTo?: string) => (assignedTo ? (agentName.get(assignedTo) ?? assignedTo) : "Equipo");
+  const companyOf = (clientId?: string) => (clientId ? (clientName.get(clientId) ?? clientId) : "—");
 
-function buildClients(): Client[] {
-  return demoStore.leads.map((lead) => {
+  const clients: Client[] = overview.leads.map((lead) => {
     const name = lead.name ?? lead.domain ?? lead.id;
-    const meta = LEAD_META[lead.ref ?? ''] ?? {
-      ltv: '—',
-      status: 'oportunidad' as ClientStatus,
-      next: lead.status ?? 'Sin próximo paso',
-      action: 'Abrir ficha',
-      detail: 'Lead sin cualificar en el tenant.',
-      amount: 'Sin importe',
-    };
     return {
       id: lead.id,
       name,
-      company: lead.domain ?? '—',
-      ltv: meta.ltv,
-      status: meta.status,
-      next: meta.next,
-      action: meta.action,
+      company: lead.domain ?? "—",
+      ltv: eur(lead.amountEur),
+      status: clientStatus(lead.status),
+      next: lead.nextStep ?? "Sin próximo paso",
+      action: lead.action ?? "Abrir ficha",
       avatar: initials(name),
-      detail: `${meta.detail} Estado actual: ${lead.status ?? 'sin estado'} · actualizado hace ${relative(lead.updatedAt)}.`,
-      amount: meta.amount,
+      detail: lead.detail ?? "",
+      amount: eur(lead.amountEur),
     };
   });
-}
 
-/* ------------------------------------------------------------ proyectos */
-
-const PROJECT_TASK: Record<string, string> = {
-  'proj-checkout': 'task-checkout',
-  'proj-otono': 'task-landing',
-  'proj-soporte': 'task-contrato',
-};
-
-function projectPct(project: (typeof demoStore.projects)[number]): number {
-  const checklist = project.blocks.filter((block) => block.type === 'checklist');
-  if (checklist.length === 0) return project.status === 'paused' ? 30 : 60;
-  const done = checklist.filter((block) => block.checked).length;
-  return Math.round((done / checklist.length) * 100);
-}
-
-function buildProjects(): Project[] {
-  return demoStore.projects.map((project) => {
-    const taskId = PROJECT_TASK[project.id];
-    const task = taskId ? demoStore.tasks.find((item) => item.id === taskId) : undefined;
-    const pct = projectPct(project);
-    const note = project.blocks.find((block) => block.type === 'note')?.text;
+  const projects: Project[] = overview.projects.map((project) => {
+    const pct = typeof project.progressPct === "number" ? project.progressPct : 0;
     return {
-      name: project.name,
+      name: project.name ?? project.id,
       pct,
-      owner: task ? ownerName(task) : 'Equipo',
-      avatar: initials(task ? ownerName(task) : project.name),
+      owner: companyOf(project.clientId),
+      avatar: initials(project.name ?? project.id),
       alert:
-        project.status === 'paused'
-          ? 'Pausado · pendiente de renovación'
-          : note ?? (pct >= 80 ? 'En tiempo' : 'En curso'),
-      color: project.status === 'paused' ? ORANGE : pct >= 80 ? GREEN : PURPLE,
+        project.status === "paused"
+          ? "Pausado"
+          : `${project.checklistDone ?? 0}/${project.checklistTotal ?? 0} partidas`,
+      color: project.status === "paused" ? ORANGE : pct >= 80 ? GREEN : PURPLE,
     };
   });
-}
 
-/* -------------------------------------------------------------- tickets */
-
-const ATTENTION: Record<
-  string,
-  { badge: string; badgeColor: string; urgency: string; dot: string }
-> = {
-  waiting_approval: {
-    badge: 'Aprobación',
-    badgeColor: 'bg-[#FEF3C7] text-amber-800',
-    urgency: 'ALTA',
-    dot: 'bg-amber-400',
-  },
-  waiting_input: {
-    badge: 'Falta un dato',
-    badgeColor: 'bg-[#DBEAFE] text-blue-700',
-    urgency: 'MEDIA',
-    dot: 'bg-[#5E4FF1]',
-  },
-  failed: {
-    badge: 'Fallo',
-    badgeColor: 'bg-[#FFE4E6] text-red-700',
-    urgency: 'URGENCIA',
-    dot: 'bg-red-500',
-  },
-};
-
-const CLIENTS_IN_TEXT = ['Lumen', 'Botànica', 'Talleres', 'Verde'];
-
-function clientInText(text: string): string {
-  return CLIENTS_IN_TEXT.find((client) => text.includes(client)) ?? TENANT;
-}
-
-function buildTickets(): Ticket[] {
-  return demoStore.tasks
-    .filter((task) => task.status in ATTENTION)
-    .sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1))
+  const tickets: Ticket[] = overview.tasks
+    .filter((task) => task.status && task.status in ATTENTION)
+    .sort((a, b) => (String(a.updatedAt ?? "") < String(b.updatedAt ?? "") ? 1 : -1))
     .map((task) => {
-      const meta = ATTENTION[task.status];
+      const meta = ATTENTION[task.status as keyof typeof ATTENTION];
       return {
-        name: ownerName(task),
-        company: clientInText(task.title),
-        issue: task.title,
+        name: ownerOf(task.assignedTo),
+        company: companyOf(task.clientId),
+        issue: task.title ?? task.id,
         time: relative(task.updatedAt),
         badge: meta.badge,
         badgeColor: meta.badgeColor,
@@ -223,190 +173,106 @@ function buildTickets(): Ticket[] {
         dot: meta.dot,
       };
     });
-}
 
-/* ---------------------------------------------------------------- agentes */
-
-function buildAgents(): Agent[] {
-  return agents
-    .filter((agent) => agent.active)
-    .map((agent) => {
-      const assigned = demoStore.tasks.filter(
-        (task) => task.assignedTo === agent.id && OPEN_STATUSES.has(task.status),
-      );
-      const blocked = assigned.filter(
-        (task) => task.status === 'failed' || task.status === 'waiting_input',
-      ).length;
-      const conf = Math.max(62, 96 - blocked * 9 - (assigned.length > 3 ? 4 : 0));
-      return {
-        name: agent.name,
-        conf,
-        tasks: assigned.length,
-        status: blocked > 0 ? 'warn' : 'ok',
-        desc: agent.objetivo,
-      } satisfies Agent;
-    });
-}
-
-/* ------------------------------------------------------------- acciones */
-
-const ACTION_KIND_LABEL: Record<string, string> = {
-  'email.send': 'Email',
-  'content.publish': 'Notion',
-  'drive.createFolder': 'Drive',
-  'shopify.sync': 'Shopify',
-};
-
-const ACTION_BADGE: Record<string, { label: string; tone: PendingAction['tone'] }> = {
-  awaiting_review: { label: 'Revisar', tone: 'warn' },
-  scheduled: { label: 'Programada', tone: 'info' },
-  outcome_unknown: { label: 'Sin confirmar', tone: 'danger' },
-  failed: { label: 'Fallida', tone: 'danger' },
-};
-
-function buildPending(): PendingAction[] {
-  return demoStore.actions
-    .filter((action) => action.status in ACTION_BADGE)
+  const pending: PendingAction[] = overview.actions
+    .filter((action) => action.status && action.status in ACTION_BADGE)
     .map((action) => {
-      const data = (action.data ?? {}) as Record<string, unknown>;
-      const detail =
-        typeof data.importe === 'string'
-          ? data.importe
-          : typeof data.canal === 'string'
-            ? data.canal
-            : typeof data.carpeta === 'string'
-              ? data.carpeta
-              : action.account ?? ACTION_KIND_LABEL[action.kind] ?? action.kind;
-      const badge = ACTION_BADGE[action.status];
+      const badge = ACTION_BADGE[action.status as keyof typeof ACTION_BADGE];
       return {
         id: action.id,
-        title: action.title,
-        meta: detail,
+        title: action.title ?? action.id,
+        meta: typeof action.amountEur === "number" ? eur(action.amountEur) : (action.kind ?? "Acción"),
         badge: badge.label,
         tone: badge.tone,
-      } satisfies PendingAction;
+      };
     });
-}
 
-function amountOf(): { total: number; label: string } {
-  const total = demoStore.actions.reduce((sum, action) => {
-    const data = (action.data ?? {}) as Record<string, unknown>;
-    if (typeof data.importe !== 'string') return sum;
-    const parsed = Number(data.importe.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.'));
-    return Number.isFinite(parsed) ? sum + parsed : sum;
-  }, 0);
+  const openTasks = overview.tasks.filter((task) => task.status && OPEN_STATUSES.has(task.status));
+  const loadByAgent = [...new Set(openTasks.map((task) => task.assignedTo ?? "sin-agente"))]
+    .map((assignedTo) => ({
+      name: assignedTo === "sin-agente" ? "Sin asignar" : ownerOf(assignedTo),
+      value: openTasks.filter((task) => (task.assignedTo ?? "sin-agente") === assignedTo).length,
+    }))
+    .sort((a, b) => b.value - a.value);
+  const maxLoad = Math.max(1, ...loadByAgent.map((row) => row.value));
+  const load: BarRow[] = loadByAgent.map((row) => ({ ...row, pct: Math.round((row.value / maxLoad) * 100) }));
+
+  const pipelineValues = PIPELINE_STATUSES.map((status) => ({
+    label: status.charAt(0).toUpperCase() + status.slice(1),
+    val: overview.leads.filter((lead) => lead.status === status).length,
+  }));
+  const maxStage = Math.max(1, ...pipelineValues.map((item) => item.val));
+  const pipeline: PipelineStage[] = pipelineValues.map((item) => ({
+    ...item,
+    w: `${Math.round((item.val / maxStage) * 100)}%`,
+  }));
+
+  const variants: Insight["variant"][] = ["light", "primary", "ghost"];
+  const insights: Insight[] = overview.notifications.slice(0, 3).map((notification, index) => ({
+    tag: notification.title ?? notification.id,
+    body: notification.body ?? "",
+    cta: notification.cta ?? "Abrir",
+    variant: variants[index % variants.length],
+  }));
+
   return {
-    total,
-    label:
-      total > 0
-        ? `${total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} €`
-        : '—',
+    tenant: overview.tenantId.toUpperCase(),
+    clients,
+    projects,
+    tickets,
+    // AgentMetric (confianza) es un dato que el tenant no tiene: lista vacía.
+    agents: [] as Agent[],
+    insights,
+    pending,
+    load,
+    pipeline,
+    topAgent: undefined as Agent | undefined,
+    kpis: {
+      ...empty.kpis,
+      openTasks: overview.kpis.openTasks,
+      running: overview.kpis.running,
+      awaitingDecision: overview.kpis.awaitingDecision,
+      failed: overview.kpis.failed,
+      done: overview.kpis.done,
+      newToday: overview.kpis.newToday,
+      pending: overview.kpis.pendingActions,
+      pendingAmount: eur(overview.kpis.pendingAmountEur),
+      leads: overview.kpis.leads,
+      activeProjects: overview.kpis.activeProjects,
+    },
+    lastSync: relative(overview.generatedAt),
   };
 }
 
-/* --------------------------------------------------------------- insights */
-
-const INSIGHT_CTA: Record<string, string> = {
-  'task-presupuesto': 'Revisar presupuesto',
-  'task-landing': 'Responder al equipo',
-  'task-shopify': 'Reconectar Shopify',
-  'task-guia': 'Abrir en Notion',
-};
-
-function buildInsights(): Insight[] {
-  const variants: Insight['variant'][] = ['light', 'primary', 'ghost'];
-  return demoStore.notifications
-    .filter((notification) => !notification.read)
-    .slice(0, 3)
-    .map((notification, index) => ({
-      tag: notification.title,
-      body: notification.body,
-      cta: (notification.taskId && INSIGHT_CTA[notification.taskId]) ?? 'Abrir tarea',
-      variant: variants[index % variants.length],
-    }));
-}
-
-/* ------------------------------------------------------------------ datos */
-
 export function useCentroMandoData(range: DateRange) {
-  const days = RANGE_DAYS[range];
+  const demo = isDemoSession();
+  const demoData = useDemoCentroMandoData(range);
+  const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
+  const [loading, setLoading] = useState(!demo);
+  const [error, setError] = useState<string | null>(null);
 
-  return useMemo(() => {
-    const now = Date.now();
-    const inRange = (iso?: string) =>
-      Boolean(iso) && now - new Date(iso as string).getTime() <= days * 86_400_000;
-
-    const openTasks = demoStore.tasks.filter((task) => OPEN_STATUSES.has(task.status));
-    const running = openTasks.filter((task) => task.status === 'running').length;
-    const awaitingDecision = openTasks.filter(
-      (task) => task.status === 'waiting_approval' || task.status === 'waiting_input',
-    ).length;
-    const failed = demoStore.tasks.filter((task) => task.status === 'failed').length;
-    const done = demoStore.tasks.filter(
-      (task) => task.status === 'succeeded' && inRange(task.updatedAt),
-    ).length;
-    const newToday = demoStore.tasks.filter(
-      (task) => now - new Date(task.createdAt).getTime() <= 86_400_000,
-    ).length;
-
-    const pending = buildPending();
-    const amount = amountOf();
-
-    const loadByAgent: { name: string; value: number }[] = agents
-      .map((agent) => ({
-        name: agent.name,
-        value: openTasks.filter((task) => task.assignedTo === agent.id).length,
-      }))
-      .filter((row) => row.value > 0)
-      .sort((a, b) => b.value - a.value);
-    const maxLoad = Math.max(1, ...loadByAgent.map((row) => row.value));
-    const load: BarRow[] = loadByAgent.map((row) => ({
-      ...row,
-      pct: Math.round((row.value / maxLoad) * 100),
-    }));
-
-    const leads = demoStore.leads;
-    const stage = (needle: string) =>
-      leads.filter((lead) => (lead.status ?? '').includes(needle)).length;
-    const stageValues = [
-      { label: 'Lead', val: stage('Contacto') },
-      { label: 'Propuesta', val: stage('Propuesta') + stage('Presupuesto') },
-      { label: 'En espera', val: stage('espera') },
-      { label: 'Ganado', val: 0 },
-    ];
-    const maxStage = Math.max(1, ...stageValues.map((item) => item.val));
-    const pipeline: PipelineStage[] = stageValues.map((item) => ({
-      ...item,
-      w: `${Math.round((item.val / maxStage) * 100)}%`,
-    }));
-
-    const agentsData = buildAgents();
-    const topAgent = [...agentsData].sort((a, b) => b.conf - a.conf)[0];
-
-    return {
-      tenant: TENANT,
-      clients: buildClients(),
-      projects: buildProjects(),
-      tickets: buildTickets(),
-      agents: agentsData,
-      insights: buildInsights(),
-      pending,
-      load,
-      pipeline,
-      topAgent,
-      kpis: {
-        openTasks: openTasks.length,
-        running,
-        awaitingDecision,
-        failed,
-        done,
-        newToday,
-        pending: pending.length,
-        pendingAmount: amount.label,
-        leads: leads.length,
-        activeProjects: demoStore.projects.filter((project) => project.status === 'active').length,
-      },
-      lastSync: relative(demoStore.notifications[0]?.createdAt),
+  useEffect(() => {
+    if (demo) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchAnalyticsOverview(range)
+      .then((next) => {
+        if (!cancelled) setOverview(next);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "No se pudo cargar la analítica");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
     };
-  }, [days]);
+  }, [range, demo]);
+
+  const real = useMemo(() => mapOverview(overview), [overview]);
+
+  if (demo) return { ...demoData, loading: false, error: null };
+  return { ...real, loading, error };
 }

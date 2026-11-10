@@ -31,7 +31,12 @@ function findView(
 }
 
 export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: WorkspaceDispatcher) {
-  const app = new Hono<{ Variables: { owner: string; tenantId: string } }>();
+  // WS_TENANT_FROM_CTX_V1 (E17) - `ctx` es lo que deja el middleware de auth
+  // en app.ts para toda petición /api/*. `tenantId` solo lo ponen las rutas
+  // que resuelven su propio scope (leads, voz).
+  const app = new Hono<{
+    Variables: { owner: string; tenantId?: string; ctx?: { tenantId?: string } };
+  }>();
 
   app.get("/", async (c) => {
     return c.json(registry.list().map((m) => ({
@@ -59,7 +64,9 @@ export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: 
   // WS_VIEW_EXEC_V1 - ejecuta una declaracion real y devuelve ViewEnvelope.
   app.post("/:id/view", async (c) => {
     const owner = c.get("owner");
-    const tenantId = c.get("tenantId") ?? owner;
+    const tenantId = c.get("tenantId") ?? c.get("ctx")?.tenantId;
+    // Caer a `owner` producía un envelope con tenantId = uuid del usuario (H11).
+    if (!tenantId) return c.json({ error: "Sesion sin empresa resuelta", code: "TENANT_REQUIRED" }, 403);
     const m = registry.get(c.req.param("id"));
     if (!m) return c.json({ error: "workspace not found" }, 404);
     const body = z
@@ -108,7 +115,9 @@ export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: 
 
   app.post("/:id/command", async (c) => {
     const owner = c.get("owner");
-    const tenantId = c.get("tenantId") ?? owner;
+    const tenantId = c.get("tenantId") ?? c.get("ctx")?.tenantId;
+    // Caer a `owner` producía un envelope con tenantId = uuid del usuario (H11).
+    if (!tenantId) return c.json({ error: "Sesion sin empresa resuelta", code: "TENANT_REQUIRED" }, 403);
     const m = registry.get(c.req.param("id"));
     if (!m) return c.json({ error: "workspace not found" }, 404);
     const body = await c.req.json();
@@ -131,7 +140,9 @@ export function workspacesRoutes(registry: WorkspaceModuleRegistry, dispatcher: 
 
   app.post("/:id/query", async (c) => {
     const owner = c.get("owner");
-    const tenantId = c.get("tenantId") ?? owner;
+    const tenantId = c.get("tenantId") ?? c.get("ctx")?.tenantId;
+    // Caer a `owner` producía un envelope con tenantId = uuid del usuario (H11).
+    if (!tenantId) return c.json({ error: "Sesion sin empresa resuelta", code: "TENANT_REQUIRED" }, 403);
     const m = registry.get(c.req.param("id"));
     if (!m) return c.json({ error: "workspace not found" }, 404);
     const body = await c.req.json();

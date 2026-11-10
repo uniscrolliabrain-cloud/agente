@@ -828,6 +828,9 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     // APP_LEADS_WIRE_V1 - descubrimiento de leads (Google Places) por empresa.
     const { leadsRoutes } = await import("./leads-routes.ts");
     app.route("/api/leads", leadsRoutes(agent));
+    // ANALYTICS_OVERVIEW_WIRE_V1 (E19) - el panel lee del tenant, no de fixtures.
+    const { analyticsRoutes } = await import("./routes/analytics.ts");
+    app.route("/api/analytics", analyticsRoutes({ db: tdb }));
   }
   // COGNITION_ROUTES_WIRE_V1 - tarjetas del slow por owner y tenant.
   {

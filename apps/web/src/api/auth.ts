@@ -7,6 +7,8 @@ export interface AuthUser {
   email: string;
   name: string;
   role: "admin" | "user";
+  /** SESSION_TENANT_NOTICE_V1 - empresa resuelta por el servidor para esta sesion. */
+  tenantId?: string | null;
   active?: boolean;
   setup: { sopIds: string[]; allowedTools: string[]; greeting: string };
   createdAt?: string;

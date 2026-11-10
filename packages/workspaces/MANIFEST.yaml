@@ -3,12 +3,12 @@ package: "@agente/workspaces"
 updated_at: "2026-10-10T16:49:37Z"
 
 families:
-  comunicacion: [gmail, whatsapp, hubspot, zendesk, intercom, suitedash, buffer]
+  comunicacion: [gmail, whatsapp, hubspot, zendesk, intercom, suitedash, buffer, acme-clientes]
   documentos:   [google-drive, notion, docusign, canva]
-  trabajo:      [linear, trello, google-calendar, productive, n8n, process-street]
+  trabajo:      [linear, trello, google-calendar, productive, n8n, process-street, acme-obras]
   finanzas:     [holded, holded-tesoreria, odoo-purchase, ramp, stripe, shopify]
   personas:     [factorial, personio, perdoo]
-  operaciones:  [odoo-inventory, maintainx, odoo-manufacturing]
+  operaciones:  [odoo-inventory, maintainx, odoo-manufacturing, acme-suministros]
   gobierno:     [isms-online, microsoft-entra, langsmith]
   datos:        [airtable]
   global:       [chatgpt]
@@ -252,6 +252,28 @@ modules:
     reference: "Trello"
     title: "Tableros Kanban"
     status: scaffold
+
+  acme-obras:
+    order: 35
+    folder: "acme-obras"
+    family: trabajo
+    reference: "ACME Obras"
+    title: "Obras y ejecucion"
+    status: implemented
+  acme-clientes:
+    order: 36
+    folder: "acme-clientes"
+    family: comunicacion
+    reference: "ACME Clientes"
+    title: "Clientes y negocio"
+    status: implemented
+  acme-suministros:
+    order: 37
+    folder: "acme-suministros"
+    family: operaciones
+    reference: "ACME Suministros"
+    title: "Suministros y compras"
+    status: implemented
 
 limits:
   max_files_modified_per_patch: 1

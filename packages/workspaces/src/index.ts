@@ -36,6 +36,9 @@ import { workspace as ws_31_suitedash } from "../31-suitedash/src/index.ts";
 import { workspace as ws_32_notion } from "../32-notion/src/index.ts";
 import { workspace as ws_33_langsmith } from "../33-langsmith/src/index.ts";
 import { workspace as ws_34_trello } from "../34-trello/src/index.ts";
+import { workspace as ws_35_acme_obras } from "../acme-obras/src/index.ts";
+import { workspace as ws_36_acme_clientes } from "../acme-clientes/src/index.ts";
+import { workspace as ws_37_acme_suministros } from "../acme-suministros/src/index.ts";
 export const ALL_WORKSPACES = [
   ws_01_gmail,
   ws_02_whatsapp,
@@ -71,4 +74,7 @@ export const ALL_WORKSPACES = [
   ws_32_notion,
   ws_33_langsmith,
   ws_34_trello,
+  ws_35_acme_obras,
+  ws_36_acme_clientes,
+  ws_37_acme_suministros,
 ] as const;

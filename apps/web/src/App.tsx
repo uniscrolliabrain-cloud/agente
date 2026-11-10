@@ -153,6 +153,11 @@ export default function App() {
     : tasks.workerRunning
       ? "Agente activo"
       : "Desconectado";
+  // SESSION_TENANT_NOTICE_V1 (E18) - la etiqueta del espacio sale del tenant
+  // que devuelve /api/auth/me, no del token demo. El sandbox conserva su
+  // etiqueta propia porque su tenant sintetico no existe en el backend.
+  const sessionTenant = isDemoSession() ? null : (auth.user?.tenantId ?? null);
+  const contextLabel = isDemoSession() ? "Interfaz" : (sessionTenant ? sessionTenant.toUpperCase() : "MI");
 
   const sidebar = (
     <SidebarV2
@@ -169,6 +174,7 @@ export default function App() {
         active: isDemoSession(),
         onExit: () => { void auth.logout(); },
       }}
+      tenant={sessionTenant ? { id: sessionTenant } : null}
     />
   );
 
@@ -187,7 +193,7 @@ export default function App() {
         <TopBarV2
           status={status}
           statusLabel={statusLabel}
-          contextLabel={isDemoSession() ? "Interfaz" : "MI"}
+          contextLabel={contextLabel}
           onNewChat={handleNewChat}
           onOpenPalette={() => setPaletteOpen(true)}
         />

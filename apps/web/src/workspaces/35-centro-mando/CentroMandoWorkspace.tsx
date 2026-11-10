@@ -15,7 +15,6 @@ import { TopClientsPanel } from './components/TopClientsPanel';
 import { AiInsightsPanel } from './components/AiInsightsPanel';
 import { ClientDetailModal } from './components/ClientDetailModal';
 import { Toast } from './components/Toast';
-import { isDemoSession } from '../../api/client';
 
 // CENTRO_MANDO_V2 - mismo chrome que el resto del menu (sin sidebar propio ni
 // marca de ejemplo) y todos los numeros salen del tenant activo.
@@ -27,25 +26,27 @@ export default function CentroMandoWorkspace() {
 
   const { kpis } = data;
 
-  // CENTRO_MANDO_NO_FIXTURES_V1 - en una sesion real esta vista no tiene
-  // endpoint de analitica: se declara sin datos antes que pintar fixtures del
-  // tenant demo. Los datos sinteticos solo existen con sesion demo.
-  if (!isDemoSession()) {
+  // CENTRO_MANDO_NO_FIXTURES_V1 - en sesion real los numeros vienen de
+  // /api/analytics/overview (tenant del contexto). Sin datos no se pinta nada
+  // de ejemplo: se dice que esta cargando o que fallo.
+  if (data.loading) {
     return (
       <div className="v2-tasks-view" style={{ maxWidth: 1100 }}>
-        <WorkspaceHeader
-          meta="Sin fuente de datos conectada"
-          range={range}
-          onRange={setRange}
-          onExport={() => showToast('La exportación necesita la analítica del tenant')}
-        />
+        <WorkspaceHeader meta="Cargando el tenant" range={range} onRange={setRange} onExport={() => showToast('Cargando datos')} />
         <div className="v2-tasks-empty" style={{ padding: '48px 24px' }}>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--v2-text)' }}>
-            Centro de Mando todavía no tiene endpoint de analítica.
-          </p>
-          <small style={{ color: 'var(--v2-text-3)' }}>
-            Se conectará al tenant activo cuando exista la vista en el backend; hasta entonces no muestra datos de ejemplo.
-          </small>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--v2-text)' }}>Cargando la analítica del tenant...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (data.error) {
+    return (
+      <div className="v2-tasks-view" style={{ maxWidth: 1100 }}>
+        <WorkspaceHeader meta="Sin datos del tenant" range={range} onRange={setRange} onExport={() => showToast(data.error ?? '')} />
+        <div className="v2-tasks-empty" style={{ padding: '48px 24px' }} role="alert">
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--v2-text)' }}>{data.error}</p>
+          <small style={{ color: 'var(--v2-text-3)' }}>No se muestran datos de ejemplo mientras la fuente falle.</small>
         </div>
       </div>
     );
@@ -133,7 +134,7 @@ export default function CentroMandoWorkspace() {
             <span className="text-[28px] font-semibold tracking-tight">{kpis.leads}</span>
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10">en cartera</span>
           </div>
-          <div className="text-[11px] text-white/60">Pipeline de Interfaz Studio</div>
+          <div className="text-[11px] text-white/60">Pipeline de {data.tenant}</div>
           <div className="mt-5">
             <PipelineFunnel stages={data.pipeline} />
           </div>
