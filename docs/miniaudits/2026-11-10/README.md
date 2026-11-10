@@ -89,3 +89,16 @@ Cada `miniaudit.md` termina ahora con **Revisión de destino** y **Conclusión**
 2. **Riesgo económico y de datos**: 24 (Stripe), 23 (scopes), 20 (backups), 18 (exposición).
 3. **Fase 1**: 14/15 (acciones, KPIs, procedencia), 12/13 (chat y memoria).
 4. **Fase 2**: 03, 05, 19 y el resto de P1.
+
+## Ejecución de fixes (2026-11-10)
+
+Aplicados en `main`, con typecheck y pruebas en foco en verde:
+
+| Fix | Hallazgo | Cambio | Commit |
+|---|---|---|---|
+| Tenant de las vistas | 14-4 / 08 | `/api/views/resolve` exige el tenant del principal y responde 403 `TENANT_REQUIRED`; ya no cae al `owner` | `b148961` |
+| Techo de reintentos | 04-1 / 06-1 | una tarea que agota `TASK_MAX_ATTEMPTS` (5) por lease perdido termina en `failed` y va al dead-letter en vez de reencolarse | `b148961` |
+| Verificador sin criterios | 25 | `DeterministicVerifier` no firma `verified: true` cuando el goal no declara `successCriteria` | `b148961` |
+| Contexto del orquestador | 10-1 | un rol inexistente devuelve `blocked` con el motivo en vez de lanzar y dejar la tarea sin outcome | `d009dee` |
+
+Revisados y **no aplicables** tal como están escritos: `actions.ts` fija `provider: "google"` porque ese servicio sólo propone acciones de Google (el proveedor real viaja en la conexión); y `backup-tenant.ts` ya copia `files` y `browser-profiles` por tenant, así que el hallazgo de backup se reduce a incluir el dump de Postgres, que es de despliegue y no de este módulo.
