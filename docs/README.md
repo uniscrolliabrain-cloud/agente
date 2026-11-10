@@ -79,6 +79,10 @@ Campaña de UI/UX: shell, chat, panel contextual, templates. En curso.
 |---|---|
 | [BETA.md](../BETA.md) | Beta readiness (raíz del repo) |
 
+## Handoffs por fecha
+
+- [Vistas servidas · 2026-11-10](./2026-11-10/README.md)
+
 ## Archivo
 
 Documentos históricos que ya cumplieron su función. Se conservan por
