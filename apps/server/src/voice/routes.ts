@@ -250,6 +250,11 @@ export function avatarRoutes(deps: AvatarDeps) {
     if (session) {
       const touched = await sessions.touch(session).catch(() => session);
       // El refresco va en segundo plano: el turno ya tiene su snapshot leido.
+      // La consulta es el ultimo mensaje del usuario, no la de apertura: si no,
+      // la llamada refrescaria siempre el mismo contexto.
+      const lastUser = [...parsed.data.messages]
+        .reverse()
+        .find((message) => message.role === "user")?.content;
       maybeRefreshSnapshot(
         deps,
         {
@@ -258,6 +263,7 @@ export function avatarRoutes(deps: AvatarDeps) {
           agentId: profile.agentId,
           agentName: profile.displayName,
           role: profile.role,
+          ...(lastUser ? { query: lastUser.slice(0, 300) } : {}),
           agentKey: "session",
         },
         touched.turns,
