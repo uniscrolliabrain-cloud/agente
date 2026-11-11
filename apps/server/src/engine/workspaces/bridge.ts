@@ -18,11 +18,18 @@ export function bridgeWorkspaceCapabilities(
         inputs: {},
         outputs: {},
         preconditions: [],
-        sideEffects: [],
+        // BRIDGE_SIDE_EFFECTS_V1 - el puente declaraba `sideEffects: []` e
+        // `idempotent` para TODA capability de workspace, aunque la declaracion
+        // dijera que escribe: el runner no pedia claim ni clave de idempotencia
+        // y una capacidad con efectos se anunciaba como pura. Se respeta la
+        // declaracion; sin saber si el efecto es externo se declara `write`.
+        sideEffects: c.sideEffects
+          ? [{ kind: "write" as const, target: c.id, reversible: false }]
+          : [],
         permissions: [],
         risk: c.risk,
         cost: {},
-        idempotency: "idempotent",
+        idempotency: c.sideEffects ? "at-most-once" : "idempotent",
         retryable: false,
         compensatable: false,
         requiresApproval: c.requiresApproval ?? false,

@@ -44,7 +44,11 @@ export class CapabilityRunner implements StepRunner {
       const approvalId = ctx.sessionId;
       if (!approvalId) throw new Error(`requires approval: ${capability.id}`);
       if (this.db) {
-        const approval = await this.db.get(ctx.tenantId, "actions", approvalId);
+        // CAPABILITY_RUNNER_APPROVAL_OWNER_V1 - el store compone la clave como
+        // `${tenant}:${owner}`; aqui se pasaba ctx.tenantId como owner, asi que
+        // se buscaba `${tenant}:${tenant}` y NINGUNA aprobacion se encontraba.
+        // La accion se guarda con el owner real (ActionService.propose(owner)).
+        const approval = await this.db.get(ctx.owner, "actions", approvalId);
         if (!approval) throw new Error(`approval not found: ${approvalId}`);
         const a = approval as { status?: string; kind?: string; taskId?: string };
         const validStatuses = ["executing", "succeeded"];

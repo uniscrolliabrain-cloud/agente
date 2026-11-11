@@ -8,6 +8,42 @@ Ningún arreglo de esta limpieza ha fallado dos veces. Lo que hay abajo es lo qu
 
 ---
 
+## Campaña 2026-11-11 · fase A de los miniaudits
+
+**Base:** rama `feat/acme-tenant` (8 commits por encima de `main` = `b37b67d`), más los arreglos de
+esta tanda, que están sin commitear al escribir esto.
+**Origen:** `docs/miniaudits/2026-11-10/ANEXO-ORDEN-DE-TRABAJO.md`, fase A.
+**Verificación de la tanda:** `tsc --noEmit` exit 0. Suite completa: 790 tests, 772 pass, 12 skipped,
+5 todo y **1 fallo que era mío** (`decide` con 409 rompía cancelar tarea). Revertido ese cambio, se
+repitieron en verde los focos: `actions` 12/12, `workflows` 5/5, `vertical-slice-approval` 4/4,
+`gate/idempotency-execution` 6/6, `campaign-3/e2e-05-authz` 1/1. **La suite completa no se ha
+repetido después del revert.**
+
+### Cerrado en esta tanda
+
+| # | Arreglo | Fichero | Prueba |
+|---|---|---|---|
+| 07 | `CapabilityRunner` buscaba la aprobación con `ctx.tenantId` como owner; el store compone `${tenant}:${owner}` y la acción se guarda con el owner usuario, así que buscaba `${tenant}:${tenant}` y ninguna aprobación se encontraba. Las claves de idempotencia se dejan por tenant: el gate las fixturiza así y no hay fuga entre empresas | `apps/server/src/engine/execution/capability-runner.ts` | `tsc` + `tests/gate/idempotency-execution.test.ts` |
+| 25 | El resultado de `runGoal` se descartaba: un goal `achieved` seguía `active` para siempre. Ahora se marcan los hitos y pasa a `completed` con CAS | `apps/server/src/engine/service.ts` (`createGoal`) | `tsc` (sin test de orquestador) |
+| 14 | `bridgeWorkspaceCapabilities` declaraba `sideEffects: []` e `idempotent` para toda capability de workspace aunque la declaración dijera que escribe. Ahora respeta `sideEffects` y usa `at-most-once` | `apps/server/src/engine/workspaces/bridge.ts` | `tsc` |
+| 08/14 | `/api/views/resolve` exige tenant (403 `TENANT_REQUIRED`) | `apps/server/src/routes/views.ts` | commits previos |
+| 04/06 | Techo de intentos y dead-letter; verificador sin criterios no firma; contexto que no se puede montar deja el goal en `blocked` | `worker.ts`, `verifier.ts`, `orchestrator.ts` | commits `b148961`, `d009dee` |
+
+### Pendiente de la fase A, con motivo
+
+| # | Qué queda | Por qué no se hace aquí |
+|---|---|---|
+| 25/10 | Llevar el goal a `failed` cuando el ciclo falla | El `Goal` legacy (`packages/domain/src/agent.ts`) sólo admite `active\|paused\|completed`. Añadir `failed` cambia el dominio y los filtros de la UI: es una decisión, no un parche |
+| 25 | Persistir el `Outcome` por tarea (no sólo el estado del goal) | Necesita un kind de store y contrato de lectura para el panel; hoy el desenlace vive en `task.result` y en eventos |
+| 07 | `decide()` con 409 en conflicto de estado | No aplica tal cual: aprobar una acción ya denegada debe devolver la propuesta en `denied`; es el contrato que usa cancelar tarea (`tests/workflows.test.ts:127`) y romperlo tiraba la suite (790 tests, 1 fallo). La idempotencia actual es deliberada |
+| 07 | `provider` desde la acción | No aplica: este módulo sólo propone acciones de Google y el proveedor real viaja en la conexión (`README.md:104`) |
+| 07 | La aprobación se identifica con `ctx.sessionId` | Hay que llevar `task.actionId` al `ExecutionContext` (dominio + orquestador + service). Cambia tres firmas |
+| 14/08 | PolicyEngine real (envelope calcula permisos, rutas los respetan) | El PEP se monta **antes** de que exista `ctx` (`app.ts:582` vs `583-690`) y nadie lee `c.get("authz")`. Además `defaultPolicies()` no tiene ninguna regla `allow` para humanos: activarlo tal cual deja la API en 403 total. Faltan permisos por rol declarados y la decisión 404/403 |
+| 13 | El `rag` no puede devolver `[]` cuando falla | `searchReport` ya expone `degraded`, pero `memory.ts:199` convierte el fallo en `[]`. Propagar el error rompe el turno de chat cuando no hay embeddings; hay que decidir si el recall degrada o falla |
+| 09 | Semántica de `delivered` en el bus | Contar entregas confirmadas exige que `publish` espere handlers (hoy es síncrono y alimenta SSE); es un cambio de contrato del bus, no un rename |
+| 04/06 | Clasificar el error del reintento | `defaultIsRetryable` existe y sólo lo usa `files.ts`. El worker reintenta por lease/intentos, no por `retryWithBackoff`; cablearlo cambia la política de reintentos de tareas |
+| 02 | Quitar los 10 `skip` que quedan | 5 son placeholders de e2e (`campaign-3/e2e-02..12-skip.test.ts`), 2 tienen motivo escrito (fixture de modelo y mock de guardrails), 1 es por Windows y 2 están en `b30`/`computer-runner`. Convertirlos exige los fixtures que aún no existen |
+
 ## 1. Bloqueado por el vertical slice (no se toca a propósito)
 
 Estos ficheros los modifican las campañas de `docs/vertical-slice-actual/`. Arreglarlos ahora garantiza conflicto con las ramas `freebuff/vsa-NN-*` y `codex/vsa-NN-*-test`.

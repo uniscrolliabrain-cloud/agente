@@ -304,6 +304,10 @@ export class ActionService {
     if (!proposal) throw new AppError("Action not found", 404);
     if (proposal.hash !== hash)
       throw new AppError("This proposal changed. Open its latest review before deciding.", 409);
+    // APPROVAL_DECIDE_IDEMPOTENT_V1 - decidir sobre una propuesta que ya no
+    // esta `awaiting_review` devuelve el estado actual, no un error: cancelar
+    // una tarea deniega su accion y la UI necesita leer ese `denied`
+    // (tests/workflows.test.ts:127). Un 409 ahi rompia ese contrato.
     if (proposal.status !== "awaiting_review") return proposal;
     if (decision === "approve" && proposal.taskId) {
       const task = await this.db.get<{ status: string }>(owner, "tasks", proposal.taskId);

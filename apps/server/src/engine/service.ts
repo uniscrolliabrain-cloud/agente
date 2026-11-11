@@ -1693,11 +1693,29 @@ export class AgentService {
           createdAt: saved.createdAt,
           updatedAt: saved.createdAt,
         };
-        await this.orchestrator.runGoal(
+        const result = await this.orchestrator.runGoal(
           // GOAL_CREATE_ACTOR_V1 - el goal se crea en nombre del owner.
           { tenantId, owner, role: "system", requestId: `goal-create:${goal.id}`, actorId: owner },
           orchestratorGoal,
         );
+        // GOAL_OUTCOME_PERSIST_V1 - el resultado del ciclo se descartaba: un
+        // goal que el orquestador daba por `achieved` seguia `active` para
+        // siempre y ni la UI ni el grafo veian el desenlace. Al cerrar, se
+        // marcan los hitos y el goal pasa a `completed` con CAS.
+        if (result.status === "achieved" && saved.status !== "completed") {
+          await this.db
+            .compareAndSwap(
+              owner,
+              "goals",
+              saved.id,
+              { status: saved.status },
+              {
+                status: "completed",
+                milestones: saved.milestones.map((m) => ({ ...m, done: true })),
+              },
+            )
+            .catch((error) => backgroundFailure(`goal outcome ${goal.id}`, error));
+        }
       } catch (error) {
         backgroundFailure(`goal run ${goal.id}`, error);
       }
