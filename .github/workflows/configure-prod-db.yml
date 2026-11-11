@@ -1,10 +1,10 @@
 name: Configurar base y desplegar (manual)
 
-# CONFIGURE_PROD_DB_V1 - ruta manual pensada para lanzarse desde el movil:
-# lee el DSN de Postgres del config de Doppler, lo valida sin imprimirlo,
-# lo fija en Fly, redespliega si el health sigue en 503 y comprueba el login.
-# No sustituye al deploy por tag: es el camino de emergencia cuando el gate
-# de audits esta en rojo y hay que levantar produccion ya.
+# CONFIGURE_PROD_DB_V2 - ruta manual pensada para lanzarse desde el movil.
+# V1 instalaba el workspace con pnpm solo para tener el driver `pg`; el runner
+# ya trae `psql`, asi que V2 valida el DSN sin node_modules (menos pasos, menos
+# formas de fallar). Lee el DSN de Doppler, lo valida sin imprimirlo, lo fija
+# en Fly, despliega si el health sigue en 503 y comprueba el login.
 on:
   workflow_dispatch:
     inputs:
@@ -21,17 +21,21 @@ jobs:
   configure:
     name: configurar produccion
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22.6"
-      - run: corepack enable
-      - run: corepack pnpm install --frozen-lockfile
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: instalar doppler
-        run: curl -sL https://cli.doppler.com/install.sh | sh
+
+      - name: instalar doppler y cliente de postgres
+        run: |
+          set -euo pipefail
+          curl -sL https://cli.doppler.com/install.sh | sh
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+          psql --version
 
       - name: resolver DSN
         env:
@@ -60,7 +64,26 @@ jobs:
           echo "DSN tomado de: $found"
 
       - name: validar DSN
-        run: node scripts/ci/check-dsn.cjs
+        run: |
+          set -euo pipefail
+          export PGSSLMODE=require PGCONNECT_TIMEOUT=15
+          node -e 'const u=new URL(process.env.DSN);console.log(`host=${u.host} db=${u.pathname.slice(1)} user=${decodeURIComponent(u.username)}`)'
+          if ! psql "$DSN" -t -A -c "select 1" > /dev/null 2> /tmp/psql.err; then
+            echo "::error::psql no pudo conectar"
+            cat /tmp/psql.err
+            if grep -qiE "ENETUNREACH|Network is unreachable|No route to host" /tmp/psql.err; then
+              echo "::error::Parece un DSN IPv6 directo (db.<ref>.supabase.co). Usa el pooler: puerto 6543 y host *.pooler.supabase.com."
+            fi
+            exit 1
+          fi
+          psql "$DSN" -t -A -c "select current_user || ' | ' || current_database() || ' | ' || split_part(version(), ',', 1)"
+          vector=$(psql "$DSN" -t -A -c "select coalesce((select extversion from pg_extension where extname='vector'), '')" || true)
+          bypass=$(psql "$DSN" -t -A -c "select rolbypassrls from pg_roles where rolname = current_user" || true)
+          tablas=$(psql "$DSN" -t -A -c "select count(*) from information_schema.tables where table_schema='public'" || true)
+          echo "pgvector=${vector:-no} rol_bypassrls=${bypass:-?} tablas_public=${tablas:-?}"
+          if [ "$bypass" = "t" ]; then
+            echo "::warning::El rol de la app tiene BYPASSRLS: las politicas de RLS se crearan pero no se aplicaran a este usuario."
+          fi
 
       - name: aplicar en Fly
         if: ${{ inputs.apply }}
