@@ -42,27 +42,35 @@ jobs:
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
           DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+          S_SUPABASE: ${{ secrets.SUPABASE_DB_URL }}
+          S_PROD: ${{ secrets.DATABASE_URL_PROD }}
+          S_PLAIN: ${{ secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
-          echo "config de doppler: $DOPPLER_CONFIG"
-          names=$(doppler secrets --only-names --json --config "$DOPPLER_CONFIG" \
-            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);const ks=Array.isArray(j)?j:Object.keys(j);console.log(ks.filter(k=>/DATABASE|SUPABASE|POSTGRES|PG_?URL/i.test(k)).join(" "))})')
-          echo "nombres relevantes: ${names:-ninguno}"
-          found=""
-          for k in DATABASE_URL SUPABASE_DB_URL SUPABASE_DATABASE_URL SUPABASE_POOLER_URL POSTGRES_URL PG_URL; do
-            v=$(doppler secrets get "$k" --plain --config "$DOPPLER_CONFIG" 2>/dev/null || true)
-            if [ -n "$v" ]; then
-              found="$k"
-              echo "::add-mask::$v"
-              { echo "DSN=$v"; echo "DSN_SOURCE=$k"; } >> "$GITHUB_ENV"
-              break
-            fi
-          done
-          if [ -z "$found" ]; then
-            echo "::error::No hay DSN Postgres en $DOPPLER_CONFIG. Nombres vistos: ${names:-ninguno}"
-            exit 1
+          pick() {
+            echo "::add-mask::$1"
+            { echo "DSN=$1"; echo "DSN_SOURCE=$2"; } >> "$GITHUB_ENV"
+            echo "DSN tomado de: $2"
+            exit 0
+          }
+          if [ -n "${DOPPLER_TOKEN:-}" ]; then
+            echo "config de doppler: $DOPPLER_CONFIG"
+            names=$(doppler secrets --only-names --json --config "$DOPPLER_CONFIG" 2>/tmp/dop.err \
+              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const ks=Array.isArray(j)?j:Object.keys(j);console.log(ks.filter(k=>/DATABASE|SUPABASE|POSTGRES|PG_?URL/i.test(k)).join(" "))}catch{console.log("")}})' || true)
+            if [ -s /tmp/dop.err ]; then echo "doppler dijo: $(head -c 200 /tmp/dop.err)"; fi
+            echo "nombres relevantes: ${names:-ninguno}"
+            for k in DATABASE_URL SUPABASE_DB_URL SUPABASE_DATABASE_URL SUPABASE_POOLER_URL POSTGRES_URL PG_URL; do
+              v=$(doppler secrets get "$k" --plain --config "$DOPPLER_CONFIG" 2>/dev/null || true)
+              if [ -n "$v" ]; then pick "$v" "doppler:$k"; fi
+            done
+          else
+            echo "sin DOPPLER_TOKEN en el repo: salto Doppler"
           fi
-          echo "DSN tomado de: $found"
+          if [ -n "${S_SUPABASE:-}" ]; then pick "$S_SUPABASE" "secret SUPABASE_DB_URL"; fi
+          if [ -n "${S_PROD:-}" ]; then pick "$S_PROD" "secret DATABASE_URL_PROD"; fi
+          if [ -n "${S_PLAIN:-}" ]; then pick "$S_PLAIN" "secret DATABASE_URL"; fi
+          echo "::error::No hay DSN. Opcion rapida desde el movil: Settings -> Secrets and variables -> Actions -> New repository secret, nombre SUPABASE_DB_URL, valor el pooler de Supabase (puerto 6543)."
+          exit 1
 
       - name: validar DSN
         run: |
