@@ -1,5 +1,8 @@
 # Guia del cliente
 
+> **NOTA DE VIGENCIA · 2026-11-10.** «Tus datos no comparten servidor con otros» ya no es cierto en el modelo compartido: el aislamiento es lógico (aplicación) y RLS está apagada en producción. No entregues esta frase a un cliente sin revisarla. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 ## Primer acceso
 
 1. Recibe un email con la URL de tu workspace y tu contrasena temporal.

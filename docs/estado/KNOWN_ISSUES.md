@@ -1,5 +1,8 @@
 # Known issues
 
+> **NOTA DE VIGENCIA · 2026-11-10.** La suite completa pasa el 2026-11-10 (726 casos, exit 0). Si estos síntomas siguen existiendo, no están cubiertos por test: verifica antes de dar cada punto por abierto. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 > Deuda tecnica identificada durante el pase de reconciliacion (Fase 0).
 > No bloquea la continuacion. Se resuelve en la fase indicada.
 

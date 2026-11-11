@@ -1,5 +1,8 @@
 # Laia — Whitepaper
 
+> **NOTA DE VIGENCIA · 2026-11-10.** El apartado II.6 describe el modelo anterior (un deployment por cliente). Hoy es multitenant clásico; RLS sigue pendiente de activar y probar. Estado real: [docs/00-EMPIEZA-AQUI.md](docs/00-EMPIEZA-AQUI.md).
+
+
 > v1 · 2026-10-27 · Estado: current
 
 ## Resumen ejecutivo

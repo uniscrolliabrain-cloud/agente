@@ -49,6 +49,15 @@
   ejecución completa da **726 casos, exit 0**.
 - `pnpm docs:check`: citado en el ROADMAP como gate; **no existe**.
 
+## Ficheros que no son lo que parecen
+
+- `docs/WHITEPAPER.md` **no es el whitepaper**: contiene una copia de
+  `scripts/rollback.ts`. El whitepaper vivo es `whitepaper.md`, en la raíz. No lo
+  uses como referencia de producto ni lo entregues.
+- `docs/INFORME-TRANSVERSAL-CLIENTES.md` es un snapshot del 2026-11-05 sobre
+  `5490a49`. Su lectura de RLS (apagada sin `MULTI_TENANT_SHARED`) sigue siendo
+  correcta; su topología, no.
+
 ## Reglas para escribir docu nueva
 
 1. Cabecera obligatoria: `> vN · YYYY-MM-DD · Estado: current|draft|archived`.

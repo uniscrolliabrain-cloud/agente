@@ -1,5 +1,8 @@
 # Auditoría de contratos del dominio
 
+> **NOTA DE VIGENCIA · 2026-11-10.** Medición 2026-11-10 en `main@2693917`: **340 contratos, 288 OK, 43 MODULE, 1 HARNESS, 2 PENDING, 0 allowlist, 6 huérfanos**; el gate sigue rojo. Las cifras del cuerpo (322/150/79) son del 8-nov.
+
+
 > **Este fichero ya no es el informe.** Era una copia del audit generado el 2026-10-26 y se quedó obsoleta: en `main` convivían dos verdades sobre los mismos contratos.
 
 El informe real lo escribe el propio audit en `artifacts/gate/audits/AUDIT_CONTRACTS.md` (fuera de git), que es el que se relee en cada ejecución:

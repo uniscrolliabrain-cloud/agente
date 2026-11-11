@@ -1,5 +1,8 @@
 # Deploy por Cliente
 
+> **NOTA DE VIGENCIA · 2026-11-10.** «Un deployment por cliente» ya no es el modelo: una instancia sirve varias empresas y el tenant se resuelve por sesión. Para desplegar, usa [DEPLOY.md](./DEPLOY.md). Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 > Guía de aprovisionamiento por cliente. Sigue [DEPLOY.md](DEPLOY.md) para publicar y operar la instancia.
 
 ## Modelo

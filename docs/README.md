@@ -1,5 +1,8 @@
 # Documentación de Laia
 
+> **NOTA DE VIGENCIA · 2026-11-10.** Este índice no cubre los 404 `.md` de `docs/`. Punto de entrada: [00-EMPIEZA-AQUI.md](./00-EMPIEZA-AQUI.md). Mapa por estado: [00-MAPA-DOCS.md](./00-MAPA-DOCS.md). Varias entradas de abajo son históricas.
+
+
 > v2 · 2026-11-07 · Estado: current
 
 Índice de la documentación del repositorio. Cada entrada dice qué es,
@@ -45,7 +48,7 @@ dónde vive y si está viva o archivada.
 | Fichero | Qué es |
 |---|---|
 | [DEPLOY.md](./04-operaciones/DEPLOY.md) | Cómo desplegar el backend |
-| [DEPLOY-CLIENTE.md](./04-operaciones/DEPLOY-CLIENTE.md) | Deploy por cliente (un deployment por cliente) |
+| [DEPLOY-CLIENTE.md](./04-operaciones/DEPLOY-CLIENTE.md) | Histórico: modelo anterior de un deployment por cliente. Hoy multitenant |
 | [PRODUCCION.md](./04-operaciones/PRODUCCION.md) | Notas de producción |
 | [ONBOARDING-CLIENTE.md](./04-operaciones/ONBOARDING-CLIENTE.md) | Pasos para dar de alta un cliente |
 | [CLIENTE.md](./04-operaciones/CLIENTE.md) | Guía del cliente final |
