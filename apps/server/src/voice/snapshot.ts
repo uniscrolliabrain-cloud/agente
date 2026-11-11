@@ -5,8 +5,6 @@
 // Se guarda bajo el owner con su tenantId dentro del registro; la lectura
 // comprueba ambos, asi que un snapshot no cruza empresas.
 
-import { VOICE_SESSIONS_KIND } from "./sessions.ts";
-
 export const VOICE_CONTEXT_KIND = "voice-context";
 
 export interface VoiceSnapshot {
@@ -139,15 +137,12 @@ export async function readVoiceSnapshot(
  */
 export function maybeRefreshSnapshot(
   deps: SnapshotDeps,
-  snapshot: VoiceSnapshot,
   input: BuildSnapshotInput,
+  turns: number,
   everyTurns = 5,
 ): void {
-  const nextTurns = snapshot.turns + 1;
-  if (nextTurns % everyTurns !== 0) return;
-  void buildVoiceSnapshot(deps, { ...input, agentKey: snapshot.id.split(":").at(-1) }).catch(
-    () => undefined,
-  );
+  // El contador que manda es el de la sesion, no el del snapshot leido: el
+  // snapshot puede llevar varios turnos sin reescribirse.
+  if (turns <= 0 || turns % everyTurns !== 0) return;
+  void buildVoiceSnapshot(deps, input).catch(() => undefined);
 }
-
-export { VOICE_SESSIONS_KIND };

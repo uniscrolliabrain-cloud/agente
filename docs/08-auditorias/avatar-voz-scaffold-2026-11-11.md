@@ -86,6 +86,26 @@ recurso **no existe** (404/null), igual que en el resto del producto.
   empresa, reaper, una lectura de snapshot por turno, SSE con LLM inyectado,
   degradación sin claves).
 - Suite completa: 800 tests, 783 pass, 0 fail, 12 skipped, 5 todo.
+- Segunda pasada (sin claves): registro de `rag-sources` cacheado por owner
+  (una lista de 20 000 filas por búsqueda menos), perfiles de voz cacheados por
+  tenant, tope `VOICE_TURNS_PER_HOUR` por empresa en `/llm` y `/tts`, y refresco
+  de snapshot en segundo plano arreglado (ya no depende de un cast).
+
+## Mañana: conectar Anam y ElevenLabs (paso a paso)
+
+1. **Voz.** Crear la clave en ElevenLabs y elegir una voz de la biblioteca.
+   Poner `ELEVENLABS_API_KEY` y `ELEVENLABS_VOICE_ID` en el `.env` del servidor.
+   Para dar voces distintas: `ELEVENLABS_VOICE_COMERCIAL`, `ELEVENLABS_VOICE_LEGAL`…
+   Comprobar con `POST /api/avatar/tts` y `{"text":"hola","agentId":"laia"}`.
+2. **Cara.** Crear la persona en Anam, copiar su id a `ANAM_PERSONA_ID` y poner
+   `ANAM_API_KEY`. Comprobar con `GET /api/avatar/providers` → `anam.configured: true`.
+3. **Unir las dos.** `POST /api/avatar/sessions` devuelve `anam.token` y el perfil
+   del agente; montar el SDK de Anam en `videoRef` de `ConferenceRoom.tsx` usando
+   ese token y, como custom LLM, `POST /api/avatar/llm` con `x-avatar-session`.
+4. **Verificar de verdad.** Una llamada de 1 minuto: primer audio < 1,5 s, corte
+   al hablar (barge-in) y cierre que deja `seconds`/`costEur` en la sesión.
+   El coste por minuto hay que ajustarlo a la tarifa real
+   (`VOICE_EUR_PER_MINUTE`); el 0,12 por defecto es una estimación.
 
 ## Pendiente (fuera de este scaffold)
 

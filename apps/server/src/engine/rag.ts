@@ -370,6 +370,7 @@ export class RagService {
       indexedAt: now,
       updatedAt: now,
     };
+    this.sourceRegistryCache.delete(owner);
     await this.db.put(owner, "rag-sources", record);
     return record;
   }
@@ -414,6 +415,7 @@ export class RagService {
       updatedAt: now,
       error: error.slice(0, 500),
     };
+    this.sourceRegistryCache.delete(owner);
     await this.db.put(owner, "rag-sources", record);
     return record;
   }
@@ -440,6 +442,7 @@ export class RagService {
     }
     // RAG_SOURCE_REMOVE_V1 - borrar la fuente borra tambien su registro: una
     // cita verificada nunca apunta a algo que el usuario ya retiro.
+    this.sourceRegistryCache.delete(owner);
     await this.db.remove(owner, "rag-sources", sourceId);
   }
 
@@ -458,6 +461,30 @@ export class RagService {
       : null;
   }
 
+  // RAG_REGISTRY_CACHE_V1 - cada busqueda listaba hasta 20 000 filas de
+  // "rag-sources" solo para decidir que citas son verificables. Se cachea el
+  // registro por owner con TTL corto y se invalida en cada escritura de esta
+  // clase, asi que una ingesta propia se ve al instante.
+  private readonly sourceRegistryCache = new Map<
+    string,
+    { at: number; registry: Map<string, RagSourceRecord> }
+  >();
+
+  private async sourceRegistry(owner: string): Promise<Map<string, RagSourceRecord>> {
+    const ttl = Number(process.env.RAG_REGISTRY_TTL_MS ?? "15000") || 15000;
+    const hit = this.sourceRegistryCache.get(owner);
+    if (hit && Date.now() - hit.at < ttl) return hit.registry;
+    const rows = await this.db.list<RagSourceRecord>(owner, "rag-sources", { limit: 20000 });
+    const registry = new Map(rows.map((entry) => [entry.id, entry]));
+    // El cache no puede crecer sin limite con muchos owners.
+    if (this.sourceRegistryCache.size > 50) {
+      const oldest = this.sourceRegistryCache.keys().next().value;
+      if (oldest !== undefined) this.sourceRegistryCache.delete(oldest);
+    }
+    this.sourceRegistryCache.set(owner, { at: Date.now(), registry });
+    return registry;
+  }
+
   private async rank(
     owner: string,
     query: string,
@@ -467,12 +494,7 @@ export class RagService {
     const apiKey = await this.apiKeyFor(owner);
     const queryVec = await embed(query, apiKey);
     const degraded = !queryVec;
-    const registry = new Map(
-      (await this.db.list<RagSourceRecord>(owner, "rag-sources", { limit: 20000 })).map((entry) => [
-        entry.id,
-        entry,
-      ]),
-    );
+    const registry = await this.sourceRegistry(owner);
     const queryWords = query
       .toLowerCase()
       .split(/\W+/)

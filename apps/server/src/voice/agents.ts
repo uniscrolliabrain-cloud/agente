@@ -166,13 +166,26 @@ export interface PersonaSource {
  * personas del tenant mandan (nombre y rol reales); la plantilla rellena los
  * huecos para que el panel de llamadas nunca salga vacio.
  */
+// VOICE_PROFILE_CACHE_V1 - el turno de voz pide el perfil una o dos veces, y
+// cada vez se reconstruian 16+ perfiles leyendo el registro de personas. Un Map
+// por tenant con TTL corto deja eso en una lectura de memoria.
+const voiceProfileCache = new Map<string, { at: number; profiles: VoiceProfile[] }>();
+
+/** Tras cambiar personas o claves de voz, esto se llama y se ve al instante. */
+export function invalidateVoiceProfiles(tenantId?: string): void {
+  if (tenantId) voiceProfileCache.delete(tenantId);
+  else voiceProfileCache.clear();
+}
+
 export function listVoiceAgents(
   personas: PersonaSource | undefined,
   tenantId: string,
 ): VoiceProfile[] {
+  const ttl = Number(process.env.VOICE_PROFILE_TTL_MS ?? "60000") || 60000;
+  const cached = voiceProfileCache.get(tenantId);
+  if (cached && Date.now() - cached.at < ttl) return cached.profiles;
   const byId = new Map<string, AgentDescriptor>();
   for (const agent of DEFAULT_CLIENT_AGENTS) byId.set(agent.id, agent);
-  let loaded = 0;
   try {
     for (const entry of personas?.list(tenantId) ?? []) {
       const persona = entry.persona;
@@ -185,18 +198,16 @@ export function listVoiceAgents(
         ...(persona.language ? { language: persona.language } : {}),
         ...(persona.avatar?.style ? { archetype: persona.avatar.style } : {}),
       });
-      loaded += 1;
     }
   } catch {
     // Un registro roto no puede dejar sin agentes al panel de llamadas.
   }
-  const profiles = [...byId.values()].map((agent) => voiceProfileFor(agent));
-  // Se ordena por nombre para que la rejilla de la videoconferencia sea estable.
-  return profiles.sort((a, b) => a.displayName.localeCompare(b.displayName)).map((profile) => ({
-    ...profile,
-    // `loaded` solo documenta de donde salieron; no cambia el perfil.
-    ...(loaded > 0 ? {} : {}),
-  }));
+  const profiles = [...byId.values()]
+    .map((agent) => voiceProfileFor(agent))
+    // Orden estable para que la rejilla de la videoconferencia no baile.
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  voiceProfileCache.set(tenantId, { at: Date.now(), profiles });
+  return profiles;
 }
 
 export function voiceProfileOf(

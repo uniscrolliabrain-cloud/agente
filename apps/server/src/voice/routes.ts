@@ -16,6 +16,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Config } from "../config.ts";
 import { AppError } from "../errors.ts";
+import { RateLimiter } from "../rate-limit.ts";
 import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
 import { listVoiceAgents, voiceProfileOf, type PersonaSource } from "./agents.ts";
 import { sseChunk, sseDone, voiceCompletion, type VoiceCompletionInput } from "./llm.ts";
@@ -75,6 +76,20 @@ const SUPABASE_TTS_MAX = 5000;
 export function avatarRoutes(deps: AvatarDeps) {
   const app = new Hono<{ Variables: { owner: string; tenantId: string } }>();
   const sessions = new VoiceSessionService(deps.db);
+  // VOICE_COST_LIMIT_V1 - cada turno gasta cuota del modelo y del TTS. Un tope
+  // por empresa evita que una pestaña olvidada se lleve la factura por delante.
+  const voiceLimiter = new RateLimiter(
+    Number(process.env.VOICE_TURNS_PER_HOUR ?? "600") || 600,
+    60 * 60 * 1000,
+  );
+  const checkVoiceQuota = (tenantId: string, owner: string) => {
+    const verdict = voiceLimiter.takeForTenant(tenantId, owner, "avatar-turn") as {
+      allowed?: boolean;
+    };
+    if (verdict?.allowed === false) {
+      throw new AppError("Limite de turnos de voz alcanzado. Prueba en un rato.", 429);
+    }
+  };
 
   app.use("*", async (c, next) => {
     const owner = c.get("owner");
@@ -194,6 +209,7 @@ export function avatarRoutes(deps: AvatarDeps) {
   app.post("/llm", async (c) => {
     const owner = c.get("owner");
     const tenantId = c.get("tenantId");
+    checkVoiceQuota(tenantId, owner);
     const parsed = llmSchema.safeParse(await c.req.json().catch(() => null));
     if (!parsed.success) throw new AppError("Peticion LLM invalida", 422);
 
@@ -233,9 +249,9 @@ export function avatarRoutes(deps: AvatarDeps) {
 
     if (session) {
       const touched = await sessions.touch(session).catch(() => session);
+      // El refresco va en segundo plano: el turno ya tiene su snapshot leido.
       maybeRefreshSnapshot(
         deps,
-        { ...snapshotOrEmpty(tenantId, profile.agentId, owner), turns: touched.turns } as never,
         {
           owner,
           tenantId,
@@ -244,6 +260,7 @@ export function avatarRoutes(deps: AvatarDeps) {
           role: profile.role,
           agentKey: "session",
         },
+        touched.turns,
       );
     }
 
@@ -289,6 +306,7 @@ export function avatarRoutes(deps: AvatarDeps) {
       .object({ text: z.string().min(1).max(SUPABASE_TTS_MAX), agentId: z.string().optional() })
       .safeParse(await c.req.json().catch(() => null));
     if (!body.success) throw new AppError("Texto invalido", 422);
+    checkVoiceQuota(c.get("tenantId"), c.get("owner"));
     const profile = voiceProfileOf(
       deps.personas,
       c.get("tenantId"),
@@ -317,20 +335,6 @@ export function avatarRoutes(deps: AvatarDeps) {
   });
 
   return app;
-}
-
-function snapshotOrEmpty(tenantId: string, agentId: string, owner: string) {
-  const at = new Date().toISOString();
-  return {
-    id: snapshotId(tenantId, agentId, "session"),
-    owner,
-    tenantId,
-    agentId,
-    text: "",
-    builtAt: at,
-    expiresAt: at,
-    turns: 0,
-  };
 }
 
 export type { VoiceSession };

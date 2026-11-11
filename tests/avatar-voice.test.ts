@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import {
   DEFAULT_CLIENT_AGENTS,
   avatarSeed,
+  invalidateVoiceProfiles,
   listVoiceAgents,
   voiceProfileFor,
 } from "../apps/server/src/voice/agents.ts";
@@ -74,6 +75,7 @@ function snapshotDeps(store: ReturnType<typeof fakeStore>) {
 }
 
 test("todo agente tiene cara y voz, y la semilla es estable", () => {
+  invalidateVoiceProfiles();
   const agents = listVoiceAgents(undefined, "tenant-a");
   assert.ok(agents.length >= 12, `esperaba al menos 12 agentes, hay ${agents.length}`);
   const seeds = new Set(agents.map((agent) => agent.avatar.seed));
@@ -89,6 +91,7 @@ test("todo agente tiene cara y voz, y la semilla es estable", () => {
 });
 
 test("el perfil lee la voz por agente del entorno y cae al global", () => {
+  invalidateVoiceProfiles();
   process.env.ELEVENLABS_VOICE_ID = "voz-global";
   process.env.ELEVENLABS_VOICE_COMERCIAL = "voz-comercial";
   const comercial = voiceProfileFor({ id: "comercial", displayName: "Marc", role: "Comercial" });
@@ -101,6 +104,7 @@ test("el perfil lee la voz por agente del entorno y cae al global", () => {
 });
 
 test("las personas del tenant mandan sobre la plantilla", () => {
+  invalidateVoiceProfiles();
   const personas = {
     list: () => [
       {
@@ -119,7 +123,25 @@ test("las personas del tenant mandan sobre la plantilla", () => {
   assert.ok(agents.length > DEFAULT_CLIENT_AGENTS.length - 1);
 });
 
+test("el perfil se cachea por tenant y no se reconstruye cada turno", () => {
+  invalidateVoiceProfiles();
+  let loads = 0;
+  const personas = {
+    list: () => {
+      loads += 1;
+      return [];
+    },
+  };
+  listVoiceAgents(personas, "tenant-cache");
+  listVoiceAgents(personas, "tenant-cache");
+  assert.equal(loads, 1, "el segundo turno no debe releer el registro de personas");
+  invalidateVoiceProfiles("tenant-cache");
+  listVoiceAgents(personas, "tenant-cache");
+  assert.equal(loads, 2, "invalidar debe forzar la relectura");
+});
+
 test("un registro de personas roto no deja el panel sin agentes", () => {
+  invalidateVoiceProfiles();
   const agents = listVoiceAgents(
     {
       list: () => {
