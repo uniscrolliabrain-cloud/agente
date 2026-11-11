@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.6"
+          node-version: "22"
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - run: pnpm typecheck
@@ -114,7 +114,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.6"
+          node-version: "22"
       - run: npm i -g vercel@latest
       # DEPLOY_VERCEL_NONINTERACTIVE_V1 - `vercel deploy` sin proyecto enlazado
       # es interactivo y en CI se queda esperando input hasta el timeout. Con
@@ -145,7 +145,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.6"
+          node-version: "22"
       - run: corepack enable
       - run: corepack pnpm install --frozen-lockfile
       - name: humo
