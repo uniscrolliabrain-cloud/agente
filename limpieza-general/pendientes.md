@@ -196,3 +196,17 @@ gate exit=1
 - Siguiente acción, desde el móvil: regenerar el token de Doppler y guardarlo en
   el secret `DOPPLER_TOKEN`, o crear el secret `SUPABASE_DB_URL` con el DSN del
   pooler (`*.pooler.supabase.com:6543`). Después, relanzar el workflow.
+
+### Diagnóstico del run 6 (2026-11-11 17:45)
+
+- El token nuevo de Doppler funciona, pero sólo ve el config
+  `dev_campaign_transversal_leads_ia`; `prd` no existe para ese token.
+- El único DSN que hay en Doppler apunta a **Neon**
+  (`ep-withered-waterfall-...pooler.c-7.us-east-2.aws.neon.tech`) y responde
+  `Your account or project has exceeded the quota`.
+- En GitHub no hay DSN: `SUPABASE_SECRET` es la service key (API REST), no una
+  cadena de conexión.
+- Supabase: el DSN directo `db.<ref>.supabase.co` sólo resuelve a IPv6, así que
+  ni el runner ni Fly lo alcanzan; hace falta el pooler `*.pooler.supabase.com:6543`.
+- Workflow V3: reúne todos los candidatos (secret del repo primero, luego todos
+  los configs de Doppler) y usa el primero que conecte con `psql`.

@@ -1,15 +1,16 @@
 name: Configurar base y desplegar (manual)
 
-# CONFIGURE_PROD_DB_V2 - ruta manual pensada para lanzarse desde el movil.
-# V1 instalaba el workspace con pnpm solo para tener el driver `pg`; el runner
-# ya trae `psql`, asi que V2 valida el DSN sin node_modules (menos pasos, menos
-# formas de fallar). Lee el DSN de Doppler, lo valida sin imprimirlo, lo fija
-# en Fly, despliega si el health sigue en 503 y comprueba el login.
+# CONFIGURE_PROD_DB_V3 - ruta manual pensada para lanzarse desde el movil.
+# V1 instalaba el workspace con pnpm (corepack no verifica la firma de pnpm 11).
+# V2 usaba ya `psql`, pero se quedaba con el primer DSN que encontraba: con el
+# unico DSN en Doppler (Neon, cuota excedida) moria sin probar los demas.
+# V3 reune TODOS los candidatos (secrets del repo primero, luego Doppler) y se
+# queda con el primero que conecte de verdad.
 on:
   workflow_dispatch:
     inputs:
       apply:
-        description: "Aplicar en Fly si el DSN es valido"
+        description: "Aplicar en Fly si hay un DSN que conecte"
         type: boolean
         default: true
 
@@ -38,7 +39,7 @@ jobs:
           fi
           psql --version
 
-      - name: resolver DSN
+      - name: reunir candidatos de DSN
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
           DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
@@ -48,59 +49,71 @@ jobs:
           S_PLAIN: ${{ secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
-          pick() {
+          : > dsn-candidates.txt
+          add() {
+            if [ -z "${1:-}" ]; then return 0; fi
             echo "::add-mask::$1"
-            { echo "DSN=$1"; echo "DSN_SOURCE=$2"; } >> "$GITHUB_ENV"
-            echo "DSN tomado de: $2"
-            exit 0
+            printf '%s\t%s\n' "$2" "$1" >> dsn-candidates.txt
+            echo "candidato: $2"
           }
+          add "${S_SUPABASE:-}" "secret SUPABASE_DB_URL"
+          add "${S_PROD:-}" "secret DATABASE_URL_PROD"
+          add "${S_PLAIN:-}" "secret DATABASE_URL"
           if [ -n "${DOPPLER_TOKEN:-}" ]; then
-            echo "config de doppler: $DOPPLER_CONFIG"
-            names=$(doppler secrets --only-names --json --config "$DOPPLER_CONFIG" 2>/tmp/dop.err \
-              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const ks=Array.isArray(j)?j:Object.keys(j);console.log(ks.filter(k=>/DATABASE|SUPABASE|POSTGRES|PG_?URL/i.test(k)).join(" "))}catch{console.log("")}})' || true)
-            if [ -s /tmp/dop.err ]; then echo "doppler dijo: $(head -c 200 /tmp/dop.err)"; fi
-            echo "nombres relevantes en $DOPPLER_CONFIG: ${names:-ninguno}"
             project="${DOPPLER_PROJECT:-agntiapro}"
-            configs="$DOPPLER_CONFIG"
-            visibles=$(doppler configs --json --project "$project" 2>/dev/null \
+            visibles=$(doppler configs --json --project "$project" 2>/tmp/dop.err \
               | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const a=Array.isArray(j)?j:(j.configs||[]);console.log(a.map(c=>c.name).filter(Boolean).join(" "))}catch{console.log("")}})' || true)
-            echo "configs visibles con el token: ${visibles:-ninguno}"
+            if [ -s /tmp/dop.err ]; then echo "doppler dijo: $(head -c 200 /tmp/dop.err)"; fi
+            echo "configs visibles: ${visibles:-ninguno}"
+            configs="${DOPPLER_CONFIG:-prd}"
             for c in $visibles prd production prod stg dev; do
               case " $configs " in *" $c "*) ;; *) configs="$configs $c" ;; esac
             done
-            echo "configs a probar: $configs"
             for c in $configs; do
               for k in DATABASE_URL SUPABASE_DB_URL SUPABASE_DATABASE_URL SUPABASE_POOLER_URL POSTGRES_URL PG_URL; do
                 v=$(doppler secrets get "$k" --plain --project "$project" --config "$c" 2>/dev/null || true)
-                if [ -n "$v" ]; then pick "$v" "doppler:$c/$k"; fi
+                if [ -n "$v" ]; then add "$v" "doppler:$c/$k"; fi
               done
             done
           else
             echo "sin DOPPLER_TOKEN en el repo: salto Doppler"
           fi
-          if [ -n "${S_SUPABASE:-}" ]; then pick "$S_SUPABASE" "secret SUPABASE_DB_URL"; fi
-          if [ -n "${S_PROD:-}" ]; then pick "$S_PROD" "secret DATABASE_URL_PROD"; fi
-          if [ -n "${S_PLAIN:-}" ]; then pick "$S_PLAIN" "secret DATABASE_URL"; fi
-          echo "::error::No hay DSN. Opcion rapida desde el movil: Settings -> Secrets and variables -> Actions -> New repository secret, nombre SUPABASE_DB_URL, valor el pooler de Supabase (puerto 6543)."
-          exit 1
+          echo "total candidatos: $(wc -l < dsn-candidates.txt)"
+          if [ ! -s dsn-candidates.txt ]; then
+            echo "::error::No hay ningun DSN. Anade el secret SUPABASE_DB_URL con el pooler (puerto 6543) o ponlo en Doppler."
+            exit 1
+          fi
 
-      - name: validar DSN
+      - name: validar DSN (usa el primero que conecta)
         run: |
           set -euo pipefail
           export PGSSLMODE=require PGCONNECT_TIMEOUT=15
-          node -e 'const u=new URL(process.env.DSN);console.log(`host=${u.host} db=${u.pathname.slice(1)} user=${decodeURIComponent(u.username)}`)'
-          if ! psql "$DSN" -t -A -c "select 1" > /dev/null 2> /tmp/psql.err; then
-            echo "::error::psql no pudo conectar"
-            cat /tmp/psql.err
-            if grep -qiE "ENETUNREACH|Network is unreachable|No route to host" /tmp/psql.err; then
-              echo "::error::Parece un DSN IPv6 directo (db.<ref>.supabase.co). Usa el pooler: puerto 6543 y host *.pooler.supabase.com."
+          ok=""
+          src=""
+          while IFS=$'\t' read -r s d; do
+            if [ -z "$d" ]; then continue; fi
+            host=$(D="$d" node -e 'const u=new URL(process.env.D);console.log(u.host+" db="+u.pathname.slice(1)+" user="+decodeURIComponent(u.username))')
+            if psql "$d" -t -A -c "select 1" > /dev/null 2> /tmp/psql.err; then
+              ok="$d"
+              src="$s"
+              echo "conecta: $s ($host)"
+              break
+            else
+              echo "no conecta: $s ($host)"
+              sed -n '1,4p' /tmp/psql.err
             fi
+          done < dsn-candidates.txt
+          if [ -z "$ok" ]; then
+            echo "::error::Ningun DSN candidato conecta."
+            echo "::error::Si el de Neon sigue con la cuota excedida, usa el pooler de Supabase: postgresql://postgres.<ref>:<pass>@aws-<n>-<region>.pooler.supabase.com:6543/postgres"
             exit 1
           fi
-          psql "$DSN" -t -A -c "select current_user || ' | ' || current_database() || ' | ' || split_part(version(), ',', 1)"
-          vector=$(psql "$DSN" -t -A -c "select coalesce((select extversion from pg_extension where extname='vector'), '')" || true)
-          bypass=$(psql "$DSN" -t -A -c "select rolbypassrls from pg_roles where rolname = current_user" || true)
-          tablas=$(psql "$DSN" -t -A -c "select count(*) from information_schema.tables where table_schema='public'" || true)
+          echo "::add-mask::$ok"
+          { echo "DSN=$ok"; echo "DSN_SOURCE=$src"; } >> "$GITHUB_ENV"
+          psql "$ok" -t -A -c "select current_user || ' | ' || current_database() || ' | ' || split_part(version(), ',', 1)"
+          vector=$(psql "$ok" -t -A -c "select coalesce((select extversion from pg_extension where extname='vector'), '')" || true)
+          bypass=$(psql "$ok" -t -A -c "select rolbypassrls from pg_roles where rolname = current_user" || true)
+          tablas=$(psql "$ok" -t -A -c "select count(*) from information_schema.tables where table_schema='public'" || true)
           echo "pgvector=${vector:-no} rol_bypassrls=${bypass:-?} tablas_public=${tablas:-?}"
           if [ "$bypass" = "t" ]; then
             echo "::warning::El rol de la app tiene BYPASSRLS: las politicas de RLS se crearan pero no se aplicaran a este usuario."
