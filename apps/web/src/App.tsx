@@ -32,6 +32,8 @@ import CommandPalette from "./components/CommandPalette";
 import AppShell from "./components/AppShell";
 import ContextualPanel from "./components/ContextualPanel";
 import type { AgentTask } from "./types/api";
+// VOICE_ROOM_MOUNT_V1 - sala de videoconferencia interna (cara + voz).
+import ConferenceRoom from "./voice/ConferenceRoom";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -88,6 +90,10 @@ export default function App() {
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
+  // Se puede abrir con #/llamada (enlace directo desde el movil) o Ctrl+Shift+V.
+  const [voiceOpen, setVoiceOpen] = useState(() =>
+    window.location.hash.startsWith("#/llamada"),
+  );
   const { workspaces } = useWorkspaces(auth.isAuthenticated);
 
   useEffect(() => {
@@ -96,6 +102,7 @@ export default function App() {
       const k = e.key.toLowerCase();
       if (k === "k") { e.preventDefault(); setPaletteOpen((v) => !v); }
       if (k === "n") { e.preventDefault(); setView("chat"); void threads.createNew(); }
+      if (k === "v" && e.shiftKey) { e.preventDefault(); setVoiceOpen((v) => !v); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -261,6 +268,17 @@ export default function App() {
           user={auth.user}
           onClose={() => setProfileOpen(false)}
           onSaved={(u) => { localStorage.setItem("agente_user", JSON.stringify(u)); }}
+        />
+      )}
+
+      {voiceOpen && (
+        <ConferenceRoom
+          onClose={() => {
+            setVoiceOpen(false);
+            if (window.location.hash.startsWith("#/llamada")) {
+              window.history.replaceState(null, "", window.location.pathname);
+            }
+          }}
         />
       )}
 

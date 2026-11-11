@@ -72,6 +72,21 @@ export interface AssembleInput {
 const DEFAULT_EVENT_LIMIT = Number(process.env.CONTEXT_EVENT_LIMIT ?? "20") || 20; // FIX_12_13_EVENT_LIMIT_V1
 
 export class ContextEngine {
+  // CONTEXT_ROLE_CACHE_V1 - el chat ya leyo el rol antes de llamar a assemble;
+  // volver a pedirlo era una segunda lectura por turno. Cache corto por
+  // owner+rol: si el owner edita el rol, en 5 s se ve (y se puede bajar con
+  // CONTEXT_ROLE_TTL_MS).
+  private readonly roleCache = new Map<string, { at: number; role: AgentRole }>();
+  private readonly roleTtlMs =
+    Number(process.env.CONTEXT_ROLE_TTL_MS ?? "5000") || 5000;
+  private async cachedRole(owner: string, roleId: string): Promise<AgentRole | null> {
+    const key = `${owner}|${roleId}`;
+    const hit = this.roleCache.get(key);
+    if (hit && Date.now() - hit.at < this.roleTtlMs) return hit.role;
+    const role = await this.db.get<AgentRole>(owner, "agent-roles", roleId);
+    if (role) this.roleCache.set(key, { at: Date.now(), role });
+    return role;
+  }
   constructor(
     private readonly db: Store,
     private readonly graph: BusinessGraph,
@@ -80,7 +95,8 @@ export class ContextEngine {
   ) {}
 
   async assemble(owner: string, input: AssembleInput): Promise<ContextPackage> {
-    const role = await this.db.get<AgentRole>(owner, "agent-roles", input.roleId);
+    // CONTEXT_ROLE_CACHE_V1 - lectura cacheada (ver campo roleCache).
+    const role = await this.cachedRole(owner, input.roleId);
     if (!role) throw new Error(`Role not found: ${input.roleId}`);
     const storedMemories = (await this.db.list<AgentMemory>(owner, "memories")).filter(
       (m) => m.roleId === role.id,

@@ -1,0 +1,336 @@
+// AVATAR_ROUTES_V1 - canal de voz y cara para cualquier agente.
+//
+//   GET    /api/avatar/agents              -> agentes con su perfil de voz/cara
+//   GET    /api/avatar/providers           -> que esta configurado
+//   POST   /api/avatar/sessions            -> abre llamada (token Anam + snapshot)
+//   GET    /api/avatar/sessions/:id
+//   POST   /api/avatar/sessions/:id/interrupt
+//   DELETE /api/avatar/sessions/:id
+//   POST   /api/avatar/llm                 -> OpenAI-compatible SSE (custom LLM de Anam)
+//
+// El scope sale del claim firmado, igual que en el resto del producto: nunca
+// de un tenantId que mande el cliente. Cada sesion guarda su tenantId y se
+// comprueba al leer, asi que una empresa no ve la llamada de otra.
+
+import { Hono } from "hono";
+import { z } from "zod";
+import type { Config } from "../config.ts";
+import { AppError } from "../errors.ts";
+import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
+import { listVoiceAgents, voiceProfileOf, type PersonaSource } from "./agents.ts";
+import { sseChunk, sseDone, voiceCompletion, type VoiceCompletionInput } from "./llm.ts";
+import { createAnamSessionToken, providerStatus, synthesizeSpeech } from "./providers.ts";
+import {
+  VoiceSessionService,
+  sessionLimits,
+  type SessionStore,
+  type VoiceSession,
+} from "./sessions.ts";
+import {
+  buildVoiceSnapshot,
+  maybeRefreshSnapshot,
+  readVoiceSnapshot,
+  snapshotId,
+  type SnapshotDeps,
+} from "./snapshot.ts";
+
+export interface AvatarDeps {
+  db: SessionStore & SnapshotDeps["db"];
+  config: Config;
+  memory: SnapshotDeps["memory"];
+  systemContext: SnapshotDeps["systemContext"];
+  tenantIdFor?: (owner: string) => Promise<string>;
+  personas?: PersonaSource;
+  /** Inyectable: en tests evita llamar a un modelo real. */
+  completion?: (input: VoiceCompletionInput) => AsyncIterable<string>;
+}
+
+const openSessionSchema = z
+  .object({
+    agentId: z.string().trim().min(1).max(80),
+    threadId: z.string().trim().min(1).max(200).optional(),
+    roleId: z.string().trim().min(1).max(120).optional(),
+    query: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
+const llmSchema = z
+  .object({
+    model: z.string().optional(),
+    stream: z.boolean().optional(),
+    messages: z
+      .array(
+        z.object({
+          role: z.enum(["system", "user", "assistant"]),
+          content: z.string().max(20_000),
+        }),
+      )
+      .min(1)
+      .max(40),
+  })
+  .passthrough();
+
+const SUPABASE_TTS_MAX = 5000;
+
+export function avatarRoutes(deps: AvatarDeps) {
+  const app = new Hono<{ Variables: { owner: string; tenantId: string } }>();
+  const sessions = new VoiceSessionService(deps.db);
+
+  app.use("*", async (c, next) => {
+    const owner = c.get("owner");
+    if (!owner) throw new AppError("Sesion requerida", 401);
+    const scope = currentTenantScope();
+    if (scope && scope.actorId !== owner) throw new AppError("Actor no valido", 403);
+    let tenantId = scope?.tenantId;
+    if (!tenantId) {
+      if (!deps.tenantIdFor) throw new AppError("Voz requiere empresa resuelta", 503);
+      tenantId = await deps.tenantIdFor(owner);
+    }
+    if (!tenantId) throw new AppError("Voz requiere empresa resuelta", 409);
+    c.set("tenantId", tenantId);
+    await runInTenantScope({ tenantId, actorId: owner }, next);
+  });
+
+  app.get("/agents", (c) => {
+    const tenantId = c.get("tenantId");
+    const agents = listVoiceAgents(deps.personas, tenantId);
+    return c.json({
+      agents,
+      // Lo que falta no se esconde: la UI necesita saber si puede ofrecer llamada.
+      providers: providerStatus(),
+      ready: providerStatus().anam.configured && providerStatus().elevenlabs.configured,
+    });
+  });
+
+  app.get("/providers", (c) => c.json(providerStatus()));
+
+  app.post("/sessions", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = c.get("tenantId");
+    const parsed = openSessionSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) throw new AppError("Peticion de sesion invalida", 422);
+    const profile = voiceProfileOf(deps.personas, tenantId, parsed.data.agentId);
+    if (!profile) throw new AppError("Agente desconocido para voz", 404);
+
+    const session = await sessions.create({
+      owner,
+      tenantId,
+      agentId: profile.agentId,
+      ...(parsed.data.threadId ? { threadId: parsed.data.threadId } : {}),
+      ...(parsed.data.roleId ? { roleId: parsed.data.roleId } : {}),
+    });
+
+    // El snapshot se construye ya: Anam tarda 4-5 s en tener la sesion WebRTC
+    // lista, asi que este trabajo se esconde dentro de ese arranque.
+    let snapshotChars = 0;
+    try {
+      const snapshot = await buildVoiceSnapshot(deps, {
+        owner,
+        tenantId,
+        agentId: profile.agentId,
+        agentName: profile.displayName,
+        role: profile.role,
+        ...(parsed.data.query ? { query: parsed.data.query } : {}),
+        agentKey: "session",
+      });
+      snapshotChars = snapshot.text.length;
+    } catch {
+      snapshotChars = 0;
+    }
+
+    let anam: { configured: boolean; token?: unknown; error?: string } = {
+      configured: providerStatus().anam.configured,
+    };
+    if (anam.configured) {
+      try {
+        anam = {
+          configured: true,
+          token: await createAnamSessionToken({
+            personaId: profile.avatar.personaId,
+            voiceId: profile.voice.voiceId,
+          }),
+        };
+      } catch (error) {
+        anam = {
+          configured: true,
+          error: error instanceof Error ? error.message : "Anam no respondio",
+        };
+      }
+    }
+
+    return c.json({
+      session,
+      agent: profile,
+      snapshotChars,
+      anam,
+      limits: sessionLimits(),
+    });
+  });
+
+  app.get("/sessions/:id", async (c) => {
+    const session = await sessions.get(c.get("owner"), c.get("tenantId"), c.req.param("id"));
+    if (!session) throw new AppError("Sesion no encontrada", 404);
+    return c.json({ session });
+  });
+
+  app.post("/sessions/:id/interrupt", async (c) => {
+    const session = await sessions.get(c.get("owner"), c.get("tenantId"), c.req.param("id"));
+    if (!session) throw new AppError("Sesion no encontrada", 404);
+    // El abort real lo hace el cliente al cerrar el fetch del stream; aqui se
+    // deja constancia para que el backend no siga facturando un turno muerto.
+    return c.json({ session: await sessions.interrupt(session) });
+  });
+
+  app.delete("/sessions/:id", async (c) => {
+    const session = await sessions.get(c.get("owner"), c.get("tenantId"), c.req.param("id"));
+    if (!session) throw new AppError("Sesion no encontrada", 404);
+    return c.json({ session: await sessions.close(session, "user") });
+  });
+
+  /**
+   * OpenAI Chat Completions en streaming. Es el contrato que Anam consume como
+   * "custom LLM": no hay adaptador propio ni AG-UI en medio.
+   */
+  app.post("/llm", async (c) => {
+    const owner = c.get("owner");
+    const tenantId = c.get("tenantId");
+    const parsed = llmSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) throw new AppError("Peticion LLM invalida", 422);
+
+    const sessionId = c.req.header("x-avatar-session") ?? "";
+    const session = sessionId ? await sessions.get(owner, tenantId, sessionId) : null;
+    const agentId =
+      c.req.header("x-avatar-agent") ||
+      (parsed.data.model ? String(parsed.data.model).split("/").at(-1) : "") ||
+      session?.agentId ||
+      "laia";
+    const profile = voiceProfileOf(deps.personas, tenantId, agentId);
+    if (!profile) throw new AppError("Agente desconocido para voz", 404);
+
+    const snapshot = await readVoiceSnapshot(
+      deps,
+      owner,
+      tenantId,
+      snapshotId(tenantId, profile.agentId, "session"),
+    );
+    const systemPrompt = [
+      snapshot?.text ?? `Eres ${profile.displayName}, ${profile.role}.`,
+      "Hablas en voz: 1-2 frases, sin markdown, sin listas, sin emojis.",
+      "Si falta un dato verificable, dilo en una frase corta.",
+    ].join("\n\n");
+
+    const completionInput: VoiceCompletionInput = {
+      config: deps.config,
+      messages: parsed.data.messages,
+      systemPrompt,
+      firstByteMs: profile.latency.firstByteMs,
+      totalMs: profile.latency.totalMs,
+      signal: c.req.raw.signal,
+    };
+    const tokens = deps.completion
+      ? deps.completion(completionInput)
+      : voiceCompletion(completionInput);
+
+    if (session) {
+      const touched = await sessions.touch(session).catch(() => session);
+      maybeRefreshSnapshot(
+        deps,
+        { ...snapshotOrEmpty(tenantId, profile.agentId, owner), turns: touched.turns } as never,
+        {
+          owner,
+          tenantId,
+          agentId: profile.agentId,
+          agentName: profile.displayName,
+          role: profile.role,
+          agentKey: "session",
+        },
+      );
+    }
+
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          for await (const delta of tokens) {
+            controller.enqueue(encoder.encode(sseChunk(delta)));
+          }
+          controller.enqueue(encoder.encode(sseDone()));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Error del modelo";
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ error: { message: message.slice(0, 300) } })}\n\n`,
+            ),
+          );
+          controller.enqueue(encoder.encode(sseDone()));
+        } finally {
+          controller.close();
+        }
+      },
+      cancel() {
+        // El cliente corto (barge-in): el fetch aborta el modelo por signal.
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "content-type": "text/event-stream; charset=utf-8",
+        "cache-control": "no-cache, no-transform",
+        "x-accel-buffering": "no",
+        "content-encoding": "identity",
+        connection: "keep-alive",
+      },
+    });
+  });
+
+  /** TTS directo para el modo audio-passthrough (no pasa por Anam). */
+  app.post("/tts", async (c) => {
+    const body = z
+      .object({ text: z.string().min(1).max(SUPABASE_TTS_MAX), agentId: z.string().optional() })
+      .safeParse(await c.req.json().catch(() => null));
+    if (!body.success) throw new AppError("Texto invalido", 422);
+    const profile = voiceProfileOf(
+      deps.personas,
+      c.get("tenantId"),
+      body.data.agentId ?? "laia",
+    );
+    if (!providerStatus().elevenlabs.configured) {
+      throw new AppError("ElevenLabs no configurado (ELEVENLABS_API_KEY)", 503);
+    }
+    try {
+      const audio = await synthesizeSpeech({
+        text: body.data.text,
+        ...(profile?.voice.voiceId ? { voiceId: profile.voice.voiceId } : {}),
+        ...(profile?.voice.speed ? { speed: profile.voice.speed } : {}),
+        signal: c.req.raw.signal,
+      });
+      return new Response(audio.body, {
+        headers: {
+          "content-type": audio.headers.get("content-type") ?? "audio/mpeg",
+          "cache-control": "no-store",
+          "content-encoding": "identity",
+        },
+      });
+    } catch (error) {
+      throw new AppError(error instanceof Error ? error.message : "TTS fallo", 502);
+    }
+  });
+
+  return app;
+}
+
+function snapshotOrEmpty(tenantId: string, agentId: string, owner: string) {
+  const at = new Date().toISOString();
+  return {
+    id: snapshotId(tenantId, agentId, "session"),
+    owner,
+    tenantId,
+    agentId,
+    text: "",
+    builtAt: at,
+    expiresAt: at,
+    turns: 0,
+  };
+}
+
+export type { VoiceSession };

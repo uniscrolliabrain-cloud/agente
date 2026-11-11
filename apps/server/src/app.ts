@@ -825,6 +825,21 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     // APP_VOICE_WIRE_V1 - agente de telefono (Vapi) con scope de empresa.
     const { voiceRoutes } = await import("./voice-routes.ts");
     app.route("/api/voice", voiceRoutes(agent));
+    // APP_AVATAR_WIRE_V1 - canal de voz y cara para cualquier agente. Va en
+    // /api/avatar porque /api/voice ya es el canal telefonico de Vapi.
+    const { avatarRoutes } = await import("./voice/routes.ts");
+    app.route(
+      "/api/avatar",
+      avatarRoutes({
+        db: tdb,
+        config,
+        memory: agent.memory,
+        systemContext: (owner: string) => agent.systemContext(owner),
+        ...(tenantService
+          ? { tenantIdFor: (owner: string) => tenantService.tenantIdFor(owner) }
+          : {}),
+      }),
+    );
     // APP_LEADS_WIRE_V1 - descubrimiento de leads (Google Places) por empresa.
     const { leadsRoutes } = await import("./leads-routes.ts");
     app.route("/api/leads", leadsRoutes(agent));
@@ -1083,7 +1098,16 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         },
       }),
     );
-    return new Response(body, { status: response.status, headers: response.headers });
+    // SSE_NO_BUFFER_V1 - el informe de latencia tenia razon aqui: el proxy
+    // reenviaba las cabeceras del runtime sin marcar el stream, y un CDN puede
+    // agruparlo en rafagas. En audio eso se oye como tirones.
+    const headers = new Headers(response.headers);
+    if ((headers.get("content-type") ?? "").includes("text/event-stream")) {
+      headers.set("cache-control", "no-cache, no-transform");
+      headers.set("x-accel-buffering", "no");
+      headers.set("content-encoding", "identity");
+    }
+    return new Response(body, { status: response.status, headers });
   });
   const here = dirname(fileURLToPath(import.meta.url));
   const webDist = [

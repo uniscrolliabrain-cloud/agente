@@ -862,23 +862,91 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           subscriber.complete();
           return;
         }
+        // CHAT_LATENCY_PARALLEL_V1 - recall, contexto de sistema, rol y tarjetas
+        // de cognicion no dependen entre si. Antes se esperaban en serie: con la
+        // base remota cada uno es una ida y vuelta (~100 ms) antes de que el
+        // modelo vea el primer token. Ahora arrancan juntos y cada fase tiene
+        // presupuesto propio: si se pasa, se degrada a vacio en vez de retrasar
+        // la respuesta. Voz y cara necesitan el primer token cuanto antes.
+        const latency = new LatencyTrace();
+        const chatRoleId =
+          typeof (input.state as Record<string, unknown>)?.roleId === "string"
+            ? String((input.state as Record<string, unknown>).roleId)
+            : undefined;
+        const systemCtxP = latency
+          .measure("system_context", () =>
+            withDeadline(
+              this.service.systemContext(this.owner),
+              latency.deadlineMs,
+              "system_context",
+            ),
+          )
+          .catch(() => undefined);
+        const roleContextP: Promise<{
+          name: string;
+          objetivo: string;
+          sops: string[];
+          tone?: "warm" | "concise" | "thoughtful";
+          memories?: { kind: string; text: string }[];
+        } | null> = chatRoleId
+          ? latency
+              .measure("role", () =>
+                withDeadline(
+                  this.service.db.get<{
+                    name: string;
+                    objetivo: string;
+                    sops: string[];
+                    tone?: "warm" | "concise" | "thoughtful";
+                    memories?: { kind: string; text: string }[];
+                  }>(this.owner, "agent-roles", chatRoleId),
+                  latency.deadlineMs,
+                  "role",
+                ),
+              )
+              .then((role) => role ?? null)
+              .catch(() => null)
+          : Promise.resolve(null);
+        // COGNITION_NO_DEADLINE_V1 - reclamar tarjetas es una escritura: si el
+        // presupuesto cortara la espera, la tarjeta quedaria reclamada y sin
+        // inyectar. Se paraleliza, pero se espera entera. Si falla, el catch de
+        // abajo la libera como antes.
+        const cognitionP = latency
+          .measure("cognition", async () => {
+            const { assembleCognitionCards } = await import("./context/cognition-cards.ts");
+            return await assembleCognitionCards(
+              { cards: this.service.cards },
+              {
+                tenantId: tenantIdForRate,
+                owner: this.owner,
+                threadId: input.threadId,
+                query: typeof latest?.content === "string" ? latest.content : "",
+              },
+            );
+          })
+          .catch(() => undefined);
+        const recallP = latency
+          .measure("recall", async () => {
+            const userMessages = input.messages.filter(
+              (m) => m.role === "user" && typeof m.content === "string",
+            );
+            const lastUser = userMessages.at(-1);
+            if (!lastUser) return undefined;
+            const historyLimit = Number(process.env.CHAT_RAG_HISTORY ?? "8") || 8; // FIX_11_B_RAG_HISTORY_V1
+            const history = userMessages.slice(-historyLimit, -1).map((m) => String(m.content));
+            return await withDeadline(
+              this.service.memory.recall(this.owner, String(lastUser.content), { history }),
+              latency.deadlineMs,
+              "recall",
+            );
+          })
+          .catch(() => undefined);
         let ragContext = "";
         // CONTEXT_SINGLE_RECALL_V1 - el mismo recall alimenta el bloque RAG y
         // el ContextEngine; antes se ejecutaba dos veces por mensaje.
         let precomputedRecall: import("./memory.ts").RecallResult | undefined;
         try {
-          const userMessages = input.messages.filter(
-            (m) => m.role === "user" && typeof m.content === "string",
-          );
-          const lastUser = userMessages.at(-1);
-          if (lastUser) {
-            const historyLimit = Number(process.env.CHAT_RAG_HISTORY ?? "8") || 8; // FIX_11_B_RAG_HISTORY_V1
-            const history = userMessages.slice(-historyLimit, -1).map((m) => String(m.content));
-            const result = await this.service.memory.recall(
-              this.owner,
-              String(lastUser.content),
-              { history },
-            );
+          const result = await recallP;
+          if (result) {
             ragContext = result.text;
             precomputedRecall = result;
           }
@@ -910,9 +978,10 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // URGENT_BLOCK_ORDER_FIX_V1 - construccion del bloque urgente.
         let urgentBlock = "";
         try {
-          // CONV_CTX_RENAME_V1 - antes se llamaba `ctx`, pero habia otro
-          // `ctx` en el mismo scope (el del kernel). TS inferia unknown.
-          const systemCtx = await this.service.systemContext(this.owner);
+          // CHAT_LATENCY_PARALLEL_V1 - el contexto de sistema ya estaba en
+          // marcha desde antes del recall; aqui solo se recoge su resultado.
+          const systemCtx = await systemCtxP;
+          if (!systemCtx) throw new Error("contexto de sistema sin presupuesto");
           const lines: string[] = [];
           if (systemCtx.pendingApprovals.length > 0)
             lines.push(`Pendiente: ${systemCtx.pendingApprovals.length} aprobacion(es) esperando tu revision.`);
@@ -930,22 +999,12 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           if (lines.length > 0) urgentBlock = "\n\n[Contexto urgente del sistema]\n" + lines.join("\n"); // URGENT_BLOCK_NEWLINE_FIX_V1
         } catch { /* sin contexto si falla */ }
 
-        const roleId = typeof (input.state as Record<string, unknown>)?.roleId === "string"
-          ? String((input.state as Record<string, unknown>).roleId)
-          : undefined;
+        // CHAT_LATENCY_PARALLEL_V1 - el rol se resolvio en el mismo grupo
+        // paralelo; roleId se calculo alli como chatRoleId.
+        const roleId = chatRoleId;
         // ROLE_PROMPT_V2 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â traemos tone y memories ademas de name/objetivo/sops.
         // Los roles guardados antes del v2 no tienen estos campos: se usan defaults.
-        const roleContext = roleId
-          ? await this.service.db
-              .get<{
-                name: string;
-                objetivo: string;
-                sops: string[];
-                tone?: "warm" | "concise" | "thoughtful";
-                memories?: { kind: string; text: string }[];
-              }>(this.owner, "agent-roles", roleId)
-              .catch(() => null)
-          : null;
+        const roleContext = await roleContextP;
         // CONTEXT_ENGINE_IN_CHAT_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â si hay roleId, intentamos ensamblar contexto
         // completo. Si falla o no hay, caemos al prompt simple de rol.
         const ROLE_TONE_PROMPT: Record<string, string> = {
@@ -986,16 +1045,9 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // datos del turno siguiente. Se reclaman una sola vez antes de pintar.
         let cognitionBlock = "";
         try {
-          const { assembleCognitionCards } = await import("./context/cognition-cards.ts");
-          const cognition = await assembleCognitionCards(
-            { cards: this.service.cards },
-            {
-              tenantId: tenantIdForRate,
-              owner: this.owner,
-              threadId: input.threadId,
-              query: typeof latest?.content === "string" ? latest.content : "",
-            },
-          );
+          // CHAT_LATENCY_PARALLEL_V1 - tambien se lanzo con el resto.
+          const cognition = await cognitionP;
+          if (!cognition) throw new Error("tarjetas de cognicion sin presupuesto");
           cognitionBlock = cognition.block;
           injectedCognitionCardIds = cognition.cards.map((card) => card.id);
           injectedCognitionTenantId =
@@ -1110,6 +1162,12 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             }
           }
         }
+        // CHAT_LATENCY_TRACE_V1 - deja en el log cuanto costo cada fase antes
+        // del primer token: es lo que decide si la voz llega a tiempo.
+        latency.log("before_model", {
+          model: chatModelChain[0] ?? this.config.model ?? "",
+          rag: ragContext.length > 0,
+        });
         let activeModel = chatModelChain[0] ?? this.config.model ?? "";
         run = runWithModelFallback(
           chatModelChain,
@@ -1465,4 +1523,64 @@ export function shouldDelegateToSlow(prompt: string): boolean {
   if (trimmed.length < 40) return false;
   const delegating = /\b(analiza|investiga|prepara|resume|planifica|revisa|compara|estudia|calcula)\b/i;
   return delegating.test(trimmed);
+}
+
+// CHAT_LATENCY_TRACE_V1 - traza del trabajo previo al primer token del chat.
+// Cada fase se mide y se registra; con CHAT_LATENCY_LOG=0 no se imprime nada.
+class LatencyTrace {
+  private readonly t0 = Date.now();
+  private readonly phases: Record<string, number> = {};
+  readonly deadlineMs: number;
+
+  constructor() {
+    const raw = Number(process.env.CHAT_CONTEXT_DEADLINE_MS ?? "900");
+    this.deadlineMs = Number.isFinite(raw) && raw > 0 ? raw : 900;
+  }
+
+  async measure<T>(name: string, run: () => Promise<T>): Promise<T> {
+    const from = Date.now();
+    try {
+      return await run();
+    } finally {
+      this.phases[`${name}_ms`] = Date.now() - from;
+    }
+  }
+
+  log(event: string, extra: Record<string, unknown> = {}): void {
+    if (process.env.CHAT_LATENCY_LOG === "0") return;
+    console.info(
+      `[chat.latency] ${JSON.stringify({
+        event,
+        total_ms: Date.now() - this.t0,
+        deadline_ms: this.deadlineMs,
+        ...this.phases,
+        ...extra,
+      })}`,
+    );
+  }
+}
+
+/**
+ * CHAT_LATENCY_DEADLINE_V1 - presupuesto duro por fase opcional. Al agotarse
+ * devuelve undefined y el chat sigue sin ese contexto, en vez de esperar a una
+ * dependencia lenta (Google embeddings, base remota) antes del primer token.
+ */
+async function withDeadline<T>(promise: Promise<T>, ms: number, name: string): Promise<T | undefined> {
+  if (!Number.isFinite(ms) || ms <= 0) return promise;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<undefined>((resolve) => {
+        timer = setTimeout(() => {
+          console.warn(`[chat.latency] ${name} supero ${ms} ms: se degrada sin bloquear`);
+          resolve(undefined);
+        }, ms);
+        // No retener el proceso por un temporizador de presupuesto.
+        if (typeof timer === "object" && timer && "unref" in timer) timer.unref();
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }

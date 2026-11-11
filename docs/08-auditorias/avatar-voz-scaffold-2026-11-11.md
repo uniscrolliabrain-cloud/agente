@@ -1,0 +1,96 @@
+# Voz y cara para todos los agentes (scaffold) — 2026-11-11
+
+Rama: `feat/voice-avatar-scaffold`.
+
+Objetivo: que **cualquier** agente (los dos principales y los de cliente) pueda
+tener cara (Anam) y voz (ElevenLabs) con la latencia mínima posible, y una sala
+de videoconferencia interna usable desde PC o móvil. Anam y ElevenLabs se
+conectan poniendo claves: no hace falta tocar código.
+
+## Qué hay
+
+Servidor, `apps/server/src/voice/`:
+
+| Fichero | Responsabilidad |
+| --- | --- |
+| `agents.ts` | Perfil de voz/cara por agente. 16 agentes de cliente por defecto; las personas del tenant mandan. Semilla de cara determinista (`sha256(agentId)`), así el mismo agente tiene siempre la misma cara. |
+| `sessions.ts` | Ciclo de vida de la llamada: `requested → live → closed`, turnos, segundos, coste, `interrupt` y `reap` (silencio 45 s, tope 15 min). |
+| `snapshot.ts` | Contexto de la llamada construido **una vez**, leído con **un solo `get()`** por turno, y refrescado en segundo plano cada 5 turnos. |
+| `providers.ts` | Anam (`/v1/auth/session-token`) y ElevenLabs (`/v1/text-to-speech/:id/stream`, `eleven_flash_v2_5`). Sin clave: `configured: false` y 503 legible, nunca excepción en el camino caliente. |
+| `llm.ts` | Puente OpenAI Chat Completions en SSE para el "custom LLM" de Anam. `maxSteps: 1`, sin herramientas, presupuesto de primer byte de voz. |
+| `routes.ts` | `/api/avatar/{agents,providers,sessions,sessions/:id/interrupt,llm,tts}`. |
+
+Montado en `app.ts` bajo `/api/avatar` (no en `/api/voice`, que es Vapi).
+
+Cliente, `apps/web/src/voice/`:
+
+- `useAvatarCall.ts`: abre sesión, consume SSE, trocea por frases para el TTS y
+  corta con `AbortController` (barge-in).
+- `ConferenceRoom.tsx`: rejilla de participantes, tile del avatar, transcripción,
+  mute, colgar y cortar.
+
+## Por qué esto baja la latencia
+
+1. **Un turno de voz no paga recall + contexto + rol.** Se paga al abrir la
+   sesión, escondido tras los 4-5 s que Anam tarda en levantar el WebRTC.
+2. **Presupuesto propio**: 900 ms de primer byte (el chat usa 8 000 ms) y 20 s
+   totales. El rol duplicado, además, ya se cachea (`CONTEXT_ROLE_CACHE_V1`,
+   `CONTEXT_ROLE_TTL_MS`).
+3. **TTS por frases**: el audio empieza en la primera frase, no al cerrar el
+   turno.
+4. **SSE sin buffer**: el proxy `/api/copilotkit/*` y `/api/avatar/llm` mandan
+   `Cache-Control: no-cache, no-transform` y `X-Accel-Buffering: no`.
+
+## Variables de entorno
+
+Ver `.env.example`. Mínimo para tener cara y voz:
+
+```
+ELEVENLABS_API_KEY=...
+ELEVENLABS_VOICE_ID=...
+ANAM_API_KEY=...
+ANAM_PERSONA_ID=...
+```
+
+Por agente: `ELEVENLABS_VOICE_<ID>` y `ANAM_PERSONA_<ID>` con el id en
+MAYÚSCULAS_CON_GUIONES (`ELEVENLABS_VOICE_COMERCIAL`, `ANAM_PERSONA_LEGAL`).
+Sin `VOICE_*`, los valores por defecto ya son de voz.
+
+## Contrato de `/api/avatar/llm`
+
+Petición (la que hace Anam como custom LLM):
+
+```json
+POST /api/avatar/llm
+{ "model": "laia", "stream": true, "messages": [{ "role": "user", "content": "hola" }] }
+```
+
+Cabeceras opcionales: `x-avatar-session` (id de sesión, para turnos y refresco)
+y `x-avatar-agent` (si el `model` no es el id del agente).
+
+Respuesta: `text/event-stream` con `data: {"choices":[{"delta":{"content":"…"}}]}`
+y `data: [DONE]`. Los errores viajan como `data: {"error":{"message":"…"}}`.
+
+## Aislamiento
+
+Todas las rutas exigen owner del claim firmado y tenant resuelto (scope o
+`tenantIdFor`); nunca aceptan un `tenantId` del cliente. Cada sesión y cada
+snapshot guardan su `tenantId` y se comparan en la lectura: si no coincide, el
+recurso **no existe** (404/null), igual que en el resto del producto.
+
+## Verificación hecha
+
+- `tsc --noEmit` (raíz y `apps/web`): 0 errores.
+- `tests/avatar-voice.test.ts`: 10/10 (≥12 perfiles con cara y voz, semilla
+  estable, voz por agente, personas del tenant, store roto, aislamiento por
+  empresa, reaper, una lectura de snapshot por turno, SSE con LLM inyectado,
+  degradación sin claves).
+- Suite completa: 800 tests, 783 pass, 0 fail, 12 skipped, 5 todo.
+
+## Pendiente (fuera de este scaffold)
+
+- Conectar Anam y ElevenLabs con claves reales y montar el SDK de Anam en
+  `videoRef`: hoy el tile muestra retrato generado y estado de sesión.
+- Audio del micrófono: falta el pipeline WebRTC/STT (Anam lo aporta con su SDK).
+- Coste real por minuto: `VOICE_EUR_PER_MINUTE` es una estimación, hay que
+  ajustarla con la tarifa contratada.
