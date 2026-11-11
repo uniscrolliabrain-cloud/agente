@@ -168,3 +168,31 @@ gate exit=1
 ## Campaña 06 · identidad durable del worker (2026-11-08)
 
 - **06.P1/P2 pendiente**: la tarea no persiste todavía tenant, solicitante, agente, SOP, versión ni correlación, y el despacho no revalida actor/suspensión. El recibo falso ya está cerrado (06.P3), pero esto toca `worker.ts`, `service.ts` y el formato de `AgentTask`; hacerlo sin staging habría cambiado el contrato de reclamación a ciegas. Lo consume la campaña 18 y el gate de la 20.
+
+## Ruta manual de producción (2026-11-11, tanda desde el móvil)
+
+- `main` con la ruta manual publicada; rama única, sin ramas abiertas.
+- El gate del deploy estaba roto por dos motivos distintos:
+  1. `corepack pnpm install` con Node 22.6 moría con
+     `Cannot find matching keyid` (no verifica la firma de pnpm 11.19).
+     Arreglado: `deploy.yml` usa Node `"22"`, igual que el job `unit` que sí instala.
+     **Pendiente de confirmar en un run del gate.**
+  2. `audit:coherence` sigue en rojo (bridges + contracts). Es trabajo real
+     pendiente; no se relaja el gate para saltarlo.
+- `DOPPLER_TOKEN` del repo es inválido: Doppler responde
+  `{"error":"Invalid Auth token"}`. Afecta al workflow manual y al sync
+  Doppler→Fly de `deploy.yml`.
+- Base de datos: Neon sigue con la cuota excedida; `/api/health` devuelve 503
+  con `database:false`.
+- Workflow manual: `.github/workflows/configure-prod-db.yml`
+  (Actions → "Configurar base y desplegar (manual)" → Run workflow).
+  Toma el DSN de Doppler (`DATABASE_URL`/`SUPABASE_*`/`POSTGRES_URL`/`PG_URL`)
+  o de un secret del repo (`SUPABASE_DB_URL`, luego `DATABASE_URL_PROD`, luego
+  `DATABASE_URL`); lo valida con `psql` sin imprimirlo, lo fija en
+  `agntiapro-api`/`agntiapro-worker`, despliega si el health sigue en 503 y
+  comprueba la redirección del login de GitHub.
+- Runs 1-4: fallos de entorno encadenados (firma de pnpm, `sudo` del instalador
+  de Doppler, DSN ausente). Los tres primeros corregidos; el cuarto es el token.
+- Siguiente acción, desde el móvil: regenerar el token de Doppler y guardarlo en
+  el secret `DOPPLER_TOKEN`, o crear el secret `SUPABASE_DB_URL` con el DSN del
+  pooler (`*.pooler.supabase.com:6543`). Después, relanzar el workflow.
