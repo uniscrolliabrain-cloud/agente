@@ -1,0 +1,107 @@
+name: Configurar base y desplegar (manual)
+
+# CONFIGURE_PROD_DB_V1 - ruta manual pensada para lanzarse desde el movil:
+# lee el DSN de Postgres del config de Doppler, lo valida sin imprimirlo,
+# lo fija en Fly, redespliega si el health sigue en 503 y comprueba el login.
+# No sustituye al deploy por tag: es el camino de emergencia cuando el gate
+# de audits esta en rojo y hay que levantar produccion ya.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Aplicar en Fly si el DSN es valido"
+        type: boolean
+        default: true
+
+concurrency:
+  group: configure-prod-db
+  cancel-in-progress: false
+
+jobs:
+  configure:
+    name: configurar produccion
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.6"
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: instalar doppler
+        run: curl -sL https://cli.doppler.com/install.sh | sh
+
+      - name: resolver DSN
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+        run: |
+          set -euo pipefail
+          echo "config de doppler: $DOPPLER_CONFIG"
+          names=$(doppler secrets --only-names --json --config "$DOPPLER_CONFIG" \
+            | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);const ks=Array.isArray(j)?j:Object.keys(j);console.log(ks.filter(k=>/DATABASE|SUPABASE|POSTGRES|PG_?URL/i.test(k)).join(" "))})')
+          echo "nombres relevantes: ${names:-ninguno}"
+          found=""
+          for k in DATABASE_URL SUPABASE_DB_URL SUPABASE_DATABASE_URL SUPABASE_POOLER_URL POSTGRES_URL PG_URL; do
+            v=$(doppler secrets get "$k" --plain --config "$DOPPLER_CONFIG" 2>/dev/null || true)
+            if [ -n "$v" ]; then
+              found="$k"
+              echo "::add-mask::$v"
+              { echo "DSN=$v"; echo "DSN_SOURCE=$k"; } >> "$GITHUB_ENV"
+              break
+            fi
+          done
+          if [ -z "$found" ]; then
+            echo "::error::No hay DSN Postgres en $DOPPLER_CONFIG. Nombres vistos: ${names:-ninguno}"
+            exit 1
+          fi
+          echo "DSN tomado de: $found"
+
+      - name: validar DSN
+        run: node scripts/ci/check-dsn.cjs
+
+      - name: aplicar en Fly
+        if: ${{ inputs.apply }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf 'DATABASE_URL=%s\nMULTI_TENANT_SHARED=true\n' "$DSN" \
+            | flyctl secrets import -a agntiapro-api
+          printf 'DATABASE_URL=%s\nMULTI_TENANT_SHARED=true\n' "$DSN" \
+            | flyctl secrets import -a agntiapro-worker \
+            || echo "::warning::no se pudo actualizar agntiapro-worker (puede no existir o estar parada)"
+
+      - name: esperar health y desplegar si hace falta
+        if: ${{ inputs.apply }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          healthy=0
+          for i in $(seq 1 24); do
+            body=$(curl -sS --max-time 10 https://www.agntiapro.com/api/health || true)
+            if echo "$body" | grep -q '"database":true'; then healthy=1; break; fi
+            sleep 10
+          done
+          if [ "$healthy" != "1" ]; then
+            echo "health sigue sin base tras 4 min; desplegando la imagen de main"
+            flyctl deploy --remote-only -a agntiapro-api
+            for i in $(seq 1 36); do
+              body=$(curl -sS --max-time 10 https://www.agntiapro.com/api/health || true)
+              if echo "$body" | grep -q '"database":true'; then healthy=1; break; fi
+              sleep 10
+            done
+          fi
+          echo "health_body=$body"
+          curl -sS -o /dev/null -w "health_http=%{http_code}\n" https://www.agntiapro.com/api/health || true
+          echo "login_github:"
+          curl -sS -D- -o /dev/null https://www.agntiapro.com/api/auth/oauth/github/start \
+            | awk 'BEGIN{IGNORECASE=1} /^location:/{print substr($0,1,110)}' || true
+          if [ "$healthy" != "1" ]; then
+            echo "::error::Produccion sigue sin base de datos. Revisa el DSN y los logs de Fly."
+            exit 1
+          fi
+          echo "OK: base conectada y health en 200"
