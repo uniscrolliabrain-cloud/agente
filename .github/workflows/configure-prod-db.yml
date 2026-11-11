@@ -42,6 +42,7 @@ jobs:
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
           DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+          DOPPLER_PROJECT: ${{ vars.DOPPLER_PROJECT || 'agntiapro' }}
           S_SUPABASE: ${{ secrets.SUPABASE_DB_URL }}
           S_PROD: ${{ secrets.DATABASE_URL_PROD }}
           S_PLAIN: ${{ secrets.DATABASE_URL }}
@@ -58,10 +59,21 @@ jobs:
             names=$(doppler secrets --only-names --json --config "$DOPPLER_CONFIG" 2>/tmp/dop.err \
               | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const ks=Array.isArray(j)?j:Object.keys(j);console.log(ks.filter(k=>/DATABASE|SUPABASE|POSTGRES|PG_?URL/i.test(k)).join(" "))}catch{console.log("")}})' || true)
             if [ -s /tmp/dop.err ]; then echo "doppler dijo: $(head -c 200 /tmp/dop.err)"; fi
-            echo "nombres relevantes: ${names:-ninguno}"
-            for k in DATABASE_URL SUPABASE_DB_URL SUPABASE_DATABASE_URL SUPABASE_POOLER_URL POSTGRES_URL PG_URL; do
-              v=$(doppler secrets get "$k" --plain --config "$DOPPLER_CONFIG" 2>/dev/null || true)
-              if [ -n "$v" ]; then pick "$v" "doppler:$k"; fi
+            echo "nombres relevantes en $DOPPLER_CONFIG: ${names:-ninguno}"
+            project="${DOPPLER_PROJECT:-agntiapro}"
+            configs="$DOPPLER_CONFIG"
+            visibles=$(doppler configs --json --project "$project" 2>/dev/null \
+              | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const a=Array.isArray(j)?j:(j.configs||[]);console.log(a.map(c=>c.name).filter(Boolean).join(" "))}catch{console.log("")}})' || true)
+            echo "configs visibles con el token: ${visibles:-ninguno}"
+            for c in $visibles prd production prod stg dev; do
+              case " $configs " in *" $c "*) ;; *) configs="$configs $c" ;; esac
+            done
+            echo "configs a probar: $configs"
+            for c in $configs; do
+              for k in DATABASE_URL SUPABASE_DB_URL SUPABASE_DATABASE_URL SUPABASE_POOLER_URL POSTGRES_URL PG_URL; do
+                v=$(doppler secrets get "$k" --plain --project "$project" --config "$c" 2>/dev/null || true)
+                if [ -n "$v" ]; then pick "$v" "doppler:$c/$k"; fi
+              done
             done
           else
             echo "sin DOPPLER_TOKEN en el repo: salto Doppler"
