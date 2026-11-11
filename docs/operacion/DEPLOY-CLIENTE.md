@@ -1,5 +1,8 @@
 # Deploy por cliente
 
+> **NOTA DE VIGENCIA · 2026-11-10.** Duplicado obsoleto. El procedimiento vigente es [04-operaciones/DEPLOY.md](../04-operaciones/DEPLOY.md); el alta de empresa no requiere un despliegue propio. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 Un deployment por cliente. Nunca multitenancy. Pasos:
 
 1. Clonar repo en el host.

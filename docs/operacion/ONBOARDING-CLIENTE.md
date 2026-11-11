@@ -1,5 +1,8 @@
 # Onboarding de cliente — pasos exactos
 
+> **NOTA DE VIGENCIA · 2026-11-10.** «Un deployment por cliente. Nunca multitenancy» describe el modelo anterior. Hoy se provisiona un tenant en un despliegue compartido. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 > Uso interno. Se ejecuta cliente a cliente. No va al cliente.
 > Verdad: este fichero + TODO-FOR-PROD.md + repo actualizado.
 

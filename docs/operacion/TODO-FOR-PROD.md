@@ -1,5 +1,8 @@
 # TODO-FOR-PROD — Checklist de produccion cliente a cliente
 
+> **NOTA DE VIGENCIA · 2026-11-10.** La línea «Multitenancy (un deployment por cliente)» es falsa hoy: dar de alta una empresa ya no exige un despliegue dedicado. El resto de la checklist sigue siendo operativo. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 > Uso interno. No va al cliente. Cada empresa onboardeada recorre esta lista.
 > Verdad: este fichero + HANDOFF.md + repo actualizado.
 

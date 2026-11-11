@@ -1,5 +1,8 @@
 # Product
 
+> **NOTA DE VIGENCIA · 2026-11-10.** v1 (2026-10-04), superado por [02-producto/PRODUCT.md](./02-producto/PRODUCT.md). El modelo de este documento es el anterior: **un deployment por cliente**. Hoy el repo es multitenant clásico (un despliegue, N empresas) con aislamiento en aplicación y RLS apagada en producción. Léelo como histórico. Estado real: [00-EMPIEZA-AQUI.md](./00-EMPIEZA-AQUI.md).
+
+
 > v1 · 2026-10-04 · Estado: current
 
 ## Que es Laia

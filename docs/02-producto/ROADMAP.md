@@ -1,5 +1,8 @@
 # Roadmap
 
+> **NOTA DE VIGENCIA · 2026-11-10.** «Fase 3 - Multi-tenant real» no implica que hoy sea single-tenant: el multitenant clásico ya está en código; faltan RLS forzada y subdominio. Además, `pnpm docs:check` (FASE-04) no existe como script. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 > v2 · 2026-10-27 · Estado: current
 
 ## Fases de producto

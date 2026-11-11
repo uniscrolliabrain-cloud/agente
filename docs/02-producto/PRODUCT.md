@@ -1,5 +1,8 @@
 # Product
 
+> **NOTA DE VIGENCIA · 2026-11-10.** La topología de este documento («un deployment por cliente») está superada: hoy es multitenant clásico (un despliegue, N empresas). Lo pendiente de la Fase 3 es RLS por defecto y subdominio, no el multitenant. Estado real: [00-EMPIEZA-AQUI.md](../00-EMPIEZA-AQUI.md).
+
+
 > v2 · 2026-10-27 · Estado: current
 
 ## Qué es Laia
