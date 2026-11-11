@@ -30,7 +30,8 @@ jobs:
       - name: instalar doppler y cliente de postgres
         run: |
           set -euo pipefail
-          curl -sL https://cli.doppler.com/install.sh | sh
+          curl -sL https://cli.doppler.com/install.sh | sudo sh
+          doppler --version
           if ! command -v psql >/dev/null; then
             sudo apt-get update -qq
             sudo apt-get install -y -qq postgresql-client
