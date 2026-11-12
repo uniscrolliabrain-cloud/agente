@@ -112,7 +112,7 @@ recurso **no existe** (404/null), igual que en el resto del producto.
   con `/api/health` 200, login de admin 200, `GET /api/avatar/agents` devuelve
   las **12 personas reales del tenant** (no la plantilla), `POST
   /api/avatar/sessions` 200 con snapshot construido, `DELETE` cierra con motivo
-  `user`, `/api/avatar/llm` 503 «Voz sin modelo…» y `/api/avatar/tts` 503
+  `user`, `/api/avatar/llm` 200 `text/event-stream` servido por el **agente real** (sin modelo contesta un chunk de espera y guarda el turno en Activity, que es lo que hace el harness) y `/api/avatar/tts` 503
   «ElevenLabs no configurado», `401` sin token y `404` para un agente que no
   existe en la empresa. La sala no se ha renderizado en navegador.
 - Segunda pasada (sin claves): registro de `rag-sources` cacheado por owner
