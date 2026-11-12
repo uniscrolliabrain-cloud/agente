@@ -225,3 +225,14 @@ export function voiceProfileOf(
 ): VoiceProfile | undefined {
   return listVoiceAgents(personas, tenantId).find((profile) => profile.agentId === agentId);
 }
+
+/**
+ * Primer agente que existe en el tenant. Ni la UI ni el LLM pueden asumir que
+ * "laia" esta: hay empresas cuyas personas son solo comerciales y de atencion.
+ */
+export function defaultAgentId(
+  personas: PersonaSource | undefined,
+  tenantId: string,
+): string | undefined {
+  return listVoiceAgents(personas, tenantId)[0]?.agentId;
+}

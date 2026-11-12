@@ -86,6 +86,11 @@ export function useAvatarCall({ agentId, onSentence }: UseAvatarCallOptions) {
   useEffect(() => () => void stop(), [stop]);
 
   const start = useCallback(async () => {
+    if (!agentId) {
+      setState("error");
+      setError("No hay agentes con voz en esta empresa");
+      return;
+    }
     setError(null);
     historyRef.current = [];
     setState("requesting");

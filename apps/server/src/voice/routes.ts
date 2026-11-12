@@ -18,7 +18,7 @@ import type { Config } from "../config.ts";
 import { AppError } from "../errors.ts";
 import { RateLimiter } from "../rate-limit.ts";
 import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
-import { listVoiceAgents, voiceProfileOf, type PersonaSource } from "./agents.ts";
+import { defaultAgentId, listVoiceAgents, voiceProfileOf, type PersonaSource } from "./agents.ts";
 import { sseChunk, sseDone, voiceCompletion, type VoiceCompletionInput } from "./llm.ts";
 import { createAnamSessionToken, providerStatus, synthesizeSpeech } from "./providers.ts";
 import {
@@ -219,7 +219,8 @@ export function avatarRoutes(deps: AvatarDeps) {
       c.req.header("x-avatar-agent") ||
       (parsed.data.model ? String(parsed.data.model).split("/").at(-1) : "") ||
       session?.agentId ||
-      "laia";
+      defaultAgentId(deps.personas, tenantId) ||
+      "";
     const profile = voiceProfileOf(deps.personas, tenantId, agentId);
     if (!profile) throw new AppError("Agente desconocido para voz", 404);
 
@@ -329,7 +330,7 @@ export function avatarRoutes(deps: AvatarDeps) {
     const profile = voiceProfileOf(
       deps.personas,
       c.get("tenantId"),
-      body.data.agentId ?? "laia",
+      body.data.agentId ?? defaultAgentId(deps.personas, c.get("tenantId")) ?? "",
     );
     if (!providerStatus().elevenlabs.configured) {
       throw new AppError("ElevenLabs no configurado (ELEVENLABS_API_KEY)", 503);

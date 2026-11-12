@@ -23,7 +23,10 @@ export default function ConferenceRoom({
   onClose,
 }: ConferenceRoomProps) {
   const [agents, setAgents] = useState<AvatarAgent[]>(initialAgents ?? []);
-  const [selected, setSelected] = useState(initialAgentId ?? initialAgents?.[0]?.agentId ?? "laia");
+  // Ningun id fijo: hay empresas sin "laia" y el agente se elige de la lista.
+  const [selected, setSelected] = useState(
+    initialAgentId ?? initialAgents?.[0]?.agentId ?? "",
+  );
   const [muted, setMuted] = useState(true);
   const [draft, setDraft] = useState("");
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -32,7 +35,7 @@ export default function ConferenceRoom({
     [agents, selected],
   );
 
-  const call = useAvatarCall({ agentId: selected });
+  const call = useAvatarCall({ agentId: selected || agent?.agentId || "" });
   const startedRef = useRef(false);
 
   // El panel de llamadas se sirve su propia lista: montarlo no obliga a tocar
@@ -51,13 +54,21 @@ export default function ConferenceRoom({
     };
   }, [initialAgents]);
 
-  // VOICE_ROOM_AUTOSTART_V1 - una sola apertura de sesion; `call` es un objeto
-  // nuevo en cada render, asi que no puede ir en las dependencias.
+  // Si el agente pedido no existe en este tenant, se cae al primero que haya.
   useEffect(() => {
-    if (startedRef.current) return;
+    if (agents.length === 0) return;
+    if (agents.some((entry) => entry.agentId === selected)) return;
+    setSelected(agents[0].agentId);
+  }, [agents, selected]);
+
+  // VOICE_ROOM_AUTOSTART_V1 - una sola apertura de sesion, y solo cuando hay un
+  // agente real: `call` es un objeto nuevo en cada render, asi que no puede ir
+  // en las dependencias.
+  useEffect(() => {
+    if (startedRef.current || !agent?.agentId) return;
     startedRef.current = true;
     void call.start();
-  }, [call.start]);
+  }, [agent?.agentId, call.start]);
 
   const send = async () => {
     const text = draft.trim();
