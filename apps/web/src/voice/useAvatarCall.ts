@@ -67,6 +67,9 @@ export function useAvatarCall({ agentId, onSentence }: UseAvatarCallOptions) {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const sessionRef = useRef<AvatarSessionInfo | null>(null);
+  // VOICE_TURN_HISTORY_V1 - el snapshot es contexto de empresa, no la
+  // conversacion: sin esto cada turno de voz arrancaba sin recordar lo dicho.
+  const historyRef = useRef<Array<{ role: "user" | "assistant"; content: string }>>([]);
 
   const stop = useCallback(async () => {
     abortRef.current?.abort();
@@ -84,6 +87,7 @@ export function useAvatarCall({ agentId, onSentence }: UseAvatarCallOptions) {
 
   const start = useCallback(async () => {
     setError(null);
+    historyRef.current = [];
     setState("requesting");
     try {
       const response = await fetch("/api/avatar/sessions", {
@@ -122,7 +126,7 @@ export function useAvatarCall({ agentId, onSentence }: UseAvatarCallOptions) {
           body: JSON.stringify({
             model: agentId,
             stream: true,
-            messages: [{ role: "user", content: text }],
+            messages: [...historyRef.current, { role: "user", content: text }],
           }),
           signal: controller.signal,
         });
@@ -159,6 +163,15 @@ export function useAvatarCall({ agentId, onSentence }: UseAvatarCallOptions) {
           }
         }
         splitter.flush();
+        // Se guardan los ultimos 6 intercambios: mas historia es latencia y
+        // en voz el contexto largo estorba.
+        historyRef.current = [
+          ...historyRef.current,
+          { role: "user" as const, content: text },
+          ...(collected.trim()
+            ? [{ role: "assistant" as const, content: collected.trim() }]
+            : []),
+        ].slice(-12);
       } catch (cause) {
         if (controller.signal.aborted) return;
         setError(cause instanceof Error ? cause.message : "Error del modelo");
