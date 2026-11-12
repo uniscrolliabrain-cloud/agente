@@ -129,6 +129,29 @@ export class Store {
     const parsed = Number(total);
     return Number.isFinite(parsed) ? parsed : 0;
   }
+
+  /**
+   * LIST_SINCE_V1 - filas de un kind cuyo `data.<field>` es posterior a un ISO.
+   * La cuota de llm-usage se calculaba con list(), que sin limite devuelve como
+   * mucho 1000 filas: a partir de ahi el gasto del dia salia corto y el limite
+   * no saltaba. Aqui filtra el motor, no JavaScript.
+   */
+  async listSince<T = Record<string, unknown>>(
+    owner: string,
+    kind: string,
+    field: string,
+    since: string,
+    limit = 5000,
+  ): Promise<T[]> {
+    // El nombre del campo no puede venir de fuera; se valida igual porque va
+    // dentro del SQL como operando de ->>.
+    if (!/^[a-z][a-z0-9_]*$/i.test(field)) throw new Error(`Campo no valido: ${field}`);
+    const result = await this.db.query(
+      "SELECT data FROM records WHERE owner=$1 AND kind=$2 AND (data->>$3) > $4 ORDER BY updated_at DESC LIMIT $5",
+      [owner, kind, field, since, limit],
+    );
+    return result.rows.map((row) => row.data as T);
+  }
   async put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T> {
     await this.db.query(
       "INSERT INTO records(owner,kind,id,data) VALUES($1,$2,$3,$4::jsonb) ON CONFLICT(owner,kind,id) DO UPDATE SET data=excluded.data,updated_at=now()",

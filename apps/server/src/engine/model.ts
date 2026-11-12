@@ -564,9 +564,11 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
       const tenantIdForQuota = service.tenantService
         ? await service.tenantService.tenantIdFor(owner)
         : "default";
-      const usage = await service.db.list<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(owner, "llm-usage");
+      // LLM_USAGE_WINDOW_V1 - misma ventana que el chat: list() se corta en
+      // 1000 filas y la cuota del slow tambien salia corta.
       const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const usage = await service.db.listSince<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(owner, "llm-usage", "date", dayAgo);
       const today = usage.filter((u) => u.date > dayAgo);
       const tokensToday = today.reduce((sum, u) => sum + (u.inputTokens ?? 0) + (u.outputTokens ?? 0), 0);
       const costToday = today.reduce((sum, u) => sum + (u.costEur ?? 0), 0);

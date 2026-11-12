@@ -1143,10 +1143,23 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // FIX 24 - cuota antes de inferir: tokens, coste y velocidad.
         if (this.service.guardrails) {
           try {
-            const tenantIdForQuota = (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
-            const usage = await this.service.db.list<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(this.owner, "llm-usage");
+            // LLM_USAGE_WINDOW_V1 - antes se leia con list(), que sin limite
+            // devuelve 1000 filas: con mas consumo el gasto del dia salia corto
+            // y la cuota no frenaba nada. Ahora filtra la base por fecha, y el
+            // tenant se resuelve a la vez en vez de en serie.
             const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
             const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+            const [tenantIdForQuota, usage] = await Promise.all([
+              this.service.tenantService?.tenantIdFor(this.owner).catch(() => "default") ??
+                Promise.resolve("default"),
+              this.service.db.listSince<{
+                date: string;
+                speed?: string;
+                inputTokens?: number;
+                outputTokens?: number;
+                costEur?: number;
+              }>(this.owner, "llm-usage", "date", dayAgo),
+            ]);
             const today = usage.filter((u) => u.date > dayAgo);
             const tokensToday = today.reduce((sum, u) => sum + (u.inputTokens ?? 0) + (u.outputTokens ?? 0), 0);
             const costToday = today.reduce((sum, u) => sum + (u.costEur ?? 0), 0);

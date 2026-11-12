@@ -46,6 +46,19 @@ export class TenantScopedStore {
     return this.store.count(await this.key(owner), kind);
   }
 
+  // LIST_SINCE_TENANT_V1 - misma ventana por fecha, con la clave compuesta
+  // `${tenantId}:${owner}`, asi que la cuota de una empresa no ve el consumo de
+  // otra ni aunque compartan owner.
+  async listSince<T = Record<string, unknown>>(
+    owner: string,
+    kind: string,
+    field: string,
+    since: string,
+    limit = 5000,
+  ): Promise<T[]> {
+    return this.store.listSince<T>(await this.key(owner), kind, field, since, limit);
+  }
+
   async put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T> {
     return this.store.put(await this.key(owner), kind, value);
   }
