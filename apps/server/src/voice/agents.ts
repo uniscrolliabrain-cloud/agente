@@ -185,7 +185,7 @@ export function listVoiceAgents(
   const cached = voiceProfileCache.get(tenantId);
   if (cached && Date.now() - cached.at < ttl) return cached.profiles;
   const byId = new Map<string, AgentDescriptor>();
-  for (const agent of DEFAULT_CLIENT_AGENTS) byId.set(agent.id, agent);
+  let tenantAgents = 0;
   try {
     for (const entry of personas?.list(tenantId) ?? []) {
       const persona = entry.persona;
@@ -198,9 +198,17 @@ export function listVoiceAgents(
         ...(persona.language ? { language: persona.language } : {}),
         ...(persona.avatar?.style ? { archetype: persona.avatar.style } : {}),
       });
+      tenantAgents += 1;
     }
   } catch {
     // Un registro roto no puede dejar sin agentes al panel de llamadas.
+  }
+  // VOICE_PERSONAS_ONLY_V1 - si la empresa tiene personas cargadas, la sala
+  // ofrece esas y solo esas: ofrecer agentes de plantilla que no existen en el
+  // tenant seria mentir en el panel de llamadas. La plantilla es el relleno de
+  // una empresa que aun no tiene personas.
+  if (tenantAgents === 0) {
+    for (const agent of DEFAULT_CLIENT_AGENTS) byId.set(agent.id, agent);
   }
   const profiles = [...byId.values()]
     .map((agent) => voiceProfileFor(agent))

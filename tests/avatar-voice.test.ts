@@ -120,7 +120,11 @@ test("las personas del tenant mandan sobre la plantilla", () => {
   const agents = listVoiceAgents(personas, "tenant-a");
   assert.ok(agents.some((agent) => agent.agentId === "cobros"));
   assert.ok(!agents.some((agent) => agent.agentId === "antiguo"));
-  assert.ok(agents.length > DEFAULT_CLIENT_AGENTS.length - 1);
+  assert.equal(agents.length, 1, "con personas cargadas no se añaden agentes de plantilla");
+  assert.ok(!agents.some((agent) => agent.agentId === "laia"));
+  // Una empresa que aun no tiene personas si recibe la plantilla completa.
+  const empty = listVoiceAgents({ list: () => [] }, "tenant-vacio");
+  assert.equal(empty.length, DEFAULT_CLIENT_AGENTS.length);
 });
 
 test("el perfil se cachea por tenant y no se reconstruye cada turno", () => {

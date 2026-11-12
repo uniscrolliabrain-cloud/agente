@@ -243,9 +243,22 @@ export function avatarRoutes(deps: AvatarDeps) {
       totalMs: profile.latency.totalMs,
       signal: c.req.raw.signal,
     };
-    const tokens = deps.completion
-      ? deps.completion(completionInput)
-      : voiceCompletion(completionInput);
+    // VOICE_LLM_CONFIG_ERROR_V1 - sin modelo configurado esto lanzaba un Error
+    // generico y el cliente recibia un 502 "revisa el servidor". En voz hay que
+    // decir exactamente que falta.
+    let tokens: AsyncIterable<string>;
+    try {
+      tokens = deps.completion
+        ? deps.completion(completionInput)
+        : voiceCompletion(completionInput);
+    } catch (error) {
+      throw new AppError(
+        `Voz sin modelo: ${
+          error instanceof Error ? error.message : "no hay modelo configurado"
+        }. Configura FAST_LLM_API_KEY o el modelo del tenant.`,
+        503,
+      );
+    }
 
     if (session) {
       const touched = await sessions.touch(session).catch(() => session);
