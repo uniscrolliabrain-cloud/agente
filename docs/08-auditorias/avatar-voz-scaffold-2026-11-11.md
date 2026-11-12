@@ -29,6 +29,28 @@ Cliente, `apps/web/src/voice/`:
 - `ConferenceRoom.tsx`: rejilla de participantes, tile del avatar, transcripción,
   mute, colgar y cortar.
 
+## La voz es el mismo agente, no un gemelo
+
+`/api/avatar/llm` no habla con un modelo suelto: entra por
+`voiceHarnessCompletion` (`apps/server/src/voice/harness.ts`), que instancia el
+mismo `ConversationAgent` que monta `makeRuntime()` para el chat, con el mismo
+`AgentService`, el mismo owner y **el hilo de la sesión** (`session.threadId`;
+si el cliente no manda uno, la llamada abre `voice-<id>`). Eso significa que la
+llamada tiene kernel, herramientas, memoria, guardrails, contadores de uso y
+turno del harness, y que lo que se habla queda en el hilo igual que en el chat
+escrito.
+
+Diferencias deliberadas, solo de transporte:
+
+- la salida se entrega como SSE para que Anam la convierta en voz;
+- el turno viaja con `state.voice = true`, y el agente añade una instrucción de
+  voz (1-2 frases, sin listas ni ids) sin cambiar nada del chat escrito;
+- el snapshot de contexto sigue existiendo para el saludo/identidad de Anam,
+  pero ya no es el contexto del turno.
+
+El camino ligero (`voiceCompletion`) queda como respaldo para cuando no hay
+servicio montado (por ejemplo, una prueba aislada del TTS), no como camino real.
+
 ## Por qué esto baja la latencia
 
 1. **Un turno de voz no paga recall + contexto + rol.** Se paga al abrir la

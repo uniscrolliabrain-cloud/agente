@@ -799,6 +799,13 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
       latest && typeof latest.content === "string" && shouldDelegateToSlow(latest.content)
         ? "\n\nINSTRUCCION: Este mensaje pide trabajo complejo. Responde solo con un acuse corto y llama a delegate_task con el trabajo completo. No intentes resolverlo tu. // FIX_11_J_DELEGATE_CONDITIONAL_V1\n"
         : "";
+    // VOICE_TURN_HINT_V1 - cuando el turno viene de una llamada (state.voice),
+    // el mismo agente responde para ser escuchado. No cambia nada del chat
+    // escrito: solo se añade esta instruccion en ese turno.
+    const voiceHint =
+      (input.state as Record<string, unknown> | undefined)?.voice === true
+        ? "\n\nESTAS EN UNA LLAMADA DE VOZ: responde en 1-2 frases, sin listas, sin markdown, sin leer ids ni rutas. Si el trabajo es largo, dilo en una frase y delega. Trabaja con las herramientas y la memoria reales: no inventes nada que no puedas verificar."
+        : "";
     const prompt =
       "Eres Laia, la asistente personal del dueno de este negocio. Hablas como una persona competente, no como un manual tecnico. " +
       "REGLAS DE TONO: " +
@@ -826,7 +833,8 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
 "Las aprobaciones pasan por la app, nunca por el chat. Si algo no esta conectado, dilo claramente; no finjas. " +
       "Nunca generes texto de relleno. Si falta un dato verificable para responder, di: «Aún no puedo verificar ese dato». " +
       "Omite las cifras, estimaciones y confirmaciones que dependan del dato ausente. " +
-      computerInstructions;
+      computerInstructions +
+      voiceHint;
 
     return new Observable((subscriber) => {
       let run: { events: Observable<BaseEvent>; abort: () => void } | undefined;

@@ -255,8 +255,9 @@ test("las rutas degradan sin claves y sirven SSE con el LLM inyectado", async ()
     body: JSON.stringify({ agentId: "laia" }),
   });
   assert.equal(opened.status, 200);
-  const { session } = (await opened.json()) as { session: { id: string } };
+  const { session } = (await opened.json()) as { session: { id: string; threadId: string } };
   assert.ok(session.id);
+  assert.match(session.threadId, /^voice-/, "la llamada abre su propio hilo del agente");
 
   const llm = await app.request("/api/avatar/llm", {
     method: "POST",
@@ -278,6 +279,44 @@ test("las rutas degradan sin claves y sirven SSE con el LLM inyectado", async ()
     method: "POST",
   });
   assert.equal(interrupted.status, 200);
+});
+
+test("la voz ejecuta el agente real en el hilo de la sesion", async () => {
+  const store = fakeStore();
+  let captured: { threadId: string; messages: unknown[] } | null = null;
+  const app = appFor({
+    ...snapshotDeps(store),
+    config,
+    tenantIdFor: async () => "tenant-a",
+    // El servicio real no se toca: el harness inyectado hace de agente.
+    service: {} as never,
+    harness: async function* (input) {
+      captured = { threadId: input.threadId, messages: input.messages };
+      yield "voy";
+    },
+  });
+
+  const opened = await app.request("/api/avatar/sessions", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ agentId: "laia" }),
+  });
+  const { session } = (await opened.json()) as {
+    session: { id: string; threadId: string };
+  };
+
+  const llm = await app.request("/api/avatar/llm", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-avatar-session": session.id },
+    body: JSON.stringify({ messages: [{ role: "user", content: "hola" }] }),
+  });
+  const stream = await llm.text();
+  assert.ok(stream.includes("voy"));
+
+  const seen = captured as { threadId: string; messages: unknown[] } | null;
+  assert.ok(seen, "el harness debe recibir el turno");
+  assert.equal(seen.threadId, session.threadId, "la voz va al hilo de la llamada, no a uno suelto");
+  assert.equal(seen.messages.length, 1);
 });
 
 test("un agente de otra empresa no puede abrir sesion", async () => {

@@ -100,6 +100,17 @@ export class VoiceSessionService {
     return session;
   }
 
+  /**
+   * VOICE_SAME_THREAD_V1 - la llamada se ata a un hilo. Si el usuario ya tenia
+   * uno abierto, la voz continua esa conversacion; si no, la llamada tiene el
+   * suyo y el harness ve los turnos anteriores igual que el chat escrito.
+   */
+  async attachThread(session: VoiceSession, threadId: string): Promise<VoiceSession> {
+    const next: VoiceSession = { ...session, threadId, updatedAt: nowIso() };
+    await this.db.put(session.owner, VOICE_SESSIONS_KIND, next);
+    return next;
+  }
+
   /** Lectura O(1): el turno de voz no puede permitirse un list(). */
   async get(owner: string, tenantId: string, id: string): Promise<VoiceSession | null> {
     const found = await this.db.get<VoiceSession>(owner, VOICE_SESSIONS_KIND, id);

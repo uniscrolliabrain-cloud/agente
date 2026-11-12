@@ -16,9 +16,11 @@ import { Hono } from "hono";
 import { z } from "zod";
 import type { Config } from "../config.ts";
 import { AppError } from "../errors.ts";
+import type { AgentService } from "../engine/service.ts";
 import { RateLimiter } from "../rate-limit.ts";
 import { currentTenantScope, runInTenantScope } from "../tenant-scope.ts";
 import { defaultAgentId, listVoiceAgents, voiceProfileOf, type PersonaSource } from "./agents.ts";
+import { voiceHarnessCompletion, type VoiceHarnessInput } from "./harness.ts";
 import { sseChunk, sseDone, voiceCompletion, type VoiceCompletionInput } from "./llm.ts";
 import { createAnamSessionToken, providerStatus, synthesizeSpeech } from "./providers.ts";
 import {
@@ -42,7 +44,14 @@ export interface AvatarDeps {
   systemContext: SnapshotDeps["systemContext"];
   tenantIdFor?: (owner: string) => Promise<string>;
   personas?: PersonaSource;
-  /** Inyectable: en tests evita llamar a un modelo real. */
+  /**
+   * VOICE_SAME_AGENT_V1 - el agente real del runtime. Con esto la llamada no
+   * usa el camino ligero: entra por el mismo ConversationAgent que el chat,
+   * con kernel, herramientas, memoria y turno del harness.
+   */
+  service?: AgentService;
+  /** Inyectables en tests: evitan arrancar el runtime o un modelo real. */
+  harness?: (input: VoiceHarnessInput) => AsyncIterable<string>;
   completion?: (input: VoiceCompletionInput) => AsyncIterable<string>;
 }
 
@@ -127,13 +136,19 @@ export function avatarRoutes(deps: AvatarDeps) {
     const profile = voiceProfileOf(deps.personas, tenantId, parsed.data.agentId);
     if (!profile) throw new AppError("Agente desconocido para voz", 404);
 
-    const session = await sessions.create({
+    const created = await sessions.create({
       owner,
       tenantId,
       agentId: profile.agentId,
       ...(parsed.data.threadId ? { threadId: parsed.data.threadId } : {}),
       ...(parsed.data.roleId ? { roleId: parsed.data.roleId } : {}),
     });
+    // La llamada entra en un hilo real: el que traiga el cliente (la
+    // conversacion abierta) o uno propio de la llamada.
+    const session = await sessions.attachThread(
+      created,
+      parsed.data.threadId ?? `voice-${created.id}`,
+    );
 
     // El snapshot se construye ya: Anam tarda 4-5 s en tener la sesion WebRTC
     // lista, asi que este trabajo se esconde dentro de ese arranque.
@@ -247,11 +262,31 @@ export function avatarRoutes(deps: AvatarDeps) {
     // VOICE_LLM_CONFIG_ERROR_V1 - sin modelo configurado esto lanzaba un Error
     // generico y el cliente recibia un 502 "revisa el servidor". En voz hay que
     // decir exactamente que falta.
+    // VOICE_SAME_AGENT_V1 - orden de preferencia: harness inyectado (tests) >
+    // agente real del runtime > camino ligero (solo si no hay servicio).
     let tokens: AsyncIterable<string>;
     try {
       tokens = deps.completion
         ? deps.completion(completionInput)
-        : voiceCompletion(completionInput);
+        : deps.harness
+          ? deps.harness({
+              config: deps.config,
+              service: deps.service as AgentService,
+              owner,
+              threadId: session?.threadId ?? `voice-${sessionId || profile.agentId}`,
+              messages: parsed.data.messages,
+              signal: c.req.raw.signal,
+            })
+          : deps.service
+            ? voiceHarnessCompletion({
+                config: deps.config,
+                service: deps.service,
+                owner,
+                threadId: session?.threadId ?? `voice-${sessionId || profile.agentId}`,
+                messages: parsed.data.messages,
+                signal: c.req.raw.signal,
+              })
+            : voiceCompletion(completionInput);
     } catch (error) {
       throw new AppError(
         `Voz sin modelo: ${

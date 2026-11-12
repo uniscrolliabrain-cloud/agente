@@ -838,6 +838,9 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         // VOICE_PERSONAS_WIRE_V1 - las personas reales del tenant ponen nombre,
         // rol e idioma; la plantilla solo rellena los huecos.
         personas: personaRegistry,
+        // VOICE_SAME_AGENT_V1 - el servicio real: la voz ejecuta el mismo
+        // ConversationAgent que el chat, no un gemelo simplificado.
+        service: agent,
         ...(tenantService
           ? { tenantIdFor: (owner: string) => tenantService.tenantIdFor(owner) }
           : {}),

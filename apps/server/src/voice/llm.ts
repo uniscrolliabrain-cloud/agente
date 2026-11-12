@@ -51,7 +51,7 @@ function toRunInput(input: VoiceCompletionInput): RunAgentInput {
  * trozos de texto. Es lo que permite consumirlo por SSE sin arrastrar rxjs a
  * las rutas.
  */
-function eventsToDeltas(events: unknown, signal?: AbortSignal): AsyncIterable<string> {
+export function deltasOf(events: unknown, signal?: AbortSignal): AsyncIterable<string> {
   const queue: string[] = [];
   let finished = false;
   let failure: unknown;
@@ -72,9 +72,17 @@ function eventsToDeltas(events: unknown, signal?: AbortSignal): AsyncIterable<st
     }) => { unsubscribe: () => void };
   };
   const subscription = observable.subscribe({
-    next: (event: { type?: string; delta?: unknown }) => {
+    next: (event: { type?: string; delta?: unknown; message?: unknown }) => {
       if (event?.type === EventType.TEXT_MESSAGE_CONTENT && typeof event.delta === "string") {
         queue.push(event.delta);
+        notify();
+        return;
+      }
+      // RUN_ERROR no llega por el canal de error del Observable: viaja como
+      // evento. Sin esto la llamada se quedaba muda y solo cerraba el stream.
+      if (event?.type === EventType.RUN_ERROR && typeof event.message === "string") {
+        failure = new Error(event.message);
+        finished = true;
         notify();
       }
     },
@@ -144,7 +152,7 @@ export function voiceCompletion(input: VoiceCompletionInput): AsyncIterable<stri
     { firstByteMs: input.firstByteMs, totalMs: input.totalMs },
   );
   input.signal?.addEventListener("abort", () => run.abort(), { once: true });
-  return eventsToDeltas(run.events, input.signal);
+  return deltasOf(run.events, input.signal);
 }
 
 /** Formatea un delta como chunk OpenAI. Anam lo entiende sin adaptador. */
