@@ -835,6 +835,9 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         config,
         memory: agent.memory,
         systemContext: (owner: string) => agent.systemContext(owner),
+        // VOICE_PERSONAS_WIRE_V1 - las personas reales del tenant ponen nombre,
+        // rol e idioma; la plantilla solo rellena los huecos.
+        personas: personaRegistry,
         ...(tenantService
           ? { tenantIdFor: (owner: string) => tenantService.tenantIdFor(owner) }
           : {}),
