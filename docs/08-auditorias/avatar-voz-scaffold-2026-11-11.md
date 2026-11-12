@@ -85,11 +85,29 @@ recurso **no existe** (404/null), igual que en el resto del producto.
   estable, voz por agente, personas del tenant, store roto, aislamiento por
   empresa, reaper, una lectura de snapshot por turno, SSE con LLM inyectado,
   degradación sin claves).
-- Suite completa: 800 tests, 783 pass, 0 fail, 12 skipped, 5 todo.
+- Suite completa: 802 tests, 785 pass, 0 fail, 12 skipped, 5 todo.
+- Smoke contra el servidor real (12-11, PGlite en `/tmp`, sin claves): arranca
+  con `/api/health` 200, login de admin 200, `GET /api/avatar/agents` devuelve
+  las **12 personas reales del tenant** (no la plantilla), `POST
+  /api/avatar/sessions` 200 con snapshot construido, `DELETE` cierra con motivo
+  `user`, `/api/avatar/llm` 503 «Voz sin modelo…» y `/api/avatar/tts` 503
+  «ElevenLabs no configurado», `401` sin token y `404` para un agente que no
+  existe en la empresa. La sala no se ha renderizado en navegador.
 - Segunda pasada (sin claves): registro de `rag-sources` cacheado por owner
   (una lista de 20 000 filas por búsqueda menos), perfiles de voz cacheados por
   tenant, tope `VOICE_TURNS_PER_HOUR` por empresa en `/llm` y `/tts`, y refresco
   de snapshot en segundo plano arreglado (ya no depende de un cast).
+
+## Ojo al conectar mañana
+
+- **No todos los tenants tienen `laia`.** El panel lista las personas cargadas;
+  en el tenant de ejemplo son dirección, comercial, atención, administrativo,
+  finanzas, marketing, contenido, operaciones, compras, personas, legal y
+  cumplimiento. La sala coge la primera disponible, nunca un id fijo.
+- **Sin modelo no hay voz.** `POST /api/avatar/llm` responde 503 con el motivo
+  hasta que exista `FAST_LLM_API_KEY` o modelo de tenant: no es un fallo, es la
+  configuración que falta.
+- El tope `VOICE_TURNS_PER_HOUR` (600) protege la factura desde el primer día.
 
 ## Mañana: conectar Anam y ElevenLabs (paso a paso)
 
