@@ -1,3 +1,10 @@
+## R-20261115-017 — Turno 14/16: C13 Anam avatar y voz
+- **Auditoría real:** `docs/08-auditorias/latencia-anam-2026-11-11.md`, `voice-routes.ts`, `packages/integrations/src/vapi.ts`, `scripts/lib/connections.ts`, `conversation.ts`, `ChatPanel.tsx`; búsqueda Anam/ElevenLabs/WebRTC/voice.
+- **Hallazgos:** no cliente Anam identificado en main; Vapi es REST telefónico, ElevenLabs solo health probe; ruta chat pre-LLM pesada; falta STT/VAD/barge-in end-to-end. Las latencias del informe previo son estimaciones.
+- **Documento:** [C13](./campanas-redisenio-v2/C13-ANAM-AVATAR-VOZ-REALTIME-INTERRUPCIONES-SESIONES.md), 18.623 caracteres, 26 hallazgos, 19 patchsets, 12 waves, 19 tests, gates, rollback.
+- **Decisión:** avatar como canal de presentación, Fast-only speech path, C10 snapshot precalculado, C12 Presenter, interrupción por epoch, consentimiento y cuotas; verificar API Anam y comparar native/custom LLM/passthrough antes de implementar.
+- **Estado:** documentación en rama; no runtime/tests/merge/deploy. **Siguiente:** C14 bridge repo ciberseguridad.
+
 ## R-20261115-016 — Turno 13/16: C12 Presenter/UX/AG-UI/SVG
 - **Auditoría:** `kernel/observers/{presenter,presenter-sse}.ts`, `kernel/graph/progress.ts`, `kernel/authors/slow-author.ts`, `engine/conversation.ts`, `web/components/ChatPanel.tsx`; SHA blobs documentados.
 - **Hallazgos:** Presenter score role/confidence/attention no verifica verdad; doble `thoughtsOf`; cast a kernel deps privados; Fast stream y Presenter post-stream pueden divergir; progress en attention.metadata no equivale a evento durable; ChatPanel tiene streaming básico.
