@@ -1,3 +1,10 @@
+## R-20261115-014 — Turno 11/16: C10 ContextServingFacade V2
+- **Auditoría real:** `engine/context/{assembly,budget,cognition-cards}.ts`, `engine/conversation.ts`, `engine/memory.ts`, `engine/rag.ts`; SHA blobs en campaña.
+- **Hallazgos:** ensamblaje fragmentado en conversación; budgets por categoría sin límite global probado; RAG+ContextEngine+cards+urgencias en rutas separadas; consumed antes de ACK; private memories requieren filtro estricto; RAG registry/citabilidad reutilizables.
+- **Documento:** [C10](./campanas-redisenio-v2/C10-CONTEXT-SERVING-FACADE-SNAPSHOTS-DELTAS-REFERENCIAS.md), 18.122 caracteres, 24 hallazgos, 16 patchsets, 11 waves, contratos, tests, rollback y handoff.
+- **Decisión:** fachada única auth-first con snapshots/deltas/refs, provenance, epistemic status, source watermarks, invalidación y presupuesto global tokenizer-aware; Fast independiente de Slow/JEV.
+- **Estado:** documentación en rama, no código/tests/merge/deploy. **Siguiente:** C11 Fast/Slow APIs independientes.
+
 ## R-20261115-013 — Turno 10/16: C09 CardStore V2 y delivery ledger
 - **Auditoría real:** `kernel/cognition/card-store.ts`, `engine/context/cognition-cards.ts`, `packages/domain/src/cognition-card.ts`, `cognition-routes.ts`, `tests/cognition-cards.test.ts`; SHA blobs registrados en campaña.
 - **Hallazgos:** consumed antes de ACK, CAS opcional con fallback no atómico, store por owner/tenant filter, rank basado en confidence, pending 20, budget `length/4`, pruebas V1 in-memory sin restart/fence.
