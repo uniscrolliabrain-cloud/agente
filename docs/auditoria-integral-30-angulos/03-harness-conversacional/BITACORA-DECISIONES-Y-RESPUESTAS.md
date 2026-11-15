@@ -1,3 +1,12 @@
+## R-20261115-006 — Turno 03/16: C02 Event Bus durable y proyector cognitivo
+- **Petición:** «Sigue» tras C01, manteniendo 16 turnos y auditoría incremental de `agente`.
+- **Código leído:** `engine/events/{bus,subscriber,types,schemas,schema-registry,sinks/store}.ts`, `kernel/subscribers/events.ts`, `kernel/cognition/cycle.ts`, `engine/service.ts`, `tests/event-bus.test.ts`.
+- **Hallazgos P0:** `emit` agrupa persistencia y efectos posteriores en catch; `StoreSink` ignora retorno de insertIfAbsent; callbacks live no ACK; `replayTenant` existe pero está limitado y sin cursor durable; `sinceId` inconsistente entre SQL y fallback; idempotencia de openTurn no demuestra idempotencia de appendThought; workspace payloads passthrough.
+- **Decisión:** extender el bus autoritativo con receipts y proyector durable shadow, inbox, cursor, lease/fence, DLQ, replay paginado, sin segundo bus ni doble escritura cognitiva.
+- **Documento:** [C02](./campanas-redisenio-v2/C02-EVENT-BUS-DURABLE-PROYECTOR-COGNITIVO-REPLAY.md), 19.351 caracteres, 16 hallazgos, 10 patchsets, 7 olas, matriz de fallos, gates.
+- **Estado:** documentación y auditoría estática; no se ha escrito código V2 ni ejecutado tests. Sin merge ni deploy.
+- **Siguiente:** C03 grafo cognitivo multicapa con auditoría adicional y revalidación de C00–C02.
+
 ## R-20261115-005 — Turno 02/16: C01 contratos V2, auditoría incremental
 - **Petición:** «Ok sigue», tras C00.
 - **Repo central:** `uniscrolliabrain-cloud/agente`. Cyber solo interfaz para C14.
