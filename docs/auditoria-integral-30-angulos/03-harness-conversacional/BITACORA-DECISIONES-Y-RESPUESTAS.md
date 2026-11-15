@@ -1,3 +1,12 @@
+## R-20261115-005 — Turno 02/16: C01 contratos V2, auditoría incremental
+- **Petición:** «Ok sigue», tras C00.
+- **Repo central:** `uniscrolliabrain-cloud/agente`. Cyber solo interfaz para C14.
+- **Código auditado:** cognition-card.ts, card-builder.ts, card-store.ts, capture.ts, graph/thought.ts, authors/slow-author.ts, kernel-context.ts, events/types.ts, cognition-routes.ts, node-ref.ts, tests/cognition-cards.test.ts.
+- **Hallazgos:** schema V1 estricto, status de consumo mezcla lifecycle y delivery, owner-store no garantiza compartición cross-owner en tenant, CAS opcional, dedupe taskId colapsa revisiones, eventos schema 1.0 cerrado, NodeRef unknown no es ACL.
+- **Documento:** [C01 profunda](./campanas-redisenio-v2/C01-REVISION-ULTRAGRANULAR-CONTRATOS-Y-TAXONOMIA-V2.md), 19.6k caracteres, 12 hallazgos, 7 patchsets, 7 waves, 10 riesgos, tests y rollback.
+- **Estado:** diseño y auditoría estática parcial; **sin código V2, sin tests ejecutados, sin merge/deploy**.
+- **Próximo:** C02 Event Bus durable y proyector; releer C00/C01, revalidar HEAD y contratos antes de implementar.
+
 ## R-20261115-004 — Turno 01/16: auditoría profunda C00 del repo padre
 - **Petición:** iniciar reescritura progresiva de 16 campañas con auditoría acumulativa; `agente` es el repo central, Cyber solo integración.
 - **Fuente:** código de `main` de `agente` (conversation, model, service, cognition-cards, bus, subscribers, cromos, domain, package scripts) y contratos de `agntia-ciberseguridad`.
