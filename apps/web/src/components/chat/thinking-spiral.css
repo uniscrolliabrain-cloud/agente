@@ -1,0 +1,4 @@
+.thinking-status { display: flex; align-items: center; gap: .5rem; padding: .5rem 0; color: var(--text-secondary, #64748b); font-size: .875rem; }
+.thinking-spiral { color: #6474df; animation: cognition-orbit 2.4s linear infinite; flex-shrink: 0; }
+@keyframes cognition-orbit { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .thinking-spiral { animation: none; } }

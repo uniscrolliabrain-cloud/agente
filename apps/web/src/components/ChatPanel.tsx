@@ -2,6 +2,7 @@
 // usuario; el backend devuelve un ViewEnvelope y el frontend conserva la
 // vista si el intent no produce ninguna.
 import { useEffect, useRef, useState } from "react";
+import { CognitionTimeline } from "./chat/CognitionTimeline";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import SuggestionChips from "./SuggestionChips";
@@ -110,6 +111,7 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
         streamBuf={chat.streamBuf}
         tools={chat.tools}
       />
+      <CognitionTimeline refreshKey={`${chat.threadId}:${chat.messages.length}:${chat.streaming}`} />
       <div className="v2-conv-input">
         <ChatInput
           onSend={chat.send}

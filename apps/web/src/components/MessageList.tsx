@@ -1,4 +1,5 @@
 // BUG03_MESSAGELIST_V3 - typewriter + ToolCallsGroup.
+import { ThinkingSpiral } from "./chat/ThinkingSpiral";
 import { useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/api";
 import MessageBubble from "./MessageBubble";
@@ -34,6 +35,7 @@ export default function MessageList({ messages, streaming, streamBuf, tools, onQ
         <MessageBubble key={m.id} message={m} onQuickAction={onQuickAction} />
       ))}
 
+      {streaming && !streamBuf && <ThinkingSpiral />}
       {streaming && typed && (
         <div className="v2-assistant-text" style={{ marginTop: 12 }}>
           {typed}
