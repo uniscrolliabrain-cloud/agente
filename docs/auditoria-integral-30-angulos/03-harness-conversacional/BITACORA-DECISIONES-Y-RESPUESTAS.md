@@ -1,3 +1,10 @@
+## R-20261115-015 — Turno 12/16: C11 Fast/Slow APIs independientes
+- **Código auditado:** `engine/conversation.ts`, `engine/model.ts`, `engine/model-chain.ts`, `engine/service.ts`, `kernel/authors/{fast,slow}-author.ts`, `engine/context/engine.ts`; blobs y tramos documentados.
+- **Hallazgos:** fallback Fast→Slow explícito en conversación; role model puede preceder Fast; circuit/bulkhead compartidos por proveedor y proceso, límite no duro cuando no hay fallback; cuotas scan no atómico; delegación por prompt; AG-UI y cancel existentes.
+- **Documento:** [C11](./campanas-redisenio-v2/C11-FAST-SLOW-APIS-INDEPENDIENTES-LATENCIA-STREAMING.md), 20.335 caracteres, 27 hallazgos, 18 patchsets, 12 waves, contratos, pruebas, rollback.
+- **Decisión:** Fast/Slow runtime, API, cuotas, pools, fallback y observabilidad independientes; C10 snapshot Fast; Slow durable C02/C07; ACK solo tras receipt real. Sustitución opción 3, legacy temporal.
+- **Estado:** documentación confirmada, no runtime/tests/merge/deploy. **Siguiente:** C12 Presenter/UX SVG fases verídicas.
+
 ## R-20261115-014 — Turno 11/16: C10 ContextServingFacade V2
 - **Auditoría real:** `engine/context/{assembly,budget,cognition-cards}.ts`, `engine/conversation.ts`, `engine/memory.ts`, `engine/rag.ts`; SHA blobs en campaña.
 - **Hallazgos:** ensamblaje fragmentado en conversación; budgets por categoría sin límite global probado; RAG+ContextEngine+cards+urgencias en rutas separadas; consumed antes de ACK; private memories requieren filtro estricto; RAG registry/citabilidad reutilizables.
