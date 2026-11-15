@@ -1,3 +1,12 @@
+## R-20261115-010 — Turno 07/16: C06 atención global y metacognición
+- **Petición:** «Sigue» tras C05. Repo principal `agente`.
+- **Código auditado:** `kernel/graph/{attention,thought}.ts`, `kernel/observers/meta.ts`, `kernel/authors/{fast-author,slow-author}.ts`, `engine/context/assembly.ts`.
+- **Hallazgos prioritarios:** matching de atención no es autorización; `FastAuthor` deriva foco por substring y confidence 0.9 por defecto; `SlowAuthor` crea nodos fallback y confidence 0.8; `Meta.extractProgress` castea sin validación; `seenHints` es Set local y `evaluate` no lo consulta; `detectAttentionConflict` solo mide divergencia de foco.
+- **Documento:** [C06](./campanas-redisenio-v2/C06-ATENCION-GLOBAL-METACOGNICION-SELECTOR-V2.md), 13.794 caracteres, 19 hallazgos, 13 patchsets, 9 waves, contratos, tests, rollback y gates.
+- **Decisión:** GlobalAttentionWorkspace V2 tenant/actor scoped, auth-first, scoring versionado, snapshots/deltas y MetaHint durable con ACK C02; no confundir score con evidencia ni foco con contradicción.
+- **Estado:** documentación y auditoría estática; no código ni tests, no merge/deploy.
+- **Siguiente:** C07 Slow LLM asíncrono, Thoughts enriquecidos y producción de tarjetas, con nueva auditoría.
+
 ## R-20261115-009 — Turno 06/16: C05 cromos y ontología cromática
 - **Petición:** «Sigue» tras C04. Repo central `agente`, sin tocar Cyber.
 - **Auditoría:** `kernel/cromos/{cromo,logic/axioms,physics/field}.ts`, `kernel/graph/{thought,attention}.ts`, `kernel/observers/meta.ts`, `kernel/cognition/card-builder.ts`; contrastado `docs/estado/FUTURE.md`, `docs/campaigns/NC-COORDINATION/CONTRACT-CANDIDATES.md` y `specs/NC-03-SOURCE.md`.
