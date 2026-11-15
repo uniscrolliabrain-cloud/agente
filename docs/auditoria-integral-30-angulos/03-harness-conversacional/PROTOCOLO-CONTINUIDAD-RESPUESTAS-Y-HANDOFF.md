@@ -1,3 +1,5 @@
+**CORRECCIÓN PRIORITARIA 2026-11-15:** Leer `ADR-009-REDISENO-SUSTITUTIVO-LEGACY-TRANSITORIO.md` antes de interpretar este documento. La opción 3 es un **rediseño sustitutivo**; el código actual puede pasar a legacy o eliminarse tras migración. «No destructivo» significa migración segura, NO conservar semánticas viejas ni exigir paridad como objetivo final.
+
 # Protocolo de continuidad: cada respuesta, decisión y ejecución queda documentada
 **Fecha de establecimiento:** 2026-11-15
 **Proyecto:** AgntiaPro / ChatLLM / Cognition / Ciberseguridad
