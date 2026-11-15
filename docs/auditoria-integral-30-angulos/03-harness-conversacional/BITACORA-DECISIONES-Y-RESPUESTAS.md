@@ -1,3 +1,9 @@
+## R-20261115-002 — Corrección del objetivo: rediseño sustitutivo
+- **Petición:** el fundador aclara que el diseño actual no satisface sus necesidades y debe quedar parcialmente como legacy.
+- **Decisión:** la opción 3 es arquitectura de sustitución, no de preservación. Compatibilidad solo durante transición; paridad legacy no es criterio de aceptación.
+- **Documento vinculante:** `ADR-009-REDISENO-SUSTITUTIVO-LEGACY-TRANSITORIO.md`.
+- **Estado:** DOCUMENTADO; sin cambios de runtime ni tests.
+
 # Bitácora de decisiones y respuestas — ChatLLM / Opción 3
 **Regla:** append-only semántico. Una entrada por respuesta técnica sustancial, con links a reportes y commit.
 
