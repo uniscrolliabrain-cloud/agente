@@ -1,3 +1,14 @@
+## R-20261115-007 — Turno 04/16: C03 grafo cognitivo multicapa
+- **Petición:** «Sigue», tras C02.
+- **Repo central:** `uniscrolliabrain-cloud/agente`. Cyber solo evidencia referenciada futura.
+- **Código auditado:** `kernel/graph/{thought,turn,store,port,attention,consolidate}.ts`, `kernel/kernel.ts`, `kernel/cromos/cromo.ts`.
+- **Hallazgos:** `appendThought` genera UUID por llamada; `openTurnIdempotent` solo busca turnos abiertos; GraphPort es de lectura; edges Thought solo Thought→Thought; consolidación por hash y negación textual con cap 200; cromos declarados no cableados.
+- **Documento:** [C03 profunda](./campanas-redisenio-v2/C03-REVISION-ULTRAGRANULAR-GRAFO-COGNITIVO-MULTICAPA.md), 17.335 caracteres, 16 hallazgos, 10 patchsets, 7 olas, tests, gates y rollback.
+- **Decisión:** grafo cognitivo como proyección reconstruible C02, no segundo kernel ni sustitución inmediata del business graph. Estado epistémico, provenance y ACL por lectura; no acciones por LLM.
+- **Pendientes de auditoría:** adapters TurnStore, business graph, Promoter (ruta `kernel/graph/promoter.ts` no existe), consumidores UI; revalidar antes de codificar.
+- **Estado:** auditoría estática/documentación; sin tests ni runtime, sin merge/deploy.
+- **Siguiente:** C04 cinco memorias, recuperación y RAG, con lectura incremental.
+
 ## R-20261115-006 — Turno 03/16: C02 Event Bus durable y proyector cognitivo
 - **Petición:** «Sigue» tras C01, manteniendo 16 turnos y auditoría incremental de `agente`.
 - **Código leído:** `engine/events/{bus,subscriber,types,schemas,schema-registry,sinks/store}.ts`, `kernel/subscribers/events.ts`, `kernel/cognition/cycle.ts`, `engine/service.ts`, `tests/event-bus.test.ts`.
