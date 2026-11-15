@@ -70,3 +70,9 @@ Cada informe debe incorporar: árbol real de archivos, SHA/ramas, mapa de llamad
 ## Estado de ejecución
 
 Se han creado 30 informes iniciales y este índice. **No se ha ejecutado typecheck, test, build, smoke, despliegue ni integración con los repos hijos.** Ninguna conclusión debe presentarse como certificación de producción.
+
+## Decisión posterior — rediseño conversacional V2 (prioridad alta)
+
+La auditoría de latencia confirma un riesgo arquitectónico en la ruta actual de conversación. El `ConversationAgent` actual pasa a ser **candidato a legacy** mediante migración strangler, sin borrarlo hasta validar paridad y rollback. El nuevo `FastConversationV2` debe desacoplar chat/voz de la preparación pesada de contexto, RAG, cuotas y slow LLM. Laia y otros agentes solo conversan; `IntentBridge` comunica solicitudes al kernel y `ProgressProjector` traduce estados confirmados a fases humanas. UI con SVG animado ligero para escucha/pensamiento/habla y fases de trabajo ancladas en eventos, nunca efectos ficticios.
+
+**Documento maestro:** [Rediseño V2 — Fast Chat, Anam y comunicación humana](./03-harness-conversacional/REDISENO-V2-FAST-CHAT-VOICE.md). Dependencias: ángulos 03, 04, 05, 07, 08, 09, 19, 22, 27 y 29. Ejecutar primero baseline M0 y migración paralela M1, sin tocar `main` ni retirar V1.
