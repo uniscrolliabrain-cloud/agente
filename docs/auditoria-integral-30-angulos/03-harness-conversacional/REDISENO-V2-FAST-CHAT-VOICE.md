@@ -1,3 +1,5 @@
+> **ACTUALIZACIÓN PRIORITARIA 2026-11-15:** este documento fue un diseño parcial de migración y NO recoge por sí solo la arquitectura cognitiva continua acordada. Leer primero [MASTER cognitivo-conversacional](./00-ARQUITECTURA-COGNITIVA-CONVERSACIONAL-MASTER.md), [tarjetas RAC/RAG](./01-TARJETAS-RAC-RAG-ATENCION-MEMORIA.md), [UX SVG y caminos](./02-UX-SVG-Y-CAMINOS-DE-ACCION.md) y [dos motores API y migración](./03-DOS-APIS-FAST-SLOW-HARNESS-Y-MIGRACION.md). El Fast no inicia toda la cognición: consume tarjetas preparadas desde kernel/grafo/bus/memorias/atención/Slow/Presenter. Las cinco fases SVG pueden ser pedagógicas, no equivalentes a pasos reales. **No tratar el diagrama de este documento como topología completa.**
+
 # Rediseño V2 — Fast Conversational Harness y comunicación humana
 
 > Decisión arquitectónica 2026-11-15. **Propuesta de migración, no implementación.** La ruta actual se conservará como legacy hasta que V2 supere gates funcionales y de latencia. Evidencia: `docs/08-auditorias/latencia-anam-2026-11-11.md` (auditó un SHA anterior; revalidar en HEAD).
