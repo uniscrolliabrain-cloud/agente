@@ -1,3 +1,12 @@
+## R-20261115-009 — Turno 06/16: C05 cromos y ontología cromática
+- **Petición:** «Sigue» tras C04. Repo central `agente`, sin tocar Cyber.
+- **Auditoría:** `kernel/cromos/{cromo,logic/axioms,physics/field}.ts`, `kernel/graph/{thought,attention}.ts`, `kernel/observers/meta.ts`, `kernel/cognition/card-builder.ts`; contrastado `docs/estado/FUTURE.md`, `docs/campaigns/NC-COORDINATION/CONTRACT-CANDIDATES.md` y `specs/NC-03-SOURCE.md`.
+- **Conflicto real:** visión antigua de dos polos por cromo frente a seis polaridades/diez dimensiones no definidas; NO inventar semántica. Ontología aprobada por founder antes de datos reales.
+- **Decisión:** kernel agnóstico, motor cromático en `engine/cognition/chromatic/**`; V1 solo adapter legacy; JEV/Slow señales no autoritativas; C02/C03 proyecciones, C06 atención.
+- **Documento:** [C05](./campanas-redisenio-v2/C05-CROMOS-ONTOLOGIA-SEIS-POLARIDADES-MOTOR-V2.md), 14.798 caracteres, 17 hallazgos, 13 patchsets, 9 olas, tests, rollback y gates.
+- **Estado:** documento en rama, sin código ni tests ni merge/deploy.
+- **Siguiente:** C06 atención global y metacognición; revisar resultados de C05 y avanzar auditoría de consumidores.
+
 ## R-20261115-008 — Turno 05/16: C04 cinco memorias, RAG y revocación
 - **Petición:** «Sigue», continuación de C03. El turno anterior dejó C04 iniciada en respuesta pero sin confirmación de escritura; este turno la completa y verifica en GitHub.
 - **Repo central:** `uniscrolliabrain-cloud/agente`. Cyber solo referencia de evidencia; no se toca.
