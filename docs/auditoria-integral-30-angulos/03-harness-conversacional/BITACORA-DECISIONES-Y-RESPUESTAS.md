@@ -1,3 +1,10 @@
+## R-20261115-016 — Turno 13/16: C12 Presenter/UX/AG-UI/SVG
+- **Auditoría:** `kernel/observers/{presenter,presenter-sse}.ts`, `kernel/graph/progress.ts`, `kernel/authors/slow-author.ts`, `engine/conversation.ts`, `web/components/ChatPanel.tsx`; SHA blobs documentados.
+- **Hallazgos:** Presenter score role/confidence/attention no verifica verdad; doble `thoughtsOf`; cast a kernel deps privados; Fast stream y Presenter post-stream pueden divergir; progress en attention.metadata no equivale a evento durable; ChatPanel tiene streaming básico.
+- **Documento:** [C12](./campanas-redisenio-v2/C12-PRESENTER-UX-STREAMING-ESTADOS-SVG-ACCESIBILIDAD.md), 18.596 caracteres, 25 hallazgos, 17 patchsets, 11 waves, 18 tests propuestos.
+- **Decisión:** Presenter V2 como proyector de eventos/recibos y compositor de mensajes; timeline verídica, SVG espiral decorativa accesible, AG-UI compatible, sin estados ficticios ni chain-of-thought.
+- **Estado:** documento en rama, no runtime/tests/merge/deploy. **Siguiente:** C13 Anam avatar/voz.
+
 ## R-20261115-015 — Turno 12/16: C11 Fast/Slow APIs independientes
 - **Código auditado:** `engine/conversation.ts`, `engine/model.ts`, `engine/model-chain.ts`, `engine/service.ts`, `kernel/authors/{fast,slow}-author.ts`, `engine/context/engine.ts`; blobs y tramos documentados.
 - **Hallazgos:** fallback Fast→Slow explícito en conversación; role model puede preceder Fast; circuit/bulkhead compartidos por proveedor y proceso, límite no duro cuando no hay fallback; cuotas scan no atómico; delegación por prompt; AG-UI y cancel existentes.
