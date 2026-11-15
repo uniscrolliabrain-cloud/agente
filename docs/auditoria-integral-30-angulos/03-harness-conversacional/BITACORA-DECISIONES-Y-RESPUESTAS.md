@@ -1,3 +1,13 @@
+## R-20261115-008 — Turno 05/16: C04 cinco memorias, RAG y revocación
+- **Petición:** «Sigue», continuación de C03. El turno anterior dejó C04 iniciada en respuesta pero sin confirmación de escritura; este turno la completa y verifica en GitHub.
+- **Repo central:** `uniscrolliabrain-cloud/agente`. Cyber solo referencia de evidencia; no se toca.
+- **Código leído:** `engine/memory.ts`, `engine/rag.ts`, `engine/context/{assembly,budget}.ts`, `packages/domain/src/agent.ts`, especificación histórica NC-01.
+- **Hallazgos:** MemoryService ya separa privado/empresa/roles/hechos, pero no cinco memorias cognitivas; cap 2.000 registros; RAG híbrido vector/BM25 con registry y revisiones, ingesta no atómica; context scoring textual y presupuesto chars/4.
+- **Documento:** [C04](./campanas-redisenio-v2/C04-CINCO-MEMORIAS-RECUPERACION-RAG-REVOCACION.md), 15.498 caracteres, 20 hallazgos, 13 patchsets, 8 waves, matriz adversarial, gates y rollback.
+- **Decisión:** cinco memorias como proyecciones con source refs, política, revocación y vigencia; conservar MemoryService/RagService vía adapter shadow, sin duplicar stores; Slow/JEV proponen, kernel dispone.
+- **Estado:** auditoría estática/documentación, sin código ni tests, sin merge/deploy.
+- **Siguiente:** C05 cromos, polaridades y atención con auditoría incremental del runtime y consumidores.
+
 ## R-20261115-007 — Turno 04/16: C03 grafo cognitivo multicapa
 - **Petición:** «Sigue», tras C02.
 - **Repo central:** `uniscrolliabrain-cloud/agente`. Cyber solo evidencia referenciada futura.
