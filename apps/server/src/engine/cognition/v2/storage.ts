@@ -15,12 +15,15 @@ export type SqlStore = Pick<Store, "rawQuery" | "transaction">;
 export async function installCognitionV2(db: Store): Promise<void> {
   // No destructive changes; event source records and legacy readers remain intact.
   for (const sql of [
+    `CREATE TABLE IF NOT EXISTS cognition_v2_rag_refs (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,source_id text NOT NULL,source_version text NOT NULL,PRIMARY KEY(tenant,id))`,
+    `CREATE TABLE IF NOT EXISTS cognition_v2_attention (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_chat_runs (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,state text NOT NULL,response text,receipt_id text,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_lane_locks (tenant text NOT NULL,lane text NOT NULL,PRIMARY KEY(tenant,lane))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_lane_slots (tenant text NOT NULL,lane text NOT NULL,token text NOT NULL,expires_at timestamptz NOT NULL,PRIMARY KEY(tenant,lane,token))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_lane_usage (tenant text NOT NULL,lane text NOT NULL,day text NOT NULL,calls integer NOT NULL,PRIMARY KEY(tenant,lane,day))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_slow_jobs (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,state text NOT NULL,
-      fence bigint NOT NULL DEFAULT 0,attempts integer NOT NULL DEFAULT 0,lease_until timestamptz,next_at timestamptz NOT NULL,output jsonb,classification jsonb,PRIMARY KEY(tenant,id))`,
+      fence bigint NOT NULL DEFAULT 0,attempts integer NOT NULL DEFAULT 0,lease_until timestamptz,next_at timestamptz NOT NULL,output jsonb,classification jsonb,failure_code text,PRIMARY KEY(tenant,id))`,
+    `ALTER TABLE cognition_v2_slow_jobs ADD COLUMN IF NOT EXISTS failure_code text`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_sequences (tenant text PRIMARY KEY, sequence bigint NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_events (tenant text NOT NULL, sequence bigint NOT NULL, event_id text NOT NULL,
       event jsonb NOT NULL, PRIMARY KEY(tenant,sequence), UNIQUE(tenant,event_id))`,
@@ -131,7 +134,13 @@ export class CognitiveProjectionStore {
   constructor(readonly db: Store) {}
   async apply(raw: unknown, sequence: string): Promise<void> {
     const record = cognitiveRecordSchema.parse(raw);
-    if (await this.revoked(record.tenantId, record.sourceEventId)) return;
+    const dependencies = [record.id, record.sourceEventId, ...record.evidence.map((e) => e.id)];
+    for (const source of dependencies) {
+      if (await this.revoked(record.tenantId, source)) {
+        await this.revoke(record.tenantId, record.id);
+        return;
+      }
+    }
     const [existing] = await this.db.rawQuery<{ data: CognitiveRecord }>(`SELECT data FROM cognition_v2_objects WHERE tenant=$1 AND id=$2 AND revision=$3`, [record.tenantId, record.id, record.revision]);
     if (existing) {
       if (digest(existing.data) !== digest(record)) throw Error("REVISION_CONFLICT");

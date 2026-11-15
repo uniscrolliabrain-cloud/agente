@@ -1,7 +1,7 @@
 // C06_C09_C10_CONTEXT_V2: authorized projection reads and durable delivery.
 import { randomUUID } from "node:crypto";
 import type { CognitiveIdentity, CognitiveRecord } from "../../../../../../packages/domain/src/cognition-v2.ts";
-import { cognitiveIdentitySchema, contextRequestV2Schema } from "../../../../../../packages/domain/src/cognition-v2.ts";
+import { cognitiveIdentitySchema, contextRequestV2Schema, deliveryAckV2Schema } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import { CognitiveProjectionStore, digest } from "./storage.ts";
 export interface CognitivePolicy {
   // Must revalidate current membership/policy, not trust claims from a prompt.
@@ -20,11 +20,14 @@ export class ContextServingFacade {
     // UTF-8 bytes is an intentionally conservative byte-level upper bound for
     // byte/BPE tokenizers, not a claim of exact provider tokenization.
     private readonly countTokens = (text: string) => Buffer.byteLength(text, "utf8")) {}
-  async assertAuthorized(identity: CognitiveIdentity, record?: CognitiveRecord): Promise<void> {
+  async assertAuthorized(identity: CognitiveIdentity, record?: CognitiveRecord, seen = new Set<string>()): Promise<void> {
     cognitiveIdentitySchema.parse(identity);
     if (record && (record.tenantId !== identity.tenantId || record.visibility.tenantId !== identity.tenantId)) throw Error("DENIED");
     if (!(await this.policy.authorize(identity, record))) throw Error("DENIED");
     if (record) {
+      if (seen.has(record.id)) return;
+      if (seen.size >= 100) throw Error("EVIDENCE_GRAPH_BUDGET");
+      seen.add(record.id);
       const v = record.visibility;
       if (v.policyRevision !== identity.policyRevision ||
         (v.scope === "private" && v.ownerActorId !== identity.actorId) ||
@@ -33,6 +36,11 @@ export class ContextServingFacade {
         await this.projections.revoked(record.tenantId, record.sourceEventId) || await this.projections.revoked(record.tenantId, record.id)) throw Error("REVOKED");
       for (const evidence of record.evidence) {
         if (await this.projections.revoked(identity.tenantId, evidence.id)) throw Error("EVIDENCE_REVOKED");
+        if (evidence.kind === "card" || evidence.kind === "memory") {
+          const [parent] = await this.projections.db.rawQuery<{ data: CognitiveRecord }>(`SELECT data FROM cognition_v2_objects WHERE tenant=$1 AND id=$2 ORDER BY revision DESC LIMIT 1`, [identity.tenantId, evidence.id]);
+          if (!parent || parent.data.revision !== evidence.revision) throw Error("EVIDENCE_UNAVAILABLE");
+          await this.assertAuthorized(identity, parent.data, seen);
+        }
       }
     }
   }
@@ -42,13 +50,14 @@ export class ContextServingFacade {
     // revision because a caller knows its old ID/revision.
     const [row] = await this.projections.db.rawQuery<{ data: CognitiveRecord }>(
       `SELECT data FROM cognition_v2_objects WHERE tenant=$1 AND id=$2 ORDER BY revision DESC LIMIT 1`, [identity.tenantId, id]);
+    if (row?.data.kind === "thought_ref") return null;
     if (!row || (revision !== undefined && row.data.revision !== revision)) return null;
     try { await this.assertAuthorized(identity, row.data); return row.data; } catch { return null; }
   }
   async getSnapshot(identity: CognitiveIdentity, options: { query: string; maxTokens: number; maxRefs: number }): Promise<ContextSnapshotV2> {
     options = contextRequestV2Schema.parse(options);
     await this.assertAuthorized(identity);
-    const records = await this.projections.latest(identity.tenantId, 501, identity.actorId);
+    const records = await this.projections.latest(identity.tenantId, Math.min(200, options.maxRefs * 8) + 1, identity.actorId);
     const eligible: CognitiveRecord[] = [];
     for (const r of records) {
       // Internal Thought references are not public reasoning/context.
@@ -80,9 +89,23 @@ export class ContextServingFacade {
     const content = { identity, refs, segments, watermark: String(counter?.sequence ?? "0"), usedTokens, maxTokens: options.maxTokens };
     const snapshot: ContextSnapshotV2 = { schemaVersion: "2.0", id: randomUUID(), ...content,
       createdAt: new Date(this.clock()).toISOString(), expiresAt: new Date(this.clock() + 60000).toISOString(),
-      digest: digest(content), truncated: records.length > 500 || eligible.length > refs.length };
+      digest: digest(content), truncated: records.length > Math.min(200, options.maxRefs * 8) || eligible.length > refs.length };
     await this.projections.db.rawQuery(`INSERT INTO cognition_v2_snapshots(tenant,id,actor,data) VALUES($1,$2,$3,$4::jsonb)`, [identity.tenantId, snapshot.id, identity.actorId, JSON.stringify(snapshot)]);
     return snapshot;
+  }
+  async prepared(identity: CognitiveIdentity, query: string, maxTokens = 4000, maxRefs = 10): Promise<ContextSnapshotV2> {
+    await this.assertAuthorized(identity);
+    const candidates = await this.projections.db.rawQuery<{ id: string }>(`SELECT id FROM cognition_v2_snapshots WHERE tenant=$1 AND actor=$2
+      AND data->'identity'->>'policyRevision'=$3 AND (data->>'expiresAt')::timestamptz>$4
+      ORDER BY data->>'createdAt' DESC LIMIT 5`, [identity.tenantId, identity.actorId, identity.policyRevision, new Date(this.clock()).toISOString()]);
+    const [cursor] = await this.projections.db.rawQuery<{ sequence: string }>(`SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer='cognitive-v2.1'`, [identity.tenantId]);
+    for (const candidate of candidates) {
+      const snapshot = await this.readSnapshot(identity, candidate.id);
+      if (snapshot && snapshot.maxTokens <= maxTokens && snapshot.refs.length <= maxRefs && snapshot.watermark === String(cursor?.sequence ?? "0")) return snapshot;
+    }
+    // Cold start remains bounded SQL only. Slow, embeddings and external RAG
+    // never run on this path; prepared sources are refreshed separately.
+    return this.getSnapshot(identity, { query, maxTokens, maxRefs });
   }
   async readSnapshot(identity: CognitiveIdentity, id: string): Promise<ContextSnapshotV2 | null> {
     await this.assertAuthorized(identity);
@@ -110,7 +133,7 @@ export class CardDeliveryLedger {
       const ref = snapshot?.refs.find((r) => r.id === cardId);
       if (!ref) throw Error("SNAPSHOT_INVALID");
       const card = await this.context.resolve(identity, cardId, ref.revision);
-      if (card?.kind !== "card") throw Error("CARD_REQUIRED");
+      if (card?.kind !== "card" && card?.kind !== "meta_hint") throw Error("CARD_REQUIRED");
       const id = digest([identity.tenantId, identity.actorId, identity.purpose, snapshotId, cardId, ref.revision]);
       await db.rawQuery(`INSERT INTO cognition_v2_deliveries(tenant,id,actor,card_id,revision,snapshot_id,status)
         VALUES($1,$2,$3,$4,$5,$6,'pending') ON CONFLICT DO NOTHING`, [identity.tenantId, id, identity.actorId, cardId, ref.revision, snapshotId]);
@@ -124,6 +147,7 @@ export class CardDeliveryLedger {
     return this.transition(identity, id, fence, "rendered");
   }
   async ack(identity: CognitiveIdentity, id: string, fence: number, receiptId: string): Promise<boolean> {
+    deliveryAckV2Schema.parse({ deliveryId: id, fence, receiptId });
     return this.transition(identity, id, fence, "acknowledged", receiptId);
   }
   private async transition(identity: CognitiveIdentity, id: string, fence: number, state: string, receiptId?: string): Promise<boolean> {

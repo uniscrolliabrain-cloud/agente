@@ -15,6 +15,19 @@ export class CognitiveProjector {
           to: evidence, relation: "derived_from" });
         await this.store.db.rawQuery(`INSERT INTO cognition_v2_edges(tenant,id,data) VALUES($1,$2,$3::jsonb) ON CONFLICT DO NOTHING`, [record.tenantId, edge.id, JSON.stringify(edge)]);
       }
+    } else if (event.type === "cognition.v2.slow.status" && (event.payload.state === "completed" || event.payload.state === "failed")) {
+      const [job] = await this.store.db.rawQuery<{ data: { identity: { actorId: string; policyRevision: string } } }>(
+        `SELECT data FROM cognition_v2_slow_jobs WHERE tenant=$1 AND id=$2 AND actor=$3`, [event.tenantId, event.payload.jobId, event.owner]);
+      if (!job) throw Error("SLOW_RECEIPT_NOT_FOUND");
+      const record = cognitiveRecordSchema.parse({ schemaVersion: "2.0", id: `hint:${event.id}`, tenantId: event.tenantId,
+        revision: 1, kind: "meta_hint", title: event.payload.state === "completed" ? "Análisis guardado" : "Análisis fallido",
+        body: JSON.stringify({ jobId: event.payload.jobId, state: event.payload.state, receiptId: event.payload.receiptId }),
+        epistemic: "reported_fact", evidence: [{ tenantId: event.tenantId, kind: "event", id: event.id, revision: 1 }],
+        sourceEventId: event.id, sourceRevision: 1,
+        visibility: { tenantId: event.tenantId, ownerActorId: job.data.identity.actorId, scope: "private", allowedActorIds: [], policyRevision: job.data.identity.policyRevision },
+        signals: { relevance: .5, confidence: 0, novelty: 1, urgency: event.payload.state === "failed" ? 1 : .5, contradiction: 0 },
+        lifecycle: "active", createdAt: event.emittedAt, expiresAt: new Date(Date.parse(event.emittedAt) + 86400000).toISOString() });
+      await this.store.apply(record, sequence);
     } else if (event.type === "cognition.v2.source.revoked") {
       // Publisher is an internal authorized route/worker, not an LLM tool.
       const source = String(event.payload.sourceId);
