@@ -1,5 +1,6 @@
 // PGVECTOR_MERGED_V1 - extension vector + columna embedding + ivfflat.
 // R4a-db_APPLIED
+import { AsyncLocalStorage } from "node:async_hooks";
 import { mkdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import pg from "pg";
@@ -9,6 +10,7 @@ type Row = { data: Record<string, unknown>; updated_at?: unknown };
 interface Database {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: Row[] }>;
   close: () => Promise<void>;
+  transaction?: <T>(fn: (connection: Database) => Promise<T>) => Promise<T>;
 }
 
 export interface ListOptions {
@@ -20,8 +22,14 @@ export interface ListOptions {
 export class Store {
   /** Que motor hay debajo: PGlite embebido o Postgres real via pg. Decide rutas de codigo. */
   readonly backend: "pglite" | "postgres";
-  constructor(private readonly db: Database, backend: "pglite" | "postgres" = "pglite") {
+  private readonly transactionConnection = new AsyncLocalStorage<Database>();
+  private readonly db: Database;
+  constructor(private readonly database: Database, backend: "pglite" | "postgres" = "pglite") {
     this.backend = backend;
+    this.db = {
+      query: (sql, params) => (this.transactionConnection.getStore() ?? database).query(sql, params),
+      close: () => database.close(),
+    };
   }
 
   /** true cuando el motor soporta pgvector (Postgres real, no PGlite). */
@@ -302,22 +310,16 @@ export class Store {
   // seguidos reventaban Postgres con "there is already a transaction in
   // progress". Si ya estamos en transaccion, el callback corre sin BEGIN.
   // DB_TRANSACTION_GUARD_V1
-  private inTransaction = false;
+  // C02_TX_CONNECTION_V2: scope the connection to the async call chain, never
+  // a process-wide boolean. Closures using this Store see the same transaction.
   async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
-    if (this.inTransaction) return fn(this);
-    const raw = this.db as { query: (sql: string, params?: unknown[]) => Promise<unknown> };
-    await raw.query("BEGIN");
-    this.inTransaction = true;
-    try {
-      const result = await fn(this);
-      await raw.query("COMMIT");
-      return result;
-    } catch (error) {
-      try { await raw.query("ROLLBACK"); } catch { /* rollback best-effort */ }
-      throw error;
-    } finally {
-      this.inTransaction = false;
+    if (this.transactionConnection.getStore()) return fn(this);
+    if (!this.database.transaction) {
+      throw new Error("TRANSACTION_UNSUPPORTED: adapter must provide an atomic connection");
     }
+    return this.database.transaction((connection) =>
+      this.transactionConnection.run(connection, () => fn(this)),
+    );
   }
 
   // DB_CLAIM_SQL_V1
@@ -393,7 +395,21 @@ export async function createStore(
       // Un DSN con formato host=... no es una URL; no se imprime nada de el.
     }
     console.log(`[Laia] DB: Postgres (${where}) - backend: postgres`);
-    database = { query: async (sql, params) => pool.query(sql, params), close: () => pool.end() };
+    database = {
+      query: async (sql, params) => pool.query(sql, params), close: () => pool.end(),
+      transaction: async (fn) => {
+        const client = await pool.connect();
+        try {
+          await client.query("BEGIN");
+          const value = await fn({ query: (sql, params) => client.query(sql, params), close: async () => {} });
+          await client.query("COMMIT");
+          return value;
+        } catch (error) {
+          await client.query("ROLLBACK").catch(() => {});
+          throw error;
+        } finally { client.release(); }
+      },
+    };
   } else {
     // El directorio que guarda los datos es options.dataDir, no su padre: con
     // dataDir=".agente/postgres" un dirname() creaba ".agente" y dejaba el
@@ -404,6 +420,9 @@ export async function createStore(
     database = {
       query: (sql, params) => embedded.query<Row>(sql, params),
       close: () => embedded.close(),
+      transaction: (fn) => embedded.transaction((tx) => fn({
+        query: (sql, params) => tx.query<Row>(sql, params), close: async () => {},
+      })),
     };
   }
   await database.query(
