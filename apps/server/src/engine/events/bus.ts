@@ -90,6 +90,11 @@ export class EventBus {
     payload: T,
     options: EmitOptions = {},
   ): Promise<EmitResult> {
+    if (this.db.inTransaction) {
+      return { id: "", tenantId: options.tenantId ?? currentTenantScope()?.tenantId ?? owner,
+        persisted: false, delivered: 0, error: "EVENT_EMIT_REQUIRES_COMMIT_BOUNDARY" };
+    }
+    let committed: { id: string; tenantId: string; persisted: boolean; delivered: number } | undefined;
     try {
       // EVENTS_BUS_EMIT_VALIDATES_TENANT_V1
       // EVENTBUS_METRIC_ERRORS_V1
@@ -130,10 +135,12 @@ export class EventBus {
         payload: parsed,
       };
       await this.sink.write(event);
+      committed = { id: event.id, tenantId, persisted: true, delivered: 0 };
       // EVENTS_BUS_PUBLISH_V1 Ã¢â‚¬â€ publicar a subscribers en vivo (SSE, mÃƒÂ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
       // EVENTBUS_PUBLISH_SUBSCRIBERS_V1
       const delivered = globalSubscribers.publish(event);
+      committed.delivered = delivered;
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.
@@ -168,6 +175,7 @@ export class EventBus {
         .then(({ globalMetrics }) => { globalMetrics.inc("event_bus_errors_total", { type }); })
         .catch(() => {});
       backgroundFailure(`event emit ${type}`, error);
+      if (committed) return { ...committed, error: "POST_COMMIT_NOTIFICATION_FAILED" };
       return {
         id: "",
         tenantId: options.tenantId ?? currentTenantScope()?.tenantId ?? owner,

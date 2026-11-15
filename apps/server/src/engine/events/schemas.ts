@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cognitiveRecordSchema } from "../../../../../packages/domain/src/cognition-v2.ts";
 import type { SystemEventType } from "./types.ts";
 
 /**
@@ -22,6 +23,9 @@ const base = {
 };
 
 export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
+  "cognition.v2.record.proposed": z.strictObject({ record: cognitiveRecordSchema }),
+  "cognition.v2.source.revoked": z.strictObject({ sourceId: z.string().min(1).max(200) }),
+  "cognition.v2.slow.status": z.strictObject({ jobId: z.string().min(1).max(200), state: z.enum(["queued", "running", "completed", "failed", "cancelled"]), receiptId: z.string().min(1).max(200) }),
   "task.created": z.object({ ...base, title: z.string().max(200), kind: z.string().max(40) }),
   "task.status_changed": z.object({ ...base, from: z.string().max(40), to: z.string().max(40) }),
   "task.completed": z.object({ ...base, title: z.string().max(200), result: z.string().max(2000).optional() }),

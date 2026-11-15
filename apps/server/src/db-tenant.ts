@@ -267,6 +267,7 @@ export class TenantScopedStore {
     return this.store.purgeOlderThan(kind, days);
   }
 
+  get inTransaction() { return this.store.inTransaction; }
   get backend() { return this.store.backend; }
   get pgvectorReady() { return this.store.pgvectorReady; }
 

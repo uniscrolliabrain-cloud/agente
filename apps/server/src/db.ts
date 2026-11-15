@@ -34,7 +34,7 @@ export class Store {
 
   /** true cuando el motor soporta pgvector (Postgres real, no PGlite). */
   get pgvectorReady(): boolean {
-    return this.backend === "postgres" && Boolean((this.db as { pgvectorReady?: boolean }).pgvectorReady);
+    return this.backend === "postgres" && Boolean((this.database as { pgvectorReady?: boolean }).pgvectorReady);
   }
 
   /**
@@ -312,6 +312,7 @@ export class Store {
   // DB_TRANSACTION_GUARD_V1
   // C02_TX_CONNECTION_V2: scope the connection to the async call chain, never
   // a process-wide boolean. Closures using this Store see the same transaction.
+  get inTransaction(): boolean { return Boolean(this.transactionConnection.getStore()); }
   async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
     if (this.transactionConnection.getStore()) return fn(this);
     if (!this.database.transaction) {
