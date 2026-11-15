@@ -12,6 +12,7 @@ test("C04/C10 actual RAG registry is prepared off Fast; source revision/removal 
   const db = await createStore();
   try {
     const tenantService = new TenantService(db, testConfig()); await tenantService.addMembership("alice", "A");
+    await db.put("system", "users", { id: "alice", data: { active: true } });
     const tdb = new TenantScopedStore(db, async () => "A"), rag = new RagService(tdb);
     const runtime = await CognitionV2Runtime.create(db, tdb, new Set(["A"]), tenantService, rag);
     const identity = await runtime.identity("A", "alice", "alice", "chat");
@@ -23,6 +24,9 @@ test("C04/C10 actual RAG registry is prepared off Fast; source revision/removal 
       const snapshot = await runtime.context.getSnapshot(identity, { query: "facturas", maxTokens: 4000, maxRefs: 10 });
       assert.ok(snapshot.refs.length > 0);
       const document = await runtime.context.resolve(identity, prepared.ids[0]); assert.equal(document?.epistemic, "reported_fact");
+      await rag.ingestSource("alice", { sourceId: "doc", sourceName: "Synthetic runbook", kind: "upload", revision: "revision-a" }, "Contenido corregido aunque la revisión externa tenga la misma etiqueta.");
+      assert.equal(await runtime.preparedRag!.valid(identity, document!.evidence[0].id), false, "same external revision cannot preserve old content");
+      assert.equal(await runtime.context.readSnapshot(identity, snapshot.id), null);
       await rag.removeSource("alice", "doc");
       assert.equal(await runtime.context.readSnapshot(identity, snapshot.id), null);
       assert.equal(await runtime.context.resolve(identity, prepared.ids[0]), null);

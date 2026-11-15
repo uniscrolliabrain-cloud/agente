@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Store } from "../../db.ts";
+import { transactionOutcome, type Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
 import { backgroundFailure } from "../../log.ts";
 // BUS_TENANT_SCOPE_V1 - el tenant de la peticion manda sobre owner.
@@ -63,6 +63,7 @@ export interface EmitResult {
   persisted: boolean;
   delivered: number;
   pendingCommit?: boolean;
+  commitOutcome?: "unknown";
   duplicate?: boolean;
   error?: string;
 }
@@ -91,6 +92,7 @@ export class EventBus {
     payload: T,
     options: EmitOptions = {},
   ): Promise<EmitResult> {
+    let proposedEvent: { id: string; tenantId: string } | undefined;
     let committed: EmitResult | undefined;
     try {
       // EVENTS_BUS_EMIT_VALIDATES_TENANT_V1
@@ -131,6 +133,7 @@ export class EventBus {
         ...(finalCausationId ? { causationId: finalCausationId } : {}),
         payload: parsed,
       };
+      proposedEvent = { id: event.id, tenantId };
       await this.sink.write(event);
       const result: EmitResult = { id: event.id, tenantId, persisted: !this.db.inTransaction, delivered: 0,
         ...(this.db.inTransaction ? { pendingCommit: true } : {}) };
@@ -176,8 +179,11 @@ export class EventBus {
           backgroundFailure(`event notification ${type}`, error);
         }
       };
-      if (typeof this.db.afterCommit === "function" && this.db.afterCommit(notifyCommitted, () => {
-        result.persisted = false; result.pendingCommit = false; result.error = "OUTER_TRANSACTION_ROLLED_BACK";
+      if (typeof this.db.afterCommit === "function" && this.db.afterCommit(notifyCommitted, (error) => {
+        result.persisted = false; result.pendingCommit = false;
+        if (transactionOutcome(error) === "unknown") {
+          result.commitOutcome = "unknown"; result.error = "OUTER_TRANSACTION_OUTCOME_UNKNOWN";
+        } else result.error = "OUTER_TRANSACTION_ROLLED_BACK";
       })) return result;
       await notifyCommitted();
       return result;
@@ -188,6 +194,10 @@ export class EventBus {
         .catch(() => {});
       backgroundFailure(`event emit ${type}`, error);
       if (committed) return { ...committed, error: "POST_COMMIT_NOTIFICATION_FAILED" };
+      if (transactionOutcome(error) === "unknown") return {
+        id: proposedEvent?.id ?? "", tenantId: proposedEvent?.tenantId ?? options.tenantId ?? "",
+        persisted: false, delivered: 0, commitOutcome: "unknown", error: "TRANSACTION_COMMIT_OUTCOME_UNKNOWN",
+      };
       return {
         id: "",
         tenantId: options.tenantId ?? currentTenantScope()?.tenantId ?? owner,

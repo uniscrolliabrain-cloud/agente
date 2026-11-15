@@ -5,7 +5,7 @@ import { cognitiveRecordSchema } from "../../../../../../packages/domain/src/cog
 import type { ContextServingFacade } from "./context.ts";
 import { DurableEventSink, digest } from "./storage.ts";
 export type PreparedRagPort = Pick<RagService, "source" | "searchReport">;
-const sourceVersion = (source: RagSourceRecord) => digest([source.id, source.revision ?? source.indexedAt ?? source.updatedAt, source.status]);
+const sourceVersion = (source: RagSourceRecord) => digest([source.id, source.revision ?? null, source.contentDigest ?? null, source.indexedAt ?? null, source.updatedAt, source.status]);
 export class PreparedRagContext {
   constructor(readonly context: ContextServingFacade, readonly sink: DurableEventSink, readonly rag: PreparedRagPort) {}
   async valid(identity: CognitiveIdentity, referenceId: string): Promise<boolean> {
@@ -19,9 +19,13 @@ export class PreparedRagContext {
     await this.context.assertAuthorized(identity);
     const result = await this.rag.searchReport(identity.owner, query, 5);
     const ids: string[] = [];
+    let excludedStale = 0;
     for (const hit of result.hits) {
       const source = await this.rag.source(identity.owner, hit.sourceId);
       if (!source || source.status !== "indexed" || !hit.verified) continue;
+      if (!source.indexedAt || hit.createdAt !== source.indexedAt || (hit.revision ?? null) !== (source.revision ?? null)) {
+        excludedStale++; continue;
+      }
       const version = sourceVersion(source), referenceId = digest([identity.tenantId, identity.actorId, source.id, version]);
       const id = `rag:${digest([referenceId, hit.id, hit.text])}`;
       const record = cognitiveRecordSchema.parse({ schemaVersion: "2.0", id, tenantId: identity.tenantId, revision: 1,
@@ -41,6 +45,6 @@ export class PreparedRagContext {
       });
       ids.push(id);
     }
-    return { ids, degraded: result.degraded, status: result.status, prepared: ids.length };
+    return { ids, degraded: result.degraded || excludedStale > 0, status: result.status, prepared: ids.length, excludedStale };
   }
 }

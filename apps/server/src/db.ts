@@ -13,6 +13,17 @@ interface Database {
   transaction?: <T>(fn: (connection: Database) => Promise<T>) => Promise<T>;
 }
 
+// An adapter rejection is not proof of rollback: COMMIT may have succeeded
+// before the transport lost its acknowledgement.
+export function transactionOutcome(error: unknown): "rolled_back" | "unknown" | undefined {
+  return error instanceof Error ? (error as Error & { transactionOutcome?: "rolled_back" | "unknown" }).transactionOutcome : undefined;
+}
+function withTransactionOutcome(error: unknown, outcome: "rolled_back" | "unknown"): Error {
+  const tagged = error instanceof Error ? error : new Error(String(error));
+  try { Object.defineProperty(tagged, "transactionOutcome", { value: outcome, configurable: true }); return tagged; }
+  catch { const wrapped = new Error(tagged.message, { cause: tagged }); Object.defineProperty(wrapped, "transactionOutcome", { value: outcome }); return wrapped; }
+}
+
 export interface ListOptions {
   limit?: number;
   cursorUpdatedAt?: string;
@@ -22,8 +33,8 @@ export interface ListOptions {
 export class Store {
   /** Que motor hay debajo: PGlite embebido o Postgres real via pg. Decide rutas de codigo. */
   readonly backend: "pglite" | "postgres";
-  private readonly transactionHooks = new AsyncLocalStorage<{ commit: (() => void | Promise<void>)[]; rollback: (() => void)[] }>();
-  afterCommit(commit: () => void | Promise<void>, rollback?: () => void): boolean {
+  private readonly transactionHooks = new AsyncLocalStorage<{ commit: (() => void | Promise<void>)[]; rollback: ((error: unknown) => void)[] }>();
+  afterCommit(commit: () => void | Promise<void>, rollback?: (error: unknown) => void): boolean {
     const hooks = this.transactionHooks.getStore();
     if (!hooks) return false;
     hooks.commit.push(commit); if (rollback) hooks.rollback.push(rollback); return true;
@@ -324,14 +335,16 @@ export class Store {
     if (!this.database.transaction) {
       throw new Error("TRANSACTION_UNSUPPORTED: adapter must provide an atomic connection");
     }
-    const hooks = { commit: [] as (() => void | Promise<void>)[], rollback: [] as (() => void)[] };
+    const hooks = { commit: [] as (() => void | Promise<void>)[], rollback: [] as ((error: unknown) => void)[] };
     let result: T;
     try {
       result = await this.database.transaction((connection) => this.transactionHooks.run(hooks, () =>
         this.transactionConnection.run(connection, () => fn(this))));
     } catch (error) {
-      for (const rollback of hooks.rollback) rollback();
-      throw error;
+      const outcome = transactionOutcome(error) ?? "unknown";
+      const tagged = withTransactionOutcome(error, outcome);
+      for (const rollback of hooks.rollback) { try { rollback(tagged); } catch { /* preserve original transaction outcome */ } }
+      throw tagged;
     }
     for (const commit of hooks.commit) {
       try { await commit(); } catch (error) { backgroundFailure("after commit notification", error); }
@@ -416,14 +429,17 @@ export async function createStore(
       query: async (sql, params) => pool.query(sql, params), close: () => pool.end(),
       transaction: async (fn) => {
         const client = await pool.connect();
+        let committing = false;
         try {
           await client.query("BEGIN");
           const value = await fn({ query: (sql, params) => client.query(sql, params), close: async () => {} });
+          committing = true;
           await client.query("COMMIT");
           return value;
         } catch (error) {
-          await client.query("ROLLBACK").catch(() => {});
-          throw error;
+          let rolledBack = false;
+          try { await client.query("ROLLBACK"); rolledBack = true; } catch { /* connection outcome unknown */ }
+          throw withTransactionOutcome(error, !committing && rolledBack ? "rolled_back" : "unknown");
         } finally { client.release(); }
       },
     };
@@ -437,9 +453,13 @@ export async function createStore(
     database = {
       query: (sql, params) => embedded.query<Row>(sql, params),
       close: () => embedded.close(),
-      transaction: (fn) => embedded.transaction((tx) => fn({
-        query: (sql, params) => tx.query<Row>(sql, params), close: async () => {},
-      })),
+      transaction: async (fn) => {
+        let callbackError: unknown;
+        try { return await embedded.transaction(async (tx) => {
+          try { return await fn({ query: (sql, params) => tx.query<Row>(sql, params), close: async () => {} }); }
+          catch (error) { callbackError = error; throw error; }
+        }); } catch (error) { throw withTransactionOutcome(error, callbackError !== undefined && error === callbackError ? "rolled_back" : "unknown"); }
+      },
     };
   }
   await database.query(

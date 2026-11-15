@@ -50,6 +50,7 @@ export interface RagSourceRecord {
   id: string;
   sourceId: string;
   sourceName: string;
+  contentDigest?: string;
   kind: "upload" | "drive";
   connectionId?: string;
   revision?: string;
@@ -368,6 +369,7 @@ export class RagService {
       embedded,
       attempts: (previous?.attempts ?? 0) + 1,
       indexedAt: now,
+      contentDigest: createHash("sha256").update(normalized).digest("hex"),
       updatedAt: now,
     };
     await this.db.put(owner, "rag-sources", record);

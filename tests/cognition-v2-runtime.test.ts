@@ -19,6 +19,7 @@ test("C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipt
   const db = await createStore();
   try {
     await installCognitionV2(db); const memberships = new TenantService(db, testConfig()); await memberships.addMembership("alice", "A", "member");
+    await db.put("system", "users", { id: "alice", data: { active: true } });
     let calls = 0;
     const runtime = new CognitionV2Runtime(db, db, new Set(["A"]), memberships, { stream: async (request, prompt, profile, signal, emit) => {
       calls++; assert.equal(profile, "fast"); assert.equal(request.tools.length, 0); assert.deepEqual(request.state, {});
@@ -53,6 +54,8 @@ test("C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipt
     assert.equal(unauthorized.at(-1)?.type, EventType.RUN_ERROR); assert.equal(calls, 10);
     const large = input(); large.messages = [{ id: "large", role: "user", content: "x".repeat(50000) }];
     assert.equal((await collect(runInTenantScope({ tenantId: "A", actorId: "alice" }, () => runtime.chat("alice", large)))).at(-1)?.type, EventType.RUN_ERROR);
+    await db.put("system", "users", { id: "alice", data: { active: false } });
+    await assert.rejects(runtime.identity("A", "alice", "alice", "chat"), /DENIED/, "deactivated actor remains blocked even with membership");
     await memberships.removeMembership("alice", "A"); await assert.rejects(runtime.context.readSnapshot(identity, "any"), /DENIED/);
     latencies.sort((a, b) => a - b);
     const result = { provider: "deterministic in-process fixture; no network/model SLA", samples: latencies.length, ttftMs: { p50: latencies[4], p95: latencies[9], p99: latencies[9] }, providerCost: "NOT_MEASURED", slo: "NOT_APPROVED" };

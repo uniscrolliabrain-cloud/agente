@@ -79,12 +79,19 @@ export class SlowCognitionQueue {
     });
     if (!job) return false;
     const cancellation = new AbortController();
-    let checking = false;
+    let checking = false, lastAuthorization = 0;
     const monitor = setInterval(() => {
       if (checking) return;
       checking = true;
       void this.db.rawQuery<{ state: string; fence: string }>(`SELECT state,fence FROM cognition_v2_slow_jobs WHERE tenant=$1 AND id=$2`, [tenant, job.id])
-        .then(([r]) => { if (!r || r.state !== "running" || r.fence !== job.fence) cancellation.abort(); })
+        .then(async ([r]) => {
+          if (!r || r.state !== "running" || r.fence !== job.fence) { cancellation.abort(); return; }
+          if (this.clock() - lastAuthorization >= 1000) {
+            lastAuthorization = this.clock();
+            await this.context.assertAuthorized(job.data.identity);
+            for (const ref of job.data.evidence) if (!await this.context.resolve(job.data.identity, ref.id, ref.revision)) cancellation.abort();
+          }
+        })
         .catch(() => cancellation.abort()).finally(() => { checking = false; });
     }, 100);
     try {
@@ -96,7 +103,12 @@ export class SlowCognitionQueue {
         preparedContext.push({ id: record.id, body: record.body, epistemic: record.epistemic });
       }
       if (Buffer.byteLength(JSON.stringify(preparedContext), "utf8") > 32000) throw Error("SLOW_CONTEXT_BUDGET");
-      const raw = job.output ?? await this.lane.run(tenant, (signal) => this.provider.infer({ ...job.data, context: preparedContext }, signal), AbortSignal.any([cancellation.signal, ...(shutdown ? [shutdown] : [])]));
+      const raw = job.output ?? await this.lane.run(tenant, async (signal) => {
+        await this.context.assertAuthorized(job.data.identity);
+        for (const ref of job.data.evidence) if (!await this.context.resolve(job.data.identity, ref.id, ref.revision)) throw Error("EVIDENCE_REVOKED");
+        signal.throwIfAborted();
+        return this.provider.infer({ ...job.data, context: preparedContext }, signal);
+      }, AbortSignal.any([cancellation.signal, ...(shutdown ? [shutdown] : [])]));
       if (Buffer.byteLength(JSON.stringify(raw), "utf8") > 32000) throw Error("SLOW_OUTPUT_BUDGET");
       const saved = await this.db.rawQuery(`UPDATE cognition_v2_slow_jobs SET output=$4::jsonb WHERE tenant=$1 AND id=$2 AND fence=$3 AND state='running' AND lease_until>$5 RETURNING id`,
         [tenant, job.id, job.fence, JSON.stringify(raw), new Date(this.clock()).toISOString()]);

@@ -60,7 +60,8 @@ export class CognitionV2Runtime {
     if (!this.tenants.has(tenantId) || actorId !== owner) throw Error("DENIED");
     const membership = await this.memberships.findMembership(actorId, tenantId);
     const state = await this.memberships.tenantState(tenantId);
-    if (!membership || state.suspended) throw Error("DENIED");
+    const user = await this.db.get<{ data: { active: boolean } }>("system", "users", actorId);
+    if (!membership || state.suspended || user?.data.active !== true) throw Error("DENIED");
     return { tenantId, actorId, owner, purpose, policyRevision: digest(membership) };
   }
   enabledForRequest(): boolean { return this.tenants.has(currentTenantScope()?.tenantId ?? ""); }
@@ -69,6 +70,7 @@ export class CognitionV2Runtime {
     return new Observable<BaseEvent>((subscriber) => {
       const controller = new AbortController();
       let ended = false;
+      let revocationMonitor: ReturnType<typeof setInterval> | undefined;
       void (async () => {
         let accepted = false;
         try {
@@ -84,6 +86,13 @@ export class CognitionV2Runtime {
           subscriber.next({ type: EventType.RUN_STARTED, threadId: input.threadId, runId: input.runId });
           const latest = input.messages.filter((m) => m.role === "user").at(-1);
           const snapshot = await this.context.prepared(identity, typeof latest?.content === "string" ? latest.content : "");
+          let checkingRevocation = false;
+          revocationMonitor = setInterval(() => {
+            if (checkingRevocation) return;
+            checkingRevocation = true;
+            void this.context.readSnapshot(identity, snapshot.id).then((valid) => { if (!valid) controller.abort(); })
+              .catch(() => controller.abort()).finally(() => { checkingRevocation = false; });
+          }, 500);
           const deliveries: { id: string; fence: number }[] = [];
           for (const ref of snapshot.refs) {
             const record = await this.context.resolve(identity, ref.id, ref.revision);
@@ -100,12 +109,16 @@ export class CognitionV2Runtime {
           // until their governed V2 capability migration is certified.
           if (Buffer.byteLength(prompt, "utf8") + Buffer.byteLength(JSON.stringify(input.messages), "utf8") > 32000) throw Error("CHAT_GLOBAL_INPUT_BUDGET");
           let streamedResponse = "";
-          const response = await this.fast.run(identity.tenantId, (signal) => this.provider.stream({ ...input,
+          const response = await this.fast.run(identity.tenantId, async (signal) => {
+            if (!await this.context.readSnapshot(identity, snapshot.id)) throw Error("CONTEXT_REVOKED_BEFORE_DISPATCH");
+            signal.throwIfAborted();
+            return this.provider.stream({ ...input,
             messages: input.messages.filter((m) => m.role === "user" || m.role === "assistant").slice(-20),
             state: {}, tools: [], context: [], forwardedProps: {} }, prompt, "fast", signal, (event) => {
               if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") streamedResponse += event.delta;
               if (event.type !== EventType.RUN_STARTED && event.type !== EventType.RUN_FINISHED) subscriber.next(event);
-            }), controller.signal);
+            });
+          }, controller.signal);
           controller.signal.throwIfAborted();
           if (streamedResponse !== response) throw Error("STREAM_RECEIPT_MISMATCH");
           await this.context.assertAuthorized(identity);
@@ -119,7 +132,7 @@ export class CognitionV2Runtime {
             [scope.tenantId, digest([scope.tenantId, scope.actorId, input.threadId, input.runId]), controller.signal.aborted ? "cancelled" : "failed"]).catch(() => {});
           ended = true;
           if (!subscriber.closed) { subscriber.next({ type: EventType.RUN_ERROR, message: "No se ha podido completar la respuesta." }); subscriber.complete(); }
-        }
+        } finally { clearInterval(revocationMonitor); }
       })();
       return () => { if (!ended) controller.abort(); };
     });
