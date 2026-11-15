@@ -142,6 +142,9 @@ export class ConversationAgent extends AbstractAgent {
   }
 
   run(input: RunAgentInput): Observable<BaseEvent> {
+    // C11_CONVERSATION_CUTOVER_V2: independently implemented path; V1 only
+    // serves tenants outside the explicit synthetic allowlist.
+    if (this.service.cognitionV2?.enabledForRequest()) return this.service.cognitionV2.chat(this.owner, input);
     // CONVERSATION_META_HINT_READ_V1
     // KERNEL_CONTEXT_PERSONA_FROM_STATE_V1
     const personaId = (input.state as { personaId?: string } | undefined)?.personaId;

@@ -191,6 +191,7 @@ export class AgentService {
   // conversation.ts, sop-executor.ts y kernel-routes lean deps sin cast.
   readonly kernel?: Kernel;
   // COGNITION_CARD_PUBLIC_V1 - el chat consume tarjetas del slow.
+  cognitionV2?: import("./cognition/v2/runtime.ts").CognitionV2Runtime;
   readonly cards?: CognitionCardStore;
   // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
   readonly tenantService?: TenantService;

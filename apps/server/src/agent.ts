@@ -1,4 +1,5 @@
 import "./config.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
 import { HttpAgent } from "@ag-ui/client";
 import {
   type AgentsFactory,
@@ -24,13 +25,16 @@ export function agentConfigured(config: Config) {
   );
 }
 export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
+  const ownerFor = async (request: Request) => service.cognitionV2?.enabledForRequest()
+    ? currentTenantScope()!.actorId
+    : auth.owner(request.headers.get("authorization") ?? undefined);
   const agents: AgentsFactory = async ({ request }) => ({
     default:
       config.agentBackend === "sample"
         ? new ConversationAgent(
             config,
             service,
-            await auth.owner(request.headers.get("authorization") ?? undefined),
+            await ownerFor(request),
           )
         : config.agentBackend === "agui"
           ? new HttpAgent({
@@ -40,7 +44,7 @@ export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
           : new ConversationAgent(
               config,
               service,
-              await auth.owner(request.headers.get("authorization") ?? undefined),
+              await ownerFor(request),
             ),
   });
   const runtime = new CopilotRuntime({ agents });

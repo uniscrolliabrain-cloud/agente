@@ -66,6 +66,14 @@ if (process.env.AGENTE_KERNEL_STORE !== "memory") {
   }
 }
 const { app, agent, bus } = await createApp(db, config);
+// C07_EMBEDDED_COGNITION_V2: opt-in development lifecycle; no process starts on import.
+const cognitionWorkerAbort = new AbortController();
+if (agent.cognitionV2 && process.env.COGNITION_V2_EMBEDDED_WORKER === "true") {
+  const { runCognitionWorkers } = await import("./engine/cognition/v2/workers.ts");
+  void runCognitionWorkers(agent.cognitionV2, cognitionWorkerAbort.signal).catch((error) => backgroundFailure("cognition worker", error));
+}
+process.on("SIGTERM", () => cognitionWorkerAbort.abort());
+process.on("SIGINT", () => cognitionWorkerAbort.abort());
 // KERNEL_LISTENERS_SINGLE_WIRE_V1 - un solo registro por proceso. createApp
 // puede instanciarse varias veces en tests; suscribir alli duplicaba
 // consumidores y hacia que un kernel viejo procesara eventos de otro.

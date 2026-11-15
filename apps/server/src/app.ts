@@ -155,7 +155,11 @@ export async function createApp(
   // BUSINESS_OS_FIXED_V1
   // EVENTBUS_TENANT_RESOLVER_V1 - fuera de una peticion no hay scope; el bus
   // resuelve el tenant real del owner en vez de usar owner como tenant.
-  const bus = new EventBus(tdb, undefined, undefined, {
+  const cognitionV2Tenants = new Set((process.env.COGNITION_V2_TENANTS ?? "").split(",").map((x) => x.trim()).filter(Boolean));
+  const cognitionV2 = cognitionV2Tenants.size
+    ? await (await import("./engine/cognition/v2/runtime.ts")).CognitionV2Runtime.create(db, tdb, cognitionV2Tenants, tenantService, rag)
+    : undefined;
+  const bus = new EventBus(tdb, cognitionV2?.sink, undefined, {
     tenantForOwner: (owner) => tenantService.tenantIdFor(owner),
   });
   // POLICY_EARLY_V1
@@ -242,6 +246,10 @@ export async function createApp(
   // apoyado en el mismo Store que el resto del sistema. InMemoryTurnStore
   // queda solo para tests que lo instancian a mano.
   const persistentStorePort = {
+    lockKey: async (tenantId: string, key: string) => {
+      await db.insertIfAbsent(tenantId, "kernel-operation-lock", { id: key });
+      await db.rawQuery("SELECT id FROM records WHERE owner=$1 AND kind='kernel-operation-lock' AND id=$2 FOR UPDATE", [tenantId, key]);
+    },
     put: async (tenantId: string, kind: string, _id: string, data: unknown) => {
       await db.put(tenantId, kind, data as { id: string });
     },
@@ -689,6 +697,14 @@ app.get("/api/health", async (c) => {
     // deja de depender de que cada servicio recuerde pasar el tenantId.
     return runInTenantScope({ tenantId: resolvedTenant, actorId: ctxActor.id }, () => next());
   });
+  if (cognitionV2) {
+    const { cognitionV2Routes } = await import("./cognition-v2-routes.ts");
+    app.route("/api/cognition-v2", cognitionV2Routes(cognitionV2));
+    cognitionV2.slow.capture = (identity, input) => kernel.captureAsyncResult({
+      tenantId: identity.tenantId, owner: identity.owner, actorId: identity.actorId, role: "system", requestId: input.operationId,
+    }, input);
+    agent.cognitionV2 = cognitionV2;
+  }
   app.get("/api/workspace", async (c) => {
     const owner = c.get("owner");
     const snapshot = await workspace.snapshot(owner, c.req.query("q"));
@@ -1065,7 +1081,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     return c.json({ ok: true });
   });
   app.all("/api/copilotkit/*", async (c) => {
-    if (!agentConfigured(config))
+    if (!agentConfigured(config) && !cognitionV2?.enabledForRequest())
       throw new AppError(
         "Configure a model and provider API key, or a valid AG-UI endpoint, to start chat",
         503,
