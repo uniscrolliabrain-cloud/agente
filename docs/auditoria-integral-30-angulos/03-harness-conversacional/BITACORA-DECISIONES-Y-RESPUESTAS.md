@@ -1,3 +1,9 @@
+## R-20261115-012 — Turno 09/16: C08 JEV clasificador no autoritativo
+- **Auditoría:** búsqueda GitHub Jev/classifier; `classification.ts`, `authz/pdp.ts`, `events/schema-registry.ts`, NC-COORDINATION.
+- **Resultado:** sin cliente Jev verificable; la API real está bloqueada en docs NC. Clasificación de sensibilidad no equivale a semántica.
+- **Documento:** [C08](./campanas-redisenio-v2/C08-JEV-CLASIFICADOR-SEMANTICO-NO-AUTORITATIVO.md), 20 hallazgos, 14 patchsets, 10 olas, provider discovery obligatorio, baseline, gates y rollback.
+- **Estado:** documentación en rama; no código ni tests ni merge/deploy. Siguiente C09.
+
 ## R-20261115-011 — Turno 08/16: C07 Slow asíncrono y tarjetas enriquecidas
 - **Petición:** «Sigue» tras C06. Repo principal `agente`.
 - **Auditoría:** `engine/model.ts`, `kernel/cognition/{capture,card-builder}.ts`, `kernel/authors/slow-author.ts`, `engine/events/types.ts`, `engine/context/cognition-cards.ts`.
