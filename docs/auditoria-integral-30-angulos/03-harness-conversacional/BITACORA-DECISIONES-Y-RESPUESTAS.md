@@ -1,3 +1,11 @@
+## R-20261115-004 — Turno 01/16: auditoría profunda C00 del repo padre
+- **Petición:** iniciar reescritura progresiva de 16 campañas con auditoría acumulativa; `agente` es el repo central, Cyber solo integración.
+- **Fuente:** código de `main` de `agente` (conversation, model, service, cognition-cards, bus, subscribers, cromos, domain, package scripts) y contratos de `agntia-ciberseguridad`.
+- **Documento nuevo:** [C00 revisión ultragranuIar](./campanas-redisenio-v2/C00-REVISION-ULTRAGRANULAR-AUDITORIA-INCREMENTAL.md) (15.9k caracteres), hallazgos F01–F15, olas W0–W6, patchsets, gates, riesgos y reporte.
+- **Decisión:** preservar únicamente invariantes y continuidad transitoria; sustituir el diseño que no satisface opción 3. Seguir numeración canónica C00–C15 del plan original, no las campañas alternativas previas.
+- **Estado:** lectura estática parcial; sin tests ejecutados, sin cambios de runtime, sin merge ni deploy.
+- **Siguiente:** continuar inventario C00 y pasar a C01 en siguiente turno con hallazgos revalidados.
+
 ## R-20261115-003 — Redacción de las 16 campañas sustitutivas
 - **Petición:** «Ahora sí puedes escribir las campañas».
 - **Decisión:** C00–C15 documentadas según ADR-009, opción 3 sustitutiva; sin perpetuar legacy.
