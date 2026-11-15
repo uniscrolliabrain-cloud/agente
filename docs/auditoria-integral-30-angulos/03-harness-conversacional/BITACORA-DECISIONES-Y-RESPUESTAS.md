@@ -1,3 +1,12 @@
+## R-20261115-011 — Turno 08/16: C07 Slow asíncrono y tarjetas enriquecidas
+- **Petición:** «Sigue» tras C06. Repo principal `agente`.
+- **Auditoría:** `engine/model.ts`, `kernel/cognition/{capture,card-builder}.ts`, `kernel/authors/slow-author.ts`, `engine/events/types.ts`, `engine/context/cognition-cards.ts`.
+- **Hallazgos:** Slow ya ejecuta tareas con fallback/cuotas/abort; captura Thought→card no atómica; dedupe de tarjeta no asegura Thought/event; card kind regex; progreso en metadata; `card.created` emitido tras save; entrega marca consumed antes de ACK Fast.
+- **Documento:** [C07](./campanas-redisenio-v2/C07-SLOW-LLM-ASINCRONO-THOUGHTS-TARJETAS-ENRIQUECIDAS.md), 15.218 caracteres, 20 hallazgos, 14 patchsets, 10 waves, contratos, fallos, tests y rollback.
+- **Decisión:** separar ejecución Slow, receipt, Thought, extracción estructurada, JEV, verificación, proyección y ContextServing; async independiente de Fast. Kernel dispone; JEV/Slow proponen.
+- **Estado:** auditoría estática/documentación; sin código ni tests, merge ni deploy.
+- **Siguiente:** C08 JEV classifier no autoritativo, auditar integración y esquema real antes de planificar.
+
 ## R-20261115-010 — Turno 07/16: C06 atención global y metacognición
 - **Petición:** «Sigue» tras C05. Repo principal `agente`.
 - **Código auditado:** `kernel/graph/{attention,thought}.ts`, `kernel/observers/meta.ts`, `kernel/authors/{fast-author,slow-author}.ts`, `engine/context/assembly.ts`.
