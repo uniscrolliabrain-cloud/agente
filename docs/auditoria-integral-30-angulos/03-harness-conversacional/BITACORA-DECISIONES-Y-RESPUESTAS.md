@@ -1,3 +1,10 @@
+## R-20261115-018 — Turno 15/16: C14 bridge con repo ciberseguridad
+- **Auditoría cruzada:** `uniscrolliabrain-cloud/agente` y `uniscrolliabrain-cloud/agntia-ciberseguridad`; código real Python `app.py`, `auth.py`, `agents/routes.py`, SDK TS package y docs de estado/gates; blobs en campaña.
+- **Hallazgos:** hijo ya tiene FastAPI, SDK server-only, gateway gobernado, 84 rutas y 196 tests Python reportados (8 skips), pero `production_enabled=false`, 2 PASS/40 PARTIAL y sin wiring autorizado con padre. No duplicar middleware ni mezclar Adversarial Lab independiente.
+- **Documento:** [C14](./campanas-redisenio-v2/C14-BRIDGE-CIBERSEGURIDAD-PYTHON-TS-GOBERNANZA-EVIDENCIA.md), 20.623 caracteres, 27 hallazgos, 20 patchsets, 12 waves, 20 tests propuestos.
+- **Decisión:** puente tipado y gobernado parent capability→SDK TS→Python, doble autorización tenant/actor/grant, receipts, outbox/ACK, evidencia y proyección minimizada; Pedro/LAIA no elevan permisos.
+- **Estado:** documentación en rama padre; no cambios de código ni repo hijo, sin tests/merge/deploy. **Siguiente:** C15 E2E aceptación integral.
+
 ## R-20261115-017 — Turno 14/16: C13 Anam avatar y voz
 - **Auditoría real:** `docs/08-auditorias/latencia-anam-2026-11-11.md`, `voice-routes.ts`, `packages/integrations/src/vapi.ts`, `scripts/lib/connections.ts`, `conversation.ts`, `ChatPanel.tsx`; búsqueda Anam/ElevenLabs/WebRTC/voice.
 - **Hallazgos:** no cliente Anam identificado en main; Vapi es REST telefónico, ElevenLabs solo health probe; ruta chat pre-LLM pesada; falta STT/VAD/barge-in end-to-end. Las latencias del informe previo son estimaciones.
