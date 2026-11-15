@@ -1,3 +1,5 @@
+**CORRECCIÓN PRIORITARIA 2026-11-15:** Leer `ADR-009-REDISENO-SUSTITUTIVO-LEGACY-TRANSITORIO.md` antes de interpretar este documento. La opción 3 es un **rediseño sustitutivo**; el código actual puede pasar a legacy o eliminarse tras migración. «No destructivo» significa migración segura, NO conservar semánticas viejas ni exigir paridad como objetivo final.
+
 # C00 — Auditoría preventiva de compatibilidad y no destrucción (opción 3)
 **Fecha:** 2026-11-15
 **Rama de trabajo:** `audit/preflight-cognition-option3-20261115` (creada desde `main`)
