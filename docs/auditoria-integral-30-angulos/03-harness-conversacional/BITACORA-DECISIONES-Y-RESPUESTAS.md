@@ -1,3 +1,10 @@
+## R-20261115-013 — Turno 10/16: C09 CardStore V2 y delivery ledger
+- **Auditoría real:** `kernel/cognition/card-store.ts`, `engine/context/cognition-cards.ts`, `packages/domain/src/cognition-card.ts`, `cognition-routes.ts`, `tests/cognition-cards.test.ts`; SHA blobs registrados en campaña.
+- **Hallazgos:** consumed antes de ACK, CAS opcional con fallback no atómico, store por owner/tenant filter, rank basado en confidence, pending 20, budget `length/4`, pruebas V1 in-memory sin restart/fence.
+- **Documento:** [C09](./campanas-redisenio-v2/C09-CARDSTORE-V2-DELIVERY-LEDGER-LEASE-ACK-REPLAY.md), 14.539 caracteres, 22 hallazgos, 15 patchsets, 10 olas, tests, rollback y handoff.
+- **Decisión:** separar card lifecycle/revisions de delivery lease/render/ACK, at-least-once+idempotencia; replay C02, tenant ACL, C10 snapshot serving.
+- **Estado:** documentación en rama, no código/tests/merge/deploy. Siguiente C10.
+
 ## R-20261115-012 — Turno 09/16: C08 JEV clasificador no autoritativo
 - **Auditoría:** búsqueda GitHub Jev/classifier; `classification.ts`, `authz/pdp.ts`, `events/schema-registry.ts`, NC-COORDINATION.
 - **Resultado:** sin cliente Jev verificable; la API real está bloqueada en docs NC. Clasificación de sensibilidad no equivale a semántica.
