@@ -19,6 +19,7 @@ export interface TurnStore {
     trigger: string,
   ): Promise<Turn>;
   append(thought: Thought): Promise<Thought>;
+  captureClosedResult?(turn: Turn, thought: Thought): Promise<{ thought: Thought; created: boolean }>;
   thoughtsOf(tenantId: string, turnId: string): Promise<Thought[]>;
   closeTurn(
     tenantId: string,

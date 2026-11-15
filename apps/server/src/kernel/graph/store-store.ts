@@ -21,6 +21,7 @@ export interface StorePort {
   put(tenantId: string, kind: string, id: string, data: unknown): Promise<void>;
   get(tenantId: string, kind: string, id: string): Promise<unknown>;
   list(tenantId: string, kind: string, limit: number): Promise<{ id: string; data: unknown }[]>;
+  lockKey?(tenantId: string, key: string): Promise<void>;
   transaction<T>(fn: (tx: StorePort) => Promise<T>): Promise<T>;
 }
 
@@ -94,6 +95,26 @@ export class StoreTurnStore implements TurnStore {
       await tx.put(tenantId, TURNS_KIND, parent.id, parent);
       await tx.put(tenantId, TURNS_KIND, child.id, child);
       return child;
+    });
+  }
+
+  // C07_ASYNC_RESULT_CAPTURE_V2: independent closed turn, deterministic IDs.
+  // No dependency on a still-open parent conversation.
+  async captureClosedResult(rawTurn: Turn, rawThought: Thought): Promise<{ thought: Thought; created: boolean }> {
+    const turn = turnSchema.parse(rawTurn), thought = thoughtSchema.parse(rawThought);
+    if (turn.tenantId !== thought.tenantId || turn.id !== thought.turnId || turn.owner !== thought.owner || turn.status !== "closed") throw new AppError("Invalid async result scope", 409);
+    return this.store.transaction(async (tx) => {
+      if (!tx.lockKey) throw new AppError("Atomic capture lock unavailable", 503);
+      await tx.lockKey(thought.tenantId, thought.id);
+      const existing = await tx.get(thought.tenantId, THOUGHTS_KIND, thought.id);
+      if (existing) {
+        const saved = thoughtSchema.parse(existing);
+        if (saved.owner !== thought.owner || saved.tenantId !== thought.tenantId || saved.turnId !== thought.turnId || JSON.stringify(saved.content) !== JSON.stringify(thought.content)) throw new AppError("Async result idempotency conflict", 409);
+        return { thought: saved, created: false };
+      }
+      await tx.put(thought.tenantId, THOUGHTS_KIND, thought.id, thought);
+      await tx.put(turn.tenantId, TURNS_KIND, turn.id, turn);
+      return { thought, created: true };
     });
   }
 

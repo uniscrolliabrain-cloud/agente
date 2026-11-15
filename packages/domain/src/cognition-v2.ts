@@ -23,6 +23,11 @@ export const attentionSignalsSchema = z.strictObject({
   contradiction: z.number().min(0).max(1),
 });
 export const memoryKindSchema = z.enum(["episodic", "semantic", "procedural", "autobiographical", "working"]);
+export const classificationV2Schema = z.strictObject({
+  classifier: z.enum(["rules", "jev"]), version: id,
+  labels: z.array(z.enum(["risk", "question", "summary", "uncertain"])).max(4),
+  uncertainty: z.number().min(0).max(1), review: z.literal("proposed"),
+});
 export const cognitiveRecordSchema = z.strictObject({
   schemaVersion: z.literal("2.0"), id, tenantId: id, revision: z.number().int().positive(),
   kind: z.enum(["claim", "thought_ref", "entity_ref", "memory", "card", "attention", "meta_hint"]),
@@ -31,6 +36,7 @@ export const cognitiveRecordSchema = z.strictObject({
   epistemic: epistemicSchema, evidence: z.array(cognitiveRefSchema).min(1).max(100),
   sourceEventId: id, sourceRevision: z.number().int().positive(),
   visibility: cognitiveVisibilitySchema, signals: attentionSignalsSchema,
+  classification: classificationV2Schema.optional(),
   lifecycle: z.enum(["active", "superseded", "revoked", "expired"]),
   createdAt: time, expiresAt: time.optional(),
 }).superRefine((r, ctx) => {
@@ -48,11 +54,6 @@ export const cognitiveEdgeSchema = z.strictObject({
   id, tenantId: id, from: cognitiveRefSchema, to: cognitiveRefSchema,
   relation: z.enum(["supports", "contradicts", "derived_from", "about", "supersedes", "attends_to"]),
 }).refine((e) => e.from.tenantId === e.tenantId && e.to.tenantId === e.tenantId, "cross-tenant edge");
-export const classificationV2Schema = z.strictObject({
-  classifier: z.enum(["rules", "jev"]), version: id,
-  labels: z.array(z.enum(["risk", "question", "summary", "uncertain"])).max(4),
-  uncertainty: z.number().min(0).max(1), review: z.literal("proposed"),
-});
 export const slowOutputSchema = z.strictObject({
   title: z.string().min(1).max(160), body: z.string().min(1).max(16000),
   epistemic: z.enum(["hypothesis", "inference", "unknown"]),

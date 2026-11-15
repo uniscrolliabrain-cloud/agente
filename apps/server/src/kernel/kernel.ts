@@ -7,7 +7,7 @@
 //   - closeTurn recibe closedBy ademas de reason.
 //   - thoughtsOf pasa tenantId.
 
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { AuditStore } from "./audit/store.ts";
 import type { KernelContext } from "./context/kernel-context.ts";
 import type {
@@ -170,6 +170,26 @@ export class Kernel implements KernelWriterPort {
       },
     });
     return turn;
+  }
+
+  // C07_KERNEL_ASYNC_RESULT_V2: durable cognitive recording, not execution.
+  async captureAsyncResult(ctx: KernelContext, input: { operationId: string; content: string; createdAt: string; epistemic: string }): Promise<Thought> {
+    const tenantId = await this.tenantOf(ctx);
+    if (!this.deps.store.captureClosedResult) throw new Error("ASYNC_KERNEL_CAPTURE_UNSUPPORTED");
+    const key = createHash("sha256").update(JSON.stringify([tenantId, ctx.owner, input.operationId])).digest("hex");
+    const turnId = `async-turn:${key}`, thoughtId = `async-thought:${key}`;
+    const thought = thoughtSchema.parse({ id: thoughtId, tenantId, turnId, owner: ctx.owner,
+      actor: { kind: "slow-llm", id: "slow-v2", onBehalfOf: ctx.actorId }, role: "observation",
+      content: input.content, attention: { id: `attention:${key}`, author: "slow", primary: `task:${input.operationId}`,
+        query: "async cognitive result", intent: "record_result", confidence: 0, timestamp: input.createdAt,
+        metadata: { epistemic: input.epistemic, sourceOperationId: input.operationId } },
+      provenance: { source: "slow.v2", timestamp: input.createdAt, correlationId: input.operationId } });
+    const captured = await this.deps.store.captureClosedResult({ id: turnId, tenantId, owner: ctx.owner,
+      startedAt: input.createdAt, closedAt: input.createdAt, status: "closed", closeReason: "response", closedBy: "system",
+      thoughtIds: [thoughtId], childTurnIds: [], triggers: ["async.cognition.result"], quiescenceMs: 0 }, thought);
+    if (captured.created) await this.deps.audit.append({ tenantId, owner: ctx.owner, action: "thought.appended",
+      actor: { kind: "slow-llm", id: "slow-v2" }, payload: { thoughtId, turnId, role: "observation", sourceOperationId: input.operationId } });
+    return captured.thought;
   }
 
   async appendThought(
