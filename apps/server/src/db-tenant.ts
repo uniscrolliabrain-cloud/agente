@@ -267,6 +267,7 @@ export class TenantScopedStore {
     return this.store.purgeOlderThan(kind, days);
   }
 
+  afterCommit(commit: () => void | Promise<void>, rollback?: () => void): boolean { return this.store.afterCommit(commit, rollback); }
   get inTransaction() { return this.store.inTransaction; }
   get backend() { return this.store.backend; }
   get pgvectorReady() { return this.store.pgvectorReady; }

@@ -22,6 +22,12 @@ export interface ListOptions {
 export class Store {
   /** Que motor hay debajo: PGlite embebido o Postgres real via pg. Decide rutas de codigo. */
   readonly backend: "pglite" | "postgres";
+  private readonly transactionHooks = new AsyncLocalStorage<{ commit: (() => void | Promise<void>)[]; rollback: (() => void)[] }>();
+  afterCommit(commit: () => void | Promise<void>, rollback?: () => void): boolean {
+    const hooks = this.transactionHooks.getStore();
+    if (!hooks) return false;
+    hooks.commit.push(commit); if (rollback) hooks.rollback.push(rollback); return true;
+  }
   private readonly transactionConnection = new AsyncLocalStorage<Database>();
   private readonly db: Database;
   constructor(private readonly database: Database, backend: "pglite" | "postgres" = "pglite") {
@@ -318,9 +324,19 @@ export class Store {
     if (!this.database.transaction) {
       throw new Error("TRANSACTION_UNSUPPORTED: adapter must provide an atomic connection");
     }
-    return this.database.transaction((connection) =>
-      this.transactionConnection.run(connection, () => fn(this)),
-    );
+    const hooks = { commit: [] as (() => void | Promise<void>)[], rollback: [] as (() => void)[] };
+    let result: T;
+    try {
+      result = await this.database.transaction((connection) => this.transactionHooks.run(hooks, () =>
+        this.transactionConnection.run(connection, () => fn(this))));
+    } catch (error) {
+      for (const rollback of hooks.rollback) rollback();
+      throw error;
+    }
+    for (const commit of hooks.commit) {
+      try { await commit(); } catch (error) { backgroundFailure("after commit notification", error); }
+    }
+    return result;
   }
 
   // DB_CLAIM_SQL_V1

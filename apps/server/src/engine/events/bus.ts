@@ -62,6 +62,7 @@ export interface EmitResult {
   tenantId: string;
   persisted: boolean;
   delivered: number;
+  pendingCommit?: boolean;
   duplicate?: boolean;
   error?: string;
 }
@@ -90,11 +91,7 @@ export class EventBus {
     payload: T,
     options: EmitOptions = {},
   ): Promise<EmitResult> {
-    if (this.db.inTransaction) {
-      return { id: "", tenantId: options.tenantId ?? currentTenantScope()?.tenantId ?? owner,
-        persisted: false, delivered: 0, error: "EVENT_EMIT_REQUIRES_COMMIT_BOUNDARY" };
-    }
-    let committed: { id: string; tenantId: string; persisted: boolean; delivered: number } | undefined;
+    let committed: EmitResult | undefined;
     try {
       // EVENTS_BUS_EMIT_VALIDATES_TENANT_V1
       // EVENTBUS_METRIC_ERRORS_V1
@@ -135,12 +132,17 @@ export class EventBus {
         payload: parsed,
       };
       await this.sink.write(event);
-      committed = { id: event.id, tenantId, persisted: true, delivered: 0 };
+      const result: EmitResult = { id: event.id, tenantId, persisted: !this.db.inTransaction, delivered: 0,
+        ...(this.db.inTransaction ? { pendingCommit: true } : {}) };
+      committed = result;
+      const notifyCommitted = async () => {
+        result.persisted = true; result.pendingCommit = false;
+        try {
       // EVENTS_BUS_PUBLISH_V1 Ã¢â‚¬â€ publicar a subscribers en vivo (SSE, mÃƒÂ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
       // EVENTBUS_PUBLISH_SUBSCRIBERS_V1
       const delivered = globalSubscribers.publish(event);
-      committed.delivered = delivered;
+      result.delivered = delivered;
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.
@@ -168,7 +170,17 @@ export class EventBus {
           });
         }
       }
-      return { id: event.id, tenantId, persisted: true, delivered };
+
+        } catch (error) {
+          result.error = "POST_COMMIT_NOTIFICATION_FAILED";
+          backgroundFailure(`event notification ${type}`, error);
+        }
+      };
+      if (typeof this.db.afterCommit === "function" && this.db.afterCommit(notifyCommitted, () => {
+        result.persisted = false; result.pendingCommit = false; result.error = "OUTER_TRANSACTION_ROLLED_BACK";
+      })) return result;
+      await notifyCommitted();
+      return result;
     } catch (error) {
       // EVENTBUS_ERROR_METRIC_V1 - contador de errores.
       import("../../metrics/registry.ts")
