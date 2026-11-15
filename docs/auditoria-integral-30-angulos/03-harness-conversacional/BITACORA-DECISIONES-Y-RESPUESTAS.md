@@ -1,3 +1,11 @@
+## R-20261115-003 — Redacción de las 16 campañas sustitutivas
+- **Petición:** «Ahora sí puedes escribir las campañas».
+- **Decisión:** C00–C15 documentadas según ADR-009, opción 3 sustitutiva; sin perpetuar legacy.
+- **Entregable:** [Índice y campañas](./campanas-redisenio-v2/README.md), 16 archivos individuales, seis waves por campaña, patchsets, gates, reportes y rollback.
+- **Ramas:** documentación escrita en `audit/preflight-cognition-option3-20261115`; la documentación previa más extensa permanece en `docs/audit-30-dominios-runtime-20261115`, pendiente de reconciliar.
+- **Estado:** DOCUMENTADO; ningún código de runtime implementado, ningún test ejecutado, ningún merge/deploy.
+- **Próximo paso:** ejecutar C00 con inventario exhaustivo y baseline verificable; no iniciar C01 sin resolver los bloqueos P0 de contrato/ownership/eventos.
+
 ## R-20261115-002 — Corrección del objetivo: rediseño sustitutivo
 - **Petición:** el fundador aclara que el diseño actual no satisface sus necesidades y debe quedar parcialmente como legacy.
 - **Decisión:** la opción 3 es arquitectura de sustitución, no de preservación. Compatibilidad solo durante transición; paridad legacy no es criterio de aceptación.
