@@ -61,11 +61,17 @@
     "migrate:drop-tenant-id": "tsx scripts/drop-tenant-id-column.ts",
     "admin:create": "tsx scripts/admin-create.ts",
     "roles:export": "tsx scripts/export-roles-public.ts",
-    "SEED_AGENTS_REMOVED": "removed: scripts/seed-agents.ts no existe"
+    "SEED_AGENTS_REMOVED": "removed: scripts/seed-agents.ts no existe",
+    "dev:cognition-worker": "tsx apps/server/src/cognition-worker-entry.ts",
+    "test:cognition-v2": "node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=90000 tests/cognition-v2-*.test.ts"
   },
   "dependencies": {
     "@ag-ui/client": "0.0.59",
     "@ag-ui/core": "0.0.59",
+    "@agntia/ciberseguridad": "file:vendor/agntia-ciberseguridad-0.1.0-alpha.2.tgz",
+    "@ai-sdk/anthropic": "^3.0.121",
+    "@ai-sdk/google": "^3.0.126",
+    "@ai-sdk/openai": "^3.0.116",
     "@copilotkit/runtime": "1.70.1",
     "@electric-sql/pglite": "^0.3.14",
     "@hono/node-server": "^1.19.0",
