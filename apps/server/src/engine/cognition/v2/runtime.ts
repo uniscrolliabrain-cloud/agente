@@ -112,9 +112,10 @@ export class CognitionV2Runtime {
           const deliveries: { id: string; fence: number }[] = [];
           for (const ref of snapshot.refs) {
             const record = await this.context.resolve(identity, ref.id, ref.revision);
-            if (record?.kind !== "card") continue;
-            const lease = await this.ledger.reserve(identity, snapshot.id, ref.id);
-            if (lease && await this.ledger.rendered(identity, lease.id, lease.fence)) deliveries.push(lease);
+            if (record?.kind !== "card" && record?.kind !== "meta_hint") continue;
+            const lease = await this.ledger.reserve(identity, snapshot.id, ref.id, 30000, key);
+            if (!lease || !await this.ledger.rendered(identity, lease.id, lease.fence)) throw Error("DELIVERY_RESERVATION_UNAVAILABLE");
+            deliveries.push(lease);
           }
           const prompt = "Eres LAIA. Conversa en español. No has ejecutado ninguna acción empresarial en este canal. " +
             "Solo el runtime puede ejecutar acciones autorizadas. No afirmes delegaciones sin recibo. " +
@@ -139,8 +140,14 @@ export class CognitionV2Runtime {
           if (streamedResponse !== response) throw Error("STREAM_RECEIPT_MISMATCH");
           await this.context.assertAuthorized(identity);
           const receiptId = randomUUID();
-          await this.db.rawQuery(`UPDATE cognition_v2_chat_runs SET state='completed',response=$3,receipt_id=$4 WHERE tenant=$1 AND id=$2`, [identity.tenantId, key, response, receiptId]);
-          for (const lease of deliveries) await this.ledger.ack(identity, lease.id, lease.fence, receiptId);
+          // A durable server-consumer receipt and its card ACKs commit together.
+          // This does not claim browser reception or media playback.
+          await this.db.transaction(async () => {
+            await this.db.rawQuery(`UPDATE cognition_v2_chat_runs SET state='completed',response=$3,receipt_id=$4 WHERE tenant=$1 AND id=$2`, [identity.tenantId, key, response, receiptId]);
+            for (const lease of deliveries) {
+              if (!await this.ledger.ack(identity, lease.id, lease.fence, receiptId)) throw Error("DELIVERY_ACK_UNAVAILABLE");
+            }
+          });
           ended = true;
           subscriber.next({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId }); subscriber.complete();
         } catch {

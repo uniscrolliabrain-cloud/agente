@@ -72,3 +72,18 @@ test('C09 native Postgres workers reconcile one expired lease once under concurr
   assert.equal(Number(audit.count),1);assert.equal(await ledger.ack(identity,lease.id,lease.fence,'stale'),false);
  }finally{await db.close();await other.close();}
 });
+test('C09 explicit consumers have independent ACKs while retries retain one fenced delivery',async()=>{
+ const db=await createStore();try{
+  await installCognitionV2(db);const store=new CognitiveProjectionStore(db);await store.apply(record(),'1');
+  const context=new ContextServingFacade(store,{authorize:async()=>true});const ledger=new CardDeliveryLedger(context);
+  const snapshot=await context.getSnapshot(alice,{query:'',maxTokens:4000,maxRefs:10});
+  const leases=await Promise.all([ledger.reserve(alice,snapshot.id,'card-1',1000,'run-one'),ledger.reserve(alice,snapshot.id,'card-1',1000,'run-two')]);
+  assert.ok(leases[0]&&leases[1]);assert.notEqual(leases[0].id,leases[1].id);
+  for(const lease of leases){assert.ok(lease);assert.equal(await ledger.rendered(alice,lease.id,lease.fence),true);assert.equal(await ledger.ack(alice,lease.id,lease.fence,'receipt:'+lease.id),true);}
+  assert.equal(await ledger.reserve(alice,snapshot.id,'card-1',1000,'run-one'),null,'ACKed consumer cannot be selected again under retry');
+  assert.ok(await context.resolve(alice,'card-1'),'knowledge survives both deliveries');
+  const rows=await db.rawQuery<{consumer_ref:string;status:string}>('SELECT consumer_ref,status FROM cognition_v2_deliveries ORDER BY consumer_ref');
+  assert.deepEqual(rows,[{consumer_ref:'run-one',status:'acknowledged'},{consumer_ref:'run-two',status:'acknowledged'}]);
+  await assert.rejects(ledger.reserve(alice,snapshot.id,'card-1',1000,''),/INVALID_DELIVERY_CONSUMER/);
+ }finally{await db.close();}
+});

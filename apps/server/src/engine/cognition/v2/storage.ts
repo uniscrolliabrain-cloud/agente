@@ -42,6 +42,7 @@ export async function installCognitionV2(db: Store): Promise<void> {
     `CREATE TABLE IF NOT EXISTS cognition_v2_deliveries (tenant text NOT NULL, id text NOT NULL, actor text NOT NULL,
       card_id text NOT NULL, revision integer NOT NULL, snapshot_id text NOT NULL, status text NOT NULL,
       fence bigint NOT NULL DEFAULT 0, lease_until timestamptz, receipt_id text, PRIMARY KEY(tenant,id))`,
+    `ALTER TABLE cognition_v2_deliveries ADD COLUMN IF NOT EXISTS consumer_ref text`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_delivery_recoveries (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_snapshots (tenant text NOT NULL, id text NOT NULL, actor text NOT NULL,
       data jsonb NOT NULL, PRIMARY KEY(tenant,id))`,

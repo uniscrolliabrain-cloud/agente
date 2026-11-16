@@ -130,8 +130,9 @@ export class ContextServingFacade {
 }
 export class CardDeliveryLedger {
   constructor(readonly context: ContextServingFacade, private readonly clock = () => Date.now()) {}
-  async reserve(identity: CognitiveIdentity, snapshotId: string, cardId: string, leaseMs = 30000) {
+  async reserve(identity: CognitiveIdentity, snapshotId: string, cardId: string, leaseMs = 30000, consumerRef?: string) {
     if (!Number.isInteger(leaseMs) || leaseMs < 1 || leaseMs > 60000) throw Error("INVALID_DELIVERY_LEASE");
+    if (consumerRef !== undefined && (!consumerRef.trim() || consumerRef.length > 256)) throw Error("INVALID_DELIVERY_CONSUMER");
     const db = this.context.projections.db;
     return db.transaction(async () => {
       const snapshot = await this.context.readSnapshot(identity, snapshotId);
@@ -139,9 +140,11 @@ export class CardDeliveryLedger {
       if (!ref) throw Error("SNAPSHOT_INVALID");
       const card = await this.context.resolve(identity, cardId, ref.revision);
       if (card?.kind !== "card" && card?.kind !== "meta_hint") throw Error("CARD_REQUIRED");
-      const id = digest([identity.tenantId, identity.actorId, identity.purpose, snapshotId, cardId, ref.revision]);
-      await db.rawQuery(`INSERT INTO cognition_v2_deliveries(tenant,id,actor,card_id,revision,snapshot_id,status)
-        VALUES($1,$2,$3,$4,$5,$6,'pending') ON CONFLICT DO NOTHING`, [identity.tenantId, id, identity.actorId, cardId, ref.revision, snapshotId]);
+      // Preserve IDs of legacy reservations; explicit consumers get one delivery per run.
+      const parts = [identity.tenantId, identity.actorId, identity.purpose, snapshotId, cardId, ref.revision];
+      const id = digest(consumerRef === undefined ? parts : [...parts, "consumer", consumerRef]);
+      await db.rawQuery(`INSERT INTO cognition_v2_deliveries(tenant,id,actor,card_id,revision,snapshot_id,status,consumer_ref)
+        VALUES($1,$2,$3,$4,$5,$6,'pending',$7) ON CONFLICT DO NOTHING`, [identity.tenantId, id, identity.actorId, cardId, ref.revision, snapshotId, consumerRef ?? null]);
       const [lease] = await db.rawQuery<{ fence: string }>(`UPDATE cognition_v2_deliveries SET status='leased',fence=fence+1,lease_until=$4
         WHERE tenant=$1 AND id=$2 AND actor=$3 AND status<>'acknowledged' AND (lease_until IS NULL OR lease_until<=$5) RETURNING fence`,
         [identity.tenantId, id, identity.actorId, new Date(this.clock() + leaseMs).toISOString(), new Date(this.clock()).toISOString()]);
