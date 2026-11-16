@@ -20,7 +20,7 @@ PASS indica exclusivamente el escenario local descrito y sus fixtures ejecutados
 | A14 | PARTIAL | MetaHints de resultado persistidos por eventos; todos los rules/ACK de hints pendientes |
 | A15 | PASS | Fast responde con Slow ocupado; admisión y timeout separados |
 | A16 | PARTIAL | Job→Thought→Card con fuentes reales; todos los dominios/evidencias externos no cubiertos |
-| A17 | BLOCKED_EXTERNAL | JEV no identificado/verificado; baseline rules operativo |
+| A17 | BLOCKED_EXTERNAL | Contrato TypeSafe/JEV verificado e integrado; gateway durable probado con fixture; sandbox real, consentimiento/DPA y calibración externos pendientes |
 | A18 | PASS | Lease/fence, render/ACK, restart PGlite, idempotencia y conocimiento reutilizable |
 | A19 | PARTIAL | Snapshots preparados, deltas/referencias y source watermark; cobertura completa de consumers pendiente |
 | A20 | PARTIAL | Cota conservadora por bytes y salida limitada; tokenizer/modelo externo no medido |

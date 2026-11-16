@@ -16,7 +16,7 @@ export type SlowInput = z.infer<typeof jobInput>;
 export type SlowInferenceInput = SlowInput & { context?: { id: string; body: string; epistemic: string }[]; contextDigest?: string };
 export interface SlowProvider { infer(input: SlowInferenceInput, signal: AbortSignal): Promise<unknown> }
 export interface SemanticEvaluationContext {
-  identity: CognitiveIdentity; evidence: SlowInput["evidence"]; contextDigest: string;
+  identity: CognitiveIdentity; evidence: SlowInput["evidence"]; contextDigest: string; operationId?: string;
   ontologyId: "agntiapro.cards"; ontologyVersion: "1.0.0";
 }
 export interface SemanticClassifier { classify(body: string, signal: AbortSignal, context?: SemanticEvaluationContext): Promise<unknown> }
@@ -130,7 +130,7 @@ export class SlowCognitionQueue {
       try {
         classification = classificationV2Schema.parse(await Promise.race([
           this.classifier.classify(output.body, AbortSignal.any([cancellation.signal, AbortSignal.timeout(500)]),
-            { identity: job.data.identity, evidence: output.evidence, contextDigest, ontologyId: "agntiapro.cards", ontologyVersion: "1.0.0" }),
+            { identity: job.data.identity, evidence: output.evidence, contextDigest, operationId: job.id, ontologyId: "agntiapro.cards", ontologyVersion: "1.0.0" }),
           new Promise((_, reject) => { const t = setTimeout(() => reject(Error("CLASSIFIER_TIMEOUT")), 500); t.unref(); }),
         ]));
         if (classification.ontology) {

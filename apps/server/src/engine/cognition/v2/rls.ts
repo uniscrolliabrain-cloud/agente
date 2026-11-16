@@ -2,7 +2,7 @@ import type { Store } from "../../../db.ts";
 
 /** Explicit migration run by the schema owner; application roles must not own tables. */
 export const cognitionTables = [
-  "rag_refs", "import_plans", "import_receipts", "attention", "chat_runs", "lane_locks", "lane_slots", "lane_usage",
+  "egress_quotas", "egress_receipts", "rag_refs", "import_plans", "import_receipts", "attention", "chat_runs", "lane_locks", "lane_slots", "lane_usage",
   "slow_jobs", "sequences", "events", "cursors", "inbox", "objects", "edges",
   "revocations", "deliveries", "delivery_recoveries", "snapshots",
 ].map((name) => `cognition_v2_${name}`);
