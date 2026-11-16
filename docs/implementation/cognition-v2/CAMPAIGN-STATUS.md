@@ -16,7 +16,7 @@ Ninguna fila PARTIAL/BLOCKED equivale a PASS de campaña. Las decisiones externa
 | C09 | PARTIAL_IMPLEMENTED | Revisiones y ledger separados, lease/fence/render/ACK/restart/revoke probados; recuperación operacional y migración masiva pendientes. |
 | C10 | PARTIAL_IMPLEMENTED | Facade/snapshot/delta/refs y RAG fuera de Fast; tokenizer de proveedor, todos los collectors y pruebas a escala pendientes. |
 | C11 | PARTIAL_IMPLEMENTED | Fast/Slow sin fallback cruzado, admisión/cuotas/circuitos y cancelación independientes; herramientas de negocio V2 y métricas/coste reales pendientes. |
-| C12 | PARTIAL_IMPLEMENTED | Journey factual y SVG accesible en UI real comprobados; polling/reconexión completos, todos los estados y auditoría WCAG integral pendientes. |
+| C12 | PARTIAL_IMPLEMENTED | Journey factual y SVG accesible en UI real comprobados; polling con cursor/reconexión/dedupe probado en Chromium; todos los estados de negocio y auditoría WCAG integral pendientes. |
 | C13 | BLOCKED_EXTERNAL | Coordinador durable + adaptador al mismo Fast, 4 tests locales; sandbox/media/ACK físico/DPA y frontend avatar no activados. |
 | C14 | PARTIAL_IMPLEMENTED | SDK Python real, ACK añadido en hijo, bridge+relay+contexto probados; broker/PDP/delegaciones y jobs/piloto real no configurados. |
 | C15 | NO_GO | Revisión y pruebas locales aportan evidencia parcial. No aceptación integral, legacy retirado, founder GO, merge ni despliegue. |

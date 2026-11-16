@@ -1,6 +1,6 @@
 # Ejecución C15 — informe de pruebas y límites
 
-Código congelado para la última tanda: `13caec2f0ec47b859b9613965a9967c8ae64d418`.
+Primera tanda completa: `13caec2f0ec47b859b9613965a9967c8ae64d418`. Segunda tanda core iniciada en `24b4e8d`; patchsets web/migración posteriores se verifican por separado y no se atribuyen al snapshot inicial del gate.
 Decisión integral: **NOT_CERTIFIED / NO_GO**. [Matriz A01–A30](ACCEPTANCE-MATRIX.md).
 
 ## Evidencia ya ejecutada
@@ -39,3 +39,13 @@ El gate de C15 lee un gate completo real y siempre conserva NO_GO mientras exist
 ## Avance RLS — 16 de noviembre
 
 Migración transaccional explícita para las 16 tablas cognitivas: ENABLE/FORCE ROW LEVEL SECURITY, USING y WITH CHECK con app.tenant_id. Prueba real con rol NOSUPERUSER/NOBYPASSRLS: 1/1 PASS. Sin scope no lee; con scope A no lee/borra B aunque conozca el ID; inserción falsificada falla; SET LOCAL no sobrevive a la transacción. El runtime compartido sigue bloqueado: falta integrar y verificar el contexto de conexión a lo largo de HTTP, identidad global y workers. No equivale a certificación compartida ni se activó sobre datos reales.
+
+## C12 — Timeline incremental
+
+El frontend ahora continúa desde el cursor durable, limita a cuatro páginas por ráfaga y 50 eventos en memoria (ocho visibles), deduplica por eventId y consulta sin esperar a un nuevo mensaje. Se pausa en pestaña oculta/offline, retoma al volver y elimina estados ante 401/403/404. No inventa estados por tiempo. `node scripts/check-cognition-timeline.mjs`: PASS en Chromium local (paginación 100→101, completion en idle, duplicado de replay, fallo 503/recuperación, denegación y parada); typecheck web exit 0. El primer intento del harness omitía abrir details y agotó timeout; corregida la interacción del harness, no la aserción de producto. Este patchset web posterior se verifica por separado de la tanda general core congelada en 24b4e8d.
+
+## C01 — Corpus de adaptación V1
+
+`tests/cognition-v2-migration.test.ts`: 2/2 PASS, cubriendo ocho combinaciones status/scope, determinismo, aislamiento y datos manipulados. Se corrige la promoción de epistemicidad (legacy sin receipt queda unknown) y se valida actor=owner. IDs V1 de 200 caracteres ya no desbordan V2 al añadir prefijo: clave hash determinista scoped por tenant. El adapter no ejecutó backfill real, no migra ledger de entregas ni resuelve revisiones de todas las referencias legacy. EntityRefs/memoryIds y metadatos cromáticos no se consideran migrados; se requiere inventario/backfill con resolución autorizada antes del cutover. Este patchset posterior tiene evidencia focal propia, no se atribuye a la tanda core iniciada anteriormente.
+
+Build web tras la timeline incremental: exit 0, 9.99 s; assets generados en apps/web/dist. Sin publicar.
