@@ -1,0 +1,221 @@
+{
+  "schemaVersion": "2.0",
+  "testedCommit": "55eb692d921cf10b43432a8f2f208bf49da5375d",
+  "sourceGate": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/report.json",
+  "generatedAt": "2026-11-16T00:18:38.927Z",
+  "steps": [
+    {
+      "name": "typecheck",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/uniscrolliabrain-cloud-agente/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 17575,
+      "counters": {},
+      "tail": [],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/typecheck.log"
+    },
+    {
+      "name": "typecheck:worker",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/uniscrolliabrain-cloud-agente/apps/worker/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente/apps/worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1939,
+      "counters": {},
+      "tail": [],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/typecheck_worker.log"
+    },
+    {
+      "name": "test",
+      "kind": "test",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/uniscrolliabrain-cloud-agente/node_modules/tsx/dist/cli.mjs --import ./tests/setup.ts --test --test-timeout=30000 --test-force-exit tests/**/*.test.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 678230,
+      "counters": {},
+      "tail": [
+        "ℹ tests 818",
+        "ℹ suites 13",
+        "ℹ pass 801",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 12",
+        "ℹ todo 5",
+        "ℹ duration_ms 677942.033157"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/test.log"
+    },
+    {
+      "name": "audit:layers",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/layers.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 321,
+      "counters": {
+        "violaciones": 0
+      },
+      "tail": [
+        "[audit:layers] 0 violaciones"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_layers.log"
+    },
+    {
+      "name": "audit:bridges",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/bridges.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 220,
+      "counters": {
+        "wired": 12,
+        "total": 16
+      },
+      "tail": [
+        "[audit:bridges] 12/16 wired"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_bridges.log"
+    },
+    {
+      "name": "audit:console",
+      "kind": "audit",
+      "blocking": false,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/no-console.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 223,
+      "counters": {
+        "ocurrencias": 25,
+        "ficheros": 276
+      },
+      "tail": [
+        "[audit:console] 25 ocurrencias en 276 ficheros"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_console.log"
+    },
+    {
+      "name": "audit:anchors",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/anchors.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 141,
+      "counters": {},
+      "tail": [
+        "[audit:anchors] No hay bloques para revisar."
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_anchors.log"
+    },
+    {
+      "name": "audit:contracts",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/contracts.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 9654,
+      "counters": {},
+      "tail": [
+        "[audit:contracts] Recorriendo dominios...",
+        "[audit:contracts] Cargando implementaciones y harness...",
+        "[audit:contracts] Ficheros de codigo: 894   de tests/scripts: 239",
+        "[audit:contracts] Contratos encontrados: 369",
+        "[audit:contracts] Informe escrito en /workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits/AUDIT_CONTRACTS.md",
+        "[audit:contracts] OK: 300   MODULO: 53   HARNESS: 1   PENDING: 9   ALLOWLIST: 0   HUERFANOS: 6",
+        "[audit:contracts] 6 contrato(s) sin uso y sin decision. Consume, marca PENDING(motivo, fecha) o declara en contracts-allowlist.json con motivo y fecha."
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_contracts.log"
+    },
+    {
+      "name": "audit:idempotency",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/idempotency.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 499,
+      "counters": {
+        "duplicadas": 183,
+        "huerfanas": 0,
+        "repetidas": 156
+      },
+      "tail": [
+        "[audit:idempotency] Recorriendo ficheros...",
+        "[audit:idempotency] Ficheros: 923",
+        "[audit:idempotency] Marcas encontradas: 2301",
+        "[audit:idempotency] Informe escrito en /workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits/AUDIT_IDEMPOTENCY.md",
+        "[audit:idempotency] DUPLICADAS: 183   HUERFANAS: 0   REPETIDAS: 156",
+        "[audit:idempotency] PEGADAS_DOS_VECES: 0"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_idempotency.log"
+    },
+    {
+      "name": "audit:tenant-default",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/tenant-default.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 286,
+      "counters": {
+        "permitidas": 158,
+        "prohibidas": 0
+      },
+      "tail": [
+        "[audit:tenant-default] Recorriendo ficheros...",
+        "[audit:tenant-default] Ficheros: 577",
+        "[audit:tenant-default] Informe en /workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits/AUDIT_TENANT_DEFAULT.md",
+        "[audit:tenant-default] PERMITIDAS: 158   PROHIBIDAS: 0"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_tenant-default.log"
+    }
+  ],
+  "repositoryGateOk": false,
+  "blockers": [
+    {
+      "campaign": "C05",
+      "status": "BLOCKED_DECISION",
+      "reason": "Founder-approved chromatic ontology and approval receipt are missing"
+    },
+    {
+      "campaign": "C08",
+      "status": "BLOCKED_EXTERNAL",
+      "reason": "JEV identity/API and provider sandbox are not verified; rules baseline only"
+    },
+    {
+      "campaign": "C13",
+      "status": "BLOCKED_EXTERNAL",
+      "reason": "Anam media, physical playback ACK/barge-in, consent operations and provider contract are not certified"
+    },
+    {
+      "campaign": "C14",
+      "status": "BLOCKED_CONFIGURATION",
+      "reason": "Real parent PDP, credential broker and human child delegations remain unconfigured; synthetic contracts only"
+    },
+    {
+      "campaign": "C15",
+      "status": "PARTIAL",
+      "reason": "Shared restricted-role RLS, provider costs/SLO, canary, complete legacy retirement and founder GO remain pending"
+    }
+  ],
+  "certification": "NOT_CERTIFIED",
+  "productionReady": false,
+  "decision": "NO_GO"
+}

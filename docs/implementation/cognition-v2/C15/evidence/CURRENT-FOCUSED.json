@@ -1,0 +1,16 @@
+{
+  "testedCommit": "55eb692",
+  "suite": "pnpm test:cognition-v2",
+  "postgres": "local synthetic PostgreSQL 17",
+  "tests": 30,
+  "pass": 30,
+  "fail": 0,
+  "cancelled": 0,
+  "skipped": 0,
+  "durationMs": 52558.127318,
+  "rootTypecheckExit": 0,
+  "webTypecheckExit": 0,
+  "webBuildExit": 0,
+  "timelineChromiumExit": 0,
+  "certification": "NOT_CERTIFIED"
+}

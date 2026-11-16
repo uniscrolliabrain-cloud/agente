@@ -24,7 +24,7 @@ Gate completo sobre `13caec2`: 817 tests, 799 PASS, 1 FAIL, 0 cancelados, 12 ski
 
 Los otros dos controles fallidos coinciden con main congelado: bridges 12/16 y seis contratos huérfanos (ActionSpec, CognitionCardScope, CognitionCardStatus, ColumnSpec, DataSourceSpec, ViewProvenance). No se añadieron marcas ficticias ni excepciones para ocultarlos.
 
-Nueva tanda completa iniciada sobre `24b4e8d`, que incluye la corrección y la migración RLS explícita. Resultado pendiente. Los intentos interrumpidos anteriores no se presentan como gates completos.
+Segunda tanda completa iniciada sobre `24b4e8d`: 818 tests, 801 PASS, 0 FAIL, 0 cancelados, 12 skipped y 5 TODO. Duración: 709.1 s de gate, 678.2 s de tests. Ocho de diez controles verdes; únicamente bridges 12/16 y los seis contratos huérfanos heredados fallan. C15 ejecutado después: exit 1, NOT_CERTIFIED/NO_GO como corresponde. Los cambios posteriores de frontend, corpus de migración y endurecimiento del harness tienen evidencia focal separada; no se atribuyen al SHA inicial del gate. Los intentos interrumpidos anteriores no se presentan como gates completos.
 
 El gate de C15 lee un gate completo real y siempre conserva NO_GO mientras existan los bloqueos explícitos. No modifica ni relaja el gate de repositorio. RLS compartido con rol restringido, proveedores reales, costes/SLO, canary, migración/retiro completo y aprobación del fundador no se convierten en PASS por documentación.
 
@@ -49,3 +49,9 @@ El frontend ahora continúa desde el cursor durable, limita a cuatro páginas po
 `tests/cognition-v2-migration.test.ts`: 2/2 PASS, cubriendo ocho combinaciones status/scope, determinismo, aislamiento y datos manipulados. Se corrige la promoción de epistemicidad (legacy sin receipt queda unknown) y se valida actor=owner. IDs V1 de 200 caracteres ya no desbordan V2 al añadir prefijo: clave hash determinista scoped por tenant. El adapter no ejecutó backfill real, no migra ledger de entregas ni resuelve revisiones de todas las referencias legacy. EntityRefs/memoryIds y metadatos cromáticos no se consideran migrados; se requiere inventario/backfill con resolución autorizada antes del cutover. Este patchset posterior tiene evidencia focal propia, no se atribuye a la tanda core iniciada anteriormente.
 
 Build web tras la timeline incremental: exit 0, 9.99 s; assets generados en apps/web/dist. Sin publicar.
+
+Event Bus: el harness de emisión se reforzó para exigir `persisted=true` por cada tipo, payload vacío válido para eventos opcionales y total almacenado igual al catálogo. Antes solo exigía al menos una fila y podía ocultar ZodErrors. Prueba focal real con `--test-isolation=none`: 3/3 PASS; contratos+migración+bus previos: 7/7 PASS. No se relajaron schemas ni assertions.
+
+## Verificación consolidada posterior
+
+Código `55eb692`: `pnpm test:cognition-v2` con Postgres sintético: **30 tests / 30 PASS / 0 FAIL / 0 skip / 0 cancelados**, 52.558 s. Incluye corpus nuevo y RLS; typecheck raíz actual exit 0. Frontend separado: typecheck/build y Chromium de timeline exit 0. No se extrapolan estos resultados a costes/proveedores, RLS integrado compartido o certificación C15.

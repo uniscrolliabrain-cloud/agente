@@ -162,3 +162,8 @@
 - **RLS:** migración explícita y prueba Postgres con rol restringido pasan; integración compartida continúa cerrada hasta completar HTTP/workers.
 - **Decisiones pendientes:** ontología cromática y proveedor JEV no identificados/aprobados. Anam sin validación audiovisual real. No se inventaron capacidades externas.
 - **Estado:** PARTIAL_IMPLEMENTED, C15 NO_GO. No se han completado todos los patchsets, ni migrado/retirado todo legacy. El trabajo restante consta en [estado por campaña](../../implementation/cognition-v2/CAMPAIGN-STATUS.md).
+
+## R-20261116-003 — Continuación y cierre de verificación de esta tanda
+- **Cambios:** RLS explícito probado con rol restringido (`24b4e8d`); timeline incremental y reconexión (`d1922bb`); migración sin promoción de certeza ni cambio de propietario (`119fbf2`); harness Event Bus exige todos los receipts persistidos (`55eb692`).
+- **Resultados:** gate completo iniciado en 24b4e8d: 818 tests / 801 PASS / 0 FAIL / 12 skip / 5 TODO, 8/10 controles. Solo bridges 12/16 y seis contratos huérfanos heredados fallan. Código posterior: suite V2 consolidada 30/30 PASS; typecheck raíz/web, build web y Chromium timeline PASS.
+- **Estado:** C15 NO_GO; falta integración compartida, backfill/cutover y otras tareas del [estado por campaña](../../implementation/cognition-v2/CAMPAIGN-STATUS.md). No merge ni deploy.

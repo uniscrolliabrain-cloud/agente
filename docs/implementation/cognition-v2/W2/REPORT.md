@@ -12,4 +12,4 @@ Correcciones de revisión: conexión pgvector preservada; última revisión eleg
 
 El buffer ya enviado a un proveedor no se puede retirar retroactivamente. Los monitores abortan al detectar revocación; el estado final vuelve a validarse y no confirma resultados desautorizados. Eso no certifica cancelación física del proveedor ni playback Anam.
 
-Typecheck y focos ejecutados constan en C15/EXECUTION-REPORT.md. El gate general se repite sobre el commit congelado; resultados finales pendientes al escribir este reporte de ola.
+Typecheck y focos ejecutados constan en C15/EXECUTION-REPORT.md. Gate general iniciado en 24b4e8d: 818 tests, 801 PASS, 0 FAIL, 12 skipped, 5 TODO; 8/10 controles verdes. Solo bridges/contratos heredados bloquean el gate del repositorio. C15 conserva NO_GO; véase informe de ejecución para patchsets posteriores y evidencia focal.
