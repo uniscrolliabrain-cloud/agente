@@ -6,7 +6,7 @@ PASS indica exclusivamente el escenario local descrito y sus fixtures ejecutados
 |---|---|---|
 | A01 | PARTIAL | HTTP real con dos empresas, user activo y membership; roles/agentes V2 completos pendientes |
 | A02 | PARTIAL | Política privada self-read y sin herramientas de negocio; PDP completo V2 no certificado |
-| A03 | PARTIAL | Puerto interno de escritura V2 con aprobación formal ligada al payload, consumo único y receipt incierto; no montado ni con compensación |
+| A03 | NOT_RUN | El adaptador aislado anterior se retiró: su formato de aprobación no era compatible con ActionService; falta migrar una acción real sin duplicar la puerta legacy |
 | A04 | PASS | Persist-before-confirm, rollback y ACK de commit perdido con unknown/eventId, local |
 | A05 | PASS | 501 eventos, cursor durable y orden real de commit por tenant |
 | A06 | PASS | Replay idempotente, revisión estable, concurrencia de writers y no resurrección |
