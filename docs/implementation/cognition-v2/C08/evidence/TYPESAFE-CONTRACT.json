@@ -1,0 +1,179 @@
+{
+  "source": "https://api.typesafe.ai/openapi.json",
+  "verifiedDate": "2026-11-16",
+  "upstreamSha256": "3ca93b6e6b9aa8d7820531b78c66ed7a9798b11e6e163ad96b140fb3d75fbcf4",
+  "server": "https://api.typesafe.ai",
+  "operation": "POST /v1/systemone",
+  "authorization": {
+    "HTTPBearer": {
+      "type": "http",
+      "scheme": "bearer"
+    }
+  },
+  "schemas": {
+    "ChoiceQuestion": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "choice"
+        },
+        "instructions": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-accepts": "string | object | array"
+        },
+        "criteria": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "x-accepts": "string | object | array"
+          },
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 255
+        }
+      },
+      "type": "object",
+      "required": [
+        "type",
+        "criteria"
+      ]
+    },
+    "ChoiceAnswer": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "choice"
+        },
+        "choice": {
+          "type": "string"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "probabilities": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object",
+      "required": [
+        "type",
+        "choice",
+        "confidence",
+        "probabilities"
+      ]
+    },
+    "SystemOneRequest": {
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
+          ],
+          "x-accepts": "string | object | array"
+        },
+        "questions": {
+          "additionalProperties": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "type": "object",
+          "minProperties": 1
+        },
+        "assets": {
+          "additionalProperties": {
+            "$ref": "#/components/schemas/Asset"
+          },
+          "type": "object",
+          "minProperties": 1
+        }
+      },
+      "type": "object",
+      "required": [
+        "model",
+        "state",
+        "questions"
+      ]
+    },
+    "SystemOneResponse": {
+      "properties": {
+        "model": {
+          "type": "string"
+        },
+        "answers": {
+          "additionalProperties": {
+            "$ref": "#/components/schemas/Answer"
+          },
+          "type": "object",
+          "minProperties": 1
+        },
+        "usage": {
+          "$ref": "#/components/schemas/Usage"
+        }
+      },
+      "type": "object",
+      "required": [
+        "model",
+        "answers",
+        "usage"
+      ]
+    },
+    "Usage": {
+      "properties": {
+        "input_tokens": {
+          "type": "integer"
+        },
+        "output_tokens": {
+          "type": "integer"
+        }
+      },
+      "type": "object",
+      "required": [
+        "input_tokens",
+        "output_tokens"
+      ]
+    }
+  }
+}

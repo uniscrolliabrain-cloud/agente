@@ -14,7 +14,7 @@ import { PreparedRagContext, type PreparedRagPort } from "./rag.ts";
 import { FiveMemories } from "./memory.ts";
 import { GlobalAttentionWorkspace } from "./attention.ts";
 import { InferenceLane } from "./inference.ts";
-import { SlowCognitionQueue, type SlowProvider } from "./slow.ts";
+import { SlowCognitionQueue, type SlowProvider, type SemanticClassifier } from "./slow.ts";
 import { CopilotInferenceProvider, type StreamingProvider } from "./provider.ts";
 import { DeliveryRecoveryWorker } from "./delivery-recovery.ts";
 import { CardOntologyService } from "../chromatic/card-ontology.ts";
@@ -34,7 +34,7 @@ export class CognitionV2Runtime {
   readonly attention: GlobalAttentionWorkspace;
   preparedRag?: PreparedRagContext;
   constructor(readonly db: Store, records: Store | TenantScopedStore, readonly tenants: ReadonlySet<string>,
-    readonly memberships: TenantService, readonly provider: StreamingProvider & Partial<SlowProvider> = new CopilotInferenceProvider()) {
+    readonly memberships: TenantService, readonly provider: StreamingProvider & Partial<SlowProvider> = new CopilotInferenceProvider(), classifier?: SemanticClassifier) {
     this.sink = new DurableEventSink(db, records, tenants);
     this.ontology = new CardOntologyService(db);
     this.context = new ContextServingFacade(new CognitiveProjectionStore(db), { authorize: async (identity, record) => {
@@ -60,16 +60,16 @@ export class CognitionV2Runtime {
       catch (error) { if (error instanceof Error && error.message === "DENIED") return null; throw error; }
     });
     this.projector = new CognitiveProjector(this.context.projections);
-    this.slow = new SlowCognitionQueue(db, this.sink, this.context, { infer: (input, signal) => provider.infer ? provider.infer(input, signal) : Promise.reject(Error("SLOW_PROVIDER_UNCONFIGURED")) });
+    this.slow = new SlowCognitionQueue(db, this.sink, this.context, { infer: (input, signal) => provider.infer ? provider.infer(input, signal) : Promise.reject(Error("SLOW_PROVIDER_UNCONFIGURED")) }, classifier);
     this.fast = new InferenceLane(db, "fast", 4, 15000, 1000);
   }
-  static async create(db: Store, records: Store | TenantScopedStore, tenants: ReadonlySet<string>, memberships: TenantService, rag?: PreparedRagPort) {
+  static async create(db: Store, records: Store | TenantScopedStore, tenants: ReadonlySet<string>, memberships: TenantService, rag?: PreparedRagPort, classifier?: SemanticClassifier) {
     // Shared Postgres tables require a verified RLS migration and separate
     // restricted-role integration gate. Until then the feature fails closed.
     if (process.env.MULTI_TENANT_SHARED === "true") throw Error("COGNITION_V2_SHARED_RLS_NOT_CERTIFIED");
     await installCognitionV2(db);
     await new CardOntologyService(db).install();
-    const runtime = new CognitionV2Runtime(db, records, tenants, memberships);
+    const runtime = new CognitionV2Runtime(db, records, tenants, memberships, undefined, classifier);
     if (rag) runtime.preparedRag = new PreparedRagContext(runtime.context, runtime.sink, rag);
     return runtime;
   }
