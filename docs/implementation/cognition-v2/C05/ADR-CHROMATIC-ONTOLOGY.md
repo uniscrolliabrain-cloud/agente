@@ -9,3 +9,7 @@ Implementación revisable: registro versionado, validación numérica finita, ch
 Para aprobar una ontología concreta hace falta un documento con: nombres y significados de las seis polaridades, relación con los polos opuestos, nombres/escalas de las diez dimensiones, ejemplos positivos/negativos, tratamiento de desconocidos, reglas de interacción y migración de los cinco tipos legacy. La alternativa de conservar solo los cinco tipos también necesita confirmación explícita; no se asume.
 
 Hasta esa decisión: ningún dato de tenant recibe una interpretación cromática. Atención/contexto continúan sin este motor. A12 y aceptación integral C15 permanecen bloqueados.
+
+## Propuesta presentada el 16 de noviembre
+
+[Propuesta completa de ontologías](PROPOSAL-ONTOLOGY-V1.md): ocho familias, seis polos agrupados en tres pares, diez dimensiones contextuales y reparto Slow/JEV/engine/kernel. Estado DRAFT_FOR_REVIEW, sin aprobación ni activación. No reinterpreta automáticamente los cinco kinds legacy.

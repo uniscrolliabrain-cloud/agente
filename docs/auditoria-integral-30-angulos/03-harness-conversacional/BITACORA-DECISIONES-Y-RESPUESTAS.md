@@ -167,3 +167,10 @@
 - **Cambios:** RLS explícito probado con rol restringido (`24b4e8d`); timeline incremental y reconexión (`d1922bb`); migración sin promoción de certeza ni cambio de propietario (`119fbf2`); harness Event Bus exige todos los receipts persistidos (`55eb692`).
 - **Resultados:** gate completo iniciado en 24b4e8d: 818 tests / 801 PASS / 0 FAIL / 12 skip / 5 TODO, 8/10 controles. Solo bridges 12/16 y seis contratos huérfanos heredados fallan. Código posterior: suite V2 consolidada 30/30 PASS; typecheck raíz/web, build web y Chromium timeline PASS.
 - **Estado:** C15 NO_GO; falta integración compartida, backfill/cutover y otras tareas del [estado por campaña](../../implementation/cognition-v2/CAMPAIGN-STATUS.md). No merge ni deploy.
+
+## R-20261116-004 — Propuesta de ontologías solicitada por el fundador
+- **Solicitud:** propuesta completa de ontologías de tarjetas para mejorar cognición y resultados empresariales, con Slow, JEV y kernel.
+- **Propuesta:** [documento completo](../../implementation/cognition-v2/C05/PROPOSAL-ONTOLOGY-V1.md), DRAFT_FOR_REVIEW. Ocho familias; seis polos en tres pares con intensidades independientes; diez dimensiones tipadas/contextuales; hechos, permisos y ejecución separados.
+- **Validación futura:** ablaciones tipos/evidencia → dimensiones → polos → JEV, corpus revisado, coste por tarea exitosa y privacidad/autoridad. Ninguna mejora cuantitativa garantizada.
+- **Límite:** la API/capacidades del proveedor JEV no se presuponen. La propuesta no es aprobación ni implementación. C05 continúa BLOCKED_DECISION.
+- **Continuidad:** edición C09 de recuperación de entregas en curso; no incluida en este commit documental ni presentada como probada.
