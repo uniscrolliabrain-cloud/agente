@@ -28,4 +28,5 @@ test('C01 migration rejects scope substitution and malformed legacy data',()=>{
   const longId=cognitionCardSchema.parse({...base,id:'x'.repeat(200)});
   assert.ok(migrateLegacyCard(longId,identity).id.length<=200);
   assert.notEqual(migrateLegacyCard(longId,identity).id,migrateLegacyCard(legacy,identity).id);
+  assert.notEqual(migrateLegacyCard({...legacy,owner:'bob'},{...identity,actorId:'bob',owner:'bob'}).id,migrateLegacyCard(legacy,identity).id,'same legacy ID in one tenant must not collide across owners');
 });

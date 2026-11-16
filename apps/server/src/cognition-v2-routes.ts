@@ -6,6 +6,18 @@ import { AppError } from "./errors.ts";
 type Vars = { owner: string; ctx?: { tenantId: string; actorId: string } };
 export function cognitionV2Routes(runtime: CognitionV2Runtime) {
   const app = new Hono<{ Variables: Vars }>();
+  const migration = async <T>(work: () => Promise<T>): Promise<T> => {
+    try { return await work(); }
+    catch (error) {
+      const reason = error instanceof Error ? error.message : "";
+      if (reason === "BACKFILL_PLAN_DENIED") throw new AppError("Plan no disponible", 404);
+      if (reason === "DENIED") throw new AppError("Acceso denegado", 403);
+      if (reason === "BACKFILL_PLAN_EXPIRED") throw new AppError("El plan ha caducado", 410);
+      if (["BACKFILL_PLAN_VERSION_UNSUPPORTED", "BACKFILL_PLAN_KEY_CONFLICT", "BACKFILL_PLAN_CORRUPTED", "BACKFILL_SOURCE_CHANGED", "BACKFILL_EVIDENCE_CHANGED", "BACKFILL_SOURCE_REVISION_CONFLICT", "BACKFILL_UNRESOLVED_EVIDENCE"].includes(reason))
+        throw new AppError("El plan no puede aplicarse; genera otra previsualización", 409);
+      throw error;
+    }
+  };
   const identity = async (c: Context<{ Variables: Vars }>) => {
     const ctx = c.get("ctx");
     if (!ctx) throw new AppError("Sesion requerida", 401);
@@ -22,6 +34,16 @@ export function cognitionV2Routes(runtime: CognitionV2Runtime) {
     const actor = await identity(c);
     const input = z.strictObject({ body: z.string().min(1).max(4000) }).parse(await c.req.json());
     return c.json(await runtime.memories.working(actor, input.body, 300000), 202);
+  });
+  app.post("/migration/legacy-cards/prepare", async (c) => {
+    const input = z.strictObject({ key: z.string().min(1).max(200), afterId: z.string().max(200).optional(), limit: z.number().int().min(1).max(100).optional() }).parse(await c.req.json());
+    const actor = await identity(c);
+    return c.json(await migration(() => runtime.legacyBackfill.prepare(actor, input)));
+  });
+  app.post("/migration/legacy-cards/:id/apply", async (c) => {
+    const input = z.strictObject({ planDigest: z.string().regex(/^[a-f0-9]{64}$/) }).parse(await c.req.json());
+    const actor = await identity(c);
+    return c.json(await migration(() => runtime.legacyBackfill.apply(actor, c.req.param("id"), input.planDigest)), 202);
   });
   app.get("/memories", async (c) => c.json(await runtime.memories.recall(await identity(c), memoryKindSchema.parse(c.req.query("kind")))));
   app.post("/attention", async (c) => {

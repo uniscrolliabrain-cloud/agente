@@ -2,7 +2,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { currentTenantScope, runInTenantScope } from "../../../tenant-scope.ts";
 import type { Store } from "../../../db.ts";
-import type { TenantScopedStore } from "../../../db-tenant.ts";
+import { TenantScopedStore } from "../../../db-tenant.ts";
 import type { EventSink, SystemEvent } from "../../events/types.ts";
 import { cognitiveRecordSchema, type CognitiveRecord } from "../../../../../../packages/domain/src/cognition-v2.ts";
 function canonical(value: unknown): unknown {
@@ -16,6 +16,8 @@ export async function installCognitionV2(db: Store): Promise<void> {
   // No destructive changes; event source records and legacy readers remain intact.
   for (const sql of [
     `CREATE TABLE IF NOT EXISTS cognition_v2_rag_refs (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,source_id text NOT NULL,source_version text NOT NULL,PRIMARY KEY(tenant,id))`,
+    `CREATE TABLE IF NOT EXISTS cognition_v2_import_plans (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,state text NOT NULL,expires_at timestamptz NOT NULL,PRIMARY KEY(tenant,id))`,
+    `CREATE TABLE IF NOT EXISTS cognition_v2_import_receipts (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,source_id text NOT NULL,source_revision integer NOT NULL,source_digest text NOT NULL,data jsonb NOT NULL,PRIMARY KEY(tenant,id),UNIQUE(tenant,actor,source_id,source_revision))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_attention (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_chat_runs (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,state text NOT NULL,response text,receipt_id text,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_lane_locks (tenant text NOT NULL,lane text NOT NULL,PRIMARY KEY(tenant,lane))`,
@@ -46,6 +48,9 @@ export async function installCognitionV2(db: Store): Promise<void> {
   ]) await db.rawQuery(sql);
 }
 export class DurableEventSink implements EventSink {
+  usesTransactionStore(db: Store): boolean {
+    return this.db === db && (this.records === db || (this.records instanceof TenantScopedStore && this.records.usesTransactionStore(db)));
+  }
   constructor(private readonly db: Store, private readonly records: Store | TenantScopedStore,
     private readonly tenants: ReadonlySet<string>) {}
   async write(event: SystemEvent): Promise<void> {
