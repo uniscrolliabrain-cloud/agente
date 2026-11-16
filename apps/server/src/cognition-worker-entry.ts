@@ -6,10 +6,16 @@ import { runCognitionWorkers } from "./engine/cognition/v2/workers.ts";
 const config = readConfig();
 if (!config.databaseUrl) throw Error("Separate cognition worker requires DATABASE_URL; embedded PGlite belongs to the API process");
 const db = await createStore({ databaseUrl: config.databaseUrl });
-const { agent } = await createApp(db, config);
-if (!agent.cognitionV2) throw Error("COGNITION_V2_TENANTS is required");
 const controller = new AbortController();
-process.on("SIGTERM", () => controller.abort());
-process.on("SIGINT", () => controller.abort());
-try { await runCognitionWorkers(agent.cognitionV2, controller.signal); }
-finally { await db.close(); }
+const stop = () => controller.abort();
+process.on("SIGTERM", stop);
+process.on("SIGINT", stop);
+try {
+  const { agent } = await createApp(db, config);
+  if (!agent.cognitionV2) throw Error("COGNITION_V2_TENANTS is required");
+  await runCognitionWorkers(agent.cognitionV2, controller.signal);
+} finally {
+  process.removeListener("SIGTERM", stop);
+  process.removeListener("SIGINT", stop);
+  await db.close();
+}

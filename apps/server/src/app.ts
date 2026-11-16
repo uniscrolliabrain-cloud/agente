@@ -505,7 +505,14 @@ export async function createApp(
       checks.internal = e instanceof Error ? e.message : "error";
       checks.ok = false;
     }
-    return c.json(checks, checks.ok ? 200 : 500);
+    if (cognitionV2) {
+      try {
+        const { cognitionWorkerReady } = await import("./engine/cognition/v2/workers.ts");
+        checks.cognitionV2Worker = await cognitionWorkerReady(db, cognitionV2.tenants);
+      } catch { checks.cognitionV2Worker = false; }
+      if (!checks.cognitionV2Worker) checks.ok = false;
+    }
+    return c.json(checks, checks.ok ? 200 : 503);
   });
 app.get("/api/health", async (c) => {
     const checks: Record<string, boolean> = {};
@@ -525,7 +532,13 @@ app.get("/api/health", async (c) => {
     checks.worker = true;
     checks.agentConfigured = agentConfigured(config);
     checks.browserConfigured = Boolean(config.workerUrl && config.workerToken);
-    const ok = checks.database && checks.bus;
+    if (cognitionV2) {
+      try {
+        const { cognitionWorkerReady } = await import("./engine/cognition/v2/workers.ts");
+        checks.cognitionV2Worker = await cognitionWorkerReady(db, cognitionV2.tenants);
+      } catch { checks.cognitionV2Worker = false; }
+    }
+    const ok = checks.database && checks.bus && (!cognitionV2 || checks.cognitionV2Worker);
     return c.json(
       {
         ok,

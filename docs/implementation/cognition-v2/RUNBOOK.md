@@ -24,6 +24,8 @@ Configurar una allowlist explícita `COGNITION_V2_TENANTS=tenant-sintetico` y cr
 
 - PGlite: API y worker deben compartir el mismo proceso; habilitar expresamente `COGNITION_V2_EMBEDDED_WORKER=true` al arrancar `pnpm dev`.
 - Postgres: `pnpm dev:cognition-worker` requiere `DATABASE_URL` y la misma allowlist; no comparte cola ni admisión Fast con Slow.
+- Supervisa por separado el proceso dedicado y reinícialo si termina. En modo embebido supervisa el proceso API. Cada carril por tenant reintenta con backoff hasta 30 s; no activa proveedores nuevos.
+- `/api/health` y `/api/health-deep` devuelven 503 con V2 habilitado hasta que proyección, Slow, recuperación de entregas y recibos hayan completado un tick reciente para todos los tenants configurados. La señal dura 90 s y se elimina al terminar ordenadamente. Un crash puede tardar hasta 90 s en reflejarse; no demuestra ausencia de backlog ni estado de proveedores. La API y el worker separado deben compartir base y allowlist.
 - Fast necesita FAST_LLM_PROVIDER/MODEL/API_KEY; Slow sus propias SLOW_LLM_PROVIDER/MODEL/API_KEY. BASE_URL se configura por carril con objetos de proveedor, sin mutar variables globales. Una configuración ausente falla de forma explícita, sin fallback cruzado.
 - Presupuestos actuales son límites defensivos de llamadas/entrada/salida, no una política comercial de costes aprobada ni un SLA. El conteo de contexto por bytes UTF-8 es una cota conservadora, no tokens medidos por proveedor.
 
@@ -47,4 +49,4 @@ M0/M1/M2 locales están construidos parcialmente; canary, migración de datos ex
 
 El runtime V2 instala agntiapro.cards@1.0.0 con la decisión founder-20261116-card-ontology-001 del fundador. Las inferencias no pueden aprobar nuevas versiones. Un registro de revocación en el store autoritativo invalida su uso al proyectar/servir; el bootstrap no lo borra. No habilita JEV externo ni cambia el flag de tenants.
 
-El worker tiene tres bucles independientes: proyección, Slow y recuperación de entregas. Esta última es acotada, utiliza cursor/lease/fence persistentes y valida actor. Las reservas caducadas no reciben ACK automático. Auditoría: cognition_v2_delivery_recoveries. La migración RLS se ejecuta de nuevo explícitamente para incluir esta tabla antes de cualquier validación compartida.
+El worker tiene cuatro carriles independientes por tenant: proyección, Slow, recuperación de entregas y recibos de auditoría/notificación. La recuperación de entregas es acotada, utiliza cursor/lease/fence persistentes y valida actor. Las reservas caducadas no reciben ACK automático. Auditoría: cognition_v2_delivery_recoveries. La migración RLS se ejecuta de nuevo explícitamente para incluir esta tabla antes de cualquier validación compartida.
