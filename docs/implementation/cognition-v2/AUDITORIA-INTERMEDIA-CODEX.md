@@ -4,6 +4,8 @@ Checkpoint UTC: 2026-11-16T13:47:34.208372+00:00. Código auditado: [640a55db01f
 
 **Resultado: EN CURSO / NO_GO para certificación integral.** Hay código funcional probado y publicado, pero ninguna campaña C00–C15 supera todavía todo su gate. Dos defectos P1 se reproducen con fixtures: ledger sin correlación por ejecución y reenvío de eventos privados del proveedor. Se publican antes de corregirlos para que la auditoría tenga una referencia estable. La ontología C05 está aprobada; la mejora cognitiva/empresarial aún no está medida.
 
+**Seguimiento posterior:** los dos defectos reproducidos en este checkpoint se corrigieron en commits separados después de publicarlo. Véanse [W7 y sus pruebas](checkpoints/FOLLOW-UP-W7.md). Las tablas y hallazgos siguientes describen el SHA congelado, no se reescriben como si las correcciones ya existieran al auditarlo.
+
 ## A. Identificación y trazabilidad
 
 - Repositorio: https://github.com/uniscrolliabrain-cloud/agente.
