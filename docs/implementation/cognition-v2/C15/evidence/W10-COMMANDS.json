@@ -1,0 +1,30 @@
+[
+  {
+    "command": "pnpm gate",
+    "testedCommit": "015de17f481978fd9c57d7b93201f581c1d70fe8",
+    "exitCode": 0,
+    "durationSeconds": 895.094,
+    "counts": {
+      "tests": 853,
+      "pass": 836,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 12,
+      "todo": 5
+    }
+  },
+  {
+    "command": "pnpm test:coverage",
+    "testedCommit": "015de17f481978fd9c57d7b93201f581c1d70fe8",
+    "exitCode": 0,
+    "durationSeconds": 1024.18,
+    "counts": {
+      "tests": 853,
+      "pass": 836,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 12,
+      "todo": 5
+    }
+  }
+]

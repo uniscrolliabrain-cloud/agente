@@ -1,0 +1,100 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-16T15:18:41.658Z",
+  "finishedAt": "2026-11-16T15:33:34.510Z",
+  "durationMs": 892852,
+  "git": {
+    "branch": "feat/cognition-v2-runtime-C00-C15",
+    "head": "015de17f481978fd9c57d7b93201f581c1d70fe8",
+    "dirty": 0
+  },
+  "ok": true,
+  "failed": [],
+  "steps": [
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 24488,
+      "counters": {}
+    },
+    {
+      "name": "typecheck:worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 2424,
+      "counters": {}
+    },
+    {
+      "name": "test",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 849601,
+      "counters": {}
+    },
+    {
+      "name": "audit:layers",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 370,
+      "counters": {
+        "violaciones": 0
+      }
+    },
+    {
+      "name": "audit:bridges",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1726,
+      "counters": {
+        "wired": 16,
+        "total": 16
+      }
+    },
+    {
+      "name": "audit:console",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 254,
+      "counters": {
+        "ocurrencias": 25,
+        "ficheros": 284
+      }
+    },
+    {
+      "name": "audit:anchors",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 141,
+      "counters": {}
+    },
+    {
+      "name": "audit:contracts",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 12695,
+      "counters": {}
+    },
+    {
+      "name": "audit:idempotency",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 663,
+      "counters": {
+        "duplicadas": 183,
+        "huerfanas": 0,
+        "repetidas": 156
+      }
+    },
+    {
+      "name": "audit:tenant-default",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 463,
+      "counters": {
+        "permitidas": 158,
+        "prohibidas": 0
+      }
+    }
+  ]
+}
