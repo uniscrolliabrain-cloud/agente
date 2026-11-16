@@ -8,7 +8,7 @@ export function migrateLegacyCard(raw: CognitionCard, identity: CognitiveIdentit
   if (card.tenantId !== identity.tenantId || card.owner !== identity.owner || identity.actorId !== identity.owner) throw Error("MIGRATION_SCOPE_MISMATCH");
   // Both schemas allow 200-character IDs; adding a prefix to the legacy ID
   // would reject valid legacy rows. Hash the full scoped key deterministically.
-  const id = `legacy:${createHash("sha256").update(JSON.stringify([card.tenantId, card.id])).digest("hex")}`;
+  const id = `legacy:${createHash("sha256").update(JSON.stringify([card.tenantId, card.owner, card.id])).digest("hex")}`;
   return cognitiveRecordSchema.parse({ schemaVersion: "2.0", id, tenantId: card.tenantId,
     // Legacy cards have no epistemic verification receipt. Model confidence
     // must never promote generated text into a reported or verified fact.

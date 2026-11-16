@@ -17,12 +17,14 @@ import { SlowCognitionQueue, type SlowProvider } from "./slow.ts";
 import { CopilotInferenceProvider, type StreamingProvider } from "./provider.ts";
 import { DeliveryRecoveryWorker } from "./delivery-recovery.ts";
 import { CardOntologyService } from "../chromatic/card-ontology.ts";
+import { LegacyCardBackfill, legacyEvidenceResolver } from "./legacy-backfill.ts";
 export class CognitionV2Runtime {
   readonly sink: DurableEventSink;
   readonly context: ContextServingFacade;
   readonly ledger: CardDeliveryLedger;
   readonly deliveryRecovery: DeliveryRecoveryWorker;
   readonly ontology: CardOntologyService;
+  readonly legacyBackfill: LegacyCardBackfill;
   readonly projector: CognitiveProjector;
   readonly slow: SlowCognitionQueue;
   readonly fast: InferenceLane;
@@ -47,6 +49,7 @@ export class CognitionV2Runtime {
         (!record || (record.visibility.scope === "private" && record.visibility.ownerActorId === identity.actorId)));
     } });
     this.memories = new FiveMemories(this.context, this.sink);
+    this.legacyBackfill = new LegacyCardBackfill(db, this.context, this.sink, legacyEvidenceResolver(this.context));
     this.attention = new GlobalAttentionWorkspace(this.context);
     this.ledger = new CardDeliveryLedger(this.context);
     this.deliveryRecovery = new DeliveryRecoveryWorker(this.ledger, tenants, async (tenant, actor) => {

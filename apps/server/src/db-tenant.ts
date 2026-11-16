@@ -13,6 +13,7 @@ function tenantPrefix(tenantId: string): string {
 }
 
 export class TenantScopedStore {
+  usesTransactionStore(store: Store): boolean { return this.store === store; }
   constructor(
     private readonly store: Store,
     private readonly resolver: (owner: string) => Promise<string>,

@@ -24,7 +24,7 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
       const response = await server!.app.request("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: u.email, password: "synthetic-long-password" }) });
       assert.equal(response.status, 200); return { id: u.id, token: (await response.json() as { token: string }).token };
     }
-    const alice = await user("alice", "tenant-a"), bob = await user("bob", "tenant-b");
+    const alice = await user("alice", "tenant-a"), bob = await user("bob", "tenant-b"), charlie = await user("charlie", "tenant-a");
     const request = (path: string, token: string, method = "GET", body?: unknown) => server!.app.request(`/api/cognition-v2${path}`, { method,
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
     assert.equal((await request("/snapshots", alice.token, "POST", { query: "x", maxTokens: 1000, maxRefs: 10, tenantId: "tenant-b" })).status, 422);
@@ -48,6 +48,22 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     const identity = await runtime.identity("tenant-a", alice.id, alice.id, "chat");
     const graph = new CognitiveGraphQuery(runtime.context); const sources = await graph.evidence(identity, cardId);
     assert.ok(sources?.refs.some((ref) => ref.kind === "thought" && ref.available));
+    const thoughtId = sources!.refs.find(ref => ref.kind === "thought")!.id;
+    await db.put(alice.id, "cognition-cards", { id: "legacy-http", tenantId: "tenant-a", owner: alice.id, turnId: "legacy-turn", thoughtId,
+      kind: "decision", title: "Propuesta antigua", body: "No es una aprobación", status: "consumed", scope: "tenant", confidence: 1,
+      evidence: { thoughtIds: [thoughtId], entityRefs: [] }, attention: { primary: thoughtId, matched: [] }, provenance: { source: "slow.llm", createdAt: "2026-11-15T00:00:00Z" }, version: 1 });
+    assert.equal((await request("/migration/legacy-cards/prepare", alice.token, "POST", { key: "bad", tenantId: "tenant-b" })).status, 422);
+    const previewResponse = await request("/migration/legacy-cards/prepare", alice.token, "POST", { key: "http-preview" });
+    assert.equal(previewResponse.status, 200);
+    const preview = await previewResponse.json() as { id: string; planDigest: string; ready: number }; assert.equal(preview.ready, 1);
+    const applyPath = `/migration/legacy-cards/${preview.id}/apply`;
+    assert.equal((await request(applyPath, bob.token, "POST", { planDigest: preview.planDigest })).status, 404);
+    assert.equal((await request(applyPath, charlie.token, "POST", { planDigest: preview.planDigest })).status, 404);
+    assert.equal((await request(applyPath, alice.token, "POST", { planDigest: preview.planDigest })).status, 202);
+    assert.equal((await request(applyPath, alice.token, "POST", { planDigest: preview.planDigest })).status, 202);
+    await runtime.projector.tick("tenant-a");
+    const imported = (await runtime.context.projections.latest("tenant-a", 100, alice.id)).find(card => card.id.startsWith("legacy:"));
+    assert.equal(imported?.epistemic, "unknown"); assert.equal(imported?.visibility.scope, "private"); assert.equal(imported?.lifecycle, "active");
     const journey = await request("/journey", alice.token); assert.equal(journey.status, 200);
     assert.deepEqual((await journey.json() as { phases: { state: string }[] }).phases.map((p) => p.state), ["queued", "running", "completed"]);
     assert.equal((await request(`/references/${encodeURIComponent(cardId)}`, alice.token, "DELETE")).status, 200);
