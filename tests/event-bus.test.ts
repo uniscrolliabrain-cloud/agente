@@ -119,15 +119,16 @@ test("todo SystemEventType tiene schema y un payload minimo valido", () => {
   }
 });
 
-test("EventBus.emit no lanza con ningun tipo del enum", async () => {
+test("EventBus.emit persiste todos los tipos del enum con payload valido", async () => {
   const db = await createStore();
   try {
     const bus = new EventBus(db);
     for (const type of SYSTEM_EVENT_TYPES) {
-      await bus.emit("owner", type, { kind: "system", id: "test" }, minimalPayload[type]);
+      const receipt = await bus.emit("owner", type, { kind: "system", id: "test" }, minimalPayload[type] ?? {});
+      assert.equal(receipt.persisted, true, `no se persistio ${type}: ${receipt.error ?? "sin error"}`);
     }
     const stored = await db.list("owner", "system-events");
-    assert.ok(stored.length >= 1, "el bus no escribio nada");
+    assert.equal(stored.length, SYSTEM_EVENT_TYPES.length);
   } finally {
     await db.close();
   }
