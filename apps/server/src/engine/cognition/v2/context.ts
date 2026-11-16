@@ -13,6 +13,7 @@ export interface ContextSnapshotV2 {
   segments: { refId: string; text: string; trust: "untrusted_data"; tokens: number }[];
   watermark: string; usedTokens: number; maxTokens: number; createdAt: string;
   expiresAt: string; digest: string; truncated: boolean;
+  queryDigest?: string;
 }
 export class ContextServingFacade {
   constructor(readonly projections: CognitiveProjectionStore, readonly policy: CognitivePolicy,
@@ -88,7 +89,7 @@ export class ContextServingFacade {
     // Revalidation catches a membership/policy change during preparation.
     await this.assertAuthorized(identity);
     const [counter] = await this.projections.db.rawQuery<{ sequence: string }>(`SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer='cognitive-v2.1'`, [identity.tenantId]);
-    const content = { identity, refs, segments, watermark: String(counter?.sequence ?? "0"), usedTokens, maxTokens: options.maxTokens };
+    const content = { identity, refs, segments, watermark: String(counter?.sequence ?? "0"), usedTokens, maxTokens: options.maxTokens, queryDigest: digest(options.query) };
     const snapshot: ContextSnapshotV2 = { schemaVersion: "2.0", id: randomUUID(), ...content,
       createdAt: new Date(this.clock()).toISOString(), expiresAt: new Date(this.clock() + 60000).toISOString(),
       digest: digest(content), truncated: records.length > Math.min(200, options.maxRefs * 8) || eligible.length > refs.length };
@@ -98,8 +99,8 @@ export class ContextServingFacade {
   async prepared(identity: CognitiveIdentity, query: string, maxTokens = 4000, maxRefs = 10): Promise<ContextSnapshotV2> {
     await this.assertAuthorized(identity);
     const candidates = await this.projections.db.rawQuery<{ id: string }>(`SELECT id FROM cognition_v2_snapshots WHERE tenant=$1 AND actor=$2
-      AND data->'identity'->>'policyRevision'=$3 AND (data->>'expiresAt')::timestamptz>$4
-      ORDER BY data->>'createdAt' DESC LIMIT 5`, [identity.tenantId, identity.actorId, identity.policyRevision, new Date(this.clock()).toISOString()]);
+      AND data->'identity'->>'policyRevision'=$3 AND (data->>'expiresAt')::timestamptz>$4 AND data->>'queryDigest'=$5
+      ORDER BY data->>'createdAt' DESC LIMIT 5`, [identity.tenantId, identity.actorId, identity.policyRevision, new Date(this.clock()).toISOString(), digest(query)]);
     const [cursor] = await this.projections.db.rawQuery<{ sequence: string }>(`SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer='cognitive-v2.1'`, [identity.tenantId]);
     for (const candidate of candidates) {
       const snapshot = await this.readSnapshot(identity, candidate.id);
