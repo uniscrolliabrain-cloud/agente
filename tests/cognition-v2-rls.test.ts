@@ -31,7 +31,7 @@ test("C01 restricted Postgres role: RLS rejects cross-tenant reads and writes wi
       await db.rawQuery(`SET LOCAL ROLE ${role}`);
       assert.equal((await db.rawQuery("SELECT * FROM cognition_v2_revocations")).length, 0, "transaction-local scope must not leak");
     });
-    const policies = await db.rawQuery<{ tablename: string }>("SELECT tablename FROM pg_policies WHERE policyname='cognition_tenant_isolation'");
+    const policies = await db.rawQuery<{ tablename: string }>("SELECT tablename FROM pg_policies WHERE policyname='cognition_tenant_isolation' AND tablename=ANY($1::text[])", [cognitionTables]);
     assert.deepEqual(policies.map((p) => p.tablename).sort(), [...cognitionTables].sort());
   } finally {
     await db.rawQuery(`DROP OWNED BY ${role}`).catch(() => {});

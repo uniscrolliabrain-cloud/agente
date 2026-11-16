@@ -7,10 +7,15 @@ export const cognitionTables = [
   "revocations", "deliveries", "delivery_recoveries", "snapshots",
 ].map((name) => `cognition_v2_${name}`);
 
-export async function installCognitionRls(db: Store): Promise<void> {
+export const voiceTables = ["consents", "locks", "sessions", "turns", "receipts"].map((name) => `cognition_v2_voice_${name}`);
+export const cyberTables = ["cursors", "inbox"].map((name) => `cognition_v2_cyber_${name}`);
+
+/** Optional modules must be installed explicitly before including them in this migration. */
+export async function installCognitionRls(db: Store, modules: { voice?: boolean; cyber?: boolean } = {}): Promise<void> {
   if (db.backend !== "postgres") throw Error("COGNITION_RLS_REQUIRES_POSTGRES");
+  const tables = [...cognitionTables, ...(modules.voice ? voiceTables : []), ...(modules.cyber ? cyberTables : [])];
   await db.transaction(async () => {
-    for (const table of cognitionTables) {
+    for (const table of tables) {
       // Identifiers come exclusively from the static schema inventory above.
       await db.rawQuery(`ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY`);
       await db.rawQuery(`ALTER TABLE ${table} FORCE ROW LEVEL SECURITY`);
