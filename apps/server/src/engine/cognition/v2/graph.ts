@@ -1,5 +1,6 @@
 import type { CognitiveIdentity } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import type { ContextServingFacade } from "./context.ts";
+import { RuntimeOutcomeProjector } from "./runtime-outcome.ts";
 /** Bounded read projection. Relations never trigger business execution. */
 export class CognitiveGraphQuery {
   constructor(readonly context: ContextServingFacade) {}
@@ -41,6 +42,8 @@ export class CognitiveGraphQuery {
       } else if (ref.kind === "event") {
         const found = await this.context.projections.db.rawQuery(`SELECT event_id FROM cognition_v2_events WHERE tenant=$1 AND event_id=$2 AND event->>'owner'=$3`, [identity.tenantId, ref.id, identity.actorId]);
         if (found.length) refs.push({ ...ref, available: true });
+      } else if (ref.kind === "receipt" && record.runtimeOutcome && await new RuntimeOutcomeProjector(this.context.projections.db).validates(record)) {
+        refs.push({ ...ref, available: true });
       }
     }
     await this.context.assertAuthorized(identity);

@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { cognitiveRefSchema } from "./cognitive-reference.ts";
 import { cardOntologyAnnotationSchema, cardOntologyProposalSchema } from "./card-ontology.ts";
+import { runtimeOutcomeSchema } from "./runtime-outcome.ts";
 export { cognitiveRefSchema } from "./cognitive-reference.ts";
 const id = z.string().min(1).max(200);
 const time = z.iso.datetime({ offset: true });
@@ -39,6 +40,7 @@ export const cognitiveRecordSchema = z.strictObject({
   visibility: cognitiveVisibilitySchema, signals: attentionSignalsSchema,
   classification: classificationV2Schema.optional(),
   ontology: cardOntologyAnnotationSchema.optional(),
+  runtimeOutcome: runtimeOutcomeSchema.optional(),
   lifecycle: z.enum(["active", "superseded", "revoked", "expired"]),
   createdAt: time, expiresAt: time.optional(),
 }).superRefine((r, ctx) => {
@@ -52,6 +54,12 @@ export const cognitiveRecordSchema = z.strictObject({
     ctx.addIssue({ code: "custom", message: "verified fact requires receipt" });
   if (r.ontology) {
     if (r.kind !== "card") ctx.addIssue({ code: "custom", message: "card ontology only on cards" });
+  }
+  if (r.runtimeOutcome) {
+    const ref = r.runtimeOutcome.receiptRef;
+    if (r.kind !== "card" || r.epistemic !== "verified_fact" || r.ontology || ref.tenantId !== r.tenantId ||
+      !r.evidence.some(e => e.kind === ref.kind && e.id === ref.id && e.tenantId === ref.tenantId && e.revision === ref.revision))
+      ctx.addIssue({code:"custom",message:"runtime outcome requires its own verified receipt and no semantic proposal"});
   }
   for (const proposal of [...(r.ontology?.assessments.map(a => a.proposal) ?? []), ...(r.classification?.ontology ? [r.classification.ontology] : [])]) {
       for (const ref of [...proposal.evidenceRefs, ...(proposal.targetGoalRef ? [proposal.targetGoalRef] : [])]) {

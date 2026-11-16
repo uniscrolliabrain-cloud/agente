@@ -36,11 +36,13 @@ export class FiveMemories {
   async semanticFromCard(identity: CognitiveIdentity, id: string) {
     const source = await this.context.resolve(identity, id);
     if (source?.kind !== "card") throw Error("CARD_REQUIRED");
-    // A semantic memory preserves reported/hypothetical content; it is not
-    // automatically promoted to verified knowledge by consolidation.
+    // A derived summary retains attribution, not an inherited verification
+    // certificate. Hypotheses remain hypotheses; verified source status stays
+    // in the quoted metadata and the authorized parent reference.
     return this.propose(identity, "semantic", digest([id, source.revision, "semantic"]),
       JSON.stringify({ text: source.body, epistemic: source.epistemic }),
-      [{ tenantId: identity.tenantId, kind: "card", id, revision: source.revision }], source.createdAt, undefined, source.epistemic);
+      [{ tenantId: identity.tenantId, kind: "card", id, revision: source.revision }], source.createdAt, undefined,
+      source.epistemic === "verified_fact" ? "reported_fact" : source.epistemic);
   }
   async autobiographical(identity: CognitiveIdentity, episodeIds: string[]) {
     if (!episodeIds.length || episodeIds.length > 20) throw Error("EPISODE_BUDGET");

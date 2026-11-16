@@ -51,6 +51,7 @@ export class SlowCognitionQueue {
       if (ref.kind !== "card" && ref.kind !== "memory") throw Error("UNRESOLVABLE_EVIDENCE");
       if (!await this.context.resolve(input.identity, ref.id, ref.revision)) throw Error("EVIDENCE_DENIED");
     }
+    await this.ontology.install();
     const id = digest([input.identity.tenantId, input.identity.actorId, key]);
     return this.db.transaction(async () => {
       const rows = await this.db.rawQuery(`INSERT INTO cognition_v2_slow_jobs(tenant,id,actor,data,state,next_at)
