@@ -42,3 +42,9 @@ M0/M1/M2 locales están construidos parcialmente; canary, migración de datos ex
 ## Migración RLS explícita (solo Postgres de pruebas por ahora)
 
 `installCognitionRls` en `engine/cognition/v2/rls.ts` se ejecuta después de instalar el esquema, con el propietario de las tablas. No concede roles, no borra datos ni desactiva políticas. El rol de aplicación debe ser NOSUPERUSER NOBYPASSRLS y tener solo DML. Cada operación debe usar una conexión transaccional con SET LOCAL app.tenant_id derivado de identidad autenticada. No usar SET de sesión con pools. La integración del runtime todavía falla cerrada en modo compartido: esta migración aislada no autoriza retirar ese bloqueo.
+
+## Ontología aprobada y recuperación
+
+El runtime V2 instala agntiapro.cards@1.0.0 con la decisión founder-20261116-card-ontology-001 del fundador. Las inferencias no pueden aprobar nuevas versiones. Un registro de revocación en el store autoritativo invalida su uso al proyectar/servir; el bootstrap no lo borra. No habilita JEV externo ni cambia el flag de tenants.
+
+El worker tiene tres bucles independientes: proyección, Slow y recuperación de entregas. Esta última es acotada, utiliza cursor/lease/fence persistentes y valida actor. Las reservas caducadas no reciben ACK automático. Auditoría: cognition_v2_delivery_recoveries. La migración RLS se ejecuta de nuevo explícitamente para incluir esta tabla antes de cualquier validación compartida.

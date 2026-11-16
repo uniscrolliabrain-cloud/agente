@@ -9,11 +9,11 @@ Ninguna fila PARTIAL/BLOCKED equivale a PASS de campaña. Las decisiones externa
 | C02 | PARTIAL_IMPLEMENTED | Journal/cursor/inbox/fence/retry/DLQ y tx reales probados; RLS de tablas pasa con rol restringido, falta integración compartida extremo a extremo y retención/rebuild operacional completo. |
 | C03 | PARTIAL_IMPLEMENTED | Proyección de referencias/revisiones, consultas autorizadas y revocación; consolidación semántica avanzada y escala no certificadas. |
 | C04 | PARTIAL_IMPLEMENTED | Cinco tipos funcionales y RAG real preparado, aislamiento/TTL/revocación; cobertura/recall a escala y políticas de retención pendientes. |
-| C05 | BLOCKED_DECISION | Registro y validaciones numéricas preparados; seis polaridades/diez dimensiones no aprobadas. Ninguna semántica inventada. |
+| C05 | APPROVED_DESIGN / PARTIAL_IMPLEMENTED | Fundador aprueba ocho familias, seis polos/tres pares y diez dimensiones. Contratos/registro/revocación/Slow/proyección/contexto integrados; faltan ablaciones, calidad y escala. |
 | C06 | PARTIAL_IMPLEMENTED | Scoring versionado, selección persistida y hints de resultados durables; calibración multiagente y todos los metacognitive rules pendientes. |
 | C07 | PARTIAL_IMPLEMENTED | Jobs/output/Thought/Card recuperables, cancelación y errores; proveedor real/costes y todas las etapas de extracción avanzada no certificadas. |
 | C08 | BLOCKED_EXTERNAL | Puerto y baseline rules operativos. Identidad/API/SDK JEV no verificados; no integración fingida. |
-| C09 | PARTIAL_IMPLEMENTED | Revisiones y ledger separados, lease/fence/render/ACK/restart/revoke probados; recuperación operacional y migración masiva pendientes. |
+| C09 | PARTIAL_IMPLEMENTED | Revisiones y ledger separados, lease/fence/render/ACK/restart/revoke probados; worker de recuperación y auditoría probado en Postgres; retención/operación prolongada y migración masiva pendientes. |
 | C10 | PARTIAL_IMPLEMENTED | Facade/snapshot/delta/refs y RAG fuera de Fast; tokenizer de proveedor, todos los collectors y pruebas a escala pendientes. |
 | C11 | PARTIAL_IMPLEMENTED | Fast/Slow sin fallback cruzado, admisión/cuotas/circuitos y cancelación independientes; herramientas de negocio V2 y métricas/coste reales pendientes. |
 | C12 | PARTIAL_IMPLEMENTED | Journey factual y SVG accesible en UI real comprobados; polling con cursor/reconexión/dedupe probado en Chromium; todos los estados de negocio y auditoría WCAG integral pendientes. |
@@ -21,4 +21,4 @@ Ninguna fila PARTIAL/BLOCKED equivale a PASS de campaña. Las decisiones externa
 | C14 | PARTIAL_IMPLEMENTED | SDK Python real, ACK añadido en hijo, bridge+relay+contexto probados; broker/PDP/delegaciones y jobs/piloto real no configurados. |
 | C15 | NO_GO | Revisión y pruebas locales aportan evidencia parcial. No aceptación integral, legacy retirado, founder GO, merge ni despliegue. |
 
-La pregunta de ontología y URL oficial de JEV se formuló sin detener módulos independientes. No se interpreta el silencio como aprobación.
+El fundador aprobó explícitamente la ontología propuesta el 16 de noviembre (decisión founder-20261116-card-ontology-001). La API oficial y sandbox de JEV continúan pendientes; su ausencia no se oculta con un adaptador ficticio.

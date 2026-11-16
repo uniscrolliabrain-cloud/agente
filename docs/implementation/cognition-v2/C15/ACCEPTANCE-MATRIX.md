@@ -15,7 +15,7 @@ PASS indica exclusivamente el escenario local descrito y sus fixtures ejecutados
 | A09 | PASS | Cinco memorias funcionales escritas/recuperadas, privacidad y TTL en fixtures |
 | A10 | PASS | Revocación transitiva, fuente RAG retirada/corregida y snapshot invalidado |
 | A11 | PARTIAL | Datos sin autoridad, límites y schemas; no evaluación adversarial con proveedor LLM real |
-| A12 | BLOCKED_DECISION | Ontología sin aprobación del fundador |
+| A12 | PARTIAL | Diseño 1.0.0 aprobado, contratos/registro/revocación/flujo probados; benchmarks/ablaciones pendientes |
 | A13 | PASS | Scoring finito/versionado separado de autorización, scope privado en tests |
 | A14 | PARTIAL | MetaHints de resultado persistidos por eventos; todos los rules/ACK de hints pendientes |
 | A15 | PASS | Fast responde con Slow ocupado; admisión y timeout separados |

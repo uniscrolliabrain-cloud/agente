@@ -24,6 +24,6 @@ Kernel autoritativo reutilizado; transacciones reales por conexión y contexto a
 - [Resultados y aceptación C15](C15/EXECUTION-REPORT.md).
 - [Revisión independiente](C15/SECURITY-REVIEW.md).
 - [Baseline C00](00-baseline/README.md).
-- [Ontología pendiente](C05/ADR-CHROMATIC-ONTOLOGY.md).
+- [Ontología aprobada e implementación](C05/IMPLEMENTATION-REPORT.md).
 
 La ruta V2 está apagada por defecto. `COGNITION_V2_TENANTS` es una allowlist explícita para pruebas controladas, no una migración automática de clientes. El modo `MULTI_TENANT_SHARED=true` falla cerrado para V2 hasta terminar el gate de RLS con rol restringido y la migración correspondiente. La aplicación no está lista para producción por pasar tests locales.

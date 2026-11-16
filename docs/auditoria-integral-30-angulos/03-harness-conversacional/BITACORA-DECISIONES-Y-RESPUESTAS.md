@@ -174,3 +174,10 @@
 - **Validación futura:** ablaciones tipos/evidencia → dimensiones → polos → JEV, corpus revisado, coste por tarea exitosa y privacidad/autoridad. Ninguna mejora cuantitativa garantizada.
 - **Límite:** la API/capacidades del proveedor JEV no se presuponen. La propuesta no es aprobación ni implementación. C05 continúa BLOCKED_DECISION.
 - **Continuidad:** edición C09 de recuperación de entregas en curso; no incluida en este commit documental ni presentada como probada.
+
+## R-20261116-005 — Aprobación e implementación de ontología
+- **Instrucción:** «Vale aplica eso y sigue ejecutando en autonomo».
+- **Decisión:** se aprueba el diseño presentado en 83ae5a0; detalle/digest en [aprobación](../../implementation/cognition-v2/C05/APPROVAL-20261116.md). No equivale a certificación, autorización de proveedores ni merge/deploy.
+- **Código:** C05 fab6299, C09 b323ab3/40b12dc, caché C10 393b990. Contratos tipados, registro/revocación, Slow/proyección/contexto; recuperación auditable sin ACK inventado y caché por consulta.
+- **Pruebas:** suite V2 con Postgres 37/37 PASS; tanda nativa 5/5; integración 6/6. Gate completo nuevo pendiente.
+- **Continuidad:** [W3](../../implementation/cognition-v2/W3/REPORT.md). C05 ya no está BLOCKED_DECISION; permanece PARTIAL_IMPLEMENTED por evaluación e integración restantes. JEV externo continúa sin verificar.
