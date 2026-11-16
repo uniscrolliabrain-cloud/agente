@@ -20,6 +20,12 @@ const pause = (signal: AbortSignal, ms: number) => new Promise<void>((resolve) =
  * It does not assert an empty backlog or that external providers are operational. */
 export async function cognitionWorkerReady(db: Pick<Store, "rawQuery">, tenants: ReadonlySet<string>, now = Date.now()): Promise<boolean> {
   if (!tenants.size) return false;
+  // Projectors record retry/dead-letter internally rather than throwing; a tick
+  // alone is not evidence that those durable effects succeeded.
+  const blocked = await db.rawQuery(`SELECT tenant FROM cognition_v2_inbox
+    WHERE tenant=ANY($1::text[]) AND consumer=ANY($2::text[]) AND status IN ('retry','dead_letter') LIMIT 1`,
+    [[...tenants], ["cognitive-v2.1", "kernel-receipts-v2.1"]]);
+  if (blocked.length) return false;
   const rows = await db.rawQuery<{ tenant: string; consumer: string }>(
     `SELECT tenant,consumer FROM cognition_v2_cursors WHERE tenant=ANY($1::text[]) AND consumer LIKE $2 AND lease_until>$3`,
     [[...tenants], `${HEALTH_PREFIX}%`, new Date(now).toISOString()]);
@@ -43,9 +49,12 @@ export async function runCognitionWorkers(runtime: CognitionV2Runtime, signal: A
       try {
         await runInTenantScope({ tenantId, actorId: "cognition-worker" }, () => work[lane](tenantId));
         if (signal.aborted) break;
+        const now = Date.now();
+        await runtime.db.rawQuery(`DELETE FROM cognition_v2_cursors WHERE tenant=$1 AND consumer LIKE $2 AND lease_until<=$3`,
+          [tenantId, `${HEALTH_PREFIX}${lane}:%`, new Date(now).toISOString()]);
         await runtime.db.rawQuery(`INSERT INTO cognition_v2_cursors(tenant,consumer,lease_until) VALUES($1,$2,$3)
           ON CONFLICT(tenant,consumer) DO UPDATE SET lease_until=EXCLUDED.lease_until`,
-        [tenantId, consumer, new Date(Date.now() + HEARTBEAT_MS).toISOString()]);
+        [tenantId, consumer, new Date(now + HEARTBEAT_MS).toISOString()]);
         failures = 0;
       } catch (error) {
         if (signal.aborted) break;

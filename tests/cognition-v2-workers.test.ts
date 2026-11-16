@@ -42,6 +42,12 @@ test("V2 worker retries failures per tenant, reports readiness and recovers dura
     try {
       await eventually(() => cognitionWorkerReady(db, tenants));
       assert.ok(failures >= 2, "a failed tenant is retried");
+      await db.rawQuery("INSERT INTO cognition_v2_inbox(tenant,consumer,event_id,status) VALUES($1,'kernel-receipts-v2.1','poison','retry')", ["worker-a"]);
+      assert.equal(await cognitionWorkerReady(db, tenants), false, "durable retry is not a healthy tick");
+      await db.rawQuery("UPDATE cognition_v2_inbox SET status='dead_letter' WHERE tenant=$1 AND event_id='poison'", ["worker-a"]);
+      assert.equal(await cognitionWorkerReady(db, tenants), false, "dead letters require intervention");
+      await db.rawQuery("UPDATE cognition_v2_inbox SET status='committed' WHERE tenant=$1 AND event_id='poison'", ["worker-a"]);
+      assert.equal(await cognitionWorkerReady(db, tenants), true);
       assert.equal(await cognitionWorkerReady(db, tenants, Date.now() + 100_000), false, "stale heartbeats fail closed");
     } finally { first.abort(); await running; }
     assert.equal(await cognitionWorkerReady(db, tenants), false, "clean shutdown removes this instance's heartbeats");

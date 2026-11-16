@@ -10,4 +10,6 @@ Pruebas: `node --import tsx --import ./tests/setup.ts --test --test-timeout=3000
 
 Antes de añadir el tercer caso focal, la suite `tests/cognition-v2-*.test.ts` sobre este patchset con Postgres 17.9 en loopback y base nueva: 64/64 PASS, 0 omitidos. Los seis casos nativos anteriormente omitidos incluyen concurrencia y RLS con rol restringido. El caso adicional pasó posteriormente por separado. El servidor es temporal y su cluster vive bajo `artifacts/`, no contiene datos reales. RLS global compartida sigue bloqueada; la prueba aislada no certifica HTTP, voz o workers completos con rol restringido.
 
+Seguimiento posterior: health comprueba también inbox `retry`/`dead_letter` de los proyectores cognitivo y de auditoría, y elimina heartbeats caducados; prueba focal worker con Postgres 3/3 PASS y typecheck raíz PASS. Esto no certifica backlog completo, trabajos Slow ni indisponibilidad externa.
+
 No se ha validado supervisión en una plataforma de producción ni la recuperación tras muerte del sistema operativo. Mantener NO_GO de C15. No se ha ejecutado el gate general en este patchset.
