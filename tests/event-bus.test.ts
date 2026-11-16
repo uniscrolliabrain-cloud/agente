@@ -9,8 +9,12 @@ import { createStore } from "../apps/server/src/db.ts";
 import { EventBus } from "../apps/server/src/engine/events/index.ts";
 import { SYSTEM_EVENT_TYPES } from "../apps/server/src/engine/events/types.ts";
 import { payloadSchemas } from "../apps/server/src/engine/events/schemas.ts";
+import { record } from "./fixtures/cognition-v2/record.ts";
 
 const minimalPayload: Record<string, Record<string, unknown>> = {
+  "cognition.v2.record.proposed": { record: record() },
+  "cognition.v2.source.revoked": { sourceId: "source" },
+  "cognition.v2.slow.status": { jobId: "job", state: "queued", receiptId: "receipt" },
   "task.created": { title: "T", kind: "agent" },
   "task.status_changed": { from: "queued", to: "running" },
   "task.completed": { title: "T" },
