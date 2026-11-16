@@ -8,7 +8,7 @@ import type { SystemEventType } from "./types.ts";
  * El Record obliga a cubrir TODOS los SystemEventType: si anades uno
  * al enum y no aqui, TypeScript no compila. Eso es intencional.
  *
- * La validacion vive en el emisor (EventBus.emit), nunca en el consumidor.
+ * El emisor valida; los consumidores que acreditan recibos revalidan su frontera.
  */
 
 const base = {
@@ -22,10 +22,11 @@ const base = {
   roleId: z.string().max(200).optional(),
 };
 
+export const slowStatusPayloadSchema = z.strictObject({ jobId: z.string().min(1).max(200), state: z.enum(["queued", "running", "completed", "failed", "cancelled"]), receiptId: z.string().min(1).max(200) });
 export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
   "cognition.v2.record.proposed": z.strictObject({ record: cognitiveRecordSchema }),
   "cognition.v2.source.revoked": z.strictObject({ sourceId: z.string().min(1).max(200) }),
-  "cognition.v2.slow.status": z.strictObject({ jobId: z.string().min(1).max(200), state: z.enum(["queued", "running", "completed", "failed", "cancelled"]), receiptId: z.string().min(1).max(200) }),
+  "cognition.v2.slow.status": slowStatusPayloadSchema,
   "task.created": z.object({ ...base, title: z.string().max(200), kind: z.string().max(40) }),
   "task.status_changed": z.object({ ...base, from: z.string().max(40), to: z.string().max(40) }),
   "task.completed": z.object({ ...base, title: z.string().max(200), result: z.string().max(2000).optional() }),

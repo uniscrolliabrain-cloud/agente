@@ -2,6 +2,7 @@ import { cognitiveRecordSchema, cognitiveEdgeSchema } from "../../../../../../pa
 import type { SystemEvent } from "../../events/types.ts";
 import { CognitiveProjectionStore, DurableProjector, digest } from "./storage.ts";
 import { CardOntologyService } from "../chromatic/card-ontology.ts";
+import { RuntimeOutcomeProjector } from "./runtime-outcome.ts";
 export class CognitiveProjector {
   readonly runner: DurableProjector;
   constructor(readonly store: CognitiveProjectionStore) { this.runner = new DurableProjector(store.db); }
@@ -9,7 +10,7 @@ export class CognitiveProjector {
     if (event.type === "cognition.v2.record.proposed") {
       const record = cognitiveRecordSchema.parse(event.payload.record);
       if (record.ontology) await new CardOntologyService(this.store.db).assertApproved();
-      if (record.tenantId !== event.tenantId || record.visibility.ownerActorId !== event.owner || record.epistemic === "verified_fact") throw Error("INVALID_PROPOSAL_AUTHORITY");
+      if (record.tenantId !== event.tenantId || record.visibility.ownerActorId !== event.owner || record.epistemic === "verified_fact" || record.runtimeOutcome) throw Error("INVALID_PROPOSAL_AUTHORITY");
       await this.store.apply(record, sequence);
       for (const evidence of record.evidence) {
         const edge = cognitiveEdgeSchema.parse({ id: digest([record.id, record.revision, evidence]), tenantId: record.tenantId,
@@ -17,7 +18,10 @@ export class CognitiveProjector {
           to: evidence, relation: "derived_from" });
         await this.store.db.rawQuery(`INSERT INTO cognition_v2_edges(tenant,id,data) VALUES($1,$2,$3::jsonb) ON CONFLICT DO NOTHING`, [record.tenantId, edge.id, JSON.stringify(edge)]);
       }
-    } else if (event.type === "cognition.v2.slow.status" && (event.payload.state === "completed" || event.payload.state === "failed")) {
+    } else if (event.type === "cognition.v2.slow.status" && (event.payload.state === "completed" || event.payload.state === "failed" || event.payload.state === "cancelled")) {
+      const outcome = await new RuntimeOutcomeProjector(this.store.db).fromSlowReceipt(event);
+      await this.store.apply(outcome, sequence);
+      if (event.payload.state === "cancelled") return;
       const [job] = await this.store.db.rawQuery<{ data: { identity: { actorId: string; policyRevision: string } } }>(
         `SELECT data FROM cognition_v2_slow_jobs WHERE tenant=$1 AND id=$2 AND actor=$3`, [event.tenantId, event.payload.jobId, event.owner]);
       if (!job) throw Error("SLOW_RECEIPT_NOT_FOUND");

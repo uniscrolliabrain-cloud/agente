@@ -18,6 +18,7 @@ import { CopilotInferenceProvider, type StreamingProvider } from "./provider.ts"
 import { DeliveryRecoveryWorker } from "./delivery-recovery.ts";
 import { CardOntologyService } from "../chromatic/card-ontology.ts";
 import { LegacyCardBackfill, legacyEvidenceResolver } from "./legacy-backfill.ts";
+import { RuntimeOutcomeProjector } from "./runtime-outcome.ts";
 export class CognitionV2Runtime {
   readonly sink: DurableEventSink;
   readonly context: ContextServingFacade;
@@ -40,7 +41,8 @@ export class CognitionV2Runtime {
       // Default V2 policy is private self-read. Sharing needs a separate PDP
       // policy, not a tenant label or a classifier's proposed access list.
       if (record) {
-        if (record.ontology) await this.ontology.assertApproved();
+        if (record.ontology || record.runtimeOutcome) await this.ontology.assertApproved();
+        if (record.runtimeOutcome && !await new RuntimeOutcomeProjector(db).validates(record)) return false;
         for (const ref of record.evidence) {
           if (ref.kind === "document" && (!this.preparedRag || !await this.preparedRag.valid(identity, ref.id))) return false;
         }
