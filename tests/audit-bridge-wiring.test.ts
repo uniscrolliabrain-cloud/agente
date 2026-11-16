@@ -10,4 +10,10 @@ test('bridge evidence requires an exported function and real import/call syntax 
  assert.equal(importsAndCalls('const {start}=await import("./wrong.ts"); start();',entry,target,symbol),false);
  assert.equal(importsAndCalls('const {start:boot}=await import("./bridge.ts"); boot();',entry,target,symbol),true);
  assert.equal(importsAndCalls('import {start as boot} from "./bridge.ts"; boot();',entry,target,symbol),true);
+ assert.equal(importsAndCalls('import {start} from "./bridge.ts"; if (false) start();',entry,target,symbol),false);
+ assert.equal(importsAndCalls('import {start} from "./bridge.ts"; function other(start) { start(); }',entry,target,symbol),false);
+ assert.equal(importsAndCalls('import {start} from "./bridge.ts"; function other() { return; start(); }',entry,target,symbol),false);
+ assert.equal(importsAndCalls('import {start} from "./bridge.ts"; for (;false;) start();',entry,target,symbol),false);
+ assert.equal(importsAndCalls('import {start} from "./bridge.ts"; class S { other(){start()} registerKernelListeners(){} }',entry,target,symbol,'registerKernelListeners'),false);
+ assert.equal(importsAndCalls('class S { async registerKernelListeners(){ const {start:boot}=await import("./bridge.ts"); boot(); } }',entry,target,symbol,'registerKernelListeners'),true);
 });

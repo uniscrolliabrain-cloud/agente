@@ -11,11 +11,11 @@ interface Bridge {
   to: string;
   files: string[];
   marks: string[];
-  wiring?: { symbol: string; entry: string };
+  wiring?: { symbol: string; entry: string; method: string };
 }
 
 const BRIDGES: Bridge[] = [
-  { id: "bus-to-kernel", from: "bus", to: "kernel", files: ["apps/server/src/kernel/subscribers/events.ts"], marks: [], wiring: { symbol: "startKernelEventSubscriber", entry: "apps/server/src/engine/service.ts" } },
+  { id: "bus-to-kernel", from: "bus", to: "kernel", files: ["apps/server/src/kernel/subscribers/events.ts"], marks: [], wiring: { symbol: "startKernelEventSubscriber", entry: "apps/server/src/engine/service.ts", method: "registerKernelListeners" } },
   { id: "kernel-to-bus", from: "kernel", to: "bus", files: ["apps/server/src/kernel/subscribers/bus-emitter.ts"], marks: ["KERNEL_SUBSCRIBER_BUS_EMITTER_V1"] },
   { id: "promoter-to-memory", from: "promoter", to: "memory", files: ["apps/server/src/kernel/graph/promote.ts"], marks: ["PROMOTER_WRITE_MEMORY_V1"] },
   { id: "promoter-to-graph", from: "promoter", to: "graph", files: ["apps/server/src/kernel/graph/promote.ts"], marks: ["PROMOTER_WRITE_GRAPH_V1"] },
@@ -26,9 +26,9 @@ const BRIDGES: Bridge[] = [
   { id: "state-changed-consumer", from: "bus", to: "state-log", files: ["apps/server/src/engine/events/consumers/state-changed.ts"], marks: ["STATE_CHANGED_CONSUMER_V1"] },
   { id: "state-denied-consumer", from: "bus", to: "state-log", files: ["apps/server/src/engine/events/consumers/state-denied.ts"], marks: ["STATE_DENIED_CONSUMER_V1"] },
   { id: "verification-disagreement", from: "bus", to: "approval", files: ["apps/server/src/engine/events/consumers/verification-disagreement.ts"], marks: ["VERIFICATION_DISAGREEMENT_CONSUMER_V1"] },
-  { id: "kernel-audit-consumer", from: "bus", to: "kernel-audit", files: ["apps/server/src/kernel/subscribers/audit-consumer.ts"], marks: [], wiring: { symbol: "startKernelAuditConsumer", entry: "apps/server/src/engine/service.ts" } },
-  { id: "kernel-metrics-consumer", from: "bus", to: "metrics", files: ["apps/server/src/kernel/subscribers/metrics-consumer.ts"], marks: [], wiring: { symbol: "startKernelMetricsConsumer", entry: "apps/server/src/engine/service.ts" } },
-  { id: "kernel-notifications-consumer", from: "bus", to: "notifications", files: ["apps/server/src/kernel/subscribers/notifications-consumer.ts"], marks: [], wiring: { symbol: "startKernelNotificationsConsumer", entry: "apps/server/src/engine/service.ts" } },
+  { id: "kernel-audit-consumer", from: "bus", to: "kernel-audit", files: ["apps/server/src/kernel/subscribers/audit-consumer.ts"], marks: [], wiring: { symbol: "startKernelAuditConsumer", entry: "apps/server/src/engine/service.ts", method: "registerKernelListeners" } },
+  { id: "kernel-metrics-consumer", from: "bus", to: "metrics", files: ["apps/server/src/kernel/subscribers/metrics-consumer.ts"], marks: [], wiring: { symbol: "startKernelMetricsConsumer", entry: "apps/server/src/engine/service.ts", method: "registerKernelListeners" } },
+  { id: "kernel-notifications-consumer", from: "bus", to: "notifications", files: ["apps/server/src/kernel/subscribers/notifications-consumer.ts"], marks: [], wiring: { symbol: "startKernelNotificationsConsumer", entry: "apps/server/src/engine/service.ts", method: "registerKernelListeners" } },
   { id: "meta-hints-store", from: "conversation", to: "meta-hints-db", files: ["apps/server/src/engine/feedback/meta-hints-store.ts"], marks: ["KERNEL_META_HINTS_DB_V1"] },
   { id: "personas-bootstrap", from: "index", to: "personas", files: ["apps/server/src/kernel/personas-bootstrap.ts"], marks: ["KERNEL_PERSONAS_BOOTSTRAP_REGISTRY_V1"] },
 ];
@@ -43,9 +43,9 @@ async function check(bridge: Bridge): Promise<{ ok: boolean; missing: string[]; 
     }
     const src = await readFile(file, "utf8");
     if (bridge.wiring) {
-      const { symbol, entry } = bridge.wiring;
+      const { symbol, entry, method } = bridge.wiring;
       if (!hasExportedFunction(src, symbol)) markMissing.push(`${file}::export ${symbol}`);
-      if (!existsSync(entry) || !importsAndCalls(await readFile(entry, "utf8"), entry, file, symbol)) markMissing.push(`${entry}::import and call ${symbol}`);
+      if (!existsSync(entry) || !importsAndCalls(await readFile(entry, "utf8"), entry, file, symbol, method)) markMissing.push(`${entry}::import and call ${symbol}`);
     }
     for (const mark of bridge.marks) {
       if (!src.includes(mark)) markMissing.push(`${file}::${mark}`);
