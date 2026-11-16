@@ -54,3 +54,21 @@ test('C09 worker persists scan progress across restart, isolates actors and inva
   assert.equal(await restarted.tick('A',1),0);
  }finally{await db.close();}
 });
+const postgres=process.env.COGNITION_TEST_POSTGRES_URL;
+test('C09 native Postgres workers reconcile one expired lease once under concurrent connections',{skip:!postgres},async()=>{
+ const db=await createStore({databaseUrl:postgres}),other=await createStore({databaseUrl:postgres});
+ const tenant=`recovery-${crypto.randomUUID()}`;let now=Date.parse('2026-11-16T00:00:00Z');
+ try{
+  await installCognitionV2(db);const identity={...alice,tenantId:tenant};
+  const store=new CognitiveProjectionStore(db);await store.apply(record(tenant,'alice'),'1');
+  const policy={authorize:async()=>true};
+  const context=new ContextServingFacade(store,policy,()=>now),ledger=new CardDeliveryLedger(context,()=>now);
+  const rival=new CardDeliveryLedger(new ContextServingFacade(new CognitiveProjectionStore(other),policy,()=>now),()=>now);
+  const snapshot=await context.getSnapshot(identity,{query:'',maxTokens:4000,maxRefs:10});
+  const lease=(await ledger.reserve(identity,snapshot.id,'card-1',1000))!;now+=1001;
+  const counts=await Promise.all([ledger.recover(identity),rival.recover(identity)]);
+  assert.equal(counts.reduce((a,b)=>a+b,0),1);
+  const [audit]=await db.rawQuery<{count:string}>('SELECT count(*) AS count FROM cognition_v2_delivery_recoveries WHERE tenant=$1',[tenant]);
+  assert.equal(Number(audit.count),1);assert.equal(await ledger.ack(identity,lease.id,lease.fence,'stale'),false);
+ }finally{await db.close();await other.close();}
+});
