@@ -59,3 +59,7 @@ Código `55eb692`: `pnpm test:cognition-v2` con Postgres sintético: **30 tests 
 ## W3 — Diseño aprobado y código integrado
 
 El fundador aprobó la propuesta de ontologías del commit 83ae5a0. C05 ya no está BLOCKED_DECISION: véanse decisión e informe C05. Gate completo 11b3ebd: 827 tests / 810 PASS / 0 FAIL / 0 cancelados / 12 skip / 5 TODO; 8/10 pasos, únicamente los bridges/contratos heredados fallan. Suite V2: 37/37 PASS con Postgres. Evidencia JSON W3 conservada. C15 mantiene NO_GO por la integración/certificación restantes, sin atribuir la falta de aprobación a la ontología.
+
+## W4 — Backfill gobernado
+
+Gate completo af3b16d: 832 tests / 815 PASS / 0 FAIL / 0 cancelados / 12 skip / 5 TODO; 8/10 pasos. Solo bridges/contratos heredados fallan. Se conserva evidencia JSON W4. Planes de importación propios, cambios/revocaciones, rollback y concurrencia nativa están probados; no se ejecutó el cutover de empresas reales.

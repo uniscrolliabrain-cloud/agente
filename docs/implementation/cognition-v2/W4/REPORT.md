@@ -7,3 +7,5 @@ Código: LegacyCardBackfill, resolvedor predeterminado autorizado, planes/receip
 Validación local: suite V2 42/42 PASS, foco nativo/HTTP 8/8 PASS, foco de integridad/versionado 5/5 PASS; typecheck raíz exit 0 tras completar enlaces locales de dependencias del worktree. El primer typecheck del worktree falló por ausencia de node_modules de apps/web y apps/worker; no era un error de tipos de producto. No se instalaron ni modificaron dependencias de la rama que ejecutaba W3.
 
 No se borran fuentes, no se aplica a clientes reales ni se hace push/merge/deploy. Pendiente gate completo tras integrar este patchset. La resolución de ontología ya está aprobada; no se usa como motivo para detener migraciones independientes.
+
+Gate completo ejecutado tras integración en af3b16d: **832 tests, 815 PASS, 0 FAIL/cancelados, 12 skip y 5 TODO**, 826.5 s total. **8/10** controles: siguen fallando bridges 12/16 y los mismos seis contratos huérfanos; typecheck raíz/worker y cinco auditorías pasan. C15 conserva NO_GO. No se atribuye esta tanda a patchsets posteriores.
