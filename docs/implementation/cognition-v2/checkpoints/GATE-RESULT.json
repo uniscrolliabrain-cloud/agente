@@ -1,0 +1,103 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-16T13:35:49.608Z",
+  "finishedAt": "2026-11-16T13:47:05.202Z",
+  "durationMs": 675594,
+  "git": {
+    "branch": "feat/cognition-v2-runtime-C00-C15",
+    "head": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "dirty": 0
+  },
+  "ok": false,
+  "failed": [
+    "audit:bridges",
+    "audit:contracts"
+  ],
+  "steps": [
+    {
+      "name": "typecheck",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 19339,
+      "counters": {}
+    },
+    {
+      "name": "typecheck:worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 2675,
+      "counters": {}
+    },
+    {
+      "name": "test",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 639331,
+      "counters": {}
+    },
+    {
+      "name": "audit:layers",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 331,
+      "counters": {
+        "violaciones": 0
+      }
+    },
+    {
+      "name": "audit:bridges",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 129,
+      "counters": {
+        "wired": 12,
+        "total": 16
+      }
+    },
+    {
+      "name": "audit:console",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 238,
+      "counters": {
+        "ocurrencias": 25,
+        "ficheros": 280
+      }
+    },
+    {
+      "name": "audit:anchors",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 118,
+      "counters": {}
+    },
+    {
+      "name": "audit:contracts",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 11827,
+      "counters": {}
+    },
+    {
+      "name": "audit:idempotency",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 856,
+      "counters": {
+        "duplicadas": 183,
+        "huerfanas": 0,
+        "repetidas": 156
+      }
+    },
+    {
+      "name": "audit:tenant-default",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 719,
+      "counters": {
+        "permitidas": 158,
+        "prohibidas": 0
+      }
+    }
+  ]
+}

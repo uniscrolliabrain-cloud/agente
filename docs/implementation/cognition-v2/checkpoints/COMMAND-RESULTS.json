@@ -1,0 +1,113 @@
+[
+  {
+    "command": "pnpm typecheck",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 0,
+    "durationSeconds": 26.837,
+    "counts": {}
+  },
+  {
+    "command": "pnpm secrets:check",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 0,
+    "durationSeconds": 1.198,
+    "counts": {}
+  },
+  {
+    "command": "pnpm audit:contracts",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 1,
+    "durationSeconds": 22.652,
+    "counts": {}
+  },
+  {
+    "command": "pnpm audit:idempotency",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 0,
+    "durationSeconds": 3.337,
+    "counts": {}
+  },
+  {
+    "command": "pnpm audit:bridges",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 1,
+    "durationSeconds": 2.4,
+    "counts": {}
+  },
+  {
+    "command": "pnpm test:browser",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 1,
+    "durationSeconds": 5.292,
+    "counts": {
+      "tests": 1,
+      "suites": 0,
+      "pass": 0,
+      "fail": 1,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  {
+    "command": "pnpm test:coverage",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 1,
+    "durationSeconds": 4.533,
+    "counts": {}
+  },
+  {
+    "command": "pnpm verify:slice",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 0,
+    "durationSeconds": 74.477,
+    "counts": {
+      "tests": 7,
+      "suites": 0,
+      "pass": 7,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    }
+  },
+  {
+    "command": "pnpm test",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 0,
+    "durationSeconds": 663.972,
+    "counts": {
+      "tests": 835,
+      "suites": 13,
+      "pass": 818,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 12,
+      "todo": 5
+    }
+  },
+  {
+    "command": "pnpm gate",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "exitCode": 1,
+    "durationSeconds": 677.818,
+    "counts": {
+      "tests": 835,
+      "suites": 13,
+      "pass": 818,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 12,
+      "todo": 5
+    }
+  },
+  {
+    "command": "pnpm release:verify",
+    "auditedHead": "640a55db01fc9f934bf927dec53e97035f0455f3",
+    "status": "BLOCKED_NOT_EXECUTED",
+    "exitCode": null,
+    "durationSeconds": null,
+    "counts": {},
+    "reason": "Requires an authorized running release target. No production target contacted or deployment performed; local authenticated startup covered by verify:slice."
+  }
+]
