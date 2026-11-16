@@ -77,4 +77,6 @@ export const cognitionCardSchema = z
 export type CognitionCardKind = z.infer<typeof cognitionCardKindSchema>;
 export type CognitionCardStatus = z.infer<typeof cognitionCardStatusSchema>;
 export type CognitionCardScope = z.infer<typeof cognitionCardScopeSchema>;
-export type CognitionCard = z.infer<typeof cognitionCardSchema>;
+export type CognitionCard = Omit<z.infer<typeof cognitionCardSchema>, "scope" | "status"> & {
+  scope: CognitionCardScope; status: CognitionCardStatus;
+};

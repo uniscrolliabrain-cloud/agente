@@ -42,7 +42,9 @@ export const viewEnvelopeSchema = z.object({
   generatedAt: z.iso.datetime({ offset: true }),
 });
 
-export type ViewEnvelope = z.infer<typeof viewEnvelopeSchema>;
+export type ViewEnvelope = Omit<z.infer<typeof viewEnvelopeSchema>, "provenance"> & {
+  provenance: ViewProvenance[];
+};
 export type ViewProvenance = z.infer<typeof viewProvenanceSchema>;
 
 export function parseViewEnvelope(raw: unknown): ViewEnvelope | null {

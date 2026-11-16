@@ -1,0 +1,7 @@
+# C15 W10 — Gates estáticos y cobertura ejecutable
+
+La auditoría bridges reconoce los cuatro consumidores V2 mediante AST: función exportada, import del módulo correcto y llamada efectiva en service.ts. Comentarios, nombres de marcadores y strings no satisfacen la comprobación. Los otros doce bridges conservan su criterio anterior: este gate estático no demuestra su comportamiento E2E. Resultado focal: 16/16 wired; pruebas de detector incluyen import incorrecto y ausencia de llamada.
+
+Los seis aliases públicos antes huérfanos se componen explícitamente en sus contratos agregados ViewSpec, ViewEnvelope y CognitionCard. Mantienen sus formas runtime y sus exports; ahora el vínculo contractual entre partes y agregado es explícito y se comprueba por TypeScript. No se añaden consumidores ficticios ni excepciones PENDING. audit:contracts: 382 contratos, 307 código, 65 módulo, 1 harness, 9 PENDING preexistentes, 0 allowlist, 0 huérfanos. Esto no implementa por sí mismo funcionalidad pendiente.
+
+Se instala c8 12 como dependencia de desarrollo del workspace raíz, restaurando el ejecutable requerido por test:coverage. El intento inicial sin -w fue rechazado por la protección de raíz de pnpm; la instalación explícita -Dw completó. Cobertura medida, gate general y browser se registran por separado tras su ejecución, sin extrapolar resultados de focos al gate completo. Sin merge ni despliegue.

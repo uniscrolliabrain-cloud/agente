@@ -100,7 +100,9 @@ export type ViewKind = z.infer<typeof viewKindSchema>;
 export type ColumnSpec = z.infer<typeof columnSpecSchema>;
 export type ActionSpec = z.infer<typeof actionSpecSchema>;
 export type DataSourceSpec = z.infer<typeof dataSourceSpecSchema>;
-export type ViewSpec = z.infer<typeof viewSpecSchema>;
+export type ViewSpec = Omit<z.infer<typeof viewSpecSchema>, "columns" | "actions" | "dataSource"> & {
+  columns?: ColumnSpec[]; actions?: ActionSpec[]; dataSource?: DataSourceSpec[];
+};
 export type FormFieldSpec = z.infer<typeof formFieldSpecSchema>;
 export type FormSpec = z.infer<typeof formSpecSchema>;
 export type WorkspaceSection = z.infer<typeof workspaceSectionSchema>;
