@@ -17,7 +17,7 @@
     "dev:demo": "tsx apps/server/src/demo/entry.ts",
     "test": "tsx --import ./tests/setup.ts --test --test-timeout=30000 --test-force-exit \"tests/**/*.test.ts\"",
     "test:hanging": "tsx --import ./tests/setup.ts --test --test-timeout=10000 \"tests/**/*.test.ts\"",
-    "test:coverage": "c8 --reporter=text --reporter=lcov pnpm test",
+    "test:coverage": "c8 --reporter=text --reporter=lcov --reporter=json-summary pnpm test",
     "test:browser": "node --experimental-strip-types --test apps/worker/tests/lifecycle.test.ts",
     "typecheck": "tsc --noEmit && npm --prefix apps/worker run typecheck",
     "lint": "biome check .",
