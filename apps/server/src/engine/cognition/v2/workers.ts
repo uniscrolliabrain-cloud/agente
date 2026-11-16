@@ -19,5 +19,5 @@ export async function runCognitionWorkers(runtime: CognitionV2Runtime, signal: A
     }
   };
   await Promise.all([loop((tenant) => runtime.projector.tick(tenant)), loop((tenant) => runtime.slow.tick(tenant, signal)),
-    loop((tenant) => runtime.deliveryRecovery.tick(tenant))]);
+    loop((tenant) => runtime.deliveryRecovery.tick(tenant)), loop((tenant) => runtime.kernelReceipts.tick(tenant))]);
 }

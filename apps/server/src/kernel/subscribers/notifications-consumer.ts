@@ -26,24 +26,29 @@ const NOTIFY: Record<string, (e: SystemEvent) => { title: string; body: string }
   },
 };
 
-export function startKernelNotificationsConsumer(
-  db: Store,
-  _owners: string[] = [],
-): { stop(): void } {
-  const handle = globalSubscribers.subscribeAll((event: SystemEvent) => {
+export async function projectKernelNotificationEvent(db: Pick<Store, "insertIfAbsent">, event: SystemEvent): Promise<void> {
     const builder = NOTIFY[event.type];
     if (!builder) return;
     const content = builder(event);
     if (!content) return;
-    void db
+    await db
       .insertIfAbsent(event.owner, "notifications", {
         id: `kn-${event.id}`,
         title: content.title.slice(0, 200),
         body: content.body.slice(0, 2000),
         createdAt: event.emittedAt,
         read: false,
-      })
-      .catch(() => {});
+      });
+}
+
+export function startKernelNotificationsConsumer(
+  db: Store,
+  _owners: string[] = [],
+  durableTenants: ReadonlySet<string> = new Set(),
+): { stop(): void } {
+  const handle = globalSubscribers.subscribeAll((event: SystemEvent) => {
+    if (durableTenants.has(event.tenantId)) return;
+    void projectKernelNotificationEvent(db, event).catch(() => {});
   });
   return {
     stop() {

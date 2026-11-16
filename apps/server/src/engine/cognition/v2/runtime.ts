@@ -1,3 +1,4 @@
+import { KernelReceiptProjector } from "./kernel-receipts.ts";
 import { publicTextEvent } from "./public-text-event.ts";
 import { randomUUID } from "node:crypto";
 import { Observable } from "rxjs";
@@ -28,6 +29,7 @@ export class CognitionV2Runtime {
   readonly ontology: CardOntologyService;
   readonly legacyBackfill: LegacyCardBackfill;
   readonly projector: CognitiveProjector;
+  readonly kernelReceipts: KernelReceiptProjector;
   readonly slow: SlowCognitionQueue;
   readonly fast: InferenceLane;
   readonly memories: FiveMemories;
@@ -60,6 +62,7 @@ export class CognitionV2Runtime {
       catch (error) { if (error instanceof Error && error.message === "DENIED") return null; throw error; }
     });
     this.projector = new CognitiveProjector(this.context.projections);
+    this.kernelReceipts = new KernelReceiptProjector(db, records, tenants);
     this.slow = new SlowCognitionQueue(db, this.sink, this.context, { infer: (input, signal) => provider.infer ? provider.infer(input, signal) : Promise.reject(Error("SLOW_PROVIDER_UNCONFIGURED")) }, classifier);
     this.fast = new InferenceLane(db, "fast", 4, 15000, 1000);
   }

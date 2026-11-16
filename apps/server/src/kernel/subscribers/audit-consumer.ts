@@ -13,13 +13,9 @@ const AUDITED = new Set([
   "state.transition_denied",
 ]);
 
-export function startKernelAuditConsumer(
-  db: Store,
-  _owners: string[] = [],
-): { stop(): void } {
-  const handle = globalSubscribers.subscribeAll((event: SystemEvent) => {
-    if (!AUDITED.has(event.type)) return;
-    void db
+export async function projectKernelAuditEvent(db: Pick<Store, "put">, event: SystemEvent): Promise<void> {
+  if (!AUDITED.has(event.type)) return;
+  await db
       .put(event.tenantId, "kernel-audit-index", {
         id: `ka-${event.id}`,
         tenantId: event.tenantId,
@@ -28,8 +24,18 @@ export function startKernelAuditConsumer(
         payload: event.payload,
         emittedAt: event.emittedAt,
         correlationId: event.correlationId ?? null,
-      })
-      .catch(() => {});
+      });
+}
+
+export function startKernelAuditConsumer(
+  db: Store,
+  _owners: string[] = [],
+  durableTenants: ReadonlySet<string> = new Set(),
+): { stop(): void } {
+  const handle = globalSubscribers.subscribeAll((event: SystemEvent) => {
+    if (!AUDITED.has(event.type)) return;
+    if (durableTenants.has(event.tenantId)) return;
+    void projectKernelAuditEvent(db, event).catch(() => {});
   });
   return {
     stop() {

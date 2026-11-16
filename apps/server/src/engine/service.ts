@@ -783,8 +783,8 @@ export class AgentService {
       startKernelThoughtConsumer(this.db as Store),
       startKernelTurnConsumer(this.db as Store),
       startKernelMetricsConsumer(),
-      startKernelAuditConsumer(this.db as Store),
-      startKernelNotificationsConsumer(this.db as Store),
+      startKernelAuditConsumer(this.db as Store, [], this.cognitionV2?.tenants),
+      startKernelNotificationsConsumer(this.db as Store, [], this.cognitionV2?.tenants),
     ];
     this.kernelListenersRegistered = true;
     return handles.length;
