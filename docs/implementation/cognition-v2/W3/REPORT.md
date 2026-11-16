@@ -16,7 +16,7 @@ La caché de ContextServing ahora está ligada al digest de la consulta. Antes p
 - Tanda nativa: **5/5 PASS**, incluida recuperación concurrente, conexiones transaccionales y RLS restringido de las 17 tablas.
 - Foco integración HTTP/ontología/Slow: **6/6 PASS**; foco ontología final **3/3 PASS**.
 - Typecheck raíz de la integración: exit 0.
-- Nuevo gate completo: pendiente de cierre; se conservará el resultado exacto, sin sustituirlo por el de la tanda previa.
+- Gate completo 11b3ebd: **827 tests, 810 PASS, 0 FAIL/cancelados, 12 skip, 5 TODO**; 737.9 s total. **8/10** controles; bridges 12/16 y seis contratos huérfanos heredados siguen fallando. Typecheck raíz/worker y cinco auditorías pasan. C15 ejecutado conserva NO_GO y ya no presenta C05 como decisión pendiente.
 
 ## Límites
 

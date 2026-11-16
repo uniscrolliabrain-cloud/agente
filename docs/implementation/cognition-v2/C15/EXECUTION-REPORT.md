@@ -55,3 +55,7 @@ Event Bus: el harness de emisión se reforzó para exigir `persisted=true` por c
 ## Verificación consolidada posterior
 
 Código `55eb692`: `pnpm test:cognition-v2` con Postgres sintético: **30 tests / 30 PASS / 0 FAIL / 0 skip / 0 cancelados**, 52.558 s. Incluye corpus nuevo y RLS; typecheck raíz actual exit 0. Frontend separado: typecheck/build y Chromium de timeline exit 0. No se extrapolan estos resultados a costes/proveedores, RLS integrado compartido o certificación C15.
+
+## W3 — Diseño aprobado y código integrado
+
+El fundador aprobó la propuesta de ontologías del commit 83ae5a0. C05 ya no está BLOCKED_DECISION: véanse decisión e informe C05. Gate completo 11b3ebd: 827 tests / 810 PASS / 0 FAIL / 0 cancelados / 12 skip / 5 TODO; 8/10 pasos, únicamente los bridges/contratos heredados fallan. Suite V2: 37/37 PASS con Postgres. Evidencia JSON W3 conservada. C15 mantiene NO_GO por la integración/certificación restantes, sin atribuir la falta de aprobación a la ontología.
