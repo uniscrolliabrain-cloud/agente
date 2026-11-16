@@ -1,3 +1,4 @@
+import { publicTextEvent } from "./public-text-event.ts";
 import { randomUUID } from "node:crypto";
 import { Observable } from "rxjs";
 import { EventType, type BaseEvent, type RunAgentInput } from "@ag-ui/core";
@@ -132,8 +133,11 @@ export class CognitionV2Runtime {
             return this.provider.stream({ ...input,
             messages: input.messages.filter((m) => m.role === "user" || m.role === "assistant").slice(-20),
             state: {}, tools: [], context: [], forwardedProps: {} }, prompt, "fast", signal, (event) => {
-              if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") streamedResponse += event.delta;
-              if (event.type !== EventType.RUN_STARTED && event.type !== EventType.RUN_FINISHED) subscriber.next(event);
+              if (event.type === EventType.RUN_ERROR) throw Error("PROVIDER_ERROR");
+              const publicEvent = publicTextEvent(event);
+              if (!publicEvent) return;
+              if (publicEvent.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in publicEvent && typeof publicEvent.delta === "string") streamedResponse += publicEvent.delta;
+              subscriber.next(publicEvent);
             });
           }, controller.signal);
           controller.signal.throwIfAborted();

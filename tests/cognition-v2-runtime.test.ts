@@ -24,7 +24,10 @@ test("C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipt
     const runtime = new CognitionV2Runtime(db, db, new Set(["A"]), memberships, { stream: async (request, prompt, profile, signal, emit) => {
       calls++; assert.equal(profile, "fast"); assert.equal(request.tools.length, 0); assert.deepEqual(request.state, {});
       assert.ok(prompt.includes("hypothesis")); assert.ok(!prompt.includes("private-raw-thought")); signal.throwIfAborted();
-      emit({ type: EventType.TEXT_MESSAGE_START, messageId: "response", role: "assistant" });
+      emit({ type: EventType.REASONING_MESSAGE_CONTENT, messageId: "private", delta: "PRIVATE_SYNTHETIC_REASONING" });
+      emit({ type: EventType.STATE_SNAPSHOT, snapshot: { secret: "PRIVATE_SYNTHETIC_REASONING" } });
+      emit({ type: EventType.CUSTOM, name: "private", value: "PRIVATE_SYNTHETIC_REASONING" });
+      emit({ type: EventType.TEXT_MESSAGE_START, messageId: "response", role: "assistant", rawEvent: { reasoning: "PRIVATE_SYNTHETIC_REASONING" } });
       emit({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: "response", delta: "Hola desde Fast" });
       emit({ type: EventType.TEXT_MESSAGE_END, messageId: "response" }); return "Hola desde Fast";
     } });
@@ -43,6 +46,8 @@ test("C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipt
         if (e.type === EventType.TEXT_MESSAGE_CONTENT) ttft ??= performance.now() - began;
       })));
       assert.equal(events[0].type, EventType.RUN_STARTED); assert.equal(events.at(-1)?.type, EventType.RUN_FINISHED);
+      assert.deepEqual(events.map(e=>e.type),[EventType.RUN_STARTED,EventType.TEXT_MESSAGE_START,EventType.TEXT_MESSAGE_CONTENT,EventType.TEXT_MESSAGE_END,EventType.RUN_FINISHED]);
+      assert.ok(!JSON.stringify(events).includes("PRIVATE_SYNTHETIC_REASONING"),"private provider events and raw metadata never reach clients");
       assert.ok(ttft !== undefined); latencies.push(ttft!);
     }
     release(); await pending;

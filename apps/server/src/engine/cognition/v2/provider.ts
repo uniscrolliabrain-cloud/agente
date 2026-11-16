@@ -4,6 +4,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { BuiltInAgent } from "@copilotkit/runtime/v2";
 import { EventType, type BaseEvent, type RunAgentInput } from "@ag-ui/core";
 import type { SlowInferenceInput, SlowProvider } from "./slow.ts";
+import { publicTextEvent } from "./public-text-event.ts";
 import { emptyOntologyProposal } from "../chromatic/card-ontology.ts";
 export interface StreamingProvider {
   stream(input: RunAgentInput, prompt: string, profile: "fast" | "slow", signal: AbortSignal,
@@ -43,12 +44,16 @@ export class CopilotInferenceProvider implements StreamingProvider, SlowProvider
       signal.addEventListener("abort", abort, { once: true });
       subscription = agent.run({ ...input, tools: [] }).subscribe({
         next: (event) => {
-          if (event.type === EventType.RUN_ERROR) { finish(Error("PROVIDER_ERROR")); return; }
-          if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") {
-            text += event.delta;
-            if (text.length > 16000) { finish(Error("OUTPUT_TOO_LARGE")); return; }
-          }
-          if (event.type !== EventType.RUN_FINISHED) onEvent(event);
+          if (done) return;
+          try {
+            if (event.type === EventType.RUN_ERROR) { finish(Error("PROVIDER_ERROR")); return; }
+            if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") {
+              text += event.delta;
+              if (text.length > 16000) { finish(Error("OUTPUT_TOO_LARGE")); return; }
+            }
+            const publicEvent = publicTextEvent(event);
+            if (publicEvent) onEvent(publicEvent);
+          } catch { finish(Error("INVALID_PROVIDER_EVENT")); }
         },
         error: () => finish(Error("PROVIDER_ERROR")), complete: () => finish(),
       });

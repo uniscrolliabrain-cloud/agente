@@ -1,0 +1,36 @@
+{
+  "recordedAtUTC": "2026-11-16T13:54:28.386610+00:00",
+  "checkpointCommit": "734b687c3936e7157ee184410736a69049a605d9",
+  "deliveryFixCommit": "db2991d74d935465236ec24708a3a470fcd92562",
+  "scope": "post-checkpoint working tree, C09/C11/C12 corrections; local synthetic Postgres and mocked inference",
+  "v2Tests": {
+    "tests": 47,
+    "pass": 47,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0,
+    "durationSeconds": 131.65930210500002
+  },
+  "typecheck": "PASS root+worker",
+  "deliveryReproduction": {
+    "scope": "local synthetic fixture",
+    "completedRuns": 3,
+    "acknowledgedDeliveries": 3,
+    "expectedPerRunDeliveries": 3,
+    "finding": "NOT_REPRODUCED"
+  },
+  "publicEventReproduction": {
+    "scope": "local synthetic fixture",
+    "completedRuns": 3,
+    "acknowledgedDeliveries": 3,
+    "leakedReasoningEvents": 0,
+    "expectedReasoningEvents": 0,
+    "expectedPerRunDeliveries": 3,
+    "finding": "NOT_REPRODUCED"
+  },
+  "fullSuiteRerun": false,
+  "fullGateRerun": false,
+  "productionDeployment": false,
+  "mainMerge": false
+}
