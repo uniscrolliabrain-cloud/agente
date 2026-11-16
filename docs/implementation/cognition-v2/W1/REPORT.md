@@ -11,7 +11,7 @@ LEGACY TEMPORAL: rutas V1 para tenants fuera de la allowlist explícita.
 
 - C01 schemas strict versionados: identidad, evidencia, visibilidad, epistemia, objetos de proyección, relaciones, clasificación sin autoridad y ontología sin semántica inventada.
 - C02 conexión transaccional por AsyncLocalStorage; PGlite transaction nativa y pg.Pool client dedicado; cierre/rollback/release. pgvectorReady preservado tras revisión.
-- EventBus separa persistencia confirmada de errores post-commit; rechaza emit dentro de transacción exterior para evitar notificaciones fantasma. El pipeline nuevo escribe source/outbox juntos vía sink y publica mediante replay tras commit.
+- EventBus separa persistencia confirmada de errores post-commit; difiere publish/notificaciones mediante hooks afterCommit; el receipt permanece pendingCommit hasta el commit exterior, y un resultado incierto conserva eventId/unknown. El pipeline nuevo escribe source/outbox juntos vía sink y publica mediante replay tras commit.
 - Journal aditivo del bus existente, orden serializado por tenant bajo bloqueo de fila; projector con cursor, inbox, lease/fence, retry/DLQ y efecto+checkpoint atómicos. No exactly-once distribuido.
 - Proyecciones inmutables por revisión; conflictos explícitos; grafo de referencias y tombstones transitivos; no resurrección de versiones antiguas.
 - ContextServingFacade auth-first, private scope, límite conservador por bytes UTF-8, snapshots/deltas/referencias y revalidación. No hay tokenizer de proveedor certificado ni benchmark externo.

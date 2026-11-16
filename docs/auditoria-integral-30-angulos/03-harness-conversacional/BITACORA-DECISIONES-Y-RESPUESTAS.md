@@ -152,3 +152,13 @@
 - **Riesgos abiertos:** flujo V1 de tarjetas con CAS y release-on-error; Fast chain con fallback; Event Bus con `persisted:false`; scopes owner/tenant; diferencias entre ramas documentales.
 - **Estado:** DOCUMENTADO. No se ha implementado ni probado código de runtime.
 - **Siguiente paso:** cerrar preflight C00 con inventario de código y contratos Cyber, tests de caracterización y plan de migración compatible.
+
+## R-20261116-002 — Implementación V2 y evidencia de ejecución
+- **Autoridad:** handoff maestro del fundador; ejecución autónoma, commits en ramas de implementación, sin merge/deploy.
+- **Rama:** `feat/cognition-v2-runtime-C00-C15`, main base `54b8d5407a8576459448c4d059a877297d18ca7a`. La rama documental original permanece como referencia.
+- **Implementación:** contratos, journal/proyector, memorias/grafo/atención, Slow durable con captura kernel, ledger/contexto, Fast separado, Presenter/SVG, voz controlada y puente Cyber con SDK real. Código y límites: [informe](../../implementation/cognition-v2/README.md).
+- **Revisión:** cinco P1 corregidos y reproducidos; detalles en [C15](../../implementation/cognition-v2/C15/SECURITY-REVIEW.md).
+- **Gate ejecutado:** código `13caec2`, 817 tests / 799 pass / 1 fail / 12 skip / 5 todo. Fallo nuevo de fixture Event Bus corregido en `019ca7d`; prueba focal pasa. Bridges y contratos ya fallaban en main. Nueva tanda sobre `24b4e8d` pendiente.
+- **RLS:** migración explícita y prueba Postgres con rol restringido pasan; integración compartida continúa cerrada hasta completar HTTP/workers.
+- **Decisiones pendientes:** ontología cromática y proveedor JEV no identificados/aprobados. Anam sin validación audiovisual real. No se inventaron capacidades externas.
+- **Estado:** PARTIAL_IMPLEMENTED, C15 NO_GO. No se han completado todos los patchsets, ni migrado/retirado todo legacy. El trabajo restante consta en [estado por campaña](../../implementation/cognition-v2/CAMPAIGN-STATUS.md).

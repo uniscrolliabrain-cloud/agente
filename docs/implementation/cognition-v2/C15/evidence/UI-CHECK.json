@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "scope": "local Chromium synthetic demo, not model/provider certification",
+  "checks": [
+    "real rendered waiting status",
+    "SVG aria-hidden",
+    "16 SVG circles",
+    "reduced-motion disables animation",
+    "waiting hides on first content",
+    "390px no horizontal overflow"
+  ],
+  "browser": "156.0.8078.79"
+}

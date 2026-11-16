@@ -1,0 +1,20 @@
+[
+  {
+    "name": "typecheck",
+    "command": "pnpm typecheck",
+    "exit": 0,
+    "seconds": 67.24
+  },
+  {
+    "name": "web",
+    "command": "pnpm --filter @agente/web typecheck",
+    "exit": 1,
+    "seconds": 1.84
+  },
+  {
+    "name": "test",
+    "command": "pnpm test",
+    "exit": 1,
+    "seconds": 1346.75
+  }
+]

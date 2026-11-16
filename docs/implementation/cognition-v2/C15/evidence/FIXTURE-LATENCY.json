@@ -1,0 +1,11 @@
+{
+  "provider": "deterministic in-process fixture; no network/model SLA",
+  "samples": 10,
+  "ttftMs": {
+    "p50": 77.39727900000071,
+    "p95": 176.34688800000004,
+    "p99": 176.34688800000004
+  },
+  "providerCost": "NOT_MEASURED",
+  "slo": "NOT_APPROVED"
+}

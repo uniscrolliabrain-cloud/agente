@@ -1,0 +1,59 @@
+[
+  {
+    "name": "web-typecheck",
+    "command": [
+      "node",
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "-p",
+      "apps/web/tsconfig.json"
+    ],
+    "exit": 0,
+    "seconds": 9.92
+  },
+  {
+    "name": "web-build",
+    "command": [
+      "node",
+      "apps/web/node_modules/vite/bin/vite.js",
+      "build",
+      "--config",
+      "apps/web/vite.config.ts"
+    ],
+    "exit": 1,
+    "seconds": 0.39
+  },
+  {
+    "name": "browser",
+    "command": [
+      "pnpm",
+      "test:browser"
+    ],
+    "exit": 1,
+    "seconds": 6.55
+  },
+  {
+    "name": "slice",
+    "command": [
+      "pnpm",
+      "verify:slice"
+    ],
+    "exit": 0,
+    "seconds": 119.92
+  },
+  {
+    "name": "laia-baseline-focus",
+    "command": [
+      "node",
+      "--import",
+      "tsx",
+      "--import",
+      "./tests/setup.ts",
+      "--test",
+      "--test-force-exit",
+      "tests/laia-hierarchy.test.ts"
+    ],
+    "exit": 0,
+    "seconds": 9.89
+  }
+]

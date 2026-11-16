@@ -1,0 +1,203 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-15T23:40:37.670Z",
+  "finishedAt": "2026-11-15T23:51:29.612Z",
+  "durationMs": 651942,
+  "git": {
+    "branch": "feat/cognition-v2-runtime-C00-C15",
+    "head": "13caec2f0ec47b859b9613965a9967c8ae64d418",
+    "dirty": 0
+  },
+  "auditReportDir": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits",
+  "ok": false,
+  "failed": [
+    "test",
+    "audit:bridges",
+    "audit:contracts"
+  ],
+  "advisory": [],
+  "steps": [
+    {
+      "name": "typecheck",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/uniscrolliabrain-cloud-agente/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 18057,
+      "counters": {},
+      "tail": [],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/typecheck.log"
+    },
+    {
+      "name": "typecheck:worker",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/uniscrolliabrain-cloud-agente/apps/worker/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente/apps/worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1924,
+      "counters": {},
+      "tail": [],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/typecheck_worker.log"
+    },
+    {
+      "name": "test",
+      "kind": "test",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/uniscrolliabrain-cloud-agente/node_modules/tsx/dist/cli.mjs --import ./tests/setup.ts --test --test-timeout=30000 --test-force-exit tests/**/*.test.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 619579,
+      "counters": {},
+      "tail": [
+        "      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {",
+        "    generatedMessage: false,",
+        "    code: 'ERR_ASSERTION',",
+        "    actual: false,",
+        "    expected: true,",
+        "    operator: '==',",
+        "    diff: 'simple'",
+        "  }"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/test.log"
+    },
+    {
+      "name": "audit:layers",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/layers.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 400,
+      "counters": {
+        "violaciones": 0
+      },
+      "tail": [
+        "[audit:layers] 0 violaciones"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_layers.log"
+    },
+    {
+      "name": "audit:bridges",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/bridges.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 289,
+      "counters": {
+        "wired": 12,
+        "total": 16
+      },
+      "tail": [
+        "[audit:bridges] 12/16 wired"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_bridges.log"
+    },
+    {
+      "name": "audit:console",
+      "kind": "audit",
+      "blocking": false,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/no-console.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 379,
+      "counters": {
+        "ocurrencias": 25,
+        "ficheros": 275
+      },
+      "tail": [
+        "[audit:console] 25 ocurrencias en 275 ficheros"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_console.log"
+    },
+    {
+      "name": "audit:anchors",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/anchors.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 202,
+      "counters": {},
+      "tail": [
+        "[audit:anchors] No hay bloques para revisar."
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_anchors.log"
+    },
+    {
+      "name": "audit:contracts",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/contracts.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 1,
+      "ok": false,
+      "durationMs": 10260,
+      "counters": {},
+      "tail": [
+        "[audit:contracts] Recorriendo dominios...",
+        "[audit:contracts] Cargando implementaciones y harness...",
+        "[audit:contracts] Ficheros de codigo: 893   de tests/scripts: 237",
+        "[audit:contracts] Contratos encontrados: 369",
+        "[audit:contracts] Informe escrito en /workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits/AUDIT_CONTRACTS.md",
+        "[audit:contracts] OK: 300   MODULO: 53   HARNESS: 1   PENDING: 9   ALLOWLIST: 0   HUERFANOS: 6",
+        "[audit:contracts] 6 contrato(s) sin uso y sin decision. Consume, marca PENDING(motivo, fecha) o declara en contracts-allowlist.json con motivo y fecha."
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_contracts.log"
+    },
+    {
+      "name": "audit:idempotency",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/idempotency.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 481,
+      "counters": {
+        "duplicadas": 183,
+        "huerfanas": 0,
+        "repetidas": 156
+      },
+      "tail": [
+        "[audit:idempotency] Recorriendo ficheros...",
+        "[audit:idempotency] Ficheros: 922",
+        "[audit:idempotency] Marcas encontradas: 2301",
+        "[audit:idempotency] Informe escrito en /workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits/AUDIT_IDEMPOTENCY.md",
+        "[audit:idempotency] DUPLICADAS: 183   HUERFANAS: 0   REPETIDAS: 156",
+        "[audit:idempotency] PEGADAS_DOS_VECES: 0"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_idempotency.log"
+    },
+    {
+      "name": "audit:tenant-default",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/tenant-default.ts",
+      "cwd": "/workspace/uniscrolliabrain-cloud-agente",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 342,
+      "counters": {
+        "permitidas": 158,
+        "prohibidas": 0
+      },
+      "tail": [
+        "[audit:tenant-default] Recorriendo ficheros...",
+        "[audit:tenant-default] Ficheros: 576",
+        "[audit:tenant-default] Informe en /workspace/uniscrolliabrain-cloud-agente/artifacts/gate/audits/AUDIT_TENANT_DEFAULT.md",
+        "[audit:tenant-default] PERMITIDAS: 158   PROHIBIDAS: 0"
+      ],
+      "logFile": "/workspace/uniscrolliabrain-cloud-agente/artifacts/gate/logs/audit_tenant-default.log"
+    }
+  ]
+}
