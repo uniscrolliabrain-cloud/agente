@@ -12,6 +12,7 @@
 //   - MAX_THOUGHTS_PER_TURN evita que un bucle infinito infle el turno.
 
 import { randomUUID } from "node:crypto";
+import { z } from "zod";
 import { thoughtSchema, type Thought } from "./thought.ts";
 import { turnSchema, type Turn, type TurnCloseReason, type TurnClosedBy } from "./turn.ts";
 import type { TurnStore } from "./store.ts";
@@ -26,11 +27,15 @@ export interface StorePort {
 }
 
 const TURNS_KIND = "cognitive-turns";
+// New indexes live separately; historical indexes under TURNS_KIND are retained
+// and ignored by turn readers below.
+const TURN_THOUGHT_INDEX_KIND = "cognitive-turn-thought-indexes";
 const THOUGHTS_KIND = "cognitive-thoughts";
 // MAX_THOUGHTS_WIRE_V1 - usa TenantConfig.maxThoughtsPerTurn.
 // FIX_8A_MAX_THOUGHTS_V1 - default. Configurable por tenant via setLimitForTenant.
 const DEFAULT_MAX_THOUGHTS_PER_TURN = 500;
 const MAX_TURNS_LISTED = 200;
+const MAX_TURN_STORAGE_ROWS = MAX_TURNS_LISTED * 5;
 const MAX_CHILD_DEPTH = 10;
 
 function tenantMismatch(expected: string, actual: string): AppError {
@@ -139,7 +144,7 @@ export class StoreTurnStore implements TurnStore {
       // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09 (append lee turno entero).
       await tx.put(
         parsed.tenantId,
-        TURNS_KIND,
+        TURN_THOUGHT_INDEX_KIND,
         `${turn.id}:${parsed.id}`,
         { id: `${turn.id}:${parsed.id}`, turnId: turn.id, thoughtId: parsed.id, tenantId: parsed.tenantId },
       );
@@ -292,8 +297,30 @@ export class StoreTurnStore implements TurnStore {
   // KERNEL_STORE_LIST_TURNS_CAP_V1
   async listTurns(tenantId: string, limit: number): Promise<Turn[]> {
     const capped = Math.min(Math.max(1, limit), MAX_TURNS_LISTED);
-    const rows = await this.store.list(tenantId, TURNS_KIND, capped);
-    return rows.map((row) => turnSchema.parse(row.data));
+    return this.listStoredTurns(tenantId, capped);
+  }
+
+  /** Skip legacy thought-index rows retained in cognitive-turns. */
+  private async listStoredTurns(tenantId: string, limit: number, owner?: string, status?: Turn["status"]): Promise<Turn[]> {
+    // Historical indexes may occupy the first slots in Store.list(). Overfetch
+    // boundedly, validate entries as turns, and keep their existing order.
+    const rows = await this.store.list(tenantId, TURNS_KIND, Math.min(MAX_TURN_STORAGE_ROWS, Math.max(limit * 5, limit)));
+    const turns: Turn[] = [];
+    for (const row of rows) {
+      const parsed = turnSchema.safeParse(row.data);
+      if (!parsed.success) {
+        // Only ignore the exact legacy index shape; malformed turn records still fail closed.
+        const legacyIndex = z.object({ id: z.string(), turnId: z.string(), thoughtId: z.string(), tenantId: z.string() }).strict().safeParse(row.data);
+        if (legacyIndex.success && legacyIndex.data.id === row.id && legacyIndex.data.tenantId === tenantId) continue;
+        throw parsed.error;
+      }
+      if (parsed.data.tenantId !== tenantId) continue;
+      if (owner !== undefined && parsed.data.owner !== owner) continue;
+      if (status !== undefined && parsed.data.status !== status) continue;
+      turns.push(parsed.data);
+      if (turns.length === limit) break;
+    }
+    return turns;
   }
 
   // KERNEL_LIST_TURNS_ALL_PERSONAS_V1 - lista turnos del owner sin filtrar
@@ -301,11 +328,7 @@ export class StoreTurnStore implements TurnStore {
   // KERNEL_STORE_LIST_TURNS_FOR_OWNER_CAP_V1
   async listTurnsForOwner(tenantId: string, owner: string, limit: number): Promise<Turn[]> {
     const capped = Math.min(Math.max(1, limit), MAX_TURNS_LISTED);
-    const rows = await this.store.list(tenantId, TURNS_KIND, capped);
-    return rows
-      .map((row) => turnSchema.parse(row.data))
-      .filter((turn) => turn.owner === owner)
-      .slice(0, capped);
+    return this.listStoredTurns(tenantId, capped, owner);
   }
 
   /**
@@ -320,9 +343,6 @@ export class StoreTurnStore implements TurnStore {
     // tope duro para no explotar memoria. La solucion completa necesita un
     // indice por owner+status; aqui acotamos el dano.
     // STORE_TURN_OPEN_TURNS_SCOPED_FIX_V1 - mismo fix con marca.
-    const rows = await this.store.list(tenantId, TURNS_KIND, 500);
-    return rows
-      .map((row) => turnSchema.parse(row.data))
-      .filter((turn) => turn.owner === owner && turn.status === "open");
+    return this.listStoredTurns(tenantId, 500, owner, "open");
   }
 }
