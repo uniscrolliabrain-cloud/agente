@@ -1,6 +1,6 @@
-# ADR — Ontología cromática pendiente de decisión del fundador
+# ADR — Ontología cromática V1 aprobada para implementación
 
-Estado: BLOCKED_DECISION. No cambia ADR-009 ni aprueba semántica.
+Estado actual: APPROVED_DESIGN / PARTIAL_IMPLEMENTATION. La aprobación explícita del fundador está registrada en [APPROVAL-20261116.md](APPROVAL-20261116.md). El texto de conflicto que sigue conserva el razonamiento previo a la decisión. No cambia ADR-009 ni certifica rendimiento.
 
 Evidencia: kernel/cromos/cromo.ts declara cinco tipos (logic, physics, intent, memory, policy). FUTURE.md describe dos polos por cromo. NC-COORDINATION/CONTRACT-CANDIDATES.md propone seis polaridades y diez dimensiones todavía sin definir. No son taxonomías equivalentes.
 
@@ -13,3 +13,7 @@ Hasta esa decisión: ningún dato de tenant recibe una interpretación cromátic
 ## Propuesta presentada el 16 de noviembre
 
 [Propuesta completa de ontologías](PROPOSAL-ONTOLOGY-V1.md): ocho familias, seis polos agrupados en tres pares, diez dimensiones contextuales y reparto Slow/JEV/engine/kernel. Estado DRAFT_FOR_REVIEW, sin aprobación ni activación. No reinterpreta automáticamente los cinco kinds legacy.
+
+## Resolución
+
+El fundador aprobó la propuesta del commit 83ae5a0. Se implementan tres pares (seis polos), ocho familias y diez dimensiones; ya no falta una decisión semántica para C05. Persisten gates de integración, calidad, escala y certificación. La API de JEV continúa sin verificación externa.

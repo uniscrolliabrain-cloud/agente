@@ -1,5 +1,8 @@
 // C01_COGNITION_CONTRACTS_V2: information contracts, never execution authority.
 import { z } from "zod";
+import { cognitiveRefSchema } from "./cognitive-reference.ts";
+import { cardOntologyAnnotationSchema, cardOntologyProposalSchema } from "./card-ontology.ts";
+export { cognitiveRefSchema } from "./cognitive-reference.ts";
 const id = z.string().min(1).max(200);
 const time = z.iso.datetime({ offset: true });
 const uniqueIds = z.array(id).max(100).refine((xs) => new Set(xs).size === xs.length, "duplicate IDs");
@@ -12,10 +15,6 @@ export const cognitiveVisibilitySchema = z.strictObject({
   tenantId: id, ownerActorId: id, scope: z.enum(["private", "tenant"]),
   allowedActorIds: uniqueIds, policyRevision: id,
 });
-export const cognitiveRefSchema = z.strictObject({
-  tenantId: id, kind: z.enum(["event", "thought", "entity", "memory", "card", "document", "receipt"]),
-  id, revision: z.number().int().positive(),
-});
 export const epistemicSchema = z.enum(["reported_fact", "inference", "hypothesis", "unknown", "contradicted", "verified_fact"]);
 export const attentionSignalsSchema = z.strictObject({
   relevance: z.number().min(0).max(1), confidence: z.number().min(0).max(1),
@@ -27,6 +26,8 @@ export const classificationV2Schema = z.strictObject({
   classifier: z.enum(["rules", "jev"]), version: id,
   labels: z.array(z.enum(["risk", "question", "summary", "uncertain"])).max(4),
   uncertainty: z.number().min(0).max(1), review: z.literal("proposed"),
+  ontology: cardOntologyProposalSchema.optional(),
+  fallbackReason: z.enum(["invalid_response", "unanchored_evidence", "context_mismatch", "timeout", "provider_error"]).optional(),
 });
 export const cognitiveRecordSchema = z.strictObject({
   schemaVersion: z.literal("2.0"), id, tenantId: id, revision: z.number().int().positive(),
@@ -37,6 +38,7 @@ export const cognitiveRecordSchema = z.strictObject({
   sourceEventId: id, sourceRevision: z.number().int().positive(),
   visibility: cognitiveVisibilitySchema, signals: attentionSignalsSchema,
   classification: classificationV2Schema.optional(),
+  ontology: cardOntologyAnnotationSchema.optional(),
   lifecycle: z.enum(["active", "superseded", "revoked", "expired"]),
   createdAt: time, expiresAt: time.optional(),
 }).superRefine((r, ctx) => {
@@ -48,6 +50,15 @@ export const cognitiveRecordSchema = z.strictObject({
     ctx.addIssue({ code: "custom", message: "working memory requires expiry" });
   if (r.epistemic === "verified_fact" && !r.evidence.some((e) => e.kind === "receipt"))
     ctx.addIssue({ code: "custom", message: "verified fact requires receipt" });
+  if (r.ontology) {
+    if (r.kind !== "card") ctx.addIssue({ code: "custom", message: "card ontology only on cards" });
+  }
+  for (const proposal of [...(r.ontology?.assessments.map(a => a.proposal) ?? []), ...(r.classification?.ontology ? [r.classification.ontology] : [])]) {
+      for (const ref of [...proposal.evidenceRefs, ...(proposal.targetGoalRef ? [proposal.targetGoalRef] : [])]) {
+        if (!r.evidence.some(e => e.tenantId===ref.tenantId && e.kind===ref.kind && e.id===ref.id && e.revision===ref.revision))
+          ctx.addIssue({code:"custom",message:"unanchored ontology evidence"});
+      }
+  }
 });
 export type CognitiveRecord = z.infer<typeof cognitiveRecordSchema>;
 export const cognitiveEdgeSchema = z.strictObject({
@@ -58,6 +69,7 @@ export const slowOutputSchema = z.strictObject({
   title: z.string().min(1).max(160), body: z.string().min(1).max(16000),
   epistemic: z.enum(["hypothesis", "inference", "unknown"]),
   evidence: z.array(cognitiveRefSchema).min(1).max(100),
+  ontology: cardOntologyProposalSchema.optional(),
 });
 export const contextRequestV2Schema = z.strictObject({
   query: z.string().max(4000), maxTokens: z.number().int().min(64).max(16000),
@@ -69,6 +81,7 @@ export const deliveryAckV2Schema = z.strictObject({
 export const chromaticOntologyV2Schema = z.strictObject({
   schemaVersion: z.literal("2.0"), ontologyId: id, version: id,
   status: z.enum(["draft", "approved", "retired"]),
+  definitionDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   axes: z.array(z.strictObject({ id, positivePole: id, negativePole: id })).max(20),
   dimensions: uniqueIds, approvalReceiptId: id.optional(),
 }).refine((o) => o.status !== "approved" || Boolean(o.approvalReceiptId), "approval receipt required")

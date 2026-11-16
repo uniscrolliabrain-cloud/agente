@@ -16,6 +16,8 @@ export class ChromaticOntologyRegistry {
     const existing = await this.db.get<{ id: string; ontology: Ontology }>("system", "chromatic-ontology-v2", id);
     if (existing && digest(existing.ontology) !== digest(ontology)) throw Error("ONTOLOGY_VERSION_CONFLICT");
     await this.db.insertIfAbsent("system", "chromatic-ontology-v2", { id, ontology });
+    const persisted = await this.db.get<{ ontology: Ontology }>("system", "chromatic-ontology-v2", id);
+    if (!persisted || digest(persisted.ontology) !== digest(ontology)) throw Error("ONTOLOGY_VERSION_CONFLICT");
     return id;
   }
   async runtime(ontologyId: string, version: string): Promise<Ontology> {
@@ -26,12 +28,13 @@ export class ChromaticOntologyRegistry {
     return o;
   }
 }
-export function normalizeChromaticVector(ontology: Ontology, values: Readonly<Record<string, number>>) {
+export function normalizeChromaticVector(ontology: Ontology, values: Readonly<Record<string, number | null>>) {
   if (ontology.status !== "approved") throw Error("CHROMATIC_BLOCKED_DECISION");
   const known = new Set(ontology.axes.map((a) => a.id));
   if (Object.keys(values).some((key) => !known.has(key))) throw Error("UNKNOWN_CHROMATIC_AXIS");
   return ontology.axes.map((a) => {
-    const value = values[a.id] ?? 0;
+    const value = values[a.id];
+    if (value === undefined || value === null) return { axis: a.id, value: null };
     if (!Number.isFinite(value) || value < -1 || value > 1) throw Error("CHROMATIC_VALUE_OUT_OF_RANGE");
     return { axis: a.id, value: Math.round(value * 1e6) / 1e6 };
   });

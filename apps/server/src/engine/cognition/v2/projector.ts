@@ -1,12 +1,14 @@
 import { cognitiveRecordSchema, cognitiveEdgeSchema } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import type { SystemEvent } from "../../events/types.ts";
 import { CognitiveProjectionStore, DurableProjector, digest } from "./storage.ts";
+import { CardOntologyService } from "../chromatic/card-ontology.ts";
 export class CognitiveProjector {
   readonly runner: DurableProjector;
   constructor(readonly store: CognitiveProjectionStore) { this.runner = new DurableProjector(store.db); }
   async apply(event: SystemEvent, sequence: string): Promise<void> {
     if (event.type === "cognition.v2.record.proposed") {
       const record = cognitiveRecordSchema.parse(event.payload.record);
+      if (record.ontology) await new CardOntologyService(this.store.db).assertApproved();
       if (record.tenantId !== event.tenantId || record.visibility.ownerActorId !== event.owner || record.epistemic === "verified_fact") throw Error("INVALID_PROPOSAL_AUTHORITY");
       await this.store.apply(record, sequence);
       for (const evidence of record.evidence) {

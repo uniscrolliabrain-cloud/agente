@@ -10,7 +10,7 @@ try {
   };
   if (!source.git?.head || !Array.isArray(source.steps) || !source.steps.some((step) => step.name === "test")) throw Error("A full executed repository gate is required");
   const blockers = [
-    { campaign: "C05", status: "BLOCKED_DECISION", reason: "Founder-approved chromatic ontology and approval receipt are missing" },
+    { campaign: "C05", status: "PARTIAL", reason: "Founder approved agntiapro.cards 1.0.0; implementation requires current integration, ablation and scale evidence" },
     { campaign: "C08", status: "BLOCKED_EXTERNAL", reason: "JEV identity/API and provider sandbox are not verified; rules baseline only" },
     { campaign: "C13", status: "BLOCKED_EXTERNAL", reason: "Anam media, physical playback ACK/barge-in, consent operations and provider contract are not certified" },
     { campaign: "C14", status: "BLOCKED_CONFIGURATION", reason: "Real parent PDP, credential broker and human child delegations remain unconfigured; synthetic contracts only" },

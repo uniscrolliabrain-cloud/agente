@@ -1,6 +1,6 @@
 # Propuesta de ontologías de tarjetas AgntiaPro
 
-Estado: **DRAFT_FOR_REVIEW**. Fecha: 2026-11-16. Referencia de código consolidado: `754231c` más la edición C09 en curso. Este documento propone semántica; no constituye aprobación del fundador, no activa el motor cromático y no acredita capacidades del proveedor JEV.
+Estado histórico al presentarse: **DRAFT_FOR_REVIEW**. **Aprobada posteriormente por el fundador:** [decisión](APPROVAL-20261116.md). La versión del commit 83ae5a0 es la referencia aprobada; el resto conserva la propuesta original. Fecha: 2026-11-16. Referencia de código consolidado: `754231c` más la edición C09 en curso. Este documento propone semántica; no constituye aprobación del fundador, no activa el motor cromático y no acredita capacidades del proveedor JEV.
 
 ## 1. Recomendación y resultado buscado
 

@@ -73,7 +73,9 @@ export class ContextServingFacade {
     let usedTokens = 0;
     for (const r of eligible) {
       if (refs.length >= options.maxRefs) break;
-      const text = JSON.stringify({ title: r.title, content: r.body, epistemic: r.epistemic, evidence: r.evidence });
+      const text = JSON.stringify({ title: r.title, content: r.body, epistemic: r.epistemic, evidence: r.evidence,
+        ...(r.ontology ? { ontology: { version: r.ontology.ontologyVersion, family: r.ontology.family,
+          review: r.ontology.review, disputed: r.ontology.disputed, profile: r.ontology.profile } } : {}) });
       const tokens = this.countTokens(text);
       if (tokens + usedTokens > options.maxTokens) continue;
       refs.push({ id: r.id, revision: r.revision, sourceEventId: r.sourceEventId });

@@ -9,12 +9,17 @@ import type { Store } from "../../../db.ts";
 import { DurableEventSink, digest } from "./storage.ts";
 import type { ContextServingFacade } from "./context.ts";
 import { InferenceLane } from "./inference.ts";
+import { CardOntologyService } from "../chromatic/card-ontology.ts";
 const jobInput = z.strictObject({ identity: cognitiveIdentitySchema, prompt: z.string().min(1).max(4000),
   evidence: z.array(cognitiveRefSchema).min(1).max(30) }).refine((j) => j.evidence.every((e) => e.tenantId === j.identity.tenantId), "cross-tenant evidence");
 export type SlowInput = z.infer<typeof jobInput>;
-export type SlowInferenceInput = SlowInput & { context?: { id: string; body: string; epistemic: string }[] };
+export type SlowInferenceInput = SlowInput & { context?: { id: string; body: string; epistemic: string }[]; contextDigest?: string };
 export interface SlowProvider { infer(input: SlowInferenceInput, signal: AbortSignal): Promise<unknown> }
-export interface SemanticClassifier { classify(body: string, signal: AbortSignal): Promise<unknown> }
+export interface SemanticEvaluationContext {
+  identity: CognitiveIdentity; evidence: SlowInput["evidence"]; contextDigest: string;
+  ontologyId: "agntiapro.cards"; ontologyVersion: "1.0.0";
+}
+export interface SemanticClassifier { classify(body: string, signal: AbortSignal, context?: SemanticEvaluationContext): Promise<unknown> }
 export class RulesClassifier implements SemanticClassifier {
   async classify(body: string) {
     const labels: ("risk" | "question" | "summary" | "uncertain")[] = [];
@@ -27,10 +32,12 @@ export class RulesClassifier implements SemanticClassifier {
 export class SlowCognitionQueue {
   capture?: (identity: CognitiveIdentity, input: { operationId: string; content: string; createdAt: string; epistemic: string }) => Promise<{ id: string }>;
   readonly lane: InferenceLane;
+  readonly ontology: CardOntologyService;
   constructor(readonly db: Store, readonly sink: DurableEventSink, readonly context: ContextServingFacade,
     readonly provider: SlowProvider, readonly classifier: SemanticClassifier = new RulesClassifier(),
     readonly clock = () => Date.now()) {
     this.lane = new InferenceLane(db, "slow", 2, 45000, 100);
+    this.ontology = new CardOntologyService(db);
   }
   private async emit(input: SlowInput, id: string, state: "queued" | "running" | "completed" | "failed" | "cancelled", suffix: string) {
     const event: SystemEvent = { id: digest([id, suffix]), tenantId: input.identity.tenantId, owner: input.identity.actorId,
@@ -103,11 +110,12 @@ export class SlowCognitionQueue {
         preparedContext.push({ id: record.id, body: record.body, epistemic: record.epistemic });
       }
       if (Buffer.byteLength(JSON.stringify(preparedContext), "utf8") > 32000) throw Error("SLOW_CONTEXT_BUDGET");
+      const contextDigest = digest({ context: preparedContext, prompt: job.data.prompt, identity: job.data.identity });
       const raw = job.output ?? await this.lane.run(tenant, async (signal) => {
         await this.context.assertAuthorized(job.data.identity);
         for (const ref of job.data.evidence) if (!await this.context.resolve(job.data.identity, ref.id, ref.revision)) throw Error("EVIDENCE_REVOKED");
         signal.throwIfAborted();
-        return this.provider.infer({ ...job.data, context: preparedContext }, signal);
+        return this.provider.infer({ ...job.data, context: preparedContext, contextDigest }, signal);
       }, AbortSignal.any([cancellation.signal, ...(shutdown ? [shutdown] : [])]));
       if (Buffer.byteLength(JSON.stringify(raw), "utf8") > 32000) throw Error("SLOW_OUTPUT_BUDGET");
       const saved = await this.db.rawQuery(`UPDATE cognition_v2_slow_jobs SET output=$4::jsonb WHERE tenant=$1 AND id=$2 AND fence=$3 AND state='running' AND lease_until>$5 RETURNING id`,
@@ -120,10 +128,23 @@ export class SlowCognitionQueue {
       let classification = await new RulesClassifier().classify(output.body);
       try {
         classification = classificationV2Schema.parse(await Promise.race([
-          this.classifier.classify(output.body, AbortSignal.timeout(500)),
+          this.classifier.classify(output.body, AbortSignal.any([cancellation.signal, AbortSignal.timeout(500)]),
+            { identity: job.data.identity, evidence: output.evidence, contextDigest, ontologyId: "agntiapro.cards", ontologyVersion: "1.0.0" }),
           new Promise((_, reject) => { const t = setTimeout(() => reject(Error("CLASSIFIER_TIMEOUT")), 500); t.unref(); }),
         ]));
-      } catch { /* deterministic baseline remains explicit */ }
+        if (classification.ontology) {
+          const proposal = classification.ontology;
+          if ([...proposal.evidenceRefs, ...(proposal.targetGoalRef ? [proposal.targetGoalRef] : [])].some(r => !output.evidence.some(e => digest(e) === digest(r)))) throw Error("unanchored_evidence");
+          if (proposal.contextDigest && proposal.contextDigest !== contextDigest) throw Error("context_mismatch");
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "";
+        classification = { ...await new RulesClassifier().classify(output.body), fallbackReason:
+          message === "unanchored_evidence" || message === "context_mismatch" ? message : message === "CLASSIFIER_TIMEOUT" ? "timeout" : error instanceof z.ZodError ? "invalid_response" : "provider_error" };
+      }
+      const ontology = await this.ontology.annotate({ slow: output.ontology,
+        evaluator: classification.ontology ? { proposal: classification.ontology, name: classification.classifier, version: classification.version } : undefined,
+        evidence: output.evidence, contextDigest, evaluatedAt: new Date(this.clock()).toISOString() });
       await this.db.transaction(async () => {
         const [current] = await this.db.rawQuery<{ fence: string; state: string; valid: boolean }>(`SELECT fence,state,lease_until>$3 AS valid FROM cognition_v2_slow_jobs WHERE tenant=$1 AND id=$2 FOR UPDATE`, [tenant, job.id, new Date(this.clock()).toISOString()]);
         if (!current || current.state !== "running" || current.fence !== job.fence || !current.valid) throw Error("STALE_SLOW_FENCE");
@@ -136,7 +157,7 @@ export class SlowCognitionQueue {
           kind: "card", title: output.title, body: output.body, epistemic: output.epistemic, evidence: [...output.evidence, { tenantId: tenant, kind: "thought", id: thought.id, revision: 1 }],
           sourceEventId: job.id, sourceRevision: 1, visibility: { tenantId: tenant, ownerActorId: job.data.identity.actorId,
             scope: "private", allowedActorIds: [], policyRevision: job.data.identity.policyRevision },
-          signals: { relevance: .5, confidence: 0, novelty: .5, urgency: 0, contradiction: 0 }, classification, lifecycle: "active", createdAt: new Date(this.clock()).toISOString() });
+          signals: { relevance: .5, confidence: 0, novelty: .5, urgency: 0, contradiction: 0 }, classification, ontology, lifecycle: "active", createdAt: new Date(this.clock()).toISOString() });
         const event: SystemEvent = { id: digest([job.id, "record"]), tenantId: tenant, owner: job.data.identity.actorId,
           type: "cognition.v2.record.proposed", schemaVersion: "1.0", emittedAt: record.createdAt,
           source: { kind: "system", id: "slow-v2" }, payload: { record } };

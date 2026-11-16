@@ -16,11 +16,13 @@ import { InferenceLane } from "./inference.ts";
 import { SlowCognitionQueue, type SlowProvider } from "./slow.ts";
 import { CopilotInferenceProvider, type StreamingProvider } from "./provider.ts";
 import { DeliveryRecoveryWorker } from "./delivery-recovery.ts";
+import { CardOntologyService } from "../chromatic/card-ontology.ts";
 export class CognitionV2Runtime {
   readonly sink: DurableEventSink;
   readonly context: ContextServingFacade;
   readonly ledger: CardDeliveryLedger;
   readonly deliveryRecovery: DeliveryRecoveryWorker;
+  readonly ontology: CardOntologyService;
   readonly projector: CognitiveProjector;
   readonly slow: SlowCognitionQueue;
   readonly fast: InferenceLane;
@@ -30,11 +32,13 @@ export class CognitionV2Runtime {
   constructor(readonly db: Store, records: Store | TenantScopedStore, readonly tenants: ReadonlySet<string>,
     readonly memberships: TenantService, readonly provider: StreamingProvider & Partial<SlowProvider> = new CopilotInferenceProvider()) {
     this.sink = new DurableEventSink(db, records, tenants);
+    this.ontology = new CardOntologyService(db);
     this.context = new ContextServingFacade(new CognitiveProjectionStore(db), { authorize: async (identity, record) => {
       const fresh = await this.identity(identity.tenantId, identity.actorId, identity.owner, identity.purpose).catch(() => null);
       // Default V2 policy is private self-read. Sharing needs a separate PDP
       // policy, not a tenant label or a classifier's proposed access list.
       if (record) {
+        if (record.ontology) await this.ontology.assertApproved();
         for (const ref of record.evidence) {
           if (ref.kind === "document" && (!this.preparedRag || !await this.preparedRag.valid(identity, ref.id))) return false;
         }
@@ -58,6 +62,7 @@ export class CognitionV2Runtime {
     // restricted-role integration gate. Until then the feature fails closed.
     if (process.env.MULTI_TENANT_SHARED === "true") throw Error("COGNITION_V2_SHARED_RLS_NOT_CERTIFIED");
     await installCognitionV2(db);
+    await new CardOntologyService(db).install();
     const runtime = new CognitionV2Runtime(db, records, tenants, memberships);
     if (rag) runtime.preparedRag = new PreparedRagContext(runtime.context, runtime.sink, rag);
     return runtime;
