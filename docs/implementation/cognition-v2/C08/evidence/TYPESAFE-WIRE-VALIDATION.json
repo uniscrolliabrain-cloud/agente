@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "scope": "local synthetic wire fixture, not a live provider call",
+  "verifiedAt": "2026-11-16T13:04:13.028042+00:00",
+  "source": "https://api.typesafe.ai/openapi.json",
+  "sourceSha256": "3ca93b6e6b9aa8d7820531b78c66ed7a9798b11e6e163ad96b140fb3d75fbcf4",
+  "validator": "jsonschema 4.26.0",
+  "dialect": "Draft202012",
+  "checks": [
+    "SystemOneRequest",
+    "SystemOneResponse"
+  ],
+  "fixtureSha256": "1bada2efe7da9fc2a56a2ea7c12688a5e246c61dfd8b964d0e5e1fcfcd04af7f",
+  "realInferenceCalls": 0,
+  "cost": "NOT_MEASURED"
+}

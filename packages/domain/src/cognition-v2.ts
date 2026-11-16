@@ -1,7 +1,7 @@
 // C01_COGNITION_CONTRACTS_V2: information contracts, never execution authority.
 import { z } from "zod";
 import { cognitiveRefSchema } from "./cognitive-reference.ts";
-import { cardOntologyAnnotationSchema, cardOntologyProposalSchema } from "./card-ontology.ts";
+import { cardOntologyAnnotationSchema, cardOntologyProposalSchema, semanticProviderEvidenceSchema } from "./card-ontology.ts";
 import { runtimeOutcomeSchema } from "./runtime-outcome.ts";
 export { cognitiveRefSchema } from "./cognitive-reference.ts";
 const id = z.string().min(1).max(200);
@@ -29,6 +29,7 @@ export const classificationV2Schema = z.strictObject({
   uncertainty: z.number().min(0).max(1), review: z.literal("proposed"),
   ontology: cardOntologyProposalSchema.optional(),
   fallbackReason: z.enum(["invalid_response", "unanchored_evidence", "context_mismatch", "timeout", "provider_error"]).optional(),
+  providerEvidence: semanticProviderEvidenceSchema.optional(),
 });
 export const cognitiveRecordSchema = z.strictObject({
   schemaVersion: z.literal("2.0"), id, tenantId: id, revision: z.number().int().positive(),

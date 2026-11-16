@@ -141,7 +141,7 @@ export class SlowCognitionQueue {
       } catch (error) {
         const message = error instanceof Error ? error.message : "";
         classification = { ...await new RulesClassifier().classify(output.body), fallbackReason:
-          message === "unanchored_evidence" || message === "context_mismatch" ? message : message === "CLASSIFIER_TIMEOUT" ? "timeout" : error instanceof z.ZodError ? "invalid_response" : "provider_error" };
+          message === "unanchored_evidence" || message === "context_mismatch" ? message : message === "CLASSIFIER_TIMEOUT" || message === "JEV_TIMEOUT" ? "timeout" : error instanceof z.ZodError ? "invalid_response" : "provider_error" };
       }
       const ontology = await this.ontology.annotate({ slow: output.ontology,
         evaluator: classification.ontology ? { proposal: classification.ontology, name: classification.classifier, version: classification.version } : undefined,
