@@ -19,6 +19,6 @@ Ninguna fila PARTIAL/BLOCKED equivale a PASS de campaña. Las decisiones externa
 | C12 | PARTIAL_IMPLEMENTED | Journey factual y SVG accesible en UI real comprobados; polling con cursor/reconexión/dedupe probado en Chromium; todos los estados de negocio y auditoría WCAG integral pendientes. |
 | C13 | BLOCKED_EXTERNAL | Coordinador durable + adaptador al mismo Fast, 4 tests locales; sandbox/media/ACK físico/DPA y frontend avatar no activados. |
 | C14 | PARTIAL_IMPLEMENTED | SDK Python real, ACK añadido en hijo, bridge+relay+contexto probados; broker/PDP/delegaciones y jobs/piloto real no configurados. |
-| C15 | NO_GO | Revisión y pruebas locales aportan evidencia parcial. No aceptación integral, legacy retirado, founder GO, merge ni despliegue. |
+| C15 | NO_GO | Revisión y pruebas locales aportan evidencia parcial. Integrado en `main` por autorización explícita del fundador con gate 10/10, sin desplegar. No aceptación integral, legacy retirado ni founder GO. |
 
 El fundador aprobó explícitamente la ontología propuesta el 16 de noviembre (decisión founder-20261116-card-ontology-001). La API oficial y sandbox de JEV continúan pendientes; su ausencia no se oculta con un adaptador ficticio.
