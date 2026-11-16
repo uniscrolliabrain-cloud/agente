@@ -15,10 +15,12 @@ import { GlobalAttentionWorkspace } from "./attention.ts";
 import { InferenceLane } from "./inference.ts";
 import { SlowCognitionQueue, type SlowProvider } from "./slow.ts";
 import { CopilotInferenceProvider, type StreamingProvider } from "./provider.ts";
+import { DeliveryRecoveryWorker } from "./delivery-recovery.ts";
 export class CognitionV2Runtime {
   readonly sink: DurableEventSink;
   readonly context: ContextServingFacade;
   readonly ledger: CardDeliveryLedger;
+  readonly deliveryRecovery: DeliveryRecoveryWorker;
   readonly projector: CognitiveProjector;
   readonly slow: SlowCognitionQueue;
   readonly fast: InferenceLane;
@@ -43,6 +45,10 @@ export class CognitionV2Runtime {
     this.memories = new FiveMemories(this.context, this.sink);
     this.attention = new GlobalAttentionWorkspace(this.context);
     this.ledger = new CardDeliveryLedger(this.context);
+    this.deliveryRecovery = new DeliveryRecoveryWorker(this.ledger, tenants, async (tenant, actor) => {
+      try { return await this.identity(tenant, actor, actor, "chat"); }
+      catch (error) { if (error instanceof Error && error.message === "DENIED") return null; throw error; }
+    });
     this.projector = new CognitiveProjector(this.context.projections);
     this.slow = new SlowCognitionQueue(db, this.sink, this.context, { infer: (input, signal) => provider.infer ? provider.infer(input, signal) : Promise.reject(Error("SLOW_PROVIDER_UNCONFIGURED")) });
     this.fast = new InferenceLane(db, "fast", 4, 15000, 1000);

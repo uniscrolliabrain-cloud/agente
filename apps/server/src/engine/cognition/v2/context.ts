@@ -127,6 +127,7 @@ export class ContextServingFacade {
 export class CardDeliveryLedger {
   constructor(readonly context: ContextServingFacade, private readonly clock = () => Date.now()) {}
   async reserve(identity: CognitiveIdentity, snapshotId: string, cardId: string, leaseMs = 30000) {
+    if (!Number.isInteger(leaseMs) || leaseMs < 1 || leaseMs > 60000) throw Error("INVALID_DELIVERY_LEASE");
     const db = this.context.projections.db;
     return db.transaction(async () => {
       const snapshot = await this.context.readSnapshot(identity, snapshotId);
@@ -149,6 +150,36 @@ export class CardDeliveryLedger {
   async ack(identity: CognitiveIdentity, id: string, fence: number, receiptId: string): Promise<boolean> {
     deliveryAckV2Schema.parse({ deliveryId: id, fence, receiptId });
     return this.transition(identity, id, fence, "acknowledged", receiptId);
+  }
+  /** Reconcile expired reservations; recovery never implies delivery or ACK. */
+  async recover(identity: CognitiveIdentity, limit = 100): Promise<number> {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw Error("INVALID_RECOVERY_LIMIT");
+    const db = this.context.projections.db;
+    return db.transaction(async () => {
+      await this.context.assertAuthorized(identity);
+      const now = new Date(this.clock()).toISOString();
+      const rows = await db.rawQuery<{ id: string; snapshot_id: string; fence: string; status: string }>(
+        `SELECT id,snapshot_id,fence,status FROM cognition_v2_deliveries
+         WHERE tenant=$1 AND actor=$2 AND status IN ('leased','rendered') AND lease_until<=$3
+         ORDER BY lease_until,id LIMIT $4 FOR UPDATE SKIP LOCKED`, [identity.tenantId, identity.actorId, now, limit]);
+      for (const row of rows) {
+        const [snapshot] = await db.rawQuery<{ identity: unknown }>(`SELECT data->'identity' AS identity FROM cognition_v2_snapshots WHERE tenant=$1 AND actor=$2 AND id=$3`, [identity.tenantId, identity.actorId, row.snapshot_id]);
+        const original = cognitiveIdentitySchema.safeParse(snapshot?.identity);
+        const sameScope = original.success && original.data.tenantId === identity.tenantId && original.data.actorId === identity.actorId &&
+          original.data.owner === identity.owner && original.data.policyRevision === identity.policyRevision;
+        const valid = sameScope && await this.context.readSnapshot(original.data, row.snapshot_id);
+        const next = valid ? "pending" : "invalidated";
+        const receipt = { deliveryId: row.id, previousFence: String(row.fence), previousState: row.status,
+          state: next, reason: valid ? "lease_expired" : "snapshot_unavailable", recoveredAt: now,
+          policyRevision: identity.policyRevision };
+        await db.rawQuery(`UPDATE cognition_v2_deliveries SET status=$4,fence=fence+1,lease_until=NULL
+          WHERE tenant=$1 AND actor=$2 AND id=$3`, [identity.tenantId, identity.actorId, row.id, next]);
+        await db.rawQuery(`INSERT INTO cognition_v2_delivery_recoveries(tenant,id,actor,data) VALUES($1,$2,$3,$4::jsonb)`,
+          [identity.tenantId, digest([row.id, String(row.fence)]), identity.actorId, JSON.stringify(receipt)]);
+      }
+      await this.context.assertAuthorized(identity);
+      return rows.length;
+    });
   }
   private async transition(identity: CognitiveIdentity, id: string, fence: number, state: string, receiptId?: string): Promise<boolean> {
     const db = this.context.projections.db;

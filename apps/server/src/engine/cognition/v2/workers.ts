@@ -7,7 +7,7 @@ const pause = (signal: AbortSignal) => new Promise<void>((resolve) => {
   signal.addEventListener("abort", done, { once: true });
   if (signal.aborted) done();
 });
-/** Two independent loops; slow inference never stalls projection checkpoints. */
+/** Independent loops; inference never stalls projections or delivery recovery. */
 export async function runCognitionWorkers(runtime: CognitionV2Runtime, signal: AbortSignal): Promise<void> {
   const loop = async (work: (tenant: string) => Promise<unknown>) => {
     while (!signal.aborted) {
@@ -18,5 +18,6 @@ export async function runCognitionWorkers(runtime: CognitionV2Runtime, signal: A
       if (!signal.aborted) await pause(signal);
     }
   };
-  await Promise.all([loop((tenant) => runtime.projector.tick(tenant)), loop((tenant) => runtime.slow.tick(tenant, signal))]);
+  await Promise.all([loop((tenant) => runtime.projector.tick(tenant)), loop((tenant) => runtime.slow.tick(tenant, signal)),
+    loop((tenant) => runtime.deliveryRecovery.tick(tenant))]);
 }

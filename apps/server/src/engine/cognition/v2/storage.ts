@@ -29,6 +29,7 @@ export async function installCognitionV2(db: Store): Promise<void> {
       event jsonb NOT NULL, PRIMARY KEY(tenant,sequence), UNIQUE(tenant,event_id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_cursors (tenant text NOT NULL, consumer text NOT NULL, sequence bigint NOT NULL DEFAULT 0,
       fence bigint NOT NULL DEFAULT 0, lease_owner text, lease_until timestamptz, PRIMARY KEY(tenant,consumer))`,
+    `ALTER TABLE cognition_v2_cursors ADD COLUMN IF NOT EXISTS scan_actor text NOT NULL DEFAULT ''`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_inbox (tenant text NOT NULL, consumer text NOT NULL, event_id text NOT NULL,
       attempts integer NOT NULL DEFAULT 0, status text NOT NULL, digest text, next_at timestamptz, PRIMARY KEY(tenant,consumer,event_id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_objects (tenant text NOT NULL, id text NOT NULL, revision integer NOT NULL,
@@ -39,6 +40,7 @@ export async function installCognitionV2(db: Store): Promise<void> {
     `CREATE TABLE IF NOT EXISTS cognition_v2_deliveries (tenant text NOT NULL, id text NOT NULL, actor text NOT NULL,
       card_id text NOT NULL, revision integer NOT NULL, snapshot_id text NOT NULL, status text NOT NULL,
       fence bigint NOT NULL DEFAULT 0, lease_until timestamptz, receipt_id text, PRIMARY KEY(tenant,id))`,
+    `CREATE TABLE IF NOT EXISTS cognition_v2_delivery_recoveries (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_snapshots (tenant text NOT NULL, id text NOT NULL, actor text NOT NULL,
       data jsonb NOT NULL, PRIMARY KEY(tenant,id))`,
   ]) await db.rawQuery(sql);

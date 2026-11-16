@@ -4,7 +4,7 @@ import type { Store } from "../../../db.ts";
 export const cognitionTables = [
   "rag_refs", "attention", "chat_runs", "lane_locks", "lane_slots", "lane_usage",
   "slow_jobs", "sequences", "events", "cursors", "inbox", "objects", "edges",
-  "revocations", "deliveries", "snapshots",
+  "revocations", "deliveries", "delivery_recoveries", "snapshots",
 ].map((name) => `cognition_v2_${name}`);
 
 export async function installCognitionRls(db: Store): Promise<void> {
