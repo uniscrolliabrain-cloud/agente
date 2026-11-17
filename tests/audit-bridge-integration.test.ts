@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createStore } from "../apps/server/src/db.ts";
 import { createApp } from "../apps/server/src/app.ts";
@@ -21,7 +22,7 @@ async function eventually<T>(read: () => Promise<T | undefined>): Promise<T> {
 }
 
 test("registered kernel bridges project audit and notifications, metrics and a bus-to-kernel turn", async () => {
-  const directory = await mkdtemp(join(process.cwd(), "artifacts", "bridge-test-"));
+  const directory = await mkdtemp(join(tmpdir(), "bridge-test-"));
   const db = await createStore();
   let app: Awaited<ReturnType<typeof createApp>> | undefined;
   try {
