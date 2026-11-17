@@ -74,7 +74,11 @@ jobs:
       - name: importar secretos desde Doppler
         run: |
           set -euo pipefail
-          curl -sL https://cli.doppler.com/install.sh | sh
+          # El instalador por defecto usa dpkg y falla sin root; --install-path
+          # descarga el binario en un directorio del usuario.
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
+          export PATH="$HOME/.local/bin:$PATH"
           filter='to_entries[]
             | select(.key | test("^(CLOUDFLARE_|FLY_|DOPPLER_|VERCEL_|NEON_|GH_|AWS_|AZURE_|GCP_|SUPABASE_ACCESS_)") | not)
             | select(.key != "GITHUB_TOKEN")
