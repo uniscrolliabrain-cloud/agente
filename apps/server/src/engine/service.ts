@@ -347,6 +347,29 @@ export class AgentService {
     this.worker = new TaskWorker(db, (owner, task, context) => this.execute(owner, task, context), {
       settled: (owner, task) => this.publishOutcome(owner, task),
       bus: this.bus,
+      // WORKER_TENANT_SUSPENSION_V1 - kill switch antes de reclamar.
+      ...(this.tenantService
+        ? {
+            tenantActive: async (tenantId: string) =>
+              !(await this.tenantService!.tenantState(tenantId)).suspended,
+          }
+        : {}),
+      // WORKER_ASSIGNEE_ACTIVE_V1 - el agente asignado se revalida en cada
+      // tick: deshabilitarlo despues de encolar detiene el trabajo, y
+      // rehabilitarlo lo reanuda sin tocar la identidad de la tarea. Una tarea
+      // sin fila de rol (asignada al owner o a un rol ya borrado) conserva el
+      // curso previo: aqui solo se corta un rol que existe y esta inactivo.
+      assigneeActive: async (owner: string, task: AgentTask) => {
+        const roleId =
+          task.assignedTo ??
+          (typeof task.state.roleId === "string" ? task.state.roleId : undefined);
+        if (!roleId) return true;
+        const role = await this.db
+          .get<AgentRole>(owner, "agent-roles", roleId)
+          .catch(() => null);
+        if (!role) return true;
+        return role.active !== false;
+      },
     });
   }
   // SERVICE_RECOVER_TASKS_V1 - recupera tareas running con lease expirado.
@@ -1363,6 +1386,21 @@ export class AgentService {
     const resolvedRoleId =
       input.roleId ??
       (await this.pickRoleForTask(owner, input.kind, input.input));
+    // AGENT_DISABLED_CREATE_V1 - deshabilitar un agente impide encolar trabajo
+    // nuevo, no solo en el SOP tipado: antes el resto de tipos aceptaba el
+    // roleId inactivo y quedaba una tarea en cola que el worker ya no ejecuta.
+    // Un roleId sin fila conserva el comportamiento previo (no es un agente).
+    if (resolvedRoleId) {
+      const assignedRole = await this.db
+        .get<AgentRole>(owner, "agent-roles", resolvedRoleId)
+        .catch(() => null);
+      if (assignedRole && assignedRole.active === false) {
+        throw new AppError(
+          `El agente ${resolvedRoleId} esta deshabilitado en esta empresa`,
+          409,
+        );
+      }
+    }
     const task: AgentTask = {
       id,
       // SERVICE_TASK_TENANT_V1 - tenantId obligatorio.

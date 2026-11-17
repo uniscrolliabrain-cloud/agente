@@ -1,4 +1,4 @@
-// TENANT_HTTP_E2E_V1 — aislamiento HTTP con 2 tenants reales.
+// TENANT_HTTP_E2E_V1 — aislamiento HTTP con tenants de fixture local.
 // Ver: docs/audits/07-aislamiento-multi-tenant/miniaudit.md
 //
 // Cubre: lectura, escritura, enumeración, files.import, notifications.
@@ -18,14 +18,17 @@ import { testConfig } from "./helpers/config.ts";
 
 const ALICE = { email: "alice@tenant-a.local", password: "contrasena-larga-1", name: "Alice" };
 const BOB = { email: "bob@tenant-b.local", password: "contrasena-larga-2", name: "Bob" };
+const CAROL = { email: "carol@tenant-c.local", password: "contrasena-larga-3", name: "Carol" };
 
 let db: Store;
 let server: Awaited<ReturnType<typeof createApp>>;
 let directory: string;
 let aliceToken: string;
 let bobToken: string;
+let carolToken: string;
 let aliceId: string;
 let bobId: string;
+let carolId: string;
 
 before(async () => {
   directory = await mkdtemp(join(tmpdir(), "agente-e2e-"));
@@ -34,11 +37,14 @@ before(async () => {
   const users = new UserService(db);
   const alice = await users.create({ ...ALICE, role: "admin" });
   const bob = await users.create({ ...BOB, role: "admin" });
+  const carol = await users.create({ ...CAROL, role: "admin" });
   aliceId = alice.id;
   bobId = bob.id;
+  carolId = carol.id;
   const tenantService = new TenantService(db, server.agent.config as never);
   await tenantService.setMembership(aliceId, "tenant-a");
   await tenantService.setMembership(bobId, "tenant-b");
+  await tenantService.setMembership(carolId, "tenant-c");
   const loginA = await server.app.request("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -49,8 +55,14 @@ before(async () => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email: BOB.email, password: BOB.password }),
   });
+  const loginC = await server.app.request("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: CAROL.email, password: CAROL.password }),
+  });
   aliceToken = ((await loginA.json()) as { token: string }).token;
   bobToken = ((await loginB.json()) as { token: string }).token;
+  carolToken = ((await loginC.json()) as { token: string }).token;
 });
 
 after(async () => {
@@ -65,17 +77,47 @@ test("tenant A no ve tareas de tenant B", async () => {
   await server.app.request("/api/agent/tasks", {
     method: "POST",
     headers: { ...bearer(aliceToken), "Content-Type": "application/json" },
-    body: JSON.stringify({ title: "tarea-A", input: "x", kind: "general" }),
+    body: JSON.stringify({ title: "tarea-A", prompt: "fixture only", kind: "agent" }),
   });
   await server.app.request("/api/agent/tasks", {
     method: "POST",
     headers: { ...bearer(bobToken), "Content-Type": "application/json" },
-    body: JSON.stringify({ title: "tarea-B", input: "y", kind: "general" }),
+    body: JSON.stringify({ title: "tarea-B", prompt: "fixture only", kind: "agent" }),
   });
   const a = (await (await server.app.request("/api/agent", { headers: bearer(aliceToken) })).json()) as { tasks: Array<{ title: string }> };
   const b = (await (await server.app.request("/api/agent", { headers: bearer(bobToken) })).json()) as { tasks: Array<{ title: string }> };
   assert.ok(a.tasks.every((t) => !t.title.includes("B")));
   assert.ok(b.tasks.every((t) => !t.title.includes("A")));
+});
+
+test("tres owners autenticados ven solo sus tareas y no pueden suplantar tenant", async () => {
+  const owners = [
+    { token: aliceToken, tenantId: "tenant-a", title: "marca-privada-a" },
+    { token: bobToken, tenantId: "tenant-b", title: "marca-privada-b" },
+    { token: carolToken, tenantId: "tenant-c", title: "marca-privada-c" },
+  ];
+  for (const owner of owners) {
+    const created = await server.app.request("/api/agent/tasks", {
+      method: "POST",
+      headers: { ...bearer(owner.token), "Content-Type": "application/json" },
+      body: JSON.stringify({ title: owner.title, prompt: "fixture only", kind: "agent" }),
+    });
+    assert.equal(created.status, 201);
+    const snapshot = await server.app.request("/api/agent", { headers: bearer(owner.token) });
+    assert.equal(snapshot.status, 200);
+    const body = (await snapshot.json()) as { tasks: Array<{ title: string }> };
+    assert.ok(body.tasks.some((task) => task.title === owner.title));
+    for (const foreign of owners.filter((item) => item.tenantId !== owner.tenantId)) {
+      assert.ok(!body.tasks.some((task) => task.title === foreign.title));
+    }
+  }
+
+  const forged = await server.app.request("/api/agent/tasks", {
+    method: "POST",
+    headers: { ...bearer(aliceToken), "Content-Type": "application/json" },
+    body: JSON.stringify({ title: "forged-tenant", tenantId: "tenant-b", prompt: "fixture only", kind: "agent" }),
+  });
+  assert.equal(forged.status, 403);
 });
 
 test("tenant mismatch en query devuelve 403", async () => {
@@ -120,18 +162,41 @@ test("la traza del kernel de A excluye el contenido de B y rechaza una consulta 
   assert.ok(!trace.includes(foreignContent));
 });
 
-test("files.import usa el tenant del owner, no default", async () => {
-  const form = new FormData();
-  form.append("file", new File([new Uint8Array([1,2,3])], "a.txt", { type: "text/plain" }));
-  const response = await server.app.request("/api/files", {
-    method: "POST",
-    headers: bearer(aliceToken),
-    body: form,
-  });
-  assert.equal(response.status, 201);
-  const file = (await response.json()) as { id: string };
-  const stored = await db.get<{ owner?: string }>("tenant-a:" + aliceId, "files", file.id);
-  assert.ok(stored, "el fichero debe estar bajo tenant-a:owner, no default:owner");
+test("archivos de A/B/C se escriben y leen solo dentro de su tenant", async () => {
+  const owners = [
+    { token: aliceToken, userId: aliceId, tenantId: "tenant-a", marker: "contenido-privado-a" },
+    { token: bobToken, userId: bobId, tenantId: "tenant-b", marker: "contenido-privado-b" },
+    { token: carolToken, userId: carolId, tenantId: "tenant-c", marker: "contenido-privado-c" },
+  ];
+  const files: Array<{ token: string; userId: string; tenantId: string; marker: string; id: string }> = [];
+
+  for (const owner of owners) {
+    const form = new FormData();
+    form.append("file", new File([owner.marker], `${owner.tenantId}.txt`, { type: "text/plain" }));
+    const response = await server.app.request("/api/files", {
+      method: "POST",
+      headers: bearer(owner.token),
+      body: form,
+    });
+    assert.equal(response.status, 201);
+    const file = (await response.json()) as { id: string };
+    assert.ok(await db.get(`tenant-${owner.tenantId.slice(-1)}:${owner.userId}`, "files", file.id));
+    files.push({ ...owner, id: file.id });
+  }
+
+  for (const owner of files) {
+    const ownRead = await server.app.request(`/api/files/${owner.id}/content`, {
+      headers: bearer(owner.token),
+    });
+    assert.equal(ownRead.status, 200);
+    assert.equal(await ownRead.text(), owner.marker);
+    for (const foreign of files.filter((file) => file.tenantId !== owner.tenantId)) {
+      const foreignRead = await server.app.request(`/api/files/${foreign.id}/content`, {
+        headers: bearer(owner.token),
+      });
+      assert.equal(foreignRead.status, 404);
+    }
+  }
 });
 
 // SWITCH_TENANT_MULTI_TEST_V1 - el switch deja de ser decorativo: acepta las

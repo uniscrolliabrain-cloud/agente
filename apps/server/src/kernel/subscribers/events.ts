@@ -17,10 +17,31 @@ import type { SystemEvent } from "../../engine/events/types.ts";
 import { logInfo, logWarn } from "../../log.ts";
 import { runCognitionCycle } from "../cognition/cycle.ts";
 
+function emailEventContent(kind: "email.received" | "email.sent", event: SystemEvent): Record<string, unknown> {
+  const payload = event.payload as Record<string, unknown>;
+  const messageId = payload.entityId;
+  const threadId = payload.threadId;
+  const safeId = (value: unknown): string | undefined =>
+    typeof value === "string" && value.length > 0 && value.length <= 200 ? value : undefined;
+  const safeMessageId = safeId(messageId);
+  const safeThreadId = safeId(threadId);
+  return {
+    kind,
+    eventId: event.id,
+    sourceId: event.source.id,
+    ...(safeMessageId ? { messageId: safeMessageId } : {}),
+    ...(safeThreadId ? { threadId: safeThreadId } : {}),
+  };
+}
+
 const MAPPING: Record<
   string,
   { role: string; content: (e: SystemEvent) => Record<string, unknown> }
 > = {
+  // KERNEL_EMAIL_EVENT_MINIMIZATION_V1 - no proyectar bodies, remitentes ni
+  // campos passthrough del workspace: solo referencias opacas y tipo de hecho.
+  "email.received": { role: "observation", content: (e) => emailEventContent("email.received", e) },
+  "email.sent": { role: "action", content: (e) => emailEventContent("email.sent", e) },
   "entity.created": { role: "observation", content: (e) => ({ kind: "entity.created", payload: e.payload }) },
   "entity.updated": { role: "observation", content: (e) => ({ kind: "entity.updated", payload: e.payload }) },
   "entity.deleted": { role: "observation", content: (e) => ({ kind: "entity.deleted", payload: e.payload }) },

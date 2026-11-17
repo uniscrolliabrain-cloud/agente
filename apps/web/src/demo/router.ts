@@ -176,6 +176,68 @@ export async function demoRequest<T>(
     return clone(created) as T;
   }
 
+  /* ----------------------------------------------------------------- hoy */
+  // COMPANY_DEMO_V1 - el espacio "Hoy" del tenant sintetico sale del mismo
+  // store que el resto del demo, para que la vista no dependa de un backend.
+  if (p === "/api/company" && method === "GET") {
+    const members = store.users.map((user, index) => ({
+      userId: user.id,
+      name: user.name,
+      email: user.email,
+      role: index === 0 ? ("owner" as const) : ("member" as const),
+      active: user.active !== false,
+    }));
+    const recent = store.tasks.slice(0, 20).map((task) => ({
+      id: task.id,
+      title: task.title,
+      kind: task.kind,
+      status: task.status,
+      updatedAt: task.updatedAt,
+      ...(task.assignedTo ? { assignedTo: task.assignedTo } : {}),
+      owner: store.user.id,
+    }));
+    const count = (status: string) => store.tasks.filter((task) => task.status === status).length;
+    return clone({
+      tenant: { id: "interfaz", name: "Interfaz" },
+      role: "owner",
+      canManageMembers: true,
+      members,
+      agents: store.agents.map((agent) => ({
+        id: agent.id,
+        name: agent.name,
+        active: agent.active,
+        owner: store.user.id,
+      })),
+      tasks: {
+        total: store.tasks.length,
+        running: count("running"),
+        waiting: count("waiting_approval") + count("waiting_input"),
+        succeeded: count("succeeded"),
+        failed: count("failed"),
+        recent,
+      },
+    }) as T;
+  }
+  if (p === "/api/company/members" && method === "POST") {
+    const created = {
+      id: nextDemoId("u"),
+      email: String(body.email ?? "nueva@interfaz.studio"),
+      name: String(body.name ?? "Nueva persona"),
+      role: "user" as const,
+      active: true,
+      setup: { sopIds: [], allowedTools: [], greeting: "" },
+      createdAt: new Date().toISOString(),
+    };
+    store.users.push(created);
+    return clone({
+      ok: true,
+      created: true,
+      tenantId: "interfaz",
+      user: { id: created.id, email: created.email, name: created.name },
+      role: body.role === "admin" ? "admin" : "member",
+    }) as T;
+  }
+
   /* --------------------------------------------------------------- tareas */
   if (p === "/api/agent" && method === "GET") {
     return clone({

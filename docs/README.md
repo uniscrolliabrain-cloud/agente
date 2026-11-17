@@ -14,6 +14,7 @@ dónde vive y si está viva o archivada.
 ## Desarrollo en paralelo
 
 - [Plan de 10 agentes y 10 rondas de sprint](./operacion/SPRINTS-10-AGENTES-10-RONDAS.md)
+- [Runtime cognitivo y dogfooding multiempresa](./campaigns/runtime-cognitivo-dogfooding/README.md) — plan draft por campañas/patchsets; sin implementación ejecutada.
 
 ## Producto y visión
 

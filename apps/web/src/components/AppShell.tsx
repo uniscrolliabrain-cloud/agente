@@ -1,64 +1,63 @@
-// FIX_02_APPSHELL_NOINERT_V1 - inert no está en los tipos de React 18.
-// D3_APPSHELL_PANEL_V1 - panel prop puede recibir ContextualPanel con ViewSpec.
-// B1_APPSHELL_V1 - shell 3 columnas con grid-template-columns.
+// SHELL_CONTROLLED_V1 - el shell ya no guarda su propio estado: App decide si
+// la barra esta plegada, si el chat ocupa la columna izquierda y si el drawer
+// movil esta abierto. Asi el rail y el chat comparten una sola columna.
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
-import { usePanel } from "../hooks/usePanel";
 
 interface Props {
   sidebar: ReactNode;
   children: ReactNode;
   panel?: ReactNode;
+  /** Barra plegada: solo iconos. */
+  collapsed?: boolean;
+  /** La columna izquierda es el chat del agente. */
+  chatDock?: boolean;
+  /** Drawer movil abierto. */
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+  /** Panel contextual derecho. */
+  rightOpen?: boolean;
 }
 
-export default function AppShell({ sidebar, children, panel }: Props) {
-  const [left, setLeft] = usePanel("ui.left", true);
-  const [right, setRight] = usePanel("ui.right", false);
-  const rightVisible = right && Boolean(panel);
-  const closeLeft = () => setLeft(false);
+export default function AppShell({
+  sidebar,
+  children,
+  panel,
+  collapsed = false,
+  chatDock = false,
+  mobileOpen,
+  onCloseMobile,
+  rightOpen = false,
+}: Props) {
+  const rightVisible = rightOpen && Boolean(panel);
 
   return (
-    <div className="shell" data-left={left} data-right={rightVisible}>
+    <div
+      className="shell"
+      data-left="true"
+      data-right={rightVisible}
+      data-collapsed={collapsed}
+      data-chat={chatDock}
+      data-mobile-open={mobileOpen}
+    >
       <button
         type="button"
         className="shell__backdrop"
         aria-label="Cerrar menú"
-        onClick={closeLeft}
+        onClick={onCloseMobile}
       />
-      <aside className="shell__left" aria-hidden={!left}>
+      <aside className="shell__left">
         <button
           type="button"
           className="shell__mobile-close"
           aria-label="Cerrar menú"
-          onClick={closeLeft}
+          onClick={onCloseMobile}
         >
           <X size={16} aria-hidden="true" />
         </button>
         {sidebar}
       </aside>
       <main className="shell__main">
-        <div className="shell__toggles">
-          <button
-            type="button"
-            className="shell__toggle"
-            aria-label={left ? "Ocultar panel izquierdo" : "Mostrar panel izquierdo"}
-            aria-expanded={left}
-            onClick={() => setLeft((v) => !v)}
-          >
-            ☰
-          </button>
-          {panel && (
-            <button
-              type="button"
-              className="shell__toggle"
-              aria-label={rightVisible ? "Ocultar panel derecho" : "Mostrar panel derecho"}
-              aria-expanded={rightVisible}
-              onClick={() => setRight((v) => !v)}
-            >
-              ▤
-            </button>
-          )}
-        </div>
         {children}
       </main>
       {panel && (

@@ -66,6 +66,23 @@ export class TaskWorker {
       bus?: EventBus;
       /** WORKER_MAX_ACTIVE_V1 */
       maxActive?: number;
+      /**
+       * WORKER_TENANT_SUSPENSION_V1 - una empresa suspendida no arranca
+       * trabajo nuevo. La tarea queda en cola y se reanuda al levantarla.
+       * C04_MIDFLIGHT_SUSPENSION_V1 - tampoco continua el trabajo en vuelo: el
+       * guard la corta antes del siguiente paso. Sin este dep (tests/worker sin
+       * servicio) se conserva el comportamiento previo.
+       */
+      tenantActive?: (tenantId: string) => Promise<boolean>;
+      /**
+       * WORKER_ASSIGNEE_ACTIVE_V1 - un agente deshabilitado DESPUES de encolar
+       * no ejecuta el trabajo: la tarea queda en cola y se reanuda al
+       * rehabilitarlo. La lectura va con el tenant de la fila. Sin este dep
+       * (tests/worker sueltos) se conserva el comportamiento previo.
+       * C04_MIDFLIGHT_SUSPENSION_V1 - tambien corta una tarea ya `running` en el
+       * siguiente guard.
+       */
+      assigneeActive?: (owner: string, task: AgentTask) => Promise<boolean>;
     } = {},
   ) {
     // Default 50: suficiente para 10 clientes simult
@@ -188,8 +205,8 @@ export class TaskWorker {
 // con scanByOwnerPrefix requiere conocer el tenant activo, que el worker
 // no tiene. Este comentario documenta la deuda y remite al bloque 07.
     // Ver: docs/audits/05-motor-tareas-durable/miniaudit.md.
-    const records = await this.dueTasks();
-      const due = records.filter(
+          const records = await this.dueTasks();
+      const scanned = records.filter(
         ({ value: t }) =>
           !this.active.has(t.id) &&
           (t.status === "queued" ||
@@ -197,6 +214,30 @@ export class TaskWorker {
             (t.status === "running" && Date.parse(t.leaseUntil ?? "") <= this.now()) ||
             t.status === "waiting_approval"),
       );
+      // WORKER_TENANT_SUSPENSION_V1 - si el estado no se puede leer, no se
+      // arranca la tarea (fail-closed); sigue en cola para el siguiente tick.
+      const due: typeof scanned = [];
+      for (const record of scanned) {
+        if (record.tenantId && this.options.tenantActive) {
+          const active = await this.options.tenantActive(record.tenantId).catch(() => false);
+          if (!active) continue;
+        }
+        due.push(record);
+      }
+      // WORKER_ASSIGNEE_ACTIVE_V1 - si el rol asignado ya no esta activo, la
+      // fila no se ejecuta ni ocupa cuota: espera al siguiente tick y vuelve a
+      // correr cuando el agente se rehabilita. Un fallo de lectura se trata
+      // como inactivo (fail-closed) para no despachar con estado desconocido.
+      const runnable: typeof due = [];
+      for (const record of due) {
+        if (this.options.assigneeActive) {
+          const active = await this.inRowTenant(record, () =>
+            this.options.assigneeActive!(record.owner, record.value),
+          ).catch(() => false);
+          if (!active) continue;
+        }
+        runnable.push(record);
+      }
       const eligible = [];
       // WORKER_OWNER_QUOTA_V1
       // Sin esto, un owner con 1000 tareas queued monopoliza el worker.
@@ -207,7 +248,7 @@ export class TaskWorker {
         // No tenemos el owner en el Map actual, as
         // El contador real se construye durante este loop.
       }
-      for (const record of due) {
+      for (const record of runnable) {
         if (record.value.status === "waiting_approval") {
           const actionId = record.value.actionId;
           // WORKER_TENANT_ACTION_READ_V1 - la accion vive en el MISMO tenant que la
@@ -327,7 +368,35 @@ export class TaskWorker {
     // o cuando el heartbeat invalida la cache.
     let guardCacheAt = 0;
     // GUARD_CACHE_100_V1 - 100ms detecta robos de lease antes.
-    const GUARD_CACHE_MS = Number(process.env.WORKER_GUARD_CACHE_MS ?? "100") || 100;
+    const GUARD_CACHE_MS = (() => {
+      const raw = Number(process.env.WORKER_GUARD_CACHE_MS ?? "100");
+      return Number.isFinite(raw) && raw >= 0 ? raw : 100;
+    })();
+    // C04_MIDFLIGHT_SUSPENSION_V1 - suspender la empresa o cerrar el agente
+    // asignado corta tambien una tarea YA en vuelo, no solo el siguiente
+    // arranque. El guard corre antes de cada tool y de cada evento, asi que el
+    // efecto siguiente no llega a producirse; la tarea vuelve a la cola sin
+    // consumir presupuesto de intentos y se reanuda al rehabilitar empresa o rol.
+    // La lectura se cachea aparte (1s por defecto) para no sumar dos lecturas
+    // por paso a un bucle con muchas tools.
+    const AUTHZ_CACHE_MS = (() => {
+      const raw = Number(process.env.WORKER_AUTHZ_CACHE_MS ?? "1000");
+      return Number.isFinite(raw) && raw >= 0 ? raw : 1000;
+    })();
+    let authzAllowed = true;
+    let authzCacheAt = 0;
+    // Las mismas comprobaciones del tick, con la fila ya en el scope de su
+    // empresa. Un fallo de lectura se trata como no autorizado (fail-closed).
+    const stillAuthorized = async (): Promise<boolean> => {
+      const tenantId = currentTenantScope()?.tenantId;
+      if (tenantId && this.options.tenantActive) {
+        if (!(await this.options.tenantActive(tenantId).catch(() => false))) return false;
+      }
+      if (this.options.assigneeActive) {
+        if (!(await this.options.assigneeActive(owner, task).catch(() => false))) return false;
+      }
+      return true;
+    };
     // WORKER_STEP_SIGNAL_V1 - expone el signal a los handlers.
     const guard = async () => {
       const now = Date.now();
@@ -337,6 +406,16 @@ export class TaskWorker {
       guardCacheAt = now;
       if (controller.signal.aborted || latest?.leaseId !== leaseId || latest.status !== "running")
         throw new LostLeaseError();
+      if (now - authzCacheAt >= AUTHZ_CACHE_MS) {
+        authzCacheAt = now;
+        authzAllowed = await stillAuthorized();
+      }
+      if (!authzAllowed) {
+        // Abortar antes de lanzar deja la tarea en `queued` (no `failed`): parar
+        // por suspension no es un fallo del trabajo ni agota reintentos.
+        controller.abort();
+        throw new LostLeaseError();
+      }
     };
     // WORKER_GUARD_INVALIDATE_V1 - el heartbeat y el checkpoint invalidan la
     // cache para que el siguiente guard lea de DB.

@@ -184,6 +184,22 @@ export class TenantService {
     };
   }
 
+  /**
+   * TENANT_DURABLE_MEMBERSHIP_PROBE_V1 - ¿la empresa ya tiene matriz de roles?
+   *
+   * La compatibilidad single-tenant (actuar sin rol durable) solo puede valer
+   * donde no existe matriz. Una empresa con memberships durables es
+   * multiempresa y ahí "sin fila" significa "sin rol" —por ejemplo, revocado—,
+   * no "cuenta antigua". Sin esta sonda, revocar el rol devolvía al actor al
+   * camino legacy y seguía aprobando (hueco anotado en RUN-2026-11-17-12).
+   */
+  async hasDurableMemberships(tenantId: string): Promise<boolean> {
+    const rows = await this.db
+      .scan<{ tenantId?: string }>(MEMBERSHIPS_KIND, 5000)
+      .catch(() => []);
+    return rows.some((row) => row.value?.tenantId === tenantId);
+  }
+
   /** Todos los tenants a los que pertenece un usuario. */
   async membershipsFor(userId: string): Promise<TenantMembership[]> {
     const rows = await this.db

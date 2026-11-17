@@ -206,6 +206,14 @@ export function adminTenantsRoutes(service: AgentService, users: UserService, gl
     if (!registry) throw new AppError("Tenant no encontrado", 404);
 
     const membership = await tenantService.addMembership(user.id, tenantId, body.role ?? "member");
+    // TENANT_MEMBERSHIP_PRIMARY_V1 - sin fila primaria el middleware resuelve
+    // "default" y el invitado no entra en su empresa hasta que alguien ejecute
+    // setMembership a mano. Se fija aqui solo si no tenia ya una empresa de
+    // entrada: mover la de alguien que ya trabaja en otra es otra operacion.
+    const primary = await global
+      .get<{ tenantId?: string }>(user.id, "tenant-membership", "default")
+      .catch(() => null);
+    if (!primary?.tenantId) await tenantService.setMembership(user.id, tenantId);
     return c.json({ ok: true, tenantId, userId: user.id, role: membership.role }, 201);
   });
 

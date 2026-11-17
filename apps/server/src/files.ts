@@ -7,6 +7,7 @@ import type { Auth } from "./auth.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
 import { chunkText, embedTexts, RAG_MAX_CHUNKS_PER_SOURCE } from "./engine/rag.ts";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -129,8 +130,9 @@ export class Files {
       parentId,
     };
 
-    // FILES_TENANT_STRICT_V2 - directorio por tenant real, sin fallback.
-    const tenantSegment = tenantId;
+    // FILES_TENANT_SCOPE_V1 - los callers legacy todavía pasan "default";
+    // dentro de una petición manda el scope autenticado, también para disco.
+    const tenantSegment = currentTenantScope()?.tenantId ?? tenantId;
     const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     await mkdir(directory, { recursive: true, mode: 0o700 });
     // FILES_ATOMIC_WRITE_V1 - antes escribiamos el fichero con flag "wx"
@@ -196,9 +198,9 @@ export class Files {
   /** Reads the stored bytes. Tries .bin first (current format), falls back to .pdf (legacy). */
   async bytes(owner: string, id: string, tenantId: string = "default") {
     await this.get(owner, id);
-    // FILES_TENANT_STRICT_V2 - directorio por tenant real. El caller debe
-    // pasar el tenantId resuelto; "default" es fallback de migracion.
-    const tenantSegment = tenantId;
+    // FILES_TENANT_SCOPE_V1 - evita leer del directorio legacy default cuando
+    // la petición ya resolvió un tenant autenticado.
+    const tenantSegment = currentTenantScope()?.tenantId ?? tenantId;
     const directory = join(this.config.dataDir, "tenants", tenantSegment, "files");
     try {
       return await readFile(join(directory, `${id}.bin`));

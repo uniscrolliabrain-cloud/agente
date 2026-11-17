@@ -21,6 +21,8 @@ import { TenantScopedStore } from "./db-tenant.ts";
 // TENANT_SCOPE_V1 - tenant activo de la peticion (AsyncLocalStorage).
 import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
 import { resolveTenantPrincipal } from "./tenant-principal.ts";
+// APPROVAL_TENANT_PERMISSION_V1 - la ruta de aprobacion usa la matriz de empresa.
+import { tenantAccess } from "./engine/authz/tenant-permissions.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
@@ -767,7 +769,9 @@ app.post("/api/billing/customer", async (c) => {
   // porque sus endpoints son redirects completos del navegador, no JSON.
   {
     const { oauthLoginRoutes } = await import("./oauth-login.ts");
-    app.route("/api/auth/oauth", oauthLoginRoutes(db, users, config));
+    // ACME_OWNER_BINDING_V1 - el login de GitHub recibe el TenantService vivo
+    // para atar al owner del demo acme sin construir una cache paralela.
+    app.route("/api/auth/oauth", oauthLoginRoutes(db, users, config, tenantService));
   }
   // APP_SIGNUP_ROUTES_V1 - endpoints publicos de signup y verify.
   {
@@ -793,6 +797,12 @@ app.post("/api/billing/customer", async (c) => {
     ...(tenantService ? { tenantService } : {}),
     authz: { pdp, fieldFilter },
   }));
+  // COMPANY_ROUTES_V1 - espacio "Hoy": estado de la empresa y alta de personas
+  // por parte de su owner (rol de empresa, no rol de plataforma).
+  {
+    const { companyRoutes } = await import("./company-routes.ts");
+    app.route("/api/company", companyRoutes(agent, users, db, config));
+  }
   // APP_ASSIGNMENT_WIRE_V1 - rutas de delegacion controlada (F3).
   {
     const { AssignmentService: AssignSvc } = await import("./engine/assignments/service.ts");
@@ -914,22 +924,88 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   app.get("/api/drive/files/:id/content", async (c) =>
     c.json(await workspace.readDriveFile(c.get("owner"), c.req.param("id"))),
   );
+  // DRIVE_EXPLICIT_INDEX_ROUTE_V1 - seleccionar un archivo para indexarlo es
+  // una mutacion autenticada separada de la lectura; no indexar al hacer GET.
+  app.post("/api/drive/files/:id/index", async (c) =>
+    c.json(await workspace.indexDriveFile(c.get("owner"), c.req.param("id"))),
+  );
   app.get("/api/mail/threads/:id", async (c) =>
     c.json(await workspace.thread(c.get("owner"), c.req.param("id"))),
   );
+  /**
+   * C05_SHARED_ACTION_ACCESS_V1 - permiso del actor dentro de la empresa de la
+   * peticion. Relee la membership fresca: el cache enruta, no autoriza. Sin alta
+   * de rol se conserva el comportamiento single-tenant (`sample`/`session`), que
+   * no tiene matriz que aplicar; en multiempresa la respuesta es 403.
+   */
+  const requireCompanyAccess = async (
+    ctx: AppCtx,
+    permission: "actions.approve" | "records.read",
+  ): Promise<void> => {
+    const actorUserId = ctx.actor.kind === "human" ? ctx.actor.userId : ctx.actor.id;
+    const membership = await tenantService.findMembership(actorUserId, ctx.tenantId);
+    if (membership) {
+      const access = tenantAccess({
+        membership,
+        state: await tenantService.tenantState(ctx.tenantId),
+        permission,
+      });
+      if (!access.ok) throw access.error;
+      return;
+    }
+    if (config.mode !== "sample" && config.authProvider !== "session") {
+      throw new AppError("No eres miembro de esta empresa", 403, { code: "NO_MEMBERSHIP" });
+    }
+    // C05_REVOCATION_STRICT_V1 - el camino de compatibilidad single-tenant solo
+    // vale en una empresa sin matriz de roles. Si la empresa ya tiene
+    // memberships durables, no tener fila significa "sin rol" (revocado), no
+    // "cuenta antigua": revocar corta la aprobación en la petición siguiente.
+    if (await tenantService.hasDurableMemberships(ctx.tenantId).catch(() => true)) {
+      throw new AppError("No eres miembro de esta empresa", 403, { code: "NO_MEMBERSHIP" });
+    }
+  };
   app.post("/api/actions", async (c) => {
     const input = proposalSchema.parse(await c.req.json());
     if (input.kind === "email.send")
       for (const id of input.data.attachmentIds) await files.get(c.get("owner"), id);
     return c.json(await actions.propose(c.get("owner"), input), 201);
   });
+  // C05_SHARED_ACTION_INBOX_V1 - el aprobador ve lo que preparo otro actor de
+  // su empresa. Listado minimo (sin payload) y acotado al tenant de la peticion.
+  app.get("/api/actions/pending", async (c) => {
+    const ctx = c.get("ctx");
+    await requireCompanyAccess(ctx, "records.read");
+    return c.json(await actions.pendingInCompany(ctx.tenantId, 100));
+  });
   app.post("/api/actions/:id/decide", async (c) => {
     const body = z
       .object({ hash: z.string(), decision: z.enum(["approve", "deny"]) })
       .parse(await c.req.json());
-    return c.json(
-      await actions.decide(c.get("owner"), c.req.param("id"), body.hash, body.decision),
-    );
+    // APPROVAL_TENANT_PERMISSION_V1 - preparar no es aprobar. Antes esta ruta
+    // solo comprobaba el owner: un `member` de la empresa aprobaba su propia
+    // propuesta sin que la matriz se consultara. Ahora, si el actor tiene rol
+    // de empresa, se relee la membership fresca y se exige `actions.approve`.
+    // Denegar sigue libre: no produce efecto externo y el actor debe poder
+    // retirar lo que preparo. Sin alta de rol se conserva el comportamiento
+    // single-tenant (cuenta legacy), que no tiene matriz que aplicar.
+    const ctx = c.get("ctx");
+    const actorUserId = ctx.actor.kind === "human" ? ctx.actor.userId : ctx.actor.id;
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    // C05_SHARED_APPROVAL_V1 - aprobar una propuesta ajena de la misma empresa.
+    // La propuesta vive en la zona de quien la preparo (ahi esta su conexion y
+    // su revision), asi que se resuelve dentro del tenant ya resuelto y se
+    // decide con ese owner. Fuera de la empresa no se encuentra: 404, sin efecto.
+    let target = owner;
+    if (body.decision === "approve") {
+      await requireCompanyAccess(ctx, "actions.approve");
+      if (!(await actions.getApproval(owner, id))) {
+        const shared = await actions.findInCompany(ctx.tenantId, id);
+        if (!shared) throw new AppError("Action not found", 404);
+        target = shared.owner;
+      }
+    }
+    return c.json(await actions.decide(target, id, body.hash, body.decision, actorUserId));
   });
   app.get("/api/drafts", async (c) => c.json(await db.list(c.get("owner"), "drafts")));
   app.post("/api/drafts", async (c) => {

@@ -52,6 +52,28 @@ export interface ActionsStore {
   // LEAD_FOLLOW_UP_V1 - la guarda del seguimiento necesita releer el hilo cuando
   // el store lo permite; el resto de acciones no depende de esta lectura.
   list?<T = Record<string, unknown>>(owner: string, kind: string): Promise<T[]>;
+  // C05_SHARED_ACTIONS_V1 - lectura acotada al tenant resuelto por la peticion.
+  // Opcional: con un store crudo (tests de servicio) la aprobacion sigue siendo
+  // owner-scoped y las rutas que la necesitan responden 404, no adivinan.
+  scanByPrefix?<T>(kind: string, tenantId: string, limit?: number): Promise<{ owner: string; value: T }[]>;
+}
+
+/**
+ * C05_SHARED_ACTIONS_V1 - revision minima de una propuesta ajena. No se expone
+ * el payload (`data`): quien la aprueba despacha la revision ya preparada por su
+ * autor, no una copia editable por un tercero.
+ */
+export interface SharedActionReview {
+  id: string;
+  title: string;
+  kind: ActionProposal["kind"];
+  status: ActionProposal["status"];
+  hash: string;
+  createdAt: string;
+  expiresAt: string;
+  /** Actor que preparo la propuesta (owner del registro). */
+  requestedBy: string;
+  taskId?: string;
 }
 
 const NO_PLACES = {
@@ -195,6 +217,46 @@ export class ActionService {
   // ACTION_GET_APPROVAL_V1 - lectura de aprobacion para validacion real en CapabilityRunner.
   async getApproval(owner: string, actionId: string): Promise<ActionProposal | null> {
     return this.db.get<ActionProposal>(owner, "actions", actionId);
+  }
+
+  // C05_SHARED_ACTIONS_V1 - propuestas de la empresa.
+  //
+  // Cada accion se guarda en la zona de quien la preparo, porque es ese actor
+  // quien tiene la conexion de Google con la que se reviso y con la que se
+  // despacharia. Correcto para ejecutar, pero dejaba la propuesta invisible al
+  // resto de la empresa: un `admin` con `actions.approve` no podia aprobar lo
+  // que preparo un `member`. Estas dos lecturas la resuelven dentro del tenant
+  // que la peticion ya resolvio; nunca recorren otro prefijo, asi que dos
+  // empresas con el mismo userId siguen sin verse.
+  async findInCompany(
+    tenantId: string,
+    actionId: string,
+  ): Promise<{ owner: string; proposal: ActionProposal } | null> {
+    if (typeof this.db.scanByPrefix !== "function") return null;
+    const rows = await this.db.scanByPrefix<ActionProposal>("actions", tenantId, 2000);
+    const found = rows.find((row) => row.value?.id === actionId);
+    return found ? { owner: found.owner, proposal: found.value } : null;
+  }
+
+  /** Revisiones pendientes de toda la empresa, la mas reciente primero. */
+  async pendingInCompany(tenantId: string, limit = 100): Promise<SharedActionReview[]> {
+    if (typeof this.db.scanByPrefix !== "function") return [];
+    const rows = await this.db.scanByPrefix<ActionProposal>("actions", tenantId, 2000);
+    return rows
+      .filter((row) => row.value?.status === "awaiting_review")
+      .sort((a, b) => (b.value.createdAt ?? "").localeCompare(a.value.createdAt ?? ""))
+      .slice(0, Math.max(1, limit))
+      .map(({ owner, value }) => ({
+        id: value.id,
+        title: value.title,
+        kind: value.kind,
+        status: value.status,
+        hash: value.hash,
+        createdAt: value.createdAt,
+        expiresAt: value.expiresAt,
+        requestedBy: (value as { principal?: string }).principal ?? owner,
+        ...(value.taskId ? { taskId: value.taskId } : {}),
+      }));
   }
 
   async propose(

@@ -6,9 +6,12 @@ import { useThreads } from "./hooks/useThreads";
 import { useWorkspaceData } from "./hooks/useWorkspaceData";
 import { useNotifications } from "./hooks/useNotifications";
 import { useViewResolver } from "./hooks/useViewResolver";
+import { usePanel } from "./hooks/usePanel";
+import { useMediaQuery } from "./hooks/useMediaQuery";
 import SidebarV2, { type AppView } from "./components/SidebarV2";
 import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
+import CommandCenterView from "./components/CommandCenterView";
 import Login from "./components/Login";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
@@ -17,7 +20,8 @@ import ProjectsView from "./components/ProjectsView";
 import ControlCenterView from "./components/ControlCenterView";
 import UsersView from "./components/UsersView";
 import WhatsAppView from "./components/WhatsAppView";
-import AgentsView from "./components/AgentsView";
+// TEAM_VIEW_V1 - "Equipo" sustituye a la antigua vista de agentes.
+import TeamView from "./components/TeamView";
 import { isDemoSession } from "./api/client";
 import VerticalSliceOperationsView from "./components/VerticalSliceOperationsView";
 // APP_CENTRO_MANDO_V1
@@ -31,6 +35,10 @@ import ApprovalModal from "./components/ApprovalModal";
 import CommandPalette from "./components/CommandPalette";
 import AppShell from "./components/AppShell";
 import ContextualPanel from "./components/ContextualPanel";
+// SIDEBAR_CHAT_V1 - chat acoplado y ajustes con cierre de sesion.
+import SidebarChat from "./components/SidebarChat";
+import SettingsMenu from "./components/SettingsMenu";
+import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
 
 function useTheme() {
@@ -82,13 +90,22 @@ export default function App() {
     clear: clearView,
   } = useViewResolver();
 
-  const [view, setView] = useState<AppView>("chat");
+  // COMMAND_CENTER_VIEW_V1 - la sesion abre en el centro de mando, no en el chat vacio.
+  const [view, setView] = useState<AppView>("today");
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [reviewTaskId, setReviewTaskId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
   const { workspaces } = useWorkspaces(auth.isAuthenticated);
+  // SIDEBAR_RAIL_V1 - barra plegada y drawer movil.
+  const isMobile = useMediaQuery("(max-width: 900px)");
+  const [collapsed, setCollapsed] = usePanel("ui.left.collapsed", false);
+  const [mobileNav, setMobileNav] = useState(false);
+  // SIDEBAR_CHAT_V1 - el chat ocupa la columna izquierda sin cambiar de vista.
+  const [chatDock, setChatDock] = useState(false);
+  const [mobileChat, setMobileChat] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -159,22 +176,66 @@ export default function App() {
   const sessionTenant = isDemoSession() ? null : (auth.user?.tenantId ?? null);
   const contextLabel = isDemoSession() ? "Interfaz" : (sessionTenant ? sessionTenant.toUpperCase() : "MI");
 
-  const sidebar = (
+  const demoSession = isDemoSession();
+  const chatDockActive = chatDock && !isMobile;
+  const chatOpen = chatDockActive || mobileChat;
+
+  const selectView = (next: AppView) => {
+    setView(next);
+    setMobileNav(false);
+  };
+
+  const openDockChat = () => {
+    if (isMobile) {
+      setMobileNav(false);
+      setMobileChat(true);
+      return;
+    }
+    setCollapsed(false);
+    setChatDock(true);
+  };
+
+  const toggleChat = () => {
+    if (isMobile) {
+      setMobileChat((open) => !open);
+      return;
+    }
+    if (chatDock) {
+      setChatDock(false);
+      return;
+    }
+    setCollapsed(false);
+    setChatDock(true);
+  };
+
+  const sidebar = chatDockActive ? (
+    <SidebarChat
+      chat={chat}
+      tenantLabel={contextLabel}
+      onClose={() => setChatDock(false)}
+      onOpenFullChat={() => { setChatDock(false); setView("chat"); }}
+      onOpenSettings={() => setSettingsOpen(true)}
+    />
+  ) : (
     <SidebarV2
       activeView={view}
-      onSelectView={setView}
+      onSelectView={selectView}
       isAdmin={auth.user?.role === "admin"}
       activeThreadId={threads.activeId}
       threads={threads.threads}
-      onSelectThread={(id) => { setView("chat"); threads.select(id); }}
+      onSelectThread={(id) => { setView("chat"); setMobileNav(false); threads.select(id); }}
       userName={auth.user?.name ?? "Usuario"}
       userRole={auth.user?.role ?? "user"}
       onOpenProfile={() => setProfileOpen(true)}
       demo={{
-        active: isDemoSession(),
+        active: demoSession,
         onExit: () => { void auth.logout(); },
       }}
       tenant={sessionTenant ? { id: sessionTenant } : null}
+      collapsed={collapsed && !isMobile}
+      onToggleCollapsed={() => setCollapsed((value) => !value)}
+      onOpenSettings={() => setSettingsOpen(true)}
+      onOpenChat={openDockChat}
     />
   );
 
@@ -189,16 +250,34 @@ export default function App() {
 
   return (
     <>
-      <AppShell sidebar={sidebar} panel={panel}>
+      <AppShell
+        sidebar={sidebar}
+        panel={panel}
+        collapsed={collapsed && !isMobile}
+        chatDock={chatDockActive}
+        mobileOpen={mobileNav}
+        onCloseMobile={() => setMobileNav(false)}
+      >
         <TopBarV2
           status={status}
           statusLabel={statusLabel}
           contextLabel={contextLabel}
           onNewChat={handleNewChat}
           onOpenPalette={() => setPaletteOpen(true)}
+          onOpenMenu={() => setMobileNav(true)}
         />
 
         <div className="v2-content">
+          {view === "today" && (
+            <CommandCenterView
+              onOpenTask={(id) => setOpenTaskId(id)}
+              onReviewTask={(id) => setReviewTaskId(id)}
+              onOpenTasksView={() => setView("tasks")}
+              onOpenAgentsView={() => setView("team")}
+              onOpenChat={() => setView("chat")}
+              {...(auth.user?.role === "admin" ? { onOpenTeamView: () => setView("users") } : {})}
+            />
+          )}
           {view === "chat" && (
             <ChatPanel
               chat={chat}
@@ -228,7 +307,7 @@ export default function App() {
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "agents" && <AgentsView />}
+          {view === "team" && <TeamView onOpenChat={() => setView("chat")} />}
           {view === "workspace" && (
             <WorkspaceShell
               workspaces={workspaces}
@@ -240,6 +319,48 @@ export default function App() {
           {view === "centro-mando" && <CentroMandoWorkspace />}
         </div>
       </AppShell>
+
+      {/* SIDEBAR_CHAT_V1 - boton flotante persistente: el agente esta siempre a
+          un toque, en cualquier pantalla. En escritorio convierte la columna
+          izquierda en el chat; en movil abre una hoja a pantalla completa. */}
+      {!mobileNav && (
+        <button
+          type="button"
+          className={`chat-fab ${chatOpen ? "open" : ""}`}
+          onClick={toggleChat}
+          aria-label={chatOpen ? "Cerrar chat" : "Hablar con tu agente"}
+          aria-expanded={chatOpen}
+        >
+          {chatOpen ? <X size={18} /> : <MessageSquare size={18} />}
+          <span>{chatOpen ? "Cerrar chat" : "Chat"}</span>
+        </button>
+      )}
+
+      {isMobile && mobileChat && (
+        <div className="mobile-chat" role="dialog" aria-modal="true" aria-label="Chat con tu agente">
+          <SidebarChat
+            chat={chat}
+            tenantLabel={contextLabel}
+            variant="sheet"
+            onClose={() => setMobileChat(false)}
+            onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
+            onOpenSettings={() => setSettingsOpen(true)}
+          />
+        </div>
+      )}
+
+      <SettingsMenu
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        userName={auth.user?.name ?? "Usuario"}
+        userEmail={auth.user?.email ?? null}
+        userRole={auth.user?.role ?? "user"}
+        tenantLabel={demoSession ? "Interfaz · demo" : contextLabel}
+        demo={demoSession}
+        onOpenProfile={() => setProfileOpen(true)}
+        onExitDemo={() => { void auth.logout(); }}
+        onLogout={() => { void auth.logout(); }}
+      />
 
       <CommandPalette
         open={paletteOpen}

@@ -81,7 +81,12 @@ export class BusinessGraph {
   // GRAPH_RESOLVER_WIRE_V1 - busca duplicados por cif/email/name antes de crear.
   async createEntity(owner: string, input: CreateEntityInput): Promise<BusinessEntity> {
     // BUSINESS_SCHEMA_WIRE_V2 - validar contra el schema del tenant.
-    await this.validateAgainstSchema(owner, input.type, input.properties ?? {});
+    await this.validateAgainstSchema(
+      owner,
+      input.type,
+      input.properties ?? {},
+      input.status !== undefined ? { status: input.status } : {},
+    );
     // GRAPH_RESOLVER_WIRE_V1 - solo si no hay id explicito, buscamos candidatos.
     const id = input.id ?? randomUUID();
     if (!input.id) {
@@ -159,6 +164,13 @@ export class BusinessGraph {
     // B101b — si la entidad declara stateMachineId y este patch cambia status,
     // validamos la transicion via StateMachineRegistry. Sin stateMachineId o sin
     // registry, comportamiento previo.
+    // BUSINESS_SCHEMA_PATCH_V1 - updateEntity tambien valida el patch contra el
+    // schema. Solo los campos tocados: un registro legacy no se invalida por no
+    // traer un required historico, pero un cambio de tipo/enum/estado si falla.
+    await this.validateAgainstSchema(owner, current.type, patch.properties ?? {}, {
+      ...(patch.status !== undefined ? { status: patch.status } : {}),
+      onlyFields: Object.keys(patch.properties ?? {}),
+    });
     if (
       this.stateMachines &&
       current.stateMachineId &&
@@ -225,17 +237,21 @@ export class BusinessGraph {
 
   // BUSINESS_SCHEMA_WIRE_V2 - valida el payload contra el schema del tenant.
   // Si no hay schema registrado o no hay definicion para ese type, deja pasar.
+  private async loadSchema(owner: string): Promise<BusinessSchemaV2 | null> {
+    try {
+      return await this.db.get<BusinessSchemaV2>(owner, "business-schemas", "default");
+    } catch {
+      return null;
+    }
+  }
+
   private async validateAgainstSchema(
     owner: string,
     entityType: string,
     payload: Record<string, unknown>,
+    options: { status?: string; onlyFields?: readonly string[] } = {},
   ): Promise<void> {
-    let schema: BusinessSchemaV2 | null = null;
-    try {
-      schema = await this.db.get<BusinessSchemaV2>(owner, "business-schemas", "default");
-    } catch {
-      return;
-    }
+    const schema = await this.loadSchema(owner);
     if (!schema?.entities) return;
     const def: EntityDefinition | undefined = schema.entities.find((e) => e.type === entityType);
     // BUSINESS_SCHEMA_STATES_V1 - un schema con dos estados iniciales es
@@ -255,8 +271,19 @@ export class BusinessGraph {
       }
     }
     if (!def) return;
+    // BUSINESS_SCHEMA_STATE_NAME_V1 - si el schema declara estados, un status
+    // fuera de esa lista no se persiste (create ni update).
+    if (
+      options.status !== undefined &&
+      states.length > 0 &&
+      !states.some((state) => state.name === options.status)
+    ) {
+      throw new AppError(`Entity ${entityType} status ${options.status} is not declared`, 422);
+    }
+    const onlyFields = options.onlyFields ? new Set(options.onlyFields) : null;
     const fields: readonly FieldDefinition[] = def.fields ?? [];
     for (const field of fields) {
+      if (onlyFields && !onlyFields.has(field.name)) continue;
       // BUSINESS_SCHEMA_FIELD_TYPE_V1 - un schema guardado con un tipo que el
       // metamodelo ya no conoce falla fail-closed, no se ignora.
       if (!KNOWN_FIELD_TYPES.has(field.type)) {
@@ -288,6 +315,25 @@ export class BusinessGraph {
     if (!from) throw new AppError(`From entity not found: ${input.fromEntityId}`, 404);
     const to = await this.db.get<BusinessEntity>(owner, ENTITY_KIND, input.toEntityId);
     if (!to) throw new AppError(`To entity not found: ${input.toEntityId}`, 404);
+    // BUSINESS_SCHEMA_RELATION_WIRE_V1 - si el tenant declara relaciones, la
+    // relacion debe existir en el schema y sus extremos deben ser del tipo
+    // declarado. Sin schema o con schema sin relaciones se mantiene el modo
+    // legacy ya existente: no se invalida un grafo anterior al schema.
+    const def = this.relationDefinition(await this.loadSchema(owner), input.type);
+    if (def) {
+      if (from.type !== def.fromType) {
+        throw new AppError(
+          `Relation ${def.type} requires from type ${def.fromType}, got ${from.type}`,
+          422,
+        );
+      }
+      if (to.type !== def.toType) {
+        throw new AppError(
+          `Relation ${def.type} requires to type ${def.toType}, got ${to.type}`,
+          422,
+        );
+      }
+    }
     // BUSINESS_GRAPH_RELATION_NO_SELF_V1
     const relation = businessRelationSchema.parse({
       id,
@@ -304,7 +350,15 @@ export class BusinessGraph {
     // BUSINESS_GRAPH_RELATION_RACE_V1 - antes emitiamos relation.created
     // aunque insertIfAbsent hubiera devuelto null (la relacion ya existia).
     // Eso corrompia el event log factual: decia "se creo" cuando no se creo.
-    const inserted = await this.db.insertIfAbsent(owner, RELATION_KIND, relation);
+    // BUSINESS_SCHEMA_CARDINALITY_V1 - el chequeo y el insert van en la misma
+    // transaccion del Store. Sin indice unico en DB dos transacciones
+    // concurrentes en Postgres aun podrian pasar ambas; queda como limite.
+    const inserted = await this.db.transaction(async (tx) => {
+      if (def && def.cardinality !== "many-to-many") {
+        await this.assertCardinality(tx, owner, def, input);
+      }
+      return tx.insertIfAbsent(owner, RELATION_KIND, relation);
+    });
     if (inserted) {
       await this.bus?.emit(owner, "relation.created", { kind: "relation", id: relation.id }, {
         relationId: relation.id,
@@ -314,6 +368,58 @@ export class BusinessGraph {
       });
     }
     return relation;
+  }
+
+  private relationDefinition(
+    schema: BusinessSchemaV2 | null,
+    type: string,
+  ): RelationDefinition | null {
+    const relations: readonly RelationDefinition[] = schema?.relations ?? [];
+    // LEGACY_PERMISSIVE_V1 - sin relaciones declaradas no hay contrato que
+    // imponer; los grafos anteriores al schema siguen operando.
+    if (relations.length === 0) return null;
+    const def = relations.find((relation) => relation.type === type);
+    if (!def) {
+      throw new AppError(`Relation type ${type} is not declared by the tenant schema`, 422);
+    }
+    return def;
+  }
+
+  // BUSINESS_SCHEMA_CARDINALITY_V1 - one-to-one: ningun extremo puede
+  // participar dos veces. one-to-many: el extremo destino admite un solo
+  // origen para ese tipo. many-to-many: sin limite.
+  private async assertCardinality(
+    db: Store,
+    owner: string,
+    def: RelationDefinition,
+    input: CreateRelationInput,
+  ): Promise<void> {
+    const existing = (await db.list<BusinessRelation>(owner, RELATION_KIND)).filter(
+      (relation) => relation.type === def.type,
+    );
+    if (def.cardinality === "one-to-one") {
+      const clash = existing.find(
+        (relation) =>
+          relation.fromEntityId === input.fromEntityId ||
+          relation.toEntityId === input.fromEntityId ||
+          relation.fromEntityId === input.toEntityId ||
+          relation.toEntityId === input.toEntityId,
+      );
+      if (clash) {
+        throw new AppError(
+          `Relation ${def.type} is one-to-one; ${input.fromEntityId}->${input.toEntityId} would violate cardinality`,
+          422,
+        );
+      }
+      return;
+    }
+    const clash = existing.find((relation) => relation.toEntityId === input.toEntityId);
+    if (clash) {
+      throw new AppError(
+        `Relation ${def.type} is one-to-many; ${input.toEntityId} already has a source and would violate cardinality`,
+        422,
+      );
+    }
   }
 
   async listRelations(owner: string, entityId?: string): Promise<BusinessRelation[]> {

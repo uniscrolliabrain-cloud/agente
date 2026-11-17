@@ -1,8 +1,38 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createStore } from "../apps/server/src/db.ts";
+import { createStore, type Store } from "../apps/server/src/db.ts";
 import { BusinessGraph } from "../apps/server/src/engine/business/graph.ts";
 import { BusinessTruth } from "../apps/server/src/engine/business/truth.ts";
+
+// BUSINESS_SCHEMA_FIXTURE_V1 - schema pequeno con relaciones y estados
+// declarados. Se guarda crudo, como lo hace el instalador/admin.
+async function seedSchema(db: Store, owner: string): Promise<void> {
+  const now = new Date().toISOString();
+  await db.put(owner, "business-schemas", {
+    id: "default",
+    tenantId: owner,
+    version: "1.0",
+    entities: [
+      { type: "client", label: "Cliente", fields: [] },
+      {
+        type: "invoice",
+        label: "Factura",
+        fields: [{ name: "amount", label: "Importe", type: "number", required: true }],
+        states: [
+          { name: "draft", terminal: false, initialState: true },
+          { name: "issued", terminal: false, initialState: false },
+        ],
+      },
+      { type: "lead", label: "Lead", fields: [] },
+    ],
+    relations: [
+      { type: "has_invoice", label: "Tiene factura", fromType: "client", toType: "invoice", cardinality: "one-to-many" },
+      { type: "converted_to", label: "Convertido en", fromType: "lead", toType: "client", cardinality: "one-to-one" },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  });
+}
 
 test("createEntity guarda provenance obligatoria", async () => {
   const db = await createStore();
@@ -148,5 +178,202 @@ test("business entities estan scoped por owner", async () => {
     const graph = new BusinessGraph(db);
     await graph.createEntity("owner-a", { type: "customer", name: "A", actor: "t", source: "s" });
     assert.equal((await graph.listEntities("owner-b")).length, 0);
+  } finally { await db.close(); }
+});
+
+test("createRelation valida el tipo declarado y los tipos de sus extremos", async () => {
+  const db = await createStore();
+  try {
+    await seedSchema(db, "owner");
+    const graph = new BusinessGraph(db);
+    const client = await graph.createEntity("owner", { type: "client", name: "Cliente A", actor: "t", source: "s" });
+    const invoice = await graph.createEntity("owner", { type: "invoice", name: "F-1", actor: "t", source: "s", properties: { amount: 10 } });
+    const lead = await graph.createEntity("owner", { type: "lead", name: "Lead A", actor: "t", source: "s" });
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: client.id, toEntityId: invoice.id, type: "invented", actor: "t", source: "s" }),
+      /not declared/i,
+    );
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: client.id, toEntityId: lead.id, type: "has_invoice", actor: "t", source: "s" }),
+      /requires to type invoice/i,
+    );
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: lead.id, toEntityId: invoice.id, type: "has_invoice", actor: "t", source: "s" }),
+      /requires from type client/i,
+    );
+    const relation = await graph.createRelation("owner", { fromEntityId: client.id, toEntityId: invoice.id, type: "has_invoice", actor: "t", source: "s" });
+    assert.equal(relation.type, "has_invoice");
+  } finally { await db.close(); }
+});
+
+test("cardinalidad one-to-many rechaza una segunda fuente para el mismo destino", async () => {
+  const db = await createStore();
+  try {
+    await seedSchema(db, "owner");
+    const graph = new BusinessGraph(db);
+    const a = await graph.createEntity("owner", { type: "client", name: "Cliente A", actor: "t", source: "s" });
+    const b = await graph.createEntity("owner", { type: "client", name: "Cliente B", actor: "t", source: "s" });
+    const f1 = await graph.createEntity("owner", { type: "invoice", name: "F-1", actor: "t", source: "s", properties: { amount: 10 } });
+    const f2 = await graph.createEntity("owner", { type: "invoice", name: "F-2", actor: "t", source: "s", properties: { amount: 20 } });
+    await graph.createRelation("owner", { fromEntityId: a.id, toEntityId: f1.id, type: "has_invoice", actor: "t", source: "s" });
+    await graph.createRelation("owner", { fromEntityId: a.id, toEntityId: f2.id, type: "has_invoice", actor: "t", source: "s" });
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: b.id, toEntityId: f1.id, type: "has_invoice", actor: "t", source: "s" }),
+      /cardinality/i,
+    );
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: a.id, toEntityId: f1.id, type: "has_invoice", actor: "t", source: "s" }),
+      /cardinality/i,
+    );
+    assert.equal((await graph.listRelations("owner")).length, 2);
+  } finally { await db.close(); }
+});
+
+test("cardinalidad one-to-one rechaza en ambos sentidos", async () => {
+  const db = await createStore();
+  try {
+    await seedSchema(db, "owner");
+    const graph = new BusinessGraph(db);
+    const l1 = await graph.createEntity("owner", { type: "lead", name: "Lead 1", actor: "t", source: "s" });
+    const l2 = await graph.createEntity("owner", { type: "lead", name: "Lead 2", actor: "t", source: "s" });
+    const c1 = await graph.createEntity("owner", { type: "client", name: "Cliente 1", actor: "t", source: "s" });
+    const c2 = await graph.createEntity("owner", { type: "client", name: "Cliente 2", actor: "t", source: "s" });
+    await graph.createRelation("owner", { fromEntityId: l1.id, toEntityId: c1.id, type: "converted_to", actor: "t", source: "s" });
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: l2.id, toEntityId: c1.id, type: "converted_to", actor: "t", source: "s" }),
+      /one-to-one/i,
+    );
+    await assert.rejects(
+      graph.createRelation("owner", { fromEntityId: l1.id, toEntityId: c2.id, type: "converted_to", actor: "t", source: "s" }),
+      /one-to-one/i,
+    );
+    const second = await graph.createRelation("owner", { fromEntityId: l2.id, toEntityId: c2.id, type: "converted_to", actor: "t", source: "s" });
+    assert.equal(second.fromEntityId, l2.id);
+  } finally { await db.close(); }
+});
+
+test("las cardinalidades son por owner y no se contaminan entre tenants", async () => {
+  const db = await createStore();
+  try {
+    await seedSchema(db, "tenant-a");
+    await seedSchema(db, "tenant-b");
+    const graph = new BusinessGraph(db);
+    for (const owner of ["tenant-a", "tenant-b"]) {
+      await graph.createEntity(owner, { id: "shared-client", type: "client", name: `${owner} client`, actor: "t", source: "s" });
+      await graph.createEntity(owner, { id: "shared-invoice", type: "invoice", name: `${owner} invoice`, actor: "t", source: "s", properties: { amount: 10 } });
+      await graph.createRelation(owner, { fromEntityId: "shared-client", toEntityId: "shared-invoice", type: "has_invoice", actor: "t", source: "s" });
+    }
+    assert.equal((await graph.listRelations("tenant-a")).length, 1);
+    assert.equal((await graph.listRelations("tenant-b")).length, 1);
+  } finally { await db.close(); }
+});
+
+test("subir la version del schema no invalida las entidades anteriores", async () => {
+  const db = await createStore();
+  try {
+    await seedSchema(db, "owner");
+    const graph = new BusinessGraph(db);
+    const legacy = await graph.createEntity("owner", { type: "invoice", name: "F-legacy", actor: "t", source: "s", properties: { amount: 10 } });
+    const now = new Date().toISOString();
+    await db.put("owner", "business-schemas", {
+      id: "default",
+      tenantId: "owner",
+      version: "2.0",
+      entities: [
+        { type: "client", label: "Cliente", fields: [] },
+        {
+          type: "invoice",
+          label: "Factura",
+          fields: [
+            { name: "amount", label: "Importe", type: "number", required: true },
+            { name: "taxId", label: "NIF", type: "string", required: true },
+          ],
+          states: [
+            { name: "draft", terminal: false, initialState: true },
+            { name: "issued", terminal: false, initialState: false },
+          ],
+        },
+        { type: "lead", label: "Lead", fields: [] },
+      ],
+      relations: [
+        { type: "has_invoice", label: "Tiene factura", fromType: "client", toType: "invoice", cardinality: "one-to-many" },
+        { type: "converted_to", label: "Convertido en", fromType: "lead", toType: "client", cardinality: "one-to-one" },
+      ],
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // El registro anterior sigue legible y actualizable en los campos que toca.
+    assert.deepEqual(await graph.getEntity("owner", legacy.id), legacy);
+    const renamed = await graph.updateEntity("owner", legacy.id, { name: "F-legacy 2", actor: "t", source: "s" });
+    assert.equal(renamed.name, "F-legacy 2");
+    assert.equal(renamed.properties.amount, 10);
+
+    // Las escrituras nuevas si cumplen el schema 2.0.
+    await assert.rejects(
+      graph.createEntity("owner", { type: "invoice", name: "F-nueva", actor: "t", source: "s", properties: { amount: 20 } }),
+      /requires field taxId/i,
+    );
+    const current = await graph.createEntity("owner", { type: "invoice", name: "F-nueva", actor: "t", source: "s", properties: { amount: 20, taxId: "B1" } });
+    assert.equal(current.properties.taxId, "B1");
+  } finally { await db.close(); }
+});
+
+test("un tipo de campo que el metamodelo no conoce falla cerrado", async () => {
+  const db = await createStore();
+  try {
+    const now = new Date().toISOString();
+    await db.put("owner", "business-schemas", {
+      id: "default",
+      tenantId: "owner",
+      version: "1.0",
+      entities: [
+        { type: "customer", label: "Cliente", fields: [{ name: "id", label: "ID", type: "uuid", required: false }] },
+      ],
+      relations: [],
+      createdAt: now,
+      updatedAt: now,
+    });
+    const graph = new BusinessGraph(db);
+    await assert.rejects(
+      graph.createEntity("owner", { type: "customer", name: "A", actor: "t", source: "s" }),
+      /unknown type uuid/i,
+    );
+  } finally { await db.close(); }
+});
+
+test("el schema valida estado en create/update y tipos de campo solo en el patch", async () => {
+  const db = await createStore();
+  try {
+    await seedSchema(db, "owner");
+    const graph = new BusinessGraph(db);
+    await assert.rejects(
+      graph.createEntity("owner", { type: "invoice", name: "F-0", status: "paid", actor: "t", source: "s", properties: { amount: 1 } }),
+      /not declared/i,
+    );
+    const invoice = await graph.createEntity("owner", { type: "invoice", name: "F-1", status: "draft", actor: "t", source: "s", properties: { amount: 10 } });
+    await assert.rejects(
+      graph.updateEntity("owner", invoice.id, { properties: { amount: "diez" }, actor: "t", source: "s" }),
+      /must be number/i,
+    );
+    await assert.rejects(
+      graph.updateEntity("owner", invoice.id, { status: "paid", actor: "t", source: "s" }),
+      /not declared/i,
+    );
+    const issued = await graph.updateEntity("owner", invoice.id, { status: "issued", actor: "t", source: "s" });
+    assert.equal(issued.status, "issued");
+    // Un registro legacy sin el required historico puede actualizar su nombre:
+    // el patch solo valida los campos que toca.
+    await db.put("owner", "business-entities", {
+      id: "legacy-invoice",
+      type: "invoice",
+      name: "Legacy",
+      properties: {},
+      schemaVersion: "1.0",
+      version: 1,
+      provenance: { source: "legacy", actor: "t", updatedAt: new Date().toISOString() },
+    });
+    const legacy = await graph.updateEntity("owner", "legacy-invoice", { name: "Legacy 2", actor: "t", source: "s" });
+    assert.equal(legacy.name, "Legacy 2");
   } finally { await db.close(); }
 });

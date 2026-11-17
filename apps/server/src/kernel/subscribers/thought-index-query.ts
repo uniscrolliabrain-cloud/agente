@@ -17,11 +17,11 @@ export class KernelThoughtIndex {
   // KERNEL_INDEX_SQL_QUERY_V1
   async byTurn(tenantId: string, turnId: string, limit = 200): Promise<IndexedThought[]> {
     try {
-      const rows = await this.db.select<IndexedThought>(
+      const rows = await this.db.select<{ data: IndexedThought }>(
         "SELECT data FROM records WHERE kind='kernel-thought-index' AND (data->>'tenantId')=$1 AND (data->>'turnId')=$2 LIMIT $3",
         [tenantId, turnId, limit],
       );
-      return rows;
+      return rows.map((row) => row.data);
     } catch {
       const all = await this.db.list<IndexedThought>(tenantId, "kernel-thought-index", { limit });
       return all.filter((t) => t.turnId === turnId).slice(0, limit);
@@ -31,11 +31,11 @@ export class KernelThoughtIndex {
   // KERNEL_INDEX_SQL_BY_ROLE_V1
   async byRole(tenantId: string, role: string, limit = 100): Promise<IndexedThought[]> {
     try {
-      const rows = await this.db.select<IndexedThought>(
+      const rows = await this.db.select<{ data: IndexedThought }>(
         "SELECT data FROM records WHERE kind='kernel-thought-index' AND (data->>'tenantId')=$1 AND (data->>'role')=$2 LIMIT $3",
         [tenantId, role, limit],
       );
-      return rows;
+      return rows.map((row) => row.data);
     } catch {
       const all = await this.db.list<IndexedThought>(tenantId, "kernel-thought-index", { limit });
       return all.filter((t) => t.role === role).slice(0, limit);

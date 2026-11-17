@@ -1,5 +1,5 @@
 // B1_TOPBAR_V1
-import { Plus, Search } from "lucide-react";
+import { Menu, Plus, Search } from "lucide-react";
 import NotificationsDropdown from "./NotificationsDropdown";
 
 interface Props {
@@ -9,6 +9,8 @@ interface Props {
   onOpenPalette: () => void;
   /** Etiqueta corta del espacio activo (tenant). Por defecto, "MI". */
   contextLabel?: string;
+  /** TOPBAR_MENU_V1 - en movil abre el drawer de navegacion. */
+  onOpenMenu?: () => void;
 }
 
 export default function TopBarV2({
@@ -17,6 +19,7 @@ export default function TopBarV2({
   onNewChat,
   onOpenPalette,
   contextLabel = "MI",
+  onOpenMenu,
 }: Props) {
   const dotColor =
     status === "working" ? "var(--v2-purple)" : status === "ok" ? "var(--v2-green)" : "var(--v2-text-3)";
@@ -24,6 +27,16 @@ export default function TopBarV2({
   return (
     <div className="v2-topbar">
       <div className="v2-topbar-left">
+        {onOpenMenu && (
+          <button
+            type="button"
+            className="v2-topbar-menu"
+            onClick={onOpenMenu}
+            aria-label="Abrir menú"
+          >
+            <Menu size={17} />
+          </button>
+        )}
         <span className="v2-status-pill">
           <span style={{ width: 8, height: 8, borderRadius: 999, background: dotColor }} />
           {contextLabel} · {statusLabel}

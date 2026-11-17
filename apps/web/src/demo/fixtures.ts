@@ -199,7 +199,24 @@ const agents: AgentRole[] = [
     memories: [{ kind: "dominio", text: "El equipo de diseño no trabaja los viernes por la tarde." }],
     createdAt: "2026-05-02T09:45:00.000Z",
   },
+  {
+    id: "agent-vera",
+    name: "Vera",
+    tone: "thoughtful",
+    avatar: "lilac",
+    greeting: "Soy Vera. Busco los datos que faltan antes de decidir.",
+    roi: "Cierra cada investigación con fuentes citadas.",
+    objetivo: "Investigar mercado, competencia y datos de soporte antes de cada decisión.",
+    sops: ["Citar la fuente de cada dato.", "Separar hecho de estimación."],
+    active: false,
+    memories: [{ kind: "dominio", text: "Toda cifra va con fecha y fuente." }],
+    createdAt: "2026-06-11T11:20:00.000Z",
+  },
 ];
+
+/** DEMO_TEAM_SOURCE_V1 - fuente unica de identidades del tenant demo:
+ *  el equipo, el centro de mando y la lista de agentes leen estas mismas filas. */
+export { agents as demoAgents, users as demoUsers };
 
 /* ------------------------------------------------------------------- tareas */
 

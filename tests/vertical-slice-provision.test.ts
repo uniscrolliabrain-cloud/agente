@@ -229,6 +229,39 @@ test("la clave de operacion no se puede reutilizar para otro tenant", async () =
   assert.equal(await db.get("system", "tenant-membership", "agencia-d"), null);
 });
 
+test("tres tenants se pueden provisionar con owners y correos distintos; el cardinal empleado sigue pendiente", async () => {
+  const tenants = new TenantService(db, config);
+  const seenOwners = new Set<string>();
+  const seenEmails = new Set<string>();
+
+  for (const suffix of ["dogfood-a", "dogfood-b", "dogfood-c"]) {
+    const slug = `empresa-${suffix}`;
+    const ownerEmail = `owner-${suffix}@example.test`;
+    const owner = await new UserService(db).create({
+      email: ownerEmail,
+      name: `Owner ${suffix}`,
+      password: randomBytes(24).toString("base64url"),
+      role: "admin",
+    });
+    const bundle = makeBundle({ suffix, displayName: `Empresa ${suffix}`, slug });
+    const result = await applyProvision(db, config, bundle, { owner: owner.id });
+
+    assert.equal(result.record.status, "complete");
+    assert.equal(result.record.actors.length, 3);
+    assert.deepEqual(result.record.actors.map((actor) => actor.role).sort(), ["member", "owner", "owner"]);
+    assert.equal(result.record.actors.find((actor) => actor.personId === "owner")?.userId, owner.id);
+    assert.equal(await tenants.tenantIdFor(owner.id), slug);
+    assert.equal((await tenants.findMembership(owner.id, slug))?.role, "owner");
+    assert.equal(seenOwners.has(owner.id), false);
+    assert.equal(seenEmails.has(ownerEmail), false);
+    seenOwners.add(owner.id);
+    seenEmails.add(ownerEmail);
+  }
+
+  assert.equal(seenOwners.size, 3);
+  assert.equal(seenEmails.size, 3);
+});
+
 test("un nombre ya reclamado por otra plantilla no se reasigna", async () => {
   const sameName = makeBundle({
     suffix: "e",

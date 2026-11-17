@@ -21,8 +21,12 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
+// ACME_OWNER_BINDING_V1 - el owner del demo acme se reconoce por su login de
+// GitHub y queda atado a ese tenant al entrar desde cualquier dispositivo.
+import { bindAcmeOwner, isAcmeOwnerLogin } from "./acme-owner.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
+import { TenantService } from "./engine/tenant.ts";
 import { AppError } from "./errors.ts";
 import { backgroundFailure } from "./log.ts";
 import type { UserService } from "./users.ts";
@@ -31,14 +35,21 @@ const digest = (value: string) => createHash("sha256").update(value).digest("hex
 
 type ProviderId = "google" | "github";
 
+interface ProviderIdentity {
+  email: string;
+  /** Identidad del proveedor, para atar cuentas sin depender del email. */
+  login?: string;
+  subject?: string;
+}
+
 interface ProviderDefinition {
   authorizeUrl: string;
   tokenUrl: string;
   scope: string;
   clientId: () => string | undefined;
   clientSecret: () => string | undefined;
-  /** Devuelve el email verificado del usuario, o null si no se puede. */
-  emailFromToken: (accessToken: string) => Promise<string | null>;
+  /** Devuelve el email verificado (y la identidad) o null si no se puede. */
+  identityFromToken: (accessToken: string) => Promise<ProviderIdentity | null>;
 }
 
 const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
@@ -48,17 +59,20 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     scope: "openid email profile",
     clientId: () => process.env.GOOGLE_CLIENT_ID,
     clientSecret: () => process.env.GOOGLE_CLIENT_SECRET,
-    emailFromToken: async (accessToken) => {
+    identityFromToken: async (accessToken) => {
       const res = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
         headers: { authorization: `Bearer ${accessToken}` },
       });
       if (!res.ok) return null;
-      const body = (await res.json()) as { email?: string; email_verified?: boolean };
+      const body = (await res.json()) as { email?: string; email_verified?: boolean; sub?: string };
       if (!body.email) return null;
       // OAUTH_EMAIL_VERIFIED_STRICT_V1 - se exige `true`, no "distinto de
       // false": si Google omitiera el campo, un email sin verificar pasaria.
       if (body.email_verified !== true) return null;
-      return body.email.toLowerCase().trim();
+      return {
+        email: body.email.toLowerCase().trim(),
+        ...(body.sub ? { subject: body.sub } : {}),
+      };
     },
   },
   github: {
@@ -67,7 +81,7 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
     scope: "read:user user:email",
     clientId: () => process.env.GITHUB_CLIENT_ID,
     clientSecret: () => process.env.GITHUB_CLIENT_SECRET,
-    emailFromToken: async (accessToken) => {
+    identityFromToken: async (accessToken) => {
       const headers = {
         authorization: `Bearer ${accessToken}`,
         accept: "application/vnd.github+json",
@@ -81,7 +95,18 @@ const PROVIDERS: Record<ProviderId, ProviderDefinition> = {
       if (!emails.ok) return null;
       const list = (await emails.json()) as Array<{ email: string; primary: boolean; verified: boolean }>;
       const chosen = list.find((e) => e.primary && e.verified) ?? list.find((e) => e.verified);
-      return chosen?.email?.toLowerCase().trim() ?? null;
+      if (!chosen?.email) return null;
+      // ACME_OWNER_BINDING_V1 - el login y el id de GitHub identifican al owner
+      // del demo aunque su email verificado cambie entre dispositivos.
+      const profile = await fetch("https://api.github.com/user", { headers });
+      const me = profile.ok
+        ? ((await profile.json()) as { id?: number; login?: string })
+        : null;
+      return {
+        email: chosen.email.toLowerCase().trim(),
+        ...(me?.login ? { login: me.login } : {}),
+        ...(typeof me?.id === "number" ? { subject: String(me.id) } : {}),
+      };
     },
   },
 };
@@ -164,8 +189,16 @@ async function googleRedirectPreflight(
   return result;
 }
 
-export function oauthLoginRoutes(db: Store, users: UserService, config: Config) {
+export function oauthLoginRoutes(
+  db: Store,
+  users: UserService,
+  config: Config,
+  sharedTenants?: TenantService,
+) {
   const app = new Hono();
+  // ACME_OWNER_BINDING_V1 - se reutiliza el TenantService de la app para no
+  // duplicar cache de memberships; si el llamador no lo pasa, se construye uno.
+  const tenants = sharedTenants ?? new TenantService(db, config);
 
   const redirectUri = (provider: ProviderId) =>
     `${config.publicUrl.replace(/\/$/, "")}/api/auth/oauth/${provider}/callback`;
@@ -295,10 +328,11 @@ export function oauthLoginRoutes(db: Store, users: UserService, config: Config) 
       return c.html(page("No se pudo completar el acceso", htmlEscape(tokenBody.error_description ?? "Sin token.")), 502);
     }
 
-    const email = await def.emailFromToken(accessToken);
-    if (!email) {
+    const identity = await def.identityFromToken(accessToken);
+    if (!identity) {
       return c.html(page("Sin email verificado", "La cuenta no expone un email verificado."), 403);
     }
+    const email = identity.email;
 
     // OAUTH_ALLOWLIST_ALL_USERS_V1 - la lista se aplica tambien a cuentas que ya
     // existen. Antes `&& !existing` dejaba entrar a cualquier usuario creado
@@ -330,6 +364,12 @@ export function oauthLoginRoutes(db: Store, users: UserService, config: Config) 
     }
     if (!user.active) {
       return c.html(page("Cuenta desactivada", "Contacta con el administrador."), 403);
+    }
+
+    // ACME_OWNER_BINDING_V1 - entrar con la cuenta del owner deja `acme` como
+    // tenant activo, tanto desde el movil como desde el portatil.
+    if (provider === "github" && isAcmeOwnerLogin(identity.login)) {
+      await bindAcmeOwner(db, tenants, { id: user.id, email: user.email, name: user.name });
     }
 
     const token = randomBytes(32).toString("base64url");

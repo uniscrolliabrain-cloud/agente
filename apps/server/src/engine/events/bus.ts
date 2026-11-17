@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 import { transactionOutcome, type Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
 import { backgroundFailure } from "../../log.ts";
-// BUS_TENANT_SCOPE_V1 - el tenant de la peticion manda sobre owner.
-import { currentTenantScope } from "../../tenant-scope.ts";
+// BUS_TENANT_SCOPE_V1 - tenant de la petición para owner/storage del sink.
+import { currentTenantScope, runInTenantScope } from "../../tenant-scope.ts";
 import { payloadSchemas } from "./schemas.ts";
 // EVENTBUS_SCHEMA_REGISTRY_V1 - registry consultable.
 import { SchemaRegistry } from "./schema-registry.ts";
@@ -103,7 +103,15 @@ export class EventBus {
       // empresa. Antes se hacia `tenantId: options.tenantId ?? owner`, asi que
       // todo evento sin tenant explicito quedaba atribuido al usuario y el
       // subscriber del kernel abria turnos en un tenant fantasma.
+      const requestTenant = currentTenantScope()?.tenantId;
+      if (requestTenant && options.tenantId && requestTenant !== options.tenantId) {
+        throw new Error(`TENANT_MISMATCH: request scope ${requestTenant} != event tenant ${options.tenantId}`);
+      }
       const tenantId = await this.resolveTenant(owner, options.tenantId);
+      // El evento y el StoreSink deben usar la misma partición. TenantScopedStore
+      // resuelve por owner; fijamos el tenant ya validado durante las escrituras.
+      const emitInTenant = <T>(operation: () => T): T =>
+        runInTenantScope({ tenantId, actorId: requestTenant ? currentTenantScope()?.actorId ?? owner : owner }, operation);
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
       // EVENTBUS_DEDUPE_OWNER_FIX_V1 - antes pasabamos `${owner}:${dedupeKey}`
@@ -112,7 +120,7 @@ export class EventBus {
       // el owner real y la key por separado.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_METRIC_V1
-        if (await this.isDuplicate(owner, options.dedupeKey)) {
+        if (await emitInTenant(() => this.isDuplicate(tenantId, owner, options.dedupeKey!))) {
           return { id: "", tenantId, persisted: false, delivered: 0, duplicate: true };
         }
       }
@@ -134,7 +142,7 @@ export class EventBus {
         payload: parsed,
       };
       proposedEvent = { id: event.id, tenantId };
-      await this.sink.write(event);
+      await emitInTenant(() => this.sink.write(event));
       const result: EmitResult = { id: event.id, tenantId, persisted: !this.db.inTransaction, delivered: 0,
         ...(this.db.inTransaction ? { pendingCommit: true } : {}) };
       committed = result;
@@ -149,7 +157,7 @@ export class EventBus {
       // EVENTBUS_DEDUPE_KEY_V1 - solo registramos la clave si se paso explicitamente.
       if (options.dedupeKey !== undefined) {
         // EVENTBUS_DEDUPE_OWNER_FIX_V1 - mismo fix: owner real, key separada.
-        await this.recordDedupe(owner, options.dedupeKey);
+        await emitInTenant(() => this.recordDedupe(tenantId, owner, options.dedupeKey!));
       }
       if (options.notify) {
         // BUS_NOTIFY_PREFS_V1 - antes el bus escribia siempre en
@@ -157,20 +165,21 @@ export class EventBus {
         // notification-prefs. Ahora consultamos prefs y, si el tipo esta
         // deshabilitado, no escribimos la notificacion. El evento sigue
         // emitiendose al bus por si otros consumidores lo quieren.
-        const prefs = await this.db
+        const prefs = await emitInTenant(() => this.db
           .get<{ disabled: string[] }>(owner, "notification-prefs", "default")
-          .catch(() => null);
+          .catch(() => null));
         // EVENTBUS_NOTIFY_PREF_FILTER_V1
         const disabled = prefs?.disabled ?? [];
         if (!disabled.includes(type)) {
-          await this.db.insertIfAbsent(owner, "notifications", {
-            id: createHash("sha256").update(options.notify.key).digest("hex"),
+          const notify = options.notify;
+          await emitInTenant(() => this.db.insertIfAbsent(owner, "notifications", {
+            id: createHash("sha256").update(notify.key).digest("hex"),
             taskId: source.kind === "task" ? source.id : undefined,
-            title: options.notify.title.slice(0, 200),
-            body: options.notify.body.slice(0, 2000),
+            title: notify.title.slice(0, 200),
+            body: notify.body.slice(0, 2000),
             createdAt: event.emittedAt,
             read: false,
-          });
+          }));
         }
       }
 
@@ -277,9 +286,10 @@ export class EventBus {
   // EVENTBUS_DEDUPE_CACHE_V1 - cache negativa en memoria, TTL corto.
   private readonly negativeCache = new Map<string, number>();
 
-  private async isDuplicate(owner: string, key: string): Promise<boolean> {
+  private async isDuplicate(tenantId: string, owner: string, key: string): Promise<boolean> {
     const now = Date.now();
-    const negKey = `${owner}:${key}`;
+    const scopedKey = `${tenantId}:${owner}:${key}`;
+    const negKey = scopedKey;
     const negAt = this.negativeCache.get(negKey);
     if (negAt && now - negAt < 5000) return false;
     // DEDUPE_DB_FIRST Ã¢â‚¬â€ consultamos la DB ANTES que el Map en memoria para que
@@ -288,20 +298,20 @@ export class EventBus {
     if (state) {
       const hit = state.seen.find((entry) => entry.key === key && now - entry.at < DEDUPE_TTL_MS);
       if (hit) {
-        this.inMemory.set(`${owner}:${key}`, now);
+        this.inMemory.set(scopedKey, now);
         return true;
       }
     }
     // EVENTBUS_DEDUPE_TENANT_KEY_V1 - la cache en memoria tambien se indexa
     // por owner: antes solo por key y dos empresas con la misma clave se
     // suprimian entre si.
-    const cached = this.inMemory.get(`${owner}:${key}`);
+    const cached = this.inMemory.get(scopedKey);
     return Boolean(cached && now - cached < DEDUPE_TTL_MS);
   }
 
-  private async recordDedupe(owner: string, key: string): Promise<void> {
+  private async recordDedupe(tenantId: string, owner: string, key: string): Promise<void> {
     const now = Date.now();
-    this.inMemory.set(`${owner}:${key}`, now);
+    this.inMemory.set(`${tenantId}:${owner}:${key}`, now);
     if (this.inMemory.size > DEDUPE_MAX_ENTRIES) {
       const oldest = [...this.inMemory.entries()].sort((a, b) => a[1] - b[1])[0];
       if (oldest) this.inMemory.delete(oldest[0]);

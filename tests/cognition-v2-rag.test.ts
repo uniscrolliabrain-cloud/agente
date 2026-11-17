@@ -7,7 +7,7 @@ import { RagService } from "../apps/server/src/engine/rag.ts";
 import { CognitionV2Runtime } from "../apps/server/src/engine/cognition/v2/runtime.ts";
 import { CognitiveProjector } from "../apps/server/src/engine/cognition/v2/projector.ts";
 import { testConfig } from "./helpers/config.ts";
-import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
+import { currentTenantScope, runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 test("C04/C10 actual RAG registry is prepared off Fast; source revision/removal invalidates snapshot and derived memory", async () => {
   const db = await createStore();
   try {
@@ -33,4 +33,59 @@ test("C04/C10 actual RAG registry is prepared off Fast; source revision/removal 
       assert.equal((await runtime.context.getSnapshot(identity, { query: "facturas", maxTokens: 4000, maxRefs: 10 })).refs.length, 0);
     });
   } finally { await db.close(); }
+});
+
+test("C04 RAG keeps same owner, source and connection IDs isolated across tenants", async () => {
+  const db = await createStore();
+  const previousFetch = globalThis.fetch;
+  const previousKey = process.env.GEMINI_API_KEY;
+  process.env.GEMINI_API_KEY = "synthetic-embedding-key";
+  globalThis.fetch = (async () => Response.json({ embedding: { values: [1, 0] } })) as typeof globalThis.fetch;
+  const tdb = new TenantScopedStore(db, async () => currentTenantScope()?.tenantId ?? "default");
+  const rag = new RagService(tdb);
+  const owner = "shared-owner";
+  const sourceId = "drive:shared-file";
+  const scopes = [
+    { tenantId: "tenant-a", actorId: owner },
+    { tenantId: "tenant-b", actorId: owner },
+  ];
+  try {
+    for (const scope of scopes) {
+      await runInTenantScope(scope, () => rag.ingestSource(owner, {
+        sourceId,
+        sourceName: `Synthetic ${scope.tenantId}`,
+        kind: "drive",
+        connectionId: "same-connection-id",
+        revision: "same-revision",
+      }, `Shared resource evidence for ${scope.tenantId}; this private source remains tenant scoped.`));
+    }
+
+    for (const scope of scopes) {
+      await runInTenantScope(scope, async () => {
+        const report = await rag.searchReport(owner, "shared resource", 5);
+        assert.equal(report.hits.length, 1);
+        assert.equal(report.hits[0].text.includes(scope.tenantId), true);
+        assert.equal((await rag.source(owner, sourceId))?.sourceName, `Synthetic ${scope.tenantId}`);
+        assert.equal((await rag.sources(owner)).length, 1);
+        assert.equal((await rag.stats(owner)).chunks, 1);
+      });
+    }
+
+    await runInTenantScope(scopes[0], () => rag.removeSource(owner, sourceId));
+    await runInTenantScope(scopes[0], async () => {
+      assert.equal((await rag.searchReport(owner, "shared resource", 5)).hits.length, 0);
+      assert.equal(await rag.source(owner, sourceId), null);
+    });
+    await runInTenantScope(scopes[1], async () => {
+      const report = await rag.searchReport(owner, "shared resource", 5);
+      assert.equal(report.hits.length, 1);
+      assert.equal(report.hits[0].text.includes("tenant-b"), true);
+      assert.equal((await rag.source(owner, sourceId))?.sourceName, "Synthetic tenant-b");
+    });
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousKey === undefined) delete process.env.GEMINI_API_KEY;
+    else process.env.GEMINI_API_KEY = previousKey;
+    await db.close();
+  }
 });

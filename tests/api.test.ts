@@ -43,6 +43,7 @@ after(async () => {
 
 test("API protects private data and rejects unrelated web origins", async () => {
   assert.equal((await app.request("/api/workspace")).status, 401);
+  assert.equal((await app.request("/api/drive/files/doc/index", { method: "POST" })).status, 401);
   assert.equal(
     (
       await app.request("/api/workspace", {
@@ -51,6 +52,16 @@ test("API protects private data and rejects unrelated web origins", async () => 
     ).status,
     403,
   );
+  const foreignOriginIndex = await app.request("/api/drive/files/doc/index", {
+    method: "POST",
+    headers: { ...headers(), Origin: "https://unrelated.example" },
+  });
+  assert.equal(foreignOriginIndex.status, 403, "la mutacion rechaza origins ajenos");
+  const indexWithoutGoogle = await app.request("/api/drive/files/doc/index", {
+    method: "POST",
+    headers: { ...headers(), Origin: "http://localhost:8081" },
+  });
+  assert.equal(indexWithoutGoogle.status, 409, "la ruta existe, pero no opera si Drive no esta conectado");
 });
 test("sample workspace serves a real PDF and filling creates a new version", async () => {
   const response = await app.request("/api/workspace", { headers: headers() });

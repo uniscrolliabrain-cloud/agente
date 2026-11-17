@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { globalSearch } from "../api/search";
 // COMMAND_PALETTE_WORKSPACES_V1
 import { WORKSPACE_ENTRIES } from "../workspaces/registry";
-import { FileText, LayoutDashboard, MessageSquare, Plus, Search } from "lucide-react";
+import { FileText, Gauge, LayoutDashboard, MessageSquare, Plus, Search, Users } from "lucide-react";
 import type { AppView } from "./SidebarV2";
 
 interface Props {
@@ -61,6 +61,13 @@ export default function CommandPalette({ open, onClose, onSelectView, onNewChat 
       run: () => { close(); onNewChat(); },
     },
     {
+      id: "today",
+      label: "Ir a Centro de mando",
+      hint: "",
+      icon: <Gauge size={14} />,
+      run: () => { close(); onSelectView("today"); },
+    },
+    {
       id: "chat",
       label: "Ir a Chat",
       hint: "",
@@ -73,6 +80,13 @@ export default function CommandPalette({ open, onClose, onSelectView, onNewChat 
       hint: "",
       icon: <LayoutDashboard size={14} />,
       run: () => { close(); onSelectView("tasks"); },
+    },
+    {
+      id: "team",
+      label: "Ir a Equipo",
+      hint: "",
+      icon: <Users size={14} />,
+      run: () => { close(); onSelectView("team"); },
     },
     {
       id: "documents",

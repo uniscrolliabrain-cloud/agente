@@ -16,9 +16,16 @@ import {
   type KernelContext,
 } from "../apps/server/src/kernel/index.ts";
 import { EventBus } from "../apps/server/src/engine/events/bus.ts";
+import { createStore } from "../apps/server/src/db.ts";
+import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
+import { currentTenantScope, runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import { globalSubscribers } from "../apps/server/src/engine/events/subscriber.ts";
 import { startKernelEventSubscriber } from "../apps/server/src/kernel/subscribers/events.ts";
 import { runCognitionCycle } from "../apps/server/src/kernel/cognition/cycle.ts";
+import { startKernelThoughtConsumer } from "../apps/server/src/kernel/subscribers/thought-consumer.ts";
+import { KernelThoughtIndex } from "../apps/server/src/kernel/subscribers/thought-index-query.ts";
+import { startKernelTurnConsumer } from "../apps/server/src/kernel/subscribers/turn-consumer.ts";
+import { KernelTurnIndex } from "../apps/server/src/kernel/subscribers/turn-index-query.ts";
 
 function makeCtx(tenantId: string, owner = "u1"): KernelContext {
   return kernelContextSchema.parse({
@@ -231,6 +238,62 @@ test("el bus resuelve el tenant real del owner cuando no hay scope", async () =>
   assert.equal(events[0]?.tenantId, "t3");
 });
 
+test("EventBus particiona eventos por tenant aunque el owner resuelva a su tenant primario", async () => {
+  const store = await createStore();
+  try {
+    const tenantStore = new TenantScopedStore(
+      store,
+      async () => currentTenantScope()?.tenantId ?? "tenant-b",
+    );
+    const bus = new EventBus(tenantStore);
+
+    const inA = await bus.emit(
+      "alice",
+      "system.startup",
+      { kind: "system", id: "boot-a" },
+      { mode: "sample" },
+      { tenantId: "tenant-a" },
+    );
+    const inB = await bus.emit(
+      "alice",
+      "system.startup",
+      { kind: "system", id: "boot-b" },
+      { mode: "sample" },
+      { tenantId: "tenant-b" },
+    );
+
+    assert.equal(inA.persisted, true);
+    assert.equal(inB.persisted, true);
+    assert.equal((await store.list("tenant-a:alice", "system-events")).length, 1);
+    assert.equal((await store.list("tenant-b:alice", "system-events")).length, 1);
+
+    const dedupeA = await runInTenantScope({ tenantId: "tenant-a", actorId: "alice" }, () =>
+      bus.emit("alice", "system.maintenance", { kind: "system", id: "maintenance-a" }, { tasks: 0, monitors: 0 }, { dedupeKey: "same-key" }),
+    );
+    const dedupeB = await runInTenantScope({ tenantId: "tenant-b", actorId: "alice" }, () =>
+      bus.emit("alice", "system.maintenance", { kind: "system", id: "maintenance-b" }, { tasks: 0, monitors: 0 }, { dedupeKey: "same-key" }),
+    );
+    assert.equal(dedupeA.persisted, true);
+    assert.equal(dedupeB.persisted, true, "la misma clave en otro tenant no se suprime");
+    assert.equal((await store.list("tenant-a:alice", "system-events")).length, 2);
+    assert.equal((await store.list("tenant-b:alice", "system-events")).length, 2);
+
+    const mismatch = await runInTenantScope({ tenantId: "tenant-a", actorId: "alice" }, () =>
+      bus.emit(
+        "alice",
+        "system.startup",
+        { kind: "system", id: "forged-tenant" },
+        { mode: "sample" },
+        { tenantId: "tenant-b" },
+      ),
+    );
+    assert.equal(mismatch.persisted, false);
+    assert.match(mismatch.error ?? "", /TENANT_MISMATCH/);
+  } finally {
+    await store.close();
+  }
+});
+
 test("los suscriptores por tenant reciben solo su tenant", async () => {
   globalSubscribers.clear();
   const seen: string[] = [];
@@ -243,6 +306,85 @@ test("los suscriptores por tenant reciben solo su tenant", async () => {
   assert.deepEqual(seen, ["t1"]);
   handle.unsubscribe();
   globalSubscribers.clear();
+});
+
+test("el índice de Thoughts separa tenants si owner y thoughtId coinciden", async () => {
+  globalSubscribers.clear();
+  const store = await createStore();
+  const bus = new EventBus(store);
+  const consumer = startKernelThoughtConsumer(store);
+  const index = new KernelThoughtIndex(store);
+  try {
+    for (const tenantId of ["tenant-a", "tenant-b"]) {
+      const receipt = await bus.emit(
+        "shared-owner",
+        "kernel.thought.reflection",
+        { kind: "system", id: "shared-thought" },
+        { thoughtId: "shared-thought", turnId: "shared-turn", role: "reflection" },
+        { tenantId },
+      );
+      assert.equal(receipt.persisted, true);
+    }
+
+    const indexedByTenant = await Promise.all(
+      ["tenant-a", "tenant-b"].map((tenantId) =>
+        waitFor(async () => {
+          const thoughts = await index.byTurn(tenantId, "shared-turn");
+          return thoughts.length === 1 ? thoughts : undefined;
+        }),
+      ),
+    );
+    assert.deepEqual(indexedByTenant.map((items) => items[0]?.tenantId), ["tenant-a", "tenant-b"]);
+    assert.deepEqual(indexedByTenant.map((items) => items[0]?.owner), ["shared-owner", "shared-owner"]);
+    assert.equal((await index.byOwner("tenant-a", "shared-owner")).length, 1);
+    assert.equal((await index.byOwner("tenant-b", "shared-owner")).length, 1);
+    assert.equal((await store.list("tenant-a", "kernel-thought-index")).length, 1);
+    assert.equal((await store.list("tenant-b", "kernel-thought-index")).length, 1);
+  } finally {
+    consumer.stop();
+    globalSubscribers.clear();
+    await store.close();
+  }
+});
+
+test("el índice de turnos consulta cada tenant por separado", async () => {
+  globalSubscribers.clear();
+  const store = await createStore();
+  const bus = new EventBus(store);
+  const consumer = startKernelTurnConsumer(store);
+  const index = new KernelTurnIndex(store);
+  try {
+    for (const tenantId of ["tenant-a", "tenant-b"]) {
+      const receipt = await bus.emit(
+        "shared-owner",
+        "kernel.turn.opened",
+        { kind: "system", id: "shared-turn" },
+        { turnId: "shared-turn", owner: "shared-owner", tenantId, triggers: [`trigger-${tenantId}`] },
+        { tenantId },
+      );
+      assert.equal(receipt.persisted, true);
+    }
+
+    const recent = await Promise.all(
+      ["tenant-a", "tenant-b"].map((tenantId) =>
+        waitFor(async () => {
+          const turns = await index.recent(tenantId);
+          return turns.length === 1 ? turns : undefined;
+        }),
+      ),
+    );
+    assert.deepEqual(recent.map((turns) => turns[0]?.tenantId), ["tenant-a", "tenant-b"]);
+    assert.deepEqual(recent.map((turns) => turns[0]?.owner), ["shared-owner", "shared-owner"]);
+    assert.deepEqual(recent.map((turns) => turns[0]?.triggers), [["trigger-tenant-a"], ["trigger-tenant-b"]]);
+    assert.equal((await index.byOwner("tenant-a", "shared-owner")).length, 1);
+    assert.equal((await index.byOwner("tenant-b", "shared-owner")).length, 1);
+    assert.equal((await index.byTrigger("tenant-a", "trigger-tenant-b")).length, 0);
+    assert.equal((await index.byTrigger("tenant-b", "trigger-tenant-b")).length, 1);
+  } finally {
+    consumer.stop();
+    globalSubscribers.clear();
+    await store.close();
+  }
 });
 
 test("el subscriber del kernel crea un contexto valido y cierra el turno", async () => {
@@ -270,6 +412,51 @@ test("el subscriber del kernel crea un contexto valido y cierra el turno", async
     assert.equal(thoughts.length, 1);
     assert.equal(thoughts[0]?.role, "reflection");
     assert.equal(turn.tenantId, "t1");
+  } finally {
+    subscription.stop();
+    globalSubscribers.clear();
+  }
+});
+
+test("el subscriber del kernel proyecta eventos de email como referencias minimizadas", async () => {
+  globalSubscribers.clear();
+  const store = new InMemoryTurnStore();
+  const kernel = makeKernel(store);
+  const bus = new EventBus(new MemoryStore() as never, undefined, undefined, {
+    tenantForOwner: async () => "t1",
+  });
+  const subscription = startKernelEventSubscriber(kernel, globalSubscribers);
+  const cases = [
+    { type: "email.received" as const, role: "observation", messageId: "message-in", threadId: "thread-in" },
+    { type: "email.sent" as const, role: "action", messageId: "message-out", threadId: "thread-out" },
+  ];
+  try {
+    for (const item of cases) {
+      const event = await bus.emit(
+        "u1",
+        item.type,
+        { kind: "system", id: "workspace-gmail" },
+        { entityId: item.messageId, threadId: item.threadId, from: "private@example.test", body: "private body" },
+        { tenantId: "t1" },
+      );
+      const ctx = makeCtx("t1");
+      const turn = await waitFor(async () => {
+        const turns = await kernel.listTurns(ctx, 20);
+        return turns.find(
+          (candidate) => candidate.triggers.includes(`bus:${item.type}:${event.id}`) && candidate.status === "closed",
+        );
+      });
+      const [thought] = await kernel.thoughtsOf(ctx, turn.id);
+      assert.equal(thought?.role, item.role);
+      assert.deepEqual(thought?.content, {
+        kind: item.type,
+        eventId: event.id,
+        sourceId: "workspace-gmail",
+        messageId: item.messageId,
+        threadId: item.threadId,
+      });
+      assert.doesNotMatch(JSON.stringify(thought?.content), /private@example\.test|private body/);
+    }
   } finally {
     subscription.stop();
     globalSubscribers.clear();
