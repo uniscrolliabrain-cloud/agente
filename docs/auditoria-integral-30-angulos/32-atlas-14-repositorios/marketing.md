@@ -1,3 +1,6 @@
+> **ACTUALIZACIÓN DE ESTADO · 2026-11-18 — CÓDIGO EN MAIN**  
+> La ficha anterior basada en README es incompleta. En `agntia-marketing/main` existen `packages/contracts`, `packages/core`, `packages/adapters`, `packages/sdk`, `apps/api`, `apps/worker`, `apps/portal` y migraciones SQL, según árbol y documentación consultados. `docs/evidence/ANEXO-42-FASES.md` declara 23 DONE, 15 PARTIAL, 4 BLOCKED y 101 tests; el README todavía indica 88. Postgres real, proveedores y Anam no están certificados. El roadmap en rama `docs/roadmap-integracion-agente-20261115` declara erróneamente DOCUMENTATION_ONLY/NOT_STARTED frente a este main. Actualizar crosswalk contractual y reconciliar docs antes de integración.  
+
 # Agntia marketing — dossier de convergencia V1
 
 **Repositorio:** https://github.com/uniscrolliabrain-cloud/agntia-marketing
