@@ -1,3 +1,6 @@
+> **ACTUALIZACIÓN · 2026-11-18 — ALCANCE DE EVIDENCIA**  
+> Esta reauditoría no demuestra implementación universal ni compatibilidad de los 14 hijos. Se ha comprobado que `agntia-marketing/main` ya contiene API, worker, contratos, SDK, pruebas y un anexo de 42 campañas (23 DONE, 15 PARTIAL, 4 BLOCKED declarados); por tanto cualquier referencia a Marketing como exclusivamente documental está desactualizada. La cifra de pruebas declarada pasó de 88 en el README a 101 en el anexo; falta reejecución independiente. Revisar el atlas de Marketing y el crosswalk antes de fijar contratos.  
+
 # Reauditoría V2 — Arquitectura transversal de 15 repositorios
 
 > Ampliación de la auditoría de 30 ángulos, 2026-11-15. **Visión de destino**, no dirección de campañas de los agentes implementadores. Esta documentación se añade a la rama documental de la auditoría; no modifica código, `main` ni repos hijos.
