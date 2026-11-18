@@ -1,3 +1,7 @@
+> **ACTUALIZACIÓN DE AUDITORÍA · 2026-11-18 · ESTADO: REVISIÓN NECESARIA**  
+> Fuente: inspección de GitHub en `main` y comparación con `feat/voice-avatar-scaffold`. Esta carpeta sigue siendo diagnóstico y propuesta, no certificación. `main` conserva el comportamiento permisivo de `PolicyEngine.can()` cuando faltan permisos y `Executor.execute()` puede reportar éxito con pasos omitidos. Verificar guards y obligatoriedad de pasos antes de conectar efectos. La rama de voz incorpora código de sesiones, rutas, snapshots y pruebas, pero puede usar el `ConversationAgent` pesado: contrastar contra el diseño V2 y medir latencias. No se han ejecutado tests ni inspeccionado worktrees locales en esta actualización.  
+> **Acción:** actualizar baseline y evidencias por SHA, ejecutar tests y revisar integración V2 antes de fusionar.  
+
 # Auditoría integral AgntiaPro — 30 ángulos
 
 > Inicio 2026-11-15 · Rama `docs/audit-30-dominios-runtime-20261115` · SHA base `54b8d5407a8576459448c4d059a877297d18ca7a` · **Documentación de arranque, no certificación**.
