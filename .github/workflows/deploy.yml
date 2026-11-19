@@ -71,27 +71,60 @@ jobs:
       # Antes se importaba el config entero en las dos apps: cualquier bug de
       # servidor ponia en la mano un token de zona DNS. La denegacion es por
       # prefijo para que un token nuevo de esas familias no se cuele.
-      - name: importar secretos desde Doppler
+      # DEPLOY_DOPPLER_CLI_ON_PATH_V1 - la CLI se instala en un directorio del
+      # usuario y se publica en GITHUB_PATH para que los pasos siguientes la
+      # vean sin repetir el `export PATH` en cada uno.
+      - name: preparar CLI de Doppler
         run: |
           set -euo pipefail
           # El instalador por defecto usa dpkg y falla sin root; --install-path
           # descarga el binario en un directorio del usuario.
           mkdir -p "$HOME/.local/bin"
           curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
-          export PATH="$HOME/.local/bin:$PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/doppler" --version
+
+      # DEPLOY_PREFLIGHT_DOPPLER_V1 - antes la descarga de Doppler y las dos
+      # importaciones a Fly vivian en el mismo paso: el log solo decia "token
+      # validation error" sin decir si fallaba Doppler o Fly. Aqui se prueba
+      # Doppler sola y se informa del recuento de claves, nunca de valores.
+      - name: verificar acceso a Doppler
+        run: |
+          set -euo pipefail
+          count=$(doppler secrets download --no-file --format json --config "$DOPPLER_CONFIG" | jq 'length')
+          echo "doppler ok: config=$DOPPLER_CONFIG claves=$count"
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+
+      - name: importar secretos en la api
+        run: |
+          set -euo pipefail
           filter='to_entries[]
             | select(.key | test("^(CLOUDFLARE_|FLY_|DOPPLER_|VERCEL_|NEON_|GH_|AWS_|AZURE_|GCP_|SUPABASE_ACCESS_)") | not)
             | select(.key != "GITHUB_TOKEN")
             | "\(.key)=\(.value)"'
           doppler secrets download --no-file --format json --config "$DOPPLER_CONFIG" \
             | jq -r "$filter" | flyctl secrets import -a "$APP" --stage
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+          DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          APP: ${{ steps.target.outputs.app }}
+
+      - name: importar secretos en el worker
+        run: |
+          set -euo pipefail
+          filter='to_entries[]
+            | select(.key | test("^(CLOUDFLARE_|FLY_|DOPPLER_|VERCEL_|NEON_|GH_|AWS_|AZURE_|GCP_|SUPABASE_ACCESS_)") | not)
+            | select(.key != "GITHUB_TOKEN")
+            | "\(.key)=\(.value)"'
           doppler secrets download --no-file --format json --config "$DOPPLER_CONFIG" \
             | jq -r "$filter" | flyctl secrets import -a "$WORKER" --stage
         env:
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
           DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          APP: ${{ steps.target.outputs.app }}
           WORKER: ${{ steps.target.outputs.worker }}
       # DEPLOY_IMAGE_LABEL_V1 - el despliegue no dejaba rastro del commit que
       # ejecutaba una maquina. Con la etiqueta, `flyctl image show` responde a
