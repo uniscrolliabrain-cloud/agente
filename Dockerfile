@@ -27,6 +27,7 @@ COPY --from=build /app/dist ./dist
 # app.ts resuelve ../apps/web/dist desde dist/apps/server/src.
 COPY --from=build /app/apps/web/dist ./dist/apps/web/dist
 COPY --from=build /app/package.json ./package.json
+COPY --from=build /app/prod-ca-2021.crt ./prod-ca-2021.crt
 # PERSONAS_TEMPLATE_IN_IMAGE_V1 (campana 09) - el alta compila las personas de
 # la plantilla; sin ella en la imagen no hay Laia/Marcos que instalar.
 COPY --from=build /app/clientes/_template ./clientes/_template

@@ -2,6 +2,7 @@
 // R4a-db_APPLIED
 import { AsyncLocalStorage } from "node:async_hooks";
 import { mkdir } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import pg from "pg";
 import { backgroundFailure } from "./log.ts";
@@ -394,7 +395,32 @@ export class Store {
 /** Idle clients can be disconnected by a database restart; without a listener pg `error` event crashes the process. */
   // DB_CREATE_POOL_ERROR_V1
 export function createPool(connectionString: string) {
-  const pool = new pg.Pool({ connectionString, max: 5 });
+  const caFile = process.env.DATABASE_CA_FILE?.trim();
+  let poolConfig: pg.PoolConfig = { connectionString, max: 5 };
+  if (caFile) {
+    let url: URL;
+    try {
+      url = new URL(connectionString);
+    } catch {
+      throw new Error("DATABASE_CA_FILE requires DATABASE_URL to be a postgres:// URL");
+    }
+    if (url.protocol !== "postgres:" && url.protocol !== "postgresql:") {
+      throw new Error("DATABASE_CA_FILE requires DATABASE_URL to use postgres:// or postgresql://");
+    }
+    // node-postgres replaces `ssl` from the URL when sslmode/sslrootcert/etc.
+    // are present. Keep URL host verification while supplying Supabase's CA.
+    for (const key of [...url.searchParams.keys()]) {
+      if (["sslmode", "sslrootcert", "sslcert", "sslkey"].includes(key.toLowerCase())) {
+        url.searchParams.delete(key);
+      }
+    }
+    poolConfig = {
+      connectionString: url.toString(),
+      ssl: { ca: readFileSync(caFile, "utf8"), rejectUnauthorized: true },
+      max: 5,
+    };
+  }
+  const pool = new pg.Pool(poolConfig);
   pool.on("error", (error) => backgroundFailure("postgres pool", error));
   return pool;
 }

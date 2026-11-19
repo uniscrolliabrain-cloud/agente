@@ -18,6 +18,7 @@ primary_region = "fra"
   HOST = "0.0.0.0"
   PORT = "8787"
   DATA_DIR = "/data"
+  DATABASE_CA_FILE = "/app/prod-ca-2021.crt"
   # AGENTE_CLIENTS_DIR_V1 - en la imagen no existe `clientes/` (esta en
   # .dockerignore y el runtime solo copia dist). Sin esto, personas y ontologia
   # se buscan en /clientes, que no es escribible ni persiste. En el volumen, un

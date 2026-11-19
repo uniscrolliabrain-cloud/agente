@@ -18,6 +18,7 @@ primary_region = "fra"
   AGENT_BACKEND = "model"
   AGENTE_PROCESS_ROLE = "worker"
   DATA_DIR = "/data"
+  DATABASE_CA_FILE = "/app/prod-ca-2021.crt"
   # AGENTE_CLIENTS_DIR_V1 - mismo directorio que el API (ver fly.toml).
   AGENTE_CLIENTS_DIR = "/data/clientes"
   TASK_WORKER_ENABLED = "true"
