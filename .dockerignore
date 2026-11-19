@@ -7,7 +7,12 @@ dist
 .agente
 artifacts
 backups
-clientes
+# DOCKER_CONTEXT_CLIENTE_TEMPLATE_V1 - el Dockerfile copia clientes/_template
+# a la imagen (personas por defecto del alta). Excluir `clientes` entero hacia
+# que el COPY fallara con "not found" y tumbaba el deploy; el resto de
+# carpetas de cliente sigue fuera del contexto porque son datos de clientes.
+clientes/*
+!clientes/_template
 sops-examples
 docs
 tests
