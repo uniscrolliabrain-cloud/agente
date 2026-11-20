@@ -9,6 +9,7 @@ interface Props {
   onSend: (text: string, attachment?: ChatAttachment) => void;
   onCancel: () => void;
   streaming: boolean;
+  sendDisabled?: boolean;
 }
 
 interface SpeechRecognitionLike {
@@ -32,7 +33,7 @@ type AttachState =
   | { kind: "ready"; file: File; attachment: ChatAttachment }
   | { kind: "error"; file: File; message: string };
 
-export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedConsumed }: Props) {
+export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, seed, onSeedConsumed }: Props) {
   const [value, setValue] = useState("");
   const [dictationError, setDictationError] = useState(false);
   const availabilityId = useId();
@@ -86,7 +87,7 @@ export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedCon
   };
 
   const submit = () => {
-    if (streaming) return;
+    if (streaming || sendDisabled) return;
     if (!value.trim() && attach?.kind !== "ready") return;
     const attachment = attach?.kind === "ready" ? attach.attachment : undefined;
     if (recognitionRef.current) {
@@ -248,7 +249,7 @@ export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedCon
             <Square size={14} fill="currentColor" />
           </button>
         ) : (
-          <button className="v2-send" type="button" disabled={!canSend} onClick={submit} aria-label="Enviar" title="Enviar">
+          <button className="v2-send" type="button" disabled={!canSend || sendDisabled} onClick={submit} aria-label="Enviar" title="Enviar">
             <ArrowUp size={17} strokeWidth={2.2} />
           </button>
         )}

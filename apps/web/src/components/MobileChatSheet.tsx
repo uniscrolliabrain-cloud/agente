@@ -102,6 +102,10 @@ export default function MobileChatSheet({
   }, [applySnap]);
 
   useEffect(() => {
+    gripRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  useEffect(() => {
     const panel = panelRef.current;
     const viewport = window.visualViewport;
     let frame = 0;

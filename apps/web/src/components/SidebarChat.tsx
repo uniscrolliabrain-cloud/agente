@@ -12,6 +12,7 @@ import type { ToolCall } from "../lib/toolsReducer";
 export interface DockChat {
   messages: ChatMessage[];
   streaming: boolean;
+  sendDisabled?: boolean;
   streamBuf: string;
   tools: ToolCall[];
   error: string | null;
@@ -57,6 +58,7 @@ export default function SidebarChat({
         onSend={chat.send}
         onCancel={chat.cancel}
         streaming={chat.streaming}
+        sendDisabled={chat.sendDisabled}
         seed={seed}
         onSeedConsumed={() => setSeed("")}
       />

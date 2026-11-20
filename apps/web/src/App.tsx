@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -107,6 +107,7 @@ export default function App() {
   // SIDEBAR_CHAT_V1 - el chat ocupa la columna izquierda sin cambiar de vista.
   const [chatDock, setChatDock] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
+  const chatFabRef = useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -334,6 +335,7 @@ export default function App() {
       {showChatFab && (
         <button
           type="button"
+          ref={chatFabRef}
           className={`chat-fab ${chatOpen ? "open" : ""}`}
           onClick={toggleChat}
           aria-label={chatOpen ? "Cerrar chat" : "Hablar con tu agente"}
@@ -348,7 +350,10 @@ export default function App() {
         <MobileChatSheet
           chat={chat}
           tenantLabel={contextLabel}
-          onClose={() => setMobileChat(false)}
+          onClose={() => {
+            setMobileChat(false);
+            requestAnimationFrame(() => chatFabRef.current?.focus({ preventScroll: true }));
+          }}
           onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
           onOpenSettings={() => setSettingsOpen(true)}
         />

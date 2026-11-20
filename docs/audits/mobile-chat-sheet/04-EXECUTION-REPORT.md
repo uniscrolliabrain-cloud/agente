@@ -1,48 +1,5 @@
 # Registro de ejecución Codex
 
-Estado inicial: PENDIENTE. Documento creado para handoff, no representa ejecución ni pruebas.
-
-## W0 — Auditoría y reproducción
-- Fecha:
-- Rama y SHA:
-- Build/URL probada:
-- Dispositivo y navegador:
-- Archivos inspeccionados:
-- Reproducción FAB:
-- Reproducción drag:
-- Reproducción teclado:
-- Hipótesis confirmada:
-- Evidencias:
-- Bloqueos:
-- Resultado: NOT RUN
-
-## W1 — FAB y superposiciones
-- Cambios y SHA:
-- Pruebas y resultados:
-- Evidencias:
-- Resultado: NOT RUN
-
-## W2 — Gestos y snap points
-- Cambios y SHA:
-- Pruebas y resultados:
-- Evidencias:
-- Resultado: NOT RUN
-
-## W3 — Teclado y viewport
-- Cambios y SHA:
-- Pruebas y resultados:
-- Evidencias:
-- Resultado: NOT RUN
-
-## W4 — Regresión y entrega
-- Comandos typecheck/lint/test:
-- Playwright dispositivos y resultados:
-- Android físico (obligatorio para cerrar):
-- Criterios A01-A12 (PASS/FAIL/NOT RUN):
-- Riesgos residuales:
-- Próximo paso y aprobación requerida:
-- Resultado: NOT RUN
-
 ## C0 — Reconstrucción · 2026-11-20
 
 - Base: `wip/mobile-chat-sheet` en `365d9fd0493969f8a990b45a4159d2fb17297e0e`. Rama de trabajo: `fix/mobile-chat-sheet-keyboard-gestures`. El diff contra `origin/main` contiene 14 commits, 10 archivos frontend y 9 documentos de auditoría. La cifra de dos commits del README describe el estado previo a la documentación.
@@ -89,3 +46,37 @@ El propietario confirmó que la captura original procedía de FreeBuff y autoriz
 - `ChatInput.tsx` y `index.css`: controles compartidos de voz ElevenLabs, dictado, vídeo Anam y Enviar/Detener; botones de 44 px, etiquetas y estado visible. ElevenLabs y Anam quedan como stubs deshabilitados. Se conserva el dictado Web Speech ya existente cuando hay API. Se inicia por interacción explícita, escribe en la selección y el texto permanece editable. Se informa de falta de API o error de reconocimiento.
 - Chromium/CDP: controles visibles y de 44 px en hoja, dock de escritorio y chat completo. Ambos stubs están deshabilitados. Sigue pasando el envío de un único mensaje y la geometría con viewport simulado. Typecheck y diff check pasaron.
 - Voz y vídeo sin integraciones ni credenciales. Reconocimiento con micro real, lector de pantalla y teclado físico de Android pendientes.
+
+## C6 — Regresión y entrega
+
+- Build de producción en `apps/web/dist`, probada en `http://127.0.0.1:4173/` en Chromium 156. Se dejó abierta la vista demo del dock en Chrome compartido. Recargar la pestaña para cargar el último bundle. La opción `?sheetDebug=1` se probó también en producción y el panel no aparece. La instrumentación temporal `window.__sheetDebug` ya fue eliminada en C1. Se conserva el panel optativo de desarrollo.
+- `App.tsx` restaura el foco del FAB al cerrar la hoja. `MobileChatSheet.tsx` lleva el foco al grip sin abrir el teclado. La suite Playwright verifica ambos movimientos de foco y reduced motion. Los scripts CDP y Playwright cierran los contextos que crean.
+- `useChat.ts`: Playwright reprodujo que al crear otro hilo durante una respuesta el historial del hilo anterior reaparecía en el nuevo. El stream seguía publicando estado después del cambio. Se cancela al salir del hilo y sus callbacks dejan de actualizar la superficie. `ChatPanel.tsx` y `SidebarChat.tsx` pasan al compositor el estado de carga del hilo para desactivar Enviar temporalmente sin borrar el borrador.
+- Pasó `pnpm test`: 874 de 900 pruebas pasaron, 0 fallaron, 21 omitidas y 5 marcadas TODO.
+- Pasaron `pnpm --filter @agente/web typecheck`, `pnpm --filter @agente/web build` y `git diff --check`. `pnpm lint` falla con 1.810 errores, 505 avisos y 133 infos, cifras idénticas a la base `365d9fd` comprobada con el mismo Biome. El lint de los archivos nuevos de diagnóstico y pruebas pasa.
+- Pasaron `node apps/web/tests/mobile-sheet.mjs` y `node apps/web/tests/mobile-sheet-playwright.mjs` sobre la build de producción recién compilada, con `SHEET_TEST_URL` apuntando al preview. Playwright se tomó de la instalación del entorno mediante `SHEET_PLAYWRIGHT_MODULE` sin modificar dependencias. CDP usa Chromium en `127.0.0.1:9222`.
+- Cambios por archivo: `App.tsx` unifica visibilidad y foco. `MobileChatSheet.tsx/.css` aíslan eventos, ajustan snaps y respetan VisualViewport. `ChatInput.tsx` comparte los controles y conserva dictado/adjuntos/envío. `index.css` dimensiona controles y respeta movimiento reducido. `MobileSheetDiagnostics.tsx` y `vite-env.d.ts` soportan el diagnóstico de desarrollo. `apps/web/tests/mobile-sheet*.mjs` cubren la regresión de navegador. `08-CAMPAIGNS-AND-HANDOFF.md` incorpora el criterio acordado con el propietario.
+
+| Casos | Evidencia y resultado |
+| --- | --- |
+| A01/A02 · T01/T02 | PASS en Chromium/CDP. FAB ausente con hoja abierta, hit sobre Enviar y un solo mensaje por toque. Incidente original de FreeBuff sin verificar. |
+| A03/A04 · T03/T04 | PASS en Chromium/CDP para cuatro alturas, arrastre en ambos sentidos, tap y cancelación. Ajustes conserva altura. Maximizar accede al chat completo y cierra la hoja. |
+| A05 · T05 | PASS en Playwright con más de 30 mensajes y texto largo. El historial cambia su scrollTop sin alterar altura. |
+| A06/A07/A08 · T06/T07/T08 | PASS para geometría con VisualViewport simulado y viewports de 320 × 568 y 740 × 393. Gboard, zoom, rotación y safe areas en Android físico NO VERIFICADOS. |
+| A09 · T09 | PASS en Playwright. El contenido permanece al cambiar el workspace con hoja abierta. |
+| A10 · T10 | PASS para streaming demo, cancelación, cambio de hilo durante streaming, fallo de red simulado, reintento y mensaje largo. |
+| A11 · T11/T13 | PASS para controles de dock y chat completo, foco de apertura/cierre, teclado en grip y movimiento reducido. Lector de pantalla real pendiente. |
+| A12 · T15 | PASS. Al cerrar y reabrir vuelve al primer snap. |
+| M01/M02/M03 · T12/T14 | PASS en Chromium para controles y etiquetas en las tres superficies y geometría simulada. Los stubs están deshabilitados y el arranque no solicitó captura ni media. Verificación física pendiente. |
+| M04/M05/M06 | PASS para inserción editable en selección con Web Speech simulado, sin autoenvío, cancelar, áreas de 44 px, teclado y reduced motion. Motor de dictado y lector reales pendientes. |
+| M07 | No se añadieron llamadas de proveedor ni cambios de autenticación, persistencia o backend. La prueba de navegador usa tenant demo. |
+
+### Verificación en Android físico
+
+1. Servir la build estática incluida en el ZIP desde un equipo en la misma red que el teléfono. Desde el directorio descomprimido, ejecutar `python3 -m http.server 4173` y abrir en Chrome la dirección IP local del equipo en el puerto 4173. Verificar `BUILD-SHA.txt` en el ZIP.
+2. Entrar al tenant demo, abrir Workspaces y abrir Chat. Confirmar que desaparece el FAB. Enviar una frase de prueba con un solo toque.
+3. Arrastrar el grip en ambos sentidos. En cada nivel abrir Gboard, escribir y comprobar que el cursor, los controles y Enviar quedan por encima del teclado. Cerrar el teclado con Atrás y comprobar que recupera el nivel anterior.
+4. Repetir en horizontal y con las variantes de navegación del sistema. Cambiar de workspace con la hoja abierta y comprobar el historial. Cerrar y reabrir, y verificar el snap inicial.
+5. Registrar modelo, versión de Chrome y Gboard, navegación del sistema y SHA. Si algo falla, anotar orientación, nivel y qué control falla. El modo de desarrollo permite copiar métricas con `?sheetDebug=1`.
+
+ElevenLabs y Anam requieren diseño de sesión, autorización por tenant, credenciales del lado servidor y gestión de permisos y tracks al conectar. El dictado existente depende de Web Speech y queda pendiente de validación con micrófono real. La aprobación de Android y cualquier merge o despliegue quedan a cargo del propietario. **Sin merge a main, sin despliegue.**

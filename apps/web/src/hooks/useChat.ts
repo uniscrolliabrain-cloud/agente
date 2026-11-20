@@ -33,22 +33,24 @@ export function useChat(
   const [error, setError] = useState<string | null>(null);
   const [automation, setAutomation] = useState<ThreadAutomation | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const loadedThreadRef = useRef<string | null>(null);
+  const [loadedThreadId, setLoadedThreadId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !threadId) {
-      setMessages([]);
-      setAutomation(null);
-      loadedThreadRef.current = null;
-      return;
-    }
-    if (loadedThreadRef.current === threadId) return;
-    loadedThreadRef.current = threadId;
+    setMessages([]);
+    setAutomation(null);
+    setStreaming(false);
+    setStreamBuf("");
+    setTools([]);
+    setError(null);
+    setLoadedThreadId(null);
+    if (!enabled || !threadId) return;
+
     let cancelled = false;
     void (async () => {
       try {
         const thread = await getThread(threadId);
         if (cancelled) return;
+        setLoadedThreadId(threadId);
         setMessages(thread.messages ?? []);
         setAutomation((thread as { automation?: ThreadAutomation | null }).automation ?? null);
         setError(null);
@@ -57,14 +59,19 @@ export function useChat(
         setError(err instanceof Error ? err.message : "No se pudo cargar la conversación");
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      const previousRun = abortRef.current;
+      abortRef.current = null;
+      previousRun?.abort();
+    };
   }, [enabled, threadId]);
 
   const [roleId, setRoleId] = useState<string | undefined>(undefined);
 
   const send = useCallback(
     async (text: string, attachment?: ChatAttachment) => {
-      if ((!text.trim() && !attachment) || streaming || !threadId) return;
+      if ((!text.trim() && !attachment) || streaming || !threadId || loadedThreadId !== threadId || abortRef.current) return;
       const trimmed = text.trim();
       const userMsg: ChatMessage = {
         id: uid(),
@@ -82,6 +89,7 @@ export function useChat(
 
       const controller = new AbortController();
       abortRef.current = controller;
+      const isCurrentRun = () => abortRef.current === controller;
 
       const llmContent = attachment
         ? `${trimmed || "(sin texto)"}\n\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
@@ -99,7 +107,7 @@ export function useChat(
       const flushText = () => {
         flushHandle = null;
         lastFlush = Date.now();
-        setStreamBuf(pendingText);
+        if (isCurrentRun()) setStreamBuf(pendingText);
       };
       const pushText = (text: string) => {
         pendingText = text;
@@ -124,6 +132,7 @@ export function useChat(
             ),
           },
           (event: AgUiEvent) => {
+            if (!isCurrentRun()) return;
             const at = Date.now();
             if (
               (event.type === "TEXT_MESSAGE_CONTENT" || event.type === "TEXT_MESSAGE_CHUNK") &&
@@ -156,6 +165,7 @@ export function useChat(
           controller.signal,
         );
 
+        if (!isCurrentRun()) return;
         if (runErrorMessage && !assistantText.trim()) {
           setError(runErrorMessage);
           return;
@@ -179,16 +189,19 @@ export function useChat(
           /* se persiste en el próximo turno */
         }
       } catch (err) {
+        if (!isCurrentRun()) return;
         if (controller.signal.aborted) setError("Cancelado por el usuario");
         else setError(err instanceof Error ? err.message : "Error en el stream");
       } finally {
         if (flushHandle !== null) clearTimeout(flushHandle);
         flushHandle = null;
-        setStreaming(false);
-        abortRef.current = null;
+        if (isCurrentRun()) {
+          setStreaming(false);
+          abortRef.current = null;
+        }
       }
     },
-    [messages, streaming, threadId, onSaved, roleId],
+    [messages, streaming, threadId, loadedThreadId, onSaved, roleId],
   );
 
   const cancel = useCallback(() => {
@@ -198,6 +211,7 @@ export function useChat(
   return {
     messages,
     streaming,
+    sendDisabled: !enabled || !threadId || threadId !== loadedThreadId,
     streamBuf,
     tools,
     error,
