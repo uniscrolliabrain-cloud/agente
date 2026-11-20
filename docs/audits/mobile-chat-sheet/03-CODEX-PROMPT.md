@@ -19,3 +19,7 @@ No elimines comentarios originales del otro agente hasta haber trasladado su inf
 
 ## Requisito añadido: compositor multimodal
 Lee también `05-MULTIMODAL-COMPOSER.md`. Tras reparar el gesto, el teclado y el FAB, implementa los controles visibles de conversación bidireccional ElevenLabs (bocadillo), dictado/transcripción (micro), videoconferencia Anam (vídeo) y enviar texto (flecha) en un compositor compartido. Los proveedores no están cableados: crea solo UI y stubs honestos, sin llamadas reales ni permisos. Añade pruebas M01-M07 y registra estado en 04-EXECUTION-REPORT.md.
+
+
+## Orden definitivo
+Seguir las campañas C0-C6 de `08-CAMPAIGNS-AND-HANDOFF.md` y el blueprint `06-IMPLEMENTATION-BLUEPRINT.md`; aplicar el protocolo `07-TEST-AND-DEVICE-PROTOCOL.md` y el contrato multimodal `05-MULTIMODAL-COMPOSER.md`. El plan de olas W0-W4 anterior es una agrupación conceptual; C0-C6 es el orden operativo detallado. Actualiza `04-EXECUTION-REPORT.md` por campaña.
