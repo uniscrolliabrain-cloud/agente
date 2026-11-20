@@ -77,3 +77,9 @@ El propietario confirmó que la captura original procedía de FreeBuff y autoriz
 
 - `MobileChatSheet.tsx/.css`: Pointer Events con captura en el grip, umbral por desplazamiento del dedo, cancelación al snap anterior, tap que avanza y teclas Home/End. Grip separado de los botones. ARIA informa el porcentaje de altura calculado. Se reutilizan los snaps, la escritura DOM y el scroll independiente del historial.
 - Chromium/CDP: subida a 45%, cancelación conserva 45%, tap a 68%, End a 100% y arrastre de bajada a 45%. Cierre táctil y reapertura al snap inicial pasan. Pasaron typecheck y diff check. Pruebas de historial largo, rotación y accesibilidad física se mantienen para regresión/handoff.
+
+## C4 — Teclado y viewport
+
+- `MobileChatSheet.tsx/.css`: compensación única mediante VisualViewport. Ancla el borde inferior en height + offsetTop y toma en cuenta el desplazamiento horizontal. Escucha resize y scroll visuales, resize de ventana y cambios de tamaño de barra y footer. Conserva el índice del snap y el padding de safe area existente.
+- Chromium/CDP: viewport visual simulado de 380 px con offset de 24 px. En los cuatro niveles, borde inferior de hoja en 404 px, textarea y Enviar dentro del área visual. Al restaurar los 740 px, recupera el snap 45%. Pasaron typecheck, diff check y regresión del navegador.
+- T06/T07/T08 con teclado Gboard, rotación y safe areas en Android físico: NO VERIFICADOS.

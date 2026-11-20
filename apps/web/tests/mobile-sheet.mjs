@@ -120,6 +120,38 @@ await touch("touchMove", downGrip[0], downGrip[1] + 410);
 await touch("touchEnd");
 assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "45");
 await new Promise(resolve => setTimeout(resolve, 300));
+await evaluate(`(() => {
+  Object.defineProperties(visualViewport, {
+    height: { configurable: true, value: 380 },
+    offsetTop: { configurable: true, value: 24 },
+  });
+  document.querySelector(".mobile-chat-sheet textarea").focus({ preventScroll: true });
+  visualViewport.dispatchEvent(new Event("resize"));
+  visualViewport.dispatchEvent(new Event("scroll"));
+})()`);
+for (const key of ["ArrowDown", "ArrowUp", "ArrowUp", "End", "ArrowDown", "ArrowDown"]) {
+  await evaluate(`document.querySelector('[role="slider"]').dispatchEvent(new KeyboardEvent("keydown", { key: ${JSON.stringify(key)}, bubbles: true }))`);
+  await new Promise(resolve => setTimeout(resolve, 250));
+  const keyboardGeometry = await evaluate(`(() => {
+    const send = document.querySelector(".mobile-chat-sheet .v2-send").getBoundingClientRect();
+    const textarea = document.querySelector(".mobile-chat-sheet textarea").getBoundingClientRect();
+    const sheet = document.querySelector(".mobile-chat-sheet").getBoundingClientRect();
+    return { sendBottom: send.bottom, textareaTop: textarea.top, sheetBottom: sheet.bottom, sheetTop: sheet.top };
+  })()`);
+  assert.equal(keyboardGeometry.sheetBottom, 404);
+  assert.ok(keyboardGeometry.sendBottom <= 404);
+  assert.ok(keyboardGeometry.sheetTop >= 24);
+  assert.ok(keyboardGeometry.textareaTop >= 24);
+}
+await evaluate(`(() => {
+  delete visualViewport.height;
+  delete visualViewport.offsetTop;
+  document.querySelector(".mobile-chat-sheet textarea").blur();
+  visualViewport.dispatchEvent(new Event("resize"));
+})()`);
+await new Promise(resolve => setTimeout(resolve, 300));
+assert.equal(await evaluate("document.querySelector('.mobile-chat-sheet').getBoundingClientRect().bottom"), 740);
+assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "45");
 console.log("PASS: mobile FAB, send hit testing and single submission, drag, close and reopen");
 ws.close();
 await fetch(new URL(`/json/close/${target.id}`, endpoint));

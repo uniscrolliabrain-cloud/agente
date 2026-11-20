@@ -100,3 +100,11 @@
     transition: none;
   }
 }
+
+.mobile-chat-sheet .side-chat-foot {
+  flex: 0 0 auto;
+}
+
+.mobile-chat-sheet .side-chat-foot textarea {
+  max-height: clamp(40px, calc(var(--sheet-visual-height, 184px) - 170px), 120px);
+}

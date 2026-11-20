@@ -69,7 +69,16 @@ export default function MobileChatSheet({
   const applySnap = useCallback((index: number) => {
     const panel = panelRef.current;
     if (!panel) return;
+    const viewport = window.visualViewport;
     const height = viewportHeight();
+    const layout = document.documentElement;
+    const bottom = viewport ? Math.max(0, layout.clientHeight - viewport.height - viewport.offsetTop) : 0;
+    panel.style.bottom = `${bottom}px`;
+    panel.style.left = `${viewport?.offsetLeft ?? 0}px`;
+    panel.style.right = viewport
+      ? `${Math.max(0, layout.clientWidth - viewport.width - viewport.offsetLeft)}px`
+      : "0";
+    panel.style.setProperty("--sheet-visual-height", `${height}px`);
     const minPx = minVisible(panel);
     const px = visiblePx(SNAP_PERCENTS[index] ?? 26, height, minPx);
     panel.style.height = `${px}px`;
@@ -93,15 +102,28 @@ export default function MobileChatSheet({
   }, [applySnap]);
 
   useEffect(() => {
-    const onResize = () => applySnap(snapRef.current);
-    window.addEventListener("resize", onResize);
-    window.addEventListener("orientationchange", onResize);
-    window.visualViewport?.addEventListener("resize", onResize);
+    const panel = panelRef.current;
     const viewport = window.visualViewport;
+    let frame = 0;
+    const onResize = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        if (!panel?.classList.contains("dragging")) applySnap(snapRef.current);
+      });
+    };
+    const observer = new ResizeObserver(onResize);
+    for (const element of panel?.querySelectorAll(".mobile-sheet-bar, .side-chat-foot") ?? []) {
+      observer.observe(element);
+    }
+    window.addEventListener("resize", onResize);
+    viewport?.addEventListener("resize", onResize);
+    viewport?.addEventListener("scroll", onResize);
     return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
       window.removeEventListener("resize", onResize);
-      window.removeEventListener("orientationchange", onResize);
       viewport?.removeEventListener("resize", onResize);
+      viewport?.removeEventListener("scroll", onResize);
     };
   }, [applySnap]);
 
