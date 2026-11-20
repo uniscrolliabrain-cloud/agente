@@ -1,9 +1,9 @@
 # 08 — Campañas secuenciales para Codex
 
-**Regla:** cada campaña entrega commit en rama hija, reporte en `04-EXECUTION-REPORT.md` y resumen en chat; detenerse si no se puede reproducir/medir el fallo. No merge a main, no deploy sin autorización.
+**Regla:** cada campaña entrega commit en rama hija, reporte en `04-EXECUTION-REPORT.md` y resumen en chat; usar el navegador local y un SHA conocido como referencia. Si el incidente histórico de FreeBuff no se reproduce, conservarlo como no verificado y continuar con las regresiones medibles. No merge a main, no deploy sin autorización.
 
 ### C0 — Reconstrucción
-Leer rama, diff main, docs 00-08 y archivos de UI relacionados. Confirmar build/URL y DOM que vio el usuario. Registrar discrepancias doc vs código. Entregar mapa de eventos, estados y CSS.
+Leer rama, diff main, docs 00-08 y archivos de UI relacionados. Registrar build/URL y DOM de la reproducción local. El entorno histórico de FreeBuff es una referencia opcional. Registrar discrepancias doc vs código. Entregar mapa de eventos, estados y CSS.
 
 ### C1 — Observabilidad
 Añadir `?sheetDebug=1` solo dev, panel exportable sin PII y tests mínimos que detecten solapamiento y gesto. Confirmar que se está ejecutando el SHA editado.

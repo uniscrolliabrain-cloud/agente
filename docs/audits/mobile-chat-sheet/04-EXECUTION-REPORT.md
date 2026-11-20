@@ -55,3 +55,7 @@ Estado inicial: PENDIENTE. Documento creado para handoff, no representa ejecuci�
 - Teclado simulado: al forzar `visualViewport.height = 380` y `offsetTop = 0`, enfocar el textarea y emitir resize, borde inferior visual 380 px, hoja 740 px, Enviar 719 px. El cálculo reduce la altura, mientras el anclaje fijo deja el compositor fuera del viewport visual simulado. Android físico y Gboard pendientes.
 - Pruebas: instalación de dependencias existentes con lockfile congelado, sin cambios de manifiesto. `git diff --check origin/main...HEAD`, `pnpm --filter @agente/web typecheck` y `pnpm --filter @agente/web build` pasaron. Vite avisó sobre anotaciones Zod, un import dinámico/estático y un chunk superior a 500 kB. Medición local por CDP con touch realista y viewport visual simulado. Evidencia numérica arriba.
 - Resultado: **BLOCKED** para avanzar según 08. El mapa y la línea base local están completos. Falta identificar o medir la build y el DOM del solapamiento original. C1–C6 quedan pendientes. C0 modifica únicamente este informe.
+
+### Revisión del criterio de C0
+
+El propietario confirmó que la captura original procedía de FreeBuff y autorizó usar el navegador local como referencia. C0 queda cerrado con la evidencia ya registrada. El incidente histórico queda sin verificar y la validación física sigue pendiente.
