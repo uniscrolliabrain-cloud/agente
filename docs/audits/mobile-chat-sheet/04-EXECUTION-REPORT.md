@@ -66,3 +66,9 @@ El propietario confirmó que la captura original procedía de FreeBuff y autoriz
 - Chromium 156 por CDP. El test de navegador pasó con y sin diagnóstico. El panel devolvió el SHA `b826a85` inyectado al iniciar Vite sobre la copia de trabajo C1, cero FAB con la hoja abierta, hit correcto y movimientos táctiles registrados. Pasaron typecheck y diff check.
 - Repetición: iniciar Chromium headless con `--remote-debugging-port=9222`, iniciar `VITE_BUILD_SHA=$(git rev-parse HEAD) pnpm --filter @agente/web dev` y ejecutar `node apps/web/tests/mobile-sheet.mjs`. Para comprobar el diagnóstico, añadir `SHEET_EXPECTED_SHA=$(git rev-parse HEAD)` y `SHEET_TEST_URL=http://127.0.0.1:5173/?sheetDebug=1`.
 - Resultado: PASS en navegador local.
+
+## C2 — FAB y Enviar
+
+- `App.tsx` deriva montaje de la hoja, disponibilidad del FAB y estado abierto desde la misma condición de viewport y apertura. Se corrigió además la etiqueta de FAB en escritorio cuando queda un estado móvil anterior.
+- T01/T02/T15 pasaron en Chromium 156/CDP a 393 × 740. FAB visible antes y después de cerrar, ausente con hoja abierta, hit correcto y un toque produjo un mensaje demo. La segunda apertura recreó una sola hoja.
+- Pasaron typecheck y diff check. Se corrigió el assert de ausencia del diagnóstico para reflejar el `null` que devuelve el DOM. El incidente anterior de FreeBuff permanece sin verificar.

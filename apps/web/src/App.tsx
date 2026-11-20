@@ -180,10 +180,11 @@ export default function App() {
 
   const demoSession = isDemoSession();
   const chatDockActive = chatDock && !isMobile;
-  const chatOpen = chatDockActive || mobileChat;
+  const mobileSheetOpen = isMobile && mobileChat;
+  const chatOpen = chatDockActive || mobileSheetOpen;
   // MOBILE_SHEET_V2 - con la hoja abierta sus controles ya ofrecen cerrar; el boton
   // flotante solo hace falta cuando la hoja no esta (si no, queda encima y salta).
-  const showChatFab = !isMobile || !mobileChat;
+  const showChatFab = !mobileNav && !mobileSheetOpen;
 
   const selectView = (next: AppView) => {
     setView(next);
@@ -330,7 +331,7 @@ export default function App() {
 
       {/* SIDEBAR_CHAT_V1 - boton flotante persistente: el agente esta siempre a
           un toque; en movil abre una hoja inferior sin abandonar la pantalla. */}
-      {!mobileNav && showChatFab && (
+      {showChatFab && (
         <button
           type="button"
           className={`chat-fab ${chatOpen ? "open" : ""}`}
@@ -343,7 +344,7 @@ export default function App() {
         </button>
       )}
 
-      {isMobile && mobileChat && (
+      {mobileSheetOpen && (
         <MobileChatSheet
           chat={chat}
           tenantLabel={contextLabel}

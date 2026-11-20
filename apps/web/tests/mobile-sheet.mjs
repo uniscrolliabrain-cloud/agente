@@ -75,8 +75,29 @@ if (process.env.SHEET_EXPECTED_SHA) {
   assert.ok(report.counters.touchmove > 0);
   assert.equal(report.activeTag, "BODY");
 } else {
-  assert.equal(await evaluate(`document.querySelector('textarea[aria-label="Métricas de la hoja"]')`), undefined);
+  assert.equal(await evaluate(`document.querySelector('textarea[aria-label="Métricas de la hoja"]')`), null);
 }
-console.log("PASS: mobile FAB, send hit testing, upward touch drag");
+const message = "Mensaje sintético de prueba del FAB";
+await evaluate(`(() => {
+  const textarea = document.querySelector(".mobile-chat-sheet textarea");
+  Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set.call(textarea, ${JSON.stringify(message)});
+  textarea.dispatchEvent(new Event("input", { bubbles: true }));
+})()`);
+const send = await center(".mobile-chat-sheet .v2-send");
+await touch("touchStart", ...send);
+await touch("touchEnd");
+await waitFor('.mobile-chat-sheet [title="Detener"]');
+await waitFor('.mobile-chat-sheet [title="Enviar"]');
+assert.equal(await evaluate(`document.querySelector(".side-chat-body").textContent.split(${JSON.stringify(message)}).length - 1`), 1);
+const close = await center('.mobile-chat-sheet [aria-label="Cerrar chat"]');
+await touch("touchStart", ...close);
+await touch("touchEnd");
+await waitFor(".chat-fab");
+assert.equal(await evaluate("document.querySelectorAll('.mobile-chat-sheet').length"), 0);
+await touch("touchStart", ...fab);
+await touch("touchEnd");
+await waitFor(".mobile-chat-sheet");
+assert.equal(await evaluate("document.querySelectorAll('.chat-fab').length"), 0);
+console.log("PASS: mobile FAB, send hit testing and single submission, drag, close and reopen");
 ws.close();
 await fetch(new URL(`/json/close/${target.id}`, endpoint));
