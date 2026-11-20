@@ -15,3 +15,7 @@ W4: pruebas y regresión: mobile Playwright, escritorio, accesibilidad, streamin
 Cada ola requiere diagnóstico, cambio mínimo, comandos ejecutados, evidencia y estado PASS/FAIL/BLOCKED. Si un fallo no se puede reproducir, instrumenta y solicita trazas; no declares éxito.
 
 No elimines comentarios originales del otro agente hasta haber trasladado su información relevante a docs; elimina solamente comentarios temporales de depuración cuando las pruebas terminen. No modifiques secretos, auth, backend ni workspaces no relacionados. No instales Vaul u otras dependencias sin justificar un spike y su coste. Al terminar solicita autorización para merge y despliegue, nunca los ejecutes automáticamente.
+
+
+## Requisito añadido: compositor multimodal
+Lee también `05-MULTIMODAL-COMPOSER.md`. Tras reparar el gesto, el teclado y el FAB, implementa los controles visibles de conversación bidireccional ElevenLabs (bocadillo), dictado/transcripción (micro), videoconferencia Anam (vídeo) y enviar texto (flecha) en un compositor compartido. Los proveedores no están cableados: crea solo UI y stubs honestos, sin llamadas reales ni permisos. Añade pruebas M01-M07 y registra estado en 04-EXECUTION-REPORT.md.
