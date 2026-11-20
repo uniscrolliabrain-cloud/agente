@@ -33,6 +33,25 @@ async function waitFor(selector) {
   }
   throw Error(`Missing ${selector}`);
 }
+async function verifyComposer(surface) {
+  const controls = await evaluate(`(() => {
+    const composer = document.querySelector(${JSON.stringify(surface + " .v2-composer")});
+    return ["ElevenLabs", "dictado", "Anam", "Enviar"].map(label => {
+      const button = [...composer.querySelectorAll("button")].find(node => {
+        const name = node.getAttribute("aria-label") ?? "";
+        return label === "dictado" ? /dictado|transcribir/i.test(name) : name.includes(label);
+      });
+      const rect = button?.getBoundingClientRect();
+      return { width: rect?.width, height: rect?.height, disabled: button?.disabled };
+    });
+  })()`);
+  for (const control of controls) {
+    assert.ok(control.width >= 44);
+    assert.ok(control.height >= 44);
+  }
+  assert.equal(controls[0].disabled, true);
+  assert.equal(controls[2].disabled, true);
+}
 await call("Emulation.setDeviceMetricsOverride", {mobile:true,width:393,height:740,deviceScaleFactor:2});
 await call("Emulation.setTouchEmulationEnabled", {enabled:true,maxTouchPoints:5});
 await call("Page.navigate", {url: process.env.SHEET_TEST_URL ?? "http://127.0.0.1:5173/"});
@@ -59,6 +78,7 @@ const opened = await evaluate(`(() => {
 })()`);
 assert.equal(opened.fabs, 0);
 assert.equal(opened.sendHit, true);
+await verifyComposer(".mobile-chat-sheet");
 const grip = await center(".mobile-sheet-grip");
 await touch("touchStart", ...grip);
 await touch("touchMove", grip[0], grip[1]-95);
@@ -152,6 +172,14 @@ await evaluate(`(() => {
 await new Promise(resolve => setTimeout(resolve, 300));
 assert.equal(await evaluate("document.querySelector('.mobile-chat-sheet').getBoundingClientRect().bottom"), 740);
 assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "45");
+await call("Emulation.setDeviceMetricsOverride", { mobile: false, width: 1280, height: 800, deviceScaleFactor: 1 });
+await waitFor(".chat-fab");
+await evaluate("document.querySelector('.chat-fab').click()");
+await waitFor('.shell[data-chat="true"] .side-chat');
+await verifyComposer('.shell[data-chat="true"] .side-chat');
+await evaluate("document.querySelector('.v2-btn-new').click()");
+await waitFor(".v2-home .v2-composer");
+await verifyComposer(".v2-home");
 console.log("PASS: mobile FAB, send hit testing and single submission, drag, close and reopen");
 ws.close();
 await fetch(new URL(`/json/close/${target.id}`, endpoint));

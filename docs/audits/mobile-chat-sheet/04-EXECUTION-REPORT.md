@@ -83,3 +83,9 @@ El propietario confirmó que la captura original procedía de FreeBuff y autoriz
 - `MobileChatSheet.tsx/.css`: compensación única mediante VisualViewport. Ancla el borde inferior en height + offsetTop y toma en cuenta el desplazamiento horizontal. Escucha resize y scroll visuales, resize de ventana y cambios de tamaño de barra y footer. Conserva el índice del snap y el padding de safe area existente.
 - Chromium/CDP: viewport visual simulado de 380 px con offset de 24 px. En los cuatro niveles, borde inferior de hoja en 404 px, textarea y Enviar dentro del área visual. Al restaurar los 740 px, recupera el snap 45%. Pasaron typecheck, diff check y regresión del navegador.
 - T06/T07/T08 con teclado Gboard, rotación y safe areas en Android físico: NO VERIFICADOS.
+
+## C5 — Compositor multimodal
+
+- `ChatInput.tsx` y `index.css`: controles compartidos de voz ElevenLabs, dictado, vídeo Anam y Enviar/Detener; botones de 44 px, etiquetas y estado visible. ElevenLabs y Anam quedan como stubs deshabilitados. Se conserva el dictado Web Speech ya existente cuando hay API. Se inicia por interacción explícita, escribe en la selección y el texto permanece editable. Se informa de falta de API o error de reconocimiento.
+- Chromium/CDP: controles visibles y de 44 px en hoja, dock de escritorio y chat completo. Ambos stubs están deshabilitados. Sigue pasando el envío de un único mensaje y la geometría con viewport simulado. Typecheck y diff check pasaron.
+- Voz y vídeo sin integraciones ni credenciales. Reconocimiento con micro real, lector de pantalla y teclado físico de Android pendientes.
