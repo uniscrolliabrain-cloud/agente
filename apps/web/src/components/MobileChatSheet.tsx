@@ -61,9 +61,9 @@ export default function MobileChatSheet({
   onOpenFullChat,
   onOpenSettings,
 }: Props) {
-  const [snapIndex, setSnapIndex] = useState(0);
+  const [percent, setPercent] = useState(SNAP_PERCENTS[0]);
   const panelRef = useRef<HTMLDivElement>(null);
-  const barRef = useRef<HTMLDivElement>(null);
+  const gripRef = useRef<HTMLDivElement>(null);
   const snapRef = useRef(0);
 
   const applySnap = useCallback((index: number) => {
@@ -73,6 +73,7 @@ export default function MobileChatSheet({
     const minPx = minVisible(panel);
     const px = visiblePx(SNAP_PERCENTS[index] ?? 26, height, minPx);
     panel.style.height = `${px}px`;
+    setPercent(Math.round(100 * px / height));
     // Plegada del todo solo queda el tirador y la caja de escribir: una franja de
     // 20 px de mensaje cortado parecia un fallo de pintado.
     panel.classList.toggle("collapsed", px <= minPx + 2);
@@ -81,7 +82,6 @@ export default function MobileChatSheet({
   const setSnap = useCallback(
     (index: number) => {
       snapRef.current = index;
-      setSnapIndex(index);
       applySnap(index);
     },
     [applySnap],
@@ -107,123 +107,56 @@ export default function MobileChatSheet({
 
   useEffect(() => {
     const panel = panelRef.current;
-    const bar = barRef.current;
-    if (!panel || !bar) return;
+    const grip = gripRef.current;
+    if (!panel || !grip) return;
 
-    let active = false;
-    let pointerId: number | null = null;
-    let startY = 0;
-    let startHeight = 0;
-    let maxHeight = 0;
-    let minPx = MIN_VISIBLE_PX;
-    let travelled = 0;
+    let drag: { id: number; y: number; height: number; moved: boolean } | null = null;
 
-    const begin = (clientY: number) => {
-      const rect = panel.getBoundingClientRect();
-      maxHeight = viewportHeight();
-      minPx = minVisible(panel);
-      startHeight = rect.height;
-      startY = clientY;
-      travelled = 0;
-      active = true;
+    const onDown = (event: PointerEvent) => {
+      if (!event.isPrimary || event.button !== 0 || drag) return;
+      grip.setPointerCapture(event.pointerId);
+      drag = { id: event.pointerId, y: event.clientY, height: panel.getBoundingClientRect().height, moved: false };
+      panel.style.height = `${drag.height}px`;
       panel.classList.add("dragging");
     };
 
-    const moveTo = (clientY: number) => {
-      if (!active) return;
-      const next = Math.max(minPx, Math.min(maxHeight, startHeight + (startY - clientY)));
-      travelled = Math.max(travelled, Math.abs(next - startHeight));
+    const onMove = (event: PointerEvent) => {
+      if (drag?.id !== event.pointerId) return;
+      const delta = drag.y - event.clientY;
+      drag.moved ||= Math.abs(delta) >= TAP_SLOP_PX;
+      if (!drag.moved) return;
+      const height = viewportHeight();
+      const min = minVisible(panel);
+      const next = Math.min(height, Math.max(min, drag.height + delta));
       panel.style.height = `${next}px`;
-      panel.classList.toggle("collapsed", next <= minPx + 2);
+      panel.classList.toggle("collapsed", next <= min + 2);
     };
 
-    const finish = () => {
-      if (!active) return;
-      active = false;
-      pointerId = null;
+    const settle = (event: PointerEvent, cancelled: boolean) => {
+      if (drag?.id !== event.pointerId) return;
+      if (!cancelled) onMove(event);
+      const moved = drag.moved;
+      drag = null;
+      const visible = panel.getBoundingClientRect().height;
       panel.classList.remove("dragging");
-      const height = panel.getBoundingClientRect().height;
-      if (travelled < TAP_SLOP_PX) {
-        setSnap((snapRef.current + 1) % SNAP_PERCENTS.length);
-        return;
-      }
-      setSnap(nearestSnap(height, maxHeight, minPx));
+      if (cancelled) setSnap(snapRef.current);
+      else if (moved) setSnap(nearestSnap(visible, viewportHeight(), minVisible(panel)));
+      else setSnap((snapRef.current + 1) % SNAP_PERCENTS.length);
     };
 
-    const isControl = (target: EventTarget | null) =>
-      (target as HTMLElement | null)?.closest("button, a, input, textarea, select") ?? null;
-
-    const touchAvailable = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-
-    const onPointerDown = (event: PointerEvent) => {
-      if (event.pointerType === "mouse" && event.button !== 0) return;
-      // En tactil manda la via de touch: los dos caminos a la vez se pelean.
-      if (event.pointerType !== "mouse" && touchAvailable) return;
-      if (isControl(event.target)) return;
-      pointerId = event.pointerId;
-      try {
-        bar.setPointerCapture(event.pointerId);
-      } catch {
-        /* navegadores sin captura de puntero */
-      }
-      begin(event.clientY);
-    };
-    const onPointerMove = (event: PointerEvent) => {
-      if (!active || pointerId === null || event.pointerId !== pointerId) return;
-      if (event.cancelable) event.preventDefault();
-      moveTo(event.clientY);
-    };
-    const onPointerUp = (event: PointerEvent) => {
-      if (pointerId !== null && event.pointerId !== pointerId) return;
-      // El ultimo pointermove puede llegar fundido con el up: se aplica la
-      // posicion final del dedo antes de calcular el peldaño.
-      moveTo(event.clientY);
-      finish();
-    };
-    const onPointerCancel = () => {
-      finish();
-    };
-
-    const onTouchStart = (event: TouchEvent) => {
-      if (active || isControl(event.target)) return;
-      if (event.cancelable) event.preventDefault();
-      const touch = event.touches[0];
-      if (touch) begin(touch.clientY);
-    };
-    const onTouchMove = (event: TouchEvent) => {
-      if (!active) return;
-      // Sin preventDefault el navegador se lleva el gesto como scroll de pagina.
-      if (event.cancelable) event.preventDefault();
-      const touch = event.touches[0];
-      if (touch) moveTo(touch.clientY);
-    };
-    const onTouchEnd = (event: TouchEvent) => {
-      const touch = event.changedTouches[0];
-      if (touch) moveTo(touch.clientY);
-      finish();
-    };
-    const onTouchCancel = () => {
-      finish();
-    };
-
-    bar.addEventListener("pointerdown", onPointerDown);
-    bar.addEventListener("pointermove", onPointerMove);
-    bar.addEventListener("pointerup", onPointerUp);
-    bar.addEventListener("pointercancel", onPointerCancel);
-    bar.addEventListener("touchstart", onTouchStart, { passive: false });
-    bar.addEventListener("touchmove", onTouchMove, { passive: false });
-    bar.addEventListener("touchend", onTouchEnd);
-    bar.addEventListener("touchcancel", onTouchCancel);
-
+    const onUp = (event: PointerEvent) => settle(event, false);
+    const onCancel = (event: PointerEvent) => settle(event, true);
+    grip.addEventListener("pointerdown", onDown);
+    grip.addEventListener("pointermove", onMove);
+    grip.addEventListener("pointerup", onUp);
+    grip.addEventListener("pointercancel", onCancel);
+    grip.addEventListener("lostpointercapture", onCancel);
     return () => {
-      bar.removeEventListener("pointerdown", onPointerDown);
-      bar.removeEventListener("pointermove", onPointerMove);
-      bar.removeEventListener("pointerup", onPointerUp);
-      bar.removeEventListener("pointercancel", onPointerCancel);
-      bar.removeEventListener("touchstart", onTouchStart);
-      bar.removeEventListener("touchmove", onTouchMove);
-      bar.removeEventListener("touchend", onTouchEnd);
-      bar.removeEventListener("touchcancel", onTouchCancel);
+      grip.removeEventListener("pointerdown", onDown);
+      grip.removeEventListener("pointermove", onMove);
+      grip.removeEventListener("pointerup", onUp);
+      grip.removeEventListener("pointercancel", onCancel);
+      grip.removeEventListener("lostpointercapture", onCancel);
     };
   }, [setSnap]);
 
@@ -232,13 +165,14 @@ export default function MobileChatSheet({
       event.preventDefault();
       const direction = event.key === "ArrowUp" ? 1 : -1;
       setSnap(Math.max(0, Math.min(SNAP_PERCENTS.length - 1, snapRef.current + direction)));
+    } else if (event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      setSnap(event.key === "Home" ? 0 : SNAP_PERCENTS.length - 1);
     } else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       setSnap((snapRef.current + 1) % SNAP_PERCENTS.length);
     }
   };
-
-  const percent = SNAP_PERCENTS[snapIndex] ?? SNAP_PERCENTS[0];
 
   return (
     <div
@@ -248,22 +182,22 @@ export default function MobileChatSheet({
       role="dialog"
       aria-label="Chat con tu agente"
     >
-      <div
-        ref={barRef}
-        className="mobile-sheet-bar"
-        role="slider"
-        tabIndex={0}
-        aria-label="Altura del chat"
-        aria-valuemin={SNAP_PERCENTS[0]}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-valuetext={`${percent}% de la pantalla`}
-        onKeyDown={onKeyDown}
-      >
+      <div className="mobile-sheet-bar">
         <button type="button" className="side-chat-icon" onClick={onClose} aria-label="Cerrar chat">
           <X size={16} />
         </button>
-        <span className="mobile-sheet-grip" aria-hidden="true" />
+        <div
+          ref={gripRef}
+          className="mobile-sheet-grip"
+          role="slider"
+          tabIndex={0}
+          aria-label="Altura del chat"
+          aria-valuemin={SNAP_PERCENTS[0]}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          aria-valuetext={`${percent}% del área visible`}
+          onKeyDown={onKeyDown}
+        />
         <div className="mobile-sheet-actions">
           <button type="button" className="side-chat-icon" onClick={onOpenSettings} aria-label="Ajustes">
             <Settings size={15} />

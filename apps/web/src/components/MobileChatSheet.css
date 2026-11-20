@@ -38,17 +38,6 @@
   background: var(--v2-bg-card);
   border-bottom: 1px solid var(--v2-border);
   border-radius: 18px 18px 0 0;
-  /* El dedo manda aqui: sin esto el navegador se lleva el gesto como scroll. */
-  touch-action: none;
-  overscroll-behavior: contain;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.mobile-chat-sheet.dragging .mobile-sheet-bar {
-  cursor: grabbing;
 }
 
 .mobile-sheet-bar .side-chat-icon {
@@ -57,11 +46,26 @@
 
 .mobile-sheet-grip {
   flex: 1 1 auto;
-  max-width: 46px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-sheet-grip::before {
+  content: "";
+  width: 46px;
   height: 5px;
-  margin: 0 auto;
   border-radius: 999px;
   background: var(--v2-text-4);
+}
+
+.mobile-chat-sheet.dragging .mobile-sheet-grip {
+  cursor: grabbing;
 }
 
 .mobile-sheet-actions {

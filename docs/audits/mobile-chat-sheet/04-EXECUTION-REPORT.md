@@ -72,3 +72,8 @@ El propietario confirmó que la captura original procedía de FreeBuff y autoriz
 - `App.tsx` deriva montaje de la hoja, disponibilidad del FAB y estado abierto desde la misma condición de viewport y apertura. Se corrigió además la etiqueta de FAB en escritorio cuando queda un estado móvil anterior.
 - T01/T02/T15 pasaron en Chromium 156/CDP a 393 × 740. FAB visible antes y después de cerrar, ausente con hoja abierta, hit correcto y un toque produjo un mensaje demo. La segunda apertura recreó una sola hoja.
 - Pasaron typecheck y diff check. Se corrigió el assert de ausencia del diagnóstico para reflejar el `null` que devuelve el DOM. El incidente anterior de FreeBuff permanece sin verificar.
+
+## C3 — Gestos y alturas
+
+- `MobileChatSheet.tsx/.css`: Pointer Events con captura en el grip, umbral por desplazamiento del dedo, cancelación al snap anterior, tap que avanza y teclas Home/End. Grip separado de los botones. ARIA informa el porcentaje de altura calculado. Se reutilizan los snaps, la escritura DOM y el scroll independiente del historial.
+- Chromium/CDP: subida a 45%, cancelación conserva 45%, tap a 68%, End a 100% y arrastre de bajada a 45%. Cierre táctil y reapertura al snap inicial pasan. Pasaron typecheck y diff check. Pruebas de historial largo, rotación y accesibilidad física se mantienen para regresión/handoff.

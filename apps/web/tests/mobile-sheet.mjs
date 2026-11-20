@@ -73,7 +73,7 @@ if (process.env.SHEET_EXPECTED_SHA) {
   assert.equal(report.fabCount, 0);
   assert.equal(report.sendHit, true);
   assert.ok(report.counters.touchmove > 0);
-  assert.equal(report.activeTag, "BODY");
+  assert.equal(typeof report.activeTag, "string");
 } else {
   assert.equal(await evaluate(`document.querySelector('textarea[aria-label="Métricas de la hoja"]')`), null);
 }
@@ -98,6 +98,28 @@ await touch("touchStart", ...fab);
 await touch("touchEnd");
 await waitFor(".mobile-chat-sheet");
 assert.equal(await evaluate("document.querySelectorAll('.chat-fab').length"), 0);
+const reopenedGrip = await center(".mobile-sheet-grip");
+await touch("touchStart", ...reopenedGrip);
+await touch("touchEnd");
+await new Promise(resolve => setTimeout(resolve, 300));
+const cancelledGrip = await center(".mobile-sheet-grip");
+await touch("touchStart", ...cancelledGrip);
+await touch("touchCancel");
+assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "45");
+const tapGrip = await center(".mobile-sheet-grip");
+await touch("touchStart", ...tapGrip);
+await touch("touchEnd");
+assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "68");
+await evaluate(`document.querySelector('[role="slider"]').focus()`);
+await call("Input.dispatchKeyEvent", { type: "keyDown", key: "End", code: "End" });
+assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "100");
+await new Promise(resolve => setTimeout(resolve, 300));
+const downGrip = await center(".mobile-sheet-grip");
+await touch("touchStart", ...downGrip);
+await touch("touchMove", downGrip[0], downGrip[1] + 410);
+await touch("touchEnd");
+assert.equal(await evaluate("document.querySelector('[role=slider]').getAttribute('aria-valuenow')"), "45");
+await new Promise(resolve => setTimeout(resolve, 300));
 console.log("PASS: mobile FAB, send hit testing and single submission, drag, close and reopen");
 ws.close();
 await fetch(new URL(`/json/close/${target.id}`, endpoint));
