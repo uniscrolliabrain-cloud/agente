@@ -87,13 +87,31 @@ jobs:
       - name: validar DSN (usa el primero que conecta)
         run: |
           set -euo pipefail
-          export PGSSLMODE=require PGCONNECT_TIMEOUT=15
+          export PGSSLMODE=verify-full PGCONNECT_TIMEOUT=15
+          export PGSSLROOTCERT="$GITHUB_WORKSPACE/prod-ca-2021.crt"
+          if [ ! -s "$PGSSLROOTCERT" ]; then
+            echo "::error::No se encontro el certificado raiz prod-ca-2021.crt del repositorio."
+            exit 1
+          fi
+          psql_conninfo() {
+            D="$1" CA="$PGSSLROOTCERT" node -e '
+              const u = new URL(process.env.D);
+              if (!["postgres:", "postgresql:"].includes(u.protocol)) throw new Error("El DSN debe ser una URL postgres://");
+              for (const key of [...u.searchParams.keys()]) {
+                if (["sslmode", "sslrootcert", "sslcert", "sslkey"].includes(key.toLowerCase())) u.searchParams.delete(key);
+              }
+              u.searchParams.set("sslmode", "verify-full");
+              u.searchParams.set("sslrootcert", process.env.CA);
+              process.stdout.write(u.toString());
+            '
+          }
           ok=""
           src=""
           while IFS=$'\t' read -r s d; do
             if [ -z "$d" ]; then continue; fi
             host=$(D="$d" node -e 'const u=new URL(process.env.D);console.log(u.host+" db="+u.pathname.slice(1)+" user="+decodeURIComponent(u.username))')
-            if psql "$d" -t -A -c "select 1" > /dev/null 2> /tmp/psql.err; then
+            probe=$(psql_conninfo "$d")
+            if psql "$probe" -t -A -c "select 1" > /dev/null 2> /tmp/psql.err; then
               ok="$d"
               src="$s"
               echo "conecta: $s ($host)"
@@ -110,10 +128,11 @@ jobs:
           fi
           echo "::add-mask::$ok"
           { echo "DSN=$ok"; echo "DSN_SOURCE=$src"; } >> "$GITHUB_ENV"
-          psql "$ok" -t -A -c "select current_user || ' | ' || current_database() || ' | ' || split_part(version(), ',', 1)"
-          vector=$(psql "$ok" -t -A -c "select coalesce((select extversion from pg_extension where extname='vector'), '')" || true)
-          bypass=$(psql "$ok" -t -A -c "select rolbypassrls from pg_roles where rolname = current_user" || true)
-          tablas=$(psql "$ok" -t -A -c "select count(*) from information_schema.tables where table_schema='public'" || true)
+          probe=$(psql_conninfo "$ok")
+          psql "$probe" -t -A -c "select current_user || ' | ' || current_database() || ' | ' || split_part(version(), ',', 1)"
+          vector=$(psql "$probe" -t -A -c "select coalesce((select extversion from pg_extension where extname='vector'), '')" || true)
+          bypass=$(psql "$probe" -t -A -c "select rolbypassrls from pg_roles where rolname = current_user" || true)
+          tablas=$(psql "$probe" -t -A -c "select count(*) from information_schema.tables where table_schema='public'" || true)
           echo "pgvector=${vector:-no} rol_bypassrls=${bypass:-?} tablas_public=${tablas:-?}"
           if [ "$bypass" = "t" ]; then
             echo "::warning::El rol de la app tiene BYPASSRLS: las politicas de RLS se crearan pero no se aplicaran a este usuario."
