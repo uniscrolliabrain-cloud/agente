@@ -40,6 +40,7 @@ import SidebarChat from "./components/SidebarChat";
 import SettingsMenu from "./components/SettingsMenu";
 import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
+import MobileChatSheet from "./components/MobileChatSheet";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -179,6 +180,9 @@ export default function App() {
   const demoSession = isDemoSession();
   const chatDockActive = chatDock && !isMobile;
   const chatOpen = chatDockActive || mobileChat;
+  // MOBILE_SHEET_V2 - con la hoja abierta sus controles ya ofrecen cerrar; el boton
+  // flotante solo hace falta cuando la hoja no esta (si no, queda encima y salta).
+  const showChatFab = !isMobile || !mobileChat;
 
   const selectView = (next: AppView) => {
     setView(next);
@@ -324,9 +328,8 @@ export default function App() {
       </AppShell>
 
       {/* SIDEBAR_CHAT_V1 - boton flotante persistente: el agente esta siempre a
-          un toque, en cualquier pantalla. En escritorio convierte la columna
-          izquierda en el chat; en movil abre una hoja a pantalla completa. */}
-      {!mobileNav && (
+          un toque; en movil abre una hoja inferior sin abandonar la pantalla. */}
+      {!mobileNav && showChatFab && (
         <button
           type="button"
           className={`chat-fab ${chatOpen ? "open" : ""}`}
@@ -340,16 +343,13 @@ export default function App() {
       )}
 
       {isMobile && mobileChat && (
-        <div className="mobile-chat" role="dialog" aria-modal="true" aria-label="Chat con tu agente">
-          <SidebarChat
-            chat={chat}
-            tenantLabel={contextLabel}
-            variant="sheet"
-            onClose={() => setMobileChat(false)}
-            onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
-        </div>
+        <MobileChatSheet
+          chat={chat}
+          tenantLabel={contextLabel}
+          onClose={() => setMobileChat(false)}
+          onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
       )}
 
       <SettingsMenu

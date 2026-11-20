@@ -90,6 +90,26 @@ export function useChat(
       let assistantText = "";
       let localTools: ToolCall[] = [];
       let runErrorMessage: string | null = null;
+      // CHAT_STREAM_THROTTLE_V1 - un setState por token re-renderizaba toda la app
+      // (barra, vista activa, sidebar y chat). Se agrupa a ~12 pintados por segundo;
+      // el typewriter interpola igual y el texto sigue saliendo fluido.
+      let pendingText = "";
+      let flushHandle: ReturnType<typeof setTimeout> | null = null;
+      let lastFlush = 0;
+      const flushText = () => {
+        flushHandle = null;
+        lastFlush = Date.now();
+        setStreamBuf(pendingText);
+      };
+      const pushText = (text: string) => {
+        pendingText = text;
+        const elapsed = Date.now() - lastFlush;
+        if (elapsed >= 80) {
+          flushText();
+          return;
+        }
+        if (flushHandle === null) flushHandle = setTimeout(flushText, 80 - elapsed);
+      };
 
       try {
         await streamChat(
@@ -110,7 +130,7 @@ export function useChat(
               typeof event.delta === "string"
             ) {
               assistantText += event.delta;
-              setStreamBuf(assistantText);
+              pushText(assistantText);
             } else if (event.type === "RUN_STARTED") {
               localTools = toolsReducer(localTools, { type: "RUN_STARTED" });
               setTools([...localTools]);
@@ -162,6 +182,8 @@ export function useChat(
         if (controller.signal.aborted) setError("Cancelado por el usuario");
         else setError(err instanceof Error ? err.message : "Error en el stream");
       } finally {
+        if (flushHandle !== null) clearTimeout(flushHandle);
+        flushHandle = null;
         setStreaming(false);
         abortRef.current = null;
       }

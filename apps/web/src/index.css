@@ -4172,10 +4172,7 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
 .chat-fab:hover { transform: translateY(-1px); }
 .chat-fab.open { background: var(--v2-purple); }
 
-/* hoja de chat movil */
-.mobile-chat { position: fixed; inset: 0; z-index: 90; background: var(--v2-bg); }
-.mobile-chat .side-chat { height: 100%; border-right: 0; }
-.mobile-chat .side-chat-head { padding-top: calc(14px + env(safe-area-inset-top)); }
+/* MOBILE_SHEET_V2 - la hoja vive en components/MobileChatSheet.css. */
 
 /* menu de navegacion en movil */
 .v2-topbar-menu { display: none; }
