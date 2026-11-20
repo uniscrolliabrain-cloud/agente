@@ -40,3 +40,10 @@ Antes de editar inspeccionar también `ChatInput`, `MessageList`, `AppShell`, `S
 - MDN touch-action: https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action
 - MDN safe area: https://developer.mozilla.org/en-US/docs/Web/CSS/env
 - Alternativa a evaluar en spike aislado si falla el enfoque nativo: https://vaul.emilkowal.ski/ (no instalar en producción por defecto).
+
+## Documentación adicional obligatoria
+- `05-MULTIMODAL-COMPOSER.md`: contrato de los cuatro controles, stubs de ElevenLabs/Anam y tres superficies.
+- `06-IMPLEMENTATION-BLUEPRINT.md`: wiring, viewport, gestos, CSS, FAB y tipos orientativos.
+- `07-TEST-AND-DEVICE-PROTOCOL.md`: diagnóstico exportable y pruebas Android/Playwright.
+- `08-CAMPAIGNS-AND-HANDOFF.md`: siete campañas C0-C6, entregables y reportes.
+Estas especificaciones se añaden al handoff; no son evidencia de ejecución ni de funcionamiento en Android.
