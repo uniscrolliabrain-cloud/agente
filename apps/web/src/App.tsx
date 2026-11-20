@@ -41,6 +41,7 @@ import SettingsMenu from "./components/SettingsMenu";
 import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
 import MobileChatSheet from "./components/MobileChatSheet";
+import MobileSheetDiagnostics from "./components/MobileSheetDiagnostics";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -350,6 +351,10 @@ export default function App() {
           onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
           onOpenSettings={() => setSettingsOpen(true)}
         />
+      )}
+
+      {import.meta.env.DEV && new URLSearchParams(location.search).get("sheetDebug") === "1" && (
+        <MobileSheetDiagnostics />
       )}
 
       <SettingsMenu

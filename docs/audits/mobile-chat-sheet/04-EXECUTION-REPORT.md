@@ -59,3 +59,10 @@ Estado inicial: PENDIENTE. Documento creado para handoff, no representa ejecuci�
 ### Revisión del criterio de C0
 
 El propietario confirmó que la captura original procedía de FreeBuff y autorizó usar el navegador local como referencia. C0 queda cerrado con la evidencia ya registrada. El incidente histórico queda sin verificar y la validación física sigue pendiente.
+
+## C1 — Observabilidad
+
+- Diagnóstico de Vite con `?sheetDebug=1`, exportable como JSON. Usa geometría, etiquetas HTML y contadores de eventos. Excluye texto de mensajes, URL, valores de campos e identificadores de sesión.
+- Chromium 156 por CDP. El test de navegador pasó con y sin diagnóstico. El panel devolvió el SHA `b826a85` inyectado al iniciar Vite sobre la copia de trabajo C1, cero FAB con la hoja abierta, hit correcto y movimientos táctiles registrados. Pasaron typecheck y diff check.
+- Repetición: iniciar Chromium headless con `--remote-debugging-port=9222`, iniciar `VITE_BUILD_SHA=$(git rev-parse HEAD) pnpm --filter @agente/web dev` y ejecutar `node apps/web/tests/mobile-sheet.mjs`. Para comprobar el diagnóstico, añadir `SHEET_EXPECTED_SHA=$(git rev-parse HEAD)` y `SHEET_TEST_URL=http://127.0.0.1:5173/?sheetDebug=1`.
+- Resultado: PASS en navegador local.

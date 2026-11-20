@@ -110,11 +110,6 @@ export default function MobileChatSheet({
     const bar = barRef.current;
     if (!panel || !bar) return;
 
-    // Diagnostico sin interfaz: en el movil, `window.__sheetDebug` dice si el
-    // navegador entrega el gesto o lo cancela antes de que llegue.
-    const debug = { down: 0, move: 0, cancel: 0, kind: "" };
-    (window as unknown as { __sheetDebug?: typeof debug }).__sheetDebug = debug;
-
     let active = false;
     let pointerId: number | null = null;
     let startY = 0;
@@ -123,7 +118,7 @@ export default function MobileChatSheet({
     let minPx = MIN_VISIBLE_PX;
     let travelled = 0;
 
-    const begin = (clientY: number, kind: string) => {
+    const begin = (clientY: number) => {
       const rect = panel.getBoundingClientRect();
       maxHeight = viewportHeight();
       minPx = minVisible(panel);
@@ -131,8 +126,6 @@ export default function MobileChatSheet({
       startY = clientY;
       travelled = 0;
       active = true;
-      debug.down += 1;
-      debug.kind = kind;
       panel.classList.add("dragging");
     };
 
@@ -142,7 +135,6 @@ export default function MobileChatSheet({
       travelled = Math.max(travelled, Math.abs(next - startHeight));
       panel.style.height = `${next}px`;
       panel.classList.toggle("collapsed", next <= minPx + 2);
-      debug.move += 1;
     };
 
     const finish = () => {
@@ -174,7 +166,7 @@ export default function MobileChatSheet({
       } catch {
         /* navegadores sin captura de puntero */
       }
-      begin(event.clientY, "pointer");
+      begin(event.clientY);
     };
     const onPointerMove = (event: PointerEvent) => {
       if (!active || pointerId === null || event.pointerId !== pointerId) return;
@@ -189,7 +181,6 @@ export default function MobileChatSheet({
       finish();
     };
     const onPointerCancel = () => {
-      debug.cancel += 1;
       finish();
     };
 
@@ -197,7 +188,7 @@ export default function MobileChatSheet({
       if (active || isControl(event.target)) return;
       if (event.cancelable) event.preventDefault();
       const touch = event.touches[0];
-      if (touch) begin(touch.clientY, "touch");
+      if (touch) begin(touch.clientY);
     };
     const onTouchMove = (event: TouchEvent) => {
       if (!active) return;
@@ -212,7 +203,6 @@ export default function MobileChatSheet({
       finish();
     };
     const onTouchCancel = () => {
-      debug.cancel += 1;
       finish();
     };
 
