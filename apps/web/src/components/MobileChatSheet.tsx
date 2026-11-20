@@ -23,12 +23,9 @@ function viewportHeight(): number {
 function minVisible(panel: HTMLElement | null): number {
   const bar = panel?.querySelector<HTMLElement>(".mobile-sheet-bar");
   const foot = panel?.querySelector<HTMLElement>(".side-chat-foot");
-  const body = panel?.querySelector<HTMLElement>(".side-chat-body");
-  const bodyStyle = body ? window.getComputedStyle(body) : null;
-  const bodyPadding = bodyStyle
-    ? Number.parseFloat(bodyStyle.paddingTop) + Number.parseFloat(bodyStyle.paddingBottom)
-    : 0;
-  const needed = (bar?.offsetHeight ?? 0) + (foot?.offsetHeight ?? 0) + bodyPadding + MIN_GAP_PX;
+  // El cuerpo no suma: plegada del todo se oculta y el compositor sube hasta la
+  // barra. Sumarlo dejaba una banda vacia entre el tirador y la caja de escribir.
+  const needed = (bar?.offsetHeight ?? 0) + (foot?.offsetHeight ?? 0) + MIN_GAP_PX;
   return Math.max(MIN_VISIBLE_PX, needed);
 }
 

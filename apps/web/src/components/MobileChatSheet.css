@@ -87,6 +87,8 @@
 /* Plegada al minimo: sin franja de mensaje cortado. */
 .mobile-chat-sheet.collapsed .side-chat-body {
   visibility: hidden;
+  /* Sin el padding, el compositor queda pegado a la barra y se ve entero. */
+  padding: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
