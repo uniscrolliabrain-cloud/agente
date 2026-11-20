@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import { useState, type MouseEvent } from "react";
 import type { Thread } from "../api/threads";
-// WIRE_SIDEBAR_LIVEITEM_V1
-import LiveItem from "./LiveItem";
+// SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
+import SidebarThreads, { type ThreadPatch } from "./SidebarThreads";
 // BRAND_MARK_V1 - la marca AgntiaPro tambien en la barra lateral.
 import { BrandMark } from "./BrandMark";
 
@@ -37,6 +37,10 @@ interface Props {
   activeThreadId: string | null;
   threads: Thread[];
   onSelectThread: (id: string) => void;
+  /** SIDEBAR_THREADS_V2 - acciones del menu de cada conversacion. */
+  onRenameThread: (id: string, title: string) => Promise<unknown> | void;
+  onPatchThread: (id: string, patch: ThreadPatch) => Promise<unknown> | void;
+  onDeleteThread?: (id: string) => Promise<unknown> | void;
   userName: string;
   userRole: string;
   onOpenProfile: () => void;
@@ -79,6 +83,9 @@ export default function SidebarV2({
   activeThreadId,
   threads,
   onSelectThread,
+  onRenameThread,
+  onPatchThread,
+  onDeleteThread,
   userName,
   userRole,
   onOpenProfile,
@@ -90,7 +97,9 @@ export default function SidebarV2({
   onOpenChat,
 }: Props) {
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
-  const recent = threads.slice(0, 3);
+  // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
+  // la columna. Antes solo se veían tres y los demás desaparecían sin aviso.
+  const recent = threads;
   const hasPendingTasks = false;
   // El tooltip del rail se pinta en coordenadas de ventana para que no lo
   // recorte el scroll interno de la barra.
@@ -200,21 +209,14 @@ export default function SidebarV2({
               <span className="v2-sidebar-label" style={{ padding: 0, margin: 0 }}>Recientes</span>
               <Search size={14} style={{ color: "var(--v2-text-3)" }} />
             </div>
-            <div className="v2-sidebar-recent">
-              {recent.length === 0 ? (
-                <div style={{ padding: "0 12px", fontSize: 12, color: "var(--v2-text-3)" }}>Sin conversaciones</div>
-              ) : (
-                recent.map((t) => (
-                  <LiveItem
-                    key={t.id}
-                    title={t.title}
-                    active={t.id === activeThreadId}
-                    activities={[]}
-                    onClick={() => onSelectThread(t.id)}
-                  />
-                ))
-              )}
-            </div>
+            <SidebarThreads
+              threads={recent}
+              activeThreadId={activeThreadId}
+              onSelect={onSelectThread}
+              onRename={onRenameThread}
+              onPatch={onPatchThread}
+              {...(onDeleteThread ? { onDelete: onDeleteThread } : {})}
+            />
           </div>
         )}
       </div>

@@ -224,6 +224,9 @@ export default function App() {
       activeThreadId={threads.activeId}
       threads={threads.threads}
       onSelectThread={(id) => { setView("chat"); setMobileNav(false); threads.select(id); }}
+      onRenameThread={(id, title) => threads.rename(id, title)}
+      onPatchThread={(id, patch) => threads.patch(id, patch)}
+      onDeleteThread={(id) => threads.remove(id)}
       userName={auth.user?.name ?? "Usuario"}
       userRole={auth.user?.role ?? "user"}
       onOpenProfile={() => setProfileOpen(true)}

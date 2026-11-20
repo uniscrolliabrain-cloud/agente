@@ -354,6 +354,12 @@ export async function demoRequest<T>(
     }
     if (method === "PATCH") {
       if (typeof body.title === "string" && body.title.trim()) thread.title = body.title.trim();
+      // THREAD_ORGANIZE_V1 - el demo tambien guarda proyecto y responsable.
+      if (body.projectId === null || typeof body.projectId === "string") thread.projectId = body.projectId;
+      if (body.assignedTo === null || typeof body.assignedTo === "string") thread.assignedTo = body.assignedTo;
+      if (body.assignedKind === null || body.assignedKind === "human" || body.assignedKind === "agent") {
+        thread.assignedKind = body.assignedKind;
+      }
       thread.updatedAt = new Date().toISOString();
       return clone(thread) as T;
     }

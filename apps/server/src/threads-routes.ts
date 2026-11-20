@@ -17,6 +17,11 @@ interface Thread {
   createdAt: string;
   updatedAt: string;
   messageCount: number;
+  // THREAD_ORGANIZE_V1 - proyecto y responsable, opcionales y persistidos en el
+  // mismo registro JSONB (sin migracion).
+  projectId?: string | null;
+  assignedTo?: string | null;
+  assignedKind?: "human" | "agent" | null;
 }
 
 export function threadRoutes(
@@ -200,13 +205,40 @@ export function threadRoutes(
   });
 
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
+  // THREAD_ORGANIZE_V1 - el PATCH ya no exige titulo: tambien mueve el hilo a
+  // un proyecto y le pone responsable (persona o agente). Un campo ausente no
+  // se toca; `null` lo borra.
   app.patch("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
     const thread = await db.get<Thread>(owner, "threads", id);
     if (!thread) throw new AppError("Thread not found", 404);
-    const body = z.object({ title: z.string().trim().min(1).max(200) }).parse(await c.req.json());
-    const updated: Thread = { ...thread, title: body.title, updatedAt: new Date().toISOString() };
+    const body = z
+      .object({
+        title: z.string().trim().min(1).max(200).optional(),
+        projectId: z.string().trim().max(200).nullable().optional(),
+        assignedTo: z.string().trim().max(200).nullable().optional(),
+        assignedKind: z.enum(["human", "agent"]).nullable().optional(),
+      })
+      .refine(
+        (value) =>
+          value.title !== undefined ||
+          value.projectId !== undefined ||
+          value.assignedTo !== undefined ||
+          value.assignedKind !== undefined,
+        { message: "Nada que actualizar" },
+      )
+      .parse(await c.req.json());
+    const updated: Thread = {
+      ...thread,
+      ...(body.title !== undefined ? { title: body.title } : {}),
+      ...(body.projectId !== undefined ? { projectId: body.projectId } : {}),
+      ...(body.assignedTo !== undefined ? { assignedTo: body.assignedTo } : {}),
+      ...(body.assignedKind !== undefined ? { assignedKind: body.assignedKind } : {}),
+      // Solo el titulo reordena la lista de recientes; mover a proyecto o poner
+      // responsable no debe mover el hilo de sitio.
+      updatedAt: body.title !== undefined ? new Date().toISOString() : thread.updatedAt,
+    };
     await db.put(owner, "threads", updated);
     return c.json(updated);
   });

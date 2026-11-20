@@ -4,6 +4,7 @@ import {
   deleteThread as apiDeleteThread,
   listThreads,
   renameThread as apiRenameThread,
+  updateThread as apiUpdateThread,
   type Thread,
 } from "../api/threads";
 
@@ -87,6 +88,29 @@ export function useThreads(enabled: boolean) {
     }
   }, []);
 
+  // THREAD_ORGANIZE_V1 - mover a proyecto o asignar responsable sin recargar.
+  const patch = useCallback(
+    async (
+      id: string,
+      changes: Partial<{
+        projectId: string | null;
+        assignedTo: string | null;
+        assignedKind: "human" | "agent" | null;
+      }>,
+    ) => {
+      try {
+        const updated = await apiUpdateThread(id, changes);
+        setThreads((current) => current.map((t) => (t.id === id ? { ...t, ...updated } : t)));
+        setError(null);
+        return updated;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error actualizando la conversación");
+        return null;
+      }
+    },
+    [],
+  );
+
   const remove = useCallback(
     async (id: string) => {
       try {
@@ -130,6 +154,7 @@ export function useThreads(enabled: boolean) {
     refresh,
     createNew,
     rename,
+    patch,
     remove,
     select,
     touch,
