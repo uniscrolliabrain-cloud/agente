@@ -100,13 +100,28 @@ jobs:
       - name: importar secretos en la api
         run: |
           set -euo pipefail
-          filter='to_entries[]
+          # En Fly los secretos prevalecen sobre [env], incluso los de un deploy
+          # anterior. Publica los dos valores de dominio de fly.toml junto con
+          # los secretos para que el panel de producción acepte su propio origen.
+          panel_env='{}'
+          if [ "$DEPLOY_ENVIRONMENT" = "production" ]; then
+            panel_env=$(python3 - <<'PY'
+          import json
+          import tomllib
+          with open("fly.toml", "rb") as config:
+              env = tomllib.load(config)["env"]
+          print(json.dumps({key: env[key] for key in ("PUBLIC_API_URL", "ALLOWED_ORIGINS")}))
+          PY
+            )
+          fi
+          filter='(. + $panel_env) | to_entries[]
             | select(.key | test("^(CLOUDFLARE_|FLY_|DOPPLER_|VERCEL_|NEON_|GH_|AWS_|AZURE_|GCP_|SUPABASE_ACCESS_)") | not)
             | select(.key != "GITHUB_TOKEN")
             | "\(.key)=\(.value)"'
           doppler secrets download --no-file --format json --config "$DOPPLER_CONFIG" \
-            | jq -r "$filter" | flyctl secrets import -a "$APP" --stage
+            | jq -r --argjson panel_env "$panel_env" "$filter" | flyctl secrets import -a "$APP" --stage
         env:
+          DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment || 'production' }}
           DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
           DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

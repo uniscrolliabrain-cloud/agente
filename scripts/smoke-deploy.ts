@@ -1,8 +1,8 @@
 // SMOKE_DEPLOY_V1 - humo de un despliegue real, sin framework de tests.
 //
 // Comprueba lo minimo que un despliegue tiene que cumplir antes de decir
-// "esta vivo". No sustituye a los tests: solo dice si el proceso responde, si
-// el auth falla cerrado y si la cabecera de tenant es la esperada.
+// "esta vivo". Con --site comprueba tambien la entrega del panel en --url
+// y la disponibilidad de la web publica.
 //
 // Uso:
 //   AGENTE_URL=https://api.agntiapro.com pnpm smoke:deploy
@@ -13,6 +13,8 @@
 //   AGENTE_ACCESS_KEY           -> POST /api/session (sample mode)
 // Sin credenciales el script hace los checks publicos y marca el resto como
 // "skipped", nunca como verde.
+
+import { type DefaultTreeAdapterMap, parse } from "parse5";
 
 const args = new Map(
   process.argv.slice(2).map((arg) => {
@@ -114,9 +116,42 @@ if (token) {
   }
 }
 
-// 4) Webs publicas, si se piden.
+function moduleSources(node: DefaultTreeAdapterMap["node"]): string[] {
+  if ("tagName" in node && node.tagName === "script") {
+    const type = node.attrs.find((attr) => attr.name === "type")?.value;
+    const src = node.attrs.find((attr) => attr.name === "src")?.value;
+    return type?.trim().toLowerCase() === "module" && src ? [src] : [];
+  }
+  return "childNodes" in node ? node.childNodes.flatMap(moduleSources) : [];
+}
+
+async function checkPanel() {
+  const page = await get("/");
+  if (!page) return;
+  const sources = page.ok ? moduleSources(parse(await page.text())) : [];
+  if (!sources.length) {
+    record("GET / panel", "fail", `${page.status}, falta el modulo de arranque`);
+    return;
+  }
+
+  const origin = new URL(page.url).origin;
+  for (const src of sources) {
+    const url = new URL(src, page.url);
+    const name = `GET modulo ${url.pathname}`;
+    // El bundle de Vite es de mismo origen y el navegador envia Origin al cargarlo.
+    const res = await fetch(url, { headers: { Origin: origin } });
+    const mime = res.headers.get("content-type")?.split(";")[0].trim().toLowerCase();
+    const body = (await res.text()).trimStart();
+    const isScript = mime === "text/javascript" || mime === "application/javascript";
+    const ok = res.ok && isScript && body.length > 0 && !body.startsWith("<");
+    record(name, ok ? "pass" : "fail", `${res.status} ${mime ?? "sin Content-Type"}`);
+  }
+}
+
+// 4) Panel y web publica, si se piden.
 const site = args.get("site");
 if (site) {
+  await checkPanel().catch((error: Error) => record("GET panel", "fail", error.message));
   const res = await fetch(site).catch(() => null);
   record("GET site publico", res?.ok ? "pass" : "fail", `${site} -> ${res?.status ?? "no response"}`);
 }
