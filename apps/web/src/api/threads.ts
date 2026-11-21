@@ -44,6 +44,13 @@ export async function saveThreadMessages(
   });
 }
 
+export async function appendThreadMessages(id: string, messages: ChatMessage[]): Promise<Thread> {
+  return apiFetch<Thread>(`/api/threads/${encodeURIComponent(id)}/messages`, {
+    method: "POST",
+    body: { messages },
+  });
+}
+
 export async function renameThread(id: string, title: string): Promise<Thread> {
   return apiFetch<Thread>(`/api/threads/${encodeURIComponent(id)}`, {
     method: "PATCH",

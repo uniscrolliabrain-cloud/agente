@@ -127,3 +127,27 @@ test("presence: dos usuarios tocando el mismo thread se detectan", async () => {
   assert.equal(result.others.length, 1);
   assert.equal(result.others[0].userId, "user-A");
 });
+
+test("concurrent thread appends preserve both turns and replay only adds each message once", async () => {
+  const created = await server.app.request("/api/threads", {
+    method: "POST", headers: headers(), body: "{}",
+  });
+  assert.equal(created.status, 201);
+  const { id } = await created.json();
+  const path = `/api/threads/${id}`;
+  const append = (message: { id: string; role: string; content: string }) =>
+    server.app.request(`${path}/messages`, {
+      method: "POST", headers: headers(), body: JSON.stringify({ messages: [message] }),
+    });
+
+  const first = { id: "append-a", role: "user", content: "first" };
+  const second = { id: "append-b", role: "assistant", content: "second" };
+  const responses = await Promise.all([append(first), append(second)]);
+  assert.deepEqual(responses.map((response) => response.status), [200, 200]);
+  assert.equal((await append(first)).status, 200);
+
+  const thread = await (await server.app.request(path, { headers: headers() })).json();
+  assert.equal(thread.messageCount, 2);
+  assert.equal(thread.title, "first");
+  assert.deepEqual(thread.messages.sort((a: typeof first, b: typeof first) => a.id.localeCompare(b.id)), [first, second]);
+});

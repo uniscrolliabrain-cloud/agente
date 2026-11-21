@@ -1,7 +1,7 @@
 // BUG02_USECHAT_V2 - tools[] + typewriter en la API publica.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
-import { getThread, saveThreadMessages } from "../api/threads";
+import { getThread, appendThreadMessages } from "../api/threads";
 import { toolsReducer, type ToolCall } from "../lib/toolsReducer";
 import type { ChatAttachment, ChatMessage } from "../types/api";
 
@@ -153,10 +153,13 @@ export function useChat(
         setStreamBuf("");
         setTools([]);
         try {
-          await saveThreadMessages(threadId, finalHistory);
+          await appendThreadMessages(
+            threadId,
+            finalHistory.filter((message) => message.id && message.role !== "system"),
+          );
           onSaved?.(threadId);
         } catch {
-          /* se persiste en el próximo turno */
+          setError("No se pudo guardar el turno. Se reintentará al enviar el próximo mensaje.");
         }
       } catch (err) {
         if (controller.signal.aborted) setError("Cancelado por el usuario");

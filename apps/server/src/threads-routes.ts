@@ -143,65 +143,104 @@ export function threadRoutes(
     const lock = globalEditLock.acquire(lockUser, "thread", id);
     if (!lock) throw new AppError("Ya estas editando este thread en otro tab.", 409);
     try {
-    const thread = await db.get<Thread>(owner, "threads", id);
-    if (!thread) throw new AppError("Thread not found", 404);
-    const body = await c.req.json();
-    const messages = z.array(z.unknown()).max(1000).parse(body.messages);
-    // THREADS_CAS_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â optimismo de concurrencia. El cliente envÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a
-    // `expectedUpdatedAt` con la versiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n que leyÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³. Si el thread cambiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³
-    // desde entonces, devolvemos 409 y el cliente recarga.
-    // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
-    const expected = z
-      .object({ expectedUpdatedAt: z.iso.datetime({ offset: true }).optional() })
-      .parse(body);
-    if (expected.expectedUpdatedAt !== undefined) {
-      const current = await db.get<Thread>(owner, "threads", id);
-      if (!current || current.updatedAt !== expected.expectedUpdatedAt) {
-        // THREAD_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
-        throw new AppError(
-          "Otro usuario ha modificado esta conversaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n. Recarga y vuelve a intentarlo.",
-          409,
-          { current: current?.updatedAt ?? "", expected: expected.expectedUpdatedAt },
+      return await db.transaction(async () => {
+        const thread = await db.compareAndSwap<Thread>(owner, "threads", id, {}, {});
+        if (!thread) throw new AppError("Thread not found", 404);
+        const body = await c.req.json();
+        const messages = z.array(z.unknown()).max(1000).parse(body.messages);
+        const { expectedUpdatedAt } = z
+          .object({ expectedUpdatedAt: z.iso.datetime({ offset: true }).optional() })
+          .parse(body);
+        if (expectedUpdatedAt !== undefined && thread.updatedAt !== expectedUpdatedAt) {
+          throw new AppError(
+            "Otro usuario ha modificado esta conversación. Recarga y vuelve a intentarlo.",
+            409,
+            { current: thread.updatedAt, expected: expectedUpdatedAt },
+          );
+        }
+        const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(
+          owner,
+          "conversations",
+          id,
+          {},
+          { messages },
         );
-      }
-    }
-    // Escribir la conversaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n con CAS: expected = updatedAt leÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­do, patch = messages.
-    const currentThread = await db.get<Thread>(owner, "threads", id);
-    if (!currentThread) throw new AppError("Thread not found", 404);
-    const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(
-      owner,
-      "conversations",
-      id,
-      {},
-      { messages },
-    );
-    if (!swapped) throw new AppError("Thread changed; refresh and try again", 409);
-    let title = thread.title;
-    if (title === "Nuevo chat" && messages.length > 0) {
-      const first = messages.find(
-        (m: unknown) =>
-          typeof m === "object" &&
-          m !== null &&
-          (m as { role?: string; content?: string }).role === "user" &&
-          typeof (m as { content?: string }).content === "string",
-      );
-      if (first) {
-        const content = (first as { content: string }).content;
-        title = content.slice(0, 60).trim() || "Nuevo chat";
-      }
-    }
-    const updated: Thread = {
-      ...thread,
-      title,
-      updatedAt: new Date().toISOString(),
-      messageCount: messages.length,
-    };
-    await db.put(owner, "threads", updated);
-    return c.json(updated);
+        if (!swapped) throw new AppError("Thread changed; refresh and try again", 409);
+        let title = thread.title;
+        if (title === "Nuevo chat" && messages.length > 0) {
+          const first = messages.find(
+            (m: unknown) =>
+              typeof m === "object" &&
+              m !== null &&
+              (m as { role?: string; content?: string }).role === "user" &&
+              typeof (m as { content?: string }).content === "string",
+          );
+          if (first) {
+            const content = (first as { content: string }).content;
+            title = content.slice(0, 60).trim() || "Nuevo chat";
+          }
+        }
+        const updated: Thread = {
+          ...thread,
+          title,
+          updatedAt: new Date(Math.max(Date.now(), Date.parse(thread.updatedAt) + 1)).toISOString(),
+          messageCount: messages.length,
+        };
+        await db.put(owner, "threads", updated);
+        return c.json(updated);
+      });
     } finally {
       // THREAD_EDIT_UNLOCK_V1 - libera el lock siempre.
       globalEditLock.release(lockUser, "thread", id);
     }
+  });
+
+  // Append without replacing turns already stored by another client.
+  app.post("/:id/messages", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const { messages } = z.object({
+      messages: z.array(z.object({
+        id: z.string().min(1).max(200),
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      }).passthrough()).min(1).max(1000),
+    }).parse(await c.req.json());
+
+    const updated = await db.transaction(async () => {
+      // Lock the existing thread row before reading the conversation so
+      // concurrent appends see the latest committed message list.
+      const thread = await db.compareAndSwap<Thread>(owner, "threads", id, {}, {});
+      if (!thread) throw new AppError("Thread not found", 404);
+      const conversation = await db.get<{ messages: unknown[] }>(owner, "conversations", id);
+      const history = [...(conversation?.messages ?? [])];
+      const seen = new Set(history.map((message) =>
+        typeof message === "object" && message !== null && "id" in message ? message.id : undefined,
+      ));
+      const additions = messages.filter((message) => {
+        if (seen.has(message.id)) return false;
+        seen.add(message.id);
+        return true;
+      });
+      if (!additions.length) return thread;
+      if (history.length + additions.length > 1000) throw new AppError("Thread message limit reached", 422);
+
+      const firstUser = additions.find((message) => message.role === "user");
+      const title = thread.title === "Nuevo chat" && firstUser
+        ? firstUser.content.slice(0, 60).trim() || thread.title
+        : thread.title;
+      history.push(...additions);
+      await db.put(owner, "conversations", { ...conversation, id, messages: history });
+      const updated = {
+        ...thread,
+        title,
+        messageCount: history.length,
+        updatedAt: new Date(Math.max(Date.now(), Date.parse(thread.updatedAt) + 1)).toISOString(),
+      };
+      await db.put(owner, "threads", updated);
+      return updated;
+    });
+    return c.json(updated);
   });
 
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
@@ -229,17 +268,11 @@ export function threadRoutes(
         { message: "Nada que actualizar" },
       )
       .parse(await c.req.json());
-    const updated: Thread = {
-      ...thread,
-      ...(body.title !== undefined ? { title: body.title } : {}),
-      ...(body.projectId !== undefined ? { projectId: body.projectId } : {}),
-      ...(body.assignedTo !== undefined ? { assignedTo: body.assignedTo } : {}),
-      ...(body.assignedKind !== undefined ? { assignedKind: body.assignedKind } : {}),
-      // Solo el titulo reordena la lista de recientes; mover a proyecto o poner
-      // responsable no debe mover el hilo de sitio.
-      updatedAt: body.title !== undefined ? new Date().toISOString() : thread.updatedAt,
-    };
-    await db.put(owner, "threads", updated);
+    const updated = await db.compareAndSwap<Thread>(owner, "threads", id, {}, {
+      ...body,
+      ...(body.title !== undefined ? { updatedAt: new Date().toISOString() } : {}),
+    });
+    if (!updated) throw new AppError("Thread not found", 404);
     return c.json(updated);
   });
 
