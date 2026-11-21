@@ -107,20 +107,40 @@ test("C13 Fast voice adapter reuses the shared runtime and cancels subscription 
   const { EventType } = await import("@ag-ui/core");
   const { CognitionFastVoiceAdapter } = await import("../apps/server/src/engine/voice-v2/fast-adapter.ts");
   const { currentTenantScope } = await import("../apps/server/src/tenant-scope.ts");
-  let called = 0, stopped = 0;
-  const runtime = {
-    context: { readSnapshot: async () => ({ id: "snapshot" }) },
-    chat: (owner: string, input: { tools: unknown[]; threadId: string }) => {
-      called++; assert.equal(owner, "alice"); assert.equal(currentTenantScope()?.tenantId, "A");
-      assert.deepEqual(input.tools, []); assert.equal(input.threadId, "shared-thread");
-      return new Observable<import("@ag-ui/core").BaseEvent>((subscriber) => {
-        subscriber.next({ type: EventType.TEXT_MESSAGE_CONTENT, delta: "texto" });
-        return () => { stopped++; };
-      });
-    },
-  } as unknown as import("../apps/server/src/engine/cognition/v2/runtime.ts").CognitionV2Runtime;
-  const adapter = new CognitionFastVoiceAdapter(runtime);
-  await assert.rejects(adapter.stream(identity, { threadId: "shared-thread", turnId: "turn", text: "hola", contextSnapshotId: "snapshot" },
-    new AbortController().signal, async () => { throw Error("stale epoch"); }), /VOICE_OUTPUT_REJECTED/);
-  assert.equal(called, 1); assert.equal(stopped, 1);
+  const db = await createStore();
+  try {
+    const previous = { id: "text-turn", role: "assistant", content: "Respuesta del chat" };
+    await db.put("alice", "threads", { id: "shared-thread", tenantId: "A" });
+    await db.put("alice", "conversations", { id: "shared-thread", messages: [previous] });
+    await db.put("alice", "threads", { id: "foreign-thread", tenantId: "B" });
+    let called = 0, stopped = 0;
+    const runtime = {
+      db,
+      memberships: { resolveStrict: async () => ({ tenantId: "A" }) },
+      context: { assertAuthorized: async () => {}, readSnapshot: async () => ({ id: "snapshot" }) },
+      chat: (owner: string, input: import("@ag-ui/core").RunAgentInput) => {
+        called++;
+        assert.equal(owner, "alice");
+        assert.equal(currentTenantScope()?.tenantId, "A");
+        assert.deepEqual(input.tools, []);
+        assert.equal(input.threadId, "shared-thread");
+        assert.deepEqual(input.state, { roleId: "employee" });
+        assert.deepEqual(input.messages, [previous, { id: "turn:user", role: "user", content: "hola" }]);
+        return new Observable<import("@ag-ui/core").BaseEvent>((subscriber) => {
+          subscriber.next({ type: EventType.TEXT_MESSAGE_CONTENT, delta: "texto" });
+          return () => { stopped++; };
+        });
+      },
+    } as unknown as import("../apps/server/src/engine/cognition/v2/runtime.ts").CognitionV2Runtime;
+    const adapter = new CognitionFastVoiceAdapter(runtime);
+    const input = { threadId: "shared-thread", turnId: "turn", text: "hola", contextSnapshotId: "snapshot", roleId: "employee" };
+    const signal = new AbortController().signal;
+    await assert.rejects(adapter.stream(identity, { ...input, threadId: "foreign-thread" }, signal, async () => {}), /Thread not found/);
+    assert.equal(called, 0);
+    await assert.rejects(adapter.stream(identity, input, signal, async () => { throw Error("stale epoch"); }), /VOICE_OUTPUT_REJECTED/);
+    assert.equal(called, 1);
+    assert.equal(stopped, 1);
+  } finally {
+    await db.close();
+  }
 });

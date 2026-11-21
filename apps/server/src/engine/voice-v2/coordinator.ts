@@ -196,7 +196,7 @@ export class VoiceTurnCoordinator {
     let result: { receiptId: string; text: string };
     let emittedText = "";
     try {
-      result = await this.fast.stream(identity, { threadId: session.threadId, turnId, text: transcript, contextSnapshotId: session.contextSnapshotId }, signal, async (text) => {
+      result = await this.fast.stream(identity, { threadId: session.threadId, turnId, text: transcript, contextSnapshotId: session.contextSnapshotId, roleId: session.roleId }, signal, async (text) => {
       signal.throwIfAborted();
       if (!turn.renderLeaseUntil || Date.parse(turn.renderLeaseUntil) <= this.clock()) throw Error("VOICE_RENDER_LEASE_EXPIRED");
       if (!await this.acceptsOutput(identity, sessionId, turn.epoch)) throw Error("VOICE_STALE_EPOCH");

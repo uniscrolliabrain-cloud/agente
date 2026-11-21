@@ -54,3 +54,9 @@ Los clientes antiguos, adjuntos, demo, runtime externo y conversación principal
 El cliente envía el ID del archivo y el texto del turno. Antes de iniciar inferencia, el servidor resuelve el archivo usando el almacén del actor y tenant autenticados. Si el archivo existe, construye la referencia para el runtime a partir de su nombre e ID reales. El historial guarda el texto visible y los metadatos disponibles para la UI (ID, nombre y tamaño) con la misma transacción del sexto incremento. La referencia de inferencia y las URLs firmadas quedan fuera del historial guardado.
 
 La prueba HTTP comprueba que un archivo registrado para el mismo actor en otro tenant devuelve 404, y que un archivo propio se guarda y se vuelve a leer con sus metadatos correctos. El proveedor de prueba solo recibe la referencia. Este incremento no añade lectura ni envío de bytes al modelo. Voz y vídeo siguen pendientes.
+
+## Octavo incremento · Historial común en el adaptador de voz
+
+El coordinador pasa el rol autorizado de la sesión a Fast. Antes de iniciar inferencia, el adaptador verifica la identidad, el hilo del actor y su tenant, y el snapshot que autorizó la sesión. Construye la entrada con el mismo historial persistido y los mismos límites que el chat HTTP. Un hilo de otra empresa se rechaza antes de que el runtime reciba texto. Las pruebas sintéticas verifican el historial y el rol, además de conservar la cancelación cuando el consumidor rechaza una salida.
+
+El adaptador es interno. Sigue pendiente consolidar las transcripciones y respuestas de voz como mensajes del hilo tras validar el epoch y el fence en la transacción de cierre. También quedan pendientes el cableado HTTP, vídeo y las pruebas con proveedores. No se habilitaron rutas nuevas ni se usaron credenciales.

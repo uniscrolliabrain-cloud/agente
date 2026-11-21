@@ -42,7 +42,7 @@ function activeTenant(owner: string): string {
   return scope.tenantId;
 }
 
-async function requireThread(db: Store, tenantService: ThreadTenantService, owner: string, id: string, lock = false): Promise<Thread> {
+export async function requireThread(db: Store, tenantService: ThreadTenantService, owner: string, id: string, lock = false): Promise<Thread> {
   const tenantId = activeTenant(owner);
   const thread = lock
     ? await db.compareAndSwap<Thread>(owner, "threads", id, {}, {})

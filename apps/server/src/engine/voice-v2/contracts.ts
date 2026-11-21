@@ -44,7 +44,14 @@ export class UnavailableAvatarProvider implements AvatarProviderPort {
   async interrupt(): Promise<never> { throw Error("BLOCKED_EXTERNAL_PROVIDER"); }
   async close(): Promise<never> { throw Error("BLOCKED_EXTERNAL_PROVIDER"); }
 }
+export interface SharedFastVoiceInput {
+  threadId: string;
+  turnId: string;
+  text: string;
+  contextSnapshotId: string;
+  roleId: string;
+}
 export interface SharedFastVoicePort {
-  stream(identity: CognitiveIdentity, input: { threadId: string; turnId: string; text: string; contextSnapshotId: string },
+  stream(identity: CognitiveIdentity, input: SharedFastVoiceInput,
     signal: AbortSignal, onText: (text: string) => Promise<void>): Promise<{ receiptId: string; text: string }>;
 }
