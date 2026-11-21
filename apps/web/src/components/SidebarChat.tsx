@@ -155,7 +155,11 @@ export default function SidebarChat({
         <MobileChatCall
           mode={call.mode}
           initialReport={call.report}
-          onReport={(report) => setReports((previous) => [...previous, { thread: chat.threadId, report }])}
+          onExpand={onRevealMobileBody}
+          onReport={(report) => {
+            setReports((previous) => [...previous, { thread: chat.threadId, report }]);
+            onRevealMobileBody?.();
+          }}
           onClose={() => {
             setCall(null);
             requestAnimationFrame(() => callTrigger.current?.focus({ preventScroll: true }));

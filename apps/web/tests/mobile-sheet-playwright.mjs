@@ -60,6 +60,13 @@ try {
   await voice.tap();
   await sheet.getByRole("heading", { name: "Conversación por voz" }).waitFor();
   await sheet.getByText("Definir el objetivo de la conversación.").waitFor({ timeout: 7000 });
+  await grip.press("Home");
+  const compact = sheet.locator(".mobile-call-compact");
+  await compact.getByText("Llamada de voz").waitFor();
+  assert.notEqual(await compact.locator("span").textContent(), "En curso · 00:00");
+  assert.equal(await sheet.getByRole("heading", { name: "Conversación por voz" }).isVisible(), false);
+  await compact.getByRole("button", { name: "Ampliar llamada" }).tap();
+  await sheet.getByText("Definir el objetivo de la conversación.").waitFor();
   await sheet.getByRole("button", { name: "Finalizar" }).tap();
   await sheet.getByRole("heading", { name: "Informe de la conversación" }).waitFor();
   await sheet.getByRole("button", { name: "Volver al chat" }).tap();
@@ -79,7 +86,18 @@ try {
   await videoSwitch.tap();
   await portrait.waitFor();
   await sheet.getByRole("button", { name: "Encender cámara local" }).waitFor();
-  await sheet.getByRole("button", { name: "Finalizar" }).tap();
+  const gripBox = await grip.boundingBox();
+  const sheetBox = await sheet.boundingBox();
+  const x = Math.round(gripBox.x + gripBox.width / 2);
+  const y = Math.round(gripBox.y + gripBox.height / 2);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x, y + sheetBox.height - 140, { steps: 6 });
+  await page.mouse.up();
+  await compact.getByText("Videollamada con Juan").waitFor();
+  assert.equal(await portrait.isVisible(), false);
+  await compact.getByRole("button", { name: "Finalizar llamada" }).tap();
+  await sheet.getByRole("heading", { name: "Informe de la conversación" }).waitFor();
   await sheet.getByRole("button", { name: "Volver al chat" }).tap();
   await grip.press("Home");
   assert.deepEqual(await page.evaluate(() => [window.captureStarts, window.mediaRequests]), [0, 0]);
@@ -131,6 +149,10 @@ try {
     await send.waitFor();
   }
   await grip.press("ArrowUp");
+  await page.waitForFunction(() => {
+    const sheet = document.querySelector(".mobile-chat-sheet");
+    return sheet && Math.abs(sheet.getBoundingClientRect().height - parseFloat(sheet.style.height)) < 1;
+  });
   const height = (await sheet.boundingBox()).height;
   const history = sheet.locator(".side-chat-body");
   assert.ok(await history.locator(":scope > .v2-assistant-body").evaluate((el) => el.childElementCount >= 30));

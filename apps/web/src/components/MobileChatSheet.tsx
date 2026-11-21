@@ -86,6 +86,7 @@ export default function MobileChatSheet({
     // Plegada del todo solo queda el tirador y la caja de escribir: una franja de
     // 20 px de mensaje cortado parecia un fallo de pintado.
     panel.classList.toggle("collapsed", px <= minPx + 2);
+    panel.classList.toggle("call-compact", px <= visiblePx(SNAP_PERCENTS[0], height, minPx) + 2);
   }, []);
 
   const setSnap = useCallback(
@@ -156,6 +157,7 @@ export default function MobileChatSheet({
       const next = Math.min(height, Math.max(min, drag.height + delta));
       panel.style.height = `${next}px`;
       panel.classList.toggle("collapsed", next <= min + 2);
+      panel.classList.toggle("call-compact", next <= visiblePx(SNAP_PERCENTS[0], height, min) + 2);
     };
 
     const settle = (event: PointerEvent, cancelled: boolean) => {

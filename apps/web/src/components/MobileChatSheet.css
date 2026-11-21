@@ -191,6 +191,7 @@
 }
 .mobile-chat-actions button,
 .mobile-chat-call footer button,
+.mobile-call-compact button,
 .mobile-chat-report-link,
 .mobile-audio-note button,
 .mobile-audio-note a {
@@ -340,7 +341,7 @@
   background: var(--v2-bg-card);
 }
 .mobile-chat-call footer { justify-content: center; }
-.mobile-chat-call footer .end-call { background: #a82037; color: #fff; border-color: #a82037; }
+.mobile-chat-call .end-call { background: #a82037; color: #fff; border-color: #a82037; }
 .mobile-chat-report-link { margin-top: 8px; }
 
 .mobile-audio-note {
@@ -380,3 +381,60 @@
   color: inherit;
   cursor: pointer;
 }
+
+.mobile-call-compact {
+  display: none;
+}
+
+.mobile-chat-sheet.call-compact .mobile-chat-call {
+  justify-content: center;
+  padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+}
+
+.mobile-chat-sheet.call-compact .mobile-chat-call > :not(.mobile-call-compact) {
+  display: none;
+}
+
+.mobile-chat-sheet.call-compact .mobile-call-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--v2-border);
+  border-radius: 16px;
+  background: var(--v2-bg-card);
+}
+
+.mobile-call-compact-status {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.mobile-call-compact-status > svg {
+  flex: 0 0 auto;
+  color: var(--v2-purple);
+}
+
+.mobile-call-compact-status strong,
+.mobile-call-compact-status span {
+  display: block;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.mobile-call-compact-status span {
+  font-size: 12px;
+  color: var(--v2-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mobile-call-compact button {
+  flex: 0 0 44px;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.mobile-call-compact button svg { pointer-events: none; }

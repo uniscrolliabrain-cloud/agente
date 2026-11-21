@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Camera, Mic, MicOff, PhoneOff, Sparkles, Video, VideoOff } from "lucide-react";
+import { ArrowLeft, Camera, Maximize2, Mic, MicOff, Phone, PhoneOff, Sparkles, Video, VideoOff } from "lucide-react";
 
 export type MobileCallMode = "voice" | "video";
 
@@ -20,9 +20,10 @@ interface Props {
   initialReport?: MobileCallReport;
   onReport: (report: MobileCallReport) => void;
   onClose: () => void;
+  onExpand?: () => void;
 }
 
-export default function MobileChatCall({ mode, initialReport, onReport, onClose }: Props) {
+export default function MobileChatCall({ mode, initialReport, onReport, onClose, onExpand }: Props) {
   const [seconds, setSeconds] = useState(initialReport?.seconds ?? 0);
   const [finished, setFinished] = useState(Boolean(initialReport));
   const [muted, setMuted] = useState(false);
@@ -70,8 +71,34 @@ export default function MobileChatCall({ mode, initialReport, onReport, onClose 
     };
   }, [camera, finished]);
 
+  const finishCall = () => {
+    onReport({ id: crypto.randomUUID(), mode, seconds });
+    setFinished(true);
+  };
+
   return (
     <section className={`mobile-chat-call${videoEnabled && !finished ? " video-mode" : ""}`} aria-label="Conversación de prueba">
+      <div className="mobile-call-compact">
+        <div className="mobile-call-compact-status">
+          {mode === "video" ? <Video size={20} aria-hidden="true" /> : <Phone size={19} aria-hidden="true" />}
+          <div>
+            <strong>{finished ? "Informe de la conversación" : mode === "video" ? "Videollamada con Juan" : "Llamada de voz"}</strong>
+            <span>{finished ? "Sesión finalizada" : `En curso · ${time}`}</span>
+          </div>
+        </div>
+        <button type="button" aria-label={finished ? "Ampliar informe" : "Ampliar llamada"} onClick={() => {
+          onExpand?.();
+          headingRef.current?.focus({ preventScroll: true });
+        }}><Maximize2 size={18} aria-hidden="true" /></button>
+        <button
+          type="button"
+          className={finished ? undefined : "end-call"}
+          aria-label={finished ? "Volver al chat" : "Finalizar llamada"}
+          onClick={finished ? onClose : finishCall}
+        >
+          {finished ? <ArrowLeft size={19} aria-hidden="true" /> : <PhoneOff size={19} aria-hidden="true" />}
+        </button>
+      </div>
       <header>
         <h2 ref={headingRef} tabIndex={-1}>{finished ? "Informe de la conversación" : mode === "video" ? "Hablar con Juan · Finanzas" : "Conversación por voz"}</h2>
         <p>{mode === "video" && !finished ? "Videollamada demo" : "Simulación"} · {time}</p>
@@ -127,10 +154,7 @@ export default function MobileChatCall({ mode, initialReport, onReport, onClose 
                 {camera ? <Video size={20} /> : <VideoOff size={20} />}
               </button>
             )}
-            <button className="end-call" type="button" onClick={() => {
-              onReport({ id: crypto.randomUUID(), mode, seconds });
-              setFinished(true);
-            }}><PhoneOff size={19} /> Finalizar</button>
+            <button className="end-call" type="button" onClick={finishCall}><PhoneOff size={19} /> Finalizar</button>
           </>
         )}
       </footer>
