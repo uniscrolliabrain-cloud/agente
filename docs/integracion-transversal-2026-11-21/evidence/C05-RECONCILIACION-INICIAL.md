@@ -34,3 +34,9 @@ Rama creada desde `campaign/c04-conversacion-universal` (PR #19), sin tocar `mai
 
 ## Próximo cambio de código
 Implementar P05.1–P05.2 contra los tipos reales de Cognition V2 y el registro de roles, con tests; comprobar compatibilidad antes de tocar montaje HTTP.
+
+## Incremento P05.2 — Descubrimiento de capacidades por rol autorizado
+
+Commit `e3795bc`. Añadido `GET /api/cognition-v2/voice/capabilities/:roleId` a `voice-session-routes.ts` (el prefijo depende del montaje existente). Se obtiene la identidad autenticada y se lee el rol desde el almacén tenant-scoped; se comprueba ID exacto, esquema y estado activo. El descriptor devuelve únicamente nombre de presentación y booleanos de configuración, nunca claves ni IDs del proveedor. Sin credenciales, devuelve `voice: false` y `video: false`; sin rol autorizado, 403. No abre sesiones, no llama proveedores ni modifica el contrato de consentimiento de C04.
+
+Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.test.ts`. **No se han ejecutado** todavía; tampoco hay prueba HTTP de la ruta ni CI validada. Antes de cerrar C05, comprobar `pnpm typecheck`, tests de voz y tenant, y agregar test HTTP que verifique autorización por tenant y que no se filtran secretos. La presencia de claves solo indica configuración, no conectividad o verificación real del proveedor.
