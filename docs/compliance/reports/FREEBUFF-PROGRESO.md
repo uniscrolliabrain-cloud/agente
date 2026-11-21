@@ -30,3 +30,5 @@ Aviso contextual accesible en chat completo, dock y sheet, con enlace a informac
 
 ## Fase 7. Integración y QA
 Gate estático para metadatos, placeholders, noindex y enlaces locales. El modo release impide publicar los borradores desde el flujo de despliegue existente y el comando de release. Se añaden pruebas HTTP de identidad activa, idempotencia y permisos, y Playwright para escritorio/móvil. La matriz y el handoff recogen resultados y bloqueos.
+
+Cierre de verificación. Typecheck server/worker/web, build, smoke y auditoría 7/7 aprobados. Las pruebas focalizadas de servidor pasaron con Node 22. Playwright en Chromium de escritorio y Pixel 7 emulado verificó login, 200/404 locales, solicitud real y persistencia, gobernanza y restauración del foco. El gate bloquea los seis borradores. Suite completa en Node 24, 195/203 archivos aprobados y ocho fallidos. Lint global con deuda de base. El handoff enumera los resultados y bloqueos legales y operativos.
