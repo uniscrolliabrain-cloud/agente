@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -40,6 +40,8 @@ import SidebarChat from "./components/SidebarChat";
 import SettingsMenu from "./components/SettingsMenu";
 import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
+import MobileChatSheet from "./components/MobileChatSheet";
+import MobileSheetDiagnostics from "./components/MobileSheetDiagnostics";
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -105,6 +107,7 @@ export default function App() {
   // SIDEBAR_CHAT_V1 - el chat ocupa la columna izquierda sin cambiar de vista.
   const [chatDock, setChatDock] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
+  const chatFabRef = useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -178,7 +181,11 @@ export default function App() {
 
   const demoSession = isDemoSession();
   const chatDockActive = chatDock && !isMobile;
-  const chatOpen = chatDockActive || mobileChat;
+  const mobileSheetOpen = isMobile && mobileChat;
+  const chatOpen = chatDockActive || mobileSheetOpen;
+  // MOBILE_SHEET_V2 - con la hoja abierta sus controles ya ofrecen cerrar; el boton
+  // flotante solo hace falta cuando la hoja no esta (si no, queda encima y salta).
+  const showChatFab = !mobileNav && !mobileSheetOpen;
 
   const selectView = (next: AppView) => {
     setView(next);
@@ -324,11 +331,11 @@ export default function App() {
       </AppShell>
 
       {/* SIDEBAR_CHAT_V1 - boton flotante persistente: el agente esta siempre a
-          un toque, en cualquier pantalla. En escritorio convierte la columna
-          izquierda en el chat; en movil abre una hoja a pantalla completa. */}
-      {!mobileNav && (
+          un toque; en movil abre una hoja inferior sin abandonar la pantalla. */}
+      {showChatFab && (
         <button
           type="button"
+          ref={chatFabRef}
           className={`chat-fab ${chatOpen ? "open" : ""}`}
           onClick={toggleChat}
           aria-label={chatOpen ? "Cerrar chat" : "Hablar con tu agente"}
@@ -339,17 +346,21 @@ export default function App() {
         </button>
       )}
 
-      {isMobile && mobileChat && (
-        <div className="mobile-chat" role="dialog" aria-modal="true" aria-label="Chat con tu agente">
-          <SidebarChat
-            chat={chat}
-            tenantLabel={contextLabel}
-            variant="sheet"
-            onClose={() => setMobileChat(false)}
-            onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
-        </div>
+      {mobileSheetOpen && (
+        <MobileChatSheet
+          chat={chat}
+          tenantLabel={contextLabel}
+          onClose={() => {
+            setMobileChat(false);
+            requestAnimationFrame(() => chatFabRef.current?.focus({ preventScroll: true }));
+          }}
+          onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      )}
+
+      {import.meta.env.DEV && new URLSearchParams(location.search).get("sheetDebug") === "1" && (
+        <MobileSheetDiagnostics />
       )}
 
       <SettingsMenu

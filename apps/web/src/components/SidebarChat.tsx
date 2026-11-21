@@ -3,7 +3,7 @@
 // el mismo hook que la vista Chat, asi que la conversacion continua estes en la
 // pantalla que estes. En movil se monta como hoja a pantalla completa.
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, PanelLeftClose, Settings, Sparkles, X } from "lucide-react";
+import { Maximize2, PanelLeftClose, Settings, Sparkles } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import type { ChatMessage } from "../types/api";
@@ -12,6 +12,7 @@ import type { ToolCall } from "../lib/toolsReducer";
 export interface DockChat {
   messages: ChatMessage[];
   streaming: boolean;
+  sendDisabled?: boolean;
   streamBuf: string;
   tools: ToolCall[];
   error: string | null;
@@ -51,8 +52,23 @@ export default function SidebarChat({
     if (node) node.scrollTop = node.scrollHeight;
   }, [chat.messages.length, chat.streamBuf, chat.streaming]);
 
+  const footer = (
+    <div className="side-chat-foot">
+      <ChatInput
+        onSend={chat.send}
+        onCancel={chat.cancel}
+        streaming={chat.streaming}
+        sendDisabled={chat.sendDisabled}
+        seed={seed}
+        onSeedConsumed={() => setSeed("")}
+      />
+    </div>
+  );
+
   return (
     <section className={`side-chat ${variant === "sheet" ? "sheet" : ""}`} aria-label="Chat con tu agente">
+      {/* MOBILE_SHEET_V2 - en la hoja los controles viven en la fila del tirador. */}
+      {variant === "dock" && (
       <header className="side-chat-head">
         <div className="side-chat-identity">
           <span className="side-chat-orb" aria-hidden="true">
@@ -80,13 +96,14 @@ export default function SidebarChat({
             type="button"
             className="side-chat-icon"
             onClick={onClose}
-            title={variant === "sheet" ? "Cerrar chat" : "Volver al menú"}
-            aria-label={variant === "sheet" ? "Cerrar chat" : "Volver al menú"}
+            title="Volver al menú"
+            aria-label="Volver al menú"
           >
-            {variant === "sheet" ? <X size={16} /> : <PanelLeftClose size={15} />}
+            <PanelLeftClose size={15} />
           </button>
         </div>
       </header>
+      )}
 
       <div className="side-chat-body" ref={bodyRef}>
         {chat.messages.length === 0 ? (
@@ -115,15 +132,7 @@ export default function SidebarChat({
         {chat.error && <div className="chat-error">{chat.error}</div>}
       </div>
 
-      <div className="side-chat-foot">
-        <ChatInput
-          onSend={chat.send}
-          onCancel={chat.cancel}
-          streaming={chat.streaming}
-          seed={seed}
-          onSeedConsumed={() => setSeed("")}
-        />
-      </div>
+      {footer}
     </section>
   );
 }

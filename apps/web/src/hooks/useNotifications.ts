@@ -15,12 +15,18 @@ export function useNotifications(enabled: boolean, intervalMs = 8000) {
   const [items, setItems] = useState<AgentNotification[]>([]);
   const [error, setError] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
+  // POLL_NO_OP_SETSTATE_V1 - el refresco cada 8 s re-renderizaba la app aunque la
+  // lista no cambiara.
+  const lastSignatureRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
       const { notifications } = await fetchNotifications<AgentNotification>();
-      setItems(notifications);
       setError(null);
+      const signature = JSON.stringify(notifications);
+      if (signature === lastSignatureRef.current) return;
+      lastSignatureRef.current = signature;
+      setItems(notifications);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error cargando notificaciones");
     }

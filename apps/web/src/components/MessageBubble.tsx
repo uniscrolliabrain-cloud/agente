@@ -1,5 +1,5 @@
 // BUG03_MESSAGEBUBBLE_V2 - itera message.tools[] + preview.
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import type { ChatMessage } from "../types/api";
 import ToolCallsGroup from "./ToolCallsGroup";
@@ -11,7 +11,9 @@ interface Props {
   onQuickAction?: (kind: "responder" | "resumir" | "traducir", text: string) => void;
 }
 
-export default function MessageBubble({ message, onQuickAction }: Props) {
+// MEMO_BUBBLE_V1 - el typewriter repinta la lista mientras escribe; las burbujas
+// anteriores no cambian y no hace falta reconstruirlas.
+function MessageBubble({ message, onQuickAction }: Props) {
   const isUser = message.role === "user";
   const [copied, setCopied] = useState(false);
   const [preview] = useState<{ url: string; name: string; mimeType?: string } | null>(null);
@@ -75,7 +77,7 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
             )}
           </div>
         )}
-        {preview && (
+                {preview && (
           <AttachmentPreview
             url={preview.url}
             name={preview.name}
@@ -87,3 +89,5 @@ export default function MessageBubble({ message, onQuickAction }: Props) {
     </div>
   );
 }
+
+export default memo(MessageBubble);
