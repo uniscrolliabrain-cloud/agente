@@ -233,3 +233,77 @@ test("notifications incluye tenantId y no mezcla tenants", async () => {
   assert.equal(a.tenantId, "tenant-a");
   assert.equal(b.tenantId, "tenant-b");
 });
+
+test("thread routes keep one actor's primary and secondary tenant histories separate", async () => {
+  const tenants = new TenantService(db, server.agent.config as never);
+  await tenants.addMembership(aliceId, "tenant-a2", "owner");
+  const headers = (token: string) => ({ ...bearer(token), "Content-Type": "application/json" });
+  const switched = await server.app.request("/api/auth/switch-tenant", {
+    method: "POST", headers: headers(aliceToken), body: JSON.stringify({ tenantId: "tenant-a2" }),
+  });
+  assert.equal(switched.status, 200);
+  const { token: secondaryToken } = await switched.json();
+
+  const legacyId = "legacy-tenant-thread";
+  const timestamp = new Date().toISOString();
+  await db.put(aliceId, "threads", { id: legacyId, title: "Legacy", createdAt: timestamp, updatedAt: timestamp, messageCount: 0 });
+  await db.put(aliceId, "conversations", { id: legacyId, messages: [] });
+  assert.equal((await server.app.request(`/api/threads/${legacyId}`, { headers: headers(aliceToken) })).status, 200);
+  assert.equal((await server.app.request(`/api/threads/${legacyId}`, { headers: headers(secondaryToken) })).status, 404);
+
+  const created = await server.app.request("/api/threads", {
+    method: "POST", headers: headers(secondaryToken), body: "{}",
+  });
+  assert.equal(created.status, 201);
+  const { id } = await created.json();
+  const path = `/api/threads/${id}`;
+  const append = (token: string) => server.app.request(`${path}/messages`, {
+    method: "POST", headers: headers(token),
+    body: JSON.stringify({ messages: [{ id: "secondary-message", role: "user", content: "Secondary" }] }),
+  });
+  assert.equal((await append(aliceToken)).status, 404);
+  assert.equal((await append(secondaryToken)).status, 200);
+  assert.equal((await server.app.request(path, { method: "DELETE", headers: headers(aliceToken) })).status, 404);
+  const primary = await (await server.app.request("/api/threads", { headers: headers(aliceToken) })).json();
+  assert.ok(primary.some((thread: { id: string }) => thread.id === legacyId));
+  assert.ok(primary.every((thread: { id: string }) => thread.id !== id));
+  const secondary = await (await server.app.request(path, { headers: headers(secondaryToken) })).json();
+  assert.equal(secondary.messages.length, 1);
+
+  const legacyMainId = "legacy-main-thread";
+  await db.put(aliceId, "conversation-settings", { id: "main", threadId: legacyMainId });
+  const mainThread = async (token: string) => {
+    const response = await server.app.request("/api/main-thread", { headers: headers(token) });
+    assert.equal(response.status, 200);
+    return (await response.json()).threadId;
+  };
+  assert.equal(await mainThread(aliceToken), legacyMainId);
+  const secondaryMainId = await mainThread(secondaryToken);
+  assert.notEqual(secondaryMainId, legacyMainId);
+  assert.equal(await mainThread(secondaryToken), secondaryMainId);
+
+  const run = (token: string, threadId: string, state: object = {}, canonical = false, messageId = "test-message") =>
+    server.app.request(canonical ? "/api/copilotkit/agent/default/run" : "/api/copilotkit/run", {
+      signal: AbortSignal.timeout(5000),
+      method: "POST",
+      headers: { ...headers(token), Accept: "text/event-stream" },
+      body: JSON.stringify({
+        threadId, runId: "tenant-thread-run", state, tools: [], context: [], forwardedProps: {},
+        messages: [{ id: messageId, role: "user", content: "Hola" }],
+      }),
+    });
+
+  assert.equal((await run(aliceToken, id)).status, 404);
+  assert.equal((await run(aliceToken, id, {}, true)).status, 404);
+  assert.equal((await run(secondaryToken, legacyMainId)).status, 404);
+  assert.equal((await run(secondaryToken, id, { roleId: "missing-role" })).status, 403);
+  assert.equal((await run(secondaryToken, id, { personaId: "missing-persona" })).status, 403);
+  assert.equal((await run(secondaryToken, id, {}, false, "secondary-message")).status, 409);
+  const accepted = await run(secondaryToken, id);
+  assert.equal(accepted.status, 200);
+  assert.match(accepted.headers.get("content-type") ?? "", /text\/event-stream/);
+  const reader = accepted.body!.getReader();
+  const firstEvent = await reader.read();
+  assert.match(new TextDecoder().decode(firstEvent.value), /RUN_STARTED/);
+  await reader.cancel();
+});

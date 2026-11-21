@@ -343,7 +343,8 @@ export async function demoRequest<T>(
     if (typeof body.title === "string" && body.title.trim()) thread.title = body.title.trim();
     return clone(thread) as T;
   }
-  const threadMatch = p.match(/^\/api\/threads\/([^/]+)$/);
+  const appendMatch = method === "POST" ? p.match(/^\/api\/threads\/([^/]+)\/messages$/) : null;
+  const threadMatch = appendMatch ?? p.match(/^\/api\/threads\/([^/]+)$/);
   if (threadMatch) {
     const id = decodeURIComponent(threadMatch[1]);
     const thread = ensureThread(id);
@@ -363,9 +364,18 @@ export async function demoRequest<T>(
       thread.updatedAt = new Date().toISOString();
       return clone(thread) as T;
     }
-    if (method === "PUT") {
+    if (method === "PUT" || appendMatch) {
       const messages = Array.isArray(body.messages) ? (body.messages as ChatMessage[]) : [];
-      thread.messages = messages;
+      if (appendMatch) {
+        const seen = new Set(thread.messages.map((message) => message.id));
+        for (const message of messages) {
+          if (seen.has(message.id)) continue;
+          thread.messages.push(message);
+          seen.add(message.id);
+        }
+      } else {
+        thread.messages = messages;
+      }
       if (thread.title === "Conversación nueva") {
         const firstUser = messages.find((message) => message.role === "user");
         if (firstUser) thread.title = firstUser.content.slice(0, 42).trim();

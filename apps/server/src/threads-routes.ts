@@ -7,13 +7,23 @@ import type { RateLimiter } from "./rate-limit.ts";
 import { globalPresence } from "./engine/presence.ts";
 import { globalEditLock } from "./engine/edit-lock.ts"; // TYPE_FIX_EDIT_LOCK_IMPORT_V1
 import type { AuthzDeps } from "./engine/authz/pdp.ts";
+import { currentTenantScope } from "./tenant-scope.ts";
 import { AutomationThreads } from "./engine/automation-thread.ts";
 // THREADS_EDIT_LOCK_FIX_V1
+
+export async function threadBelongsToTenant(
+  thread: { tenantId?: string },
+  tenantId: string,
+  resolvePrimary: () => Promise<string>,
+): Promise<boolean> {
+  return (thread.tenantId ?? await resolvePrimary()) === tenantId;
+}
 
 interface Thread {
   id: string;
   title: string;
   version?: number;
+  tenantId?: string;
   createdAt: string;
   updatedAt: string;
   messageCount: number;
@@ -24,10 +34,74 @@ interface Thread {
   assignedKind?: "human" | "agent" | null;
 }
 
+type ThreadTenantService = { resolveStrict: (owner: string) => Promise<{ tenantId: string }> };
+
+function activeTenant(owner: string): string {
+  const scope = currentTenantScope();
+  if (!scope || scope.actorId !== owner) throw new AppError("Authenticated thread scope required", 403);
+  return scope.tenantId;
+}
+
+export async function requireThread(db: Store, tenantService: ThreadTenantService, owner: string, id: string, lock = false): Promise<Thread> {
+  const tenantId = activeTenant(owner);
+  const thread = lock
+    ? await db.compareAndSwap<Thread>(owner, "threads", id, {}, {})
+    : await db.get<Thread>(owner, "threads", id);
+  if (!thread || !await threadBelongsToTenant(thread, tenantId, async () => (await tenantService.resolveStrict(owner)).tenantId)) {
+    throw new AppError("Thread not found", 404);
+  }
+  return thread;
+}
+
+
+export async function appendThreadMessages(
+  db: Store,
+  tenantService: ThreadTenantService,
+  owner: string,
+  id: string,
+  messages: ReadonlyArray<{ id: string; role: string; content: string; timestamp?: string }>,
+  requireNew = false,
+): Promise<Thread> {
+  return db.transaction(async () => {
+    // Lock the existing thread row before reading the conversation so
+    // concurrent appends see the latest committed message list.
+    const thread = await requireThread(db, tenantService, owner, id, true);
+    const conversation = await db.get<{ messages: unknown[] }>(owner, "conversations", id);
+    const history = [...(conversation?.messages ?? [])];
+    const seen = new Set(history.map((message) =>
+      typeof message === "object" && message !== null && "id" in message ? message.id : undefined,
+    ));
+    const additions = messages.filter((message) => {
+      if (seen.has(message.id)) return false;
+      seen.add(message.id);
+      return true;
+    });
+    if (requireNew && additions.length !== messages.length) throw new AppError("Turn already exists", 409);
+    if (!additions.length) return thread;
+    if (history.length + additions.length > 1000) throw new AppError("Thread message limit reached", 422);
+
+    const firstUser = additions.find((message) => message.role === "user");
+    const title = thread.title === "Nuevo chat" && firstUser
+      ? firstUser.content.slice(0, 60).trim() || thread.title
+      : thread.title;
+    history.push(...additions);
+    await db.put(owner, "conversations", { ...conversation, id, messages: history });
+    const updated = {
+      ...thread,
+      tenantId: activeTenant(owner),
+      title,
+      messageCount: history.length,
+      updatedAt: new Date(Math.max(Date.now(), Date.parse(thread.updatedAt) + 1)).toISOString(),
+    };
+    await db.put(owner, "threads", updated);
+    return updated;
+  });
+}
+
 export function threadRoutes(
   db: Store,
   limiter: RateLimiter,
-  tenantService?: { tenantIdFor: (owner: string) => Promise<string> },
+  tenantService: ThreadTenantService,
   authz?: AuthzDeps,
 ) {
   const app = new Hono<{ Variables: { owner: string } }>();
@@ -36,7 +110,13 @@ export function threadRoutes(
   app.get("/", async (c) => {
     const owner = c.get("owner");
     const threads = await db.list<Thread>(owner, "threads");
-    return c.json(threads.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
+    const tenantId = activeTenant(owner);
+    const legacyTenant = threads.some((thread) => thread.tenantId === undefined)
+      ? (await tenantService.resolveStrict(owner)).tenantId
+      : undefined;
+    return c.json(threads
+      .filter((thread) => (thread.tenantId ?? legacyTenant) === tenantId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)));
   });
 
   // TAKE_FOR_TENANT_THREADS_V1 - un intento por tenant+owner antes de crear
@@ -44,11 +124,8 @@ export function threadRoutes(
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
   app.post("/", async (c) => {
     const owner = c.get("owner");
-    // TAKE_FOR_TENANT_TENANTID_V1 â€” tenantId real, no owner.
-    const tenantIdForRate = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
-      : "default"; // FALLBACK_TENANT_V1
-    const verdict = limiter.takeForTenant(tenantIdForRate, owner, "threads.create");
+    const tenantId = activeTenant(owner);
+    const verdict = limiter.takeForTenant(tenantId, owner, "threads.create");
     if (!verdict.allowed) {
       const retrySec = Math.max(1, Math.ceil(verdict.retryAfterMs / 1000));
       c.header("Retry-After", String(retrySec));
@@ -61,13 +138,16 @@ export function threadRoutes(
     const now = new Date().toISOString();
     const thread: Thread = {
       id,
+      tenantId,
       title: body.title || "Nuevo chat",
       createdAt: now,
       updatedAt: now,
       messageCount: 0,
     };
-    await db.put(owner, "threads", thread);
-    await db.put(owner, "conversations", { id, messages: [] });
+    await db.transaction(async () => {
+      await db.put(owner, "threads", thread);
+      await db.put(owner, "conversations", { id, messages: [] });
+    });
     return c.json(thread, 201);
   });
 
@@ -76,8 +156,7 @@ export function threadRoutes(
   app.post("/:id/presence", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
-    const thread = await db.get(owner, "threads", id);
-    if (!thread) throw new AppError("Thread not found", 404);
+    await requireThread(db, tenantService, owner, id);
     // THREADS_USER_HEADER_VALIDATE_V1
     const userId = c.req.header("x-user-id") ?? owner;
     const result = globalPresence.touch(userId, "thread", id);
@@ -88,6 +167,7 @@ export function threadRoutes(
   app.post("/:id/presence/leave", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
+    await requireThread(db, tenantService, owner, id);
     const userId = c.req.header("x-user-id") ?? owner;
     globalPresence.leave(userId, "thread", id);
     return c.json({ ok: true });
@@ -100,16 +180,14 @@ export function threadRoutes(
   // THREAD_CONFLICT_VERSION_V1 - GET /:id/conflict: version actual del otro.
   app.get("/:id/conflict", async (c) => {
     const owner = c.get("owner");
-    const thread = await db.get<Thread>(owner, "threads", c.req.param("id"));
-    if (!thread) throw new AppError("Thread not found", 404);
+    const thread = await requireThread(db, tenantService, owner, c.req.param("id"));
     return c.json({ current: thread.version ?? null, updatedAt: thread.updatedAt });
   });
 
   app.get("/:id/state", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
-    const thread = await db.get<Thread>(owner, "threads", id);
-    if (!thread) throw new AppError("Thread not found", 404);
+    const thread = await requireThread(db, tenantService, owner, id);
     const conversation = await db.get<{ messages: unknown[] }>(owner, "conversations", id);
     return c.json({
       id,
@@ -122,14 +200,11 @@ export function threadRoutes(
   app.get("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
-    const thread = await db.get<Thread>(owner, "threads", id);
-    if (!thread) throw new AppError("Thread not found", 404);
+    const thread = await requireThread(db, tenantService, owner, id);
     const conv = await db.get<{ messages: unknown[] }>(owner, "conversations", id);
     // AUTOMATION_THREAD_EXPOSE_V1 (campana 13) - el panel ve a que automatizacion
     // y ejecucion esta vinculado el hilo, para enlazar la evidencia.
-    const tenantId = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
-      : "default"; // FALLBACK_TENANT_V1
+    const tenantId = activeTenant(owner);
     const automation = await new AutomationThreads(db).get({ tenantId, actorId: owner }, id);
     return c.json({ ...thread, messages: conv?.messages ?? [], automation });
   });
@@ -143,65 +218,72 @@ export function threadRoutes(
     const lock = globalEditLock.acquire(lockUser, "thread", id);
     if (!lock) throw new AppError("Ya estas editando este thread en otro tab.", 409);
     try {
-    const thread = await db.get<Thread>(owner, "threads", id);
-    if (!thread) throw new AppError("Thread not found", 404);
-    const body = await c.req.json();
-    const messages = z.array(z.unknown()).max(1000).parse(body.messages);
-    // THREADS_CAS_V1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â optimismo de concurrencia. El cliente envÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­a
-    // `expectedUpdatedAt` con la versiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n que leyÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³. Si el thread cambiÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³
-    // desde entonces, devolvemos 409 y el cliente recarga.
-    // Ver: docs/audits/04-multi-usuario-concurrente/miniaudit.md.
-    const expected = z
-      .object({ expectedUpdatedAt: z.iso.datetime({ offset: true }).optional() })
-      .parse(body);
-    if (expected.expectedUpdatedAt !== undefined) {
-      const current = await db.get<Thread>(owner, "threads", id);
-      if (!current || current.updatedAt !== expected.expectedUpdatedAt) {
-        // THREAD_CONFLICT_DIFF_V1 - incluye current/expected en el 409.
-        throw new AppError(
-          "Otro usuario ha modificado esta conversaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n. Recarga y vuelve a intentarlo.",
-          409,
-          { current: current?.updatedAt ?? "", expected: expected.expectedUpdatedAt },
+      return await db.transaction(async () => {
+        const thread = await requireThread(db, tenantService, owner, id, true);
+        const body = await c.req.json();
+        const messages = z.array(z.unknown()).max(1000).parse(body.messages);
+        const { expectedUpdatedAt } = z
+          .object({ expectedUpdatedAt: z.iso.datetime({ offset: true }).optional() })
+          .parse(body);
+        if (expectedUpdatedAt !== undefined && thread.updatedAt !== expectedUpdatedAt) {
+          throw new AppError(
+            "Otro usuario ha modificado esta conversación. Recarga y vuelve a intentarlo.",
+            409,
+            { current: thread.updatedAt, expected: expectedUpdatedAt },
+          );
+        }
+        const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(
+          owner,
+          "conversations",
+          id,
+          {},
+          { messages },
         );
-      }
-    }
-    // Escribir la conversaciÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³n con CAS: expected = updatedAt leÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â­do, patch = messages.
-    const currentThread = await db.get<Thread>(owner, "threads", id);
-    if (!currentThread) throw new AppError("Thread not found", 404);
-    const swapped = await db.compareAndSwap<{ id: string; messages: unknown[] }>(
-      owner,
-      "conversations",
-      id,
-      {},
-      { messages },
-    );
-    if (!swapped) throw new AppError("Thread changed; refresh and try again", 409);
-    let title = thread.title;
-    if (title === "Nuevo chat" && messages.length > 0) {
-      const first = messages.find(
-        (m: unknown) =>
-          typeof m === "object" &&
-          m !== null &&
-          (m as { role?: string; content?: string }).role === "user" &&
-          typeof (m as { content?: string }).content === "string",
-      );
-      if (first) {
-        const content = (first as { content: string }).content;
-        title = content.slice(0, 60).trim() || "Nuevo chat";
-      }
-    }
-    const updated: Thread = {
-      ...thread,
-      title,
-      updatedAt: new Date().toISOString(),
-      messageCount: messages.length,
-    };
-    await db.put(owner, "threads", updated);
-    return c.json(updated);
+        if (!swapped) throw new AppError("Thread changed; refresh and try again", 409);
+        let title = thread.title;
+        if (title === "Nuevo chat" && messages.length > 0) {
+          const first = messages.find(
+            (m: unknown) =>
+              typeof m === "object" &&
+              m !== null &&
+              (m as { role?: string; content?: string }).role === "user" &&
+              typeof (m as { content?: string }).content === "string",
+          );
+          if (first) {
+            const content = (first as { content: string }).content;
+            title = content.slice(0, 60).trim() || "Nuevo chat";
+          }
+        }
+        const updated: Thread = {
+          ...thread,
+          tenantId: activeTenant(owner),
+          title,
+          updatedAt: new Date(Math.max(Date.now(), Date.parse(thread.updatedAt) + 1)).toISOString(),
+          messageCount: messages.length,
+        };
+        await db.put(owner, "threads", updated);
+        return c.json(updated);
+      });
     } finally {
       // THREAD_EDIT_UNLOCK_V1 - libera el lock siempre.
       globalEditLock.release(lockUser, "thread", id);
     }
+  });
+
+  // Append without replacing turns already stored by another client.
+  app.post("/:id/messages", async (c) => {
+    const owner = c.get("owner");
+    const id = c.req.param("id");
+    const { messages } = z.object({
+      messages: z.array(z.object({
+        id: z.string().min(1).max(200),
+        role: z.enum(["user", "assistant"]),
+        content: z.string(),
+      }).passthrough()).min(1).max(1000),
+    }).parse(await c.req.json());
+
+    const updated = await appendThreadMessages(db, tenantService, owner, id, messages);
+    return c.json(updated);
   });
 
   // WITH_WRITE_WIRE_V1 - withWrite aplica PDP + CAS
@@ -211,8 +293,6 @@ export function threadRoutes(
   app.patch("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
-    const thread = await db.get<Thread>(owner, "threads", id);
-    if (!thread) throw new AppError("Thread not found", 404);
     const body = z
       .object({
         title: z.string().trim().min(1).max(200).optional(),
@@ -229,17 +309,17 @@ export function threadRoutes(
         { message: "Nada que actualizar" },
       )
       .parse(await c.req.json());
-    const updated: Thread = {
-      ...thread,
-      ...(body.title !== undefined ? { title: body.title } : {}),
-      ...(body.projectId !== undefined ? { projectId: body.projectId } : {}),
-      ...(body.assignedTo !== undefined ? { assignedTo: body.assignedTo } : {}),
-      ...(body.assignedKind !== undefined ? { assignedKind: body.assignedKind } : {}),
-      // Solo el titulo reordena la lista de recientes; mover a proyecto o poner
-      // responsable no debe mover el hilo de sitio.
-      updatedAt: body.title !== undefined ? new Date().toISOString() : thread.updatedAt,
-    };
-    await db.put(owner, "threads", updated);
+    const updated = await db.transaction(async () => {
+      const thread = await requireThread(db, tenantService, owner, id, true);
+      return db.put(owner, "threads", {
+        ...thread,
+        ...body,
+        tenantId: activeTenant(owner),
+        updatedAt: body.title === undefined
+          ? thread.updatedAt
+          : new Date(Math.max(Date.now(), Date.parse(thread.updatedAt) + 1)).toISOString(),
+      });
+    });
     return c.json(updated);
   });
 
@@ -247,13 +327,12 @@ export function threadRoutes(
   app.delete("/:id", async (c) => {
     const owner = c.get("owner");
     const id = c.req.param("id");
-    await db.remove(owner, "threads", id);
-    await db.remove(owner, "conversations", id);
-    // AUTOMATION_FORGET_V1 - un hilo borrado no deja vinculo reanudable.
-    const tenantId = tenantService
-      ? await tenantService.tenantIdFor(owner).catch(() => "default") // FALLBACK_TENANT_V1
-      : "default"; // FALLBACK_TENANT_V1
-    await new AutomationThreads(db).forget({ tenantId, actorId: owner }, id);
+    await db.transaction(async () => {
+      await requireThread(db, tenantService, owner, id, true);
+      await db.remove(owner, "threads", id);
+      await db.remove(owner, "conversations", id);
+      await new AutomationThreads(db).forget({ tenantId: activeTenant(owner), actorId: owner }, id);
+    });
     return c.json({ ok: true });
   });
 

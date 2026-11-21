@@ -1,7 +1,9 @@
-// C13_DURABLE_VOICE_COORDINATOR_V2. No audio or private transcript is stored here.
+// C13_DURABLE_VOICE_COORDINATOR_V2. Voice tables retain receipts and digests, never audio or transcript text.
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { Store } from "../../db.ts";
+import { appendThreadMessages, requireThread } from "../../threads-routes.ts";
+import { runInTenantScope } from "../../tenant-scope.ts";
 import type { CognitiveIdentity } from "../../../../../packages/domain/src/cognition-v2.ts";
 import { cognitiveIdentitySchema } from "../../../../../packages/domain/src/cognition-v2.ts";
 import type { ContextServingFacade } from "../cognition/v2/context.ts";
@@ -14,7 +16,8 @@ export interface VoiceAuthorization {
 }
 export interface VoiceLimits { maxSessionMs: number; silenceMs: number; maxConcurrentSessions: number }
 const defaultLimits: VoiceLimits = { maxSessionMs: 15 * 60_000, silenceMs: 45_000, maxConcurrentSessions: 2 };
-const consentInputSchema = z.strictObject({ transcript: z.literal(true), recording: z.literal(false), purpose: z.literal("conversation") });
+const consentInputSchema = z.strictObject({ transcript: z.literal(true), recording: z.literal(false), purpose: z.literal("conversation"), saveToThread: z.boolean().optional() });
+const explicitThreadTenant = { resolveStrict: async () => { throw Error("VOICE_THREAD_TENANT_REQUIRED"); } };
 export async function installVoiceV2(db: Store): Promise<void> {
   for (const sql of [
     `CREATE TABLE IF NOT EXISTS cognition_v2_voice_consents (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,expires_at timestamptz NOT NULL,revoked_at timestamptz,PRIMARY KEY(tenant,id))`,
@@ -44,11 +47,11 @@ export class VoiceTurnCoordinator {
       [identity.tenantId, id, identity.actorId, JSON.stringify({ ...consent, policyRevision: identity.policyRevision }), expiresAt]);
     return { id, expiresAt };
   }
-  private async consentValid(identity: CognitiveIdentity, id: string): Promise<boolean> {
-    const rows = await this.db.rawQuery(`SELECT id FROM cognition_v2_voice_consents WHERE tenant=$1 AND id=$2 AND actor=$3
+  private async readConsent(identity: CognitiveIdentity, id: string) {
+    const [row] = await this.db.rawQuery<{ data: { saveToThread?: boolean } }>(`SELECT data FROM cognition_v2_voice_consents WHERE tenant=$1 AND id=$2 AND actor=$3
       AND revoked_at IS NULL AND expires_at>$4 AND data->>'policyRevision'=$5`,
       [identity.tenantId, id, identity.actorId, new Date(this.clock()).toISOString(), identity.policyRevision]);
-    return rows.length === 1;
+    return row?.data;
   }
   private async save(session: VoiceSessionV2): Promise<void> {
     await this.db.rawQuery(`UPDATE cognition_v2_voice_sessions SET data=$3::jsonb WHERE tenant=$1 AND id=$2`,
@@ -66,10 +69,12 @@ export class VoiceTurnCoordinator {
     if (session.policyRevision !== identity.policyRevision || !await this.authority.authorizeAgent(identity, session.agentId, session.roleId)) throw Error("VOICE_SESSION_DENIED");
     return session;
   }
-  private async assertLive(identity: CognitiveIdentity, session: VoiceSessionV2): Promise<void> {
+  private async assertLive(identity: CognitiveIdentity, session: VoiceSessionV2) {
     if (session.state === "closed" || session.state === "failed") throw Error("VOICE_SESSION_CLOSED");
     if (Date.parse(session.expiresAt) <= this.clock()) throw Error("VOICE_SESSION_EXPIRED");
-    if (!await this.consentValid(identity, session.consentReceiptId)) throw Error("VOICE_CONSENT_REQUIRED");
+    const consent = await this.readConsent(identity, session.consentReceiptId);
+    if (!consent) throw Error("VOICE_CONSENT_REQUIRED");
+    return consent;
   }
   async create(identity: CognitiveIdentity, raw: unknown): Promise<VoiceSessionV2> {
     await this.authorize(identity);
@@ -77,7 +82,11 @@ export class VoiceTurnCoordinator {
     if (!await this.authority.authorizeAgent(identity, input.agentId, input.roleId)) throw Error("VOICE_AGENT_DENIED");
     if (!await this.context.readSnapshot(identity, input.contextSnapshotId)) throw Error("VOICE_CONTEXT_REQUIRED");
     return this.db.transaction(async () => {
-      if (!await this.consentValid(identity, input.consentReceiptId)) throw Error("VOICE_CONSENT_REQUIRED");
+      const consent = await this.readConsent(identity, input.consentReceiptId);
+      if (!consent) throw Error("VOICE_CONSENT_REQUIRED");
+      if (consent.saveToThread === true) {
+        await runInTenantScope(identity, () => requireThread(this.db, explicitThreadTenant, identity.owner, input.threadId));
+      }
       await this.db.rawQuery(`INSERT INTO cognition_v2_voice_locks(tenant,actor) VALUES($1,$2) ON CONFLICT DO NOTHING`, [identity.tenantId, identity.actorId]);
       await this.db.rawQuery(`SELECT tenant FROM cognition_v2_voice_locks WHERE tenant=$1 AND actor=$2 FOR UPDATE`, [identity.tenantId, identity.actorId]);
       const [count] = await this.db.rawQuery<{ count: string }>(`SELECT count(*) AS count FROM cognition_v2_voice_sessions WHERE tenant=$1 AND actor=$2
@@ -196,20 +205,44 @@ export class VoiceTurnCoordinator {
     let result: { receiptId: string; text: string };
     let emittedText = "";
     try {
-      result = await this.fast.stream(identity, { threadId: session.threadId, turnId, text: transcript, contextSnapshotId: session.contextSnapshotId }, signal, async (text) => {
-      signal.throwIfAborted();
-      if (!turn.renderLeaseUntil || Date.parse(turn.renderLeaseUntil) <= this.clock()) throw Error("VOICE_RENDER_LEASE_EXPIRED");
-      if (!await this.acceptsOutput(identity, sessionId, turn.epoch)) throw Error("VOICE_STALE_EPOCH");
-      if (emittedText.length + text.length > 16000) throw Error("VOICE_OUTPUT_TOO_LARGE");
-      await onText(text, turn.epoch);
-      emittedText += text;
-    });
+      result = await this.fast.stream(identity, { threadId: session.threadId, turnId, text: transcript, contextSnapshotId: session.contextSnapshotId, roleId: session.roleId }, signal, async (text) => {
+        signal.throwIfAborted();
+        if (!turn.renderLeaseUntil || Date.parse(turn.renderLeaseUntil) <= this.clock()) throw Error("VOICE_RENDER_LEASE_EXPIRED");
+        if (!await this.acceptsOutput(identity, sessionId, turn.epoch)) throw Error("VOICE_STALE_EPOCH");
+        if (emittedText.length + text.length > 16000) throw Error("VOICE_OUTPUT_TOO_LARGE");
+        await onText(text, turn.epoch);
+        emittedText += text;
+      });
       if (!result.receiptId || result.receiptId.length > 200 || result.text !== emittedText) throw Error("VOICE_OUTPUT_RECEIPT_MISMATCH");
+      return await this.db.transaction(async () => {
+        await this.authorize(identity);
+        const current = await this.locked(identity, sessionId);
+        const consent = await this.assertLive(identity, current);
+        if (!await this.context.readSnapshot(identity, current.contextSnapshotId)) throw Error("VOICE_CONTEXT_REVOKED");
+        if (current.epoch !== turn.epoch || !turn.renderLeaseUntil || Date.parse(turn.renderLeaseUntil) <= this.clock()) throw Error("VOICE_STALE_EPOCH");
+        const completed: VoiceTurnV2 = { ...turn, state: "completed", receiptId: result.receiptId };
+        const committed = await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=$3::jsonb WHERE tenant=$1 AND id=$2
+          AND data->>'state'='rendering' AND (data->>'renderFence')::integer=$4 RETURNING id`, [identity.tenantId, turnId, JSON.stringify(completed), turn.renderFence]);
+        if (!committed.length) throw Error("VOICE_STALE_FENCE");
+        signal.throwIfAborted();
+        if (consent.saveToThread === true) {
+          const timestamp = new Date(this.clock()).toISOString();
+          await runInTenantScope(identity, () => appendThreadMessages(this.db, explicitThreadTenant, identity.owner, current.threadId, [
+            { id: `${turnId}:user`, role: "user", content: transcript, timestamp },
+            { id: `${turnId}:assistant`, role: "assistant", content: result.text, timestamp },
+          ], true));
+        }
+        signal.throwIfAborted();
+        await this.save({ ...current, state: "authorized", revision: current.revision + 1, lastActivityAt: new Date(this.clock()).toISOString() });
+        await this.receipt(current, "fast_output_completed");
+        signal.throwIfAborted();
+        return completed;
+      });
     } catch (error) {
       await this.db.transaction(async () => {
+        const current = await this.locked(identity, sessionId);
         await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=data || '{"state":"failed"}'::jsonb
           WHERE tenant=$1 AND id=$2 AND data->>'state'='rendering' AND (data->>'renderFence')::integer=$3`, [identity.tenantId, turnId, turn.renderFence]);
-        const current = await this.locked(identity, sessionId);
         if (current.epoch === turn.epoch && current.state === "processing") {
           const failed: VoiceSessionV2 = { ...current, state: "failed", closedReason: "error", epoch: current.epoch + 1, revision: current.revision + 1 };
           await this.save(failed); await this.receipt(failed, "fast_output_failed");
@@ -217,18 +250,6 @@ export class VoiceTurnCoordinator {
       });
       throw error;
     }
-    return this.db.transaction(async () => {
-      await this.authorize(identity);
-      const current = await this.locked(identity, sessionId); await this.assertLive(identity, current);
-      if (!await this.context.readSnapshot(identity, current.contextSnapshotId)) throw Error("VOICE_CONTEXT_REVOKED");
-      if (current.epoch !== turn.epoch || !turn.renderLeaseUntil || Date.parse(turn.renderLeaseUntil) <= this.clock()) throw Error("VOICE_STALE_EPOCH");
-      const completed: VoiceTurnV2 = { ...turn, state: "completed", receiptId: result.receiptId };
-      const committed = await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=$3::jsonb WHERE tenant=$1 AND id=$2
-        AND data->>'state'='rendering' AND (data->>'renderFence')::integer=$4 RETURNING id`, [identity.tenantId, turnId, JSON.stringify(completed), turn.renderFence]);
-      if (!committed.length) throw Error("VOICE_STALE_FENCE");
-      await this.save({ ...current, state: "authorized", revision: current.revision + 1, lastActivityAt: new Date(this.clock()).toISOString() });
-      await this.receipt(current, "fast_output_completed"); return completed;
-    });
   }
   /** Durable expiry is recoverable after process restart; no timer grants safety. */
   async reap(identity: CognitiveIdentity): Promise<number> {
