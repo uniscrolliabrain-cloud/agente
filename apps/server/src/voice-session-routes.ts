@@ -9,6 +9,8 @@ import { AppError } from "./errors.ts";
 import { currentTenantScope } from "./tenant-scope.ts";
 import { backgroundFailure } from "./log.ts";
 import { requireThread } from "./threads-routes.ts";
+import { resolveVoiceMediaCapabilities, voiceMediaConfigurationFromEnv } from "./engine/voice-v2/media-capabilities.ts";
+import { agentRoleSchema } from "../../../packages/domain/src/agent.ts";
 
 const sessionInput = z.strictObject({
   threadId: z.string().min(1).max(200),
@@ -68,6 +70,22 @@ export async function voiceSessionRoutes(runtime: CognitionV2Runtime, records: T
     if (!scope) throw new AppError("Session required", 401);
     c.set("voiceIdentity", await voiceRequest(() => runtime.identity(scope.tenantId, scope.actorId, c.get("owner"), "chat")));
     await next();
+  });
+  // Read-only discovery: role must be active in the authenticated tenant.
+  // Provider configuration does not grant a session or expose credentials.
+  app.get("/capabilities/:roleId", async (c) => {
+    const identity = c.get("voiceIdentity");
+    const roleId = c.req.param("roleId");
+    if (!roleId || roleId.length > 100) throw new AppError("Agent is not authorized", 403);
+    const stored = await records.get(identity.owner, "agent-roles", roleId);
+    const parsed = agentRoleSchema.pick({ id: true, name: true, active: true }).safeParse(stored);
+    if (!parsed.success || parsed.data.id !== roleId || parsed.data.active !== true) {
+      throw new AppError("Agent is not authorized", 403);
+    }
+    return c.json(resolveVoiceMediaCapabilities(
+      { id: parsed.data.id, name: parsed.data.name, active: true },
+      voiceMediaConfigurationFromEnv(),
+    ));
   });
   app.post("/consents", async (c) => {
     const input = await c.req.json();
