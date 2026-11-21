@@ -27,7 +27,7 @@ export default function MobileChatCall({ mode, initialReport, onReport, onClose 
   const [finished, setFinished] = useState(Boolean(initialReport));
   const [muted, setMuted] = useState(false);
   const [camera, setCamera] = useState(false);
-  const [videoEnabled, setVideoEnabled] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(mode === "video");
   const [cameraError, setCameraError] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -73,8 +73,8 @@ export default function MobileChatCall({ mode, initialReport, onReport, onClose 
   return (
     <section className={`mobile-chat-call${videoEnabled && !finished ? " video-mode" : ""}`} aria-label="Conversación de prueba">
       <header>
-        <h2 ref={headingRef} tabIndex={-1}>{finished ? "Informe de la conversación" : mode === "video" ? "Videollamada" : "Conversación por voz"}</h2>
-        <p>Simulación · {time}</p>
+        <h2 ref={headingRef} tabIndex={-1}>{finished ? "Informe de la conversación" : mode === "video" ? "Hablar con Juan · Finanzas" : "Conversación por voz"}</h2>
+        <p>{mode === "video" && !finished ? "Videollamada demo" : "Simulación"} · {time}</p>
       </header>
       {!finished && mode === "video" && (
         <label className="mobile-call-toggle">
@@ -87,12 +87,19 @@ export default function MobileChatCall({ mode, initialReport, onReport, onClose 
               if (!event.target.checked) setCamera(false);
             }}
           />
-          Activar vista de vídeo
+          Mostrar vista de vídeo
         </label>
       )}
       {!finished && (
         <div className="mobile-call-stage">
-          <div className="mobile-call-agent"><Sparkles size={30} aria-hidden="true" /><span>Tu agente</span></div>
+          {videoEnabled ? (
+            <>
+              <img className="mobile-call-portrait" src="/images/juan-finanzas-demo.webp" alt="Retrato de Juan, agente demo de Finanzas" />
+              <div className="mobile-call-portrait-veil" aria-hidden="true" />
+            </>
+          ) : (
+            <div className="mobile-call-agent"><Sparkles size={30} aria-hidden="true" /><span>Tu agente</span></div>
+          )}
           {videoEnabled && (
             <div className="mobile-call-self">
               {camera ? <video ref={videoRef} autoPlay muted playsInline aria-label="Vista previa local" /> : <Camera size={22} aria-hidden="true" />}

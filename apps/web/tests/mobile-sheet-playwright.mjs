@@ -68,7 +68,16 @@ try {
   await sheet.getByRole("button", { name: "Volver al chat" }).tap();
 
   await video.tap();
-  await sheet.getByRole("switch", { name: "Activar vista de vídeo" }).tap();
+  await sheet.getByRole("heading", { name: "Hablar con Juan · Finanzas" }).waitFor();
+  const portrait = sheet.getByRole("img", { name: "Retrato de Juan, agente demo de Finanzas" });
+  await portrait.waitFor();
+  await page.waitForFunction(() => document.querySelector(".mobile-call-portrait")?.naturalWidth > 0);
+  const videoSwitch = sheet.getByRole("switch", { name: "Mostrar vista de vídeo" });
+  assert.equal(await videoSwitch.isChecked(), true);
+  await videoSwitch.tap();
+  assert.equal(await portrait.count(), 0);
+  await videoSwitch.tap();
+  await portrait.waitFor();
   await sheet.getByRole("button", { name: "Encender cámara local" }).waitFor();
   await sheet.getByRole("button", { name: "Finalizar" }).tap();
   await sheet.getByRole("button", { name: "Volver al chat" }).tap();
