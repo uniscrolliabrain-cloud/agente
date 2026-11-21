@@ -50,11 +50,12 @@ interface Props {
   tenant?: { id: string } | null;
   /** SIDEBAR_RAIL_V1 - plegada deja solo los iconos. */
   collapsed: boolean;
-  onToggleCollapsed: () => void;
+  onToggleCollapsed?: () => void;
   /** SIDEBAR_SETTINGS_V1 - menu de cuenta y cierre de sesion. */
   onOpenSettings: () => void;
   /** SIDEBAR_CHAT_V1 - convierte la barra en el chat del agente. */
   onOpenChat: () => void;
+  chatDockOpen?: boolean;
 }
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
@@ -95,6 +96,7 @@ export default function SidebarV2({
   onToggleCollapsed,
   onOpenSettings,
   onOpenChat,
+  chatDockOpen = false,
 }: Props) {
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
@@ -127,7 +129,7 @@ export default function SidebarV2({
             {!collapsed && <span className="v2-sidebar-brand-name">AGNTia OS</span>}
             {!collapsed && <span className="v2-sidebar-brand-beta">BETA</span>}
           </button>
-          <button
+          {onToggleCollapsed && <button
             type="button"
             className="v2-rail-toggle"
             onClick={onToggleCollapsed}
@@ -136,7 +138,7 @@ export default function SidebarV2({
             title={collapsed ? "Desplegar menú" : "Plegar menú"}
           >
             {collapsed ? <ChevronsRight size={15} /> : <PanelLeftClose size={15} />}
-          </button>
+          </button>}
         </div>
 
         {!collapsed && demo?.active && (
@@ -230,8 +232,9 @@ export default function SidebarV2({
               onClick={onOpenChat}
               onMouseEnter={showTip("Hablar con tu agente")}
               onMouseLeave={hideTip}
-              title="Abrir chat"
-              aria-label="Abrir chat"
+              title={chatDockOpen ? "Cerrar chat lateral" : "Abrir chat"}
+              aria-label={chatDockOpen ? "Cerrar chat lateral" : "Abrir chat"}
+              aria-expanded={chatDockOpen}
             >
               <MessageSquare size={17} />
             </button>

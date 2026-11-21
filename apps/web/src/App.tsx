@@ -198,7 +198,6 @@ export default function App() {
       setMobileChat(true);
       return;
     }
-    setCollapsed(false);
     setChatDock(true);
   };
 
@@ -211,11 +210,10 @@ export default function App() {
       setChatDock(false);
       return;
     }
-    setCollapsed(false);
     setChatDock(true);
   };
 
-  const sidebar = chatDockActive ? (
+  const dockedChat = chatDockActive ? (
     <SidebarChat
       chat={chat}
       tenantLabel={contextLabel}
@@ -223,7 +221,9 @@ export default function App() {
       onOpenFullChat={() => { setChatDock(false); setView("chat"); }}
       onOpenSettings={() => setSettingsOpen(true)}
     />
-  ) : (
+  ) : undefined;
+
+  const sidebar = (
     <SidebarV2
       activeView={view}
       onSelectView={selectView}
@@ -242,10 +242,11 @@ export default function App() {
         onExit: () => { void auth.logout(); },
       }}
       tenant={sessionTenant ? { id: sessionTenant } : null}
-      collapsed={collapsed && !isMobile}
-      onToggleCollapsed={() => setCollapsed((value) => !value)}
+      collapsed={chatDockActive || (collapsed && !isMobile)}
+      onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}
-      onOpenChat={openDockChat}
+      onOpenChat={chatDockActive ? toggleChat : openDockChat}
+      chatDockOpen={chatDockActive}
     />
   );
 
@@ -264,7 +265,7 @@ export default function App() {
         sidebar={sidebar}
         panel={panel}
         collapsed={collapsed && !isMobile}
-        chatDock={chatDockActive}
+        chatDock={dockedChat}
         mobileOpen={mobileNav}
         onCloseMobile={() => setMobileNav(false)}
       >

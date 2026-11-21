@@ -253,8 +253,52 @@ try {
   await networkSheet.getByText("Respuesta tras reintentar", { exact: true }).waitFor();
   assert.equal(runCount, 2);
   assert.equal(await networkSheet.locator(".chat-error").count(), 0);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await sheet.waitFor({ state: "hidden" });
+  await fab.click();
+  const dock = page.locator(".desktop-chat-dock");
+  const rail = page.getByRole("navigation", { name: "Principal" });
+  const widthGrip = dock.getByRole("slider", { name: "Ancho del chat lateral" });
+  await rail.getByRole("button", { name: "WhatsApp" }).click();
+  await page.getByRole("heading", { name: "WhatsApp", exact: true }).waitFor();
+  await dock.getByRole("button", { name: "Abrir acciones" }).click();
+  await page.getByRole("dialog", { name: "Acciones del chat" }).waitFor();
+  await page.keyboard.press("Escape");
+  await dock.getByRole("button", { name: "Videollamada", exact: true }).click();
+  await dock.getByRole("img", { name: "Retrato de Juan, agente demo de Finanzas" }).waitFor();
+  await dock.getByRole("button", { name: "Finalizar", exact: true }).click();
+  await dock.getByRole("button", { name: "Volver al chat" }).click();
+
+  const waitForDockWidth = () => page.waitForFunction(() => {
+    const dock = document.querySelector(".desktop-chat-dock");
+    const width = parseFloat(dock?.closest(".shell")?.style.getPropertyValue("--desktop-chat-width"));
+    return dock && Math.abs(dock.getBoundingClientRect().width - width) < 1;
+  });
+  const stops = [];
+  for (const position of ["2", "3", "4", "1"]) {
+    assert.equal(await widthGrip.getAttribute("aria-valuenow"), position);
+    await waitForDockWidth();
+    stops.push(Math.round((await dock.boundingBox()).width));
+    await widthGrip.click();
+  }
+  assert.ok(stops[3] < stops[0] && stops[0] < stops[1] && stops[1] < stops[2]);
+  await widthGrip.press("End");
+  await waitForDockWidth();
+  const desktopGripBox = await widthGrip.boundingBox();
+  const desktopX = desktopGripBox.x + desktopGripBox.width / 2;
+  const desktopY = desktopGripBox.y + desktopGripBox.height / 2;
+  await page.mouse.move(desktopX, desktopY);
+  await page.mouse.down();
+  await page.mouse.move(desktopX - 370, desktopY, { steps: 8 });
+  assert.ok((await dock.boundingBox()).width < stops[2]);
+  await page.mouse.up();
+  assert.equal(await widthGrip.getAttribute("aria-valuenow"), "1");
+  await rail.getByRole("button", { name: "WhatsApp" }).waitFor();
+  await dock.getByRole("button", { name: "Cerrar chat lateral" }).click();
+  await dock.waitFor({ state: "hidden" });
+  await rail.getByRole("button", { name: "WhatsApp" }).waitFor();
   console.log(
-    "PASS: Playwright mobile, workspace continuity, history scroll, cancel, dictation, actions, local recording, simulated calls, network recovery, short viewports and reduced motion",
+    "PASS: Playwright mobile, workspace continuity, history scroll, cancel, dictation, actions, local recording, simulated calls, network recovery, short viewports, reduced motion and resizable desktop dock",
   );
 } finally {
   await context.close();

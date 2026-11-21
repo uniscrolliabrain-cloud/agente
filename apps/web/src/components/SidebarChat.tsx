@@ -77,7 +77,7 @@ export default function SidebarChat({
     };
   }, []);
 
-  const mobile = variant === "sheet" ? {
+  const multimodal = {
     onCall: (mode: MobileCallMode) => {
       callTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       onRevealMobileBody?.();
@@ -92,7 +92,7 @@ export default function SidebarChat({
       setNotes((previous) => [...previous, { thread: chat.threadId, after: chat.messages.length, note: { id, blob, url, seconds, name: `nota-de-voz-${id}.${extension}` } }]);
       onRevealMobileBody?.();
     },
-  } : undefined;
+  };
   const threadNotes = notes.filter(({ thread }) => thread === chat.threadId);
   const threadReports = reports.filter(({ thread }) => thread === chat.threadId);
   const hasLocalEntries = threadNotes.length > 0 || threadReports.length > 0;
@@ -100,7 +100,7 @@ export default function SidebarChat({
   const footer = (
     <div className="side-chat-foot" hidden={Boolean(call)}>
       <ChatInput
-        mobile={mobile}
+        multimodal={multimodal}
         onSend={chat.send}
         onCancel={chat.cancel}
         streaming={chat.streaming}
@@ -142,8 +142,8 @@ export default function SidebarChat({
             type="button"
             className="side-chat-icon"
             onClick={onClose}
-            title="Volver al menú"
-            aria-label="Volver al menú"
+            title="Cerrar chat lateral"
+            aria-label="Cerrar chat lateral"
           >
             <PanelLeftClose size={15} />
           </button>

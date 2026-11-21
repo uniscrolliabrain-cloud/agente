@@ -109,29 +109,29 @@
   max-height: clamp(40px, calc(var(--sheet-visual-height, 184px) - 170px), 120px);
 }
 
-.mobile-chat-sheet .mobile-composer .v2-composer-tools {
+.side-chat .multimodal-composer .v2-composer-tools {
   position: relative;
   flex-wrap: nowrap;
   gap: clamp(3px, 1.5vw, 10px);
 }
 
-.mobile-chat-sheet .mobile-composer .v2-attachment-chip {
+.side-chat .multimodal-composer .v2-attachment-chip {
   display: inline-flex;
   max-width: 100%;
 }
 
-.mobile-chat-sheet .side-chat-body[hidden],
-.mobile-chat-sheet .side-chat-foot[hidden] {
+.side-chat-body[hidden],
+.side-chat-foot[hidden] {
   display: none;
 }
 
-.mobile-chat-sheet .mobile-composer .mobile-voice-button {
+.side-chat .multimodal-composer .mobile-voice-button {
   touch-action: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
-.mobile-chat-sheet .mobile-composer .mobile-voice-button.active {
+.side-chat .multimodal-composer .mobile-voice-button.active {
   background: #a82037;
   border-color: #a82037;
   color: white;

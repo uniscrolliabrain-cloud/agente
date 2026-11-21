@@ -13,7 +13,7 @@ interface Props {
   onCancel: () => void;
   streaming: boolean;
   sendDisabled?: boolean;
-  mobile?: {
+  multimodal?: {
     onCall: (mode: MobileCallMode) => void;
     onNote: (blob: Blob, seconds: number) => void;
   };
@@ -40,7 +40,7 @@ type AttachState =
   | { kind: "ready"; file: File; attachment: ChatAttachment }
   | { kind: "error"; file: File; message: string };
 
-export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, seed, onSeedConsumed, mobile }: Props) {
+export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, seed, onSeedConsumed, multimodal }: Props) {
   const [videoSelection, setVideoSelection] = useState<File | null>(null);
   const [actionsOpen, setActionsOpen] = useState(false);
   const plusRef = useRef<HTMLButtonElement>(null);
@@ -101,7 +101,7 @@ export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, s
   };
 
   const submit = () => {
-    if (streaming || sendDisabled || (mobile && attach?.kind === "uploading")) return;
+    if (streaming || sendDisabled || (multimodal && attach?.kind === "uploading")) return;
     if (!value.trim() && attach?.kind !== "ready") return;
     const attachment = attach?.kind === "ready" ? attach.attachment : undefined;
     if (recognitionRef.current) {
@@ -159,19 +159,19 @@ export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, s
   };
 
   const canSend = (Boolean(value.trim()) || attach?.kind === "ready")
-    && !(mobile && attach?.kind === "uploading");
+    && !(multimodal && attach?.kind === "uploading");
   const closeActions = () => {
     setActionsOpen(false);
     requestAnimationFrame(() => plusRef.current?.focus({ preventScroll: true }));
   };
   const openCall = (mode: MobileCallMode) => {
     recognitionRef.current?.stop();
-    mobile?.onCall(mode);
+    multimodal?.onCall(mode);
   };
 
   return (
-    <div className={`v2-composer${mobile ? " mobile-composer" : ""}`}>
-      {mobile && actionsOpen && (
+    <div className={`v2-composer${multimodal ? " multimodal-composer" : ""}`}>
+      {multimodal && actionsOpen && (
         <MobileChatActions
           onClose={closeActions}
           onPick={(accept, capture) => {
@@ -229,7 +229,7 @@ export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, s
         </div>
       )}
 
-      {mobile && videoSelection && (
+      {multimodal && videoSelection && (
         <div className="mobile-video-selection">
           <span>{videoSelection.name} · seleccionado en este dispositivo</span>
           <button type="button" aria-label="Quitar vídeo" onClick={() => setVideoSelection(null)}><X size={16} /></button>
@@ -244,13 +244,13 @@ export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, s
             onChange={(e) => {
               const file = e.target.files?.[0];
               if (file) {
-                if (mobile && e.currentTarget.accept === "video/*") setVideoSelection(file);
+                if (multimodal && e.currentTarget.accept === "video/*") setVideoSelection(file);
                 else void pickFile(file);
               }
               e.target.value = "";
             }}
           />
-          {mobile ? (
+          {multimodal ? (
             <>
               <button
                 ref={plusRef}
@@ -272,7 +272,7 @@ export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, s
                 listening={listening}
                 canDictate={Boolean(SpeechRecognition)}
                 onDictate={startVoice}
-                onNote={mobile.onNote}
+                onNote={multimodal.onNote}
               />
               <button className="v2-composer-tool" type="button" aria-label="Conversación por voz" disabled={streaming} onClick={() => openCall("voice")}>
                 <Phone size={18} aria-hidden="true" />
@@ -340,7 +340,7 @@ export default function ChatInput({ onSend, onCancel, streaming, sendDisabled, s
           </button>
         )}
       </div>
-      {!mobile && <p id={availabilityId} className="v2-composer-availability">
+      {!multimodal && <p id={availabilityId} className="v2-composer-availability">
         Próximamente: voz bidireccional y vídeo.{!SpeechRecognition && " Dictado no disponible."}
       </p>}
       {dictationError && <p className="v2-composer-availability" role="status">No se pudo iniciar el dictado.</p>}

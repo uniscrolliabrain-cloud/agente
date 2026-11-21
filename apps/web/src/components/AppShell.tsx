@@ -3,6 +3,7 @@
 // movil esta abierto. Asi el rail y el chat comparten una sola columna.
 import type { ReactNode } from "react";
 import { X } from "lucide-react";
+import DesktopChatDock from "./DesktopChatDock";
 
 interface Props {
   sidebar: ReactNode;
@@ -11,7 +12,7 @@ interface Props {
   /** Barra plegada: solo iconos. */
   collapsed?: boolean;
   /** La columna izquierda es el chat del agente. */
-  chatDock?: boolean;
+  chatDock?: ReactNode;
   /** Drawer movil abierto. */
   mobileOpen: boolean;
   onCloseMobile: () => void;
@@ -24,7 +25,7 @@ export default function AppShell({
   children,
   panel,
   collapsed = false,
-  chatDock = false,
+  chatDock,
   mobileOpen,
   onCloseMobile,
   rightOpen = false,
@@ -37,7 +38,7 @@ export default function AppShell({
       data-left="true"
       data-right={rightVisible}
       data-collapsed={collapsed}
-      data-chat={chatDock}
+      data-chat={Boolean(chatDock)}
       data-mobile-open={mobileOpen}
     >
       <button
@@ -56,6 +57,7 @@ export default function AppShell({
           <X size={16} aria-hidden="true" />
         </button>
         {sidebar}
+        {chatDock && <DesktopChatDock>{chatDock}</DesktopChatDock>}
       </aside>
       <main className="shell__main">
         {children}

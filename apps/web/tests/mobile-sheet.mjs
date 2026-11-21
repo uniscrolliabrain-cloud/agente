@@ -34,8 +34,8 @@ async function waitFor(selector) {
   throw Error(`Missing ${selector}`);
 }
 async function verifyComposer(surface, visualBounds) {
-  const mobile = surface === ".mobile-chat-sheet";
-  const labels = mobile
+  const multimodal = surface !== ".v2-home";
+  const labels = multimodal
     ? ["Abrir acciones", "Dictar texto", "Conversación por voz", "Videollamada", "Enviar"]
     : ["ElevenLabs", "dictado", "Anam", "Enviar"];
   const controls = await evaluate(`(() => {
@@ -57,7 +57,7 @@ async function verifyComposer(surface, visualBounds) {
       assert.ok(control.bottom <= visualBounds.bottom);
     }
   }
-  if (mobile) {
+  if (multimodal) {
     assert.equal(controls[0].disabled, false);
     assert.equal(controls[2].disabled, false);
     assert.equal(controls[3].disabled, false);
