@@ -40,3 +40,10 @@ Implementar P05.1–P05.2 contra los tipos reales de Cognition V2 y el registro 
 Commit `e3795bc`. Añadido `GET /api/cognition-v2/voice/capabilities/:roleId` a `voice-session-routes.ts` (el prefijo depende del montaje existente). Se obtiene la identidad autenticada y se lee el rol desde el almacén tenant-scoped; se comprueba ID exacto, esquema y estado activo. El descriptor devuelve únicamente nombre de presentación y booleanos de configuración, nunca claves ni IDs del proveedor. Sin credenciales, devuelve `voice: false` y `video: false`; sin rol autorizado, 403. No abre sesiones, no llama proveedores ni modifica el contrato de consentimiento de C04.
 
 Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.test.ts`. **No se han ejecutado** todavía; tampoco hay prueba HTTP de la ruta ni CI validada. Antes de cerrar C05, comprobar `pnpm typecheck`, tests de voz y tenant, y agregar test HTTP que verifique autorización por tenant y que no se filtran secretos. La presencia de claves solo indica configuración, no conectividad o verificación real del proveedor.
+
+## Incremento P05.3 — Consulta de sesiones durables y autorización consistente
+
+- `cc30b462`: `GET /sessions/:id` bajo el montaje de voz Cognition V2, reutilizando `coordinator.inspect` para verificar identidad, estado, expiración, consentimiento y rol actual. La ruta responde 404 si no existe; no monta sesiones KV del scaffold.
+- En `authorizeAgent` se verifica el rol contra el esquema canónico y el ID exacto, además de `active: true`, evitando que un registro parcial con solo `active` autorice una sesión.
+- `9aacead3`: extendida la prueba HTTP existente `tests/cognition-v2-http.test.ts` con consulta de capacidades autorizadas, rol desconocido, acceso cross-tenant y consulta de sesión propia/ajena/inexistente.
+- **Verificación pendiente**: ejecutar test HTTP con la base compatible y el resto de la suite; estas pruebas se han escrito pero no se han ejecutado. No hay media real ni cambios en el consentimiento. Las sesiones JSON de C04 continúan siendo scaffolding, no una conexión de Anam.
