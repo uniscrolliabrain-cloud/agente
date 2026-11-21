@@ -49,3 +49,7 @@ RGPD Reglamento (UE) 2016/679, artículos 5, 6, 12–22, 25, 28, 30, 32–35, 44
 - [08 Copy exacto y enlaces legales](08-COPY-LEGAL-UX-Y-LINKS.md)
 - Footer web implementado en `apps/site/index.html` en esta rama; cinco páginas HTML preliminares enlazadas. **NO DESPLEGAR** sin completar y revisar textos legales.
 - App React: integración de enlaces en login/ajustes y panel de privacidad aún planificada, no implementada. Comparar ramas de UI más recientes antes de tocar `App.tsx`.
+
+## Benchmark de estándar profesional
+- [09 — Benchmark OpenAI, Meta, Gemini, Claude y Grok; 6 campañas complementarias C07–C12](09-BENCHMARK-ESTANDAR-PRO-OPENAI-META-GEMINI-CLAUDE-GROK.md)
+- Principio: políticas públicas + controles reales en producto + evidencias verificables. Las campañas C07–C12 amplían, no reemplazan, las seis campañas originales.
