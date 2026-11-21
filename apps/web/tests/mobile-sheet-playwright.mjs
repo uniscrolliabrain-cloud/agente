@@ -42,19 +42,73 @@ try {
   assert.equal(await grip.evaluate((el) => el === document.activeElement), true);
   assert.equal(await sheet.evaluate((el) => getComputedStyle(el).transitionProperty), "none");
 
-  const voice = sheet.getByRole("button", { name: /ElevenLabs/ });
-  const video = sheet.getByRole("button", { name: /Anam/ });
-  assert.equal(await voice.isDisabled(), true);
-  assert.equal(await video.isDisabled(), true);
+  const voice = sheet.getByRole("button", { name: "Conversación por voz" });
+  const video = sheet.getByRole("button", { name: "Videollamada" });
+  await sheet.getByRole("button", { name: "Abrir acciones" }).tap();
+  const actions = page.getByRole("dialog", { name: "Acciones del chat" });
+  await actions.getByRole("button", { name: "Proyecto" }).tap();
+  await page.getByLabel("Nombre del proyecto").fill("Portal");
+  await page.getByRole("button", { name: "Añadir al borrador" }).tap();
+  assert.equal(await input.inputValue(), "Trabajemos en el proyecto Portal");
+  await sheet.getByRole("button", { name: "Abrir acciones" }).tap();
+  const chooserEvent = page.waitForEvent("filechooser");
+  await actions.getByRole("button", { name: "Subir vídeo" }).tap();
+  await (await chooserEvent).setFiles({ name: "muestra.mp4", mimeType: "video/mp4", buffer: Buffer.from("video de prueba") });
+  await sheet.getByText("muestra.mp4 · seleccionado en este dispositivo").waitFor();
+  await sheet.getByRole("button", { name: "Quitar vídeo" }).tap();
+
+  await voice.tap();
+  await sheet.getByRole("heading", { name: "Conversación por voz" }).waitFor();
+  await sheet.getByText("Definir el objetivo de la conversación.").waitFor({ timeout: 7000 });
+  await sheet.getByRole("button", { name: "Finalizar" }).tap();
+  await sheet.getByRole("heading", { name: "Informe de la conversación" }).waitFor();
+  await sheet.getByRole("button", { name: "Volver al chat" }).tap();
+  await sheet.getByRole("button", { name: "Ver informe de la conversación por voz" }).tap();
+  await sheet.getByText("Definir el objetivo de la conversación.").waitFor();
+  await sheet.getByRole("button", { name: "Volver al chat" }).tap();
+
+  await video.tap();
+  await sheet.getByRole("switch", { name: "Activar vista de vídeo" }).tap();
+  await sheet.getByRole("button", { name: "Encender cámara local" }).waitFor();
+  await sheet.getByRole("button", { name: "Finalizar" }).tap();
+  await sheet.getByRole("button", { name: "Volver al chat" }).tap();
+  await grip.press("Home");
   assert.deepEqual(await page.evaluate(() => [window.captureStarts, window.mediaRequests]), [0, 0]);
 
   await input.fill("inicio final");
   await input.evaluate((el) => el.setSelectionRange(7, 7));
-  await sheet.getByRole("button", { name: "Transcribir voz" }).tap();
+  await sheet.getByRole("button", { name: "Dictar texto" }).tap();
   assert.equal(await input.inputValue(), "inicio texto dictado final");
   assert.equal(await sheet.getByRole("button", { name: "Detener", exact: true }).count(), 0);
   await sheet.getByRole("button", { name: "Detener dictado" }).tap();
   assert.deepEqual(await page.evaluate(() => [window.captureStarts, window.mediaRequests]), [1, 0]);
+
+  await page.evaluate(() => {
+    navigator.mediaDevices.getUserMedia = async () => {
+      window.mediaRequests++;
+      const audio = new AudioContext();
+      const destination = audio.createMediaStreamDestination();
+      const oscillator = audio.createOscillator();
+      oscillator.connect(destination);
+      oscillator.start();
+      const [track] = destination.stream.getTracks();
+      const stop = track.stop.bind(track);
+      track.stop = () => {
+        oscillator.stop();
+        void audio.close();
+        stop();
+      };
+      return destination.stream;
+    };
+  });
+  const mic = sheet.getByRole("button", { name: "Dictar texto" });
+  await mic.click({ delay: 1000 });
+  const note = sheet.getByRole("article", { name: "Nota de voz local" });
+  await note.waitFor();
+  assert.match(await note.getByRole("link", { name: "Descargar" }).getAttribute("href"), /^blob:/);
+  assert.equal(await note.locator("audio[controls]").count(), 1);
+  assert.equal(await sheet.getByRole("button", { name: "Detener dictado" }).count(), 0);
+  await grip.press("Home");
 
   const longMessage = "Historial sintético para verificar desplazamiento. ".repeat(180);
   await input.fill(longMessage);
@@ -169,7 +223,7 @@ try {
   assert.equal(runCount, 2);
   assert.equal(await networkSheet.locator(".chat-error").count(), 0);
   console.log(
-    "PASS: Playwright mobile, workspace continuity, history scroll, cancel, dictation stub, network recovery, short viewports and reduced motion",
+    "PASS: Playwright mobile, workspace continuity, history scroll, cancel, dictation, actions, local recording, simulated calls, network recovery, short viewports and reduced motion",
   );
 } finally {
   await context.close();

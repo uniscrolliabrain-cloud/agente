@@ -34,9 +34,13 @@ async function waitFor(selector) {
   throw Error(`Missing ${selector}`);
 }
 async function verifyComposer(surface, visualBounds) {
+  const mobile = surface === ".mobile-chat-sheet";
+  const labels = mobile
+    ? ["Abrir acciones", "Dictar texto", "Conversación por voz", "Videollamada", "Enviar"]
+    : ["ElevenLabs", "dictado", "Anam", "Enviar"];
   const controls = await evaluate(`(() => {
     const composer = document.querySelector(${JSON.stringify(`${surface} .v2-composer`)});
-    return ["ElevenLabs", "dictado", "Anam", "Enviar"].map(label => {
+    return ${JSON.stringify(labels)}.map(label => {
       const button = [...composer.querySelectorAll("button")].find(node => {
         const name = node.getAttribute("aria-label") ?? "";
         return label === "dictado" ? /dictado|transcribir/i.test(name) : name.includes(label);
@@ -53,8 +57,14 @@ async function verifyComposer(surface, visualBounds) {
       assert.ok(control.bottom <= visualBounds.bottom);
     }
   }
-  assert.equal(controls[0].disabled, true);
-  assert.equal(controls[2].disabled, true);
+  if (mobile) {
+    assert.equal(controls[0].disabled, false);
+    assert.equal(controls[2].disabled, false);
+    assert.equal(controls[3].disabled, false);
+  } else {
+    assert.equal(controls[0].disabled, true);
+    assert.equal(controls[2].disabled, true);
+  }
 }
 try {
   await call("Emulation.setDeviceMetricsOverride", { mobile: true, width: 393, height: 740, deviceScaleFactor: 2 });

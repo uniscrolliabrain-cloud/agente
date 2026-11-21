@@ -244,6 +244,7 @@ export default function MobileChatSheet({
         chat={chat}
         tenantLabel={tenantLabel}
         variant="sheet"
+        onRevealMobileBody={() => setSnap(SNAP_PERCENTS.length - 1)}
         onClose={onClose}
         onOpenFullChat={onOpenFullChat}
         onOpenSettings={onOpenSettings}
