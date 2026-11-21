@@ -43,3 +43,9 @@ Monorepo pnpm: apps/web React/Vite; apps/server Node/TS; apps/worker Playwright;
 
 ## Fuentes oficiales para contrastar
 RGPD Reglamento (UE) 2016/679, artículos 5, 6, 12–22, 25, 28, 30, 32–35, 44 y siguientes; LSSI-CE art. 22.2; guía de cookies AEPD; Reglamento (UE) 2024/1689 (AI Act), especialmente transparencia art. 50, roles, casos de uso y cronograma vigente. Verificar actualizaciones legales antes de ejecutar.
+
+## Anexo de implementación UI real
+- [07 Mapa concreto de la interfaz, componentes y ubicación](07-UX-LEGAL-MAPA-INTERFAZ.md)
+- [08 Copy exacto y enlaces legales](08-COPY-LEGAL-UX-Y-LINKS.md)
+- Footer web implementado en `apps/site/index.html` en esta rama; cinco páginas HTML preliminares enlazadas. **NO DESPLEGAR** sin completar y revisar textos legales.
+- App React: integración de enlaces en login/ajustes y panel de privacidad aún planificada, no implementada. Comparar ramas de UI más recientes antes de tocar `App.tsx`.
