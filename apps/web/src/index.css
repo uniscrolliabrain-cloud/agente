@@ -4361,3 +4361,7 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
 .connection-privacy summary { cursor: pointer; }
 .governance-status dd { margin: 0 0 10px; }
 .governance-status dt { font-weight: 600; }
+.ai-disclosure, .dictation-disclosure { color: var(--v2-text-2); font-size: 11px; line-height: 1.4; }
+.ai-disclosure a { color: inherit; text-decoration: underline; }
+.v2-conv > .ai-disclosure, .side-chat-body > .ai-disclosure { margin: 4px 12px 8px; }
+.dictation-disclosure { display: block; margin-inline: 8px; }

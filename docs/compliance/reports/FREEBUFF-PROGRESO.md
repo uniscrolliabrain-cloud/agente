@@ -24,3 +24,6 @@ Solicitud personal persistida en el Store por tenant y cuenta, validación estri
 
 ## Fase 5. Gobernanza y conexiones
 Consulta de gobernanza restringida a la membership vigente con tenant.admin (owner en la matriz actual). Inventario de controles pendientes y enlace a políticas. El componente Google se comparte con Mi perfil y muestra permisos, atribución disponible, consecuencias y desconexión por API existente. Se desactiva agregación de scopes previos en la solicitud OAuth de conector. Los scopes amplios de escritura se mantienen por compatibilidad hasta validar el inventario de capacidades.
+
+## Fase 6. Transparencia IA
+Aviso contextual accesible en chat completo, dock y sheet, con enlace a información recuperable. El compositor distingue dictado de conversación de voz. Inventario de voz, avatar, medios sintéticos, RRHH y supervisión. Los avisos hablados de telefonía y la etiqueta Anam quedan pendientes de verificar en canales operativos y ramas correspondientes.

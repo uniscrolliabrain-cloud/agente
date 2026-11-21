@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ArrowUp, Check, LoaderCircle, Mic, Paperclip, Square, X } from "lucide-react";
 import { uploadFile } from "../api/files";
 import type { ChatAttachment } from "../types/api";
@@ -34,6 +34,7 @@ type AttachState =
 
 export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedConsumed }: Props) {
   const [value, setValue] = useState("");
+  const dictationNoticeId = useId();
   const [listening, setListening] = useState(false);
   const [attach, setAttach] = useState<AttachState | null>(null);
 
@@ -161,6 +162,9 @@ export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedCon
         </div>
       )}
 
+      <small className="dictation-disclosure" id={dictationNoticeId}>
+        Dictado del navegador. Revisa el texto antes de enviarlo a LAIA.
+      </small>
       <div className="v2-composer-bottom">
         <div className="v2-composer-tools">
           <input
@@ -187,6 +191,7 @@ export default function ChatInput({ onSend, onCancel, streaming, seed, onSeedCon
             type="button"
             onClick={startVoice}
             disabled={streaming}
+            aria-describedby={dictationNoticeId}
             title="Transcribir voz"
             style={listening ? { background: "var(--v2-purple-soft)", color: "var(--v2-purple)", borderColor: "var(--v2-purple-border)" } : undefined}
           >

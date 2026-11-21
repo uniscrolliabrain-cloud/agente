@@ -2,6 +2,7 @@
 // panel de Cline en VS Code. No inventa un chat paralelo: usa el mismo hilo y
 // el mismo hook que la vista Chat, asi que la conversacion continua estes en la
 // pantalla que estes. En movil se monta como hoja a pantalla completa.
+import AIDisclosure from "./ai/AIDisclosure";
 import { useEffect, useRef, useState } from "react";
 import { Maximize2, PanelLeftClose, Settings, Sparkles, X } from "lucide-react";
 import MessageList from "./MessageList";
@@ -89,6 +90,7 @@ export default function SidebarChat({
       </header>
 
       <div className="side-chat-body" ref={bodyRef}>
+        <AIDisclosure />
         {chat.messages.length === 0 ? (
           <div className="side-chat-empty">
             <span className="side-chat-orb big" aria-hidden="true">

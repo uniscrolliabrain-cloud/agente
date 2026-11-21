@@ -1,6 +1,7 @@
 // CHATPANEL_RESOLVEVIEW_V2 - el panel se rellena una vez por mensaje de
 // usuario; el backend devuelve un ViewEnvelope y el frontend conserva la
 // vista si el intent no produce ninguna.
+import AIDisclosure from "./ai/AIDisclosure";
 import { useEffect, useRef, useState } from "react";
 import { CognitionTimeline } from "./chat/CognitionTimeline";
 import MessageList from "./MessageList";
@@ -90,6 +91,7 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
       <div className="v2-home">
         <div className="v2-greeting">✦ {greetingFor(userName)}</div>
         <h1 className="v2-hero-title">¿En qué te ayudo hoy?</h1>
+        <AIDisclosure />
         <ChatInput
           onSend={chat.send}
           onCancel={chat.cancel}
@@ -105,6 +107,7 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
   return (
     <div className="v2-conv">
       <RoleSelector value={chat.roleId} onChange={chat.setRoleId} />
+      <AIDisclosure />
       <MessageList
         messages={chat.messages}
         streaming={chat.streaming}
