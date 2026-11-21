@@ -11,6 +11,14 @@ import { currentTenantScope } from "./tenant-scope.ts";
 import { AutomationThreads } from "./engine/automation-thread.ts";
 // THREADS_EDIT_LOCK_FIX_V1
 
+export async function threadBelongsToTenant(
+  thread: { tenantId?: string },
+  tenantId: string,
+  resolvePrimary: () => Promise<string>,
+): Promise<boolean> {
+  return (thread.tenantId ?? await resolvePrimary()) === tenantId;
+}
+
 interface Thread {
   id: string;
   title: string;
@@ -45,7 +53,7 @@ export function threadRoutes(
     const thread = lock
       ? await db.compareAndSwap<Thread>(owner, "threads", id, {}, {})
       : await db.get<Thread>(owner, "threads", id);
-    if (!thread || (thread.tenantId ?? (await tenantService.resolveStrict(owner)).tenantId) !== tenantId) {
+    if (!thread || !await threadBelongsToTenant(thread, tenantId, async () => (await tenantService.resolveStrict(owner)).tenantId)) {
       throw new AppError("Thread not found", 404);
     }
     return thread;

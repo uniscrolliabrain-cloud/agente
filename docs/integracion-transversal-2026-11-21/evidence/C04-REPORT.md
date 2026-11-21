@@ -24,3 +24,9 @@ Rollback: revertir el commit con servidor y cliente juntos. El cambio conserva e
 Las operaciones de listado, presencia, estado, detalle, escritura y borrado de hilos verifican el tenant y el actor autenticados por el middleware. Los hilos nuevos guardan el tenant de creación y los históricos sin etiqueta se atribuyen al tenant primario resuelto por el servidor, porque sus registros anteriores carecen de procedencia. Las escrituras exitosas fijan ese tenant. La conversación principal antigua conserva su ID para el tenant al que se vincula y usa un ID separado para las demás empresas del mismo actor.
 
 La prueba HTTP con dos membresías verifica acceso al historial anterior desde el primario, exclusión en el secundario, append y borrado rechazados desde el tenant incorrecto y separación de las conversaciones principales. Los hilos anteriores sin etiqueta requieren revisión de procedencia si se trasladaron entre empresas antes de este cambio. La conversación principal histórica y los hilos del chat aún usan interfaces distintas.
+
+## Tercer incremento · Autorización antes de inferencia
+
+La entrada HTTP de CopilotKit verifica un hilo existente del actor y tenant antes de iniciar el stream, tanto en el alias web como en la ruta del SDK. Conserva la conversación principal del cliente antiguo cuando su vínculo pertenece al tenant. Un rol explícito debe existir y estar activo en el registro del actor dentro del tenant. La identidad del actor proviene del middleware y el runtime usa el tenant activo para contexto, kernel y cuotas.
+
+La regresión HTTP comprueba rechazo de un hilo de otra empresa, del ID principal histórico desde otro tenant y de un rol o persona no autorizados. Un hilo del tenant correcto inicia el stream de prueba. El runtime V2 conserva su selección de agente actual. Quedan abiertas su persona multiagente, la fuente canónica del historial consumido por inferencia y las rutas de sesión de voz y vídeo.

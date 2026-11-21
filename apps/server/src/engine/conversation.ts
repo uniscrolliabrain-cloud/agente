@@ -12,6 +12,7 @@ import {
   goalInputSchema,
   monitorInputSchema,
 } from "../../../../packages/domain/src/agent.ts";
+import { currentTenantScope } from "../tenant-scope.ts";
 import { computerInstructions, computerTools } from "../computer-tools.ts";
 // META_CONSUME_HINT_V1
 // CONVERSATION_PROGRESS_READ_V1
@@ -145,6 +146,7 @@ export class ConversationAgent extends AbstractAgent {
     // C11_CONVERSATION_CUTOVER_V2: independently implemented path; V1 only
     // serves tenants outside the explicit synthetic allowlist.
     if (this.service.cognitionV2?.enabledForRequest()) return this.service.cognitionV2.chat(this.owner, input);
+    const requestTenant = currentTenantScope()?.tenantId;
     // CONVERSATION_META_HINT_READ_V1
     // KERNEL_CONTEXT_PERSONA_FROM_STATE_V1
     const personaId = (input.state as { personaId?: string } | undefined)?.personaId;
@@ -186,9 +188,7 @@ export class ConversationAgent extends AbstractAgent {
     const automationBindingPromise = (async () => {
       try {
         const { AutomationThreads } = await import("./automation-thread.ts");
-        const tenantId = this.service.tenantService
-          ? await this.service.tenantService.tenantIdFor(this.owner)
-          : "default";
+        const tenantId = requestTenant ?? (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
         const link = await new AutomationThreads(this.service.db).get(
           { tenantId, actorId: this.owner },
           input.threadId,
@@ -237,9 +237,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           const { kernelContextSchema, UserAuthor } = await import(
             "../kernel/index.ts"
           );
-          const tenantId = svc.tenantService
-            ? await svc.tenantService.tenantIdFor(owner)
-            : "default";
+          const tenantId = requestTenant ?? (await svc.tenantService?.tenantIdFor(owner)) ?? "default";
           // CONVERSATION_PERSONA_V1 - si el frontend manda roleId y existe una
           // persona con ese id, se usa como personaId. Si no, el turno se abre
           // sin persona (comportamiento actual).
@@ -388,9 +386,9 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
     this.owner,
     `chat:${requestKey}`,
     {},
-    this.service.tenantService
-      ? this.service.tenantService.tenantIdFor(this.owner)
-      : Promise.resolve("default"),
+    requestTenant
+      ? Promise.resolve(requestTenant)
+      : this.service.tenantService?.tenantIdFor(this.owner) ?? Promise.resolve("default"),
   ),
       defineTool({
         name: "search_mail",
@@ -750,7 +748,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           "Explica el dia anterior con registros reales de esta empresa: trabajos, revisiones, recibos e incidencias, citando ids, estados y horas. No inventa: si no hay registros lo dice. No cambia nada.",
         parameters: z.object({ day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }),
         execute: async ({ day }) => {
-          const tenantId = await this.service.tenantService?.tenantIdFor(this.owner);
+          const tenantId = requestTenant ?? (await this.service.tenantService?.tenantIdFor(this.owner));
           if (!tenantId) return { error: "No hay una empresa resuelta para explicar el dia" };
           const target = day ?? new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
           const [tasks, actions] = await Promise.all([
@@ -844,9 +842,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // TAKE_FOR_TENANT_TENANTID_V1 — resuelve tenantId real y consume un
         // intento antes de cualquier trabajo de LLM. En clone-por-cliente
         // tenantId="default"; en shared, el real.
-        const tenantIdForRate = this.service.tenantService
-          ? await this.service.tenantService.tenantIdFor(this.owner).catch(() => "default")
-          : "default";
+        const tenantIdForRate = requestTenant ?? (await this.service.tenantService?.tenantIdFor(this.owner).catch(() => "default")) ?? "default";
         // CHAT_RATE_LIMIT_PUBLIC_V1 - AgentService expone checkTenantRateLimit, no
         // el limiter privado. Mismos limites que el limiter compartido (500/hora).
         const rateVerdict = await this.service.checkTenantRateLimit(
@@ -1048,7 +1044,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         let chatModelChain: string[] = modelChain(this.config);
         try {
           if (this.service.kernel) {
-            const tenantId = (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
+            const tenantId = requestTenant ?? (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
             // CONV_CTX_FOR_CHAIN_V1 - mismo problema de unknown.
             const ctxForChain: import("../kernel/index.ts").KernelContext =
               (kernelCtx as import("../kernel/index.ts").KernelContext | undefined) ??
@@ -1094,7 +1090,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // FIX 24 - cuota antes de inferir: tokens, coste y velocidad.
         if (this.service.guardrails) {
           try {
-            const tenantIdForQuota = (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
+            const tenantIdForQuota = requestTenant ?? (await this.service.tenantService?.tenantIdFor(this.owner)) ?? "default";
             const usage = await this.service.db.list<{ date: string; speed?: string; inputTokens?: number; outputTokens?: number; costEur?: number }>(this.owner, "llm-usage");
             const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
             const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();

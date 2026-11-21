@@ -47,7 +47,7 @@ import { UserService } from "./users.ts";
 import { authRoutes } from "./auth-routes.ts";
 import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
-import { threadRoutes } from "./threads-routes.ts";
+import { threadBelongsToTenant, threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
 import { PersonaRegistry, bootstrapPersonas } from "./engine/agents/personas/index.ts";
 import { loadInstalledPersonas } from "./kernel/personas-bootstrap.ts";
@@ -1184,6 +1184,32 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     await browser.input(c.get("owner"), c.req.param("id"), await c.req.json());
     return c.json({ ok: true });
   });
+  const conversationRunSchema = z.object({
+    threadId: z.string().min(1).max(200),
+    runId: z.string().min(1).max(200),
+    state: z.object({
+      roleId: z.string().min(1).max(200).optional(),
+      personaId: z.string().min(1).max(200).optional(),
+    }).optional(),
+  });
+  async function authorizeConversationThread(owner: string, threadId: string): Promise<void> {
+    const scope = currentTenantScope();
+    if (!scope || scope.actorId !== owner) throw new AppError("Authenticated conversation scope required", 403);
+
+    const resolvePrimary = async () => (await tenantService.resolveStrict(owner)).tenantId;
+    const thread = await db.get<{ tenantId?: string }>(owner, "threads", threadId);
+    if (thread) {
+      if (await threadBelongsToTenant(thread, scope.tenantId, resolvePrimary)) return;
+    } else {
+      // Older clients open their main thread through the conversation settings.
+      const scoped = await db.get<{ threadId: string }>(owner, "conversation-settings", `main:${scope.tenantId}`);
+      if (scoped?.threadId === threadId) return;
+      const legacy = await db.get<{ threadId: string; tenantId?: string }>(owner, "conversation-settings", "main");
+      if (legacy?.threadId === threadId && await threadBelongsToTenant(legacy, scope.tenantId, resolvePrimary)) return;
+    }
+    throw new AppError("Thread not found", 404);
+  }
+
   app.all("/api/copilotkit/*", async (c) => {
     if (!agentConfigured(config) && !cognitionV2?.enabledForRequest())
       throw new AppError(
@@ -1193,6 +1219,19 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     const target = new URL(c.req.url);
     if (target.pathname.replace(/\/$/, "") === "/api/copilotkit/run")
       target.pathname = "/api/copilotkit/agent/default/run";
+    const [resource, , operation] = target.pathname.split("/").filter(Boolean).slice(-3);
+    if (c.req.method === "POST" && resource === "agent" && operation === "run") {
+      const { threadId, state } = conversationRunSchema.parse(await c.req.raw.clone().json().catch(() => null));
+      const owner = c.get("owner");
+      await authorizeConversationThread(owner, threadId);
+      if (state?.personaId !== undefined && state.personaId !== state.roleId) {
+        throw new AppError("Select an active chat role", 403);
+      }
+      if (state?.roleId !== undefined) {
+        const role = await agent.db.get<{ active?: boolean }>(owner, "agent-roles", state.roleId);
+        if (role?.active !== true) throw new AppError("Chat role unavailable", 403);
+      }
+    }
     const request = target.href === c.req.url ? c.req.raw : new Request(target, c.req.raw);
     const response = await runtime.fetch(request);
     const encoder = new TextEncoder();

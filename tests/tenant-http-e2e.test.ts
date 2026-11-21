@@ -281,4 +281,28 @@ test("thread routes keep one actor's primary and secondary tenant histories sepa
   const secondaryMainId = await mainThread(secondaryToken);
   assert.notEqual(secondaryMainId, legacyMainId);
   assert.equal(await mainThread(secondaryToken), secondaryMainId);
+
+  const run = (token: string, threadId: string, state: object = {}, canonical = false) =>
+    server.app.request(canonical ? "/api/copilotkit/agent/default/run" : "/api/copilotkit/run", {
+      signal: AbortSignal.timeout(5000),
+      method: "POST",
+      headers: { ...headers(token), Accept: "text/event-stream" },
+      body: JSON.stringify({
+        threadId, runId: "tenant-thread-run", state, tools: [], context: [], forwardedProps: {},
+        messages: [{ id: "test-message", role: "user", content: "Hola" }],
+      }),
+    });
+
+  assert.equal((await run(aliceToken, id)).status, 404);
+  assert.equal((await run(aliceToken, id, {}, true)).status, 404);
+  assert.equal((await run(secondaryToken, legacyMainId)).status, 404);
+  assert.equal((await run(secondaryToken, id, { roleId: "missing-role" })).status, 403);
+  assert.equal((await run(secondaryToken, id, { personaId: "missing-persona" })).status, 403);
+  const accepted = await run(secondaryToken, id);
+  assert.equal(accepted.status, 200);
+  assert.match(accepted.headers.get("content-type") ?? "", /text\/event-stream/);
+  const reader = accepted.body!.getReader();
+  const firstEvent = await reader.read();
+  assert.match(new TextDecoder().decode(firstEvent.value), /RUN_STARTED/);
+  await reader.cancel();
 });
