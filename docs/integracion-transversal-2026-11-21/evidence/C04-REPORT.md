@@ -60,3 +60,9 @@ La prueba HTTP comprueba que un archivo registrado para el mismo actor en otro t
 El coordinador pasa el rol autorizado de la sesión a Fast. Antes de iniciar inferencia, el adaptador verifica la identidad, el hilo del actor y su tenant, y el snapshot que autorizó la sesión. Construye la entrada con el mismo historial persistido y los mismos límites que el chat HTTP. Un hilo de otra empresa se rechaza antes de que el runtime reciba texto. Las pruebas sintéticas verifican el historial y el rol, además de conservar la cancelación cuando el consumidor rechaza una salida.
 
 El adaptador es interno. Sigue pendiente consolidar las transcripciones y respuestas de voz como mensajes del hilo tras validar el epoch y el fence en la transacción de cierre. También quedan pendientes el cableado HTTP, vídeo y las pruebas con proveedores. No se habilitaron rutas nuevas ni se usaron credenciales.
+
+## Noveno incremento · Cierre de voz en el historial del chat
+
+El coordinador acepta `saveToThread` como consentimiento explícito para conservar el texto de los turnos completados. Los consentimientos anteriores conservan su comportamiento. Una sesión con guardado exige un hilo etiquetado con el tenant activo. Al completar el turno se vuelven a verificar identidad, consentimiento, snapshot, epoch, lease y fence. La transcripción final, la respuesta, la actualización de sesión y el recibo del coordinador se confirman en la misma transacción. Los IDs derivados del turno y el fence evitan duplicados. El recibo del coordinador representa cierre de texto, no reproducción de audio.
+
+Las pruebas cubren el rechazo de un hilo de otra empresa, la ausencia de escritura tras interrupción, la continuidad con un turno previo de texto, el replay y el rollback al alcanzar el límite del historial. El coordinador sigue siendo interno. Quedan pendientes su montaje HTTP, vídeo y la comprobación con proveedores.

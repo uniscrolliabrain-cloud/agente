@@ -67,7 +67,8 @@ test("C13 concurrent renderer is fenced and late text after barge-in is rejected
     } };
     const coordinator = new VoiceTurnCoordinator(db, context, authority, provider);
     const snapshot = await context.getSnapshot(identity, { query: "", maxTokens: 1000, maxRefs: 5 });
-    const consent = await coordinator.grantConsent(identity, { transcript: true, recording: false, purpose: "conversation" });
+    await db.put("alice", "threads", { id: "thread", tenantId: "A", title: "Chat", updatedAt: new Date().toISOString() });
+    const consent = await coordinator.grantConsent(identity, { transcript: true, recording: false, purpose: "conversation", saveToThread: true });
     const session = await coordinator.create(identity, { agentId: "laia", roleId: "employee", threadId: "thread", consentReceiptId: consent.id, contextSnapshotId: snapshot.id });
     const turn = (await coordinator.acceptTranscript(identity, session.sessionId, { utteranceId: "u", revision: 1, status: "final", text: "hola" }))!;
     let delivered = false;
@@ -78,6 +79,7 @@ test("C13 concurrent renderer is fenced and late text after barge-in is rejected
     assert.equal(interrupted.epoch, 1);
     release(); await assert.rejects(render, /VOICE_STALE_EPOCH/);
     assert.equal(delivered, false);
+    assert.equal(await db.get("alice", "conversations", "thread"), null);
     const [stored] = await db.rawQuery<{ data: { state: string } }>("SELECT data FROM cognition_v2_voice_turns WHERE tenant=$1 AND id=$2", ["A", turn.turnId]);
     assert.equal(stored.data.state, "interrupted");
   } finally { await db.close(); }
@@ -140,6 +142,58 @@ test("C13 Fast voice adapter reuses the shared runtime and cancels subscription 
     await assert.rejects(adapter.stream(identity, input, signal, async () => { throw Error("stale epoch"); }), /VOICE_OUTPUT_REJECTED/);
     assert.equal(called, 1);
     assert.equal(stopped, 1);
+  } finally {
+    await db.close();
+  }
+});
+
+test("voice writes only a completed, explicitly consented turn to the authorized chat history", async () => {
+  const db = await createStore();
+  try {
+    await installCognitionV2(db);
+    await installVoiceV2(db);
+    const context = new ContextServingFacade(new CognitiveProjectionStore(db), { authorize: async () => true });
+    const coordinator = new VoiceTurnCoordinator(db, context, authority, fast);
+    const snapshot = await context.getSnapshot(identity, { query: "", maxTokens: 1000, maxRefs: 5 });
+    const consent = await coordinator.grantConsent(identity, {
+      transcript: true, recording: false, purpose: "conversation", saveToThread: true,
+    });
+    const threadId = "common";
+    const previous = { id: "text", role: "user", content: "Turno anterior" };
+    const thread = { title: "Chat", updatedAt: new Date().toISOString(), messageCount: 1 };
+    await db.put("alice", "threads", { ...thread, id: threadId, tenantId: "A" });
+    await db.put("alice", "threads", { ...thread, id: "foreign", tenantId: "B" });
+    await db.put("alice", "conversations", { id: threadId, messages: [previous] });
+    const request = { agentId: "laia", roleId: "employee", threadId, consentReceiptId: consent.id, contextSnapshotId: snapshot.id };
+    await assert.rejects(coordinator.create(identity, { ...request, threadId: "foreign" }), /Thread not found/);
+    const session = await coordinator.create(identity, request);
+    const final = { utteranceId: "voice", revision: 1, status: "final", text: "Turno de voz" };
+    const turn = (await coordinator.acceptTranscript(identity, session.sessionId, final))!;
+    const readHistory = async () => (await db.get<{ messages: unknown[] }>("alice", "conversations", threadId))?.messages;
+    assert.deepEqual(await readHistory(), [previous]);
+    const render = () => coordinator.renderTurn(identity, session.sessionId, turn.turnId, final.text, new AbortController().signal, async () => {});
+    assert.equal((await render()).state, "completed");
+    const history = await readHistory();
+    assert.equal(history?.length, 3);
+    assert.deepEqual(history?.[0], previous);
+    assert.match(JSON.stringify(history?.[1]), /Turno de voz/);
+    assert.match(JSON.stringify(history?.[2]), /Respuesta factual/);
+    await assert.rejects(render(), /VOICE_TURN_INVALID/);
+    assert.deepEqual(await readHistory(), history);
+
+    const full = Array.from({ length: 999 }, (_, i) => ({ id: `filled-${i}`, role: "user", content: "Texto" }));
+    await db.put("alice", "conversations", { id: threadId, messages: full });
+    const overflow = (await coordinator.acceptTranscript(identity, session.sessionId, { ...final, utteranceId: "overflow" }))!;
+    await assert.rejects(
+      coordinator.renderTurn(identity, session.sessionId, overflow.turnId, final.text, new AbortController().signal, async () => {}),
+      /Thread message limit reached/,
+    );
+    assert.deepEqual(await readHistory(), full);
+    const [failed] = await db.rawQuery<{ data: { state: string; receiptId?: string } }>(
+      "SELECT data FROM cognition_v2_voice_turns WHERE tenant=$1 AND id=$2", ["A", overflow.turnId],
+    );
+    assert.equal(failed.data.state, "failed");
+    assert.equal(failed.data.receiptId, undefined);
   } finally {
     await db.close();
   }
