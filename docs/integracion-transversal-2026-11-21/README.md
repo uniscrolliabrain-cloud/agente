@@ -34,3 +34,7 @@ Reconstruir **con evidencia actual** todas las ramas, PRs, commits, código, tes
 - `docs/audits/mobile-chat-sheet/` (rama móvil)
 - `docs/08-auditorias/avatar-voz-scaffold-2026-11-11.md` (rama avatar)
 - `docs/auditoria-integral-30-angulos/03-harness-conversacional/campanas-redisenio-v2/C13-ANAM-AVATAR-VOZ-REALTIME-INTERRUPCIONES-SESIONES.md`
+
+## Auditoría complementaria y actualización de documentación
+
+Leer también [06 — Auditoría de integración y vigencia documental](06-AUDIT-RECOMENDACIONES-Y-VIGENCIA-DOCS.md). Añade recomendaciones para C04–C10 y un plan D00–D04 para clasificar, encabezar y actualizar la documentación de `main` mediante PRs revisables. La existencia del plan no implica que los archivos de `main` ya estén actualizados.
