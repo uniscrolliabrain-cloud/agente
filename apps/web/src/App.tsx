@@ -13,7 +13,6 @@ import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
 import CommandCenterView from "./components/CommandCenterView";
 import Login from "./components/Login";
-import Landing from "./landing/Landing";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
@@ -113,14 +112,14 @@ export default function App() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!auth.isAuthenticated || !(e.metaKey || e.ctrlKey)) return;
+      if (!(e.metaKey || e.ctrlKey)) return;
       const k = e.key.toLowerCase();
       if (k === "k") { e.preventDefault(); setPaletteOpen((v) => !v); }
       if (k === "n") { e.preventDefault(); setView("chat"); void threads.createNew(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [auth.isAuthenticated, threads.createNew]);
+  }, [threads.createNew]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) return;
@@ -154,7 +153,6 @@ export default function App() {
   }
 
   if (!auth.isAuthenticated) {
-    if (new URLSearchParams(window.location.search).get("acceso") !== "1") return <Landing />;
     return <Login onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />;
   }
 

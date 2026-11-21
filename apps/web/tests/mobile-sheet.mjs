@@ -1,8 +1,5 @@
 import assert from "node:assert/strict";
 
-const loginUrl = new URL(process.env.SHEET_TEST_URL ?? "http://127.0.0.1:5173/");
-loginUrl.searchParams.set("acceso", "1");
-
 const endpoint = process.env.SHEET_CDP_URL ?? "http://127.0.0.1:9222";
 const target = await (await fetch(new URL("/json/new?about:blank", endpoint), { method: "PUT" })).json();
 const ws = new WebSocket(target.webSocketDebuggerUrl);
@@ -72,7 +69,7 @@ async function verifyComposer(surface, visualBounds) {
 try {
   await call("Emulation.setDeviceMetricsOverride", { mobile: true, width: 393, height: 740, deviceScaleFactor: 2 });
   await call("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
-  await call("Page.navigate", { url: loginUrl.href });
+  await call("Page.navigate", { url: process.env.SHEET_TEST_URL ?? "http://127.0.0.1:5173/" });
   await waitFor(".login-demo-btn, .chat-fab");
   await evaluate("document.querySelector('.login-demo-btn')?.click()");
   await waitFor(".chat-fab");
