@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+.agntia-landing {
+  --cream: #FDFBF7;
+  --line: #E8DFD2;
+  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  color: #111111;
+  color-scheme: light;
+  font-family: Manrope, system-ui, sans-serif;
+  line-height: 1.65;
+}
+
+.agntia-landing .serif { font-family: Fraunces, Georgia, serif; }
+.agntia-landing [id] { scroll-margin-top: 110px; }
+.agntia-landing .no-scrollbar { scrollbar-width: none; }
