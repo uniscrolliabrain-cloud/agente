@@ -48,7 +48,8 @@ import { authRoutes } from "./auth-routes.ts";
 import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
 import { buildConversationInput } from "./conversation-history.ts";
-import { threadBelongsToTenant, threadRoutes } from "./threads-routes.ts";
+import { withConversationTurnPersistence } from "./conversation-turn.ts";
+import { appendThreadMessages, threadBelongsToTenant, threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
 import { PersonaRegistry, bootstrapPersonas } from "./engine/agents/personas/index.ts";
 import { loadInstalledPersonas } from "./kernel/personas-bootstrap.ts";
@@ -1189,25 +1190,26 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     threadId: z.string().min(1).max(200),
     runId: z.string().min(1).max(200),
     messages: z.array(z.unknown()).min(1),
+    persistTurn: z.boolean().optional(),
     state: z.object({
       roleId: z.string().min(1).max(200).optional(),
       personaId: z.string().min(1).max(200).optional(),
     }).optional(),
   });
-  async function authorizeConversationThread(owner: string, threadId: string): Promise<void> {
+  async function authorizeConversationThread(owner: string, threadId: string): Promise<boolean> {
     const scope = currentTenantScope();
     if (!scope || scope.actorId !== owner) throw new AppError("Authenticated conversation scope required", 403);
 
     const resolvePrimary = async () => (await tenantService.resolveStrict(owner)).tenantId;
     const thread = await db.get<{ tenantId?: string }>(owner, "threads", threadId);
     if (thread) {
-      if (await threadBelongsToTenant(thread, scope.tenantId, resolvePrimary)) return;
+      if (await threadBelongsToTenant(thread, scope.tenantId, resolvePrimary)) return true;
     } else {
       // Older clients open their main thread through the conversation settings.
       const scoped = await db.get<{ threadId: string }>(owner, "conversation-settings", `main:${scope.tenantId}`);
-      if (scoped?.threadId === threadId) return;
+      if (scoped?.threadId === threadId) return false;
       const legacy = await db.get<{ threadId: string; tenantId?: string }>(owner, "conversation-settings", "main");
-      if (legacy?.threadId === threadId && await threadBelongsToTenant(legacy, scope.tenantId, resolvePrimary)) return;
+      if (legacy?.threadId === threadId && await threadBelongsToTenant(legacy, scope.tenantId, resolvePrimary)) return false;
     }
     throw new AppError("Thread not found", 404);
   }
@@ -1223,11 +1225,12 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
       target.pathname = "/api/copilotkit/agent/default/run";
     const [resource, , operation] = target.pathname.split("/").filter(Boolean).slice(-3);
     let request: Request;
+    let persist: Parameters<typeof withConversationTurnPersistence>[0] | undefined;
     if (c.req.method === "POST" && resource === "agent" && operation === "run") {
       const body = await c.req.json().catch(() => null);
-      const { threadId, state, messages } = conversationRunSchema.parse(body);
+      const { threadId, state, messages, persistTurn } = conversationRunSchema.parse(body);
       const owner = c.get("owner");
-      await authorizeConversationThread(owner, threadId);
+      const managedThread = await authorizeConversationThread(owner, threadId);
       if (state?.personaId !== undefined && state.personaId !== state.roleId) {
         throw new AppError("Select an active chat role", 403);
       }
@@ -1236,19 +1239,33 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         if (role?.active !== true) throw new AppError("Chat role unavailable", 403);
       }
       const stored = await db.get<{ messages?: unknown[] }>(owner, "conversations", threadId);
+      const input = buildConversationInput(stored?.messages ?? [], messages);
+      if (persistTurn && managedThread && config.agentBackend !== "agui" && cognitionV2?.enabledForRequest()) {
+        const scope = currentTenantScope()!;
+        const user = { ...input.at(-1)!, timestamp: new Date().toISOString() };
+        persist = async (assistant) => {
+          await runInTenantScope(scope, () => appendThreadMessages(db, tenantService, owner, threadId, [
+            user,
+            { ...assistant, role: "assistant" },
+          ], true));
+        };
+      }
+      const { persistTurn: _persistTurn, ...runBody } = body;
       const headers = new Headers(c.req.raw.headers);
       headers.delete("content-length");
       headers.set("content-type", "application/json");
       request = new Request(target, {
         method: c.req.method,
         headers,
-        body: JSON.stringify({ ...body, messages: buildConversationInput(stored?.messages ?? [], messages) }),
+        body: JSON.stringify({ ...runBody, messages: input }),
         signal: c.req.raw.signal,
       });
     } else {
       request = target.href === c.req.url ? c.req.raw : new Request(target, c.req.raw);
     }
-    const response = await runtime.fetch(request);
+    const response = persist
+      ? await withConversationTurnPersistence(persist, () => runtime.fetch(request))
+      : await runtime.fetch(request);
     const encoder = new TextEncoder();
     const body = response.body?.pipeThrough(
       new TransformStream({
@@ -1257,7 +1274,10 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         },
       }),
     );
-    return new Response(body, { status: response.status, headers: response.headers });
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.delete("X-Conversation-Persistence");
+    if (persist) responseHeaders.set("X-Conversation-Persistence", "server");
+    return new Response(body, { status: response.status, headers: responseHeaders });
   });
   const here = dirname(fileURLToPath(import.meta.url));
   const webDist = [

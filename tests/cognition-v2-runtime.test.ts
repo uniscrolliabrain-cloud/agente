@@ -9,6 +9,7 @@ import { TenantService } from "../apps/server/src/engine/tenant.ts";
 import { testConfig } from "./helpers/config.ts";
 import { CognitionV2Runtime } from "../apps/server/src/engine/cognition/v2/runtime.ts";
 import { installCognitionV2 } from "../apps/server/src/engine/cognition/v2/storage.ts";
+import { withConversationTurnPersistence } from "../apps/server/src/conversation-turn.ts";
 import { TenantScopedStore } from "../apps/server/src/db-tenant.ts";
 import { currentTenantScope, runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import { record } from "./fixtures/cognition-v2/record.ts";
@@ -66,8 +67,15 @@ test("C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipt
     assert.equal((await collect(runInTenantScope({ tenantId: "A", actorId: "alice" }, () => runtime.chat("alice", large)))).at(-1)?.type, EventType.RUN_ERROR);
     const ack = runtime.ledger.ack.bind(runtime.ledger);
     runtime.ledger.ack = async () => false;
-    const failedAck = await collect(runInTenantScope({ tenantId: "A", actorId: "alice" }, () => runtime.chat("alice", input())));
+    const failedAck = await collect(runInTenantScope({ tenantId: "A", actorId: "alice" }, () =>
+      withConversationTurnPersistence(
+        async (assistant) => { await db.put("alice", "test-turns", { ...assistant, id: "pending" }); },
+        () => runtime.chat("alice", input()),
+      ),
+    ));
     assert.equal(failedAck.at(-1)?.type, EventType.RUN_ERROR);
+    assert.ok(failedAck.every((event) => event.type !== EventType.CUSTOM));
+    assert.equal(await db.get("alice", "test-turns", "pending"), null, "failed ACK rolls back the turn write");
     assert.equal((await db.rawQuery("SELECT id FROM cognition_v2_chat_runs WHERE tenant='A' AND state='completed'")).length,10,"failed ACK rolls back completion receipt");
     const [failed] = await db.rawQuery<{response:string|null;receipt_id:string|null}>("SELECT response,receipt_id FROM cognition_v2_chat_runs WHERE tenant='A' AND state='failed'");
     assert.equal(failed.response,null); assert.equal(failed.receipt_id,null);

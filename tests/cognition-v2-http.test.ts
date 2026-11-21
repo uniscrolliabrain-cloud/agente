@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { EventType } from "@ag-ui/core";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -31,6 +32,44 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     const accepted = await request("/working", alice.token, "POST", { body: "Dato sintético para el análisis; cualquier conclusión será una hipótesis." });
     assert.equal(accepted.status, 202);
     const runtime = server.agent.cognitionV2!; assert.ok(runtime);
+    const chatHeaders = { Authorization: `Bearer ${alice.token}`, "Content-Type": "application/json" };
+    const createThread = await server.app.request("/api/threads", { method: "POST", headers: chatHeaders, body: "{}" });
+    assert.equal(createThread.status, 201);
+    const { id: chatThread } = await createThread.json();
+    runtime.provider.stream = async (_input, _prompt, _profile, _signal, emit) => {
+      emit({ type: EventType.TEXT_MESSAGE_START, messageId: "fixture", role: "assistant" });
+      emit({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: "fixture", delta: "Respuesta de prueba" });
+      emit({ type: EventType.TEXT_MESSAGE_END, messageId: "fixture" });
+      return "Respuesta de prueba";
+    };
+    const chat = (id: string) => server!.app.request("/api/copilotkit/run", {
+      method: "POST", headers: { ...chatHeaders, Accept: "text/event-stream" },
+      body: JSON.stringify({
+        threadId: chatThread, runId: id, persistTurn: true, state: {}, tools: [], context: [],
+        messages: [{ id, role: "user", content: "Hola" }],
+      }),
+    });
+    const completedChat = await chat("first-turn");
+    assert.equal(completedChat.status, 200);
+    assert.equal(completedChat.headers.get("X-Conversation-Persistence"), "server");
+    const stream = await completedChat.text();
+    assert.match(stream, /conversation\.turn\.persisted/);
+    assert.match(stream, /RUN_FINISHED/);
+    const readChat = async () => (await server!.app.request(`/api/threads/${chatThread}`, { headers: chatHeaders })).json();
+    const stored = await readChat();
+    assert.deepEqual(stored.messages.map((message: { role: string; content: string }) => [message.role, message.content]),
+      [["user", "Hola"], ["assistant", "Respuesta de prueba"]]);
+    assert.equal((await chat("first-turn")).status, 409);
+
+    const fullHistory = Array.from({ length: 999 }, (_, id) => ({ id: `seed-${id}`, role: "user", content: "Semilla" }));
+    await db.put(alice.id, "conversations", { id: chatThread, messages: fullHistory });
+    const failedStream = await (await chat("overflow-turn")).text();
+    assert.match(failedStream, /RUN_ERROR/);
+    assert.doesNotMatch(failedStream, /conversation\.turn\.persisted|RUN_FINISHED/);
+    assert.deepEqual((await readChat()).messages, fullHistory);
+    const completedRuns = await db.rawQuery("SELECT id FROM cognition_v2_chat_runs WHERE state='completed'");
+    assert.equal(completedRuns.length, 1);
+
     await runtime.projector.tick("tenant-a");
     const snapshotResponse = await request("/snapshots", alice.token, "POST", { query: "análisis", maxTokens: 4000, maxRefs: 10 });
     assert.equal(snapshotResponse.status, 200);

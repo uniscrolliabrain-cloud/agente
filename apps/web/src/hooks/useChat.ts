@@ -90,12 +90,14 @@ export function useChat(
       let assistantText = "";
       let localTools: ToolCall[] = [];
       let runErrorMessage: string | null = null;
+      let persistedAssistant: ChatMessage | undefined;
 
       try {
         await streamChat(
           {
             threadId,
             runId: uid(),
+            persistTurn: !attachment,
             ...(roleId ? { roleId } : {}),
             messages: [{ id: userMsg.id, role: userMsg.role, content: llmContent }],
           },
@@ -125,6 +127,11 @@ export function useChat(
                 at,
               });
               setTools([...localTools]);
+            } else if (event.type === "CUSTOM" && event.name === "conversation.turn.persisted") {
+              const value = event.value as Partial<ChatMessage> | undefined;
+              if (typeof value?.id === "string" && typeof value.content === "string" && typeof value.timestamp === "string") {
+                persistedAssistant = { id: value.id, role: "assistant", content: value.content, timestamp: value.timestamp };
+              }
             } else if (event.type === "RUN_ERROR") {
               runErrorMessage = String(event.message ?? "Error del modelo");
             }
@@ -132,12 +139,12 @@ export function useChat(
           controller.signal,
         );
 
-        if (runErrorMessage && !assistantText.trim()) {
+        if (runErrorMessage) {
           setError(runErrorMessage);
           return;
         }
 
-        const finalAssistant: ChatMessage = {
+        const finalAssistant: ChatMessage = persistedAssistant ?? {
           id: uid(),
           role: "assistant",
           content: assistantText.trim() || "(sin respuesta)",
@@ -148,6 +155,10 @@ export function useChat(
         setMessages(finalHistory);
         setStreamBuf("");
         setTools([]);
+        if (persistedAssistant) {
+          onSaved?.(threadId);
+          return;
+        }
         try {
           await appendThreadMessages(
             threadId,

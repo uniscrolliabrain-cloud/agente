@@ -11,6 +11,7 @@ export interface RunInput {
    * `objetivo` del rol al prompt. Omitirlo deja el comportamiento de siempre.
    */
   roleId?: string;
+  persistTurn?: boolean;
 }
 
 export interface AgUiEvent {
@@ -48,6 +49,7 @@ export async function streamChat(
     body: JSON.stringify({
       threadId: input.threadId,
       runId: input.runId,
+      ...(input.persistTurn ? { persistTurn: true } : {}),
       messages: input.messages,
       tools: [],
       context: [],
@@ -71,6 +73,9 @@ export async function streamChat(
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
+  const serverPersistence = res.headers.get("X-Conversation-Persistence") === "server";
+  let persistenceConfirmed = false;
+  let runFailed = false;
 
   try {
     while (true) {
@@ -88,12 +93,21 @@ export async function streamChat(
           const payload = line.slice(5).trim();
           if (!payload || payload === "[DONE]") continue;
           try {
-            onEvent(JSON.parse(payload) as AgUiEvent);
+            const event = JSON.parse(payload) as AgUiEvent;
+            if (event.type === "CUSTOM" && event.name === "conversation.turn.persisted") {
+              if (!serverPersistence) continue;
+              persistenceConfirmed = true;
+            }
+            if (event.type === "RUN_ERROR") runFailed = true;
+            onEvent(event);
           } catch {
             /* ignorar payloads no-JSON */
           }
         }
       }
+    }
+    if (serverPersistence && !persistenceConfirmed && !runFailed) {
+      throw new Error("La conexión se cerró antes de confirmar el guardado.");
     }
   } finally {
     reader.releaseLock();

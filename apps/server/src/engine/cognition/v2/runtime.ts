@@ -5,6 +5,7 @@ import { Observable } from "rxjs";
 import { EventType, type BaseEvent, type RunAgentInput } from "@ag-ui/core";
 import type { Store } from "../../../db.ts";
 import type { TenantScopedStore } from "../../../db-tenant.ts";
+import { currentConversationTurnPersistence } from "../../../conversation-turn.ts";
 import { currentTenantScope, runInTenantScope } from "../../../tenant-scope.ts";
 import type { TenantService } from "../../tenant.ts";
 import { agentRoleSchema } from "../../../../../../packages/domain/src/agent.ts";
@@ -99,6 +100,7 @@ export class CognitionV2Runtime {
 
   chat(owner: string, input: RunAgentInput): Observable<BaseEvent> {
     const scope = currentTenantScope();
+    const persistTurn = currentConversationTurnPersistence();
     return new Observable<BaseEvent>((subscriber) => {
       const controller = new AbortController();
       let ended = false;
@@ -177,15 +179,25 @@ export class CognitionV2Runtime {
           await this.context.assertAuthorized(identity);
           await assertRoleCurrent();
           const receiptId = randomUUID();
+          const assistant = {
+            id: receiptId,
+            content: response.trim() || "(sin respuesta)",
+            timestamp: new Date().toISOString(),
+          };
           // A durable server-consumer receipt and its card ACKs commit together.
           // This does not claim browser reception or media playback.
           await this.db.transaction(async () => {
+            controller.signal.throwIfAborted();
+            if (persistTurn) await persistTurn(assistant);
+            controller.signal.throwIfAborted();
             await this.db.rawQuery(`UPDATE cognition_v2_chat_runs SET state='completed',response=$3,receipt_id=$4 WHERE tenant=$1 AND id=$2`, [identity.tenantId, key, response, receiptId]);
             for (const lease of deliveries) {
               if (!await this.ledger.ack(identity, lease.id, lease.fence, receiptId)) throw Error("DELIVERY_ACK_UNAVAILABLE");
             }
+            controller.signal.throwIfAborted();
           });
           ended = true;
+          if (persistTurn) subscriber.next({ type: EventType.CUSTOM, name: "conversation.turn.persisted", value: assistant });
           subscriber.next({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId }); subscriber.complete();
         } catch {
           if (accepted && scope) await this.db.rawQuery(`UPDATE cognition_v2_chat_runs SET state=$3 WHERE tenant=$1 AND id=$2 AND state<>'completed'`,
