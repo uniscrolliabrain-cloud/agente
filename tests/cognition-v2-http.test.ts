@@ -83,6 +83,19 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     const voice = (path: string, method: string, body?: unknown) => server!.app.request(`/api/cognition-v2/voice${path}`, {
       method, headers: chatHeaders, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
+    const capabilities = await voice("/capabilities/laia", "GET");
+    assert.equal(capabilities.status, 200);
+    const media = await capabilities.json();
+    assert.equal(media.roleId, "laia");
+    assert.equal(media.displayName, "Laia");
+    assert.equal(typeof media.channels.voice, "boolean");
+    assert.equal(typeof media.channels.video, "boolean");
+    assert.equal(JSON.stringify(media).includes("API_KEY"), false);
+    assert.equal((await voice("/capabilities/unknown-role", "GET")).status, 403);
+    const foreignCapabilities = await server.app.request("/api/cognition-v2/voice/capabilities/laia", {
+      headers: { ...chatHeaders, Authorization: `Bearer ${bob.token}` },
+    });
+    assert.equal(foreignCapabilities.status, 403);
     const consent = await voice("/consents", "POST", {
       transcript: true, recording: false, purpose: "conversation", saveToThread: true,
     });
@@ -98,6 +111,14 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     const transcript = (sessionId: string, text: string, status = "final") =>
       voice(`/sessions/${sessionId}/transcripts`, "POST", { utteranceId: text, revision: 1, status, text });
     const voiceId = await startSession("voice");
+    const ownSession = await voice(`/sessions/${voiceId}`, "GET");
+    assert.equal(ownSession.status, 200);
+    assert.equal((await ownSession.json()).session.threadId, chatThread);
+    const foreignSession = await server.app.request(`/api/cognition-v2/voice/sessions/${voiceId}`, {
+      headers: { ...chatHeaders, Authorization: `Bearer ${bob.token}` },
+    });
+    assert.equal(foreignSession.status, 404);
+    assert.equal((await voice("/sessions/unknown-id", "GET")).status, 404);
     assert.equal((await transcript(voiceId, "borrador", "partial")).status, 204);
     assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
     assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
