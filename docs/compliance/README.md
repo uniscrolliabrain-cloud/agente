@@ -56,3 +56,7 @@ RGPD Reglamento (UE) 2016/679, artículos 5, 6, 12–22, 25, 28, 30, 32–35, 44
 ## Benchmark de estándar profesional
 - [09 — Benchmark OpenAI, Meta, Gemini, Claude y Grok; 6 campañas complementarias C07–C12](09-BENCHMARK-ESTANDAR-PRO-OPENAI-META-GEMINI-CLAUDE-GROK.md)
 - Principio: políticas públicas + controles reales en producto + evidencias verificables. Las campañas C07–C12 amplían, no reemplazan, las seis campañas originales.
+
+## Copy legal integral — borradores ampliados (2026-11-21)
+- [Copy de los seis documentos, microcopy UX y matriz de aprobación](COPY-LEGAL-PUBLICACION-Y-VALIDACION.md).
+- Se ampliaron `apps/site/{aviso-legal,privacidad,cookies,terminos,transparencia-ia,confianza}.html` con secciones detalladas. Permanecen en `draft`, `noindex`, con campos por validar. **El bloqueo de release debe mantenerse** hasta revisión jurídica y datos verificados.
