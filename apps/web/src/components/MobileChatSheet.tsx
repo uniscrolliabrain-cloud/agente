@@ -211,8 +211,8 @@ export default function MobileChatSheet({
       aria-label="Chat con tu agente"
     >
       <div className="mobile-sheet-bar">
-        <button type="button" className="side-chat-icon" onClick={onClose} aria-label="Cerrar chat">
-          <X size={16} />
+        <button type="button" className="side-chat-icon" onClick={onOpenSettings} aria-label="Ajustes">
+          <Settings size={16} aria-hidden="true" />
         </button>
         <div
           ref={gripRef}
@@ -227,9 +227,6 @@ export default function MobileChatSheet({
           onKeyDown={onKeyDown}
         />
         <div className="mobile-sheet-actions">
-          <button type="button" className="side-chat-icon" onClick={onOpenSettings} aria-label="Ajustes">
-            <Settings size={15} />
-          </button>
           <button
             type="button"
             className="side-chat-icon"
@@ -237,7 +234,10 @@ export default function MobileChatSheet({
             aria-label="Abrir chat completo"
             title="Abrir chat completo"
           >
-            <Maximize2 size={14} />
+            <Maximize2 size={16} aria-hidden="true" />
+          </button>
+          <button type="button" className="side-chat-icon" onClick={onClose} aria-label="Cerrar chat">
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
       </div>

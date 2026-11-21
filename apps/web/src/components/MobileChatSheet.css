@@ -31,9 +31,9 @@
 .mobile-sheet-bar {
   position: relative;
   flex: 0 0 auto;
-  display: flex;
+  display: grid;
+  grid-template-columns: 90px minmax(44px, 1fr) 90px;
   align-items: center;
-  gap: 8px;
   padding: 8px 10px;
   background: var(--v2-bg-card);
   border-bottom: 1px solid var(--v2-border);
@@ -41,11 +41,11 @@
 }
 
 .mobile-sheet-bar .side-chat-icon {
-  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
 }
 
 .mobile-sheet-grip {
-  flex: 1 1 auto;
   min-width: 44px;
   min-height: 44px;
   display: grid;
@@ -69,7 +69,6 @@
 }
 
 .mobile-sheet-actions {
-  flex: 0 0 auto;
   display: flex;
   gap: 2px;
 }
