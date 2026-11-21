@@ -47,3 +47,10 @@ Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.t
 - En `authorizeAgent` se verifica el rol contra el esquema canónico y el ID exacto, además de `active: true`, evitando que un registro parcial con solo `active` autorice una sesión.
 - `9aacead3`: extendida la prueba HTTP existente `tests/cognition-v2-http.test.ts` con consulta de capacidades autorizadas, rol desconocido, acceso cross-tenant y consulta de sesión propia/ajena/inexistente.
 - **Verificación pendiente**: ejecutar test HTTP con la base compatible y el resto de la suite; estas pruebas se han escrito pero no se han ejecutado. No hay media real ni cambios en el consentimiento. Las sesiones JSON de C04 continúan siendo scaffolding, no una conexión de Anam.
+
+## Incremento P05.4 — Puerto de transporte multimedia simulado
+
+- `b49378a8`: añadido `engine/voice-v2/media-transport.ts` con puerto `open/interrupt/close` abortable y `MockMediaTransport` sin red, tokens, audio ni vídeo. Fencing monotónico por `epoch`; cierre idempotente.
+- `72d0b8ed`: añadidas pruebas `tests/voice-v2-media-transport.test.ts` para cancelación, rechazo de epochs obsoletos, cierre y sesiones terminales.
+- **No está conectado aún al coordinador HTTP**; es un puerto y doble de pruebas para futuras integraciones. No atribuir a este incremento reproducción, streaming ni integración de Anam/ElevenLabs.
+- Pendiente: ejecutar suite y typecheck, comprobar que las rutas usan únicamente sesiones autorizadas y definir el handoff de transportes de C06.
