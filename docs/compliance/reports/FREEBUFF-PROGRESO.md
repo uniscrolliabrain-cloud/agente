@@ -23,7 +23,10 @@ Inventario por clave en inventario/COOKIES-STORAGE.md y detalle técnico en el b
 Solicitud personal persistida en el Store por tenant y cuenta, validación estricta, deduplicación atómica y listado en Ajustes. CLI de operador con transiciones de estado atómicas. La revisión humana precede a cualquier actuación. Inventario de retención con dependencias de Postgres, RAG, eventos, auditoría, backups y proveedores.
 
 ## Fase 5. Gobernanza y conexiones
-Consulta de gobernanza restringida a la membership vigente con tenant.admin (owner en la matriz actual). Inventario de controles pendientes y enlace a políticas. El componente Google se comparte con Mi perfil y muestra permisos, atribución disponible, consecuencias y desconexión por API existente. Se desactiva agregación de scopes previos en la solicitud OAuth de conector. Los scopes amplios de escritura se mantienen por compatibilidad hasta validar el inventario de capacidades.
+Consulta de gobernanza restringida a la membership vigente con tenant.admin (owner en la matriz actual). Inventario de controles pendientes y enlace a políticas. El componente Google se comparte con Mi perfil y muestra permisos, atribución disponible, consecuencias y desconexión por API existente. WhatsApp muestra el proveedor y flujo de datos en su vista existente. Se desactiva agregación de scopes previos en la solicitud OAuth de conector. Los scopes amplios de escritura se mantienen por compatibilidad hasta validar el inventario de capacidades.
 
 ## Fase 6. Transparencia IA
 Aviso contextual accesible en chat completo, dock y sheet, con enlace a información recuperable. El compositor distingue dictado de conversación de voz. Inventario de voz, avatar, medios sintéticos, RRHH y supervisión. Los avisos hablados de telefonía y la etiqueta Anam quedan pendientes de verificar en canales operativos y ramas correspondientes.
+
+## Fase 7. Integración y QA
+Gate estático para metadatos, placeholders, noindex y enlaces locales. El modo release impide publicar los borradores desde el flujo de despliegue existente y el comando de release. Se añaden pruebas HTTP de identidad activa, idempotencia y permisos, y Playwright para escritorio/móvil. La matriz y el handoff recogen resultados y bloqueos.

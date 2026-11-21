@@ -33,10 +33,16 @@ export default function TenantGovernancePanel() {
     <section>
       <h3>Datos de mi empresa</h3>
       <dl className="governance-status">
-        <dt>Políticas</dt><dd><LegalExternalLink page="trust">Borradores y versiones</LegalExternalLink></dd>
-        <dt>DPA, subencargados y retención</dt><dd>Pendientes de revisión</dd>
-        <dt>Exportación de empresa</dt><dd>Próximamente</dd>
-        <dt>Incidentes y solicitudes de empresa</dt><dd>Revisión por la persona responsable de tu organización</dd>
+        <dt>Políticas</dt>
+        <dd>
+          <LegalExternalLink page="trust">Borradores y versiones</LegalExternalLink>
+        </dd>
+        <dt>DPA, subencargados y retención</dt>
+        <dd>Pendientes de revisión</dd>
+        <dt>Exportación de empresa</dt>
+        <dd>Próximamente</dd>
+        <dt>Incidentes y solicitudes de empresa</dt>
+        <dd>Revisión por la persona responsable de tu organización</dd>
       </dl>
     </section>
   );

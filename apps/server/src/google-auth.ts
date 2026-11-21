@@ -32,7 +32,8 @@ export interface GoogleConnection {
   /** true solo si el consentimiento incluye escritura. */
   write: boolean;
   generation: string | null;
-  authorizer: string | null;
+  authorizer: string;
+  authorizerRecorded: boolean;
   connectedAt: string | null;
 }
 
@@ -336,7 +337,8 @@ export class GoogleAuth {
       scopes: tokens.scopes,
       write: tokens.scopes.includes(WRITE_MARKER),
       generation: credential?.generation ?? null,
-      authorizer: tokens.authorizer ?? null,
+      authorizer: tokens.authorizer ?? owner,
+      authorizerRecorded: Boolean(tokens.authorizer),
       connectedAt: tokens.connectedAt ?? null,
     };
   }

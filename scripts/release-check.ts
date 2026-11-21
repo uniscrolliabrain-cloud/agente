@@ -5,6 +5,7 @@ import { execSync } from "node:child_process";
 
 // RELEASE_CHECK_EXTRA_V1 - checks ampliados.
 const checks: Array<{ name: string; cmd: string; fatal: boolean }> = [
+  { name: "legal-publication", cmd: "node scripts/check-legal-site.mjs --release", fatal: true },
   { name: "typecheck", cmd: "pnpm typecheck", fatal: true },
   { name: "tests", cmd: "pnpm test", fatal: true },
   { name: "tenant-isolation", cmd: "pnpm exec tsx --test tests/tenant-isolation.test.ts", fatal: true },

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
 import type { PrivacyRequest, PrivacyRequestType } from "@agente/domain/privacy";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../api/client";
 
 const labels: Record<PrivacyRequestType, string> = {
@@ -29,7 +29,9 @@ export default function PrivacyRequests({ demo }: { demo: boolean }) {
     const controller = new AbortController();
     void apiFetch<PrivacyRequest[]>(path, { signal: controller.signal })
       .then(setRequests)
-      .catch(() => { if (!controller.signal.aborted) setError("No se pudieron cargar las solicitudes."); });
+      .catch(() => {
+        if (!controller.signal.aborted) setError("No se pudieron cargar las solicitudes.");
+      });
     return () => controller.abort();
   }, [demo]);
 
@@ -56,12 +58,23 @@ export default function PrivacyRequests({ demo }: { demo: boolean }) {
     <>
       <section>
         <h3>Mis datos</h3>
-        <p>Registramos las solicitudes de esta cuenta para revisión humana. La eliminación puede estar limitada por obligaciones de conservación.</p>
-        {demo ? <p>Inicia sesión con tu cuenta para enviar solicitudes.</p> : (
+        <p>
+          Registramos las solicitudes de esta cuenta para revisión humana. La eliminación puede estar limitada por
+          obligaciones de conservación.
+        </p>
+        {demo ? (
+          <p>Inicia sesión con tu cuenta para enviar solicitudes.</p>
+        ) : (
           <div className="privacy-actions">
             {Object.entries(labels).map(([type, label]) => (
-              <button type="button" key={type} disabled={pending !== null || requests === null}
-                onClick={() => void request(type as PrivacyRequestType)}>{label}</button>
+              <button
+                type="button"
+                key={type}
+                disabled={pending !== null || requests === null}
+                onClick={() => void request(type as PrivacyRequestType)}
+              >
+                {label}
+              </button>
             ))}
           </div>
         )}
@@ -76,8 +89,10 @@ export default function PrivacyRequests({ demo }: { demo: boolean }) {
             <ul>
               {requests.map((item) => (
                 <li key={item.id}>
-                  {labels[item.type]} · {statusLabels[item.status]} · {new Date(item.createdAt).toLocaleDateString("es")}
-                  <br /><small>Referencia {item.id}</small>
+                  {labels[item.type]} · {statusLabels[item.status]} ·{" "}
+                  {new Date(item.createdAt).toLocaleDateString("es")}
+                  <br />
+                  <small>Referencia {item.id}</small>
                 </li>
               ))}
             </ul>

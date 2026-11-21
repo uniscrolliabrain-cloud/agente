@@ -27,6 +27,7 @@ jobs:
       - run: corepack pnpm install --frozen-lockfile
       # CI_TYPECHECK_SERVER_V1 — typecheck explícito del server.
       - run: pnpm typecheck
+      - run: node scripts/check-legal-site.mjs
       - name: typecheck server (filter)
         if: hashFiles('apps/server/package.json') != ''
         run: pnpm exec tsc --noEmit

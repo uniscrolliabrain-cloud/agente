@@ -4193,6 +4193,8 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
   .settings-menu {
     left: 12px; right: 12px; width: auto;
     bottom: calc(80px + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 96px - env(safe-area-inset-bottom) - env(safe-area-inset-top));
+    overflow: auto;
   }
 }
 

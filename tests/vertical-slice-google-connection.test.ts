@@ -109,6 +109,7 @@ test("el consentimiento pide solo lectura salvo que la operacion pida escritura"
   const { auth } = await harness(t, new Set(["agencia-a:fundador-a"]));
 
   const read = new URL((await runInTenantScope(A, () => auth.connect("fundador-a", false))).url);
+  assert.equal(read.searchParams.get("include_granted_scopes"), "false");
   const readScopes = (read.searchParams.get("scope") ?? "").split(" ");
   assert.ok(readScopes.includes("https://www.googleapis.com/auth/gmail.readonly"));
   assert.ok(readScopes.includes("https://www.googleapis.com/auth/drive.readonly"));

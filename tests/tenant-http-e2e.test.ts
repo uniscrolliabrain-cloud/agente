@@ -5,6 +5,7 @@
 // No cubre RAG ni workers: requieren proveedor LLM y se prueban en CI aparte.
 
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -45,6 +46,8 @@ before(async () => {
   await tenantService.setMembership(aliceId, "tenant-a");
   await tenantService.setMembership(bobId, "tenant-b");
   await tenantService.setMembership(carolId, "tenant-c");
+  await tenantService.addMembership(aliceId, "tenant-a", "owner");
+  await tenantService.addMembership(bobId, "tenant-b", "member");
   const loginA = await server.app.request("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -232,4 +235,52 @@ test("notifications incluye tenantId y no mezcla tenants", async () => {
   const b = (await (await server.app.request("/api/agent/notifications", { headers: bearer(bobToken) })).json()) as { tenantId: string; notifications: unknown[] };
   assert.equal(a.tenantId, "tenant-a");
   assert.equal(b.tenantId, "tenant-b");
+});
+
+test("derechos personales: requiere sesión, deduplica y no cruza empresas ni admite borrado directo", async () => {
+  const path = "/api/privacy/requests";
+  const id = randomUUID();
+  const send = (body: unknown) => server.app.request(path, {
+    method: "POST",
+    headers: { ...bearer(aliceToken), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  assert.equal((await server.app.request(path)).status, 401);
+  assert.equal((await send({ id, type: "erasure", tenantId: "tenant-b" })).status, 400);
+  const concurrent = await Promise.all([send({ id, type: "erasure" }), send({ id, type: "erasure" })]);
+  assert.deepEqual(concurrent.map((response) => response.status).sort(), [200, 201]);
+  const [first, second] = await Promise.all(concurrent.map((response) => response.json()));
+  assert.deepEqual(first, second);
+  assert.equal(first.status, "received");
+  assert.deepEqual(Object.keys(first).sort(), ["createdAt", "id", "status", "type", "updatedAt"]);
+  assert.equal((await send({ id, type: "access" })).status, 409);
+  assert.deepEqual(await (await server.app.request(path, { headers: bearer(bobToken) })).json(), []);
+  assert.equal((await server.app.request(path + "?tenantId=tenant-b", { headers: bearer(aliceToken) })).status, 403);
+  assert.equal((await server.app.request(path + "/" + id, { method: "DELETE", headers: bearer(aliceToken) })).status, 404);
+  const users = new UserService(db);
+  await users.update(aliceId, { active: false });
+  try {
+    assert.equal((await server.app.request(path, { headers: bearer(aliceToken) })).status, 403);
+  } finally {
+    await users.update(aliceId, { active: true });
+  }
+});
+
+test("gobernanza: exige permiso vigente del tenant, incluso para admins de plataforma", async () => {
+  const path = "/api/privacy/governance";
+  const authorized = await server.app.request(path, { headers: bearer(aliceToken) });
+  assert.equal(authorized.status, 200);
+  const scopes = await authorized.json();
+  assert.equal(scopes.tenantId, "tenant-a");
+  assert.equal(scopes.companyExport, "unavailable");
+  assert.equal((await server.app.request(path, { headers: bearer(bobToken) })).status, 403);
+  assert.equal((await server.app.request(path + "?tenantId=tenant-a", { headers: bearer(bobToken) })).status, 403);
+  const tenants = new TenantService(db, server.agent.config as never);
+  await tenants.removeMembership(aliceId, "tenant-a");
+  try {
+    assert.equal((await server.app.request(path, { headers: bearer(aliceToken) })).status, 403);
+  } finally {
+    await tenants.addMembership(aliceId, "tenant-a", "owner");
+  }
 });

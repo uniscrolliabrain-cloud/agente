@@ -1,7 +1,7 @@
 // SIDEBAR_SETTINGS_V1 - menu de ajustes y cuenta del pie de la barra lateral.
 // Antes el icono de engranaje no hacia nada y no habia forma de cerrar sesion
 // desde el panel: solo borrando el almacenamiento del navegador.
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Building2, ChevronRight, LogOut, Sparkles, UserRound, ShieldCheck, FileText, Bot } from "lucide-react";
 import LegalExternalLink from "./legal/LegalExternalLink";
 import { initialsOf } from "./team/data";
@@ -33,6 +33,13 @@ export default function SettingsMenu({
   onExitDemo,
   onLogout,
 }: Props) {
+  const privacyTrigger = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    privacyTrigger.current?.focus();
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -78,7 +85,7 @@ export default function SettingsMenu({
         </div>
 
         <div className="settings-section">
-          <button type="button" className="settings-item" onClick={onOpenPrivacy}>
+          <button ref={privacyTrigger} type="button" className="settings-item" onClick={onOpenPrivacy}>
             <ShieldCheck size={15} aria-hidden="true" />
             <span>Privacidad y datos</span>
             <ChevronRight size={14} className="settings-chevron" aria-hidden="true" />

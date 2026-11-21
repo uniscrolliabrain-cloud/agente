@@ -103,6 +103,14 @@ export default function WhatsAppView() {
       <div><strong>{unresolved}</strong><span>Por comprobar en los mensajes cargados</span></div>
       <div><span className={`wa-connection-dot ${connection?.enabled && connection?.outboundEnabled ? "enabled" : ""}`} /><span>{connection?.enabled ? connection.outboundEnabled ? "Salida habilitada" : "Salida pausada" : "Conexión pendiente"}</span></div>
     </div>
+    {connection?.enabled && (
+      <details className="wa-card connection-privacy">
+        <summary>Uso de datos de WhatsApp</summary>
+        <p>Proveedor configurado: {connection.provider}.</p>
+        <p>La conexión recibe números de teléfono y mensajes, prepara borradores y envía al proveedor el número y texto de los mensajes aprobados.</p>
+        <p>Permisos concedidos, autorizante, región y retención pendientes de verificación. La persona responsable de la conexión administra la revocación. Los mensajes ya tratados pueden conservarse.</p>
+      </details>
+    )}
     {(connectionError || (connection && (!connection.enabled || !connection.outboundEnabled))) && <div className="wa-banner"><AlertCircle size={18} /><div><strong>{connectionError ? "La conexión necesita revisión" : "Los envíos están pausados"}</strong><p>{connectionError || "Puedes revisar tus mensajes. La salida debe estar habilitada antes de aprobar un envío."}</p></div></div>}
     {error && <div className="wa-banner wa-error" role="alert"><AlertCircle size={18} /><span>{error}</span></div>}
     {notice && <div className="wa-banner wa-notice" role="status"><CheckCircle2 size={18} /><span>{notice}</span></div>}

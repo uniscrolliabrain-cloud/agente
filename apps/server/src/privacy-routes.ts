@@ -1,17 +1,18 @@
 import { Hono } from "hono";
-import { type PrivacyRequest, privacyRequestInput } from "../../../packages/domain/src/privacy.ts";
 import type { Actor } from "../../../packages/domain/src/actor.ts";
+import { type PrivacyRequest, privacyRequestInput } from "../../../packages/domain/src/privacy.ts";
 import type { TenantScopedStore } from "./db-tenant.ts";
 import { AppError } from "./errors.ts";
+import type { UserService } from "./users.ts";
 
 export const privacyRequestKind = "privacy-request";
 
-export function privacyRoutes(store: TenantScopedStore) {
+export function privacyRoutes(store: TenantScopedStore, users: Pick<UserService, "getById">) {
   const app = new Hono<{ Variables: { ctx: { owner: string; actor: Actor } } }>();
 
   app.use("*", async (c, next) => {
     const { actor, owner } = c.get("ctx");
-    if (actor.kind !== "human" || !actor.active || actor.userId !== owner) {
+    if (actor.kind !== "human" || !actor.active || actor.userId !== owner || !(await users.getById(owner))?.active) {
       return c.json({ error: "Se requiere una cuenta personal" }, 403);
     }
     await next();
@@ -29,7 +30,11 @@ export function privacyRoutes(store: TenantScopedStore) {
     const { id, type } = parsed.data;
     const now = new Date().toISOString();
     const inserted = await store.insertIfAbsent<PrivacyRequest>(owner, privacyRequestKind, {
-      id, type, status: "received", createdAt: now, updatedAt: now,
+      id,
+      type,
+      status: "received",
+      createdAt: now,
+      updatedAt: now,
     });
     if (inserted) return c.json(inserted, 201);
 

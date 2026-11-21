@@ -762,7 +762,7 @@ app.post("/api/billing/customer", async (c) => {
   });
   app.route("/api/agent", agentRoutes(agent, { pdp, fieldFilter }));
   app.route("/api/events", eventsRoutes(bus));
-  app.route("/api/privacy", privacyRoutes(tdb));
+  app.route("/api/privacy", privacyRoutes(tdb, users));
   app.route("/api/privacy/governance", tenantGovernanceRoutes(tenantService));
   // SOP_SKILLS_TENANT_WIRE_V1 - skills y SOPs viven bajo `tenantId:owner`.
   // Montadas con el store crudo, el panel de un tenant provisionado listaba 0.
@@ -1125,7 +1125,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
       account: connection?.account ?? null,
       provider: "google" as const,
       scopes: live?.scopes ?? [],
-      authorizer: live?.authorizer === owner,
+      authorizedByCurrentUser: live?.authorizerRecorded === true && live.authorizer === owner,
       write: live ? live.write : Boolean(connection),
       sample: config.mode === "sample",
       configured: config.mode === "sample" ? true : google.configured(),
