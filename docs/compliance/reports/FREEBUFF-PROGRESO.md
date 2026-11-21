@@ -15,3 +15,6 @@ Se añadió el índice de confianza y se estructuraron los borradores existentes
 
 ## Fase 2. Login y Ajustes
 Navegación legal visible en la tarjeta de login y Ajustes. Origen canónico de Vercel con override validado para pruebas. Diálogo nativo con Escape, backdrop y scroll independiente, integrado como transición de Ajustes sin cambiar AppView, drawer o composer.
+
+## Fase 3. Cookies y almacenamiento
+Inventario por clave en inventario/COOKIES-STORAGE.md y detalle técnico en el borrador informativo. El código inspeccionado carece de etiquetas opcionales en web y app, por lo que no se añade CMP. El navegador e infraestructura externa se verifican por separado.
