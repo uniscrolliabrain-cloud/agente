@@ -24,7 +24,7 @@ import type { Thread } from "../api/threads";
 // SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
 import SidebarThreads, { type ThreadPatch } from "./SidebarThreads";
 // BRAND_MARK_V1 - la marca AgntiaPro tambien en la barra lateral.
-import { BrandMark } from "./BrandMark";
+import { BrandLockup, BrandMark } from "./BrandMark";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
@@ -123,11 +123,7 @@ export default function SidebarV2({
             onClick={() => onSelectView("today")}
             aria-label="Ir al inicio"
           >
-            <div className="v2-sidebar-brand-mark">
-              <BrandMark size={16} />
-            </div>
-            {!collapsed && <span className="v2-sidebar-brand-name">AGNTia OS</span>}
-            {!collapsed && <span className="v2-sidebar-brand-beta">BETA</span>}
+            {collapsed ? <BrandMark /> : <BrandLockup />}
           </button>
           {onToggleCollapsed && <button
             type="button"

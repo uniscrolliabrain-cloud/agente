@@ -3,6 +3,7 @@
 // desde el panel: solo borrando el almacenamiento del navegador.
 import { useEffect } from "react";
 import { Building2, ChevronRight, LogOut, Sparkles, UserRound } from "lucide-react";
+import { BrandLockup } from "./BrandMark";
 import { initialsOf } from "./team/data";
 
 interface Props {
@@ -104,7 +105,7 @@ export default function SettingsMenu({
           </button>
         </div>
 
-        <div className="settings-foot">AGNTIA OS · BETA</div>
+        <div className="settings-foot"><BrandLockup markSize={24} /></div>
       </div>
     </>
   );
