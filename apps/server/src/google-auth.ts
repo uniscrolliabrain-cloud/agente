@@ -32,7 +32,7 @@ export interface GoogleConnection {
   /** true solo si el consentimiento incluye escritura. */
   write: boolean;
   generation: string | null;
-  authorizer: string;
+  authorizer: string | null;
   connectedAt: string | null;
 }
 
@@ -220,7 +220,7 @@ export class GoogleAuth {
       state,
       access_type: "offline",
       prompt: "consent",
-      include_granted_scopes: "true",
+      include_granted_scopes: "false",
       code_challenge_method: "S256",
       code_challenge: createHash("sha256").update(verifier).digest("base64url"),
     }).toString();
@@ -336,7 +336,7 @@ export class GoogleAuth {
       scopes: tokens.scopes,
       write: tokens.scopes.includes(WRITE_MARKER),
       generation: credential?.generation ?? null,
-      authorizer: tokens.authorizer ?? owner,
+      authorizer: tokens.authorizer ?? null,
       connectedAt: tokens.connectedAt ?? null,
     };
   }

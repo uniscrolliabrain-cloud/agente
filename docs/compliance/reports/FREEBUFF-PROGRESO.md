@@ -21,3 +21,6 @@ Inventario por clave en inventario/COOKIES-STORAGE.md y detalle técnico en el b
 
 ## Fase 4. Derechos y conservación
 Solicitud personal persistida en el Store por tenant y cuenta, validación estricta, deduplicación atómica y listado en Ajustes. CLI de operador con transiciones de estado atómicas. La revisión humana precede a cualquier actuación. Inventario de retención con dependencias de Postgres, RAG, eventos, auditoría, backups y proveedores.
+
+## Fase 5. Gobernanza y conexiones
+Consulta de gobernanza restringida a la membership vigente con tenant.admin (owner en la matriz actual). Inventario de controles pendientes y enlace a políticas. El componente Google se comparte con Mi perfil y muestra permisos, atribución disponible, consecuencias y desconexión por API existente. Se desactiva agregación de scopes previos en la solicitud OAuth de conector. Los scopes amplios de escritura se mantienen por compatibilidad hasta validar el inventario de capacidades.

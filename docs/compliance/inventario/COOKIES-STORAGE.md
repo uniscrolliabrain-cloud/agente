@@ -12,3 +12,4 @@
 Fuentes: oauth-login.ts, api/auth.ts, api/client.ts, App.tsx, hooks/useThreads.ts y usePanel.ts. No hay sessionStorage ni etiquetas analíticas/publicitarias en las entradas inspeccionadas. La API analytics interna calcula métricas de empresa. El proveedor OAuth controla su propio origen después de la navegación. El almacenamiento en navegador de credenciales es sensible a scripts ejecutados en el origen de la app. Falta verificar configuración externa del hosting y perfiles activos del worker.
 
 La entrada HTML de la app también hace preconnect a fonts.googleapis.com y fonts.gstatic.com y solicita una hoja de Google Fonts para Instrument Sans antes del login. Es una solicitud de recursos externos, no una prueba de cookies publicitarias. Verificar cabeceras y tratamiento de IP en el entorno objetivo.
+El CSS también solicita Inter desde Google Fonts.

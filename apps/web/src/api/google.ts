@@ -7,6 +7,7 @@ export interface GoogleStatus {
   provider: "google";
   /** Scopes concedidos: el panel muestra el minimo privilegio real. */
   scopes: string[];
+  authorizer?: boolean;
   /** false cuando el consentimiento es de solo lectura. */
   write: boolean;
   /** true cuando el deployment corre en modo sample (la conexion es simulada). */

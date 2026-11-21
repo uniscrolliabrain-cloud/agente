@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import GoogleConnections from "../integrations/GoogleConnections";
+import TenantGovernancePanel from "./TenantGovernancePanel";
 import PrivacyRequests from "./PrivacyRequests";
 import LegalLinksInline from "../legal/LegalLinksInline";
 
@@ -27,8 +29,9 @@ export default function PrivacyDataPanel({ onClose, demo }: { onClose: () => voi
         <PrivacyRequests demo={demo} />
         <section>
           <h3>Conexiones externas</h3>
-          <p>Los permisos dependen de cada integración.</p>
+          {demo ? <p>Las conexiones de la demostración son simuladas.</p> : <GoogleConnections /> }
         </section>
+        {!demo && <TenantGovernancePanel />}
         <section>
           <h3>Políticas</h3>
           <LegalLinksInline />
