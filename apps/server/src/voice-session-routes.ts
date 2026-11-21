@@ -59,8 +59,9 @@ export async function voiceSessionRoutes(runtime: CognitionV2Runtime, records: T
   const coordinator = new VoiceTurnCoordinator(runtime.db, runtime.context, {
     async authorizeAgent(identity, agentId, roleId) {
       if (agentId !== roleId) return false;
-      const role = await records.get<{ active?: boolean }>(identity.owner, "agent-roles", roleId);
-      return role?.active === true;
+      const role = await records.get(identity.owner, "agent-roles", roleId);
+      const parsed = agentRoleSchema.pick({ id: true, name: true, active: true }).safeParse(role);
+      return parsed.success && parsed.data.id === roleId && parsed.data.active === true;
     },
   }, new CognitionFastVoiceAdapter(runtime));
 
@@ -104,6 +105,13 @@ export async function voiceSessionRoutes(runtime: CognitionV2Runtime, records: T
       return coordinator.create(identity, { ...input, agentId: input.roleId, contextSnapshotId: snapshot.id });
     });
     return c.json(session, 201);
+  });
+  // Session inspection reuses the durable coordinator and its current
+  // authorization/consent/expiry checks; never trusts a client-supplied tenant.
+  app.get("/sessions/:id", async (c) => {
+    const session = await voiceRequest(() => coordinator.inspect(c.get("voiceIdentity"), c.req.param("id")));
+    if (!session) throw new AppError("Session not found", 404, undefined, "VOICE_SESSION_NOT_FOUND");
+    return c.json({ session });
   });
   app.post("/sessions/:id/transcripts", async (c) => {
     const input = transcriptInputSchema.parse(await c.req.json());
