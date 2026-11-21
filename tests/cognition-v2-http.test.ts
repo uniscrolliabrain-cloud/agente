@@ -9,6 +9,25 @@ import { TenantService } from "../apps/server/src/engine/tenant.ts";
 import { testConfig } from "./helpers/config.ts";
 import { SlowCognitionQueue } from "../apps/server/src/engine/cognition/v2/slow.ts";
 import { CognitiveGraphQuery } from "../apps/server/src/engine/cognition/v2/graph.ts";
+import { CognitionV2Runtime } from "../apps/server/src/engine/cognition/v2/runtime.ts";
+
+test("V2 refuses to start in shared multi-tenant mode while RLS certification is pending", async () => {
+  const db = await createStore();
+  const previous = process.env.MULTI_TENANT_SHARED;
+  process.env.MULTI_TENANT_SHARED = "true";
+  try {
+    const membership = new TenantService(db, testConfig());
+    await assert.rejects(
+      CognitionV2Runtime.create(db, db, new Set(["shared-test-tenant"]), membership),
+      { message: "COGNITION_V2_SHARED_RLS_NOT_CERTIFIED" },
+    );
+  } finally {
+    if (previous === undefined) delete process.env.MULTI_TENANT_SHARED;
+    else process.env.MULTI_TENANT_SHARED = previous;
+    await db.close();
+  }
+});
+
 test("C15 synthetic authenticated HTTP: working memory → snapshot → durable Slow → kernel Thought/card → revoke; cross-tenant denied", async () => {
   const old = process.env.COGNITION_V2_TENANTS;
   process.env.COGNITION_V2_TENANTS = "tenant-a,tenant-b";
