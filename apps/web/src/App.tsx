@@ -37,6 +37,7 @@ import AppShell from "./components/AppShell";
 import ContextualPanel from "./components/ContextualPanel";
 // SIDEBAR_CHAT_V1 - chat acoplado y ajustes con cierre de sesion.
 import SidebarChat from "./components/SidebarChat";
+import PrivacyDataPanel from "./components/privacy/PrivacyDataPanel";
 import SettingsMenu from "./components/SettingsMenu";
 import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
@@ -105,6 +106,7 @@ export default function App() {
   // SIDEBAR_CHAT_V1 - el chat ocupa la columna izquierda sin cambiar de vista.
   const [chatDock, setChatDock] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -352,8 +354,10 @@ export default function App() {
         </div>
       )}
 
+      {privacyOpen && <PrivacyDataPanel onClose={() => setPrivacyOpen(false)} />}
       <SettingsMenu
-        open={settingsOpen}
+        open={settingsOpen && !privacyOpen}
+        onOpenPrivacy={() => setPrivacyOpen(true)}
         onClose={() => setSettingsOpen(false)}
         userName={auth.user?.name ?? "Usuario"}
         userEmail={auth.user?.email ?? null}

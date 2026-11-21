@@ -12,3 +12,6 @@
 
 ## Fase 1. Sitio público
 Se añadió el índice de confianza y se estructuraron los borradores existentes con metadatos de versión y estado, navegación relativa y foco visible. El contacto se conserva como contacto general de la landing. La versión publicada queda sujeta a la aprobación jurídica y al gate de la fase 7.
+
+## Fase 2. Login y Ajustes
+Navegación legal visible en la tarjeta de login y Ajustes. Origen canónico de Vercel con override validado para pruebas. Diálogo nativo con Escape, backdrop y scroll independiente, integrado como transición de Ajustes sin cambiar AppView, drawer o composer.

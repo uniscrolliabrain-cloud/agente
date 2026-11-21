@@ -1,4 +1,5 @@
 import { useState } from "react";
+import LegalLinksInline from "./legal/LegalLinksInline";
 
 interface Props {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -134,7 +135,7 @@ export default function Login({ onLogin, onEnterDemo, error }: Props) {
           </button>
         )}
 
-        <div className="login-footer">Agntia Pro · Laia</div>
+        <div className="login-footer"><LegalLinksInline /></div>
       </div>
     </div>
   );

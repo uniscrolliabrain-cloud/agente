@@ -2,7 +2,8 @@
 // Antes el icono de engranaje no hacia nada y no habia forma de cerrar sesion
 // desde el panel: solo borrando el almacenamiento del navegador.
 import { useEffect } from "react";
-import { Building2, ChevronRight, LogOut, Sparkles, UserRound } from "lucide-react";
+import { Building2, ChevronRight, LogOut, Sparkles, UserRound, ShieldCheck, FileText, Bot } from "lucide-react";
+import LegalExternalLink from "./legal/LegalExternalLink";
 import { initialsOf } from "./team/data";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   userRole: string;
   tenantLabel: string;
   demo: boolean;
+  onOpenPrivacy: () => void;
   onOpenProfile: () => void;
   onExitDemo: () => void;
   onLogout: () => void;
@@ -26,6 +28,7 @@ export default function SettingsMenu({
   userRole,
   tenantLabel,
   demo,
+  onOpenPrivacy,
   onOpenProfile,
   onExitDemo,
   onLogout,
@@ -72,6 +75,20 @@ export default function SettingsMenu({
             <span>{tenantLabel}</span>
             <small>{demo ? "Demo" : "Empresa"}</small>
           </div>
+        </div>
+
+        <div className="settings-section">
+          <button type="button" className="settings-item" onClick={onOpenPrivacy}>
+            <ShieldCheck size={15} aria-hidden="true" />
+            <span>Privacidad y datos</span>
+            <ChevronRight size={14} className="settings-chevron" aria-hidden="true" />
+          </button>
+          <LegalExternalLink className="settings-item" page="trust">
+            <FileText size={15} aria-hidden="true" /> Políticas y condiciones
+          </LegalExternalLink>
+          <LegalExternalLink className="settings-item" page="ai">
+            <Bot size={15} aria-hidden="true" /> Transparencia IA
+          </LegalExternalLink>
         </div>
 
         {demo && (
