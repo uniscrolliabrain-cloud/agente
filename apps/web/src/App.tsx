@@ -192,15 +192,6 @@ export default function App() {
     setMobileNav(false);
   };
 
-  const openDockChat = () => {
-    if (isMobile) {
-      setMobileNav(false);
-      setMobileChat(true);
-      return;
-    }
-    setChatDock(true);
-  };
-
   const toggleChat = () => {
     if (isMobile) {
       setMobileChat((open) => !open);
@@ -245,8 +236,6 @@ export default function App() {
       collapsed={chatDockActive || (collapsed && !isMobile)}
       onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}
-      onOpenChat={chatDockActive ? toggleChat : openDockChat}
-      chatDockOpen={chatDockActive}
     />
   );
 

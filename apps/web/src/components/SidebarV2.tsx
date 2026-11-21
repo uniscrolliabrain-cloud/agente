@@ -12,7 +12,8 @@ import {
   FolderKanban,
   Gauge,
   LayoutDashboard,
-  MessageSquare,
+  MessageSquareText,
+  PanelsTopLeft,
   PanelLeftClose,
   Search,
   Settings,
@@ -24,7 +25,8 @@ import type { Thread } from "../api/threads";
 // SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
 import SidebarThreads, { type ThreadPatch } from "./SidebarThreads";
 // BRAND_MARK_V1 - la marca AgntiaPro tambien en la barra lateral.
-import { BrandLockup, BrandMark } from "./BrandMark";
+import { BrandLockup } from "./BrandMark";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
@@ -53,17 +55,14 @@ interface Props {
   onToggleCollapsed?: () => void;
   /** SIDEBAR_SETTINGS_V1 - menu de cuenta y cierre de sesion. */
   onOpenSettings: () => void;
-  /** SIDEBAR_CHAT_V1 - convierte la barra en el chat del agente. */
-  onOpenChat: () => void;
-  chatDockOpen?: boolean;
 }
 
-const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
+const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
   // COMMAND_CENTER_VIEW_V1 - la entrada que abre la empresa al arrancar.
   { id: "today", label: "Centro de mando", icon: Gauge },
-  { id: "chat", label: "Chat", icon: MessageSquare },
+  { id: "chat", label: "Chat", icon: MessageSquareText },
   { id: "tasks", label: "Tareas", icon: LayoutDashboard },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageSquare },
+  { id: "whatsapp", label: "WhatsApp", icon: WhatsAppIcon },
   { id: "documents", label: "Documentos", icon: Files },
   { id: "memory", label: "Conocimiento", icon: Brain },
   { id: "projects", label: "Proyectos", icon: FolderKanban },
@@ -72,7 +71,7 @@ const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
   // TEAM_VIEW_V1 - personas y agentes IA en la misma pantalla.
   { id: "team", label: "Equipo", icon: Users },
   // WS_UI_SIDEBAR_ITEM_V1
-  { id: "workspace", label: "Workspaces", icon: FolderKanban },
+  { id: "workspace", label: "Workspaces", icon: PanelsTopLeft },
   // COMMAND_CENTER_VIEW_V1 - la analitica del tenant, separada del centro de mando.
   { id: "centro-mando", label: "Analítica", icon: BarChart3 },
 ];
@@ -95,8 +94,6 @@ export default function SidebarV2({
   collapsed,
   onToggleCollapsed,
   onOpenSettings,
-  onOpenChat,
-  chatDockOpen = false,
 }: Props) {
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
@@ -123,7 +120,7 @@ export default function SidebarV2({
             onClick={() => onSelectView("today")}
             aria-label="Ir al inicio"
           >
-            {collapsed ? <BrandMark /> : <BrandLockup />}
+            <BrandLockup compact={collapsed} />
           </button>
           {onToggleCollapsed && <button
             type="button"
@@ -172,7 +169,6 @@ export default function SidebarV2({
                 onClick={() => onSelectView(item.id)}
                 onMouseEnter={showTip(item.label)}
                 onMouseLeave={hideTip}
-                title={collapsed ? item.label : undefined}
                 aria-label={collapsed ? item.label : undefined}
               >
                 <span className="v2-nav-main">
@@ -190,7 +186,6 @@ export default function SidebarV2({
               onClick={() => onSelectView("users")}
               onMouseEnter={showTip("Usuarios")}
               onMouseLeave={hideTip}
-              title={collapsed ? "Usuarios" : undefined}
               aria-label={collapsed ? "Usuarios" : undefined}
             >
               <span className="v2-nav-main">
@@ -224,23 +219,10 @@ export default function SidebarV2({
           <div className="v2-rail-actions">
             <button
               type="button"
-              className="v2-rail-action"
-              onClick={onOpenChat}
-              onMouseEnter={showTip("Hablar con tu agente")}
-              onMouseLeave={hideTip}
-              title={chatDockOpen ? "Cerrar chat lateral" : "Abrir chat"}
-              aria-label={chatDockOpen ? "Cerrar chat lateral" : "Abrir chat"}
-              aria-expanded={chatDockOpen}
-            >
-              <MessageSquare size={17} />
-            </button>
-            <button
-              type="button"
               className="v2-rail-action accent"
               onClick={onOpenSettings}
               onMouseEnter={showTip("Ajustes")}
               onMouseLeave={hideTip}
-              title="Ajustes"
               aria-label="Ajustes"
             >
               <Settings size={17} />
