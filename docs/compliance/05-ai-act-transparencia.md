@@ -17,3 +17,6 @@ Transparencia de LAIA y demás agentes, supervisión humana y evaluación por ca
 
 ## Aceptación
 Cada caso de uso tiene clasificación razonada, evidencias y dueño; transparencia comprobada en canales operativos; asuntos jurídicos no resueltos marcados bloqueantes para producción.
+
+## Especificación transversal obligatoria
+Ejecutar conforme a [07 Mapa UX real](07-UX-LEGAL-MAPA-INTERFAZ.md) y [08 Copy y links](08-COPY-LEGAL-UX-Y-LINKS.md). La landing pública ya tiene footer y cinco páginas HTML preliminares en esta rama; no publicar borradores. Verificar rutas, hosting y las ramas de UI actuales antes de integrar la app.
