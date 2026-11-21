@@ -1,0 +1,11 @@
+# Progreso Freebuff
+
+## Fase 0. Reconocimiento
+
+- Base `de924e09b145348c3aed64f85fb03a8a7687e3aa`, sobre main `3023637`. Árbol inicial limpio. Respecto de main, la base añade únicamente sitio estático y documentación de compliance.
+- Ramas fuera de main al auditar: fix móvil `18ee1c1` (+22), baseline móvil `a61978e` (+23), UX multimodal `b0ac38b` (+30), cognition `add8798` (+1), conversación universal `ebf2206` (+9), scaffold avatar `f530eee` (+11/-65). El runtime cognition `685ef3a` sí es ancestro de main. Revisar solapamientos en App, SidebarChat, hojas móviles, CSS, threads y voz antes de integrar. Fast LLM tenant-aware en main (`c028225`); las pruebas históricas de Anam/ElevenLabs (`54b8d54`) no demuestran una superficie React operativa.
+- Vercel publica apps/site en agntiapro.com y Fly sirve app/API en www.agntiapro.com según deploy y smoke existentes. GET público de landing 200 y privacidad 404 al inicio. Vite solo aproxima /api local por proxy. Los borradores se verifican en servidor estático local.
+- AppShell controla rail/drawer desde App; SettingsMenu maneja Escape y backdrop con capas CSS; el chat móvil está en App y puede abrir Ajustes. Integrar privacidad con el ciclo de Ajustes, evitando cambios al composer, rutas y autenticación.
+- OAuth login separado del conector. Cookie técnica om_oauth_binding, 600 s, HttpOnly, SameSite=Lax, ruta /api/auth/oauth. Sesión/perfil/tema/thread y estado rail en localStorage. No aparecen tags publicitarios en la landing o entrada React; analytics interno es una API de métricas tenant. Ver inventario para límites de alcance.
+- Persistencia: records (owner, kind, id), tenant-membership, credenciales cifradas, state OAuth y stores cognition/voz en SQL. TenantPrincipal valida el contexto y el middleware instala el scope. RLS opcional legacy no sustituye el scope. El Store ofrece insertIfAbsent y comparación/actualización atómicas. El coordinador de voz conserva receipts y digests. La cadena de auditoría conserva vínculos de actor/owner.
+- Proveedores observables en código: Google, GitHub, Fly/Vercel, Postgres (Neon en scripts), modelos configurables y WhatsApp; la presencia histórica de Anam/ElevenLabs no verifica uso, región ni contratos. Backups, RAG, eventos, memoria y terceros requieren inventario de purga antes de ejecutar supresión.
