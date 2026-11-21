@@ -1024,8 +1024,23 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     );
   });
   const ensureMainThreadId = async (owner: string) => {
-    await db.insertIfAbsent(owner, "conversation-settings", { id: "main", threadId: randomUUID(), existing: false });
-    const main = await db.get<{ threadId: string }>(owner, "conversation-settings", "main");
+    const scope = currentTenantScope();
+    if (!scope || scope.actorId !== owner) throw new AppError("Authenticated conversation scope required", 403);
+    const primary = (await tenantService.resolveStrict(owner)).tenantId;
+    const main = await db.transaction(async () => {
+      const legacy = await db.compareAndSwap<{ id: string; threadId: string; tenantId?: string }>(
+        owner, "conversation-settings", "main", {}, {},
+      );
+      if (legacy && (legacy.tenantId ?? primary) === scope.tenantId) {
+        if (!legacy.tenantId) {
+          await db.put(owner, "conversation-settings", { ...legacy, tenantId: scope.tenantId });
+        }
+        return legacy;
+      }
+      const key = `main:${scope.tenantId}`;
+      await db.insertIfAbsent(owner, "conversation-settings", { id: key, threadId: randomUUID(), existing: false });
+      return db.get<{ threadId: string }>(owner, "conversation-settings", key);
+    });
     if (!main) throw new AppError("Main conversation could not be loaded", 503);
     return main.threadId;
   };
