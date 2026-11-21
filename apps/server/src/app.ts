@@ -452,7 +452,7 @@ export async function createApp(
     }
     if (error instanceof AppError)
       return c.json(
-        { error: error.message, ...(error.fields ? { fields: error.fields } : {}) },
+        { error: error.message, ...(error.fields ? { fields: error.fields } : {}), ...(error.code ? { code: error.code } : {}) },
         error.status,
       );
     if (error.name === "PdfError" || error.name === "RecurringEventError")
@@ -718,7 +718,9 @@ app.get("/api/health", async (c) => {
     const { cognitionV2Routes } = await import("./cognition-v2-routes.ts");
     app.route("/api/cognition-v2", cognitionV2Routes(cognitionV2));
     const { voiceSessionRoutes } = await import("./voice-session-routes.ts");
-    app.route("/api/cognition-v2/voice", await voiceSessionRoutes(cognitionV2, tdb));
+    const voice = await voiceSessionRoutes(cognitionV2, tdb);
+    app.route("/api/cognition-v2/voice", voice.app);
+    agent.stopVoiceMaintenance = voice.stop;
     cognitionV2.slow.capture = (identity, input) => kernel.captureAsyncResult({
       tenantId: identity.tenantId, owner: identity.owner, actorId: identity.actorId, role: "system", requestId: input.operationId,
     }, input);

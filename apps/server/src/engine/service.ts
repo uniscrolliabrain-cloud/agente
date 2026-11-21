@@ -191,6 +191,7 @@ export class AgentService {
   // conversation.ts, sop-executor.ts y kernel-routes lean deps sin cast.
   readonly kernel?: Kernel;
   // COGNITION_CARD_PUBLIC_V1 - el chat consume tarjetas del slow.
+  stopVoiceMaintenance?: () => Promise<void>;
   cognitionV2?: import("./cognition/v2/runtime.ts").CognitionV2Runtime;
   readonly cards?: CognitionCardStore;
   // ENGINE_TENANT_V1 - punto unico de resolucion de tenant.
@@ -433,6 +434,7 @@ export class AgentService {
     this.maintenance.unref?.();
   }
   async stop() {
+    await this.stopVoiceMaintenance?.();
     if (this.maintenance) clearInterval(this.maintenance);
     this.maintenance = undefined;
     await this.worker.stop();

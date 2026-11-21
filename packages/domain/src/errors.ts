@@ -3,6 +3,7 @@ export class AppError extends Error {
     message: string,
     public readonly status: 400 | 401 | 403 | 404 | 409 | 410 | 413 | 422 | 429 | 500 | 501 | 502 | 503 = 400,
     public readonly fields?: Record<string, string>,
+    public readonly code?: string,
   ) {
     super(message);
     this.name = "AppError";

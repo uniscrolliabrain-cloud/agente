@@ -101,12 +101,51 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     assert.equal((await transcript(voiceId, "borrador", "partial")).status, 204);
     assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
     assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
+    const completedProvider = runtime.provider.stream;
+    const startSlow = (sessionId: string, text: string) => {
+      let started!: () => void;
+      let aborted!: () => void;
+      const ready = new Promise<void>((resolve) => { started = resolve; });
+      const stopped = new Promise<void>((resolve) => { aborted = resolve; });
+      runtime.provider.stream = async (_input, _prompt, _profile, signal) => new Promise<string>((_resolve, reject) => {
+        const abort = () => { aborted(); reject(signal.reason); };
+        if (signal.aborted) abort();
+        else signal.addEventListener("abort", abort, { once: true });
+        started();
+      });
+      return { ready, stopped, response: transcript(sessionId, text) };
+    };
+    const interrupted = startSlow(voiceId, "Interrumpido");
+    await interrupted.ready;
+    const concurrent = await transcript(voiceId, "Interrumpido");
+    assert.equal(concurrent.status, 409);
+    assert.equal((await concurrent.json()).code, "VOICE_TURN_INVALID");
     assert.equal((await voice(`/sessions/${voiceId}/interrupt`, "POST")).status, 200);
+    await interrupted.stopped;
+    const interruptedResponse = await interrupted.response;
+    assert.equal(interruptedResponse.status, 409);
+    assert.equal((await interruptedResponse.json()).code, "VOICE_INTERRUPTED");
+
+    runtime.provider.stream = completedProvider;
     const videoId = await startSession("video");
+    const foreign = await server.app.request(`/api/cognition-v2/voice/sessions/${videoId}/transcripts`, {
+      method: "POST", headers: { ...chatHeaders, Authorization: `Bearer ${bob.token}` },
+      body: JSON.stringify({ utteranceId: "foreign", revision: 1, status: "final", text: "Foreign" }),
+    });
+    assert.equal(foreign.status, 404);
+    assert.equal((await foreign.json()).code, "VOICE_SESSION_NOT_FOUND");
     assert.equal((await transcript(videoId, "Turno de vídeo")).status, 200);
     assert.match(JSON.stringify(providerHistory), /Turno de voz/);
+
+    const revoking = startSlow(videoId, "Revocación activa");
+    await revoking.ready;
     assert.equal((await voice(`/consents/${consentReceiptId}`, "DELETE")).status, 204);
-    assert.equal((await transcript(videoId, "Revocado")).status, 409);
+    await revoking.stopped;
+    const revokedResponse = await revoking.response;
+    assert.equal(revokedResponse.status, 403);
+    assert.equal((await revokedResponse.json()).code, "VOICE_CONSENT_REVOKED");
+    assert.equal((await transcript(videoId, "Revocado")).status, 403);
+    runtime.provider.stream = completedProvider;
 
     const returnToText = await (await chat("return-to-text")).text();
     assert.match(returnToText, /conversation\.turn\.persisted/);

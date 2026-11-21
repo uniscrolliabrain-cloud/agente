@@ -59,9 +59,11 @@ test("C13 concurrent renderer is fenced and late text after barge-in is rejected
   try {
     await installCognitionV2(db); await installVoiceV2(db);
     const context = new ContextServingFacade(new CognitiveProjectionStore(db), { authorize: async () => true });
-    let entered!: () => void, release!: () => void;
+    let entered!: () => void, release!: () => void, aborted!: () => void;
     const ready = new Promise<void>((resolve) => { entered = resolve; });
-    const provider: SharedFastVoicePort = { stream: async (_identity, _input, _signal, emit) => {
+    const providerAborted = new Promise<void>((resolve) => { aborted = resolve; });
+    const provider: SharedFastVoicePort = { stream: async (_identity, _input, signal, emit) => {
+      signal.addEventListener("abort", aborted, { once: true });
       entered(); await new Promise<void>((resolve) => { release = resolve; });
       await emit("obsolete speech"); return { receiptId: "never", text: "obsolete speech" };
     } };
@@ -75,8 +77,10 @@ test("C13 concurrent renderer is fenced and late text after barge-in is rejected
     const render = coordinator.renderTurn(identity, session.sessionId, turn.turnId, "hola", new AbortController().signal, async () => { delivered = true; });
     await ready;
     await assert.rejects(coordinator.renderTurn(identity, session.sessionId, turn.turnId, "hola", new AbortController().signal, async () => {}), /VOICE_TURN_INVALID/);
-    const interrupted = await coordinator.interrupt(identity, session.sessionId);
+    const otherWorker = new VoiceTurnCoordinator(db, context, authority, provider);
+    const interrupted = await otherWorker.interrupt(identity, session.sessionId);
     assert.equal(interrupted.epoch, 1);
+    await providerAborted;
     release(); await assert.rejects(render, /VOICE_STALE_EPOCH/);
     assert.equal(delivered, false);
     assert.equal(await db.get("alice", "conversations", "thread"), null);
@@ -85,7 +89,10 @@ test("C13 concurrent renderer is fenced and late text after barge-in is rejected
   } finally { await db.close(); }
 });
 test("C13 expiry/silence are recovered from durable timestamps, no timer or provider pricing assumption", async () => {
-  const db = await createStore();
+  const directory = await mkdtemp(join(tmpdir(), "voice-reap-"));
+  const databaseUrl = process.env.COGNITION_TEST_POSTGRES_URL;
+  const options = databaseUrl ? { databaseUrl } : { dataDir: directory };
+  let db = await createStore(options);
   try {
     await installCognitionV2(db); await installVoiceV2(db);
     let now = Date.now();
@@ -97,12 +104,19 @@ test("C13 expiry/silence are recovered from durable timestamps, no timer or prov
     const session = await coordinator.create(identity, input);
     await assert.rejects(coordinator.create(identity, input), /VOICE_CONCURRENT_LIMIT/);
     now += 1001;
-    const restarted = new VoiceTurnCoordinator(db, context, authority, fast, { maxSessionMs: 10000, silenceMs: 1000, maxConcurrentSessions: 1 }, () => now);
-    assert.equal(await restarted.reap(identity), 1);
+    await db.close();
+    db = await createStore(options);
+    const restartedContext = new ContextServingFacade(new CognitiveProjectionStore(db), { authorize: async () => true }, () => now);
+    const restarted = new VoiceTurnCoordinator(db, restartedContext, authority, fast, { maxSessionMs: 10000, silenceMs: 1000, maxConcurrentSessions: 1 }, () => now);
+    await restarted.reapExpired("B");
+    assert.ok(await restarted.inspect(identity, session.sessionId));
+    await restarted.reapExpired("A");
+    await restarted.reapExpired("A");
+    assert.equal(await restarted.reap(identity), 0);
     assert.equal(await restarted.acceptsOutput(identity, session.sessionId, 0), false);
     const [stored] = await db.rawQuery<{ data: { state: string; closedReason: string } }>("SELECT data FROM cognition_v2_voice_sessions WHERE tenant=$1 AND id=$2", ["A", session.sessionId]);
     assert.equal(stored.data.closedReason, "silence");
-  } finally { await db.close(); }
+  } finally { await db.close(); await rm(directory, { recursive: true, force: true }); }
 });
 test("C13 Fast voice adapter reuses the shared runtime and cancels subscription when output is rejected", async () => {
   const { Observable } = await import("rxjs");

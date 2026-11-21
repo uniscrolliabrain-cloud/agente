@@ -29,6 +29,12 @@ export async function installVoiceV2(db: Store): Promise<void> {
   ]) await db.rawQuery(sql);
 }
 export class VoiceTurnCoordinator {
+  private readonly renders = new Map<string, Set<{ epoch: number; controller: AbortController }>>();
+
+  private renderKey(session: VoiceSessionV2): string {
+    return JSON.stringify([session.tenantId, session.actorId, session.sessionId]);
+  }
+
   constructor(readonly db: Store, readonly context: ContextServingFacade, readonly authority: VoiceAuthorization,
     readonly fast: SharedFastVoicePort, readonly limits: VoiceLimits = defaultLimits, readonly clock = () => Date.now()) {
     if (!Number.isFinite(limits.maxSessionMs) || limits.maxSessionMs <= 0 || limits.maxSessionMs > 3_600_000 ||
@@ -56,6 +62,14 @@ export class VoiceTurnCoordinator {
   private async save(session: VoiceSessionV2): Promise<void> {
     await this.db.rawQuery(`UPDATE cognition_v2_voice_sessions SET data=$3::jsonb WHERE tenant=$1 AND id=$2`,
       [session.tenantId, session.sessionId, JSON.stringify(voiceSessionSchema.parse(session))]);
+    this.db.afterCommit(() => {
+      for (const render of this.renders.get(this.renderKey(session)) ?? []) {
+        if (render.epoch < session.epoch) {
+          const reason = session.closedReason === "consent_revoked" ? "VOICE_CONSENT_REVOKED" : "VOICE_STALE_EPOCH";
+          render.controller.abort(Error(reason));
+        }
+      }
+    });
   }
   private async receipt(session: VoiceSessionV2, event: string): Promise<void> {
     await this.db.rawQuery(`INSERT INTO cognition_v2_voice_receipts(tenant,id,session_id,actor,event,epoch,occurred_at) VALUES($1,$2,$3,$4,$5,$6,$7)`,
@@ -70,6 +84,8 @@ export class VoiceTurnCoordinator {
     return session;
   }
   private async assertLive(identity: CognitiveIdentity, session: VoiceSessionV2) {
+    if (session.closedReason === "consent_revoked") throw Error("VOICE_CONSENT_REVOKED");
+    if (session.closedReason === "timeout" || session.closedReason === "silence") throw Error("VOICE_SESSION_EXPIRED");
     if (session.state === "closed" || session.state === "failed") throw Error("VOICE_SESSION_CLOSED");
     if (Date.parse(session.expiresAt) <= this.clock()) throw Error("VOICE_SESSION_EXPIRED");
     const consent = await this.readConsent(identity, session.consentReceiptId);
@@ -135,12 +151,15 @@ export class VoiceTurnCoordinator {
     await this.authorize(identity);
     return this.db.transaction(async () => {
       const session = await this.locked(identity, sessionId);
-      if (session.state === "closed") return session;
-      const next: VoiceSessionV2 = { ...session, state: "closed", closedReason: reason, epoch: session.epoch + 1, revision: session.revision + 1, lastActivityAt: new Date(this.clock()).toISOString() };
-      await this.save(next);
-      await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=data || '{"state":"interrupted"}'::jsonb WHERE tenant=$1 AND session_id=$2 AND data->>'state' IN ('accepted','rendering')`, [identity.tenantId, sessionId]);
-      await this.receipt(next, "closed"); return next;
+      return this.closeLocked(session, reason);
     });
+  }
+  private async closeLocked(session: VoiceSessionV2, reason: VoiceSessionV2["closedReason"]): Promise<VoiceSessionV2> {
+    if (session.state === "closed") return session;
+    const next: VoiceSessionV2 = { ...session, state: "closed", closedReason: reason, epoch: session.epoch + 1, revision: session.revision + 1, lastActivityAt: new Date(this.clock()).toISOString() };
+    await this.save(next);
+    await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=data || '{"state":"interrupted"}'::jsonb WHERE tenant=$1 AND session_id=$2 AND data->>'state' IN ('accepted','rendering')`, [session.tenantId, session.sessionId]);
+    await this.receipt(next, "closed"); return next;
   }
   async revokeConsent(identity: CognitiveIdentity, consentId: string): Promise<void> {
     await this.authorize(identity);
@@ -202,11 +221,34 @@ export class VoiceTurnCoordinator {
       await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=$3::jsonb WHERE tenant=$1 AND id=$2`, [identity.tenantId, turnId, JSON.stringify(turn)]);
       return { session, turn };
     });
+    const key = this.renderKey(session);
+    const controller = new AbortController();
+    const active = { epoch: turn.epoch, controller };
+    const renders = this.renders.get(key) ?? new Set<typeof active>();
+    renders.add(active);
+    this.renders.set(key, renders);
+    const renderSignal = AbortSignal.any([signal, controller.signal, AbortSignal.timeout(Math.max(1, Date.parse(turn.renderLeaseUntil!) - this.clock()))]);
+    let checking = false;
+    const check = async () => {
+      if (checking || renderSignal.aborted) return;
+      checking = true;
+      try {
+        if (!await this.acceptsOutput(identity, sessionId, turn.epoch)) controller.abort(Error("VOICE_STALE_EPOCH"));
+      } catch {
+        controller.abort(Error("VOICE_STALE_EPOCH"));
+      } finally {
+        checking = false;
+      }
+    };
+    const monitor = setInterval(() => { void check(); }, 250);
+    monitor.unref();
     let result: { receiptId: string; text: string };
     let emittedText = "";
     try {
-      result = await this.fast.stream(identity, { threadId: session.threadId, turnId, text: transcript, contextSnapshotId: session.contextSnapshotId, roleId: session.roleId }, signal, async (text) => {
-        signal.throwIfAborted();
+      await check();
+      renderSignal.throwIfAborted();
+      result = await this.fast.stream(identity, { threadId: session.threadId, turnId, text: transcript, contextSnapshotId: session.contextSnapshotId, roleId: session.roleId }, renderSignal, async (text) => {
+        renderSignal.throwIfAborted();
         if (!turn.renderLeaseUntil || Date.parse(turn.renderLeaseUntil) <= this.clock()) throw Error("VOICE_RENDER_LEASE_EXPIRED");
         if (!await this.acceptsOutput(identity, sessionId, turn.epoch)) throw Error("VOICE_STALE_EPOCH");
         if (emittedText.length + text.length > 16000) throw Error("VOICE_OUTPUT_TOO_LARGE");
@@ -224,7 +266,7 @@ export class VoiceTurnCoordinator {
         const committed = await this.db.rawQuery(`UPDATE cognition_v2_voice_turns SET data=$3::jsonb WHERE tenant=$1 AND id=$2
           AND data->>'state'='rendering' AND (data->>'renderFence')::integer=$4 RETURNING id`, [identity.tenantId, turnId, JSON.stringify(completed), turn.renderFence]);
         if (!committed.length) throw Error("VOICE_STALE_FENCE");
-        signal.throwIfAborted();
+        renderSignal.throwIfAborted();
         if (consent.saveToThread === true) {
           const timestamp = new Date(this.clock()).toISOString();
           await runInTenantScope(identity, () => appendThreadMessages(this.db, explicitThreadTenant, identity.owner, current.threadId, [
@@ -232,10 +274,10 @@ export class VoiceTurnCoordinator {
             { id: `${turnId}:assistant`, role: "assistant", content: result.text, timestamp },
           ], true));
         }
-        signal.throwIfAborted();
+        renderSignal.throwIfAborted();
         await this.save({ ...current, state: "authorized", revision: current.revision + 1, lastActivityAt: new Date(this.clock()).toISOString() });
         await this.receipt(current, "fast_output_completed");
-        signal.throwIfAborted();
+        renderSignal.throwIfAborted();
         return completed;
       });
     } catch (error) {
@@ -249,6 +291,10 @@ export class VoiceTurnCoordinator {
         }
       });
       throw error;
+    } finally {
+      clearInterval(monitor);
+      renders.delete(active);
+      if (renders.size === 0) this.renders.delete(key);
     }
   }
   /** Durable expiry is recoverable after process restart; no timer grants safety. */
@@ -266,11 +312,32 @@ export class VoiceTurnCoordinator {
         const expired = Date.parse(current.expiresAt) <= this.clock();
         const silent = Date.parse(current.lastActivityAt) + this.limits.silenceMs <= this.clock();
         if (!expired && !silent) return false;
-        await this.close(identity, current.sessionId, expired ? "timeout" : "silence");
+        await this.closeLocked(current, expired ? "timeout" : "silence");
         return true;
       });
       if (closed) count++;
     }
     return count;
   }
+  async reapExpired(tenantId: string): Promise<void> {
+    const now = this.clock();
+    const rows = await this.db.rawQuery<{ id: string }>(`SELECT id FROM cognition_v2_voice_sessions
+      WHERE tenant=$1 AND data->>'state' NOT IN ('closed','failed')
+        AND ((data->>'expiresAt')::timestamptz <= $2 OR (data->>'lastActivityAt')::timestamptz <= $3)
+      ORDER BY data->>'lastActivityAt', id LIMIT 100`,
+      [tenantId, new Date(now).toISOString(), new Date(now - this.limits.silenceMs).toISOString()]);
+    for (const { id } of rows) {
+      await this.db.transaction(async () => {
+        const [row] = await this.db.rawQuery<{ data: VoiceSessionV2 }>(
+          "SELECT data FROM cognition_v2_voice_sessions WHERE tenant=$1 AND id=$2 FOR UPDATE", [tenantId, id],
+        );
+        if (!row) return;
+        const session = voiceSessionSchema.parse(row.data);
+        if (session.state === "closed" || session.state === "failed") return;
+        if (Date.parse(session.expiresAt) <= now) await this.closeLocked(session, "timeout");
+        else if (Date.parse(session.lastActivityAt) + this.limits.silenceMs <= now) await this.closeLocked(session, "silence");
+      });
+    }
+  }
+
 }

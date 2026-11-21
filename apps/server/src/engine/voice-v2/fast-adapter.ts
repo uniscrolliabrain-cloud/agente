@@ -33,7 +33,7 @@ export class CognitionFastVoiceAdapter implements SharedFastVoicePort {
         if (error) reject(error);
         else void writes.then(() => resolve({ text, receiptId: digest([identity.tenantId, input.turnId, text]) }), reject);
       };
-      const abort = () => finish(Error("VOICE_INTERRUPTED"));
+      const abort = () => finish(signal.reason instanceof Error ? signal.reason : Error("VOICE_INTERRUPTED"));
       if (signal.aborted) { abort(); return; }
       signal.addEventListener("abort", abort, { once: true });
       subscription = runInTenantScope(scope, () =>

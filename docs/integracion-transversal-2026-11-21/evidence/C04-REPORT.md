@@ -72,3 +72,28 @@ Las pruebas cubren el rechazo de un hilo de otra empresa, la ausencia de escritu
 Los tenants habilitados para Cognition V2 disponen de una API autenticada bajo `/api/cognition-v2/voice`. Permite conceder y revocar consentimiento, abrir una sesión de voz o vídeo asociada a un hilo y a un rol activo, enviar transcripciones, interrumpir y cerrar. Los IDs de actor y tenant salen de la sesión autenticada. El snapshot sale del servidor. Una transcripción parcial no encola un turno y repetir una final completada devuelve el estado existente.
 
 La prueba HTTP con inferencia simulada ejecuta texto → voz → vídeo → texto y comprueba que el historial conserva ese orden, que un turno de texto posterior recibe ambas transcripciones, que el replay no duplica y que la revocación bloquea turnos posteriores. Las pruebas del coordinador cubren interrupción en curso y rollback. Este cierre cubre el contrato conversacional y las transcripciones sintéticas. Captura, reproducción, imagen, conexión de la interfaz e integración con Anam/ElevenLabs quedan para las campañas de medios. El rollback consiste en revertir el montaje y las rutas; las tablas aditivas conservan los datos existentes.
+
+## Cierre de hallazgos de revisión del PR #19
+
+Base revisada: `020f6a1d9df6688f1dd4f581e4f421a0c49d532e`. El commit que incorpora esta sección contiene la corrección.
+
+| Hallazgo | Evidencia y corrección |
+| --- | --- |
+| Cancelación P1 | Se confirmó que el código anterior invalidaba el epoch, pero no avisaba directamente al proveedor silencioso. Ahora el commit de interrupción, cierre o revocación aborta el trabajo local. En otra instancia se detecta el epoch inválido con un sondeo nominal de 250 ms, sujeto a latencia de la base. El adaptador cancela la suscripción y Fast propaga el aborto al proveedor. El test HTTP espera una señal observada por el proveedor simulado antes de comprobar el estado y el historial. |
+| Transporte P1 | La API actual devuelve JSON al finalizar. Los fragmentos se consumen internamente para aplicar el fence. El tiempo hasta el primer audio, TTS, reproducción y facturación tras abortar quedan sin medir. |
+| Expiración P2 | La llamada previa de `reap` a `close` reutilizaba la conexión transaccional por AsyncLocalStorage. El bloqueo por transacción anidada era un riesgo preventivo, sin fallo reproducido. El cierre ahora comparte una operación interna sobre la fila ya bloqueada. El montaje HTTP inicia un barrido al arrancar y cada 15 s para tenants habilitados, con hasta 100 candidatos por tenant y revalidación bajo bloqueo. El temporizador se detiene al cerrar el servicio. |
+| API P2 | El cuerpo expone `code`. Consentimiento faltante o revocado devuelve 403, sesión expirada o cerrada 410, límite concurrente 429 e interrupción o conflicto de turno 409. Una sesión de otro actor o tenant devuelve 404. |
+
+### Contrato previsto para el transporte incremental C05–C07
+
+Cada evento de salida llevará `sessionId`, `threadId`, `turnId`, `epoch` y una secuencia monotónica. Tipos previstos: fragmento de texto, fragmento de audio, confirmación del turno, interrupción y error terminal. El adaptador de TTS debe recibir la misma señal de cancelación, dejar de enviar fragmentos de epochs anteriores y limitar los buffers. El cliente debe invalidar su cola de reproducción al cambiar de epoch. La confirmación del turno, la entrega de un fragmento y la reproducción efectiva requieren estados separados. La reanudación tras desconexión deberá definir el alcance de replay antes de habilitarse.
+
+### Reproducción de la validación
+
+- `ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-timeout=45000 --test-force-exit tests/{cognition-v2-http,cognition-v2-voice}.test.ts`
+- La recuperación se verifica reabriendo el almacén. Para PostgreSQL sintético local, definir `COGNITION_TEST_POSTGRES_URL` y ejecutar el mismo archivo de voz con `--test-name-pattern='expiry/silence'`.
+- `pnpm typecheck` y `pnpm audit:coherence`.
+
+El recorrido texto → voz → vídeo → texto se conserva con transcripciones sintéticas. Las pruebas ejercitan aislamiento, replay concurrente, interrupción, revocación, rollback y reapertura del almacén. Los proveedores reales y la interfaz móvil quedan fuera de este PR.
+
+Resultado local: 6/6 pruebas en PGlite, 1/1 de recuperación de expiración en PostgreSQL 17.9 desechable, typecheck aprobado y coherencia 7/7. La CI de GitHub debe evaluarse sobre el SHA corregido antes de cualquier aprobación de merge.
