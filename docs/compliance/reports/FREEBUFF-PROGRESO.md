@@ -32,3 +32,12 @@ Aviso contextual accesible en chat completo, dock y sheet, con enlace a informac
 Gate estático para metadatos, placeholders, noindex y enlaces locales. El modo release impide publicar los borradores desde el flujo de despliegue existente y el comando de release. Se añaden pruebas HTTP de identidad activa, idempotencia y permisos, y Playwright para escritorio/móvil. La matriz y el handoff recogen resultados y bloqueos.
 
 Cierre de verificación. Typecheck server/worker/web, build, smoke y auditoría 7/7 aprobados. Las pruebas focalizadas de servidor pasaron con Node 22. Playwright en Chromium de escritorio y Pixel 7 emulado verificó login, 200/404 locales, solicitud real y persistencia, gobernanza y restauración del foco. El gate bloquea los seis borradores. Suite completa en Node 24, 195/203 archivos aprobados y ocho fallidos. Lint global con deuda de base. El handoff enumera los resultados y bloqueos legales y operativos.
+
+## Reejecución solicitada · 2026-11-21 UTC
+
+- Código verificado en `43651739209c863a2e7d948807c6a67c9bd827ef` de `feat/freebuff-compliance-integral`.
+- `ALLOW_NETWORK=0 node --import tsx scripts/verify-vertical-slice.ts --only smoke` pasó en modo sample. Health y acceso autenticado devolvieron 200. El acceso sin sesión devolvió 401.
+- `ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=1 --test-timeout=90000 --test-force-exit tests/tenant-http-e2e.test.ts tests/oauth.test.ts tests/vertical-slice-google-connection.test.ts` pasó con Node 22. Tres archivos aprobados, cero fallos.
+- `pnpm --filter @agente/web build` pasó con avisos de Vite, incluido un chunk superior a 500 kB.
+- `node scripts/check-legal-site.mjs` verificó siete páginas. Con `--release` devolvió 1 y bloqueó los seis borradores, como se esperaba.
+- La reejecución fue focalizada. El [handoff](FREEBUFF-HANDOFF-FINAL.md) conserva los resultados de la suite completa y los pendientes de publicación.
