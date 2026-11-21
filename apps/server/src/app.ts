@@ -717,6 +717,8 @@ app.get("/api/health", async (c) => {
   if (cognitionV2) {
     const { cognitionV2Routes } = await import("./cognition-v2-routes.ts");
     app.route("/api/cognition-v2", cognitionV2Routes(cognitionV2));
+    const { voiceSessionRoutes } = await import("./voice-session-routes.ts");
+    app.route("/api/cognition-v2/voice", await voiceSessionRoutes(cognitionV2, tdb));
     cognitionV2.slow.capture = (identity, input) => kernel.captureAsyncResult({
       tenantId: identity.tenantId, owner: identity.owner, actorId: identity.actorId, role: "system", requestId: input.operationId,
     }, input);

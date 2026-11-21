@@ -37,7 +37,9 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     assert.equal(createThread.status, 201);
     const { id: chatThread } = await createThread.json();
     let providerInput: string | undefined;
+    let providerHistory: unknown[] = [];
     runtime.provider.stream = async (input, _prompt, _profile, _signal, emit) => {
+      providerHistory = input.messages;
       const latest = input.messages.at(-1);
       providerInput = typeof latest?.content === "string" ? latest.content : undefined;
       emit({ type: EventType.TEXT_MESSAGE_START, messageId: "fixture", role: "assistant" });
@@ -77,6 +79,44 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     assert.equal(afterAttachment.messages[2].content, "Adjunto: acta.pdf");
     assert.ok(!JSON.stringify(afterAttachment).includes("private-signed-url"));
 
+    await db.put(`tenant-a:${alice.id}`, "agent-roles", { id: "laia", name: "Laia", active: true });
+    const voice = (path: string, method: string, body?: unknown) => server!.app.request(`/api/cognition-v2/voice${path}`, {
+      method, headers: chatHeaders, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    const consent = await voice("/consents", "POST", {
+      transcript: true, recording: false, purpose: "conversation", saveToThread: true,
+    });
+    assert.equal(consent.status, 201);
+    const { id: consentReceiptId } = await consent.json();
+    const startSession = async (channel: "voice" | "video") => {
+      const response = await voice("/sessions", "POST", { threadId: chatThread, roleId: "laia", consentReceiptId, channel });
+      assert.equal(response.status, 201);
+      const session = await response.json();
+      assert.equal(session.channel, channel);
+      return session.sessionId as string;
+    };
+    const transcript = (sessionId: string, text: string, status = "final") =>
+      voice(`/sessions/${sessionId}/transcripts`, "POST", { utteranceId: text, revision: 1, status, text });
+    const voiceId = await startSession("voice");
+    assert.equal((await transcript(voiceId, "borrador", "partial")).status, 204);
+    assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
+    assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
+    assert.equal((await voice(`/sessions/${voiceId}/interrupt`, "POST")).status, 200);
+    const videoId = await startSession("video");
+    assert.equal((await transcript(videoId, "Turno de vídeo")).status, 200);
+    assert.match(JSON.stringify(providerHistory), /Turno de voz/);
+    assert.equal((await voice(`/consents/${consentReceiptId}`, "DELETE")).status, 204);
+    assert.equal((await transcript(videoId, "Revocado")).status, 409);
+
+    const returnToText = await (await chat("return-to-text")).text();
+    assert.match(returnToText, /conversation\.turn\.persisted/);
+    assert.match(JSON.stringify(providerHistory), /Turno de voz/);
+    assert.match(JSON.stringify(providerHistory), /Turno de vídeo/);
+    const unifiedHistory = await readChat();
+    assert.deepEqual(unifiedHistory.messages.filter((message: { role: string }) => message.role === "user")
+      .map((message: { content: string }) => message.content),
+    ["Hola", "Adjunto: acta.pdf", "Turno de voz", "Turno de vídeo", "Hola"]);
+
     const fullHistory = Array.from({ length: 999 }, (_, id) => ({ id: `seed-${id}`, role: "user", content: "Semilla" }));
     await db.put(alice.id, "conversations", { id: chatThread, messages: fullHistory });
     const failedStream = await (await chat("overflow-turn")).text();
@@ -84,7 +124,7 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     assert.doesNotMatch(failedStream, /conversation\.turn\.persisted|RUN_FINISHED/);
     assert.deepEqual((await readChat()).messages, fullHistory);
     const completedRuns = await db.rawQuery("SELECT id FROM cognition_v2_chat_runs WHERE state='completed'");
-    assert.equal(completedRuns.length, 2);
+    assert.equal(completedRuns.length, 5);
 
     await runtime.projector.tick("tenant-a");
     const snapshotResponse = await request("/snapshots", alice.token, "POST", { query: "análisis", maxTokens: 4000, maxRefs: 10 });
