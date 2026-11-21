@@ -107,6 +107,12 @@ try {
     await page.keyboard.press("Escape");
     await page.getByRole("dialog", { name: "Ajustes y cuenta" }).waitFor({ state: "hidden" });
     assert.ok(await page.getByRole("button", { name: "Transcribir voz" }).isVisible());
+    assert.equal(
+      await page
+        .getByRole("button", { name: "Ajustes", exact: true })
+        .evaluate((node) => node === document.activeElement),
+      true,
+    );
 
     await page.getByRole("button", { name: "Ajustes", exact: true }).click();
     await page.getByRole("button", { name: "Cerrar sesión" }).click();

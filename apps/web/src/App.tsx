@@ -356,7 +356,8 @@ export default function App() {
 
       {privacyOpen && <PrivacyDataPanel demo={demoSession} onClose={() => setPrivacyOpen(false)} />}
       <SettingsMenu
-        open={settingsOpen && !privacyOpen}
+        open={settingsOpen}
+        covered={privacyOpen}
         onOpenPrivacy={() => setPrivacyOpen(true)}
         onClose={() => setSettingsOpen(false)}
         userName={auth.user?.name ?? "Usuario"}

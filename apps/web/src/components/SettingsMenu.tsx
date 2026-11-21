@@ -8,6 +8,7 @@ import { initialsOf } from "./team/data";
 
 interface Props {
   open: boolean;
+  covered: boolean;
   onClose: () => void;
   userName: string;
   userEmail: string | null;
@@ -22,6 +23,7 @@ interface Props {
 
 export default function SettingsMenu({
   open,
+  covered,
   onClose,
   userName,
   userEmail,
@@ -34,22 +36,30 @@ export default function SettingsMenu({
   onLogout,
 }: Props) {
   const privacyTrigger = useRef<HTMLButtonElement>(null);
+  const visible = open && !covered;
 
   useEffect(() => {
     if (!open) return;
-    privacyTrigger.current?.focus();
+    const previous = document.activeElement;
+    return () => {
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
+    };
   }, [open]);
 
   useEffect(() => {
-    if (!open) return;
+    if (visible) privacyTrigger.current?.focus();
+  }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [visible, onClose]);
 
-  if (!open) return null;
+  if (!visible) return null;
 
   return (
     <>
