@@ -1,0 +1,292 @@
+rama	marca	sha	asunto
+audit/preflight-cognition-option3-20261115	+	80b0ca09d4b2906a42faf5aa6a39068d76176967	docs(audit): preflight code compatibility and non-destructive execution gates
+audit/preflight-cognition-option3-20261115	+	51cafbc68215452e26577135c23e8741d6e394b6	docs(cognition): establish persistent response and handoff protocol
+audit/preflight-cognition-option3-20261115	+	1e9e0d7ab25fdc597347f9300ca85ad59f773dd5	docs(cognition): establish persistent response and handoff protocol
+audit/preflight-cognition-option3-20261115	+	90c57e0afd232397f90357ca2cb972778313297c	docs(adr): option 3 replaces insufficient legacy design, not preserves it
+audit/preflight-cognition-option3-20261115	+	ecda4e61313fca8e2466da4c296b306878a95965	docs(cognition): correct preservation bias and reference replacement ADR
+audit/preflight-cognition-option3-20261115	+	44a8664a84a3c09e2f6c415eabd83ea1912c51b4	docs(cognition): correct preservation bias and reference replacement ADR
+audit/preflight-cognition-option3-20261115	+	850c4ec2fab73a31e558f20dccd1414ffeca6ddb	docs(cognition): correct preservation bias and reference replacement ADR
+audit/preflight-cognition-option3-20261115	+	28f27eb51e3eb3449bb3b4af4ebc1ec9bdd090b0	docs(campaign): C00 Inventario exhaustivo y mapa de destrucción controlada
+audit/preflight-cognition-option3-20261115	+	e1a4f2156edb23fb2860f0b3dd164ec90b16e1c6	docs(campaign): C01 Contratos V2, ADR y arquitectura de sustitución
+audit/preflight-cognition-option3-20261115	+	59e9674ec2df1d058943cf97e8b555a066447ae7	docs(campaign): C02 Event Bus durable, ingest y proyector shadow
+audit/preflight-cognition-option3-20261115	+	a2e012cd00c798142ea3b7e5c9a647d25dcea8e0	docs(campaign): C03 Grafo multicapa y procedencia
+audit/preflight-cognition-option3-20261115	+	dfb1dc8bb3316744f33138d435924ea6b886aa3d	docs(campaign): C04 Cinco memorias y recuperación RAG
+audit/preflight-cognition-option3-20261115	+	19ea8a6ef2cc148246d76889cd0f6642a9acd557	docs(campaign): C05 Cromos y motor de atención vectorial
+audit/preflight-cognition-option3-20261115	+	34f3c499e1b402039848da96e39160eff02b4ae5	docs(campaign): C06 Slow LLM asíncrono productor de conocimiento
+audit/preflight-cognition-option3-20261115	+	a28a8ac52efd2372328af6fb80cfe8d792bf50d9	docs(campaign): C07 Clasificador JEV AI y metacognición no autoritativa
+audit/preflight-cognition-option3-20261115	+	1fb5e399a219c8f4dfca1fc0d4d42bbfb3412798	docs(campaign): C08 CardStore V2, snapshots y ledger de entrega
+audit/preflight-cognition-option3-20261115	+	102c28fd45f6ddf6667ced72cb21ef218ab612d0	docs(campaign): C09 Context Serving Runtime y presupuestos de tokens
+audit/preflight-cognition-option3-20261115	+	411eaafe345d5f1ec6ea07b52c26cb8879db09d7	docs(campaign): C10 Fast LLM y router de conversación V2
+audit/preflight-cognition-option3-20261115	+	e72a0bb49666b51292981ed7bef3da696259748b	docs(campaign): C11 Presenter y UX de recorrido pedagógico
+audit/preflight-cognition-option3-20261115	+	798f51163bd8f35b2658f84245c51a37018f596d	docs(campaign): C12 Voz Anam y sesiones multicanal
+audit/preflight-cognition-option3-20261115	+	256a74fba0ed17f6ceaa4b6aa4bde5e5c5259817	docs(campaign): C13 Adaptador Ciberseguridad y eventos del dominio
+audit/preflight-cognition-option3-20261115	+	1fb8f95f4a1fbe789a22ef4d643af4bf12b7d3e5	docs(campaign): C14 Shadow, canary, migración y retiro de legacy
+audit/preflight-cognition-option3-20261115	+	31410779efd0a19216ce2e2da6b3b56ca472a0d1	docs(campaign): C15 Certificación E2E, seguridad, rendimiento y handoff final
+audit/preflight-cognition-option3-20261115	+	ea835413559c2877d22743d065da19b9a23ae0ce	docs(campaigns): index dependencies and execution gates for C00-C15
+audit/preflight-cognition-option3-20261115	+	3bd133162475a3c01c949ed3b6e8478eba164ddf	docs(handoff): log C00-C15 campaigns and pending verification
+audit/preflight-cognition-option3-20261115	+	5e5efaff2aca9db5d06b821d8e05324c7b1b2cea	docs(cognition): C00 deep evidence-based audit and safe replacement handoff
+audit/preflight-cognition-option3-20261115	+	08880fefd7b88400a9c62c1b7d74ee62e86cf98f	docs(handoff): log C00 deep audit turn 1 of 16
+audit/preflight-cognition-option3-20261115	+	225cdacab0235a5839970a39bfffc46bdddc1ff1	docs(cognition): C01 deep code audit and V2 schema contract campaign
+audit/preflight-cognition-option3-20261115	+	0b6ccd02d977f18f028b987fba88ad4cf0dd3276	docs(handoff): log C01 deep audit turn 2 of 16
+audit/preflight-cognition-option3-20261115	+	2598f0364017a1bfde99f82ab7cd60806c11c916	docs(cognition): C02 durable event projector audit, patchsets and recovery gates
+audit/preflight-cognition-option3-20261115	+	09dfd3f3f8ac610f6f483d2fd8101b9b8d8645b6	docs(handoff): log C02 durable projector turn 3 of 16
+audit/preflight-cognition-option3-20261115	+	675879a06ea6e3d9caa1b20baf49f94dfc6c8056	docs(cognition): C03 deep graph audit and multilayer projection implementation campaign
+audit/preflight-cognition-option3-20261115	+	46831e8095d5d4450803e00c8da8d7ef60868580	docs(handoff): log C03 graph audit turn 4 of 16
+audit/preflight-cognition-option3-20261115	+	c7ef6c509877b2c55c7d555c245554e711d7863f	docs(cognition): C04 five memories, RAG, invalidation and handoff
+audit/preflight-cognition-option3-20261115	+	10d257f90bd8d3a1661f876ff12c64f77290e812	docs(handoff): log C04 memory audit turn 5 of 16
+audit/preflight-cognition-option3-20261115	+	7ab536eb920cf94896dfe024f8156c11a16887f4	docs(cognition): C05 chromatic ontology audit, polarities and motor V2 plan
+audit/preflight-cognition-option3-20261115	+	5782ad6217638bcaf879540d91e950fe474f4ff9	docs(handoff): log C05 chromatic ontology turn 6 of 16
+audit/preflight-cognition-option3-20261115	+	758a573499866151c1e6d7d6e70c3899cc95084e	docs(cognition): C06 global attention and metacognition V2 audit and implementation waves
+audit/preflight-cognition-option3-20261115	+	79eabfeb40b9f0fc96d037e8c2a288c6b524b8f8	docs(handoff): log C06 attention audit turn 7 of 16
+audit/preflight-cognition-option3-20261115	+	d599e19bc17248c5bf6617855551400cdfc98731	docs(cognition): C07 async Slow LLM and enriched cognition extraction campaign
+audit/preflight-cognition-option3-20261115	+	e248c4c8a2990c8963a1e8705a03316c32f9efe4	docs(handoff): log C07 async Slow cognitive extraction turn 8 of 16
+audit/preflight-cognition-option3-20261115	+	f8a259d8248848465f93a142d8257319cdae06eb	docs(cognition): C08 JEV non-authoritative semantic classifier audit and implementation plan
+audit/preflight-cognition-option3-20261115	+	9118d5c26e713f4f21c819a049d8c6f53c19eabb	docs(handoff): log C08 JEV semantic audit turn 9 of 16
+audit/preflight-cognition-option3-20261115	+	7aa13f4cb8c25888e627fb2f43f63f31dec278a1	docs(cognition): C09 CardStore V2 durable delivery ledger ACK replay migration
+audit/preflight-cognition-option3-20261115	+	18a4c313909d4b12fd2a349c60d8b5f06506bb8f	docs(handoff): log C09 CardStore delivery ledger turn 10 of 16
+audit/preflight-cognition-option3-20261115	+	bf05dfb3adfcc6324982453c805fc58bddcb4203	docs(cognition): C10 ContextServingFacade V2 snapshots deltas references and policy gates
+audit/preflight-cognition-option3-20261115	+	7238b9f5fc425e7f8ca6f63ea740a718454ade2f	docs(handoff): log C10 ContextServingFacade audit turn 11 of 16
+audit/preflight-cognition-option3-20261115	+	b0928a10a9ae3ae859829d5d4d596610419f139e	docs(cognition): C11 Fast Slow independent inference services audit and migration plan
+audit/preflight-cognition-option3-20261115	+	c04d9ff16775cdd0d8a500b18462459b7c2c45f1	docs(handoff): log C11 independent Fast Slow runtime turn 12 of 16
+audit/preflight-cognition-option3-20261115	+	7f23236d61b8b2872e7a88164a812e67e1e26ba9	docs(cognition): C12 Presenter V2 real progress UX AG-UI SVG accessibility migration
+audit/preflight-cognition-option3-20261115	+	0de7070f162716a0cc153852ac60f066f617881d	docs(handoff): log C12 Presenter UX progress SVG turn 13 of 16
+audit/preflight-cognition-option3-20261115	+	c4390de3c0ef815bde62219f551e795ef7b17a94	docs(cognition): C13 Anam avatar realtime voice sessions interruption and provider gates
+audit/preflight-cognition-option3-20261115	+	ff555d9c196e36a4d31de98bfde8736deb3192d0	docs(handoff): log C13 Anam voice integration turn 14 of 16
+audit/preflight-cognition-option3-20261115	+	5f72a5fd9cc4dd4ba50a93f9596ef9208406bdbd	docs(cognition): C14 cross-repo cybersecurity Python TS bridge governance audit and handoff
+audit/preflight-cognition-option3-20261115	+	b2001c9f034ded04222aa3a8fe8c9a4b7021b841	docs(handoff): log C14 cybersecurity cross-repo bridge turn 15 of 16
+audit/preflight-cognition-option3-20261115	+	970a63be6ef037cb4b6a8109a32f227e3eaa8d6b	docs(cognition): C15 integral E2E acceptance gates execution handoff close 16 campaigns
+audit/preflight-cognition-option3-20261115	+	1e007d75b470490fe2ca8943ed5dc91803af039a	docs(handoff): close 16-turn cognition redesign documentation program C15
+audit/update-docs-20261118	+	a8e86f715f662cfe289c529ab2c848768bfd7f4e	docs(runtime-audit): seed angle 01 inventario-y-verdad-del-codigo
+audit/update-docs-20261118	+	cceab591252b08be03651f86e479d4f13ff8700d	docs(runtime-audit): seed angle 02 arquitectura-tres-planos
+audit/update-docs-20261118	+	bc7583612b31046bdcd92ffb7f617c0e18d7db9f	docs(runtime-audit): seed angle 03 harness-conversacional
+audit/update-docs-20261118	+	732fa324774228db4fd8465f4fd5dce356de659d	docs(runtime-audit): seed angle 04 latencia-anam
+audit/update-docs-20261118	+	17d364ff634897d09749014938f4f955899fc550	docs(runtime-audit): seed angle 05 motor-fast-llm
+audit/update-docs-20261118	+	60f7853847c933ef96014c074f981cbaa2efb6d3	docs(runtime-audit): seed angle 06 motor-slow-llm
+audit/update-docs-20261118	+	25120caa48725582a9a86141741869fef9eaea03	docs(runtime-audit): seed angle 07 tarjetas-contexto
+audit/update-docs-20261118	+	aaff34408c81a1323a2cdb2a6c35b51c545e6de7	docs(runtime-audit): seed angle 08 perfiles-laia-y-agentes
+audit/update-docs-20261118	+	c20dab1fbdf519c06f40bb519237a30742497b41	docs(runtime-audit): seed angle 09 intent-bridge
+audit/update-docs-20261118	+	048cbcf424272202d4646024a543e2d298ebc9c1	docs(runtime-audit): seed angle 10 kernel-autoridad
+audit/update-docs-20261118	+	1ee0c587d18f1fadf639f8291c8bbab2494ee7d5	docs(runtime-audit): seed angle 11 identidad-multitenant
+audit/update-docs-20261118	+	7254b275758258729ecb72f5afdbd846baa0b185	docs(runtime-audit): seed angle 12 aprobaciones-mandatos
+audit/update-docs-20261118	+	e6529c2de0e53958311615dc32779f8f961bd602	docs(runtime-audit): seed angle 13 catalogo-capacidades
+audit/update-docs-20261118	+	d42c2fb1c1ce0dea3001bc6b77bd732755996e45	docs(runtime-audit): seed angle 14 sops-tipados
+audit/update-docs-20261118	+	584fd3203ba12ba7c3f43e43fb28ed91eb0f4f1c	docs(runtime-audit): seed angle 15 skills-tipadas
+audit/update-docs-20261118	+	2be85a23566bf2052af0a0cc3636dc850ff2a509	docs(runtime-audit): seed angle 16 pipelines-dag
+audit/update-docs-20261118	+	1edf332c1b6dd606483d01ce1ed765c2d9803abf	docs(runtime-audit): seed angle 17 workers-colas
+audit/update-docs-20261118	+	9e3996a6284600381c7302bc5678a7e41560e264	docs(runtime-audit): seed angle 18 efectos-idempotencia
+audit/update-docs-20261118	+	996d57cb65547d6e147a1f7f4d9f8200dcd13498	docs(runtime-audit): seed angle 19 bus-eventos
+audit/update-docs-20261118	+	732b30933bab5443f023fdf853f7ae879f77bbcd	docs(runtime-audit): seed angle 20 observabilidad
+audit/update-docs-20261118	+	605251e4122ee6a9cb76bcc41c098a4210382721	docs(runtime-audit): seed angle 21 replay-reparacion
+audit/update-docs-20261118	+	6387a7050ba42a2a54ae9ff275b3616a3aacc8b5	docs(runtime-audit): seed angle 22 presenter-notificaciones
+audit/update-docs-20261118	+	6fa8dd5c607ed6e03bec4371959b18c05f669276	docs(runtime-audit): seed angle 23 dominio-ciberseguridad
+audit/update-docs-20261118	+	210b23cd55b377604f94af342192a2ea93f816f2	docs(runtime-audit): seed angle 24 fabrica-repos-hijos
+audit/update-docs-20261118	+	3bea9563b97e192847c3894d74dd6f6a6cdd434a	docs(runtime-audit): seed angle 25 dominio-finanzas
+audit/update-docs-20261118	+	5bde09164b4e2f9a40d3c69b97885b6f8619ffa9	docs(runtime-audit): seed angle 26 ui-workspaces
+audit/update-docs-20261118	+	0db65c32013d8764cd59ef993dc1e5a87a4d4f16	docs(runtime-audit): seed angle 27 memoria-rag
+audit/update-docs-20261118	+	f6e0d80d2094c1f51c753678e9f543c1383be117	docs(runtime-audit): seed angle 28 seguridad-privacidad
+audit/update-docs-20261118	+	583fa0198447d2d0108d4927d6e70eb747c41319	docs(runtime-audit): seed angle 29 testing-certificacion
+audit/update-docs-20261118	+	c3508ba99a77d413802245c9a6a637996d13412a	docs(runtime-audit): seed angle 30 release-operacion
+audit/update-docs-20261118	+	d4bff82c60bba96736acccbd51c5567d338c27dc	docs(runtime-audit): index 30 angles and founder architecture invariants
+audit/update-docs-20261118	+	36fc2ba4292b366dfe10c90521a053b6b3af44d1	docs(chat-v2): design low-latency conversational harness, legacy migration and user-facing progress
+audit/update-docs-20261118	+	e662000c36db926baf0dca9bd9f00fdceee008a7	docs(runtime-audit): elevate fast conversation V2 and legacy migration priority
+audit/update-docs-20261118	+	b3605323992cb631e857155ae8d9656b73e5fd40	docs(chat-v2): record pedagogical five-phase animation and SVG UX timing decisions
+audit/update-docs-20261118	+	16bd1b1be84bd6f11c88349f79522dda620fd402	docs(integration): master roadmap and execution order for 14 child repositories
+audit/update-docs-20261118	+	357c03162bb35e7d085c1704adc1346194bdc108	docs(auditoria): add V2 transversal architecture 31-lexico-y-contratos-transversales
+audit/update-docs-20261118	+	47d96cdb2d1cc5d08efa06b9d0d32b4fe47e0f5b	docs(auditoria): add V2 transversal architecture 32-atlas-14-repositorios
+audit/update-docs-20261118	+	a2a40298ef57b80dba2dddf48b9c513552353527	docs(auditoria): add V2 transversal architecture 33-arquitectura-global-destino
+audit/update-docs-20261118	+	78bdc0f96d106d5fe6c9448878c0c136320eaca2	docs(auditoria): add V2 transversal architecture 00-REAUDITORIA-V2-TRANSVERSAL.md
+audit/update-docs-20261118	+	df4235c8311106a6cc3f43fb3df60a0925e356ee	docs(auditoria): deepen V2 31-lexico-y-contratos-transversales with code-grounded contracts
+audit/update-docs-20261118	+	a1ae5c9979ac363727911f71c4a73c40cd548a36	docs(auditoria): deepen V2 32-atlas-14-repositorios with code-grounded contracts
+audit/update-docs-20261118	+	a92265c9db40985b4e7099049954491e4f2ad44c	docs(auditoria): add child repo convergence dossier 02-ESTADO-COMPARADO-README.md
+audit/update-docs-20261118	+	076c26af8f93fcfe1eb70030f0590c8b609d90e4	docs(auditoria): add child repo convergence dossier ciberseguridad.md
+audit/update-docs-20261118	+	ac2c9c0110dae03108e99eff977f4704ce9380a2	docs(auditoria): add child repo convergence dossier clientes.md
+audit/update-docs-20261118	+	03bd07541ace250cf84bea8601cd2ac37964b810	docs(auditoria): add child repo convergence dossier gestoria.md
+audit/update-docs-20261118	+	5cf693c10dc2514017f72df26b62318478e59237	docs(auditoria): add child repo convergence dossier comunicacion.md
+audit/update-docs-20261118	+	e7774eb1017cd7fe52f88cdc17d2f954015680da	docs(auditoria): add child repo convergence dossier ventas.md
+audit/update-docs-20261118	+	ebf6d2a89d0df828b7f482446322f67e9fc943bf	docs(auditoria): add child repo convergence dossier finanzas.md
+audit/update-docs-20261118	+	f3d3e9a9dde0fe6f767741a8d81966980a3ba377	docs(auditoria): add child repo convergence dossier redes.md
+audit/update-docs-20261118	+	7faf3b5b45b0ae1347454db423c05caf5274b03e	docs(auditoria): add child repo convergence dossier marketing.md
+audit/update-docs-20261118	+	f98b226581dd557a6c46035255dda350ac5241fb	docs(auditoria): add child repo convergence dossier video.md
+audit/update-docs-20261118	+	dc876eca06b76064db9e2f4c18dee12cd9b9e884	docs(auditoria): add child repo convergence dossier branding.md
+audit/update-docs-20261118	+	b0004018727538792a84cbce64193ab147d60b26	docs(auditoria): add child repo convergence dossier dise-o.md
+audit/update-docs-20261118	+	f757286ab00c9aad501f7136971cfcc552e9b1d7	docs(auditoria): add child repo convergence dossier legal.md
+audit/update-docs-20261118	+	2a78dd3b5116f929e80515a76b039259c9c6f0b8	docs(auditoria): add child repo convergence dossier seguros.md
+audit/update-docs-20261118	+	55ba30599d61b4d4266b3cfd3a23e53915b18a02	docs(auditoria): add child repo convergence dossier formacion.md
+audit/update-docs-20261118	+	c7ac442bb72458b00e65d2f7b9a2ba1b946e30db	docs(auditoria): refocus on agent kernel fast slow and first cyber integration
+audit/update-docs-20261118	+	2e62a549a64bff377b90dceeeaccf29983df7cf1	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 00-ARQUITECTURA-COGNITIVA-CONVERSACIONAL-MASTER.md
+audit/update-docs-20261118	+	761b2884dda46d585e026796165a65572c9ba485	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 01-TARJETAS-RAC-RAG-ATENCION-MEMORIA.md
+audit/update-docs-20261118	+	5e441fd397e8a48823b610209beed48069d8c711	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 02-UX-SVG-Y-CAMINOS-DE-ACCION.md
+audit/update-docs-20261118	+	dc29052bb2c7f308db345b830ac7990de485c27e	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 03-DOS-APIS-FAST-SLOW-HARNESS-Y-MIGRACION.md
+audit/update-docs-20261118	+	a322abf78f5002aed03c63e07f62dd4c649e1700	docs(chat): supersede incomplete V2 architecture with detailed cognitive master
+audit/update-docs-20261118	+	617af5a3cdc0534e29b0e5c786564b96c40333c5	docs(audit): code-grounded cognition cromos attention bus cyber orchestration options
+audit/update-docs-20261118	+	9c8131d0b230b9ce3009d4f0315783974e2248e6	docs(cognition): ultradetailed option 3 00-INDICE-DECISIONES-ESTADO-Y-TRAZABILIDAD.md
+audit/update-docs-20261118	+	4ea7085e7ebbefc0d8d40c96a6d7be39c7cb8f5c	docs(cognition): ultradetailed option 3 01-INVENTARIO-REAL-ARCHIVOS-FLUX-Y-BRECHAS.md
+audit/update-docs-20261118	+	cf971a0a50ab1514a60ce7044ec989c042bf043b	docs(cognition): ultradetailed option 3 02-CONTRATOS-CARD-RAG-JEV-CROMOS-GRAFO-MEMORIAS.md
+audit/update-docs-20261118	+	e475578361f638d7348473ca7637c3f3c0d4edd0	docs(cognition): ultradetailed option 3 03-ORQUESTACION-EVENTOS-CYBER-Y-SECUENCIAS.md
+audit/update-docs-20261118	+	2f2c8b8657e0710457327fe5ea332b2c4d899337	docs(cognition): complete ultradetailed option 3 04-SERVIDOR-CONTEXTO-FAST-SLOW-PRESENTER-ANAM-UX.md
+audit/update-docs-20261118	+	10cc237bdb6de6b2fb422ff275dbd4e1244091ab	docs(cognition): complete ultradetailed option 3 05-PLAN-IMPLEMENTACION-PATCHSETS-GATES-TESTS-HANDOFF.md
+audit/update-docs-20261118	+	546d264eda148cf765195cdf8d624099e4442399	docs(cognition): complete ultradetailed option 3 06-REGISTRO-PENDIENTES-DECISIONES-Y-EVIDENCIA.md
+audit/update-docs-20261118	+	501182971474e4469a17b6069d0b93a9d3619902	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/README.md
+audit/update-docs-20261118	+	99f425ee1d46f9449250064bcb287b9cb4c38cb9	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/00-REAUDITORIA-V2-TRANSVERSAL.md
+audit/update-docs-20261118	+	0266bbb35322b973a8ab7337d8edd1f85891996f	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/03-harness-conversacional/REDISENO-V2-FAST-CHAT-VOICE.md
+audit/update-docs-20261118	+	e20220d8223befa4af3e6a3d62b423cdc2ad5660	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/32-atlas-14-repositorios/marketing.md
+audit/update-docs-20261118	+	626c378ac54df62b026e2d0c277bf6bce7f7bbec	docs(audit): add dated audit findings and remaining gates
+docs/2026-11-17-universal-conversation	+	16e07cd3f27122b30633f842f49c4d584e6a348b	docs(universal-conversation): add README.md
+docs/2026-11-17-universal-conversation	+	60e6983af632bb42ef6a2b59e5a94c5a0b53e200	docs(universal-conversation): add 01-concepto/vision-producto.md
+docs/2026-11-17-universal-conversation	+	f082698eb4ec9a5d5f829707856933d0ff9240f4	docs(universal-conversation): add 01-concepto/escenarios-ux.md
+docs/2026-11-17-universal-conversation	+	907b16043b2eaffe2e3ff0fbc5efc005d0f98118	docs(universal-conversation): add 02-arquitectura/arquitectura-maestra.md
+docs/2026-11-17-universal-conversation	+	f139e45262c2c3379effd6babb773bb8d94ced3e	docs(universal-conversation): add 02-arquitectura/contratos-y-modelo-de-datos.md
+docs/2026-11-17-universal-conversation	+	92b6ee94a682ff00462589f21ce847fcb15cb762	docs(universal-conversation): add 03-conversacion/sincronizacion-y-concurrencia.md
+docs/2026-11-17-universal-conversation	+	64eaaa1f42bc7927d999032c1ec02f66f15c26f2	docs(universal-conversation): add 03-conversacion/harness-contexto-memoria.md
+docs/2026-11-17-universal-conversation	+	3edfbe4f29c68910aa85625d78fe8fa46a05aa77	docs(universal-conversation): add 04-conectores/google-microsoft-y-superficies.md
+docs/2026-11-17-universal-conversation	+	39025df04d16ee73ba1e84651445b68b0d8ee23e	docs(universal-conversation): add 05-seguridad/identidad-permisos-y-privacidad.md
+docs/2026-11-17-universal-conversation	+	218f2d830af3171c5d94202dcbf5b1a8246997ee	docs(universal-conversation): add 06-integracion-repo/auditoria-y-patchsets.md
+docs/2026-11-17-universal-conversation	+	5c057218f9ea7a98bd6f7d57c344ca40961d9b67	docs(universal-conversation): add 07-campanas/roadmap-y-gates.md
+docs/2026-11-17-universal-conversation	+	3abb20c92d74b72d73019e6ef240fdcfcc4d324e	docs(universal-conversation): add 08-calidad/pruebas-y-criterios.md
+docs/2026-11-17-universal-conversation	+	32d037472922f20ae754f00ce2ce170f5dec6fdd	docs(universal-conversation): add 09-decisiones/adr-y-pendientes.md
+docs/2026-11-17-universal-conversation	+	552e186bbabb18746e4345bd511eee23f49d2d9b	docs: add Agential Life Workspace vision and architecture
+docs/2026-11-17-universal-conversation	+	6cfb3f9f09c5a7941695e6ec97f43bbb5daa04d2	docs: Google Workspace Gmail pilot costs OAuth distribution and campaigns
+docs/2026-11-17-universal-conversation	+	821580a9401d686d573f8acdb8d7de43ac861e5c	docs: Google Workspace Gmail pilot costs OAuth distribution and campaigns
+docs/audit-30-dominios-runtime-20261115	+	a8e86f715f662cfe289c529ab2c848768bfd7f4e	docs(runtime-audit): seed angle 01 inventario-y-verdad-del-codigo
+docs/audit-30-dominios-runtime-20261115	+	cceab591252b08be03651f86e479d4f13ff8700d	docs(runtime-audit): seed angle 02 arquitectura-tres-planos
+docs/audit-30-dominios-runtime-20261115	+	bc7583612b31046bdcd92ffb7f617c0e18d7db9f	docs(runtime-audit): seed angle 03 harness-conversacional
+docs/audit-30-dominios-runtime-20261115	+	732fa324774228db4fd8465f4fd5dce356de659d	docs(runtime-audit): seed angle 04 latencia-anam
+docs/audit-30-dominios-runtime-20261115	+	17d364ff634897d09749014938f4f955899fc550	docs(runtime-audit): seed angle 05 motor-fast-llm
+docs/audit-30-dominios-runtime-20261115	+	60f7853847c933ef96014c074f981cbaa2efb6d3	docs(runtime-audit): seed angle 06 motor-slow-llm
+docs/audit-30-dominios-runtime-20261115	+	25120caa48725582a9a86141741869fef9eaea03	docs(runtime-audit): seed angle 07 tarjetas-contexto
+docs/audit-30-dominios-runtime-20261115	+	aaff34408c81a1323a2cdb2a6c35b51c545e6de7	docs(runtime-audit): seed angle 08 perfiles-laia-y-agentes
+docs/audit-30-dominios-runtime-20261115	+	c20dab1fbdf519c06f40bb519237a30742497b41	docs(runtime-audit): seed angle 09 intent-bridge
+docs/audit-30-dominios-runtime-20261115	+	048cbcf424272202d4646024a543e2d298ebc9c1	docs(runtime-audit): seed angle 10 kernel-autoridad
+docs/audit-30-dominios-runtime-20261115	+	1ee0c587d18f1fadf639f8291c8bbab2494ee7d5	docs(runtime-audit): seed angle 11 identidad-multitenant
+docs/audit-30-dominios-runtime-20261115	+	7254b275758258729ecb72f5afdbd846baa0b185	docs(runtime-audit): seed angle 12 aprobaciones-mandatos
+docs/audit-30-dominios-runtime-20261115	+	e6529c2de0e53958311615dc32779f8f961bd602	docs(runtime-audit): seed angle 13 catalogo-capacidades
+docs/audit-30-dominios-runtime-20261115	+	d42c2fb1c1ce0dea3001bc6b77bd732755996e45	docs(runtime-audit): seed angle 14 sops-tipados
+docs/audit-30-dominios-runtime-20261115	+	584fd3203ba12ba7c3f43e43fb28ed91eb0f4f1c	docs(runtime-audit): seed angle 15 skills-tipadas
+docs/audit-30-dominios-runtime-20261115	+	2be85a23566bf2052af0a0cc3636dc850ff2a509	docs(runtime-audit): seed angle 16 pipelines-dag
+docs/audit-30-dominios-runtime-20261115	+	1edf332c1b6dd606483d01ce1ed765c2d9803abf	docs(runtime-audit): seed angle 17 workers-colas
+docs/audit-30-dominios-runtime-20261115	+	9e3996a6284600381c7302bc5678a7e41560e264	docs(runtime-audit): seed angle 18 efectos-idempotencia
+docs/audit-30-dominios-runtime-20261115	+	996d57cb65547d6e147a1f7f4d9f8200dcd13498	docs(runtime-audit): seed angle 19 bus-eventos
+docs/audit-30-dominios-runtime-20261115	+	732b30933bab5443f023fdf853f7ae879f77bbcd	docs(runtime-audit): seed angle 20 observabilidad
+docs/audit-30-dominios-runtime-20261115	+	605251e4122ee6a9cb76bcc41c098a4210382721	docs(runtime-audit): seed angle 21 replay-reparacion
+docs/audit-30-dominios-runtime-20261115	+	6387a7050ba42a2a54ae9ff275b3616a3aacc8b5	docs(runtime-audit): seed angle 22 presenter-notificaciones
+docs/audit-30-dominios-runtime-20261115	+	6fa8dd5c607ed6e03bec4371959b18c05f669276	docs(runtime-audit): seed angle 23 dominio-ciberseguridad
+docs/audit-30-dominios-runtime-20261115	+	210b23cd55b377604f94af342192a2ea93f816f2	docs(runtime-audit): seed angle 24 fabrica-repos-hijos
+docs/audit-30-dominios-runtime-20261115	+	3bea9563b97e192847c3894d74dd6f6a6cdd434a	docs(runtime-audit): seed angle 25 dominio-finanzas
+docs/audit-30-dominios-runtime-20261115	+	5bde09164b4e2f9a40d3c69b97885b6f8619ffa9	docs(runtime-audit): seed angle 26 ui-workspaces
+docs/audit-30-dominios-runtime-20261115	+	0db65c32013d8764cd59ef993dc1e5a87a4d4f16	docs(runtime-audit): seed angle 27 memoria-rag
+docs/audit-30-dominios-runtime-20261115	+	f6e0d80d2094c1f51c753678e9f543c1383be117	docs(runtime-audit): seed angle 28 seguridad-privacidad
+docs/audit-30-dominios-runtime-20261115	+	583fa0198447d2d0108d4927d6e70eb747c41319	docs(runtime-audit): seed angle 29 testing-certificacion
+docs/audit-30-dominios-runtime-20261115	+	c3508ba99a77d413802245c9a6a637996d13412a	docs(runtime-audit): seed angle 30 release-operacion
+docs/audit-30-dominios-runtime-20261115	+	d4bff82c60bba96736acccbd51c5567d338c27dc	docs(runtime-audit): index 30 angles and founder architecture invariants
+docs/audit-30-dominios-runtime-20261115	+	36fc2ba4292b366dfe10c90521a053b6b3af44d1	docs(chat-v2): design low-latency conversational harness, legacy migration and user-facing progress
+docs/audit-30-dominios-runtime-20261115	+	e662000c36db926baf0dca9bd9f00fdceee008a7	docs(runtime-audit): elevate fast conversation V2 and legacy migration priority
+docs/audit-30-dominios-runtime-20261115	+	b3605323992cb631e857155ae8d9656b73e5fd40	docs(chat-v2): record pedagogical five-phase animation and SVG UX timing decisions
+docs/audit-30-dominios-runtime-20261115	+	16bd1b1be84bd6f11c88349f79522dda620fd402	docs(integration): master roadmap and execution order for 14 child repositories
+docs/audit-30-dominios-runtime-20261115	+	357c03162bb35e7d085c1704adc1346194bdc108	docs(auditoria): add V2 transversal architecture 31-lexico-y-contratos-transversales
+docs/audit-30-dominios-runtime-20261115	+	47d96cdb2d1cc5d08efa06b9d0d32b4fe47e0f5b	docs(auditoria): add V2 transversal architecture 32-atlas-14-repositorios
+docs/audit-30-dominios-runtime-20261115	+	a2a40298ef57b80dba2dddf48b9c513552353527	docs(auditoria): add V2 transversal architecture 33-arquitectura-global-destino
+docs/audit-30-dominios-runtime-20261115	+	78bdc0f96d106d5fe6c9448878c0c136320eaca2	docs(auditoria): add V2 transversal architecture 00-REAUDITORIA-V2-TRANSVERSAL.md
+docs/audit-30-dominios-runtime-20261115	+	df4235c8311106a6cc3f43fb3df60a0925e356ee	docs(auditoria): deepen V2 31-lexico-y-contratos-transversales with code-grounded contracts
+docs/audit-30-dominios-runtime-20261115	+	a1ae5c9979ac363727911f71c4a73c40cd548a36	docs(auditoria): deepen V2 32-atlas-14-repositorios with code-grounded contracts
+docs/audit-30-dominios-runtime-20261115	+	a92265c9db40985b4e7099049954491e4f2ad44c	docs(auditoria): add child repo convergence dossier 02-ESTADO-COMPARADO-README.md
+docs/audit-30-dominios-runtime-20261115	+	076c26af8f93fcfe1eb70030f0590c8b609d90e4	docs(auditoria): add child repo convergence dossier ciberseguridad.md
+docs/audit-30-dominios-runtime-20261115	+	ac2c9c0110dae03108e99eff977f4704ce9380a2	docs(auditoria): add child repo convergence dossier clientes.md
+docs/audit-30-dominios-runtime-20261115	+	03bd07541ace250cf84bea8601cd2ac37964b810	docs(auditoria): add child repo convergence dossier gestoria.md
+docs/audit-30-dominios-runtime-20261115	+	5cf693c10dc2514017f72df26b62318478e59237	docs(auditoria): add child repo convergence dossier comunicacion.md
+docs/audit-30-dominios-runtime-20261115	+	e7774eb1017cd7fe52f88cdc17d2f954015680da	docs(auditoria): add child repo convergence dossier ventas.md
+docs/audit-30-dominios-runtime-20261115	+	ebf6d2a89d0df828b7f482446322f67e9fc943bf	docs(auditoria): add child repo convergence dossier finanzas.md
+docs/audit-30-dominios-runtime-20261115	+	f3d3e9a9dde0fe6f767741a8d81966980a3ba377	docs(auditoria): add child repo convergence dossier redes.md
+docs/audit-30-dominios-runtime-20261115	+	7faf3b5b45b0ae1347454db423c05caf5274b03e	docs(auditoria): add child repo convergence dossier marketing.md
+docs/audit-30-dominios-runtime-20261115	+	f98b226581dd557a6c46035255dda350ac5241fb	docs(auditoria): add child repo convergence dossier video.md
+docs/audit-30-dominios-runtime-20261115	+	dc876eca06b76064db9e2f4c18dee12cd9b9e884	docs(auditoria): add child repo convergence dossier branding.md
+docs/audit-30-dominios-runtime-20261115	+	b0004018727538792a84cbce64193ab147d60b26	docs(auditoria): add child repo convergence dossier dise-o.md
+docs/audit-30-dominios-runtime-20261115	+	f757286ab00c9aad501f7136971cfcc552e9b1d7	docs(auditoria): add child repo convergence dossier legal.md
+docs/audit-30-dominios-runtime-20261115	+	2a78dd3b5116f929e80515a76b039259c9c6f0b8	docs(auditoria): add child repo convergence dossier seguros.md
+docs/audit-30-dominios-runtime-20261115	+	55ba30599d61b4d4266b3cfd3a23e53915b18a02	docs(auditoria): add child repo convergence dossier formacion.md
+docs/audit-30-dominios-runtime-20261115	+	c7ac442bb72458b00e65d2f7b9a2ba1b946e30db	docs(auditoria): refocus on agent kernel fast slow and first cyber integration
+docs/audit-30-dominios-runtime-20261115	+	2e62a549a64bff377b90dceeeaccf29983df7cf1	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 00-ARQUITECTURA-COGNITIVA-CONVERSACIONAL-MASTER.md
+docs/audit-30-dominios-runtime-20261115	+	761b2884dda46d585e026796165a65572c9ba485	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 01-TARJETAS-RAC-RAG-ATENCION-MEMORIA.md
+docs/audit-30-dominios-runtime-20261115	+	5e441fd397e8a48823b610209beed48069d8c711	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 02-UX-SVG-Y-CAMINOS-DE-ACCION.md
+docs/audit-30-dominios-runtime-20261115	+	dc29052bb2c7f308db345b830ac7990de485c27e	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 03-DOS-APIS-FAST-SLOW-HARNESS-Y-MIGRACION.md
+docs/audit-30-dominios-runtime-20261115	+	a322abf78f5002aed03c63e07f62dd4c649e1700	docs(chat): supersede incomplete V2 architecture with detailed cognitive master
+docs/audit-30-dominios-runtime-20261115	+	617af5a3cdc0534e29b0e5c786564b96c40333c5	docs(audit): code-grounded cognition cromos attention bus cyber orchestration options
+docs/audit-30-dominios-runtime-20261115	+	9c8131d0b230b9ce3009d4f0315783974e2248e6	docs(cognition): ultradetailed option 3 00-INDICE-DECISIONES-ESTADO-Y-TRAZABILIDAD.md
+docs/audit-30-dominios-runtime-20261115	+	4ea7085e7ebbefc0d8d40c96a6d7be39c7cb8f5c	docs(cognition): ultradetailed option 3 01-INVENTARIO-REAL-ARCHIVOS-FLUX-Y-BRECHAS.md
+docs/audit-30-dominios-runtime-20261115	+	cf971a0a50ab1514a60ce7044ec989c042bf043b	docs(cognition): ultradetailed option 3 02-CONTRATOS-CARD-RAG-JEV-CROMOS-GRAFO-MEMORIAS.md
+docs/audit-30-dominios-runtime-20261115	+	e475578361f638d7348473ca7637c3f3c0d4edd0	docs(cognition): ultradetailed option 3 03-ORQUESTACION-EVENTOS-CYBER-Y-SECUENCIAS.md
+docs/audit-30-dominios-runtime-20261115	+	2f2c8b8657e0710457327fe5ea332b2c4d899337	docs(cognition): complete ultradetailed option 3 04-SERVIDOR-CONTEXTO-FAST-SLOW-PRESENTER-ANAM-UX.md
+docs/audit-30-dominios-runtime-20261115	+	10cc237bdb6de6b2fb422ff275dbd4e1244091ab	docs(cognition): complete ultradetailed option 3 05-PLAN-IMPLEMENTACION-PATCHSETS-GATES-TESTS-HANDOFF.md
+docs/audit-30-dominios-runtime-20261115	+	546d264eda148cf765195cdf8d624099e4442399	docs(cognition): complete ultradetailed option 3 06-REGISTRO-PENDIENTES-DECISIONES-Y-EVIDENCIA.md
+docs/doppler-auth	-	6ef939ae0387ff298e4ad1f19516c0d1c0e5e5e6	docs: record Doppler and deployment authentication findings
+docs/integracion-transversal-coherente-20261121	+	15855ad04c599f241424b60d9232ae535badfffe	docs(integration): add README.md Codex transversal handoff
+docs/integracion-transversal-coherente-20261121	+	829d8550b525d0df59c3466b315b555e6bea4527	docs(integration): add 01-INVENTARIO-Y-CRITERIOS.md Codex transversal handoff
+docs/integracion-transversal-coherente-20261121	+	080df18e17d3ea7403a32845e77e85f06842a3f7	docs(integration): add 02-ARQUITECTURA-Y-CONFLICTOS.md Codex transversal handoff
+docs/integracion-transversal-coherente-20261121	+	b9e83d746228247c0253777df94de5f1fe2a588f	docs(integration): add 03-CAMPANAS-CODEX.md Codex transversal handoff
+docs/integracion-transversal-coherente-20261121	+	114c1c60e9e810e493a35dfcefdb09683ad2757a	docs(integration): add 04-HANDOFF-CODEX.md Codex transversal handoff
+docs/observability-dogfooding-audit-20261117	+	07305568bc55ffe70fcbe5254b413327b6be7a81	docs(obs): add 00-README.md
+docs/observability-dogfooding-audit-20261117	+	0b9d08ae7bddd88dad67017a9dfae33276088781	docs(obs): add 01-AUDIT-CODIGO.md
+docs/observability-dogfooding-audit-20261117	+	00dfc088c1e51179e8dc7505ad6ce49b152228e4	docs(obs): add 02-ARQUITECTURA-CONTRATOS.md
+docs/observability-dogfooding-audit-20261117	+	853bbe6a5745679a60fe6f65b8496fa0e47ffa2c	docs(obs): add 03-CAMPANAS-OBS00-OBS12.md
+docs/observability-dogfooding-audit-20261117	+	8ce08698a72af0d601a4d68d809f830154afde21	docs(obs): add 04-HANDOFF-CODEX.md
+docs/vigencia-2026-11-10	+	7782a9dfd3c890425af46a13f246171bea772b9f	Docs: punto de entrada de estado real y mapa de la documentación
+docs/vigencia-2026-11-10	+	cb7a2e25ac6a5bb18735534dc84d1e859b115982	Docs: nota de vigencia en producto y operación
+docs/vigencia-2026-11-10	+	54ec4a0040149783d863c4f327a9a991562b9f6e	Docs: nota de vigencia en cliente, audit y estado
+feat/cognition-v2-W4-backfill	-	88f4246e930e3cea9f96ae8be97a7f5475358804	feat(cognition): C01 stage resumable legacy backfill with scoped evidence and receipts
+feat/cognition-v2-W5-outcomes	-	33f97608c2d62935e019e06ab38963b4fc51b9b7	feat(cognition): C05 derive scoped outcome cards from verified runtime receipts
+feat/cognition-v2-W6-jev-contract	-	33f97608c2d62935e019e06ab38963b4fc51b9b7	feat(cognition): C05 derive scoped outcome cards from verified runtime receipts
+feat/cognition-v2-W6-jev-contract	-	1f63fa9929a48c16f02344a0b1efa52216f2e91a	feat(cognition): C08 implement governed TypeSafe Jev contract adapter without live activation
+feat/legal-privacy-ai-compliance	+	8909051aac927df909734aa349008108d45ceeef	docs(compliance): add README.md
+feat/legal-privacy-ai-compliance	+	201b572b2460506783b24021ca7c42986e11ee74	docs(compliance): add MATRIZ-REQUISITOS.md
+feat/legal-privacy-ai-compliance	+	5ffcc257c4728f6647aa4a8c072c77a11fcd7c2d	docs(compliance): add 01-auditoria-tratamientos-proveedores.md
+feat/legal-privacy-ai-compliance	+	229cfad890df7afb7c51f9e962e0a330b137bfea	docs(compliance): add 02-web-legal-consentimiento.md
+feat/legal-privacy-ai-compliance	+	3d0e68f79a890bbfaef2e76a77a3b83cc7d619e5	docs(compliance): add 03-rgpd-operativo.md
+feat/legal-privacy-ai-compliance	+	5e307b5519288393ae8125ced60b7b9865b8ff6b	docs(compliance): add 04-multitenant-contratos.md
+feat/legal-privacy-ai-compliance	+	49823e43882d69096bd3ab89b62853b0bdb3837a	docs(compliance): add 05-ai-act-transparencia.md
+feat/legal-privacy-ai-compliance	+	e40a7d382f8366b6174932cca408def9fa243466	docs(compliance): add 06-verificacion-produccion.md
+feat/voice-avatar-scaffold	+	01e861a754f7fff6896e97cc711e00019974c859	Scaffold de voz y cara para todos los agentes y arranque de contexto en paralelo
+feat/voice-avatar-scaffold	+	53c1c5f8874d03111db903a1d956c0b1d6059c55	Cachea registro de fuentes y perfiles de voz y limita el coste de las llamadas
+feat/voice-avatar-scaffold	+	ff87bd095190d161468de16f6b5919800ce92f4d	Refresca el contexto de voz con el ultimo mensaje, no con la consulta de apertura
+feat/voice-avatar-scaffold	+	82e92f0307f91b8aa2718af304772e24a83b469c	Calcula la cuota de uso sobre la ventana real de 24 horas
+feat/voice-avatar-scaffold	+	8c2479f3ed7ce6c2cd06ca3e2395228dabf52988	Recuerda los ultimos turnos en la llamada de voz
+feat/voice-avatar-scaffold	+	a1ef7720f40c029dae3682fb52652ae5035183fb	Usa las personas reales del tenant en el canal de voz
+feat/voice-avatar-scaffold	+	8c7fcebb77f15444c269a81beefaa55a08dbbb1d	Ofrece solo los agentes que existen y explica por que la voz no arranca
+feat/voice-avatar-scaffold	+	b4646f9b8ab7229594e799fbc3b1dd275766679f	Elige el agente de la sala entre los que existen, no un id fijo
+feat/voice-avatar-scaffold	+	8a0a5c4dc00d639f079125ad2403de50abe0de5c	Documenta el smoke real del canal de voz y los avisos para conectarlo
+feat/voice-avatar-scaffold	+	2878a06bbf5fd40e477ee148838e8ebf40d19c6e	Ejecuta la voz con el agente real del runtime, no con un gemelo
+feat/voice-avatar-scaffold	+	f530eee1325a166dfd62794f1f73731245a1ce06	Corrige el resultado real del LLM de voz en la documentacion
+fix/mobile-chat-sheet-keyboard-gestures	+	074d2cc2bcd4766ac6710267a2941af419a7c4ed	feat(web): hoja de chat movil arrastrable y fin de los re-renders periodicos
+fix/mobile-chat-sheet-keyboard-gestures	+	280c5ac8d8187796459fecd0d889076c024c1996	fix(web): el minimo de la hoja no recorta el compositor
+fix/mobile-chat-sheet-keyboard-gestures	+	d17066bd6f2c0df6ff2d0f8b99f4bb0f3ef23bdc	docs(mobile-sheet): Codex repair handoff README.md
+fix/mobile-chat-sheet-keyboard-gestures	+	bad6c30160bdd2b4efe149944f4ef7cbdac9a526	docs(mobile-sheet): Codex repair handoff 01-BEHAVIOR-AND-ACCEPTANCE.md
+fix/mobile-chat-sheet-keyboard-gestures	+	3a7422fb74456f4d4f4f8f4db0f64511b341854c	docs(mobile-sheet): Codex repair handoff 02-ROOT-CAUSE-PLAYBOOK.md
+fix/mobile-chat-sheet-keyboard-gestures	+	0cfb44a2cd5245f4299b9f8b984e1f9a93d45187	docs(mobile-sheet): Codex repair handoff 03-CODEX-PROMPT.md
+fix/mobile-chat-sheet-keyboard-gestures	+	a99ae0d17f1416e69e89794e6d372f4b74895065	docs(mobile-sheet): Codex repair handoff 04-EXECUTION-REPORT.md
+fix/mobile-chat-sheet-keyboard-gestures	+	28f3c50bee4bf2393789e6dacebec582d7cddb0b	docs(mobile-sheet): specify multimodal composer voice dictation and Anam video stubs
+fix/mobile-chat-sheet-keyboard-gestures	+	7797d44186d6c38a77e063fb0d18a4885f64d1f6	docs(mobile-sheet): extend Codex handoff for multimodal composer
+fix/mobile-chat-sheet-keyboard-gestures	+	e04067a329eb36101b1bf79cb80828f1f03822ef	docs(mobile-sheet): detailed Codex implementation and QA 06-IMPLEMENTATION-BLUEPRINT.md
+fix/mobile-chat-sheet-keyboard-gestures	+	fc0108a35c065470587540d3b3afebc522d441a5	docs(mobile-sheet): detailed Codex implementation and QA 07-TEST-AND-DEVICE-PROTOCOL.md
+fix/mobile-chat-sheet-keyboard-gestures	+	1e67fc1e8d29437157e025ecbd2c5622c4e89a6f	docs(mobile-sheet): detailed Codex implementation and QA 08-CAMPAIGNS-AND-HANDOFF.md
+fix/mobile-chat-sheet-keyboard-gestures	+	88757cb8c83a0190cd7d414f73f9d63909bc9b4c	docs(mobile-sheet): link complete Codex campaign handoff
+fix/mobile-chat-sheet-keyboard-gestures	+	365d9fd0493969f8a990b45a4159d2fb17297e0e	docs(mobile-sheet): link complete Codex campaign handoff
+fix/mobile-chat-sheet-keyboard-gestures	+	7d8e2d9a2ca736a3cca97568979f1357021efcb4	docs(mobile-sheet): record C0 baseline and reproduction blocker
+fix/mobile-chat-sheet-keyboard-gestures	+	b826a8592abfaa6808be97f97276243e85058c9b	docs(mobile-sheet): accept local browser as campaign baseline
+fix/mobile-chat-sheet-keyboard-gestures	+	54ab9154c01b8237ed5670632af35071714fa121	test(mobile-sheet): add opt-in diagnostics and browser regression
+fix/mobile-chat-sheet-keyboard-gestures	+	b2d9e2627bff92efa20df076f7763f41896ed4ea	fix(mobile-sheet): derive FAB from visible surface
+fix/mobile-chat-sheet-keyboard-gestures	+	9f7596cbca9427f324d1e506996f5baed5f7a867	fix(mobile-sheet): isolate pointer gestures and restore cancelled snap
+fix/mobile-chat-sheet-keyboard-gestures	+	134d3da2c824a7c9ec838f1f22b7ff939cf6f420	fix(mobile-sheet): anchor composer to visual viewport
+fix/mobile-chat-sheet-keyboard-gestures	+	0bb3a26a9e2ff3037b06e82edf6d4fb5f9b1cbf3	feat(chat): share accessible multimodal composer controls
+fix/mobile-chat-sheet-keyboard-gestures	+	18ee1c1f0387e5a9f3cf7044936bbb687dac77c6	test(mobile-sheet): complete regression and guard thread switches
+wip/mobile-chat-sheet	+	074d2cc2bcd4766ac6710267a2941af419a7c4ed	feat(web): hoja de chat movil arrastrable y fin de los re-renders periodicos
+wip/mobile-chat-sheet	+	280c5ac8d8187796459fecd0d889076c024c1996	fix(web): el minimo de la hoja no recorta el compositor
+wip/mobile-chat-sheet	+	d17066bd6f2c0df6ff2d0f8b99f4bb0f3ef23bdc	docs(mobile-sheet): Codex repair handoff README.md
+wip/mobile-chat-sheet	+	bad6c30160bdd2b4efe149944f4ef7cbdac9a526	docs(mobile-sheet): Codex repair handoff 01-BEHAVIOR-AND-ACCEPTANCE.md
+wip/mobile-chat-sheet	+	3a7422fb74456f4d4f4f8f4db0f64511b341854c	docs(mobile-sheet): Codex repair handoff 02-ROOT-CAUSE-PLAYBOOK.md
+wip/mobile-chat-sheet	+	0cfb44a2cd5245f4299b9f8b984e1f9a93d45187	docs(mobile-sheet): Codex repair handoff 03-CODEX-PROMPT.md
+wip/mobile-chat-sheet	+	a99ae0d17f1416e69e89794e6d372f4b74895065	docs(mobile-sheet): Codex repair handoff 04-EXECUTION-REPORT.md
+wip/mobile-chat-sheet	+	28f3c50bee4bf2393789e6dacebec582d7cddb0b	docs(mobile-sheet): specify multimodal composer voice dictation and Anam video stubs
+wip/mobile-chat-sheet	+	7797d44186d6c38a77e063fb0d18a4885f64d1f6	docs(mobile-sheet): extend Codex handoff for multimodal composer
+wip/mobile-chat-sheet	+	e04067a329eb36101b1bf79cb80828f1f03822ef	docs(mobile-sheet): detailed Codex implementation and QA 06-IMPLEMENTATION-BLUEPRINT.md
+wip/mobile-chat-sheet	+	fc0108a35c065470587540d3b3afebc522d441a5	docs(mobile-sheet): detailed Codex implementation and QA 07-TEST-AND-DEVICE-PROTOCOL.md
+wip/mobile-chat-sheet	+	1e67fc1e8d29437157e025ecbd2c5622c4e89a6f	docs(mobile-sheet): detailed Codex implementation and QA 08-CAMPAIGNS-AND-HANDOFF.md
+wip/mobile-chat-sheet	+	88757cb8c83a0190cd7d414f73f9d63909bc9b4c	docs(mobile-sheet): link complete Codex campaign handoff
+wip/mobile-chat-sheet	+	365d9fd0493969f8a990b45a4159d2fb17297e0e	docs(mobile-sheet): link complete Codex campaign handoff

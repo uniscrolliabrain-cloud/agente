@@ -1,0 +1,651 @@
+114c1c60e9e810e493a35dfcefdb09683ad2757a	b9e83d746228247c0253777df94de5f1fe2a588f	2026-11-21T12:08:46Z	docs(integration): add 04-HANDOFF-CODEX.md Codex transversal handoff
+b9e83d746228247c0253777df94de5f1fe2a588f	080df18e17d3ea7403a32845e77e85f06842a3f7	2026-11-21T12:08:44Z	docs(integration): add 03-CAMPANAS-CODEX.md Codex transversal handoff
+080df18e17d3ea7403a32845e77e85f06842a3f7	829d8550b525d0df59c3466b315b555e6bea4527	2026-11-21T12:08:42Z	docs(integration): add 02-ARQUITECTURA-Y-CONFLICTOS.md Codex transversal handoff
+829d8550b525d0df59c3466b315b555e6bea4527	15855ad04c599f241424b60d9232ae535badfffe	2026-11-21T12:08:40Z	docs(integration): add 01-INVENTARIO-Y-CRITERIOS.md Codex transversal handoff
+15855ad04c599f241424b60d9232ae535badfffe	3023637d72994460b1aa4742f558557ec0c69922	2026-11-21T12:08:38Z	docs(integration): add README.md Codex transversal handoff
+e40a7d382f8366b6174932cca408def9fa243466	49823e43882d69096bd3ab89b62853b0bdb3837a	2026-11-20T23:50:14Z	docs(compliance): add 06-verificacion-produccion.md
+49823e43882d69096bd3ab89b62853b0bdb3837a	5e307b5519288393ae8125ced60b7b9865b8ff6b	2026-11-20T23:50:12Z	docs(compliance): add 05-ai-act-transparencia.md
+5e307b5519288393ae8125ced60b7b9865b8ff6b	3d0e68f79a890bbfaef2e76a77a3b83cc7d619e5	2026-11-20T23:50:10Z	docs(compliance): add 04-multitenant-contratos.md
+3d0e68f79a890bbfaef2e76a77a3b83cc7d619e5	229cfad890df7afb7c51f9e962e0a330b137bfea	2026-11-20T23:50:08Z	docs(compliance): add 03-rgpd-operativo.md
+229cfad890df7afb7c51f9e962e0a330b137bfea	5ffcc257c4728f6647aa4a8c072c77a11fcd7c2d	2026-11-20T23:50:07Z	docs(compliance): add 02-web-legal-consentimiento.md
+5ffcc257c4728f6647aa4a8c072c77a11fcd7c2d	201b572b2460506783b24021ca7c42986e11ee74	2026-11-20T23:50:04Z	docs(compliance): add 01-auditoria-tratamientos-proveedores.md
+201b572b2460506783b24021ca7c42986e11ee74	8909051aac927df909734aa349008108d45ceeef	2026-11-20T23:50:03Z	docs(compliance): add MATRIZ-REQUISITOS.md
+8909051aac927df909734aa349008108d45ceeef	3023637d72994460b1aa4742f558557ec0c69922	2026-11-20T23:50:01Z	docs(compliance): add README.md
+18ee1c1f0387e5a9f3cf7044936bbb687dac77c6	0bb3a26a9e2ff3037b06e82edf6d4fb5f9b1cbf3	2026-11-20T22:52:33Z	test(mobile-sheet): complete regression and guard thread switches
+0bb3a26a9e2ff3037b06e82edf6d4fb5f9b1cbf3	134d3da2c824a7c9ec838f1f22b7ff939cf6f420	2026-11-20T22:42:24Z	feat(chat): share accessible multimodal composer controls
+134d3da2c824a7c9ec838f1f22b7ff939cf6f420	9f7596cbca9427f324d1e506996f5baed5f7a867	2026-11-20T22:41:09Z	fix(mobile-sheet): anchor composer to visual viewport
+9f7596cbca9427f324d1e506996f5baed5f7a867	b2d9e2627bff92efa20df076f7763f41896ed4ea	2026-11-20T22:39:53Z	fix(mobile-sheet): isolate pointer gestures and restore cancelled snap
+b2d9e2627bff92efa20df076f7763f41896ed4ea	54ab9154c01b8237ed5670632af35071714fa121	2026-11-20T22:38:13Z	fix(mobile-sheet): derive FAB from visible surface
+54ab9154c01b8237ed5670632af35071714fa121	b826a8592abfaa6808be97f97276243e85058c9b	2026-11-20T22:37:33Z	test(mobile-sheet): add opt-in diagnostics and browser regression
+b826a8592abfaa6808be97f97276243e85058c9b	7d8e2d9a2ca736a3cca97568979f1357021efcb4	2026-11-20T22:36:13Z	docs(mobile-sheet): accept local browser as campaign baseline
+7d8e2d9a2ca736a3cca97568979f1357021efcb4	365d9fd0493969f8a990b45a4159d2fb17297e0e	2026-11-20T22:30:35Z	docs(mobile-sheet): record C0 baseline and reproduction blocker
+365d9fd0493969f8a990b45a4159d2fb17297e0e	88757cb8c83a0190cd7d414f73f9d63909bc9b4c	2026-11-20T22:24:31Z	docs(mobile-sheet): link complete Codex campaign handoff
+88757cb8c83a0190cd7d414f73f9d63909bc9b4c	1e67fc1e8d29437157e025ecbd2c5622c4e89a6f	2026-11-20T22:24:29Z	docs(mobile-sheet): link complete Codex campaign handoff
+1e67fc1e8d29437157e025ecbd2c5622c4e89a6f	fc0108a35c065470587540d3b3afebc522d441a5	2026-11-20T22:24:23Z	docs(mobile-sheet): detailed Codex implementation and QA 08-CAMPAIGNS-AND-HANDOFF.md
+fc0108a35c065470587540d3b3afebc522d441a5	e04067a329eb36101b1bf79cb80828f1f03822ef	2026-11-20T22:24:21Z	docs(mobile-sheet): detailed Codex implementation and QA 07-TEST-AND-DEVICE-PROTOCOL.md
+e04067a329eb36101b1bf79cb80828f1f03822ef	7797d44186d6c38a77e063fb0d18a4885f64d1f6	2026-11-20T22:24:19Z	docs(mobile-sheet): detailed Codex implementation and QA 06-IMPLEMENTATION-BLUEPRINT.md
+7797d44186d6c38a77e063fb0d18a4885f64d1f6	28f3c50bee4bf2393789e6dacebec582d7cddb0b	2026-11-20T22:23:21Z	docs(mobile-sheet): extend Codex handoff for multimodal composer
+28f3c50bee4bf2393789e6dacebec582d7cddb0b	a99ae0d17f1416e69e89794e6d372f4b74895065	2026-11-20T22:23:16Z	docs(mobile-sheet): specify multimodal composer voice dictation and Anam video stubs
+a99ae0d17f1416e69e89794e6d372f4b74895065	0cfb44a2cd5245f4299b9f8b984e1f9a93d45187	2026-11-20T22:15:03Z	docs(mobile-sheet): Codex repair handoff 04-EXECUTION-REPORT.md
+0cfb44a2cd5245f4299b9f8b984e1f9a93d45187	3a7422fb74456f4d4f4f8f4db0f64511b341854c	2026-11-20T22:15:01Z	docs(mobile-sheet): Codex repair handoff 03-CODEX-PROMPT.md
+3a7422fb74456f4d4f4f8f4db0f64511b341854c	bad6c30160bdd2b4efe149944f4ef7cbdac9a526	2026-11-20T22:14:59Z	docs(mobile-sheet): Codex repair handoff 02-ROOT-CAUSE-PLAYBOOK.md
+bad6c30160bdd2b4efe149944f4ef7cbdac9a526	d17066bd6f2c0df6ff2d0f8b99f4bb0f3ef23bdc	2026-11-20T22:14:56Z	docs(mobile-sheet): Codex repair handoff 01-BEHAVIOR-AND-ACCEPTANCE.md
+d17066bd6f2c0df6ff2d0f8b99f4bb0f3ef23bdc	280c5ac8d8187796459fecd0d889076c024c1996	2026-11-20T22:14:54Z	docs(mobile-sheet): Codex repair handoff README.md
+280c5ac8d8187796459fecd0d889076c024c1996	074d2cc2bcd4766ac6710267a2941af419a7c4ed	2026-11-20T17:05:14Z	fix(web): el minimo de la hoja no recorta el compositor
+074d2cc2bcd4766ac6710267a2941af419a7c4ed	3023637d72994460b1aa4742f558557ec0c69922	2026-11-20T17:01:48Z	feat(web): hoja de chat movil arrastrable y fin de los re-renders periodicos
+3023637d72994460b1aa4742f558557ec0c69922	796cfa71ef646bf031066f1aebf27133c4d2529f	2026-11-20T15:29:28Z	feat(web): sidebar compacta con menú por conversación
+796cfa71ef646bf031066f1aebf27133c4d2529f	7cd2aa282d1d73f0b93d2292b80b9428e8e3bcec	2026-11-20T14:49:41Z	fix(deploy): use the production panel origin and verify its entry module
+7cd2aa282d1d73f0b93d2292b80b9428e8e3bcec	207c2a6507cca69669f7605cba56841dafff6d04	2026-11-20T13:41:56Z	fix(ci): validate the production DSN against the Supabase root CA
+207c2a6507cca69669f7605cba56841dafff6d04	4dade790eaad54d18d3076dcad39f0b31bad2d37	2026-11-19T22:55:16Z	fix(db): trust Supabase root CA without disabling TLS verification
+4dade790eaad54d18d3076dcad39f0b31bad2d37	687b26e8b83e6b005b2dd29695f00019182565f4	2026-11-19T22:24:31Z	Add files via upload
+687b26e8b83e6b005b2dd29695f00019182565f4	e09dc378c6a18e2ac2da81610cc105397e682236	2026-11-19T21:14:30Z	fix(deploy): keep the client template in the Docker build context
+e09dc378c6a18e2ac2da81610cc105397e682236	6bfc432c81a33f4b274dd8424f206cc91b80038b	2026-11-19T21:06:25Z	fix(deploy): isolate which credential breaks the Fly job
+6bfc432c81a33f4b274dd8424f206cc91b80038b	3f15ca824af29ce15680c561fed3d7134c49b812	2026-11-19T18:57:17Z	docs: record Doppler and deployment authentication findings (#15)
+6ef939ae0387ff298e4ad1f19516c0d1c0e5e5e6	3f15ca824af29ce15680c561fed3d7134c49b812	2026-11-19T18:57:01Z	docs: record Doppler and deployment authentication findings
+626c378ac54df62b026e2d0c277bf6bce7f7bbec	e20220d8223befa4af3e6a3d62b423cdc2ad5660	2026-11-18T14:39:42+01:00	docs(audit): add dated audit findings and remaining gates
+e20220d8223befa4af3e6a3d62b423cdc2ad5660	0266bbb35322b973a8ab7337d8edd1f85891996f	2026-11-18T14:39:20+01:00	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/32-atlas-14-repositorios/marketing.md
+0266bbb35322b973a8ab7337d8edd1f85891996f	99f425ee1d46f9449250064bcb287b9cb4c38cb9	2026-11-18T14:39:17+01:00	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/03-harness-conversacional/REDISENO-V2-FAST-CHAT-VOICE.md
+99f425ee1d46f9449250064bcb287b9cb4c38cb9	501182971474e4469a17b6069d0b93a9d3619902	2026-11-18T14:39:14+01:00	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/00-REAUDITORIA-V2-TRANSVERSAL.md
+501182971474e4469a17b6069d0b93a9d3619902	546d264eda148cf765195cdf8d624099e4442399	2026-11-18T14:39:11+01:00	docs(audit): prepend dated status and evidence caveats to docs/auditoria-integral-30-angulos/README.md
+8ce08698a72af0d601a4d68d809f830154afde21	853bbe6a5745679a60fe6f65b8496fa0e47ffa2c	2026-11-17T23:02:02+01:00	docs(obs): add 04-HANDOFF-CODEX.md
+853bbe6a5745679a60fe6f65b8496fa0e47ffa2c	00dfc088c1e51179e8dc7505ad6ce49b152228e4	2026-11-17T23:01:59+01:00	docs(obs): add 03-CAMPANAS-OBS00-OBS12.md
+00dfc088c1e51179e8dc7505ad6ce49b152228e4	0b9d08ae7bddd88dad67017a9dfae33276088781	2026-11-17T23:01:56+01:00	docs(obs): add 02-ARQUITECTURA-CONTRATOS.md
+0b9d08ae7bddd88dad67017a9dfae33276088781	07305568bc55ffe70fcbe5254b413327b6be7a81	2026-11-17T23:01:54+01:00	docs(obs): add 01-AUDIT-CODIGO.md
+07305568bc55ffe70fcbe5254b413327b6be7a81	3f15ca824af29ce15680c561fed3d7134c49b812	2026-11-17T23:01:52+01:00	docs(obs): add 00-README.md
+3f15ca824af29ce15680c561fed3d7134c49b812	728f5daf36e1451706665c29e8bbdc540a573281	2026-11-17T19:54:29Z	fix(deploy): install the Doppler CLI without root
+728f5daf36e1451706665c29e8bbdc540a573281	5235d86f19a867b3e2c00e5888b573284e1a03e4	2026-11-17T19:34:11Z	fix(release): align the release gate with the tests that exist
+5235d86f19a867b3e2c00e5888b573284e1a03e4	72a56fcdd9e235ab289231eedd63b5b627c86a51	2026-11-17T19:17:42Z	fix(tests): use the OS temp dir for the bridge audit fixture
+72a56fcdd9e235ab289231eedd63b5b627c86a51	770f86e86f84cf66790884f59e2734228db9e934	2026-11-17T19:02:25Z	feat(web): add team workspace, docked chat and acme owner binding
+821580a9401d686d573f8acdb8d7de43ac861e5c	6cfb3f9f09c5a7941695e6ec97f43bbb5daa04d2	2026-11-17T14:02:11+01:00	docs: Google Workspace Gmail pilot costs OAuth distribution and campaigns
+6cfb3f9f09c5a7941695e6ec97f43bbb5daa04d2	552e186bbabb18746e4345bd511eee23f49d2d9b	2026-11-17T14:02:09+01:00	docs: Google Workspace Gmail pilot costs OAuth distribution and campaigns
+552e186bbabb18746e4345bd511eee23f49d2d9b	32d037472922f20ae754f00ce2ce170f5dec6fdd	2026-11-17T13:58:22+01:00	docs: add Agential Life Workspace vision and architecture
+32d037472922f20ae754f00ce2ce170f5dec6fdd	3abb20c92d74b72d73019e6ef240fdcfcc4d324e	2026-11-17T13:40:48+01:00	docs(universal-conversation): add 09-decisiones/adr-y-pendientes.md
+3abb20c92d74b72d73019e6ef240fdcfcc4d324e	5c057218f9ea7a98bd6f7d57c344ca40961d9b67	2026-11-17T13:40:47+01:00	docs(universal-conversation): add 08-calidad/pruebas-y-criterios.md
+5c057218f9ea7a98bd6f7d57c344ca40961d9b67	218f2d830af3171c5d94202dcbf5b1a8246997ee	2026-11-17T13:40:45+01:00	docs(universal-conversation): add 07-campanas/roadmap-y-gates.md
+218f2d830af3171c5d94202dcbf5b1a8246997ee	39025df04d16ee73ba1e84651445b68b0d8ee23e	2026-11-17T13:40:42+01:00	docs(universal-conversation): add 06-integracion-repo/auditoria-y-patchsets.md
+39025df04d16ee73ba1e84651445b68b0d8ee23e	3edfbe4f29c68910aa85625d78fe8fa46a05aa77	2026-11-17T13:40:40+01:00	docs(universal-conversation): add 05-seguridad/identidad-permisos-y-privacidad.md
+3edfbe4f29c68910aa85625d78fe8fa46a05aa77	64eaaa1f42bc7927d999032c1ec02f66f15c26f2	2026-11-17T13:40:38+01:00	docs(universal-conversation): add 04-conectores/google-microsoft-y-superficies.md
+64eaaa1f42bc7927d999032c1ec02f66f15c26f2	92b6ee94a682ff00462589f21ce847fcb15cb762	2026-11-17T13:40:36+01:00	docs(universal-conversation): add 03-conversacion/harness-contexto-memoria.md
+92b6ee94a682ff00462589f21ce847fcb15cb762	f139e45262c2c3379effd6babb773bb8d94ced3e	2026-11-17T13:40:34+01:00	docs(universal-conversation): add 03-conversacion/sincronizacion-y-concurrencia.md
+f139e45262c2c3379effd6babb773bb8d94ced3e	907b16043b2eaffe2e3ff0fbc5efc005d0f98118	2026-11-17T13:40:32+01:00	docs(universal-conversation): add 02-arquitectura/contratos-y-modelo-de-datos.md
+907b16043b2eaffe2e3ff0fbc5efc005d0f98118	f082698eb4ec9a5d5f829707856933d0ff9240f4	2026-11-17T13:40:30+01:00	docs(universal-conversation): add 02-arquitectura/arquitectura-maestra.md
+f082698eb4ec9a5d5f829707856933d0ff9240f4	60e6983af632bb42ef6a2b59e5a94c5a0b53e200	2026-11-17T13:40:27+01:00	docs(universal-conversation): add 01-concepto/escenarios-ux.md
+60e6983af632bb42ef6a2b59e5a94c5a0b53e200	16e07cd3f27122b30633f842f49c4d584e6a348b	2026-11-17T13:40:25+01:00	docs(universal-conversation): add 01-concepto/vision-producto.md
+16e07cd3f27122b30633f842f49c4d584e6a348b	2b117b6fa4f030651ced611da9860dfcfdd6fd71	2026-11-17T13:40:23+01:00	docs(universal-conversation): add README.md
+770f86e86f84cf66790884f59e2734228db9e934	2b117b6fa4f030651ced611da9860dfcfdd6fd71	2026-11-16T22:24:16Z	fix(cognition): remove the unintegrated business write stub
+2b117b6fa4f030651ced611da9860dfcfdd6fd71	cb39d188e3c51fb6f34a0d65423430fe4ce5e15a	2026-11-16T19:46:16Z	docs(cognition): record the authorized integration into main
+cb39d188e3c51fb6f34a0d65423430fe4ce5e15a	474ad9ca3eb0f29ffd52301c4a69fc3585e77b79	2026-11-16T19:41:08Z	feat(cognition): gate business writes behind a single-use approval
+474ad9ca3eb0f29ffd52301c4a69fc3585e77b79	964d666b2061501e26be9a4272b0b740d1e275a4	2026-11-16T19:02:05Z	fix(kernel): stop thought indexes breaking turn reads
+964d666b2061501e26be9a4272b0b740d1e275a4	8eeffc3567a6fc1889b8da84c671fa3bde92609f	2026-11-16T18:08:21Z	fix(cognition): report blocked projection receipts as unhealthy
+8eeffc3567a6fc1889b8da84c671fa3bde92609f	cf5f4b6197d3df885aed92797b5b1e754a739eeb	2026-11-16T18:06:39Z	test(cognition): extend tenant RLS checks to optional modules
+cf5f4b6197d3df885aed92797b5b1e754a739eeb	22311de16a2d7bb14593dc77fbb7b6e0e8a643c9	2026-11-16T18:04:57Z	feat(cognition): stage a deny-by-default workspace read adapter
+22311de16a2d7bb14593dc77fbb7b6e0e8a643c9	19e52e995bdb73850a0a59696beb7f2c94bca59a	2026-11-16T17:56:33Z	test(cognition): verify live bridge contracts and reject false wiring
+19e52e995bdb73850a0a59696beb7f2c94bca59a	685ef3a17e77245fdb2d7b438584c237beccd91e	2026-11-16T17:49:54Z	fix(cognition): surface worker failures before enabling V2
+685ef3a17e77245fdb2d7b438584c237beccd91e	015de17f481978fd9c57d7b93201f581c1d70fe8	2026-11-16T16:41:04Z	docs(cognition): record green full gate and measured coverage at W10
+015de17f481978fd9c57d7b93201f581c1d70fe8	528086ddb25b075a4ff4f32d21739ccd748b46c5	2026-11-16T15:17:45Z	build(test): emit machine-readable coverage without tracking generated artifacts
+528086ddb25b075a4ff4f32d21739ccd748b46c5	0893ca1bd2353c7b44472762d90041a6b0e9034b	2026-11-16T15:17:07Z	fix(tooling): verify bridge wiring and restore executable coverage gate
+0893ca1bd2353c7b44472762d90041a6b0e9034b	8ddde999404009145ae6e5530646ad969f64651b	2026-11-16T15:12:53Z	feat(cognition): C02 replace live audit and notifications with durable receipt projector
+8ddde999404009145ae6e5530646ad969f64651b	403bc7475552b003b4d5ce2b7a87dc5be32b8d06	2026-11-16T15:11:27Z	feat(cognition): C08 persist governed egress quotas and uncertain request receipts
+403bc7475552b003b4d5ce2b7a87dc5be32b8d06	d0ea1f2d6b92c02d537babaf0776b21a864f10d9	2026-11-16T15:04:25Z	feat(cognition): C08 implement governed TypeSafe Jev contract adapter without live activation
+d0ea1f2d6b92c02d537babaf0776b21a864f10d9	66a567311302ec19278a8be5b2160acb79c5b97c	2026-11-16T13:54:54Z	docs(cognition): link post-checkpoint P1 fixes and W7 verification
+66a567311302ec19278a8be5b2160acb79c5b97c	db2991d74d935465236ec24708a3a470fcd92562	2026-11-16T13:54:28Z	fix(cognition): C11 C12 prevent private provider events reaching public streams
+db2991d74d935465236ec24708a3a470fcd92562	734b687c3936e7157ee184410736a69049a605d9	2026-11-16T13:50:45Z	fix(cognition): C09 correlate delivery per run and commit server ACK atomically
+734b687c3936e7157ee184410736a69049a605d9	640a55db01fc9f934bf927dec53e97035f0455f3	2026-11-16T13:48:01Z	docs(cognition): publish intermediate audit checkpoint and reproduced P1 findings
+640a55db01fc9f934bf927dec53e97035f0455f3	812ea3601473257a03292926b79299d31822c657	2026-11-16T13:18:56Z	test(cognition): C09 checkpoint reproduce per-run delivery ledger gap
+1f63fa9929a48c16f02344a0b1efa52216f2e91a	33f97608c2d62935e019e06ab38963b4fc51b9b7	2026-11-16T13:13:52Z	feat(cognition): C08 implement governed TypeSafe Jev contract adapter without live activation
+812ea3601473257a03292926b79299d31822c657	38d0c6afaf3022d724fae49846667a19c22e749d	2026-11-16T12:54:01Z	feat(cognition): C05 derive scoped outcome cards from verified runtime receipts
+38d0c6afaf3022d724fae49846667a19c22e749d	af3b16d244b64660a28faa7d47f0b4f73edf5ec2	2026-11-16T12:51:59Z	docs(cognition): C15 preserve full W4 migration gate evidence
+33f97608c2d62935e019e06ab38963b4fc51b9b7	af3b16d244b64660a28faa7d47f0b4f73edf5ec2	2026-11-16T12:51:58Z	feat(cognition): C05 derive scoped outcome cards from verified runtime receipts
+af3b16d244b64660a28faa7d47f0b4f73edf5ec2	97adb8bd666fea77687600b7cca07c7d6578ff50	2026-11-16T12:36:37Z	feat(cognition): C01 stage resumable legacy backfill with scoped evidence and receipts
+88f4246e930e3cea9f96ae8be97a7f5475358804	11b3ebd0dfdf18ef101fa8bc22a3ba4ad4603e99	2026-11-16T12:36:24Z	feat(cognition): C01 stage resumable legacy backfill with scoped evidence and receipts
+97adb8bd666fea77687600b7cca07c7d6578ff50	11b3ebd0dfdf18ef101fa8bc22a3ba4ad4603e99	2026-11-16T12:30:50Z	docs(cognition): C15 record W3 full gate and resolved ontology decision
+11b3ebd0dfdf18ef101fa8bc22a3ba4ad4603e99	393b990338a9ceb7f54cdcdabae2f364bd71feb2	2026-11-16T12:16:38Z	docs(cognition): W3 record approved ontology and verified recovery flow
+393b990338a9ceb7f54cdcdabae2f364bd71feb2	fab62999b735838d310bed2dbcd0a21482bbe9df	2026-11-16T12:14:37Z	fix(cognition): C10 bind prepared snapshots to the requested query
+fab62999b735838d310bed2dbcd0a21482bbe9df	40b12dc3b83e069ab81ffc3d8290131db60d446e	2026-11-16T12:13:57Z	feat(cognition): C05 apply approved card ontology to Slow projections and context
+40b12dc3b83e069ab81ffc3d8290131db60d446e	b323ab358d4e5ddb59efcd7e3032d20edd0ae4c9	2026-11-16T12:12:20Z	test(cognition): C09 prove concurrent recovery on native Postgres
+b323ab358d4e5ddb59efcd7e3032d20edd0ae4c9	83ae5a0fc92028e89da21dcd7af5e26678b84060	2026-11-16T12:07:30Z	feat(cognition): C09 recover abandoned deliveries with durable scan and fencing
+83ae5a0fc92028e89da21dcd7af5e26678b84060	754231cc7a85f4a68169e6f4d6982c2cfe0b36d7	2026-11-16T11:38:45Z	docs(cognition): C05 propose card ontologies and measured adoption
+754231cc7a85f4a68169e6f4d6982c2cfe0b36d7	55eb692d921cf10b43432a8f2f208bf49da5375d	2026-11-16T00:20:17Z	docs(cognition): C15 capture passing tests and inherited gate failures
+55eb692d921cf10b43432a8f2f208bf49da5375d	825fc694b9ecb71852f930ad4472d0d0b72eb438	2026-11-16T00:15:03Z	test(cognition): C02 require durable receipts for every event type
+825fc694b9ecb71852f930ad4472d0d0b72eb438	119fbf285e60220e92c2fcda0c52e2d9ee09d68e	2026-11-16T00:13:46Z	docs(cognition): C01 C12 record migration corpus and reconnect evidence
+119fbf285e60220e92c2fcda0c52e2d9ee09d68e	d1922bbc7f7dcc69edc595d92ddab3b9b1f411ec	2026-11-16T00:12:26Z	fix(cognition): C01 preserve uncertainty and scope in legacy migration
+d1922bbc7f7dcc69edc595d92ddab3b9b1f411ec	f7143b5a244496b7c1f2b2f4f48f274cc1909515	2026-11-16T00:10:53Z	feat(cognition): C12 resume durable timeline with bounded cursor polling
+f7143b5a244496b7c1f2b2f4f48f274cc1909515	24b4e8db5363c1cd034bd833c05dcf8812530585	2026-11-16T00:07:34Z	docs(cognition): C15 record executed evidence and outstanding migration gates
+24b4e8db5363c1cd034bd833c05dcf8812530585	019ca7dce8385c1e192adaf92da83a2f007755fc	2026-11-16T00:06:31Z	feat(cognition): C01 add explicit tenant RLS migration and restricted-role proof
+019ca7dce8385c1e192adaf92da83a2f007755fc	13caec2f0ec47b859b9613965a9967c8ae64d418	2026-11-16T00:06:31Z	test(cognition): C15 cover V2 events in exhaustive payload harness
+13caec2f0ec47b859b9613965a9967c8ae64d418	11f5df32658a9da2689b6a3c9c7975a005b5b0ce	2026-11-15T23:40:31Z	test(cognition): C15 separate local gate evidence from production acceptance
+11f5df32658a9da2689b6a3c9c7975a005b5b0ce	738a5762c7b80c834f1a8b8718d08dd1560026a7	2026-11-15T23:40:31Z	feat(cognition): C14 project minimized child receipts into shared context
+738a5762c7b80c834f1a8b8718d08dd1560026a7	b8b99fcc35e20a806120b9367335436952b3f1fb	2026-11-15T23:40:31Z	fix(cognition): C15 close dispatch revocation and unknown commit gaps
+b8b99fcc35e20a806120b9367335436952b3f1fb	e9b0b66cc00df8c1b82d14a0825862e1126ccea5	2026-11-15T23:26:10Z	feat(cognition): C14 connect governed SDK reads and durable outbox ACK relay
+e9b0b66cc00df8c1b82d14a0825862e1126ccea5	eba49879c55a974608789a40a7c9c7b60f0a5dfb	2026-11-15T23:26:10Z	feat(cognition): C13 govern durable voice sessions and interruption epochs
+eba49879c55a974608789a40a7c9c7b60f0a5dfb	eb08ef1335ab17ddaa60666b0494398707b77dd9	2026-11-15T23:26:09Z	feat(cognition): C12 show receipt timeline and accessible SVG activity
+eb08ef1335ab17ddaa60666b0494398707b77dd9	1f3eeb4aea8ca4526dd5967aa4da8c84d9261592	2026-11-15T23:26:09Z	feat(cognition): C07-C12 wire independent inference and factual runtime receipts
+1f3eeb4aea8ca4526dd5967aa4da8c84d9261592	1da67c68e3b87566046ed8c29cc3d11dcd80209d	2026-11-15T23:26:09Z	fix(cognition): C02 publish nested events only after outer commit
+1da67c68e3b87566046ed8c29cc3d11dcd80209d	0f77eb42d3cb1f5d4f72f3b1130f6881ea9c6dc6	2026-11-15T23:25:51Z	feat(cognition): C03-C06 project scoped memories graph RAG and attention
+0f77eb42d3cb1f5d4f72f3b1130f6881ea9c6dc6	d674bc8ad3e6bdc4528e4aeeae19c21ed651cb2b	2026-11-15T23:25:51Z	feat(cognition): C07 capture asynchronous results idempotently in kernel
+d674bc8ad3e6bdc4528e4aeeae19c21ed651cb2b	ff07febdad307023b379014fff2bfe8d6cdce243	2026-11-15T23:25:51Z	build(cognition): pin independent provider clients and verified cyber SDK
+ff07febdad307023b379014fff2bfe8d6cdce243	cf72046f34b37ae5fa4595f71d0b7048eb616ead	2026-11-15T20:31:04Z	feat(cognition): C02-C10 durable projection and authorized card delivery slice
+cf72046f34b37ae5fa4595f71d0b7048eb616ead	cb2ddebcccbf440e7f5086f4b0abbb720c62e500	2026-11-15T20:20:02Z	fix(cognition): C02 bind transactions to async connection scope
+cb2ddebcccbf440e7f5086f4b0abbb720c62e500	8ac7a0003d42d6609fbf3fc4d64dd3b39eba792f	2026-11-15T20:20:02Z	feat(cognition): C01 PS01 strict versioned cognitive contracts
+8ac7a0003d42d6609fbf3fc4d64dd3b39eba792f	54b8d5407a8576459448c4d059a877297d18ca7a	2026-11-15T20:13:36Z	docs(cognition): C00 freeze references and substitution baseline
+1e007d75b470490fe2ca8943ed5dc91803af039a	970a63be6ef037cb4b6a8109a32f227e3eaa8d6b	2026-11-15T19:31:23Z	docs(handoff): close 16-turn cognition redesign documentation program C15
+970a63be6ef037cb4b6a8109a32f227e3eaa8d6b	b2001c9f034ded04222aa3a8fe8c9a4b7021b841	2026-11-15T19:31:14Z	docs(cognition): C15 integral E2E acceptance gates execution handoff close 16 campaigns
+b2001c9f034ded04222aa3a8fe8c9a4b7021b841	5f72a5fd9cc4dd4ba50a93f9596ef9208406bdbd	2026-11-15T19:15:20Z	docs(handoff): log C14 cybersecurity cross-repo bridge turn 15 of 16
+5f72a5fd9cc4dd4ba50a93f9596ef9208406bdbd	ff555d9c196e36a4d31de98bfde8736deb3192d0	2026-11-15T19:15:10Z	docs(cognition): C14 cross-repo cybersecurity Python TS bridge governance audit and handoff
+ff555d9c196e36a4d31de98bfde8736deb3192d0	c4390de3c0ef815bde62219f551e795ef7b17a94	2026-11-15T19:00:51Z	docs(handoff): log C13 Anam voice integration turn 14 of 16
+c4390de3c0ef815bde62219f551e795ef7b17a94	0de7070f162716a0cc153852ac60f066f617881d	2026-11-15T19:00:42Z	docs(cognition): C13 Anam avatar realtime voice sessions interruption and provider gates
+0de7070f162716a0cc153852ac60f066f617881d	7f23236d61b8b2872e7a88164a812e67e1e26ba9	2026-11-15T18:57:40Z	docs(handoff): log C12 Presenter UX progress SVG turn 13 of 16
+7f23236d61b8b2872e7a88164a812e67e1e26ba9	c04d9ff16775cdd0d8a500b18462459b7c2c45f1	2026-11-15T18:57:30Z	docs(cognition): C12 Presenter V2 real progress UX AG-UI SVG accessibility migration
+c04d9ff16775cdd0d8a500b18462459b7c2c45f1	b0928a10a9ae3ae859829d5d4d596610419f139e	2026-11-15T18:55:30Z	docs(handoff): log C11 independent Fast Slow runtime turn 12 of 16
+b0928a10a9ae3ae859829d5d4d596610419f139e	7238b9f5fc425e7f8ca6f63ea740a718454ade2f	2026-11-15T18:55:20Z	docs(cognition): C11 Fast Slow independent inference services audit and migration plan
+7238b9f5fc425e7f8ca6f63ea740a718454ade2f	bf05dfb3adfcc6324982453c805fc58bddcb4203	2026-11-15T18:27:30Z	docs(handoff): log C10 ContextServingFacade audit turn 11 of 16
+bf05dfb3adfcc6324982453c805fc58bddcb4203	18a4c313909d4b12fd2a349c60d8b5f06506bb8f	2026-11-15T18:27:16Z	docs(cognition): C10 ContextServingFacade V2 snapshots deltas references and policy gates
+18a4c313909d4b12fd2a349c60d8b5f06506bb8f	7aa13f4cb8c25888e627fb2f43f63f31dec278a1	2026-11-15T18:23:43Z	docs(handoff): log C09 CardStore delivery ledger turn 10 of 16
+7aa13f4cb8c25888e627fb2f43f63f31dec278a1	9118d5c26e713f4f21c819a049d8c6f53c19eabb	2026-11-15T18:23:32Z	docs(cognition): C09 CardStore V2 durable delivery ledger ACK replay migration
+9118d5c26e713f4f21c819a049d8c6f53c19eabb	f8a259d8248848465f93a142d8257319cdae06eb	2026-11-15T18:22:27Z	docs(handoff): log C08 JEV semantic audit turn 9 of 16
+f8a259d8248848465f93a142d8257319cdae06eb	e248c4c8a2990c8963a1e8705a03316c32f9efe4	2026-11-15T18:22:02Z	docs(cognition): C08 JEV non-authoritative semantic classifier audit and implementation plan
+e248c4c8a2990c8963a1e8705a03316c32f9efe4	d599e19bc17248c5bf6617855551400cdfc98731	2026-11-15T18:19:10Z	docs(handoff): log C07 async Slow cognitive extraction turn 8 of 16
+d599e19bc17248c5bf6617855551400cdfc98731	79eabfeb40b9f0fc96d037e8c2a288c6b524b8f8	2026-11-15T18:19:01Z	docs(cognition): C07 async Slow LLM and enriched cognition extraction campaign
+79eabfeb40b9f0fc96d037e8c2a288c6b524b8f8	758a573499866151c1e6d7d6e70c3899cc95084e	2026-11-15T18:12:07Z	docs(handoff): log C06 attention audit turn 7 of 16
+758a573499866151c1e6d7d6e70c3899cc95084e	5782ad6217638bcaf879540d91e950fe474f4ff9	2026-11-15T18:11:58Z	docs(cognition): C06 global attention and metacognition V2 audit and implementation waves
+5782ad6217638bcaf879540d91e950fe474f4ff9	7ab536eb920cf94896dfe024f8156c11a16887f4	2026-11-15T18:03:43Z	docs(handoff): log C05 chromatic ontology turn 6 of 16
+7ab536eb920cf94896dfe024f8156c11a16887f4	10d257f90bd8d3a1661f876ff12c64f77290e812	2026-11-15T18:03:34Z	docs(cognition): C05 chromatic ontology audit, polarities and motor V2 plan
+10d257f90bd8d3a1661f876ff12c64f77290e812	c7ef6c509877b2c55c7d555c245554e711d7863f	2026-11-15T17:57:57Z	docs(handoff): log C04 memory audit turn 5 of 16
+c7ef6c509877b2c55c7d555c245554e711d7863f	46831e8095d5d4450803e00c8da8d7ef60868580	2026-11-15T17:57:41Z	docs(cognition): C04 five memories, RAG, invalidation and handoff
+46831e8095d5d4450803e00c8da8d7ef60868580	675879a06ea6e3d9caa1b20baf49f94dfc6c8056	2026-11-15T17:51:35Z	docs(handoff): log C03 graph audit turn 4 of 16
+675879a06ea6e3d9caa1b20baf49f94dfc6c8056	09dfd3f3f8ac610f6f483d2fd8101b9b8d8645b6	2026-11-15T17:51:25Z	docs(cognition): C03 deep graph audit and multilayer projection implementation campaign
+09dfd3f3f8ac610f6f483d2fd8101b9b8d8645b6	2598f0364017a1bfde99f82ab7cd60806c11c916	2026-11-15T17:46:15Z	docs(handoff): log C02 durable projector turn 3 of 16
+2598f0364017a1bfde99f82ab7cd60806c11c916	0b6ccd02d977f18f028b987fba88ad4cf0dd3276	2026-11-15T17:46:05Z	docs(cognition): C02 durable event projector audit, patchsets and recovery gates
+0b6ccd02d977f18f028b987fba88ad4cf0dd3276	225cdacab0235a5839970a39bfffc46bdddc1ff1	2026-11-15T17:41:21Z	docs(handoff): log C01 deep audit turn 2 of 16
+225cdacab0235a5839970a39bfffc46bdddc1ff1	08880fefd7b88400a9c62c1b7d74ee62e86cf98f	2026-11-15T17:41:11Z	docs(cognition): C01 deep code audit and V2 schema contract campaign
+08880fefd7b88400a9c62c1b7d74ee62e86cf98f	5e5efaff2aca9db5d06b821d8e05324c7b1b2cea	2026-11-15T17:39:17Z	docs(handoff): log C00 deep audit turn 1 of 16
+5e5efaff2aca9db5d06b821d8e05324c7b1b2cea	3bd133162475a3c01c949ed3b6e8478eba164ddf	2026-11-15T17:39:08Z	docs(cognition): C00 deep evidence-based audit and safe replacement handoff
+3bd133162475a3c01c949ed3b6e8478eba164ddf	ea835413559c2877d22743d065da19b9a23ae0ce	2026-11-15T17:27:15Z	docs(handoff): log C00-C15 campaigns and pending verification
+ea835413559c2877d22743d065da19b9a23ae0ce	31410779efd0a19216ce2e2da6b3b56ca472a0d1	2026-11-15T17:27:12Z	docs(campaigns): index dependencies and execution gates for C00-C15
+31410779efd0a19216ce2e2da6b3b56ca472a0d1	1fb8f95f4a1fbe789a22ef4d643af4bf12b7d3e5	2026-11-15T17:26:51Z	docs(campaign): C15 Certificación E2E, seguridad, rendimiento y handoff final
+1fb8f95f4a1fbe789a22ef4d643af4bf12b7d3e5	256a74fba0ed17f6ceaa4b6aa4bde5e5c5259817	2026-11-15T17:26:49Z	docs(campaign): C14 Shadow, canary, migración y retiro de legacy
+256a74fba0ed17f6ceaa4b6aa4bde5e5c5259817	798f51163bd8f35b2658f84245c51a37018f596d	2026-11-15T17:26:48Z	docs(campaign): C13 Adaptador Ciberseguridad y eventos del dominio
+798f51163bd8f35b2658f84245c51a37018f596d	e72a0bb49666b51292981ed7bef3da696259748b	2026-11-15T17:26:45Z	docs(campaign): C12 Voz Anam y sesiones multicanal
+e72a0bb49666b51292981ed7bef3da696259748b	411eaafe345d5f1ec6ea07b52c26cb8879db09d7	2026-11-15T17:26:43Z	docs(campaign): C11 Presenter y UX de recorrido pedagógico
+411eaafe345d5f1ec6ea07b52c26cb8879db09d7	102c28fd45f6ddf6667ced72cb21ef218ab612d0	2026-11-15T17:26:41Z	docs(campaign): C10 Fast LLM y router de conversación V2
+102c28fd45f6ddf6667ced72cb21ef218ab612d0	1fb5e399a219c8f4dfca1fc0d4d42bbfb3412798	2026-11-15T17:26:39Z	docs(campaign): C09 Context Serving Runtime y presupuestos de tokens
+1fb5e399a219c8f4dfca1fc0d4d42bbfb3412798	a28a8ac52efd2372328af6fb80cfe8d792bf50d9	2026-11-15T17:26:37Z	docs(campaign): C08 CardStore V2, snapshots y ledger de entrega
+a28a8ac52efd2372328af6fb80cfe8d792bf50d9	34f3c499e1b402039848da96e39160eff02b4ae5	2026-11-15T17:26:34Z	docs(campaign): C07 Clasificador JEV AI y metacognición no autoritativa
+34f3c499e1b402039848da96e39160eff02b4ae5	19ea8a6ef2cc148246d76889cd0f6642a9acd557	2026-11-15T17:26:32Z	docs(campaign): C06 Slow LLM asíncrono productor de conocimiento
+19ea8a6ef2cc148246d76889cd0f6642a9acd557	dfb1dc8bb3316744f33138d435924ea6b886aa3d	2026-11-15T17:26:30Z	docs(campaign): C05 Cromos y motor de atención vectorial
+dfb1dc8bb3316744f33138d435924ea6b886aa3d	a2e012cd00c798142ea3b7e5c9a647d25dcea8e0	2026-11-15T17:26:27Z	docs(campaign): C04 Cinco memorias y recuperación RAG
+a2e012cd00c798142ea3b7e5c9a647d25dcea8e0	59e9674ec2df1d058943cf97e8b555a066447ae7	2026-11-15T17:26:25Z	docs(campaign): C03 Grafo multicapa y procedencia
+59e9674ec2df1d058943cf97e8b555a066447ae7	e1a4f2156edb23fb2860f0b3dd164ec90b16e1c6	2026-11-15T17:26:23Z	docs(campaign): C02 Event Bus durable, ingest y proyector shadow
+e1a4f2156edb23fb2860f0b3dd164ec90b16e1c6	28f27eb51e3eb3449bb3b4af4ebc1ec9bdd090b0	2026-11-15T17:26:21Z	docs(campaign): C01 Contratos V2, ADR y arquitectura de sustitución
+28f27eb51e3eb3449bb3b4af4ebc1ec9bdd090b0	850c4ec2fab73a31e558f20dccd1414ffeca6ddb	2026-11-15T17:26:19Z	docs(campaign): C00 Inventario exhaustivo y mapa de destrucción controlada
+850c4ec2fab73a31e558f20dccd1414ffeca6ddb	44a8664a84a3c09e2f6c415eabd83ea1912c51b4	2026-11-15T17:24:29Z	docs(cognition): correct preservation bias and reference replacement ADR
+44a8664a84a3c09e2f6c415eabd83ea1912c51b4	ecda4e61313fca8e2466da4c296b306878a95965	2026-11-15T17:24:27Z	docs(cognition): correct preservation bias and reference replacement ADR
+ecda4e61313fca8e2466da4c296b306878a95965	90c57e0afd232397f90357ca2cb972778313297c	2026-11-15T17:24:24Z	docs(cognition): correct preservation bias and reference replacement ADR
+90c57e0afd232397f90357ca2cb972778313297c	1e9e0d7ab25fdc597347f9300ca85ad59f773dd5	2026-11-15T17:24:22Z	docs(adr): option 3 replaces insufficient legacy design, not preserves it
+1e9e0d7ab25fdc597347f9300ca85ad59f773dd5	51cafbc68215452e26577135c23e8741d6e394b6	2026-11-15T17:21:27Z	docs(cognition): establish persistent response and handoff protocol
+51cafbc68215452e26577135c23e8741d6e394b6	80b0ca09d4b2906a42faf5aa6a39068d76176967	2026-11-15T17:21:24Z	docs(cognition): establish persistent response and handoff protocol
+80b0ca09d4b2906a42faf5aa6a39068d76176967	54b8d5407a8576459448c4d059a877297d18ca7a	2026-11-15T17:18:38Z	docs(audit): preflight code compatibility and non-destructive execution gates
+546d264eda148cf765195cdf8d624099e4442399	10cc237bdb6de6b2fb422ff275dbd4e1244091ab	2026-11-15T17:15:14Z	docs(cognition): complete ultradetailed option 3 06-REGISTRO-PENDIENTES-DECISIONES-Y-EVIDENCIA.md
+10cc237bdb6de6b2fb422ff275dbd4e1244091ab	2f2c8b8657e0710457327fe5ea332b2c4d899337	2026-11-15T17:15:12Z	docs(cognition): complete ultradetailed option 3 05-PLAN-IMPLEMENTACION-PATCHSETS-GATES-TESTS-HANDOFF.md
+2f2c8b8657e0710457327fe5ea332b2c4d899337	e475578361f638d7348473ca7637c3f3c0d4edd0	2026-11-15T17:15:10Z	docs(cognition): complete ultradetailed option 3 04-SERVIDOR-CONTEXTO-FAST-SLOW-PRESENTER-ANAM-UX.md
+e475578361f638d7348473ca7637c3f3c0d4edd0	cf971a0a50ab1514a60ce7044ec989c042bf043b	2026-11-15T17:13:51Z	docs(cognition): ultradetailed option 3 03-ORQUESTACION-EVENTOS-CYBER-Y-SECUENCIAS.md
+cf971a0a50ab1514a60ce7044ec989c042bf043b	4ea7085e7ebbefc0d8d40c96a6d7be39c7cb8f5c	2026-11-15T17:13:48Z	docs(cognition): ultradetailed option 3 02-CONTRATOS-CARD-RAG-JEV-CROMOS-GRAFO-MEMORIAS.md
+4ea7085e7ebbefc0d8d40c96a6d7be39c7cb8f5c	9c8131d0b230b9ce3009d4f0315783974e2248e6	2026-11-15T17:13:46Z	docs(cognition): ultradetailed option 3 01-INVENTARIO-REAL-ARCHIVOS-FLUX-Y-BRECHAS.md
+9c8131d0b230b9ce3009d4f0315783974e2248e6	617af5a3cdc0534e29b0e5c786564b96c40333c5	2026-11-15T17:13:44Z	docs(cognition): ultradetailed option 3 00-INDICE-DECISIONES-ESTADO-Y-TRAZABILIDAD.md
+617af5a3cdc0534e29b0e5c786564b96c40333c5	a322abf78f5002aed03c63e07f62dd4c649e1700	2026-11-15T17:06:52Z	docs(audit): code-grounded cognition cromos attention bus cyber orchestration options
+a322abf78f5002aed03c63e07f62dd4c649e1700	dc29052bb2c7f308db345b830ac7990de485c27e	2026-11-15T16:41:27Z	docs(chat): supersede incomplete V2 architecture with detailed cognitive master
+dc29052bb2c7f308db345b830ac7990de485c27e	5e441fd397e8a48823b610209beed48069d8c711	2026-11-15T16:41:19Z	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 03-DOS-APIS-FAST-SLOW-HARNESS-Y-MIGRACION.md
+5e441fd397e8a48823b610209beed48069d8c711	761b2884dda46d585e026796165a65572c9ba485	2026-11-15T16:41:17Z	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 02-UX-SVG-Y-CAMINOS-DE-ACCION.md
+761b2884dda46d585e026796165a65572c9ba485	2e62a549a64bff377b90dceeeaccf29983df7cf1	2026-11-15T16:41:15Z	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 01-TARJETAS-RAC-RAG-ATENCION-MEMORIA.md
+2e62a549a64bff377b90dceeeaccf29983df7cf1	c7ac442bb72458b00e65d2f7b9a2ba1b946e30db	2026-11-15T16:41:13Z	docs(chat): preserve detailed cognitive Fast Slow RAC cards and SVG architecture 00-ARQUITECTURA-COGNITIVA-CONVERSACIONAL-MASTER.md
+c7ac442bb72458b00e65d2f7b9a2ba1b946e30db	55ba30599d61b4d4266b3cfd3a23e53915b18a02	2026-11-15T16:34:09Z	docs(auditoria): refocus on agent kernel fast slow and first cyber integration
+55ba30599d61b4d4266b3cfd3a23e53915b18a02	2a78dd3b5116f929e80515a76b039259c9c6f0b8	2026-11-15T16:22:33Z	docs(auditoria): add child repo convergence dossier formacion.md
+2a78dd3b5116f929e80515a76b039259c9c6f0b8	f757286ab00c9aad501f7136971cfcc552e9b1d7	2026-11-15T16:22:31Z	docs(auditoria): add child repo convergence dossier seguros.md
+f757286ab00c9aad501f7136971cfcc552e9b1d7	b0004018727538792a84cbce64193ab147d60b26	2026-11-15T16:22:30Z	docs(auditoria): add child repo convergence dossier legal.md
+b0004018727538792a84cbce64193ab147d60b26	dc876eca06b76064db9e2f4c18dee12cd9b9e884	2026-11-15T16:22:28Z	docs(auditoria): add child repo convergence dossier dise-o.md
+dc876eca06b76064db9e2f4c18dee12cd9b9e884	f98b226581dd557a6c46035255dda350ac5241fb	2026-11-15T16:22:25Z	docs(auditoria): add child repo convergence dossier branding.md
+f98b226581dd557a6c46035255dda350ac5241fb	7faf3b5b45b0ae1347454db423c05caf5274b03e	2026-11-15T16:22:23Z	docs(auditoria): add child repo convergence dossier video.md
+7faf3b5b45b0ae1347454db423c05caf5274b03e	f3d3e9a9dde0fe6f767741a8d81966980a3ba377	2026-11-15T16:22:21Z	docs(auditoria): add child repo convergence dossier marketing.md
+f3d3e9a9dde0fe6f767741a8d81966980a3ba377	ebf6d2a89d0df828b7f482446322f67e9fc943bf	2026-11-15T16:22:18Z	docs(auditoria): add child repo convergence dossier redes.md
+ebf6d2a89d0df828b7f482446322f67e9fc943bf	e7774eb1017cd7fe52f88cdc17d2f954015680da	2026-11-15T16:22:16Z	docs(auditoria): add child repo convergence dossier finanzas.md
+e7774eb1017cd7fe52f88cdc17d2f954015680da	5cf693c10dc2514017f72df26b62318478e59237	2026-11-15T16:22:14Z	docs(auditoria): add child repo convergence dossier ventas.md
+5cf693c10dc2514017f72df26b62318478e59237	03bd07541ace250cf84bea8601cd2ac37964b810	2026-11-15T16:22:12Z	docs(auditoria): add child repo convergence dossier comunicacion.md
+03bd07541ace250cf84bea8601cd2ac37964b810	ac2c9c0110dae03108e99eff977f4704ce9380a2	2026-11-15T16:22:10Z	docs(auditoria): add child repo convergence dossier gestoria.md
+ac2c9c0110dae03108e99eff977f4704ce9380a2	076c26af8f93fcfe1eb70030f0590c8b609d90e4	2026-11-15T16:22:08Z	docs(auditoria): add child repo convergence dossier clientes.md
+076c26af8f93fcfe1eb70030f0590c8b609d90e4	a92265c9db40985b4e7099049954491e4f2ad44c	2026-11-15T16:22:06Z	docs(auditoria): add child repo convergence dossier ciberseguridad.md
+a92265c9db40985b4e7099049954491e4f2ad44c	a1ae5c9979ac363727911f71c4a73c40cd548a36	2026-11-15T16:22:04Z	docs(auditoria): add child repo convergence dossier 02-ESTADO-COMPARADO-README.md
+a1ae5c9979ac363727911f71c4a73c40cd548a36	df4235c8311106a6cc3f43fb3df60a0925e356ee	2026-11-15T16:15:57Z	docs(auditoria): deepen V2 32-atlas-14-repositorios with code-grounded contracts
+df4235c8311106a6cc3f43fb3df60a0925e356ee	78bdc0f96d106d5fe6c9448878c0c136320eaca2	2026-11-15T16:15:55Z	docs(auditoria): deepen V2 31-lexico-y-contratos-transversales with code-grounded contracts
+78bdc0f96d106d5fe6c9448878c0c136320eaca2	a2a40298ef57b80dba2dddf48b9c513552353527	2026-11-15T16:12:27Z	docs(auditoria): add V2 transversal architecture 00-REAUDITORIA-V2-TRANSVERSAL.md
+a2a40298ef57b80dba2dddf48b9c513552353527	47d96cdb2d1cc5d08efa06b9d0d32b4fe47e0f5b	2026-11-15T16:12:25Z	docs(auditoria): add V2 transversal architecture 33-arquitectura-global-destino
+47d96cdb2d1cc5d08efa06b9d0d32b4fe47e0f5b	357c03162bb35e7d085c1704adc1346194bdc108	2026-11-15T16:12:23Z	docs(auditoria): add V2 transversal architecture 32-atlas-14-repositorios
+357c03162bb35e7d085c1704adc1346194bdc108	16bd1b1be84bd6f11c88349f79522dda620fd402	2026-11-15T16:12:20Z	docs(auditoria): add V2 transversal architecture 31-lexico-y-contratos-transversales
+16bd1b1be84bd6f11c88349f79522dda620fd402	b3605323992cb631e857155ae8d9656b73e5fd40	2026-11-15T00:58:43Z	docs(integration): master roadmap and execution order for 14 child repositories
+b3605323992cb631e857155ae8d9656b73e5fd40	e662000c36db926baf0dca9bd9f00fdceee008a7	2026-11-15T00:51:09Z	docs(chat-v2): record pedagogical five-phase animation and SVG UX timing decisions
+e662000c36db926baf0dca9bd9f00fdceee008a7	36fc2ba4292b366dfe10c90521a053b6b3af44d1	2026-11-15T00:45:48Z	docs(runtime-audit): elevate fast conversation V2 and legacy migration priority
+36fc2ba4292b366dfe10c90521a053b6b3af44d1	d4bff82c60bba96736acccbd51c5567d338c27dc	2026-11-15T00:45:35Z	docs(chat-v2): design low-latency conversational harness, legacy migration and user-facing progress
+d4bff82c60bba96736acccbd51c5567d338c27dc	c3508ba99a77d413802245c9a6a637996d13412a	2026-11-15T00:40:59Z	docs(runtime-audit): index 30 angles and founder architecture invariants
+c3508ba99a77d413802245c9a6a637996d13412a	583fa0198447d2d0108d4927d6e70eb747c41319	2026-11-15T00:40:44Z	docs(runtime-audit): seed angle 30 release-operacion
+583fa0198447d2d0108d4927d6e70eb747c41319	f6e0d80d2094c1f51c753678e9f543c1383be117	2026-11-15T00:40:42Z	docs(runtime-audit): seed angle 29 testing-certificacion
+f6e0d80d2094c1f51c753678e9f543c1383be117	0db65c32013d8764cd59ef993dc1e5a87a4d4f16	2026-11-15T00:40:40Z	docs(runtime-audit): seed angle 28 seguridad-privacidad
+0db65c32013d8764cd59ef993dc1e5a87a4d4f16	5bde09164b4e2f9a40d3c69b97885b6f8619ffa9	2026-11-15T00:40:38Z	docs(runtime-audit): seed angle 27 memoria-rag
+5bde09164b4e2f9a40d3c69b97885b6f8619ffa9	3bea9563b97e192847c3894d74dd6f6a6cdd434a	2026-11-15T00:40:35Z	docs(runtime-audit): seed angle 26 ui-workspaces
+3bea9563b97e192847c3894d74dd6f6a6cdd434a	210b23cd55b377604f94af342192a2ea93f816f2	2026-11-15T00:40:33Z	docs(runtime-audit): seed angle 25 dominio-finanzas
+210b23cd55b377604f94af342192a2ea93f816f2	6fa8dd5c607ed6e03bec4371959b18c05f669276	2026-11-15T00:40:31Z	docs(runtime-audit): seed angle 24 fabrica-repos-hijos
+6fa8dd5c607ed6e03bec4371959b18c05f669276	6387a7050ba42a2a54ae9ff275b3616a3aacc8b5	2026-11-15T00:40:29Z	docs(runtime-audit): seed angle 23 dominio-ciberseguridad
+6387a7050ba42a2a54ae9ff275b3616a3aacc8b5	605251e4122ee6a9cb76bcc41c098a4210382721	2026-11-15T00:40:27Z	docs(runtime-audit): seed angle 22 presenter-notificaciones
+605251e4122ee6a9cb76bcc41c098a4210382721	732b30933bab5443f023fdf853f7ae879f77bbcd	2026-11-15T00:40:24Z	docs(runtime-audit): seed angle 21 replay-reparacion
+732b30933bab5443f023fdf853f7ae879f77bbcd	996d57cb65547d6e147a1f7f4d9f8200dcd13498	2026-11-15T00:40:09Z	docs(runtime-audit): seed angle 20 observabilidad
+996d57cb65547d6e147a1f7f4d9f8200dcd13498	9e3996a6284600381c7302bc5678a7e41560e264	2026-11-15T00:40:08Z	docs(runtime-audit): seed angle 19 bus-eventos
+9e3996a6284600381c7302bc5678a7e41560e264	1edf332c1b6dd606483d01ce1ed765c2d9803abf	2026-11-15T00:40:06Z	docs(runtime-audit): seed angle 18 efectos-idempotencia
+1edf332c1b6dd606483d01ce1ed765c2d9803abf	2be85a23566bf2052af0a0cc3636dc850ff2a509	2026-11-15T00:40:04Z	docs(runtime-audit): seed angle 17 workers-colas
+2be85a23566bf2052af0a0cc3636dc850ff2a509	584fd3203ba12ba7c3f43e43fb28ed91eb0f4f1c	2026-11-15T00:40:02Z	docs(runtime-audit): seed angle 16 pipelines-dag
+584fd3203ba12ba7c3f43e43fb28ed91eb0f4f1c	d42c2fb1c1ce0dea3001bc6b77bd732755996e45	2026-11-15T00:40:00Z	docs(runtime-audit): seed angle 15 skills-tipadas
+d42c2fb1c1ce0dea3001bc6b77bd732755996e45	e6529c2de0e53958311615dc32779f8f961bd602	2026-11-15T00:39:58Z	docs(runtime-audit): seed angle 14 sops-tipados
+e6529c2de0e53958311615dc32779f8f961bd602	7254b275758258729ecb72f5afdbd846baa0b185	2026-11-15T00:39:56Z	docs(runtime-audit): seed angle 13 catalogo-capacidades
+7254b275758258729ecb72f5afdbd846baa0b185	1ee0c587d18f1fadf639f8291c8bbab2494ee7d5	2026-11-15T00:39:54Z	docs(runtime-audit): seed angle 12 aprobaciones-mandatos
+1ee0c587d18f1fadf639f8291c8bbab2494ee7d5	048cbcf424272202d4646024a543e2d298ebc9c1	2026-11-15T00:39:52Z	docs(runtime-audit): seed angle 11 identidad-multitenant
+048cbcf424272202d4646024a543e2d298ebc9c1	c20dab1fbdf519c06f40bb519237a30742497b41	2026-11-15T00:39:38Z	docs(runtime-audit): seed angle 10 kernel-autoridad
+c20dab1fbdf519c06f40bb519237a30742497b41	aaff34408c81a1323a2cdb2a6c35b51c545e6de7	2026-11-15T00:39:35Z	docs(runtime-audit): seed angle 09 intent-bridge
+aaff34408c81a1323a2cdb2a6c35b51c545e6de7	25120caa48725582a9a86141741869fef9eaea03	2026-11-15T00:39:34Z	docs(runtime-audit): seed angle 08 perfiles-laia-y-agentes
+25120caa48725582a9a86141741869fef9eaea03	60f7853847c933ef96014c074f981cbaa2efb6d3	2026-11-15T00:39:32Z	docs(runtime-audit): seed angle 07 tarjetas-contexto
+60f7853847c933ef96014c074f981cbaa2efb6d3	17d364ff634897d09749014938f4f955899fc550	2026-11-15T00:39:29Z	docs(runtime-audit): seed angle 06 motor-slow-llm
+17d364ff634897d09749014938f4f955899fc550	732fa324774228db4fd8465f4fd5dce356de659d	2026-11-15T00:39:27Z	docs(runtime-audit): seed angle 05 motor-fast-llm
+732fa324774228db4fd8465f4fd5dce356de659d	bc7583612b31046bdcd92ffb7f617c0e18d7db9f	2026-11-15T00:39:25Z	docs(runtime-audit): seed angle 04 latencia-anam
+bc7583612b31046bdcd92ffb7f617c0e18d7db9f	cceab591252b08be03651f86e479d4f13ff8700d	2026-11-15T00:39:24Z	docs(runtime-audit): seed angle 03 harness-conversacional
+cceab591252b08be03651f86e479d4f13ff8700d	a8e86f715f662cfe289c529ab2c848768bfd7f4e	2026-11-15T00:39:22Z	docs(runtime-audit): seed angle 02 arquitectura-tres-planos
+a8e86f715f662cfe289c529ab2c848768bfd7f4e	54b8d5407a8576459448c4d059a877297d18ca7a	2026-11-15T00:39:20Z	docs(runtime-audit): seed angle 01 inventario-y-verdad-del-codigo
+f530eee1325a166dfd62794f1f73731245a1ce06	2878a06bbf5fd40e477ee148838e8ebf40d19c6e	2026-11-12T15:38:31Z	Corrige el resultado real del LLM de voz en la documentacion
+2878a06bbf5fd40e477ee148838e8ebf40d19c6e	8a0a5c4dc00d639f079125ad2403de50abe0de5c	2026-11-12T15:38:14Z	Ejecuta la voz con el agente real del runtime, no con un gemelo
+8a0a5c4dc00d639f079125ad2403de50abe0de5c	b4646f9b8ab7229594e799fbc3b1dd275766679f	2026-11-12T03:18:54Z	Documenta el smoke real del canal de voz y los avisos para conectarlo
+b4646f9b8ab7229594e799fbc3b1dd275766679f	8c7fcebb77f15444c269a81beefaa55a08dbbb1d	2026-11-12T03:18:35Z	Elige el agente de la sala entre los que existen, no un id fijo
+8c7fcebb77f15444c269a81beefaa55a08dbbb1d	a1ef7720f40c029dae3682fb52652ae5035183fb	2026-11-12T03:16:17Z	Ofrece solo los agentes que existen y explica por que la voz no arranca
+a1ef7720f40c029dae3682fb52652ae5035183fb	8c2479f3ed7ce6c2cd06ca3e2395228dabf52988	2026-11-12T03:13:45Z	Usa las personas reales del tenant en el canal de voz
+8c2479f3ed7ce6c2cd06ca3e2395228dabf52988	82e92f0307f91b8aa2718af304772e24a83b469c	2026-11-12T03:11:45Z	Recuerda los ultimos turnos en la llamada de voz
+82e92f0307f91b8aa2718af304772e24a83b469c	ff87bd095190d161468de16f6b5919800ce92f4d	2026-11-12T03:11:05Z	Calcula la cuota de uso sobre la ventana real de 24 horas
+ff87bd095190d161468de16f6b5919800ce92f4d	53c1c5f8874d03111db903a1d956c0b1d6059c55	2026-11-11T22:27:44Z	Refresca el contexto de voz con el ultimo mensaje, no con la consulta de apertura
+53c1c5f8874d03111db903a1d956c0b1d6059c55	01e861a754f7fff6896e97cc711e00019974c859	2026-11-11T22:27:16Z	Cachea registro de fuentes y perfiles de voz y limita el coste de las llamadas
+01e861a754f7fff6896e97cc711e00019974c859	54b8d5407a8576459448c4d059a877297d18ca7a	2026-11-11T19:51:23Z	Scaffold de voz y cara para todos los agentes y arranque de contexto en paralelo
+54b8d5407a8576459448c4d059a877297d18ca7a	963aee2722914bf8083988c6886eb886feb63c1a	2026-11-11T18:59:00Z	Informe de latencia de voz con Anam y ElevenLabs
+963aee2722914bf8083988c6886eb886feb63c1a	c1dcaa977d1b3b2a1cbe9031cf66e6087107d3ba	2026-11-11T17:55:44Z	Prueba todos los DSN candidatos en vez de quedarse con Neon
+c1dcaa977d1b3b2a1cbe9031cf66e6087107d3ba	c703fe451922925809f6d40093efe9b8600c2ec1	2026-11-11T17:41:04Z	Busca el DSN en todos los configs que ve el token de Doppler
+c703fe451922925809f6d40093efe9b8600c2ec1	d50350838b27b0651295eb80ecdfa67d714c7b6e	2026-11-11T17:09:25Z	Deja constancia de la ruta manual y del token de Doppler inválido
+d50350838b27b0651295eb80ecdfa67d714c7b6e	b13b3102e46f8779b3e3f1cb0ca53e48bd67b236	2026-11-11T17:06:57Z	Diagnostica por que falta el DSN y admite un secret del repo
+b13b3102e46f8779b3e3f1cb0ca53e48bd67b236	ecef3893c5c33970c056269e9bc8970b62bca71b	2026-11-11T17:02:08Z	Instala el CLI de Doppler con sudo en el workflow manual
+cc0b755fc08b817a3d43cdb1495c0d0897812bc2	54ec4a0040149783d863c4f327a9a991562b9f6e ecef3893c5c33970c056269e9bc8970b62bca71b	2026-11-11T17:00:57Z	Trae main a la rama de documentación para no revertir los arreglos de CI
+54ec4a0040149783d863c4f327a9a991562b9f6e	cb7a2e25ac6a5bb18735534dc84d1e859b115982	2026-11-11T16:59:49Z	Docs: nota de vigencia en cliente, audit y estado
+cb7a2e25ac6a5bb18735534dc84d1e859b115982	7782a9dfd3c890425af46a13f246171bea772b9f	2026-11-11T16:58:08Z	Docs: nota de vigencia en producto y operación
+ecef3893c5c33970c056269e9bc8970b62bca71b	8df098b80863ad6cec5b0e99ed6878a59db6daf3	2026-11-11T16:57:17Z	Alinea el Node del deploy con el que instala pnpm
+8df098b80863ad6cec5b0e99ed6878a59db6daf3	e07af0505abe6e9a63003a9999fbc6786279e929	2026-11-11T16:56:55Z	Quita pnpm del workflow manual: corepack no verifica la firma
+7782a9dfd3c890425af46a13f246171bea772b9f	e07af0505abe6e9a63003a9999fbc6786279e929	2026-11-11T16:56:28Z	Docs: punto de entrada de estado real y mapa de la documentación
+e07af0505abe6e9a63003a9999fbc6786279e929	35fcd27e276cba6d53fd69cbc037ff3355209063	2026-11-11T16:50:11Z	Añade una ruta manual para configurar la base de producción
+35fcd27e276cba6d53fd69cbc037ff3355209063	b9fa4f03b9f53bdd9ce0b8a6305308a22404d1df	2026-11-11T12:48:57Z	Cierra tres arreglos de la fase A: aprobación, goal y capabilities
+b9fa4f03b9f53bdd9ce0b8a6305308a22404d1df	d1c5135eb871dd20a02b081bdfda8c6307cfc361	2026-11-10T21:05:50Z	Añade el anexo que ordena los 321 hallazgos restantes por lo que necesitan
+d1c5135eb871dd20a02b081bdfda8c6307cfc361	d009dee3bed4eb208de5030bb62cf24ef318036f	2026-11-10T19:56:37Z	Registra los fixes aplicados y los dos hallazgos no aplicables
+d009dee3bed4eb208de5030bb62cf24ef318036f	b148961831f00307c46769d1849a08d64f4b3b0b	2026-11-10T19:56:20Z	Declara bloqueado el goal cuando el contexto no se puede montar
+b148961831f00307c46769d1849a08d64f4b3b0b	c9e061ec756eeee0c172bdf2e23ad666553d7f8b	2026-11-10T19:55:36Z	Cierra el tenant de las vistas, el techo de reintentos y el falso verificado
+c9e061ec756eeee0c172bdf2e23ad666553d7f8b	05126b1d923dc95e1fa8e309225dcc11d21e9031	2026-11-10T19:52:52Z	Audita 327 hallazgos y revisa los fixes contra el destino multitenant
+05126b1d923dc95e1fa8e309225dcc11d21e9031	6b9b28c96f3dcaa8882566aa91ddea7af4ece681	2026-11-10T18:29:51Z	feat(acme): tenant sintético aislado con tres workspaces, panel y analítica
+6b9b28c96f3dcaa8882566aa91ddea7af4ece681	7304ec0b70d6db8dc21e592e4b035fff8beabff7	2026-11-10T15:24:28Z	docs(campaña): plan de 20 etapas para el tenant ACME
+7304ec0b70d6db8dc21e592e4b035fff8beabff7	b37b67d4e18987402d255d377343a3454d723e5e	2026-11-10T15:24:28Z	feat(web): unificar las vistas en el chrome v2 y añadir tenant demo
+b37b67d4e18987402d255d377343a3454d723e5e	804d8f7adb696fb77c47a001064f2e2c470aad92	2026-11-10T10:55:47Z	docs(vistas): añadir handoff del 10 de noviembre
+804d8f7adb696fb77c47a001064f2e2c470aad92	155f79987d3f976d90aab45275ce042d351a5c13	2026-11-10T10:29:40Z	feat(vistas): unificar las vistas de workspace en ViewEnvelope
+155f79987d3f976d90aab45275ce042d351a5c13	3f371b626570ba2f7a41b04172281189691b9a7e	2026-11-10T01:46:15Z	docs(integraciones): add the agente-gestoria contract
+3f371b626570ba2f7a41b04172281189691b9a7e	c028225a32ce74d5d45ac6ee5021cb14a109d352	2026-11-09T23:56:57Z	feat(cognicion): expone tarjetas del slow y libera las fallidas
+c028225a32ce74d5d45ac6ee5021cb14a109d352	8f1d441d14a7a4941dae8becaa59e1805b2d68fb	2026-11-09T21:53:11Z	fix(llm): rutas auxiliares usan el tenant y su clave
+8f1d441d14a7a4941dae8becaa59e1805b2d68fb	dda22d27bea16e25f9cea67bf5972cf6040c2d7e	2026-11-09T21:37:39Z	fix(llm): cablear claves, fallback y timeouts del runtime
+dda22d27bea16e25f9cea67bf5972cf6040c2d7e	0c043daf9aa5de8805f1d318ffe0822ef4574628	2026-11-09T21:29:03Z	refactor: unificar la identidad en Laia y Marcos
+0c043daf9aa5de8805f1d318ffe0822ef4574628	d6d5754ca5fb693d0e1a927f94c43eacbcf847f7	2026-11-09T19:26:23Z	refactor(contratos): cablea los 55 pendientes restantes del dominio
+d6d5754ca5fb693d0e1a927f94c43eacbcf847f7	8aa8f0250bc7032b320c332b198dcfc0be23feea	2026-11-09T18:47:59Z	feat(contratos): campana 21, cablear los contratos del dominio en el motor
+8aa8f0250bc7032b320c332b198dcfc0be23feea	8f2c01b8906074975ee370ed748ea9b236ee50c6	2026-11-09T17:32:44Z	refactor(contracts): cierra los huerfanos con dos consumos y 76 pendientes fechados
+8f2c01b8906074975ee370ed748ea9b236ee50c6	1762e4911a44661d794fe03f1dba92f08fd0df11	2026-11-09T14:51:36Z	docs(vertical-slice): dejar constancia de la rama remota aun abierta
+1762e4911a44661d794fe03f1dba92f08fd0df11	9358d80c2802be7790183955885f660125deb93d	2026-11-09T14:51:00Z	docs(vertical-slice): consolidar los pendientes de las veinte campanas
+9358d80c2802be7790183955885f660125deb93d	3a43cdf5eb70ab7d90d5940950ad4039472ed341	2026-11-09T14:46:18Z	docs(operacion): registrar el SHA del patchset y el limite de staging de la 20
+3a43cdf5eb70ab7d90d5940950ad4039472ed341	a62bff0c792d7a113f8ab2c2d5b5fca873d79e67	2026-11-09T14:46:18Z	feat(operacion): panel de operaciones y briefing con tarjetas versionadas
+a62bff0c792d7a113f8ab2c2d5b5fca873d79e67	18c313dd4ed02a0b399e24ad3a970f5ca8928ffe	2026-11-09T13:16:03Z	docs(seguimiento): registrar el SHA del patchset y el punto de rollback de la 19
+18c313dd4ed02a0b399e24ad3a970f5ca8928ffe	de170b51aeeb0d59d2882d8adbffa0008bf0da2d	2026-11-09T13:16:03Z	feat(seguimiento): pasos durables por lead y guarda de respuesta o baja
+de170b51aeeb0d59d2882d8adbffa0008bf0da2d	9f122821876f61c50dc704e74e9abe694fcd4ab2	2026-11-09T12:25:48Z	docs(marcos): registrar el SHA del patchset y el punto de rollback de la 18
+9f122821876f61c50dc704e74e9abe694fcd4ab2	4d34906b090005b44519ad44322c8cac2c0daf45	2026-11-09T12:25:42Z	feat(marcos): delegacion tipada de fichas y cualificacion con fuente por campo
+4d34906b090005b44519ad44322c8cac2c0daf45	ec0ad10895e892e0d43639b9d0fcf15cb253c1ec	2026-11-09T11:56:39Z	docs(leads): registrar el SHA del patchset y el punto de rollback de la 17
+ec0ad10895e892e0d43639b9d0fcf15cb253c1ec	2facb5276377eb9b52d2ebb789624a574c2b8823	2026-11-09T11:56:30Z	feat(leads): candidatos de Places y ficha comercial aceptada por empresa
+2facb5276377eb9b52d2ebb789624a574c2b8823	a3af62bf4eb43649c6910b5268468d3782b00198	2026-11-09T11:47:51Z	docs(calendar): registrar el SHA del patchset y el punto de rollback de la 16
+a3af62bf4eb43649c6910b5268468d3782b00198	a669f9a24e49fc076a0ce559012dd0cbcdf052d9	2026-11-09T11:47:26Z	feat(calendar): disponibilidad real y reserva serializada con recibo del evento
+a669f9a24e49fc076a0ce559012dd0cbcdf052d9	242679881d9b3d3316ba86be81591e8886dea156	2026-11-09T11:17:55Z	feat(gmail): respuesta desde el chat atada al hilo, al destinatario y a la cuenta
+242679881d9b3d3316ba86be81591e8886dea156	d34414b3580d0fda52397f3f813728d99a95fd09	2026-11-09T00:14:09Z	feat(aprobación): propuesta atada a principal y generación, y recibo o ambigüedad del proveedor
+d34414b3580d0fda52397f3f813728d99a95fd09	e9f8654c5bfa50ff6a50b26145f33ea9a8336442	2026-11-09T00:02:43Z	feat(hilo): vínculo de automatización con ejecución, referencias y siguiente responsable
+e9f8654c5bfa50ff6a50b26145f33ea9a8336442	f4fd89c359b60975b5e8a27a0869b1eeface6826	2026-11-08T23:38:33Z	feat(rag): fuentes de Drive con revisión, reintento y cita verificada
+f4fd89c359b60975b5e8a27a0869b1eeface6826	56f473be712596c52a63e42a434a549854bcb6af	2026-11-08T22:52:59Z	feat(google): conexión operativa con empresa, autorizante y mínimo privilegio
+56f473be712596c52a63e42a434a549854bcb6af	f642b31c75860f931457a1e3e6a5414e8bbf85d4	2026-11-08T20:37:48Z	feat(memoria): hechos de perfil versionados y recuerdos privados por persona
+f642b31c75860f931457a1e3e6a5414e8bbf85d4	e1c493c8df5331e27bbeccc106c40e85076f811c	2026-11-08T20:33:58Z	feat(personas): instancias por empresa con activación y arranque autorizado
+e1c493c8df5331e27bbeccc106c40e85076f811c	0abb7a9f2b4b81cda6cce9ad7532682c4577e881	2026-11-08T19:36:22Z	feat(slice): instalador reanudable con reserva por clave de operación
+0abb7a9f2b4b81cda6cce9ad7532682c4577e881	55a87a97b5b7c7f44a86da0e1f957a641001762a	2026-11-08T19:00:28Z	feat(bundle): contrato validado del bundle y plan de instalación sin escrituras
+55a87a97b5b7c7f44a86da0e1f957a641001762a	bd3df06ccde175ba2e1cf8bd39cdebca81c01aba	2026-11-08T18:33:25Z	fix(deferred): exigir recibo para no emitir éxito de un despacho vacío
+bd3df06ccde175ba2e1cf8bd39cdebca81c01aba	d0d9c9e3366fc9d10b6daec44e1e940d7651b9f8	2026-11-08T18:30:05Z	docs(pendientes): registrar el RLS real y el x-user-id de presencia que deja la campaña 05
+d0d9c9e3366fc9d10b6daec44e1e940d7651b9f8	bc41eb9812c1534127f525be457693313f33cfd0	2026-11-08T18:29:55Z	fix(slice): cortar el SQL de negocio contra la base de la app y filtrar el SSE por principal
+bc41eb9812c1534127f525be457693313f33cfd0	22217a08015a3ade89da9771ba3792027f12ed18	2026-11-08T18:14:56Z	docs(pendientes): registrar el cableado de consumidores que deja la campaña 04
+22217a08015a3ade89da9771ba3792027f12ed18	f5c60518b2eecf345386e65f6e39f7934447241d	2026-11-08T18:14:33Z	feat(records): contrato de propiedad por scope y migración con diario
+f5c60518b2eecf345386e65f6e39f7934447241d	909da273d9606bc5912bc9b2eca36dce9f6b4e31	2026-11-08T18:07:26Z	feat(authz): permisos por actor, kill switch y revocación en caliente
+909da273d9606bc5912bc9b2eca36dce9f6b4e31	480769a6865f8956e8faa36859fddb43c2d7038f	2026-11-08T17:14:34Z	feat(tenant): resolver el principal por petición y acotar el fallback a default
+480769a6865f8956e8faa36859fddb43c2d7038f	e55db3939704ee496273aed7e171116b0c003173	2026-11-08T17:02:37Z	feat(vertical-slice): verificación ejecutable de la campaña 01
+e55db3939704ee496273aed7e171116b0c003173	a3faf004c4ab3a3ec0a2721028054dcd40dd83a8	2026-11-08T17:02:37Z	fix(audits): aplicar la allowlist de idempotencia y sanear documentación muerta
+a3faf004c4ab3a3ec0a2721028054dcd40dd83a8	52924553ea36a476c7b7724724b568b0d938cd72	2026-11-08T16:58:59+01:00	docs: plan secuencial del vertical slice actual
+52924553ea36a476c7b7724724b568b0d938cd72	6b1ced95f7843518d18ef75fffc9eb826564c432	2026-11-08T15:26:05+01:00	ci: alinear el cierre de tests con el gate de campaña
+6b1ced95f7843518d18ef75fffc9eb826564c432	c2dba916ed8184a9a36c109ad314cab42b339b3e	2026-11-08T13:34:50+01:00	test: acreditar concurrencia de WhatsApp y documentar estado de campaña
+c2dba916ed8184a9a36c109ad314cab42b339b3e	d24348334cc95837b33868c4620280bc488dedf6 7378ee671fb25bc4856663ef437901909bd6de67	2026-11-08T13:27:22+01:00	Merge branch 'main' of https://github.com/uniscrolliabrain-cloud/agente
+d24348334cc95837b33868c4620280bc488dedf6	9ac9532aecc34e1ce1b4adc4f6b2483f67cacf70	2026-11-08T13:26:33+01:00	test: verificar semillas de tarjetas y alinear el timeout del gate
+7378ee671fb25bc4856663ef437901909bd6de67	9ac9532aecc34e1ce1b4adc4f6b2483f67cacf70	2026-11-08T13:25:24+01:00	docs: handoff para implementar tenant Ibercop y marca wspain
+9ac9532aecc34e1ce1b4adc4f6b2483f67cacf70	0daa961e040dd8764c30e890c3cc20347eed12b7	2026-11-08T13:18:43+01:00	docs: cerrar la integración de la beta R01-R04
+0daa961e040dd8764c30e890c3cc20347eed12b7	4f80f0fe0767e4a56f9590d63edb9ca2fa2742c9 c08a927a000162e30f4d8441641e4a8c07a123c2	2026-11-08T13:17:31+01:00	Merge branch 'main' of https://github.com/uniscrolliabrain-cloud/agente
+4f80f0fe0767e4a56f9590d63edb9ca2fa2742c9	0abe9f40f0fff13815a78060a1b0b69d196e08f9 a4a7f8304a9f5c208b9474a71ea8d2b098cb9872 9ab5151d0a81cdebbc3fd810fb28bc675ea94a86 f6ec37e4a7bdb675ede62605e6aaa25b1f4ae832 26885da09baa58135581984ab0ebbb30f65f3572 a15a0cfb9487034b8b5697d9cc988e50ee7ea880 a95a50dbe6470d106aa8940f19293165e133c514 ad89a36d70053308f070daf02d5a37d566fbace7 2c32d19258c2f175e9bbaa6fcf5783f4c4b97873 d4a9a426b2524ebc0afae1bdc06dad87a3e59156	2026-11-08T13:15:59+01:00	Merge branches 'sprint/r01-a01-medir-base', 'sprint/r01-a02-descubrimiento-tests', 'sprint/r01-a03-entorno-tests', 'sprint/r01-a04-ci-bloqueante', 'sprint/r01-a06-audit-contracts', 'sprint/r01-a07-audit-idempotency', 'sprint/r01-a08-fuente-despliegue', 'sprint/r01-a09-secrets-check' and 'sprint/r01-a10-clasificador-rojos'
+a95a50dbe6470d106aa8940f19293165e133c514	952acab91a3528eb3ba8ab70b47078bf06119fa2	2026-11-07T19:40:52+01:00	wip:r03-a07-usa-auditoria-por-accion
+26885da09baa58135581984ab0ebbb30f65f3572	de506ad8986f6a469580aa6a68edf569a741b39a	2026-11-07T19:37:23+01:00	docs(a04): cerrar las cuatro rondas y preparar el catch-up
+de506ad8986f6a469580aa6a68edf569a741b39a	f88ec66e8541703002884373ef6f80ec9f0742b8	2026-11-07T19:37:13+01:00	sprint(r04-a04): renderizar tarjetas fixed con escape por canal
+952acab91a3528eb3ba8ab70b47078bf06119fa2	ad6b1b3f1692fa99d56f80fbcd908e9f4341f941	2026-11-07T19:35:53+01:00	wip:r03-a07-cubre-aislamiento-de-trazas-http
+f88ec66e8541703002884373ef6f80ec9f0742b8	32f19e7e2e998ec27c6b203c165cef1ed35785fc	2026-11-07T19:33:17+01:00	sprint(r03-a04): agregar hechos operativos por tenant y periodo
+a4a7f8304a9f5c208b9474a71ea8d2b098cb9872	202fe04e97b2f9e2a1109b97700e762cea6a9d04	2026-11-07T19:33:04+01:00	sprint(r04-a01): valida tarjetas en modo estricto
+f6ec37e4a7bdb675ede62605e6aaa25b1f4ae832	ec7da8ebe008887c2bb9d2cb37d8b363e9026e97	2026-11-07T19:32:48+01:00	docs(a03): registra evidencia y handoffs de las cuatro rondas
+9ab5151d0a81cdebbc3fd810fb28bc675ea94a86	8b51d3ab335a648f318847c41ae38873835c54e8	2026-11-07T19:32:40+01:00	docs(a02): cierra la ficha de cuatro rondas
+ec7da8ebe008887c2bb9d2cb37d8b363e9026e97	25373f85c8566881f12286160b65e67583c3066d	2026-11-07T19:31:39+01:00	sprint(r04-a03): rechaza empates de prioridad en tarjetas
+8b51d3ab335a648f318847c41ae38873835c54e8	74c3228442fb8888be97a1adfe0ebd73705f8600	2026-11-07T19:31:36+01:00	sprint(r04-a02): registra la aprobacion y huella de PublishedCard
+ad89a36d70053308f070daf02d5a37d566fbace7	7379768feeb0a553686bffbf33eaabb253e157d4	2026-11-07T19:30:52+01:00	wip(r04-a08): registrar prueba HTTP y cierre de beta
+2c32d19258c2f175e9bbaa6fcf5783f4c4b97873	e8550d4c1ca4f57cdb89ee5ac1c5683bf54749f7	2026-11-07T19:30:17+01:00	R04 A09: document trace integration dependencies and catch-up
+d4a9a426b2524ebc0afae1bdc06dad87a3e59156	d3485d6008419ccde349c2b53350adcd86271545	2026-11-07T19:29:13+01:00	docs(a10): incorpora el gate base recuperado por A01
+25373f85c8566881f12286160b65e67583c3066d	b6c666a7a63e36e15a8bc06c9d9a9078d9325f61	2026-11-07T19:25:41+01:00	sprint(r03-a03): resuelve enlaces y solicita aclaración ante homónimos
+e8550d4c1ca4f57cdb89ee5ac1c5683bf54749f7	f61db73d66e26c9007f2f15e106898ba5782ee54	2026-11-07T19:25:35+01:00	R03 A09: enumerate Laia vertical acceptance gaps
+d3485d6008419ccde349c2b53350adcd86271545	e73b60ff16170e7b79637871a62910b770a22b5d	2026-11-07T19:25:33+01:00	docs(a10): registra el cierre de las cuatro rondas
+202fe04e97b2f9e2a1109b97700e762cea6a9d04	3d8b0c83f491041a79172608adabce4959e22236	2026-11-07T19:24:23+01:00	sprint(r01-a01): registra los totales de tests
+7379768feeb0a553686bffbf33eaabb253e157d4	a699d837b0a2a9751655125b86996d101846b1df	2026-11-07T19:23:08+01:00	sprint(r04-a08): cubrir cambios de intención y canal en autorización HTTP
+74c3228442fb8888be97a1adfe0ebd73705f8600	f8084eb17ca220653f2b7d0d7bbf0f0305deac00	2026-11-07T19:22:45+01:00	sprint(r03-a02): prepara el acceso de Laia desde un SOP
+ad6b1b3f1692fa99d56f80fbcd908e9f4341f941	d0cd904d92e4046fc4342e7cc4f30203da80c79c	2026-11-07T19:22:19+01:00	wip:r02-a07-verifica-reclamacion-con-50-workers
+e73b60ff16170e7b79637871a62910b770a22b5d	a8a2a723af153010751be8dbbff20d2b00ac2365	2026-11-07T19:21:41+01:00	sprint(r04-a10): documenta ciclo-vida-tarjetas-comunicacion
+f61db73d66e26c9007f2f15e106898ba5782ee54	29d44a1a74848d8a232f139bad26252d8e4a21c6	2026-11-07T19:21:04+01:00	R02 A09: guard context output against event token leaks
+f8084eb17ca220653f2b7d0d7bbf0f0305deac00	c8235f44077f58bf0a12a98c22e71a67162bd899	2026-11-07T19:20:00+01:00	sprint(r03-a02): prepara el acceso de Laia desde un SOP
+32f19e7e2e998ec27c6b203c165cef1ed35785fc	47a4b1b647c5408d059edd4a0550589660c04c57	2026-11-07T19:16:15+01:00	sprint(r02-a04): reforzar el prefijo físico por tenant
+a8a2a723af153010751be8dbbff20d2b00ac2365	8d21c7fc679e64893547d24d4a2a78408ea6be0c	2026-11-07T19:16:11+01:00	sprint(r03-a10): documenta laia-evidencia-y-preguntas-abiertas
+a699d837b0a2a9751655125b86996d101846b1df	6fa36ec3211a48dc299064a654e6d3f86aa74e29	2026-11-07T19:14:16+01:00	sprint(r01-a08): registrar revisión de despliegue e inicio de R02
+b6c666a7a63e36e15a8bc06c9d9a9078d9325f61	fd7a8f8135022ec155a0afcedba7536e55a0cbe8	2026-11-07T19:13:48+01:00	sprint(r02-a03): restaura al solicitante desde la tarea durable
+3d8b0c83f491041a79172608adabce4959e22236	724ef4f46b09ed9adc11dbde0503ae3ad969087e	2026-11-07T19:12:54+01:00	sprint(r03-a01): provisiona Laia en el catálogo del tenant
+d0cd904d92e4046fc4342e7cc4f30203da80c79c	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T19:08:39+01:00	wip:r01-a07-indexa-marcas-y-control-negativo
+8d21c7fc679e64893547d24d4a2a78408ea6be0c	d47e2747a0ac3a7f4e75ff6179b3f9252b621ed8	2026-11-07T19:08:31+01:00	sprint(r02-a10): documenta contrato-contexto-prompt
+c8235f44077f58bf0a12a98c22e71a67162bd899	25f92436b4e5353e0ab187cf8ad051850ef83b8f	2026-11-07T19:07:07+01:00	sprint(r02-a02): filtra los eventos por entidad
+29d44a1a74848d8a232f139bad26252d8e4a21c6	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T19:06:56+01:00	R01 A09: cover deployment and integration secret names
+d47e2747a0ac3a7f4e75ff6179b3f9252b621ed8	aaa996a4c4a38c2887eea265396ca20125379503	2026-11-07T19:02:58+01:00	sprint(r01-a10): registra la revalidación del clasificador
+724ef4f46b09ed9adc11dbde0503ae3ad969087e	0b85043263ce141f7a2603b1902e12e82589cf4a	2026-11-07T19:02:34+01:00	sprint(r01-a01): registra gate recuperado y dependencia de R02
+a15a0cfb9487034b8b5697d9cc988e50ee7ea880	525e1ef5fccc1c7cff49dfcff9b5fee2bdddcf88	2026-11-07T19:01:17+01:00	sprint:r04-a06-card-seed
+0b85043263ce141f7a2603b1902e12e82589cf4a	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T19:00:07+01:00	wip: r01-a01 registra medición parcial de la base
+fd7a8f8135022ec155a0afcedba7536e55a0cbe8	cde8854383d2ba88cb8c9bf8840587c7395a0fe4	2026-11-07T18:56:30+01:00	verify(r01-a03): revalida el entorno limpio
+47a4b1b647c5408d059edd4a0550589660c04c57	5efa282513a87592cd80a602489683f3972178b6	2026-11-07T18:54:47+01:00	docs(r01-a04): registrar la reverificación de CI
+525e1ef5fccc1c7cff49dfcff9b5fee2bdddcf88	047a182882f31d02c64219e9bc20dad6b67a391e	2026-11-07T18:54:40+01:00	sprint:r03-a06-missing-evidence
+047a182882f31d02c64219e9bc20dad6b67a391e	dfa456d863657eebeddab06955e95e0d70db5140	2026-11-07T18:51:53+01:00	sprint:r02-a06-store
+dfa456d863657eebeddab06955e95e0d70db5140	13c198c8487dd1aead2e1241fdb95a80d6cd93ce	2026-11-07T18:49:21+01:00	verify:r01-a06
+0abe9f40f0fff13815a78060a1b0b69d196e08f9	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T18:27:16+01:00	docs: registrar entregas y ramas de los diez agentes
+c08a927a000162e30f4d8441641e4a8c07a123c2	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T16:16:16Z	docs(sprints): briefings de auditoría por carril para la ronda 1
+25f92436b4e5353e0ab187cf8ad051850ef83b8f	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T16:02:10+01:00	wip: r01-a02 cubre tests en subdirectorios
+aaa996a4c4a38c2887eea265396ca20125379503	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T16:01:59+01:00	sprint(r01-a10): clasifica fallos de tests tras tres repeticiones
+13c198c8487dd1aead2e1241fdb95a80d6cd93ce	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T16:01:59+01:00	wip:r01-a06-audit-contracts
+cde8854383d2ba88cb8c9bf8840587c7395a0fe4	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T15:59:52+01:00	wip: aislar la precarga de tests del .env local (r01-a03)
+6fa36ec3211a48dc299064a654e6d3f86aa74e29	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T15:54:04+01:00	wip: consolidar la guía de despliegue R01-A08
+5efa282513a87592cd80a602489683f3972178b6	0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	2026-11-07T15:46:57+01:00	wip: hacer bloqueante el worker y cachear pnpm en CI
+0c8fe81ec8ece4dd35cbc9b12e3b1d1d168ce81f	d9a3b6ad39f6dbbbffc0dc0814f5767f36639413	2026-11-07T12:07:15Z	docs(operacion): plan de 10 agentes en 10 rondas de sprints de 30 minutos
+d9a3b6ad39f6dbbbffc0dc0814f5767f36639413	a317d8d61739fd3bab04453ec43d77f157b56405 2a475e91d115e043391f1dada02270e8f53bdf73	2026-11-07T11:44:53Z	merge: integra la rama de despliegue en main y unifica el dominio en agntiapro.com
+2a475e91d115e043391f1dada02270e8f53bdf73	5f9ae56f31c76150ba4a26c20648a8fde2d894fe	2026-11-06T20:49:01+01:00	fix(conexiones): que la sonda de Google pruebe las APIs, no solo el token
+5f9ae56f31c76150ba4a26c20648a8fde2d894fe	aaca29a07155ec51dc382de7b23e918e7c0b70d1	2026-11-06T20:40:18+01:00	fix(login): explicar en la app cuando Google rechaza el redirect_uri
+a317d8d61739fd3bab04453ec43d77f157b56405	2c4665629d35f6b94c6cbb2cfc718eb34f281605	2026-11-06T20:18:02+01:00	Specify Agntia service pipelines and Laia communication cards
+2c4665629d35f6b94c6cbb2cfc718eb34f281605	df18584143bc5f3d6635e85f5f388cf93382f11b	2026-11-06T19:11:58+01:00	Document Agntia pilot runtime, Laia context and service benchmarks
+aaca29a07155ec51dc382de7b23e918e7c0b70d1	8df55c245979b008405d0b25b73e491be22f34de	2026-11-06T18:58:18+01:00	fix(seguridad): cerrar los hallazgos de la auditoria externa y el cron mensual
+8df55c245979b008405d0b25b73e491be22f34de	1ddc5867814afc355271553f2031d4a087181f79	2026-11-06T16:14:34+01:00	feat(acceso): Google y GitHub como login, y la agencia agntia viva en produccion
+1ddc5867814afc355271553f2031d4a087181f79	fab668e91158b1a2fa65b0996c926c35f4746bce	2026-11-06T13:29:54+01:00	fix(runtime): el despliegue real destapa cinco fallos que ningun test veia
+fab668e91158b1a2fa65b0996c926c35f4746bce	0168cba231cc495bd90460a6513c42fb1750c87a	2026-11-06T12:16:43+01:00	fix(deploy): el artefacto compilado arranca y el pipeline puede desplegar
+0168cba231cc495bd90460a6513c42fb1750c87a	3f30ea3449ee98049c8a3a40474facad0ceb3c6b	2026-11-05T18:54:40+01:00	chore(operacion): proyecto Doppler declarado y aviso de shell no bloqueante
+3f30ea3449ee98049c8a3a40474facad0ceb3c6b	eb6efb31730b24cbcafec06566dabb5ea96bab7a	2026-11-05T18:54:01+01:00	feat(leads): descubrimiento en Places con dedupe por placeId
+eb6efb31730b24cbcafec06566dabb5ea96bab7a	4c6b55ddc4c72c9171decddb2512ac0c055054af	2026-11-05T18:51:19+01:00	feat(operacion): informe de conexiones y gate que termina
+4c6b55ddc4c72c9171decddb2512ac0c055054af	e23852d08c9c5992c523b934846ad4632f155a14	2026-11-05T18:51:09+01:00	feat(server): canales cableados y credenciales de Google por empresa
+e23852d08c9c5992c523b934846ad4632f155a14	bdb70816cacbec8917a26bebfe3407d0d04e8608	2026-11-05T18:50:59+01:00	feat(integraciones): adaptadores reales de email, voz y WhatsApp Meta
+bdb70816cacbec8917a26bebfe3407d0d04e8608	ada620b47af11a3bc856bdc16dfefd4a01282ada	2026-11-05T16:26:35+01:00	docs(auditoria): transversal de clientes leida del codigo de main
+df18584143bc5f3d6635e85f5f388cf93382f11b	2a70176a05f880990ff63cc9e673e497e08f5317	2026-11-05T15:36:05+01:00	Recover historical account and team planning
+2a70176a05f880990ff63cc9e673e497e08f5317	cd24e54fc2d1cbf15cc5b65da9105514f88fc89f	2026-11-05T15:35:56+01:00	docs(nc-p00a): registra rama publicada y PR de revisión
+cd24e54fc2d1cbf15cc5b65da9105514f88fc89f	9fa666a5bbe369025fd5fdf62b2892161cc2b2df	2026-11-05T15:35:56+01:00	docs(nc-p00a): mapa, propiedad y contratos de la base compartida
+9fa666a5bbe369025fd5fdf62b2892161cc2b2df	6c69afe22bc67c001ce6d9b8fe01c04ceac68dba	2026-11-05T15:33:10+01:00	Recover Cline documentation drafts and historical gate handoff
+ada620b47af11a3bc856bdc16dfefd4a01282ada	70776af81303183c5451876b4e92a999e9f8284d	2026-11-05T15:32:14+01:00	docs(operacion): campana SCAFFOLD VIVO con los siete todos del slice
+70776af81303183c5451876b4e92a999e9f8284d	364a5d2b8be45bb6e6b5e1677baa2802bb729179	2026-11-05T15:32:14+01:00	fix(audits): el criterio de contratos mide uso, no mencion literal
+364a5d2b8be45bb6e6b5e1677baa2802bb729179	2a29e94a48fc15ed65c55879d72056ab6a632fe2	2026-11-05T15:32:13+01:00	feat(gate): indice de marcas en idempotency y test de doble ejecucion
+2a29e94a48fc15ed65c55879d72056ab6a632fe2	3a6f10836e340dd769fe06c36b7e5c0cd3e94a82	2026-11-05T15:32:12+01:00	patch(gate): documenta la causa medida del step de tests lento
+3a6f10836e340dd769fe06c36b7e5c0cd3e94a82	31dfb3724409d0bfa932741d9d36cef439b3bf5a	2026-11-05T15:32:09+01:00	feat(gate): un solo comando verifica typecheck, tests y los siete audits
+31dfb3724409d0bfa932741d9d36cef439b3bf5a	5490a492dbc0d84e10b483cb4396c8ea313048e4	2026-11-05T15:32:07+01:00	docs(operacion): handoff del corpus para Cline y campana VERDAD del gate
+6c69afe22bc67c001ce6d9b8fe01c04ceac68dba	c9b472b94e60795ea87ad175f2ddb494fa07b909	2026-11-05T15:30:36+01:00	Trace roles and cognitive runtime from the web interface
+c9b472b94e60795ea87ad175f2ddb494fa07b909	5490a492dbc0d84e10b483cb4396c8ea313048e4	2026-11-05T15:30:36+01:00	Document agent, LLM and cognitive kernel audit
+5490a492dbc0d84e10b483cb4396c8ea313048e4	8e97a78518130bc48149f271e75432c2ae5380db 3b9f588c18eb8104bb5f52f820f34110e4c00a17	2026-11-05T18:42:52+01:00	Merge pull request #10 from uniscrolliabrain-cloud/campaign/vs-02-whatsapp-approval
+3b9f588c18eb8104bb5f52f820f34110e4c00a17	c41fc8805d4a762ef49102ac7f3b0750b9092fb6 8e97a78518130bc48149f271e75432c2ae5380db	2026-11-05T14:18:38+01:00	Merge remote-tracking branch 'origin/main' into campaign/vs-02-whatsapp-approval
+8e97a78518130bc48149f271e75432c2ae5380db	01a5c0642b7bf8a5f98e30c2af5c491ce73c2e38 f7e4968ae888f6ff5b5372425d8cc91a54c633aa	2026-11-05T18:03:07+01:00	Merge pull request #12 from uniscrolliabrain-cloud/fix/store-cursor-order
+01a5c0642b7bf8a5f98e30c2af5c491ce73c2e38	4f81f2293b67048ec4f6a32801f5940439b832cf f57b1fe2983d7957b74c668fa241fb8e35ff517a	2026-11-05T18:02:24+01:00	Merge pull request #13 from uniscrolliabrain-cloud/fix/ci-worker-workspace
+c41fc8805d4a762ef49102ac7f3b0750b9092fb6	db550cbe2794a7765e9df0e7b326f1e4bdf2a7a5	2026-11-05T13:43:44+01:00	Keep old WhatsApp operations accessible through scoped pagination
+f57b1fe2983d7957b74c668fa241fb8e35ff517a	4f81f2293b67048ec4f6a32801f5940439b832cf	2026-11-05T13:43:05+01:00	Use the frozen pnpm workspace for worker CI
+db550cbe2794a7765e9df0e7b326f1e4bdf2a7a5	7c6ee8d703f396864fca8b9d4507889c4030f927	2026-10-31T18:43:10+01:00	Fix mixed-order keyset cursors and preserve database timestamp precision
+7c6ee8d703f396864fca8b9d4507889c4030f927	644aff4eee9cedb1b71c1a5d3bb6445863162a57	2026-10-31T18:43:09+01:00	Bind reply preparation and approval to the reviewed source channel
+f7e4968ae888f6ff5b5372425d8cc91a54c633aa	4f81f2293b67048ec4f6a32801f5940439b832cf	2026-10-31T18:42:53+01:00	Fix mixed-order keyset cursors and preserve database timestamp precision
+644aff4eee9cedb1b71c1a5d3bb6445863162a57	38d7a819accb17f1f0432824975792925055c7bb	2026-10-31T17:55:44+01:00	Audit Codex and Freebuff deliveries with adversarial reproductions
+38d7a819accb17f1f0432824975792925055c7bb	5a2852e44cd317fa5cc23aecf0abd5d2bc6d1e0f	2026-10-31T13:49:42+01:00	Record final 36-test WhatsApp inbox verification
+5a2852e44cd317fa5cc23aecf0abd5d2bc6d1e0f	e765b8f6db5b061a77c23015b0852e3c77489102	2026-10-31T13:45:05+01:00	Preserve outbound channel evidence across connection rotation
+e765b8f6db5b061a77c23015b0852e3c77489102	8420138e80507f71583fced2d744c5a9bdc05277	2026-10-31T13:39:44+01:00	Record end-to-end inbox reply evidence and current integration limits
+8420138e80507f71583fced2d744c5a9bdc05277	93f729e9f3ac167308ceb8a484dbfaa5859a62e9	2026-10-31T13:34:14+01:00	Connect WhatsApp inbox to channel-bound manual replies
+93f729e9f3ac167308ceb8a484dbfaa5859a62e9	576bf5e3973c24b85b07861257ee910e7274a855	2026-10-31T12:54:00+01:00	Link WhatsApp review evidence to PR and normalize log whitespace
+576bf5e3973c24b85b07861257ee910e7274a855	a3f77ac1fd0ca77184cfc313021bef4be5666578	2026-10-31T12:52:31+01:00	Record WhatsApp approval verification and remaining integration gates
+a3f77ac1fd0ca77184cfc313021bef4be5666578	4f81f2293b67048ec4f6a32801f5940439b832cf	2026-10-31T12:49:02+01:00	Add tenant-scoped WhatsApp review and durable outbound decisions
+4f81f2293b67048ec4f6a32801f5940439b832cf	568f11a2a6c279f482c02cf8ea9956b5ef96962d 6324fa24dcb5826549a91f4fc006f119a93da0c9	2026-10-30T23:04:58+01:00	Merge pull request #6 from uniscrolliabrain-cloud/docs/nc-phase0-shared-foundation
+6324fa24dcb5826549a91f4fc006f119a93da0c9	568f11a2a6c279f482c02cf8ea9956b5ef96962d	2026-10-30T23:03:12+01:00	Close shared foundation in cognitive phase zero before vertical edits
+568f11a2a6c279f482c02cf8ea9956b5ef96962d	68aa77f121e0f032fa30ee68fed47c1a2c3fc7ff 76e996561f05d5ed5d44ca9750c3df5920ae83fe	2026-10-30T23:00:50+01:00	Merge pull request #5 from uniscrolliabrain-cloud/docs/handoff-nucleo-coexistencia
+76e996561f05d5ed5d44ca9750c3df5920ae83fe	68aa77f121e0f032fa30ee68fed47c1a2c3fc7ff	2026-10-30T23:00:17+01:00	Define cognitive squad handoff and serialize shared runtime integration
+68aa77f121e0f032fa30ee68fed47c1a2c3fc7ff	b358be6d59da3a33883be74a98b4dbb120010474 416d9d7e47784b3ba59a44278d6f8c9ecdb3b38b	2026-10-29T14:05:01+01:00	Merge pull request #4 from uniscrolliabrain-cloud/docs/inventario-conexiones-stepper
+416d9d7e47784b3ba59a44278d6f8c9ecdb3b38b	b358be6d59da3a33883be74a98b4dbb120010474	2026-10-29T14:04:19+01:00	Add complete connection inventory and setup copilot guide
+b358be6d59da3a33883be74a98b4dbb120010474	de6a0d307ee8d5f6bb7d6210f72e299df0671021 6171110b08fdc3d60d7fbe5ed700bb5c9098aa24	2026-10-29T13:11:05+01:00	Merge pull request #3 from uniscrolliabrain-cloud/docs/protocolo-agentes-vertical
+6171110b08fdc3d60d7fbe5ed700bb5c9098aa24	de6a0d307ee8d5f6bb7d6210f72e299df0671021	2026-10-29T13:10:44+01:00	Set Copilot verification and Cline searchable documentation protocol
+de6a0d307ee8d5f6bb7d6210f72e299df0671021	83d20b2d01478b56dd756d54261c71f31653799d dd8358c476f30adae574f221efd84cf789c0e324	2026-10-29T13:07:35+01:00	Merge pull request #2 from uniscrolliabrain-cloud/docs/campana-vertical-agntia
+dd8358c476f30adae574f221efd84cf789c0e324	83d20b2d01478b56dd756d54261c71f31653799d	2026-10-29T13:06:54+01:00	Define AGNTIA vertical campaign, review gates and connection inventory
+83d20b2d01478b56dd756d54261c71f31653799d	c69e028ac0e14ae775753cec53f5aee7a823f7cc d1d2a0bef3969c2508650b1b9f6231d3df16b73b	2026-10-29T13:00:32+01:00	Merge pull request #1 from uniscrolliabrain-cloud/review/pilot-webhook
+d1d2a0bef3969c2508650b1b9f6231d3df16b73b	c5e652f56dba822fec385ffbc8dc1b485fcf36ce	2026-10-29T12:58:11+01:00	Document bounded WhatsApp integration decision
+c5e652f56dba822fec385ffbc8dc1b485fcf36ce	0e56b99bab1aea46cf87287f11907f31d451c1dd	2026-10-28T14:43:27+01:00	Record full diagnostic results and remaining integration gates
+0e56b99bab1aea46cf87287f11907f31d451c1dd	c5a8c7c33cd28fe77f6bd6c2afd18410349a4d1d	2026-10-28T14:36:03+01:00	Harden tenant-bound WhatsApp ingress and document pilot readiness
+c5a8c7c33cd28fe77f6bd6c2afd18410349a4d1d	9082fba9e43fe912188af969b559b209914d213b	2026-10-27T17:33:33Z	docs(operacion): auditoria del camino LLM y mandato de la campana
+9082fba9e43fe912188af969b559b209914d213b	c69e028ac0e14ae775753cec53f5aee7a823f7cc	2026-10-27T17:20:06Z	fix(canales): webhook de WhatsApp publico, con firma real y handshake
+c69e028ac0e14ae775753cec53f5aee7a823f7cc	c365e85d0e231c4748a30ac34f28c4fb41c2e907	2026-10-27T15:36:33Z	Alinea el contrato de secretos con lo que el codigo lee de verdad
+c365e85d0e231c4748a30ac34f28c4fb41c2e907	acb6ac4a2e1d5f10491ce01250b6db3e2d1cb604	2026-10-27T15:14:24Z	feat(agencia): SOPs ejecutables en el bootstrap del tenant
+acb6ac4a2e1d5f10491ce01250b6db3e2d1cb604	021c73ce6734bbbe30e605391f9a046737b916ec	2026-10-27T15:10:36Z	feat(deploy): despliegue de la fase 1 en agntiapro.io
+021c73ce6734bbbe30e605391f9a046737b916ec	00adb411058d670fc8473a09293256d9ba766795	2026-10-27T15:10:36Z	fix(tenant): switch-tenant real, registro de tenants y alta de la agencia
+00adb411058d670fc8473a09293256d9ba766795	918658d991ae4007f512aa8ad01a6ecd86536fb0	2026-10-26T17:32:42Z	fix(ci): el test runner descubre tambien los tests anidados
+918658d991ae4007f512aa8ad01a6ecd86536fb0	ff4cde725bbad4ce74ac9de643f928e5f6cac510	2026-10-26T17:29:56Z	feat(deploy): contrato de secretos con Doppler y plan de despliegue
+ff4cde725bbad4ce74ac9de643f928e5f6cac510	09a2e445b6fc1078b8c0b3f4c2c78d9a2c8a65f7	2026-10-26T17:26:57Z	feat(authz): JWT verificado, claim de tenant y scope por peticion
+09a2e445b6fc1078b8c0b3f4c2c78d9a2c8a65f7	7eaa3298258eb0c08331f70fef5fc645495bc67d	2026-10-26T17:16:08Z	fix(suite): cerrar las 18 rojas y las incoherencias de store que las causaban
+7eaa3298258eb0c08331f70fef5fc645495bc67d	88a20bffadde0d1d00bb405bbdeddd60098d25c1	2026-10-26T15:03:29Z	fix(coherencia): 5 campañas de contratos, tests, auditorías y marcadores
+88a20bffadde0d1d00bb405bbdeddd60098d25c1	61f6e4e0cfa34dfdb943e2c6131497ccde715cef	2026-10-25T19:23:21+01:00	docs(vertical-slice): 9 documentos del compilador de empresas
+61f6e4e0cfa34dfdb943e2c6131497ccde715cef	9025da93bf3381af6e7df8aad4e8ea94f64bbd8b	2026-10-25T18:53:58+01:00	docs(vertical-slice): 7 documentos del primer vertical slice
+9025da93bf3381af6e7df8aad4e8ea94f64bbd8b	f6cdf3c94b31dbd73d03ffb1cc71ab31cac93ffa	2026-10-25T18:26:27+01:00	feat(runtime): B0-B10 + Bloques 1-6 — cierre transversal Campana B
+f6cdf3c94b31dbd73d03ffb1cc71ab31cac93ffa	323c3531af085c23657f792ed8134207dd939939	2026-10-25T17:58:35+01:00	docs(roadmap): correcciones del audit externo (3 ejes, reutilizar contratos, iteración vertical)
+323c3531af085c23657f792ed8134207dd939939	677f0301ec3de4089eaac354be53c1c90c6b5700	2026-10-25T17:47:36+01:00	docs(roadmap): 18 documentos de roadmap auditable y testeable (15 etapas + baseline + contrato)
+677f0301ec3de4089eaac354be53c1c90c6b5700	35c181a40456fc64031bb32285c32247a8bef889	2026-10-25T17:07:15+01:00	feat(runtime): B0-B10 — authz, idempotencia, kernel, embeddings, cuotas, aprobaciones (typecheck limpio, 38+ marcas)
+35c181a40456fc64031bb32285c32247a8bef889	903001d3de4e8d40dc3b1b713e3fdcdae7a345de	2026-10-24T23:43:08+02:00	feat(assignments): F6 + F7 - trazabilidad e integridad + cierre [AUDIT_TRAIL_V1, RECORD_HISTORY_V1, WITH_READ_AUDIT_TRAIL_V1, WITH_WRITE_RECORD_HISTORY_V1, ACTIONS_ACTOR_ID_V1, CONFIG_AUDIT_V1, RETENTION_AUDIT_ENTRIES_V1]
+903001d3de4e8d40dc3b1b713e3fdcdae7a345de	3ad48bc0c0c1712cc266b67109ebe139dc2254e6	2026-10-24T23:32:47+02:00	feat(assignments): F4 - consistencia e integridad [CONFLICT_MODEL_V1, AGENT_TASK_VERSION_V1, GOAL_VERSION_V1, SOP_VERSION_V1, DOMAIN_INDEX_CONFLICT_V1, WITH_WRITE_CAS_V1, THREAD_CONFLICT_VERSION_V1, PROJECT_CONFLICT_VERSION_V1, TASK_RECONCILE_V1]
+3ad48bc0c0c1712cc266b67109ebe139dc2254e6	92b096b41769f6716e6b41da0c08a8b3c756affa	2026-10-24T23:22:57+02:00	Merge branch 'fix/cleanup-corrupted-app' # Please enter a commit message to explain why this merge is necessary, # especially if it merges an updated upstream into a topic branch. # # Lines starting with '#' will be ignored, and an empty message aborts # the commit.
+92b096b41769f6716e6b41da0c08a8b3c756affa	352725911187742396c7604391669fabd0af4556 b17170edc689aba5b1516b6215d93fa856b1233b	2026-10-23T23:44:08+02:00	merge: fase 2 - acceso seguro (33/37, 4 aplazados a F5)
+b17170edc689aba5b1516b6215d93fa856b1233b	c6237deff5132273cbd53df9e109d12256feb87c	2026-10-23T23:43:35+02:00	feat(multiusuario): fase 2 - acceso seguro (9/13 routes-part2, 4 aplazados a F5)
+c6237deff5132273cbd53df9e109d12256feb87c	ab981ea8964e9383912fb6fa57f9731cefa54d4c	2026-10-23T17:06:23+02:00	docs(multiusuario): fase 0 - contrato v5 (supabase auth, 7 fases, 5 garantias, 13 invariantes, 17 tests)
+ab981ea8964e9383912fb6fa57f9731cefa54d4c	0bfc9366bd6e00b1b255945a5ee1fbda07c4e5be	2026-10-22T21:07:49+02:00	feat(multitenant): fase 7 — switch-tenant + admin CRUD + migrate scope tx + setMembership invalidateAll [MEMBERSHIP_CACHE_INVALIDATE_V1, SWITCH_TENANT_ENDPOINT_V1, ADMIN_TENANTS_CRUD_V1, MIGRATE_SCOPE_TX_V1, MIGRATE_MEMBERSHIP_VERIFIED_V1]
+0bfc9366bd6e00b1b255945a5ee1fbda07c4e5be	0c9489400e00f60477a7eab04eeef31b884a3e55	2026-10-22T20:48:18+02:00	feat(multitenant): fase 6 parcial — browser/computer limiter + metrics tenant + notifications tenant [TAKE_FOR_TENANT_BROWSER_V1, BROWSER_IMPORTS_TENANT_V1, TAKE_FOR_TENANT_COMPUTER_V1, METRICS_TENANT_LABEL_V1, METRICS_EXPORTER_TENANT_V1, NOTIFICATION_PREFS_TENANT_V1, NOTIFICATIONS_STREAM_TENANT_V1, TAKE_FOR_TENANT_TENANTID_V1 (conversation), TENANT_ASSERT_NOT_DEFAULT_WIRED_V1 (computer-routes + import en computer-tools)]
+0c9489400e00f60477a7eab04eeef31b884a3e55	e58ffbd891f2c6314722dc9eafe33eb88a9dfc56	2026-10-22T20:28:25+02:00	feat(multitenant): fase 5 — computer tenantId + backup verificado [COMPUTER_IDENTITY_TENANT_V1, COMPUTER_ROUTES_TENANT_V1, COMPUTER_TOOLS_TENANT_V1, COMPUTER_ROUTES_WIRE_V1, COMPUTER_TOOLS_WIRE_V1, BACKUP_TENANT_PATH_V1]
+352725911187742396c7604391669fabd0af4556	39e3511c5d80e5e26ff1d5b4e4cd493e116df791 e58ffbd891f2c6314722dc9eafe33eb88a9dfc56	2026-10-22T18:05:46+02:00	docs(readme): README v2
+e58ffbd891f2c6314722dc9eafe33eb88a9dfc56	2aa287fcb1e2896c7eb1a37227f6ffb895bae366	2026-10-22T18:05:41+02:00	docs(readme): README v2 con stack, comandos, estado multi-tenant y convenciones
+39e3511c5d80e5e26ff1d5b4e4cd493e116df791	cd50b71125921e422346c0603193e23cc617134d 2aa287fcb1e2896c7eb1a37227f6ffb895bae366	2026-10-22T17:54:31+02:00	merge: fase 4 multitenancy + README
+2aa287fcb1e2896c7eb1a37227f6ffb895bae366	90178ddf69311cbd68578184479248e413e2cabb	2026-10-22T17:54:24+02:00	docs(readme): reescribir README con stack, comandos, estado multi-tenant y convenciones
+90178ddf69311cbd68578184479248e413e2cabb	8f2b916f993f31c315ad0301ca7023a0edfa19e3	2026-10-22T17:50:40+02:00	fix(multitenant): db-rls sin BOM + app.ts tenantLimiter wire [TENANT_RLS_TX_V1, TENANT_RATE_LIMITER_WIRE_V1]
+8f2b916f993f31c315ad0301ca7023a0edfa19e3	6a1e30ddc8860b40c766e272cc3aeeb3f06ccff9	2026-10-22T11:56:47+02:00	feat(multitenant): fase 4 - rls tx + body tenant validate + cross audit + response tenant header [TENANT_RLS_TX_V1, RLS_REQUIRED_IN_SHARED_V1, AUDIT_STORE_TENANT_V1, APP_TENANT_REQUEST_VALIDATE_BODY_V1, TENANT_CROSS_AUDIT_V1, RESPONSE_TENANT_HEADER_V1, TENANT_BODY_VALIDATE_V1]
+6a1e30ddc8860b40c766e272cc3aeeb3f06ccff9	ba3ba7c35cbcf44fde6ceed9daad4b49c81c250d	2026-10-22T11:56:16+02:00	feat(multitenant): fase 4 — rls tx + body tenant validate + cross audit + response tenant header
+ba3ba7c35cbcf44fde6ceed9daad4b49c81c250d	5364a7207696d02f9e15cf837277a5f80aca07ec	2026-10-22T11:31:03+02:00	feat(multitenant): fase 4 — rls tx + body tenant validate + cross audit + response tenant header [TENANT_RLS_TX_V1, RLS_REQUIRED_IN_SHARED_V1, AUDIT_STORE_TENANT_V1, APP_TENANT_REQUEST_VALIDATE_BODY_V1, TENANT_CROSS_AUDIT_V1, RESPONSE_TENANT_HEADER_V1]
+5364a7207696d02f9e15cf837277a5f80aca07ec	386ef3ded7da1dc08aee9b0afaa24bd03f494fa8	2026-10-21T20:57:34+02:00	docs(multitenant): fase 0 - marcas ESTADO_REAL_PS01B/C/D_V1
+386ef3ded7da1dc08aee9b0afaa24bd03f494fa8	ac8d5c41b34f2d58c687b4057cac34aaa5c21deb	2026-10-21T20:53:29+02:00	docs(multitenant): fase 0 - ESTADO-REAL + pendientes
+ac8d5c41b34f2d58c687b4057cac34aaa5c21deb	b57cb9e5ea8d59be9ad00241d8b1f4f132d9048b	2026-10-21T20:22:28+02:00	docs(multitenant): fase 0 - ESTADO-REAL con 27 marcas + pendientes
+b57cb9e5ea8d59be9ad00241d8b1f4f132d9048b	e59b733ef38423e72001eeb85bd38755beff6972	2026-10-21T19:34:58+02:00	docs(multitenant): bloque 1 - ESTADO-REAL, CIERRE-MVP, fuera-de-mvp, ID-MAP, pendientes
+e59b733ef38423e72001eeb85bd38755beff6972	0ce17fbb2f4d4266bc6813ff727d3536ce6b4500	2026-10-21T19:34:57+02:00	wip: baseline copilot (worker/kernel/conversation/db-tenant) antes de campana multitenant
+0ce17fbb2f4d4266bc6813ff727d3536ce6b4500	41e85042bb7bff1db66131ab06fe0944b77bcef3	2026-10-19T12:30:49+02:00	fix: restaurar seguridad de inicio tras migracion PGlite->Postgres (db.ts ESCAPE, worker.ts/kernel.ts corruption)
+cd50b71125921e422346c0603193e23cc617134d	41e85042bb7bff1db66131ab06fe0944b77bcef3	2026-10-18T21:40:24+02:00	Add files via upload
+41e85042bb7bff1db66131ab06fe0944b77bcef3	047ed7224b08cb48cc11c3e22f1a8cb5a186eafb	2026-10-18T17:09:40Z	docs: 9 documentos codespace automation [DOCS_CODESPACE_V1]
+047ed7224b08cb48cc11c3e22f1a8cb5a186eafb	3c7c88c6effc92934891d36ce20014cbca098cce 0be7f7b959255e01fc342ac167a53a564b124a72	2026-10-16T16:40:26+02:00	merge: recuperacion de encoding (kernel, worker, conversation)
+0be7f7b959255e01fc342ac167a53a564b124a72	0236511c3049c3ecee8e6bc853c290e8589ca331	2026-10-16T16:40:00+02:00	fix(encoding): recuperar kernel, worker y conversation del mojibake multi-pass
+0236511c3049c3ecee8e6bc853c290e8589ca331	3c7c88c6effc92934891d36ce20014cbca098cce	2026-10-16T16:21:07+02:00	wip: checkpoint antes de recuperar encoding (fixes 10-12 + rename audits->miniaudits)
+3c7c88c6effc92934891d36ce20014cbca098cce	f5b9a27771d0d4e817f11751415c613fb80613a2	2026-10-15T12:53:57+02:00	chore: limpieza de codigo muerto, contracts, backend y docs
+f5b9a27771d0d4e817f11751415c613fb80613a2	9cd0fd9a2c70b225b2bf6380e8bb284e457d1ae7	2026-10-15T11:55:56+02:00	docs: snapshot de la pagina Agentes antes de rehacerla
+9cd0fd9a2c70b225b2bf6380e8bb284e457d1ae7	d5b96eeac7809119ce24c0d17bc5246e96988b66	2026-10-15T11:55:23+02:00	chore(web): borrar pagina de Agentes para rehacerla
+d5b96eeac7809119ce24c0d17bc5246e96988b66	ad29d4a2164002d3b8b01f25b12dcc8041d798c0	2026-10-14T13:33:46+02:00	feat(web): centro-mando en sidebar, palette y brand AGNTia OS
+ad29d4a2164002d3b8b01f25b12dcc8041d798c0	717496d88bf6c8a4379d46a9f1c8af2bf627f94a	2026-10-12T18:30:00+02:00	feat: engine updates, event schemas, kernel improvements & audit docs (excluding large service.ts)
+717496d88bf6c8a4379d46a9f1c8af2bf627f94a	feba098ccd1728f2eda88bb8cbf248862efc5f8b	2026-10-12T13:06:35+02:00	feat: kernel cognitivo, consumers eventos, meta-hints y auditorias
+feba098ccd1728f2eda88bb8cbf248862efc5f8b	c56db315b475e08fa8d5692d2d6fb5acf6dea7ab	2026-10-11T22:57:23+02:00	feat(web): workspace 14-zendesk UI
+c56db315b475e08fa8d5692d2d6fb5acf6dea7ab	e6a6ba715b4a79cf7bfd5f747e38c7367535ad21	2026-10-11T18:46:13+02:00	feat: workspace 02-whatsapp UI base + docs pipeline + cambios varios
+e6a6ba715b4a79cf7bfd5f747e38c7367535ad21	d6196f532b8b9d40bc05766a508d21feb8321db3	2026-10-10T20:02:38+02:00	feat(workspaces): handlers reales, contratos extendidos, cableado engine y UI
+d6196f532b8b9d40bc05766a508d21feb8321db3	341049d1f3f206adb86360c5137a51ff2420696f	2026-10-10T19:14:59+02:00	feat(workspaces): integracion de workspaces y motor del servidor
+341049d1f3f206adb86360c5137a51ff2420696f	539117bda1864c09b81aa81b48978399f186a78b	2026-10-10T19:13:47+02:00	feat(workspaces): integracion de los 34 workspaces, motor de eventos y dispatcher
+539117bda1864c09b81aa81b48978399f186a78b	ebafced19dd8806c308656e7b2e89ddbc7ab5303	2026-10-10T17:50:42+02:00	feat(workspaces): add canonical entities for all 34 workspaces
+ebafced19dd8806c308656e7b2e89ddbc7ab5303	5dd606c0f44be94c043ff428f0b69e1f2b126188	2026-10-10T17:03:34+02:00	chore(workspaces): scaffold 34 frontend workspace folders and seed docs
+5dd606c0f44be94c043ff428f0b69e1f2b126188	94ddda9de1b7995754fa746912da247ec562cf69	2026-10-10T17:03:32+02:00	chore(workspaces): scaffold 34 backend workspace folders and seed docs
+94ddda9de1b7995754fa746912da247ec562cf69	5090b981227ea0ffb45e39852bff55bdcc03327d	2026-10-10T17:03:30+02:00	chore(workspaces): include packages/* in pnpm workspace config
+5090b981227ea0ffb45e39852bff55bdcc03327d	b88f2b841e9d0f820ebe33225141e6a7f6dbf2ca	2026-10-09T18:19:34+02:00	feat(backend): portar Laia + 12 agentes + kernel cross-persona a origin/main
+b88f2b841e9d0f820ebe33225141e6a7f6dbf2ca	a4679c2ef13ee6857c2fa1175606fcbf57d9b2f4 7aa915c8a8e5eff7c5558c7e1de60394f2ba63fb	2026-10-07T20:56:55+02:00	feat: Fases A,B,C,D,E,G del kernel y UI + resolver conflictos de docs
+a4679c2ef13ee6857c2fa1175606fcbf57d9b2f4	c9514158c1b284abdaf7b5240f8175e72da20c2c f1a037858cc21e918d99a4c633d567c4ad525208	2026-10-07T19:50:19+02:00	merge: 09z kernel cognitivo
+f1a037858cc21e918d99a4c633d567c4ad525208	d4758edf396d707da7e381e66a35135a11098e6a	2026-10-07T19:38:55+02:00	feat(web): workspace de agentes + ventana flotante
+d4758edf396d707da7e381e66a35135a11098e6a	6aeb3d93696770d6681fbe64318e3a8feb23ba60	2026-10-07T19:38:29+02:00	feat(personas): scaffolding + Laia como template
+6aeb3d93696770d6681fbe64318e3a8feb23ba60	db9a5e23e806952f8aa897b2fe465bf32bd49c8f	2026-10-07T19:37:39+02:00	feat(kernel): 09z - personaId + fixes posteriores
+c9514158c1b284abdaf7b5240f8175e72da20c2c	d0331ef2d618544aaecfa721b4d376c7df10e744 db9a5e23e806952f8aa897b2fe465bf32bd49c8f	2026-10-06T23:38:06+02:00	merge: 09z kernel cognitivo (Fases 1-3 + 6 pipelines)
+db9a5e23e806952f8aa897b2fe465bf32bd49c8f	6a6c717cd40ef1066137c742387bcdaf92560869	2026-10-06T21:57:58+02:00	chore(kernel): 09z Fase 3 Pipeline 6 - slow-author atencion real (reasoning + delegation)
+6a6c717cd40ef1066137c742387bcdaf92560869	608cf078aabb0a87c7230817ba5842d4fc36a813	2026-10-06T21:46:48+02:00	chore(kernel): 09z Fase 3 Pipeline 5 - wirear TenantScopedCapabilityRegistry + rediagnostico 09
+608cf078aabb0a87c7230817ba5842d4fc36a813	69bbd016ff76488d5a828e70624d1c174cda3763	2026-10-06T21:30:06+02:00	chore(kernel): 09z Fase 3 Pipeline 4 - latencias (consolidate O(n2), views paged, getTurn cache)
+69bbd016ff76488d5a828e70624d1c174cda3763	7a5b6fab787a20c5c7e1c4b170942ada4616a287	2026-10-06T21:28:32+02:00	chore(kernel): 09z Fase 3 Pipeline 3 - atencion real, presenter compose, views sin as any
+7a5b6fab787a20c5c7e1c4b170942ada4616a287	140c18d48b1834e1ce3b3f5e0b30463d444ee323	2026-10-06T21:24:54+02:00	chore(kernel): 09z Fase 3 Pipeline 2 - meta consumeHint, rules order, child turn
+140c18d48b1834e1ce3b3f5e0b30463d444ee323	19fd5af2132d3867aadff7165da762860855606d	2026-10-06T20:09:03+02:00	chore(kernel): 09z Fase 3 Pipeline 1 - fundaciones (attention Zod, lifecycle, snapshot, health-deep)
+19fd5af2132d3867aadff7165da762860855606d	7c9b936389f04a79ecf6c8dfaa16ac59154999a1	2026-10-06T19:52:54+02:00	chore: limpieza de WEBS, repomix y basura de Cline
+7c9b936389f04a79ecf6c8dfaa16ac59154999a1	59d675e265c090f5aa24ec76b16a06bba56db003	2026-10-06T19:51:28+02:00	chore(kernel): 09z Fase 2 - migrar capacidades, validator, canTransitionTask
+59d675e265c090f5aa24ec76b16a06bba56db003	d0331ef2d618544aaecfa721b4d376c7df10e744	2026-10-06T16:11:58+02:00	chore(kernel): 09z Fase 1 - fundamentos cognitivos
+d0331ef2d618544aaecfa721b4d376c7df10e744	f728b6e11148074049e352fe9f53a61e2d3ce4b8	2026-10-06T13:35:42+02:00	chore(audits): bloque 08 bus de eventos aplicado
+f728b6e11148074049e352fe9f53a61e2d3ce4b8	88e6f2d0e823d310ad2aba0b1198f3ce5d580256	2026-10-06T12:12:42+02:00	chore: gitignore para temporales de auditoria
+88e6f2d0e823d310ad2aba0b1198f3ce5d580256	d6436e17f6c31ca04125c31b213b3a9645d694be	2026-10-06T12:08:52+02:00	chore: batch 00-08 + typecheck verde
+d6436e17f6c31ca04125c31b213b3a9645d694be	33cb139344eb715cd23fc8aae5de274b13bae90d	2026-10-05T23:03:36+02:00	chore(audits): bloques 04 y 05 aplicados + doc de pendientes
+33cb139344eb715cd23fc8aae5de274b13bae90d	dc5634fe942695d4a8bdf088c5ff79c0c08e56e6	2026-10-05T18:43:02+02:00	chore(audits): bloques 00 + 02 + 03 aplicados
+dc5634fe942695d4a8bdf088c5ff79c0c08e56e6	63d6c8c45320ecd9b39f7daaa9b2855f75b24990	2026-10-04T19:47:58+02:00	chore(audits): campana de fixes 01-25 + infra scripts/fixes
+7aa915c8a8e5eff7c5558c7e1de60394f2ba63fb	2efafa62d76f4a82b6efe920669c533d9d9012b8	2026-10-04T15:36:51+02:00	Descripción de tus cambios
+2efafa62d76f4a82b6efe920669c533d9d9012b8	63d6c8c45320ecd9b39f7daaa9b2855f75b24990	2026-10-04T13:11:40+02:00	fix: 11 fixes de codigo + reestructuracion de docs
+63d6c8c45320ecd9b39f7daaa9b2855f75b24990	458c1ddc419199765c79a01c113a30c922846e9b 57d184d7849577b0703e87e4b80684d2e94a5597	2026-10-04T11:32:25+02:00	merge: 79 fixes de kernel, services, DB y multi-tenant
+57d184d7849577b0703e87e4b80684d2e94a5597	458c1ddc419199765c79a01c113a30c922846e9b	2026-10-04T11:23:08+02:00	chore: 79 fixes de kernel, services, DB y multi-tenant (WIP typecheck)
+458c1ddc419199765c79a01c113a30c922846e9b	c477694592c7482bfd1f70fcbf94a01599e37c29 a32a1d437c31a12db5dba708114b622b5cb60845	2026-10-03T22:56:22+02:00	merge: feat/ui-campaign (campaña UI/UX A-E)
+a32a1d437c31a12db5dba708114b622b5cb60845	aeef89870bd3d25bb64850e6c86fc1a584f84b4e	2026-10-03T22:56:19+02:00	fix(ui-campaign): typecheck verde backend+frontend, wires, paths, demo
+aeef89870bd3d25bb64850e6c86fc1a584f84b4e	3734785c293674a986782c290534c1655184bbe1	2026-10-03T22:40:23+02:00	feat(ui-campaign): demo tenant + run-demo + DEMO.md
+3734785c293674a986782c290534c1655184bbe1	c477694592c7482bfd1f70fcbf94a01599e37c29	2026-10-03T22:36:27+02:00	feat(ui-campaign): 15 branches A-E + docs + wires + tenants demo
+c477694592c7482bfd1f70fcbf94a01599e37c29	5073115f6abe53b2d47a2a61e285929a2a03e01c e8b19a67cd17e2c1ea4cfe41b93f234c09ab7899	2026-10-03T21:23:58+02:00	merge: feat/a1-memory-hotfix
+e8b19a67cd17e2c1ea4cfe41b93f234c09ab7899	5073115f6abe53b2d47a2a61e285929a2a03e01c	2026-10-03T21:23:55+02:00	feat(ui-campaign): docs base + A1 memory hotfix + estructura de campana
+5073115f6abe53b2d47a2a61e285929a2a03e01c	625043dbaffdea2159ae94deb72de2e6e7232b65 6715d097cc4de1072c7e160f98adbccd79814dff	2026-10-03T19:36:06+02:00	merge: fase 0 - cierra contradicciones CI/frontend/kernel
+6715d097cc4de1072c7e160f98adbccd79814dff	625043dbaffdea2159ae94deb72de2e6e7232b65	2026-10-03T19:31:17+02:00	chore(fase-0): cierra contradicciones que rompian CI, frontend y kernel
+625043dbaffdea2159ae94deb72de2e6e7232b65	a2b4614dd0606e1347b1f7ec35180f8521bfd0ab	2026-10-03T16:21:05+02:00	feat(112): fases A, B, C, D - multi-tenant, UI agentes, panel contextual, vistas, onboarding, orquestador, planner, verifier, graph, kernel, RAG, notificaciones, formularios, integraciones
+a2b4614dd0606e1347b1f7ec35180f8521bfd0ab	54b8abff06ddd9cd210a53ecd5f6d92dec801a27	2026-10-03T13:07:47+02:00	docs(roadmap): 112 pasos, aspecto 0 higiene, orden corregido, SOC 2 ready
+54b8abff06ddd9cd210a53ecd5f6d92dec801a27	54894302d32f3049e09e0add8db85262b378d2f5 5c7ec24882c30aded745968f9122d1404de9f8f4	2026-10-03T12:03:00+02:00	merge: equipo digital + arquitecto + signup + operacion + whitepaper
+5c7ec24882c30aded745968f9122d1404de9f8f4	ad31dc94f470ae7591808108a216780ddaed4a20	2026-10-03T12:02:01+02:00	wip: equipo digital + arquitecto + signup + operacion + whitepaper
+ad31dc94f470ae7591808108a216780ddaed4a20	52856a9ec45eb82a29da26139cc74748bb4af977 19042c86434cdb7e437d456d52e604b0ea6afcfb	2026-10-03T11:19:39+02:00	merge: feat/runtime-muscle a fix/cline-tests
+52856a9ec45eb82a29da26139cc74748bb4af977	312d2bf4c857ad1ae221ab30b65cf00c66c3c6e5	2026-10-02T22:48:55+02:00	fix(wiring): el EventBus se construye con tdb, no con db
+312d2bf4c857ad1ae221ab30b65cf00c66c3c6e5	03d080a1cbf3c0f2079eedf98be273641576786c	2026-10-02T22:48:04+02:00	revert(events): MT-5/MT-6 - el aislamiento por tenant vuelve a TenantScopedStore
+19042c86434cdb7e437d456d52e604b0ea6afcfb	54894302d32f3049e09e0add8db85262b378d2f5	2026-10-02T19:21:09+02:00	wip: residuales R-1 a R-14 (resolvers, views, meta, promoter, maintain por tenant, panel contextual, busqueda global, preview adjuntos, release checks)
+03d080a1cbf3c0f2079eedf98be273641576786c	54894302d32f3049e09e0add8db85262b378d2f5	2026-10-02T19:17:11+02:00	wip: residuales R-1 a R-14 (resolvers, views, meta, promoter, maintain por tenant, panel contextual, busqueda global, preview adjuntos, release checks)
+54894302d32f3049e09e0add8db85262b378d2f5	742b308bb09032f5fc0fc865cc32662e346a9f61	2026-10-02T19:00:56+02:00	wip: multitenant + runtime muscle (bloques 1-18), pendiente cline
+742b308bb09032f5fc0fc865cc32662e346a9f61	07aa9e17a77b549761bf74d3a15c3861f4e831cb	2026-10-02T17:57:11+02:00	feat: ST-21 a ST-29 completados - business resolver, truth-resolver, metrics, views, workspace, tenant
+07aa9e17a77b549761bf74d3a15c3861f4e831cb	aa826bca6390a7b335544d9c589e6518d190da32	2026-10-02T17:45:33+02:00	feat: Business OS wiring + ciclo completo + learning + feedback
+aa826bca6390a7b335544d9c589e6518d190da32	140e88c2c5b18728c62b3ba89fb2bac856e96022	2026-10-02T17:10:35+02:00	feat: Business OS contracts + guardrails + multi-tenant base
+140e88c2c5b18728c62b3ba89fb2bac856e96022	c02b4e2da24b4c110bb18b9b44bbf810ce475d23	2026-10-02T13:39:03+02:00	﻿feat: pase de kernel, persistencia y transacciones
+c02b4e2da24b4c110bb18b9b44bbf810ce475d23	3fe0c43c6a9c45a09c77a22557525c5752cb815f	2026-10-02T11:37:42+02:00	fix(kernel): typecheck verde - ProviderSpec + TenantConfig completo + StorePort + resolvers honestos + rutas Hono + worker scanByStatus + frontend dinámico
+3fe0c43c6a9c45a09c77a22557525c5752cb815f	a70997d47be744065eb56836f441b7cd1665b521	2026-10-02T10:59:02+02:00	fix(tenancy): database-resolver with fallback to DEFAULT_TENANT
+a70997d47be744065eb56836f441b7cd1665b521	bdd4f73ccc55b8bdd1928b14369a7ef1d19fb280 7a8bcbf798bd85eb60f3ca6d144e2781d894c50d	2026-10-01T22:51:57+02:00	merge: kernel V1 complete - 113 files (kernel+views+templates)
+7a8bcbf798bd85eb60f3ca6d144e2781d894c50d	d9d5066ec3377250e3f14cccbcbe7c3e03cce32a	2026-10-01T22:21:59+02:00	feat(kernel): complete kernel V1 blocks 1-5 - AttentionVector Zod V2 + Turn V2 + Store V2 + rules + consolidate + progress + views + meta + StoreTurnStore + capabilities + database resolvers + views/resolve + ContextChips + templates + docs perfectos
+d9d5066ec3377250e3f14cccbcbe7c3e03cce32a	4e71fb78aa0c1014cc3324dfb41c035876d6a836	2026-10-01T21:49:47+02:00	feat(kernel): add cognitive kernel with graph views progress audit and authors
+4e71fb78aa0c1014cc3324dfb41c035876d6a836	5d28b1b9e1b1fd816e3cf326da5dcd9c01473852	2026-10-01T20:38:10+02:00	feat(backend): event bus + business graph + policy engine + auth
+5d28b1b9e1b1fd816e3cf326da5dcd9c01473852	91b95d4f76f682ed68865ded8090d6db8311c7b6	2026-10-01T20:37:47+02:00	feat(ui): rediseno V2 warm beige completo (sidebar + topbar + vistas + tailwind)
+91b95d4f76f682ed68865ded8090d6db8311c7b6	bdd4f73ccc55b8bdd1928b14369a7ef1d19fb280	2026-10-01T20:37:10+02:00	feat(backend): business-os fase 1 + state machines + sop/worker
+bdd4f73ccc55b8bdd1928b14369a7ef1d19fb280	c36c00e0fa36fc742aa206d76547c219e0b5ab07	2026-09-30T19:11:36+02:00	feat(business-os): fase 1 cimientos + scaffold completo de roles
+c36c00e0fa36fc742aa206d76547c219e0b5ab07	af112a48ff92735eff6e85de77e7a44d4ddcb2b0	2026-09-30T16:38:17+02:00	wip(event-bus): 8 de 10 ficheros aplicados; faltan actions.ts y app.ts (busEarly)
+af112a48ff92735eff6e85de77e7a44d4ddcb2b0	c6b929e9f9e1c905eb42b2153949f6cb8a0136b4	2026-09-30T13:37:53+02:00	fix(sop): unificar llm_generate + recall_memory, quitar default duplicado
+c6b929e9f9e1c905eb42b2153949f6cb8a0136b4	b3b84e3ead356ccc08b3983777872bdfdfb1b7ba a163ae5b6ba3548ebd4b4a4aa70966f9215933bd	2026-09-30T13:35:48+02:00	merge: interface chat kanban (llm_generate + ?force=1 + business-records)
+b3b84e3ead356ccc08b3983777872bdfdfb1b7ba	6a780fb0a420c2290574669e0772a284a04b0e31 c92b8f3009a256f2866482f5b6e6452fc479d4aa	2026-09-30T13:22:00+02:00	merge: agent records llm stubs (CSV import + business-records endpoints)
+6a780fb0a420c2290574669e0772a284a04b0e31	7e6c40e0cbfe8f942f68ae929353f67c663ff3b2	2026-09-30T13:16:37+02:00	chore: corregir incongruencias y desalineaciones varias en backend, web y worker
+7e6c40e0cbfe8f942f68ae929353f67c663ff3b2	ed4a18178c2629c791ed45317c39dc082a63bd3f 4c261ce178744934e67fc441b827f4ca24c13dc8	2026-09-30T13:13:26+02:00	merge: fix chat llm + agente role v2
+4c261ce178744934e67fc441b827f4ca24c13dc8	a27bda063269738262fa94bb188acd22cac68a07	2026-09-30T13:13:21+02:00	fix(agent): cerrar AGENT_ROLE_V2 - schema compartido, defaults y backfill en lectura
+a27bda063269738262fa94bb188acd22cac68a07	c1b5543637eef5af10d572713a214b3dea188ecd	2026-09-29T22:34:48+02:00	revert(web): quitar boton Escalar muerto de TaskDetailModal
+c1b5543637eef5af10d572713a214b3dea188ecd	f4474b96e0e128600f7e8a2e984d8b0be67b6375	2026-09-29T22:33:52+02:00	fix(web): import ragReingest en DocumentsView
+f4474b96e0e128600f7e8a2e984d8b0be67b6375	ed4a18178c2629c791ed45317c39dc082a63bd3f	2026-09-29T22:07:23+02:00	fix(web): leer TEXT_MESSAGE_CHUNK en el chat para que el LLM responda
+ed4a18178c2629c791ed45317c39dc082a63bd3f	5d6099d57cddc0e3305aff39b1e01ce2a6d7cdcf fb0a44d331e14e3c3f1573a5fa9223fc7b725d18	2026-09-29T17:18:58+02:00	merge: event bus + centro de control (fases 1-7)
+fb0a44d331e14e3c3f1573a5fa9223fc7b725d18	dcbb6eb8637bce9e8f67e9e641674316e84bb112	2026-09-29T17:16:53+02:00	fix(db): crear dataDir directamente en lugar de dirname
+dcbb6eb8637bce9e8f67e9e641674316e84bb112	f87f2e71e8b32ffb6345111769e606526141d0db	2026-09-29T15:34:11+02:00	feat(event-bus): fases 3-7 - centro de control, chat curado, notificaciones, taxonomia, stubs
+f87f2e71e8b32ffb6345111769e606526141d0db	0dcf3c7c8c14c3619b7488cf07143e9e5a0310e6	2026-09-29T15:33:32+02:00	feat(event-bus): fases 3-7 - centro de control, chat curado, notificaciones, taxonomia, stubs
+0dcf3c7c8c14c3619b7488cf07143e9e5a0310e6	84f749b4cafa6a74f6547d88c62da29cdf5e76cd	2026-09-29T15:08:48+02:00	feat(event-bus): fase 2 - endpoints /api/events (list, aggregate, schemas, timeline)
+84f749b4cafa6a74f6547d88c62da29cdf5e76cd	5d6099d57cddc0e3305aff39b1e01ce2a6d7cdcf	2026-09-29T15:04:25+02:00	feat(event-bus): fase 1 - bus global, validacion Zod, sink append-only
+5d6099d57cddc0e3305aff39b1e01ce2a6d7cdcf	1fa4ab2cdf6652ad952d76502fcea9d990374175	2026-09-29T12:55:22+02:00	fix: restaurar service.ts truncado y corregir import de WhatsApp
+1fa4ab2cdf6652ad952d76502fcea9d990374175	be120fda8ce71cc5563d4f19bf02fbe4233d3be6	2026-09-28T23:30:58+02:00	wip: merge cline + 19 items; 5 errores typecheck conocidos para Cline
+be120fda8ce71cc5563d4f19bf02fbe4233d3be6	5aaa29d6382c5b1b2adc8b729cbd9285bf9e1973 9cd3e0960442965d92bdf7973a61d1c053522aac	2026-09-28T22:36:06+02:00	merge: integrar merge/todo-cline-blocks (pgvector, agent-ui, stubs, .gitattributes) sobre 19 items
+5aaa29d6382c5b1b2adc8b729cbd9285bf9e1973	82a7d92f4ef4a762d1c5c11525cecefcf71d52c7	2026-09-28T22:31:49+02:00	feat: 19 items de negocio (RAG auto-ingesta, escalado, WhatsApp, Stripe, cost tracking, busqueda global, notificaciones, preview, atajos, pgvector, indices, dedupe)
+82a7d92f4ef4a762d1c5c11525cecefcf71d52c7	ece330e19dcc1e2034f5a77f0b5b72834d8616f5	2026-09-28T22:03:24+02:00	feat: when en SOPs, escalate_task, email_body_match + TODO actualizado
+9cd3e0960442965d92bdf7973a61d1c053522aac	ee3320b0329a7d6efb3a2fed10e8323f2552e7ee 566eaa0af85dfbaca9f56181fbda2eca9cd957d5	2026-09-28T22:03:08+02:00	merge(feat/agent-ui): UI de roles de agente (trae feat/client-onboarding)
+ee3320b0329a7d6efb3a2fed10e8323f2552e7ee	6b5b8cb4004f4ace46c175412f953b4e019a4803 d5aa3a81b9c7be98baf7e512ed017b9833836e1a	2026-09-28T22:02:46+02:00	merge(docs/resultado-cline): bloques de TODO-CLINE
+6b5b8cb4004f4ace46c175412f953b4e019a4803	2457be263340022e4cac2fb924768410d2d96bed 8e5fe3ddccd58f3e89debf702d670d9a88fc2b47	2026-09-28T22:02:46+02:00	merge(feat/pgvector): bloques de TODO-CLINE
+2457be263340022e4cac2fb924768410d2d96bed	205826909017e92d4cb67721dd6189d3a6a6c772 8ee6dda0eecc5963fcf4c497c2562845027a3628	2026-09-28T22:02:45+02:00	merge(chore/tech-debt): bloques de TODO-CLINE
+d5aa3a81b9c7be98baf7e512ed017b9833836e1a	205826909017e92d4cb67721dd6189d3a6a6c772	2026-09-28T21:46:08+02:00	docs: resultado de ejecutar los bloques de TODO-CLINE
+566eaa0af85dfbaca9f56181fbda2eca9cd957d5	5c61f2e07b396ba84700271d3ec73df2731ae445	2026-09-28T21:44:35+02:00	fix(package): quitar la clave admin:create duplicada
+5c61f2e07b396ba84700271d3ec73df2731ae445	e9a16f9a5264409a587870c7378ea9e9d22f96a5	2026-09-28T21:44:35+02:00	feat(web): filtro por rol en la vista de tareas
+e9a16f9a5264409a587870c7378ea9e9d22f96a5	d42a42a2abbd64ce5e528f5bbf78996154d02547	2026-09-28T21:44:35+02:00	feat(web): el run del chat lleva el rol activo
+d42a42a2abbd64ce5e528f5bbf78996154d02547	ece330e19dcc1e2034f5a77f0b5b72834d8616f5	2026-09-28T21:44:35+02:00	feat(web): cliente de roles de agente y AgentsView
+8e5fe3ddccd58f3e89debf702d670d9a88fc2b47	939ca6ae41bbde9ab73991edea44bead70e015d5	2026-09-28T19:51:00+02:00	feat(rag): busqueda pgvector cuando la extension esta, con fallback en JS
+939ca6ae41bbde9ab73991edea44bead70e015d5	205826909017e92d4cb67721dd6189d3a6a6c772	2026-09-28T19:50:59+02:00	feat(db): Store.backend y select() de solo lectura
+ece330e19dcc1e2034f5a77f0b5b72834d8616f5	8d578b78cb1533ea1f2a96b490348a6ca54743e7 205826909017e92d4cb67721dd6189d3a6a6c772	2026-09-28T19:47:46+02:00	Merge remote-tracking branch 'origin/main' into feat/client-onboarding
+8ee6dda0eecc5963fcf4c497c2562845027a3628	64ddfe46d8053e0c0dc9497017b2e582b96a1d0f	2026-09-28T19:45:39+02:00	chore(integrations): mover los 4 conectores sin cablear a stubs/
+64ddfe46d8053e0c0dc9497017b2e582b96a1d0f	fb175aba8610e943853d1b5d28bd1278ff84f334	2026-09-28T19:44:09+02:00	chore(clientes): placeholder en vez de password en config.json
+fb175aba8610e943853d1b5d28bd1278ff84f334	205826909017e92d4cb67721dd6189d3a6a6c772	2026-09-28T19:44:08+02:00	chore(git): .gitattributes con LF forzado
+8d578b78cb1533ea1f2a96b490348a6ca54743e7	25d64b96ea2f38da8d1bfc01cf94a0676faba404	2026-09-28T19:20:04+02:00	feat(agent-role): cablear roleId al prompt de chat y task
+25d64b96ea2f38da8d1bfc01cf94a0676faba404	2a9a95f47aa2e553c96d9c53a339a2b61c9ba20f	2026-09-28T19:06:23+02:00	docs: TODO-CLINE con briefing para ramas delegadas
+2a9a95f47aa2e553c96d9c53a339a2b61c9ba20f	9995df0b956b1a97f33a326da9df030640d523e1	2026-09-28T19:05:23+02:00	feat(client-onboarding): TODO-FOR-PROD, plantilla cliente ampliada, provision-client con memorias/agentes/docs, AgentRole + seed-agents + /api/agent/roles, ONBOARDING-CLIENTE
+9995df0b956b1a97f33a326da9df030640d523e1	c73b3c059e73e50b7f11dfed7e8251b140f2a365	2026-09-28T19:02:55+02:00	feat(client-onboarding): admin bootstrap, sample post-login, rate limit, surface aliases, TODO-FOR-PROD y plantilla cliente ampliada
+205826909017e92d4cb67721dd6189d3a6a6c772	c73b3c059e73e50b7f11dfed7e8251b140f2a365 43cb39855b01730a022918245d2699a173c01c21	2026-09-28T18:46:57+02:00	merge: arreglos del audit (B1-B4, D1-D11, P2) sobre main
+43cb39855b01730a022918245d2699a173c01c21	a0b15773adcdb638f2406585ecca7848420e0b71	2026-09-28T18:37:16+02:00	docs(audit): memo de ejecucion del 28 sep 2026
+a0b15773adcdb638f2406585ecca7848420e0b71	0c1e1214122f24f4a82ac068bd55f4188ebcdf74	2026-09-28T18:07:31+02:00	chore(lint): ordenar imports en auth-routes.ts
+0c1e1214122f24f4a82ac068bd55f4188ebcdf74	6a8dd24f2bbf8a2b2d417b3414354aeda6c35121	2026-09-28T18:05:04+02:00	fix(config): BUSINESS_DATABASE_URL vacio cae a DATABASE_URL
+6a8dd24f2bbf8a2b2d417b3414354aeda6c35121	f978c68b988230021a876e5e491f6901301a1fdf	2026-09-28T18:01:20+02:00	docs(audit): anadir D9-D11 y el estado tras aplicar el plan
+f978c68b988230021a876e5e491f6901301a1fdf	e500a7b240f8d10175828493c7e07a64336bd61e	2026-09-28T18:01:20+02:00	test(audit): cubrir los arreglos del audit
+c73b3c059e73e50b7f11dfed7e8251b140f2a365	85853b1ff9fd38aae90fa1039b3d62cb9368b4f6 c5b4df0a5d6b071f8ecf71f349cecbc90667dd8c	2026-09-28T18:00:49+02:00	Merge branch 'feat/ui-and-features'
+e500a7b240f8d10175828493c7e07a64336bd61e	4d54d59b2a369c8ac0bc2db229187f0725db8fdd	2026-09-28T18:00:29+02:00	fix(audit): B1-B4, D1-D11 y P2 del audit
+c5b4df0a5d6b071f8ecf71f349cecbc90667dd8c	58d781515f6e2411cc8b724489df07cd6d88bbf1	2026-09-28T17:59:30+02:00	feat: Wave C UI + Wave D deploy + Wave F1 auto-ingesta artefactos
+85853b1ff9fd38aae90fa1039b3d62cb9368b4f6	4d54d59b2a369c8ac0bc2db229187f0725db8fdd a5daf818af3980748570a47fb8d5e113f1280a73	2026-09-28T17:58:23+02:00	Merge branch 'feat/ui-and-features'
+a5daf818af3980748570a47fb8d5e113f1280a73	58d781515f6e2411cc8b724489df07cd6d88bbf1	2026-09-28T17:58:19+02:00	feat: Wave C UI + Wave D deploy + Wave F1 auto-ingesta artefactos
+58d781515f6e2411cc8b724489df07cd6d88bbf1	e9fd1dcfd74b6bf54433b0151f7779fd114327bb	2026-09-28T17:08:56+02:00	feat(deploy): render.yaml + fly.toml + .env.production.example + DEPLOY.md
+e9fd1dcfd74b6bf54433b0151f7779fd114327bb	235db7c1a1d8b7ad42d23b379c19587cfa895400	2026-09-28T17:04:54+02:00	feat(web): Wave C completa - kit UI, sidebar, shell, chat vacio, panel derecho, modo oscuro
+235db7c1a1d8b7ad42d23b379c19587cfa895400	5828ce8b5257cedac6ed2dd530157b874c00d8fc	2026-09-28T16:59:31+02:00	feat(web): chat vacio con hero + chips + composer central
+5828ce8b5257cedac6ed2dd530157b874c00d8fc	4a1626efb7d9800db22ee90561cb255d9d341c75	2026-09-28T16:41:07+02:00	feat(web): sidebar reescrito + shell con atajos + CSS UI kit
+4a1626efb7d9800db22ee90561cb255d9d341c75	f83913052633280c6db49021d52378fc9fe2c757	2026-09-28T16:37:28+02:00	feat(web): WorkspaceSwitcher, TopBar, CommandPalette, Onboarding, SuggestionChips
+f83913052633280c6db49021d52378fc9fe2c757	79c97929a13f2e2e58febb681524456699436076	2026-09-28T16:21:34+02:00	feat(web): usePanel persistence + shortcuts (Cmd+B/Cmd+J)
+79c97929a13f2e2e58febb681524456699436076	e20779b3dffa2d8a5a2cdd38c49b6e9084e5f54c	2026-09-28T16:10:26+02:00	docs(handoff): protocolo 0.12-0.15 (formato respuesta, CSS, here-strings)
+4d54d59b2a369c8ac0bc2db229187f0725db8fdd	3eedd2754a405592f6a72168f7b35d1480a7757e	2026-09-28T16:10:07+02:00	docs(audit): auditoria completa del repo (P0 bloqueantes, P1 bugs, P2 musculo falso)
+e20779b3dffa2d8a5a2cdd38c49b6e9084e5f54c	96ca77e77b4e6ce165a5cd09aba7bf97adb448f8	2026-09-28T16:09:46+02:00	feat(web): UI kit tokens, Instrument Sans, sprite de iconos
+96ca77e77b4e6ce165a5cd09aba7bf97adb448f8	d545ea9ac9e6c031c459f102870647fd846dc77e 3eedd2754a405592f6a72168f7b35d1480a7757e	2026-09-28T15:33:56+02:00	Merge branch 'main' into feat/ui-and-features
+3eedd2754a405592f6a72168f7b35d1480a7757e	934f526b5b12fb833a174f88e57696c1ea516d72	2026-09-28T15:32:54+02:00	docs(todo): anotar pendiente store.list -> listPaged y BOM resuelto
+d545ea9ac9e6c031c459f102870647fd846dc77e	8ce51dafcd1c69c14892f127150e9a9061b7da51	2026-09-28T15:27:32+02:00	feat: multi-thread UI, projects view, backup scheduler, Dockerfile
+8ce51dafcd1c69c14892f127150e9a9061b7da51	3553adb2a2b2d313ac000d9e48ae489317fc7bb3	2026-09-28T15:22:42+02:00	feat(server,web): projects view + automatic backup scheduler
+3553adb2a2b2d313ac000d9e48ae489317fc7bb3	232d6dc2bdf856db2068fc7c709d7a272733c4be	2026-09-28T15:09:13+02:00	feat(web): projects view (list + detail + blocks editable)
+232d6dc2bdf856db2068fc7c709d7a272733c4be	51884b687947f0829766527c9ccfb2425041e059	2026-09-28T15:01:09+02:00	feat(web): multi-thread conversations + HANDOFF protocol
+934f526b5b12fb833a174f88e57696c1ea516d72	e9f3ab4633787c468c36aa59e1b446c9113e1271	2026-09-28T12:51:40+02:00	chore(app): remove unreachable PdfError branch in onError
+e9f3ab4633787c468c36aa59e1b446c9113e1271	51884b687947f0829766527c9ccfb2425041e059	2026-09-28T12:48:45+02:00	fix: cleanup and bug batch (BOM, db.listPaged, auth body, onError branch, AppError move, voice dup, model.ts Config import)
+51884b687947f0829766527c9ccfb2425041e059	a9e9924782ad1c125cd5e840c29c36997b94a0dd	2026-09-28T11:12:01+02:00	feat: multi-user, memory, projects, threads, RAG, UI redesign doc
+a9e9924782ad1c125cd5e840c29c36997b94a0dd	0da28cc559200063e9c75b02b8ccc34c35d0963e	2026-09-27T19:50:49+02:00	feat: multi-user, memory service, projects backend, threads backend, RAG UI
+0da28cc559200063e9c75b02b8ccc34c35d0963e	7fabd871378946400eb110934b14d7edb50fdd21	2026-09-27T19:40:12+02:00	wip: memory service, projects backend, rag frontend, threads backend
+7fabd871378946400eb110934b14d7edb50fdd21	568a0b46d50bd547996db86db6c50c7fa665cb66	2026-09-27T18:52:56+02:00	feat: multi-user, RAG y profile modal
+568a0b46d50bd547996db86db6c50c7fa665cb66	a6b57616839af6b05416fa685da40612bc8112dc	2026-09-27T17:50:07+02:00	docs: add TODO backlog with production roadmap
+a6b57616839af6b05416fa685da40612bc8112dc	9d0748d63ae0ce28b466af698f97a527384de30a	2026-09-27T17:09:16+02:00	feat(auth): real email/password login with users table and multi-user service
+9d0748d63ae0ce28b466af698f97a527384de30a	41761ef0a8b6b074beba8ff486c12ddd50c5ba8d	2026-09-27T16:37:59+02:00	docs: update HANDOFF with production roadmap and current state
+41761ef0a8b6b074beba8ff486c12ddd50c5ba8d	7006741c12cf7cbb3377d7e51ac5a6be23d06871	2026-09-27T14:49:17+02:00	feat(web+server): attachment upload with multi-file-type support, tabbed panel, sidebar views
+7006741c12cf7cbb3377d7e51ac5a6be23d06871	d68b2182d7d24220a2571befe1fbc8d2978dfdd4	2026-09-27T12:07:02+02:00	feat(web): professional redesign with dark mode, sidebar, tabbed panel, Lucide icons
+d68b2182d7d24220a2571befe1fbc8d2978dfdd4	4940fd6c560fbed25703183daf557171c7ff627a	2026-09-27T11:37:28+02:00	feat(web): chat SSE end-to-end + redesigned layout with sidebar, tabs, Lucide-ready structure
+4940fd6c560fbed25703183daf557171c7ff627a	ce8614965a77f83bd77bdc9aa5b1960741163fa6	2026-09-26T12:59:19+02:00	docs: add HANDOFF.md for cross-session continuity
+a163ae5b6ba3548ebd4b4a4aa70966f9215933bd	8c1f9b731196d241001f55e975e494e14a09c260	2026-09-25T22:37:49+02:00	feat(sops): add llm_generate step backed by the configured model chain
+8c1f9b731196d241001f55e975e494e14a09c260	c92b8f3009a256f2866482f5b6e6452fc479d4aa	2026-09-25T20:36:21+02:00	feat(sops): allow ?force=1 to start non-api SOPs
+c92b8f3009a256f2866482f5b6e6452fc479d4aa	f2a03580fc2d2d17d6c6b07e6fdff8e6421745e9	2026-09-25T20:12:11+02:00	feat(agent): CSV import for business-records with header parsing, uuid ids and 1000-row cap
+f2a03580fc2d2d17d6c6b07e6fdff8e6421745e9	ce8614965a77f83bd77bdc9aa5b1960741163fa6	2026-09-25T19:59:46+02:00	feat(agent): add business-records GET/POST/DELETE endpoints working in sample and live modes
+ce8614965a77f83bd77bdc9aa5b1960741163fa6	c6ec13d91675144f633c98a5d8d59398936829b3	2026-09-25T14:55:48+02:00	feat(sop): add sop-triggers, executor improvements and pipeline alta
+c6ec13d91675144f633c98a5d8d59398936829b3	2a58275387d1cb75af8f1615d6f4d9957030d637	2026-09-25T12:24:14+02:00	chore: apply full audit remediation (phases 0-4)
+2a58275387d1cb75af8f1615d6f4d9957030d637	d3e39dc368b3433f31302adeca22771591490c44	2026-09-24T23:17:33+02:00	feat: model chain y mejoras
+d3e39dc368b3433f31302adeca22771591490c44		2026-09-24T18:24:41+02:00	Initial commit
