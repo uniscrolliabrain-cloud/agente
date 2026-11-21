@@ -13,3 +13,10 @@
 .agntia-landing .serif { font-family: Fraunces, Georgia, serif; }
 .agntia-landing [id] { scroll-margin-top: 110px; }
 .agntia-landing .no-scrollbar { scrollbar-width: none; }
+
+.agntia-landing .cc-brand { display: inline-flex; align-items: center; gap: 9px; color: #111; }
+.agntia-landing .cc-brand-copy { display: flex; flex-direction: column; gap: 4px; }
+.agntia-landing .cc-brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1; }
+.agntia-landing .cc-brand-name b { font-weight: 800; }
+.agntia-landing .cc-brand-sub { display: flex; align-items: center; gap: 6px; font-size: 8px; font-weight: 700; letter-spacing: .38em; color: #6b655e; }
+.agntia-landing .cc-brand-sub::before, .agntia-landing .cc-brand-sub::after { content: ""; width: 14px; height: 1px; background: #c9a86a; }

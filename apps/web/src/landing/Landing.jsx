@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import './landing.css'
+import { BrandLockup } from '../components/BrandMark'
 import { ArrowRight, ArrowUp, Check, ChevronDown, Mic, Paperclip, Pause, Play, Search, X } from 'lucide-react'
 
-const logoUrl = '/landing/logo.png'
 const laiaUrl = '/landing/laia.png'
 const antonioUrl = '/landing/antonio.png'
 const pedroUrl = '/landing/pedro.png'
-const mandoUrl = '/landing/centro-de-mando.png'
-const chatUrl = '/landing/chat.png'
-const opsUrl = '/landing/operaciones.png'
-const wsUrl = '/landing/workspaces.png'
+const mandoUrl = '/images/AgntiaPro.png'
+const chatUrl = '/landing/chat.webp'
+const opsUrl = '/landing/operaciones.webp'
+const wsUrl = '/landing/workspaces.webp'
 
 const initialMessages = [
   { role: 'laia', text: 'Hola. Te aviso de que la conexión con Google se ha perdido. ¿Quieres que la revise y te diga qué ha dejado de sincronizarse?' },
@@ -43,7 +43,7 @@ function laiaReply(q) {
   return 'Me encanta esa pregunta. Para darte una respuesta útil, cuéntame un poco de tu negocio: sector, tamaño y qué te quita más tiempo. Con eso te propongo dos servicios de alto impacto y el siguiente paso sería una discovery call, sin compromiso.'
 }
 
-export default function Landing() {
+export default function Landing({ loginHref = '/?acceso=1' }) {
   const [chatOpen, setChatOpen] = useState(false)
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState('')
@@ -125,7 +125,7 @@ export default function Landing() {
       <header style={{ top: 'var(--safe-area-inset-top)' }} className="sticky z-50 border-b border-[var(--line)] bg-[var(--cream)]">
         <div className="mx-auto flex max-w-prose flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <a href="#inicio" className="flex shrink-0 items-center gap-3">
-            <img src={logoUrl} alt="AgntiaPro — LAIA" className="h-10 w-auto object-contain sm:h-11" />
+            <BrandLockup />
             <span className="hidden flex-col leading-none md:flex"><span className="text-sm font-bold">agntiapro</span><span className="mt-1.5 h-px w-full bg-[#C9A86A]" /><span className="mt-1 text-sm font-medium text-[#6B655E]">LAIA · tu empresa, en conversación</span></span>
           </a>
           <nav className="hidden items-center gap-6 text-sm font-semibold lg:flex"><a href="#producto" className="hover:text-[#5B4BDB]">Producto</a><a href="#equipo" className="hover:text-[#5B4BDB]">Equipo</a><a href="#como-trabajan" className="hover:text-[#5B4BDB]">Cómo trabajan</a><a href="#implantacion" className="hover:text-[#5B4BDB]">Implantación</a></nav>
@@ -140,7 +140,7 @@ export default function Landing() {
             ) : (
               <button onClick={() => setSearchOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-white" aria-label="Buscar"><Search className="h-4 w-4" /></button>
             )}
-            <a href="/?acceso=1" className="rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-bold">Acceso clientes</a>
+            <a href={loginHref} className="rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-bold">Acceso clientes</a>
             <button onClick={newChat} className="rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white">Nuevo chat</button>
             <a href="#reserva" className="hidden rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white md:block">Reservar discovery call</a>
           </div>
@@ -199,7 +199,7 @@ export default function Landing() {
         <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
           <p className="text-sm font-bold text-[#6B655E]">Producto real</p>
           <h2 className="serif mt-3 max-w-prose text-[clamp(2rem,4.5vw,3.4rem)] font-medium leading-[1.05]">Así se ve tu empresa por dentro.</h2>
-          <p className="mt-4 max-w-prose leading-relaxed text-[#6B655E]">Detrás de la conversación hay una aplicación completa. Estas son capturas reales del producto, sin recortes ni retoques.</p>
+          <p className="mt-4 max-w-prose leading-relaxed text-[#6B655E]">Detrás de la conversación hay una aplicación completa. Estas son capturas del producto y de su entorno de demostración.</p>
           <div className="mt-7 flex flex-wrap gap-2">{tabs.map((t, i) => <button key={t.label} onClick={() => setTab(i)} className={`rounded-full px-4 py-2.5 text-sm font-bold ${tab === i ? 'bg-[#111] text-white' : 'border border-[var(--line)] bg-white'}`}>{t.label}</button>)}</div>
           <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[#F1EADF] shadow-[0_14px_34px_rgba(17,17,17,.07)]">
             <img src={tabs[tab].img} alt={`Captura real de AgntiaPro: ${tabs[tab].label}`} className="block max-h-[780px] w-full object-contain" />
@@ -301,7 +301,7 @@ export default function Landing() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-[#FDFBF7]"><div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6"><div className="flex flex-col gap-8 md:flex-row md:justify-between"><div className="max-w-prose"><img src={logoUrl} alt="AgntiaPro" className="h-12 w-auto object-contain" /><div className="mt-2 h-px w-16 bg-[#C9A86A]" /><p className="mt-3 text-sm leading-relaxed text-[#6B655E]">AgntiaPro — tu empresa compilada, operada y siempre actualizada.</p></div><div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3"><div><p className="mb-3 font-bold">Producto</p><ul className="space-y-2 text-[#6B655E]"><li><a href="#producto">Centro de Mando</a></li><li><a href="#producto">Chat</a></li><li><a href="#producto">Operaciones</a></li><li><a href="#producto">Workspaces</a></li></ul></div><div><p className="mb-3 font-bold">Soluciones</p><ul className="space-y-2 text-[#6B655E]"><li><a href="#equipo">Equipo digital</a></li><li><a href="#como-trabajan">Cómo trabajan</a></li><li><a href="#implantacion">Implantación</a></li><li><a href="#reserva">Discovery call</a></li></ul></div><div><p className="mb-3 font-bold">Legal</p><ul className="space-y-2 text-[#6B655E]"><li>Privacidad</li><li>Términos y condiciones</li><li>Cookies y preferencias</li><li>Transparencia sobre IA</li></ul></div></div></div><div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-[var(--line)] pt-5 text-sm text-[#6B655E]"><span>© AgntiaPro · Habla con tu empresa.</span><span>Hecho con calma, para empresas que quieren avanzar.</span></div></div></footer>
+      <footer className="bg-[#FDFBF7]"><div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6"><div className="flex flex-col gap-8 md:flex-row md:justify-between"><div className="max-w-prose"><BrandLockup /><div className="mt-2 h-px w-16 bg-[#C9A86A]" /><p className="mt-3 text-sm leading-relaxed text-[#6B655E]">AgntiaPro — tu empresa compilada, operada y siempre actualizada.</p></div><div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3"><div><p className="mb-3 font-bold">Producto</p><ul className="space-y-2 text-[#6B655E]"><li><a href="#producto">Centro de Mando</a></li><li><a href="#producto">Chat</a></li><li><a href="#producto">Operaciones</a></li><li><a href="#producto">Workspaces</a></li></ul></div><div><p className="mb-3 font-bold">Soluciones</p><ul className="space-y-2 text-[#6B655E]"><li><a href="#equipo">Equipo digital</a></li><li><a href="#como-trabajan">Cómo trabajan</a></li><li><a href="#implantacion">Implantación</a></li><li><a href="#reserva">Discovery call</a></li></ul></div><div><p className="mb-3 font-bold">Legal</p><ul className="space-y-2 text-[#6B655E]"><li>Privacidad</li><li>Términos y condiciones</li><li>Cookies y preferencias</li><li>Transparencia sobre IA</li></ul></div></div></div><div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-[var(--line)] pt-5 text-sm text-[#6B655E]"><span>© AgntiaPro · Habla con tu empresa.</span><span>Hecho con calma, para empresas que quieren avanzar.</span></div></div></footer>
 
       {/* CHAT PERSISTENTE */}
       {!chatOpen && <button onClick={() => setChatOpen(true)} className="fixed bottom-4 right-4 z-[80] flex items-center gap-2 rounded-full bg-[#111] px-5 py-3.5 text-sm font-bold text-white shadow-2xl">Chat <span className="h-2 w-2 rounded-full bg-emerald-400" /></button>}
