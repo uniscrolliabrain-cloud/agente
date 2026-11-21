@@ -9,3 +9,6 @@
 - OAuth login separado del conector. Cookie técnica om_oauth_binding, 600 s, HttpOnly, SameSite=Lax, ruta /api/auth/oauth. Sesión/perfil/tema/thread y estado rail en localStorage. No aparecen tags publicitarios en la landing o entrada React; analytics interno es una API de métricas tenant. Ver inventario para límites de alcance.
 - Persistencia: records (owner, kind, id), tenant-membership, credenciales cifradas, state OAuth y stores cognition/voz en SQL. TenantPrincipal valida el contexto y el middleware instala el scope. RLS opcional legacy no sustituye el scope. El Store ofrece insertIfAbsent y comparación/actualización atómicas. El coordinador de voz conserva receipts y digests. La cadena de auditoría conserva vínculos de actor/owner.
 - Proveedores observables en código: Google, GitHub, Fly/Vercel, Postgres (Neon en scripts), modelos configurables y WhatsApp; la presencia histórica de Anam/ElevenLabs no verifica uso, región ni contratos. Backups, RAG, eventos, memoria y terceros requieren inventario de purga antes de ejecutar supresión.
+
+## Fase 1. Sitio público
+Se añadió el índice de confianza y se estructuraron los borradores existentes con metadatos de versión y estado, navegación relativa y foco visible. El contacto se conserva como contacto general de la landing. La versión publicada queda sujeta a la aprobación jurídica y al gate de la fase 7.
