@@ -1,0 +1,4 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+.agntia-landing img[src^="/landing/"] { background-color: #f1eadf; }
