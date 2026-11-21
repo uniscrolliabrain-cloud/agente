@@ -97,11 +97,7 @@ export function useChat(
             threadId,
             runId: uid(),
             ...(roleId ? { roleId } : {}),
-            messages: history.map((m, i) =>
-              i === history.length - 1
-                ? { id: m.id, role: m.role, content: llmContent }
-                : { id: m.id, role: m.role, content: m.content },
-            ),
+            messages: [{ id: userMsg.id, role: userMsg.role, content: llmContent }],
           },
           (event: AgUiEvent) => {
             const at = Date.now();

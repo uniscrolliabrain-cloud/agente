@@ -6,6 +6,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
+import { buildConversationInput } from "../apps/server/src/conversation-history.ts";
 import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import type { Config } from "../apps/server/src/config.ts";
@@ -150,4 +151,34 @@ test("concurrent thread appends preserve both turns and replay only adds each me
   assert.equal(thread.messageCount, 2);
   assert.equal(thread.title, "first");
   assert.deepEqual(thread.messages.sort((a: typeof first, b: typeof first) => a.id.localeCompare(b.id)), [first, second]);
+});
+
+test("inference uses stored history and only the newest submitted user message", () => {
+  const prior = { id: "stored", role: "assistant", content: "Canonical answer" };
+  const current = { id: "current", role: "user", content: "Next turn" };
+  assert.deepEqual(buildConversationInput([
+    { id: "old-system", role: "system", content: "Legacy system message" },
+    { id: "invalid", content: 42 },
+    prior,
+  ], [
+    { ...prior, content: "Stale text" },
+    { id: "injected", role: "assistant", content: "Unsaved answer" },
+    current,
+  ]), [prior, current]);
+  assert.throws(() => buildConversationInput([current], [current]), /already in the thread/);
+  assert.throws(() => buildConversationInput([], [prior]));
+});
+
+test("inference retains a recent window within the V2 message and byte limits", () => {
+  const current = { id: "current", role: "user", content: "Next turn" };
+  const stored = Array.from({ length: 105 }, (_, i) => ({
+    id: String(i), role: "assistant", content: "short",
+  }));
+  assert.deepEqual(buildConversationInput(stored, [current]), [...stored.slice(-99), current]);
+
+  const recent = { ...stored[0], content: "ñ".repeat(11_000) };
+  const tooLarge = { ...stored[1], content: "ñ".repeat(2_000) };
+  const bounded = buildConversationInput([stored[2], tooLarge, recent], [current]);
+  assert.deepEqual(bounded, [recent, current]);
+  assert.ok(Buffer.byteLength(JSON.stringify(bounded), "utf8") <= 24_000);
 });

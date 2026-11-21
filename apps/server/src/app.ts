@@ -47,6 +47,7 @@ import { UserService } from "./users.ts";
 import { authRoutes } from "./auth-routes.ts";
 import { RagService } from "./engine/rag.ts";
 import { ragRoutes } from "./rag-routes.ts";
+import { buildConversationInput } from "./conversation-history.ts";
 import { threadBelongsToTenant, threadRoutes } from "./threads-routes.ts";
 import { projectRoutes } from "./projects-routes.ts";
 import { PersonaRegistry, bootstrapPersonas } from "./engine/agents/personas/index.ts";
@@ -1187,6 +1188,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
   const conversationRunSchema = z.object({
     threadId: z.string().min(1).max(200),
     runId: z.string().min(1).max(200),
+    messages: z.array(z.unknown()).min(1),
     state: z.object({
       roleId: z.string().min(1).max(200).optional(),
       personaId: z.string().min(1).max(200).optional(),
@@ -1220,8 +1222,10 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     if (target.pathname.replace(/\/$/, "") === "/api/copilotkit/run")
       target.pathname = "/api/copilotkit/agent/default/run";
     const [resource, , operation] = target.pathname.split("/").filter(Boolean).slice(-3);
+    let request: Request;
     if (c.req.method === "POST" && resource === "agent" && operation === "run") {
-      const { threadId, state } = conversationRunSchema.parse(await c.req.raw.clone().json().catch(() => null));
+      const body = await c.req.json().catch(() => null);
+      const { threadId, state, messages } = conversationRunSchema.parse(body);
       const owner = c.get("owner");
       await authorizeConversationThread(owner, threadId);
       if (state?.personaId !== undefined && state.personaId !== state.roleId) {
@@ -1231,8 +1235,19 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         const role = await agent.db.get<{ active?: boolean }>(owner, "agent-roles", state.roleId);
         if (role?.active !== true) throw new AppError("Chat role unavailable", 403);
       }
+      const stored = await db.get<{ messages?: unknown[] }>(owner, "conversations", threadId);
+      const headers = new Headers(c.req.raw.headers);
+      headers.delete("content-length");
+      headers.set("content-type", "application/json");
+      request = new Request(target, {
+        method: c.req.method,
+        headers,
+        body: JSON.stringify({ ...body, messages: buildConversationInput(stored?.messages ?? [], messages) }),
+        signal: c.req.raw.signal,
+      });
+    } else {
+      request = target.href === c.req.url ? c.req.raw : new Request(target, c.req.raw);
     }
-    const request = target.href === c.req.url ? c.req.raw : new Request(target, c.req.raw);
     const response = await runtime.fetch(request);
     const encoder = new TextEncoder();
     const body = response.body?.pipeThrough(
