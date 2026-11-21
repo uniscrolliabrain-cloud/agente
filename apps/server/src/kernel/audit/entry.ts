@@ -4,9 +4,9 @@
 // una AuditEntry. La cadena de hashes (previousHash -> hash) hace que
 // borrar o modificar una entrada rompa la cadena y sea detectable.
 //
-// El audit trail no se borra: se anonimiza. El derecho al olvido (SOC-2
-// Privacy) se cumple reemplazando owner/content por hashes, no eliminando
-// la fila.
+// El digest preserva la integridad, y los identificadores pueden seguir
+// vinculados a personas. La conservación y supresión requieren una política
+// aprobada para la cadena y sus referencias.
 
 import { z } from "zod";
 

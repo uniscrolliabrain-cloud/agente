@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
+import PrivacyRequests from "./PrivacyRequests";
 import LegalLinksInline from "../legal/LegalLinksInline";
 
-export default function PrivacyDataPanel({ onClose }: { onClose: () => void }) {
+export default function PrivacyDataPanel({ onClose, demo }: { onClose: () => void; demo: boolean }) {
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -23,10 +24,7 @@ export default function PrivacyDataPanel({ onClose }: { onClose: () => void }) {
           <h2 id="privacy-title">Privacidad y datos</h2>
           <button type="button" autoFocus onClick={onClose}>Cerrar</button>
         </header>
-        <section>
-          <h3>Mis datos y solicitudes</h3>
-          <p>Las solicitudes de datos estarán disponibles próximamente.</p>
-        </section>
+        <PrivacyRequests demo={demo} />
         <section>
           <h3>Conexiones externas</h3>
           <p>Los permisos dependen de cada integración.</p>

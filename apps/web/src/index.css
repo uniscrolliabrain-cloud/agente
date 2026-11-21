@@ -4355,3 +4355,5 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
       max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   }
 }
+.privacy-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.privacy-actions button { min-height: 44px; padding: 4px 10px; }

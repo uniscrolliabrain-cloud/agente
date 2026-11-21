@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 const canonicalSite = "https://agntiapro.com";
 
 export const legalPages = {

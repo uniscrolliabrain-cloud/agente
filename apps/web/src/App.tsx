@@ -354,7 +354,7 @@ export default function App() {
         </div>
       )}
 
-      {privacyOpen && <PrivacyDataPanel onClose={() => setPrivacyOpen(false)} />}
+      {privacyOpen && <PrivacyDataPanel demo={demoSession} onClose={() => setPrivacyOpen(false)} />}
       <SettingsMenu
         open={settingsOpen && !privacyOpen}
         onOpenPrivacy={() => setPrivacyOpen(true)}

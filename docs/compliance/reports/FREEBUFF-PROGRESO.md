@@ -18,3 +18,6 @@ Navegación legal visible en la tarjeta de login y Ajustes. Origen canónico de 
 
 ## Fase 3. Cookies y almacenamiento
 Inventario por clave en inventario/COOKIES-STORAGE.md y detalle técnico en el borrador informativo. El código inspeccionado carece de etiquetas opcionales en web y app, por lo que no se añade CMP. El navegador e infraestructura externa se verifican por separado.
+
+## Fase 4. Derechos y conservación
+Solicitud personal persistida en el Store por tenant y cuenta, validación estricta, deduplicación atómica y listado en Ajustes. CLI de operador con transiciones de estado atómicas. La revisión humana precede a cualquier actuación. Inventario de retención con dependencias de Postgres, RAG, eventos, auditoría, backups y proveedores.

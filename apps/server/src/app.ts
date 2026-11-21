@@ -23,6 +23,7 @@ import { currentTenantScope, runInTenantScope } from "./tenant-scope.ts";
 import { resolveTenantPrincipal } from "./tenant-principal.ts";
 // APPROVAL_TENANT_PERMISSION_V1 - la ruta de aprobacion usa la matriz de empresa.
 import { tenantAccess } from "./engine/authz/tenant-permissions.ts";
+import { privacyRoutes } from "./privacy-routes.ts";
 import { BrowserService } from "./browser.ts";
 import { ComputerService, type DockerRunner } from "./computer.ts";
 import { computerRoutes } from "./computer-routes.ts";
@@ -760,6 +761,7 @@ app.post("/api/billing/customer", async (c) => {
   });
   app.route("/api/agent", agentRoutes(agent, { pdp, fieldFilter }));
   app.route("/api/events", eventsRoutes(bus));
+  app.route("/api/privacy", privacyRoutes(tdb));
   // SOP_SKILLS_TENANT_WIRE_V1 - skills y SOPs viven bajo `tenantId:owner`.
   // Montadas con el store crudo, el panel de un tenant provisionado listaba 0.
   app.route("/api/skills", skillsRoutes(tdb));
