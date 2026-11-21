@@ -1,5 +1,8 @@
 # Programa de cumplimiento RGPD, LSSI y AI Act — AgntiaPro
 
+> **INSTRUCCIÓN DE EJECUCIÓN VIGENTE PARA FREEBUFF:** [CAMPAÑA ÚNICA — Implementación integral](CAMPANA-UNICA-FREEBUFF-IMPLEMENTACION-INTEGRAL.md). Los documentos 01–09 son referencias y anexos, **no campañas independientes**. Ejecutar en una sola rama nueva desde esta rama; no merge/deploy sin revisión.
+
+
 Estado: PLANIFICADO / NO IMPLEMENTADO. Rama: `feat/legal-privacy-ai-compliance`. Fuente: seis campañas acordadas el 2026-11-20.
 
 ## Objetivo
