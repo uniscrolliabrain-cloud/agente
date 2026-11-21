@@ -19,3 +19,6 @@ Páginas y componentes en código si la campaña se ejecuta; `reports/CAMPANA-02
 
 ## Aceptación
 Páginas públicas enlazadas y funcionales; ninguna cookie opcional antes de permiso; rechazo y revocación operativos; copy legal aprobado antes de publicación. No presentar borradores como asesoramiento jurídico definitivo.
+
+## Especificación transversal obligatoria
+Ejecutar conforme a [07 Mapa UX real](07-UX-LEGAL-MAPA-INTERFAZ.md) y [08 Copy y links](08-COPY-LEGAL-UX-Y-LINKS.md). La landing pública ya tiene footer y cinco páginas HTML preliminares en esta rama; no publicar borradores. Verificar rutas, hosting y las ramas de UI actuales antes de integrar la app.
