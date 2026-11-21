@@ -1191,6 +1191,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     runId: z.string().min(1).max(200),
     messages: z.array(z.unknown()).min(1),
     persistTurn: z.boolean().optional(),
+    attachmentId: z.string().min(1).max(200).optional(),
     state: z.object({
       roleId: z.string().min(1).max(200).optional(),
       personaId: z.string().min(1).max(200).optional(),
@@ -1228,7 +1229,7 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     let persist: Parameters<typeof withConversationTurnPersistence>[0] | undefined;
     if (c.req.method === "POST" && resource === "agent" && operation === "run") {
       const body = await c.req.json().catch(() => null);
-      const { threadId, state, messages, persistTurn } = conversationRunSchema.parse(body);
+      const { threadId, state, messages, persistTurn, attachmentId } = conversationRunSchema.parse(body);
       const owner = c.get("owner");
       const managedThread = await authorizeConversationThread(owner, threadId);
       if (state?.personaId !== undefined && state.personaId !== state.roleId) {
@@ -1239,10 +1240,12 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
         if (role?.active !== true) throw new AppError("Chat role unavailable", 403);
       }
       const stored = await db.get<{ messages?: unknown[] }>(owner, "conversations", threadId);
-      const input = buildConversationInput(stored?.messages ?? [], messages);
+      const file = attachmentId === undefined ? undefined : await files.get(owner, attachmentId);
+      const attachment = file && { id: file.id, name: file.name, size: file.size };
+      const input = buildConversationInput(stored?.messages ?? [], messages, attachment);
       if (persistTurn && managedThread && config.agentBackend !== "agui" && cognitionV2?.enabledForRequest()) {
         const scope = currentTenantScope()!;
-        const user = { ...input.at(-1)!, timestamp: new Date().toISOString() };
+        const user = { ...input.user, timestamp: new Date().toISOString() };
         persist = async (assistant) => {
           await runInTenantScope(scope, () => appendThreadMessages(db, tenantService, owner, threadId, [
             user,
@@ -1250,14 +1253,14 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
           ], true));
         };
       }
-      const { persistTurn: _persistTurn, ...runBody } = body;
+      const { persistTurn: _persistTurn, attachmentId: _attachmentId, ...runBody } = body;
       const headers = new Headers(c.req.raw.headers);
       headers.delete("content-length");
       headers.set("content-type", "application/json");
       request = new Request(target, {
         method: c.req.method,
         headers,
-        body: JSON.stringify({ ...runBody, messages: input }),
+        body: JSON.stringify({ ...runBody, messages: input.messages }),
         signal: c.req.raw.signal,
       });
     } else {

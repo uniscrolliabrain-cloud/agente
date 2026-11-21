@@ -83,10 +83,6 @@ export function useChat(
       const controller = new AbortController();
       abortRef.current = controller;
 
-      const llmContent = attachment
-        ? `${trimmed || "(sin texto)"}\n\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
-        : trimmed;
-
       let assistantText = "";
       let localTools: ToolCall[] = [];
       let runErrorMessage: string | null = null;
@@ -97,9 +93,10 @@ export function useChat(
           {
             threadId,
             runId: uid(),
-            persistTurn: !attachment,
+            persistTurn: true,
+            ...(attachment ? { attachmentId: attachment.id } : {}),
             ...(roleId ? { roleId } : {}),
-            messages: [{ id: userMsg.id, role: userMsg.role, content: llmContent }],
+            messages: [{ id: userMsg.id, role: userMsg.role, content: trimmed }],
           },
           (event: AgUiEvent) => {
             const at = Date.now();

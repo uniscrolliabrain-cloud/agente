@@ -164,7 +164,7 @@ test("inference uses stored history and only the newest submitted user message",
     { ...prior, content: "Stale text" },
     { id: "injected", role: "assistant", content: "Unsaved answer" },
     current,
-  ]), [prior, current]);
+  ]).messages, [prior, current]);
   assert.throws(() => buildConversationInput([current], [current]), /already in the thread/);
   assert.throws(() => buildConversationInput([], [prior]));
 });
@@ -174,11 +174,11 @@ test("inference retains a recent window within the V2 message and byte limits", 
   const stored = Array.from({ length: 105 }, (_, i) => ({
     id: String(i), role: "assistant", content: "short",
   }));
-  assert.deepEqual(buildConversationInput(stored, [current]), [...stored.slice(-99), current]);
+  assert.deepEqual(buildConversationInput(stored, [current]).messages, [...stored.slice(-99), current]);
 
   const recent = { ...stored[0], content: "ñ".repeat(11_000) };
   const tooLarge = { ...stored[1], content: "ñ".repeat(2_000) };
-  const bounded = buildConversationInput([stored[2], tooLarge, recent], [current]);
+  const bounded = buildConversationInput([stored[2], tooLarge, recent], [current]).messages;
   assert.deepEqual(bounded, [recent, current]);
   assert.ok(Buffer.byteLength(JSON.stringify(bounded), "utf8") <= 24_000);
 });

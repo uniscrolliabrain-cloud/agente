@@ -36,17 +36,21 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     const createThread = await server.app.request("/api/threads", { method: "POST", headers: chatHeaders, body: "{}" });
     assert.equal(createThread.status, 201);
     const { id: chatThread } = await createThread.json();
-    runtime.provider.stream = async (_input, _prompt, _profile, _signal, emit) => {
+    let providerInput: string | undefined;
+    runtime.provider.stream = async (input, _prompt, _profile, _signal, emit) => {
+      const latest = input.messages.at(-1);
+      providerInput = typeof latest?.content === "string" ? latest.content : undefined;
       emit({ type: EventType.TEXT_MESSAGE_START, messageId: "fixture", role: "assistant" });
       emit({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: "fixture", delta: "Respuesta de prueba" });
       emit({ type: EventType.TEXT_MESSAGE_END, messageId: "fixture" });
       return "Respuesta de prueba";
     };
-    const chat = (id: string) => server!.app.request("/api/copilotkit/run", {
+    const chat = (id: string, attachmentId?: string) => server!.app.request("/api/copilotkit/run", {
       method: "POST", headers: { ...chatHeaders, Accept: "text/event-stream" },
       body: JSON.stringify({
         threadId: chatThread, runId: id, persistTurn: true, state: {}, tools: [], context: [],
-        messages: [{ id, role: "user", content: "Hola" }],
+        attachmentId,
+        messages: [{ id, role: "user", content: attachmentId ? "" : "Hola" }],
       }),
     });
     const completedChat = await chat("first-turn");
@@ -61,6 +65,18 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
       [["user", "Hola"], ["assistant", "Respuesta de prueba"]]);
     assert.equal((await chat("first-turn")).status, 409);
 
+    const attachment = { id: "owned-file", name: "acta.pdf", size: 123 };
+    await db.put(`tenant-a:${alice.id}`, "files", { ...attachment, url: "private-signed-url" });
+    await db.put(`tenant-b:${alice.id}`, "files", { ...attachment, id: "foreign-file" });
+    assert.equal((await chat("foreign-attachment", "foreign-file")).status, 404);
+    const attachmentStream = await (await chat("attached-turn", attachment.id)).text();
+    assert.match(attachmentStream, /conversation\.turn\.persisted/);
+    assert.equal(providerInput, "(sin texto)\n\n[Adjunto: acta.pdf, id: owned-file]");
+    const afterAttachment = await readChat();
+    assert.deepEqual(afterAttachment.messages[2].attachment, attachment);
+    assert.equal(afterAttachment.messages[2].content, "Adjunto: acta.pdf");
+    assert.ok(!JSON.stringify(afterAttachment).includes("private-signed-url"));
+
     const fullHistory = Array.from({ length: 999 }, (_, id) => ({ id: `seed-${id}`, role: "user", content: "Semilla" }));
     await db.put(alice.id, "conversations", { id: chatThread, messages: fullHistory });
     const failedStream = await (await chat("overflow-turn")).text();
@@ -68,7 +84,7 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     assert.doesNotMatch(failedStream, /conversation\.turn\.persisted|RUN_FINISHED/);
     assert.deepEqual((await readChat()).messages, fullHistory);
     const completedRuns = await db.rawQuery("SELECT id FROM cognition_v2_chat_runs WHERE state='completed'");
-    assert.equal(completedRuns.length, 1);
+    assert.equal(completedRuns.length, 2);
 
     await runtime.projector.tick("tenant-a");
     const snapshotResponse = await request("/snapshots", alice.token, "POST", { query: "análisis", maxTokens: 4000, maxRefs: 10 });

@@ -12,6 +12,7 @@ export interface RunInput {
    */
   roleId?: string;
   persistTurn?: boolean;
+  attachmentId?: string;
 }
 
 export interface AgUiEvent {
@@ -50,6 +51,7 @@ export async function streamChat(
       threadId: input.threadId,
       runId: input.runId,
       ...(input.persistTurn ? { persistTurn: true } : {}),
+      ...(input.attachmentId ? { attachmentId: input.attachmentId } : {}),
       messages: input.messages,
       tools: [],
       context: [],

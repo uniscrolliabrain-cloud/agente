@@ -13,10 +13,17 @@ type ConversationMessage = z.infer<typeof conversationMessageSchema>;
 export function buildConversationInput(
   storedMessages: readonly unknown[],
   submittedMessages: readonly unknown[],
-): ConversationMessage[] {
+  attachment?: { id: string; name: string; size: number },
+) {
   // Older clients still send their full history. Only their last message is
   // the new turn. Every preceding message comes from the authorized thread.
-  const current = submittedMessageSchema.parse(submittedMessages.at(-1));
+  const submitted = submittedMessageSchema.parse(submittedMessages.at(-1));
+  const user = attachment
+    ? { ...submitted, content: submitted.content || `Adjunto: ${attachment.name}`, attachment }
+    : submitted;
+  const current = attachment
+    ? { ...submitted, content: `${submitted.content || "(sin texto)"}\n\n[Adjunto: ${attachment.name}, id: ${attachment.id}]` }
+    : submitted;
   const history: ConversationMessage[] = [];
   const seen = new Set<string>([current.id]);
   let bytes = Buffer.byteLength(JSON.stringify(current), "utf8") + 2;
@@ -39,5 +46,5 @@ export function buildConversationInput(
     bytes += size;
   }
 
-  return [...history.reverse(), current];
+  return { messages: [...history.reverse(), current], user };
 }
