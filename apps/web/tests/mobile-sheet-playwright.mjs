@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 
+const loginUrl = new URL(process.env.SHEET_TEST_URL ?? "http://127.0.0.1:5173/");
+loginUrl.searchParams.set("acceso", "1");
+
 const { chromium, devices } = await import(process.env.SHEET_PLAYWRIGHT_MODULE ?? "playwright");
 const browser = await chromium.connectOverCDP(process.env.SHEET_CDP_URL ?? "http://127.0.0.1:9222");
 const context = await browser.newContext({ ...devices["Pixel 7"], reducedMotion: "reduce" });
@@ -26,7 +29,7 @@ try {
   });
   const page = await context.newPage();
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto(process.env.SHEET_TEST_URL ?? "http://127.0.0.1:5173/");
+  await page.goto(loginUrl.href);
   await page.getByRole("button", { name: /Entrar al tenant demo/ }).click();
   await page.getByRole("button", { name: "Abrir menú" }).tap();
   await page.getByRole("button", { name: "Workspaces" }).tap();
@@ -239,7 +242,7 @@ try {
         return route.fulfill({ status: 503, json: { error: "Ruta fuera de la prueba de red" } });
     }
   });
-  await networkPage.goto(process.env.SHEET_TEST_URL ?? "http://127.0.0.1:5173/");
+  await networkPage.goto(loginUrl.href);
   await networkPage.locator(".chat-fab").tap();
   const networkSheet = networkPage.locator(".mobile-chat-sheet");
   await networkSheet.getByRole("slider").press("End");
