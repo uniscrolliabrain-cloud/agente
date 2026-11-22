@@ -1,114 +1,170 @@
-# CORRECCIÓN DE DIRECCIÓN ARTÍSTICA — PRIORIDAD ABSOLUTA (2026-11-22)
+# AgntiaPro — Especificación de rediseño del sistema legal público
+**Versión:** 1.0 · **Fecha:** 22-11-2026 · **Estado:** auditoría de código y diseño propuesto, NO implementado  
+**Rama documental:** `feat/freebuff-compliance-integral`  
+**Ámbito:** seis páginas legales, footer de la landing React, aviso informativo de privacidad.  
+**Principio rector:** no crear otra estética: extender fielmente los componentes reales de la landing editorial premium.
 
-**Esta sección prevalece sobre cualquier propuesta visual genérica del documento.** La primera propuesta de imágenes inspiracionales y componentes inventados no representa el branding real. Se prohíbe utilizar imágenes de referencia genéricas como especificación. El diseño debe derivarse por extracción literal de los componentes de `apps/web/src/landing/Landing.jsx`, `landing.css`, `ProductScene.jsx` y `BrandMark`.
+## Índice
+1. Evidencia y límites
+2. Inventario y taxonomía
+3. ADN visual comprobado
+4. Contrato de arquitectura y contenido
+5. Especificación de las seis páginas
+6. Footer: intervención mínima
+7. Aviso legal informativo: intervención mínima
+8. Movimiento, accesibilidad y responsive
+9. Campañas secuenciales
+10. Pruebas y aceptación
+11. Riesgos, decisiones y handoff
 
-## Anatomía comprobada de la landing
-- `.agntia-landing.lp-premium`: papel `#fcfaf6`, tinta `#242421`, muted `#6e6c66`, borde `#e6e1d8`, violeta `#6550dd`, dorado `#b49665`; cuerpo Manrope y titulares Fraunces.
-- `.lp-container` es el contenedor maestro; `.lp-header` y `BrandLockup` dan la identidad, no un logo improvisado.
-- `.lp-hero` es una retícula 1.08fr / 1fr con gap 74px y H1 editorial de letter-spacing -0.052em; conservar ese ritmo tipográfico.
-- `.lp-premium .lp-button`: radio **9px**, min-height **50px**, hover `translateY(-2px)`; **NO** introducir botones tipo pill ni tarjetas indiscriminadamente redondeadas.
-- `.lp-footer`: papel, padding 65px 25px vertical; `.lp-footer-main` tiene cuatro columnas `1.4fr 1fr 1fr 1.3fr`, logo real, claim, grupos «Explora» y «Hablemos» y microcopy «AGNTIAPRO + TU EMPRESA». `.lp-legal-links` es una banda inferior de enlaces; no sustituir por un footer SaaS genérico.
-- `.lp-reserve-section` usa tinta `#232420` para el contraste oscuro de conversión; no replicar ese negro como fondo de los documentos legales.
-- `.lp-premium .lp-legal-notice`: aviso real anclado bottom-left, ancho 330px, padding 12px 14px, borde `--lp-line`, radio **12px**, fondo `--lp-paper`. No rediseñarlo como modal grande, bottom-sheet intrusivo ni toast genérico con iconos de escudo decorativos.
+## 1. Evidencia y límites
 
-## Especificación revisada, directamente desde los componentes
-**Páginas legales**: usar `BrandLockup` o su SVG real, mismo header y ancho de contenedor `.lp-container`, títulos Fraunces con tracking editorial, eyebrow `.lp-micro` y línea dorada `.lp-gold-line` si procede, párrafos Manrope con color muted, divisores `--lp-line`, links violeta sobrios y el footer de cuatro columnas adaptado. Reutilizar proporciones y radios de la landing, no inventar un nuevo sistema de cards. Para seis documentos de texto largo, priorizar lectura y espaciado; el índice lateral es opcional y no debe romper la composición editorial. `/confianza.html` puede usar la misma gramática de tarjetas que la landing, pero no tarjetas genéricas ni badges de certificación.
+**Fuentes de código inspeccionadas en esta rama:** `apps/web/src/landing/Landing.jsx`, `apps/web/src/landing/landing.css`, `apps/web/src/landing/ProductScene.jsx`, `apps/web/src/config/publicSite.ts`, `apps/site/aviso-legal.html`, `privacidad.html`, `cookies.html`, `terminos.html`, `transparencia-ia.html`, `confianza.html` y `docs/compliance/reports/PUBLICACION-LANDING.md`. Se identificó el uso de `BrandLockup` desde `../components/BrandMark`; **su implementación interna debe inspeccionarse antes de reutilizarla**.
 
-**Footer**: mantener DOM, copy, BrandLockup, cuatro columnas y banda legal. Ajustar tipografía, interlineado, espaciado, alineación y wrapping de los seis enlaces en móvil. No agregar nuevas columnas ni reestructurar sin comparar screenshot de la landing.
+**Hallazgo verificable:** los seis HTML legales comparten CSS inline con fondo oscuro `#0b0d12`, texto `#e8eaf0`, enlaces azul claro `#aabfff` y tipografía system-ui. No comparten la apariencia de la landing React. El footer de la landing ya contiene seis enlaces correctos por `legalPages` y el aviso se controla con `legalVisible`. La documentación de publicación afirma integración multipágina mediante Vite y pruebas históricas; no es una prueba de la versión actualmente servida.
 
-**Aviso legal**: evolucionar el componente existente, no reemplazarlo. Conservar ancho aproximado 330px, radio 12px, borde fino, tipografía Manrope, título en tinta, copy muted, enlaces discretos y X alineada. Microanimación `opacity` y `translateY(6px)` de 200–280ms; sombra muy tenue. Comprobar solapamiento con launcher «Hablar con LAIA» y teclado móvil. No introducir icono grande, CTA morado ni banner de consentimiento si no hay cookies opcionales.
+**Límite:** no se inspeccionó visualmente el sitio público desde navegador en esta auditoría. Las decisiones estéticas se basan en el código real y en las capturas de la landing compartidas por el titular. Antes de programar: comparar screenshots de producción, rama de release y rama de compliance.
 
-**Prohibiciones**: estética de plantilla Notion/Stripe, tarjetas con radios 18–24px, pastillas, glassmorphism, sombras profundas, ilustraciones stock, colores no presentes, gradientes nuevos, fondos oscuros legales, titulares sans genéricos. El estándar es **la landing real**, no una imagen inspiracional.
+## 2. Inventario y taxonomía
 
-## Puerta de aceptación visual obligatoria
-Antes de programar: capturar una vista real del hero, footer, tarjeta de precio, CTA oscuro y aviso; extraer tokens y medidas del CSS computado. Después: screenshot de las seis páginas y aviso en 1440/768/390/320px; comparar lado a lado con componentes de la landing y rechazar cualquier divergencia en tipografía, color, radio, ritmo y tono. No declarar «alineado al branding» sin esta comparación. Mantener texto legal idéntico, rutas y semántica de aviso informativo.
+| ID | Superficie | Fuente | Acción |
+|---|---|---|---|
+| L0 | Routing, build, metadatos | `apps/site/*.html`, Vite, `publicSite.ts` | Conservar URLs y publicación |
+| L1 | Tokens, marca, tipografía | `landing.css`, `BrandMark` | Extraer y reutilizar |
+| L2 | Plantilla documental | Seis HTML de `apps/site` | Sustituir CSS oscuro por shell editorial |
+| L3 | Confianza y seguridad | `apps/site/confianza.html` | Hub documental dentro del mismo lenguaje |
+| L4 | Footer React | `Landing.jsx`, `.lp-footer*`, `.lp-legal-links` | Ajuste de banda legal, sin rehacer footer |
+| L5 | Aviso informativo | `legalVisible`, `.lp-legal-notice` | Refinar componente existente |
+| L6 | Motion/a11y/responsive | CSS + estados React | Microinteracciones discretas |
+| L7 | Tests/release | Scripts legales, Playwright, Vite | Verificar y entregar sin desplegar automáticamente |
 
----
+## 3. ADN visual de AgntiaPro — contrato vinculante
 
-# AgntiaPro · Rediseño premium de páginas legales, footer y aviso de privacidad
+### 3.1 Tokens comprobados
+- `.agntia-landing.lp-premium`: papel `#fcfaf6`, tinta `#242421`, secundario `#6e6c66`, línea `#e6e1d8`, violeta `#6550dd`, dorado `#b49665`.
+- Fraunces en titulares; Manrope en UI y cuerpo.
+- `.lp-container` determina el ancho de composición. **No fijar un contenedor alternativo sin contrastarlo con el CSS existente**.
+- Hero `.lp-hero`: grid `1.08fr 1fr`, gap 74px en su regla base; H1 con `letter-spacing: -0.052em`. Reutilizar la gramática tipográfica, no copiar literalmente el tamaño del hero a documentos largos.
+- `.lp-premium .lp-button`: radio 9px, alto mínimo 50px, hover `translateY(-2px)`. No botones pill.
+- `.lp-footer-main`: cuatro columnas `1.4fr 1fr 1fr 1.3fr`; logo `BrandLockup`, claim «Tu empresa, siempre un paso por delante», grupos «Explora» y «Hablemos», nota «AGNTIAPRO + TU EMPRESA». Banda inferior `.lp-legal-links` y `.lp-footer-bottom`.
+- `.lp-reserve-section` utiliza `#232420` como contraste de conversión; **no extenderlo a los documentos legales**.
+- `.lp-legal-notice`: bottom-left, ancho `min(330px, calc(100% - 24px))`, padding `12px 14px`, radio 12px, fondo papel, borde fino. Esta es la base, no una plantilla de toast inventada.
 
-**Fecha:** 2026-11-22 · **Estado:** auditoría de código y especificación de diseño, no implementado. **Rama:** feat/freebuff-compliance-integral. **Objetivo:** unificar las seis páginas legales y el aviso informativo con el sistema editorial premium de la landing, sin modificar el contenido jurídico aprobado ni la semántica de consentimiento.
+### 3.2 Reglas negativas
+Prohibido: degradados nuevos, glassmorphism, ilustraciones stock, iconografía decorativa de escudos gigantes, tarjetas con radios 18–24px por defecto, botones tipo píldora, sombras profundas, modo oscuro legal, titulares sans genéricos, CTA comerciales insertados dentro de obligaciones jurídicas o cualquier nuevo sistema visual de inspiración externa. **Las capturas reales de la landing son la referencia visual de aceptación.**
 
-## 00. Evidencia y límites
-Se han leído en esta rama: apps/site/{aviso-legal,privacidad,cookies,terminos,transparencia-ia,confianza}.html; apps/web/src/landing/{Landing.jsx,landing.css}; apps/web/src/config/publicSite.ts; docs/compliance/reports/PUBLICACION-LANDING.md. El acceso HTTP externo a las páginas públicas falló desde el entorno de auditoría; **no se ha validado visualmente el sitio en producción**. La documentación previa reporta comprobaciones Playwright y que antes de publicar ciertas rutas daban 404; no confundir esos resultados históricos con una comprobación actual.
+### 3.3 Sistema compartido
+Extraer variables y patrones sin arrastrar el bundle entero de React a los HTML legales. Candidato: `apps/site/legal.css` con tokens derivados de `landing.css` y clases `.agntia-legal`. No copiar CSS de forma ciega: verificar cascada, fuentes, licencia de assets, responsive y dependencia de Google Fonts. Reutilizar el SVG/logo real de `BrandMark` solo tras inspeccionar su implementación y ruta pública. Mantener el contenido legal legible si las fuentes externas fallan.
 
-### Diagnóstico verificado
-1. Los seis HTML legales repiten un bloque CSS inline oscuro: body background #0b0d12, texto #e8eaf0, enlaces #aabfff, system-ui, main max-width 800px. Contrasta con landing .agntia-landing.lp-premium: papel #fcfaf6, tinta #242421, violeta #6550dd, Fraunces + Manrope.
-2. Los HTML repiten cabecera de dos enlaces y footer de seis enlaces, sin header editorial compartido, jerarquía de navegación ni estilo de marca.
-3. Landing.jsx usa legalPages desde ../config/publicSite para los seis enlaces del footer y un aviso condicional legalVisible; se oculta mientras chat, modal de agente o menú están abiertos.
-4. landing.css ya contiene reglas .lp-footer, .lp-legal-links y .lp-legal-notice, con posibles overrides al final; revisar cascada, especificidad y media queries antes de tocar.
-5. apps/site/index.html sigue siendo una landing legacy oscura: **no confundir la eliminación futura de esa portada con la conservación de los seis HTML legales**.
-6. docs/compliance/reports/PUBLICACION-LANDING.md explica la integración Vite de las páginas HTML en el origen de la landing y que el aviso es informativo, sin almacenamiento ni registro de consentimiento. El HTML de cookies describe Google Fonts; auditar tráfico real antes de afirmar que no hay terceros.
-7. Los documentos legales llevan meta legal-status=published y legal-version=2026-11-21. Preservar estos metadatos y contenido legal.
+## 4. Contrato de arquitectura y contenido
 
-## 01. Taxonomía de intervención
-- L0 — Fuente de verdad, routing, contenido legal y garantías.
-- L1 — Design system jurídico (tokens, tipografía, superficies, iconos).
-- L2 — Layout y navegación de seis páginas.
-- L3 — Centro de confianza y navegación transversal.
-- L4 — Footer de landing y enlaces legales.
-- L5 — Aviso informativo de privacidad; consentimiento solo si aplica.
-- L6 — Motion, responsive y accesibilidad.
-- L7 — QA, publicación y rollback.
+- Mantener estas rutas exactas: `/aviso-legal.html`, `/privacidad.html`, `/cookies.html`, `/terminos.html`, `/transparencia-ia.html`, `/confianza.html`.
+- Mantener los metadatos `legal-status=published` y `legal-version=2026-11-21`, salvo actualización jurídica aprobada. Preservar títulos y encabezados legales.
+- El texto jurídico aprobado es **inmutable para esta campaña**: comprobar igualdad de contenido normalizado antes/después, incluyendo datos identificativos y enlaces. No mover cláusulas a acordeones cerrados.
+- Reutilizar enlaces centralizados desde `legalPages` en React; los HTML estáticos pueden usar enlaces relativos verificados. Mantener origen, canonical y acceso directo.
+- Preferir HTML semántico ligero + CSS compartido, con `main`, `nav`, `article`, `section`, `footer`, `h1/h2`. Si se propone plantilla/generador común, verificar primero scripts de empaquetado Vite y control legal. No migrar a React sin justificación técnica.
+- Mantener separadas landing pública demo y app operativa. No tocar backend, Fly, auth, APIs, contenido comercial ni portada legacy `apps/site/index.html` sin plan independiente.
+- Evitar nuevas cookies, trackers o SDK de consentimiento. Verificar solicitudes a Google Fonts y otros terceros con Network antes de cualquier afirmación de cumplimiento.
 
-## 02. L0 · Arquitectura y fuentes
-Preservar archivos y rutas existentes: /aviso-legal.html, /privacidad.html, /cookies.html, /terminos.html, /transparencia-ia.html, /confianza.html. Mantener compatibilidad de enlaces directos, canonical, indexación y metadatos. Preferir CSS compartido apps/site/legal.css y shell común generado mediante script/build si la infraestructura existente lo admite; **no migrar a React sin demostrar necesidad**. Si se conserva HTML estático, usar header/footer idénticos en seis archivos mediante plantilla validada; no duplicar CSS inline. Revisar Vite multipage y scripts de copia/packaging antes de modificar rutas. Evitar cargar bundle completo del producto en páginas legales. No introducir analytics, trackers, SDK de consentimiento ni nuevas fuentes remotas sin revisión de privacidad.
+## 5. Especificación de las seis páginas
 
-## 03. L1 · Dirección artística: «Editorial Trust»
-Continuación natural de landing: papel #fcfaf6, secciones crema sutil #f3efe7, tinta #242421, texto secundario #6e6c66, líneas #e6e1d8, violeta #6550dd, dorado #b49665. Titulares Fraunces, cuerpo Manrope con fallback local. Reutilizar el logo real/BrandLockup o equivalente SVG accesible y ligero. No copiar marca con texto plano improvisado. No aplicar fondo oscuro de forma general; reservar un bloque de contacto opcional en tinta si armoniza con la landing. Anchura editorial del cuerpo 680–760px, contenedor exterior 1120–1200px; 16–18px cuerpo, line-height 1.65–1.8; H1 clamp(36px,5vw,64px); H2 23–30px. Etiquetas pequeñas con contraste suficiente; aire entre apartados 32–52px. Prohibido esconder textos legales tras acordeones cerrados por defecto.
+### 5.1 Shell editorial compartido
+1. **Header:** mismo lockup real que la landing, mismo fondo papel, navegación discreta «Volver al inicio» y acceso a «Confianza». Sin crear un menú SaaS paralelo.
+2. **Intro:** microetiqueta sobria con tratamiento `.lp-micro` y, si encaja, línea dorada `.lp-gold-line`; H1 Fraunces, subtítulo solo si no introduce nuevas afirmaciones; fecha/versión en Manrope secundaria.
+3. **Cuerpo:** ancho de lectura aproximado 680–760px *dentro* del contenedor maestro; espaciado generoso entre secciones, subtítulos claros, líneas finas `--lp-line`, enlaces subrayados y foco visible. Evitar cards por cada párrafo.
+4. **Navegación interna:** índice de secciones opcional en escritorio, discreto y no sticky si interfiere con lectura; en móvil índice compacto. No esconder contenido.
+5. **Cierre:** enlaces a documentos hermanos y contacto existente, sin añadir garantías.
+6. **Footer:** reutilizar estructura editorial y lenguaje de `.lp-footer`, adaptado a navegación legal, con cuatro columnas cuando el viewport lo permita.
 
-## 04. L2 · Composición de página
-Header: logo izquierda, enlace «Volver a AgntiaPro», acceso discreto a «Confianza y seguridad»; versión móvil sin menú innecesario. Hero legal: eyebrow «AGNTIAPRO / INFORMACIÓN Y CONFIANZA», H1 editorial, descripción introductoria solo si no altera alcance jurídico, metadato «Versión 21 nov 2026». Desktop: columna central de lectura + índice lateral sticky de secciones (derivado de h2), ocultar índice sticky en móvil y ofrecer índice compacto no obstructivo. Secciones numeradas opcionalmente solo como decoración fuera del texto jurídico. Bordes finos, sin cajas grandes por párrafo. Enlaces con subrayado y focus visible; enlaces externos identificados accesiblemente. Cierre: contacto y enlaces a documentos hermanos. Footer igual al universo visual de landing. Mantener heading hierarchy y HTML semántico main/nav/article/section/footer.
+### 5.2 Reglas por documento
+| Documento | Tratamiento visual | Cautela |
+|---|---|---|
+| Aviso legal | Título, versión, secciones de identificación y actividad bien espaciadas | No editar datos del prestador |
+| Privacidad | Jerarquía de finalidades, derechos y contacto fácil de escanear | No inventar plazos, bases o proveedores |
+| Cookies | Estructura muy clara de tecnologías, terceros y gestión | Confirmar inventario real antes de cambiar texto |
+| Términos | Secciones y navegación editorial ordenadas | No alterar obligaciones ni ámbito |
+| Transparencia IA | Jerarquía limpia de información sobre LAIA y demo | No sugerir IA autónoma activa o garantías inexistentes |
+| Confianza | Hub de documentos con enlaces sobrios en el lenguaje de la landing | No certificaciones, badges ni promesas de seguridad sin evidencia |
 
-### Seis fichas de diseño
-1. **Aviso legal:** identificación, actividad, uso/propiedad, responsabilidad, contacto; presentación sobria y verificable.
-2. **Privacidad:** priorizar legibilidad de finalidades, derechos, contacto, conservación y destinatarios según copy existente; tablas responsivas solo si ya están justificadas.
-3. **Cookies:** distinguir tecnologías y configuraciones reales; nunca ofrecer controles ficticios.
-4. **Términos:** estructura numerada y navegación por epígrafes; no alterar alcance informativo ni cláusulas.
-5. **Transparencia IA:** reforzar claridad visual de que LAIA es IA y qué partes son demo; sin inventar capacidades, garantías o certificaciones.
-6. **Confianza y seguridad:** convertirla en hub visual de las seis páginas mediante tarjetas editoriales sobrias, no en una página de marketing con claims de seguridad no demostrados.
+**Confianza no debe parecer un dashboard**: si se usan tarjetas, derivarlas de componentes ya presentes en la landing; de lo contrario, usar lista editorial con separadores finos.
 
-## 05. L3 · Centro de confianza
-/confianza.html será el punto de navegación transversal: seis tarjetas de documentos con título, descripción neutral, icono lineal consistente y enlace; sección de contacto y fecha de actualización. No usar badges «RGPD certificado», «seguridad garantizada», «100% privado» o logos de certificaciones sin evidencia. Enlaces cruzados desde todas las páginas. Respetar copy jurídico aprobado; descripciones de tarjetas deben verificarse contra el texto real.
+## 6. Footer — intervención mínima y precisa
 
-## 06. L4 · Footer
-En Landing.jsx conservar las seis rutas centralizadas legalPages. Ajustar footer a la grilla de columnas actual, sin convertirlo en una lista kilométrica; agrupar «Producto», «Recursos» y «Legal / Confianza» si cabe sin romper el layout. En móvil: columnas de dos o una según anchura, tap targets ≥44px recomendados, no texto minúsculo. En las páginas legales, footer hermano de la landing con marca, contacto y links. Evitar estilos globales que afecten app autenticada; scope con .agntia-legal o .lp-premium. Tests de navegación de vuelta al home, links absolutos/relativos, base path y refresh directo.
+### 6.1 DOM existente que debe conservarse
+`<footer className="lp-footer"><div className="lp-container"><div className="lp-footer-main">...` contiene marca/claim, «Explora», «Hablemos» y nota editorial. Después vienen `<nav className="lp-legal-links">` con seis enlaces y `.lp-footer-bottom` con copyright y disclaimer demo.
 
-## 07. L5 · Aviso informativo / banner
-**Código actual:** legalVisible en Landing.jsx, bloque .lp-legal-notice con enlaces Privacidad y Cookies y botón cerrar; se oculta con chat/modal/menú. Según documentación, no escribe consentimiento ni storage. Por tanto llamarlo «aviso informativo», no «cookie consent», salvo que auditoría de cookies indique necesidad.
+### 6.2 Problema y solución
+El añadido de seis enlaces legales puede romper ritmo visual y wrapping de la franja inferior, sobre todo en tablet y móvil. **No rehacer la retícula de cuatro columnas.** Revisar `.lp-legal-links` (gap actual 8px 20px, flex-wrap) y su posición frente a `.lp-footer-bottom`. Establecer orden y agrupación visual con separadores sutiles o dos filas controladas cuando sea necesario, manteniendo los seis links visibles. Ajustar alineación y tipografía con el resto del footer. No introducir nuevas columnas de navegación ni duplicar enlaces.
 
-### Diseño propuesto
-- Desktop: toast editorial flotante bottom-left o bottom-center, max-width 420–480px, fondo papel, borde #e6e1d8, sombra cálida suave, radio 16–18px, padding 18–22px. Icono shield/lock fino violeta, título «Información legal y privacidad», copy existente, enlaces subrayados «Privacidad» y «Cookies», cierre claramente etiquetado. No bloquear hero ni CTA.
-- Móvil: bottom sheet compacto, ancho viewport menos safe-area/márgenes, no tapa botón de chat, input ni CTA; posibilidad de cierre con botón grande. No tapar teclado virtual. Evitar backdrop bloqueante.
-- Entrada única por sesión de visualización (sin inventar persistencia): 280–360ms opacity + translateY(8px); salida 180–220ms. Reduced motion: instantánea.
-- Si la auditoría encuentra cookies no esenciales: diseñar **separadamente** gestor real con «Aceptar», «Rechazar» y «Configurar» de prominencia comparable, bloqueo previo de scripts, granularidad y revocación persistente. Nunca sustituir consentimiento obligatorio por simple X; no implantar sin inventario actualizado y asesoramiento jurídico.
-- Evitar textos que impliquen consentimiento al cerrar; no almacenar un «consent=true» al cerrar aviso informativo.
+### 6.3 Aceptación footer
+- A 1440px la banda legal se integra sin dominar la composición.
+- A 768px no hay enlaces huérfanos ni colisiones con la nota editorial.
+- A 390px y 320px todos los enlaces son legibles, clicables, sin scroll horizontal y sin interferir con copyright.
+- `BrandLockup`, claims y grupos existentes intactos.
 
-## 08. L6 · Movimiento y accesibilidad
-Transiciones 160–240ms hover, 280–420ms entrada, 500–650ms reveal editorial opcional. Header con transición sutil de borde/sombra, índice activo por IntersectionObserver, enlaces con underline, tarjetas de confianza con elevación 2px. Nada de parallax pesado, scroll-jacking o revelar el texto legal de modo que quede invisible si JS falla. CSS preferido; no introducir Motion solo para estas páginas. prefers-reduced-motion: reduce; teclado, Escape donde aplique, focus visible, contraste WCAG AA, 200% zoom, 320px sin overflow, landmarks y skip-link. No ocultar contenido legal detrás de animaciones.
+## 7. Aviso informativo — refinamiento del componente real
 
-## 09. L7 · Campañas para implementación
-**C00 Inventario**: confirmar rama, commit desplegado, rutas y CSS de seis HTML; capturas 1440/390/320; DevTools Network y cookies/storage antes/después; confirmar origen de Fonts y scripts. Baseline Lighthouse/axe.
-**C01 Design tokens**: CSS compartido y shell accesible sin tocar textos; tests de igualdad de copy por extracción DOM/hash normalizado.
-**C02 Seis páginas**: refactor header, hero, índice, cuerpo y footer, preservando exactamente contenido, meta tags y rutas.
-**C03 Confianza**: hub editorial, tarjetas y navegación cruzada, sin claims nuevos.
-**C04 Footer React**: alinear grilla y responsive con landing premium, mantener legalPages.
-**C05 Aviso**: rediseñar .lp-legal-notice, estados, teclado, móvil; sin introducir cookies/consent ficticio.
-**C06 Motion & QA**: microinteracciones, reduced motion, responsive, pruebas de enlaces, contrastes, snapshots.
-**C07 Preflight y release**: typecheck/build/test legal/link checker/release gate/Playwright escritorio y móvil, comparar screenshots y métricas, revisar Vercel scope=site; no desplegar API/worker por un cambio puramente visual. Merge/deploy solo tras aprobación.
+### 7.1 Estado y semántica comprobados
+`legalVisible` empieza en `true`; aviso `aside.lp-legal-notice` se muestra si `!chatOpen && !selectedAgent && !menuOpen`; contiene título «Información legal y privacidad», texto descriptivo, enlaces a Privacidad y Cookies y botón X. Según documentación previa, no registra consentimiento ni escribe en storage.
 
-## 10. Criterios de aceptación
-- Las seis páginas parecen parte de la misma marca que la landing Fraunces/Manrope, no una segunda web oscura.
-- Ninguna palabra del contenido legal aprobado cambia sin revisión expresa; conservar version y published.
-- URLs existentes funcionan en acceso directo y desde el footer; no 404 ni redirecciones al login.
-- Footer de landing no se rompe en móvil; todas las rutas correctas.
-- Aviso elegante, legible, cerrable y no intrusivo; semántica fiel a su función informativa.
-- Si no hay cookies no esenciales, no inventar banner de consentimiento. Si las hay, activar proyecto de consentimiento aparte.
-- Páginas sin dependencia de JS para leer texto; keyboard/screenreader y reduced-motion correctos.
-- Build, gate legal, Playwright, enlace checker y contraste pasan; reportar resultados reales.
-- Ninguna modificación de backend, textos comerciales, precio, API, worker, ni landing legacy en esta campaña.
+### 7.2 Rediseño exacto
+- Conservar anclaje inferior izquierdo, ancho de 330px, padding 12px 14px, radio 12px, borde `--lp-line` y fondo `--lp-paper`.
+- Mejorar únicamente jerarquía tipográfica, interlineado, alineación de la X, espaciado entre texto y links y sombra cálida casi imperceptible.
+- Título tinta; descripción muted; enlaces con el mismo subrayado de `.lp-premium .lp-legal-notice a`. Sin iconos grandes ni botón morado de «Aceptar».
+- Entrada `opacity:0→1` y `translateY(6px)→0` en 200–280ms; salida 180–220ms, con desmontaje controlado si se anima la salida. Reduced-motion: instantáneo.
+- Comprobar convivencia con launcher «Hablar con LAIA», menús, diálogos y teclado virtual. Si el ancho móvil no permite mantener el anclaje, ajustar margen y max-width, **sin convertirlo en un bottom-sheet modal**.
+- Cerrar X significa **cerrar aviso**, no aceptar cookies.
 
-## 11. Riesgos y handoff
-La rama feat/freebuff-compliance-integral tiene copia de la landing React y los HTML legales; comparar con release/landing-legal-20261122 y feat/landing-premium-funnel para no sobrescribir mejoras de motion ni cambios recientes. El informe PUBLICACION-LANDING.md contiene comprobaciones históricas, no prueba actual de producción. El acceso web directo a agntiapro.com no fue posible durante esta auditoría: un agente con navegador debe capturar y verificar el sitio publicado antes de programar. No borrar apps/site/index.html sin resolver el entrypoint de deploy. Mantener separación entre publicación informativa y activación de servicios operativos.
+### 7.3 Decisión legal pendiente de evidencia
+Auditar cookies, localStorage, solicitudes a terceros y scripts reales en producción. Si se usan tecnologías opcionales que requieren consentimiento, crear una campaña independiente de consentimiento con bloqueo previo, rechazo y configuración equivalentes, revocación y persistencia adecuada; nunca disfrazar consentimiento de simple aviso.
 
-**Regla de diseño:** la confianza no debe parecer un anexo legal añadido al final, sino una extensión natural de la identidad premium de AgntiaPro.
+## 8. Motion, accesibilidad y responsive
+- Motion de nivel editorial: enlaces 160–220ms, hover de botones según landing (200ms), aviso 200–280ms. Sin parallax ni reveals que oculten texto jurídico.
+- `prefers-reduced-motion: reduce`: eliminar desplazamientos, suavizado de scroll y animaciones no esenciales.
+- Focus visible; landmarks; skip link; jerarquía H1/H2; contraste WCAG AA; zoom 200%; viewport 320px sin overflow; touch targets adecuados; idioma `lang=es`.
+- Las páginas legales deben ser legibles sin JS; no usar `opacity:0` como estado base.
+- Verificar carga de fuentes, CLS, navegación directa y lector de pantalla. CSS scoped `.agntia-legal` para evitar afectar app autenticada.
+
+## 9. Campañas secuenciales de implementación
+
+**C00 · Preflight (solo lectura).** Confirmar SHA realmente desplegado, Vercel root/output, ramas `feat/freebuff-compliance-integral`, `release/landing-legal-20261122`, `feat/landing-premium-funnel`. Inspeccionar `BrandMark`, tokens completos, cascada final y scripts Vite. Capturar landing (hero, footer, CTA y aviso) y seis páginas a 1440/768/390/320. Registrar Network, cookies, storage, Lighthouse y pruebas actuales.
+
+**C01 · Fuente de verdad visual.** Extraer tokens a CSS legal scoped; preparar lockup, header y footer a partir de componentes reales, sin inventar otros. Revisar fuentes y assets.
+
+**C02 · Plantilla de lectura.** Aplicar shell a los seis HTML manteniendo el texto jurídico byte-for-byte cuando sea posible; comparar DOM normalizado para verificar igualdad. Preservar metadatos.
+
+**C03 · Confianza.** Mejorar la navegación de `confianza.html` con la gramática visual real; validar cada link y evitar claims nuevos.
+
+**C04 · Footer.** Ajustar únicamente `.lp-legal-links` y responsive necesario; conservar `.lp-footer-main`, textos y navegación.
+
+**C05 · Aviso.** Refinar `.lp-legal-notice` y su interacción; probar superposiciones, teclado, X y reduced-motion.
+
+**C06 · QA visual y accesible.** Screenshots comparativos, Playwright desktop/mobile, axe o auditoría equivalente, navegación por teclado, zoom, 320px, enlaces directos, performance, cookies y storage.
+
+**C07 · Release controlado.** Ejecutar `check-legal-site`, release gate, tests/build/typecheck y smoke de seis URLs; documentar comandos exactos y resultados. Preparar PR y rollback. **No merge ni deploy sin aprobación del titular**; no desplegar API/worker por este cambio visual.
+
+### Entregable obligatorio por campaña
+Commit acotado, lista de archivos tocados, screenshots antes/después, pruebas ejecutadas con resultado real, regresiones conocidas, decisión de continuar o bloquear y nota de handoff.
+
+## 10. Pruebas y criterios de aceptación
+- [ ] Seis documentos con la misma identidad visual de la landing, sin CSS dark legacy.
+- [ ] Misma marca real, Fraunces/Manrope, colores, bordes y proporciones verificadas con screenshots.
+- [ ] Contenido legal, metadatos, enlaces y rutas preservados; ninguna cláusula alterada sin aprobación.
+- [ ] Footer de cuatro columnas conservado y banda legal equilibrada en escritorio/móvil.
+- [ ] Aviso mantiene semántica informativa, X funcional y no tapa controles.
+- [ ] Seis URLs abren directamente sin 404, redirecciones al login ni enlaces rotos.
+- [ ] Sin regresiones de accesibilidad, performance, fuentes ni CLS significativas.
+- [ ] Sin nuevas cookies o trackers no auditados; consentimiento real separado si procede.
+- [ ] No se modifica backend, app operativa, precios, copy comercial ni legacy index.
+- [ ] Capturas comparativas aprobadas por el titular antes de publicar.
+
+## 11. Riesgos, decisiones y handoff
+1. **Divergencia de ramas:** la landing premium aparece en varias ramas; comprobar diferencias antes de aplicar cambios para evitar sobrescribir motion u otras mejoras.
+2. **Build multipágina:** `apps/site` contiene portada legacy y seis documentos legales; no borrar directorio ni rutas por confundirlos.
+3. **Dependencia de fuentes:** la landing carga Google Fonts; revisar transferencia de datos y rendimiento si se replica en legal.
+4. **Aviso vs consentimiento:** no son equivalentes. Una X no prueba consentimiento.
+5. **Producción no verificada visualmente:** el implementador debe confirmar screenshots y HTTP actuales antes de afirmar que la corrección está publicada.
+6. **Copy aprobado:** separar diseño de revisión jurídica; cualquier hallazgo sustantivo se escala al titular, no se corrige silenciosamente.
+
+### Instrucción final al agente
+Trabaja sobre la rama confirmada, compara con la landing premium real y conserva el código operativo. No uses mockups ni imágenes de terceros como autoridad de diseño. No hagas cambios de contenido legal. Reporta avances campaña por campaña, con capturas y pruebas. **El criterio de éxito no es “parece premium”: es “parece exactamente AgntiaPro”.**
