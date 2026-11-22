@@ -6,6 +6,8 @@ function versionManifest(): Plugin {
   return {
     name: "ui-lab-version-manifest",
     generateBundle() {
+      this.emitFile({ type: "asset", fileName: "robots.txt", source: "User-agent: *\\nDisallow: /\\n" });
+      this.emitFile({ type: "asset", fileName: "_headers", source: "/*\\n  X-Robots-Tag: noindex, nofollow\\n  Referrer-Policy: no-referrer\\n  X-Content-Type-Options: nosniff\\n" });
       this.emitFile({
         type: "asset",
         fileName: "version.json",
