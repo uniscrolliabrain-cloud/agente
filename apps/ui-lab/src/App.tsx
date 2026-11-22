@@ -20,6 +20,7 @@ export default function App(){
  const select=(id:string)=>{setActive(id);setKey(k=>k+1);history.replaceState(null,"","?view="+encodeURIComponent(id));};
  useEffect(()=>{document.title="AgntiaPro UI Lab · "+item.name;},[item.name]);
  const Preview=item.Component;
+ if(new URLSearchParams(location.search).has("embed")) return <div className="lab-embed"><div className="lab-preview-badge">UI LAB · {item.status==="api"?"API NO CONECTADA":item.status==="fixture"?"DATOS FICTICIOS":"DEMO"}</div><PreviewBoundary><Suspense fallback={<div className="lab-loading">Cargando componente real…</div>}><Preview/></Suspense></PreviewBoundary></div>;
  return <div className={"lab-root "+(full?"lab-full":"")}>
   <aside className="lab-sidebar" aria-label="Catálogo de pantallas">
     <div className="lab-brand"><span className="lab-brand-mark">A<span>.</span></span><div><strong>AgntiaPro</strong><small>UI LAB · PREVIEW</small></div></div>
@@ -40,11 +41,10 @@ export default function App(){
       </div>
     </header>
     <div className="lab-canvas">
-      <div className="lab-viewport-wrap" style={{width:widths[device]?Math.min(widths[device]!,Math.max(320,window.innerWidth-32))*zoom/100: "100%",maxWidth:"100%"}}>
-        <div className="lab-viewport" style={{width:widths[device]??"100%",transform:widths[device]?`scale(${zoom/100})`:undefined,transformOrigin:"top left"}}>
-          <div className="lab-preview-badge">UI LAB · {item.status==="api"?"API NO CONECTADA":item.status==="fixture"?"DATOS FICTICIOS":"DEMO"}</div>
-          <PreviewBoundary key={item.id+"-"+key}><Suspense fallback={<div className="lab-loading">Cargando componente real…</div>}><Preview/></Suspense></PreviewBoundary>
-        </div>
+      <div className="lab-viewport-wrap" style={{width:widths[device]?Math.min(widths[device]!,Math.max(320,window.innerWidth-32))*zoom/100:"100%",maxWidth:"100%"}}>
+        <iframe key={item.id+"-"+key+"-"+device} title={"Vista "+item.name} className="lab-frame"
+          style={{width:widths[device]??"100%",height:device==="desktop"?900:850,transform:widths[device]?`scale(${zoom/100})`:undefined,transformOrigin:"top left"}}
+          src={"/?embed=1&view="+encodeURIComponent(item.id)} sandbox="allow-scripts allow-same-origin allow-forms" referrerPolicy="no-referrer"/>
       </div>
     </div>
     <footer className="lab-footer"><span>{device==="fluid"?"Ancho disponible":widths[device]+" px"} · {zoom}% · Vista aislada</span><span>No se envían cambios a producción</span></footer>
