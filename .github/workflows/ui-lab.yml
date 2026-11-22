@@ -18,6 +18,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ui-lab-build-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
     steps:
@@ -34,6 +37,8 @@ jobs:
       - name: Typecheck UI Lab
         run: pnpm --filter @agente/ui-lab typecheck
       - name: Build UI Lab
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
         run: pnpm --filter @agente/ui-lab build
       - uses: actions/upload-artifact@v4
         with:
@@ -42,7 +47,10 @@ jobs:
           retention-days: 7
   deploy:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    concurrency:
+      group: ui-lab-deploy
+      cancel-in-progress: false
+    if: (github.event_name == 'workflow_dispatch' && inputs.deploy == true) || (github.event_name == 'push' && vars.UI_LAB_AUTO_DEPLOY == 'true')
     runs-on: ubuntu-latest
     environment: ui-lab
     permissions:
@@ -75,6 +83,7 @@ jobs:
       - name: Build via Vercel
         working-directory: apps/ui-lab
         env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
           VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
