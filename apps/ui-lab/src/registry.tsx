@@ -27,5 +27,5 @@ export const previews:Preview[]=[
 {id:"users",name:"Usuarios",category:"Trabajo",description:"Vista original; depende de API",Component:()=> <Users currentUserId="ui-lab"/>,status:"api"},
 {id:"whatsapp",name:"WhatsApp",category:"Canales",description:"Vista original; API bloqueada en el laboratorio",Component:Whatsapp,status:"api"},
 {id:"control",name:"Control de actividad",category:"Trabajo",description:"Vista original en modo desconectado",Component:()=> <Control enabled={false}/>,status:"api"},
-{id:"operations",name:"Operaciones",category:"Trabajo",description:"Vista original; datos de servidor no disponibles",Component:Operations,status:"api"},
+{id:"operations",name:"Operaciones",category:"Trabajo",description:"Vista original; datos de servidor no disponibles",Component:()=> <Operations enabled={false}/>,status:"api"},
 ];
