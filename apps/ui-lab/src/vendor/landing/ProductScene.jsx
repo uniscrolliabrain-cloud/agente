@@ -1,4 +1,4 @@
-import { BrandLockup } from "../components/BrandMark";
+import { BrandLockup } from "../../../../web/src/components/BrandMark";
 import {
   Check,
   CheckCheck,
