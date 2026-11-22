@@ -30,7 +30,7 @@ Lectura de código del frontend, rutas de servidor, contratos de dominio y módu
 | Worker | `engine/worker.ts:44,213`; `server/src/index.ts:100` | TaskWorker ya usa nextRunAt/leases. El playhead de UX no debe ejecutar ni reprogramar tareas. |
 | Presencia | `engine/presence.ts` | Map en memoria, TTL 30 s, thread/project. No prueba disponibilidad, productividad ni sincronización entre réplicas. |
 | Grafo | `kernel/graph/views.ts:43` | Consulta opcional `businessGraph`; fallback explícito si no conectado. No prometer Digital Twin predictivo operativo. |
-| Shell/chat | `App.tsx`; `SidebarV2.tsx`; `AppShell.tsx` | Auth, tenant, barra, chat lateral y sheet móvil compartidos. El estudio no añade otro sidebar/chat. Hooks globales pueden seguir consultando APIs al estar autenticado; no atribuir esas lecturas al proveedor demo. |
+| Shell/chat | `App.tsx`; `SidebarV2.tsx`; `AppShell.tsx` | Auth, tenant, barra, chat lateral y sheet móvil compartidos. El estudio no añade otro sidebar/chat. Hooks globales pueden seguir consultando APIs al estar autenticado; App también puede crear un hilo de chat si no existe ninguno (comportamiento previo). El estudio no dispara esas operaciones. La preview aislada no monta App ni esos hooks. |
 
 ## Riesgos que condicionan el diseño
 

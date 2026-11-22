@@ -1,0 +1,82 @@
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+.bcs-review-shell {
+  background: #fcfaf6;
+  color: #242421;
+  font-family: Manrope, system-ui, sans-serif;
+}
+.bcs-review-header {
+  height: 58px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  border-bottom: 1px solid #e6e1d8;
+  box-sizing: border-box;
+  background: #fffdfa;
+}
+.bcs-review-header > a {
+  color: #242421;
+  text-decoration: none;
+}
+.bcs-review-header > span {
+  font-size: 12px;
+  color: #6e6c66;
+}
+.bcs-review-header > span:last-child {
+  margin-left: auto;
+  font-size: 11px;
+}
+.bcs-review-shell .cc-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.bcs-review-shell .cc-brand-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bcs-review-shell .cc-brand-name {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.7px;
+}
+.bcs-review-shell .cc-brand-name b {
+  font-weight: 800;
+}
+.bcs-review-shell .cc-brand-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 7px;
+  letter-spacing: 0.35em;
+  color: #79756e;
+}
+.bcs-review-shell .cc-brand-sub::before,
+.bcs-review-shell .cc-brand-sub::after {
+  content: "";
+  height: 1px;
+  width: 18px;
+  background: #b49665;
+}
+@media (max-width: 700px) {
+  .bcs-review-header {
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .bcs-review-header > span:not(:last-child) {
+    display: none;
+  }
+  .bcs-review-header > span:last-child {
+    max-width: 120px;
+    text-align: right;
+    line-height: 1.4;
+  }
+}

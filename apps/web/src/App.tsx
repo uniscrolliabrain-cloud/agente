@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -43,6 +43,8 @@ import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
 import MobileChatSheet from "./components/MobileChatSheet";
 import MobileSheetDiagnostics from "./components/MobileSheetDiagnostics";
+
+const BusinessCommandStudio = lazy(() => import("./workspaces/business-command-studio/BusinessCommandStudio"));
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -319,6 +321,11 @@ export default function App() {
           )}
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
+          {view === "command-studio" && (
+            <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
+              <BusinessCommandStudio />
+            </Suspense>
+          )}
         </div>
       </AppShell>
 
