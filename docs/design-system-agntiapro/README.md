@@ -1,38 +1,35 @@
-# AgntiaPro — Sistema de diseño maestro v1.0
-Fecha: 2026-11-22. Estado: **normativa propuesta, pendiente de aprobación visual del fundador**. Rama documental: `docs/design-system-agntiapro-master-20261122`. Sin modificaciones de aplicación ni despliegue.
+# AgntiaPro — Manual maestro de branding, UI y UX visual
+**Edición 2 · 22 noviembre 2026 · Exclusivamente diseño.** Esta documentación establece el lenguaje visual de toda AgntiaPro, independientemente de lo que haga cada workspace.
 
-## Propósito
-Fuente de verdad para todas las interfaces nuevas: landing pública, aplicación autenticada, Centro de Mando, Estudio de Operaciones, chat y videoconferencia, móvil y workspaces futuros. Mantener el lenguaje visual premium de la landing y el Estudio de Operaciones sin hacer rediseños radicales. Priorizar claridad, calma, espacio, jerarquía, densidad controlada, velocidad, accesibilidad, continuidad contextual y confianza.
+## Regla fundamental
+**Esta guía NO define funcionalidades.** No prescribe operaciones, agentes, datos, workflows, modelos, contratos, permisos, arquitectura, backend ni lógica de producto. Los nombres de pantallas solo sirven para identificar **referencias estéticas**. Cada espacio conserva total libertad funcional; debe compartir la identidad gráfica, la calidad compositiva y el lenguaje de interacción.
 
-## Índice de lectura obligatoria
-1. [01-auditoria-fuentes.md](01-auditoria-fuentes.md) — evidencias y deuda real.
-2. [02-identidad-tokens.md](02-identidad-tokens.md) — colores, tipografía, espacio, superficies, iconografía.
-3. [03-componentes-patrones.md](03-componentes-patrones.md) — biblioteca de componentes y reglas.
-4. [04-interaccion-motion.md](04-interaccion-motion.md) — microinteracciones, estados, transiciones.
-5. [05-workspaces-runtime.md](05-workspaces-runtime.md) — shell, chat/vídeo, Studio, vistas generativas y contratos.
-6. [06-calidad-gobernanza.md](06-calidad-gobernanza.md) — criterios de aceptación, QA y adopción.
-7. [07-prompt-agentes.md](07-prompt-agentes.md) — instrucciones copiables para Codex/Cline/otros.
+## Referencias estéticas
+- Landing premium: `apps/web/src/landing/landing.css` y `Landing.jsx`.
+- Estudio de Operaciones: `apps/web/src/workspaces/business-command-studio/studio.css`, `BusinessCommandStudio.tsx` y `apps/web/src/design-system/agntia-tokens.css`.
+- Centro de Mando: referencias visuales y `apps/web/src/workspaces/35-centro-mando/`; no es referencia funcional.
+- Capturas aportadas por el fundador: fuente de preferencias visuales, sujetas a revisión por versión.
 
-## Jerarquía de autoridad
-- La implementación en la rama auditada es evidencia, no norma eterna.
-- Los tokens `agntia-tokens.css` son el punto de partida operativo **opt-in**.
-- Estas normas son la dirección objetivo, no afirmaciones de que todo ya esté implementado.
-- Un componente compartido aprobado prevalece sobre una copia local.
-- El branding no debe romperse para introducir un workspace nuevo.
-- Ninguna UI puede falsear datos, acciones ejecutadas, reservas o conexiones.
-- Cambios que afecten a producto, API, tenant, permisos o despliegue requieren revisión separada.
+## Índice
+01. Auditoría estética y diferencias entre fuentes.
+02. Identidad, tokens y tipografía.
+03. Gramática visual y catálogo de componentes **visuales**.
+04. Movimiento, transiciones y feedback.
+05. Composición, navegación visual, responsive y densidad.
+06. Control de calidad, gobernanza visual y evolución.
+07. Prompt universal para agentes de diseño/frontend.
 
-## Principios innegociables
-1. **Una empresa, múltiples perspectivas**: misma entidad y selección en Kanban, Grafo, Timeline, Digital Twin y Empresa 360°.
-2. **Humano dirige, agentes ejecutan**: permisos y aprobación explícita antes de acciones sensibles.
-3. **La conversación no es otra aplicación**: panel acoplado y videollamada conviven con el workspace sin destruir contexto.
-4. **Editorial + instrumental**: belleza de la landing y precisión de un editor profesional.
-5. **Un foco principal por pantalla**: información secundaria progresiva.
-6. **Demo, real, planificado y simulado son estados distinguibles**.
-7. **Movimiento explica causalidad**: nunca animación decorativa que dificulte operar.
-8. **Accesible por teclado, táctil y lector de pantalla**.
-9. **Móvil no es escritorio reducido**: sheets, safe areas y teclado virtual.
-10. **La coherencia es verificable**: tokens, componentes, screenshots, tests y revisión.
+## Los diez principios
+1. Belleza editorial y precisión de software profesional.
+2. Identidad cálida: marfil, carbón, violeta y oro contenido.
+3. Fraunces para titulares, Manrope para interfaz.
+4. Una jerarquía evidente, no un mosaico de tarjetas.
+5. Espacio negativo deliberado; densidad sin saturación.
+6. Un sistema de superficies, bordes y radios coherente.
+7. Movimiento corto, suave y con sentido espacial.
+8. Adaptación móvil rediseñada por composición, no miniaturizada.
+9. Estados visuales completos y accesibles.
+10. Consistencia de marca sin imponer un mismo layout a todas las pantallas.
 
-## Alcance y límites de la auditoría
-Inspección del código GitHub en `feat/business-command-studio-demo` y documentos heredados, además de las capturas aportadas en conversación. No se ejecutaron builds, tests visuales ni inspección de navegador real. La landing y Studio son demos deliberadas en partes; no se infiere conexión real de una captura. El árbol de `main` no contenía Studio ni landing premium en la misma forma que la rama elegida; antes de integrar, comparar ramas y resolver divergencias. No copiar documentación legacy como autoridad.
+## Alcance y verificación
+Auditoría de CSS y componentes concretos en rama `feat/business-command-studio-demo`; no auditoría visual automatizada de navegador. Los valores exactos extraídos del CSS se distinguen de las recomendaciones. La rama es documental, no cambia interfaces ni despliega.
