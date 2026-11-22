@@ -17,10 +17,10 @@ function RichText({value,onChange}:{value:string;onChange:(v:string)=>void}) {
  const lines=value.split("\n");
  return <div className="kn-editor" aria-label="Contenido editable de la página">
   {lines.map((line,i)=>{
-   const heading=line.startsWith("## "); const check=line.startsWith("☐ ");
+   const heading=line.startsWith("## "); const check=line.startsWith("☐ ")||line.startsWith("☑ ");
    return <div key={i} className={"kn-line "+(heading?"kn-heading":check?"kn-check":"")}>
     {check&&<input type="checkbox" aria-label={"Marcar "+line.slice(2)} onChange={e=>{const copy=[...lines];copy[i]=(e.target.checked?"☑ ":"☐ ")+line.slice(2);onChange(copy.join("\n"));}} checked={line.startsWith("☑ ")}/>}
-    <input aria-label={heading?"Encabezado": "Línea "+(i+1)} value={heading?line.slice(3):check?line.slice(2):line.startsWith("☑ ")?line.slice(2):line} placeholder={heading?"Encabezado":"Escribe algo…"} onChange={e=>{const copy=[...lines];copy[i]=(heading?"## ":check?"☐ ":line.startsWith("☑ ")?"☑ ":"")+e.target.value;onChange(copy.join("\n"));}} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();const copy=[...lines];copy.splice(i+1,0,"");onChange(copy.join("\n"));requestAnimationFrame(()=>{const fields=document.querySelectorAll<HTMLInputElement>(".kn-editor .kn-line > input:not([type=checkbox])");fields[i+1]?.focus();});} if(e.key==="Backspace"&&!line&&lines.length>1){e.preventDefault();const copy=[...lines];copy.splice(i,1);onChange(copy.join("\n"));}}}/>
+    <input aria-label={heading?"Encabezado": "Línea "+(i+1)} value={heading?line.slice(3):check?line.slice(2):line.startsWith("☑ ")?line.slice(2):line} placeholder={heading?"Encabezado":"Escribe algo…"} onChange={e=>{const copy=[...lines];copy[i]=(heading?"## ":check?(line.startsWith("☑ ")?"☑ ":"☐ "):"")+e.target.value;onChange(copy.join("\n"));}} onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();const copy=[...lines];copy.splice(i+1,0,"");onChange(copy.join("\n"));requestAnimationFrame(()=>{const fields=document.querySelectorAll<HTMLInputElement>(".kn-editor .kn-line > input:not([type=checkbox])");fields[i+1]?.focus();});} if(e.key==="Backspace"&&!line&&lines.length>1){e.preventDefault();const copy=[...lines];copy.splice(i,1);onChange(copy.join("\n"));}}}/>
    </div>;
   })}
  </div>;
@@ -50,7 +50,7 @@ export default function KnowledgeNotionLab(){
   </div>{expanded.includes(p.id)&&tree(p.id,depth+1)}
  </div>);
  return <div className="kn-root">
-  <header className="kn-top"><div className="kn-top-left"><button className="kn-icon kn-mobile-menu" aria-label="Abrir páginas" onClick={()=>setMobileOpen(true)}><Menu size={18}/></button><span className="kn-product">Conocimiento</span><span className="kn-divider">/</span><span className="kn-top-context">AgntiaPro · Demo</span></div><div className="kn-top-right"><span className="kn-demo-label">DATOS SINTÉTICOS</span><button className="kn-icon" title="Buscar en conocimiento (Ctrl+K)" aria-label="Buscar" onClick={()=>setSearchOpen(true)}><Search size={17}/></button><button className="kn-icon" title="Ayuda de la demo" aria-label="Ayuda" onClick={()=>setNotice("Prototipo aislado: los cambios no se guardan ni modifican AgntiaPro.")}><CircleHelp size={17}/></button></div></header>
+  <header className="kn-top"><div className="kn-top-left"><button className="kn-icon kn-mobile-menu" aria-label="Abrir páginas" onClick={()=>{setTreeOpen(true);setMobileOpen(true);}}><Menu size={18}/></button><span className="kn-product">Conocimiento</span><span className="kn-divider">/</span><span className="kn-top-context">AgntiaPro · Demo</span></div><div className="kn-top-right"><span className="kn-demo-label">DATOS SINTÉTICOS</span><button className="kn-icon" title="Buscar en conocimiento (Ctrl+K)" aria-label="Buscar" onClick={()=>setSearchOpen(true)}><Search size={17}/></button><button className="kn-icon" title="Ayuda de la demo" aria-label="Ayuda" onClick={()=>setNotice("Prototipo aislado: los cambios no se guardan ni modifican AgntiaPro.")}><CircleHelp size={17}/></button></div></header>
   <nav className="kn-tabs" aria-label="Áreas de conocimiento">{sections.map(s=><button key={s.id} className={"kn-tab "+(section===s.id?"active":"")} onClick={()=>{setSection(s.id);setMobileOpen(false);}}><s.icon size={15}/><span>{s.label}</span></button>)}</nav>
   <div className="kn-workspace">
    {section==="documents"?<>
