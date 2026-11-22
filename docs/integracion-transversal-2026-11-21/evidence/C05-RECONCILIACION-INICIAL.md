@@ -54,3 +54,12 @@ Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.t
 - `72d0b8ed`: añadidas pruebas `tests/voice-v2-media-transport.test.ts` para cancelación, rechazo de epochs obsoletos, cierre y sesiones terminales.
 - **No está conectado aún al coordinador HTTP**; es un puerto y doble de pruebas para futuras integraciones. No atribuir a este incremento reproducción, streaming ni integración de Anam/ElevenLabs.
 - Pendiente: ejecutar suite y typecheck, comprobar que las rutas usan únicamente sesiones autorizadas y definir el handoff de transportes de C06.
+
+## Incremento P05.5 — Adaptador de ciclo de vida (sin activación de proveedores)
+
+- `bda6582f`: `engine/voice-v2/media-lifecycle.ts` incorpora `VoiceMediaLifecycle`, que compone `VoiceTurnCoordinator.inspect/interrupt/close` con un puerto `MediaTransportPort` inyectado.
+- `open` comprueba autorización y consentimiento en el coordinador antes de abrir el transporte y **revalida epoch/revision** después de la apertura. Si cambian, solicita cierre del transporte.
+- `interrupt` confirma primero el nuevo epoch durable; `close` confirma primero el cierre durable. Un fallo de transporte nunca debe deshacer la revocación en el coordinador.
+- `40bd64ea`: `tests/voice-v2-media-lifecycle.test.ts` cubre aislamiento de tenant, revocación, interrupción, cierre, señal abortada y carrera de epoch durante apertura.
+- **No está instalado en rutas HTTP ni en producción.** La prueba usa un coordinador simulado y transporte mock. El puerto externo real y el control de su disponibilidad se diseñarán en C06.
+- **Pendiente de validar:** ejecutar `pnpm` typecheck y suites de C05/C04. No hay resultado CI verificado para estos commits. Antes de activar transporte real, revisar limpieza en errores de proveedor, concurrencia multiinstancia y comportamiento ante aborts durante `transport.open`.
