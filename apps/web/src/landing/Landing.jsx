@@ -1,335 +1,1053 @@
-import { useEffect, useRef, useState } from 'react'
-import './landing.css'
-import { BrandLockup } from '../components/BrandMark'
-import { ArrowRight, ArrowUp, Check, ChevronDown, Mic, Paperclip, Pause, Play, Search, X } from 'lucide-react'
+import { useEffect, useRef, useState } from "react";
+import "./landing.css";
+import { BrandLockup } from "../components/BrandMark";
+import {
+  ArrowUp,
+  Check,
+  CheckCheck,
+  Clock3,
+  Folder,
+  Menu,
+  MessageCircle,
+  Mic,
+  Paperclip,
+  Pause,
+  Play,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
+import ProductScene, { productViews } from "./ProductScene";
 
-const laiaUrl = '/landing/laia.png'
-const antonioUrl = '/landing/antonio.png'
-const pedroUrl = '/landing/pedro.png'
-const mandoUrl = '/images/AgntiaPro.png'
-const chatUrl = '/landing/chat.webp'
-const opsUrl = '/landing/operaciones.webp'
-const wsUrl = '/landing/workspaces.webp'
+const laiaUrl = "/landing/laia.png";
+const antonioUrl = "/landing/antonio.png";
+const pedroUrl = "/landing/pedro.png";
 
-const initialMessages = [
-  { role: 'laia', text: 'Hola. Te aviso de que la conexión con Google se ha perdido. ¿Quieres que la revise y te diga qué ha dejado de sincronizarse?' },
-]
+const initialMessages = [{ role: "laia", text: "Hola, soy LAIA. ¿Qué te gustaría quitarte de encima en tu empresa?" }];
 
 const agents = [
-  { id: 'laia', name: 'LAIA', role: 'Supervisora · Atención · Manager', img: laiaUrl, duration: '0:35', quote: '¿Y si pudieras hablar directamente con tu empresa?', detail: 'Pregunta, delega y supervisa. LAIA coordina al equipo y te trae el resultado, con tu aprobación en lo sensible.' },
-  { id: 'antonio', name: 'Antonio', role: 'Finanzas · Gestoría · Banca', img: antonioUrl, duration: '0:30', quote: '¿Sabes realmente qué está pasando con tus números?', detail: 'Cobros, gastos y obligaciones en orden, explicados en claro y sin perderte en carpetas ni plazos.' },
-  { id: 'pedro', name: 'Pedro', role: 'Ciberseguridad · Diseño web y gráfico', img: pedroUrl, duration: '0:40', quote: 'Tu empresa segura, tu web vendiendo, tu marca cuidada.', detail: 'Protección, presencia y diseño que trabajan cada día por tu negocio, con tu tono y tu marca.' },
-]
+  {
+    id: "laia",
+    name: "LAIA",
+    role: "Supervisora · Atención · Manager",
+    img: laiaUrl,
+    duration: "0:35",
+    quote: "¿Y si pudieras hablar directamente con tu empresa?",
+    detail:
+      "Pregunta, delega y supervisa. LAIA coordina al equipo y te trae el resultado, con tu aprobación en lo sensible.",
+  },
+  {
+    id: "antonio",
+    name: "Antonio",
+    role: "Finanzas · Gestoría · Banca",
+    img: antonioUrl,
+    duration: "0:30",
+    quote: "¿Sabes realmente qué está pasando con tus números?",
+    detail: "Cobros, gastos y obligaciones en orden, explicados en claro y sin perderte en carpetas ni plazos.",
+  },
+  {
+    id: "pedro",
+    name: "Pedro",
+    role: "Ciberseguridad · Diseño web y gráfico",
+    img: pedroUrl,
+    duration: "0:40",
+    quote: "Tu empresa segura, tu web vendiendo, tu marca cuidada.",
+    detail: "Protección, presencia y diseño que trabajan cada día por tu negocio, con tu tono y tu marca.",
+  },
+];
 
 const supportAgents = [
-  { name: 'Marcos', role: 'Operaciones', initials: 'M', detail: 'Recepción, tareas y seguimiento sin que nada se quede en el aire.' },
-  { name: 'Ana', role: 'RRHH', initials: 'A', detail: 'Turnos, incorporaciones y seguimiento de tu equipo humano.' },
-  { name: 'Juan', role: 'Gestoría', initials: 'J', detail: 'Trámites y obligaciones con orden, aviso y control.' },
-]
+  {
+    name: "Marcos",
+    role: "Operaciones",
+    initials: "M",
+    detail: "Recepción, tareas y seguimiento sin que nada se quede en el aire.",
+  },
+  { name: "Ana", role: "RRHH", initials: "A", detail: "Turnos, incorporaciones y seguimiento de tu equipo humano." },
+  { name: "Juan", role: "Gestoría", initials: "J", detail: "Trámites y obligaciones con orden, aviso y control." },
+];
 
-const chips = ['¿Qué puedes hacer por mi empresa?', 'Quiero más clientes', 'Automatizar mi atención', '¿Cómo es la implantación?']
-const subtitles = ['Habla con tu empresa. Así de simple.', 'Pregunta, delega y supervisa.', 'Tu equipo digital, coordinado.', 'Tú diriges. Ellos ejecutan.']
+const chips = ["Quiero más clientes", "Organizar mi equipo", "Automatizar mi atención"];
+const subtitles = [
+  "Habla con tu empresa. Así de simple.",
+  "Pregunta, delega y supervisa.",
+  "Tu equipo digital, coordinado.",
+  "Tú diriges. Ellos ejecutan.",
+];
 
 function laiaReply(q) {
-  const s = q.toLowerCase()
-  if (s.includes('cliente')) return 'Claro. Empezaríamos por lo que más mueve tu negocio: captación y atención. Te ayudamos a ordenar contactos, responder a tiempo, recuperar oportunidades y hacer seguimiento sin que se te escape nada. Cuéntame: ¿de dónde te llegan hoy tus clientes?'
-  if (s.includes('atención') || s.includes('atencion') || s.includes('automatizar') || s.includes('recep')) return 'La atención es un gran primer paso. Podemos organizar la recepción, responder consultas frecuentes, gestionar agenda y derivar a una persona cuando la conversación lo necesita. Tú decides qué se aprueba y qué se hace solo. ¿Qué pregunta te repiten más tus clientes?'
-  if (s.includes('implant') || s.includes('cómo funciona') || s.includes('como funciona') || s.includes('empez')) return 'Así lo hacemos: primero una discovery call para conocer tu negocio y tus prioridades. Después compilamos tu entorno: procesos, herramientas, permisos y tu forma de trabajar. Activamos dos servicios de alto impacto y luego seguimos evolucionando contigo.'
-  if (s.includes('precio') || s.includes('cuesta') || s.includes('cuánto') || s.includes('cuanto')) return 'Te lo digo con claridad: la implantación es de 1.500 € y el servicio gestionado desde 1.000 €/mes. En la discovery call vemos qué dos servicios de alto impacto tienen más sentido para tu empresa.'
-  if (s.includes('números') || s.includes('numeros') || s.includes('finanzas') || s.includes('gestoría') || s.includes('gestoria')) return 'Ahí Antonio y Juan pueden ayudarte mucho: orden en cobros y gastos, seguimiento financiero explicado en claro y trámites de gestoría con control. Cuéntame qué te quita más tiempo ahora: ¿facturas, cobros, trámites o todo a la vez?'
-  if (s.includes('segur') || s.includes('web') || s.includes('marca') || s.includes('diseño')) return 'Pedro se encarga de esa parte: seguridad, web y marca cuidada. La idea es que tu presencia venda y tu empresa esté protegida, sin que tengas que aprender herramientas nuevas. ¿Tienes ya web o partimos de cero?'
-  if (s.includes('equipo') || s.includes('rrhh') || s.includes('turno')) return 'Tu equipo digital trabaja con tareas, turnos, permisos y tu estándar operacional. Ana cuida la parte humana: organización, turnos e incorporaciones. Y tú diriges todo desde una sola conversación. ¿Cuántas personas hay hoy en tu equipo?'
-  if (s.includes('hola') || s.includes('buenas')) return 'Hola, encantada. Soy LAIA, tu supervisora. Cuéntame cómo funciona tu empresa y te enseño, con ejemplos concretos, qué podríamos hacer por ella. ¿Qué te quita más tiempo en tu día a día?'
-  return 'Me encanta esa pregunta. Para darte una respuesta útil, cuéntame un poco de tu negocio: sector, tamaño y qué te quita más tiempo. Con eso te propongo dos servicios de alto impacto y el siguiente paso sería una discovery call, sin compromiso.'
+  const s = q.toLowerCase();
+  if (s.includes("cliente"))
+    return "Claro. Empezaríamos por lo que más mueve tu negocio: captación y atención. Te ayudamos a ordenar contactos, responder a tiempo, recuperar oportunidades y hacer seguimiento sin que se te escape nada. Cuéntame: ¿de dónde te llegan hoy tus clientes?";
+  if (s.includes("atención") || s.includes("atencion") || s.includes("automatizar") || s.includes("recep"))
+    return "La atención es un gran primer paso. Podemos organizar la recepción, responder consultas frecuentes, gestionar agenda y derivar a una persona cuando la conversación lo necesita. Tú decides qué se aprueba y qué se hace solo. ¿Qué pregunta te repiten más tus clientes?";
+  if (s.includes("implant") || s.includes("cómo funciona") || s.includes("como funciona") || s.includes("empez"))
+    return "Así lo hacemos: primero una discovery call para conocer tu negocio y tus prioridades. Después compilamos tu entorno: procesos, herramientas, permisos y tu forma de trabajar. Activamos dos servicios de alto impacto y luego seguimos evolucionando contigo.";
+  if (s.includes("precio") || s.includes("cuesta") || s.includes("cuánto") || s.includes("cuanto"))
+    return "Te lo digo con claridad: la implantación es de 1.500 € y el servicio gestionado desde 1.000 €/mes. En la discovery call vemos qué dos servicios de alto impacto tienen más sentido para tu empresa.";
+  if (
+    s.includes("números") ||
+    s.includes("numeros") ||
+    s.includes("finanzas") ||
+    s.includes("gestoría") ||
+    s.includes("gestoria")
+  )
+    return "Ahí Antonio y Juan pueden ayudarte mucho: orden en cobros y gastos, seguimiento financiero explicado en claro y trámites de gestoría con control. Cuéntame qué te quita más tiempo ahora: ¿facturas, cobros, trámites o todo a la vez?";
+  if (s.includes("segur") || s.includes("web") || s.includes("marca") || s.includes("diseño"))
+    return "Pedro se encarga de esa parte: seguridad, web y marca cuidada. La idea es que tu presencia venda y tu empresa esté protegida, sin que tengas que aprender herramientas nuevas. ¿Tienes ya web o partimos de cero?";
+  if (s.includes("equipo") || s.includes("rrhh") || s.includes("turno"))
+    return "Tu equipo digital trabaja con tareas, turnos, permisos y tu estándar operacional. Ana cuida la parte humana: organización, turnos e incorporaciones. Y tú diriges todo desde una sola conversación. ¿Cuántas personas hay hoy en tu equipo?";
+  if (s.includes("hola") || s.includes("buenas"))
+    return "Hola, encantada. Soy LAIA, tu supervisora. Cuéntame cómo funciona tu empresa y te enseño, con ejemplos concretos, qué podríamos hacer por ella. ¿Qué te quita más tiempo en tu día a día?";
+  return "Me encanta esa pregunta. Para darte una respuesta útil, cuéntame un poco de tu negocio: sector, tamaño y qué te quita más tiempo. Con eso te propongo dos servicios de alto impacto y el siguiente paso sería una discovery call, sin compromiso.";
 }
 
-export default function Landing({ loginHref = '/?acceso=1' }) {
-  const [chatOpen, setChatOpen] = useState(false)
-  const [messages, setMessages] = useState(initialMessages)
-  const [input, setInput] = useState('')
-  const [typing, setTyping] = useState(false)
-  const [composerNote, setComposerNote] = useState('')
-  const [tab, setTab] = useState(0)
-  const [form, setForm] = useState({ name: '', company: '', sector: '', phone: '' })
-  const [formStatus, setFormStatus] = useState({ type: 'idle', msg: '' })
-  const [selectedAgent, setSelectedAgent] = useState(null)
-  const [playing, setPlaying] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchResult, setSearchResult] = useState('')
-  const scrollRef = useRef(null)
+const navigation = [
+  { href: "#producto", label: "Producto" },
+  { href: "#equipo", label: "Equipo" },
+  { href: "#como-trabajan", label: "Cómo funciona" },
+  { href: "#implantacion", label: "Implantación" },
+];
+const workflow = [
+  {
+    icon: MessageCircle,
+    title: "Tú hablas.",
+    text: "Un encargo, una pregunta, una prioridad. Lo cuentas con tus palabras.",
+  },
+  {
+    icon: Sparkles,
+    title: "LAIA coordina.",
+    text: "Entiende el contexto y organiza el trabajo con el agente adecuado.",
+  },
+  {
+    icon: CheckCheck,
+    title: "El equipo ejecuta.",
+    text: "Cada tarea tiene un responsable, un proceso y un resultado que revisar.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Tú decides.",
+    text: "Las acciones sensibles esperan tu aprobación. El control sigue contigo.",
+  },
+];
+const implementation = [
+  ["Nos cuentas tu negocio", "Entendemos tus prioridades y elegimos dos procesos donde empezar."],
+  ["Preparamos tu entorno", "Organizamos contexto, herramientas y permisos con tu forma de trabajar."],
+  ["Activamos tu equipo", "Ponemos en marcha los dos primeros servicios, con supervisión."],
+  ["Evolucionamos contigo", "Afinamos los procesos y ampliamos el alcance cuando tenga sentido."],
+];
 
-  useEffect(() => { scrollRef.current?.scrollTo({ top: 9999, behavior: 'smooth' }) }, [messages, typing, chatOpen])
+function Dialog({ title, onClose, children, className = "" }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    const previous = document.activeElement;
+    el.showModal();
+    return () => {
+      el.close();
+      previous?.focus?.();
+    };
+  }, []);
+  return (
+    <dialog
+      ref={ref}
+      className={`lp-dialog ${className}`}
+      aria-label={title}
+      onCancel={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="lp-dialog-inner">{children}</div>
+    </dialog>
+  );
+}
+
+export default function Landing({ loginHref = "/?acceso=1" }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [messages, setMessages] = useState(initialMessages);
+  const [input, setInput] = useState("");
+  const [typing, setTyping] = useState(false);
+  const [composerNote, setComposerNote] = useState("");
+  const [tab, setTab] = useState(0);
+  const [form, setForm] = useState({ name: "", company: "", sector: "", phone: "" });
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const rootRef = useRef(null);
+  const scrollRef = useRef(null);
+  const inlineScrollRef = useRef(null);
+  const responseTimer = useRef(null);
+  const sending = useRef(false);
+  const tabRefs = useRef([]);
 
   useEffect(() => {
-    if (!playing) return
-    setProgress(0)
-    const iv = setInterval(() => setProgress((p) => { if (p >= 100) { clearInterval(iv); setPlaying(false); return 100 } return p + 2 }), 220)
-    return () => clearInterval(iv)
-  }, [playing])
+    const onScroll = () => setScrolled(window.scrollY > 36);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("lp-visible");
+            observer.unobserve(entry.target);
+          }
+        }),
+      { threshold: 0.08 },
+    );
+    rootRef.current.querySelectorAll("[data-reveal]").forEach((el) => observer.observe(el));
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      observer.disconnect();
+      clearTimeout(responseTimer.current);
+    };
+  }, []);
+  useEffect(() => {
+    for (const el of [scrollRef.current, inlineScrollRef.current])
+      el?.scrollTo({ top: el.scrollHeight, behavior: "auto" });
+  }, [messages, typing, chatOpen]);
+  useEffect(() => {
+    if (!playing) return;
+    const timer = setInterval(() => setProgress((p) => Math.min(100, p + 2)), 350);
+    return () => clearInterval(timer);
+  }, [playing]);
+  useEffect(() => {
+    if (progress === 100) setPlaying(false);
+  }, [progress]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeMenu = (event) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        rootRef.current.querySelector(".lp-menu-toggle")?.focus();
+      }
+    };
+    window.addEventListener("keydown", closeMenu);
+    return () => window.removeEventListener("keydown", closeMenu);
+  }, [menuOpen]);
 
-  const send = (raw) => {
-    const text = (raw ?? input).trim()
-    if (!text || typing) return
-    const userMsg = { role: 'user', text }
-    setMessages((m) => [...m, userMsg])
-    setInput('')
-    setTyping(true)
-    window.setTimeout(() => {
-      const reply = { role: 'laia', text: laiaReply(text) }
-      setMessages((m) => [...m, reply])
-      setTyping(false)
-    }, 750)
+  function send(raw) {
+    const text = (raw ?? input).trim();
+    if (!text || sending.current) return;
+    sending.current = true;
+    setMessages((m) => [...m, { role: "user", text }]);
+    setInput("");
+    setTyping(true);
+    responseTimer.current = window.setTimeout(() => {
+      setMessages((m) => [...m, { role: "laia", text: laiaReply(text) }]);
+      setTyping(false);
+      sending.current = false;
+    }, 850);
   }
-
-  const askAgent = (a) => {
-    setChatOpen(true)
-    window.setTimeout(() => send(`LAIA, cuéntame cómo trabajaría ${a.name} con mi empresa.`), 80)
+  function askAgent(agent) {
+    setPlaying(false);
+    setSelectedAgent(null);
+    setChatOpen(true);
+    send(`Cuéntame cómo trabajaría ${agent.name} en ${agent.role} con mi empresa.`);
   }
-
-  const newChat = () => { setMessages(initialMessages); setChatOpen(true); setInput('') }
-
-  function submitForm(e) {
-    e.preventDefault()
-    if (!form.name.trim() || !form.company.trim() || !form.phone.trim()) {
-      setFormStatus({ type: 'error', msg: 'Completa nombre, empresa y teléfono para que podamos llamarte.' })
-      return
+  function openAgent(agent) {
+    setSelectedAgent(agent);
+    setProgress(0);
+    setPlaying(false);
+  }
+  function reserveFromChat() {
+    setChatOpen(false);
+    window.setTimeout(
+      () =>
+        document
+          .getElementById("reserva")
+          ?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }),
+      0,
+    );
+  }
+  function submitForm(event) {
+    event.preventDefault();
+    const nextErrors = {};
+    if (form.name.trim().length < 2) nextErrors.name = "Indica tu nombre.";
+    if (!form.company.trim()) nextErrors.company = "Indica el nombre de tu empresa.";
+    if (
+      !/^[+\d\s().-]+$/.test(form.phone) ||
+      form.phone.replace(/\D/g, "").length < 7 ||
+      form.phone.replace(/\D/g, "").length > 15
+    )
+      nextErrors.phone = "Introduce un teléfono válido, con prefijo si es necesario.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      document.getElementById(`lp-${Object.keys(nextErrors)[0]}`)?.focus();
+      return;
     }
-    const subject = encodeURIComponent('Solicitud de discovery call · AgntiaPro')
-    const body = encodeURIComponent(`Nombre: ${form.name.trim()}\nEmpresa: ${form.company.trim()}\nSector: ${form.sector.trim()}\nTeléfono: ${form.phone.trim()}`)
-    setFormStatus({ type: 'ok', msg: 'Tu solicitud está lista para enviarla desde tu correo.' })
-    window.location.href = `mailto:hola@agntiapro.com?subject=${subject}&body=${body}`
+    setSubmitted(true);
   }
-
-  const runSearch = (e) => {
-    e.preventDefault()
-    const q = searchQuery.toLowerCase()
-    const target = q.includes('equipo') ? 'equipo' : q.includes('trabaj') || q.includes('cómo') || q.includes('como') ? 'como-trabajan' : q.includes('implant') || q.includes('precio') ? 'implantacion' : q.includes('producto') || q.includes('centro') || q.includes('chat') || q.includes('operacion') ? 'producto' : 'reserva'
-    document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' })
-    setSearchResult(`Te llevamos a la sección relacionada con “${searchQuery}”.`)
+  function changeTab(index) {
+    setTab(index);
+    tabRefs.current[index]?.focus();
   }
-
-  const tabs = [
-    { label: 'Centro de Mando', img: mandoUrl, desc: 'Estado, resultados, aprobaciones y actividad. Tu empresa, a vista de pájaro, sin perseguir datos.' },
-    { label: 'Chat', img: chatUrl, desc: 'La conversación que manda en todo. Pregunta, delega y recibe el resultado, sin cambiar de app.' },
-    { label: 'Operaciones', img: opsUrl, desc: 'Tareas, procesos y seguimiento que se cumplen cada día, con responsables y orden.' },
-    { label: 'Workspaces', img: wsUrl, desc: 'Cada área de tu empresa con su espacio, sus documentos y sus permisos.' },
-  ]
-
-  const openAgent = (a) => { setSelectedAgent(a); setPlaying(false); setProgress(0) }
+  const messageList = (
+    <>
+      {messages.map((m, i) => (
+        <div key={i} className={`lp-message lp-message-${m.role}`}>
+          {m.text}
+        </div>
+      ))}
+      {typing && (
+        <div className="lp-typing" role="status" aria-label="LAIA está escribiendo">
+          <i />
+          <i />
+          <i />
+        </div>
+      )}
+    </>
+  );
 
   return (
-    <div style={{ boxSizing: 'border-box', paddingTop: 'var(--safe-area-inset-top)', minHeight: '100vh', background: 'var(--cream)' }} className="agntia-landing overflow-x-clip">
-      {/* HEADER */}
-      <header style={{ top: 'var(--safe-area-inset-top)' }} className="sticky z-50 border-b border-[var(--line)] bg-[var(--cream)]">
-        <div className="landing-header-row mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <a href="#inicio" aria-label="AgntiaPro · Inicio" className="flex shrink-0 items-center gap-3">
-            <BrandLockup />
+    <div ref={rootRef} className="agntia-landing lp-premium">
+      <a className="lp-skip" href="#inicio">
+        Ir al contenido
+      </a>
+      <header className={`lp-header ${scrolled ? "lp-header-scrolled" : ""}`}>
+        <div className="lp-container lp-header-row">
+          <a href="#inicio" aria-label="AgntiaPro · Inicio" onClick={() => setMenuOpen(false)}>
+            <BrandLockup markSize={32} />
           </a>
-          <nav aria-label="Navegación principal" className="landing-desktop-nav hidden items-center gap-6 text-sm font-semibold lg:flex"><a href="#producto" className="hover:text-[#5B4BDB]">Producto</a><a href="#equipo" className="hover:text-[#5B4BDB]">Equipo</a><a href="#como-trabajan" className="hover:text-[#5B4BDB]">Cómo trabajan</a><a href="#implantacion" className="hover:text-[#5B4BDB]">Implantación</a></nav>
-          <div className="landing-header-actions flex items-center gap-2">
-            <div className="lg:hidden">
-            {searchOpen ? (
-              <form onSubmit={runSearch} className="flex items-center gap-1 rounded-full border border-[var(--line)] bg-white px-2 py-1">
-                <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar en la página…" className="w-28 bg-transparent px-2 py-1.5 text-sm outline-none sm:w-40" aria-label="Buscar en la página" />
-                <button type="submit" className="rounded-full bg-[#111] px-3 py-1.5 text-sm font-bold text-white">Buscar</button>
-                <button type="button" onClick={() => { setSearchOpen(false); setSearchQuery(''); setSearchResult('') }} className="rounded-full p-1.5" aria-label="Cerrar búsqueda"><X className="h-4 w-4" /></button>
-              </form>
-            ) : (
-              <button onClick={() => setSearchOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-white" aria-label="Buscar"><Search className="h-4 w-4" /></button>
-            )}
-            </div>
-            <a href={loginHref} className="landing-client-link rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-bold">Acceso clientes</a>
-            <button onClick={newChat} className="rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white lg:hidden">Nuevo chat</button>
-            <a href="#reserva" className="landing-reserve-link hidden rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white md:block">Reservar</a>
+          <nav className="lp-desktop-nav" aria-label="Navegación principal">
+            {navigation.map((n) => (
+              <a key={n.href} href={n.href}>
+                {n.label}
+              </a>
+            ))}
+          </nav>
+          <div className="lp-header-actions">
+            <a className="lp-client-access" href={loginHref}>
+              Acceso clientes
+            </a>
+            <a className="lp-button lp-button-small lp-button-dark" href="#reserva" onClick={() => setMenuOpen(false)}>
+              Reservar
+            </a>
+            <button
+              className="lp-menu-toggle lp-icon-button"
+              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              aria-expanded={menuOpen}
+              aria-controls="lp-mobile-nav"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <X /> : <Menu />}
+            </button>
           </div>
         </div>
-        {searchResult && <p role="status" className="mx-auto max-w-[1240px] px-4 pb-2 text-sm font-semibold text-[#6B655E] sm:px-6 lg:hidden">{searchResult}</p>}
-        <nav aria-label="Navegación móvil" className="flex gap-5 overflow-x-auto px-4 pb-2 text-sm font-semibold lg:hidden no-scrollbar"><a href="#producto">Producto</a><a href="#equipo">Equipo</a><a href="#como-trabajan">Cómo trabajan</a><a href="#implantacion">Implantación</a></nav>
+        {menuOpen && (
+          <nav id="lp-mobile-nav" className="lp-mobile-nav" aria-label="Navegación móvil">
+            {navigation.map((n) => (
+              <a key={n.href} href={n.href} onClick={() => setMenuOpen(false)}>
+                {n.label}
+              </a>
+            ))}
+            <a href={loginHref}>Acceso clientes</a>
+            <button
+              onClick={() => {
+                setMenuOpen(false);
+                setChatOpen(true);
+              }}
+            >
+              Hablar con LAIA
+            </button>
+          </nav>
+        )}
       </header>
-
-      {/* HERO */}
-      <section id="inicio" className="mx-auto max-w-[1240px] px-4 pb-16 pt-10 sm:px-6 lg:pt-16">
-        <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
-          <div>
-            <h1 className="serif mt-6 text-[clamp(2.8rem,6vw,4.8rem)] font-medium leading-[1.02] tracking-[-0.02em]">Tu empresa, siempre un paso por delante.</h1>
-            <p className="serif mt-6 text-[clamp(1.35rem,2.6vw,1.8rem)] leading-snug">Imagina poder hablar con tu empresa.</p>
-            <p className="mt-4 max-w-prose text-sm leading-relaxed text-[#6B655E]">No necesitas aprender IA ni tecnología. Tú diriges, tu equipo digital trabaja. Pregunta, delega, aprueba y recibe resultados.</p>
-
-            <div className="mt-8 overflow-hidden rounded-2xl border border-[var(--line)] bg-white shadow-[0_12px_30px_rgba(17,17,17,.06)]">
-              <div className="max-h-52 space-y-3 overflow-y-auto p-4 sm:p-5">
-                {messages.map((m, i) => (<div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere] ${m.role === 'user' ? 'bg-[#111] text-white' : 'border border-[var(--line)] bg-[#FDFBF7]'}`}>{m.text}</div></div>))}
-                {typing && <p className="text-sm text-[#6B655E]">LAIA está escribiendo…</p>}
+      <main>
+        <section id="inicio" className="lp-container lp-hero">
+          <div className="lp-hero-copy">
+            <p className="lp-eyebrow">
+              <span className="lp-gold-line" />
+              TU EMPRESA. UN EQUIPO DIGITAL.
+            </p>
+            <h1>
+              Tu empresa,
+              <br />
+              siempre un paso
+              <br />
+              <em>por delante.</em>
+            </h1>
+            <p className="lp-hero-lead">Imagina poder hablar con tu empresa.</p>
+            <p className="lp-hero-description">
+              LAIA coordina un equipo de agentes que trabaja contigo. Tú marcas el rumbo. Ellos se ocupan de que las
+              cosas avancen.
+            </p>
+            <div className="lp-hero-actions">
+              <a className="lp-button lp-button-purple" href="#reserva">
+                Descubrir mi equipo
+              </a>
+              <a className="lp-text-action" href="#producto">
+                <span className="lp-play-small">
+                  <Play size={13} fill="currentColor" />
+                </span>
+                Ver cómo funciona
+              </a>
+            </div>
+            <p className="lp-reassurance">Una primera conversación. 30 minutos. Sin compromiso.</p>
+            <div className="lp-inline-chat">
+              <div className="lp-chat-caption">
+                <span>
+                  <Sparkles size={15} />
+                  Pruébalo con LAIA
+                </span>
+                <span className="lp-demo-label">Demo interactiva</span>
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); send() }} className="border-t border-[var(--line)] p-3 sm:p-4">
-                <div className="flex items-end gap-2">
-                  <button type="button" onClick={() => setComposerNote('En esta demostración, escribe tu mensaje en el compositor. LAIA te responderá en el chat.')} className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--line)]" aria-label="Adjuntar archivo"><Paperclip className="h-4 w-4" /></button>
-                  <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} rows={2} placeholder="Pregunta lo que quieras o pide que ejecute un SOP..." className="min-h-[52px] min-w-0 flex-1 resize-none rounded-2xl border-0 bg-transparent px-1 py-2 text-sm outline-none placeholder:text-[#6B655E]" aria-label="Pregunta lo que quieras o pide que ejecute un SOP" />
-                  <button type="button" onClick={() => setComposerNote('El micrófono es un concepto de la demo. Escribe tu mensaje y LAIA te responderá.')} className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--line)]" aria-label="Dictar por voz"><Mic className="h-4 w-4" /></button>
-                  <button type="submit" className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#5B4BDB] text-white" aria-label="Enviar mensaje"><ArrowUp className="h-5 w-5" /></button>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => send('LAIA, enséñame los SOPs de mi empresa.')} className="rounded-full border border-[var(--line)] bg-[#F5EFE6] px-3 py-1.5 text-sm font-bold">SOPs de Mi empresa</button>
-                  <span className="text-sm text-[#6B655E]">Sin login en esta demostración</span>
-                </div>
-                {composerNote && <p role="status" className="mt-3 rounded-xl bg-[#F5EFE6] px-3 py-2 text-sm leading-relaxed">{composerNote}</p>}
+              <div
+                className="lp-inline-messages"
+                ref={inlineScrollRef}
+                role="log"
+                aria-label="Conversación de demostración"
+              >
+                {messageList}
+              </div>
+              <form
+                className="lp-composer"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send();
+                }}
+              >
+                <button
+                  type="button"
+                  className="lp-icon-button"
+                  aria-label="Adjuntar archivo"
+                  onClick={() =>
+                    setComposerNote(
+                      "Los archivos estarán disponibles al activar tu equipo. En esta demo puedes conversar por texto.",
+                    )
+                  }
+                >
+                  <Paperclip size={17} />
+                </button>
+                <input
+                  aria-label="Mensaje para LAIA"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="¿Qué te quita tiempo hoy?"
+                  maxLength={2000}
+                />
+                <button
+                  type="button"
+                  className="lp-icon-button"
+                  aria-label="Dictar por voz"
+                  onClick={() =>
+                    setComposerNote(
+                      "La voz forma parte de la experiencia que estamos preparando. Prueba ahora con un mensaje.",
+                    )
+                  }
+                >
+                  <Mic size={17} />
+                </button>
+                <button className="lp-send" aria-label="Enviar mensaje" disabled={!input.trim() || typing}>
+                  <ArrowUp size={18} />
+                </button>
               </form>
+              {composerNote && (
+                <div role="status" className="lp-composer-note">
+                  {composerNote}
+                  <button className="lp-icon-button" aria-label="Cerrar aviso" onClick={() => setComposerNote("")}>
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">{chips.map((c) => <button key={c} onClick={() => send(c)} className="rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold">{c}</button>)}</div>
-          </div>
-
-          <div className="relative">
-            <img src={laiaUrl} alt="LAIA, supervisora principal de AgntiaPro" className="aspect-[4/5] w-full rounded-2xl border border-[var(--line)] object-cover object-top" />
-            <div className="absolute left-4 top-4 flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-white px-3 py-2.5 shadow-[0_10px_28px_rgba(17,17,17,.10)]">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-[#5B4BDB] text-sm font-bold text-white">L</span>
-              <span><span className="block text-sm font-bold leading-tight">LAIA · Supervisora</span><span className="mt-0.5 flex items-center gap-1.5 text-sm font-semibold text-[#6B655E]"><span className="h-2 w-2 rounded-full bg-emerald-500" />En línea</span></span>
-            </div>
-            <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-[var(--line)] bg-white p-4 shadow-[0_10px_28px_rgba(17,17,17,.10)] sm:left-6 sm:right-auto sm:max-w-xs">
-              <p className="text-sm leading-relaxed"><span className="font-bold">LAIA</span> · Hola. Te aviso de que la conexión con Google se ha perdido. ¿Quieres que la revise?</p>
-              <button onClick={() => send('Sí, LAIA, revisa la conexión con Google.')} className="mt-3 rounded-full bg-[#5B4BDB] px-4 py-2 text-sm font-bold text-white">Revisar conexión</button>
+            <div className="lp-suggestions">
+              {chips.map((c) => (
+                <button key={c} onClick={() => send(c)} disabled={typing}>
+                  {c}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* PRODUCTO */}
-      <section id="producto" className="bg-[#F4EEE3] py-14 sm:py-20">
-        <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
-          <p className="text-sm font-bold text-[#6B655E]">Producto real</p>
-          <h2 className="serif mt-3 max-w-prose text-[clamp(2rem,4.5vw,3.4rem)] font-medium leading-[1.05]">Así se ve tu empresa por dentro.</h2>
-          <p className="mt-4 max-w-prose leading-relaxed text-[#6B655E]">Detrás de la conversación hay una aplicación completa. Estas son capturas del producto y de su entorno de demostración.</p>
-          <div className="mt-7 flex flex-wrap gap-2">{tabs.map((t, i) => <button key={t.label} onClick={() => setTab(i)} className={`rounded-full px-4 py-2.5 text-sm font-bold ${tab === i ? 'bg-[#111] text-white' : 'border border-[var(--line)] bg-white'}`}>{t.label}</button>)}</div>
-          <div className="mt-5 overflow-hidden rounded-2xl border border-[var(--line)] bg-[#F1EADF] shadow-[0_14px_34px_rgba(17,17,17,.07)]">
-            <img src={tabs[tab].img} alt={`Captura real de AgntiaPro: ${tabs[tab].label}`} className="block max-h-[780px] w-full object-contain" />
-            <div className="border-t border-[var(--line)] bg-white p-5 sm:p-6"><h3 className="serif text-sm font-medium">{tabs[tab].label}</h3><p className="mt-1 max-w-prose text-sm leading-relaxed text-[#6B655E]">{tabs[tab].desc}</p></div>
-          </div>
-        </div>
-      </section>
-
-      {/* EQUIPO */}
-      <section id="equipo" className="mx-auto max-w-[1240px] px-4 py-14 sm:px-6 sm:py-20">
-        <p className="text-sm font-bold text-[#6B655E]">Equipo</p>
-        <h2 className="serif mt-3 max-w-prose text-[clamp(2rem,4.5vw,3.4rem)] font-medium leading-[1.05]">Conoce al equipo que puede trabajar con tu empresa.</h2>
-        <p className="mt-4 max-w-prose leading-relaxed text-[#6B655E]">Primero el problema. Después las capacidades. Luego, cómo se trabaja con ellos. Cada presentación termina en una conversación.</p>
-        <div className="mt-10 grid gap-10 md:grid-cols-3 lg:gap-12">
-          {agents.map((a) => (
-            <article key={a.id}>
-              <button onClick={() => openAgent(a)} className="block w-full text-left" aria-label={`Ver presentación de ${a.name}`}>
-                <img src={a.img} alt={`${a.name}, ${a.role}`} className="aspect-[4/5] w-full rounded-2xl border border-[var(--line)] object-cover object-top" />
+          <div className="lp-hero-visual">
+            <div className="lp-portrait-frame">
+              <img
+                className="lp-hero-portrait"
+                src={laiaUrl}
+                alt="LAIA, tu supervisora digital"
+                width="1254"
+                height="1254"
+                fetchPriority="high"
+              />
+              <div className="lp-portrait-shade" />
+              <div className="lp-portrait-heading">
+                <span className="lp-portrait-role">TU PUNTO DE ENCUENTRO</span>
+                <span className="lp-laia-name">Hola, soy LAIA.</span>
+                <p>Tu empresa, en una conversación.</p>
+              </div>
+              <button className="lp-portrait-play" onClick={() => openAgent(agents[0])} aria-label="Conocer a LAIA">
+                <Play size={19} />
               </button>
-              <h3 className="serif mt-5 text-sm font-medium leading-none">{a.name}</h3>
-              <p className="mt-2 text-sm font-semibold text-[#6B655E]">{a.role}</p>
-              <p className="serif mt-3 text-sm italic leading-relaxed">“{a.quote}”</p>
-              <p className="mt-2 text-sm leading-relaxed text-[#6B655E]">{a.detail}</p>
-              <button onClick={() => askAgent(a)} className="mt-4 rounded-full border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-bold">Pregúntale a LAIA sobre esto</button>
-              <button onClick={() => openAgent(a)} className="ml-2 mt-4 rounded-full px-3 py-2.5 text-sm font-bold text-[#5B4BDB]">Ver presentación →</button>
-            </article>
-          ))}
-        </div>
-        <div className="mt-12 grid gap-4 rounded-2xl border border-[var(--line)] bg-[#F5EFE6] p-5 sm:grid-cols-3 sm:p-6">
-          {supportAgents.map((a) => (
-            <div key={a.name} className="flex items-start gap-4"><span className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-[#F1EADF] text-sm font-bold">{a.initials}</span><div><h3 className="serif text-sm font-medium leading-tight">{a.name}</h3><p className="text-sm font-semibold text-[#6B655E]">{a.role}</p><p className="mt-1 text-sm leading-relaxed text-[#6B655E]">{a.detail}</p><button onClick={() => askAgent({ ...agents[0], name: a.name })} className="mt-2 text-sm font-bold text-[#5B4BDB]">Pregúntale a LAIA →</button></div></div>
-          ))}
-        </div>
-      </section>
-
-      {/* CÓMO TRABAJAN */}
-      <section id="como-trabajan" className="bg-[#F4EEE3] py-14 sm:py-20">
-        <div className="mx-auto max-w-[1240px] px-4 sm:px-6">
-          <p className="text-sm font-bold text-[#6B655E]">Cómo trabajan</p>
-          <h2 className="serif mt-3 max-w-prose text-[clamp(2rem,4.5vw,3.4rem)] font-medium leading-[1.05]">Son empleados digitales de verdad.</h2>
-          <p className="mt-4 max-w-prose leading-relaxed text-[#6B655E]">No son respuestas sueltas. Tienen tareas, rutas, SOPs, permisos y el estándar operacional de tu empresa. Trabajan en tus aplicaciones normales y usan la interfaz por ti.</p>
-          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[
-              { n: '1', t: 'Tú hablas', d: 'Cuenta lo que necesitas por chat, voz, videollamada o teléfono. “Oye, LAIA” funciona como Siri.' },
-              { n: '2', t: 'LAIA coordina', d: 'Tu supervisora entiende el encargo, lo reparte y mantiene el contexto de tu negocio.' },
-              { n: '3', t: 'El equipo ejecuta', d: 'El equipo trabaja en Gmail, Drive, Outlook, Slack y WhatsApp, con responsables y orden.' },
-              { n: '4', t: 'Tú apruebas', d: 'Nada sensible se mueve sin que lo veas. Recibes el resultado y decides.' },
-            ].map((s) => <article key={s.n} className="rounded-2xl border border-[var(--line)] bg-white p-5"><span className="serif text-sm font-medium">{s.n}</span><h3 className="serif mt-4 text-sm font-medium">{s.t}</h3><p className="mt-2 text-sm leading-relaxed text-[#6B655E]">{s.d}</p></article>)}
+            </div>
+            <div className="lp-hero-float">
+              <span className="lp-spark">
+                <Sparkles size={21} />
+              </span>
+              <div>
+                <span className="lp-micro">ASÍ TRABAJA TU EQUIPO</span>
+                <strong>
+                  Todo conectado.
+                  <br />
+                  Contigo al mando.
+                </strong>
+              </div>
+              <div className="lp-avatar-stack">
+                <img src={antonioUrl} alt="Antonio" />
+                <img src={pedroUrl} alt="Pedro" />
+                <span>+3</span>
+              </div>
+            </div>
+            <div className="lp-visual-footnote">
+              <span className="lp-gold-line" />
+              Personas al mando. Agentes trabajando.
+            </div>
           </div>
-        </div>
-      </section>
+          <div className="lp-principles">
+            <span>
+              <MessageCircle />
+              Tan natural como conversar
+            </span>
+            <span>
+              <Folder />
+              Con el contexto de tu negocio
+            </span>
+            <span>
+              <ShieldCheck />
+              Las decisiones importantes, contigo
+            </span>
+          </div>
+        </section>
 
-      {/* IMPLANTACIÓN */}
-      <section id="implantacion" className="mx-auto max-w-[1240px] px-4 py-14 sm:px-6 sm:py-20">
-        <p className="text-sm font-bold text-[#6B655E]">Implantación</p>
-        <h2 className="serif mt-3 max-w-prose text-[clamp(2rem,4.5vw,3.4rem)] font-medium leading-[1.05]">No empiezas desde cero. Empezamos con tu empresa.</h2>
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[
-            { n: '1', t: 'Discovery call', d: 'Conocemos tu negocio, tus prioridades y qué te quita más tiempo.' },
-            { n: '2', t: 'Compilación', d: 'Estudiamos tu empresa y tus SOPs. Configuramos entorno, procesos y permisos.' },
-            { n: '3', t: 'Activación', d: 'Ponemos en marcha dos servicios de alto impacto, con supervisión y control.' },
-            { n: '4', t: 'Evolución', d: 'Formamos a humanos y agentes con tu estándar operacional, paso a paso.' },
-          ].map((s) => <article key={s.n} className="rounded-2xl border border-[var(--line)] bg-[#F5EFE6] p-5"><span className="serif text-sm font-medium">{s.n}</span><h3 className="mt-4 text-sm font-bold">{s.t}</h3><p className="mt-2 text-sm leading-relaxed text-[#6B655E]">{s.d}</p></article>)}
-        </div>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-[var(--line)] bg-[#F5EFE6] p-6"><p className="text-sm font-bold text-[#6B655E]">Implantación</p><p className="serif mt-2 text-sm font-medium">1.500 €</p><p className="mt-2 text-sm leading-relaxed text-[#6B655E]">Compilación de tu empresa y puesta en marcha de dos servicios de alto impacto.</p></div>
-          <div className="rounded-2xl border border-[var(--line)] bg-[#F5EFE6] p-6"><p className="text-sm font-bold text-[#6B655E]">Servicio gestionado</p><p className="serif mt-2 text-sm font-medium">Desde 1.000 €/mes</p><p className="mt-2 text-sm leading-relaxed text-[#6B655E]">Equipo digital coordinado, evolución continua y soporte con tu estándar operacional.</p></div>
-        </div>
-        <p className="mt-5 text-sm leading-relaxed text-[#6B655E]">Ley española · VeriFactu. Sin promesas de resultados garantizados. El valor se construye con tu operación real.</p>
-      </section>
+        <section id="producto" className="lp-product-section lp-section">
+          <div className="lp-container">
+            <div className="lp-section-heading lp-centered" data-reveal>
+              <p className="lp-eyebrow">DE LA CONVERSACIÓN A LA ACCIÓN</p>
+              <h2>
+                Una conversación.
+                <br />
+                <em>Toda tu empresa en movimiento.</em>
+              </h2>
+              <p>
+                Detrás de LAIA hay un espacio para organizar el trabajo,
+                <br className="lp-desktop-break" /> conectar al equipo y decidir con contexto.
+              </p>
+            </div>
+            <div
+              className="lp-tabs"
+              role="tablist"
+              aria-label="Explorar el producto"
+              onKeyDown={(e) => {
+                let next;
+                if (e.key === "ArrowRight") next = (tab + 1) % 4;
+                if (e.key === "ArrowLeft") next = (tab + 3) % 4;
+                if (e.key === "Home") next = 0;
+                if (e.key === "End") next = 3;
+                if (next !== undefined) {
+                  e.preventDefault();
+                  changeTab(next);
+                }
+              }}
+            >
+              {productViews.map(({ label, icon: Icon }, i) => (
+                <button
+                  key={label}
+                  ref={(el) => (tabRefs.current[i] = el)}
+                  role="tab"
+                  id={`lp-tab-${i}`}
+                  aria-selected={tab === i}
+                  aria-controls="lp-product-panel"
+                  tabIndex={tab === i ? 0 : -1}
+                  onClick={() => setTab(i)}
+                >
+                  <Icon size={17} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div
+              className="lp-product-panel"
+              id="lp-product-panel"
+              role="tabpanel"
+              aria-labelledby={`lp-tab-${tab}`}
+              tabIndex={0}
+            >
+              <ProductScene view={tab} />
+              <div className="lp-product-caption">
+                <div>
+                  <h3>{productViews[tab].title}</h3>
+                  <p>{productViews[tab].text}</p>
+                </div>
+                <span className="lp-demo-label">Visualización de producto · Demo</span>
+              </div>
+            </div>
+            <div className="lp-product-bottom">
+              <span>
+                <Sparkles size={18} />
+                {productViews[tab].detail}
+              </span>
+              <a href="#reserva" className="lp-underlined">
+                Ver cómo encaja en mi empresa
+              </a>
+            </div>
+          </div>
+        </section>
 
-      {/* CIERRE + RESERVA */}
-      <section id="reserva" className="bg-[#111111] py-14 text-[#FDFBF7] sm:py-20">
-        <div className="mx-auto grid max-w-[1240px] gap-10 px-4 sm:px-6 lg:grid-cols-[1fr_1.05fr]">
+        <section id="equipo" className="lp-container lp-section">
+          <div className="lp-section-heading lp-heading-split" data-reveal>
+            <div>
+              <p className="lp-eyebrow">TECNOLOGÍA CON QUIEN HABLAR</p>
+              <h2>
+                Conoce a tu
+                <br />
+                <em>próximo equipo.</em>
+              </h2>
+            </div>
+            <p>
+              Especialidades distintas. Un mismo contexto.
+              <br />
+              LAIA coordina, cada agente aporta lo suyo
+              <br className="lp-desktop-break" /> y tú mantienes la visión completa.
+            </p>
+          </div>
+          <div className="lp-team-grid">
+            {agents.map((agent) => (
+              <article className="lp-agent" key={agent.id} data-reveal>
+                <button
+                  className="lp-agent-photo"
+                  onClick={() => openAgent(agent)}
+                  aria-label={`Ver presentación de ${agent.name}`}
+                >
+                  <img src={agent.img} alt={`${agent.name}, ${agent.role}`} width="1254" height="1254" loading="lazy" />
+                  <span className="lp-agent-photo-label">
+                    {agent.id === "laia"
+                      ? "Tu supervisora"
+                      : agent.id === "antonio"
+                        ? "Tus números, claros"
+                        : "Tu negocio, cuidado"}
+                  </span>
+                  <span className="lp-agent-play">
+                    <Play size={17} />
+                  </span>
+                </button>
+                <div className="lp-agent-heading">
+                  <h3>{agent.name}</h3>
+                  <span>
+                    {agent.id === "laia" ? "Coordinación" : agent.id === "antonio" ? "Finanzas" : "Seguridad y diseño"}
+                  </span>
+                </div>
+                <p className="lp-agent-quote">{agent.quote}</p>
+                <p className="lp-agent-description">{agent.detail}</p>
+                <button className="lp-underlined" onClick={() => askAgent(agent)}>
+                  Hablar con LAIA sobre {agent.id === "laia" ? "mi empresa" : agent.name}
+                </button>
+              </article>
+            ))}
+          </div>
+          <div className="lp-support-team">
+            <div className="lp-support-intro">
+              <span className="lp-micro">Y EL EQUIPO SIGUE</span>
+              <p>Un especialista para cada área.</p>
+            </div>
+            {supportAgents.map((a) => (
+              <button key={a.name} onClick={() => askAgent(a)}>
+                <span className="lp-initial">{a.initials}</span>
+                <span>
+                  <strong>{a.name}</strong>
+                  <small>{a.role}</small>
+                </span>
+                <MessageCircle size={17} />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section id="como-trabajan" className="lp-workflow-section lp-section">
+          <div className="lp-container">
+            <div className="lp-section-heading lp-centered" data-reveal>
+              <p className="lp-eyebrow">ASÍ SE MUEVE EL TRABAJO</p>
+              <h2>
+                De «hay que hacerlo»
+                <br />
+                <em>a «listo para revisar».</em>
+              </h2>
+              <p>
+                Un equipo que sigue tus procesos.
+                <br />Y un sistema que te mantiene al mando.
+              </p>
+            </div>
+            <div className="lp-workflow">
+              {workflow.map(({ icon: Icon, title, text }) => (
+                <article key={title} data-reveal>
+                  <span className="lp-workflow-icon">
+                    <Icon size={24} />
+                  </span>
+                  <h3>{title}</h3>
+                  <p>{text}</p>
+                </article>
+              ))}
+            </div>
+            <div className="lp-control-note">
+              <ShieldCheck size={22} />
+              <p>
+                <strong>Delegar trabajo. Conservar el control.</strong>
+                <span>Permisos, contexto y aprobación forman parte de la forma de trabajar.</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="implantacion" className="lp-container lp-section lp-implementation">
           <div>
-            <p className="text-sm font-bold text-white/70">Discovery call</p>
-            <h2 className="serif mt-3 text-[clamp(2.2rem,5vw,3.8rem)] font-medium leading-[1.02]">Tu empresa no tiene por qué quedarse atrás.</h2>
-            <p className="mt-4 max-w-prose leading-relaxed text-white/70">Descubre cómo sería trabajar con un equipo digital que conoce tu negocio y evoluciona contigo. Una conversación para identificar oportunidades concretas.</p>
-            <ul className="mt-6 space-y-3 text-sm font-semibold">
-              <li className="flex gap-2"><Check className="h-5 w-5 shrink-0 text-[#C9A86A]" />Sin compromiso · 30 minutos</li>
-              <li className="flex gap-2"><Check className="h-5 w-5 shrink-0 text-[#C9A86A]" />Tú controlas las acciones sensibles</li>
-              <li className="flex gap-2"><Check className="h-5 w-5 shrink-0 text-[#C9A86A]" />Te llamamos para agendar</li>
-            </ul>
-            <a href="#formulario" className="mt-7 inline-flex items-center rounded-full bg-[#5B4BDB] px-5 py-3 text-sm font-bold text-white">Reservar discovery call <ArrowRight className="ml-1 h-4 w-4" /></a>
-          </div>
-          <form id="formulario" onSubmit={submitForm} className="rounded-2xl bg-white p-5 text-[#111111] shadow-xl sm:p-6">
-            <div className="flex items-center gap-3"><img src={laiaUrl} alt="LAIA" className="h-12 w-12 rounded-full object-cover" /><div><p className="font-bold">Reserva tu discovery call</p><p className="text-sm text-[#6B655E]">LAIA lo recibe y te llamamos para agendar.</p></div></div>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <label className="block text-sm font-bold">Nombre *<input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl border border-[var(--line)] px-3 py-2.5 font-medium" placeholder="Tu nombre" /></label>
-              <label className="block text-sm font-bold">Empresa *<input required value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className="mt-1 w-full rounded-xl border border-[var(--line)] px-3 py-2.5 font-medium" placeholder="Nombre de tu empresa" /></label>
-              <label className="block text-sm font-bold">Sector<input value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} className="mt-1 w-full rounded-xl border border-[var(--line)] px-3 py-2.5 font-medium" placeholder="Ej. clínica, tienda, asesoría" /></label>
-              <label className="block text-sm font-bold">Teléfono *<input required type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-1 w-full rounded-xl border border-[var(--line)] px-3 py-2.5 font-medium" placeholder="Tu teléfono" /></label>
+            <div className="lp-section-heading" data-reveal>
+              <p className="lp-eyebrow">HECHO PARA TU EMPRESA</p>
+              <h2>
+                No empiezas de cero.
+                <br />
+                <em>Empezamos contigo.</em>
+              </h2>
+              <p>
+                Primero entendemos tu negocio. Después ponemos la tecnología a trabajar en lo que de verdad necesitas.
+              </p>
             </div>
-            {formStatus.msg && <p role="status" className={`mt-3 rounded-xl px-3 py-2.5 text-sm font-semibold ${formStatus.type === 'ok' ? 'bg-emerald-50 text-emerald-800' : formStatus.type === 'error' ? 'bg-red-50 text-red-800' : 'bg-[#F5EFE6]'}`}>{formStatus.msg}</p>}
-            <button disabled={formStatus.type === 'saving'} className="mt-4 w-full rounded-full bg-[#5B4BDB] py-3.5 text-sm font-bold text-white disabled:opacity-60">{formStatus.type === 'saving' ? 'Guardando…' : 'Reservar discovery call →'}</button>
-            <p className="mt-3 text-center text-sm text-[#6B655E]">Se abrirá tu aplicación de correo con los datos de la solicitud.</p>
-          </form>
-        </div>
-      </section>
+            <ol className="lp-timeline">
+              {implementation.map(([title, text], i) => (
+                <li key={title}>
+                  <span>{i + 1}</span>
+                  <div>
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <div className="lp-pricing" data-reveal>
+            <div className="lp-pricing-top">
+              <Sparkles size={22} />
+              <span>Un equipo. Un acompañamiento.</span>
+            </div>
+            <div className="lp-price-block">
+              <span className="lp-micro">PUESTA EN MARCHA</span>
+              <p className="lp-price">
+                1.500 <span>€</span>
+              </p>
+              <p>Tu entorno preparado y dos servicios de alto impacto para empezar.</p>
+              <ul>
+                <li>
+                  <Check />
+                  Contexto, procesos y permisos
+                </li>
+                <li>
+                  <Check />
+                  Activación y supervisión inicial
+                </li>
+              </ul>
+            </div>
+            <div className="lp-price-block">
+              <span className="lp-micro">SERVICIO GESTIONADO</span>
+              <p className="lp-price">
+                <small>desde </small>1.000 <span>€/mes</span>
+              </p>
+              <p>Tu equipo digital coordinado, con soporte y evolución continua.</p>
+            </div>
+            <a className="lp-button lp-button-purple" href="#reserva">
+              Hablemos de tu empresa
+            </a>
+            <p className="lp-price-note">Definimos juntos el alcance en la primera conversación.</p>
+          </div>
+        </section>
 
-      {/* FOOTER */}
-      <footer className="bg-[#FDFBF7]"><div className="mx-auto max-w-[1240px] px-4 py-10 sm:px-6"><div className="flex flex-col gap-8 md:flex-row md:justify-between"><div className="max-w-prose"><BrandLockup /><div className="mt-2 h-px w-16 bg-[#C9A86A]" /><p className="mt-3 text-sm leading-relaxed text-[#6B655E]">AgntiaPro — tu empresa compilada, operada y siempre actualizada.</p></div><div className="grid grid-cols-2 gap-8 text-sm sm:grid-cols-3"><div><p className="mb-3 font-bold">Producto</p><ul className="space-y-2 text-[#6B655E]"><li><a href="#producto">Centro de Mando</a></li><li><a href="#producto">Chat</a></li><li><a href="#producto">Operaciones</a></li><li><a href="#producto">Workspaces</a></li></ul></div><div><p className="mb-3 font-bold">Soluciones</p><ul className="space-y-2 text-[#6B655E]"><li><a href="#equipo">Equipo digital</a></li><li><a href="#como-trabajan">Cómo trabajan</a></li><li><a href="#implantacion">Implantación</a></li><li><a href="#reserva">Discovery call</a></li></ul></div><div><p className="mb-3 font-bold">Legal</p><ul className="space-y-2 text-[#6B655E]"><li>Privacidad</li><li>Términos y condiciones</li><li>Cookies y preferencias</li><li>Transparencia sobre IA</li></ul></div></div></div><div className="mt-10 flex flex-wrap justify-between gap-3 border-t border-[var(--line)] pt-5 text-sm text-[#6B655E]"><span>© AgntiaPro · Habla con tu empresa.</span><span>Hecho con calma, para empresas que quieren avanzar.</span></div></div></footer>
-
-      {/* CHAT PERSISTENTE */}
-      {!chatOpen && <button onClick={() => setChatOpen(true)} className="fixed bottom-4 right-4 z-[80] flex items-center gap-2 rounded-full bg-[#111] px-5 py-3.5 text-sm font-bold text-white shadow-2xl">Chat <span className="h-2 w-2 rounded-full bg-emerald-400" /></button>}
-      {chatOpen && (
-        <div className="fixed inset-0 z-[90] overflow-y-auto bg-black/30 pt-[max(1rem,var(--safe-area-inset-top))]">
-          <div className="flex min-h-full items-end justify-center sm:items-center sm:justify-end sm:pr-4">
-            <div className="flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-white shadow-2xl sm:rounded-2xl">
-              <div className="flex items-center gap-3 border-b border-[var(--line)] px-4 py-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-[#5B4BDB] text-sm font-bold text-white">L</span><div className="flex-1"><p className="font-bold">LAIA</p><p className="text-sm text-emerald-600">En línea</p></div><button onClick={() => setChatOpen(false)} className="rounded-full bg-[#F5EFE6] p-2" aria-label="Minimizar chat"><ChevronDown className="h-5 w-5" /></button><button onClick={() => setChatOpen(false)} className="rounded-full bg-[#F5EFE6] p-2" aria-label="Cerrar chat"><X className="h-5 w-5" /></button></div>
-              <div ref={scrollRef} className="h-64 space-y-3 overflow-y-auto bg-[#FDFBF7] p-4">{messages.map((m, i) => (<div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[86%] rounded-2xl px-3 py-2.5 text-sm leading-relaxed [overflow-wrap:anywhere] ${m.role === 'user' ? 'bg-[#111] text-white' : 'border border-[var(--line)] bg-white'}`}>{m.text}</div></div>))}{typing && <p className="text-sm text-[#6B655E]">LAIA está escribiendo…</p>}</div>
-              <form onSubmit={(e) => { e.preventDefault(); send() }} className="flex gap-2 border-t border-[var(--line)] p-3"><input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Pregunta a LAIA…" className="flex-1 rounded-full border border-[var(--line)] px-3 py-2.5 text-sm" aria-label="Pregunta a LAIA" /><button className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#5B4BDB] text-white" aria-label="Enviar"><ArrowUp className="h-5 w-5" /></button></form>
-              <div className="flex gap-2 overflow-x-auto px-3 pb-3 no-scrollbar">{chips.map((c) => <button key={c} onClick={() => send(c)} className="shrink-0 rounded-full border border-[var(--line)] px-3 py-1.5 text-sm font-semibold">{c}</button>)}</div>
+        <section id="reserva" className="lp-reserve-section lp-section">
+          <div className="lp-container lp-reserve-grid">
+            <div className="lp-reserve-copy" data-reveal>
+              <p className="lp-eyebrow">TU SIGUIENTE PASO</p>
+              <h2>
+                Tu equipo digital
+                <br />
+                empieza con
+                <br />
+                <em>una conversación.</em>
+              </h2>
+              <p>
+                Cuéntanos qué te está quitando tiempo.
+                <br />
+                Veamos dónde puede empezar a ayudarte tu equipo.
+              </p>
+              <ul>
+                <li>
+                  <Clock3 />
+                  30 minutos, sin compromiso
+                </li>
+                <li>
+                  <Check />
+                  Dos procesos concretos por los que empezar
+                </li>
+                <li>
+                  <ShieldCheck />
+                  Un plan adaptado a tu forma de trabajar
+                </li>
+              </ul>
+              <div className="lp-reserve-signature">
+                <img src={laiaUrl} alt="LAIA" width="48" height="48" loading="lazy" />
+                <span>
+                  Tu empresa tiene mucho por delante.
+                  <br />
+                  <strong>Vamos a darle espacio para avanzar.</strong>
+                </span>
+              </div>
+            </div>
+            <div className="lp-form-card" id="formulario">
+              {submitted ? (
+                <div className="lp-form-success" role="status">
+                  <span className="lp-success-icon">
+                    <Check size={28} />
+                  </span>
+                  <p className="lp-eyebrow">TODO EMPIEZA POR AQUÍ</p>
+                  <h3>
+                    Así empieza
+                    <br />
+                    tu próximo paso, {form.name.split(" ")[0]}.
+                  </h3>
+                  <p>
+                    Una conversación sobre <strong>{form.company}</strong> y lo que te gustaría mejorar.
+                  </p>
+                  <dl>
+                    <div>
+                      <dt>Contacto</dt>
+                      <dd>{form.phone}</dd>
+                    </div>
+                    {form.sector && (
+                      <div>
+                        <dt>Sector</dt>
+                        <dd>{form.sector}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  <p className="lp-demo-disclosure">
+                    Estás explorando una demo. Tus datos no se han enviado y no se ha reservado una llamada.
+                  </p>
+                  <button className="lp-button lp-button-dark" onClick={() => setSubmitted(false)}>
+                    Volver a mis datos
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={submitForm} noValidate>
+                  <div className="lp-form-title">
+                    <span className="lp-spark">
+                      <MessageCircle size={23} />
+                    </span>
+                    <span className="lp-demo-label">Demo</span>
+                  </div>
+                  <h3>Hablemos de tu empresa.</h3>
+                  <p>Déjanos un poco de contexto para preparar la conversación.</p>
+                  <div className="lp-form-fields">
+                    {[
+                      { key: "name", label: "Tu nombre", placeholder: "¿Cómo te llamas?", auto: "given-name" },
+                      { key: "company", label: "Empresa", placeholder: "Nombre de tu empresa", auto: "organization" },
+                      { key: "phone", label: "Teléfono", placeholder: "+34 600 000 000", type: "tel", auto: "tel" },
+                      {
+                        key: "sector",
+                        label: "Sector",
+                        placeholder: "Clínica, comercio, asesoría…",
+                        optional: true,
+                        auto: "off",
+                      },
+                    ].map((field) => (
+                      <label key={field.key} htmlFor={`lp-${field.key}`}>
+                        {field.label}
+                        {field.optional && <span> · opcional</span>}
+                        <input
+                          id={`lp-${field.key}`}
+                          name={field.key}
+                          type={field.type || "text"}
+                          autoComplete={field.auto}
+                          required={!field.optional}
+                          maxLength={field.key === "phone" ? 30 : 100}
+                          value={form[field.key]}
+                          onChange={(e) => {
+                            setForm({ ...form, [field.key]: e.target.value });
+                            setErrors({ ...errors, [field.key]: undefined });
+                          }}
+                          placeholder={field.placeholder}
+                          aria-invalid={!!errors[field.key]}
+                          aria-describedby={errors[field.key] ? `lp-error-${field.key}` : undefined}
+                        />
+                        {errors[field.key] && (
+                          <small className="lp-error" id={`lp-error-${field.key}`}>
+                            {errors[field.key]}
+                          </small>
+                        )}
+                      </label>
+                    ))}
+                  </div>
+                  <button className="lp-button lp-button-purple lp-submit">Solicitar una conversación</button>
+                  <p className="lp-form-note">30 minutos para explorar lo que tu empresa necesita.</p>
+                  <p className="lp-demo-disclosure">
+                    Modo demo: puedes probar el formulario. No se envían datos ni se agenda una llamada.
+                  </p>
+                </form>
+              )}
             </div>
           </div>
+        </section>
+      </main>
+      <footer className="lp-footer">
+        <div className="lp-container">
+          <div className="lp-footer-main">
+            <div>
+              <a href="#inicio" aria-label="AgntiaPro · Volver al inicio">
+                <BrandLockup />
+              </a>
+              <p>
+                Tu empresa, siempre
+                <br />
+                un paso por delante.
+              </p>
+            </div>
+            <nav aria-label="Producto">
+              <strong>Explora</strong>
+              <a href="#producto">Producto</a>
+              <a href="#equipo">Equipo digital</a>
+              <a href="#como-trabajan">Cómo funciona</a>
+            </nav>
+            <nav aria-label="Empieza">
+              <strong>Hablemos</strong>
+              <a href="#implantacion">Implantación</a>
+              <a href="#reserva">Primera conversación</a>
+              <a href={loginHref}>Acceso clientes</a>
+            </nav>
+            <div className="lp-footer-note">
+              <span className="lp-micro">AGNTIAPRO + TU EMPRESA</span>
+              <p>
+                Más foco en lo que importa.
+                <br />
+                Más espacio para avanzar.
+              </p>
+            </div>
+          </div>
+          <div className="lp-footer-bottom">
+            <span>© {new Date().getFullYear()} AgntiaPro</span>
+            <span>Demostración de producto · Agentes digitales, criterio humano.</span>
+          </div>
         </div>
+      </footer>
+      {!chatOpen && !selectedAgent && (
+        <button className="lp-chat-launcher" onClick={() => setChatOpen(true)}>
+          <MessageCircle size={19} />
+          <span>Hablar con LAIA</span>
+        </button>
       )}
-
-      {/* PANEL AGENTE */}
+      {chatOpen && (
+        <Dialog title="Chat de demostración con LAIA" onClose={() => setChatOpen(false)} className="lp-chat-dialog">
+          <div className="lp-dialog-header">
+            <img src={laiaUrl} alt="" />
+            <div>
+              <strong>LAIA</strong>
+              <span>Tu supervisora · Demo</span>
+            </div>
+            <button className="lp-icon-button" onClick={() => setChatOpen(false)} aria-label="Cerrar chat">
+              <X />
+            </button>
+          </div>
+          <div ref={scrollRef} className="lp-chat-messages" role="log" aria-label="Mensajes con LAIA">
+            {messageList}
+          </div>
+          <div className="lp-chat-suggestions">
+            {chips.map((c) => (
+              <button key={c} disabled={typing} onClick={() => send(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+          <form
+            className="lp-composer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send();
+            }}
+          >
+            <input
+              aria-label="Pregunta a LAIA"
+              autoFocus
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Cuéntame sobre tu empresa…"
+              maxLength={2000}
+            />
+            <button className="lp-send" aria-label="Enviar" disabled={!input.trim() || typing}>
+              <ArrowUp size={18} />
+            </button>
+          </form>
+          <button className="lp-chat-reserve" onClick={reserveFromChat}>
+            Llevémoslo a tu empresa · Reservar conversación
+          </button>
+        </Dialog>
+      )}
       {selectedAgent && (
-        <div className="fixed inset-0 z-[90] overflow-y-auto bg-black/30 pt-[max(1rem,var(--safe-area-inset-top))]">
-          <div className="flex min-h-full items-end justify-center sm:items-center sm:justify-end sm:pr-4">
-            <div className="max-h-[88dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6">
-              <div className="flex items-start justify-between gap-3"><div><p className="text-sm font-bold text-[#6B655E]">Presentación · {selectedAgent.duration}</p><h3 className="serif mt-1 text-sm font-medium leading-none">{selectedAgent.name}</h3><p className="mt-1 text-sm font-semibold text-[#6B655E]">{selectedAgent.role}</p></div><button onClick={() => { setSelectedAgent(null); setPlaying(false) }} className="rounded-full bg-[#F5EFE6] p-2" aria-label="Cerrar presentación"><X className="h-5 w-5" /></button></div>
-              <div className="relative mt-5 overflow-hidden rounded-2xl border border-[var(--line)]"><img src={selectedAgent.img} alt={`${selectedAgent.name}, ${selectedAgent.role}`} className="aspect-[4/5] w-full object-cover object-top" /><div className="absolute inset-x-0 bottom-0 bg-white/95 p-3"><p className="text-sm font-semibold">{playing ? subtitles[Math.floor(progress / 25) % 4] : 'Pulsa play · subtítulos activados · sin sonido'}</p><div className="mt-2 h-1 overflow-hidden rounded-full bg-[#E8DFD2]"><div className="h-full bg-[#111111]" style={{ width: `${progress}%` }} /></div></div></div>
-              <p className="serif mt-5 text-sm italic leading-snug">“{selectedAgent.quote}”</p><p className="mt-2 text-sm leading-relaxed text-[#6B655E]">{selectedAgent.detail} En esta demostración, el vídeo es una simulación con la foto del agente; la conversación con LAIA sí funciona.</p>
-              <div className="mt-5 flex gap-2"><button onClick={() => setPlaying(!playing)} className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#111] px-4 py-3 text-sm font-bold text-white">{playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{playing ? 'Pausar simulación' : 'Reproducir simulación'}</button><button onClick={() => { setSelectedAgent(null); askAgent(selectedAgent) }} className="flex-1 rounded-full bg-[#5B4BDB] px-4 py-3 text-sm font-bold text-white">Pregúntale a LAIA</button></div>
+        <Dialog
+          title={`Presentación de ${selectedAgent.name}`}
+          onClose={() => {
+            setSelectedAgent(null);
+            setPlaying(false);
+          }}
+          className="lp-agent-dialog"
+        >
+          <div className="lp-dialog-header">
+            <div>
+              <strong>{selectedAgent.name}</strong>
+              <span>{selectedAgent.role}</span>
+            </div>
+            <button
+              className="lp-icon-button"
+              aria-label="Cerrar presentación"
+              onClick={() => {
+                setSelectedAgent(null);
+                setPlaying(false);
+              }}
+            >
+              <X />
+            </button>
+          </div>
+          <div className="lp-presentation">
+            <img src={selectedAgent.img} alt={selectedAgent.name} />
+            <div>
+              <p>{playing ? subtitles[Math.min(3, Math.floor(progress / 25))] : selectedAgent.quote}</p>
+              <div
+                className="lp-progress"
+                role="progressbar"
+                aria-label="Progreso de la presentación"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progress}
+              >
+                <span style={{ width: `${progress}%` }} />
+              </div>
             </div>
           </div>
-        </div>
+          <div className="lp-presentation-content">
+            <p>{selectedAgent.detail}</p>
+            <p className="lp-demo-disclosure">Presentación de demostración con imagen y subtítulos, sin audio.</p>
+            <div className="lp-presentation-actions">
+              <button
+                className="lp-button lp-button-dark"
+                onClick={() => {
+                  if (progress === 100) setProgress(0);
+                  setPlaying(!playing);
+                }}
+              >
+                {playing ? <Pause size={17} /> : <Play size={17} />} {playing ? "Pausar" : "Ver demo"}
+              </button>
+              <button className="lp-button lp-button-purple" onClick={() => askAgent(selectedAgent)}>
+                Preguntarle a LAIA
+              </button>
+            </div>
+          </div>
+        </Dialog>
       )}
     </div>
-  )
+  );
 }
