@@ -63,3 +63,11 @@ Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.t
 - `40bd64ea`: `tests/voice-v2-media-lifecycle.test.ts` cubre aislamiento de tenant, revocación, interrupción, cierre, señal abortada y carrera de epoch durante apertura.
 - **No está instalado en rutas HTTP ni en producción.** La prueba usa un coordinador simulado y transporte mock. El puerto externo real y el control de su disponibilidad se diseñarán en C06.
 - **Pendiente de validar:** ejecutar `pnpm` typecheck y suites de C05/C04. No hay resultado CI verificado para estos commits. Antes de activar transporte real, revisar limpieza en errores de proveedor, concurrencia multiinstancia y comportamiento ante aborts durante `transport.open`.
+
+## P05.6 — Hardening de apertura parcial (2026-11-22)
+
+- `dfbe4c8f`: `VoiceMediaLifecycle.open` ahora incluye `transport.open` dentro del bloque protegido por cleanup. Antes, si el proveedor reservaba recursos y después rechazaba la promesa, no se ejecutaba `transport.close`. El cierre usa una señal independiente de la petición cancelada y no oculta el error original.
+- `2e37d2f5`: dos pruebas de regresión para asignación parcial seguida de error y cancelación durante apertura.
+- **Estado de validación**: commits publicados; pruebas y typecheck NO ejecutados en este entorno. No atribuir resultado verde a estos cambios.
+- **Riesgos aún abiertos**: el mock de transporte vive en memoria y no ofrece exclusión distribuida; la limpieza de recursos ante timeout de proveedor debe tener límite temporal en C06; `close` después de un fallo del proveedor podría requerir reintento externo; la apertura concurrente de un mismo sessionId debe coordinarse con una lease durable antes de conectar proveedores reales.
+- **Gate de cierre C05**: `pnpm exec tsx --import ./tests/setup.ts --test tests/voice-v2-media-capabilities.test.ts tests/voice-v2-media-transport.test.ts tests/voice-v2-media-lifecycle.test.ts`, `pnpm test:cognition-v2`, `pnpm typecheck`, y verificación CI del SHA final. Mantener NO_GO hasta tener logs.
