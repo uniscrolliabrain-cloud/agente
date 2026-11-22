@@ -4,8 +4,8 @@ import type { Plugin } from "vite";
 import { fileURLToPath, URL } from "node:url";
 import { createRequire } from "node:module";
 const requireWeb = createRequire(fileURLToPath(new URL("../web/package.json", import.meta.url)));
-const tailwindcss = requireWeb("tailwindcss") as typeof import("tailwindcss");
-const autoprefixer = requireWeb("autoprefixer") as typeof import("autoprefixer");
+const tailwindcss = requireWeb("tailwindcss");
+const autoprefixer = requireWeb("autoprefixer");
 import webTailwindConfig from "../web/tailwind.config.js";
 function versionManifest(): Plugin {
   return {
