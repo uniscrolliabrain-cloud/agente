@@ -1,6 +1,8 @@
 import { Component, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowUpRight, ChevronDown, Code2, ExternalLink, Maximize2, Monitor, RotateCcw, Search, Smartphone, Tablet, X } from "lucide-react";
 import { previews } from "./registry";
+import { labVersions } from "./versions";
+import { useLabVersion } from "./useLabVersion";
 type Device="mobile"|"tablet"|"desktop"|"fluid";
 const widths:Record<Device,number|undefined>={mobile:390,tablet:768,desktop:1440,fluid:undefined};
 class PreviewBoundary extends Component<{children:ReactNode},{error:string|null}> {
@@ -15,6 +17,7 @@ export default function App(){
  const [zoom,setZoom]=useState(100);
  const [key,setKey]=useState(0);
  const [full,setFull]=useState(false);
+ const version=useLabVersion();
  const item=previews.find(p=>p.id===active)??previews[0];
  const filtered=useMemo(()=>previews.filter(p=>(p.name+" "+p.category).toLowerCase().includes(query.toLowerCase())),[query]);
  const select=(id:string)=>{setActive(id);setKey(k=>k+1);history.replaceState(null,"","?view="+encodeURIComponent(id));};
@@ -26,6 +29,7 @@ export default function App(){
     <div className="lab-brand"><span className="lab-brand-mark">A<span>.</span></span><div><strong>AgntiaPro</strong><small>UI LAB · PREVIEW</small></div></div>
     <label className="lab-search"><Search size={16}/><input placeholder="Buscar pantallas…" value={query} onChange={e=>setQuery(e.target.value)} aria-label="Buscar pantallas"/></label>
     <nav>{["Aplicación","Público","Trabajo","Canales","Componentes"].map(group=><div key={group} className="lab-group"><p>{group}</p>{filtered.filter(p=>p.category===group).map(p=><button key={p.id} className={p.id===item.id?"lab-nav-item active":"lab-nav-item"} onClick={()=>select(p.id)}><span>{p.name}</span><span className={"lab-status "+p.status} title={p.status==="api"?"Requiere API":p.status==="fixture"?"Datos ficticios":"Demo interna"}/></button>)}</div>)}</nav>
+    <div className="lab-version-selector"><label htmlFor="lab-version">Versiones registradas</label><select id="lab-version" value={labVersions.find(v=>v.previewId===active)?.id??"current"} onChange={e=>{const v=labVersions.find(x=>x.id===e.target.value);if(v)select(v.previewId);}}>{labVersions.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select><small>Solo versiones con código registrado</small></div>
     <div className="lab-sidebar-footer"><Code2 size={15}/> Componentes reales del monorepo <br/> Datos de demostración · sin producción</div>
   </aside>
   <section className="lab-stage">
@@ -36,10 +40,12 @@ export default function App(){
           {([{id:"mobile",Icon:Smartphone,label:"Móvil"},{id:"tablet",Icon:Tablet,label:"Tablet"},{id:"desktop",Icon:Monitor,label:"PC"},{id:"fluid",Icon:ChevronDown,label:"Fluido"}] as const).map(({id,Icon,label})=><button key={id} title={label} aria-label={label} aria-pressed={device===id} className={device===id?"active":""} onClick={()=>setDevice(id)}><Icon size={17}/></button>)}
         </div>
         <select aria-label="Zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{[50,75,90,100].map(z=><option value={z} key={z}>{z}%</option>)}</select>
+        <button title="Comprobar nueva compilación" aria-label="Comprobar nueva compilación" onClick={()=>void version.check()}><RotateCcw size={15}/> <span className="lab-check-label">Comprobar</span></button>
         <button title="Recargar componente" aria-label="Recargar componente" onClick={()=>setKey(k=>k+1)}><RotateCcw size={17}/></button>
         <button title={full?"Salir de pantalla completa":"Pantalla completa"} aria-label={full?"Salir de pantalla completa":"Pantalla completa"} onClick={()=>setFull(f=>!f)}>{full?<X size={17}/>:<Maximize2 size={17}/>}</button>
       </div>
     </header>
+    {version.updateAvailable && <div className="lab-update" role="status"><span>Nueva versión disponible: {version.latest?.version.slice(0,8)}</span><button onClick={()=>location.reload()}>Cargar actualización</button></div>}
     <div className="lab-canvas">
       <div className="lab-viewport-wrap" style={{width:widths[device]?Math.min(widths[device]!,Math.max(320,window.innerWidth-32))*zoom/100:"100%",maxWidth:"100%"}}>
         <iframe key={item.id+"-"+key+"-"+device} title={"Vista "+item.name} className="lab-frame"
@@ -47,7 +53,7 @@ export default function App(){
           src={"/?embed=1&view="+encodeURIComponent(item.id)} sandbox="allow-scripts allow-same-origin allow-forms" referrerPolicy="no-referrer"/>
       </div>
     </div>
-    <footer className="lab-footer"><span>{device==="fluid"?"Ancho disponible":widths[device]+" px"} · {zoom}% · Vista aislada</span><span>No se envían cambios a producción</span></footer>
+    <footer className="lab-footer"><span>{device==="fluid"?"Ancho disponible":widths[device]+" px"} · {zoom}% · Vista aislada</span><span>Build: {version.initial?.version.slice(0,8)??"comprobando"} · {version.error?"Sin conexión al manifiesto":"Preview independiente"}</span></footer>
   </section>
  </div>;
 }
