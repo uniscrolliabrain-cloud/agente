@@ -1,3 +1,30 @@
+# CORRECCIÓN DE DIRECCIÓN ARTÍSTICA — PRIORIDAD ABSOLUTA (2026-11-22)
+
+**Esta sección prevalece sobre cualquier propuesta visual genérica del documento.** La primera propuesta de imágenes inspiracionales y componentes inventados no representa el branding real. Se prohíbe utilizar imágenes de referencia genéricas como especificación. El diseño debe derivarse por extracción literal de los componentes de `apps/web/src/landing/Landing.jsx`, `landing.css`, `ProductScene.jsx` y `BrandMark`.
+
+## Anatomía comprobada de la landing
+- `.agntia-landing.lp-premium`: papel `#fcfaf6`, tinta `#242421`, muted `#6e6c66`, borde `#e6e1d8`, violeta `#6550dd`, dorado `#b49665`; cuerpo Manrope y titulares Fraunces.
+- `.lp-container` es el contenedor maestro; `.lp-header` y `BrandLockup` dan la identidad, no un logo improvisado.
+- `.lp-hero` es una retícula 1.08fr / 1fr con gap 74px y H1 editorial de letter-spacing -0.052em; conservar ese ritmo tipográfico.
+- `.lp-premium .lp-button`: radio **9px**, min-height **50px**, hover `translateY(-2px)`; **NO** introducir botones tipo pill ni tarjetas indiscriminadamente redondeadas.
+- `.lp-footer`: papel, padding 65px 25px vertical; `.lp-footer-main` tiene cuatro columnas `1.4fr 1fr 1fr 1.3fr`, logo real, claim, grupos «Explora» y «Hablemos» y microcopy «AGNTIAPRO + TU EMPRESA». `.lp-legal-links` es una banda inferior de enlaces; no sustituir por un footer SaaS genérico.
+- `.lp-reserve-section` usa tinta `#232420` para el contraste oscuro de conversión; no replicar ese negro como fondo de los documentos legales.
+- `.lp-premium .lp-legal-notice`: aviso real anclado bottom-left, ancho 330px, padding 12px 14px, borde `--lp-line`, radio **12px**, fondo `--lp-paper`. No rediseñarlo como modal grande, bottom-sheet intrusivo ni toast genérico con iconos de escudo decorativos.
+
+## Especificación revisada, directamente desde los componentes
+**Páginas legales**: usar `BrandLockup` o su SVG real, mismo header y ancho de contenedor `.lp-container`, títulos Fraunces con tracking editorial, eyebrow `.lp-micro` y línea dorada `.lp-gold-line` si procede, párrafos Manrope con color muted, divisores `--lp-line`, links violeta sobrios y el footer de cuatro columnas adaptado. Reutilizar proporciones y radios de la landing, no inventar un nuevo sistema de cards. Para seis documentos de texto largo, priorizar lectura y espaciado; el índice lateral es opcional y no debe romper la composición editorial. `/confianza.html` puede usar la misma gramática de tarjetas que la landing, pero no tarjetas genéricas ni badges de certificación.
+
+**Footer**: mantener DOM, copy, BrandLockup, cuatro columnas y banda legal. Ajustar tipografía, interlineado, espaciado, alineación y wrapping de los seis enlaces en móvil. No agregar nuevas columnas ni reestructurar sin comparar screenshot de la landing.
+
+**Aviso legal**: evolucionar el componente existente, no reemplazarlo. Conservar ancho aproximado 330px, radio 12px, borde fino, tipografía Manrope, título en tinta, copy muted, enlaces discretos y X alineada. Microanimación `opacity` y `translateY(6px)` de 200–280ms; sombra muy tenue. Comprobar solapamiento con launcher «Hablar con LAIA» y teclado móvil. No introducir icono grande, CTA morado ni banner de consentimiento si no hay cookies opcionales.
+
+**Prohibiciones**: estética de plantilla Notion/Stripe, tarjetas con radios 18–24px, pastillas, glassmorphism, sombras profundas, ilustraciones stock, colores no presentes, gradientes nuevos, fondos oscuros legales, titulares sans genéricos. El estándar es **la landing real**, no una imagen inspiracional.
+
+## Puerta de aceptación visual obligatoria
+Antes de programar: capturar una vista real del hero, footer, tarjeta de precio, CTA oscuro y aviso; extraer tokens y medidas del CSS computado. Después: screenshot de las seis páginas y aviso en 1440/768/390/320px; comparar lado a lado con componentes de la landing y rechazar cualquier divergencia en tipografía, color, radio, ritmo y tono. No declarar «alineado al branding» sin esta comparación. Mantener texto legal idéntico, rutas y semántica de aviso informativo.
+
+---
+
 # AgntiaPro · Rediseño premium de páginas legales, footer y aviso de privacidad
 
 **Fecha:** 2026-11-22 · **Estado:** auditoría de código y especificación de diseño, no implementado. **Rama:** feat/freebuff-compliance-integral. **Objetivo:** unificar las seis páginas legales y el aviso informativo con el sistema editorial premium de la landing, sin modificar el contenido jurídico aprobado ni la semántica de consentimiento.
