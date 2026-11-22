@@ -1,0 +1,102 @@
+name: UI Lab - build and optional deploy
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to the dedicated UI Lab Vercel project?"
+        type: boolean
+        default: false
+        required: true
+  push:
+    branches:
+      - feat/ui-lab-main-isolated
+      - main
+    paths:
+      - "apps/ui-lab/**"
+      - "apps/web/src/**"
+      - "packages/domain/src/**"
+      - "apps/web/public/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/ui-lab.yml"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ui-lab-build-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck UI Lab
+        run: pnpm --filter @agente/ui-lab typecheck
+      - name: Build UI Lab
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+        run: pnpm --filter @agente/ui-lab build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agntiapro-ui-lab-dist
+          path: apps/ui-lab/dist
+          retention-days: 7
+  deploy:
+    needs: build
+    concurrency:
+      group: ui-lab-deploy
+      cancel-in-progress: false
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    runs-on: ubuntu-latest
+    environment: ui-lab
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pnpm install --no-frozen-lockfile
+      - name: Validate dedicated project secrets
+        env:
+          TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          ORG: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          PROJECT: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: |
+          test -n "$TOKEN" && test -n "$ORG" && test -n "$PROJECT" || { echo "UI Lab Vercel secrets missing"; exit 1; }
+      - name: Refuse deployment from non-main branch
+        run: test "$GITHUB_REF" = "refs/heads/main" || { echo "UI Lab deploy requires main"; exit 1; }
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull isolated UI Lab project settings
+        working-directory: apps/ui-lab
+        env:
+          VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build via Vercel
+        working-directory: apps/ui-lab
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+          VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: Deploy UI Lab only
+        working-directory: apps/ui-lab
+        env:
+          VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
