@@ -78,3 +78,10 @@ Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.t
 - La CI global existente (`.github/workflows/ci.yml`) solo ejecuta push a main y PR; por eso se añadió este gate de rama.
 - La consulta disponible de runs por commit devuelve exclusivamente ejecuciones originadas por PR; para `75e1df12` devolvió lista vacía. **No demuestra que el workflow push no exista ni que haya pasado.** Consultar Actions de la rama y obtener logs antes de afirmar validación.
 - Si falla la suite, registrar logs, corregir sobre esta rama y repetir. **No mergear ni desplegar sin evidencia verde y aprobación explícita.**
+
+## P05.8 — Auditoría del esquema canónico de roles y corrección fail-closed
+
+- Revisado `packages/domain/src/agent.ts`: `agentRoleSchema.active` utiliza `.default(true)` para compatibilidad legacy. Por ello, un `pick({active:true})` seguido de `safeParse` **no prueba** que el registro persistido contenga `active: true`: puede fabricarlo el parser.
+- `2f56a3fd`: la autorización de sesiones y el descubrimiento de capacidades exigen ahora `active === true` **en el registro original**, además de comprobar ID y nombre con Zod. No se cambia el contrato global de roles ni el comportamiento legacy fuera de voz.
+- `27b63123`: pruebas HTTP negativas para `active` ausente y `active: false`. Un rol de voz no se autoriza por defaults.
+- **Validación pendiente**: comprobar CI de la rama y ejecutar las suites; no se ha obtenido evidencia de ejecución verde.
