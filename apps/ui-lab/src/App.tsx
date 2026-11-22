@@ -18,7 +18,7 @@ export default function App(){
  const [key,setKey]=useState(0);
  const [full,setFull]=useState(false);
  const [compare,setCompare]=useState(false);
- const [comparisonId,setComparisonId]=useState("landing");
+ const [comparisonId,setComparisonId]=useState("brand");
  const version=useLabVersion();
  const item=previews.find(p=>p.id===active)??previews[0];
  const filtered=useMemo(()=>previews.filter(p=>(p.name+" "+p.category).toLowerCase().includes(query.toLowerCase())),[query]);
@@ -54,7 +54,7 @@ export default function App(){
       <div className="lab-viewport-wrap" style={{width:widths[device]?Math.min(widths[device]!,Math.max(320,window.innerWidth-32))*zoom/100:"100%",maxWidth:"100%"}}>
         <iframe key={item.id+"-"+key+"-"+device} title={"Vista "+item.name} className="lab-frame"
           style={{width:widths[device]??"100%",height:device==="desktop"?900:850,transform:widths[device]?`scale(${zoom/100})`:undefined,transformOrigin:"top left"}}
-          src={"/?embed=1&view="+encodeURIComponent(item.id)} sandbox="allow-scripts allow-same-origin allow-forms" referrerPolicy="no-referrer"/>
+          src={"/?embed=1&view="+encodeURIComponent(item.id)} sandbox="allow-scripts allow-same-origin" referrerPolicy="no-referrer"/>
       </div>
       {compare && <div className="lab-compare-frame"><div className="lab-compare-label">{previews.find(p=>p.id===comparisonId)?.name}</div><iframe key={comparisonId+"-"+device} title="Vista para comparar" className="lab-frame" src={"/?embed=1&view="+encodeURIComponent(comparisonId)} sandbox="allow-scripts allow-same-origin allow-forms" referrerPolicy="no-referrer"/></div>}
     </div>
