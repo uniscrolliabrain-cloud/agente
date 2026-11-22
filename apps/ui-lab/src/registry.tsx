@@ -5,9 +5,9 @@ const TopBar=lazy(()=>import("../../web/src/components/TopBarV2"));
 const Chat=lazy(()=>import("../../web/src/components/ChatPanel"));
 const Kpi=lazy(()=>import("../../web/src/components/KpiCard"));
 const Brand=lazy(()=>import("./BrandGallery"));
-const Landing=lazy(()=>import("../../web/src/landing/Landing.jsx"));
+
 const Knowledge=lazy(()=>import("../../web/src/components/MemoryView"));
-const Studio=lazy(()=>import("../../web/src/workspaces/business-command-studio/BusinessCommandStudio"));
+
 const Centro=lazy(()=>import("../../web/src/workspaces/35-centro-mando/CentroMandoWorkspace"));
 const Tasks=lazy(()=>import("../../web/src/components/TasksView"));
 const Docs=lazy(()=>import("../../web/src/components/DocumentsView"));
@@ -24,10 +24,8 @@ export const previews:Preview[]=[
 {id:"brand",name:"Identidad y marca",category:"Componentes",description:"Marca real y tokens visuales",Component:Brand,status:"demo"},
 {id:"topbar",name:"Barra superior",category:"Componentes",description:"TopBarV2 original, sin backend",Component:()=> <TopBar status="ok" statusLabel="Agente activo" contextLabel="DEMO" onNewChat={()=>{}} onOpenPalette={()=>{}} onOpenMenu={()=>{}}/>,status:"demo"},
 {id:"kpi",name:"Tarjetas KPI",category:"Componentes",description:"KpiCard original con datos sintéticos",Component:()=> <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,padding:24}}><Kpi label="Actividades" value={128} meta="+12 esta semana" icon="purple" series={[4,6,5,9,7,12]}/><Kpi label="Completadas" value={94} meta="Datos de ejemplo" icon="green" series={[2,3,6,7,8,11]}/><Kpi label="Pendientes" value={12} icon="orange" series={[8,7,6,7,5,4]}/></div>,status:"fixture"},
-{id:"chat",name:"Chat conversacional",category:"Componentes",description:"ChatPanel original con conversación ficticia",Component:()=> <Chat chat={{messages:[],streaming:false,streamBuf:"",tools:[],error:null,send:()=>{},cancel:()=>{},threadId:"ui-lab",sendDisabled:true}} userName="Demo"/>,status:"fixture"},
-{id:"landing",name:"Landing premium",category:"Público",description:"Landing real del repositorio",Component:Landing,status:"demo"},
+{id:"chat",name:"Chat conversacional",category:"Componentes",description:"ChatPanel original con conversación ficticia",Component:()=> <Chat chat={{messages:[],streaming:false,streamBuf:"",tools:[],error:null,send:()=>{},cancel:()=>{},threadId:"ui-lab"}} userName="Demo"/>,status:"fixture"},
 {id:"knowledge",name:"Conocimiento",category:"Trabajo",description:"Biblioteca editorial C01",Component:()=> <Knowledge memories={memories}/>,status:"fixture"},
-{id:"studio",name:"Estudio de operaciones",category:"Trabajo",description:"Editor de operaciones con estado demo interno",Component:Studio,status:"demo"},
 {id:"centro",name:"Centro de Mando",category:"Trabajo",description:"Workspace 35; inspeccionar dependencias",Component:Centro,status:"demo"},
 {id:"today",name:"Inicio / Hoy",category:"Trabajo",description:"Vista original; requiere API para datos reales",Component:Today,status:"api"},
 {id:"tasks",name:"Tareas",category:"Trabajo",description:"Componente original con tareas ficticias",Component:()=> <Tasks tasks={tasks} currentUserId={null} onOpenTask={()=>{}} onReviewTask={()=>{}}/>,status:"fixture"},
