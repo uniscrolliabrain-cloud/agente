@@ -4,7 +4,7 @@
  */
 export type LabVersion = {id:string;name:string;description:string;previewId:string};
 export const labVersions:LabVersion[]=[
-{id:"current",name:"Actual · rama UI Lab",description:"Último componente del código de esta rama",previewId:"full-app"},
+{id:"current",name:"Actual · main (vista demo)",description:"Vista del frontend importada desde el commit compilado",previewId:"full-app"},
 
-{id:"knowledge",name:"Conocimiento · C01",description:"Variante editorial incluida en la rama de origen",previewId:"knowledge"},
+{id:"knowledge",name:"Conocimiento · vista actual",description:"Vista de Conocimiento del frontend actual; no es un snapshot histórico",previewId:"knowledge"},
 ];
