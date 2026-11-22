@@ -61,7 +61,7 @@ export async function voiceSessionRoutes(runtime: CognitionV2Runtime, records: T
       if (agentId !== roleId) return false;
       const role = await records.get(identity.owner, "agent-roles", roleId);
       const parsed = agentRoleSchema.pick({ id: true, name: true, active: true }).safeParse(role);
-      return parsed.success && parsed.data.id === roleId && parsed.data.active === true;
+      return parsed.success && parsed.data.id === roleId && (role as { active?: unknown } | null)?.active === true;
     },
   }, new CognitionFastVoiceAdapter(runtime));
 
@@ -80,7 +80,7 @@ export async function voiceSessionRoutes(runtime: CognitionV2Runtime, records: T
     if (!roleId || roleId.length > 100) throw new AppError("Agent is not authorized", 403);
     const stored = await records.get(identity.owner, "agent-roles", roleId);
     const parsed = agentRoleSchema.pick({ id: true, name: true, active: true }).safeParse(stored);
-    if (!parsed.success || parsed.data.id !== roleId || parsed.data.active !== true) {
+    if (!parsed.success || parsed.data.id !== roleId || (stored as { active?: unknown } | null)?.active !== true) {
       throw new AppError("Agent is not authorized", 403);
     }
     return c.json(resolveVoiceMediaCapabilities(
