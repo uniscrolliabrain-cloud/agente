@@ -14,7 +14,9 @@ on:
     paths:
       - "apps/ui-lab/**"
       - "apps/web/src/**"
+      - "packages/domain/src/**"
       - "apps/web/public/**"
+      - "pnpm-lock.yaml"
       - ".github/workflows/ui-lab.yml"
 jobs:
   build:
