@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./landing.css";
+import { legalPages } from "../config/publicSite";
 import { BrandLockup } from "../components/BrandMark";
 import {
   ArrowUp,
@@ -164,6 +165,7 @@ function Dialog({ title, onClose, children, className = "" }) {
 }
 
 export default function Landing({ loginHref = "/?acceso=1" }) {
+  const [legalVisible, setLegalVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -836,6 +838,7 @@ export default function Landing({ loginHref = "/?acceso=1" }) {
                 </div>
               ) : (
                 <form onSubmit={submitForm} noValidate>
+                  <p className="lp-demo-disclosure">Formulario de demostración. Usa datos ficticios. No se envían ni se reserva una llamada.</p>
                   <div className="lp-form-title">
                     <span className="lp-spark">
                       <MessageCircle size={23} />
@@ -929,12 +932,33 @@ export default function Landing({ loginHref = "/?acceso=1" }) {
               </p>
             </div>
           </div>
+          <nav className="lp-legal-links" aria-label="Información legal">
+            <a href={`/${legalPages.notice}`}>Aviso legal</a>
+            <a href={`/${legalPages.privacy}`}>Privacidad</a>
+            <a href={`/${legalPages.cookies}`}>Cookies</a>
+            <a href={`/${legalPages.terms}`}>Términos del servicio</a>
+            <a href={`/${legalPages.ai}`}>Transparencia IA</a>
+            <a href={`/${legalPages.trust}`}>Confianza y seguridad</a>
+          </nav>
           <div className="lp-footer-bottom">
             <span>© {new Date().getFullYear()} AgntiaPro</span>
             <span>Demostración de producto · Agentes digitales, criterio humano.</span>
           </div>
         </div>
       </footer>
+      {legalVisible && !chatOpen && !selectedAgent && !menuOpen && (
+        <aside className="lp-legal-notice" aria-label="Información legal y privacidad">
+          <div>
+            <strong>Información legal y privacidad</strong>
+            <p>Consulta cómo tratamos los datos y qué tecnologías utiliza esta web.</p>
+            <a href={`/${legalPages.privacy}`}>Privacidad</a>{" · "}
+            <a href={`/${legalPages.cookies}`}>Cookies</a>
+          </div>
+          <button type="button" aria-label="Cerrar aviso legal" onClick={() => setLegalVisible(false)}>
+            <X size={18} aria-hidden="true" />
+          </button>
+        </aside>
+      )}
       {!chatOpen && !selectedAgent && (
         <button className="lp-chat-launcher" onClick={() => setChatOpen(true)}>
           <MessageCircle size={19} />

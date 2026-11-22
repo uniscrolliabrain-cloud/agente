@@ -33,6 +33,7 @@ jobs:
         env:
           ALLOW_NETWORK: "0"
       - run: pnpm audit:coherence
+      - run: node scripts/check-legal-site.mjs --release
 
   fly:
     name: fly (api + worker)

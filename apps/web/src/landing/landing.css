@@ -3095,3 +3095,48 @@ html:has(.lp-premium) {
     scroll-behavior: auto;
   }
 }
+
+.lp-premium .lp-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-block: 24px;
+}
+.lp-premium .lp-legal-links a,
+.lp-premium .lp-legal-notice a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.lp-premium .lp-legal-notice {
+  position: fixed;
+  inset-inline-start: max(12px, env(safe-area-inset-left));
+  inset-block-end: max(12px, env(safe-area-inset-bottom));
+  z-index: 30;
+  width: min(330px, calc(100% - 24px));
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--lp-line);
+  border-radius: 12px;
+  background: var(--lp-paper);
+  box-shadow: 0 8px 32px #24242126;
+  font-size: 13px;
+}
+.lp-premium .lp-legal-notice p { margin: 4px 0; }
+.lp-premium .lp-legal-notice button {
+  display: grid;
+  place-items: center;
+  flex: none;
+  min-height: 44px;
+  min-width: 44px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+@media (max-width: 600px) {
+  .lp-premium .lp-legal-notice {
+    inset-block-end: calc(82px + env(safe-area-inset-bottom));
+  }
+}
