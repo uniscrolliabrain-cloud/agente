@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import type { Plugin } from "vite";
 import { fileURLToPath, URL } from "node:url";
+import tailwindcss from "tailwindcss";
+import autoprefixer from "autoprefixer";
+import webTailwindConfig from "../web/tailwind.config.js";
 function versionManifest(): Plugin {
   return {
     name: "ui-lab-version-manifest",
@@ -21,6 +24,7 @@ function versionManifest(): Plugin {
 }
 export default defineConfig({
   plugins:[react(),versionManifest()],
+  css: { postcss: { plugins: [tailwindcss({ ...webTailwindConfig, content: [fileURLToPath(new URL("../web/src/**/*.{ts,tsx,js,jsx}", import.meta.url)), fileURLToPath(new URL("./src/**/*.{ts,tsx,js,jsx}", import.meta.url))] }), autoprefixer()] } },
   resolve:{alias:{"@agente/domain":fileURLToPath(new URL("../../packages/domain/src",import.meta.url))}},
   publicDir:fileURLToPath(new URL("../web/public",import.meta.url)),
   server:{host:"0.0.0.0",port:5178,strictPort:true},
