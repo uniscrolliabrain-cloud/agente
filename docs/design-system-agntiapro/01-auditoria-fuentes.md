@@ -1,49 +1,26 @@
-# 01 — Auditoría trazable de fuentes
-## Baseline
-Repositorio `uniscrolliabrain-cloud/agente`; rama de partida `feat/business-command-studio-demo`; árbol `f9c344b828b391df65bf873bf5155897c3c03fef`. Capturas del usuario: Centro de Mando con datos ACME demo; Estudio de Operaciones Kanban+timeline; Estudio con videollamada acoplada a la izquierda. Evidencia visual y código pueden diferir por versión desplegada.
+# 01 — Auditoría exclusivamente visual
+## Evidencias del código
+`landing/landing.css`: papel #fcfaf6, tinta #242421, texto secundario #6e6c66, líneas #e6e1d8, violeta #6550dd y oro #b49665. Fraunces para encabezados y Manrope para cuerpo. Contenedor máximo 1248px, secciones desktop 112px, botón primario de 50px mínimo y radio 9px; transiciones de ~200ms y reveals suaves.
 
-## Fuentes primarias inspeccionadas
-- `apps/web/src/landing/landing.css`: Fraunces/Manrope, variables `--lp-*`, contenedor 1248px, secciones 112px, focus-visible, responsive y reduced-motion; animaciones `lp-reveal`, `lp-message-enter`, `lp-portrait-enter`, `lp-typing`.
-- `apps/web/src/landing/Landing.jsx`: chat local de respuesta por palabras clave, agentes, escenas y flujo comercial. No confundir con conversación LLM productiva.
-- `apps/web/src/design-system/agntia-tokens.css`: tokens `--ag-*` compartidos, alcance opt-in `.agntia-workspace`.
-- `apps/web/src/workspaces/business-command-studio/BusinessCommandStudio.tsx`: vistas Kanban, Grafo, Digital Twin, Empresa 360°; estado con reducer, `Game Master`, inspector, timeline, reinicio demo.
-- `apps/web/src/workspaces/business-command-studio/studio.css`: rejilla principal, inspector 268px, paneles, tipografía, interacciones, responsive y reduced-motion.
-- `apps/web/src/workspaces/35-centro-mando/centro-mando.css`: define `:root` con `--bg #f6f6f9`, `--ink #14141f`, `--muted #8a8a9c`; riesgo de contaminación global.
-- `apps/web/src/components/ControlCenterView.tsx`: vista de control heredada, distinta del workspace 35 y del Estudio.
-- `apps/web/src/components/VerticalSliceOperationsView.tsx`: panel operacional de solo lectura, **no** es el Business Command Studio.
-- `apps/web/src/index.css`: hoja global grande (aprox. 168 KB), tokens previos `--accent #5b4bdb`, `--font Instrument Sans`; coexistencia de capas.
-- `apps/web/tailwind.config.js`: paleta V2 `purple #5E4FF1`, `bg #F3F0EB`, tipografía Instrument Sans; no coincide exactamente con la landing premium.
-- `apps/web/src/App.tsx`: shell, panel de chat acoplado, mobile chat y workspaces.
-- `docs/ui/UI-REDESIGN.md`: decisiones históricas útiles pero no autoridad automática.
-- `docs/landing/premium-funnel.md`: landing premium, demos deliberadas, no atribuir reservas reales.
+`design-system/agntia-tokens.css`: mismos colores principales, superficie blanca, fondo suave #f2efe8 y lila #f0ecfc, bajo selector `.agntia-workspace`. **Existe un inicio de convergencia gráfica**.
 
-## Hallazgos
-**A1 Alta — Deriva de tokens.** Tres acentos violeta (`#6550dd`, `#5b4bdb`, `#5E4FF1`), fondos y fuentes coexistentes. Recomendación: token semántico canónico y adaptadores legacy; no sustitución masiva a ciegas.
+`business-command-studio/studio.css`: tarjetas blancas con borde fino, radios 14px, sombras muy discretas, espacio exterior 20px, gaps 14–16px, títulos Fraunces, controles compactos y responsive a 1200/700px. Su estilo editorial-instrumental es referencia estética, no plantilla funcional.
 
-**A2 Alta — Estilos globales no encapsulados.** `centro-mando.css` declara variables en `:root`, que pueden cambiar otras superficies. Mover gradualmente a scope de workspace o namespace, con pruebas visuales.
+`35-centro-mando/centro-mando.css`: variables globales antiguas #f6f6f9, #14141f, #8a8a9c. `index.css` y `tailwind.config.js` usan otros acentos y tipografía Instrument Sans. Hay deriva visual entre generaciones.
 
-**A3 Alta — Terminología ambigua.** Centro de Mando, ControlCenterView, Operaciones (vertical slice) y Estudio de Operaciones son superficies diferentes. Documentar rutas, dueños y responsabilidades; prohibir renombrados que rompan navegación.
+## Diagnóstico UI
+- **Alta**: paletas, fuentes y tokens duplicados provocan identidad desigual.
+- **Alta**: variables `:root` del Centro de Mando pueden contaminar otras vistas.
+- **Alta**: no hay una especificación visual única para componentes, estados y densidades.
+- **Media**: la landing y el Studio aplican diferentes escalas de espacio, apropiadas a sus contextos pero sin una escala común documentada.
+- **Media**: motion, responsive y focus están implementados localmente, no como reglas compartidas.
+- **Media**: ausencia de biblioteca de screenshots de referencia y comparación visual automatizada.
 
-**A4 Alta — Estado demo/real.** Studio tiene `ACME` y `Entorno demo` explícitos. El Centro de Mando mostrado por el usuario contiene cifras de ejemplo. No permitir fallback demo silencioso para un tenant real.
+## Qué preservar
+El carácter cálido y premium; titulares serif elegantes; interfaz sans precisa; superficies luminosas; violeta reservado a puntos de atención; detalles dorados sutiles; bordes finos; composiciones despejadas; sensación de producto artesanal, no dashboard genérico.
 
-**A5 Media — Movimiento fragmentado.** Landing usa reveal y varias animaciones; Studio usa `bcs-reveal` y transiciones cortas. Falta lenguaje único de duración, easing, jerarquía, interrupción y preferencia de movimiento reducido.
+## Qué evitar
+No copiar la estructura de ninguna pantalla a otra. No hacer que todos los workspaces parezcan Kanban ni landing. No confundir similitud de identidad con uniformidad de distribución. No reemplazar todo CSS legacy sin comparar visualmente.
 
-**A6 Media — Tipografía híbrida.** Landing/Studio usan Fraunces+Manrope; CSS global y Tailwind siguen Instrument Sans. Conservar la dupla premium en superficies nuevas, sin migración indiscriminada de todo lo legacy.
-
-**A7 Media — Móvil y densidad.** Studio tiene breakpoint a 1200 y 700 px; landing a 1100/900/640/360. Deben probarse conjuntamente con chat acoplado, teclado y safe areas.
-
-**A8 Media — Componentes repetidos.** Botones, cards, badges y paneles definidos por clase local; crear inventario y wrappers comunes antes de consolidar.
-
-**A9 Media — Relación temporal.** Las cuatro vistas comparten modelo local demo; la integración real con runtime, event log y snapshots no está verificada aquí. El diseño debe distinguir estado factual de simulación.
-
-**A10 Baja — Auditoría visual automatizada pendiente.** Faltan capturas de referencia versionadas por viewport, tests de regresión y presupuesto de movimiento.
-
-## Decisiones
-- Canonical visual target = landing premium + Studio; Centro de Mando se alinea progresivamente, conservando su función.
-- No imponer serif en tablas densas ni reemplazar de golpe CSS global.
-- No borrar ramas ni estilos legacy sin mapa de uso.
-- Antes de una migración: inventario de selectores, import graph, capturas, contraste y test de rutas.
-- No afirmar que el código de Studio está en main: revisar `git merge-base`, diffs y release efectivo.
-
-## Riesgos pendientes
-No se inspeccionaron exhaustivamente todos los componentes, todas las ramas ni todos los navegadores. Esta auditoría es profunda en las superficies de referencia, no una certificación de todo el monorepo.
+## Límite
+Los nombres de las pantallas auditadas identifican **fuentes de diseño**. No se derivan de ellas requisitos funcionales.
