@@ -1,0 +1,31 @@
+import { lazy, type ComponentType } from "react";
+import { memories,files,tasks } from "./fixtures";
+const Landing=lazy(()=>import("../../web/src/landing/Landing.jsx"));
+const Knowledge=lazy(()=>import("../../web/src/components/MemoryView"));
+const Studio=lazy(()=>import("../../web/src/workspaces/business-command-studio/BusinessCommandStudio"));
+const Centro=lazy(()=>import("../../web/src/workspaces/35-centro-mando/CentroMandoWorkspace"));
+const Tasks=lazy(()=>import("../../web/src/components/TasksView"));
+const Docs=lazy(()=>import("../../web/src/components/DocumentsView"));
+const Projects=lazy(()=>import("../../web/src/components/ProjectsView"));
+const Team=lazy(()=>import("../../web/src/components/TeamView"));
+const Users=lazy(()=>import("../../web/src/components/UsersView"));
+const Whatsapp=lazy(()=>import("../../web/src/components/WhatsAppView"));
+const Control=lazy(()=>import("../../web/src/components/ControlCenterView"));
+const Today=lazy(()=>import("../../web/src/components/CommandCenterView"));
+const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
+export type Preview={id:string;name:string;category:string;description:string;Component:ComponentType;status:"fixture"|"demo"|"api";};
+export const previews:Preview[]=[
+{id:"landing",name:"Landing premium",category:"Público",description:"Landing real del repositorio",Component:Landing,status:"demo"},
+{id:"knowledge",name:"Conocimiento",category:"Trabajo",description:"Biblioteca editorial C01",Component:()=> <Knowledge memories={memories}/>,status:"fixture"},
+{id:"studio",name:"Estudio de operaciones",category:"Trabajo",description:"Editor de operaciones con estado demo interno",Component:Studio,status:"demo"},
+{id:"centro",name:"Centro de Mando",category:"Trabajo",description:"Workspace 35; inspeccionar dependencias",Component:Centro,status:"demo"},
+{id:"today",name:"Inicio / Hoy",category:"Trabajo",description:"Vista original; requiere API para datos reales",Component:Today,status:"api"},
+{id:"tasks",name:"Tareas",category:"Trabajo",description:"Componente original con tareas ficticias",Component:()=> <Tasks tasks={tasks} currentUserId={null} onOpenTask={()=>{}} onReviewTask={()=>{}}/>,status:"fixture"},
+{id:"documents",name:"Documentos",category:"Trabajo",description:"Vista original con archivos ficticios",Component:()=> <Docs files={files}/>,status:"api"},
+{id:"projects",name:"Proyectos",category:"Trabajo",description:"Vista original en modo desconectado",Component:()=> <Projects enabled={false}/>,status:"api"},
+{id:"team",name:"Equipo",category:"Trabajo",description:"Vista original; depende de API o modo demo",Component:Team,status:"api"},
+{id:"users",name:"Usuarios",category:"Trabajo",description:"Vista original; depende de API",Component:()=> <Users currentUserId="ui-lab"/>,status:"api"},
+{id:"whatsapp",name:"WhatsApp",category:"Canales",description:"Vista original; API bloqueada en el laboratorio",Component:Whatsapp,status:"api"},
+{id:"control",name:"Control de actividad",category:"Trabajo",description:"Vista original en modo desconectado",Component:()=> <Control enabled={false}/>,status:"api"},
+{id:"operations",name:"Operaciones",category:"Trabajo",description:"Vista original; datos de servidor no disponibles",Component:Operations,status:"api"},
+];
