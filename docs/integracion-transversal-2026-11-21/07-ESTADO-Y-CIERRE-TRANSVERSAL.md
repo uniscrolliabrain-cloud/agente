@@ -61,7 +61,7 @@ Los conteos son commits propios / commits exclusivos de main al momento del info
 | `audit/update-docs-20261118` | `626c378` | 75 / 66 | Clasificar y deduplicar en C09. |
 | `docs/audit-30-dominios-runtime-20261115` | `546d264` | 70 / 66 | Comparar por dominio con código y pruebas vigentes. |
 
-Las ramas locales `campaign/c00-preflight` (`ad8a34a`) y `campaign/c01-arqueologia` (`28bb383`) conservan informes, procedencia e inventarios. Los TSV son evidencia del snapshot original y no incluyen las referencias aparecidas después. Los worktrees de otros entornos siguen fuera de la observación.
+Las ramas de campaña publicadas `campaign/c00-preflight` (`ad8a34a`) y `campaign/c01-arqueologia` (`28bb383`) conservan los commits originales. Esta rama también contiene los [informes C00](evidence/C00-REPORT.md) y [C01](evidence/C01-REPORT.md), la [procedencia](evidence/DEPLOY-PROVENANCE.md) y la [matriz inicial](evidence/BRANCH-MATRIX.md). Los TSV son evidencia del snapshot original y no incluyen las referencias aparecidas después. Los worktrees de otros entornos siguen fuera de la observación.
 
 ## Orden de integración y comprobaciones
 
