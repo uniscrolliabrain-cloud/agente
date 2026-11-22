@@ -96,6 +96,12 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
       headers: { ...chatHeaders, Authorization: `Bearer ${bob.token}` },
     });
     assert.equal(foreignCapabilities.status, 403);
+    // AgentRoleSchema defaults missing active to true for legacy reads.
+    // Voice authorization must never inherit that permissive default.
+    await db.put(`tenant-a:${alice.id}`, "agent-roles", { id: "inactive-missing", name: "Legacy missing active" });
+    assert.equal((await voice("/capabilities/inactive-missing", "GET")).status, 403);
+    await db.put(`tenant-a:${alice.id}`, "agent-roles", { id: "inactive-false", name: "Disabled", active: false });
+    assert.equal((await voice("/capabilities/inactive-false", "GET")).status, 403);
     const consent = await voice("/consents", "POST", {
       transcript: true, recording: false, purpose: "conversation", saveToThread: true,
     });
