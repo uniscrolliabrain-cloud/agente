@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { BookOpen, Brain, ChevronDown, ChevronRight, CircleHelp, FilePlus2, FileText, FolderClosed, GitBranch, History, Home, Menu, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, ShieldCheck, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { BookOpen, Brain, ChevronDown, ChevronRight, CircleHelp, FilePlus2, FileText, FolderClosed, GitBranch, History, Home, Menu, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plus, Search, ShieldCheck, Sparkles, X } from "lucide-react";
 import "./knowledge.css";
 
 type Page = { id:string; title:string; parent:string|null; icon:string; body:string; updated:string };
@@ -42,7 +42,7 @@ export default function KnowledgeNotionLab(){
  const update=(field:"title"|"body",value:string)=>setPages(v=>v.map(p=>p.id===selected?{...p,[field]:value,updated:"Ahora"}:p));
  const matches=pages.filter(p=>(p.title+" "+p.body).toLowerCase().includes(query.toLowerCase()));
  useEffect(()=>{const handler=(e:KeyboardEvent)=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="k"){e.preventDefault();setSearchOpen(true);}if(e.key==="Escape"){setSearchOpen(false);setMobileOpen(false);}};window.addEventListener("keydown",handler);return()=>window.removeEventListener("keydown",handler);},[]);
- const tree=(parent:string|null,depth=0):React.ReactNode=>pages.filter(p=>p.parent===parent).map(p=><div key={p.id}>
+ const tree=(parent:string|null,depth=0):ReactNode=>pages.filter(p=>p.parent===parent).map(p=><div key={p.id}>
   <div className={"kn-page-row "+(selected===p.id&&section==="documents"?"selected":"")} style={{paddingLeft:10+depth*13}}>
    <button className="kn-expand" aria-label={"Expandir "+p.title} onClick={()=>setExpanded(v=>v.includes(p.id)?v.filter(x=>x!==p.id):[...v,p.id])}>{pages.some(x=>x.parent===p.id)?expanded.includes(p.id)?<ChevronDown size={13}/>:<ChevronRight size={13}/>:<span className="kn-expand-space"/>}</button>
    <button className="kn-page-link" onClick={()=>choose(p.id)}><span>{p.icon}</span><span className="kn-truncate">{p.title}</span></button>
