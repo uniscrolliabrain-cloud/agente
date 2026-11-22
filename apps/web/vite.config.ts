@@ -21,7 +21,7 @@ function publicLegalPages(): Plugin {
       });
     },
     generateBundle() {
-      for (const file of files) this.emitFile({ type: "asset", fileName: file, source: read(file) });
+      files.forEach((file) => this.emitFile({ type: "asset", fileName: file, source: read(file) }));
     },
   };
 }
