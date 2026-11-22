@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import type { Plugin } from "vite";
 import { fileURLToPath, URL } from "node:url";
 import { createRequire } from "node:module";
+import { readdirSync, readFileSync } from "node:fs";
 const requireWeb = createRequire(fileURLToPath(new URL("../web/package.json", import.meta.url)));
 const tailwindcss = requireWeb("tailwindcss");
 const autoprefixer = requireWeb("autoprefixer");
@@ -11,6 +12,10 @@ function versionManifest(): Plugin {
   return {
     name: "ui-lab-version-manifest",
     generateBundle() {
+      const assetsDir = fileURLToPath(new URL("./public/landing/", import.meta.url));
+      for (const name of readdirSync(assetsDir)) {
+        this.emitFile({ type: "asset", fileName: `landing/${name}`, source: readFileSync(fileURLToPath(new URL(`./public/landing/${name}`, import.meta.url))) });
+      }
       this.emitFile({ type: "asset", fileName: "robots.txt", source: "User-agent: *\\nDisallow: /\\n" });
       this.emitFile({ type: "asset", fileName: "_headers", source: "/*\\n  X-Robots-Tag: noindex, nofollow\\n  Referrer-Policy: no-referrer\\n  X-Content-Type-Options: nosniff\\n" });
       this.emitFile({
