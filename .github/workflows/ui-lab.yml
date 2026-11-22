@@ -11,6 +11,7 @@ on:
     branches:
       - feat/ui-lab-main-isolated
       - fix/ui-lab-centro-tailwind-landing-studio
+      - feat/ui-lab-knowledge-notion-v1
       - main
     paths:
       - "apps/ui-lab/**"
