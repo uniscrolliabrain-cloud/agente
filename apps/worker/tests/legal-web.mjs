@@ -77,6 +77,21 @@ try {
     assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0]);
     assert.equal(external.size, 0);
     await page.goto(appOrigin);
+    const notice = page.getByRole("complementary", { name: "Información legal y privacidad" });
+    await notice.waitFor();
+    const legalFooter = page.getByRole("navigation", { name: "Información legal" });
+    const legalLinks = await legalFooter.getByRole("link").all();
+    assert.equal(legalLinks.length, 6);
+    for (const link of legalLinks) {
+      const href = await link.getAttribute("href");
+      const response = await context.request.get(new URL(href, appOrigin).href);
+      assert.equal(response.status(), 200, href);
+      assert.match(await response.text(), /name="legal-status" content="published"/);
+    }
+    await notice.getByRole("button", { name: "Cerrar aviso legal" }).press("Enter");
+    await notice.waitFor({ state: "hidden" });
+    assert.equal(await legalFooter.count(), 1);
+    await page.goto(`${appOrigin}/?acceso=1`);
     const privacy = page.getByRole("link", { name: "Privacidad", exact: true });
     await privacy.waitFor();
     assert.equal(await privacy.getAttribute("href"), `${siteOrigin}/privacidad.html`);

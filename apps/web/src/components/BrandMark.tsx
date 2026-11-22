@@ -34,16 +34,18 @@ export function BrandMark({ size = 28 }: { size?: number }) {
   );
 }
 
-export function BrandLockup({ markSize = 32 }: { markSize?: number }) {
+export function BrandLockup({ markSize = 32, compact = false }: { markSize?: number; compact?: boolean }) {
   return (
-    <div className="cc-brand">
+    <span className="cc-brand">
       <BrandMark size={markSize} />
-      <div className="cc-brand-copy">
-        <span className="cc-brand-name">
-          Agntia<b>Pro</b>
+      {!compact && (
+        <span className="cc-brand-copy">
+          <span className="cc-brand-name">
+            Agntia<b>Pro</b>
+          </span>
+          <span className="cc-brand-sub">LAIA</span>
         </span>
-        <span className="cc-brand-sub">LAIA</span>
-      </div>
-    </div>
+      )}
+    </span>
   );
 }

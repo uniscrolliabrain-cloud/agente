@@ -1,3 +1,4 @@
+import Landing from "./landing/Landing.jsx";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
@@ -152,6 +153,7 @@ export default function App() {
   }
 
   if (!auth.isAuthenticated) {
+    if (new URLSearchParams(window.location.search).get("acceso") !== "1") return <Landing />;
     return <Login onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />;
   }
 

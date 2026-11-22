@@ -3,6 +3,7 @@
 const canonicalSite = "https://agntiapro.com";
 
 export const legalPages = {
+  notice: "aviso-legal.html",
   privacy: "privacidad.html",
   terms: "terminos.html",
   cookies: "cookies.html",

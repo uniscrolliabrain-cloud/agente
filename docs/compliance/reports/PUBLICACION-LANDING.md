@@ -12,3 +12,11 @@ Antes de activar el servicio para clientes se mantiene el plan de trabajo de la 
 - Chromium verificó las seis rutas locales y el estado indexable. En la landing candidata no se observaron cookies, escrituras en localStorage o sessionStorage ni solicitudes a terceros. La versión pública anterior sí intentó cargar Google Fonts.
 - Playwright pasó en escritorio y móvil emulado. El typecheck y la compilación web pasaron. Vite emitió un aviso por el tamaño de un chunk.
 - La suite estándar con Node 22 terminó con código distinto de cero. `tests/browser.test.ts` y `tests/business-graph.test.ts` alcanzaron el límite de 30 segundos. El archivo de navegador pasó sus 16 casos por separado con un límite de 90 segundos. El gate conserva su configuración.
+
+## Integración con la landing React
+
+La landing editorial de `113dcb7`, con las secciones Producto, Equipo digital e Implantación visibles en el bundle servido por www.agntiapro.com, se incorpora a Freebuff con sus componentes, estilos y recursos. El login sigue disponible en `/?acceso=1`. El footer de React enlaza las seis páginas legales en el mismo origen. Vite sirve y empaqueta los HTML de `apps/site` para evitar dos juegos de textos.
+
+El aviso informativo abre con la visita. Puede cerrarse con teclado, no bloquea la navegación y no registra consentimiento ni escribe en el navegador. El formulario de demostración indica antes de introducir datos que se deben utilizar ejemplos ficticios. Los textos legales reflejan la demostración local y las peticiones de tipografías de esta portada.
+
+Pasaron el typecheck web, la build con los seis HTML, el control de enlaces, el gate legal y Playwright Chromium en escritorio y móvil emulado. Playwright verificó 200 para cada página en el origen de la landing, el cierre del aviso y la permanencia de los enlaces del footer. Las rutas en producción aún devolvían 404 al verificarlas antes de publicar este cambio.
