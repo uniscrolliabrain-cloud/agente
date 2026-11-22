@@ -20,3 +20,7 @@ body{margin:0}#root{min-height:100vh}
 .lab-root :is(button,input,select):focus-visible{outline:2px solid #6550dd;outline-offset:2px}
 @media(max-width:780px){.lab-root{grid-template-columns:1fr}.lab-sidebar{display:none}.lab-topbar{padding:12px;flex-wrap:wrap}.lab-title h1{font-size:20px}.lab-actions{width:100%;justify-content:space-between}.lab-canvas{padding:14px 8px 50px}.lab-footer{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.lab-root *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.lab-frame{display:block;border:0;background:#fcfaf6;box-shadow:0 18px 65px #24242120;border-radius:10px}
+.lab-embed{min-height:100dvh;background:#fcfaf6;overflow-x:hidden}
+.lab-embed .lab-preview-badge{position:sticky;top:0}
