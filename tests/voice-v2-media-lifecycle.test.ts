@@ -84,3 +84,39 @@ test("C05 lifecycle does not mutate state on pre-aborted request", async () => {
   await assert.rejects(f.lifecycle.open(identity, session.sessionId, abort.signal), /request cancelled/);
   assert.equal(f.port.inspect(session.sessionId), undefined);
 });
+
+test("C05 lifecycle tears down partially allocated media when open fails", async () => {
+  const f = fixture();
+  let closed = 0;
+  const transport = {
+    open: async (item: VoiceSessionV2, signal: AbortSignal) => {
+      await f.port.open(item, signal);
+      throw Error("PROVIDER_OPEN_FAILED");
+    },
+    interrupt: f.port.interrupt.bind(f.port),
+    close: async (id: string, signal: AbortSignal) => {
+      closed += 1;
+      await f.port.close(id, signal);
+    },
+  };
+  const lifecycle = new VoiceMediaLifecycle(f.coordinator, transport);
+  await assert.rejects(lifecycle.open(identity, session.sessionId, new AbortController().signal), /PROVIDER_OPEN_FAILED/);
+  assert.equal(closed, 1);
+  assert.equal(f.port.inspect(session.sessionId)?.closed, true);
+});
+
+test("C05 lifecycle tears down media when request aborts during open", async () => {
+  const f = fixture();
+  const controller = new AbortController();
+  const transport = {
+    open: async (item: VoiceSessionV2, signal: AbortSignal) => {
+      await f.port.open(item, signal);
+      controller.abort(Error("request cancelled during open"));
+    },
+    interrupt: f.port.interrupt.bind(f.port),
+    close: f.port.close.bind(f.port),
+  };
+  const lifecycle = new VoiceMediaLifecycle(f.coordinator, transport);
+  await assert.rejects(lifecycle.open(identity, session.sessionId, controller.signal), /request cancelled during open/);
+  assert.equal(f.port.inspect(session.sessionId)?.closed, true);
+});
