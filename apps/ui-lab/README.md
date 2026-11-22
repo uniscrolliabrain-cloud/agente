@@ -12,7 +12,10 @@ Desplegar en **otro proyecto Vercel y otro origen**; nunca montar en `agntiapro.
 Crear un proyecto separado desde el mismo repo y elegir **Root Directory `apps/ui-lab`**. Framework: Vite; build `pnpm --filter @agente/ui-lab build` desde raíz si Vercel detecta el workspace, o configurar el comando apropiado al root elegido; output `dist`. Validar una compilación real de Vercel antes de activar publicación. No reutilizar el Project ID de producción.
 
 ## GitHub Actions
-`.github/workflows/ui-lab.yml` compila el laboratorio en `main` y en la rama aislada. El deploy está desactivado por defecto y solo se ejecuta con `workflow_dispatch` y `deploy=true`; requiere secretos dedicados `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID` y `UI_LAB_VERCEL_PROJECT_ID`.
+`.github/workflows/ui-lab.yml` compila el laboratorio en `main` y en la rama aislada. El deploy está desactivado por defecto y solo se ejecuta desde `main` con `workflow_dispatch` y `deploy=true` (GitHub Actions → UI Lab → Run workflow); requiere secretos dedicados `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID` y `UI_LAB_VERCEL_PROJECT_ID`.
+
+## Publicación y actualización
+El botón **Buscar actualización** solo consulta `version.json`; **no inicia un despliegue**. Para publicar una versión, usar el workflow manual protegido de GitHub Actions o configurar auto-deploy de Vercel únicamente para el proyecto UI Lab. No incorporar tokens de GitHub ni Vercel al navegador. El laboratorio reproduce el código de la revisión que se compila; la fidelidad con el deploy público requiere verificar el commit realmente desplegado, sus variables, assets y los estados de datos.
 
 ## Limitaciones conocidas
 No hay pruebas visuales automatizadas, versiones persistentes ni fidelidad pixel-perfect certificada. Las pantallas con APIs desconectadas son inspecciones visuales, no flujos operativos. No se ha desplegado este proyecto todavía.
