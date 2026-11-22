@@ -123,14 +123,13 @@ export default function Landing({ loginHref = '/?acceso=1' }) {
     <div style={{ boxSizing: 'border-box', paddingTop: 'var(--safe-area-inset-top)', minHeight: '100vh', background: 'var(--cream)' }} className="agntia-landing overflow-x-clip">
       {/* HEADER */}
       <header style={{ top: 'var(--safe-area-inset-top)' }} className="sticky z-50 border-b border-[var(--line)] bg-[var(--cream)]">
-        <div className="mx-auto flex max-w-prose flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <a href="#inicio" className="flex shrink-0 items-center gap-3">
+        <div className="landing-header-row mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <a href="#inicio" aria-label="AgntiaPro · Inicio" className="flex shrink-0 items-center gap-3">
             <BrandLockup />
-            <span className="hidden flex-col leading-none md:flex"><span className="text-sm font-bold">agntiapro</span><span className="mt-1.5 h-px w-full bg-[#C9A86A]" /><span className="mt-1 text-sm font-medium text-[#6B655E]">LAIA · tu empresa, en conversación</span></span>
           </a>
-          <nav className="hidden items-center gap-6 text-sm font-semibold lg:flex"><a href="#producto" className="hover:text-[#5B4BDB]">Producto</a><a href="#equipo" className="hover:text-[#5B4BDB]">Equipo</a><a href="#como-trabajan" className="hover:text-[#5B4BDB]">Cómo trabajan</a><a href="#implantacion" className="hover:text-[#5B4BDB]">Implantación</a></nav>
-          <div className="flex items-center gap-2">
-            <span className="hidden items-center gap-2 rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-bold sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" />ACME · Agente activo</span>
+          <nav aria-label="Navegación principal" className="landing-desktop-nav hidden items-center gap-6 text-sm font-semibold lg:flex"><a href="#producto" className="hover:text-[#5B4BDB]">Producto</a><a href="#equipo" className="hover:text-[#5B4BDB]">Equipo</a><a href="#como-trabajan" className="hover:text-[#5B4BDB]">Cómo trabajan</a><a href="#implantacion" className="hover:text-[#5B4BDB]">Implantación</a></nav>
+          <div className="landing-header-actions flex items-center gap-2">
+            <div className="lg:hidden">
             {searchOpen ? (
               <form onSubmit={runSearch} className="flex items-center gap-1 rounded-full border border-[var(--line)] bg-white px-2 py-1">
                 <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Buscar en la página…" className="w-28 bg-transparent px-2 py-1.5 text-sm outline-none sm:w-40" aria-label="Buscar en la página" />
@@ -140,20 +139,20 @@ export default function Landing({ loginHref = '/?acceso=1' }) {
             ) : (
               <button onClick={() => setSearchOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--line)] bg-white" aria-label="Buscar"><Search className="h-4 w-4" /></button>
             )}
-            <a href={loginHref} className="rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-bold">Acceso clientes</a>
-            <button onClick={newChat} className="rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white">Nuevo chat</button>
-            <a href="#reserva" className="hidden rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white md:block">Reservar discovery call</a>
+            </div>
+            <a href={loginHref} className="landing-client-link rounded-full border border-[var(--line)] bg-white px-3 py-2 text-sm font-bold">Acceso clientes</a>
+            <button onClick={newChat} className="rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white lg:hidden">Nuevo chat</button>
+            <a href="#reserva" className="landing-reserve-link hidden rounded-full bg-[#111] px-4 py-2.5 text-sm font-bold text-white md:block">Reservar</a>
           </div>
         </div>
-        {searchResult && <p role="status" className="mx-auto max-w-[1240px] px-4 pb-2 text-sm font-semibold text-[#6B655E] sm:px-6">{searchResult}</p>}
-        <nav className="flex gap-5 overflow-x-auto px-4 pb-2 text-sm font-semibold lg:hidden no-scrollbar"><a href="#producto">Producto</a><a href="#equipo">Equipo</a><a href="#como-trabajan">Cómo trabajan</a><a href="#implantacion">Implantación</a></nav>
+        {searchResult && <p role="status" className="mx-auto max-w-[1240px] px-4 pb-2 text-sm font-semibold text-[#6B655E] sm:px-6 lg:hidden">{searchResult}</p>}
+        <nav aria-label="Navegación móvil" className="flex gap-5 overflow-x-auto px-4 pb-2 text-sm font-semibold lg:hidden no-scrollbar"><a href="#producto">Producto</a><a href="#equipo">Equipo</a><a href="#como-trabajan">Cómo trabajan</a><a href="#implantacion">Implantación</a></nav>
       </header>
 
       {/* HERO */}
       <section id="inicio" className="mx-auto max-w-[1240px] px-4 pb-16 pt-10 sm:px-6 lg:pt-16">
         <div className="grid items-start gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-sm font-bold"><span className="h-2 w-2 rounded-full bg-emerald-500" />ACME · Agente activo</span>
             <h1 className="serif mt-6 text-[clamp(2.8rem,6vw,4.8rem)] font-medium leading-[1.02] tracking-[-0.02em]">Tu empresa, siempre un paso por delante.</h1>
             <p className="serif mt-6 text-[clamp(1.35rem,2.6vw,1.8rem)] leading-snug">Imagina poder hablar con tu empresa.</p>
             <p className="mt-4 max-w-prose text-sm leading-relaxed text-[#6B655E]">No necesitas aprender IA ni tecnología. Tú diriges, tu equipo digital trabaja. Pregunta, delega, aprueba y recibe resultados.</p>

@@ -14,6 +14,65 @@
 .agntia-landing [id] { scroll-margin-top: 110px; }
 .agntia-landing .no-scrollbar { scrollbar-width: none; }
 
+.agntia-landing header a:focus-visible,
+.agntia-landing header button:focus-visible {
+  outline: 2px solid #5B4BDB;
+  outline-offset: 4px;
+}
+
+@media (min-width: 1024px) {
+  .agntia-landing .landing-header-row {
+    height: 72px;
+    flex-wrap: nowrap;
+    gap: 24px;
+    padding-top: 0;
+    padding-bottom: 0;
+    white-space: nowrap;
+  }
+
+  .agntia-landing .landing-desktop-nav {
+    gap: clamp(16px, 2vw, 28px);
+    font-size: 13px;
+    color: #6B655E;
+  }
+
+  .agntia-landing .landing-desktop-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    transition: color 150ms ease;
+  }
+
+  .agntia-landing .landing-header-actions { gap: 20px; }
+
+  .agntia-landing .landing-client-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B655E;
+  }
+
+  .agntia-landing .landing-client-link:hover { color: #111; }
+
+  .agntia-landing .landing-reserve-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 22px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 150ms ease;
+  }
+
+  .agntia-landing .landing-reserve-link:hover { background: #34302D; }
+}
+
 .agntia-landing .cc-brand { display: inline-flex; align-items: center; gap: 9px; color: #111; }
 .agntia-landing .cc-brand-copy { display: flex; flex-direction: column; gap: 4px; }
 .agntia-landing .cc-brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1; }
