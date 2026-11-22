@@ -1,7 +1,7 @@
 // Standalone review entry for the exact workspace component. No App/auth hooks.
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrandLockup } from "../../components/BrandMark";
+import { BrandLockup } from "../../../../web/src/components/BrandMark";
 import BusinessCommandStudio from "./BusinessCommandStudio";
 import "./preview.css";
 
