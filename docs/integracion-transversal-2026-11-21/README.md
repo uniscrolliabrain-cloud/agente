@@ -17,6 +17,7 @@ Reconstruir **con evidencia actual** todas las ramas, PRs, commits, código, tes
 3. `03-CAMPANAS-CODEX.md`
 4. `04-HANDOFF-CODEX.md`
 5. [Informe de integración por rama](05-INFORME-POR-RAMA.md)
+6. [Estado y cierre de la integración transversal](07-ESTADO-Y-CIERRE-TRANSVERSAL.md)
 
 ## Invariantes
 - Tenant/actor/rol/policy en servidor; deny-by-default, RLS, fail-closed, auditoría y idempotencia.
