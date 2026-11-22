@@ -25,20 +25,10 @@ class BlockedXHR extends NativeXHR {
   }
 }
 window.XMLHttpRequest = BlockedXHR;
-class BlockedWebSocket extends WebSocket {
-  constructor(_url: string | URL, _protocols?: string | string[]) {
-    super("ws://127.0.0.1:0");
-    throw new Error("UI Lab: WebSocket deshabilitado");
-  }
-}
-window.WebSocket = BlockedWebSocket;
-class BlockedEventSource extends EventSource {
-  constructor(_url: string | URL, _options?: EventSourceInit) {
-    super("data:,");
-    throw new Error("UI Lab: EventSource deshabilitado");
-  }
-}
-window.EventSource = BlockedEventSource;
+const BlockedWebSocket = function (): never { throw new Error("UI Lab: WebSocket deshabilitado"); };
+window.WebSocket = BlockedWebSocket as unknown as typeof WebSocket;
+const BlockedEventSource = function (): never { throw new Error("UI Lab: EventSource deshabilitado"); };
+window.EventSource = BlockedEventSource as unknown as typeof EventSource;
 try {
   Object.defineProperty(navigator, "sendBeacon", { configurable: true, value: () => false });
 } catch {
