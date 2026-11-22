@@ -1,48 +1,38 @@
-# 02 — Identidad visual y tokens normativos
-## ADN de marca
-Editorial premium, humano, cálido, tecnológico sin estética sci-fi recargada. Papel marfil, tinta carbón, líneas arena, acento violeta vivo, detalles dorados discretos. Interfaz sobria y profesional, densidad útil de editor creativo. No neón, no glassmorphism excesivo, no gradientes genéricos, no saturación de chips.
+# 02 — Identidad visual y tokens
+## Personalidad
+Editorial, premium, cálida, tranquila, sofisticada, contemporánea y muy legible. Tecnología que se siente humana y madura. No estética gamer, neón, futurismo saturado, gradientes de plantilla ni glassmorphism omnipresente.
 
-## Colores fuente confirmados
-| Semántica | Canonical propuesta | Fuente |
+## Paleta extraída de código
+| Rol visual | Color | Evidencia |
 |---|---|---|
-| paper | `#fcfaf6` | landing y tokens Studio |
-| surface | `#ffffff` | Studio |
-| soft | `#f2efe8` | Studio |
-| ink | `#242421` | landing y Studio |
-| muted | `#6e6c66` | landing y Studio |
-| line | `#e6e1d8` | landing y Studio |
-| violet | `#6550dd` | landing y Studio |
-| lilac | `#f0ecfc` | Studio |
-| gold | `#b49665` | landing y Studio |
+| Fondo papel | `#fcfaf6` | landing/Studio |
+| Superficie | `#ffffff` | Studio |
+| Superficie tenue | `#f2efe8` | Studio |
+| Tinta | `#242421` | landing/Studio |
+| Secundario | `#6e6c66` | landing/Studio |
+| Separador | `#e6e1d8` | landing/Studio |
+| Acento | `#6550dd` | landing/Studio |
+| Lila tenue | `#f0ecfc` | Studio |
+| Dorado | `#b49665` | landing/Studio |
 
-Estos son valores fuente, no una licencia para usarlos en todos los contextos. Crear roles `color.bg.canvas`, `surface.default`, `surface.subtle`, `text.primary`, `text.secondary`, `border.default`, `interactive.primary`, `focus.ring`, `status.*`; los estados de error, aviso y éxito requieren contraste verificado y no deben deducirse de la paleta decorativa. **No reemplazar** variables `--lp`/`--ag`/`--v2` sin compatibilidad.
+No introducir hex nuevos en componentes si existe token equivalente. Reservar el violeta para selección, enlaces destacados, CTA y foco; oro para microdetalles editoriales, no para grandes fondos. Contraste mínimo WCAG AA medido en contexto.
 
 ## Tipografía
-- Titulares editoriales: **Fraunces** 400/500; kerning compacto, altura de línea 1.1–1.25; usar en hero, títulos de workspace y bloques narrativos, nunca en cifras tabulares.
-- Interfaz y cuerpo: **Manrope** 400/500/600/700/800; alturas de línea 1.4–1.65; evitar 800 para párrafos.
-- Monoespaciada para IDs, timestamps técnicos y logs: fuente del sistema monospace, solo cuando mejora escaneabilidad.
-- Escala objetivo propuesta: display 48–72; page title 28–36; section 20–24; body 14–16; meta 12–13; micro 11–12 px. En escritorio denso permitir 12 px para etiquetas secundarias, nunca para controles esenciales.
-- Números de métricas: tabular-nums; separadores locales; unidad visible.
-- No usar tipografía como único indicador de prioridad.
+**Fraunces** 400–500 para títulos editoriales, encabezados de página y momentos de identidad; tracking ligeramente negativo, sin abusar de itálicas. **Manrope** 400–800 para navegación, controles, textos, cifras y etiquetas. Mono solo para fragmentos de apariencia técnica cuando la composición lo requiera. No mezclar Instrument Sans en nuevas superficies salvo excepción aprobada.
+
+Escala recomendada: display 48–72px; H1 28–40; H2 20–28; H3 17–22; cuerpo 14–16; caption 12–13; micro 11–12. Responsive con clamp y pruebas de saltos de línea. Interlineado: titulares 1.1–1.25, cuerpo 1.45–1.65. Máximo dos familias visibles por pantalla.
 
 ## Espaciado
-Unidad base 4px; escala 4/8/12/16/20/24/32/40/48/64/80/112. En Studio: 16px de gap de layout, 14px entre inspector y visualizador, 20px de padding exterior según CSS auditado. En landing: contenedor máximo 1248px y secciones 112px desktop. Adaptar, no trasplantar el padding de marketing a una tabla operativa.
+Unidad 4px. Escala: 4,8,12,16,20,24,32,40,48,64,80,112. Agrupar por proximidad y separar por intención; mantener ritmo vertical. No convertir todo en cajas. Landing admite espacios amplios; software denso utiliza compactación consistente sin perder respiración.
 
-## Geometría
-- Bordes suaves y consistentes: botones 8–9px; cards funcionales 12–16px; contenedores grandes 14–20px; píldoras solo para estados, filtros y acciones compactas.
-- Borde fino `--ag-line`; sombra mínima, nunca contorno+shadow pesado simultáneo.
-- Un solo nivel principal de tarjeta anidada; evitar cajas dentro de cajas.
-- Iconos Lucide de 16–20px, grosor coherente; icono sin etiqueta solo con tooltip y aria-label.
+## Bordes, radios y sombras
+Borde fino #e6e1d8; radios 8–9px en botones, 12–16px en cards y paneles, 18–24px en grandes superficies. Píldoras solo cuando su forma aporta significado. Sombra ligera con alfa bajo; preferir borde sobre elevación. Evitar tres niveles de cards anidadas.
 
-## Contraste y estados
-Contraste WCAG AA: 4.5:1 texto normal y 3:1 texto grande y controles relevantes; comprobar sobre el color real. Violet no debe ser color de texto pequeño sobre fondos claros sin verificar. No codificar semántica solo con color: texto+icono+estado. Focus-visible 2px violeta con offset 3–5px, jamás quitar outline sin sustituto.
+## Iconografía
+Lucide o set equivalente unificado, 16–20px habitual, stroke consistente, alineación óptica, área táctil cómoda. No mezclar iconos 3D, emojis y lineales como si fueran un mismo sistema. Iconos solos: etiqueta accesible y tooltip cuando corresponda.
 
-## Densidades
-- Marketing: ritmo editorial, imágenes y bloques respirados.
-- Centro de Mando: lectura rápida, briefing, alertas, métricas, aprobaciones.
-- Studio: densidad instrumental, columnas, inspector, tracks y canvas; superficies claras y separadores finos.
-- Videollamada: contenido humano protagonista, controles agrupados y notas estructuradas debajo.
-La identidad se mantiene por tokens, tipografía, tono y comportamiento, no por hacer todas las pantallas iguales.
+## Imágenes, retratos e ilustraciones
+Retratos con iluminación, encuadre, tratamiento cromático y proporciones coherentes; evitar bancos de imágenes inconexos. Ilustraciones y mockups de producto deben respetar papel, tinta y violeta; no añadir efectos tecnológicos genéricos. Imágenes sirven a la composición, no la dominan sin intención.
 
-## Anti-patrones visuales
-Cards enormes para un solo dato; sombras oscuras; violeta en todo; bordes de 2px por defecto; texto gris ilegible; animaciones constantes; tipografías mezcladas; widgets de distinta altura sin razón; modales para cada acción; floating chat tapando enviar; toolbars duplicadas; barras laterales que reducen el canvas hasta hacerlo inútil.
+## Tokens semánticos futuros
+`--ui-bg-canvas`, `--ui-bg-surface`, `--ui-bg-subtle`, `--ui-text-primary`, `--ui-text-muted`, `--ui-border`, `--ui-accent`, `--ui-accent-soft`, `--ui-focus`, `--ui-radius-card`, `--ui-space-4`, etc. Son propuestas de nomenclatura, NO variables existentes. Migración mediante alias, nunca ruptura global.
