@@ -1,5 +1,5 @@
 import { BrandLockup, BrandMark } from "../../web/src/components/BrandMark";
-import "../../web/src/design-system/agntia-tokens.css";
+
 const colors=[["Marfil","#fcfaf6"],["Blanco","#ffffff"],["Carbón","#242421"],["Secundario","#6e6c66"],["Borde","#e6e1d8"],["Violeta","#6550dd"],["Lavanda","#f0ecfc"],["Oro","#b49665"]];
 export default function BrandGallery(){return <div style={{padding:28,fontFamily:"Manrope,sans-serif",background:"#fcfaf6",color:"#242421",minHeight:620}}>
 <div style={{display:"flex",gap:20,alignItems:"center",flexWrap:"wrap"}}><BrandLockup markSize={44}/><BrandMark size={64}/></div>
