@@ -9,7 +9,8 @@ on:
         required: true
   push:
     branches:
-      - feat/agntiapro-ui-lab
+      - feat/ui-lab-main-isolated
+      - main
     paths:
       - "apps/ui-lab/**"
       - "apps/web/src/**"
@@ -50,7 +51,7 @@ jobs:
     concurrency:
       group: ui-lab-deploy
       cancel-in-progress: false
-    if: (github.event_name == 'workflow_dispatch' && inputs.deploy == true) || (github.event_name == 'push' && vars.UI_LAB_AUTO_DEPLOY == 'true')
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
     runs-on: ubuntu-latest
     environment: ui-lab
     permissions:
