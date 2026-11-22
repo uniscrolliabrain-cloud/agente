@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - feat/ui-lab-main-isolated
+      - fix/ui-lab-centro-tailwind-landing-studio
       - main
     paths:
       - "apps/ui-lab/**"
