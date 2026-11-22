@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { BookOpen, ChevronLeft, ChevronRight, FileText, Filter, Grid2X2, LayoutList, List, Pencil, Search, Trash2, X } from "lucide-react";
 import { CATEGORIES, getExcerpt, getTitle, relativeTime } from "./knowledge.types";
 import type { CategoryFilter, KnowledgeItem, Presentation } from "./knowledge.types";
