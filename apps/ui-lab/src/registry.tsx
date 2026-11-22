@@ -1,5 +1,6 @@
 import { lazy, type ComponentType } from "react";
 import { memories,files,tasks } from "./fixtures";
+const FullApp=lazy(()=>import("./FullAppPreview"));
 const TopBar=lazy(()=>import("../../web/src/components/TopBarV2"));
 const Chat=lazy(()=>import("../../web/src/components/ChatPanel"));
 const Kpi=lazy(()=>import("../../web/src/components/KpiCard"));
@@ -19,6 +20,7 @@ const Today=lazy(()=>import("../../web/src/components/CommandCenterView"));
 const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
 export type Preview={id:string;name:string;category:string;description:string;Component:ComponentType;status:"fixture"|"demo"|"api";};
 export const previews:Preview[]=[
+{id:"full-app",name:"AgntiaPro completo",category:"Aplicación",description:"App.tsx original, navegación y shell reales en tenant demo",Component:FullApp,status:"demo"},
 {id:"brand",name:"Identidad y marca",category:"Componentes",description:"Marca real y tokens visuales",Component:Brand,status:"demo"},
 {id:"topbar",name:"Barra superior",category:"Componentes",description:"TopBarV2 original, sin backend",Component:()=> <TopBar status="ok" statusLabel="Agente activo" contextLabel="DEMO" onNewChat={()=>{}} onOpenPalette={()=>{}} onOpenMenu={()=>{}}/>,status:"demo"},
 {id:"kpi",name:"Tarjetas KPI",category:"Componentes",description:"KpiCard original con datos sintéticos",Component:()=> <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,padding:24}}><Kpi label="Actividades" value={128} meta="+12 esta semana" icon="purple" series={[4,6,5,9,7,12]}/><Kpi label="Completadas" value={94} meta="Datos de ejemplo" icon="green" series={[2,3,6,7,8,11]}/><Kpi label="Pendientes" value={12} icon="orange" series={[8,7,6,7,5,4]}/></div>,status:"fixture"},
