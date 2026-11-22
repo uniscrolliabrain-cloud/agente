@@ -71,3 +71,10 @@ Tests unitarios del descriptor añadidos en `tests/voice-v2-media-capabilities.t
 - **Estado de validación**: commits publicados; pruebas y typecheck NO ejecutados en este entorno. No atribuir resultado verde a estos cambios.
 - **Riesgos aún abiertos**: el mock de transporte vive en memoria y no ofrece exclusión distribuida; la limpieza de recursos ante timeout de proveedor debe tener límite temporal en C06; `close` después de un fallo del proveedor podría requerir reintento externo; la apertura concurrente de un mismo sessionId debe coordinarse con una lease durable antes de conectar proveedores reales.
 - **Gate de cierre C05**: `pnpm exec tsx --import ./tests/setup.ts --test tests/voice-v2-media-capabilities.test.ts tests/voice-v2-media-transport.test.ts tests/voice-v2-media-lifecycle.test.ts`, `pnpm test:cognition-v2`, `pnpm typecheck`, y verificación CI del SHA final. Mantener NO_GO hasta tener logs.
+
+## P05.7 — Gate automático específico en GitHub Actions
+
+- `75e1df12`: creado `.github/workflows/c05-voice.yml` en la rama C05. Se dispara en push a esta rama o PR que afecte a rutas de voz, ejecuta `pnpm typecheck`, los tres tests unitarios C05 y la prueba HTTP Cognition V2. Node 22, instalación frozen, permisos read-only, sin despliegue ni secretos externos.
+- La CI global existente (`.github/workflows/ci.yml`) solo ejecuta push a main y PR; por eso se añadió este gate de rama.
+- La consulta disponible de runs por commit devuelve exclusivamente ejecuciones originadas por PR; para `75e1df12` devolvió lista vacía. **No demuestra que el workflow push no exista ni que haya pasado.** Consultar Actions de la rama y obtener logs antes de afirmar validación.
+- Si falla la suite, registrar logs, corregir sobre esta rama y repetir. **No mergear ni desplegar sin evidencia verde y aprobación explícita.**
