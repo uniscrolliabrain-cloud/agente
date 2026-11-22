@@ -12,7 +12,7 @@ class PreviewBoundary extends Component<{children:ReactNode},{error:string|null}
 }
 export default function App(){
  const [active,setActive]=useState(()=>new URLSearchParams(location.search).get("view")||"full-app");
- const [device,setDevice]=useState<Device>("mobile");
+ const [device,setDevice]=useState<Device>("desktop");
  const [query,setQuery]=useState("");
  const [zoom,setZoom]=useState(100);
  const [key,setKey]=useState(0);
@@ -43,7 +43,7 @@ export default function App(){
         </div>
         <select aria-label="Zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{[50,75,90,100].map(z=><option value={z} key={z}>{z}%</option>)}</select>
         <button title={compare?"Cerrar comparación":"Comparar interfaces"} aria-pressed={compare} onClick={()=>setCompare(v=>!v)}>{compare?"Cerrar comparación":"Comparar"}</button>
-        <button title="Comprobar nueva compilación" aria-label="Comprobar nueva compilación" onClick={()=>void version.check()}><RotateCcw size={15}/> <span className="lab-check-label">Comprobar</span></button>
+        <button title="Comprobar si hay una versión ya publicada (no despliega)" aria-label="Comprobar versión publicada" onClick={()=>void version.check()}><RotateCcw size={15}/> <span className="lab-check-label">Buscar actualización</span></button>
         <button title="Recargar componente" aria-label="Recargar componente" onClick={()=>setKey(k=>k+1)}><RotateCcw size={17}/></button>
         <button title={full?"Salir de pantalla completa":"Pantalla completa"} aria-label={full?"Salir de pantalla completa":"Pantalla completa"} onClick={()=>setFull(f=>!f)}>{full?<X size={17}/>:<Maximize2 size={17}/>}</button>
       </div>
@@ -56,7 +56,7 @@ export default function App(){
           style={{width:widths[device]??"100%",height:device==="desktop"?900:850,transform:widths[device]?`scale(${zoom/100})`:undefined,transformOrigin:"top left"}}
           src={"/?embed=1&view="+encodeURIComponent(item.id)} sandbox="allow-scripts allow-same-origin" referrerPolicy="no-referrer"/>
       </div>
-      {compare && <div className="lab-compare-frame"><div className="lab-compare-label">{previews.find(p=>p.id===comparisonId)?.name}</div><iframe key={comparisonId+"-"+device} title="Vista para comparar" className="lab-frame" src={"/?embed=1&view="+encodeURIComponent(comparisonId)} sandbox="allow-scripts allow-same-origin allow-forms" referrerPolicy="no-referrer"/></div>}
+      {compare && <div className="lab-compare-frame"><div className="lab-compare-label">{previews.find(p=>p.id===comparisonId)?.name}</div><iframe key={comparisonId+"-"+device} title="Vista para comparar" className="lab-frame" src={"/?embed=1&view="+encodeURIComponent(comparisonId)} sandbox="allow-scripts allow-same-origin" referrerPolicy="no-referrer"/></div>}
     </div>
     <footer className="lab-footer"><span>{device==="fluid"?"Ancho disponible":widths[device]+" px"} · {zoom}% · Vista aislada</span><span>Build: {version.initial?.version.slice(0,8)??"comprobando"} · {version.error?"Sin conexión al manifiesto":"Preview independiente"}</span></footer>
   </section>
