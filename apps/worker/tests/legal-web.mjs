@@ -67,9 +67,15 @@ try {
       if (!href || href.startsWith("mailto:")) continue;
       const response = await context.request.get(new URL(href, siteOrigin).href);
       assert.equal(response.status(), 200, href);
-      assert.match(await response.text(), /name="robots" content="noindex,nofollow"/);
+      const html = await response.text();
+      assert.match(html, /name="legal-status" content="published"/);
+      assert.doesNotMatch(html, /name="robots"[^>]*noindex/i);
     }
     assert.equal((await context.request.get(`${siteOrigin}/no-existe.html`)).status(), 404);
+    assert.equal(await page.locator("main a[href^='https://www.agntiapro.com']").count(), 0);
+    assert.deepEqual(await context.cookies(), []);
+    assert.deepEqual(await page.evaluate(() => [localStorage.length, sessionStorage.length]), [0, 0]);
+    assert.equal(external.size, 0);
     await page.goto(appOrigin);
     const privacy = page.getByRole("link", { name: "Privacidad", exact: true });
     await privacy.waitFor();

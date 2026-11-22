@@ -12,6 +12,12 @@ on:
         description: "preview o production"
         required: true
         default: "preview"
+      scope:
+        description: "Qué se despliega"
+        type: choice
+        options: [full, site]
+        default: full
+        required: true
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -36,6 +42,7 @@ jobs:
       - run: node scripts/check-legal-site.mjs --release
 
   fly:
+    if: github.event.inputs.scope != 'site'
     name: fly (api + worker)
     needs: gate
     runs-on: ubuntu-latest
