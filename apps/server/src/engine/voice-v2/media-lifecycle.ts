@@ -22,9 +22,11 @@ export class VoiceMediaLifecycle {
     const session = await this.coordinator.inspect(identity, sessionId);
     if (!session) throw Error("VOICE_SESSION_NOT_FOUND");
     signal.throwIfAborted();
-    await this.transport.open(session, signal);
-    // An authorization/consent change while opening must not leave media active.
+    // The provider may allocate media resources and then reject or abort.
+    // Cleanup therefore covers the open call itself, not only revalidation.
     try {
+      await this.transport.open(session, signal);
+      // An authorization/consent change while opening must not leave media active.
       signal.throwIfAborted();
       const current = await this.coordinator.inspect(identity, sessionId);
       if (!current || current.epoch !== session.epoch || current.revision !== session.revision) {
