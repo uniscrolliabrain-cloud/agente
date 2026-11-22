@@ -32,3 +32,13 @@ body{margin:0}#root{min-height:100vh}
 .lab-update{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 22px;background:#f0ecfc;color:#4e3ac0;font-size:12px;font-weight:700}
 .lab-update button{background:#6550dd;border:0;color:white;border-radius:8px;padding:8px 12px;font:700 11px Manrope,sans-serif;cursor:pointer}
 .lab-check-label{font:600 10px Manrope,sans-serif;margin-left:3px}
+
+.lab-compare-toolbar{display:flex;align-items:center;gap:12px;padding:9px 22px;background:#fcfaf6;border-bottom:1px solid #e6e1d8;font-size:11px}
+.lab-compare-toolbar select{border:1px solid #e6e1d8;border-radius:7px;padding:7px;font:600 11px Manrope,sans-serif}
+.lab-compare-toolbar span{color:#817c73}
+.lab-canvas-compare{justify-content:flex-start;gap:16px}
+.lab-canvas-compare>.lab-viewport-wrap{width:50%!important;max-width:50%!important;overflow:auto}
+.lab-compare-frame{flex:1;min-width:300px}
+.lab-compare-label{font:700 11px Manrope,sans-serif;color:#6550dd;padding:0 0 10px}
+.lab-compare-frame iframe{width:100%;height:850px}
+@media(max-width:850px){.lab-canvas-compare{flex-direction:column}.lab-canvas-compare>.lab-viewport-wrap,.lab-compare-frame{width:100%!important;max-width:100%!important}.lab-compare-toolbar{flex-wrap:wrap}}
