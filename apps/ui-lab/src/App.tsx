@@ -25,7 +25,7 @@ export default function App(){
   <aside className="lab-sidebar" aria-label="Catálogo de pantallas">
     <div className="lab-brand"><span className="lab-brand-mark">A<span>.</span></span><div><strong>AgntiaPro</strong><small>UI LAB · PREVIEW</small></div></div>
     <label className="lab-search"><Search size={16}/><input placeholder="Buscar pantallas…" value={query} onChange={e=>setQuery(e.target.value)} aria-label="Buscar pantallas"/></label>
-    <nav>{["Público","Trabajo","Canales"].map(group=><div key={group} className="lab-group"><p>{group}</p>{filtered.filter(p=>p.category===group).map(p=><button key={p.id} className={p.id===item.id?"lab-nav-item active":"lab-nav-item"} onClick={()=>select(p.id)}><span>{p.name}</span><span className={"lab-status "+p.status} title={p.status==="api"?"Requiere API":p.status==="fixture"?"Datos ficticios":"Demo interna"}/></button>)}</div>)}</nav>
+    <nav>{["Público","Trabajo","Canales","Componentes"].map(group=><div key={group} className="lab-group"><p>{group}</p>{filtered.filter(p=>p.category===group).map(p=><button key={p.id} className={p.id===item.id?"lab-nav-item active":"lab-nav-item"} onClick={()=>select(p.id)}><span>{p.name}</span><span className={"lab-status "+p.status} title={p.status==="api"?"Requiere API":p.status==="fixture"?"Datos ficticios":"Demo interna"}/></button>)}</div>)}</nav>
     <div className="lab-sidebar-footer"><Code2 size={15}/> Componentes reales del monorepo <br/> Datos de demostración · sin producción</div>
   </aside>
   <section className="lab-stage">
