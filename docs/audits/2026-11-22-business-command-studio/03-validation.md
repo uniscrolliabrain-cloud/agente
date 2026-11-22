@@ -23,4 +23,12 @@ Antes de declarar éxito deben terminar `gate`, Vercel, Fly y smoke del workflow
 
 ## Límites y siguiente iteración
 
-La composición responsive y reducción de movimiento están implementadas, pero requieren revisión visual en dispositivos reales. Grafo, Digital Twin y métricas explican el escenario de ejemplo; no son un motor predictivo ni una proyección viva de la empresa. La futura integración de datos exige la campaña backend descrita en 02. El incidente histórico de FreeBuff continúa sin verificar.
+La composición responsive y reducción de movimiento están implementadas; queda revisión móvil en dispositivos reales. Grafo, Digital Twin y métricas explican el escenario de ejemplo; no son un motor predictivo ni una proyección viva de la empresa. La futura integración de datos exige la campaña backend descrita en 02. El incidente histórico de FreeBuff continúa sin verificar.
+
+## Revisión de producción y ajuste final
+
+El workflow [45029201909](https://github.com/uniscrolliabrain-cloud/agente/actions/runs/45029201909) terminó correctamente en `0faaa9f` (gate, Vercel, API, worker, smoke). HTTP confirmó el chunk nuevo y los hashes de las cuatro imágenes de la landing.
+
+Se observó un despliegue concurrente `release/landing-legal-20261122`, `91576dc`, descendiente directo de `0faaa9f`. Cambió hashes de assets mientras una pestaña cargaba el módulo diferido, causando un fallo temporal de importación. Tras recargar, el estudio funcionó con esa versión. La rama se actualizó por fast-forward a ese commit para preservar el trabajo legal antes de publicar el ajuste final.
+
+En navegador de producción, sesión pública de datos de ejemplo: apertura de Estudio, Kanban, Grafo, selección de nodo sincronizada con inspector, Digital Twin, Empresa 360°, creación local de actividad (conteo 10→11 y nueva pista), y modo Observar bloqueando nueva actividad/editar: verificados. Se detectó línea temporal sin posicionamiento absoluto y control de modo sin nombre accesible cuando su texto se ocultaba. Corregidos junto con wrapping de prioridad y ancho de etiquetas móvil. Se añade un límite de error al módulo diferido para conservar el shell y ofrecer recarga en futuros cambios de assets.

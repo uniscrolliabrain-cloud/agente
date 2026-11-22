@@ -73,6 +73,8 @@ export default function BusinessCommandStudio() {
         <div className="bcs-header-actions">
           <button
             className="bcs-mode"
+            aria-label={state.editing ? "Modo Game Master" : "Modo Observar"}
+            title={state.editing ? "Game Master: edición local habilitada" : "Observar: edición deshabilitada"}
             aria-pressed={state.editing}
             onClick={() => dispatch({ type: "editing", value: !state.editing })}
           >

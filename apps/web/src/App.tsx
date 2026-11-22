@@ -43,6 +43,7 @@ import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
 import MobileChatSheet from "./components/MobileChatSheet";
 import MobileSheetDiagnostics from "./components/MobileSheetDiagnostics";
+import WorkspaceLoadBoundary from "./components/WorkspaceLoadBoundary";
 
 const BusinessCommandStudio = lazy(() => import("./workspaces/business-command-studio/BusinessCommandStudio"));
 
@@ -322,9 +323,11 @@ export default function App() {
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
           {view === "command-studio" && (
-            <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
-              <BusinessCommandStudio />
-            </Suspense>
+            <WorkspaceLoadBoundary>
+              <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
+                <BusinessCommandStudio />
+              </Suspense>
+            </WorkspaceLoadBoundary>
           )}
         </div>
       </AppShell>

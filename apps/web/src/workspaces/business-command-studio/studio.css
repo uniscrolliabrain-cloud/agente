@@ -524,6 +524,7 @@
 }
 .bcs-card-top {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 4px;
   color: var(--ag-muted);
@@ -799,6 +800,8 @@
   z-index: 4;
 }
 .bcs-playhead {
+  position: absolute;
+  top: 0;
   height: 100%;
   width: 1px;
   background: var(--ag-violet);
@@ -1389,6 +1392,22 @@
   }
   .bcs-time-row {
     height: 40px;
+    grid-template-columns: 140px 1fr;
+  }
+  .bcs-time-ruler {
+    grid-template-columns: 140px 1fr;
+  }
+  .bcs-group-toggle {
+    width: 140px;
+  }
+  .bcs-playhead-track {
+    left: 140px;
+  }
+  .bcs-lane-label {
+    padding-left: 12px;
+  }
+  .bcs-lane-label small {
+    display: none;
   }
   .bcs-time-block {
     top: 8px;
