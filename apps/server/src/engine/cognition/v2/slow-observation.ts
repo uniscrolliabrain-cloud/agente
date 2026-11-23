@@ -31,7 +31,7 @@ export class SlowObservationBridge {
     const record = await this.context.resolve(identity, sourceId, sourceRevision);
     if (!record || record.tenantId !== identity.tenantId ||
         (record.kind !== "card" && record.kind !== "memory") ||
-        record.epistemic === "hypothesis" || record.epistemic === "unknown") {
+        record.epistemic === "hypothesis" || record.epistemic === "unknown" || record.epistemic === "contradicted") {
       throw Error("SLOW_OBSERVATION_EVIDENCE_DENIED");
     }
     // Key includes identity and immutable source revision to avoid cross-actor
