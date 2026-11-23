@@ -81,3 +81,12 @@ Lectura directa de `apps/server/src/app.ts` y `apps/server/src/engine/service.ts
 - **No confundir** `assertConnectorGrant` con una autorización criptográfica o consulta al kernel: solo verifica forma, ámbito y caducidad. La validación durable y la reserva de egress deberán permanecer en el kernel antes de implementar un proveedor real.
 - **No integrado aún en el constructor runtime ni en las rutas**: deliberadamente, para no sustituir el clasificador JEV existente o el adaptador multimedia sin verificar sus contratos y preservar compatibilidad.
 - Pruebas CI todavía sin evidencia verde. No hay conexión real ni smoke frontend.
+
+## Campaña de código C06.P02 — Enrutamiento conversacional V2 por tenant
+
+- `e82ec3c2`: nuevo `engine/cognition/v2/chat-agent.ts`, adaptador `AbstractAgent` para el runtime V2 con el owner autenticado. No implementa herramientas legacy ni delegación V1.
+- `899e0cb8`: `apps/server/src/agent.ts` ahora selecciona `CognitionV2ChatAgent` cuando `service.cognitionV2.enabledForRequest()` y el backend **no** es `agui`. Los tenants no opt-in conservan `ConversationAgent` y el modo remoto AG-UI permanece sin alterar. La selección ocurre por scope del request, no por datos del prompt.
+- `70522ec0`: prueba unitaria de adaptación V2, sin fallback a V1; `a0579fc8`: añadida al gate CI.
+- El handler de `app.ts` ya instalaba `agent.cognitionV2` antes de recibir peticiones, y el guard de `/api/copilotkit/*` permite chat V2 aunque no haya configuración del provider legacy. La selección de V2 se realiza ahora en la factory `makeRuntime`.
+- **No afirmar que el legacy está muerto globalmente**: tenants sin opt-in y backend remoto AG-UI conservan sus rutas; `/api/voice` y `/api/cognition` siguen montados. La desactivación requiere paridad, observabilidad y rollback.
+- **Validación pendiente**: typecheck, tests y prueba HTTP CopilotKit de streaming/persistencia. El adaptador y el gate se han publicado pero no hay evidencia de ejecución verde.
