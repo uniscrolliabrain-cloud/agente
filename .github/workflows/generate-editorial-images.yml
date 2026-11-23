@@ -50,7 +50,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$branch"
-          git add -- apps/ui-lab/public/formation/images apps/ui-lab/docs/dashboards/20-formacion/arte assets/generated
+          git add -A -- apps/ui-lab/public/formation/images/ assets/generated/ 2>/dev/null || git add -A
           git commit -m "assets: generate editorial images for review"
           git push origin "$branch"
           gh pr create --base main --head "$branch" --title "Review generated editorial images #${GITHUB_RUN_ID}" --body "Generated image assets and manifest for human review. No deployment or promotion to production. Verify brand, provenance and visual quality before merging."
