@@ -58,3 +58,7 @@
 ## Criterio de aceptación
 
 No aceptar por compilar. Debe sentirse tan refinado como la Landing y con la claridad operativa de Studio, pero más editorial, respirado y audiovisual. Se requiere evidencia de render real, pruebas táctiles y aprobación visual del founder. **Esta auditoría no modifica código ni autoriza despliegue.**
+
+
+## Seguimiento V2 · 2026-11-23
+Se han actualizado **encima de los mismos archivos** `FormationWorkspace.tsx` y `formation.css`, sin crear componentes paralelos ni ramas: (a) `BrandLockup` de Landing sustituye al logotipo inventado; (b) variables locales ahora referencian `--ag-*`; (c) entradas por grupos y microtransiciones con reduced-motion; (d) variantes geométricas provisionales por ID; (e) sheet con eventos Pointer consolidados, pointer capture y cancelación, foco de cierre y retorno al disparador; (f) destacado por ID IA01/R01, imports y variable de iteración sin uso retirados. **Estado: implementación parcial, pendiente de pruebas**. No se ha recuperado el sheet original del chat, no hay todavía fotografías, no hay player real ni capturas, y el sheet requiere verificar foco y scroll en móvil. No afirmar que la V2 supera Landing/Studio sin render. La coreografía sigue siendo una primera pasada, no el sistema definitivo.
