@@ -1,6 +1,8 @@
 import { Component, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { ArrowUpRight, ChevronDown, Code2, ExternalLink, Maximize2, Monitor, RotateCcw, Search, Smartphone, Tablet, X } from "lucide-react";
 import { previews } from "./registry";
+import { DEMO_TOKEN } from "../../web/src/demo/tenant";
+import { demoUser } from "../../web/src/demo/fixtures";
 import { labVersions } from "./versions";
 import { useLabVersion } from "./useLabVersion";
 type Device="mobile"|"tablet"|"desktop"|"fluid";
@@ -25,6 +27,15 @@ export default function App(){
  const select=(id:string)=>{setActive(id);setKey(k=>k+1);history.replaceState(null,"","?view="+encodeURIComponent(id));};
  useEffect(()=>{document.title="AgntiaPro UI Lab · "+item.name;},[item.name]);
  const Preview=item.Component;
+ // Isolated preview frames always use the in-memory demo router. The network guard
+ // in safety.ts blocks requests outside the local version manifest.
+ if (new URLSearchParams(location.search).has("embed")) {
+  if (location.hostname === "agntiapro.com" || location.hostname === "www.agntiapro.com") {
+   throw new Error("UI Lab no puede usar el origen de producción");
+  }
+  localStorage.setItem("agente_auth", JSON.stringify({ token: DEMO_TOKEN, mode: "sample" }));
+  localStorage.setItem("agente_user", JSON.stringify(demoUser));
+ }
  if(new URLSearchParams(location.search).has("embed")) return <div className="lab-embed"><div className="lab-preview-badge">UI LAB · {item.status==="api"?"API NO CONECTADA":item.status==="fixture"?"DATOS FICTICIOS":"DEMO"}</div><PreviewBoundary><Suspense fallback={<div className="lab-loading">Cargando componente real…</div>}><Preview/></Suspense></PreviewBoundary></div>;
  return <div className={"lab-root "+(full?"lab-full":"")}>
   <aside className="lab-sidebar" aria-label="Catálogo de pantallas">
