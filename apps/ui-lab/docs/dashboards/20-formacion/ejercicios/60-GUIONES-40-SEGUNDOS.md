@@ -1,6 +1,6 @@
 # 60 guiones originales de 40 segundos · IA profesional
 
-**Estado:** propuestas de locución para revisión editorial; no vídeos producidos. Ritmo orientativo: cuatro bloques de 10 segundos, 75–95 palabras por pieza. Ajustar al locutor y cronometrar antes de publicar. Cada reel lleva subtítulos, demostración visual y CTA «Practícalo con LAIA». No mostrar datos reales de clientes.
+**Estado:** propuestas de locución para revisión editorial; no vídeos producidos. Ritmo orientativo: cuatro bloques de 10 segundos, 75–95 palabras por pieza. Ajustar al locutor y cronometrar antes de publicar. Cada reel lleva subtítulos, demostración visual y CTA «Practícalo con LAIA». **Cada guion incorpora su propio prompt audiovisual y tres búsquedas de stock gratuito sugeridas**; son consultas editoriales, no activos ni licencias verificados. No mostrar datos reales de clientes.
 
 ## Pensar con IA
 
