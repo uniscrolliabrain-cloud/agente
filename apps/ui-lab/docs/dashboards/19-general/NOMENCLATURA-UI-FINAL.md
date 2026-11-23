@@ -26,6 +26,8 @@ Fuente: decisiones del founder en el chat UX del 23-11-2026, estructura document
 | 18 | Data | `18-data` | Por diseñar |
 | 19 | General | `19-general` | Documentación transversal |
 
+**20 · Formación — Trabaja con LAIA:** [documentación de la nueva sección](../20-formacion/README.md). Experiencia audiovisual inspirada en una biblioteca musical, 50 reels prácticos y 10 ejercicios de introducción; diseño y código pendientes. Es una sección general del producto, no una de las 34 Apps.
+
 **Superficies aprovechables adicionales:** Estudio Demo y Tareas. No equiparar Estudio Demo con Estudio de Operaciones sin verificar sus componentes. **Control de actividad, Inicio/Hoy, Usuarios y Operaciones** aparecen como vistas técnicas del laboratorio, pero no se deben inventar como nuevas entradas del menú definitivo. Su ubicación final está pendiente.
 
 ## Apps — los 34 nombres comerciales propuestos
@@ -57,7 +59,7 @@ Estos son los nombres del catálogo, **no** los nombres de las plataformas de in
 ## Reglas de nomenclatura
 
 1. El usuario ve nombres de AgntiaPro; las marcas de inspiración se documentan solo como referencias de diseño.
-2. Las 19 superficies generales y las 34 Apps son niveles distintos; no duplicar 34 entradas en el menú principal ni convertir el laboratorio en otro menú.
+2. Las 20 superficies generales y las 34 Apps son niveles distintos; no duplicar 34 entradas en el menú principal ni convertir el laboratorio en otro menú.
 3. El selector de UI Lab muestra **solo vistas que realmente puede renderizar**. Las fichas sin implementación de preview siguen siendo documentación; no crear botones que lleven a pantallas ficticias.
 4. Para renombrar el menú de `apps/web`, mapear etiquetas visibles y rutas por separado, con pruebas de navegación y aprobación específica. No renombrar carpetas técnicas automáticamente.
 5. «Aprovechable» no significa «aprobado definitivamente», «implementado» ni «desplegado».
