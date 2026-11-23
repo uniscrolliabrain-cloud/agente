@@ -1,0 +1,3 @@
+# Mandato del founder — documentación sin síntesis (transcripción literal)
+
+tu eres el escribano, con lo que te dije en las respuestas del ceo operativo y el founder, creas un docu kick off de cada, lo registras completo, con el resto que te dije en el chart sin resumirlo creas otro doc y no quieres sintetizar porque en docu quieres cuanta mas raw data mejor, cuando esos folders esten publicados, respetando las fases que te dije, puedes crear la docu de la plantilla que hiciste, ese es el macro de lo que tienes que hacer, y cuando eso lo dejas asi, ya cualquier agente puede muy bien trabajar con eso
