@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { EventType } from "@ag-ui/core";
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -31,6 +32,139 @@ test("C15 synthetic authenticated HTTP: working memory → snapshot → durable 
     const accepted = await request("/working", alice.token, "POST", { body: "Dato sintético para el análisis; cualquier conclusión será una hipótesis." });
     assert.equal(accepted.status, 202);
     const runtime = server.agent.cognitionV2!; assert.ok(runtime);
+    const chatHeaders = { Authorization: `Bearer ${alice.token}`, "Content-Type": "application/json" };
+    const createThread = await server.app.request("/api/threads", { method: "POST", headers: chatHeaders, body: "{}" });
+    assert.equal(createThread.status, 201);
+    const { id: chatThread } = await createThread.json();
+    let providerInput: string | undefined;
+    let providerHistory: unknown[] = [];
+    runtime.provider.stream = async (input, _prompt, _profile, _signal, emit) => {
+      providerHistory = input.messages;
+      const latest = input.messages.at(-1);
+      providerInput = typeof latest?.content === "string" ? latest.content : undefined;
+      emit({ type: EventType.TEXT_MESSAGE_START, messageId: "fixture", role: "assistant" });
+      emit({ type: EventType.TEXT_MESSAGE_CONTENT, messageId: "fixture", delta: "Respuesta de prueba" });
+      emit({ type: EventType.TEXT_MESSAGE_END, messageId: "fixture" });
+      return "Respuesta de prueba";
+    };
+    const chat = (id: string, attachmentId?: string) => server!.app.request("/api/copilotkit/run", {
+      method: "POST", headers: { ...chatHeaders, Accept: "text/event-stream" },
+      body: JSON.stringify({
+        threadId: chatThread, runId: id, persistTurn: true, state: {}, tools: [], context: [],
+        attachmentId,
+        messages: [{ id, role: "user", content: attachmentId ? "" : "Hola" }],
+      }),
+    });
+    const completedChat = await chat("first-turn");
+    assert.equal(completedChat.status, 200);
+    assert.equal(completedChat.headers.get("X-Conversation-Persistence"), "server");
+    const stream = await completedChat.text();
+    assert.match(stream, /conversation\.turn\.persisted/);
+    assert.match(stream, /RUN_FINISHED/);
+    const readChat = async () => (await server!.app.request(`/api/threads/${chatThread}`, { headers: chatHeaders })).json();
+    const stored = await readChat();
+    assert.deepEqual(stored.messages.map((message: { role: string; content: string }) => [message.role, message.content]),
+      [["user", "Hola"], ["assistant", "Respuesta de prueba"]]);
+    assert.equal((await chat("first-turn")).status, 409);
+
+    const attachment = { id: "owned-file", name: "acta.pdf", size: 123 };
+    await db.put(`tenant-a:${alice.id}`, "files", { ...attachment, url: "private-signed-url" });
+    await db.put(`tenant-b:${alice.id}`, "files", { ...attachment, id: "foreign-file" });
+    assert.equal((await chat("foreign-attachment", "foreign-file")).status, 404);
+    const attachmentStream = await (await chat("attached-turn", attachment.id)).text();
+    assert.match(attachmentStream, /conversation\.turn\.persisted/);
+    assert.equal(providerInput, "(sin texto)\n\n[Adjunto: acta.pdf, id: owned-file]");
+    const afterAttachment = await readChat();
+    assert.deepEqual(afterAttachment.messages[2].attachment, attachment);
+    assert.equal(afterAttachment.messages[2].content, "Adjunto: acta.pdf");
+    assert.ok(!JSON.stringify(afterAttachment).includes("private-signed-url"));
+
+    await db.put(`tenant-a:${alice.id}`, "agent-roles", { id: "laia", name: "Laia", active: true });
+    const voice = (path: string, method: string, body?: unknown) => server!.app.request(`/api/cognition-v2/voice${path}`, {
+      method, headers: chatHeaders, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    const consent = await voice("/consents", "POST", {
+      transcript: true, recording: false, purpose: "conversation", saveToThread: true,
+    });
+    assert.equal(consent.status, 201);
+    const { id: consentReceiptId } = await consent.json();
+    const startSession = async (channel: "voice" | "video") => {
+      const response = await voice("/sessions", "POST", { threadId: chatThread, roleId: "laia", consentReceiptId, channel });
+      assert.equal(response.status, 201);
+      const session = await response.json();
+      assert.equal(session.channel, channel);
+      return session.sessionId as string;
+    };
+    const transcript = (sessionId: string, text: string, status = "final") =>
+      voice(`/sessions/${sessionId}/transcripts`, "POST", { utteranceId: text, revision: 1, status, text });
+    const voiceId = await startSession("voice");
+    assert.equal((await transcript(voiceId, "borrador", "partial")).status, 204);
+    assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
+    assert.equal((await transcript(voiceId, "Turno de voz")).status, 200);
+    const completedProvider = runtime.provider.stream;
+    const startSlow = (sessionId: string, text: string) => {
+      let started!: () => void;
+      let aborted!: () => void;
+      const ready = new Promise<void>((resolve) => { started = resolve; });
+      const stopped = new Promise<void>((resolve) => { aborted = resolve; });
+      runtime.provider.stream = async (_input, _prompt, _profile, signal) => new Promise<string>((_resolve, reject) => {
+        const abort = () => { aborted(); reject(signal.reason); };
+        if (signal.aborted) abort();
+        else signal.addEventListener("abort", abort, { once: true });
+        started();
+      });
+      return { ready, stopped, response: transcript(sessionId, text) };
+    };
+    const interrupted = startSlow(voiceId, "Interrumpido");
+    await interrupted.ready;
+    const concurrent = await transcript(voiceId, "Interrumpido");
+    assert.equal(concurrent.status, 409);
+    assert.equal((await concurrent.json()).code, "VOICE_TURN_INVALID");
+    assert.equal((await voice(`/sessions/${voiceId}/interrupt`, "POST")).status, 200);
+    await interrupted.stopped;
+    const interruptedResponse = await interrupted.response;
+    assert.equal(interruptedResponse.status, 409);
+    assert.equal((await interruptedResponse.json()).code, "VOICE_INTERRUPTED");
+
+    runtime.provider.stream = completedProvider;
+    const videoId = await startSession("video");
+    const foreign = await server.app.request(`/api/cognition-v2/voice/sessions/${videoId}/transcripts`, {
+      method: "POST", headers: { ...chatHeaders, Authorization: `Bearer ${bob.token}` },
+      body: JSON.stringify({ utteranceId: "foreign", revision: 1, status: "final", text: "Foreign" }),
+    });
+    assert.equal(foreign.status, 404);
+    assert.equal((await foreign.json()).code, "VOICE_SESSION_NOT_FOUND");
+    assert.equal((await transcript(videoId, "Turno de vídeo")).status, 200);
+    assert.match(JSON.stringify(providerHistory), /Turno de voz/);
+
+    const revoking = startSlow(videoId, "Revocación activa");
+    await revoking.ready;
+    assert.equal((await voice(`/consents/${consentReceiptId}`, "DELETE")).status, 204);
+    await revoking.stopped;
+    const revokedResponse = await revoking.response;
+    assert.equal(revokedResponse.status, 403);
+    assert.equal((await revokedResponse.json()).code, "VOICE_CONSENT_REVOKED");
+    assert.equal((await transcript(videoId, "Revocado")).status, 403);
+    runtime.provider.stream = completedProvider;
+
+    const returnToText = await (await chat("return-to-text")).text();
+    assert.match(returnToText, /conversation\.turn\.persisted/);
+    assert.match(JSON.stringify(providerHistory), /Turno de voz/);
+    assert.match(JSON.stringify(providerHistory), /Turno de vídeo/);
+    const unifiedHistory = await readChat();
+    assert.deepEqual(unifiedHistory.messages.filter((message: { role: string }) => message.role === "user")
+      .map((message: { content: string }) => message.content),
+    ["Hola", "Adjunto: acta.pdf", "Turno de voz", "Turno de vídeo", "Hola"]);
+
+    const fullHistory = Array.from({ length: 999 }, (_, id) => ({ id: `seed-${id}`, role: "user", content: "Semilla" }));
+    await db.put(alice.id, "conversations", { id: chatThread, messages: fullHistory });
+    const failedStream = await (await chat("overflow-turn")).text();
+    assert.match(failedStream, /RUN_ERROR/);
+    assert.doesNotMatch(failedStream, /conversation\.turn\.persisted|RUN_FINISHED/);
+    assert.deepEqual((await readChat()).messages, fullHistory);
+    const completedRuns = await db.rawQuery("SELECT id FROM cognition_v2_chat_runs WHERE state='completed'");
+    assert.equal(completedRuns.length, 5);
+
     await runtime.projector.tick("tenant-a");
     const snapshotResponse = await request("/snapshots", alice.token, "POST", { query: "análisis", maxTokens: 4000, maxRefs: 10 });
     assert.equal(snapshotResponse.status, 200);

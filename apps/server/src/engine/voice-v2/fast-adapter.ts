@@ -3,15 +3,26 @@ import { EventType } from "@ag-ui/core";
 import type { Subscription } from "rxjs";
 import type { CognitiveIdentity } from "../../../../../packages/domain/src/cognition-v2.ts";
 import type { CognitionV2Runtime } from "../cognition/v2/runtime.ts";
+import { buildConversationInput } from "../../conversation-history.ts";
+import { requireThread } from "../../threads-routes.ts";
 import { runInTenantScope } from "../../tenant-scope.ts";
 import { digest } from "../cognition/v2/storage.ts";
-import type { SharedFastVoicePort } from "./contracts.ts";
+import type { SharedFastVoiceInput, SharedFastVoicePort } from "./contracts.ts";
 export class CognitionFastVoiceAdapter implements SharedFastVoicePort {
   constructor(readonly runtime: CognitionV2Runtime) {}
-  async stream(identity: CognitiveIdentity, input: { threadId: string; turnId: string; text: string; contextSnapshotId: string },
+  async stream(identity: CognitiveIdentity, input: SharedFastVoiceInput,
     signal: AbortSignal, onText: (text: string) => Promise<void>): Promise<{ receiptId: string; text: string }> {
+    signal.throwIfAborted();
+    await this.runtime.context.assertAuthorized(identity);
+    const scope = { tenantId: identity.tenantId, actorId: identity.actorId };
+    await runInTenantScope(scope, () =>
+      requireThread(this.runtime.db, this.runtime.memberships, identity.owner, input.threadId));
     // A voice session may reference only an authorized, currently valid snapshot.
     if (!await this.runtime.context.readSnapshot(identity, input.contextSnapshotId)) throw Error("VOICE_CONTEXT_REVOKED");
+    const history = await this.runtime.db.get<{ messages?: unknown[] }>(identity.owner, "conversations", input.threadId);
+    const { messages } = buildConversationInput(history?.messages ?? [], [
+      { id: `${input.turnId}:user`, role: "user", content: input.text },
+    ]);
     return new Promise((resolve, reject) => {
       let text = "", succeeded = false, ended = false;
       let subscription: Subscription | undefined;
@@ -22,12 +33,12 @@ export class CognitionFastVoiceAdapter implements SharedFastVoicePort {
         if (error) reject(error);
         else void writes.then(() => resolve({ text, receiptId: digest([identity.tenantId, input.turnId, text]) }), reject);
       };
-      const abort = () => finish(Error("VOICE_INTERRUPTED"));
+      const abort = () => finish(signal.reason instanceof Error ? signal.reason : Error("VOICE_INTERRUPTED"));
       if (signal.aborted) { abort(); return; }
       signal.addEventListener("abort", abort, { once: true });
-      subscription = runInTenantScope({ tenantId: identity.tenantId, actorId: identity.actorId }, () =>
+      subscription = runInTenantScope(scope, () =>
         this.runtime.chat(identity.owner, { threadId: input.threadId, runId: input.turnId,
-          messages: [{ id: `${input.turnId}:user`, role: "user", content: input.text }], state: {}, tools: [], context: [], forwardedProps: {} })
+          messages, state: { roleId: input.roleId }, tools: [], context: [], forwardedProps: {} })
           .subscribe({
             next: (event) => {
               if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") {

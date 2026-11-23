@@ -5,12 +5,12 @@ const id = z.string().min(1).max(200);
 const time = z.iso.datetime({ offset: true });
 export const voiceSessionInputSchema = z.strictObject({
   agentId: id, roleId: id, threadId: id, consentReceiptId: id,
-  contextSnapshotId: id,
+  contextSnapshotId: id, channel: z.enum(["voice", "video"]).default("voice"),
 });
 export const voiceSessionSchema = z.strictObject({
   schemaVersion: z.literal("2.0"), sessionId: id, tenantId: id, actorId: id,
   agentId: id, roleId: id, threadId: id, consentReceiptId: id,
-  contextSnapshotId: id, policyRevision: id,
+  contextSnapshotId: id, policyRevision: id, channel: z.enum(["voice", "video"]).default("voice"),
   state: z.enum(["authorized", "ready", "processing", "interrupted", "closed", "failed"]),
   revision: z.number().int().positive(), epoch: z.number().int().nonnegative(),
   createdAt: time, lastActivityAt: time, expiresAt: time,
@@ -44,7 +44,14 @@ export class UnavailableAvatarProvider implements AvatarProviderPort {
   async interrupt(): Promise<never> { throw Error("BLOCKED_EXTERNAL_PROVIDER"); }
   async close(): Promise<never> { throw Error("BLOCKED_EXTERNAL_PROVIDER"); }
 }
+export interface SharedFastVoiceInput {
+  threadId: string;
+  turnId: string;
+  text: string;
+  contextSnapshotId: string;
+  roleId: string;
+}
 export interface SharedFastVoicePort {
-  stream(identity: CognitiveIdentity, input: { threadId: string; turnId: string; text: string; contextSnapshotId: string },
+  stream(identity: CognitiveIdentity, input: SharedFastVoiceInput,
     signal: AbortSignal, onText: (text: string) => Promise<void>): Promise<{ receiptId: string; text: string }>;
 }

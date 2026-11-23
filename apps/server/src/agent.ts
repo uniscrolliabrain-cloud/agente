@@ -25,9 +25,8 @@ export function agentConfigured(config: Config) {
   );
 }
 export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
-  const ownerFor = async (request: Request) => service.cognitionV2?.enabledForRequest()
-    ? currentTenantScope()!.actorId
-    : auth.owner(request.headers.get("authorization") ?? undefined);
+  const ownerFor = async (request: Request) =>
+    currentTenantScope()?.actorId ?? await auth.owner(request.headers.get("authorization") ?? undefined);
   const agents: AgentsFactory = async ({ request }) => ({
     default:
       config.agentBackend === "sample"

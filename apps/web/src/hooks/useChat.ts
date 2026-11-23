@@ -1,7 +1,7 @@
 // BUG02_USECHAT_V2 - tools[] + typewriter en la API publica.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { streamChat, type AgUiEvent } from "../api/chat";
-import { getThread, saveThreadMessages } from "../api/threads";
+import { getThread, appendThreadMessages } from "../api/threads";
 import { toolsReducer, type ToolCall } from "../lib/toolsReducer";
 import type { ChatAttachment, ChatMessage } from "../types/api";
 
@@ -83,25 +83,20 @@ export function useChat(
       const controller = new AbortController();
       abortRef.current = controller;
 
-      const llmContent = attachment
-        ? `${trimmed || "(sin texto)"}\n\n[Adjunto: ${attachment.name}, id: ${attachment.id}]`
-        : trimmed;
-
       let assistantText = "";
       let localTools: ToolCall[] = [];
       let runErrorMessage: string | null = null;
+      let persistedAssistant: ChatMessage | undefined;
 
       try {
         await streamChat(
           {
             threadId,
             runId: uid(),
+            persistTurn: true,
+            ...(attachment ? { attachmentId: attachment.id } : {}),
             ...(roleId ? { roleId } : {}),
-            messages: history.map((m, i) =>
-              i === history.length - 1
-                ? { id: m.id, role: m.role, content: llmContent }
-                : { id: m.id, role: m.role, content: m.content },
-            ),
+            messages: [{ id: userMsg.id, role: userMsg.role, content: trimmed }],
           },
           (event: AgUiEvent) => {
             const at = Date.now();
@@ -129,6 +124,11 @@ export function useChat(
                 at,
               });
               setTools([...localTools]);
+            } else if (event.type === "CUSTOM" && event.name === "conversation.turn.persisted") {
+              const value = event.value as Partial<ChatMessage> | undefined;
+              if (typeof value?.id === "string" && typeof value.content === "string" && typeof value.timestamp === "string") {
+                persistedAssistant = { id: value.id, role: "assistant", content: value.content, timestamp: value.timestamp };
+              }
             } else if (event.type === "RUN_ERROR") {
               runErrorMessage = String(event.message ?? "Error del modelo");
             }
@@ -136,12 +136,12 @@ export function useChat(
           controller.signal,
         );
 
-        if (runErrorMessage && !assistantText.trim()) {
+        if (runErrorMessage) {
           setError(runErrorMessage);
           return;
         }
 
-        const finalAssistant: ChatMessage = {
+        const finalAssistant: ChatMessage = persistedAssistant ?? {
           id: uid(),
           role: "assistant",
           content: assistantText.trim() || "(sin respuesta)",
@@ -152,11 +152,18 @@ export function useChat(
         setMessages(finalHistory);
         setStreamBuf("");
         setTools([]);
+        if (persistedAssistant) {
+          onSaved?.(threadId);
+          return;
+        }
         try {
-          await saveThreadMessages(threadId, finalHistory);
+          await appendThreadMessages(
+            threadId,
+            finalHistory.filter((message) => message.id && message.role !== "system"),
+          );
           onSaved?.(threadId);
         } catch {
-          /* se persiste en el próximo turno */
+          setError("No se pudo guardar el turno. Se reintentará al enviar el próximo mensaje.");
         }
       } catch (err) {
         if (controller.signal.aborted) setError("Cancelado por el usuario");
