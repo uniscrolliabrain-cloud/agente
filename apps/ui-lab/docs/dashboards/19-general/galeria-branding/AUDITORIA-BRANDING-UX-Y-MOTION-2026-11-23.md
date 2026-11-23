@@ -47,3 +47,11 @@ El founder confirma un déficit compartido en **landing y Estudio Demo**: faltan
 
 ## Alcance
 Este archivo registra decisiones y déficits; **no afirma que se hayan implementado transiciones nuevas** ni que exista una revisión de navegador. No cambiar producción, no crear rama ni campaña de implementación sin nueva instrucción.
+
+## Hallazgo posterior: documentación preexistente en ramas (2026-11-23)
+**Corrección del alcance inicial:** se localizó documentación más completa, no visible en la galería de UI Lab de main. Antes de escribir una nueva guía V2 o planificar campañas, **reutilizar y reconciliar** estas fuentes; no duplicar trabajo ni asumir que estén integradas:
+- [Sistema maestro de diseño (rama `docs/design-system-agntiapro-master-20261122`)](https://github.com/uniscrolliabrain-cloud/agente/tree/docs/design-system-agntiapro-master-20261122/docs/design-system-agntiapro): `01-auditoria-fuentes.md`, `02-identidad-tokens.md`, `03-componentes-patrones.md`, `04-interaccion-motion.md`, `05-workspaces-runtime.md`, `06-calidad-gobernanza.md`, `07-prompt-agentes.md` y README. `04` especifica tiempos y principios de motion, pero no declara implementación.
+- [Motion Design Premium landing (rama `feat/landing-premium-funnel`)](https://github.com/uniscrolliabrain-cloud/agente/blob/feat/landing-premium-funnel/docs/landing/motion-design-premium/README.md): propuesta **NO implementada**, taxonomía M0–M6 y campañas C00–C08, hero LAIA, reveals, ProductScene, transiciones de tabs, chat, equipo, CTA, reduced-motion y QA. **Es una fuente de detalle superior a esta auditoría** para la landing.
+- [Auditoría y campaña de Business Command Studio](https://github.com/uniscrolliabrain-cloud/agente/tree/docs/design-system-agntiapro-master-20261122/docs/audits/2026-11-22-business-command-studio): `01-audit.md`, `02-campaign.md`, `03-validation.md` en la rama de sistema maestro. El plan C0–C6 incluye identidad, composición, motion, responsive y validación.
+
+**Acción futura:** contrastar las ramas contra `main` archivo por archivo, verificar qué código/documentación ya se integró y qué propuestas siguen pendientes; consolidar la fuente de verdad sin hacer merge ciego. No se ha importado código ni ejecutado ninguna campaña.
