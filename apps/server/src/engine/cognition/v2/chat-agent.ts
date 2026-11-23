@@ -11,6 +11,15 @@ export class CognitionV2ChatAgent extends AbstractAgent {
     // Bind once so the scoped cognition runtime and owner are never lost.
     this.run = this.run.bind(this);
   }
+  override clone(): CognitionV2ChatAgent {
+    // The CopilotKit runner clones registered agents per request. AbstractAgent
+    // copies only its own fields; custom tenant-scoped dependencies are lost.
+    const copy = super.clone() as CognitionV2ChatAgent;
+    copy.cognition = this.cognition;
+    copy.owner = this.owner;
+    copy.run = copy.run.bind(copy);
+    return copy;
+  }
   run(input: RunAgentInput): Observable<BaseEvent> {
     return this.cognition.chat(this.owner, input);
   }
