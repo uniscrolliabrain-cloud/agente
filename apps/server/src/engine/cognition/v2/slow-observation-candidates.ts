@@ -38,7 +38,6 @@ export function selectSlowObservationCandidate(event: SystemEvent): SlowObservat
       record.tenantId !== event.tenantId ||
       record.visibility.tenantId !== event.tenantId ||
       record.visibility.ownerActorId !== event.owner ||
-      record.sourceEventId === event.id ||
       record.id.startsWith("slow:") || record.id.startsWith("outcome:") ||
       record.id.startsWith("hint:")) return null;
   return {
