@@ -4,7 +4,7 @@ import { SlowObservationBridge } from "../apps/server/src/engine/cognition/v2/sl
 import type { CognitiveIdentity, CognitiveRecord } from "../packages/domain/src/cognition-v2.ts";
 
 const identity: CognitiveIdentity = { tenantId: "tenant-a", actorId: "alice", owner: "alice", purpose: "chat", policyRevision: "p1" };
-const source = { id: "card-1", tenantId: "tenant-a", kind: "card", revision: 3, epistemic: "reported_fact" } as CognitiveRecord;
+const source = { id: "card-1", tenantId: "tenant-a", kind: "card", revision: 3, epistemic: "reported_fact", lifecycle: "active", visibility: { tenantId: "tenant-a" } } as CognitiveRecord;
 
 test("C06 observation enqueues durable slow work with an exact authorized revision and stable key", async () => {
   const enqueued: unknown[] = [];
@@ -34,4 +34,38 @@ test("C06 observation rejects missing, speculative, contradicted or foreign evid
   }
   await assert.rejects(bridge.observe({ ...request, sourceRevision: 0 }), /SLOW_OBSERVATION_INVALID/);
   assert.equal(called, 0);
+});
+
+test("C06 observation refuses forged resolved revision, identity, source and empty prompt", async () => {
+  let enqueues = 0;
+  let resolved: CognitiveRecord = source;
+  const bridge = new SlowObservationBridge({
+    async assertAuthorized() {},
+    async resolve() { return resolved; },
+  } as any, { async enqueue() { enqueues++; return { id: "job", state: "queued" }; } } as any);
+  const request = { identity, sourceId: "card-1", sourceRevision: 3, operationId: "receipt-1", prompt: "Analiza evidencia" };
+  for (resolved of [
+    { ...source, id: "card-2" }, { ...source, revision: 2 },
+    { ...source, lifecycle: "revoked" }, { ...source, visibility: { tenantId: "tenant-b" } },
+  ] as CognitiveRecord[]) {
+    await assert.rejects(bridge.observe(request), /SLOW_OBSERVATION_EVIDENCE_DENIED/);
+  }
+  resolved = source;
+  for (const invalid of [
+    { ...request, prompt: "   " }, { ...request, sourceId: "x".repeat(201) },
+    { ...request, operationId: " " }, { ...request, identity: { ...identity, owner: "mallory" } },
+  ]) await assert.rejects(bridge.observe(invalid), /SLOW_OBSERVATION_INVALID/);
+  assert.equal(enqueues, 0);
+});
+
+test("C06 observation propagates queue conflict without changing identity or retrying", async () => {
+  let attempts = 0;
+  const bridge = new SlowObservationBridge({
+    async assertAuthorized() {},
+    async resolve() { return source; },
+  } as any, { async enqueue() { attempts++; throw Error("IDEMPOTENCY_CONFLICT"); } } as any);
+  await assert.rejects(bridge.observe({
+    identity, sourceId: "card-1", sourceRevision: 3, operationId: "receipt-1", prompt: "Analiza",
+  }), /IDEMPOTENCY_CONFLICT/);
+  assert.equal(attempts, 1);
 });
