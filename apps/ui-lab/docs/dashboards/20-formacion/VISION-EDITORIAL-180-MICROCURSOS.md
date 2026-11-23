@@ -10,9 +10,9 @@ Lema literal: **«Deja de aprender la IA y empieza a trabajar con LAIA».**
 ## Catálogo inicial previsto: tres líneas de 60
 1. **Trabaja con LAIA — 60 reels**: los 60 ejercicios ya documentados en `ejercicios/50-reels.md` y `ejercicios/10-introduccion.md`. Son **60 microcursos individuales**, no seis cursos largos.
 2. **Aprende AgntiaPro — otros 60 reels**: tutoriales breves de uso del software, sus aplicaciones, navegación y tareas. **Pendientes de ideación y documentación**; no afirmar que ya existen.
-3. **IA técnica y profesional — otros 60 reels**: fundamentos y conceptos de IA necesarios para trabajar con criterio, desde introducción hasta uso profesional. **Pendientes de ideación y documentación**.
+3. **IA técnica y profesional — otros 60 reels**: fundamentos y conceptos de IA necesarios para trabajar con criterio, desde introducción hasta uso profesional. **60 ideas ya documentadas** en `ejercicios/60-ia-profesional.md`; vídeos y prácticas pendientes de producción.
 
-**Total previsto: 180 microcursos/reels**, agrupables en playlists, colecciones y series extensibles. Solo los primeros 60 tienen catálogo documentado actualmente. La serie ilustrativa «IA Act» de la prompt UX es **otro formato editorial de ejemplo**, no un sustituto ni parte contada automáticamente de estos 180.
+**Total previsto: 180 microcursos/reels**, agrupables en playlists, colecciones y series extensibles. Hay **120 microcursos catalogados** (60 Trabaja con LAIA + 60 IA profesional); faltan por idear 60 Aprende AgntiaPro. La serie ilustrativa «IA Act» de la prompt UX es **otro formato editorial de ejemplo**, no un sustituto ni parte contada automáticamente de estos 180.
 
 ## Producción audiovisual agéntica imaginada
 - El founder conversa con ChatGPT a partir de una estructura o tema, o se graba explicándolo con su propia voz. **Grabación de trabajo orientativa: aproximadamente 1 minuto por pieza**.
@@ -32,3 +32,6 @@ Lema literal: **«Deja de aprender la IA y empieza a trabajar con LAIA».**
 
 ## Alcance y siguientes decisiones
 **No iniciar campaña, no crear rama, no modificar código ni navegación, no producir los 120 reels futuros.** Esta nota documenta el concepto para diseñarlo más adelante. Cuando se retome, auditar el repositorio de edición agéntica y el sistema de diseño vigente, decidir el modelo editorial y crear los dos catálogos adicionales de 60 sin alterar los 60 existentes.
+
+## Personalización contextual
+El motor de recomendaciones por rol, objetivos declarados, progreso y señales mínimas de uso se especifica en [ALGORITMO-RECOMENDACIONES-PERSONALIZADAS.md](./ALGORITMO-RECOMENDACIONES-PERSONALIZADAS.md). No implica implementación ni autoriza vigilancia laboral.
