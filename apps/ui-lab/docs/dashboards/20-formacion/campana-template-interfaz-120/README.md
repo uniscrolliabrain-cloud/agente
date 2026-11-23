@@ -37,6 +37,7 @@ Construir **el template reusable de Formación** para albergar IA01–IA60, R01�
 - [06 · Bitácora de campaña y handoff](./06-BITACORA-Y-HANDOFF.md)
 - [07 · Auditoría crítica de paridad visual](./07-AUDITORIA-PARIDAD-VISUAL.md)
 - [08 · Mockup audiovisual y sheet reutilizable](./08-MOCKUP-REAL-Y-SHEET-REUTILIZABLE.md) — referencia visual aportada, hallazgos reales de chat FAB y plan de vertical slice.
+- [09 · Criterios de componentes desde auditorías Landing + Studio](./09-CRITERIOS-COMPONENTES-DESDE-AUDITS.md) — reglas de composición abierta, densidad, motion, componentes reutilizables y gates de calidad.
 
 ## Condición de salida
 
