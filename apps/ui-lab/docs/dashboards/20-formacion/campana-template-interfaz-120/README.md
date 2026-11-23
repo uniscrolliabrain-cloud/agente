@@ -36,6 +36,7 @@ Construir **el template reusable de Formación** para albergar IA01–IA60, R01�
 - [05 · QA visual y criterios de aceptación](./05-QA-Y-ACEPTACION.md)
 - [06 · Bitácora de campaña y handoff](./06-BITACORA-Y-HANDOFF.md)
 - [07 · Auditoría crítica de paridad visual](./07-AUDITORIA-PARIDAD-VISUAL.md)
+- [08 · Mockup audiovisual y sheet reutilizable](./08-MOCKUP-REAL-Y-SHEET-REUTILIZABLE.md) — referencia visual aportada, hallazgos reales de chat FAB y plan de vertical slice.
 
 ## Condición de salida
 
