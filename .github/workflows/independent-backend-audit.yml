@@ -1,0 +1,26 @@
+name: Independent Cognition V2 audit
+on:
+  push:
+    branches: [audit/cognition-v2-independent-20261123]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ALLOW_NETWORK: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Cognition V2 tests
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-lanes.test.ts tests/cognition-v2-security-context.test.ts tests/cognition-v2-runtime.test.ts
+      - name: HTTP integration
+        if: always()
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
