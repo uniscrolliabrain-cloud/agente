@@ -1,25 +1,31 @@
 # UI Lab — estructura documental aprobada
 
-Carpetas principales, en el orden exacto indicado por el founder (numeración continua para resolver el 8 repetido):
+Las 19 carpetas principales conservan el orden aprobado por el founder.
 
-01. [landing](./01-landing/README.md)
-02. [login](./02-login/README.md)
-03. [legal](./03-legal/README.md)
-04. [chat boton transversal](./04-chat-boton-transversal/README.md)
-05. [perfil](./05-perfil/README.md)
-06. [settings](./06-settings/README.md)
-07. [menu lateral](./07-menu-lateral/README.md)
-08. [centro de mando](./08-centro-de-mando/README.md)
-09. [chat](./09-chat/README.md)
-10. [estudio de operaciones](./10-estudio-de-operaciones/README.md)
-11. [apps](./11-apps/README.md)
-12. [comunicacion](./12-comunicacion/README.md)
-13. [automatizaciones](./13-automatizaciones/README.md)
-14. [documentos](./14-documentos/README.md)
-15. [conocimiento](./15-conocimiento/README.md)
-16. [proyectos](./16-proyectos/README.md)
-17. [equipo](./17-equipo/README.md)
-18. [data](./18-data/README.md)
-19. [general](./19-general/README.md)
+01. [landing](./01-landing/README.md) — **APROVECHABLE AHORA**
+02. [login](./02-login/README.md) — **POR DISEÑAR**
+03. [legal](./03-legal/README.md) — **POR DISEÑAR**
+04. [chat boton transversal](./04-chat-boton-transversal/README.md) — **POR DISEÑAR**
+05. [perfil](./05-perfil/README.md) — **POR DISEÑAR**
+06. [settings](./06-settings/README.md) — **POR DISEÑAR**
+07. [menu lateral](./07-menu-lateral/README.md) — **POR DISEÑAR**
+08. [centro de mando](./08-centro-de-mando/README.md) — **APROVECHABLE AHORA**
+09. [chat](./09-chat/README.md) — **APROVECHABLE AHORA**
+10. [estudio de operaciones](./10-estudio-de-operaciones/README.md) — **PENDIENTE DE VALIDACIÓN — no confundir con Estudio Demo**
+11. [apps](./11-apps/README.md) — **POR DISEÑAR**
+12. [comunicacion](./12-comunicacion/README.md) — **POR DISEÑAR**
+13. [automatizaciones](./13-automatizaciones/README.md) — **APROVECHABLE AHORA**
+14. [documentos](./14-documentos/README.md) — **POR DISEÑAR**
+15. [conocimiento](./15-conocimiento/README.md) — **POR DISEÑAR**
+16. [proyectos](./16-proyectos/README.md) — **POR DISEÑAR**
+17. [equipo](./17-equipo/README.md) — **APROVECHABLE AHORA**
+18. [data](./18-data/README.md) — **POR DISEÑAR**
+19. [general](./19-general/README.md) — **POR DISEÑAR**
 
-**Apps:** las 34 fichas comerciales, el metadashboard y su prompt están dentro de [11-apps](./11-apps/README.md). No se crea un segundo catálogo fuera. Teléfono queda como subcarpeta de Comunicación y la galería de branding como subcarpeta de General. No se ha modificado código, main ni desplegado.
+## Seguimiento
+
+- [Cuaderno de bitácora UX: notas, decisiones, hitos y estados](./19-general/BITACORA-UX.md)
+- [Estudio Demo: aprovechable](./19-general/superficies-transversales/ESTUDIO-DEMO.md)
+- [Tareas: aprovechable](./19-general/superficies-transversales/TAREAS.md)
+
+**Importante:** Estudio Demo no es automáticamente Estudio de Operaciones. Las 34 fichas de Apps están dentro de [11-apps](./11-apps/README.md); disponer de documentación no implica tener el diseño aprobado. No se modifica código ni se despliega por esta clasificación.
