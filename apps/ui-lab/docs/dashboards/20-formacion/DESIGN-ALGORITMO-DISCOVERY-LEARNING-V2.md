@@ -6,7 +6,7 @@
 
 Spotify inspira las colecciones, continuidad y serendipia; YouTube inspira contexto, satisfacción explícita y feedback negativo; Google inspira recuperación por intención, relevancia semántica, calidad y diversidad; Facebook/Meta inspira la ponderación contextual de relaciones, pero **no** el crecimiento del tiempo de pantalla ni el uso de relaciones personales sin consentimiento. Estos son **patrones públicos**, no afirmaciones sobre fórmulas internas o pesos secretos.
 
-**Función objetivo AgntiaPro:** maximizar utilidad profesional esperada y progreso verificable, condicionado por consentimiento, seguridad, tiempo disponible y preferencias explícitas. No usar horas vistas, scroll, autoplay, ansiedad, vulnerabilidad ni conversiones comerciales como objetivo principal. No inferir rendimiento de empleados para RRHH.
+**Función objetivo AgntiaPro:** maximizar utilidad profesional **o aprendizaje voluntario significativo según el modo elegido**, condicionado por consentimiento, seguridad, tiempo disponible y preferencias explícitas. La duración voluntaria puede aportar una señal secundaria positiva en aprendizaje, pero no equivale a comprensión. No optimizar ansiedad, vulnerabilidad, scroll compulsivo ni conversiones comerciales como objetivo principal. No inferir rendimiento de empleados para RRHH.
 
 Referencias públicas:
 - Google Search ranking systems: https://developers.google.com/search/docs/appearance/ranking-systems-guide
@@ -26,6 +26,24 @@ Referencias públicas:
 **Señales de trabajo:** únicamente datos agregados, mínimos, consentidos y pertinentes al propósito; jamás lectura silenciosa de correos, actividad personal o datos sensibles para perfilar formación. No puntuar productividad de empleados.
 
 **Calidad editorial:** revisión humana, exactitud, fecha de validación, accesibilidad, derechos audiovisuales, funcionalidad realmente disponible. Material en draft no es publicable; bloqueos de licencia/privacidad prevalecen sobre cualquier score.
+
+## 2 bis. Retención educativa positiva y modos de intención (revisión del founder)
+
+**Corrección del principio de producto:** retener puede ser beneficioso cuando la persona **elige dedicar tiempo a aprender**, incluso fuera de su jornada. No confundir duración de una sesión educativa con uso compulsivo. No inferir automáticamente «fuera del trabajo» por hora, día o calendario: existen turnos, horarios flexibles y estudio dentro del trabajo. **El usuario selecciona el modo y puede cambiarlo en cualquier momento.**
+
+Tres modos de sesión, independientes del horario:
+
+1. **Trabajo / Resolver:** priorizar resultado rápido, práctica aplicada, exactitud y cierre. Minimizar pasos y evitar recomendaciones que distraigan de la tarea.
+2. **Aprender / Profundizar:** priorizar continuidad conceptual, comprensión, progresión por dificultad, variedad pedagógica y sesiones voluntarias más largas. Permitir rutas de 10/20/45/60 minutos con elección explícita.
+3. **Explorar / Descubrir:** serendipia, temas adyacentes, perspectivas nuevas y recomendaciones editoriales diversas, sin exigir una tarea productiva inmediata.
+
+**Señales educativas positivas:** tiempo voluntario de estudio, guardados, volver a un tema, ejercicios resueltos, utilidad percibida, progreso en objetivos declarados y retorno libre al aprendizaje. El watch time puede ser **una señal contextual secundaria** en modos Aprender/Explorar, nunca el objetivo único ni sustituto de comprensión. Pausas, abandonos y cambios de modo no son fallos del usuario.
+
+**No diseñar:** autoplay infinito por defecto, notificaciones insistentes, ocultar el final de una ruta, presión por rachas, perfiles psicológicos sensibles, explotación de cansancio o vulnerabilidad, maximización indiscriminada de permanencia. Ofrecer fin de sesión claro y controles «menos de esto», «seguir aprendiendo» y «terminar por hoy».
+
+**Adaptación del ranking:** aplicar ponderaciones específicas según modo y propósito consentido, manteniendo los gates de derechos, privacidad y capacidad. En Trabajo aumentar relevancia inmediata y práctica. En Aprender aumentar progresión, diversidad pedagógica y satisfacción educativa. En Explorar aumentar novedad y conexiones semánticas. Los pesos del apartado 4 son solo un baseline del modo Trabajo; deben calibrarse y evaluarse por modo.
+
+**Experimentos:** comparar utilidad y comprensión a 24 h/7 días, retorno voluntario, tasa de prácticas, satisfacción y abandono declarado. No presentar duración de sesión como evidencia suficiente de aprendizaje. Segmentar solo por preferencias y modos elegidos, no por características sensibles ni evaluación laboral.
 
 ## 3. Pipeline propuesto
 
@@ -52,7 +70,7 @@ Score preliminar 0–100:
 
 Aplicar después reglas de cobertura y penalización por repetición. **Nunca** compensar un bloqueo de privacidad, derechos o permisos con un score alto. No basar ranking en popularidad bruta: un curso con 2 valoraciones no debe dominar a otro con 200 por azar.
 
-Una sesión nueva no recibe una pantalla vacía: ofrece «Empieza con LAIA», «Resolver algo hoy», «Entender la IA», «Crear contenido», «Organizar mi trabajo». Sin historial ni perfil también funciona.
+Una sesión nueva no recibe una pantalla vacía: permite seleccionar Trabajo, Aprender o Explorar y ofrece «Empieza con LAIA», «Resolver algo hoy», «Entender la IA», «Crear contenido», «Organizar mi trabajo». Sin historial ni perfil también funciona.
 
 ## 5. Colecciones UX tipo biblioteca musical, con branding propio
 
@@ -83,7 +101,7 @@ No llamar a campos de aprendizaje `capability` o `attention` sin mapearlos a los
 
 ## 7. Métricas y evaluación
 
-Primarias: porcentaje de prácticas verificadas voluntarias, utilidad declarada tras practicar, tiempo hasta resultado, éxito en tareas consentidas. Secundarias: cobertura de categorías, diversidad, precisión de recomendaciones, satisfacción, repetición no deseada. Guardrails: errores de permisos, filtración cross-tenant, sugerencias de funciones inexistentes, licencias no verificadas, carga cognitiva, quejas, exclusiones de accesibilidad. Watch time solo diagnóstico de producción audiovisual, nunca objetivo de optimización.
+Primarias: porcentaje de prácticas verificadas voluntarias, utilidad declarada tras practicar, tiempo hasta resultado, éxito en tareas consentidas. Secundarias: cobertura de categorías, diversidad, precisión de recomendaciones, satisfacción, repetición no deseada. Guardrails: errores de permisos, filtración cross-tenant, sugerencias de funciones inexistentes, licencias no verificadas, carga cognitiva, quejas, exclusiones de accesibilidad. Watch time como diagnóstico audiovisual y señal contextual secundaria de estudio voluntario en modos Aprender/Explorar, nunca métrica única de éxito.
 
 Tests obligatorios: cold start, historial vacío, usuario que rechaza personalización, dos tenants aislados, revocación OAuth, ausencia de vídeos publicados, resultados duplicados, catálogo corrupto, cambio de política entre propuesta y publicación, expiración de proyección, JEV no disponible, slow LLM no disponible, ausencia de aprobación kernel, señal de práctica falsa, diversidad de colecciones y compatibilidad móvil.
 
@@ -99,4 +117,4 @@ Tests obligatorios: cold start, historial vacío, usuario que rechaza personaliz
 
 **F4 · Evaluación y mejora:** experimento con cohortes pequeñas, métricas de aprendizaje y utilidad, sin incentivos de retención compulsiva.
 
-**Decisión de producto:** una persona debe poder completar una práctica, cerrar Formación y volver a su trabajo. Eso es éxito.
+**Decisión de producto:** una persona debe poder completar una práctica y volver a su trabajo **o** elegir seguir aprendiendo durante una hora porque le resulta valioso. Ambos resultados son éxito si responden a su intención y preservan su autonomía.
