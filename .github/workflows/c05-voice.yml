@@ -9,11 +9,13 @@ on:
       - 'apps/server/src/engine/voice-v2/**'
       - 'apps/server/src/engine/cognition/v2/external-connectors.ts'
       - 'apps/server/src/engine/cognition/v2/chat-agent.ts'
+      - 'apps/server/src/engine/cognition/v2/slow-observation.ts'
       - 'apps/server/src/agent.ts'
       - 'apps/server/src/voice-session-routes.ts'
       - 'tests/voice-v2-*.test.ts'
       - 'tests/cognition-v2-external-connectors.test.ts'
       - 'tests/cognition-v2-chat-agent.test.ts'
+      - 'tests/cognition-v2-slow-observation.test.ts'
       - 'tests/cognition-v2-http.test.ts'
       - '.github/workflows/c05-voice.yml'
 
@@ -45,5 +47,7 @@ jobs:
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-external-connectors.test.ts
       - name: C06 CopilotKit V2 chat adapter
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-chat-agent.test.ts
+      - name: C06 slow observation boundary
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation.test.ts
       - name: Cognition V2 HTTP integration
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
