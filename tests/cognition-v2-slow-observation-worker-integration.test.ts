@@ -123,6 +123,15 @@ test("C06.P03b exhausted quota never acknowledges a card without enqueuing it", 
       "SELECT status FROM cognition_v2_inbox WHERE tenant=$1 AND consumer=$2 AND event_id=$3",
       [f.tenant, "slow-observer-v2.1", "card-proposal-1"]);
     assert.equal(inbox.status, "retry");
+    const [deferred] = await f.db.rawQuery<{ attempts: number; next_at: string }>(
+      "SELECT attempts,next_at FROM cognition_v2_inbox WHERE tenant=$1 AND consumer=$2 AND event_id=$3",
+      [f.tenant, "slow-observer-v2.1", "card-proposal-1"]);
+    assert.equal(deferred.attempts, 0, "capacity pause must not exhaust dead-letter retries");
+    const next = new Date(deferred.next_at);
+    assert.equal(next.getUTCHours(), 0);
+    assert.equal(next.getUTCMinutes(), 0);
+    assert.ok(next.getTime() > Date.now());
+    assert.equal(await worker.tick(f.tenant, 10), 0, "do not spin on deferred quota");
     const [quota] = await f.db.rawQuery<{ calls: number }>(
       "SELECT calls FROM cognition_v2_observation_quotas WHERE tenant=$1 AND day=$2", [f.tenant, day]);
     assert.equal(quota.calls, 3);
