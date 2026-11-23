@@ -42,3 +42,9 @@ body{margin:0}#root{min-height:100vh}
 .lab-compare-label{font:700 11px Manrope,sans-serif;color:#6550dd;padding:0 0 10px}
 .lab-compare-frame iframe{width:100%;height:850px}
 @media(max-width:850px){.lab-canvas-compare{flex-direction:column}.lab-canvas-compare>.lab-viewport-wrap,.lab-compare-frame{width:100%!important;max-width:100%!important}.lab-compare-toolbar{flex-wrap:wrap}}
+
+/* UI Lab is a preview tool, not a second application navigation shell. */
+.lab-root{grid-template-columns:minmax(0,1fr)}
+.lab-preview-picker{display:flex;align-items:center;gap:8px;font:600 11px Manrope,sans-serif;color:#6e6c66}
+.lab-preview-picker select{min-width:180px;max-width:260px;padding:8px 10px;font:600 12px Manrope,sans-serif}
+@media(max-width:780px){.lab-preview-picker{flex:1;min-width:0}.lab-preview-picker select{min-width:0;max-width:100%;width:100%}.lab-actions{flex-wrap:wrap}.lab-preview-picker span{display:none}}
