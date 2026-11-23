@@ -9,6 +9,14 @@ La sección **Formación** es una parte de AgntiaPro con experiencia de descubri
 
 La unidad pedagógica es un reel de 20–45 s producido con IA, con subtítulos, caption, demostración verificable y CTA contextual: **Conectar aplicación** si no está autorizada, **Pruébalo con LAIA** si ya lo está. La autorización es reutilizable entre ejercicios y revocable. Nunca forzar conexiones para ver contenido.
 
+## Producción editorial · «Deja de aprender la IA y trabaja con LAIA» (60/60)
+
+- [Entrega 1/3 — R01–R20: organización, documentos y conocimiento](./ejercicios/TRABAJA-CON-LAIA-60-PRODUCCION-01-R01-R20.md)
+- [Entrega 2/3 — R21–R40: colaboración, proyectos y creatividad](./ejercicios/TRABAJA-CON-LAIA-60-PRODUCCION-02-R21-R40.md)
+- [Entrega 3/3 — R41–R50 y P01–P10: vida cotidiana e introducción](./ejercicios/TRABAJA-CON-LAIA-60-PRODUCCION-03-R41-R50-P01-P10.md)
+
+**60 paquetes documentados**: cada uno incluye guion de voz orientativo de 40 s, propuesta de realización, tres consultas de free stock y prompt instrumental Suno sin referencias a artistas. Son materiales de preproducción: requieren revisión editorial y cronometraje, selección y comprobación de licencias de stock, generación musical con derechos comerciales adecuados y verificación de capacidades antes de mostrar demostraciones reales. Los 60 tutoriales de uso específico de AgntiaPro siguen fuera de este paquete.
+
 ## Inventario
 - **[Propuesta SOP cíclico con Cognition V2 TRUE](./PROPUESTA-SOP-CICLICO-COGNITION-V2-TRUE.md)** — arquitectura objetivo, contraste con código, gates y fallbacks.
 - **[60 guiones de 40 segundos](./ejercicios/60-GUIONES-40-SEGUNDOS.md)** — propuestas de locución IA01–IA60, pendientes de revisión y cronometraje.
