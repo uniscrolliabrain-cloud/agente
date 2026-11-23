@@ -42,3 +42,8 @@ El Estudio conserva exactamente su estructura conceptual **inspector izquierda, 
 
 ## Límites de auditoría
 Inspección de código y documentación en main; no render en navegador, no medición FPS, no pruebas de interacción ejecutadas. No se ha modificado código.
+
+## Antecedentes encontrados en rama (2026-11-23)
+El Estudio Demo tiene una auditoría y campaña preexistentes en `docs/design-system-agntiapro-master-20261122`: [01-audit](https://github.com/uniscrolliabrain-cloud/agente/blob/docs/design-system-agntiapro-master-20261122/docs/audits/2026-11-22-business-command-studio/01-audit.md), [02-campaign](https://github.com/uniscrolliabrain-cloud/agente/blob/docs/design-system-agntiapro-master-20261122/docs/audits/2026-11-22-business-command-studio/02-campaign.md), [03-validation](https://github.com/uniscrolliabrain-cloud/agente/blob/docs/design-system-agntiapro-master-20261122/docs/audits/2026-11-22-business-command-studio/03-validation.md). La campaña C5 ya pedía integración, responsive y movimiento con identidad de landing. Además, la [guía de motion del sistema maestro](https://github.com/uniscrolliabrain-cloud/agente/blob/docs/design-system-agntiapro-master-20261122/docs/design-system-agntiapro/04-interaccion-motion.md) distingue el ritmo editorial de landing del ritmo instrumental del software.
+
+**No duplicar estas campañas.** Contrastar estado real en main, reutilizar auditoría, contratos y QA, y extender solo las brechas de coreografía cinematográfica y continuidad entre inspector/visualizador/timeline. Esta anotación es documental; no se ha fusionado la rama ni implementado motion.
