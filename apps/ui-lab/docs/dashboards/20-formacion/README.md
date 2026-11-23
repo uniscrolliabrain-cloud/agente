@@ -10,6 +10,7 @@ La sección **Formación** es una parte de AgntiaPro con experiencia de descubri
 La unidad pedagógica es un reel de 20–45 s producido con IA, con subtítulos, caption, demostración verificable y CTA contextual: **Conectar aplicación** si no está autorizada, **Pruébalo con LAIA** si ya lo está. La autorización es reutilizable entre ejercicios y revocable. Nunca forzar conexiones para ver contenido.
 
 ## Inventario
+- [Prompt maestra UX/UI V2 — adaptación extensa al branding AgntiaPro](./PROMPT-MAESTRA-FORMACION-V2.md).
 - [50 ejercicios cotidianos](./ejercicios/50-reels.md), agrupados en 5 colecciones de 10.
 - [10 ejercicios de introducción profesional](./ejercicios/10-introduccion.md).
 - [UX de Formación](./UX-FORMACION.md).
@@ -27,5 +28,5 @@ La unidad pedagógica es un reel de 20–45 s producido con IA, con subtítulos,
 6. Un conector autorizado se reutiliza para varios ejercicios dentro del mismo scope; la UI jamás solicita reconexión innecesaria.
 7. Los ejemplos son **ideas sujetas a validación de disponibilidad de APIs, permisos, restricciones comerciales y acciones por proveedor**.
 
-## Alcance de esta rama
+## Alcance de esta documentación
 Solo documentación y material de preparación. No hay UI, vídeos, SDK, OAuth, SOPs nuevos ni despliegue.
