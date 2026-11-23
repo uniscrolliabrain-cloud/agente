@@ -164,3 +164,53 @@ test("C06.P03b persists a real slow job and queued receipt atomically", async ()
     assert.equal(after.length, 1);
   } finally { await f.db.close(); }
 });
+
+test("C06.P03b resumes deferred observation after UTC rollover, once only", async () => {
+  const f = await fixture();
+  try {
+    let now = Date.parse("2026-11-23T23:59:00.000Z");
+    const clock = () => now;
+    await f.db.rawQuery(
+      "INSERT INTO cognition_v2_observation_quotas(tenant,day,calls) VALUES($1,$2,$3)",
+      [f.tenant, "2026-11-23", 3]);
+    const worker = new SlowObservationWorker(f.runtime, 3, f.db, clock);
+    assert.equal(await worker.tick(f.tenant, 10), 1);
+    assert.equal(f.attempts(), 0);
+    const [deferred] = await f.db.rawQuery<{ next_at: string; attempts: number }>(
+      "SELECT next_at,attempts FROM cognition_v2_inbox WHERE tenant=$1 AND consumer=$2 AND event_id=$3",
+      [f.tenant, "slow-observer-v2.1", "card-proposal-1"]);
+    assert.equal(new Date(deferred.next_at).toISOString(), "2026-11-24T00:00:00.000Z");
+    assert.equal(deferred.attempts, 0);
+    now = Date.parse("2026-11-23T23:59:59.000Z");
+    assert.equal(await worker.tick(f.tenant, 10), 0);
+    now = Date.parse("2026-11-24T00:00:01.000Z");
+    assert.equal(await worker.tick(f.tenant, 10), 1);
+    assert.equal(f.attempts(), 1);
+    assert.equal(f.jobs.length, 1);
+    assert.equal(await worker.tick(f.tenant, 10), 0);
+    assert.equal(f.attempts(), 1);
+    const [quota] = await f.db.rawQuery<{ calls: number }>(
+      "SELECT calls FROM cognition_v2_observation_quotas WHERE tenant=$1 AND day=$2",
+      [f.tenant, "2026-11-24"]);
+    assert.equal(quota.calls, 1);
+    const [cursor] = await f.db.rawQuery<{ sequence: string }>(
+      "SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer=$2",
+      [f.tenant, "slow-observer-v2.1"]);
+    assert.equal(Number(cursor.sequence), 2);
+  } finally { await f.db.close(); }
+});
+
+test("C06.P03b competing workers cannot double-enqueue the same card", async () => {
+  const f = await fixture();
+  try {
+    const first = new SlowObservationWorker(f.runtime, 3);
+    const second = new SlowObservationWorker(f.runtime, 3);
+    const results = await Promise.all([first.tick(f.tenant, 10), second.tick(f.tenant, 10)]);
+    assert.equal(results.reduce((sum, value) => sum + value, 0), 2);
+    assert.equal(f.jobs.length, 1);
+    assert.equal(f.attempts(), 1);
+    const [quota] = await f.db.rawQuery<{ calls: number }>(
+      "SELECT calls FROM cognition_v2_observation_quotas WHERE tenant=$1", [f.tenant]);
+    assert.equal(quota.calls, 1);
+  } finally { await f.db.close(); }
+});
