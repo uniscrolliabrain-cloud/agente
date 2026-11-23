@@ -19,6 +19,11 @@
 | UX13 | Entradas, sheets y player sin saltos de layout | walkthrough |
 | UX14 | Cero cambios a backend/landing/studio/deploy | diff de archivos |
 | UX15 | Revisión visual explícita del founder | aprobación registrada |
+| UX16 | Escena y sheet mantienen jerarquía a 360/390px | capturas peek/half/full |
+| UX17 | Gesto completo y scroll de episodios sin conflicto | grabación + test táctil/teclado |
+| UX18 | Safe areas, teclado, orientación, FAB chat y navegación sin solaparse | capturas y walkthrough |
+| UX19 | Snap y tabs preservan selección/foco; reduced motion | test de continuidad y accesibilidad |
+| UX20 | Landing = editorial; Studio = controles; mockup Formación = composición | matriz comparativa de tres referencias |
 
 **Test data:** catálogo 120; portada ausente; vídeo ausente; permisos denegados; biblioteca vacía; búsqueda sin resultados; modo exploración; usuario sin historial; error de player; offline; título largo; texto escalado 200%.
 
