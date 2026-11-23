@@ -12,6 +12,7 @@ on:
       - feat/ui-lab-main-isolated
       - fix/ui-lab-centro-tailwind-landing-studio
       - main
+      - feat/comunicaciones-telefono-v1
       - feat/ui-lab-comunicaciones-whatsapp
       - fix/ui-lab-synthetic-all-previews
     paths:
