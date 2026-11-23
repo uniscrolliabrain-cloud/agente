@@ -83,7 +83,8 @@ export class DurableEventSink implements EventSink {
 export interface ProjectionLease { tenant: string; consumer: string; fence: number; owner: string }
 export interface OrderedEvent { sequence: string; event: SystemEvent }
 export class DurableProjector {
-  constructor(readonly db: Store, readonly consumer = "cognitive-v2.1", private readonly clock = () => Date.now()) {}
+  constructor(readonly db: Store, readonly consumer = "cognitive-v2.1", private readonly clock = () => Date.now(),
+    private readonly deferUntil?: (error: unknown) => number | null) {}
   async acquire(tenant: string, owner: string = randomUUID(), leaseMs = 30000): Promise<ProjectionLease | null> {
     return this.db.transaction(async () => {
       await this.db.rawQuery(`INSERT INTO cognition_v2_cursors(tenant,consumer) VALUES($1,$2) ON CONFLICT DO NOTHING`, [tenant, this.consumer]);
@@ -128,6 +129,18 @@ export class DurableProjector {
           const valid = await this.db.rawQuery(`SELECT tenant FROM cognition_v2_cursors WHERE tenant=$1 AND consumer=$2 AND fence=$3
             AND lease_owner=$4 AND lease_until>$5 FOR UPDATE`, [lease.tenant, lease.consumer, lease.fence, lease.owner, new Date(this.clock()).toISOString()]);
           if (!valid.length) return;
+          // A consumer-specific capacity pause is not a failed delivery attempt.
+          // Preserve the cursor and defer until capacity returns without poisoning
+          // the shared retry/dead-letter budget.
+          const deferredAt = this.deferUntil?.(error);
+          if (deferredAt !== undefined && deferredAt !== null) {
+            if (!Number.isFinite(deferredAt) || deferredAt <= this.clock()) throw Error("INVALID_PROJECTOR_DEFERRAL");
+            await this.db.rawQuery(`INSERT INTO cognition_v2_inbox(tenant,consumer,event_id,attempts,status,next_at)
+              VALUES($1,$2,$3,0,'retry',$4) ON CONFLICT(tenant,consumer,event_id) DO UPDATE
+              SET status='retry',next_at=$4 WHERE cognition_v2_inbox.status NOT IN ('committed','dead_letter')`,
+              [lease.tenant, lease.consumer, candidate!.event.id, new Date(deferredAt).toISOString()]);
+            return;
+          }
           await this.db.rawQuery(`INSERT INTO cognition_v2_inbox(tenant,consumer,event_id,attempts,status,next_at)
             VALUES($1,$2,$3,1,'retry',$4) ON CONFLICT(tenant,consumer,event_id) DO UPDATE
             SET attempts=cognition_v2_inbox.attempts+1,
