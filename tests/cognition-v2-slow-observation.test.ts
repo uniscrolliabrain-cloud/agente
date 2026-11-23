@@ -9,10 +9,10 @@ const source = { id: "card-1", tenantId: "tenant-a", kind: "card", revision: 3, 
 test("C06 observation enqueues durable slow work with an exact authorized revision and stable key", async () => {
   const enqueued: unknown[] = [];
   const bridge = new SlowObservationBridge({
-    async assertAuthorized(i) { assert.equal(i, identity); },
-    async resolve(_i, id, revision) { assert.equal(id, source.id); assert.equal(revision, 3); return source; },
+    async assertAuthorized(i: CognitiveIdentity) { assert.equal(i, identity); },
+    async resolve(_i: CognitiveIdentity, id: string, revision?: number) { assert.equal(id, source.id); assert.equal(revision, 3); return source; },
   } as any, {
-    async enqueue(input, key) { enqueued.push({ input, key }); return { id: "job-1", state: "queued" }; },
+    async enqueue(input: unknown, key: string) { enqueued.push({ input, key }); return { id: "job-1", state: "queued" }; },
   } as any);
   const request = { identity, sourceId: "card-1", sourceRevision: 3, operationId: "receipt-1", prompt: "Examina este resultado empresarial." };
   assert.deepEqual(await bridge.observe(request), { id: "job-1", state: "queued" });
