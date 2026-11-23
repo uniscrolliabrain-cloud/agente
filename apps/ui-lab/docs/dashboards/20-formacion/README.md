@@ -10,6 +10,9 @@ La sección **Formación** es una parte de AgntiaPro con experiencia de descubri
 La unidad pedagógica es un reel de 20–45 s producido con IA, con subtítulos, caption, demostración verificable y CTA contextual: **Conectar aplicación** si no está autorizada, **Pruébalo con LAIA** si ya lo está. La autorización es reutilizable entre ejercicios y revocable. Nunca forzar conexiones para ver contenido.
 
 ## Inventario
+- **[60 microlecciones de IA técnica y profesional](./ejercicios/60-ia-profesional.md)** — catálogo nuevo, pendiente de producción.
+- **[Motor de recomendaciones personalizadas](./ALGORITMO-RECOMENDACIONES-PERSONALIZADAS.md)** — diseño de algoritmo contextual, privacidad y roadmap.
+
 - **[Visión editorial futura — 180 microcursos y producción audiovisual agéntica](./VISION-EDITORIAL-180-MICROCURSOS.md)** (solo planificación; los 60 actuales ya documentados).
 - **[Prompt maestra V3 — lógica Spotify y branding AgntiaPro](./PROMPT-MAESTRA-FORMACION-V3-SPOTIFY.md) — referencia UX vigente para la próxima implementación.**
 - [Prompt maestra UX/UI V2 — adaptación extensa al branding AgntiaPro](./PROMPT-MAESTRA-FORMACION-V2.md).
