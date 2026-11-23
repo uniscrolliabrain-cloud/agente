@@ -1,5 +1,7 @@
 # Motor de recomendaciones de Formación · diseño funcional y técnico
 
+> **Nota de arquitectura posterior:** este documento es la primera propuesta de ranking determinista. La arquitectura objetivo aprobada conceptualmente es un **SOP cíclico gobernado por Cognition V2 TRUE**, con slow LLM, JEV AI, gate del kernel y template dinámico. Véase [PROPUESTA-SOP-CICLICO-COGNITION-V2-TRUE.md](./PROPUESTA-SOP-CICLICO-COGNITION-V2-TRUE.md). Las puntuaciones aquí son una posible heurística de respaldo editorial, no el motor cognitivo definitivo.
+
 > **Gate obligatorio de nomenclatura:** antes de implementar, leer [AUDITORIA-LEXICON-RECOMENDADOR.md](./AUDITORIA-LEXICON-RECOMENDADOR.md). Los nombres de campos y señales de esta propuesta son conceptuales hasta mapearlos a contratos reales; no crear eventos ni capacidades inexistentes.
 
 **Estado:** especificación para implementación futura, no código desplegado. Vive dentro de Formación de AgntiaPro, con lógica de descubrimiento tipo biblioteca musical y branding propio. No confundir con un algoritmo de maximización de tiempo de pantalla: **optimizar utilidad y aprendizaje demostrado**.
