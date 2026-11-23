@@ -25,6 +25,8 @@ Construir **el template reusable de Formación** para albergar IA01–IA60, R01�
 - [Prompt V3 Formación](../PROMPT-MAESTRA-FORMACION-V3-SPOTIFY.md): fuente funcional principal.
 - [Metadata de 120 cursos](../METADATA-120-CURSOS.json): seed editorial; contenido todavía draft.
 
+**Auditoría posterior:** la campaña original NO acredita paridad visual con Landing; leer [07 · Auditoría de paridad visual](./07-AUDITORIA-PARIDAD-VISUAL.md) antes de C00. Deben aprobarse concepto de composición, sistema de portadas y prototipo Home + ficha + player antes de construir el resto.
+
 ## Documentos de esta campaña
 
 - [01 · Design brief y composición](./01-DESIGN-BRIEF.md)
@@ -33,6 +35,7 @@ Construir **el template reusable de Formación** para albergar IA01–IA60, R01�
 - [04 · Prompt maestra para el agente implementador](./04-PROMPT-AGENTE.md)
 - [05 · QA visual y criterios de aceptación](./05-QA-Y-ACEPTACION.md)
 - [06 · Bitácora de campaña y handoff](./06-BITACORA-Y-HANDOFF.md)
+- [07 · Auditoría crítica de paridad visual](./07-AUDITORIA-PARIDAD-VISUAL.md)
 
 ## Condición de salida
 
