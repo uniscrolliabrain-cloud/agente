@@ -1,5 +1,13 @@
 # Formación · Trabaja con LAIA
 
+## Catálogo y algoritmo de descubrimiento · 120 microcursos
+
+- [Metadata estructurada de 120 cursos (JSON)](./METADATA-120-CURSOS.json) — 60 IA profesional, 50 prácticas LAIA, 10 introducción; IDs y títulos canónicos, taxonomía editorial, objetivos, prerequisitos, candidatos de conectores y estados draft.
+- [Concept design Discovery & Learning Engine V2](./DESIGN-ALGORITMO-DISCOVERY-LEARNING-V2.md) — inspiración pública Google/YouTube/Spotify/Meta, candidate generation, elegibilidad, ranking explicable, colecciones, SOP cíclico Cognition V2 TRUE, JEV, gate kernel, proyecciones y roadmap.
+
+**Advertencia de calidad:** los títulos de producción R13–R20 no coinciden completamente con el catálogo R canónico; reconciliar antes de publicar. No se ha implementado el algoritmo ni activado ninguna función.
+
+
 > **Deja de aprender la IA y empieza a trabajar con LAIA.**
 
 Estado: **diseño documental, no implementado**. Documentación integrada en `main`, en el apartado Formación de UI Lab. No activar integraciones ni modificar runtime sin una campaña posterior.
