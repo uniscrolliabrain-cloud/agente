@@ -11,6 +11,7 @@ on:
     branches:
       - feat/ui-lab-main-isolated
       - fix/ui-lab-centro-tailwind-landing-studio
+      - feat/agntia-demo-ui-lab-preview
       - main
     paths:
       - "apps/ui-lab/**"
