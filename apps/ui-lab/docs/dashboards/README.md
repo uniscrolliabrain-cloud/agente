@@ -21,6 +21,7 @@ Las 19 carpetas principales conservan el orden aprobado por el founder.
 17. [equipo](./17-equipo/README.md) — **APROVECHABLE AHORA**
 18. [data](./18-data/README.md) — **POR DISEÑAR**
 19. [general](./19-general/README.md) — **POR DISEÑAR**
+20. [formacion](./20-formacion/README.md) — **DOCUMENTACIÓN COMPLETA · UX POR IMPLEMENTAR**
 
 ## Seguimiento
 
