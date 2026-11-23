@@ -139,7 +139,9 @@ test("C06.P03b persists a real slow job and queued receipt atomically", async ()
     });
     const runtime = { ...f.runtime, slow: queue } as CognitionV2Runtime;
     const worker = new SlowObservationWorker(runtime, 3);
-    assert.equal(await worker.tick(f.tenant, 10), 2);
+    // The queued status receipt is appended in the same transaction and may
+    // be consumed by this batch; it must never trigger a second slow job.
+    assert.equal(await worker.tick(f.tenant, 10), 3);
     const jobs = await f.db.rawQuery<{ id: string; state: string; actor: string }>(
       "SELECT id,state,actor FROM cognition_v2_slow_jobs WHERE tenant=$1", [f.tenant]);
     assert.equal(jobs.length, 1);
@@ -148,7 +150,7 @@ test("C06.P03b persists a real slow job and queued receipt atomically", async ()
     const events = await f.db.rawQuery<{ event: { type: string } }>(
       "SELECT event FROM cognition_v2_events WHERE tenant=$1", [f.tenant]);
     assert.equal(events.filter(({ event }) => event.type === "cognition.v2.slow.status").length, 1);
-    assert.equal(await worker.tick(f.tenant, 10), 1); // consume own status receipt without re-enqueue
+    assert.equal(await worker.tick(f.tenant, 10), 0); // status already consumed, no self-loop
     const after = await f.db.rawQuery("SELECT id FROM cognition_v2_slow_jobs WHERE tenant=$1", [f.tenant]);
     assert.equal(after.length, 1);
   } finally { await f.db.close(); }
