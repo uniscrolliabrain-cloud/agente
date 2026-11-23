@@ -53,7 +53,9 @@ export class SlowObservationWorker {
         SET calls=cognition_v2_observation_quotas.calls+1
         WHERE cognition_v2_observation_quotas.calls < $3 RETURNING calls`,
       [tenant, today, this.dailyLimit]);
-    if (!quota.length) return; // Exhausted: skip without unbounded retries.
+    // Never permanently acknowledge an unprocessed event when budget is exhausted.
+    // DurableProjector records a bounded retry/dead-letter, not a silent drop.
+    if (!quota.length) throw Error("SLOW_OBSERVER_DAILY_QUOTA_EXHAUSTED");
     await this.bridge.observe({
       identity, operationId: event.id, sourceId: candidate.sourceId,
       sourceRevision: candidate.sourceRevision,
