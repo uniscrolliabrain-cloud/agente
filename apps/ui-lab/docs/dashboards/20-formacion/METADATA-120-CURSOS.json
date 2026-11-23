@@ -1,0 +1,5169 @@
+{
+  "schemaVersion": "0.1.0-draft",
+  "catalogVersion": "2026-11-23",
+  "status": "editorial-proposal-not-runtime",
+  "total": 120,
+  "tracks": {
+    "ia-profesional": 60,
+    "trabaja-con-laia": 50,
+    "introduccion-laia": 10
+  },
+  "items": [
+    {
+      "id": "IA01",
+      "slug": "ia01",
+      "title": "La IA no piensa por ti",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "La IA no piensa por ti",
+      "learningObjective": "Explicar y aplicar: la ia no piensa por ti",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA02",
+        "IA03"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia01"
+    },
+    {
+      "id": "IA02",
+      "slug": "ia02",
+      "title": "Qué es la cognición aumentada",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es la cognición aumentada",
+      "learningObjective": "Explicar y aplicar: qué es la cognición aumentada",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA03",
+        "IA04"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia02"
+    },
+    {
+      "id": "IA03",
+      "slug": "ia03",
+      "title": "Qué es un LLM",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un LLM",
+      "learningObjective": "Explicar y aplicar: qué es un llm",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA04",
+        "IA05"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia03"
+    },
+    {
+      "id": "IA04",
+      "slug": "ia04",
+      "title": "Cómo hacer buenas preguntas",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Cómo hacer buenas preguntas",
+      "learningObjective": "Explicar y aplicar: cómo hacer buenas preguntas",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA05",
+        "IA06"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia04"
+    },
+    {
+      "id": "IA05",
+      "slug": "ia05",
+      "title": "Qué es un prompt",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico",
+        "prompting"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un prompt",
+      "learningObjective": "Explicar y aplicar: qué es un prompt",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA06",
+        "IA07"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia05"
+    },
+    {
+      "id": "IA06",
+      "slug": "ia06",
+      "title": "Pensar con varias perspectivas",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Pensar con varias perspectivas",
+      "learningObjective": "Explicar y aplicar: pensar con varias perspectivas",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA07",
+        "IA08"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia06"
+    },
+    {
+      "id": "IA07",
+      "slug": "ia07",
+      "title": "Qué es el pensamiento crítico",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico",
+        "critical-thinking"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es el pensamiento crítico",
+      "learningObjective": "Explicar y aplicar: qué es el pensamiento crítico",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA08",
+        "IA09"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia07"
+    },
+    {
+      "id": "IA08",
+      "slug": "ia08",
+      "title": "Cómo contrastar una respuesta",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Cómo contrastar una respuesta",
+      "learningObjective": "Explicar y aplicar: cómo contrastar una respuesta",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA09",
+        "IA10"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia08"
+    },
+    {
+      "id": "IA09",
+      "slug": "ia09",
+      "title": "Aprende algo nuevo en diez minutos",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Aprende algo nuevo en diez minutos",
+      "learningObjective": "Explicar y aplicar: aprende algo nuevo en diez minutos",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA10",
+        "IA11"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia09"
+    },
+    {
+      "id": "IA10",
+      "slug": "ia10",
+      "title": "No delegues tu criterio",
+      "track": "ia-profesional",
+      "category": "pensamiento-critico",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "pensamiento-critico"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "No delegues tu criterio",
+      "learningObjective": "Explicar y aplicar: no delegues tu criterio",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA11",
+        "IA12"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia10"
+    },
+    {
+      "id": "IA11",
+      "slug": "ia11",
+      "title": "Qué es un sistema",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "systems"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un sistema",
+      "learningObjective": "Explicar y aplicar: qué es un sistema",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA12",
+        "IA13"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia11"
+    },
+    {
+      "id": "IA12",
+      "slug": "ia12",
+      "title": "Tu empresa es un sistema",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "systems"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Tu empresa es un sistema",
+      "learningObjective": "Explicar y aplicar: tu empresa es un sistema",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA13",
+        "IA14"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia12"
+    },
+    {
+      "id": "IA13",
+      "slug": "ia13",
+      "title": "Piensa en procesos, no en tareas aisladas",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "tasks",
+        "processes"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Piensa en procesos, no en tareas aisladas",
+      "learningObjective": "Explicar y aplicar: piensa en procesos, no en tareas aisladas",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA14",
+        "IA15"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia13"
+    },
+    {
+      "id": "IA14",
+      "slug": "ia14",
+      "title": "Qué es un flujo de trabajo",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "workflows"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un flujo de trabajo",
+      "learningObjective": "Explicar y aplicar: qué es un flujo de trabajo",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA15",
+        "IA16"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia14"
+    },
+    {
+      "id": "IA15",
+      "slug": "ia15",
+      "title": "Qué es un cuello de botella",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un cuello de botella",
+      "learningObjective": "Explicar y aplicar: qué es un cuello de botella",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA16",
+        "IA17"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia15"
+    },
+    {
+      "id": "IA16",
+      "slug": "ia16",
+      "title": "Qué son las dependencias",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué son las dependencias",
+      "learningObjective": "Explicar y aplicar: qué son las dependencias",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA17",
+        "IA18"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia16"
+    },
+    {
+      "id": "IA17",
+      "slug": "ia17",
+      "title": "Qué es la retroalimentación",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es la retroalimentación",
+      "learningObjective": "Explicar y aplicar: qué es la retroalimentación",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA18",
+        "IA19"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia17"
+    },
+    {
+      "id": "IA18",
+      "slug": "ia18",
+      "title": "Qué es un mapa de procesos",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "processes"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un mapa de procesos",
+      "learningObjective": "Explicar y aplicar: qué es un mapa de procesos",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA19",
+        "IA20"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia18"
+    },
+    {
+      "id": "IA19",
+      "slug": "ia19",
+      "title": "Qué es un sistema complejo",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "systems"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un sistema complejo",
+      "learningObjective": "Explicar y aplicar: qué es un sistema complejo",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA20",
+        "IA21"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia19"
+    },
+    {
+      "id": "IA20",
+      "slug": "ia20",
+      "title": "Mejora el sistema, no solo tu velocidad",
+      "track": "ia-profesional",
+      "category": "sistemas-y-procesos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "sistemas-y-procesos",
+        "systems"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Mejora el sistema, no solo tu velocidad",
+      "learningObjective": "Explicar y aplicar: mejora el sistema, no solo tu velocidad",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA21",
+        "IA22"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia20"
+    },
+    {
+      "id": "IA21",
+      "slug": "ia21",
+      "title": "Qué es automatizar",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "automation"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es automatizar",
+      "learningObjective": "Explicar y aplicar: qué es automatizar",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA22",
+        "IA23"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia21"
+    },
+    {
+      "id": "IA22",
+      "slug": "ia22",
+      "title": "Audita tu jornada laboral",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Audita tu jornada laboral",
+      "learningObjective": "Explicar y aplicar: audita tu jornada laboral",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA23",
+        "IA24"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia22"
+    },
+    {
+      "id": "IA23",
+      "slug": "ia23",
+      "title": "Detecta tareas repetitivas",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "tasks"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Detecta tareas repetitivas",
+      "learningObjective": "Explicar y aplicar: detecta tareas repetitivas",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA24",
+        "IA25"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia23"
+    },
+    {
+      "id": "IA24",
+      "slug": "ia24",
+      "title": "Reconoce patrones",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Reconoce patrones",
+      "learningObjective": "Explicar y aplicar: reconoce patrones",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA25",
+        "IA26"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia24"
+    },
+    {
+      "id": "IA25",
+      "slug": "ia25",
+      "title": "Qué tareas no debes automatizar",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "tasks",
+        "automation"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué tareas no debes automatizar",
+      "learningObjective": "Explicar y aplicar: qué tareas no debes automatizar",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA26",
+        "IA27"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia25"
+    },
+    {
+      "id": "IA26",
+      "slug": "ia26",
+      "title": "Calcula el coste de una tarea",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "tasks"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Calcula el coste de una tarea",
+      "learningObjective": "Explicar y aplicar: calcula el coste de una tarea",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA27",
+        "IA28"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia26"
+    },
+    {
+      "id": "IA27",
+      "slug": "ia27",
+      "title": "Prioriza automatizaciones",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "automation"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Prioriza automatizaciones",
+      "learningObjective": "Explicar y aplicar: prioriza automatizaciones",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA28",
+        "IA29"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia27"
+    },
+    {
+      "id": "IA28",
+      "slug": "ia28",
+      "title": "Automatiza primero una tarea pequeña",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "tasks",
+        "automation"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Automatiza primero una tarea pequeña",
+      "learningObjective": "Explicar y aplicar: automatiza primero una tarea pequeña",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA29",
+        "IA30"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia28"
+    },
+    {
+      "id": "IA29",
+      "slug": "ia29",
+      "title": "Qué hacer con las excepciones",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué hacer con las excepciones",
+      "learningObjective": "Explicar y aplicar: qué hacer con las excepciones",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA30",
+        "IA31"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia29"
+    },
+    {
+      "id": "IA30",
+      "slug": "ia30",
+      "title": "Crea tu mapa personal de automatizaciones",
+      "track": "ia-profesional",
+      "category": "automatizacion",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "beginner",
+      "topicTags": [
+        "automatizacion",
+        "automation"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Crea tu mapa personal de automatizaciones",
+      "learningObjective": "Explicar y aplicar: crea tu mapa personal de automatizaciones",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA31",
+        "IA32"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia30"
+    },
+    {
+      "id": "IA31",
+      "slug": "ia31",
+      "title": "Qué es un SOP",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica",
+        "sop"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un SOP",
+      "learningObjective": "Explicar y aplicar: qué es un sop",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA32",
+        "IA33"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia31"
+    },
+    {
+      "id": "IA32",
+      "slug": "ia32",
+      "title": "Convierte tu trabajo en un SOP",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica",
+        "sop"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Convierte tu trabajo en un SOP",
+      "learningObjective": "Explicar y aplicar: convierte tu trabajo en un sop",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA33",
+        "IA34"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia32"
+    },
+    {
+      "id": "IA33",
+      "slug": "ia33",
+      "title": "Qué es un trigger",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un trigger",
+      "learningObjective": "Explicar y aplicar: qué es un trigger",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA34",
+        "IA35"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia33"
+    },
+    {
+      "id": "IA34",
+      "slug": "ia34",
+      "title": "Qué es un pipeline",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un pipeline",
+      "learningObjective": "Explicar y aplicar: qué es un pipeline",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA35",
+        "IA36"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia34"
+    },
+    {
+      "id": "IA35",
+      "slug": "ia35",
+      "title": "Qué es un skill",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un skill",
+      "learningObjective": "Explicar y aplicar: qué es un skill",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA36",
+        "IA37"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia35"
+    },
+    {
+      "id": "IA36",
+      "slug": "ia36",
+      "title": "Qué es un boilerplate",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es un boilerplate",
+      "learningObjective": "Explicar y aplicar: qué es un boilerplate",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA37",
+        "IA38"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia36"
+    },
+    {
+      "id": "IA37",
+      "slug": "ia37",
+      "title": "Qué es una API",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es una API",
+      "learningObjective": "Explicar y aplicar: qué es una api",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA38",
+        "IA39"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia37"
+    },
+    {
+      "id": "IA38",
+      "slug": "ia38",
+      "title": "Qué son los conectores y MCP",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica",
+        "integrations"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué son los conectores y MCP",
+      "learningObjective": "Explicar y aplicar: qué son los conectores y mcp",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA39",
+        "IA40"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia38"
+    },
+    {
+      "id": "IA39",
+      "slug": "ia39",
+      "title": "Qué es una aprobación humana",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica",
+        "approvals"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es una aprobación humana",
+      "learningObjective": "Explicar y aplicar: qué es una aprobación humana",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA40",
+        "IA41"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia39"
+    },
+    {
+      "id": "IA40",
+      "slug": "ia40",
+      "title": "De tarea a automatización completa",
+      "track": "ia-profesional",
+      "category": "arquitectura-agentica",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "arquitectura-agentica",
+        "tasks",
+        "automation"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "De tarea a automatización completa",
+      "learningObjective": "Explicar y aplicar: de tarea a automatización completa",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA41",
+        "IA42"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia40"
+    },
+    {
+      "id": "IA41",
+      "slug": "ia41",
+      "title": "Panorama de las IA actuales",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Panorama de las IA actuales",
+      "learningObjective": "Explicar y aplicar: panorama de las ia actuales",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA42",
+        "IA43"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia41"
+    },
+    {
+      "id": "IA42",
+      "slug": "ia42",
+      "title": "ChatGPT",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "ChatGPT",
+      "learningObjective": "Explicar y aplicar: chatgpt",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA43",
+        "IA44"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia42"
+    },
+    {
+      "id": "IA43",
+      "slug": "ia43",
+      "title": "Claude",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Claude",
+      "learningObjective": "Explicar y aplicar: claude",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA44",
+        "IA45"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia43"
+    },
+    {
+      "id": "IA44",
+      "slug": "ia44",
+      "title": "Gemini",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Gemini",
+      "learningObjective": "Explicar y aplicar: gemini",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA45",
+        "IA46"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia44"
+    },
+    {
+      "id": "IA45",
+      "slug": "ia45",
+      "title": "DeepSeek y Qwen",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "DeepSeek y Qwen",
+      "learningObjective": "Explicar y aplicar: deepseek y qwen",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA46",
+        "IA47"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia45"
+    },
+    {
+      "id": "IA46",
+      "slug": "ia46",
+      "title": "Perplexity y buscadores con IA",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Perplexity y buscadores con IA",
+      "learningObjective": "Explicar y aplicar: perplexity y buscadores con ia",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA47",
+        "IA48"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia46"
+    },
+    {
+      "id": "IA47",
+      "slug": "ia47",
+      "title": "IA para imágenes",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "IA para imágenes",
+      "learningObjective": "Explicar y aplicar: ia para imágenes",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA48",
+        "IA49"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia47"
+    },
+    {
+      "id": "IA48",
+      "slug": "ia48",
+      "title": "IA para vídeo y voz",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia",
+        "ai-literacy",
+        "media"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "IA para vídeo y voz",
+      "learningObjective": "Explicar y aplicar: ia para vídeo y voz",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA49",
+        "IA50"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia48"
+    },
+    {
+      "id": "IA49",
+      "slug": "ia49",
+      "title": "Qué son los agentes IA",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué son los agentes IA",
+      "learningObjective": "Explicar y aplicar: qué son los agentes ia",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA50",
+        "IA51"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia49"
+    },
+    {
+      "id": "IA50",
+      "slug": "ia50",
+      "title": "Qué herramienta elegir",
+      "track": "ia-profesional",
+      "category": "herramientas-ia",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "herramientas-ia"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué herramienta elegir",
+      "learningObjective": "Explicar y aplicar: qué herramienta elegir",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA51",
+        "IA52"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia50"
+    },
+    {
+      "id": "IA51",
+      "slug": "ia51",
+      "title": "Qué es el AI Act europeo",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es el AI Act europeo",
+      "learningObjective": "Explicar y aplicar: qué es el ai act europeo",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA52",
+        "IA53"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia51"
+    },
+    {
+      "id": "IA52",
+      "slug": "ia52",
+      "title": "Qué significa alfabetización en IA",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué significa alfabetización en IA",
+      "learningObjective": "Explicar y aplicar: qué significa alfabetización en ia",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA53",
+        "IA54"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia52"
+    },
+    {
+      "id": "IA53",
+      "slug": "ia53",
+      "title": "Protege los datos de tu empresa",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Protege los datos de tu empresa",
+      "learningObjective": "Explicar y aplicar: protege los datos de tu empresa",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA54",
+        "IA55"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia53"
+    },
+    {
+      "id": "IA54",
+      "slug": "ia54",
+      "title": "RGPD e inteligencia artificial",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza",
+        "privacy",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "RGPD e inteligencia artificial",
+      "learningObjective": "Explicar y aplicar: rgpd e inteligencia artificial",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA55",
+        "IA56"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia54"
+    },
+    {
+      "id": "IA55",
+      "slug": "ia55",
+      "title": "Qué es el sesgo algorítmico",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué es el sesgo algorítmico",
+      "learningObjective": "Explicar y aplicar: qué es el sesgo algorítmico",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA56",
+        "IA57"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia55"
+    },
+    {
+      "id": "IA56",
+      "slug": "ia56",
+      "title": "Reconoce las alucinaciones",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Reconoce las alucinaciones",
+      "learningObjective": "Explicar y aplicar: reconoce las alucinaciones",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA57",
+        "IA58"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia56"
+    },
+    {
+      "id": "IA57",
+      "slug": "ia57",
+      "title": "Evita el prompt injection",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza",
+        "prompting"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Evita el prompt injection",
+      "learningObjective": "Explicar y aplicar: evita el prompt injection",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA58",
+        "IA59"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia57"
+    },
+    {
+      "id": "IA58",
+      "slug": "ia58",
+      "title": "Qué significa supervisión humana",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Qué significa supervisión humana",
+      "learningObjective": "Explicar y aplicar: qué significa supervisión humana",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA59",
+        "IA60"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia58"
+    },
+    {
+      "id": "IA59",
+      "slug": "ia59",
+      "title": "Deja evidencia de tu trabajo",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Deja evidencia de tu trabajo",
+      "learningObjective": "Explicar y aplicar: deja evidencia de tu trabajo",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "IA60"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia59"
+    },
+    {
+      "id": "IA60",
+      "slug": "ia60",
+      "title": "Tu nueva metodología profesional",
+      "track": "ia-profesional",
+      "category": "seguridad-y-gobernanza",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "conceptual",
+      "level": "intermediate",
+      "topicTags": [
+        "seguridad-y-gobernanza"
+      ],
+      "intentTags": [
+        "understand",
+        "apply"
+      ],
+      "description": "Tu nueva metodología profesional",
+      "learningObjective": "Explicar y aplicar: tu nueva metodología profesional",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/60-ia-profesional.md#ia60"
+    },
+    {
+      "id": "R01",
+      "slug": "r01",
+      "title": "Consulta tu agenda de mañana",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad",
+        "calendar"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Consulta tu agenda de mañana",
+      "learningObjective": "Practicar con LAIA: consulta tu agenda de mañana",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R02",
+        "R03"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r01"
+    },
+    {
+      "id": "R02",
+      "slug": "r02",
+      "title": "Convierte un correo en tarea",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad",
+        "email",
+        "tasks"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Convierte un correo en tarea",
+      "learningObjective": "Practicar con LAIA: convierte un correo en tarea",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R03",
+        "R04"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r02"
+    },
+    {
+      "id": "R03",
+      "slug": "r03",
+      "title": "Reorganiza un bloque de trabajo",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Reorganiza un bloque de trabajo",
+      "learningObjective": "Practicar con LAIA: reorganiza un bloque de trabajo",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R04",
+        "R05"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r03"
+    },
+    {
+      "id": "R04",
+      "slug": "r04",
+      "title": "Prepara tu briefing matinal",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara tu briefing matinal",
+      "learningObjective": "Practicar con LAIA: prepara tu briefing matinal",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R05",
+        "R06"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r04"
+    },
+    {
+      "id": "R05",
+      "slug": "r05",
+      "title": "Detecta conflictos de reuniones",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Detecta conflictos de reuniones",
+      "learningObjective": "Practicar con LAIA: detecta conflictos de reuniones",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R06",
+        "R07"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r05"
+    },
+    {
+      "id": "R06",
+      "slug": "r06",
+      "title": "Crea un recordatorio desde la voz",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Crea un recordatorio desde la voz",
+      "learningObjective": "Practicar con LAIA: crea un recordatorio desde la voz",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R07",
+        "R08"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r06"
+    },
+    {
+      "id": "R07",
+      "slug": "r07",
+      "title": "Prepara tu modo concentración",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara tu modo concentración",
+      "learningObjective": "Practicar con LAIA: prepara tu modo concentración",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R08",
+        "R09"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r07"
+    },
+    {
+      "id": "R08",
+      "slug": "r08",
+      "title": "Organiza las prioridades del día",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Organiza las prioridades del día",
+      "learningObjective": "Practicar con LAIA: organiza las prioridades del día",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R09",
+        "R10"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r08"
+    },
+    {
+      "id": "R09",
+      "slug": "r09",
+      "title": "Busca el correo de Marta",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad",
+        "email"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Busca el correo de Marta",
+      "learningObjective": "Practicar con LAIA: busca el correo de marta",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R10",
+        "R11"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r09"
+    },
+    {
+      "id": "R10",
+      "slug": "r10",
+      "title": "Cierra tu jornada con un resumen",
+      "track": "trabaja-con-laia",
+      "category": "agenda-y-productividad",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "agenda-y-productividad"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Cierra tu jornada con un resumen",
+      "learningObjective": "Practicar con LAIA: cierra tu jornada con un resumen",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R11",
+        "R12"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r10"
+    },
+    {
+      "id": "R11",
+      "slug": "r11",
+      "title": "Encuentra el documento perdido",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento",
+        "documents"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Encuentra el documento perdido",
+      "learningObjective": "Practicar con LAIA: encuentra el documento perdido",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R12",
+        "R13"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r11"
+    },
+    {
+      "id": "R12",
+      "slug": "r12",
+      "title": "Resume un PDF de trabajo",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Resume un PDF de trabajo",
+      "learningObjective": "Practicar con LAIA: resume un pdf de trabajo",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R13",
+        "R14"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r12"
+    },
+    {
+      "id": "R13",
+      "slug": "r13",
+      "title": "Prepara una presentación",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara una presentación",
+      "learningObjective": "Practicar con LAIA: prepara una presentación",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R14",
+        "R15"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r13"
+    },
+    {
+      "id": "R14",
+      "slug": "r14",
+      "title": "Ordena archivos de un proyecto",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento",
+        "files",
+        "projects"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Ordena archivos de un proyecto",
+      "learningObjective": "Practicar con LAIA: ordena archivos de un proyecto",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R15",
+        "R16"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r14"
+    },
+    {
+      "id": "R15",
+      "slug": "r15",
+      "title": "Convierte notas en checklist",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Convierte notas en checklist",
+      "learningObjective": "Practicar con LAIA: convierte notas en checklist",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R16",
+        "R17"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r15"
+    },
+    {
+      "id": "R16",
+      "slug": "r16",
+      "title": "Compara dos versiones",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Compara dos versiones",
+      "learningObjective": "Practicar con LAIA: compara dos versiones",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R17",
+        "R18"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r16"
+    },
+    {
+      "id": "R17",
+      "slug": "r17",
+      "title": "Crea un documento de reunión",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento",
+        "meetings",
+        "documents"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Crea un documento de reunión",
+      "learningObjective": "Practicar con LAIA: crea un documento de reunión",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R18",
+        "R19"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r17"
+    },
+    {
+      "id": "R18",
+      "slug": "r18",
+      "title": "Recupera una decisión antigua",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Recupera una decisión antigua",
+      "learningObjective": "Practicar con LAIA: recupera una decisión antigua",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R19",
+        "R20"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r18"
+    },
+    {
+      "id": "R19",
+      "slug": "r19",
+      "title": "Clasifica documentos nuevos",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento",
+        "documents"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Clasifica documentos nuevos",
+      "learningObjective": "Practicar con LAIA: clasifica documentos nuevos",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R20",
+        "R21"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r19"
+    },
+    {
+      "id": "R20",
+      "slug": "r20",
+      "title": "Prepara un dossier de proyecto",
+      "track": "trabaja-con-laia",
+      "category": "documentos-y-conocimiento",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "documentos-y-conocimiento",
+        "projects"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara un dossier de proyecto",
+      "learningObjective": "Practicar con LAIA: prepara un dossier de proyecto",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R21",
+        "R22"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r20"
+    },
+    {
+      "id": "R21",
+      "slug": "r21",
+      "title": "Resume lo que pasó en el canal",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Resume lo que pasó en el canal",
+      "learningObjective": "Practicar con LAIA: resume lo que pasó en el canal",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R22",
+        "R23"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r21"
+    },
+    {
+      "id": "R22",
+      "slug": "r22",
+      "title": "Prepara una reunión de equipo",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos",
+        "meetings",
+        "team"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara una reunión de equipo",
+      "learningObjective": "Practicar con LAIA: prepara una reunión de equipo",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R23",
+        "R24"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r22"
+    },
+    {
+      "id": "R23",
+      "slug": "r23",
+      "title": "Transforma acuerdos en tareas",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos",
+        "tasks"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Transforma acuerdos en tareas",
+      "learningObjective": "Practicar con LAIA: transforma acuerdos en tareas",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R24",
+        "R25"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r23"
+    },
+    {
+      "id": "R24",
+      "slug": "r24",
+      "title": "Avisa al equipo de un cambio",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos",
+        "team"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Avisa al equipo de un cambio",
+      "learningObjective": "Practicar con LAIA: avisa al equipo de un cambio",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R25",
+        "R26"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r24"
+    },
+    {
+      "id": "R25",
+      "slug": "r25",
+      "title": "Consulta el estado del proyecto",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos",
+        "projects"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Consulta el estado del proyecto",
+      "learningObjective": "Practicar con LAIA: consulta el estado del proyecto",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R26",
+        "R27"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r25"
+    },
+    {
+      "id": "R26",
+      "slug": "r26",
+      "title": "Crea un ticket de seguimiento",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Crea un ticket de seguimiento",
+      "learningObjective": "Practicar con LAIA: crea un ticket de seguimiento",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R27",
+        "R28"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r26"
+    },
+    {
+      "id": "R27",
+      "slug": "r27",
+      "title": "Prepara el orden del día",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara el orden del día",
+      "learningObjective": "Practicar con LAIA: prepara el orden del día",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R28",
+        "R29"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r27"
+    },
+    {
+      "id": "R28",
+      "slug": "r28",
+      "title": "Busca una conversación anterior",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Busca una conversación anterior",
+      "learningObjective": "Practicar con LAIA: busca una conversación anterior",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R29",
+        "R30"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r28"
+    },
+    {
+      "id": "R29",
+      "slug": "r29",
+      "title": "Distribuye tareas acordadas",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos",
+        "tasks"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Distribuye tareas acordadas",
+      "learningObjective": "Practicar con LAIA: distribuye tareas acordadas",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R30",
+        "R31"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r29"
+    },
+    {
+      "id": "R30",
+      "slug": "r30",
+      "title": "Prepara el seguimiento del viernes",
+      "track": "trabaja-con-laia",
+      "category": "colaboracion-y-proyectos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "colaboracion-y-proyectos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara el seguimiento del viernes",
+      "learningObjective": "Practicar con LAIA: prepara el seguimiento del viernes",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R31",
+        "R32"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r30"
+    },
+    {
+      "id": "R31",
+      "slug": "r31",
+      "title": "Encuentra inspiración visual",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Encuentra inspiración visual",
+      "learningObjective": "Practicar con LAIA: encuentra inspiración visual",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R32",
+        "R33"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r31"
+    },
+    {
+      "id": "R32",
+      "slug": "r32",
+      "title": "Diseña una pieza sencilla",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos",
+        "design"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Diseña una pieza sencilla",
+      "learningObjective": "Practicar con LAIA: diseña una pieza sencilla",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R33",
+        "R34"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r32"
+    },
+    {
+      "id": "R33",
+      "slug": "r33",
+      "title": "Prepara un post profesional",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos",
+        "content"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara un post profesional",
+      "learningObjective": "Practicar con LAIA: prepara un post profesional",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R34",
+        "R35"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r33"
+    },
+    {
+      "id": "R34",
+      "slug": "r34",
+      "title": "Convierte notas en contenido",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Convierte notas en contenido",
+      "learningObjective": "Practicar con LAIA: convierte notas en contenido",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R35",
+        "R36"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r34"
+    },
+    {
+      "id": "R35",
+      "slug": "r35",
+      "title": "Busca un tutorial específico",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Busca un tutorial específico",
+      "learningObjective": "Practicar con LAIA: busca un tutorial específico",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R36",
+        "R37"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r35"
+    },
+    {
+      "id": "R36",
+      "slug": "r36",
+      "title": "Prepara un calendario editorial",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos",
+        "ai-literacy",
+        "calendar"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara un calendario editorial",
+      "learningObjective": "Practicar con LAIA: prepara un calendario editorial",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R37",
+        "R38"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r36"
+    },
+    {
+      "id": "R37",
+      "slug": "r37",
+      "title": "Reutiliza una presentación",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Reutiliza una presentación",
+      "learningObjective": "Practicar con LAIA: reutiliza una presentación",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R38",
+        "R39"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r37"
+    },
+    {
+      "id": "R38",
+      "slug": "r38",
+      "title": "Prepara respuestas a comentarios",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara respuestas a comentarios",
+      "learningObjective": "Practicar con LAIA: prepara respuestas a comentarios",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R39",
+        "R40"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r38"
+    },
+    {
+      "id": "R39",
+      "slug": "r39",
+      "title": "Guarda referencias creativas",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos",
+        "ai-literacy",
+        "creativity"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Guarda referencias creativas",
+      "learningObjective": "Practicar con LAIA: guarda referencias creativas",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R40",
+        "R41"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r39"
+    },
+    {
+      "id": "R40",
+      "slug": "r40",
+      "title": "Comparte una propuesta de diseño",
+      "track": "trabaja-con-laia",
+      "category": "creatividad-y-contenidos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "creatividad-y-contenidos",
+        "design"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Comparte una propuesta de diseño",
+      "learningObjective": "Practicar con LAIA: comparte una propuesta de diseño",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R41",
+        "R42"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r40"
+    },
+    {
+      "id": "R41",
+      "slug": "r41",
+      "title": "Pon música para concentrarte",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana",
+        "music"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Pon música para concentrarte",
+      "learningObjective": "Practicar con LAIA: pon música para concentrarte",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R42",
+        "R43"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r41"
+    },
+    {
+      "id": "R42",
+      "slug": "r42",
+      "title": "Prepara tu ruta a una reunión",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana",
+        "meetings"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara tu ruta a una reunión",
+      "learningObjective": "Practicar con LAIA: prepara tu ruta a una reunión",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R43",
+        "R44"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r42"
+    },
+    {
+      "id": "R43",
+      "slug": "r43",
+      "title": "Organiza una salida de equipo",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana",
+        "team"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Organiza una salida de equipo",
+      "learningObjective": "Practicar con LAIA: organiza una salida de equipo",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R44",
+        "R45"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r43"
+    },
+    {
+      "id": "R44",
+      "slug": "r44",
+      "title": "Guarda una idea espontánea",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Guarda una idea espontánea",
+      "learningObjective": "Practicar con LAIA: guarda una idea espontánea",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R45",
+        "R46"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r44"
+    },
+    {
+      "id": "R45",
+      "slug": "r45",
+      "title": "Prepara tu lista personal",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara tu lista personal",
+      "learningObjective": "Practicar con LAIA: prepara tu lista personal",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R46",
+        "R47"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r45"
+    },
+    {
+      "id": "R46",
+      "slug": "r46",
+      "title": "Encuentra una cafetería para trabajar",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Encuentra una cafetería para trabajar",
+      "learningObjective": "Practicar con LAIA: encuentra una cafetería para trabajar",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R47",
+        "R48"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r46"
+    },
+    {
+      "id": "R47",
+      "slug": "r47",
+      "title": "Consulta tu actividad deportiva",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Consulta tu actividad deportiva",
+      "learningObjective": "Practicar con LAIA: consulta tu actividad deportiva",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R48",
+        "R49"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r47"
+    },
+    {
+      "id": "R48",
+      "slug": "r48",
+      "title": "Planifica tus vacaciones",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana",
+        "travel"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Planifica tus vacaciones",
+      "learningObjective": "Practicar con LAIA: planifica tus vacaciones",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R49",
+        "R50"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r48"
+    },
+    {
+      "id": "R49",
+      "slug": "r49",
+      "title": "Revisa tus suscripciones",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana",
+        "finance"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Revisa tus suscripciones",
+      "learningObjective": "Practicar con LAIA: revisa tus suscripciones",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [
+        "R50"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r49"
+    },
+    {
+      "id": "R50",
+      "slug": "r50",
+      "title": "Prepara una rutina de fin de semana",
+      "track": "trabaja-con-laia",
+      "category": "vida-cotidiana",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "practical",
+      "level": "beginner",
+      "topicTags": [
+        "vida-cotidiana"
+      ],
+      "intentTags": [
+        "do",
+        "practice"
+      ],
+      "description": "Prepara una rutina de fin de semana",
+      "learningObjective": "Practicar con LAIA: prepara una rutina de fin de semana",
+      "prerequisiteIds": [
+        "P01",
+        "P03"
+      ],
+      "suggestedNextIds": [],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/50-reels.md#r50"
+    },
+    {
+      "id": "P01",
+      "slug": "p01",
+      "title": "Conoce a LAIA",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Diferencia entre conversación, propuesta y acción real.",
+      "learningObjective": "Comprender y practicar: conoce a laia",
+      "prerequisiteIds": [],
+      "suggestedNextIds": [
+        "P02",
+        "P03"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p01"
+    },
+    {
+      "id": "P02",
+      "slug": "p02",
+      "title": "Pedir resultados, no prompts perfectos",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "prompting"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Formular objetivos y criterios de éxito.",
+      "learningObjective": "Comprender y practicar: pedir resultados, no prompts perfectos",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P03",
+        "P04"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p02"
+    },
+    {
+      "id": "P03",
+      "slug": "p03",
+      "title": "Qué puede hacer LAIA y qué no",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Capacidades disponibles y límites honestos.",
+      "learningObjective": "Comprender y practicar: qué puede hacer laia y qué no",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P04",
+        "P05"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p03"
+    },
+    {
+      "id": "P04",
+      "slug": "p04",
+      "title": "Tus aplicaciones y tus permisos",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "permissions",
+        "privacy"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "OAuth, alcance, revocación y privacidad.",
+      "learningObjective": "Comprender y practicar: tus aplicaciones y tus permisos",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P05",
+        "P06"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p04"
+    },
+    {
+      "id": "P05",
+      "slug": "p05",
+      "title": "Empresa frente a espacio personal",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Distinguir datos y cuentas según propietario.",
+      "learningObjective": "Comprender y practicar: empresa frente a espacio personal",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P06",
+        "P07"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p05"
+    },
+    {
+      "id": "P06",
+      "slug": "p06",
+      "title": "Cómo revisar una propuesta",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Vista previa, confirmación y rechazo.",
+      "learningObjective": "Comprender y practicar: cómo revisar una propuesta",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P07",
+        "P08"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p06"
+    },
+    {
+      "id": "P07",
+      "slug": "p07",
+      "title": "Cómo funciona una tarea",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "tasks",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Estados, progreso, evidencias y errores.",
+      "learningObjective": "Comprender y practicar: cómo funciona una tarea",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P08",
+        "P09"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p07"
+    },
+    {
+      "id": "P08",
+      "slug": "p08",
+      "title": "Cómo crear una rutina reutilizable",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "sop"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "SOP tipado, versión y activación.",
+      "learningObjective": "Comprender y practicar: cómo crear una rutina reutilizable",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P09",
+        "P10"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p08"
+    },
+    {
+      "id": "P09",
+      "slug": "p09",
+      "title": "Qué hacer cuando algo falla",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "sop"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Resultados inciertos, reintentos y soporte.",
+      "learningObjective": "Comprender y practicar: qué hacer cuando algo falla",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [
+        "P10"
+      ],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p09"
+    },
+    {
+      "id": "P10",
+      "slug": "p10",
+      "title": "Tu primera jornada con LAIA",
+      "track": "introduccion-laia",
+      "category": "primeros-pasos",
+      "format": "microreel",
+      "durationTargetSeconds": 40,
+      "locale": "es-ES",
+      "learningMode": "onboarding",
+      "level": "beginner",
+      "topicTags": [
+        "primeros-pasos",
+        "ai-literacy"
+      ],
+      "intentTags": [
+        "onboard",
+        "practice"
+      ],
+      "description": "Recorrido completo y medición de aprendizaje.",
+      "learningObjective": "Comprender y practicar: tu primera jornada con laia",
+      "prerequisiteIds": [
+        "P01"
+      ],
+      "suggestedNextIds": [],
+      "connectorCandidates": [],
+      "capabilityProposal": null,
+      "media": {
+        "scriptStatus": "draft",
+        "videoStatus": "not-produced",
+        "audioStatus": "not-produced",
+        "licenseStatus": "unverified"
+      },
+      "publicationStatus": "draft",
+      "safety": {
+        "externalAction": "approval-if-required",
+        "personalData": "minimize",
+        "scope": "tenant-and-actor"
+      },
+      "editorialSource": "ejercicios/10-introduccion.md#p10"
+    }
+  ]
+}
