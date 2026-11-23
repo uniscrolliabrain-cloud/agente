@@ -22,3 +22,19 @@ test("C06 opted-in AG-UI adapter delegates only to Cognition V2 with the scoped 
   assert.deepEqual(seen, [{ owner: "tenant-a:alice", input }]);
   assert.deepEqual(events, [{ type: EventType.RUN_FINISHED, threadId: "thread-a", runId: "run-a" }]);
 });
+
+test("C06 CopilotKit callback dispatch preserves V2 runtime after run is extracted", async () => {
+  const calls: string[] = [];
+  const runtime = {
+    chat(owner: string, input: RunAgentInput) {
+      calls.push(owner);
+      return of({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId });
+    },
+  } as unknown as CognitionV2Runtime;
+  const adapter = new CognitionV2ChatAgent(runtime, "alice");
+  const extractedRun = adapter.run;
+  const input = { threadId: "thread-1", runId: "run-1", messages: [], state: {}, tools: [], context: [], forwardedProps: {} } as RunAgentInput;
+  await new Promise<void>((resolve, reject) =>
+    extractedRun(input).subscribe({ error: reject, complete: resolve }));
+  assert.deepEqual(calls, ["alice"]);
+});
