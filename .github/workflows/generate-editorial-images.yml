@@ -1,5 +1,9 @@
 name: Generate editorial images (manual)
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/image-pipeline/requests/generate-now.json'
   workflow_dispatch:
     inputs:
       manifest:
@@ -39,12 +43,12 @@ jobs:
       - name: Validate or generate
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          IMAGE_MODEL: ${{ inputs.model }}
-          JOB_MANIFEST: ${{ inputs.manifest }}
-          DRY_RUN: ${{ inputs.dry_run }}
+          IMAGE_MODEL: ${{ github.event_name == 'push' && 'openai/gpt-image-2' || inputs.model }}
+          JOB_MANIFEST: ${{ github.event_name == 'push' && 'tools/image-pipeline/requests/generate-now.json' || inputs.manifest }}
+          DRY_RUN: ${{ github.event_name == 'push' && 'false' || inputs.dry_run }}
         run: python tools/image-pipeline/generate.py
       - name: Open review pull request (only for actual generations)
-        if: ${{ inputs.dry_run == false }}
+        if: ${{ github.event_name == 'push' || inputs.dry_run == false }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
