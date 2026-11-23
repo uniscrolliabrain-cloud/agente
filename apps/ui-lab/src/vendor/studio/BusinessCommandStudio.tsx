@@ -62,7 +62,7 @@ export default function BusinessCommandStudio() {
       <header className="bcs-header">
         <div>
           <div className="bcs-header-context">
-            <span>ACME</span>
+            <span>AGNTIAPRO</span>
             <span className="bcs-demo-tag">Entorno demo</span>
             <span className="bcs-header-caption">Observar. Dirigir. Conectar.</span>
           </div>
@@ -164,8 +164,9 @@ export default function BusinessCommandStudio() {
                   ))}
                 </optgroup>
                 <optgroup label="Clientes">
-                  <option>Estudio Norte</option>
-                  <option>ACME</option>
+                  {Array.from(new Set(projects.map((project) => project.client))).map((client) => (
+                    <option key={client} value={client}>{client}</option>
+                  ))}
                 </optgroup>
               </select>
             </label>
@@ -180,7 +181,7 @@ export default function BusinessCommandStudio() {
       <span className="bcs-sr-only" role="status" aria-live="polite">
         {state.revision
           ? `Escenario local actualizado. ${state.activities.length} actividades. Cambio ${state.revision}.`
-          : "Escenario ACME de demostración cargado."}
+          : "Escenario sintético de AgntiaPro cargado."}
       </span>
       {resetPrompt && (
         <div className="bcs-reset-overlay">
