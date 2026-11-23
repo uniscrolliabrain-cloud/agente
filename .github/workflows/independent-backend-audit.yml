@@ -1,0 +1,30 @@
+name: Independent backend audit verification
+on:
+  push:
+    branches:
+      - audit/cognition-v2-independent-20261123
+      - audit/c06-p03a-slow-observation-20261123
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      ALLOW_NETWORK: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Cognition and Slow observation tests
+        run: |
+          pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation.test.ts tests/cognition-v2-slow.test.ts tests/cognition-v2-context.test.ts
+      - name: Full Cognition HTTP integration
+        if: always()
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
