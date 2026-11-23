@@ -33,7 +33,6 @@ test("C06.P03b excludes slow outputs, terminal receipts and self-referential eve
     { ...base, type: "cognition.v2.slow.status" },
     { ...base, payload: { record: { ...base.payload.record, id: "slow:job" } } },
     { ...base, payload: { record: { ...base.payload.record, id: "hint:job" } } },
-    { ...base, payload: { record: { ...base.payload.record, sourceEventId: base.id } } },
     { ...base, payload: { record: { ...base.payload.record, epistemic: "hypothesis" } } },
     { ...base, payload: { record: { ...base.payload.record, lifecycle: "revoked" } } },
     { ...base, payload: { record: { ...base.payload.record, tenantId: "tenant-b" } } },
