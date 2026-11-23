@@ -37,8 +37,16 @@ export class SlowObservationWorker {
     if (!receipt || receipt.tenantId !== tenant || receipt.owner !== candidate.actorId ||
         receipt.id !== sourceId || !BUSINESS_EVENTS.has(receipt.type) ||
         !["task", "sop", "action", "entity"].includes(receipt.source.kind)) return;
+    // Revocation of the original business receipt must prevent new inference,
+    // even when the projected card has not yet been invalidated.
+    const revoked = await this.runtime.db.rawQuery(
+      `SELECT source FROM cognition_v2_revocations WHERE tenant=$1 AND source=ANY($2::text[]) LIMIT 1`,
+      [tenant, [sourceId, candidate.sourceId]]);
+    if (revoked.length) return;
     const identity = await this.runtime.identity(tenant, candidate.actorId, candidate.actorId, "chat");
     const today = new Date().toISOString().slice(0, 10);
+    // This runs inside DurableProjector.batch transaction: quota reservation,
+    // slow enqueue and inbox/cursor commit succeed or roll back together.
     const quota = await this.runtime.db.rawQuery<{ calls: number }>(
       `INSERT INTO cognition_v2_observation_quotas(tenant,day,calls)
         VALUES($1,$2,1) ON CONFLICT(tenant,day) DO UPDATE
