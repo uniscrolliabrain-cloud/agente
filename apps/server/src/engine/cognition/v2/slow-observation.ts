@@ -1,4 +1,4 @@
-import type { CognitiveIdentity } from "../../../../../../packages/domain/src/cognition-v2.ts";
+import { cognitiveIdentitySchema, type CognitiveIdentity } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import type { ContextServingFacade } from "./context.ts";
 import type { SlowCognitionQueue } from "./slow.ts";
 import { digest } from "./storage.ts";
@@ -23,13 +23,17 @@ export class SlowObservationBridge {
     operationId: string;
     prompt: string;
   }): Promise<{ id: string; state: string }> {
+    if (!input || typeof input !== "object") throw Error("SLOW_OBSERVATION_INVALID");
     const { identity, sourceId, sourceRevision, operationId, prompt } = input;
-    if (!operationId?.trim() || operationId.length > 200 || !sourceId?.trim() ||
+    if (!cognitiveIdentitySchema.safeParse(identity).success || identity.actorId !== identity.owner ||
+        typeof operationId !== "string" || !operationId.trim() || operationId.length > 200 ||
+        typeof sourceId !== "string" || !sourceId.trim() || sourceId.length > 200 ||
         !Number.isSafeInteger(sourceRevision) || sourceRevision < 1 ||
-        !prompt?.trim() || prompt.length > 4000) throw Error("SLOW_OBSERVATION_INVALID");
+        typeof prompt !== "string" || !prompt.trim() || prompt.length > 4000) throw Error("SLOW_OBSERVATION_INVALID");
     await this.context.assertAuthorized(identity);
     const record = await this.context.resolve(identity, sourceId, sourceRevision);
-    if (!record || record.tenantId !== identity.tenantId ||
+    if (!record || record.tenantId !== identity.tenantId || record.id !== sourceId || record.revision !== sourceRevision ||
+        record.visibility?.tenantId !== identity.tenantId || record.lifecycle !== "active" ||
         (record.kind !== "card" && record.kind !== "memory") ||
         record.epistemic === "hypothesis" || record.epistemic === "unknown" || record.epistemic === "contradicted") {
       throw Error("SLOW_OBSERVATION_EVIDENCE_DENIED");
