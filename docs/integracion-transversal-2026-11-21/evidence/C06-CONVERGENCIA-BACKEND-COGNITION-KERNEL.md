@@ -90,3 +90,10 @@ Lectura directa de `apps/server/src/app.ts` y `apps/server/src/engine/service.ts
 - El handler de `app.ts` ya instalaba `agent.cognitionV2` antes de recibir peticiones, y el guard de `/api/copilotkit/*` permite chat V2 aunque no haya configuración del provider legacy. La selección de V2 se realiza ahora en la factory `makeRuntime`.
 - **No afirmar que el legacy está muerto globalmente**: tenants sin opt-in y backend remoto AG-UI conservan sus rutas; `/api/voice` y `/api/cognition` siguen montados. La desactivación requiere paridad, observabilidad y rollback.
 - **Validación pendiente**: typecheck, tests y prueba HTTP CopilotKit de streaming/persistencia. El adaptador y el gate se han publicado pero no hay evidencia de ejecución verde.
+
+## Campaña de código C06.P03a — Handoff de evidencia a slow (no automático todavía)
+
+- `c9942edb`, `14e56f41`: nuevo `engine/cognition/v2/slow-observation.ts`, puerto `SlowObservationBridge.observe` que recibe identidad, operación/recibo estable, referencia y revisión exactas de una tarjeta o memoria previamente proyectada, y una pregunta acotada. Revalida política mediante `ContextServingFacade`, rechaza fuentes inexistentes, extranjeras, especulativas, desconocidas o contradichas, y delega a `SlowCognitionQueue.enqueue` con clave de idempotencia derivada del ámbito y la revisión. No realiza inferencia síncrona ni egress.
+- `e32a43b2`, `bd89fadd`: pruebas para idempotencia, revisión exacta y rechazo; `cbaae1d7`: workflow CI ampliado.
+- **Pendiente deliberado**: conectar productor de eventos/recibos al puente mediante outbox/worker con idempotencia, límites de frecuencia y ownership de actor. No llamar desde `CognitiveProjector.apply` sin analizar ciclos: `slow.status` produce `meta_hint` y outcome, y un disparador indiscriminado generaría bucles de inferencia.
+- **No afirmar circuito end-to-end**: el puente es una nueva frontera de integración, todavía sin suscriptor automático, sin test Postgres y sin pruebas CI verdes verificadas.
