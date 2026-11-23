@@ -58,3 +58,17 @@ Extraer patchsets por ownership de archivo, detectar conflictos de rutas, schema
 ## Condición de aceptación
 
 No declarar `BACKEND_UNIFIED` hasta demostrar: un único camino activo por funcionalidad; fast/slow V2 conectados al bus, grafo y kernel; tarjetas slow con procedencia y revisión; latencia medida y sin slow bloqueante; canales legacy sin tráfico pero conservados; integraciones externas bloqueadas hasta autorización; suites y CI verdes; diff de ramas reconciliado; rollback documentado.
+
+## Inspección adicional del montaje real — hallazgo bloqueante
+
+Lectura directa de `apps/server/src/app.ts` y `apps/server/src/engine/service.ts`:
+
+- `app.ts:162-166`: Cognition V2 **solo se instancia si** `COGNITION_V2_TENANTS` contiene al menos un tenant. Sin esa configuración, no existe runtime V2. La migración no está completa por defecto.
+- `app.ts:717-727`: monta `/api/cognition-v2` y `/api/cognition-v2/voice`, instala `cognitionV2.slow.capture` hacia `kernel.captureAsyncResult`, y asigna `agent.cognitionV2`. Esto es evidencia de un puente slow→kernel, **no** de una observación completa kernel→slow.
+- `app.ts:870-872`: monta además `/api/voice` legacy (Vapi) cuando su condición de configuración se cumple. `app.ts:880-883`: también monta `/api/cognition` para tarjetas legacy. Por tanto es falso que los canales legacy estén muertos actualmente.
+- `engine/service.ts` sigue exponiendo `cards`, `kernel`, `cognitionV2` y ejecutando el worker operativo V1; `engine/conversation.ts` todavía incluye el flujo antiguo de delegación y herramientas. No se puede cortar sin mapa de consumers y pruebas.
+- `cognition-worker-entry.ts`: el worker Cognition V2 es proceso separado y requiere `DATABASE_URL` y `COGNITION_V2_TENANTS`; la presencia del archivo no garantiza que esté desplegado y saludable.
+
+**Decisión de integración:** no apagar `/api/voice`, `/api/cognition` ni la conversación legacy globalmente todavía. Primero comprobar si tienen tráfico y qué funcionalidades carecen de reemplazo. Incorporar un modo de cutover por tenant, con kill switch, observabilidad, tests y rollback; la eliminación lógica de legacy debe ser posterior a la paridad funcional.
+
+**Prioridad inmediata:** registrar rutas efectivas y ownership de fast/slow por tenant, instrumentar los dos loops y demostrar eventos `runtime → bus → projector → slow → proposed card → kernel policy → delivery → fast` con prueba end-to-end. El objetivo es una LAIA rápida con contexto veraz, no una simulación de omnisciencia.
