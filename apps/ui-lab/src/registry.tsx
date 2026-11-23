@@ -16,7 +16,7 @@ const Docs=lazy(()=>import("../../web/src/components/DocumentsView"));
 const Projects=lazy(()=>import("../../web/src/components/ProjectsView"));
 const Team=lazy(()=>import("../../web/src/components/TeamView"));
 const Users=lazy(()=>import("../../web/src/components/UsersView"));
-const Whatsapp=lazy(()=>import("../../web/src/components/WhatsAppView"));
+const Comunicaciones=lazy(()=>import("./comunicaciones/ComunicacionesWorkspace"));
 const Control=lazy(()=>import("../../web/src/components/ControlCenterView"));
 const Today=lazy(()=>import("../../web/src/components/CommandCenterView"));
 const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
@@ -37,7 +37,7 @@ export const previews:Preview[]=[
 {id:"projects",name:"Proyectos",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:()=> <Projects enabled={true}/>,status:"api"},
 {id:"team",name:"Equipo",category:"Trabajo",description:"Vista original con sesión demo aislada",Component:Team,status:"api"},
 {id:"users",name:"Usuarios",category:"Trabajo",description:"Vista original con API sintética del navegador",Component:()=> <Users currentUserId="ui-lab"/>,status:"api"},
-{id:"whatsapp",name:"WhatsApp",category:"Canales",description:"Vista original con bandeja y borradores simulados",Component:Whatsapp,status:"api"},
+{id:"comunicaciones",name:"Comunicaciones",category:"Canales",description:"WhatsApp Business, llamadas y SMS, Slack · demo agéntica con supervisión humana",Component:Comunicaciones,status:"demo"},
 {id:"control",name:"Control de actividad",category:"Trabajo",description:"Vista original en modo desconectado",Component:()=> <Control enabled={true}/>,status:"api"},
 {id:"operations",name:"Operaciones",category:"Trabajo",description:"Vista original con datos sintéticos del navegador",Component:()=> <Operations enabled={true}/>,status:"api"},
 ];
