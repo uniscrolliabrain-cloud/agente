@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "formacion-01-pensamiento",
+      "courseId": "IA01",
+      "path": "apps/ui-lab/public/formation/images/formacion-01-pensamiento.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Libro abierto y escultura de cristal sobre escritorio marfil",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    }
+  ]
+}
