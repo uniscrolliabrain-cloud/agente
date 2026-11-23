@@ -60,3 +60,12 @@
 .fm-root .fm-count{display:none}
 }
 @media(prefers-reduced-motion:reduce){.fm-feature-copy{animation:none!important}}
+
+/* Photographic Formation gallery: imagery replaces the original synthetic sculptures. */
+.fm-art-photo{background:#eae5dc;isolation:isolate}
+.fm-art-photo img{display:block;width:100%;height:100%;object-fit:cover;object-position:center;transition:transform .7s cubic-bezier(.2,.8,.2,1),filter .4s ease}
+.fm-art-photo-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,transparent 68%,#24242112)}
+.fm-card-open:hover .fm-art-photo{transform:translateY(-3px);filter:none}
+.fm-card-open:hover .fm-art-photo img{transform:scale(1.055)}
+.fm-feature:hover .fm-art-photo img{transform:scale(1.025)}
+@media(prefers-reduced-motion:reduce){.fm-art-photo img{transition:none!important}}
