@@ -21,6 +21,7 @@ on:
       - 'tests/cognition-v2-slow-observation-candidates.test.ts'
       - 'tests/cognition-v2-slow-observation-worker.test.ts'
       - 'tests/cognition-v2-slow-observation-atomicity.test.ts'
+      - 'tests/cognition-v2-slow-observation-worker-integration.test.ts'
       - 'tests/cognition-v2-http.test.ts'
       - '.github/workflows/c05-voice.yml'
 
@@ -60,5 +61,7 @@ jobs:
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-worker.test.ts
       - name: C06 observation SQL atomicity
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-atomicity.test.ts
+      - name: C06 durable observer integration
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-worker-integration.test.ts
       - name: Cognition V2 HTTP integration
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
