@@ -1,5 +1,5 @@
-import { Component, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
-import { ArrowUpRight, ChevronDown, Code2, ExternalLink, Maximize2, Monitor, RotateCcw, Search, Smartphone, Tablet, X } from "lucide-react";
+import { Component, Suspense, useEffect, useState, type ReactNode } from "react";
+import { Maximize2, Monitor, RotateCcw, Smartphone, Tablet, X } from "lucide-react";
 import { previews } from "./registry";
 import { DEMO_TOKEN } from "../../web/src/demo/tenant";
 import { demoUser } from "../../web/src/demo/fixtures";
@@ -15,7 +15,6 @@ class PreviewBoundary extends Component<{children:ReactNode},{error:string|null}
 export default function App(){
  const [active,setActive]=useState(()=>new URLSearchParams(location.search).get("view")||"full-app");
  const [device,setDevice]=useState<Device>("desktop");
- const [query,setQuery]=useState("");
  const [zoom,setZoom]=useState(100);
  const [key,setKey]=useState(0);
  const [full,setFull]=useState(false);
@@ -23,7 +22,6 @@ export default function App(){
  const [comparisonId,setComparisonId]=useState("brand");
  const version=useLabVersion();
  const item=previews.find(p=>p.id===active)??previews[0];
- const filtered=useMemo(()=>previews.filter(p=>(p.name+" "+p.category).toLowerCase().includes(query.toLowerCase())),[query]);
  const select=(id:string)=>{setActive(id);setKey(k=>k+1);history.replaceState(null,"","?view="+encodeURIComponent(id));};
  useEffect(()=>{document.title="AgntiaPro UI Lab · "+item.name;},[item.name]);
  const Preview=item.Component;
@@ -38,17 +36,11 @@ export default function App(){
  }
  if(new URLSearchParams(location.search).has("embed")) return <div className="lab-embed"><div className="lab-preview-badge">UI LAB · {item.status==="api"?"API NO CONECTADA":item.status==="fixture"?"DATOS FICTICIOS":"DEMO"}</div><PreviewBoundary><Suspense fallback={<div className="lab-loading">Cargando componente real…</div>}><Preview/></Suspense></PreviewBoundary></div>;
  return <div className={"lab-root "+(full?"lab-full":"")}>
-  <aside className="lab-sidebar" aria-label="Catálogo de pantallas">
-    <div className="lab-brand"><span className="lab-brand-mark">A<span>.</span></span><div><strong>AgntiaPro</strong><small>UI LAB · PREVIEW</small></div></div>
-    <label className="lab-search"><Search size={16}/><input placeholder="Buscar pantallas…" value={query} onChange={e=>setQuery(e.target.value)} aria-label="Buscar pantallas"/></label>
-    <nav>{["Aplicación","Público","Trabajo","Canales","Componentes"].map(group=><div key={group} className="lab-group"><p>{group}</p>{filtered.filter(p=>p.category===group).map(p=><button key={p.id} className={p.id===item.id?"lab-nav-item active":"lab-nav-item"} onClick={()=>select(p.id)}><span>{p.name}</span><span className={"lab-status "+p.status} title={p.status==="api"?"Requiere API":p.status==="fixture"?"Datos ficticios":"Demo interna"}/></button>)}</div>)}</nav>
-    <div className="lab-version-selector"><label htmlFor="lab-version">Versiones registradas</label><select id="lab-version" value={labVersions.find(v=>v.previewId===active)?.id??"current"} onChange={e=>{const v=labVersions.find(x=>x.id===e.target.value);if(v)select(v.previewId);}}>{labVersions.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}</select><small>Solo versiones con código registrado</small></div>
-    <div className="lab-sidebar-footer"><Code2 size={15}/> Componentes reales del monorepo <br/> Datos de demostración · sin producción</div>
-  </aside>
   <section className="lab-stage">
     <header className="lab-topbar">
       <div className="lab-title"><span className="lab-kicker">VISTA PREVIA</span><h1>{item.name}</h1><small>{item.description}</small></div>
       <div className="lab-actions">
+        <label className="lab-preview-picker"><span>Vista</span><select aria-label="Seleccionar pantalla de UI Lab" value={item.id} onChange={e=>select(e.target.value)}>{previews.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
         <div className="lab-devices" role="group" aria-label="Tamaño de pantalla">
           {([{id:"mobile",Icon:Smartphone,label:"Móvil"},{id:"tablet",Icon:Tablet,label:"Tablet"},{id:"desktop",Icon:Monitor,label:"PC"},{id:"fluid",Icon:ChevronDown,label:"Fluido"}] as const).map(({id,Icon,label})=><button key={id} title={label} aria-label={label} aria-pressed={device===id} className={device===id?"active":""} onClick={()=>setDevice(id)}><Icon size={17}/></button>)}
         </div>
