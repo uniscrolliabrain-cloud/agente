@@ -7,6 +7,9 @@ import type { CognitionV2Runtime } from "./runtime.ts";
 export class CognitionV2ChatAgent extends AbstractAgent {
   constructor(private readonly cognition: CognitionV2Runtime, private readonly owner: string) {
     super();
+    // CopilotKit/AG-UI may extract run as a callback before invoking it.
+    // Bind once so the scoped cognition runtime and owner are never lost.
+    this.run = this.run.bind(this);
   }
   run(input: RunAgentInput): Observable<BaseEvent> {
     return this.cognition.chat(this.owner, input);
