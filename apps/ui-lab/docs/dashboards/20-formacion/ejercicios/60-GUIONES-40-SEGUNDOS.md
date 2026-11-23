@@ -7,6 +7,18 @@
 ### IA01 · La IA no piensa por ti
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un informe puede sonar convincente y estar equivocado. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA01 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «La IA no piensa por ti».
+- **00–10 s / gancho:** plano stock «AI report verification», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «fact checking data», superponer rótulo breve «La IA no piensa por ti».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `AI report verification`; `fact checking data`; `AI report verification vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «La IA no piensa por ti. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Pídele tres opciones y comprueba tú los datos antes de decidir. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -17,6 +29,18 @@
 
 ### IA02 · Qué es la cognición aumentada
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Tu experiencia aporta contexto; la IA puede ordenar alternativas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA02 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es la cognición aumentada».
+- **00–10 s / gancho:** plano stock «human AI collaboration», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «brainstorming whiteboard», superponer rótulo breve «Qué es la cognición aumentada».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `human AI collaboration`; `brainstorming whiteboard`; `human AI collaboration vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué es la cognición aumentada. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -29,6 +53,18 @@
 ### IA03 · Qué es un LLM
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un modelo de lenguaje predice y genera texto; no garantiza verdad. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA03 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un LLM».
+- **00–10 s / gancho:** plano stock «language model technology», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «data center AI», superponer rótulo breve «Qué es un LLM».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `language model technology`; `data center AI`; `language model technology vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un LLM. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Pide una explicación y solicita fuentes comprobables. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -39,6 +75,18 @@
 
 ### IA04 · Cómo hacer buenas preguntas
 **00–10 s · Gancho:** «¿Te has encontrado con esto? «Hazme marketing» es demasiado abierto. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA04 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Cómo hacer buenas preguntas».
+- **00–10 s / gancho:** plano stock «business meeting questions», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «typing detailed instructions», superponer rótulo breve «Cómo hacer buenas preguntas».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `business meeting questions`; `typing detailed instructions`; `business meeting questions vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Cómo hacer buenas preguntas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -51,6 +99,18 @@
 ### IA05 · Qué es un prompt
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una instrucción mejora cuando das contexto y límites. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA05 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un prompt».
+- **00–10 s / gancho:** plano stock «structured prompt writing», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business brief checklist», superponer rótulo breve «Qué es un prompt».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `structured prompt writing`; `business brief checklist`; `structured prompt writing vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un prompt. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Escribe objetivo, contexto, datos, restricciones y resultado esperado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -61,6 +121,18 @@
 
 ### IA06 · Pensar con varias perspectivas
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una propuesta entusiasma a ventas y preocupa a finanzas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA06 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Pensar con varias perspectivas».
+- **00–10 s / gancho:** plano stock «business perspectives discussion», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «team reviewing proposal», superponer rótulo breve «Pensar con varias perspectivas».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `business perspectives discussion`; `team reviewing proposal`; `business perspectives discussion vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Pensar con varias perspectivas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -73,6 +145,18 @@
 ### IA07 · Qué es el pensamiento crítico
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una cifra precisa no es necesariamente correcta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA07 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es el pensamiento crítico».
+- **00–10 s / gancho:** plano stock «critical thinking office», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «analyst checking claims», superponer rótulo breve «Qué es el pensamiento crítico».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `critical thinking office`; `analyst checking claims`; `critical thinking office vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es el pensamiento crítico. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Pregunta qué evidencia falta y qué hipótesis podría fallar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -83,6 +167,18 @@
 
 ### IA08 · Cómo contrastar una respuesta
 **00–10 s · Gancho:** «¿Te has encontrado con esto? La IA cita un dato de mercado sin fecha. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA08 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Cómo contrastar una respuesta».
+- **00–10 s / gancho:** plano stock «research source verification», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «document comparison», superponer rótulo breve «Cómo contrastar una respuesta».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `research source verification`; `document comparison`; `research source verification vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Cómo contrastar una respuesta. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -95,6 +191,18 @@
 ### IA09 · Aprende algo nuevo en diez minutos
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas entender una herramienta antes de una reunión. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA09 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Aprende algo nuevo en diez minutos».
+- **00–10 s / gancho:** plano stock «online professional learning», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «notebook laptop», superponer rótulo breve «Aprende algo nuevo en diez minutos».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `online professional learning`; `notebook laptop`; `online professional learning vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Aprende algo nuevo en diez minutos. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Pide una explicación sencilla, tres preguntas y un mini ejercicio. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -105,6 +213,18 @@
 
 ### IA10 · No delegues tu criterio
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una IA recomienda rechazar una reclamación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA10 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «No delegues tu criterio».
+- **00–10 s / gancho:** plano stock «human decision approval», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «manager reviewing report», superponer rótulo breve «No delegues tu criterio».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `human decision approval`; `manager reviewing report`; `human decision approval vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «No delegues tu criterio. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -119,6 +239,18 @@
 ### IA11 · Qué es un sistema
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un pedido entra, se procesa y termina en entrega. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA11 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un sistema».
+- **00–10 s / gancho:** plano stock «business process system», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «warehouse workflow», superponer rótulo breve «Qué es un sistema».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `business process system`; `warehouse workflow`; `business process system vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un sistema. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Dibuja entrada, transformación, salida y retroalimentación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -129,6 +261,18 @@
 
 ### IA12 · Tu empresa es un sistema
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Ventas promete algo que operaciones no puede entregar. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA12 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Tu empresa es un sistema».
+- **00–10 s / gancho:** plano stock «cross functional teamwork», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business operations», superponer rótulo breve «Tu empresa es un sistema».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `cross functional teamwork`; `business operations`; `cross functional teamwork vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Tu empresa es un sistema. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -141,6 +285,18 @@
 ### IA13 · Piensa en procesos, no en tareas aisladas
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Responder un correo no equivale a resolver una incidencia. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA13 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Piensa en procesos, no en tareas aisladas».
+- **00–10 s / gancho:** plano stock «customer support workflow», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «support ticket team», superponer rótulo breve «Piensa en procesos, no en tareas aisladas».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `customer support workflow`; `support ticket team`; `customer support workflow vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Piensa en procesos, no en tareas aisladas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Sigue el proceso desde la solicitud hasta su cierre. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -151,6 +307,18 @@
 
 ### IA14 · Qué es un flujo de trabajo
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una factura pasa por recepción, revisión y pago. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA14 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un flujo de trabajo».
+- **00–10 s / gancho:** plano stock «invoice approval workflow», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «paperwork desk», superponer rótulo breve «Qué es un flujo de trabajo».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `invoice approval workflow`; `paperwork desk`; `invoice approval workflow vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué es un flujo de trabajo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -163,6 +331,18 @@
 ### IA15 · Qué es un cuello de botella
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Diez solicitudes esperan una única aprobación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA15 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un cuello de botella».
+- **00–10 s / gancho:** plano stock «office backlog kanban», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «workflow bottleneck», superponer rótulo breve «Qué es un cuello de botella».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `office backlog kanban`; `workflow bottleneck`; `office backlog kanban vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un cuello de botella. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Localiza la etapa donde se acumula el trabajo. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -173,6 +353,18 @@
 
 ### IA16 · Qué son las dependencias
 **00–10 s · Gancho:** «¿Te has encontrado con esto? No puedes publicar antes de aprobar el diseño. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA16 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué son las dependencias».
+- **00–10 s / gancho:** plano stock «project task dependencies», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «project planning board», superponer rótulo breve «Qué son las dependencias».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `project task dependencies`; `project planning board`; `project task dependencies vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué son las dependencias. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -185,6 +377,18 @@
 ### IA17 · Qué es la retroalimentación
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una campaña se repite aunque no funcione. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA17 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es la retroalimentación».
+- **00–10 s / gancho:** plano stock «performance feedback meeting», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «marketing metrics», superponer rótulo breve «Qué es la retroalimentación».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `performance feedback meeting`; `marketing metrics`; `performance feedback meeting vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es la retroalimentación. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Define una métrica y ajusta el siguiente ciclo. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -195,6 +399,18 @@
 
 ### IA18 · Qué es un mapa de procesos
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un compañero nuevo no entiende cómo se atienden clientes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA18 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un mapa de procesos».
+- **00–10 s / gancho:** plano stock «process mapping workshop», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «sticky note flowchart», superponer rótulo breve «Qué es un mapa de procesos».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `process mapping workshop`; `sticky note flowchart`; `process mapping workshop vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué es un mapa de procesos. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -207,6 +423,18 @@
 ### IA19 · Qué es un sistema complejo
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Cambiar un plazo puede alterar soporte y cobros. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA19 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un sistema complejo».
+- **00–10 s / gancho:** plano stock «complex systems teamwork», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business operations planning», superponer rótulo breve «Qué es un sistema complejo».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `complex systems teamwork`; `business operations planning`; `complex systems teamwork vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un sistema complejo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Enumera efectos secundarios antes de optimizar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -217,6 +445,18 @@
 
 ### IA20 · Mejora el sistema, no solo tu velocidad
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Responder más rápido no sirve si luego hay retrabajo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA20 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Mejora el sistema, no solo tu velocidad».
+- **00–10 s / gancho:** plano stock «process improvement team», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «reducing rework», superponer rótulo breve «Mejora el sistema, no solo tu velocidad».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `process improvement team`; `reducing rework`; `process improvement team vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Mejora el sistema, no solo tu velocidad. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -231,6 +471,18 @@
 ### IA21 · Qué es automatizar
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Copias datos de formularios a una tabla cada mañana. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA21 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es automatizar».
+- **00–10 s / gancho:** plano stock «repetitive data entry», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «spreadsheet automation», superponer rótulo breve «Qué es automatizar».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `repetitive data entry`; `spreadsheet automation`; `repetitive data entry vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es automatizar. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Separa reglas repetibles de decisiones que requieren juicio. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -241,6 +493,18 @@
 
 ### IA22 · Audita tu jornada laboral
 **00–10 s · Gancho:** «¿Te has encontrado con esto? El día se llena de tareas pequeñas que no recuerdas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA22 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Audita tu jornada laboral».
+- **00–10 s / gancho:** plano stock «daily work diary», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «time tracking office», superponer rótulo breve «Audita tu jornada laboral».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `daily work diary`; `time tracking office`; `daily work diary vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Audita tu jornada laboral. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -253,6 +517,18 @@
 ### IA23 · Detecta tareas repetitivas
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Cada viernes preparas el mismo resumen. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA23 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Detecta tareas repetitivas».
+- **00–10 s / gancho:** plano stock «weekly reporting spreadsheet», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «calendar recurring tasks», superponer rótulo breve «Detecta tareas repetitivas».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `weekly reporting spreadsheet`; `calendar recurring tasks`; `weekly reporting spreadsheet vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Detecta tareas repetitivas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Identifica entradas, plantilla y variaciones. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -263,6 +539,18 @@
 
 ### IA24 · Reconoce patrones
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Los correos de facturas siguen casi siempre el mismo recorrido. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA24 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Reconoce patrones».
+- **00–10 s / gancho:** plano stock «email sorting workflow», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business inbox», superponer rótulo breve «Reconoce patrones».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `email sorting workflow`; `business inbox`; `email sorting workflow vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Reconoce patrones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -275,6 +563,18 @@
 ### IA25 · Qué tareas no debes automatizar
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una decisión de contratación afecta a personas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA25 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué tareas no debes automatizar».
+- **00–10 s / gancho:** plano stock «human resources review», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «human oversight decision», superponer rótulo breve «Qué tareas no debes automatizar».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `human resources review`; `human oversight decision`; `human resources review vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué tareas no debes automatizar. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Reserva supervisión humana para casos sensibles. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -285,6 +585,18 @@
 
 ### IA26 · Calcula el coste de una tarea
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Quince minutos diarios se acumulan durante el mes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA26 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Calcula el coste de una tarea».
+- **00–10 s / gancho:** plano stock «time cost calculation», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «timesheet calculator», superponer rótulo breve «Calcula el coste de una tarea».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `time cost calculation`; `timesheet calculator`; `time cost calculation vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Calcula el coste de una tarea. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -297,6 +609,18 @@
 ### IA27 · Prioriza automatizaciones
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Tienes diez ideas y solo tiempo para una. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA27 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Prioriza automatizaciones».
+- **00–10 s / gancho:** plano stock «project prioritization matrix», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «impact effort board», superponer rótulo breve «Prioriza automatizaciones».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `project prioritization matrix`; `impact effort board`; `project prioritization matrix vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Prioriza automatizaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Compara impacto, esfuerzo, riesgo y reversibilidad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -307,6 +631,18 @@
 
 ### IA28 · Automatiza primero una tarea pequeña
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres automatizar toda la empresa de golpe. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA28 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Automatiza primero una tarea pequeña».
+- **00–10 s / gancho:** plano stock «simple automated reminder», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «phone notification desk», superponer rótulo breve «Automatiza primero una tarea pequeña».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `simple automated reminder`; `phone notification desk`; `simple automated reminder vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Automatiza primero una tarea pequeña. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -319,6 +655,18 @@
 ### IA29 · Qué hacer con las excepciones
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento llega incompleto. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA29 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué hacer con las excepciones».
+- **00–10 s / gancho:** plano stock «incomplete form error», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «office exception handling», superponer rótulo breve «Qué hacer con las excepciones».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `incomplete form error`; `office exception handling`; `incomplete form error vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué hacer con las excepciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Diseña una salida segura: pausa, aviso y revisión. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -329,6 +677,18 @@
 
 ### IA30 · Crea tu mapa personal de automatizaciones
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Sabes que repites trabajo, pero no sabes por dónde empezar. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA30 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Crea tu mapa personal de automatizaciones».
+- **00–10 s / gancho:** plano stock «automation ideas workshop», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business process board», superponer rótulo breve «Crea tu mapa personal de automatizaciones».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `automation ideas workshop`; `business process board`; `automation ideas workshop vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Crea tu mapa personal de automatizaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -343,6 +703,18 @@
 ### IA31 · Qué es un SOP
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Cada persona prepara una propuesta de forma distinta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA31 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un SOP».
+- **00–10 s / gancho:** plano stock «standard operating procedure», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «checklist office», superponer rótulo breve «Qué es un SOP».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `standard operating procedure`; `checklist office`; `standard operating procedure vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un SOP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Documenta un procedimiento con pasos y resultado comprobable. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -353,6 +725,18 @@
 
 ### IA32 · Convierte tu trabajo en un SOP
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Preparar un alta de cliente depende de tu memoria. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA32 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Convierte tu trabajo en un SOP».
+- **00–10 s / gancho:** plano stock «client onboarding process», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «procedure documentation», superponer rótulo breve «Convierte tu trabajo en un SOP».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `client onboarding process`; `procedure documentation`; `client onboarding process vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Convierte tu trabajo en un SOP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -365,6 +749,18 @@
 ### IA33 · Qué es un trigger
 **00–10 s · Gancho:** «¿Te has encontrado con esto? La llegada de una solicitud puede iniciar un flujo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA33 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un trigger».
+- **00–10 s / gancho:** plano stock «workflow trigger notification», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «new email alert», superponer rótulo breve «Qué es un trigger».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `workflow trigger notification`; `new email alert`; `workflow trigger notification vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un trigger. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Define el evento que activa el proceso y evita duplicados. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -375,6 +771,18 @@
 
 ### IA34 · Qué es un pipeline
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento se recibe, clasifica, revisa y archiva. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA34 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un pipeline».
+- **00–10 s / gancho:** plano stock «document processing pipeline», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business workflow stages», superponer rótulo breve «Qué es un pipeline».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `document processing pipeline`; `business workflow stages`; `document processing pipeline vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué es un pipeline. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -387,6 +795,18 @@
 ### IA35 · Qué es un skill
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Reutilizas siempre la misma capacidad de resumir documentos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA35 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un skill».
+- **00–10 s / gancho:** plano stock «reusable software modules», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «developer coding laptop», superponer rótulo breve «Qué es un skill».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `reusable software modules`; `developer coding laptop`; `reusable software modules vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es un skill. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Define una función reutilizable con entradas y salidas claras. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -397,6 +817,18 @@
 
 ### IA36 · Qué es un boilerplate
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Creas propuestas desde cero una y otra vez. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA36 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un boilerplate».
+- **00–10 s / gancho:** plano stock «business proposal template», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «document editing office», superponer rótulo breve «Qué es un boilerplate».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `business proposal template`; `document editing office`; `business proposal template vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué es un boilerplate. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -409,6 +841,18 @@
 ### IA37 · Qué es una API
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Dos aplicaciones necesitan intercambiar datos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA37 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es una API».
+- **00–10 s / gancho:** plano stock «API integration development», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «software systems diagram», superponer rótulo breve «Qué es una API».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `API integration development`; `software systems diagram`; `API integration development vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es una API. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Distingue solicitud, permiso, respuesta y error. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -419,6 +863,18 @@
 
 ### IA38 · Qué son los conectores y MCP
 **00–10 s · Gancho:** «¿Te has encontrado con esto? LAIA necesita trabajar con una aplicación externa. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA38 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué son los conectores y MCP».
+- **00–10 s / gancho:** plano stock «business application connection», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «OAuth permission screen illustration», superponer rótulo breve «Qué son los conectores y MCP».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `business application connection`; `OAuth permission screen illustration`; `business application connection vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué son los conectores y MCP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -431,6 +887,18 @@
 ### IA39 · Qué es una aprobación humana
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un borrador de correo puede prepararse sin enviarse. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA39 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es una aprobación humana».
+- **00–10 s / gancho:** plano stock «human approval workflow», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «manager approving draft», superponer rótulo breve «Qué es una aprobación humana».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `human approval workflow`; `manager approving draft`; `human approval workflow vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es una aprobación humana. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Marca el punto exacto donde una persona debe aprobar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -441,6 +909,18 @@
 
 ### IA40 · De tarea a automatización completa
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una solicitud debe pasar de entrada a cierre. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA40 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «De tarea a automatización completa».
+- **00–10 s / gancho:** plano stock «end to end business process», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «workflow completion checklist», superponer rótulo breve «De tarea a automatización completa».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `end to end business process`; `workflow completion checklist`; `end to end business process vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «De tarea a automatización completa. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -455,6 +935,18 @@
 ### IA41 · Panorama de las IA actuales
 **00–10 s · Gancho:** «¿Te has encontrado con esto? No todas las herramientas de IA sirven para lo mismo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA41 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Panorama de las IA actuales».
+- **00–10 s / gancho:** plano stock «artificial intelligence tools», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «AI software comparison», superponer rótulo breve «Panorama de las IA actuales».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `artificial intelligence tools`; `AI software comparison`; `artificial intelligence tools vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Panorama de las IA actuales. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Separa modelos de lenguaje, búsqueda, imagen, voz y agentes. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -465,6 +957,18 @@
 
 ### IA42 · ChatGPT
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas ordenar ideas para una propuesta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA42 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «ChatGPT».
+- **00–10 s / gancho:** plano stock «chatbot drafting office», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «professional editing text», superponer rótulo breve «ChatGPT».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `chatbot drafting office`; `professional editing text`; `chatbot drafting office vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «ChatGPT. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -477,6 +981,18 @@
 ### IA43 · Claude
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Tienes un documento largo que necesitas comprender. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA43 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Claude».
+- **00–10 s / gancho:** plano stock «long document analysis», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «highlighting report», superponer rótulo breve «Claude».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `long document analysis`; `highlighting report`; `long document analysis vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Claude. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Solicita un resumen con referencias a secciones verificables. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -487,6 +1003,18 @@
 
 ### IA44 · Gemini
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Trabajas con documentos y herramientas del ecosistema Google. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA44 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Gemini».
+- **00–10 s / gancho:** plano stock «cloud collaboration workplace», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «team shared documents», superponer rótulo breve «Gemini».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `cloud collaboration workplace`; `team shared documents`; `cloud collaboration workplace vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Gemini. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -499,6 +1027,18 @@
 ### IA45 · DeepSeek y Qwen
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres comparar modelos para una tarea concreta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA45 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «DeepSeek y Qwen».
+- **00–10 s / gancho:** plano stock «AI model benchmarking», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «developer comparing outputs», superponer rótulo breve «DeepSeek y Qwen».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `AI model benchmarking`; `developer comparing outputs`; `AI model benchmarking vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «DeepSeek y Qwen. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Prueba el mismo caso con criterios de calidad y privacidad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -509,6 +1049,18 @@
 
 ### IA46 · Perplexity y buscadores con IA
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Investigas un proveedor nuevo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA46 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Perplexity y buscadores con IA».
+- **00–10 s / gancho:** plano stock «research web citations», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «checking primary sources», superponer rótulo breve «Perplexity y buscadores con IA».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `research web citations`; `checking primary sources`; `research web citations vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Perplexity y buscadores con IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -521,6 +1073,18 @@
 ### IA47 · IA para imágenes
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas una ilustración para un informe. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA47 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «IA para imágenes».
+- **00–10 s / gancho:** plano stock «graphic designer computer», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «creative moodboard», superponer rótulo breve «IA para imágenes».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `graphic designer computer`; `creative moodboard`; `graphic designer computer vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «IA para imágenes. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Define composición, estilo y restricciones de marca. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -531,6 +1095,18 @@
 
 ### IA48 · IA para vídeo y voz
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres explicar un procedimiento en formato audiovisual. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA48 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «IA para vídeo y voz».
+- **00–10 s / gancho:** plano stock «video editor timeline», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «studio microphone», superponer rótulo breve «IA para vídeo y voz».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `video editor timeline`; `studio microphone`; `video editor timeline vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «IA para vídeo y voz. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -543,6 +1119,18 @@
 ### IA49 · Qué son los agentes IA
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un chat responde; un sistema agéntico coordina pasos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA49 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué son los agentes IA».
+- **00–10 s / gancho:** plano stock «AI agent workflow», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «human supervision automation», superponer rótulo breve «Qué son los agentes IA».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `AI agent workflow`; `human supervision automation`; `AI agent workflow vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué son los agentes IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Distingue propuesta, permisos, ejecución y comprobación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -553,6 +1141,18 @@
 
 ### IA50 · Qué herramienta elegir
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Tres aplicaciones prometen resolver el mismo problema. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA50 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué herramienta elegir».
+- **00–10 s / gancho:** plano stock «software vendor comparison», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business tool evaluation», superponer rótulo breve «Qué herramienta elegir».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `software vendor comparison`; `business tool evaluation`; `software vendor comparison vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué herramienta elegir. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -567,6 +1167,18 @@
 ### IA51 · Qué es el AI Act europeo
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Usar IA en la empresa también exige entender sus riesgos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA51 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es el AI Act europeo».
+- **00–10 s / gancho:** plano stock «EU digital regulation», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «European flag technology», superponer rótulo breve «Qué es el AI Act europeo».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `EU digital regulation`; `European flag technology`; `EU digital regulation vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es el AI Act europeo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Identifica responsabilidades según sistema, contexto y uso real. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -577,6 +1189,18 @@
 
 ### IA52 · Qué significa alfabetización en IA
 **00–10 s · Gancho:** «¿Te has encontrado con esto? No basta con abrir un chatbot una vez. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA52 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué significa alfabetización en IA».
+- **00–10 s / gancho:** plano stock «AI training employees», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «digital literacy workshop», superponer rótulo breve «Qué significa alfabetización en IA».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `AI training employees`; `digital literacy workshop`; `AI training employees vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué significa alfabetización en IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -589,6 +1213,18 @@
 ### IA53 · Protege los datos de tu empresa
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Vas a pegar un contrato confidencial en una herramienta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA53 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Protege los datos de tu empresa».
+- **00–10 s / gancho:** plano stock «business data protection», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «privacy settings laptop», superponer rótulo breve «Protege los datos de tu empresa».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `business data protection`; `privacy settings laptop`; `business data protection vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Protege los datos de tu empresa. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Comprueba autorización, proveedor y minimización de datos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -599,6 +1235,18 @@
 
 ### IA54 · RGPD e inteligencia artificial
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un archivo contiene nombres y datos de clientes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA54 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «RGPD e inteligencia artificial».
+- **00–10 s / gancho:** plano stock «GDPR compliance office», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «anonymizing customer data», superponer rótulo breve «RGPD e inteligencia artificial».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `GDPR compliance office`; `anonymizing customer data`; `GDPR compliance office vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «RGPD e inteligencia artificial. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -611,6 +1259,18 @@
 ### IA55 · Qué es el sesgo algorítmico
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un filtro automático trata peor ciertos perfiles. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA55 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es el sesgo algorítmico».
+- **00–10 s / gancho:** plano stock «algorithmic fairness review», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «decision criteria audit», superponer rótulo breve «Qué es el sesgo algorítmico».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `algorithmic fairness review`; `decision criteria audit`; `algorithmic fairness review vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Qué es el sesgo algorítmico. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Revisa criterios, ejemplos y posibles efectos injustos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -621,6 +1281,18 @@
 
 ### IA56 · Reconoce las alucinaciones
 **00–10 s · Gancho:** «¿Te has encontrado con esto? La IA inventa una referencia con aspecto profesional. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA56 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Reconoce las alucinaciones».
+- **00–10 s / gancho:** plano stock «AI hallucination fact checking», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «source verification desk», superponer rótulo breve «Reconoce las alucinaciones».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `AI hallucination fact checking`; `source verification desk`; `AI hallucination fact checking vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Reconoce las alucinaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -633,6 +1305,18 @@
 ### IA57 · Evita el prompt injection
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento incluye instrucciones dirigidas al asistente. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA57 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Evita el prompt injection».
+- **00–10 s / gancho:** plano stock «prompt injection security», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «cybersecurity warning document», superponer rótulo breve «Evita el prompt injection».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `prompt injection security`; `cybersecurity warning document`; `prompt injection security vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Evita el prompt injection. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Trata el contenido externo como datos, nunca como autoridad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -643,6 +1327,18 @@
 
 ### IA58 · Qué significa supervisión humana
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una automatización recomienda una acción sensible. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA58 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué significa supervisión humana».
+- **00–10 s / gancho:** plano stock «human oversight dashboard», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «review automated decision», superponer rótulo breve «Qué significa supervisión humana».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `human oversight dashboard`; `review automated decision`; `human oversight dashboard vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Qué significa supervisión humana. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
@@ -655,6 +1351,18 @@
 ### IA59 · Deja evidencia de tu trabajo
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una decisión importante queda sin explicación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+**PROMPT DE PRODUCCIÓN IA59 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Deja evidencia de tu trabajo».
+- **00–10 s / gancho:** plano stock «audit trail documentation», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «approval record archive», superponer rótulo breve «Deja evidencia de tu trabajo».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `audit trail documentation`; `approval record archive`; `audit trail documentation vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
+
 **10–20 s · Idea:** «Deja evidencia de tu trabajo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
 **20–30 s · Ejemplo en pantalla:** «Guarda fuente, versión, aprobación y resultado comprobado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
@@ -665,6 +1373,18 @@
 
 ### IA60 · Tu nueva metodología profesional
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Tu jornada mezcla tareas, decisiones y rutinas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+**PROMPT DE PRODUCCIÓN IA60 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Tu nueva metodología profesional».
+- **00–10 s / gancho:** plano stock «professional workflow planning», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «standard procedure team», superponer rótulo breve «Tu nueva metodología profesional».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `professional workflow planning`; `standard procedure team`; `professional workflow planning vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
+
 
 **10–20 s · Idea:** «Tu nueva metodología profesional. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
