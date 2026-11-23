@@ -1,5 +1,7 @@
 # Motor de recomendaciones de Formación · diseño funcional y técnico
 
+> **Gate obligatorio de nomenclatura:** antes de implementar, leer [AUDITORIA-LEXICON-RECOMENDADOR.md](./AUDITORIA-LEXICON-RECOMENDADOR.md). Los nombres de campos y señales de esta propuesta son conceptuales hasta mapearlos a contratos reales; no crear eventos ni capacidades inexistentes.
+
 **Estado:** especificación para implementación futura, no código desplegado. Vive dentro de Formación de AgntiaPro, con lógica de descubrimiento tipo biblioteca musical y branding propio. No confundir con un algoritmo de maximización de tiempo de pantalla: **optimizar utilidad y aprendizaje demostrado**.
 
 ## 1. Objetivo
