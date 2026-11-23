@@ -97,3 +97,10 @@ Lectura directa de `apps/server/src/app.ts` y `apps/server/src/engine/service.ts
 - `e32a43b2`, `bd89fadd`: pruebas para idempotencia, revisión exacta y rechazo; `cbaae1d7`: workflow CI ampliado.
 - **Pendiente deliberado**: conectar productor de eventos/recibos al puente mediante outbox/worker con idempotencia, límites de frecuencia y ownership de actor. No llamar desde `CognitiveProjector.apply` sin analizar ciclos: `slow.status` produce `meta_hint` y outcome, y un disparador indiscriminado generaría bucles de inferencia.
 - **No afirmar circuito end-to-end**: el puente es una nueva frontera de integración, todavía sin suscriptor automático, sin test Postgres y sin pruebas CI verdes verificadas.
+
+## C06.P03a hardening tras auditoría independiente (2026-11-23)
+
+- `39214a0e`: valida identidad mediante schema, exige actor=owner, limita IDs, rechaza prompt vacío/blanco, comprueba que el registro resuelto corresponde exactamente al ID y revisión solicitados, está activo y pertenece al tenant también en visibilidad.
+- `b6f2fc7c`: tests adicionales de evidencia manipulada, inputs malformados y propagación de `IDEMPOTENCY_CONFLICT` sin reintentos implícitos.
+- La semántica de idempotencia permanece intencional: mismo operationId+evidencia y prompt distinto causa conflicto en la cola durable, no nuevo trabajo. La factualidad `inference`/`reported_fact` no se eleva a `verified_fact`.
+- **No verificado todavía**: typecheck, ejecución CI, transacciones PostgreSQL, carreras de revocación y ownership real de recibos. La activación de C06.P03b seguirá condicionada a pruebas y a un productor durable autenticado; no activar egress ni despliegues.
