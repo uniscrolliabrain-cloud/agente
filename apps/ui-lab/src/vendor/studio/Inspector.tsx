@@ -45,7 +45,7 @@ export default function Inspector({
     (p) => p.id === (state.selection.kind === "project" ? state.selection.id : item?.project),
   );
   const heading =
-    item?.title ?? actor?.name ?? project?.name ?? (state.selection.kind === "client" ? state.selection.id : "ACME");
+    item?.title ?? actor?.name ?? project?.name ?? (state.selection.kind === "client" ? state.selection.id : "AgntiaPro");
   const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -215,7 +215,7 @@ export default function Inspector({
           <p className="bcs-inspector-description">
             {item?.detail ??
               (actor
-                ? `Actividad de ${actor.name} en la jornada de ACME. Selecciona una pieza para ver su contexto.`
+                ? `Actividad de ${actor.name} en la jornada de AgntiaPro. Selecciona una pieza para ver su contexto.`
                 : (project?.output ??
                   "Observa el trabajo del equipo, sus dependencias y las decisiones que necesitan tu atención."))}
           </p>
