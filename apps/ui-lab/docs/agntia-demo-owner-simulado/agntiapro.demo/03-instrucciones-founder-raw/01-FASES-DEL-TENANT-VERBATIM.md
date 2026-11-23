@@ -1,0 +1,5 @@
+# Instrucción del founder — fases de compilación (transcripción literal)
+
+> Origen: mensaje del fundador en esta conversación. Se conserva sin correcciones de numeración ni interpretación.
+
+ahora ya puedes crear la data sintetica o por lo menos todos los factores que permiten crearla, ten en cuenta que tiene que tener fases como llega una empresa a estar operativa como tenant en nuestro software. la fase 0 es crear la info de la plantilla de su tenant demo porque siempre las empresas empiezas en modo simulado en nuestra sandbox, la fase 1 es hacer el proceso de compilacion de la empresa, procesos, dolores, soluciones, ontologias, relaciones capacidades etc, la fase 3 es formacion en la que el owner y los empleados humanos y actores se entrenan usando la simulacion, la fase 4 es el deploy en beta con un projecto minimo viable con validacion obligatoria y la fase 5 es el deploy completo , la fase 6 es de feedback, ajustes y monitorizacion con mi acompañamiento, fase 7 es alpha, fase 8 es scale y digital twin que simula variaciones futuras etc. esto esta bueno porque hace que sea excitante y un poco epico para una empresa usar mi software
