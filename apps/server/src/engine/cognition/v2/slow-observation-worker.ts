@@ -10,11 +10,11 @@ export class SlowObservationWorker {
   private readonly cursor: DurableProjector;
   private readonly bridge: SlowObservationBridge;
   constructor(private readonly runtime: CognitionV2Runtime,
-    private readonly dailyLimit = 20, db: Store = runtime.db) {
+    private readonly dailyLimit = 20, db: Store = runtime.db, private readonly clock = () => Date.now()) {
     if (!Number.isSafeInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 500) throw Error("SLOW_OBSERVER_QUOTA_INVALID");
-    this.cursor = new DurableProjector(db, "slow-observer-v2.1", () => Date.now(), error => {
+    this.cursor = new DurableProjector(db, "slow-observer-v2.1", this.clock, error => {
       if (!(error instanceof Error) || error.message !== "SLOW_OBSERVER_DAILY_QUOTA_EXHAUSTED") return null;
-      const now = new Date();
+      const now = new Date(this.clock());
       return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
     });
     this.bridge = new SlowObservationBridge(runtime.context, runtime.slow);
@@ -48,7 +48,7 @@ export class SlowObservationWorker {
       [tenant, [sourceId, candidate.sourceId]]);
     if (revoked.length) return;
     const identity = await this.runtime.identity(tenant, candidate.actorId, candidate.actorId, "chat");
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date(this.clock()).toISOString().slice(0, 10);
     // This runs inside DurableProjector.batch transaction: quota reservation,
     // slow enqueue and inbox/cursor commit succeed or roll back together.
     const quota = await this.runtime.db.rawQuery<{ calls: number }>(
@@ -58,7 +58,7 @@ export class SlowObservationWorker {
         WHERE cognition_v2_observation_quotas.calls < $3 RETURNING calls`,
       [tenant, today, this.dailyLimit]);
     // Never permanently acknowledge an unprocessed event when budget is exhausted.
-    // DurableProjector records a bounded retry/dead-letter, not a silent drop.
+    // DurableProjector defers until next UTC day without spending retry budget.
     if (!quota.length) throw Error("SLOW_OBSERVER_DAILY_QUOTA_EXHAUSTED");
     await this.bridge.observe({
       identity, operationId: event.id, sourceId: candidate.sourceId,
