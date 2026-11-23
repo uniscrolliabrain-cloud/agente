@@ -56,7 +56,7 @@ jobs:
     concurrency:
       group: ui-lab-deploy
       cancel-in-progress: false
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy == true))
     runs-on: ubuntu-latest
     environment: ui-lab
     permissions:
@@ -102,4 +102,21 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
-        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        run: |
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tee /tmp/ui-lab-deployment-url.txt
+          test -s /tmp/ui-lab-deployment-url.txt
+      - name: Verify published UI Lab manifest and required previews
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          URL="$(tail -n 1 /tmp/ui-lab-deployment-url.txt | tr -d '\\r')"
+          echo "Published URL: $URL"
+          curl --fail --location --retry 5 --retry-delay 3 "$URL/version.json" -o /tmp/ui-lab-version.json
+          node -e 'const v=require("/tmp/ui-lab-version.json");if(v.version!==process.env.EXPECTED_SHA){console.error("Stale deployment",v.version);process.exit(1)}'
+          for view in full-app projects team users control operations comunicaciones; do
+            curl --fail --location --retry 3 "$URL/?embed=1&view=$view" -o /tmp/ui-lab-preview.html
+            grep -q 'id="root"' /tmp/ui-lab-preview.html
+          done
+          echo "UI Lab deployment manifest and preview entrypoints verified"
+
