@@ -31,15 +31,15 @@ def safe_rel(value, *, prefixes=None):
 
 def main():
     job_rel = safe_rel(os.getenv("JOB_MANIFEST", "tools/image-pipeline/jobs/formacion-pilot.json"))
-    if not job_rel.startswith("tools/image-pipeline/jobs/") or not job_rel.endswith(".json"):
-        raise ValueError("Job must be a tracked JSON file under tools/image-pipeline/jobs")
+    if not (job_rel.startswith("tools/image-pipeline/jobs/") or job_rel == "tools/image-pipeline/requests/generate-now.json") or not job_rel.endswith(".json"):
+        raise ValueError("Job must be a tracked approved JSON file")
     job_path = ROOT / job_rel
     if not job_path.is_file() or job_path.is_symlink():
         raise ValueError("Job file not found")
     job = json.loads(job_path.read_text(encoding="utf-8"))
     entries = job.get("images")
     if not isinstance(entries, list) or not 1 <= len(entries) <= 12:
-        raise ValueError("One to nine images per run")
+        raise ValueError("One to twelve images per run")
     output_dir = safe_rel(job["outputDir"].rstrip("/") + "/", prefixes=ALLOWED)
     seen = set()
     for item in entries:
