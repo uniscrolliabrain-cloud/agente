@@ -1,0 +1,72 @@
+name: Deploy public landing only
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Vercel target"
+        required: true
+        type: choice
+        options:
+          - preview
+          - production
+        default: preview
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-site-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  site:
+    name: Check and deploy public site (no API or worker)
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - name: Verify legal publication and internal links
+        run: node scripts/check-legal-site.mjs --release
+      - name: Check Vercel credentials
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!name}" ]; then echo "::error::Missing $name"; exit 1; fi
+          done
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Deploy site
+        id: deploy
+        working-directory: apps/site
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          if [ "$TARGET" = "production" ]; then
+            url=$(vercel deploy --prod --yes --token "$VERCEL_TOKEN")
+          else
+            url=$(vercel deploy --yes --token "$VERCEL_TOKEN")
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployment URL: $url"
+      - name: Verify public pages on deployed URL
+        env:
+          URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          set -euo pipefail
+          for path in / /aviso-legal.html /privacidad.html /cookies.html /terminos.html /transparencia-ia.html /confianza.html; do
+            echo "Checking $URL$path"
+            curl --fail --location --retry 5 --retry-delay 3 --silent --show-error --output /dev/null "$URL$path"
+          done
