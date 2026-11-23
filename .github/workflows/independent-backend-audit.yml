@@ -24,7 +24,7 @@ jobs:
         run: pnpm typecheck
       - name: Cognition and Slow observation tests
         run: |
-          pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation.test.ts tests/cognition-v2-slow.test.ts tests/cognition-v2-context.test.ts
+          pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation.test.ts tests/cognition-v2-slow-lanes.test.ts tests/cognition-v2-security-context.test.ts tests/cognition-v2-runtime.test.ts
       - name: Full Cognition HTTP integration
         if: always()
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
