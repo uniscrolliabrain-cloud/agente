@@ -29,3 +29,34 @@
 @keyframes fm-sheet-in{from{opacity:.8;transform:translate(-50%,18px)}to{opacity:1;transform:translate(-50%,0)}}
 @keyframes fm-backdrop-in{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.fm-root .fm-intro,.fm-root .fm-feature,.fm-root .fm-catalog,.fm-sheet,.fm-sheet-backdrop{animation:none!important}.fm-feature-art .fm-art-sculpture,.fm-feature:hover .fm-art-sculpture{transition:none!important}}
+
+/* Guía Maestra Branding UX V2: composición editorial y lectura móvil. */
+.fm-feature-copy{position:relative}
+.fm-feature-copy::before{content:"";position:absolute;left:clamp(32px,4.3vw,70px);top:30px;width:30px;height:1px;background:var(--fm-gold)}
+.fm-feature-copy>.fm-eyebrow{padding-top:18px}
+.fm-feature-copy h2{max-width:530px;letter-spacing:-.048em}
+.fm-feature-copy>p{max-width:390px}
+.fm-feature-copy{animation:fm-editorial-in .44s cubic-bezier(.22,1,.36,1) both}
+.fm-card-open{border-radius:11px}
+.fm-card-open:focus-visible{outline:2px solid var(--fm-violet);outline-offset:5px}
+.fm-card .fm-art{background-blend-mode:normal}
+.fm-sheet-peek .fm-sheet-content,.fm-sheet-peek .fm-snap-controls{visibility:hidden}
+.fm-sheet-backdrop{background:#24242135}
+.fm-root .fm-search:focus-within{border-color:var(--fm-violet);box-shadow:0 0 0 3px #6550dd12}
+.fm-root .fm-card h3{overflow-wrap:anywhere}
+.fm-root .fm-feature-pagination button{min-height:8px}
+.fm-root .fm-feature-pagination button:focus-visible{outline-offset:5px}
+@keyframes fm-editorial-in{from{opacity:.4;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:650px){
+.fm-feature-copy::before{left:25px;top:18px}
+.fm-feature-copy>.fm-eyebrow{padding-top:9px}
+.fm-feature-copy h2{font-size:clamp(32px,9vw,42px)}
+.fm-feature-actions{margin-top:22px}
+.fm-root .fm-tabs button{min-height:44px}
+.fm-root .fm-card-save{width:44px;height:44px;right:6px;top:6px}
+.fm-root .fm-feature-art-label button{width:44px;height:44px;flex-shrink:0}
+.fm-root .fm-sheet-actions button{width:44px;height:44px}
+.fm-root .fm-header nav button{min-width:44px;min-height:44px;justify-content:center}
+.fm-root .fm-count{display:none}
+}
+@media(prefers-reduced-motion:reduce){.fm-feature-copy{animation:none!important}}
