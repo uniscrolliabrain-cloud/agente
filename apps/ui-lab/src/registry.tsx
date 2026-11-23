@@ -7,6 +7,7 @@ const Kpi=lazy(()=>import("../../web/src/components/KpiCard"));
 const Brand=lazy(()=>import("./BrandGallery"));
 const Landing=lazy(()=>import("./vendor/landing/Landing.jsx"));
 const Studio=lazy(()=>import("./vendor/studio/BusinessCommandStudio"));
+const Formation=lazy(()=>import("./formation/FormationWorkspace"));
 
 const Knowledge=lazy(()=>import("../../web/src/components/MemoryView"));
 
@@ -25,6 +26,7 @@ export const previews:Preview[]=[
 {id:"full-app",name:"Aplicación completa",category:"Aplicación",description:"App.tsx original, navegación y shell reales en tenant demo",Component:FullApp,status:"demo"},
 {id:"landing",name:"Landing",category:"Público",description:"Landing real recuperada de la rama de diseño, aislada en UI Lab",Component:Landing,status:"demo"},
 {id:"studio",name:"Estudio de Operaciones",category:"Trabajo",description:"Business Command Studio original recuperado como vista de laboratorio",Component:Studio,status:"demo"},
+{id:"formation",name:"Formación · 120 microlecciones",category:"Trabajo",description:"Catálogo editorial y ficha inferior deslizable, datos de ejemplo",Component:Formation,status:"fixture"},
 {id:"brand",name:"Identidad visual",category:"Componentes",description:"Marca real y tokens visuales",Component:Brand,status:"demo"},
 {id:"topbar",name:"Barra superior",category:"Componentes",description:"TopBarV2 original, sin backend",Component:()=> <TopBar status="ok" statusLabel="Agente activo" contextLabel="DEMO" onNewChat={()=>{}} onOpenPalette={()=>{}} onOpenMenu={()=>{}}/>,status:"demo"},
 {id:"kpi",name:"Tarjetas KPI",category:"Componentes",description:"KpiCard original con datos sintéticos",Component:()=> <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,padding:24}}><Kpi label="Actividades" value={128} meta="+12 esta semana" icon="purple" series={[4,6,5,9,7,12]}/><Kpi label="Completadas" value={94} meta="Datos de ejemplo" icon="green" series={[2,3,6,7,8,11]}/><Kpi label="Pendientes" value={12} icon="orange" series={[8,7,6,7,5,4]}/></div>,status:"fixture"},
