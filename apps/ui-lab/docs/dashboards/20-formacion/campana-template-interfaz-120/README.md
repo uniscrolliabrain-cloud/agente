@@ -39,6 +39,18 @@ Construir **el template reusable de Formación** para albergar IA01–IA60, R01�
 - [08 · Mockup audiovisual y sheet reutilizable](./08-MOCKUP-REAL-Y-SHEET-REUTILIZABLE.md) — referencia visual aportada, hallazgos reales de chat FAB y plan de vertical slice.
 - [09 · Criterios de componentes desde auditorías Landing + Studio](./09-CRITERIOS-COMPONENTES-DESDE-AUDITS.md) — reglas de composición abierta, densidad, motion, componentes reutilizables y gates de calidad.
 
+## Manual premium para construir (V2)
+
+Esta campaña se complementa con un manual de diseño de calidad equivalente en **profundidad documental** al sistema de Landing. Las especificaciones no acreditan todavía paridad visual ni implementación.
+
+- [10 · Manual maestro de diseño](./10-MANUAL-MAESTRO-DISENO.md) — fuente de verdad, tokens, tipografía, composición, densidad y antipatrones.
+- [11 · Sistema de motion y sheet](./11-SISTEMA-MOTION-Y-SHEET.md) — máquina de estados, arrastre, storyboard, accesibilidad y continuidad.
+- [12 · Portadas y catálogo de 120](./12-SISTEMA-PORTADAS-Y-CATALOGO.md) — gramática editorial, disponibilidad, portadas y recomendaciones.
+- [13 · Plan de implementación y validación](./13-PLAN-IMPLEMENTACION-Y-VALIDACION.md) — siete campañas, gates y trazabilidad.
+- [14 · Prompt maestra de ejecución V2](./14-PROMPT-MAESTRA-EJECUCION-V2.md) — handoff para implementar en UI Lab sin alterar producción.
+
+**Nota de coherencia:** las fases C00–C09 del documento 03 son el desglose técnico original; las campañas 0–6 del documento 13 agrupan ese trabajo en entregables visuales verificables. Para dirección de arte y QA, prevalecen 10–14 sobre los borradores 01–05 cuando haya contradicción.
+
 ## Condición de salida
 
 No basta con que compile: **capturas reales** escritorio/móvil, interacción reproducible, diseño comparado con Landing y Estudio Demo del mismo commit, validación responsive y aprobación del founder. La campaña no autoriza deploy.
