@@ -9,6 +9,7 @@ import {
 import type { Auth } from "./auth.ts";
 import type { Config } from "./config.ts";
 import { ConversationAgent } from "./engine/conversation.ts";
+import { CognitionV2ChatAgent } from "./engine/cognition/v2/chat-agent.ts";
 import type { AgentService } from "./engine/service.ts";
 
 export function agentConfigured(config: Config) {
@@ -29,7 +30,11 @@ export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
     currentTenantScope()?.actorId ?? await auth.owner(request.headers.get("authorization") ?? undefined);
   const agents: AgentsFactory = async ({ request }) => ({
     default:
-      config.agentBackend === "sample"
+      // Opted-in tenants use Cognition V2 end-to-end, without V1 fallback.
+      // Explicit remote AG-UI backend stays isolated until migration approval.
+      config.agentBackend !== "agui" && service.cognitionV2?.enabledForRequest()
+        ? new CognitionV2ChatAgent(service.cognitionV2, await ownerFor(request))
+        : config.agentBackend === "sample"
         ? new ConversationAgent(
             config,
             service,
