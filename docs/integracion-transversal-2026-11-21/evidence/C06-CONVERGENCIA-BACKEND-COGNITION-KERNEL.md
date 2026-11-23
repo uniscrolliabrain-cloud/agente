@@ -72,3 +72,12 @@ Lectura directa de `apps/server/src/app.ts` y `apps/server/src/engine/service.ts
 **Decisión de integración:** no apagar `/api/voice`, `/api/cognition` ni la conversación legacy globalmente todavía. Primero comprobar si tienen tráfico y qué funcionalidades carecen de reemplazo. Incorporar un modo de cutover por tenant, con kill switch, observabilidad, tests y rollback; la eliminación lógica de legacy debe ser posterior a la paridad funcional.
 
 **Prioridad inmediata:** registrar rutas efectivas y ownership de fast/slow por tenant, instrumentar los dos loops y demostrar eventos `runtime → bus → projector → slow → proposed card → kernel policy → delivery → fast` con prueba end-to-end. El objetivo es una LAIA rápida con contexto veraz, no una simulación de omnisciencia.
+
+## Campaña de código C06.P01 — Puertos externos sin activación
+
+- `b26f5af8`: creado `apps/server/src/engine/cognition/v2/external-connectors.ts`, con contratos `ExternalConnectorPort`, `ConnectorAuthorization`, `ConnectorReadiness`, stubs para `jev`, `anam`, `elevenlabs` y helper de prevalidación tenant/actor/policy/operation/expiry. Los tres stubs rechazan ejecución y no hacen red. `verified` queda reservado para una implementación futura auditada.
+- `7b69545c`: suite `tests/cognition-v2-external-connectors.test.ts` para no-readiness, denegación y abort.
+- `77ab5a52`: workflow C05 ampliado para incluir esta suite C06.
+- **No confundir** `assertConnectorGrant` con una autorización criptográfica o consulta al kernel: solo verifica forma, ámbito y caducidad. La validación durable y la reserva de egress deberán permanecer en el kernel antes de implementar un proveedor real.
+- **No integrado aún en el constructor runtime ni en las rutas**: deliberadamente, para no sustituir el clasificador JEV existente o el adaptador multimedia sin verificar sus contratos y preservar compatibilidad.
+- Pruebas CI todavía sin evidencia verde. No hay conexión real ni smoke frontend.
