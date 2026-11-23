@@ -104,3 +104,11 @@ Lectura directa de `apps/server/src/app.ts` y `apps/server/src/engine/service.ts
 - `b6f2fc7c`: tests adicionales de evidencia manipulada, inputs malformados y propagación de `IDEMPOTENCY_CONFLICT` sin reintentos implícitos.
 - La semántica de idempotencia permanece intencional: mismo operationId+evidencia y prompt distinto causa conflicto en la cola durable, no nuevo trabajo. La factualidad `inference`/`reported_fact` no se eleva a `verified_fact`.
 - **No verificado todavía**: typecheck, ejecución CI, transacciones PostgreSQL, carreras de revocación y ownership real de recibos. La activación de C06.P03b seguirá condicionada a pruebas y a un productor durable autenticado; no activar egress ni despliegues.
+
+## C06.P04 — Corrección de callback CopilotKit/AG-UI (2026-11-23)
+
+- Evidencia real de GitHub Actions sobre snapshots `b59b2950` y `4f426ca7`: typecheck y suites específicas PASS; `tests/cognition-v2-http.test.ts` FAIL con `RUN_ERROR Cannot read properties of undefined (reading 'chat')`, `INCOMPLETE_STREAM`.
+- Diagnóstico: `CognitionV2ChatAgent.run` dependía de `this.cognition` sin vincular la función; CopilotKit puede extraer `run` y llamarla como callback.
+- `a2a21bd2`: vinculación `this.run = this.run.bind(this)` en constructor, sin cambiar contrato ni ruta de ejecución.
+- `205ee036`: prueba de regresión que extrae `const extractedRun = adapter.run` y lo invoca sin receptor. Debe demostrar la conservación del ámbito y owner.
+- **No cerrar todavía**: verificar el nuevo SHA en GitHub Actions, especialmente el test HTTP completo. Esta corrección es una hipótesis con fundamento en el error original, pero requiere confirmación experimental.
