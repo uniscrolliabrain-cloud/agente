@@ -29,3 +29,7 @@ Las 19 carpetas principales conservan el orden aprobado por el founder.
 - [Tareas: aprovechable](./19-general/superficies-transversales/TAREAS.md)
 
 **Importante:** Estudio Demo no es automáticamente Estudio de Operaciones. Las 34 fichas de Apps están dentro de [11-apps](./11-apps/README.md); disponer de documentación no implica tener el diseño aprobado. No se modifica código ni se despliega por esta clasificación.
+
+## Nombres de interfaz
+
+La [nomenclatura objetivo de las 19 pantallas y las 34 Apps](./19-general/NOMENCLATURA-UI-FINAL.md) es la referencia para futuros cambios de etiquetas en la aplicación real. El catálogo de 34 Apps está en [11-apps/CATALOGO-34-APPS.md](./11-apps/CATALOGO-34-APPS.md). El selector del laboratorio no sustituye el menú de AgntiaPro.
