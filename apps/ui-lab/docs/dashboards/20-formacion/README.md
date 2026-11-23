@@ -10,6 +10,9 @@ La sección **Formación** es una parte de AgntiaPro con experiencia de descubri
 La unidad pedagógica es un reel de 20–45 s producido con IA, con subtítulos, caption, demostración verificable y CTA contextual: **Conectar aplicación** si no está autorizada, **Pruébalo con LAIA** si ya lo está. La autorización es reutilizable entre ejercicios y revocable. Nunca forzar conexiones para ver contenido.
 
 ## Inventario
+- **[Propuesta SOP cíclico con Cognition V2 TRUE](./PROPUESTA-SOP-CICLICO-COGNITION-V2-TRUE.md)** — arquitectura objetivo, contraste con código, gates y fallbacks.
+- **[60 guiones de 40 segundos](./ejercicios/60-GUIONES-40-SEGUNDOS.md)** — propuestas de locución IA01–IA60, pendientes de revisión y cronometraje.
+
 - **[Auditoría de nomenclatura y lexicón del recomendador](./AUDITORIA-LEXICON-RECOMENDADOR.md)** — contratos reales, colisiones semánticas y gate de implementación.
 
 - **[60 microlecciones de IA técnica y profesional](./ejercicios/60-ia-profesional.md)** — catálogo nuevo, pendiente de producción.
