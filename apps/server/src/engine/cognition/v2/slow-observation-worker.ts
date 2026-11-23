@@ -12,7 +12,11 @@ export class SlowObservationWorker {
   constructor(private readonly runtime: CognitionV2Runtime,
     private readonly dailyLimit = 20, db: Store = runtime.db) {
     if (!Number.isSafeInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 500) throw Error("SLOW_OBSERVER_QUOTA_INVALID");
-    this.cursor = new DurableProjector(db, "slow-observer-v2.1");
+    this.cursor = new DurableProjector(db, "slow-observer-v2.1", () => Date.now(), error => {
+      if (!(error instanceof Error) || error.message !== "SLOW_OBSERVER_DAILY_QUOTA_EXHAUSTED") return null;
+      const now = new Date();
+      return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+    });
     this.bridge = new SlowObservationBridge(runtime.context, runtime.slow);
   }
   async tick(tenant: string, limit = 25): Promise<number> {
