@@ -7,6 +7,15 @@
 ### IA01 · La IA no piensa por ti
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un informe puede sonar convincente y estar equivocado. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
+
+**10–20 s · Idea:** «La IA no piensa por ti. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+
+**20–30 s · Ejemplo en pantalla:** «Pídele tres opciones y comprueba tú los datos antes de decidir. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+
+**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
+
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «La IA no piensa por ti: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pídele tres opciones y comprueba tú los datos antes de decidir.
+
 **PROMPT DE PRODUCCIÓN IA01 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «La IA no piensa por ti».
 - **00–10 s / gancho:** plano stock «AI report verification», narrar literalmente el gancho del guion.
@@ -17,18 +26,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA02 · Qué es la cognición aumentada
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Tu experiencia aporta contexto; la IA puede ordenar alternativas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «La IA no piensa por ti. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es la cognición aumentada. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Pídele tres opciones y comprueba tú los datos antes de decidir. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Explica una decisión real y compara opciones, riesgos y evidencias. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «La IA no piensa por ti: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pídele tres opciones y comprueba tú los datos antes de decidir.
-
-### IA02 · Qué es la cognición aumentada
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Tu experiencia aporta contexto; la IA puede ordenar alternativas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es la cognición aumentada: un ejemplo para aplicar hoy con LAIA». **Práctica:** Explica una decisión real y compara opciones, riesgos y evidencias.
 
 **PROMPT DE PRODUCCIÓN IA02 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es la cognición aumentada».
@@ -40,18 +48,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA03 · Qué es un LLM
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un modelo de lenguaje predice y genera texto; no garantiza verdad. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es la cognición aumentada. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un LLM. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Explica una decisión real y compara opciones, riesgos y evidencias. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Pide una explicación y solicita fuentes comprobables. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es la cognición aumentada: un ejemplo para aplicar hoy con LAIA». **Práctica:** Explica una decisión real y compara opciones, riesgos y evidencias.
-
-### IA03 · Qué es un LLM
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un modelo de lenguaje predice y genera texto; no garantiza verdad. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un LLM: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide una explicación y solicita fuentes comprobables.
 
 **PROMPT DE PRODUCCIÓN IA03 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un LLM».
@@ -63,18 +70,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA04 · Cómo hacer buenas preguntas
+**00–10 s · Gancho:** «¿Te has encontrado con esto? «Hazme marketing» es demasiado abierto. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un LLM. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Cómo hacer buenas preguntas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Pide una explicación y solicita fuentes comprobables. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Indica audiencia, objetivo, canal y formato de entrega. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un LLM: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide una explicación y solicita fuentes comprobables.
-
-### IA04 · Cómo hacer buenas preguntas
-**00–10 s · Gancho:** «¿Te has encontrado con esto? «Hazme marketing» es demasiado abierto. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Cómo hacer buenas preguntas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Indica audiencia, objetivo, canal y formato de entrega.
 
 **PROMPT DE PRODUCCIÓN IA04 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Cómo hacer buenas preguntas».
@@ -86,18 +92,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA05 · Qué es un prompt
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una instrucción mejora cuando das contexto y límites. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Cómo hacer buenas preguntas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un prompt. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Indica audiencia, objetivo, canal y formato de entrega. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Escribe objetivo, contexto, datos, restricciones y resultado esperado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Cómo hacer buenas preguntas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Indica audiencia, objetivo, canal y formato de entrega.
-
-### IA05 · Qué es un prompt
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una instrucción mejora cuando das contexto y límites. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un prompt: un ejemplo para aplicar hoy con LAIA». **Práctica:** Escribe objetivo, contexto, datos, restricciones y resultado esperado.
 
 **PROMPT DE PRODUCCIÓN IA05 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un prompt».
@@ -109,18 +114,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA06 · Pensar con varias perspectivas
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una propuesta entusiasma a ventas y preocupa a finanzas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un prompt. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Pensar con varias perspectivas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Escribe objetivo, contexto, datos, restricciones y resultado esperado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Pide objeciones desde cliente, operaciones y dirección. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un prompt: un ejemplo para aplicar hoy con LAIA». **Práctica:** Escribe objetivo, contexto, datos, restricciones y resultado esperado.
-
-### IA06 · Pensar con varias perspectivas
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una propuesta entusiasma a ventas y preocupa a finanzas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Pensar con varias perspectivas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide objeciones desde cliente, operaciones y dirección.
 
 **PROMPT DE PRODUCCIÓN IA06 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Pensar con varias perspectivas».
@@ -132,18 +136,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA07 · Qué es el pensamiento crítico
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una cifra precisa no es necesariamente correcta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Pensar con varias perspectivas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es el pensamiento crítico. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Pide objeciones desde cliente, operaciones y dirección. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Pregunta qué evidencia falta y qué hipótesis podría fallar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Pensar con varias perspectivas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide objeciones desde cliente, operaciones y dirección.
-
-### IA07 · Qué es el pensamiento crítico
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una cifra precisa no es necesariamente correcta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es el pensamiento crítico: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pregunta qué evidencia falta y qué hipótesis podría fallar.
 
 **PROMPT DE PRODUCCIÓN IA07 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es el pensamiento crítico».
@@ -155,18 +158,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA08 · Cómo contrastar una respuesta
+**00–10 s · Gancho:** «¿Te has encontrado con esto? La IA cita un dato de mercado sin fecha. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es el pensamiento crítico. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Cómo contrastar una respuesta. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Pregunta qué evidencia falta y qué hipótesis podría fallar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Busca la fuente primaria y comprueba periodo y metodología. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es el pensamiento crítico: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pregunta qué evidencia falta y qué hipótesis podría fallar.
-
-### IA08 · Cómo contrastar una respuesta
-**00–10 s · Gancho:** «¿Te has encontrado con esto? La IA cita un dato de mercado sin fecha. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Cómo contrastar una respuesta: un ejemplo para aplicar hoy con LAIA». **Práctica:** Busca la fuente primaria y comprueba periodo y metodología.
 
 **PROMPT DE PRODUCCIÓN IA08 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Cómo contrastar una respuesta».
@@ -178,18 +180,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA09 · Aprende algo nuevo en diez minutos
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas entender una herramienta antes de una reunión. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Cómo contrastar una respuesta. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Aprende algo nuevo en diez minutos. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Busca la fuente primaria y comprueba periodo y metodología. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Pide una explicación sencilla, tres preguntas y un mini ejercicio. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Cómo contrastar una respuesta: un ejemplo para aplicar hoy con LAIA». **Práctica:** Busca la fuente primaria y comprueba periodo y metodología.
-
-### IA09 · Aprende algo nuevo en diez minutos
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas entender una herramienta antes de una reunión. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Aprende algo nuevo en diez minutos: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide una explicación sencilla, tres preguntas y un mini ejercicio.
 
 **PROMPT DE PRODUCCIÓN IA09 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Aprende algo nuevo en diez minutos».
@@ -201,29 +202,8 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
-
-
-**10–20 s · Idea:** «Aprende algo nuevo en diez minutos. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
-
-**20–30 s · Ejemplo en pantalla:** «Pide una explicación sencilla, tres preguntas y un mini ejercicio. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
-
-**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
-
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Aprende algo nuevo en diez minutos: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide una explicación sencilla, tres preguntas y un mini ejercicio.
-
 ### IA10 · No delegues tu criterio
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una IA recomienda rechazar una reclamación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
-
-**PROMPT DE PRODUCCIÓN IA10 (acompaña este guion de 40 s)**
-- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «No delegues tu criterio».
-- **00–10 s / gancho:** plano stock «human decision approval», narrar literalmente el gancho del guion.
-- **10–20 s / concepto:** plano stock «manager reviewing report», superponer rótulo breve «No delegues tu criterio».
-- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
-- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
-- **Búsquedas gratuitas específicas (EN):** `human decision approval`; `manager reviewing report`; `human decision approval vertical video`.
-- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
-- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
-
 
 
 **10–20 s · Idea:** «No delegues tu criterio. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
@@ -236,8 +216,27 @@
 
 ## Pensamiento sistémico
 
+**PROMPT DE PRODUCCIÓN IA10 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «No delegues tu criterio».
+- **00–10 s / gancho:** plano stock «human decision approval», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «manager reviewing report», superponer rótulo breve «No delegues tu criterio».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `human decision approval`; `manager reviewing report`; `human decision approval vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
 ### IA11 · Qué es un sistema
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Un pedido entra, se procesa y termina en entrega. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+
+**10–20 s · Idea:** «Qué es un sistema. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+
+**20–30 s · Ejemplo en pantalla:** «Dibuja entrada, transformación, salida y retroalimentación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+
+**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
+
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un sistema: un ejemplo para aplicar hoy con LAIA». **Práctica:** Dibuja entrada, transformación, salida y retroalimentación.
 
 **PROMPT DE PRODUCCIÓN IA11 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un sistema».
@@ -249,18 +248,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA12 · Tu empresa es un sistema
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Ventas promete algo que operaciones no puede entregar. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un sistema. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Tu empresa es un sistema. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Dibuja entrada, transformación, salida y retroalimentación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Relaciona equipos, información y dependencias. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un sistema: un ejemplo para aplicar hoy con LAIA». **Práctica:** Dibuja entrada, transformación, salida y retroalimentación.
-
-### IA12 · Tu empresa es un sistema
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Ventas promete algo que operaciones no puede entregar. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Tu empresa es un sistema: un ejemplo para aplicar hoy con LAIA». **Práctica:** Relaciona equipos, información y dependencias.
 
 **PROMPT DE PRODUCCIÓN IA12 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Tu empresa es un sistema».
@@ -272,18 +270,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA13 · Piensa en procesos, no en tareas aisladas
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Responder un correo no equivale a resolver una incidencia. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Tu empresa es un sistema. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Piensa en procesos, no en tareas aisladas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Relaciona equipos, información y dependencias. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Sigue el proceso desde la solicitud hasta su cierre. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Tu empresa es un sistema: un ejemplo para aplicar hoy con LAIA». **Práctica:** Relaciona equipos, información y dependencias.
-
-### IA13 · Piensa en procesos, no en tareas aisladas
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Responder un correo no equivale a resolver una incidencia. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Piensa en procesos, no en tareas aisladas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Sigue el proceso desde la solicitud hasta su cierre.
 
 **PROMPT DE PRODUCCIÓN IA13 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Piensa en procesos, no en tareas aisladas».
@@ -295,18 +292,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA14 · Qué es un flujo de trabajo
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una factura pasa por recepción, revisión y pago. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Piensa en procesos, no en tareas aisladas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un flujo de trabajo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Sigue el proceso desde la solicitud hasta su cierre. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Ordena los pasos y marca quién interviene. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Piensa en procesos, no en tareas aisladas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Sigue el proceso desde la solicitud hasta su cierre.
-
-### IA14 · Qué es un flujo de trabajo
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una factura pasa por recepción, revisión y pago. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un flujo de trabajo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Ordena los pasos y marca quién interviene.
 
 **PROMPT DE PRODUCCIÓN IA14 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un flujo de trabajo».
@@ -318,18 +314,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA15 · Qué es un cuello de botella
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Diez solicitudes esperan una única aprobación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un flujo de trabajo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un cuello de botella. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Ordena los pasos y marca quién interviene. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Localiza la etapa donde se acumula el trabajo. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un flujo de trabajo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Ordena los pasos y marca quién interviene.
-
-### IA15 · Qué es un cuello de botella
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Diez solicitudes esperan una única aprobación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un cuello de botella: un ejemplo para aplicar hoy con LAIA». **Práctica:** Localiza la etapa donde se acumula el trabajo.
 
 **PROMPT DE PRODUCCIÓN IA15 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un cuello de botella».
@@ -341,18 +336,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA16 · Qué son las dependencias
+**00–10 s · Gancho:** «¿Te has encontrado con esto? No puedes publicar antes de aprobar el diseño. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un cuello de botella. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué son las dependencias. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Localiza la etapa donde se acumula el trabajo. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Marca los pasos que deben terminar primero. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un cuello de botella: un ejemplo para aplicar hoy con LAIA». **Práctica:** Localiza la etapa donde se acumula el trabajo.
-
-### IA16 · Qué son las dependencias
-**00–10 s · Gancho:** «¿Te has encontrado con esto? No puedes publicar antes de aprobar el diseño. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué son las dependencias: un ejemplo para aplicar hoy con LAIA». **Práctica:** Marca los pasos que deben terminar primero.
 
 **PROMPT DE PRODUCCIÓN IA16 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué son las dependencias».
@@ -364,18 +358,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA17 · Qué es la retroalimentación
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una campaña se repite aunque no funcione. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué son las dependencias. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es la retroalimentación. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Marca los pasos que deben terminar primero. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Define una métrica y ajusta el siguiente ciclo. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué son las dependencias: un ejemplo para aplicar hoy con LAIA». **Práctica:** Marca los pasos que deben terminar primero.
-
-### IA17 · Qué es la retroalimentación
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una campaña se repite aunque no funcione. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es la retroalimentación: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define una métrica y ajusta el siguiente ciclo.
 
 **PROMPT DE PRODUCCIÓN IA17 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es la retroalimentación».
@@ -387,18 +380,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA18 · Qué es un mapa de procesos
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un compañero nuevo no entiende cómo se atienden clientes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es la retroalimentación. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un mapa de procesos. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Define una métrica y ajusta el siguiente ciclo. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Dibuja actores, decisiones y traspasos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es la retroalimentación: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define una métrica y ajusta el siguiente ciclo.
-
-### IA18 · Qué es un mapa de procesos
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un compañero nuevo no entiende cómo se atienden clientes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un mapa de procesos: un ejemplo para aplicar hoy con LAIA». **Práctica:** Dibuja actores, decisiones y traspasos.
 
 **PROMPT DE PRODUCCIÓN IA18 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un mapa de procesos».
@@ -410,18 +402,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA19 · Qué es un sistema complejo
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Cambiar un plazo puede alterar soporte y cobros. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un mapa de procesos. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un sistema complejo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Dibuja actores, decisiones y traspasos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Enumera efectos secundarios antes de optimizar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un mapa de procesos: un ejemplo para aplicar hoy con LAIA». **Práctica:** Dibuja actores, decisiones y traspasos.
-
-### IA19 · Qué es un sistema complejo
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Cambiar un plazo puede alterar soporte y cobros. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un sistema complejo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Enumera efectos secundarios antes de optimizar.
 
 **PROMPT DE PRODUCCIÓN IA19 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un sistema complejo».
@@ -433,29 +424,8 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
-
-
-**10–20 s · Idea:** «Qué es un sistema complejo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
-
-**20–30 s · Ejemplo en pantalla:** «Enumera efectos secundarios antes de optimizar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
-
-**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
-
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un sistema complejo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Enumera efectos secundarios antes de optimizar.
-
 ### IA20 · Mejora el sistema, no solo tu velocidad
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Responder más rápido no sirve si luego hay retrabajo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
-
-**PROMPT DE PRODUCCIÓN IA20 (acompaña este guion de 40 s)**
-- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Mejora el sistema, no solo tu velocidad».
-- **00–10 s / gancho:** plano stock «process improvement team», narrar literalmente el gancho del guion.
-- **10–20 s / concepto:** plano stock «reducing rework», superponer rótulo breve «Mejora el sistema, no solo tu velocidad».
-- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
-- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
-- **Búsquedas gratuitas específicas (EN):** `process improvement team`; `reducing rework`; `process improvement team vertical video`.
-- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
-- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
-
 
 
 **10–20 s · Idea:** «Mejora el sistema, no solo tu velocidad. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
@@ -468,8 +438,27 @@
 
 ## Descubre qué puedes automatizar
 
+**PROMPT DE PRODUCCIÓN IA20 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Mejora el sistema, no solo tu velocidad».
+- **00–10 s / gancho:** plano stock «process improvement team», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «reducing rework», superponer rótulo breve «Mejora el sistema, no solo tu velocidad».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `process improvement team`; `reducing rework`; `process improvement team vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
 ### IA21 · Qué es automatizar
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Copias datos de formularios a una tabla cada mañana. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+
+**10–20 s · Idea:** «Qué es automatizar. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+
+**20–30 s · Ejemplo en pantalla:** «Separa reglas repetibles de decisiones que requieren juicio. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+
+**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
+
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es automatizar: un ejemplo para aplicar hoy con LAIA». **Práctica:** Separa reglas repetibles de decisiones que requieren juicio.
 
 **PROMPT DE PRODUCCIÓN IA21 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es automatizar».
@@ -481,18 +470,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA22 · Audita tu jornada laboral
+**00–10 s · Gancho:** «¿Te has encontrado con esto? El día se llena de tareas pequeñas que no recuerdas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es automatizar. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Audita tu jornada laboral. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Separa reglas repetibles de decisiones que requieren juicio. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Anota durante una jornada actividad, duración y frecuencia. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es automatizar: un ejemplo para aplicar hoy con LAIA». **Práctica:** Separa reglas repetibles de decisiones que requieren juicio.
-
-### IA22 · Audita tu jornada laboral
-**00–10 s · Gancho:** «¿Te has encontrado con esto? El día se llena de tareas pequeñas que no recuerdas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Audita tu jornada laboral: un ejemplo para aplicar hoy con LAIA». **Práctica:** Anota durante una jornada actividad, duración y frecuencia.
 
 **PROMPT DE PRODUCCIÓN IA22 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Audita tu jornada laboral».
@@ -504,18 +492,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA23 · Detecta tareas repetitivas
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Cada viernes preparas el mismo resumen. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Audita tu jornada laboral. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Detecta tareas repetitivas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Anota durante una jornada actividad, duración y frecuencia. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Identifica entradas, plantilla y variaciones. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Audita tu jornada laboral: un ejemplo para aplicar hoy con LAIA». **Práctica:** Anota durante una jornada actividad, duración y frecuencia.
-
-### IA23 · Detecta tareas repetitivas
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Cada viernes preparas el mismo resumen. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Detecta tareas repetitivas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Identifica entradas, plantilla y variaciones.
 
 **PROMPT DE PRODUCCIÓN IA23 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Detecta tareas repetitivas».
@@ -527,18 +514,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA24 · Reconoce patrones
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Los correos de facturas siguen casi siempre el mismo recorrido. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Detecta tareas repetitivas. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Reconoce patrones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Identifica entradas, plantilla y variaciones. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Describe condiciones «si ocurre A, entonces B». LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Detecta tareas repetitivas: un ejemplo para aplicar hoy con LAIA». **Práctica:** Identifica entradas, plantilla y variaciones.
-
-### IA24 · Reconoce patrones
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Los correos de facturas siguen casi siempre el mismo recorrido. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Reconoce patrones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Describe condiciones «si ocurre A, entonces B».
 
 **PROMPT DE PRODUCCIÓN IA24 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Reconoce patrones».
@@ -550,18 +536,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA25 · Qué tareas no debes automatizar
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una decisión de contratación afecta a personas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Reconoce patrones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué tareas no debes automatizar. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Describe condiciones «si ocurre A, entonces B». LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Reserva supervisión humana para casos sensibles. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Reconoce patrones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Describe condiciones «si ocurre A, entonces B».
-
-### IA25 · Qué tareas no debes automatizar
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una decisión de contratación afecta a personas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué tareas no debes automatizar: un ejemplo para aplicar hoy con LAIA». **Práctica:** Reserva supervisión humana para casos sensibles.
 
 **PROMPT DE PRODUCCIÓN IA25 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué tareas no debes automatizar».
@@ -573,18 +558,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA26 · Calcula el coste de una tarea
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Quince minutos diarios se acumulan durante el mes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué tareas no debes automatizar. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Calcula el coste de una tarea. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Reserva supervisión humana para casos sensibles. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Multiplica duración, frecuencia y coste de errores. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué tareas no debes automatizar: un ejemplo para aplicar hoy con LAIA». **Práctica:** Reserva supervisión humana para casos sensibles.
-
-### IA26 · Calcula el coste de una tarea
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Quince minutos diarios se acumulan durante el mes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Calcula el coste de una tarea: un ejemplo para aplicar hoy con LAIA». **Práctica:** Multiplica duración, frecuencia y coste de errores.
 
 **PROMPT DE PRODUCCIÓN IA26 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Calcula el coste de una tarea».
@@ -596,18 +580,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA27 · Prioriza automatizaciones
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Tienes diez ideas y solo tiempo para una. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Calcula el coste de una tarea. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Prioriza automatizaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Multiplica duración, frecuencia y coste de errores. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Compara impacto, esfuerzo, riesgo y reversibilidad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Calcula el coste de una tarea: un ejemplo para aplicar hoy con LAIA». **Práctica:** Multiplica duración, frecuencia y coste de errores.
-
-### IA27 · Prioriza automatizaciones
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Tienes diez ideas y solo tiempo para una. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Prioriza automatizaciones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Compara impacto, esfuerzo, riesgo y reversibilidad.
 
 **PROMPT DE PRODUCCIÓN IA27 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Prioriza automatizaciones».
@@ -619,18 +602,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA28 · Automatiza primero una tarea pequeña
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres automatizar toda la empresa de golpe. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Prioriza automatizaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Automatiza primero una tarea pequeña. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Compara impacto, esfuerzo, riesgo y reversibilidad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Empieza por un recordatorio verificable y reversible. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Prioriza automatizaciones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Compara impacto, esfuerzo, riesgo y reversibilidad.
-
-### IA28 · Automatiza primero una tarea pequeña
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres automatizar toda la empresa de golpe. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Automatiza primero una tarea pequeña: un ejemplo para aplicar hoy con LAIA». **Práctica:** Empieza por un recordatorio verificable y reversible.
 
 **PROMPT DE PRODUCCIÓN IA28 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Automatiza primero una tarea pequeña».
@@ -642,18 +624,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA29 · Qué hacer con las excepciones
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento llega incompleto. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Automatiza primero una tarea pequeña. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué hacer con las excepciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Empieza por un recordatorio verificable y reversible. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Diseña una salida segura: pausa, aviso y revisión. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Automatiza primero una tarea pequeña: un ejemplo para aplicar hoy con LAIA». **Práctica:** Empieza por un recordatorio verificable y reversible.
-
-### IA29 · Qué hacer con las excepciones
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento llega incompleto. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué hacer con las excepciones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Diseña una salida segura: pausa, aviso y revisión.
 
 **PROMPT DE PRODUCCIÓN IA29 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué hacer con las excepciones».
@@ -665,29 +646,8 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
-
-
-**10–20 s · Idea:** «Qué hacer con las excepciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
-
-**20–30 s · Ejemplo en pantalla:** «Diseña una salida segura: pausa, aviso y revisión. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
-
-**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
-
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué hacer con las excepciones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Diseña una salida segura: pausa, aviso y revisión.
-
 ### IA30 · Crea tu mapa personal de automatizaciones
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Sabes que repites trabajo, pero no sabes por dónde empezar. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
-
-**PROMPT DE PRODUCCIÓN IA30 (acompaña este guion de 40 s)**
-- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Crea tu mapa personal de automatizaciones».
-- **00–10 s / gancho:** plano stock «automation ideas workshop», narrar literalmente el gancho del guion.
-- **10–20 s / concepto:** plano stock «business process board», superponer rótulo breve «Crea tu mapa personal de automatizaciones».
-- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
-- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
-- **Búsquedas gratuitas específicas (EN):** `automation ideas workshop`; `business process board`; `automation ideas workshop vertical video`.
-- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
-- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
-
 
 
 **10–20 s · Idea:** «Crea tu mapa personal de automatizaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
@@ -700,8 +660,27 @@
 
 ## SOPs, skills y automatizaciones
 
+**PROMPT DE PRODUCCIÓN IA30 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Crea tu mapa personal de automatizaciones».
+- **00–10 s / gancho:** plano stock «automation ideas workshop», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business process board», superponer rótulo breve «Crea tu mapa personal de automatizaciones».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `automation ideas workshop`; `business process board`; `automation ideas workshop vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
 ### IA31 · Qué es un SOP
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Cada persona prepara una propuesta de forma distinta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+
+**10–20 s · Idea:** «Qué es un SOP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+
+**20–30 s · Ejemplo en pantalla:** «Documenta un procedimiento con pasos y resultado comprobable. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+
+**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
+
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un SOP: un ejemplo para aplicar hoy con LAIA». **Práctica:** Documenta un procedimiento con pasos y resultado comprobable.
 
 **PROMPT DE PRODUCCIÓN IA31 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un SOP».
@@ -713,18 +692,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA32 · Convierte tu trabajo en un SOP
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Preparar un alta de cliente depende de tu memoria. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un SOP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Convierte tu trabajo en un SOP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Documenta un procedimiento con pasos y resultado comprobable. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Escribe entrada, pasos, excepciones, responsable y verificación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un SOP: un ejemplo para aplicar hoy con LAIA». **Práctica:** Documenta un procedimiento con pasos y resultado comprobable.
-
-### IA32 · Convierte tu trabajo en un SOP
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Preparar un alta de cliente depende de tu memoria. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Convierte tu trabajo en un SOP: un ejemplo para aplicar hoy con LAIA». **Práctica:** Escribe entrada, pasos, excepciones, responsable y verificación.
 
 **PROMPT DE PRODUCCIÓN IA32 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Convierte tu trabajo en un SOP».
@@ -736,18 +714,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA33 · Qué es un trigger
+**00–10 s · Gancho:** «¿Te has encontrado con esto? La llegada de una solicitud puede iniciar un flujo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Convierte tu trabajo en un SOP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un trigger. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Escribe entrada, pasos, excepciones, responsable y verificación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Define el evento que activa el proceso y evita duplicados. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Convierte tu trabajo en un SOP: un ejemplo para aplicar hoy con LAIA». **Práctica:** Escribe entrada, pasos, excepciones, responsable y verificación.
-
-### IA33 · Qué es un trigger
-**00–10 s · Gancho:** «¿Te has encontrado con esto? La llegada de una solicitud puede iniciar un flujo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un trigger: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define el evento que activa el proceso y evita duplicados.
 
 **PROMPT DE PRODUCCIÓN IA33 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un trigger».
@@ -759,18 +736,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA34 · Qué es un pipeline
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento se recibe, clasifica, revisa y archiva. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un trigger. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un pipeline. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Define el evento que activa el proceso y evita duplicados. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Dibuja las etapas y qué entrega cada una a la siguiente. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un trigger: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define el evento que activa el proceso y evita duplicados.
-
-### IA34 · Qué es un pipeline
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento se recibe, clasifica, revisa y archiva. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un pipeline: un ejemplo para aplicar hoy con LAIA». **Práctica:** Dibuja las etapas y qué entrega cada una a la siguiente.
 
 **PROMPT DE PRODUCCIÓN IA34 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un pipeline».
@@ -782,18 +758,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA35 · Qué es un skill
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Reutilizas siempre la misma capacidad de resumir documentos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un pipeline. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un skill. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Dibuja las etapas y qué entrega cada una a la siguiente. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Define una función reutilizable con entradas y salidas claras. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un pipeline: un ejemplo para aplicar hoy con LAIA». **Práctica:** Dibuja las etapas y qué entrega cada una a la siguiente.
-
-### IA35 · Qué es un skill
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Reutilizas siempre la misma capacidad de resumir documentos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un skill: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define una función reutilizable con entradas y salidas claras.
 
 **PROMPT DE PRODUCCIÓN IA35 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un skill».
@@ -805,18 +780,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA36 · Qué es un boilerplate
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Creas propuestas desde cero una y otra vez. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un skill. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es un boilerplate. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Define una función reutilizable con entradas y salidas claras. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Prepara una plantilla base editable y revisa sus supuestos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un skill: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define una función reutilizable con entradas y salidas claras.
-
-### IA36 · Qué es un boilerplate
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Creas propuestas desde cero una y otra vez. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un boilerplate: un ejemplo para aplicar hoy con LAIA». **Práctica:** Prepara una plantilla base editable y revisa sus supuestos.
 
 **PROMPT DE PRODUCCIÓN IA36 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es un boilerplate».
@@ -828,18 +802,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA37 · Qué es una API
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Dos aplicaciones necesitan intercambiar datos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es un boilerplate. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es una API. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Prepara una plantilla base editable y revisa sus supuestos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Distingue solicitud, permiso, respuesta y error. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es un boilerplate: un ejemplo para aplicar hoy con LAIA». **Práctica:** Prepara una plantilla base editable y revisa sus supuestos.
-
-### IA37 · Qué es una API
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Dos aplicaciones necesitan intercambiar datos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es una API: un ejemplo para aplicar hoy con LAIA». **Práctica:** Distingue solicitud, permiso, respuesta y error.
 
 **PROMPT DE PRODUCCIÓN IA37 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es una API».
@@ -851,18 +824,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA38 · Qué son los conectores y MCP
+**00–10 s · Gancho:** «¿Te has encontrado con esto? LAIA necesita trabajar con una aplicación externa. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es una API. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué son los conectores y MCP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Distingue solicitud, permiso, respuesta y error. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Comprende la conexión autorizada y la descripción de herramientas. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es una API: un ejemplo para aplicar hoy con LAIA». **Práctica:** Distingue solicitud, permiso, respuesta y error.
-
-### IA38 · Qué son los conectores y MCP
-**00–10 s · Gancho:** «¿Te has encontrado con esto? LAIA necesita trabajar con una aplicación externa. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué son los conectores y MCP: un ejemplo para aplicar hoy con LAIA». **Práctica:** Comprende la conexión autorizada y la descripción de herramientas.
 
 **PROMPT DE PRODUCCIÓN IA38 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué son los conectores y MCP».
@@ -874,18 +846,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA39 · Qué es una aprobación humana
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un borrador de correo puede prepararse sin enviarse. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué son los conectores y MCP. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es una aprobación humana. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Comprende la conexión autorizada y la descripción de herramientas. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Marca el punto exacto donde una persona debe aprobar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué son los conectores y MCP: un ejemplo para aplicar hoy con LAIA». **Práctica:** Comprende la conexión autorizada y la descripción de herramientas.
-
-### IA39 · Qué es una aprobación humana
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un borrador de correo puede prepararse sin enviarse. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es una aprobación humana: un ejemplo para aplicar hoy con LAIA». **Práctica:** Marca el punto exacto donde una persona debe aprobar.
 
 **PROMPT DE PRODUCCIÓN IA39 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es una aprobación humana».
@@ -897,29 +868,8 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
-
-
-**10–20 s · Idea:** «Qué es una aprobación humana. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
-
-**20–30 s · Ejemplo en pantalla:** «Marca el punto exacto donde una persona debe aprobar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
-
-**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
-
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es una aprobación humana: un ejemplo para aplicar hoy con LAIA». **Práctica:** Marca el punto exacto donde una persona debe aprobar.
-
 ### IA40 · De tarea a automatización completa
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Una solicitud debe pasar de entrada a cierre. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
-
-**PROMPT DE PRODUCCIÓN IA40 (acompaña este guion de 40 s)**
-- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «De tarea a automatización completa».
-- **00–10 s / gancho:** plano stock «end to end business process», narrar literalmente el gancho del guion.
-- **10–20 s / concepto:** plano stock «workflow completion checklist», superponer rótulo breve «De tarea a automatización completa».
-- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
-- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
-- **Búsquedas gratuitas específicas (EN):** `end to end business process`; `workflow completion checklist`; `end to end business process vertical video`.
-- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
-- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
-
 
 
 **10–20 s · Idea:** «De tarea a automatización completa. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
@@ -932,8 +882,27 @@
 
 ## Conoce las inteligencias artificiales
 
+**PROMPT DE PRODUCCIÓN IA40 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «De tarea a automatización completa».
+- **00–10 s / gancho:** plano stock «end to end business process», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «workflow completion checklist», superponer rótulo breve «De tarea a automatización completa».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `end to end business process`; `workflow completion checklist`; `end to end business process vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
 ### IA41 · Panorama de las IA actuales
 **00–10 s · Gancho:** «¿Te has encontrado con esto? No todas las herramientas de IA sirven para lo mismo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+
+**10–20 s · Idea:** «Panorama de las IA actuales. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+
+**20–30 s · Ejemplo en pantalla:** «Separa modelos de lenguaje, búsqueda, imagen, voz y agentes. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+
+**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
+
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Panorama de las IA actuales: un ejemplo para aplicar hoy con LAIA». **Práctica:** Separa modelos de lenguaje, búsqueda, imagen, voz y agentes.
 
 **PROMPT DE PRODUCCIÓN IA41 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Panorama de las IA actuales».
@@ -945,18 +914,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA42 · ChatGPT
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas ordenar ideas para una propuesta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Panorama de las IA actuales. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «ChatGPT. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Separa modelos de lenguaje, búsqueda, imagen, voz y agentes. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Pide un esquema, revisa supuestos y corrige el resultado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Panorama de las IA actuales: un ejemplo para aplicar hoy con LAIA». **Práctica:** Separa modelos de lenguaje, búsqueda, imagen, voz y agentes.
-
-### IA42 · ChatGPT
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas ordenar ideas para una propuesta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «ChatGPT: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide un esquema, revisa supuestos y corrige el resultado.
 
 **PROMPT DE PRODUCCIÓN IA42 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «ChatGPT».
@@ -968,18 +936,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA43 · Claude
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Tienes un documento largo que necesitas comprender. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «ChatGPT. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Claude. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Pide un esquema, revisa supuestos y corrige el resultado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Solicita un resumen con referencias a secciones verificables. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «ChatGPT: un ejemplo para aplicar hoy con LAIA». **Práctica:** Pide un esquema, revisa supuestos y corrige el resultado.
-
-### IA43 · Claude
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Tienes un documento largo que necesitas comprender. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Claude: un ejemplo para aplicar hoy con LAIA». **Práctica:** Solicita un resumen con referencias a secciones verificables.
 
 **PROMPT DE PRODUCCIÓN IA43 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Claude».
@@ -991,18 +958,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA44 · Gemini
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Trabajas con documentos y herramientas del ecosistema Google. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Claude. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Gemini. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Solicita un resumen con referencias a secciones verificables. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Comprueba qué integración y permisos están realmente disponibles. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Claude: un ejemplo para aplicar hoy con LAIA». **Práctica:** Solicita un resumen con referencias a secciones verificables.
-
-### IA44 · Gemini
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Trabajas con documentos y herramientas del ecosistema Google. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Gemini: un ejemplo para aplicar hoy con LAIA». **Práctica:** Comprueba qué integración y permisos están realmente disponibles.
 
 **PROMPT DE PRODUCCIÓN IA44 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Gemini».
@@ -1014,18 +980,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA45 · DeepSeek y Qwen
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres comparar modelos para una tarea concreta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Gemini. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «DeepSeek y Qwen. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Comprueba qué integración y permisos están realmente disponibles. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Prueba el mismo caso con criterios de calidad y privacidad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Gemini: un ejemplo para aplicar hoy con LAIA». **Práctica:** Comprueba qué integración y permisos están realmente disponibles.
-
-### IA45 · DeepSeek y Qwen
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres comparar modelos para una tarea concreta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «DeepSeek y Qwen: un ejemplo para aplicar hoy con LAIA». **Práctica:** Prueba el mismo caso con criterios de calidad y privacidad.
 
 **PROMPT DE PRODUCCIÓN IA45 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «DeepSeek y Qwen».
@@ -1037,18 +1002,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA46 · Perplexity y buscadores con IA
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Investigas un proveedor nuevo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «DeepSeek y Qwen. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Perplexity y buscadores con IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Prueba el mismo caso con criterios de calidad y privacidad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Sigue las fuentes y contrasta la información primaria. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «DeepSeek y Qwen: un ejemplo para aplicar hoy con LAIA». **Práctica:** Prueba el mismo caso con criterios de calidad y privacidad.
-
-### IA46 · Perplexity y buscadores con IA
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Investigas un proveedor nuevo. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Perplexity y buscadores con IA: un ejemplo para aplicar hoy con LAIA». **Práctica:** Sigue las fuentes y contrasta la información primaria.
 
 **PROMPT DE PRODUCCIÓN IA46 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Perplexity y buscadores con IA».
@@ -1060,18 +1024,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA47 · IA para imágenes
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas una ilustración para un informe. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Perplexity y buscadores con IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «IA para imágenes. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Sigue las fuentes y contrasta la información primaria. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Define composición, estilo y restricciones de marca. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Perplexity y buscadores con IA: un ejemplo para aplicar hoy con LAIA». **Práctica:** Sigue las fuentes y contrasta la información primaria.
-
-### IA47 · IA para imágenes
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Necesitas una ilustración para un informe. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «IA para imágenes: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define composición, estilo y restricciones de marca.
 
 **PROMPT DE PRODUCCIÓN IA47 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «IA para imágenes».
@@ -1083,18 +1046,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA48 · IA para vídeo y voz
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres explicar un procedimiento en formato audiovisual. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «IA para imágenes. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «IA para vídeo y voz. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Define composición, estilo y restricciones de marca. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Escribe un guion, revisa consentimiento y verifica la narración. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «IA para imágenes: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define composición, estilo y restricciones de marca.
-
-### IA48 · IA para vídeo y voz
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Quieres explicar un procedimiento en formato audiovisual. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «IA para vídeo y voz: un ejemplo para aplicar hoy con LAIA». **Práctica:** Escribe un guion, revisa consentimiento y verifica la narración.
 
 **PROMPT DE PRODUCCIÓN IA48 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «IA para vídeo y voz».
@@ -1106,18 +1068,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA49 · Qué son los agentes IA
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un chat responde; un sistema agéntico coordina pasos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «IA para vídeo y voz. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué son los agentes IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Escribe un guion, revisa consentimiento y verifica la narración. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Distingue propuesta, permisos, ejecución y comprobación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «IA para vídeo y voz: un ejemplo para aplicar hoy con LAIA». **Práctica:** Escribe un guion, revisa consentimiento y verifica la narración.
-
-### IA49 · Qué son los agentes IA
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un chat responde; un sistema agéntico coordina pasos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué son los agentes IA: un ejemplo para aplicar hoy con LAIA». **Práctica:** Distingue propuesta, permisos, ejecución y comprobación.
 
 **PROMPT DE PRODUCCIÓN IA49 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué son los agentes IA».
@@ -1129,29 +1090,8 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
-
-
-**10–20 s · Idea:** «Qué son los agentes IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
-
-**20–30 s · Ejemplo en pantalla:** «Distingue propuesta, permisos, ejecución y comprobación. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
-
-**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
-
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué son los agentes IA: un ejemplo para aplicar hoy con LAIA». **Práctica:** Distingue propuesta, permisos, ejecución y comprobación.
-
 ### IA50 · Qué herramienta elegir
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Tres aplicaciones prometen resolver el mismo problema. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
-
-**PROMPT DE PRODUCCIÓN IA50 (acompaña este guion de 40 s)**
-- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué herramienta elegir».
-- **00–10 s / gancho:** plano stock «software vendor comparison», narrar literalmente el gancho del guion.
-- **10–20 s / concepto:** plano stock «business tool evaluation», superponer rótulo breve «Qué herramienta elegir».
-- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
-- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
-- **Búsquedas gratuitas específicas (EN):** `software vendor comparison`; `business tool evaluation`; `software vendor comparison vertical video`.
-- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
-- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
-
 
 
 **10–20 s · Idea:** «Qué herramienta elegir. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
@@ -1164,8 +1104,27 @@
 
 ## Trabaja con IA de forma responsable
 
+**PROMPT DE PRODUCCIÓN IA50 (acompaña este guion de 40 s)**
+- **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué herramienta elegir».
+- **00–10 s / gancho:** plano stock «software vendor comparison», narrar literalmente el gancho del guion.
+- **10–20 s / concepto:** plano stock «business tool evaluation», superponer rótulo breve «Qué herramienta elegir».
+- **20–30 s / demostración:** recrear el ejemplo del guion con pantalla ficticia, datos sintéticos o motion graphic original; no simular una función no implementada.
+- **30–40 s / acción:** mostrar CTA «Practícalo con LAIA» y el ejercicio correspondiente, sin fingir permisos ni acciones ejecutadas.
+- **Búsquedas gratuitas específicas (EN):** `software vendor comparison`; `business tool evaluation`; `software vendor comparison vertical video`.
+- **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
+- **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
+
 ### IA51 · Qué es el AI Act europeo
 **00–10 s · Gancho:** «¿Te has encontrado con esto? Usar IA en la empresa también exige entender sus riesgos. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+
+
+**10–20 s · Idea:** «Qué es el AI Act europeo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+
+**20–30 s · Ejemplo en pantalla:** «Identifica responsabilidades según sistema, contexto y uso real. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+
+**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
+
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es el AI Act europeo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Identifica responsabilidades según sistema, contexto y uso real.
 
 **PROMPT DE PRODUCCIÓN IA51 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es el AI Act europeo».
@@ -1177,18 +1136,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA52 · Qué significa alfabetización en IA
+**00–10 s · Gancho:** «¿Te has encontrado con esto? No basta con abrir un chatbot una vez. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es el AI Act europeo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué significa alfabetización en IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Identifica responsabilidades según sistema, contexto y uso real. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Aprende capacidades, límites, riesgos y supervisión adaptados a tu puesto. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es el AI Act europeo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Identifica responsabilidades según sistema, contexto y uso real.
-
-### IA52 · Qué significa alfabetización en IA
-**00–10 s · Gancho:** «¿Te has encontrado con esto? No basta con abrir un chatbot una vez. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué significa alfabetización en IA: un ejemplo para aplicar hoy con LAIA». **Práctica:** Aprende capacidades, límites, riesgos y supervisión adaptados a tu puesto.
 
 **PROMPT DE PRODUCCIÓN IA52 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué significa alfabetización en IA».
@@ -1200,18 +1158,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA53 · Protege los datos de tu empresa
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Vas a pegar un contrato confidencial en una herramienta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué significa alfabetización en IA. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Protege los datos de tu empresa. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Aprende capacidades, límites, riesgos y supervisión adaptados a tu puesto. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Comprueba autorización, proveedor y minimización de datos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué significa alfabetización en IA: un ejemplo para aplicar hoy con LAIA». **Práctica:** Aprende capacidades, límites, riesgos y supervisión adaptados a tu puesto.
-
-### IA53 · Protege los datos de tu empresa
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Vas a pegar un contrato confidencial en una herramienta. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Protege los datos de tu empresa: un ejemplo para aplicar hoy con LAIA». **Práctica:** Comprueba autorización, proveedor y minimización de datos.
 
 **PROMPT DE PRODUCCIÓN IA53 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Protege los datos de tu empresa».
@@ -1223,18 +1180,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA54 · RGPD e inteligencia artificial
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un archivo contiene nombres y datos de clientes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Protege los datos de tu empresa. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «RGPD e inteligencia artificial. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Comprueba autorización, proveedor y minimización de datos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Distingue finalidad, base jurídica y acceso permitido. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Protege los datos de tu empresa: un ejemplo para aplicar hoy con LAIA». **Práctica:** Comprueba autorización, proveedor y minimización de datos.
-
-### IA54 · RGPD e inteligencia artificial
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un archivo contiene nombres y datos de clientes. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «RGPD e inteligencia artificial: un ejemplo para aplicar hoy con LAIA». **Práctica:** Distingue finalidad, base jurídica y acceso permitido.
 
 **PROMPT DE PRODUCCIÓN IA54 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «RGPD e inteligencia artificial».
@@ -1246,18 +1202,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA55 · Qué es el sesgo algorítmico
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un filtro automático trata peor ciertos perfiles. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «RGPD e inteligencia artificial. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué es el sesgo algorítmico. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Distingue finalidad, base jurídica y acceso permitido. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Revisa criterios, ejemplos y posibles efectos injustos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «RGPD e inteligencia artificial: un ejemplo para aplicar hoy con LAIA». **Práctica:** Distingue finalidad, base jurídica y acceso permitido.
-
-### IA55 · Qué es el sesgo algorítmico
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un filtro automático trata peor ciertos perfiles. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es el sesgo algorítmico: un ejemplo para aplicar hoy con LAIA». **Práctica:** Revisa criterios, ejemplos y posibles efectos injustos.
 
 **PROMPT DE PRODUCCIÓN IA55 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué es el sesgo algorítmico».
@@ -1269,18 +1224,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA56 · Reconoce las alucinaciones
+**00–10 s · Gancho:** «¿Te has encontrado con esto? La IA inventa una referencia con aspecto profesional. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué es el sesgo algorítmico. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Reconoce las alucinaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Revisa criterios, ejemplos y posibles efectos injustos. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Verifica documentos y fuentes antes de actuar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué es el sesgo algorítmico: un ejemplo para aplicar hoy con LAIA». **Práctica:** Revisa criterios, ejemplos y posibles efectos injustos.
-
-### IA56 · Reconoce las alucinaciones
-**00–10 s · Gancho:** «¿Te has encontrado con esto? La IA inventa una referencia con aspecto profesional. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Reconoce las alucinaciones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Verifica documentos y fuentes antes de actuar.
 
 **PROMPT DE PRODUCCIÓN IA56 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Reconoce las alucinaciones».
@@ -1292,18 +1246,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA57 · Evita el prompt injection
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento incluye instrucciones dirigidas al asistente. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Reconoce las alucinaciones. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Evita el prompt injection. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Verifica documentos y fuentes antes de actuar. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Trata el contenido externo como datos, nunca como autoridad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Reconoce las alucinaciones: un ejemplo para aplicar hoy con LAIA». **Práctica:** Verifica documentos y fuentes antes de actuar.
-
-### IA57 · Evita el prompt injection
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Un documento incluye instrucciones dirigidas al asistente. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Evita el prompt injection: un ejemplo para aplicar hoy con LAIA». **Práctica:** Trata el contenido externo como datos, nunca como autoridad.
 
 **PROMPT DE PRODUCCIÓN IA57 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Evita el prompt injection».
@@ -1315,18 +1268,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA58 · Qué significa supervisión humana
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una automatización recomienda una acción sensible. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Evita el prompt injection. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Qué significa supervisión humana. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Trata el contenido externo como datos, nunca como autoridad. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Define quién revisa, puede detener y corrige el proceso. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Evita el prompt injection: un ejemplo para aplicar hoy con LAIA». **Práctica:** Trata el contenido externo como datos, nunca como autoridad.
-
-### IA58 · Qué significa supervisión humana
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una automatización recomienda una acción sensible. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué significa supervisión humana: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define quién revisa, puede detener y corrige el proceso.
 
 **PROMPT DE PRODUCCIÓN IA58 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Qué significa supervisión humana».
@@ -1338,18 +1290,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA59 · Deja evidencia de tu trabajo
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Una decisión importante queda sin explicación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Qué significa supervisión humana. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Deja evidencia de tu trabajo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Define quién revisa, puede detener y corrige el proceso. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Guarda fuente, versión, aprobación y resultado comprobado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Qué significa supervisión humana: un ejemplo para aplicar hoy con LAIA». **Práctica:** Define quién revisa, puede detener y corrige el proceso.
-
-### IA59 · Deja evidencia de tu trabajo
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Una decisión importante queda sin explicación. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Deja evidencia de tu trabajo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Guarda fuente, versión, aprobación y resultado comprobado.
 
 **PROMPT DE PRODUCCIÓN IA59 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Deja evidencia de tu trabajo».
@@ -1361,18 +1312,17 @@
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
 
+### IA60 · Tu nueva metodología profesional
+**00–10 s · Gancho:** «¿Te has encontrado con esto? Tu jornada mezcla tareas, decisiones y rutinas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
 
 
-**10–20 s · Idea:** «Deja evidencia de tu trabajo. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
+**10–20 s · Idea:** «Tu nueva metodología profesional. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
 
-**20–30 s · Ejemplo en pantalla:** «Guarda fuente, versión, aprobación y resultado comprobado. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
+**20–30 s · Ejemplo en pantalla:** «Elige un proceso, documenta un SOP y revisa su mejora. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
 
 **30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
 
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Deja evidencia de tu trabajo: un ejemplo para aplicar hoy con LAIA». **Práctica:** Guarda fuente, versión, aprobación y resultado comprobado.
-
-### IA60 · Tu nueva metodología profesional
-**00–10 s · Gancho:** «¿Te has encontrado con esto? Tu jornada mezcla tareas, decisiones y rutinas. No necesitas aprender cien comandos: necesitas entender qué está pasando.»
+**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Tu nueva metodología profesional: un ejemplo para aplicar hoy con LAIA». **Práctica:** Elige un proceso, documenta un SOP y revisa su mejora.
 
 **PROMPT DE PRODUCCIÓN IA60 (acompaña este guion de 40 s)**
 - **Estética:** reel 9:16, 1080×1920, ritmo claro, subtítulos sincronizados, diseño AgntiaPro conforme a tokens vigentes, sin inventar colores ni copiar interfaces ajenas. Tema: «Tu nueva metodología profesional».
@@ -1383,14 +1333,4 @@
 - **Búsquedas gratuitas específicas (EN):** `professional workflow planning`; `standard procedure team`; `professional workflow planning vertical video`.
 - **Dónde buscar:** [Pexels Videos](https://www.pexels.com/search/videos/) · [Pixabay Videos](https://pixabay.com/videos/search/) · [Mixkit](https://mixkit.co/free-stock-video/). Alternativa: fotografía elegible con movimiento ligero o gráfica propia.
 - **Licencias:** búsquedas sugeridas, **ningún clip está seleccionado ni verificado**. Antes de publicar registrar URL del asset, autor, licencia vigente, condiciones comerciales/atribución, personas/marcas visibles y restricciones; música/voz se licencian por separado.
-
-
-
-**10–20 s · Idea:** «Tu nueva metodología profesional. La clave es mirar el trabajo real, separar lo que sabemos de lo que suponemos y explicar qué resultado buscamos.»
-
-**20–30 s · Ejemplo en pantalla:** «Elige un proceso, documenta un SOP y revisa su mejora. LAIA puede ayudarte a ordenar la propuesta, pero comprueba los datos y decide tú cuando corresponda.»
-
-**30–40 s · Cierre:** «Haz la prueba con una tarea de tu jornada. Empieza pequeño, revisa el resultado y mejora el proceso. Abre LAIA y practica este ejercicio.»
-
-**Visual:** problema → pantalla esquemática con ejemplo ficticio → paso recomendado → CTA. **Caption:** «Tu nueva metodología profesional: un ejemplo para aplicar hoy con LAIA». **Práctica:** Elige un proceso, documenta un SOP y revisa su mejora.
 
