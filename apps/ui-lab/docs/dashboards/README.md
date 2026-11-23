@@ -1,21 +1,25 @@
-# UI Lab — navegación y superficies generales
+# UI Lab — estructura documental aprobada
 
-La sección [Apps](./apps-metadashboard/README.md) contiene el metadashboard y las [34 fichas comerciales](./apps-metadashboard/CATALOGO-34-APPS.md) de workspaces. Los 40 folders anteriores eran duplicados documentales y se retiran de este nivel; no se borra código ni se altera el catálogo técnico.
+Carpetas principales, en el orden exacto indicado por el founder (numeración continua para resolver el 8 repetido):
 
-## Superficies generales
+01. [landing](./01-landing/README.md)
+02. [login](./02-login/README.md)
+03. [legal](./03-legal/README.md)
+04. [chat boton transversal](./04-chat-boton-transversal/README.md)
+05. [perfil](./05-perfil/README.md)
+06. [settings](./06-settings/README.md)
+07. [menu lateral](./07-menu-lateral/README.md)
+08. [centro de mando](./08-centro-de-mando/README.md)
+09. [chat](./09-chat/README.md)
+10. [estudio de operaciones](./10-estudio-de-operaciones/README.md)
+11. [apps](./11-apps/README.md)
+12. [comunicacion](./12-comunicacion/README.md)
+13. [automatizaciones](./13-automatizaciones/README.md)
+14. [documentos](./14-documentos/README.md)
+15. [conocimiento](./15-conocimiento/README.md)
+16. [proyectos](./16-proyectos/README.md)
+17. [equipo](./17-equipo/README.md)
+18. [data](./18-data/README.md)
+19. [general](./19-general/README.md)
 
-- [Menú lateral](./menu-lateral/README.md)
-- [Legal](./legal/README.md)
-- [Ajustes](./ajustes/README.md)
-- [Perfil](./perfil/README.md)
-- [Chat transversal](./chat-transversal/README.md)
-- [Landing](./landing/README.md)
-- [Inicio de sesión](./login/README.md)
-- [Estudio de Operaciones](./estudio-operaciones/README.md)
-- [Comunicaciones](./comunicaciones/README.md)
-- [Teléfono](./telefono/README.md)
-- [Galería de branding](./galeria-branding/README.md)
-
-El menú lateral se contrastó con `apps/web/src/components/SidebarV2.tsx`; Legal requiere verificar rutas. El Centro de Mando sigue en el software y el workspace 35 sigue en código, pero no necesita una carpeta de App duplicada aquí. Estudio de Operaciones, Comunicaciones, Teléfono y Galería son superficies UI Lab adicionales, no Apps.
-
-No modificar runtime, código, navegación real, main ni desplegar en esta campaña documental.
+**Apps:** las 34 fichas comerciales, el metadashboard y su prompt están dentro de [11-apps](./11-apps/README.md). No se crea un segundo catálogo fuera. Teléfono queda como subcarpeta de Comunicación y la galería de branding como subcarpeta de General. No se ha modificado código, main ni desplegado.
