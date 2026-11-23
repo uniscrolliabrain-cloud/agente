@@ -21,7 +21,7 @@
 | PracticeCTA | abrir LAIA o proponer conexión | ready, needs-permission, unavailable |
 | RecommendationReason | «Por qué lo ves», ocultar, feedback | visible, hidden |
 | CourseSkeleton / EmptyState | estados honestos y consistentes | loading, no-content |
-| FormationBottomSheet | cola, opciones, contexto móvil | open, closed |
+| FormationBottomSheet | ficha de serie y episodios superpuesta a escena, tabs Resumen/Episodios/Recursos/Transcripción; reutilizar motor de gesto del chat solo tras localizar su fuente | closed, peek, half, full, dragging, settling |
 
 ## Contratos de integración
 
