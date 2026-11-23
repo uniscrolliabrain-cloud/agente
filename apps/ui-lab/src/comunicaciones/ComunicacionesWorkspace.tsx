@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, Check, ChevronDown, CircleAlert, MessageCircle, MoreHorizontal, Phone, Plus, Search, Send, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import "./comunicaciones.css";
+import TelefonoWorkspace from "./telefono/TelefonoWorkspace";
 
 type Owner = "laia" | "humano" | "aprobacion";
 type Message = { id: string; who: "cliente" | "laia" | "humano" | "sistema"; text: string; time: string };
@@ -41,7 +42,7 @@ export default function ComunicacionesWorkspace(){
  return <div className="comms">
   <header className="comms-head"><div><p className="comms-eyebrow">WORKSPACE · AGNTIAPRO</p><h1>Comunicaciones<span className="comms-star">✳</span></h1><p>Un solo lugar para conversar, supervisar y aprobar.</p></div><span className="comms-demo"><span/> Simulación · sin conexiones externas</span></header>
   <nav className="comms-tabs" aria-label="Canales"><button className={tab==="whatsapp"?"on":""} onClick={()=>{setTab("whatsapp");setMobile("lista");}}><MessageCircle size={17}/> WhatsApp Business</button><button className={tab==="llamadas"?"on":""} onClick={()=>setTab("llamadas")}><Phone size={17}/> Llamadas y SMS</button><button className={tab==="slack"?"on":""} onClick={()=>setTab("slack")}><span className="comms-hash">#</span> Slack</button></nav>
-  {tab!=="whatsapp"?<section className="comms-soon"><div className="comms-soon-icon">{tab==="slack"?"#":"◉"}</div><p className="comms-eyebrow">PRÓXIMA ETAPA</p><h2>{tab==="slack"?"Slack":"Llamadas y SMS"}</h2><p>{tab==="slack"?"Supervisión de canales, mensajes internos y automatizaciones con aprobación humana.":"Monitorización de llamadas, transcripciones, SMS, intervención humana y reglas de automatización."}</p><span>Esta pestaña está reservada. No hay integración activa.</span></section>:
+  {tab==="llamadas"?<TelefonoWorkspace/>:tab==="slack"?<section className="comms-soon"><div className="comms-soon-icon">{tab==="slack"?"#":"◉"}</div><p className="comms-eyebrow">PRÓXIMA ETAPA</p><h2>{tab==="slack"?"Slack":"Llamadas y SMS"}</h2><p>{tab==="slack"?"Supervisión de canales, mensajes internos y automatizaciones con aprobación humana.":"Monitorización de llamadas, transcripciones, SMS, intervención humana y reglas de automatización."}</p><span>Esta pestaña está reservada. No hay integración activa.</span></section>:
   <div className="comms-layout">
    <aside className={"comms-inbox "+(mobile!=="lista"?"comms-mobile-hide":"")}>
     <div className="comms-inbox-top"><div className="comms-section-title"><div><p className="comms-eyebrow">BANDEJA COMPARTIDA</p><h2>Conversaciones <span>{rows.length}</span></h2></div><button aria-label="Nueva conversación" title="Nueva conversación" onClick={()=>setShowNew(true)}><Plus size={19}/></button></div><label className="comms-search"><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar conversación…"/></label><div className="comms-filters">{["Todas","Sin leer","LAIA","Humanos","Aprobar"].map(f=><button key={f} className={filter===f?"on":""} onClick={()=>setFilter(f)}>{f}</button>)}</div></div>
