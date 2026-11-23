@@ -25,7 +25,7 @@ def safe_rel(value, *, prefixes=None):
     if p.is_absolute() or ".." in p.parts or any(x.startswith(".") for x in p.parts):
         raise ValueError("Unsafe path")
     normalized = p.as_posix()
-    if prefixes and not any(normalized.startswith(prefix) for prefix in prefixes):
+    if prefixes and not any((normalized + "/").startswith(prefix) for prefix in prefixes):
         raise ValueError("Output outside approved asset folders")
     return normalized
 
