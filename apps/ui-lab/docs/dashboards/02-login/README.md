@@ -1,7 +1,8 @@
-# Inicio de sesión
+# 02 · Login
 
-**Referencia:** `Login.tsx`
+Rediseño editorial propuesto del acceso a AgntiaPro, sin cambiar autenticación existente.
 
-Autenticación y estados.
+- [Prompt maestra Login V2](./PROMPT-MAESTRA-LOGIN-V2.md)
+- [Auditoría Login V2](./AUDITORIA-LOGIN-V2.md)
 
-Superficie general de UI Lab, fuera del catálogo de 34 Apps. Documentar aquí el UX/UI, los estados, las interacciones, los componentes, las pruebas y la relación con el branding real de AgntiaPro. No confundir el Centro de Mando transversal con el workspace técnico 35; no modificar código.
+Estado: documentación. Sin cambios de código ni despliegue.
