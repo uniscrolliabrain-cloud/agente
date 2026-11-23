@@ -38,3 +38,38 @@ test("C06 CopilotKit callback dispatch preserves V2 runtime after run is extract
     extractedRun(input).subscribe({ error: reject, complete: resolve }));
   assert.deepEqual(calls, ["alice"]);
 });
+
+test("C06 CopilotKit per-request clone retains scoped cognition runtime and owner", async () => {
+  const calls: string[] = [];
+  const runtime = {
+    chat(owner: string, input: RunAgentInput) {
+      calls.push(owner);
+      return of({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId });
+    },
+  } as unknown as CognitionV2Runtime;
+  const original = new CognitionV2ChatAgent(runtime, "tenant-a:alice");
+  const copied = original.clone();
+  assert.notEqual(copied, original);
+  const input = { threadId: "clone-thread", runId: "clone-run", messages: [], state: {}, tools: [], context: [], forwardedProps: {} } as RunAgentInput;
+  const runFromClone = copied.run;
+  await new Promise<void>((resolve, reject) => runFromClone(input).subscribe({
+    error: reject, complete: resolve,
+  }));
+  assert.deepEqual(calls, ["tenant-a:alice"]);
+});
+
+test("C06 independently cloned agents never switch the authorized owner", async () => {
+  const seen: string[] = [];
+  const runtime = {
+    chat(owner: string, input: RunAgentInput) {
+      seen.push(owner);
+      return of({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId });
+    },
+  } as unknown as CognitionV2Runtime;
+  const first = new CognitionV2ChatAgent(runtime, "tenant-a:alice").clone();
+  const second = new CognitionV2ChatAgent(runtime, "tenant-b:bob").clone();
+  const input = { threadId: "thread", runId: "run", messages: [], state: {}, tools: [], context: [], forwardedProps: {} } as RunAgentInput;
+  await Promise.all([first, second].map(agent => new Promise<void>((resolve, reject) =>
+    agent.run(input).subscribe({ error: reject, complete: resolve }))));
+  assert.deepEqual(seen, ["tenant-a:alice", "tenant-b:bob"]);
+});
