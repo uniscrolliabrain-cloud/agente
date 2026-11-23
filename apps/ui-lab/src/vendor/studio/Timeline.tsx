@@ -173,7 +173,7 @@ export default function Timeline({ state, dispatch }: { state: StudioState; disp
               lane(
                 "process",
                 "Captación · Entrega",
-                blocksFor(["demo-brief", "demo-campaign", "demo-proposal", "demo-meeting"], "neutral"),
+                blocksFor(["demo-brief-bruma", "demo-ontology-bruma", "demo-caliza-proposal", "demo-caliza-approval"], "neutral"),
               ),
             )}
             {group(
@@ -210,7 +210,7 @@ export default function Timeline({ state, dispatch }: { state: StudioState; disp
                   label: "Brief del cliente",
                   start: 480,
                   end: 595,
-                  selection: { kind: "activity", id: "demo-brief" },
+                  selection: { kind: "activity", id: "demo-brief-bruma" },
                   tone: "neutral",
                 },
                 {
@@ -218,7 +218,7 @@ export default function Timeline({ state, dispatch }: { state: StudioState; disp
                   label: "CRM · Contactos",
                   start: 780,
                   end: 890,
-                  selection: { kind: "activity", id: "demo-crm" },
+                  selection: { kind: "activity", id: "demo-ontology-bruma" },
                   tone: "neutral",
                 },
                 {
@@ -226,7 +226,7 @@ export default function Timeline({ state, dispatch }: { state: StudioState; disp
                   label: "Feedback del cliente",
                   start: 960,
                   end: 1080,
-                  selection: { kind: "client", id: "Estudio Norte" },
+                  selection: { kind: "client", id: "Taller Bruma" },
                   tone: "neutral",
                 },
               ]),
