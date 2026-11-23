@@ -15,6 +15,7 @@ export type SqlStore = Pick<Store, "rawQuery" | "transaction">;
 export async function installCognitionV2(db: Store): Promise<void> {
   // No destructive changes; event source records and legacy readers remain intact.
   for (const sql of [
+    `CREATE TABLE IF NOT EXISTS cognition_v2_observation_quotas (tenant text NOT NULL,day text NOT NULL,calls integer NOT NULL,PRIMARY KEY(tenant,day))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_egress_quotas (tenant text NOT NULL,day text NOT NULL,calls integer NOT NULL,PRIMARY KEY(tenant,day))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_egress_receipts (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,operation text NOT NULL,state text NOT NULL,grant_digest text NOT NULL,binding jsonb NOT NULL,expires_at timestamptz NOT NULL,created_at timestamptz NOT NULL,finished_at timestamptz,result jsonb,result_digest text,PRIMARY KEY(tenant,id),UNIQUE(tenant,operation))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_rag_refs (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,source_id text NOT NULL,source_version text NOT NULL,PRIMARY KEY(tenant,id))`,
