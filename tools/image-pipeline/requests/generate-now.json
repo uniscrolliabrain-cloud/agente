@@ -10,5 +10,5 @@
       "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. An open linen-bound book and a single faceted clear glass sculpture on a pale ivory writing desk, late morning window light, architectural shadows, human thought and deliberate attention, warm paper, restrained violet reflection, exquisite editorial still life, ample negative space on the left."
     }
   ],
-  "requestNote": "Automated single-image OpenRouter connectivity pilot. Review before generating remaining eleven."
+  "requestNote": "Retry single-image connectivity pilot after aligning GitHub secret name OPEN_ROUTER_API_KEY. Review output before other images."
 }
