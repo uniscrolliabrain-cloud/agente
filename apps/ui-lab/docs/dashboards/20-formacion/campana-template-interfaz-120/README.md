@@ -49,7 +49,9 @@ Esta campaña se complementa con un manual de diseño de calidad equivalente en 
 - [13 · Plan de implementación y validación](./13-PLAN-IMPLEMENTACION-Y-VALIDACION.md) — siete campañas, gates y trazabilidad.
 - [14 · Prompt maestra de ejecución V2](./14-PROMPT-MAESTRA-EJECUCION-V2.md) — handoff para implementar en UI Lab sin alterar producción.
 
-**Nota de coherencia:** las fases C00–C09 del documento 03 son el desglose técnico original; las campañas 0–6 del documento 13 agrupan ese trabajo en entregables visuales verificables. Para dirección de arte y QA, prevalecen 10–14 sobre los borradores 01–05 cuando haya contradicción.
+**Nota de coherencia:** las fases C00–C09 del documento 03 y las campañas 0–6 del documento 13 NO son dos ejecuciones distintas. La correspondencia y el orden de implementación corregido están en [15 · Auditoría transversal](./15-AUDITORIA-TRANSVERSAL-Y-CORRECCIONES.md). Para dirección de arte y QA, prevalecen 10–15 sobre los borradores 01–05 cuando haya contradicción.
+
+- [15 · Auditoría transversal y correcciones](./15-AUDITORIA-TRANSVERSAL-Y-CORRECCIONES.md) — hallazgos priorizados, reconciliación de fases, criterios de sheet y QA UX16–UX20.
 
 ## Condición de salida
 
