@@ -1,0 +1,56 @@
+name: Generate editorial images (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      manifest:
+        description: 'Tracked JSON job file, e.g. tools/image-pipeline/jobs/formacion-pilot.json'
+        required: true
+        default: 'tools/image-pipeline/jobs/formacion-pilot.json'
+        type: string
+      dry_run:
+        description: 'Validate only; do not call image API or create PR'
+        required: true
+        default: true
+        type: boolean
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: image-pipeline-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install image tooling
+        run: python -m pip install 'Pillow>=10,<12'
+      - name: Validate or generate
+        env:
+          IMAGE_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          JOB_MANIFEST: ${{ inputs.manifest }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python tools/image-pipeline/generate.py
+      - name: Open review pull request (only for actual generations)
+        if: ${{ inputs.dry_run == false }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "No changes to propose"
+            exit 0
+          fi
+          branch="assets/generated-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git add -- apps/ui-lab/public/formation/images apps/ui-lab/docs/dashboards/20-formacion/arte assets/generated
+          git commit -m "assets: generate editorial images for review"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" --title "Review generated editorial images #${GITHUB_RUN_ID}" --body "Generated image assets and manifest for human review. No deployment or promotion to production. Verify brand, provenance and visual quality before merging."
