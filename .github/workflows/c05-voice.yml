@@ -10,12 +10,14 @@ on:
       - 'apps/server/src/engine/cognition/v2/external-connectors.ts'
       - 'apps/server/src/engine/cognition/v2/chat-agent.ts'
       - 'apps/server/src/engine/cognition/v2/slow-observation.ts'
+      - 'apps/server/src/engine/cognition/v2/slow-observation-candidates.ts'
       - 'apps/server/src/agent.ts'
       - 'apps/server/src/voice-session-routes.ts'
       - 'tests/voice-v2-*.test.ts'
       - 'tests/cognition-v2-external-connectors.test.ts'
       - 'tests/cognition-v2-chat-agent.test.ts'
       - 'tests/cognition-v2-slow-observation.test.ts'
+      - 'tests/cognition-v2-slow-observation-candidates.test.ts'
       - 'tests/cognition-v2-http.test.ts'
       - '.github/workflows/c05-voice.yml'
 
@@ -49,5 +51,7 @@ jobs:
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-chat-agent.test.ts
       - name: C06 slow observation boundary
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation.test.ts
+      - name: C06 slow event admission (disabled worker)
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-candidates.test.ts
       - name: Cognition V2 HTTP integration
         run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
