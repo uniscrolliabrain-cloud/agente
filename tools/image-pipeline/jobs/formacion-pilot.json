@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "outputDir": "apps/ui-lab/public/formation/images",
+  "images": [
+    {
+      "id": "ia01-thinking-editorial",
+      "courseId": "IA01",
+      "size": "1536x1024",
+      "alt": "Libro abierto con formas geométricas de conocimiento en un escritorio cálido",
+      "prompt": "Premium editorial photography for AgntiaPro, a warm ivory desk with an open book and a subtle faceted glass sculpture suggesting critical thinking, restrained violet and champagne-gold accents, calm daylight, generous negative space, sophisticated European design magazine art direction, tactile materials, natural cinematic lighting. No text, no logos, no UI, no watermarks."
+    },
+    {
+      "id": "ia02-augmented-cognition",
+      "courseId": "IA02",
+      "size": "1536x1024",
+      "alt": "Escritorio de trabajo con capas transparentes y notas conectadas",
+      "prompt": "Premium editorial still-life photography of human augmented cognition: thoughtful work desk, paper notes and translucent layered glass panels with delicate abstract connecting lines, cream and sand palette with subtle violet and warm gold details, open airy composition, beautifully art-directed, quiet sophisticated cinematic daylight, generous negative space. No text, no logos, no UI, no watermarks."
+    },
+    {
+      "id": "ia03-language-model",
+      "courseId": "IA03",
+      "size": "1536x1024",
+      "alt": "Páginas y capas translúcidas que evocan un modelo de lenguaje",
+      "prompt": "Premium conceptual editorial photograph representing language models: sculptural overlapping translucent pages, typographic forms as abstract textures without readable words, restrained violet refractions and warm champagne light on an ivory background, tactile paper, elegant quiet editorial still life, airy negative space, natural shadows. No readable text, no logos, no UI, no watermarks."
+    }
+  ]
+}
