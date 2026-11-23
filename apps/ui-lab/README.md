@@ -1,21 +1,21 @@
-# AgntiaPro UI Lab (integración aislada)
+# AgntiaPro UI Lab — laboratorio visual de ingeniería
 
-Aplicación Vite independiente en `apps/ui-lab` que importa componentes existentes de `apps/web/src` sin modificar el frontend productivo. **No es un clon funcional íntegro ni un snapshot de la web publicada**: las pantallas dependientes del backend pueden mostrar estados vacíos o errores. El catálogo incluye la aplicación original de `main`, no la landing premium que permanece en otra rama.
+UI Lab es una aplicación Vite separada en `apps/ui-lab` para visualizar componentes y pantallas reales de AgntiaPro. No es un producto final ni una segunda navegación empresarial. La opción **AgntiaPro completo** carga la aplicación original con su propia navegación.
 
-## Desarrollo y QA
-Desde la raíz: `pnpm install --frozen-lockfile`, `pnpm --filter @agente/ui-lab typecheck`, `pnpm --filter @agente/ui-lab build`, `pnpm --filter @agente/ui-lab dev`. Revisar escritorio y móvil con navegador real antes de compartir la URL. La selección de versiones registra **vistas**, no historial de snapshots. La comparación muestra dos vistas actuales.
+## Navegación y previsualización
 
-## Aislamiento obligatorio
-Desplegar en **otro proyecto Vercel y otro origen**; nunca montar en `agntiapro.com`. No suministrar credenciales, tokens, variables de entorno de producción ni cookies reales. El laboratorio deniega peticiones de red de componentes importados por `fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` y `sendBeacon`; permite `fetch` de `/version.json` para comprobar nuevas versiones. La CSP restringe conexiones. **Estas defensas no equivalen a aislamiento de seguridad completo**, especialmente para recursos HTML, navegación, almacenamiento y nuevos canales de red. Proteger el despliegue con controles de acceso de Vercel; no usarlo con datos sensibles.
+El laboratorio no tiene menú lateral propio. Un selector compacto **Vista** en la barra superior permite cambiar entre las 18 previews registradas en `src/registry.tsx`. Se conservan modos móvil/tablet/PC, zoom, comparación, recarga y pantalla completa. El selector de versiones históricas se retiró del menú anterior; `src/versions.ts` solo define vistas registradas, no snapshots reales. El catálogo de vistas no equivale a los 35 workspaces documentados individualmente.
 
-## Vercel
-Crear un proyecto separado desde el mismo repo y elegir **Root Directory `apps/ui-lab`**. Framework: Vite; build `pnpm --filter @agente/ui-lab build` desde raíz si Vercel detecta el workspace, o configurar el comando apropiado al root elegido; output `dist`. Validar una compilación real de Vercel antes de activar publicación. No reutilizar el Project ID de producción.
+## Desarrollo
 
-## GitHub Actions
-`.github/workflows/ui-lab.yml` compila el laboratorio en `main` y en la rama aislada. El deploy está desactivado por defecto y solo se ejecuta desde `main` con `workflow_dispatch` y `deploy=true` (GitHub Actions → UI Lab → Run workflow); requiere secretos dedicados `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID` y `UI_LAB_VERCEL_PROJECT_ID`.
+Desde raíz: `pnpm install --frozen-lockfile`, `pnpm --filter @agente/ui-lab typecheck`, `pnpm --filter @agente/ui-lab build`, `pnpm --filter @agente/ui-lab dev`. Vite HMR actualiza durante desarrollo.
 
-## Publicación y actualización
-El botón **Buscar actualización** solo consulta `version.json`; **no inicia un despliegue**. Para publicar una versión, usar el workflow manual protegido de GitHub Actions o configurar auto-deploy de Vercel únicamente para el proyecto UI Lab. No incorporar tokens de GitHub ni Vercel al navegador. El laboratorio reproduce el código de la revisión que se compila; la fidelidad con el deploy público requiere verificar el commit realmente desplegado, sus variables, assets y los estados de datos.
+## Publicación automática (decisión del founder)
 
-## Limitaciones conocidas
-No hay pruebas visuales automatizadas, versiones persistentes ni fidelidad pixel-perfect certificada. Las pantallas con APIs desconectadas son inspecciones visuales, no flujos operativos. No se ha desplegado este proyecto todavía.
+El workflow `.github/workflows/ui-lab.yml` ejecuta typecheck y build en pushes relevantes a `main` y ramas listadas. **En `main`, un push relevante dispara también el job deploy**, si build pasa y existen los secrets dedicados. También permite ejecución manual desde `main` con `deploy=true`. El job utiliza el environment `ui-lab` y el proyecto Vercel independiente configurado con `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID` y `UI_LAB_VERCEL_PROJECT_ID`. Si el environment exige aprobación, esta puede frenar la publicación. El workflow no despliega `agntiapro.com` por diseño; hay que configurar correctamente los IDs.
+
+El botón Buscar actualización consulta `version.json`; no despliega. El manifiesto identifica el commit compilado.
+
+## Límites
+
+Las previews pueden usar fixtures o depender de APIs no conectadas. El guard de red bloquea fetch salvo `version.json`, XHR, WebSocket, EventSource y sendBeacon, pero no es un sandbox de seguridad completo. No cargar cuentas ni secretos reales. El iframe actual permite scripts y same-origin: válido solo para este laboratorio interno de código confiable y datos sintéticos. No hay certificación pixel-perfect ni pruebas visuales automatizadas. No se afirma aquí que un despliegue concreto haya terminado: verificarlo en GitHub Actions.
