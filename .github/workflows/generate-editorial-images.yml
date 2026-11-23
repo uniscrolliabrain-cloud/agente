@@ -42,7 +42,7 @@ jobs:
         run: python -m pip install 'Pillow>=10,<12'
       - name: Validate or generate
         env:
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPEN_ROUTER_API_KEY }}
           IMAGE_MODEL: ${{ github.event_name == 'push' && 'openai/gpt-image-2' || inputs.model }}
           JOB_MANIFEST: ${{ github.event_name == 'push' && 'tools/image-pipeline/requests/generate-now.json' || inputs.manifest }}
           DRY_RUN: ${{ github.event_name == 'push' && 'false' || inputs.dry_run }}
