@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createStore } from "../apps/server/src/db.ts";
-import { installCognitionV2 } from "../apps/server/src/engine/cognition/v2/storage.ts";
+import { installCognitionV2, DurableEventSink } from "../apps/server/src/engine/cognition/v2/storage.ts";
+import { SlowCognitionQueue } from "../apps/server/src/engine/cognition/v2/slow.ts";
 import { SlowObservationWorker } from "../apps/server/src/engine/cognition/v2/slow-observation-worker.ts";
 import type { CognitionV2Runtime } from "../apps/server/src/engine/cognition/v2/runtime.ts";
 import type { CognitiveRecord, CognitiveIdentity } from "../packages/domain/src/cognition-v2.ts";
@@ -125,5 +126,30 @@ test("C06.P03b exhausted quota never acknowledges a card without enqueuing it", 
     const [quota] = await f.db.rawQuery<{ calls: number }>(
       "SELECT calls FROM cognition_v2_observation_quotas WHERE tenant=$1 AND day=$2", [f.tenant, day]);
     assert.equal(quota.calls, 3);
+  } finally { await f.db.close(); }
+});
+
+test("C06.P03b persists a real slow job and queued receipt atomically", async () => {
+  const f = await fixture();
+  try {
+    const context = f.runtime.context;
+    const sink = new DurableEventSink(f.db, f.db, new Set([f.tenant]));
+    const queue = new SlowCognitionQueue(f.db, sink, context, {
+      infer: async () => { throw Error("PROVIDER_NOT_USED_BY_OBSERVER"); },
+    });
+    const runtime = { ...f.runtime, slow: queue } as CognitionV2Runtime;
+    const worker = new SlowObservationWorker(runtime, 3);
+    assert.equal(await worker.tick(f.tenant, 10), 2);
+    const jobs = await f.db.rawQuery<{ id: string; state: string; actor: string }>(
+      "SELECT id,state,actor FROM cognition_v2_slow_jobs WHERE tenant=$1", [f.tenant]);
+    assert.equal(jobs.length, 1);
+    assert.equal(jobs[0].state, "queued");
+    assert.equal(jobs[0].actor, "alice");
+    const events = await f.db.rawQuery<{ event: { type: string } }>(
+      "SELECT event FROM cognition_v2_events WHERE tenant=$1", [f.tenant]);
+    assert.equal(events.filter(({ event }) => event.type === "cognition.v2.slow.status").length, 1);
+    assert.equal(await worker.tick(f.tenant, 10), 1); // consume own status receipt without re-enqueue
+    const after = await f.db.rawQuery("SELECT id FROM cognition_v2_slow_jobs WHERE tenant=$1", [f.tenant]);
+    assert.equal(after.length, 1);
   } finally { await f.db.close(); }
 });
