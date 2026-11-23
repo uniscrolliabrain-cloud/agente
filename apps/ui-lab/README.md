@@ -4,7 +4,7 @@ UI Lab es una aplicación Vite separada en `apps/ui-lab` para visualizar compone
 
 ## Navegación y previsualización
 
-El laboratorio no tiene menú lateral propio. Un selector compacto **Vista** en la barra superior permite cambiar entre las 18 previews registradas en `src/registry.tsx`. Se conservan modos móvil/tablet/PC, zoom, comparación, recarga y pantalla completa. El selector de versiones históricas se retiró del menú anterior; `src/versions.ts` solo define vistas registradas, no snapshots reales. El catálogo de vistas no equivale a los 35 workspaces documentados individualmente.
+El laboratorio no tiene menú lateral propio. Un selector compacto **Vista** en la barra superior permite cambiar entre las 18 previews registradas en `src/registry.tsx`. Se conservan modos móvil/tablet/PC, zoom, comparación, recarga y pantalla completa. El selector de versiones históricas se retiró del menú anterior; `src/versions.ts` solo define vistas registradas, no snapshots reales. El catálogo de vistas no equivale a las 34 Apps documentadas individualmente ni al identificador técnico 35 del Centro de Mando. La nomenclatura de las 19 pantallas y las 34 Apps está en [NOMENCLATURA-UI-FINAL.md](./docs/dashboards/19-general/NOMENCLATURA-UI-FINAL.md).
 
 ## Desarrollo
 
