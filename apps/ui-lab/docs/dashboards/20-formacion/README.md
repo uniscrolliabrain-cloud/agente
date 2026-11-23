@@ -1,5 +1,9 @@
 # Formación · Trabaja con LAIA
 
+## Campaña de componentes · Template audiovisual de 120 cursos
+
+- [Campaña completa y handoff de implementación](./campana-template-interfaz-120/README.md) — benchmark obligatorio Landing + Estudio Demo reales, 18 componentes propuestos, 10 fases C00–C09, prompt para agente, QA visual y bitácora. Solo documentación en main; sin implementación ni deploy.
+
 ## Catálogo y algoritmo de descubrimiento · 120 microcursos
 
 - [Metadata estructurada de 120 cursos (JSON)](./METADATA-120-CURSOS.json) — 60 IA profesional, 50 prácticas LAIA, 10 introducción; IDs y títulos canónicos, taxonomía editorial, objetivos, prerequisitos, candidatos de conectores y estados draft.
