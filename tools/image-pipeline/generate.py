@@ -14,8 +14,8 @@ from PIL import Image
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 JOB_ROOT = ROOT / "tools/image-pipeline/jobs"
 ALLOWED = ("apps/ui-lab/public/formation/images/", "assets/generated/")
-API_URL = "https://api.openai.com/v1/images/generations"
-MODEL = "gpt-image-1"
+API_URL = "https://openrouter.ai/api/v1/images"
+MODEL = os.getenv("IMAGE_MODEL", "openai/gpt-image-2")
 VALID_SIZES = {"1024x1024", "1536x1024", "1024x1536"}
 
 def safe_rel(value, *, prefixes=None):
@@ -38,7 +38,7 @@ def main():
         raise ValueError("Job file not found")
     job = json.loads(job_path.read_text(encoding="utf-8"))
     entries = job.get("images")
-    if not isinstance(entries, list) or not 1 <= len(entries) <= 9:
+    if not isinstance(entries, list) or not 1 <= len(entries) <= 12:
         raise ValueError("One to nine images per run")
     output_dir = safe_rel(job["outputDir"].rstrip("/") + "/", prefixes=ALLOWED)
     seen = set()
@@ -55,9 +55,9 @@ def main():
     print(f"Validated {len(entries)} images. dry_run={dry}. output={output_dir}")
     if dry:
         return
-    key = os.getenv("IMAGE_API_KEY")
+    key = os.getenv("OPENROUTER_API_KEY")
     if not key:
-        raise ValueError("Missing OPENAI_API_KEY GitHub Actions secret")
+        raise ValueError("Missing OPENROUTER_API_KEY GitHub Actions secret")
     dest = ROOT / output_dir
     dest.mkdir(parents=True, exist_ok=True)
     records = []
@@ -65,7 +65,8 @@ def main():
         payload = json.dumps({
             "model": MODEL,
             "prompt": item["prompt"],
-            "size": item.get("size", "1536x1024"),
+            "aspect_ratio": {"1024x1024":"1:1","1536x1024":"3:2","1024x1536":"2:3"}[item.get("size", "1536x1024")],
+            "response_format": "b64_json",
             "n": 1,
         }).encode()
         request = urllib.request.Request(API_URL, data=payload, headers={
@@ -73,14 +74,21 @@ def main():
             "Content-Type": "application/json",
         }, method="POST")
         try:
-            with urllib.request.urlopen(request, timeout=180) as response:
+            with urllib.request.urlopen(request, timeout=240) as response:
                 result = json.load(response)
         except urllib.error.HTTPError as exc:
             raise RuntimeError(f"Image API HTTP {exc.code}; check key/model/billing") from None
-        datum = result["data"][0]
-        if "b64_json" not in datum:
-            raise ValueError("Unexpected image API response: missing b64_json")
-        raw = base64.b64decode(datum["b64_json"], validate=True)
+        images = result.get("data")
+        if not isinstance(images, list) or not images:
+            raise ValueError("Unexpected Image API response: no images")
+        datum = images[0]
+        if datum.get("b64_json"):
+            raw = base64.b64decode(datum["b64_json"], validate=True)
+        elif isinstance(datum.get("url"), str) and datum["url"].startswith("https://"):
+            with urllib.request.urlopen(datum["url"], timeout=90) as image_response:
+                raw = image_response.read(30_000_001)
+        else:
+            raise ValueError("Unexpected Image API response: no image data")
         if len(raw) > 30_000_000:
             raise ValueError("Image too large")
         with Image.open(io.BytesIO(raw)) as img:
