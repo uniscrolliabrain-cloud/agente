@@ -103,3 +103,27 @@ test("C06.P03b revoked original receipt prevents slow queue and quota charge", a
     assert.equal(quotas.length, 0);
   } finally { await f.db.close(); }
 });
+
+test("C06.P03b exhausted quota never acknowledges a card without enqueuing it", async () => {
+  const f = await fixture();
+  try {
+    const day = new Date().toISOString().slice(0, 10);
+    await f.db.rawQuery(
+      "INSERT INTO cognition_v2_observation_quotas(tenant,day,calls) VALUES($1,$2,$3)",
+      [f.tenant, day, 3]);
+    const worker = new SlowObservationWorker(f.runtime, 3);
+    assert.equal(await worker.tick(f.tenant, 10), 1);
+    assert.equal(f.attempts(), 0);
+    const [cursor] = await f.db.rawQuery<{ sequence: string }>(
+      "SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer=$2",
+      [f.tenant, "slow-observer-v2.1"]);
+    assert.equal(Number(cursor.sequence), 1);
+    const [inbox] = await f.db.rawQuery<{ status: string }>(
+      "SELECT status FROM cognition_v2_inbox WHERE tenant=$1 AND consumer=$2 AND event_id=$3",
+      [f.tenant, "slow-observer-v2.1", "card-proposal-1"]);
+    assert.equal(inbox.status, "retry");
+    const [quota] = await f.db.rawQuery<{ calls: number }>(
+      "SELECT calls FROM cognition_v2_observation_quotas WHERE tenant=$1 AND day=$2", [f.tenant, day]);
+    assert.equal(quota.calls, 3);
+  } finally { await f.db.close(); }
+});
