@@ -68,7 +68,7 @@ export default function Visualizer({
 }) {
   if (state.view === "Kanban")
     return (
-      <div className="bcs-kanban" aria-label="Tablero de actividades ACME">
+      <div className="bcs-kanban" aria-label="Tablero de actividades AgntiaPro">
         {stages.map((stage) => (
           <section className="bcs-column" key={stage} data-stage={stage}>
             <h3>
@@ -151,7 +151,7 @@ export default function Visualizer({
       <div className="bcs-twin">
         <div className="bcs-twin-heading">
           <div>
-            <span className="bcs-eyebrow">ACME · Modelo operativo</span>
+            <span className="bcs-eyebrow">AgntiaPro · Modelo operativo</span>
             <h3>Una empresa. Un mismo pulso.</h3>
           </div>
           <span className="bcs-badge">
@@ -264,7 +264,7 @@ export default function Visualizer({
       </div>
       <div className="bcs-client-row">
         <span>Mirar por cliente</span>
-        {["Estudio Norte", "ACME"].map((client) => (
+        {Array.from(new Set(projects.map((project) => project.client))).map((client) => (
           <button key={client} onClick={() => dispatch({ type: "select", selection: { kind: "client", id: client } })}>
             {client}
             <ArrowUpRight size={14} />
