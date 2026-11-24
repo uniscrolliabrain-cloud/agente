@@ -22,3 +22,8 @@ Inventario por SHA de ramas relevantes, mapa productor/consumidor, paths exactos
 
 ## Reporte obligatorio
 Actualizar BITACORA.md con base/HEAD, fase/pasada/oleada, patchset, paths, solicitudes, comandos y exit codes, evidencia, bloqueos y siguiente tarea. Entregar PR pequeño por oleada, sin auto-merge ni force push. No deploy ni cierre de ramas.
+
+
+## Instrucción de ejecución vigente (prevalece sobre paradas anteriores)
+
+Lee [PROTOCOLO-TURNOS](../PROTOCOLO-TURNOS.md) y ejecuta [TURNOS.md](TURNOS.md). T01 completo incluye W0 y todo scaffold documental; no parar tras W0. Solo parar en B1–B6 o excepción de seguridad definida. No reportar por chat cada paso, patchset ni oleada. Bitácora y commits son el reporte.
