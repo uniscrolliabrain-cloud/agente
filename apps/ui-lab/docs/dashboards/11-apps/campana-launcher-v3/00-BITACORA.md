@@ -6,7 +6,7 @@
 | Rama | `main` (sin ramas ni PR, según el protocolo de la campaña) |
 | Alcance | UI Lab, vista nueva `apps-launcher-v3`. Producción, kernel, runtime e integraciones intactos |
 | Build verificado | `e3652cfc33b6` (`version.json`) |
-| Build del artifact | `a5d9447fe411` (`version.json` del paquete) |
+| Build del artifact | `28b55a1f7b67` (`version.json` del paquete) |
 
 ## Qué se ha construido
 
