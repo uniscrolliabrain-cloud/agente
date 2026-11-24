@@ -1,5 +1,2 @@
-# 08 · centro de mando
-
-Centro de Mando de AgntiaPro.
-
-Carpeta de documentación UX/UI de esta superficie. No implica modificaciones del software ni funcionalidades implementadas. Conservar el diseño real de AgntiaPro y auditar el código antes de redactar especificaciones funcionales.
+# 08 · Centro de Mando editorial V2
+Founder autoriza preparar refinamiento de la vista Inicio/Hoy, no workspace 35 ni ControlCenterView. Leer PROMPT-MAESTRA-REFINAMIENTO-V2.md, CAMPAÑA-EJECUCION.md, GATE-ACEPTACION-VISUAL.md y componentes-propuestos/. Preservar componentes-reales/ como baseline. Propuesta CSS y wrapper no ejecutados; agente debe integrar en preview aislado, verificar y completar composición/motion. No modificar producción ni shell, no merge/deploy.
