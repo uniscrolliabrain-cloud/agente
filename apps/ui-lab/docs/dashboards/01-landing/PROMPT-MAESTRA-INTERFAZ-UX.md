@@ -1,21 +1,7 @@
-# Landing · La primera conversación con tu empresa
+# Landing aprobada: preservar íntegramente
 
-## Mandato de diseño
-Diseña la experiencia futura en UI Lab, primero vacía de datos empresariales definitivos. Lee la visión founder y las cinco preguntas del kickoff en ../../agntia-demo/01-kick-off y ../../agntia-demo/02-vision-founder, la guía de branding de esta carpeta, los componentes reales y el handoff. Contrasta con Landing, Studio y Formación V4 (../20-formacion/CAMPANAS-V4-FORMACION-NIVEL-9.md). El propósito empresarial determina capacidades; el diseño determina después la data. No es una orden de implementar ni de auditar backend.
+**Decisión expresa del founder · 2026-11-24.** Prevalece sobre propuestas anteriores y handoffs genéricos.
 
-La landing actual es la referencia de identidad, no un lienzo que debas sustituir. Conserva su composición editorial, su titular, sus retratos, su recorrido comercial y sus cuatro escenas de producto. La intervención es un refinamiento de dirección artística y movimiento. Quiero que el visitante entienda que compra una organización digital gestionada y continuamente actualizada, no una licencia de chatbot.
+No rediseñar, cambiar composición, copy, escenas, retratos, navegación ni movimiento. La landing actual es referencia de branding para los demás espacios. Cualquier mejora futura requiere petición expresa del founder. La fase data no sustituirá contenido público aprobado.
 
-## Composición y recorrido
-En escritorio, cabecera ligera con marca real, navegación por anclas y acceso clientes; reserva como acción comercial. Hero con titular serif de gran escala, texto breve y conversación con LAIA en equilibrio con su retrato. Mantén espacio negativo alrededor de la fotografía, sin convertirla en una tarjeta de perfil. La conversación es una invitación a explicar el negocio, no un formulario disfrazado. Los chips actuales orientan al visitante que no sabe qué preguntar. El chat abierto y el inline son dos expresiones de una misma conversación pública.
-Al bajar, las cuatro perspectivas de producto —Centro de Mando, Conversación, Operaciones y Workspaces— funcionan como una pequeña exposición interactiva. Cada selección cambia escena y explicación juntas, con altura estable y foco visual único. No conviertas las cuatro en un mosaico de KPIs. Después, los tres retratos protagonistas de LAIA, Antonio y Pedro y los especialistas Marcos, Ana y Juan explican cómo se organiza el trabajo. Mantén la sección de cuatro pasos y la implantación como relato de servicio. La reserva cierra el recorrido, con formulario corto y mensajes claros.
-## Interacciones y dirección de arte
-El retrato de agente abre una ficha audiovisual con identidad, especialidad, explicación y acción de conversar. Si no hay vídeo, la ficha sigue siendo útil sin fingir reproducción. El visitante puede volver a la conversación y continuar. El formulario debe mostrar errores junto a campos y mantener lo escrito. El aviso legal no debe competir con el hero. En móvil, marca, titular, conversación y retrato se reorganizan con una sola columna y navegación compacta; no se reduce el escritorio en miniatura. Los diálogos pasan a hojas cómodas de cerrar.
-## Coreografía
-Llegada: marca y titular primero, retrato y conversación después, sin retrasar la lectura. Al hacer scroll, revelar grupos completos con desplazamiento leve y cascada corta. Al cambiar escena, salida suave del contenido anterior y entrada de la nueva explicación, sin saltos de altura. Al abrir ficha, continuidad desde el retrato; al cerrar, devolver foco. Evitar parallax agresivo, animaciones repetitivas y vídeo automático. 
-## Recorridos de diseño
-Visitante que quiere más clientes → conversa → descubre servicios → reserva. Visitante que quiere conocer a Pedro → ficha → pregunta → vuelve al producto. Cliente existente → acceso. Visitante móvil → menú → sección → conversación → cierre. Cada recorrido debe mostrar cómo se siente la transición, no solo el resultado estático.
-## Contenido pendiente de la fase data
-Diseña espacios para mensajes públicos, ejemplos de necesidades, perfiles, escenas de producto y solicitud de reunión. No redactes todavía una historia empresarial completa ni sustituyas los textos comerciales aprobados. La escena pública no expone la empresa privada del founder.
-
-## Entrega de diseño y revisión
-Describe cada escena en desktop 1440 y móvil 390, jerarquía, proporciones, componentes, estados vacíos y de error, interacción y transición de llegada/salida. Usa esqueletos editoriales y etiquetas descriptivas, no cifras ni historias definitivas. Conserva los componentes valiosos y señala las nuevas experiencias como propuestas. Contrasta visualmente con Landing y Studio: identidad cálida, Fraunces en titulares, Manrope en controles, violeta intencional, oro reservado a la firma, espacio negativo y densidades distintas. Como Formación V4, prioriza una experiencia memorable y completa antes que volumen. No crear un segundo shell ni chat global. Revisar con founder antes de generar data sintética. Sin cambios de código ni despliegue.
+Solo documentación; no código ni despliegue.

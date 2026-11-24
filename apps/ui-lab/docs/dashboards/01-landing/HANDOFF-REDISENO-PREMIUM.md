@@ -1,3 +1,5 @@
+> **DECISIÓN PRIORITARIA DEL FOUNDER · 2026-11-24:** No rediseñar, cambiar composición, copy, escenas, retratos, navegación ni movimiento. La landing actual es referencia de branding para los demás espacios. Cualquier mejora futura requiere petición expresa del founder. La fase data no sustituirá contenido público aprobado. Las fases genéricas siguientes solo aplican dentro de este alcance; no autorizan rediseño adicional.
+
 # HANDOFF · Landing · estándar de rediseño premium
 
 Estado: instrucciones para una futura campaña, no autorización de cambios funcionales ni certificación visual. Baseline: main 74f8dccbf6e56a81c4c8ead83bacea7e9251cd9b. Fuente: implementación Formación V4 y código de Landing/Studio; no se ha consultado ni reproducido la UX Branding Guide. La copia de esa guía que aporte el founder será una lectura adicional independiente.

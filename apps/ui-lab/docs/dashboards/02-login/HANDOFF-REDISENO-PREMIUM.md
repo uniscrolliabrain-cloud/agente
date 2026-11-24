@@ -1,3 +1,5 @@
+> **DECISIÓN PRIORITARIA DEL FOUNDER · 2026-11-24:** La referencia prioritaria es [PROMPT-MAESTRA-LOGIN-V2.md](PROMPT-MAESTRA-LOGIN-V2.md) junto al [PNG original](apps/ui-lab/docs/dashboards/02-login/login-mockup-falta-adaptar-branding-y-copy.png). Abrir y estudiar ambos antes de diseñar. Reproducir su composición, jerarquía, orden y comportamiento, adaptando branding y copy a la landing real conforme a las correcciones de V2. No reinterpretar la composición ni convertir el mini-chat inline en una hoja alternativa. No crear data empresarial sintética para el acceso público. Mantener autenticación existente y distinguir capacidades pendientes. Las fases genéricas siguientes solo aplican dentro de este alcance; no autorizan rediseño adicional.
+
 # HANDOFF · Login · estándar de rediseño premium
 
 Estado: instrucciones para una futura campaña, no autorización de cambios funcionales ni certificación visual. Baseline: main 74f8dccbf6e56a81c4c8ead83bacea7e9251cd9b. Fuente: implementación Formación V4 y código de Landing/Studio; no se ha consultado ni reproducido la UX Branding Guide. La copia de esa guía que aporte el founder será una lectura adicional independiente.

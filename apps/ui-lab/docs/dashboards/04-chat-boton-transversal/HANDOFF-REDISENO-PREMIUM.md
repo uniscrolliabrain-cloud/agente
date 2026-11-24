@@ -1,3 +1,5 @@
+> **DECISIÓN PRIORITARIA DEL FOUNDER · 2026-11-24:** Conservar el interfaz existente, posición, dimensiones, navegación, comportamiento, conversación y capacidades. Adaptar exclusivamente tipografía, colores, bordes, iconografía, espaciados puntuales y microtransiciones al branding vigente. No introducir nuevo inspector, arquitectura de paneles, flujos, capacidades ni rediseño móvil estructural. Cualquier mejora funcional requiere aprobación separada. La futura data reutilizará conversaciones compartidas, sin crear un universo independiente. Las fases genéricas siguientes solo aplican dentro de este alcance; no autorizan rediseño adicional.
+
 # HANDOFF · Chat transversal · estándar de rediseño premium
 
 Estado: instrucciones para una futura campaña, no autorización de cambios funcionales ni certificación visual. Baseline: main 74f8dccbf6e56a81c4c8ead83bacea7e9251cd9b. Fuente: implementación Formación V4 y código de Landing/Studio; no se ha consultado ni reproducido la UX Branding Guide. La copia de esa guía que aporte el founder será una lectura adicional independiente.

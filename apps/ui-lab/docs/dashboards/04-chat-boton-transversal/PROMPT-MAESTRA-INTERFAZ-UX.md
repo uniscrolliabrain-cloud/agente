@@ -1,22 +1,7 @@
-# Chat transversal · LAIA acompaña el trabajo
+# Chat transversal: actualización visual limitada
 
-## Mandato de diseño
-Diseña la experiencia futura en UI Lab, primero vacía de datos empresariales definitivos. Lee la visión founder y las cinco preguntas del kickoff en ../../agntia-demo/01-kick-off y ../../agntia-demo/02-vision-founder, la guía de branding de esta carpeta, los componentes reales y el handoff. Contrasta con Landing, Studio y Formación V4 (../20-formacion/CAMPANAS-V4-FORMACION-NIVEL-9.md). El propósito empresarial determina capacidades; el diseño determina después la data. No es una orden de implementar ni de auditar backend.
+**Decisión expresa del founder · 2026-11-24.** Prevalece sobre propuestas anteriores y handoffs genéricos.
 
-Quiero poder hablar con LAIA desde cualquier lugar de mi empresa sin abandonar lo que estoy haciendo. El botón transversal no es otro chatbot: es la presencia constante de la misma compañera digital. Inspírate en los paneles de conversación de herramientas de trabajo y en las hojas de Google Maps, no en un widget comercial de soporte.
+Conservar el interfaz existente, posición, dimensiones, navegación, comportamiento, conversación y capacidades. Adaptar exclusivamente tipografía, colores, bordes, iconografía, espaciados puntuales y microtransiciones al branding vigente. No introducir nuevo inspector, arquitectura de paneles, flujos, capacidades ni rediseño móvil estructural. Cualquier mejora funcional requiere aprobación separada. La futura data reutilizará conversaciones compartidas, sin crear un universo independiente.
 
-## Composición escritorio
-Un único acceso transversal, discreto pero reconocible, con firma visual LAIA y texto Chat. Al abrir, el espacio lateral existente se transforma en conversación o aparece como panel adyacente según el ancho disponible; el workspace conserva su foco y no queda tapado por una ventana gigante. Ancho orientativo 340–420 px, ajustable en pantallas grandes. Cabecera con retrato pequeño, nombre, contexto actual en una línea y acciones minimizar, abrir chat completo y ajustes. El centro es historial de lectura con burbujas ligeras, texto amplio, separadores temporales discretos y tarjetas de resultado solo cuando aporten algo. Composer fijo abajo con envío, adjuntos y acceso a voz cuando corresponda. No duplicar navegación global.
-## Conversación contextual
-Desde un proyecto, LAIA puede explicar el estado, abrir una tarea relacionada o preparar una decisión. Desde documentos, puede resumir o señalar una fuente. Desde finanzas, puede explicar un cobro pendiente y llevar al detalle. Diseña una referencia contextual pequeña, removible, que deje claro qué elemento acompaña la pregunta. El usuario puede preguntar libremente sin tener que elegir comandos. Las respuestas deben poder incluir una propuesta, una vista previa de documento, una lista breve de tareas o una solicitud de aprobación. Cada pieza tiene una acción principal y enlace al workspace de origen. No mostrar razonamiento interno ni una cascada de logs como conversación.
-## Estados
-Vacío con saludo y tres sugerencias útiles; conversación existente; respuesta en curso con cancelación; resultado listo; decisión pendiente; error recuperable; cambio de contexto; apertura de chat completo. El historial debe sentirse continuo. Diseña cómo se conserva el borrador y la posición de lectura como objetivo UX. El usuario puede cerrar y seguir trabajando, volver y retomar.
-## Móvil
-Hoja de altura adaptable: vista compacta cuando solo consulta, expansión para conversar y pantalla completa cuando escribe o revisa un resultado largo. Cabecera y composer accesibles con teclado, gesto de cierre no interfiere con scroll. Al cerrar, recuperar exactamente el workspace que estaba mirando.
-## Coreografía
-Botón→panel mediante expansión suave; contenido del workspace se adapta sin saltos; mensajes aparecen con microentrada breve; tarjetas de resultado se revelan después del texto; apertura a chat completo conserva identidad y posición contextual. Reduced motion conserva toda funcionalidad. 
-## Recorridos
-Consultar proyecto sin salir, revisar una propuesta desde una conversación, pasar al chat completo, volver al proyecto, cancelar respuesta, recuperar error. La futura data se diseñará para estos recorridos, no como una colección independiente de mensajes.
-
-## Entrega de diseño y revisión
-Describe cada escena en desktop 1440 y móvil 390, jerarquía, proporciones, componentes, estados vacíos y de error, interacción y transición de llegada/salida. Usa esqueletos editoriales y etiquetas descriptivas, no cifras ni historias definitivas. Conserva los componentes valiosos y señala las nuevas experiencias como propuestas. Contrasta visualmente con Landing y Studio: identidad cálida, Fraunces en titulares, Manrope en controles, violeta intencional, oro reservado a la firma, espacio negativo y densidades distintas. Como Formación V4, prioriza una experiencia memorable y completa antes que volumen. No crear un segundo shell ni chat global. Revisar con founder antes de generar data sintética. Sin cambios de código ni despliegue.
+Solo documentación; no código ni despliegue.
