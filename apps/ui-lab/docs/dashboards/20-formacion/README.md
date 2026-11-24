@@ -1,6 +1,6 @@
-# PLAN VIGENTE · FORMACIÓN 9/10
+# PLAN VIGENTE · FORMACIÓN V4.1 · OBJETIVO 9+/10
 
-**La ejecución se rige ahora por [CAMPAÑAS V4](./CAMPANAS-V4-FORMACION-NIVEL-9.md).** Sobrescribe la prioridad de campañas anteriores, que se conservan como histórico. Estado: plan creado, implementación V4 pendiente. Las 12 fotografías ya están en el repo; build PASS, deploy UI Lab bloqueado por configuración de ruta Vercel.
+**[Plan maestro V4.1](./CAMPANAS-V4-FORMACION-NIVEL-9.md)**: sobrescribe el plan V4 anterior y su prioridad de ejecución. **La interfaz actual queda clasificada como LEGACY FUNCIONAL, preservada sin cambios.** La V4 se implementará separada en `apps/ui-lab/src/formation-v4/` y no sustituirá la ruta existente sin QA visual, pruebas y aprobación del founder. Las 12 imágenes están disponibles; el deploy UI Lab histórico falló por ruta duplicada de Vercel. El 9+/10 es un objetivo, no una nota obtenida.
 
 # Formación · Trabaja con LAIA
 
