@@ -1,3 +1,7 @@
+# PLAN VIGENTE · FORMACIÓN 9/10
+
+**La ejecución se rige ahora por [CAMPAÑAS V4](./CAMPANAS-V4-FORMACION-NIVEL-9.md).** Sobrescribe la prioridad de campañas anteriores, que se conservan como histórico. Estado: plan creado, implementación V4 pendiente. Las 12 fotografías ya están en el repo; build PASS, deploy UI Lab bloqueado por configuración de ruta Vercel.
+
 # Formación · Trabaja con LAIA
 
 ## Campaña de componentes · Template audiovisual de 120 cursos
