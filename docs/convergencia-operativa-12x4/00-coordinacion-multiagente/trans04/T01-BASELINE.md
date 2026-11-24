@@ -1,0 +1,37 @@
+# T01 · Baseline reproducible
+
+Base del código `a48b79e93a2a0ddde88a9345853e42b928d80092`, rama local Trans04. Linux, Node 24.22.3 y pnpm 11.25.0. La matriz CI declara Node 22. Runtime de muestra y fixtures locales, `ALLOW_NETWORK=0` durante la ejecución. No se usaron DSN, credenciales de proveedores ni owner real.
+
+| Comando | Exit | Evidencia |
+|---|---|---|
+| `pnpm install --frozen-lockfile` | 254 | ENOENT al crear store bajo home. |
+| `XDG_CACHE_HOME=/tmp/trans04-cache XDG_DATA_HOME=/tmp/trans04-data pnpm install --store-dir /tmp/trans04-store --frozen-lockfile` | 0 | Instalación congelada de cuatro proyectos. |
+| `pnpm typecheck` | 0 | TypeScript raíz y browser-worker. |
+| `pnpm gate` | 1 | El launcher tsx intenta abrir socket Unix y recibe EPERM. |
+| `node --import tsx scripts/gate-report.ts` | 1 | 9/10 pasos, incluida toda la auditoría. El subproceso test conserva launcher tsx y falla con EPERM antes de ejecutar casos. `artifacts/gate/report.json`, `artifacts/gate/logs/test.log`. |
+| `node --import tsx --import ./tests/setup.ts --test --test-reporter=spec --test-timeout=30000 tests/worker-metrics.test.ts tests/vertical-slice-bundle.test.ts tests/vertical-slice-provision.test.ts` | 0 | Tres archivos de pruebas, sin archivos fallidos o saltados. |
+| `node --import tsx scripts/verify-vertical-slice.ts --only smoke` | 0 | Sample, health 200, petición sin sesión 401 y acceso autenticado 200. |
+| `pnpm test:cognition-v2` | 0 | 61 pasan, 0 fallan, 9 omisiones de Postgres nativo/restringido. |
+| `pnpm gate:cognition-v2` | 1 | NO_GO, `repositoryGateOk=false`, bloqueos C05/C08/C13/C14/C15. `artifacts/cognition-v2/acceptance.json`. |
+| `pnpm release:check`, `pnpm release:verify` | NOT_RUN | Los checks usan el launcher tsx y verificación posterior a deploy, respectivamente. Certificar posteriormente sobre entorno aprobado y SHA combinado. |
+
+El worker baseline sólo comprueba presencia textual de métricas. Para T02 exigir delta exacta de sum/count tras un resultado durable, ausencia de éxito ante rollback y dedupe ante replay. El probe local siguiente verifica filtro básico y demuestra que el p99 actual es global aunque el render tenga filtro. Los números son datos de prueba, no SLO.
+
+```sh
+ALLOW_NETWORK=0 node --import tsx --input-type=module <<'NODE'
+import { strict as assert } from "node:assert";
+import { MetricsRegistry } from "./apps/server/src/metrics/registry.ts";
+const registry = new MetricsRegistry();
+registry.counter("baseline_events_total", "Synthetic events");
+registry.histogram("baseline_latency_ms", "Synthetic latency", [10, 100]);
+registry.inc("baseline_events_total", { tenant: "fixture-a" });
+registry.inc("baseline_events_total", { tenant: "fixture-b" }, 2);
+registry.observe("baseline_latency_ms", 5, { tenant: "fixture-a" });
+registry.observe("baseline_latency_ms", 20, { tenant: "fixture-b" });
+assert.match(registry.render({ tenant: "fixture-a" }), /baseline_events_total\{tenant="fixture-a"\} 1/);
+assert.doesNotMatch(registry.render({ tenant: "fixture-a" }), /fixture-b/);
+assert.equal(registry.quantile("baseline_latency_ms", 0.99), 100);
+NODE
+```
+
+Exit 0. Buckets HTTP del registry en ms: 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000 y +Inf. Series HTTP con método, ruta, estado y tenant si está disponible. Tareas con sum/count en segundos y gauges de concurrencia; LLM registra familias por velocidad/modelo; eventos kernel y bus tienen productores separados. Series de métricas viven en memoria por proceso, mientras que MetricsCollector usa Store. La migración de unidades o nombres necesita compatibilidad de scraping y dashboards.
