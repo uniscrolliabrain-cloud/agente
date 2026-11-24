@@ -1,5 +1,2 @@
-# 09 · chat
-
-Pantalla Chat como sección principal, distinta del botón transversal.
-
-Carpeta de documentación UX/UI de esta superficie. No implica modificaciones del software ni funcionalidades implementadas. Conservar el diseño real de AgntiaPro y auditar el código antes de redactar especificaciones funcionales.
+# 09 · Chat IA
+Refinamiento conservador autorizado por founder. Leer PROMPT-MAESTRA-INTERFAZ-UX.md, CAMPAÑA-EJECUCION.md, GATE-ACEPTACION-VISUAL.md y componentes-propuestos/. Legacy no es fuente activa. Mantener apariencia familiar y separar chat transversal 04. Propuesta no compilada. No producción ni merge/deploy.

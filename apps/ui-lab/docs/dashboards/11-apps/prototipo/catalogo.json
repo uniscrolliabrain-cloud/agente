@@ -1,0 +1,177 @@
+[
+  {
+    "id": "01-gmail",
+    "name": "Correo",
+    "glyph": "✉"
+  },
+  {
+    "id": "02-whatsapp",
+    "name": "Conversaciones",
+    "glyph": "◉"
+  },
+  {
+    "id": "03-hubspot",
+    "name": "Clientes",
+    "glyph": "◎"
+  },
+  {
+    "id": "04-holded",
+    "name": "Facturación",
+    "glyph": "▤"
+  },
+  {
+    "id": "05-google-drive",
+    "name": "Archivos",
+    "glyph": "▱"
+  },
+  {
+    "id": "06-google-calendar",
+    "name": "Agenda",
+    "glyph": "▦"
+  },
+  {
+    "id": "07-linear",
+    "name": "Plan de trabajo",
+    "glyph": "✓"
+  },
+  {
+    "id": "08-chatgpt",
+    "name": "Asistente",
+    "glyph": "✦"
+  },
+  {
+    "id": "09-airtable",
+    "name": "Registros",
+    "glyph": "▥"
+  },
+  {
+    "id": "10-perdoo",
+    "name": "Objetivos",
+    "glyph": "◈"
+  },
+  {
+    "id": "11-holded-tesoreria",
+    "name": "Tesorería",
+    "glyph": "€"
+  },
+  {
+    "id": "12-odoo-purchase",
+    "name": "Compras",
+    "glyph": "◇"
+  },
+  {
+    "id": "13-productive",
+    "name": "Rentabilidad",
+    "glyph": "↗"
+  },
+  {
+    "id": "14-zendesk",
+    "name": "Atención",
+    "glyph": "☏"
+  },
+  {
+    "id": "15-docusign",
+    "name": "Firmas",
+    "glyph": "✎"
+  },
+  {
+    "id": "16-n8n",
+    "name": "Automatizaciones",
+    "glyph": "⌘"
+  },
+  {
+    "id": "17-process-street",
+    "name": "Procedimientos",
+    "glyph": "☷"
+  },
+  {
+    "id": "18-factorial",
+    "name": "Equipo",
+    "glyph": "♙"
+  },
+  {
+    "id": "19-personio",
+    "name": "Personas",
+    "glyph": "♧"
+  },
+  {
+    "id": "20-ramp",
+    "name": "Gastos",
+    "glyph": "−"
+  },
+  {
+    "id": "21-stripe",
+    "name": "Cobros",
+    "glyph": "+"
+  },
+  {
+    "id": "22-canva",
+    "name": "Diseño",
+    "glyph": "◒"
+  },
+  {
+    "id": "23-buffer",
+    "name": "Publicaciones",
+    "glyph": "≋"
+  },
+  {
+    "id": "24-shopify",
+    "name": "Tienda",
+    "glyph": "▣"
+  },
+  {
+    "id": "25-intercom",
+    "name": "Soporte",
+    "glyph": "◌"
+  },
+  {
+    "id": "26-odoo-inventory",
+    "name": "Inventario",
+    "glyph": "▧"
+  },
+  {
+    "id": "27-maintainx",
+    "name": "Mantenimiento",
+    "glyph": "⚙"
+  },
+  {
+    "id": "28-odoo-manufacturing",
+    "name": "Producción",
+    "glyph": "⬡"
+  },
+  {
+    "id": "29-isms-online",
+    "name": "Cumplimiento",
+    "glyph": "◆"
+  },
+  {
+    "id": "30-microsoft-entra",
+    "name": "Accesos",
+    "glyph": "⚿"
+  },
+  {
+    "id": "31-suitedash",
+    "name": "Portal cliente",
+    "glyph": "▰"
+  },
+  {
+    "id": "32-notion",
+    "name": "Conocimiento",
+    "glyph": "▩"
+  },
+  {
+    "id": "33-langsmith",
+    "name": "Observabilidad IA",
+    "glyph": "∿"
+  },
+  {
+    "id": "34-trello",
+    "name": "Tableros",
+    "glyph": "▥"
+  },
+  {
+    "id": "35-centro-mando",
+    "name": "Centro de Mando",
+    "glyph": "◫"
+  }
+]

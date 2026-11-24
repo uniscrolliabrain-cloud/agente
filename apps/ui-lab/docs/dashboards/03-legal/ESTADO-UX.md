@@ -12,6 +12,11 @@ páginas públicas y la revisión del founder.
 
 **Bitácora y milestones:** [Cuaderno de bitácora UX](../19-general/BITACORA-UX.md).
 
+**Documentación de campaña:** [CAMPANA-LEGAL-V1.md](./CAMPANA-LEGAL-V1.md) (decisiones y QA),
+[CONTRATO-VISUAL.md](./CONTRATO-VISUAL.md), [CONTRATO-FUNCIONAL.md](./CONTRATO-FUNCIONAL.md),
+[CAMPAÑA-EJECUCION.md](./CAMPAÑA-EJECUCION.md) y [GATE-ACEPTACION-VISUAL.md](./GATE-ACEPTACION-VISUAL.md).
+Las tres ramas legales anteriores quedan preservadas en [`legacy/`](./legacy/README.md).
+
 ## Notas y seguimiento
 
 - Hecho: portada editorial, entrada destacada de Transparencia IA, índice de seis documentos, lector con

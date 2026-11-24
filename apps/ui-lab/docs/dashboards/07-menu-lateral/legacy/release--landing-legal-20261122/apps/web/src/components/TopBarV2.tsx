@@ -1,0 +1,59 @@
+// B1_TOPBAR_V1
+import { Menu, Plus, Search } from "lucide-react";
+import NotificationsDropdown from "./NotificationsDropdown";
+
+interface Props {
+  status: "ok" | "working" | "offline";
+  statusLabel: string;
+  onNewChat: () => void;
+  onOpenPalette: () => void;
+  /** Etiqueta corta del espacio activo (tenant). Por defecto, "MI". */
+  contextLabel?: string;
+  /** TOPBAR_MENU_V1 - en movil abre el drawer de navegacion. */
+  onOpenMenu?: () => void;
+}
+
+export default function TopBarV2({
+  status,
+  statusLabel,
+  onNewChat,
+  onOpenPalette,
+  contextLabel = "MI",
+  onOpenMenu,
+}: Props) {
+  const dotColor =
+    status === "working" ? "var(--v2-purple)" : status === "ok" ? "var(--v2-green)" : "var(--v2-text-3)";
+
+  return (
+    <div className="v2-topbar">
+      <div className="v2-topbar-left">
+        {onOpenMenu && (
+          <button
+            type="button"
+            className="v2-topbar-menu"
+            onClick={onOpenMenu}
+            aria-label="Abrir menú"
+          >
+            <Menu size={17} />
+          </button>
+        )}
+        <span className="v2-status-pill">
+          <span style={{ width: 8, height: 8, borderRadius: 999, background: dotColor }} />
+          <span className="v2-status-label">{contextLabel} · {statusLabel}</span>
+        </span>
+      </div>
+      <div className="v2-topbar-right">
+        <NotificationsDropdown />
+        <button className="v2-search-pill" onClick={onOpenPalette} aria-label="Buscar">
+          <Search size={14} />
+          <span className="v2-topbar-action-label">Buscar</span>
+          <span className="v2-search-kbd">⌘K</span>
+        </button>
+        <button className="v2-btn-new" onClick={onNewChat} aria-label="Nuevo chat">
+          <Plus size={16} />
+          <span className="v2-topbar-action-label">Nuevo chat</span>
+        </button>
+      </div>
+    </div>
+  );
+}
