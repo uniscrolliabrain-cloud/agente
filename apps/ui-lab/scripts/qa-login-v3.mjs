@@ -106,9 +106,13 @@ page.on("console", (message) => {
 });
 const fontResponses = [];
 const failedResponses = [];
+const cssResponses = [];
 page.on("response", (response) => {
   if (response.url().endsWith(".woff2")) fontResponses.push({ url: response.url(), status: response.status() });
   if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.url()}`);
+  if (/\.css(\?|$)/.test(response.url())) {
+    cssResponses.push(`${response.status()} ${response.headers()["content-type"] ?? "?"} ${response.url()}`);
+  }
 });
 page.on("crash", () => console.error("La página se ha caído (crash del renderer)."));
 page.on("requestfailed", (request) => {
@@ -141,6 +145,11 @@ async function loadView(target) {
     console.error("La vista login-v3 no montó:", JSON.stringify(diagnostics, null, 2));
     if (consoleErrors.length > 0) console.error("Errores de consola:", consoleErrors.join(" | "));
     if (failedResponses.length > 0) console.error("Respuestas HTTP fallidas:", failedResponses.join(" | "));
+    console.error("Respuestas CSS:", cssResponses.join(" | ") || "ninguna");
+    const linkState = await target
+      .evaluate(() => [...document.querySelectorAll('link[rel="stylesheet"]')].map((link) => `${link.getAttribute("href")} -> ${link.sheet ? `${link.sheet.cssRules.length} reglas` : "sin hoja"}`))
+      .catch(() => []);
+    console.error("Hojas de estilo del documento:", linkState.join(" | ") || "ninguna");
     throw error;
   }
   await target.evaluate(() => document.fonts.ready.then(() => true));
