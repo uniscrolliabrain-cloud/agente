@@ -13,6 +13,12 @@ import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
 import CommandCenterView from "./components/CommandCenterView";
 import Login from "./components/Login";
+import LoginV3 from "./components/login-v3/LoginV3";
+
+// LOGIN_V3_SWITCH_V1 - la interfaz nueva queda activa por defecto y se puede
+// revertir sin tocar código con VITE_LOGIN_V3=false. La autenticación es la
+// misma en ambos casos: ningún contrato OAuth o de sesión cambia.
+const USE_LOGIN_V3 = import.meta.env.VITE_LOGIN_V3 !== "false";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
@@ -150,7 +156,11 @@ export default function App() {
   }
 
   if (!auth.isAuthenticated) {
-    return <Login onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />;
+    return USE_LOGIN_V3 ? (
+      <LoginV3 onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />
+    ) : (
+      <Login onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />
+    );
   }
 
   const openTask = (t: AgentTask) => setOpenTaskId(t.id);

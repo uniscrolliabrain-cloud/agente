@@ -1,0 +1,18 @@
+/* Opt-in. Source of truth: landing/landing.css at 113dcb7. */
+.agntia-workspace {
+  --ag-paper: #fcfaf6;
+  --ag-surface: #ffffff;
+  --ag-soft: #f2efe8;
+  --ag-ink: #242421;
+  --ag-muted: #6e6c66;
+  --ag-line: #e6e1d8;
+  --ag-violet: #6550dd;
+  --ag-lilac: #f0ecfc;
+  --ag-gold: #b49665;
+  color-scheme: light;
+  color: var(--ag-ink);
+  background: var(--ag-paper);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
