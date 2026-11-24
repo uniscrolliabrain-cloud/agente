@@ -1,9 +1,8 @@
 LOGIN V3 — CLONES BYTE A BYTE · origen: repositorio uniscrolliabrain-cloud/agente
 Rama: feat/ui-lab-login-v3 · cierre de campaña
-Generado: 2026-11-24T17:14:24Z
-Incluye: orden móvil (acceso primero), modal más amplio, CSS único y QA reproducible.
+Generado: 2026-11-24T17:19:46Z
 28dae45e7c5798e4af02cc5e666c63e93bf81d7ed4ac74145eabc8880acbc2f7  .github/workflows/ui-lab.yml
-9bdac56601c395e460d6e59bf5f5a9629d3a2908d95a243930d704d74b231aa6  apps/ui-lab/scripts/qa-login-v3.mjs
+e30f9aa23e525dea53c43e2f2a09cdbb0dea34c8b506e396b2d36588e6be7b13  apps/ui-lab/scripts/qa-login-v3.mjs
 a91d089ea047d318ffd9d9c6d74bdf152772e5a8b8f4d7c2391bcbb2f2f8fc5e  apps/ui-lab/src/design-system/agntia-tokens.css
 d09e40a6a32f861ba5745a7105666f672f9016d3ae8fa6a0016b74e8095eacfe  apps/ui-lab/src/login-v3/LoginV3.tsx
 2a348bf27f66ae89ecd21a8411bfb5517251cb7b40ba16c70950692bf92a9f32  apps/ui-lab/src/login-v3/login-v3.css

@@ -266,7 +266,13 @@ await page.setViewportSize({ width: 1366, height: 1002 });
 
 // ---------------------------------------------------- foco de validación
 async function focusedId() {
-  return page.evaluate(() => document.activeElement?.id ?? document.activeElement?.className ?? "");
+  // id y clase juntos: un botón sin id (el CTA de invitación) también debe poder
+  // identificarse, y `?? ` no cae al className cuando el id es una cadena vacía.
+  return page.evaluate(() => {
+    const element = document.activeElement;
+    if (!element || element === document.body) return "body";
+    return `${element.id} ${typeof element.className === "string" ? element.className : ""}`.trim();
+  });
 }
 
 // Muestreo dentro de la página: mide la altura real del colapso sin la latencia
