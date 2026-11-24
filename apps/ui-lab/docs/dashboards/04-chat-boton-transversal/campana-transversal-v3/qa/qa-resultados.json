@@ -1,0 +1,315 @@
+{
+  "campana": "chat-transversal-v3",
+  "build": "0f2e867a6be2",
+  "fecha": "2026-11-24",
+  "navegador": "Chromium headless gestionado (navegador cloud)",
+  "total": 45,
+  "superadas": 40,
+  "avisos": 1,
+  "checks": [
+    {
+      "id": "D01",
+      "area": "escritorio",
+      "check": "FAB visible y panel cerrado al entrar",
+      "ok": true
+    },
+    {
+      "id": "D02",
+      "area": "escritorio",
+      "check": "Apertura del panel en la columna izquierda",
+      "ok": true,
+      "evidencia": "1440 abierto: dock 390 px + workspace 974 px; 1024: dock 375 px + workspace 573 px"
+    },
+    {
+      "id": "D03",
+      "area": "escritorio",
+      "check": "Ancho normal de 390 px",
+      "ok": true,
+      "evidencia": "390"
+    },
+    {
+      "id": "D04",
+      "area": "escritorio",
+      "check": "Ciclo de los cuatro anchos por clic en el tirador",
+      "ok": true,
+      "evidencia": "390 → 510 → 660 → 312"
+    },
+    {
+      "id": "D05",
+      "area": "escritorio",
+      "check": "Arrastre continuo del tirador con snap",
+      "ok": true,
+      "evidencia": "432 px durante el gesto con ctv-resizing; snap a 390"
+    },
+    {
+      "id": "D06",
+      "area": "escritorio",
+      "check": "Tirador por teclado (Home y flecha)",
+      "ok": true,
+      "evidencia": "312 · 390"
+    },
+    {
+      "id": "D07",
+      "area": "escritorio",
+      "check": "Sin desbordamiento horizontal",
+      "ok": true
+    },
+    {
+      "id": "D08",
+      "area": "escritorio",
+      "check": "Cabecera con ajustes, ampliar y cerrar",
+      "ok": true,
+      "evidencia": "3 botones"
+    },
+    {
+      "id": "D09",
+      "area": "escritorio",
+      "check": "Sugerencia rellena el borrador",
+      "ok": true,
+      "evidencia": "¿Qué tengo pendiente hoy?"
+    },
+    {
+      "id": "D10",
+      "area": "escritorio",
+      "check": "Respuesta simulada del agente",
+      "ok": true
+    },
+    {
+      "id": "D11",
+      "area": "escritorio",
+      "check": "Borrador vacío tras enviar",
+      "ok": true
+    },
+    {
+      "id": "D12",
+      "area": "escritorio",
+      "check": "Diez acciones en el menú «+»",
+      "ok": true,
+      "evidencia": "Subir archivo · Subir fotos · Hacer una foto · Subir vídeo · Grabar vídeo · Cliente · Proyecto · Crear SOP · Crear vídeo · Buscar en la web"
+    },
+    {
+      "id": "D13",
+      "area": "escritorio",
+      "check": "«Grabar vídeo» separado de «Subir vídeo»",
+      "ok": true
+    },
+    {
+      "id": "D14",
+      "area": "escritorio",
+      "check": "Acción empresarial añade al borrador",
+      "ok": true,
+      "evidencia": "Ayúdame a redactar un SOP para Cierre mensual"
+    },
+    {
+      "id": "D15",
+      "area": "escritorio",
+      "check": "Resoluciones 1440, 1366, 1280 y 1024 sin desbordar y con compositor visible",
+      "ok": true,
+      "evidencia": "dock 390/390/390/375"
+    },
+    {
+      "id": "D16",
+      "area": "escritorio",
+      "check": "Consola sin errores",
+      "ok": true
+    },
+    {
+      "id": "D17",
+      "area": "escritorio",
+      "check": "Sin peticiones a servicios externos",
+      "ok": false,
+      "aviso": true,
+      "evidencia": "fonts.googleapis.com y fonts.gstatic.com, inyectadas por apps/ui-lab/src/lab.css (shell del laboratorio, preexistente). El módulo sirve fuentes locales"
+    },
+    {
+      "id": "M01",
+      "area": "movil",
+      "check": "Rail oculto y workspace a ancho completo",
+      "ok": true,
+      "evidencia": "workspace a ancho completo y hoja pegada al borde inferior a 390"
+    },
+    {
+      "id": "M02",
+      "area": "movil",
+      "check": "La hoja abre al 26 % del alto visible",
+      "ok": true,
+      "evidencia": "219 / 844 px"
+    },
+    {
+      "id": "M03",
+      "area": "movil",
+      "check": "Hoja anclada al borde inferior",
+      "ok": true
+    },
+    {
+      "id": "M04",
+      "area": "movil",
+      "check": "Cuatro posiciones con el tirador",
+      "ok": true,
+      "evidencia": "219 → 380 → 574 → 844 px (26 / 45 / 68 / 100 %)"
+    },
+    {
+      "id": "M05",
+      "area": "movil",
+      "check": "Mínimo medido con compositor visible",
+      "ok": true,
+      "evidencia": "219 px, sin is-collapsed"
+    },
+    {
+      "id": "M06",
+      "area": "movil",
+      "check": "Arrastre vertical continuo y snap",
+      "ok": true,
+      "evidencia": "219 → 501 durante el gesto → 574 al soltar"
+    },
+    {
+      "id": "M07",
+      "area": "movil",
+      "check": "Página sin scroll y scroll interno del hilo",
+      "ok": true,
+      "evidencia": "pageScroll 0"
+    },
+    {
+      "id": "M08",
+      "area": "movil",
+      "check": "768, 390, 360 y 320 sin overflow y con compositor visible",
+      "ok": true,
+      "evidencia": "a 320 el mínimo manda: 32 %"
+    },
+    {
+      "id": "M09",
+      "area": "movil",
+      "check": "Acciones a 320 en una columna",
+      "ok": true
+    },
+    {
+      "id": "M10",
+      "area": "movil",
+      "check": "Escape cierra la hoja y devuelve el foco al FAB",
+      "ok": true
+    },
+    {
+      "id": "M11",
+      "area": "movil",
+      "check": "Teclado: escribir y Enter envía",
+      "ok": true
+    },
+    {
+      "id": "M12",
+      "area": "movil",
+      "check": "Escena de voz con marca real y tres anillos",
+      "ok": true
+    },
+    {
+      "id": "M13",
+      "area": "movil",
+      "check": "Ideas progresivas durante la sesión",
+      "ok": true,
+      "evidencia": "1 idea a los 7 s"
+    },
+    {
+      "id": "M14",
+      "area": "movil",
+      "check": "Acta vacía si la sesión termina sin ideas",
+      "ok": true
+    },
+    {
+      "id": "M15",
+      "area": "movil",
+      "check": "Acta con puntos y siguiente paso",
+      "ok": true
+    },
+    {
+      "id": "M16",
+      "area": "movil",
+      "check": "Acta reabrible desde el hilo",
+      "ok": true,
+      "evidencia": "2 enlaces"
+    },
+    {
+      "id": "M17",
+      "area": "movil",
+      "check": "Retrato de LAIA cargado",
+      "ok": true,
+      "evidencia": "900 × 900, complete"
+    },
+    {
+      "id": "M18",
+      "area": "movil",
+      "check": "Cámara denegada: aviso honesto y sin vídeo residual",
+      "ok": true,
+      "aviso": true,
+      "evidencia": "No se pudo abrir la cámara. Revisa el permiso del navegador."
+    },
+    {
+      "id": "X01",
+      "area": "transversal",
+      "check": "Borrador persiste al recargar",
+      "ok": true
+    },
+    {
+      "id": "X02",
+      "area": "transversal",
+      "check": "Reduced motion desactiva animaciones",
+      "ok": true,
+      "evidencia": "animation-name none, duration 0s"
+    },
+    {
+      "id": "X03",
+      "area": "transversal",
+      "check": "Consola limpia en toda la matriz",
+      "ok": true
+    },
+    {
+      "id": "X04",
+      "area": "transversal",
+      "check": "Typecheck de UI Lab",
+      "ok": true
+    },
+    {
+      "id": "X05",
+      "area": "transversal",
+      "check": "Build de UI Lab",
+      "ok": true,
+      "evidencia": "version.json 0f2e867a6be2"
+    },
+    {
+      "id": "X06",
+      "area": "transversal",
+      "check": "Sin imports de backend ni fetch en el módulo",
+      "ok": true
+    },
+    {
+      "id": "X07",
+      "area": "transversal",
+      "check": "Cámara con permiso concedido y liberación de tracks reales",
+      "ok": null,
+      "noEjecutado": true,
+      "evidencia": "El Chromium cloud no expone cámara"
+    },
+    {
+      "id": "X08",
+      "area": "transversal",
+      "check": "Dictado con SpeechRecognition y nota con MediaRecorder",
+      "ok": null,
+      "noEjecutado": true,
+      "evidencia": "Sin micrófono ni reconocimiento en el navegador de QA"
+    },
+    {
+      "id": "X09",
+      "area": "transversal",
+      "check": "Lector de pantalla real, zoom 200 %, Safari y Firefox",
+      "ok": null,
+      "noEjecutado": true
+    },
+    {
+      "id": "X10",
+      "area": "transversal",
+      "check": "Ejecución del workflow de GitHub Actions",
+      "ok": null,
+      "noEjecutado": true,
+      "evidencia": "El ZIP se genera y valida en local con el script del workflow"
+    }
+  ],
+  "noEjecutadas": 4
+}
