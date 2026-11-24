@@ -1,0 +1,13 @@
+d29a9e3a78b673f168129d04fda5eb03b0d9c03705a365083534d74d5f5d18af  apps/ui-lab/src/chat-ux-v2/ChatComposerUX.tsx
+09d468fbf007beb8acc6f4f2c69c1ce3a8b7276ff738c4b2d74f681a168e9fa1  apps/ui-lab/src/chat-ux-v2/ChatPanelUX.tsx
+2bbfcb64ee3daf28809168c38dac865d02ff451d3a2a0252bc2b8f153dfe8363  apps/ui-lab/src/chat-ux-v2/ChatUXFrame.tsx
+6fc3e25bfa5f44e3adea606bd84fd49d0b999227e417b7c5c16c9f9931abf152  apps/ui-lab/src/chat-ux-v2/ChatUXV2Preview.tsx
+042d6db79d75675c1b6a8f5da406469bef0cb0c4ae242cc534a2e7b698983908  apps/ui-lab/src/chat-ux-v2/CognitionTimelineUX.tsx
+d4810bc86bf43dcf2c88b92163394be7b643793339236fe033c59a175bcba237  apps/ui-lab/src/chat-ux-v2/Markdown.tsx
+86b41ee564c7fb3493107a695899915d15aa00975f256f9fe849bf02864a0eb4  apps/ui-lab/src/chat-ux-v2/MessageBubbleUX.tsx
+967b8cd8da1b693820233369b1b059a0e487fed6798b35f5c564553a738e5091  apps/ui-lab/src/chat-ux-v2/MessageListUX.tsx
+7adaefd54dff0ec35822895a21492b38303301def60e641f77b933e752de063b  apps/ui-lab/src/chat-ux-v2/RoleSelectorUX.tsx
+e9d4366a103ce0342c35b17da0450251435ca4de38b172eb7ef90139f32032b0  apps/ui-lab/src/chat-ux-v2/chat-ux-v2.css
+8dfd3cb8eba20f98a7fcdb11a754b2ea77cae6d5deaf1c49853362420f256e5b  apps/ui-lab/src/chat-ux-v2/fixture.ts
+8c2def024c1bf31aacf3624ae3c4d701269b4ec3dc765c04830839f0d36b2d9e  apps/ui-lab/src/chat-ux-v2/fonts/manrope-latin-var.woff2
+b25587989e8498e51ebe84cd185f368bdc724e57f4c292314cfe83b964421416  apps/ui-lab/src/chat-ux-v2/useChatFixture.ts
