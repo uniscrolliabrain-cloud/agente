@@ -19,3 +19,21 @@ Validaciones del componente conservadas; cambios no llegan a producción; rol no
 
 ## Entrega exigida al futuro generador
 Proponer schema tipado y mapeo a props existentes; manifest de registros con IDs y fuente; escenarios positivos y negativos; proyección pura con tests de referencias, determinismo y aislamiento; informe de campos no soportados. Guardar datos ejecutables únicamente en la fuente central futura apps/ui-lab/agntia-demo/, no en esta carpeta. No implementar backend, cambiar código activo ni desplegar sin autorización.
+
+
+## Anexo de contraste con código real · revisión 2
+Baseline 21364ef55320ffb46fdcfd65a02802d593f9285b. Lectura focalizada de snapshots y contratos activos; no certifica auditoría exhaustiva de todos los imports transitivos ni QA visual. Esta sección prevalece sobre cualquier descripción anterior incompatible.
+
+| Componente / API | Contrato y escenarios |
+|---|---|
+| ProfileModal | user:AuthUser, onClose,onSaved; email visible, name editable; no editor de rol |
+| updateMe | PATCH /api/auth/me con name opcional y currentPassword/newPassword opcionales; no confirmPassword en payload |
+| Validación | name trim obligatorio; si newPassword, actual requerida, >=8 caracteres, confirmación igual; ApiError.fields y error general; saved y busy |
+| GoogleStatus | connected,account nullable,provider google,scopes[],write,sample,configured |
+| googleStatus | GET /api/google/status; fallo inicial deja null; no afirmar desconectado verificado cuando status desconocido |
+| connectGoogle | POST capability read/write; resultado url nullable,connected opcional; url real redirige, null refresca status |
+| disconnectGoogle | POST y refresco; solo botón visible si connected |
+| RoleSelector | GET /api/agent/roles, id/name/active, filtra activos, sin rol undefined; pertenece a chat, no a edición de identidad |
+| AuthUser | role admin/user; setup sopIds/allowedTools/greeting; owner es rol empresarial distinto |
+
+Fixtures mínimos Google: desconocido, sample desconectado, sample conectado lectura, sample conectado escritura, live no configurado (solo representación), error conectar/desconectar; scopes deben venir del contrato autorizado, no inventar permisos. Nunca activar OAuth desde preview. Probar actualización de nombre y callback onSaved; sincronización con otras vistas es requisito propuesto, no prueba de implementación. Contraseñas efímeras y nunca en logs.

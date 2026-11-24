@@ -18,3 +18,20 @@ Abrir desde Centro de Mando, Comunicación y Data si existe ruta; preservar sele
 
 ## Entrega exigida al futuro generador
 Proponer schema tipado y mapeo a props existentes; manifest de registros con IDs y fuente; escenarios positivos y negativos; proyección pura con tests de referencias, determinismo y aislamiento; informe de campos no soportados. Guardar datos ejecutables únicamente en la fuente central futura apps/ui-lab/agntia-demo/, no en esta carpeta. No implementar backend, cambiar código activo ni desplegar sin autorización.
+
+
+## Anexo de contraste con código real · revisión 2
+Baseline 21364ef55320ffb46fdcfd65a02802d593f9285b. Lectura focalizada de snapshots y contratos activos; no certifica auditoría exhaustiva de todos los imports transitivos ni QA visual. Esta sección prevalece sobre cualquier descripción anterior incompatible.
+
+| Componente | Contrato / proyección |
+|---|---|
+| App.tsx | una instancia useChat(auth.isAuthenticated,threads.activeId,threads.touch); chatDock/mobileChat booleanos; desktop sustituye sidebar, móvil dialog; abrir chat completo cambia view a chat |
+| SidebarChat | DockChat messages,streaming,streamBuf,tools,error,send,cancel,threadId; tenantLabel; variant dock/sheet; callbacks close/full/settings |
+| QUICK_PROMPTS | tres chips exactos: pendientes hoy, estado equipo, preparar email; seed local consumido por ChatInput; no envío automático por seleccionar chip |
+| MessageList / ChatInput | mismos componentes en dock y chat completo; no duplicar mensajes ni tool results |
+| ChatPanel | estado vacío, chips por roleId, RoleSelector, CognitionTimeline; onResolveView una vez por threadId + último mensaje user |
+| SidebarV2 | onOpenChat, onOpenProfile, onOpenSettings, navegación y threads; AppView enum existente |
+| usePanel | persistencia boolean localStorage; en App se usa para collapsed, no para persistir chatDock |
+| AppShell | composición de paneles; no generar entidades para layout |
+
+Diferenciar actual y propuesta: conservar hilo y mensajes es comportamiento respaldado; conservar borrador al desmontar, selección de entidad y scrollAnchor entre superficies requiere diseño adicional, no afirmar que existe. El texto 'en línea' es copy actual, no presencia verificada. Escenarios: tres chips, envío/cancelación, streaming/error, dock→full, móvil→full, cierre y settings; no duplicar resolución de vista. Datos de cognición deben ser eventos simulados, no razonamiento privado del modelo.

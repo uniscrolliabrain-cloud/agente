@@ -18,3 +18,16 @@ Verificar fuente y destino por enlace, distinguir publicado de borrador, no most
 
 ## Entrega exigida al futuro generador
 Proponer schema tipado y mapeo a props existentes; manifest de registros con IDs y fuente; escenarios positivos y negativos; proyección pura con tests de referencias, determinismo y aislamiento; informe de campos no soportados. Guardar datos ejecutables únicamente en la fuente central futura apps/ui-lab/agntia-demo/, no en esta carpeta. No implementar backend, cambiar código activo ni desplegar sin autorización.
+
+
+## Anexo de contraste con código real · revisión 2
+Baseline 21364ef55320ffb46fdcfd65a02802d593f9285b. Lectura focalizada de snapshots y contratos activos; no certifica auditoría exhaustiva de todos los imports transitivos ni QA visual. Esta sección prevalece sobre cualquier descripción anterior incompatible.
+
+| Fuente | Datos y límites |
+|---|---|
+| publicSite.ts | legalPages seis claves; publicSiteOrigin valida HTTPS o HTTP local, rechaza credenciales, path distinto de /, query y hash; fallback https://agntiapro.com |
+| Landing.jsx | legalVisible es visibilidad de aviso, no registro de consentimiento |
+| Landing.d.ts | loginHref opcional; no contrato legal adicional |
+| Snapshot legal | no hay componente propio identificado; no inventar contrato de documentos |
+
+Pruebas del resolver: origen válido HTTPS, localhost HTTP, origen con credenciales, path, query, hash, URL inválida; verificar fallback. La existencia de seis nombres de archivo no prueba publicación ni contenido. Los escenarios de consentimiento de la primera prompt son condicionales, no capacidades actuales. Bloqueo: localizar documentos jurídicos autorizados antes de poblar textos.

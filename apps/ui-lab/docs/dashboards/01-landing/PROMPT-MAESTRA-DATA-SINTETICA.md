@@ -19,3 +19,21 @@ La proyección pública usa allowlist de campos, no importa el dataset privado c
 
 ## Entrega exigida al futuro generador
 Proponer schema tipado y mapeo a props existentes; manifest de registros con IDs y fuente; escenarios positivos y negativos; proyección pura con tests de referencias, determinismo y aislamiento; informe de campos no soportados. Guardar datos ejecutables únicamente en la fuente central futura apps/ui-lab/agntia-demo/, no en esta carpeta. No implementar backend, cambiar código activo ni desplegar sin autorización.
+
+
+## Anexo de contraste con código real · revisión 2
+Baseline 21364ef55320ffb46fdcfd65a02802d593f9285b. Lectura focalizada de snapshots y contratos activos; no certifica auditoría exhaustiva de todos los imports transitivos ni QA visual. Esta sección prevalece sobre cualquier descripción anterior incompatible.
+
+| Landing.jsx / función | Datos y estados requeridos | Prueba |
+|---|---|---|
+| agents / supportAgents | 3 protagonistas con id, name, role, img, duration, quote, detail; 3 colaboradores Marcos/Ana/Juan con name, role, initials, detail. Conservar copy existente; mapear IDs editoriales a actores centrales sin cambiar roles unilateralmente. | 6 agentes; abrir protagonistas y preguntar por colaboradores |
+| laiaReply / send | 8 ramas explícitas (clientes, atención, implantación, precio, finanzas, seguridad/web, equipo, saludo) y fallback; mensajes role laia/user, text; typing y exclusión de envío concurrente; retardo actual 850ms | probar cada rama, prioridad de coincidencias y texto vacío |
+| initialMessages / chips | saludo literal existente y tres chips comerciales; conversación pública compartida entre inline y launcher | abrir launcher conserva mensajes |
+| askAgent / openAgent | nombre y rol del agente; selectedAgent, playing, progress 0–100 | diálogo, reinicio y cierre; progreso simulado no equivale a vídeo |
+| ProductScene | 4 tabs; vista 0 imagen product-dimension.webp; vista 1 conversación/plan de 3 pasos; vista 2 tres columnas de dos tareas; vista 3 tres carpetas | conservar composición; Estudio Lumen es dato antiguo a sustituir solo en futura proyección autorizada |
+| submitForm | name, company, sector, phone; nombre >=2, empresa no vacía, teléfono 7–15 dígitos y caracteres admitidos; errors, submitted | error por campo, foco inicial, éxito local, reset; no crear reserva real |
+| navigation / workflow / implementation | 4 enlaces internos, 4 pasos de trabajo, 4 de implantación; copy editorial no dataset privado | enlaces y CTA |
+| Dialog / composerNote / legalVisible | estado UI local, no hechos empresariales | cierre, aviso, foco; no inferir consentimiento |
+| BrandLockup / publicSite | marca estática y rutas legales | no generar registros empresariales para decoración |
+
+Corrección de alcance: la oferta 1.500 EUR y desde 1.000 EUR ya aparece en la rama precio de laiaReply. No sustituir respuestas existentes por un LLM ficticio. El formulario no persiste lead: el vínculo lead-001 es una propuesta narrativa, no comportamiento implementado.

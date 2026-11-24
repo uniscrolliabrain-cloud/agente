@@ -19,3 +19,18 @@ No hay secretos ni PII real; sesión demo no autoriza API real; errores no revel
 
 ## Entrega exigida al futuro generador
 Proponer schema tipado y mapeo a props existentes; manifest de registros con IDs y fuente; escenarios positivos y negativos; proyección pura con tests de referencias, determinismo y aislamiento; informe de campos no soportados. Guardar datos ejecutables únicamente en la fuente central futura apps/ui-lab/agntia-demo/, no en esta carpeta. No implementar backend, cambiar código activo ni desplegar sin autorización.
+
+
+## Anexo de contraste con código real · revisión 2
+Baseline 21364ef55320ffb46fdcfd65a02802d593f9285b. Lectura focalizada de snapshots y contratos activos; no certifica auditoría exhaustiva de todos los imports transitivos ni QA visual. Esta sección prevalece sobre cualquier descripción anterior incompatible.
+
+| Componente | Contrato exacto y escenarios |
+|---|---|
+| Login | onLogin(email,password), onEnterDemo opcional, error nullable; busy, demoBusy, showPassword; no introducir registro o recuperación como capacidad existente |
+| OAuth | enlaces /api/auth/oauth/google/start y /api/auth/oauth/github/start; separar navegación real de fixture |
+| useAuth | AuthState isAuthenticated, mode sample/live/null, user nullable; booting, error; restauración via currentSession/cachedUser/me; 401 vuelve a login |
+| api/auth.ts | AuthUser id,email,name,role admin/user,tenantId opcional,active opcional,setup{sopIds,allowedTools,greeting},createdAt opcional; LoginResponse token,mode,user |
+| demo/tenant.ts | interfaz y token marcador demo:interfaz actuales; migración a agntia-demo pendiente |
+| BrandMark | sin datos de sesión; marca estática |
+
+Escenarios obligatorios: arranque sin sesión, sesión cacheada válida, me rechazado, 401, login credenciales fallido, éxito demo sample, salida. Owner empresarial no es valor válido de AuthUser.role: mapear explícitamente a admin en propuesta demo, sin conceder permisos reales. No persistir contraseñas de test. El token marcador actual no es credencial real pero no reutilizarlo como autorización de producción.
