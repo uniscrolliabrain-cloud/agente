@@ -21,6 +21,22 @@ interface Props {
 
 const MAX_RENDERED_MESSAGES = 50;
 
+// CHAT_UX_V2_STREAM_PREVIEW - mientras llega el texto se muestra una lectura
+// limpia sin marcadores markdown a medio escribir ("**Lo qu"); al finalizar,
+// el mensaje se renderiza con markdown completo.
+function plainPreview(text: string): string {
+  return text
+    .replace(/^\s*#{1,4}\s*/gm, "")
+    .replace(/\*\*([^*]*)\*\*/g, "$1")
+    .replace(/\*\*/g, "")
+    .replace(/(^|\s)\*([^*\n]+)\*/g, "$1$2")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/```/g, "")
+    .replace(/\*/g, "")
+    .replace(/`/g, "")
+    .replace(/^\s*>\s?/gm, "");
+}
+
 export default function MessageListUX({ messages, streaming, streamBuf, tools, onQuickAction, seeded }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const pinned = useRef(true);
@@ -64,7 +80,7 @@ export default function MessageListUX({ messages, streaming, streamBuf, tools, o
             IA
           </div>
           <div className="v2-assistant-text cux-assistant-text">
-            <span className="cux-stream-text">{typed}</span>
+            <span className="cux-stream-text">{plainPreview(typed)}</span>
             {typing && <span className="stream-cursor cux-cursor" aria-hidden="true" />}
           </div>
         </div>

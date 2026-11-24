@@ -29,7 +29,7 @@ Cobertura automatizada:
 | Portada, copy, proporciones, chips | Saludo, titular 48 px, compositor 680 px, 3 chips, enviar deshabilitado, sin overflow |
 | Fuente offline | Manrope local con Google Fonts bloqueado, ancho de texto real |
 | Transición | FLIP medido 413→656 px, mismo nodo, mensaje visible, streaming inmediato |
-| Streaming / cancelación | Texto creciente, cursor, detener, bloqueo del compositor, sin respuesta parcial, foco recuperable |
+| Streaming / cancelación | Texto creciente sin marcadores crudos, cursor, detener, bloqueo del compositor, sin respuesta parcial, foco recuperable |
 | Markdown | Tabla, código, negrita, cita, lista ordenada, tabla sin desbordar |
 | Scroll | No fuerza el fondo al leer; un mensaje nuevo no arrastra |
 | Herramientas / timeline | Resumen «2 pasos», apertura del detalle |

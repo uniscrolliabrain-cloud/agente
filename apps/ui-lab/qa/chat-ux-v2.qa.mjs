@@ -206,8 +206,8 @@ async function main() {
       textareaDisabled: document.querySelector(".cux-composer textarea")?.disabled,
     }));
     check(
-      "Streaming: texto creciente con cursor",
-      stream.text.length > 20 && stream.cursor,
+      "Streaming: texto creciente con cursor y sin marcadores crudos",
+      stream.text.length > 20 && stream.cursor && !/\*\*|```/.test(stream.text),
       `${stream.text.length} chars`,
     );
     check("Streaming: control de detener visible", stream.stop === true);

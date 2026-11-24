@@ -46,7 +46,7 @@ La portada desaparece en el mismo commit que entra la conversación; no hay pant
 | Repetición | Una vez por montaje; nunca por token |
 | Evidencia | `03b`, `06`, `07` |
 
-El texto en streaming no se reanima: el contenedor de la respuesta entra una vez y el texto crece dentro. El cursor es un bloque violeta de 2 px con parpadeo de 1.05 s (`steps(1,end)`), estático con reduced motion.
+El texto en streaming no se reanima: el contenedor de la respuesta entra una vez y el texto crece dentro. Mientras llega, se lee como texto limpio (sin marcadores markdown a medio escribir); al finalizar, el mensaje se renderiza con su jerarquía completa. El cursor es un bloque violeta de 2 px con parpadeo de 1.05 s (`steps(1,end)`), estático con reduced motion.
 
 ## 4. Microinteracciones
 

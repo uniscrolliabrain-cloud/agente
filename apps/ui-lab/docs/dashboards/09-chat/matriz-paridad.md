@@ -16,7 +16,7 @@ Cada control real → control de la propuesta → handler → estado → prueba.
 | 10 | Autoajuste de altura ≤120 px | idéntico (≤132 con el nuevo alto) | efecto `value` | — | Visual | D |
 | 11 | Selector de rol (`/api/agent/roles`) | roles locales | `onChange` | sin roles → null | QA selector | F (fixture) |
 | 12 | Lista tope 50 | idéntico | `visibleMessages` | — | Lectura + fixture larga | D |
-| 13 | Typewriter real | mismo hook | `useTypewriter` | reduced motion | QA streaming | D |
+| 13 | Typewriter real | mismo hook; preview sin marcadores crudos y markdown al finalizar | `useTypewriter` | reduced motion | QA streaming | D |
 | 14 | Scroll al fondo siempre | pinning si ya estaba abajo | `onScroll` + efecto | historial leído | QA scroll | F |
 | 15 | Copiar + acciones | mismas acciones | `copy`, `onQuickAction` | clipboard bloqueado | QA copiar | D |
 | 16 | Herramientas `<details>` | mismo comportamiento | estado real | running/error | QA herramientas | D |
