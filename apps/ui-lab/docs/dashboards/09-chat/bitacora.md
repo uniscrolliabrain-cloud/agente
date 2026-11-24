@@ -7,7 +7,9 @@
 | 2026-11-24 | `6e1512c` | Buffy | CSS, componentes, fuente local | Tokens, container queries, motion contenido, Manrope offline | `pnpm build` | PASS | Chromium sin libs ni fuentes del sistema; se instalaron libs locales y DejaVu/FONTCONFIG para QA | QA |
 | 2026-11-24 | `6e1512c` | Buffy | `qa/chat-ux-v2.qa.mjs` | QA Playwright 1.62.1 con 8 viewports, 3 contenedores y estados | ejecución local | 75/75 PASS tras corregir expectativas de pruebas | — | Revisión visual |
 | 2026-11-24 | `6e1512c` | Buffy | CSS | Ajuste de titular móvil 30 px, fade inferior y medición FLIP | QA + capturas | 76/76 PASS | — | Documentar y empaquetar |
-| 2026-11-24 | `6e1512c` | Buffy | docs, artifact, workflow | Cierre de campaña sin merge ni deploy | typecheck/build/QA/verify ZIP | Pendiente de registro final | — | Aprobación del founder |
+| 2026-11-24 | `6e1512c` | Buffy | docs, artifact, workflow | Cierre de campaña sin merge ni deploy | typecheck/build/QA/verify ZIP | 76/76 + 7/7 verificación del ZIP | Artifact inicial con revisión base | Revisión de capturas |
+| 2026-11-24 | `f818faa` | Buffy | `qa/chat-ux-v2.qa.mjs`, fixture | Eliminar flakiness del FLIP y del streaming (aserción antes de capturas) | QA repetido | 76/76 PASS | El compositor podía medirse ya en su posición final | Revisión visual del streaming |
+| 2026-11-24 | `88ba9fa` | Buffy | `MessageListUX.tsx`, docs | El streaming se lee como texto limpio; el markdown completo llega al finalizar | QA + captura 04 | 76/76 PASS, sin `**` crudos | Antes se veía `**Lo qu` a medio escribir | Aprobación del founder |
 
 ## Registro de decisiones
 
@@ -30,4 +32,6 @@
 - **Probado:** typecheck, build y 76/76 checks automatizados; inspección visual de capturas.
 - **Publicado:** no. Sin merge, sin push a main, sin Vercel.
 - **Aprobado:** no. Requiere revisión visual y aprobación del founder.
-- **Artifact:** `chat-ux-v2-chromebook.zip`, generado desde la revisión de la rama; su SHA256 se registra en el cierre de la entrega.
+- **Artifact:** `apps/ui-lab/artifacts/chat-ux-v2-chromebook.zip` · revisión `88ba9fa38f489f4dc982a6f26088540f74207572` · SHA256 `ad0385866f6bc157bd1137fb95eeb1628b9908b5accea628b3cefacdd0f11e73` (11 MB, 173 archivos).
+- **Verificación del ZIP:** extraído y servido desde `site/`, 7/7 PASS (portada, Manrope sin red, saludo, consola limpia, conversación/markdown, compositor completo).
+- **Evidencia:** 14 capturas en `capturas/`, 76 checks en `QA/RESULTADOS.md` dentro del artifact y `VERIFICACION-ZIP.txt`.
