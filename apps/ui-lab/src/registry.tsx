@@ -21,6 +21,7 @@ const Users=lazy(()=>import("../../web/src/components/UsersView"));
 const Comunicaciones=lazy(()=>import("./comunicaciones/ComunicacionesWorkspace"));
 const Control=lazy(()=>import("../../web/src/components/ControlCenterView"));
 const Today=lazy(()=>import("../../web/src/components/CommandCenterView"));
+const TodayEditorial=lazy(()=>import("./command-center-editorial/CommandCenterEditorialPreview"));
 const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
 export type Preview={id:string;name:string;category:string;description:string;Component:ComponentType;status:"fixture"|"demo"|"api";};
 export const previews:Preview[]=[
@@ -36,6 +37,7 @@ export const previews:Preview[]=[
 {id:"knowledge",name:"Conocimiento",category:"Trabajo",description:"Biblioteca editorial C01",Component:()=> <Knowledge memories={memories}/>,status:"fixture"},
 {id:"centro",name:"Centro de Mando",category:"Trabajo",description:"Workspace 35; inspeccionar dependencias",Component:Centro,status:"demo"},
 {id:"today",name:"Inicio / Hoy",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:Today,status:"demo"},
+{id:"today-editorial",name:"Inicio · Editorial V2",category:"Trabajo",description:"Refinamiento editorial del Centro de Mando sobre los mismos datos demo, filtros, permisos y callbacks",Component:TodayEditorial,status:"demo"},
 {id:"tasks",name:"Tareas",category:"Trabajo",description:"Componente original con tareas ficticias",Component:()=> <Tasks tasks={tasks} currentUserId={null} onOpenTask={()=>{}} onReviewTask={()=>{}}/>,status:"fixture"},
 {id:"documents",name:"Documentos",category:"Trabajo",description:"Vista original con archivos ficticios",Component:()=> <Docs files={files}/>,status:"api"},
 {id:"projects",name:"Proyectos",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:()=> <Projects enabled={true}/>,status:"api"},
