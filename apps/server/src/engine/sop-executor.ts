@@ -522,16 +522,22 @@ export class SOPExecutor {
       }
       case "computer_command": {
         // B102 Ã¢â‚¬â€ si la tarea tiene rol activo, AgentGovernance debe autorizar la tool.
+        // SOP_COMPUTER_AUTHZ_FAIL_CLOSED_V1 - con rol activo, governance es
+        // obligatoria: antes un rol borrado o un montaje sin governance saltaban
+        // la autorizacion y el comando se ejecutaba.
+        if (ctx.signal?.aborted) throw new Error("computer_command aborted before dispatch");
         const activeRoleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
-        if (activeRoleId && this.service.governance) {
-          const role = await this.service.db
-            .get<import("../../../../packages/domain/src/agent.ts").AgentRole>(
-              owner,
-              "agent-roles",
-              activeRoleId,
-            )
-            .catch(() => null);
-          if (role) {
+        if (activeRoleId) {
+          if (!this.service.governance)
+            throw new AppError(
+              "computer_command requires governance for a role-scoped task",
+              403,
+            );
+          const role = await this.service.db.get<
+            import("../../../../packages/domain/src/agent.ts").AgentRole
+          >(owner, "agent-roles", activeRoleId);
+          if (!role) throw new AppError(`AgentRole ${activeRoleId} not found for authz`, 403);
+          {
             const decision = await this.service.governance.canExecuteTool(
               agentActor({
                 // SOP_ACTOR_TENANT_V1 - el tenant sale de la tarea; runStep no lo recibe.
