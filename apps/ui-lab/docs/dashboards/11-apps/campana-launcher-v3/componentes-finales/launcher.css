@@ -426,10 +426,10 @@ body:has(.alp-root) { overflow: hidden; }
   display: inline-flex; align-items: center; gap: 6px;
   align-self: flex-start;
   font-size: 12.5px; font-weight: 700; color: var(--alp-violet-deep);
-  padding: 4px 0; min-height: 40px;
+  padding: 4px 0; min-height: 44px;
 }
 .alp-widget-link:hover { text-decoration: underline; text-underline-offset: 3px; }
-.alp-widget-more { font-size: 11.5px; font-weight: 700; color: var(--alp-violet-deep); padding: 4px 8px; min-height: 40px; }
+.alp-widget-more { font-size: 11.5px; font-weight: 700; color: var(--alp-violet-deep); padding: 4px 10px; min-height: 44px; }
 .alp-widget ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .alp-widget--agenda li,
 .alp-widget--agents li { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -509,11 +509,11 @@ body:has(.alp-root) { overflow: hidden; }
 .alp-search:focus-within { border-color: var(--alp-violet); box-shadow: 0 0 0 3px rgba(101, 80, 221, 0.14); }
 .alp-search input { flex: 1; min-width: 0; border: 0; background: none; font-size: 13.5px; color: var(--alp-ink); outline: none; }
 .alp-search input::-webkit-search-cancel-button { display: none; }
-.alp-search-clear { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--alp-muted); }
+.alp-search-clear { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--alp-muted); }
 .alp-search-clear:hover { background: var(--alp-soft); }
 .alp-drawer-close {
   display: grid; place-items: center;
-  width: 42px; height: 42px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
   border: 1px solid var(--alp-line); background: rgba(255, 255, 255, 0.7);
 }
 .alp-drawer-close:hover { background: #fff; }
@@ -573,7 +573,7 @@ body:has(.alp-root) { overflow: hidden; }
 .alp-icon-button:hover { background: #fff; }
 .alp-text-button {
   display: inline-flex; align-items: center; gap: 6px;
-  min-height: 40px; padding: 0 12px;
+  min-height: 44px; padding: 0 14px;
   border-radius: 10px;
   font-size: 12.5px; font-weight: 700; color: #47453f;
   transition: background 160ms var(--alp-ease-soft), color 160ms var(--alp-ease-soft);
@@ -756,7 +756,7 @@ body:has(.alp-root) { overflow: hidden; }
   .alp-widget--briefing { grid-column: auto; }
   .alp-dock { padding: 6px 8px; gap: 4px; width: 100%; justify-content: space-between; }
   .alp-dock-apps { gap: 4px; }
-  .alp-dock .alp-app { width: clamp(40px, 11vw, 46px); }
+  .alp-dock .alp-app { width: clamp(44px, 11.5vw, 46px); }
   .alp-dock-tool { width: 44px; height: 44px; }
   .alp-drawer-head { padding: 14px 14px 10px; gap: 10px; }
   .alp-drawer-scroll { padding: 14px 14px 26px; }

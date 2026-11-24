@@ -513,7 +513,7 @@ body:has(.alp-root) { overflow: hidden; }
 .alp-search-clear:hover { background: var(--alp-soft); }
 .alp-drawer-close {
   display: grid; place-items: center;
-  width: 42px; height: 42px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
   border: 1px solid var(--alp-line); background: rgba(255, 255, 255, 0.7);
 }
 .alp-drawer-close:hover { background: #fff; }
@@ -756,7 +756,7 @@ body:has(.alp-root) { overflow: hidden; }
   .alp-widget--briefing { grid-column: auto; }
   .alp-dock { padding: 6px 8px; gap: 4px; width: 100%; justify-content: space-between; }
   .alp-dock-apps { gap: 4px; }
-  .alp-dock .alp-app { width: clamp(40px, 11vw, 46px); }
+  .alp-dock .alp-app { width: clamp(44px, 11.5vw, 46px); }
   .alp-dock-tool { width: 44px; height: 44px; }
   .alp-drawer-head { padding: 14px 14px 10px; gap: 10px; }
   .alp-drawer-scroll { padding: 14px 14px 26px; }
