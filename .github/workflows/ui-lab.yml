@@ -98,12 +98,17 @@ jobs:
           VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
         run: vercel build --prod --token="$VERCEL_TOKEN"
       - name: Deploy UI Lab only
-        working-directory: apps/ui-lab
+        # Vercel project Root Directory is apps/ui-lab. Deploy from the repository
+        # root so the CLI does not resolve apps/ui-lab/apps/ui-lab.
         env:
           VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
         run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          cp apps/ui-lab/.vercel/project.json .vercel/project.json
+          cp -R apps/ui-lab/.vercel/output .vercel/output
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tee /tmp/ui-lab-deployment-url.txt
           test -s /tmp/ui-lab-deployment-url.txt
       - name: Verify published UI Lab manifest and required previews
