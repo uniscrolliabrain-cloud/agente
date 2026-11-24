@@ -18,6 +18,7 @@ Reconstruir **con evidencia actual** todas las ramas, PRs, commits, código, tes
 4. `04-HANDOFF-CODEX.md`
 5. [Informe de integración por rama](05-INFORME-POR-RAMA.md)
 6. [Estado y cierre de la integración transversal](07-ESTADO-Y-CIERRE-TRANSVERSAL.md)
+7. [Auditoría del repositorio actualizado · 24 de noviembre](08-AUDITORIA-DELTA-20261124.md)
 
 ## Invariantes
 - Tenant/actor/rol/policy en servidor; deny-by-default, RLS, fail-closed, auditoría y idempotencia.
