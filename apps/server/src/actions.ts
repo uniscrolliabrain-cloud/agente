@@ -445,7 +445,7 @@ export class ActionService {
     const approvalStatus: ApprovalStatus = decision === "deny" ? "rejected" : "approved";
     const approval: ApprovalRequest = {
       id: proposal.id,
-      tenantId: owner,
+      tenantId: currentTenantScope()?.tenantId ?? owner,
       owner,
       ...(proposal.taskId ? { taskId: proposal.taskId } : {}),
       capabilityId: `action:${proposal.kind}`,
@@ -600,15 +600,16 @@ export class ActionService {
         : finished.status === "failed" || finished.status === "outcome_unknown"
           ? "rejected"
           : "pending";
+    const approval = await this.db.get<ApprovalRequest>(owner, "approval-requests", finished.id);
     void this.db
       .put(owner, "approval-requests", {
-        ...((await this.db.get<Record<string, unknown>>(owner, "approval-requests", finished.id)) ?? {}),
+        ...approval,
         id: finished.id,
-        tenantId: owner,
+        tenantId: currentTenantScope()?.tenantId ?? approval?.tenantId ?? owner,
         owner,
         status: finalStatus,
-        decidedAt: new Date().toISOString(),
-        decidedBy: owner,
+        decidedAt: approval?.decidedAt ?? new Date().toISOString(),
+        decidedBy: approval?.decidedBy ?? owner,
         result: finished.result ?? finished.error ?? null,
       })
       .catch(() => {});
