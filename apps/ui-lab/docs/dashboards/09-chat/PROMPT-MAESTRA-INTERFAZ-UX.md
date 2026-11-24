@@ -1,0 +1,24 @@
+# Chat · Hablar con mi empresa
+
+## Mandato
+Diseño UX documental en UI Lab. Leer las cinco preguntas y respuestas del CEO y founder en ../../agntia-demo/01-kick-off y ../../agntia-demo/02-vision-founder, y ../../agntia-demo/03-compilacion-y-dataset/OWNER-JOURNEY-UX.md. Contrastar con componentes reales de esta carpeta, guía de branding y handoff; con Landing, Studio y Formación V4. La empresa determina capacidades, las capacidades determinan UX y el UX determina la data posterior. No auditar backend ni implementar código. Las ampliaciones descritas son propuestas de experiencia.
+
+Conservar el concepto actual de Chat: saludo, pregunta central, composer, sugerencias, conversación, selector de especialidad y actividad cognitiva. Quiero una experiencia familiar como las mejores aplicaciones conversacionales, pero que se reconozca inmediatamente como AgntiaPro. No es un chat de soporte ni una sala de agentes discutiendo entre sí. Es el lugar donde el owner dirige, consulta, crea y delega.
+
+## Escena inicial
+En escritorio, zona central de lectura de 720–860 px con espacio negativo alrededor. Saludo pequeño con firma LAIA, titular serif «¿En qué te ayudo hoy?» y composer amplio, con acciones secundarias discretas. Las sugerencias actuales de resumen, email y documento son útiles; se adaptan a la especialidad o al contexto. Presentar pocas y bien elegidas, no un catálogo de prompts. Una sugerencia rellena el borrador y deja al usuario decidir. El historial pertenece al menú lateral; no duplicarlo.
+## Conversación activa
+Al comenzar, el hero cede el lugar a una conversación continua. Cabecera local compacta con título del hilo, interlocutor/especialidad y acciones pertinentes. Mensajes del usuario claramente diferenciados, respuestas de LAIA con tipografía legible, párrafos, listas cuando proceda y fuentes empresariales accesibles. No encerrar cada respuesta en una tarjeta pesada. Composer fijo al pie, adjuntos visibles como piezas removibles, envío y cancelación inequívocos. La respuesta en curso se lee de forma progresiva sin saltos; permitir desplazarse arriba sin forzar retorno al final.
+## Trabajo y resultados
+La conversación puede producir un documento, una propuesta, una tabla, una agenda, una lista de tareas, una aprobación o una visualización. Diseña piezas embebidas que tengan sentido en el diálogo: resumen breve, vista previa, acción principal y abrir workspace. Para un documento largo, panel contextual a la derecha en escritorio amplio; para un resultado pequeño, permanecer en el hilo. El usuario puede cerrar la vista sin perder la conversación. La actividad cognitiva actual se refina como progreso comprensible del trabajo: qué se está preparando, qué falta y qué resultado se obtuvo, sin presentar razonamiento privado ni ruido técnico. Las acciones sensibles se distinguen de sugerencias y borradores.
+## Capacidades propuestas
+Conversar con LAIA o especialista, adjuntar y consultar documentos, recuperar contexto de empresa, pedir un resumen, preparar trabajo, revisar decisiones y abrir resultados. Voz y videollamada son extensiones de comunicación cuando estén disponibles, no una obligación visual permanente. El selector de especialidad debe explicar qué cambia sin sugerir que el usuario necesita aprender arquitectura.
+## Estados y móvil
+Hilo nuevo, historial, respuesta en curso, cancelación, error con recuperación, adjunto pendiente, resultado listo, decisión requerida y conversación larga. En móvil, ancho de lectura real, composer sobre teclado, adjuntos en tira horizontal, resultados largos en hoja o pantalla completa y regreso al hilo. 
+## Coreografía
+Saludo→conversación con continuidad del composer; entrada de mensajes leve; resultado se despliega después de su explicación; panel contextual entra sin oscurecer innecesariamente; retorno desde chat transversal conserva conversación. No animar cada token. 
+## Recorridos
+Preguntar por ventas, preparar un documento, delegar trabajo, revisar aprobación, abrir resultado, cancelar y recuperar error, pasar del panel transversal al chat completo. Los textos concretos y los objetos de negocio se escribirán después, a medida de estas escenas.
+
+## Entrega y contraste con Formación V4
+Preparar escenas de escritorio 1440/1280 y móvil 390/360, composición, jerarquía, estados y recorridos; especificar movimiento de entrada, selección, cambio de vista y salida. Mantener identidad de Landing, Fraunces/Manrope, papel cálido, violeta intencional, oro como firma LAIA. Como Formación V4, usar inspiración reconocible sin copiar branding, alternar densidades, priorizar pocas experiencias completas sobre volumen y evitar tarjetas homogéneas. No duplicar shell ni chat transversal. Usar etiquetas y estructuras vacías de datos definitivos; revisar con founder antes de la fase de contenido. Sin código ni despliegue.
