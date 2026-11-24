@@ -1,0 +1,39 @@
+name: ChatGPT sandbox
+on:
+  push:
+    branches: ['chatgpt/**']
+permissions:
+  contents: read
+concurrency:
+  group: sandbox-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  ALLOW_NETWORK: "0"
+  CI: "true"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Web typecheck
+        if: success() || failure()
+        run: pnpm --filter @agente/web exec tsc --noEmit
+      - name: Unit tests
+        if: success() || failure()
+        run: pnpm test
+      - name: Server build
+        if: success() || failure()
+        run: pnpm build:server
+      - name: Web build
+        if: success() || failure()
+        run: pnpm --filter @agente/web --fail-if-no-match build
