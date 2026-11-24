@@ -13,8 +13,17 @@
 | `11-apps/GUIA-MAESTRA-BRANDING-UX-V2.md` | Tokens y reglas de motion | Autoridad de estilo |
 | `apps/ui-lab/src/vendor/landing/`, `design-system/agntia-tokens.css` | Branding real | Tokens copiados, no reinterpretados |
 | `tools/image-pipeline/` + `generate-editorial-images.yml` | Pipeline OpenRouter con `OPEN_ROUTER_API_KEY` | Documentado; no ejecutable aquí (sin secreto) |
-| `11-apps/iconos/`, `CAMPAÑA-LAUNCHER-V2.md`, `DECISION-FOUNDER-INTERACCION-ICONOS.md` | **No existen en `main`** | Se crean en esta campaña; la interacción se implementa según la prompt |
+| `11-apps/iconos/` (35 SVG provisionales, `manifest.json`, `PROMPTS-INDIVIDUALES-V3.md`, `generacion-v3.json`) | Existen en `main` por trabajo paralelo, incorporados durante esta campaña | Se conservan como referencia histórica; el acabado final son los 35 renders propios en `iconos/final/` |
+| `CAMPAÑA-LAUNCHER-V2.md` y `DECISION-FOUNDER-INTERACCION-ICONOS.md` | Existen en `main` (llegaron en el rebase) | La decisión del founder se implementa literalmente: sin nombres permanentes, hover/foco revelan, primer toque selecciona, segundo abre, ≥44 px, Escape cancela selección, sin desplazar la cuadrícula |
 | `.github/workflows/ui-lab.yml` | Build + artifact de Formación V4 | Se amplía con el artifact del launcher |
+
+## Reconciliación con `generacion-v3.json`
+
+El manifiesto canónico de prompts propone fondo marfil cálido (#FCFAF6) y cuerpo de objeto al 58–65 %.
+La dirección aprobada por el founder y las cinco muestras de referencia usan **fondo lavanda suave
+(#F0ECFC)**, y la prompt de esta campaña lo confirma como dirección aprobada. Los 35 renders siguen
+esa dirección lavanda; `generacion-v3.json` queda como fuente de sujetos y para una regeneración
+alternativa sobre marfil si el founder la prefiere.
 
 ## Lo que no existía y se ha creado
 
@@ -50,3 +59,7 @@ favoritos y fichas textuales. Problemas detectados:
 `git status` antes del commit solo muestra archivos nuevos del launcher, su documentación, los iconos
 y el workflow. No hay cambios en `apps/web` ni en los documentos existentes de 11-apps (solo se
 actualizan `README.md` y `ESTADO-UX.md` al final de la campaña, como pide la prompt).
+
+Durante la campaña `main` avanzó con trabajo de otros agentes (Legal V1, Login V3, campaña
+transversal y los SVG provisionales de Apps). La rama se rebasó sobre ese estado y el único conflicto
+real fue `.github/workflows/ui-lab.yml`: se conservaron ambos pasos de artifact (Login V3 y Launcher V3).

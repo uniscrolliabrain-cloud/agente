@@ -35,6 +35,19 @@ dial, columnas de tablero y consola de mando).
 Los prompts definitivos están en `iconos/prompts-definitivos.json` y repetidos por app en
 `iconos/final/manifiesto.json`.
 
+### Relación con `iconos/generacion-v3.json`
+
+Ese manifiesto (incorporado a `main` durante la campaña) fija los sujetos por app y una base de
+estudio con **fondo marfil #FCFAF6**. La dirección aprobada por el founder y las cinco muestras de
+referencia usan **fondo lavanda #F0ECFC**, que es lo que pide la prompt de esta campaña; los 35
+renders siguen esa base. Los sujetos son equivalentes (sobre, bocadillos, factura con sello, carpetas,
+calendario, planos de trabajo, diana, monedas, engranajes, escudo, llave, portal, libro, dial,
+columnas, consola…). Si el founder prefiere marfil, `generacion-v3.json` es la vía de regeneración
+sin reescribir la app: basta cambiar los archivos de `iconos/final/` y volver a lanzar `build-icons.py`.
+
+Los 35 SVG tipográficos de `iconos/*.svg` se conservan como referencia histórica y **no** son el
+acabado entregado.
+
 ## Archivos
 
 | Ruta | Contenido | Tamaño |
@@ -63,5 +76,6 @@ Los 35 `id` coinciden con el inventario real de workspaces de `11-apps/README.md
 ## Estado de aprobación
 
 - **Técnico:** 35/35 archivos presentes, 1024×1024, sin texto ni logotipos, sin cuadrículas
-  recortadas, carga correcta en la app (35/35 `img.naturalWidth > 0` en el cajón).
+  recortadas, carga correcta en la app (35/35 `img.naturalWidth > 0` en el cajón). Legibilidad
+  comprobada a 48 px generando una tira de miniaturas (`iconos/final/tira-48px.png`).
 - **Estético:** **pendiente de la auditoría del founder.** No se declara aprobado.
