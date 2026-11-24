@@ -3,6 +3,16 @@ import { randomUUID } from "node:crypto";
 import type { CognitiveIdentity, CognitiveRecord } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import { cognitiveIdentitySchema, contextRequestV2Schema, deliveryAckV2Schema } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import { CognitiveProjectionStore, digest } from "./storage.ts";
+/** Shared scoring for the prepared snapshot and the attention view of its references. */
+export function contextScorer(query: string): (record: CognitiveRecord) => number {
+  const words = query.toLocaleLowerCase().split(/\W+/u).filter(Boolean);
+  return (record) => {
+    const content = `${record.title} ${record.body}`.toLocaleLowerCase();
+    const { relevance, urgency, novelty } = record.signals;
+    return relevance * .5 + urgency * .3 + novelty * .2 +
+      words.filter((word) => content.includes(word)).length;
+  };
+}
 export interface CognitivePolicy {
   // Must revalidate current membership/policy, not trust claims from a prompt.
   authorize(identity: CognitiveIdentity, record?: CognitiveRecord): Promise<boolean>;
@@ -65,10 +75,7 @@ export class ContextServingFacade {
       if (r.kind === "thought_ref" || r.kind === "entity_ref") continue;
       try { await this.assertAuthorized(identity, r); eligible.push(r); } catch { /* private/expired/denied excluded without metadata */ }
     }
-    const words = options.query.toLocaleLowerCase().split(/\W+/u).filter(Boolean);
-    const score = (r: CognitiveRecord) =>
-      r.signals.relevance * .5 + r.signals.urgency * .3 + r.signals.novelty * .2 +
-      words.filter((w) => `${r.title} ${r.body}`.toLocaleLowerCase().includes(w)).length;
+    const score = contextScorer(options.query);
     eligible.sort((a, b) => score(b) - score(a) || a.id.localeCompare(b.id));
     const refs: ContextSnapshotV2["refs"] = [], segments: ContextSnapshotV2["segments"] = [];
     let usedTokens = 0;

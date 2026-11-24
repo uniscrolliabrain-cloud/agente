@@ -136,6 +136,7 @@ export class CognitionV2Runtime {
             return this.provider.stream({ ...input,
             messages: input.messages.filter((m) => m.role === "user" || m.role === "assistant").slice(-20),
             state: {}, tools: [], context: [], forwardedProps: {} }, prompt, "fast", signal, (event) => {
+              if (signal.aborted) return;
               if (event.type === EventType.RUN_ERROR) throw Error("PROVIDER_ERROR");
               const publicEvent = publicTextEvent(event);
               if (!publicEvent) return;
@@ -145,7 +146,8 @@ export class CognitionV2Runtime {
           }, controller.signal);
           controller.signal.throwIfAborted();
           if (streamedResponse !== response) throw Error("STREAM_RECEIPT_MISMATCH");
-          await this.context.assertAuthorized(identity);
+          if (!await this.context.readSnapshot(identity, snapshot.id)) throw Error("CONTEXT_REVOKED_BEFORE_RECEIPT");
+          controller.signal.throwIfAborted();
           const receiptId = randomUUID();
           // A durable server-consumer receipt and its card ACKs commit together.
           // This does not claim browser reception or media playback.
