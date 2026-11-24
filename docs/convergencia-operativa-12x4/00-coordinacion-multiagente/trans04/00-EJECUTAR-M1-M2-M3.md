@@ -1,0 +1,16 @@
+# Entrada ejecutable — M1, M2, M3
+Rama exclusiva indicada abajo; campaña general campaign/convergencia-operativa-12x4 solo lectura. Leer contrato transversal, wiring, doce fases, agntia-demo y documentación propia disponible. Reconciliar HEAD y commits previos. LLM o SOP propone mediante Zod; kernel dispone; runtime ejecuta. Ningún agente/persona tiene herramientas propias. No duplicar runtime, bus, registry, OAuth ni memorias. Fast presenta como LAIA por defecto; Slow/JEV interpretan, no autorizan. 
+Por cada unidad: inspeccionar firmas/callers, prueba de regresión, hunk mínimo, test focal/typecheck, commit y bitácora. Nombres de tests y cambios abajo son propuestas; comprobar runner y ownership. Si falta ABI, registrar solicitud y continuar independiente; no montar stub como operativo. M1 termina B2, M2 B4 (B3 interno), M3 B6 (B5 interno). No avanzar macroturno sin autorización. No efectos reales, merges, deploy, cierre, UX/demo. Gate NO_GO permanece. Registrar SHA, comandos, exit, skips, rollback, bloqueos; reporte único al final. Si falta documentación histórica, recuperar de campaña general en lectura, no recrear trabajo funcional. 
+
+Rama activa: **Trans04**. Carpeta: **trans04**.
+## M1 — observabilidad y certificación
+Anclas: metrics/registry.ts 6e048687, metrics-exporter.ts ca222271, middleware/request-logger.ts 60a311c0, scripts/provision-vertical-slice.ts 3ae48b16. Los documentos históricos de esta carpeta devolvieron 404; recuperar campaña general y verificar historial antes de repetir.
+I01: quantile(name,q,filter?) YA existe y metricsRoutes pasa filter a p99. No repetir fix: comprobar filtro previo a agregación con A/B y route template en requestLogger. Test URLs con IDs distintos misma serie, tenant A no incluye B, ausencia de datos. MetricsCollector existente; no segundo registry.
+I02: inspeccionar exporter OTel existente, registry por proceso, propagación W3C, cola acotada, drop observable y shutdown; collector offline no bloquea. H01 kernel/runtime, H02 cognition, H03 adapters: publicar contrato de hooks y pedir implementación a propietarios. Sin payload, PII, IDs de negocio/tenant en export externo. Test redacción y doble conteo.
+I03: verificar Node/pnpm de CI, lock reproducible; diagnosticar tasks-reassign con gate limpio, sin aumentar timeout ni skip. Ejecutar pnpm gate y gate Cognition V2, conservar NO_GO. Registrar SHA y exit.
+## M2
+I04: fixtures deterministas A/B para seis slices, ACME upstream licencia/generador antes de instalar; local etiquetada si bloqueado.
+I05: planProvision/applyProvision/checkProvision, readInstallation/readClaimedNames, PROVISION_STEPS tenant/actors/complete. Inspeccionar catches y reserva: fallo lectura no equivale vacío; CAS/journal por operación, dos provisionadores, fallo tras cada paso y reanudación. No apply owner real. Preservar personalizaciones.
+I06: métricas de outcome/lag/coste ciber/gestoría, alertas y dashboards infra sin UX. I07: recompilación bundle, migración, restore y jornada E2E; pnpm verify:slice y release checks. Gate combinado solo SHA real integrado.
+## M3
+Auditar Trans03 scopes/egress/unknown, detectar mocks y skips; corregir propios gates. Fault injection, carga, restore, Postgres restringido, collector offline; runbook y evidencia. Rollback exporter/config sin perder journal. No certificar producción por mock.
