@@ -90,6 +90,21 @@ en el navegador Cloud (el entorno no puede lanzar Chromium local: faltan `libnsp
 `sudo`). Capturas regeneradas. El artifact de run 234 sigue siendo el de `c6cf874…`: requiere un nuevo
 `workflow_dispatch` con `deploy: false` para publicar este estado.
 
+## T08 · Corrección visual pedida por el founder (2026-11-24)
+
+Dos correcciones, sin tocar copy, composición de escritorio ni arquitectura:
+
+1. **Móvil (≤1023 px):** el acceso va primero y el texto editorial después; invitación y legal quedan al
+   final. La columna de acceso se divide en `.lv3-access` (tarjeta) y `.lv3-access-foot` (invitación +
+   legal) para poder ordenar sin duplicar markup; en escritorio ambas siguen apiladas a la derecha.
+   Medido a 390 px: tarjeta y=114, hero y=732, pie y=1509.
+2. **Modal de invitación:** 520 px de ancho (antes 440) con 32 px de padding interior (antes 24) y radio
+   18; en ≤430, 343 px útiles con 28 × 24 de padding. Medido: 520×589 a 1366 y 343×603 a 390.
+
+Verificación: `typecheck` y `build` en verde; medidas y capturas tomadas en navegador real a 390 y 1366
+(`login-v3-390.png`, `login-v3-1366.png`, `login-v3-invitacion-390.png`,
+`login-v3-invitacion-viewport-1366.png`). El escritorio queda como estaba.
+
 ## Pendientes
 
 - Aprobación visual del founder (no se declara 10/10).

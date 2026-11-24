@@ -7,41 +7,85 @@
  *
  * Uso:
  *   pnpm --filter @agente/ui-lab build
- *   (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
- *   npm i --prefix /tmp/pw playwright
+ *   pnpm --filter @agente/ui-lab exec vite preview --host 127.0.0.1 --port 4173 &
+ *   (alternativa: cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1;
+ *    con muchos assets en paralelo el servidor de Python puede agotar su cola de
+ *    conexiones y fallar la precarga del CSS de un chunk: por eso CI usa vite)
+ *   npm i --prefix /tmp/pw --no-save playwright@1.65.1
  *   /tmp/pw/node_modules/.bin/playwright install chromium
  *   NODE_PATH=/tmp/pw/node_modules node apps/ui-lab/scripts/qa-login-v3.mjs
  *
+ * Reproducibilidad: la versión de Playwright está fijada (PLAYWRIGHT_VERSION,
+ * por defecto 1.65.1; el workflow la inyecta). Si la instalada no coincide, el
+ * script aborta con código 3 en lugar de medir con otro motor.
+ *
  * Variables: BASE_URL (por defecto http://127.0.0.1:4173),
  *            VIEW (por defecto /?embed=1&view=login-v3),
- *            SHOT_DIR (opcional; guarda capturas de los estados comprobados).
+ *            SHOT_DIR (opcional; guarda capturas de los estados comprobados),
+ *            REPORT (opcional; escribe el informe JSON con SHA, versiones y checks),
+ *            EXPECTED_BUILD_SHA (opcional; exige que el bundle servido sea de ese commit).
  *
  * Google Fonts se bloquea a propósito: si la tipografía se sirve en local, el
  * diseño sobrevive sin red. Cualquier llamada externa se registra y se informa.
  */
+import { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:4173";
 const VIEW = process.env.VIEW ?? "/?embed=1&view=login-v3";
 const SHOT_DIR = process.env.SHOT_DIR ?? "";
+const REPORT = process.env.REPORT ?? "";
+const EXPECTED_BUILD_SHA = process.env.EXPECTED_BUILD_SHA ?? "";
+const EXPECTED_PLAYWRIGHT = process.env.PLAYWRIGHT_VERSION ?? "1.65.1";
 
+const requireFromHere = createRequire(import.meta.url);
 let chromium;
+let playwrightVersion = "desconocida";
 try {
   // require (no import) para que NODE_PATH permita instalarlo fuera del repo.
-  ({ chromium } = createRequire(import.meta.url)("playwright"));
+  ({ chromium } = requireFromHere("playwright"));
 } catch {
   console.error("Falta Playwright. Instálalo aparte (ver cabecera) sin tocar package.json.");
   process.exit(2);
 }
+try {
+  playwrightVersion = requireFromHere("playwright/package.json").version;
+} catch {
+  try {
+    const main = requireFromHere.resolve("playwright");
+    playwrightVersion = JSON.parse(readFileSync(join(dirname(main), "..", "package.json"), "utf8")).version;
+  } catch {
+    playwrightVersion = "desconocida";
+  }
+}
+if (playwrightVersion !== EXPECTED_PLAYWRIGHT) {
+  console.error(
+    `Playwright ${playwrightVersion} no coincide con la versión fijada ${EXPECTED_PLAYWRIGHT}. ` +
+      "Instala la versión fijada para que la medición sea reproducible.",
+  );
+  process.exit(3);
+}
+console.log(`Playwright ${playwrightVersion} (fijado)`);
 
 const results = [];
 function check(name, pass, detail = "") {
   results.push({ name, pass: Boolean(pass), detail: String(detail) });
 }
 
-const browser = await chromium.launch();
+// Se mide en el Chromium completo ("nuevo headless"), no en el headless shell: es
+// el motor que se comporta como un navegador real y el que sí resuelve la
+// precarga del CSS de los chunks dinámicos. Si el canal no está instalado, se
+// avisa y se sigue con el binario por defecto.
+const launchOptions = { args: ["--disable-dev-shm-usage"] };
+let browser;
+try {
+  browser = await chromium.launch({ channel: "chromium", ...launchOptions });
+} catch (error) {
+  console.warn(`Chromium completo no disponible (${error.message.split("\n")[0]}); se usa el binario por defecto.`);
+  browser = await chromium.launch(launchOptions);
+}
 const context = await browser.newContext({ viewport: { width: 1366, height: 1002 }, deviceScaleFactor: 1 });
 
 const externalRequests = [];
@@ -61,9 +105,12 @@ page.on("console", (message) => {
   consoleErrors.push(`${message.text()} ${origin}`.trim());
 });
 const fontResponses = [];
+const failedResponses = [];
 page.on("response", (response) => {
   if (response.url().endsWith(".woff2")) fontResponses.push({ url: response.url(), status: response.status() });
+  if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.url()}`);
 });
+page.on("crash", () => console.error("La página se ha caído (crash del renderer)."));
 
 async function shot(name) {
   if (!SHOT_DIR) return;
@@ -73,9 +120,50 @@ async function shot(name) {
 }
 
 // ---------------------------------------------------------------- carga base
-await page.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
-await page.waitForSelector("#login-v3-title");
-await page.evaluate(() => document.fonts.ready.then(() => true));
+// Un fallo de arranque debe explicarse solo: si la vista no monta, se informa de
+// la URL, el título, el HTML de #root y los errores recogidos antes de abortar.
+async function loadView(target) {
+  await target.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
+  try {
+    await target.waitForSelector("#login-v3-title", { timeout: 20000 });
+  } catch (error) {
+    const diagnostics = await target
+      .evaluate(() => ({
+        url: location.href,
+        title: document.title,
+        rootLength: document.getElementById("root")?.innerHTML.length ?? -1,
+        bodyText: (document.body?.innerText ?? "").slice(0, 200),
+      }))
+      .catch((cause) => ({ evaluateFailed: cause.message }));
+    console.error("La vista login-v3 no montó:", JSON.stringify(diagnostics, null, 2));
+    if (consoleErrors.length > 0) console.error("Errores de consola:", consoleErrors.join(" | "));
+    if (failedResponses.length > 0) console.error("Respuestas HTTP fallidas:", failedResponses.join(" | "));
+    throw error;
+  }
+  await target.evaluate(() => document.fonts.ready.then(() => true));
+}
+
+await loadView(page);
+
+// Une la evidencia con el código: el bundle servido declara su SHA en version.json.
+let servedBuildSha = "no disponible";
+let servedBuiltAt = "no disponible";
+try {
+  const manifest = await page.evaluate(async (url) => (await fetch(url)).json(), new URL("/version.json", BASE_URL).href);
+  servedBuildSha = String(manifest?.version ?? "no disponible");
+  servedBuiltAt = String(manifest?.builtAt ?? "no disponible");
+} catch (error) {
+  servedBuildSha = `no se pudo leer version.json: ${error.message}`;
+}
+if (EXPECTED_BUILD_SHA) {
+  check(
+    "el bundle servido es del commit esperado",
+    servedBuildSha === EXPECTED_BUILD_SHA,
+    `${servedBuildSha} esperado ${EXPECTED_BUILD_SHA}`,
+  );
+} else {
+  console.log(`version.json del bundle: ${servedBuildSha} (${servedBuiltAt})`);
+}
 
 check("título de la vista", (await page.title()).includes("Login V3"), await page.title());
 const storageBaseline = await page.evaluate(() => Object.keys(localStorage).sort().join(","));
@@ -332,8 +420,7 @@ check("el foco vuelve a la invitación", (await focusedId()).includes("lv3-cta")
 // ------------------------------------------------- reduced motion
 const reduced = await browser.newContext({ viewport: { width: 1366, height: 1002 }, reducedMotion: "reduce" });
 const reducedPage = await reduced.newPage();
-await reducedPage.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
-await reducedPage.waitForSelector("#login-v3-title");
+await loadView(reducedPage);
 const reducedState = await reducedPage.evaluate(() => {
   const hero = document.querySelector(".lv3-hero .lv3-anim");
   return {
@@ -351,6 +438,7 @@ await reduced.close();
 // ------------------------------------------------------------- consola
 check("consola sin errores propios", consoleErrors.length === 0, consoleErrors.join(" | "));
 
+const browserVersion = browser.version();
 await browser.close();
 
 const failed = results.filter((entry) => !entry.pass);
@@ -360,5 +448,26 @@ for (const entry of results) {
 console.log(`\n${results.length - failed.length}/${results.length} comprobaciones correctas`);
 if (externalRequests.length > 0) {
   console.log(`Google Fonts bloqueado a propósito: ${externalRequests.length} peticiones abortadas.`);
+}
+if (REPORT) {
+  const report = {
+    generatedAt: new Date().toISOString(),
+    baseUrl: BASE_URL,
+    view: VIEW,
+    buildSha: servedBuildSha,
+    builtAt: servedBuiltAt,
+    expectedBuildSha: EXPECTED_BUILD_SHA || null,
+    playwright: playwrightVersion,
+    chromium: browserVersion,
+    runId: process.env.GITHUB_RUN_ID ?? null,
+    commit: process.env.GITHUB_SHA ?? null,
+    total: results.length,
+    passed: results.length - failed.length,
+    failed: failed.length,
+    checks: results,
+  };
+  await mkdir(dirname(REPORT), { recursive: true });
+  writeFileSync(REPORT, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(`Informe: ${REPORT} (build ${servedBuildSha}, chromium ${browserVersion})`);
 }
 process.exit(failed.length === 0 ? 0 : 1);

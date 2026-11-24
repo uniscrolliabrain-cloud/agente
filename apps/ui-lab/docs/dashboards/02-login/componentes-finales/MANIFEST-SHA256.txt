@@ -1,12 +1,12 @@
 LOGIN V3 — CLONES BYTE A BYTE · origen: repositorio uniscrolliabrain-cloud/agente
-Rama: feat/ui-lab-login-v3 · base a98ba12 + refinamiento de auditoría
-Generado: 2026-11-24T15:24:32Z
-
-f21d5daa84dc5d32e3c265bceeb7218cd8d33ebf448c5964aac9b8d191182a1c  .github/workflows/ui-lab.yml
-9dc3d19b51c5d501ee794ba9b142f15bf44d5162976b04a60ddca26f74e66270  apps/ui-lab/scripts/qa-login-v3.mjs
+Rama: feat/ui-lab-login-v3 · base a98ba12 + refinamiento de auditoría + cierre de campaña
+Generado: 2026-11-24T16:48:18Z
+Incluye la corrección visual del founder: orden móvil (acceso primero) y modal más amplio.
+28dae45e7c5798e4af02cc5e666c63e93bf81d7ed4ac74145eabc8880acbc2f7  .github/workflows/ui-lab.yml
+24c42d0468973a68b1eb8769025c25434c98baeefdd8863d5f2d1b397b7aad2b  apps/ui-lab/scripts/qa-login-v3.mjs
 a91d089ea047d318ffd9d9c6d74bdf152772e5a8b8f4d7c2391bcbb2f2f8fc5e  apps/ui-lab/src/design-system/agntia-tokens.css
-89be06673709868d89ab82960780ff2dec9940c3f5e5c916f91c3e08ceaa59e7  apps/ui-lab/src/login-v3/LoginV3.tsx
-a4c5a00e3d93b40cfdd528d267a403772700a3fa397718cd2d4c4f7f5527c9bd  apps/ui-lab/src/login-v3/login-v3.css
+7537622b28ad0c76176735d59d577640d17f1abda082d659df8fb3c0ca073e70  apps/ui-lab/src/login-v3/LoginV3.tsx
+2a348bf27f66ae89ecd21a8411bfb5517251cb7b40ba16c70950692bf92a9f32  apps/ui-lab/src/login-v3/login-v3.css
 bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b  apps/ui-lab/src/login-v3/fonts/OFL-Fraunces.txt
 58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b  apps/ui-lab/src/login-v3/fonts/OFL-Manrope.txt
 7453f89453b477c25b4fe236722f93b909d93c8b4cf5342ee6009b660974c5a4  apps/ui-lab/src/login-v3/fonts/fraunces-latin.woff2

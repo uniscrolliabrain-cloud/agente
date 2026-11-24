@@ -56,6 +56,8 @@ alcanza a rechazar alguna petición. En CI eso se veía como `Unable to preload 
 | H1 desktop | 60 px, line-height 1,035, tracking −0,052em | igual |
 | H1 1024 / 768 / 390 | 52 / 46 / 38 px | 52 / ≤1023 / ≤430 38 |
 | Chips | 11 px, padding 6 × 10, radio 100 | 11 px, padding 6 × 10 (CONTRATO-VISUAL) |
+| Orden móvil (≤1023) | acceso → texto editorial → invitación y legal | decisión del founder: el acceso va primero |
+| Modal de invitación | 520 px de ancho, 32 px de padding interior (28/24 en ≤430) | más tamaño y aire, pedido del founder |
 | CTA violeta | `rgb(101, 80, 221)` sobre `#fff` (estilos computados) | `--ag-violet`, texto blanco |
 | Overflow horizontal | 0 en 320, 360, 390, 430, 768, 1024, 1280, 1366, 1440, 1920 | ninguno |
 | Fuentes | Fraunces y Manrope `status: loaded` con Google Fonts bloqueado | sin fallback silencioso |
@@ -103,8 +105,8 @@ En `capturas/` (regeneradas en esta pasada):
 - `login-v3-1366.png` — estado inicial, 1366×1002.
 - `login-v3-chat-chip-1366.png` — chat abierto con chip precargado.
 - `login-v3-password-1366.png` — contraseña, error y aviso de entorno.
-- `login-v3-invitacion-viewport-1366.png` — modal de invitación sin recorte de captura.
-- `login-v3-invitacion-390.png` — modal en móvil.
+- `login-v3-invitacion-viewport-1366.png` — modal de invitación sin recorte de captura (520 px).
+- `login-v3-invitacion-390.png` — modal en móvil, con el nuevo aire interior.
 - `login-v3-390.png`, `login-v3-768.png`, `login-v3-1920.png` — responsive.
 - `login-v3-artifact-1366.png` — **evidencia histórica**: render del artifact de run 234 (`c6cf874…`),
   anterior a estas correcciones. Se conserva como registro, no describe el estado actual.
@@ -134,6 +136,8 @@ propia ejecución de QA a partir de su propio build.
 | Sin pruebas de navegador en el workflow | Añadido, opt-in | input `browser_qa` (por defecto `false`), Playwright fijado y resultado en `qa/qa-report.json` |
 | El empaquetado hacía fallar el job en ramas sin la vista | Corregido | paso `Detect Login V3 view`; empaquetado y artifact condicionados a `present == 'true'` |
 | Arquitectura monolítica | No aplicado | recomendación de mantenibilidad, no bloqueante; queda como siguiente campaña |
+| En móvil el texto editorial iba antes que el acceso | Corregido | a 390 px: tarjeta de acceso y=114, hero y=732, invitación+legal y=1509 |
+| Modal de invitación apretado y pequeño | Corregido | 520×589 px con 32 px de padding a 1366; 343 px y 28/24 de padding a 390 |
 
 El manifiesto anterior listaba `apps/ui-lab/src/vite.config.ts`; el archivo real es
 `apps/ui-lab/vite.config.ts`. Corregido en `componentes-finales/MANIFEST-SHA256.txt`.

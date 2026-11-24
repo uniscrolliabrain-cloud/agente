@@ -498,7 +498,10 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
               </div>
             </div>
           </section>
+        </div>
 
+        {/* Invitación y legal: en escritorio van bajo la tarjeta; en móvil, al final. */}
+        <div className="lv3-access-foot">
           <section className="lv3-invite lv3-anim lv3-d3" aria-labelledby="login-v3-invite-title">
             <h2 id="login-v3-invite-title">¿No tienes acceso todavía?</h2>
             <p>
