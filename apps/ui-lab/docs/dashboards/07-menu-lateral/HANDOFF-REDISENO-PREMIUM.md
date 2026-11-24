@@ -1,3 +1,9 @@
+# Alcance vinculante del founder — 2026-11-24
+
+Solo alineación visual UX con Landing: tipografía, iconos, color, espaciado, alineación, estados y microtransiciones. Preservar orden, agrupación, accesos, dimensiones funcionales, navegación, rail, hilos y comportamiento móvil. No reorganizar ni añadir funciones.
+
+Las propuestas anteriores incompatibles quedan anuladas. No ejecutar cambios de código desde este documento. La guía de branding y el handoff no amplían este alcance. La generación de contenido debe respetar las superficies existentes; si un ejemplo requiere una capacidad ausente, descartarlo.
+
 # HANDOFF · Menú lateral · estándar de rediseño premium
 
 Estado: instrucciones para una futura campaña, no autorización de cambios funcionales ni certificación visual. Baseline: main 74f8dccbf6e56a81c4c8ead83bacea7e9251cd9b. Fuente: implementación Formación V4 y código de Landing/Studio; no se ha consultado ni reproducido la UX Branding Guide. La copia de esa guía que aporte el founder será una lectura adicional independiente.
