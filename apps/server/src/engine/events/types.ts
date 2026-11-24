@@ -154,6 +154,11 @@ export interface SystemEvent<T = Record<string, unknown>> {
   source: SystemEventSource;
   correlationId?: string;
   causationId?: string;
+  // EVENTS_CAUSAL_ENVELOPE_V1 - campos aditivos del perfil causal-1. Los
+  // lectores 1.0 anteriores los ignoran; `source.personaId` sigue siendo
+  // presentacion y nunca sustituye al actor autenticado.
+  actorId?: string;
+  causalKind?: "root" | "derived";
   payload: T;
 }
 
@@ -180,4 +185,14 @@ export interface EventSink {
 export interface EventQuery {
   recent(owner: string, filter: EventFilter): Promise<SystemEvent[]>;
   aggregate(owner: string, hours: number): Promise<EventAggregate[]>;
+  /**
+   * EVENTS_PAGE_TENANT_V1 - pagina ascendente por tenant con filtros y cursor
+   * aplicados en el store ANTES del limite. Devuelve `null` si el backend no
+   * soporta la consulta, para conservar el camino historico.
+   */
+  pageTenant?(
+    tenantId: string,
+    filter: EventFilter,
+    limit: number,
+  ): Promise<SystemEvent[] | null>;
 }

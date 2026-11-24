@@ -87,6 +87,61 @@ export class StoreQuery implements EventQuery {
       .slice(0, limit);
   }
 
+  /**
+   * EVENTS_PAGE_TENANT_V1 - lectura ascendente por tenant con cursor durable.
+   * El cursor se resuelve a su evento dentro del mismo tenant; un cursor
+   * ajeno o inexistente deniega en vez de reiniciar la pagina por accidente.
+   * Filtros y limite se aplican en SQL, nunca despues de truncar.
+   */
+  async pageTenant(
+    tenantId: string,
+    filter: EventFilter,
+    limit: number,
+  ): Promise<SystemEvent[] | null> {
+    const selectFn = (
+      this.db as unknown as {
+        select?: <T>(sql: string, params: unknown[]) => Promise<T[]>;
+      }
+    ).select?.bind(this.db);
+    if (typeof selectFn !== "function") return null;
+    const params: unknown[] = [KIND, tenantId];
+    let sql = "SELECT data FROM records WHERE kind = $1 AND data->>'tenantId' = $2";
+    if (filter.sinceId) {
+      const cursorRows = await selectFn<{ data: SystemEvent }>(
+        "SELECT data FROM records WHERE kind = $1 AND data->>'tenantId' = $2 AND id = $3",
+        [KIND, tenantId, filter.sinceId],
+      );
+      const cursor = cursorRows[0]?.data;
+      if (!cursor) throw new Error(`EVENT_CURSOR_NOT_FOUND: ${filter.sinceId}`);
+      params.push(cursor.emittedAt);
+      const atParam = params.length;
+      params.push(cursor.id);
+      const idParam = params.length;
+      sql += ` AND ((data->>'emittedAt') > $${atParam} OR ((data->>'emittedAt') = $${atParam} AND id > $${idParam}))`;
+    }
+    if (filter.since) {
+      params.push(filter.since);
+      sql += ` AND (data->>'emittedAt') >= $${params.length}`;
+    }
+    if (filter.until) {
+      params.push(filter.until);
+      sql += ` AND (data->>'emittedAt') <= $${params.length}`;
+    }
+    const types = filter.type
+      ? Array.isArray(filter.type)
+        ? filter.type
+        : [filter.type]
+      : undefined;
+    if (types && types.length > 0) {
+      params.push(types);
+      sql += ` AND (data->>'type') = ANY($${params.length}::text[])`;
+    }
+    params.push(limit);
+    sql += ` ORDER BY (data->>'emittedAt') ASC, id ASC LIMIT $${params.length}`;
+    const rows = await selectFn<{ data: SystemEvent }>(sql, params);
+    return rows.map((row) => row.data);
+  }
+
   async aggregate(owner: string, hours: number): Promise<EventAggregate[]> {
     const since = new Date(Date.now() - hours * 3600000).toISOString();
     // BUS_AGGREGATE_SQL_V1 - antes traia 5000 eventos a memoria y contaba en

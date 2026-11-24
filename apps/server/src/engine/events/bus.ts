@@ -31,9 +31,16 @@ const DEDUPE_TTL_MS = Number(process.env.EVENTBUS_DEDUPE_TTL_MS ?? "60000") || 6
 // EVENTBUS_DEDUPE_LRU_V1 - LRU configurable.
 const DEDUPE_MAX_ENTRIES = Number(process.env.EVENTBUS_DEDUPE_LRU ?? "64") || 64;
 
+/** EVENTS_CAUSAL_ENVELOPE_V1 - vinculo causal explicito del productor gobernado. */
+export type CausalLink = { kind: "root" } | { kind: "derived"; causationId: string };
+
 export interface EmitOptions {
   correlationId?: string;
   causationId?: string;
+  /** EVENTS_CAUSAL_ENVELOPE_V1 - actor autenticado o principal de servicio. */
+  actorId?: string;
+  /** EVENTS_CAUSAL_ENVELOPE_V1 - exige actor, tenant y correlacion explicitos. */
+  causal?: CausalLink;
   /**
    * EVENTBUS_DEDUPE_KEY_V1 - clave de deduplicacion explicita.
    *
@@ -112,6 +119,30 @@ export class EventBus {
       // resuelve por owner; fijamos el tenant ya validado durante las escrituras.
       const emitInTenant = <T>(operation: () => T): T =>
         runInTenantScope({ tenantId, actorId: requestTenant ? currentTenantScope()?.actorId ?? owner : owner }, operation);
+      // EVENTS_CAUSAL_ENVELOPE_V1 - admision del perfil causal-1. No se deduce
+      // root de la ausencia de causationId y no se admite un derivado cuyo
+      // antecedente no exista en el mismo tenant y correlacion.
+      const causal = options.causal;
+      if (causal) {
+        if (!options.actorId) throw new Error("CAUSAL_ACTOR_REQUIRED");
+        if (!options.tenantId) throw new Error("CAUSAL_TENANT_REQUIRED");
+        if (!options.correlationId) throw new Error("CAUSAL_CORRELATION_REQUIRED");
+        if (causal.kind === "root" && options.causationId)
+          throw new Error("CAUSAL_ROOT_WITH_CAUSATION");
+        if (causal.kind === "derived") {
+          if (options.causationId && options.causationId !== causal.causationId)
+            throw new Error("CAUSAL_CAUSATION_MISMATCH");
+          const antecedent = await emitInTenant(() =>
+            this.db.get<SystemEvent>(owner, KIND, causal.causationId),
+          );
+          if (!antecedent)
+            throw new Error(`CAUSAL_ANTECEDENT_NOT_FOUND: ${causal.causationId}`);
+          if (antecedent.tenantId !== tenantId)
+            throw new Error("CAUSAL_ANTECEDENT_TENANT_MISMATCH");
+          if (antecedent.correlationId !== options.correlationId)
+            throw new Error("CAUSAL_ANTECEDENT_CORRELATION_MISMATCH");
+        }
+      }
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
       // EVENTBUS_DEDUPE_OWNER_FIX_V1 - antes pasabamos `${owner}:${dedupeKey}`
@@ -127,7 +158,8 @@ export class EventBus {
       // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
       const logCtx = (await import("../../log.ts")).logContext.getStore();
       const finalCorrelationId = options.correlationId ?? logCtx?.correlationId;
-      const finalCausationId = options.causationId;
+      const finalCausationId =
+        options.causationId ?? (causal?.kind === "derived" ? causal.causationId : undefined);
       const event: SystemEvent<T> = {
         id: ulid(),
         schemaVersion: "1.0",
@@ -139,6 +171,8 @@ export class EventBus {
         source,
         ...(finalCorrelationId ? { correlationId: finalCorrelationId } : {}),
         ...(finalCausationId ? { causationId: finalCausationId } : {}),
+        ...(options.actorId ? { actorId: options.actorId } : {}),
+        ...(causal ? { causalKind: causal.kind } : {}),
         payload: parsed,
       };
       proposedEvent = { id: event.id, tenantId };
@@ -255,8 +289,19 @@ export class EventBus {
         limit?: number,
       ) => Promise<{ owner: string; value: U }[]>;
     };
-    if (typeof db.scanByPrefix !== "function") return 0;
     const limit = Math.min(Math.max(1, filter.limit ?? 200), 200);
+    // EVENTS_PAGE_BEFORE_LIMIT_V1 - el cursor y los filtros se aplican en el
+    // store ANTES del limite. Antes, `scanByPrefix(...,limit)` podia devolver
+    // solo eventos anteriores al cursor y la recuperacion quedaba vacia pese a
+    // existir filas posteriores.
+    if (typeof this.query.pageTenant === "function") {
+      const page = await this.query.pageTenant(tenantId, filter, limit);
+      if (page) {
+        for (const event of page) await handler(event);
+        return page.length;
+      }
+    }
+    if (typeof db.scanByPrefix !== "function") return 0;
     const rows = await db.scanByPrefix<SystemEvent>("system-events", tenantId, limit);
     const events = rows
       .map((row) => row.value)
