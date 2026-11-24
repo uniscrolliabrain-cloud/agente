@@ -1,17 +1,5 @@
-# Arte de Formación · lote inicial de 12 imágenes
+# Arte de Formación · 12 fotografías generadas
 
-**Estado:** carpeta preparada, imágenes pendientes de aportar por el founder. No generar ni subir imágenes todavía.
+**Estado actualizado 2026-11-24:** las doce imágenes editoriales WebP 1536×1024 se generaron con OpenRouter (Actions #45287170675), se integraron mediante PR #31 y residen en `apps/ui-lab/public/formation/images/` junto con `assets-manifest.json`. El fundador autorizó el coste. No volver a generar sin necesidad. Los 120 cursos comparten las 12 imágenes, sin afirmar 120 fotografías únicas. El mapeo editorial y QA se refinan en [campañas V4](../CAMPANAS-V4-FORMACION-NIVEL-9.md).
 
-## Destino para subir imágenes
-`apps/ui-lab/public/formation/images/`
-
-## Acuerdo
-- Primero construir y revisar los componentes de Formación en UI Lab.
-- Después el asistente preparará **12 prompts finales**, ajustadas a los componentes y a las auditorías de Landing y Studio.
-- El founder generará las 12 imágenes y las subirá al directorio indicado.
-- Conectar cada imagen con el catálogo real de 120 cursos mediante un manifiesto y nombres estables. No inventar títulos ni afirmar que los vídeos existen.
-- Mantener estética editorial cálida de AgntiaPro, con composición abierta y diversidad de escenas. Distribución exacta de las 12 imágenes pendiente de revisar la UI implementada.
-- Optimizar peso y proporciones tras conocer el render real; no forzar ahora tamaños arbitrarios.
-- No usar el workflow de generación mediante API de pago; queda fuera de este flujo.
-
-**Nota:** Git no conserva directorios vacíos; `.gitkeep` reserva la ruta. Las imágenes deben subirse a esa carpeta, no al directorio de documentación.
+**Pendiente:** curaduría por tema, QA visual responsive y despliegue Vercel (ruta duplicada). Vídeos aún no producidos. Este documento sustituye las instrucciones antiguas que prohibían generar o decían que las imágenes faltaban.
