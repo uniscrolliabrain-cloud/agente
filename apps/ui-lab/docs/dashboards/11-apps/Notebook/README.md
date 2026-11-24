@@ -119,9 +119,9 @@ El grafo permite navegar más allá de similitud vectorial: entidades, fuentes, 
 
 El usuario propone leer el chatbox mientras escribe para comenzar a analizar la intención antes de enviar. Esto puede reducir el camino crítico mediante ejecución especulativa, no porque el Slow LLM se vuelva intrínsecamente más rápido.
 
-Diseño: modo explícitamente activado, indicador visible, procesamiento local inicial cuando sea viable, debounce y umbral de longitud, revisiones monotónicas del borrador y cancelación. Primero realizar operaciones baratas: extracción de términos, búsqueda local/autorizada, precarga de índices y selección tentativa de perfiles. Solo activar llamadas externas especulativas con consentimiento específico y presupuesto. No transmitir cada pulsación. Excluir campos de contraseña y datos sensibles detectables, sin confiar exclusivamente en detectores.
+Diseño: capacidad nativa experimental, procesamiento local inicial cuando sea viable, debounce y umbral de longitud, revisiones monotónicas del borrador y cancelación. Primero realizar operaciones baratas: extracción de términos, búsqueda local/autorizada, precarga de índices y selección tentativa de perfiles. Las llamadas externas especulativas quedan sujetas a autorización del tratamiento, alcance y presupuesto; no se impone opt-in independiente como invariante arquitectónica. No transmitir cada pulsación. Excluir campos de contraseña y datos sensibles detectables, sin confiar exclusivamente en detectores.
 
-Cada trabajo especulativo lleva draftId, revision, scopeHash, sourceSnapshot y expiry. Si el usuario borra o modifica texto, invalidar los resultados incompatibles y cancelar workers. Al enviar, crear la intención confirmada y reutilizar únicamente resultados cuyo alcance y contenido sigan siendo válidos. Nunca ejecutar SOPs, enviar mensajes, persistir memoria ni producir efectos externos a partir de un borrador. El modo desactivado debe ofrecer funcionalidad completa, solo sin anticipación. No registrar contenido de borradores en telemetría.
+Cada trabajo especulativo lleva draftId, revision, scopeHash, sourceSnapshot y expiry. Si el usuario borra o modifica texto, invalidar los resultados incompatibles y cancelar workers. Al enviar, crear la intención confirmada y reutilizar únicamente resultados cuyo alcance y contenido sigan siendo válidos. Nunca ejecutar SOPs, enviar mensajes, persistir memoria ni producir efectos externos a partir de un borrador. La variante experimental sin anticipación debe conservar funcionalidad completa para permitir ablaciones. No registrar contenido de borradores en telemetría.
 
 La latencia percibida y la latencia real son métricas distintas. Fast puede entregar una respuesta parcial útil mientras Slow trabaja, pero no llenar la espera con afirmaciones inventadas. Medir tiempo hasta primera respuesta útil, hasta primer hallazgo verificado y hasta conclusión, además del coste desperdiciado por cancelaciones.
 
@@ -161,7 +161,7 @@ Fase 2: lectores programáticos paralelos, fusión de rankings y mapa de cobertu
 Fase 3: Global Workspace, eventos y reducer determinista; cancelación, snapshots, presupuesto y recuperación.
 Fase 4: attention vectors, catálogo de diez cards y matchmaking; conectar skills y JEV con contratos reales.
 Fase 5: Fast/Slow, presenter y respuestas parciales; validar cambios de intención y fallos de proveedores.
-Fase 6: anticipación opt-in, invalidación de borradores, cachés y medición de latencia/coste.
+Fase 6: anticipación nativa experimental, invalidación de borradores, cachés y medición de latencia/coste.
 Fase 7: UI lab, accesibilidad, integración con fuentes y artefactos; revisión visual antes de producción.
 Fase 8: propuestas de SOP y memoria validada, sin duplicar runtime ni eludir aprobaciones.
 Fase 9: evaluación comparativa, hardening, observabilidad y certificación de la vertical.
@@ -185,3 +185,8 @@ Decisiones pendientes: correspondencia exacta de perfiles y memorias canónicos;
 ## 19. Principio final
 
 No queremos que el LLM sea quien decida por sí solo qué conocimiento existe, qué debe leer, cómo razonar, qué recordar y cuándo actuar. Queremos una arquitectura que distribuya esas funciones entre software programático, modelos, memorias, grafo, atención y procedimientos, coordinados por un workspace y gobernados por el kernel. Notebook es una oportunidad para hacer visible y medible esa arquitectura en una aplicación concreta, útil incluso sin ejecutar operaciones empresariales. El éxito no será tener más piezas sino conseguir que su interacción produzca conocimiento mejor organizado, más verificable y más útil.
+
+## Ampliación de la visión cognitiva
+
+- [Metaconocimiento y consciencia operativa](algoritmos/METACONOCIMIENTO-Y-CONSCIENCIA-OPERATIVA.md).
+- [Registro ampliado de la conversación y decisiones](algoritmos/REGISTRO-AMPLIADO-CONVERSACION.md).
