@@ -19,3 +19,9 @@ Cada bloque: leer código vivo y AGENTS.md; inventariar paths exactos y dependen
 - [02-coding-audit-transversal](02-coding-audit-transversal/README.md)
 - [03-reaudit-refactoring](03-reaudit-refactoring/README.md)
 - [04-reaudit-hardening](04-reaudit-hardening/README.md)
+
+## Ajuste de auditoría contra código vivo (24-11-2026)
+
+package.json ya expone demo:seed y verify:slice. Separar fixtures de test de agntia-demo protegido. Adaptar generadores al bundle existente, no cambiar schemas para acomodar datos.
+
+Estado: inspección estática; confirmar HEAD y ejecutar gates durante la campaña.
