@@ -1,0 +1,13 @@
+.github/workflows/ci.yml
+apps/server/src/engine/metrics/collector.ts
+apps/server/src/metrics-exporter.ts
+apps/server/src/metrics/registry.ts
+apps/server/src/middleware/request-logger.ts
+package.json
+pnpm-lock.yaml
+scripts/gate-cognition-v2.ts
+scripts/gate-report.ts
+scripts/lib/agency-bootstrap.ts
+scripts/lib/vertical-slice-bundle.ts
+scripts/provision-vertical-slice.ts
+scripts/verify-vertical-slice.ts
