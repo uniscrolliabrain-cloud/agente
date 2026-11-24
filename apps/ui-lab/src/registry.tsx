@@ -25,6 +25,7 @@ const Control=lazy(()=>import("../../web/src/components/ControlCenterView"));
 const Today=lazy(()=>import("../../web/src/components/CommandCenterView"));
 const TodayEditorial=lazy(()=>import("./command-center-editorial/CommandCenterEditorialPreview"));
 const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
+const AppsLauncher=lazy(()=>import("./apps-launcher/AppsLauncher"));
 export type Preview={id:string;name:string;category:string;description:string;Component:ComponentType;status:"fixture"|"demo"|"api";};
 export const previews:Preview[]=[
 {id:"full-app",name:"Aplicación completa",category:"Aplicación",description:"App.tsx original, navegación y shell reales en tenant demo",Component:FullApp,status:"demo"},
@@ -50,4 +51,5 @@ export const previews:Preview[]=[
 {id:"comunicaciones",name:"Comunicación",category:"Canales",description:"WhatsApp Business, llamadas y SMS, Slack · demo agéntica con supervisión humana",Component:Comunicaciones,status:"demo"},
 {id:"control",name:"Control de actividad",category:"Trabajo",description:"Vista original en modo desconectado",Component:()=> <Control enabled={true}/>,status:"api"},
 {id:"operations",name:"Operaciones",category:"Trabajo",description:"Vista original con datos sintéticos del navegador",Component:()=> <Operations enabled={true}/>,status:"api"},
+{id:"apps-launcher-v3",name:"Apps · Launcher V3",category:"Trabajo",description:"Launcher empresarial: reposo, escritorio, cajón de 35 apps, carpetas, recientes y apertura con transición",Component:AppsLauncher,status:"demo"},
 ];
