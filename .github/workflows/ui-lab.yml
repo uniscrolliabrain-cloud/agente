@@ -114,22 +114,36 @@ jobs:
           REPORT: /tmp/login-v3-qa/qa-report.json
         run: |
           set -euo pipefail
-          npm i --prefix /tmp/pw --no-audit --no-fund --no-save "playwright@${PLAYWRIGHT_VERSION}"
+          mkdir -p /tmp/login-v3-qa
+          {
+            echo "runner: $(uname -a)"
+            node --version
+            echo "PLAYWRIGHT_VERSION=$PLAYWRIGHT_VERSION"
+          } | tee /tmp/login-v3-qa/entorno.log
+          npm i --prefix /tmp/pw --no-audit --no-fund --no-save "playwright@${PLAYWRIGHT_VERSION}" 2>&1 | tee /tmp/login-v3-qa/npm.log
           INSTALLED="$(node -p "require('/tmp/pw/node_modules/playwright/package.json').version")"
           test "$INSTALLED" = "$PLAYWRIGHT_VERSION"
           echo "Playwright $INSTALLED"
-          /tmp/pw/node_modules/.bin/playwright install --with-deps chromium
+          /tmp/pw/node_modules/.bin/playwright install --with-deps chromium 2>&1 | tail -20
           (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
           for _ in $(seq 1 30); do
             curl -fsS http://127.0.0.1:4173/version.json >/dev/null && break
             sleep 1
           done
           curl -fsS http://127.0.0.1:4173/version.json
-          mkdir -p /tmp/login-v3-qa
           NODE_PATH=/tmp/pw/node_modules \
             PLAYWRIGHT_VERSION="$PLAYWRIGHT_VERSION" \
             EXPECTED_BUILD_SHA="$UI_LAB_BUILD_SHA" \
-            node apps/ui-lab/scripts/qa-login-v3.mjs
+            node apps/ui-lab/scripts/qa-login-v3.mjs 2>&1 | tee /tmp/login-v3-qa/qa.log
+      - name: Upload Login V3 QA evidence
+        # Se sube también si la QA falla: sin log no hay forma de corregirla.
+        if: ${{ always() && steps.login_v3.outputs.present == 'true' && github.event_name == 'workflow_dispatch' && inputs.browser_qa == true }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: login-v3-qa-evidence
+          path: /tmp/login-v3-qa/
+          retention-days: 7
+          if-no-files-found: warn
       - name: Prepare Login V3 Chromebook package
         # Omitido (no fallido) en ramas sin la vista: el job build sigue verde.
         if: ${{ steps.login_v3.outputs.present == 'true' }}
