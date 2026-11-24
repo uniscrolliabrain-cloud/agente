@@ -5,9 +5,10 @@ Create a world-class luxury industrial design 3D icon for AgntiaPro, a premium a
 ## Subject and geometry
 Preserve the exact master folder silhouette, raised tab, ivory porcelain front, violet rear panel, champagne brass structural edge, slightly open construction and single ivory document. Do not change the camera or proportions.
 
-## Sculptural semantic emblem
-A compact sculptural padlock, centered on the ivory front panel. Its body is satin violet ceramic, with a broad rounded rectangular silhouette, a genuine brushed champagne brass U-shaped shackle and a small recessed keyhole in dark violet. The shackle must visibly connect to the body. Keep the emblem low relief, not a separate floating object.
-The emblem must be physically integrated into the main surface, with precision bevels, convincing contact shadows and generous breathing room. Prioritize instant recognition at 32 pixels; no tiny ornamental details.
+## Individual art direction and sculptural construction
+Design the lock as a miniature architectural security fitting, not a generic emoji. Preserve every contour of the approved folder, including the asymmetrical tab and the visible ivory insert. The lock occupies roughly 43% of the front panel width and is optically centered on its uninterrupted lower face. Construct a broad violet ceramic body with softly radiused shoulders, a shallow chamfer and a restrained champagne brass perimeter seam. The closed U-shaped shackle has a round cross-section, two equal legs entering the body, and a clear ivory opening between them. Recess a single dark-violet keyhole into the body, with a circular upper opening and short tapered stem. Keep the relief shallow enough to read as an integral fitting. Brushing follows the curve of the shackle; highlights trace the radius rather than flooding the metal. The emotional register is calm confidentiality, not danger. No shield, warning color, chain, key or extra lock. At thumbnail size the closed shackle and body must remain distinct.
+
+Treat these proportions as optical design targets, not visible annotations. Match the approved reference's material roughness, edge highlights and contact shadows. The emblem must be recognizable without relying on its type mark.
 
 ## Materials
 Warm matte ivory porcelain (#FCFAF6), rich satin violet (#6550DD), genuine brushed champagne brass (#B49665). Use only the semantic accent specified above, if any. Fine microtexture, realistic ceramic roughness, anisotropic brushed metal, controlled highlights and precision-machined edges. No shiny plastic. Material separation must be physically believable.
@@ -24,5 +25,5 @@ Photorealistic premium CGI, physically based rendering, global illumination, exc
 ## Strict exclusions
 No watermarks, corporate logos, borders, decorative backgrounds, floating particles, exaggerated reflections, cartoon aesthetics or extra objects. No text except the exact file-type mark explicitly requested above. No external captions. Generate one square 1024 × 1024 image.
 
-## Acceptance gate (not part of the image)
-Compare against the three founder-approved images before accepting. Reject inconsistent camera, background, material finish, optical scale, ambiguous emblem, misspelled type marks or visible artifacts. For document icons, compare against the approved 05 document silhouette once available. Inspect at 1024, 128 and 32 pixels. Regenerate individually if needed; never batch-generate a contact sheet.
+## Acceptance gate (operator only; exclude from image prompt)
+Attach the actual three founder-approved PNG references to the image generation request; a textual reference alone is insufficient. For 06–16 also attach the approved 05 DOCX render. If these assets are unavailable, stop and request them rather than improvising. Compare against the references before accepting. Reject inconsistent camera, background, material finish, optical scale, ambiguous emblem, misspelled type marks or visible artifacts. For document icons, compare against the approved 05 document silhouette once available. Inspect at 1024, 128 and 32 pixels. Regenerate individually if needed; never batch-generate a contact sheet.
