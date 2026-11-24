@@ -48,3 +48,9 @@ Se inventariaron los 79 documentos de la maestra, sus 12 fases y 48 bloques, y l
 | 10 Gestoría | Especificar autorización y receipt para importación/conciliación. | Definir upstream/licencia y revisión humana de efectos. |
 | 11 Recompilación | Matriz dominio→SOP→capacidad→permiso→evento→outcome, preservando versiones. | Probar repetición, compatibilidad y rollback sin eliminar hechos. |
 | 12 Validación | Gates y casos detallados en la propuesta B1. | Candidato combinado, Postgres restringido, restore y aprobación externa. |
+
+## Delta de autoridad que bloquea la activación
+
+- **CONFIRMADO por lectura.** `actions.ts` escribe estado de acción, sincroniza `approval-requests` por separado y emite el evento después. La proyección final usa `tenantId: owner`. El namespace del store y el campo del payload son controles distintos. T02 debe obtener tenant real desde la identidad durable y documentar el punto transaccional. Probar con dos memberships del mismo actor, comprobando receipt, aprobación y evento en el tenant correcto.
+- **RIESGO PREVENTIVO.** `CapabilityRunner.run` obtiene claim inicial con `insertIfAbsent`, pero la transición desde `failed` usa una escritura ordinaria. Su catch persiste `failed` de forma general. Antes de aprobar reintentos de efectos externos, reproducir el caso con dos workers y resultado ambiguo usando dobles, y fijar CAS/fence y reconciliación.
+- **RIESGO PREVENTIVO.** El envelope actual no contiene un campo `actorId` general y permite causalidad ausente. Conservar lectores 1.0, exigir un actor validado y referencias del mismo tenant en los productores reconciliados. Mantener Slow en observación, sin certificar como hecho una respuesta textual.
