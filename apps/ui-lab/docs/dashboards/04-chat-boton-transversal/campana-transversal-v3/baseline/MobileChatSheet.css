@@ -1,0 +1,439 @@
+/* MOBILE_SHEET_V2 - hoja inferior. Vive aparte de index.css para no tocar 4.300
+   lineas de estilos ajenos. El alto lo escribe el gesto de MobileChatSheet.tsx. */
+
+.mobile-chat-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  /* Alto inicial; el componente lo ajusta al peldaño real en el primer pintado. */
+  height: 184px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--v2-bg);
+  border: 1px solid var(--v2-border);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.22);
+  transition: height 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* El panel no debe meter su layout en el resto de la app. */
+  contain: layout paint;
+}
+
+/* Durante el gesto no hay animacion: el borde sigue al dedo. */
+.mobile-chat-sheet.dragging {
+  transition: none;
+}
+
+.mobile-sheet-bar {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 90px minmax(44px, 1fr) 90px;
+  align-items: center;
+  padding: 8px 10px;
+  background: var(--v2-bg-card);
+  border-bottom: 1px solid var(--v2-border);
+  border-radius: 18px 18px 0 0;
+}
+
+.mobile-sheet-bar .side-chat-icon {
+  width: 44px;
+  height: 44px;
+}
+
+.mobile-sheet-grip {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-sheet-grip::before {
+  content: "";
+  width: 46px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--v2-text-4);
+}
+
+.mobile-chat-sheet.dragging .mobile-sheet-grip {
+  cursor: grabbing;
+}
+
+.mobile-sheet-actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* SidebarChat dentro de la hoja: sin cabecera propia (los controles ya estan en
+   la fila del tirador) y sin borde de columna. */
+.mobile-chat-sheet .side-chat {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  border-right: 0;
+  background: var(--v2-bg);
+}
+
+.mobile-chat-sheet .side-chat-empty {
+  padding-top: 6px;
+}
+
+/* Plegada al minimo: sin franja de mensaje cortado. */
+.mobile-chat-sheet.collapsed .side-chat-body {
+  visibility: hidden;
+  /* Sin el padding, el compositor queda pegado a la barra y se ve entero. */
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-chat-sheet {
+    transition: none;
+  }
+}
+
+.mobile-chat-sheet .side-chat-foot {
+  flex: 0 0 auto;
+}
+
+.mobile-chat-sheet .side-chat-foot textarea {
+  max-height: clamp(40px, calc(var(--sheet-visual-height, 184px) - 170px), 120px);
+}
+
+.side-chat .multimodal-composer .v2-composer-tools {
+  position: relative;
+  flex-wrap: nowrap;
+  gap: clamp(3px, 1.5vw, 10px);
+}
+
+.side-chat .multimodal-composer .v2-attachment-chip {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.side-chat-body[hidden],
+.side-chat-foot[hidden] {
+  display: none;
+}
+
+.side-chat .multimodal-composer .mobile-voice-button {
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.side-chat .multimodal-composer .mobile-voice-button.active {
+  background: #a82037;
+  border-color: #a82037;
+  color: white;
+}
+
+.mobile-voice-status {
+  position: absolute;
+  z-index: 1;
+  bottom: calc(100% + 5px);
+  left: 0;
+  max-width: min(75vw, 270px);
+  width: max-content;
+  padding: 5px 9px;
+  border-radius: 10px;
+  background: var(--v2-bg-card);
+  border: 1px solid var(--v2-border-strong);
+  color: var(--v2-text);
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.mobile-chat-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.mobile-chat-actions {
+  position: fixed;
+  inset: auto 0 max(12px, env(safe-area-inset-bottom));
+  width: min(calc(100% - 24px), 450px);
+  max-height: calc(100dvh - 24px);
+  margin: 0 auto;
+  padding: 0;
+  border: 1px solid var(--v2-border-strong);
+  border-radius: 24px;
+  background: var(--v2-bg-card);
+  color: var(--v2-text);
+  box-shadow: 0 16px 36px #0004;
+}
+
+.mobile-chat-actions::backdrop { background: #16141b70; }
+.mobile-chat-actions-content { padding: 16px; }
+.mobile-chat-actions header,
+.mobile-chat-call footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mobile-chat-actions h2 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+}
+.mobile-chat-actions button,
+.mobile-chat-call footer button,
+.mobile-call-compact button,
+.mobile-chat-report-link,
+.mobile-audio-note button,
+.mobile-audio-note a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--v2-border-strong);
+  border-radius: 14px;
+  background: var(--v2-bg-card);
+  color: var(--v2-text);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: none;
+}
+.mobile-chat-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+.mobile-chat-actions-grid button {
+  flex-direction: column;
+  min-height: 70px;
+  padding-inline: 4px;
+  font-size: 12px;
+  text-align: center;
+}
+.mobile-chat-actions-grid svg { color: var(--v2-purple); }
+.mobile-chat-actions form { display: grid; gap: 12px; margin-top: 16px; }
+.mobile-chat-actions label { display: grid; gap: 6px; font-size: 14px; }
+.mobile-chat-actions input {
+  width: 100%;
+  background: var(--v2-bg-card);
+  color: var(--v2-text);
+  border: 1px solid var(--v2-border-strong);
+  border-radius: 12px;
+  padding: 10px;
+  font-size: 16px;
+}
+.mobile-chat-actions form button { background: var(--v2-purple-soft); }
+.mobile-chat-actions button:disabled { opacity: .55; cursor: default; }
+
+.mobile-chat-call {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 14px calc(16px + env(safe-area-inset-bottom));
+  color: var(--v2-text);
+}
+.mobile-chat-call h2,
+.mobile-chat-call h3,
+.mobile-chat-call p,
+.mobile-chat-call ul { margin: 0; }
+.mobile-chat-call h2 { font-size: 20px; }
+.mobile-chat-call h3 { font-size: 15px; }
+.mobile-chat-call p,
+.mobile-chat-call li { font-size: 14px; }
+.mobile-chat-call header p { color: var(--v2-text-2); }
+.mobile-call-toggle { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.mobile-call-toggle input {
+  appearance: none;
+  position: relative;
+  width: 46px;
+  height: 27px;
+  border: 1px solid #8a8592;
+  border-radius: 30px;
+  background: #716b79;
+  cursor: pointer;
+}
+.mobile-call-toggle input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #fff;
+}
+.mobile-call-toggle input:checked { background: #6252bd; }
+.mobile-call-toggle input:checked::after { left: 22px; }
+
+.mobile-call-stage {
+  position: relative;
+  flex: 1 0 130px;
+  display: grid;
+  place-items: center;
+  background: var(--v2-purple-soft);
+  border-radius: 22px;
+}
+.video-mode .mobile-call-stage {
+  flex: 1 0 clamp(240px, 46dvh, 480px);
+  min-height: 0;
+  overflow: hidden;
+  background: #e6dfd7;
+}
+
+.mobile-call-portrait,
+.mobile-call-portrait-veil {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-call-portrait {
+  object-fit: cover;
+  object-position: center 37%;
+}
+
+.mobile-call-portrait-veil {
+  background: linear-gradient(180deg, rgb(255 255 255 / 22%), rgb(255 255 255 / 10%));
+  pointer-events: none;
+}
+
+.video-mode .mobile-call-ideas { order: 1; }
+.video-mode .mobile-call-self { border: 1px solid rgb(255 255 255 / 65%); }
+.mobile-call-agent { display: grid; justify-items: center; gap: 8px; }
+.mobile-call-self {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+  color: #fff;
+  background: #494357;
+}
+.mobile-call-self video { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.mobile-call-self span { position: absolute; bottom: 4px; padding: 2px 5px; border-radius: 6px; background: #211e2ccc; }
+.mobile-call-ideas {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--v2-border);
+  background: var(--v2-bg-card);
+}
+.mobile-chat-call footer { justify-content: center; }
+.mobile-chat-call .end-call { background: #a82037; color: #fff; border-color: #a82037; }
+.mobile-chat-report-link { margin-top: 8px; }
+
+.mobile-audio-note {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 300px);
+  margin: 8px 0 8px auto;
+  padding: 10px;
+  border: 1px solid var(--v2-border);
+  border-radius: 16px;
+  background: var(--v2-bg-card);
+  font-size: 13px;
+  color: var(--v2-text);
+}
+.mobile-audio-note div { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mobile-audio-note span { color: var(--v2-text-2); }
+.mobile-audio-note audio { width: 100%; }
+.mobile-audio-note p { margin: 0; }
+
+.mobile-video-selection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--v2-text-2);
+}
+.mobile-video-selection span { overflow-wrap: anywhere; }
+.mobile-video-selection button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.mobile-call-compact {
+  display: none;
+}
+
+.mobile-chat-sheet.call-compact .mobile-chat-call {
+  justify-content: center;
+  padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+}
+
+.mobile-chat-sheet.call-compact .mobile-chat-call > :not(.mobile-call-compact) {
+  display: none;
+}
+
+.mobile-chat-sheet.call-compact .mobile-call-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--v2-border);
+  border-radius: 16px;
+  background: var(--v2-bg-card);
+}
+
+.mobile-call-compact-status {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+}
+
+.mobile-call-compact-status > svg {
+  flex: 0 0 auto;
+  color: var(--v2-purple);
+}
+
+.mobile-call-compact-status strong,
+.mobile-call-compact-status span {
+  display: block;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.mobile-call-compact-status span {
+  font-size: 12px;
+  color: var(--v2-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mobile-call-compact button {
+  flex: 0 0 44px;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.mobile-call-compact button svg { pointer-events: none; }
