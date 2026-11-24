@@ -6,6 +6,7 @@
 // Ver: docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
 
 import type { Context, Next } from "hono";
+import { matchedRoutes } from "hono/route";
 import { randomUUID } from "node:crypto";
 import { withLogContext, logInfo, logWarn, logContext } from "../log.ts";
 import { globalMetrics } from "../metrics/registry.ts";
@@ -55,7 +56,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
     const correlationId = correlationIdFrom(c);
     const startedAt = performance.now();
     const method = c.req.method;
-    const path = new URL(c.req.url).pathname;
+    const path = matchedRoutes(c).findLast((route) => route.method !== "ALL")?.path ?? "unmatched";
 
     // Cabecera de vuelta para que el cliente pueda trazar.
     c.header("X-Correlation-Id", correlationId);
@@ -91,7 +92,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
           : {};
         globalMetrics.inc("agente_http_requests_total", {
           method,
-          path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+          path,
           status: String(status),
           ...tenantLabels,
         });
@@ -101,7 +102,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
         globalMetrics.observe(
           "agente_http_request_duration_ms",
           durationMs,
-          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status), ...tenantLabels },
+          { method, path, status: String(status), ...tenantLabels },
         );
         // HTTP_ERRORS_AND_HISTOGRAM_V1 - contador dedicado a errores por ruta.
         if (status >= 400) {
@@ -109,7 +110,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
           // METRICS_TENANT_LABEL_V1 — idem para errores por ruta.
           globalMetrics.inc("http_errors_by_route_total", {
             method,
-            path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+            path,
             status: String(status),
             ...tenantLabels,
           });
@@ -121,7 +122,6 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
           path,
           durationMs,
           error: error instanceof Error ? error.name : "UnknownError",
-          message: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
         });
         throw error;
       }
