@@ -21,6 +21,10 @@ export const executionContextSchema = z.object({
   // Si una ruta no tiene actor (health, system), usar owner como actor o systemContext.
   actorId: z.string().min(1).max(200),
   sessionId: z.string().max(200).optional(),
+  // APPROVAL_ID_CONTEXT_V1 - identificador explicito de la aprobacion que
+  // autoriza este paso. `sessionId` se conserva como fallback historico, pero
+  // una sesion no es una aprobacion y no debe confundirse con ella.
+  approvalId: z.string().max(200).optional(),
 });
 
 export type ExecutionRole = z.infer<typeof executionRoleSchema>;

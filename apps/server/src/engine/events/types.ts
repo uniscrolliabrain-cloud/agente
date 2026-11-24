@@ -158,6 +158,10 @@ export interface SystemEvent<T = Record<string, unknown>> {
   // lectores 1.0 anteriores los ignoran; `source.personaId` sigue siendo
   // presentacion y nunca sustituye al actor autenticado.
   actorId?: string;
+  // EVENTS_ACTOR_PROVENANCE_V1 - procedencia del actor: un principal humano
+  // autenticado o un principal de servicio con identidad propia. `personaId`
+  // sigue siendo presentacion y nunca se promueve a actor.
+  actorKind?: "human" | "service";
   causalKind?: "root" | "derived";
   payload: T;
 }

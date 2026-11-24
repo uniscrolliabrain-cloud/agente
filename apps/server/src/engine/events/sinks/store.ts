@@ -88,10 +88,19 @@ export class StoreQuery implements EventQuery {
   }
 
   /**
-   * EVENTS_PAGE_TENANT_V1 - lectura ascendente por tenant con cursor durable.
-   * El cursor se resuelve a su evento dentro del mismo tenant; un cursor
-   * ajeno o inexistente deniega en vez de reiniciar la pagina por accidente.
-   * Filtros y limite se aplican en SQL, nunca despues de truncar.
+   * EVENTS_PAGE_TENANT_V2 - lectura ascendente por tenant con cursor durable.
+   *
+   * EVENTS_REPLAY_INSERTION_ORDER_V1 - el orden y el cursor usan `updated_at`,
+   * la posicion durable de insercion, no `emittedAt`. El timestamp de emision
+   * lo fija el productor: un evento insertado tarde con un `emittedAt` anterior
+   * al cursor desaparecia para siempre. Los eventos son append-only
+   * (insertIfAbsent), asi que `updated_at` es la secuencia real del log y una
+   * insercion tardia siempre cae despues del cursor. `id` desempata timestamps
+   * iguales y da un orden total estable para la paginacion por keyset.
+   *
+   * El cursor se resuelve a su evento dentro del mismo tenant; un cursor ajeno
+   * o inexistente deniega en vez de reiniciar la pagina por accidente. Filtros
+   * y limite se aplican en SQL, nunca despues de truncar.
    */
   async pageTenant(
     tenantId: string,
@@ -107,17 +116,18 @@ export class StoreQuery implements EventQuery {
     const params: unknown[] = [KIND, tenantId];
     let sql = "SELECT data FROM records WHERE kind = $1 AND data->>'tenantId' = $2";
     if (filter.sinceId) {
-      const cursorRows = await selectFn<{ data: SystemEvent }>(
-        "SELECT data FROM records WHERE kind = $1 AND data->>'tenantId' = $2 AND id = $3",
+      const cursorRows = await selectFn<{ data: SystemEvent; updated_at: string }>(
+        `SELECT data, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated_at
+           FROM records WHERE kind = $1 AND data->>'tenantId' = $2 AND id = $3`,
         [KIND, tenantId, filter.sinceId],
       );
-      const cursor = cursorRows[0]?.data;
-      if (!cursor) throw new Error(`EVENT_CURSOR_NOT_FOUND: ${filter.sinceId}`);
-      params.push(cursor.emittedAt);
+      const cursor = cursorRows[0];
+      if (!cursor?.data) throw new Error(`EVENT_CURSOR_NOT_FOUND: ${filter.sinceId}`);
+      params.push(cursor.updated_at);
       const atParam = params.length;
-      params.push(cursor.id);
+      params.push(cursor.data.id);
       const idParam = params.length;
-      sql += ` AND ((data->>'emittedAt') > $${atParam} OR ((data->>'emittedAt') = $${atParam} AND id > $${idParam}))`;
+      sql += ` AND (updated_at > $${atParam}::timestamptz OR (updated_at = $${atParam}::timestamptz AND id > $${idParam}))`;
     }
     if (filter.since) {
       params.push(filter.since);
@@ -137,7 +147,7 @@ export class StoreQuery implements EventQuery {
       sql += ` AND (data->>'type') = ANY($${params.length}::text[])`;
     }
     params.push(limit);
-    sql += ` ORDER BY (data->>'emittedAt') ASC, id ASC LIMIT $${params.length}`;
+    sql += ` ORDER BY updated_at ASC, id ASC LIMIT $${params.length}`;
     const rows = await selectFn<{ data: SystemEvent }>(sql, params);
     return rows.map((row) => row.data);
   }

@@ -101,6 +101,14 @@ const capability = {
   sideEffects: [{ kind: "external_write" }],
 };
 
+// KERNEL_AUTHORITY_V1 - un efecto externo exige principal, rol y PDP en
+// cualquier perfil. El harness modela una composicion gobernada completa; el
+// mecanismo de idempotencia que este fichero mide no cambia.
+const governance = {
+  canExecuteTool: async () => ({ allowed: true }),
+  canExecuteAction: async () => ({ allowed: true }),
+};
+
 function runnerFor(effects: { count: number }) {
   const registry = { get: async () => capability };
   const executors = new Map([
@@ -114,7 +122,13 @@ function runnerFor(effects: { count: number }) {
       },
     ],
   ]);
-  return new CapabilityRunner(registry as never, executors as never, undefined, undefined, db as never);
+  return new CapabilityRunner(
+    registry as never,
+    executors as never,
+    governance as never,
+    (async () => ({ id: "role-idem", name: "Agent" })) as never,
+    db as never,
+  );
 }
 
 const step = (id: string): PlanStep => ({
@@ -130,6 +144,7 @@ const ctx: ExecutionContext = {
   tenantId: "tenant-idem",
   owner: "idem-runner",
   role: "agent",
+  roleId: "role-idem",
   requestId: "req-idem-1",
   actorId: "actor-idem-1",
 };
@@ -153,7 +168,7 @@ test("ruta 3 (control): otro paso es otra clave y si ejecuta", async () => {
   assert.equal(effects.count, 2, "dos pasos distintos son dos efectos");
 });
 
-test("ruta 3: un claim fallido permite el reintento", async () => {
+test("ruta 3: un fallo confirmado sin efecto permite el reintento", async () => {
   const owner = "idem-runner-failed";
   const tenantId = "tenant-idem-failed";
   let calls = 0;
@@ -164,15 +179,26 @@ test("ruta 3: un claim fallido permite el reintento", async () => {
       {
         run: async () => {
           calls++;
-          if (calls === 1) throw new Error("proveedor caido");
+          // EXECUTION_OUTCOME_CONTRACT_V1 - reintentar exige evidencia positiva
+          // de ausencia de efecto; un error generico ya no basta.
+          if (calls === 1)
+            throw Object.assign(new Error("proveedor rechazo la solicitud"), {
+              outcome: "rejected_before_dispatch",
+            });
           return { receipt: "r-2" };
         },
       },
     ],
   ]);
-  const runner = new CapabilityRunner(registry as never, executors as never, undefined, undefined, db as never);
+  const runner = new CapabilityRunner(
+    registry as never,
+    executors as never,
+    governance as never,
+    (async () => ({ id: "role-idem", name: "Agent" })) as never,
+    db as never,
+  );
   const localCtx: ExecutionContext = { ...ctx, tenantId, owner };
-  await assert.rejects(() => runner.run(localCtx, step("paso-4")), /proveedor caido/);
+  await assert.rejects(() => runner.run(localCtx, step("paso-4")), /proveedor rechazo/);
   await runner.run(localCtx, step("paso-4"));
   assert.equal(calls, 2, "un fallo no puede dejar el paso bloqueado para siempre");
   const claims = await db.list<{ status?: string }>(tenantId, "idempotency-claims");

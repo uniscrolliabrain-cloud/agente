@@ -29,12 +29,14 @@ function runnerFor(
     getAgentRole?: unknown;
     store?: Store | undefined;
     profile?: "legacy_v1" | "governed_v2";
+    capability?: typeof capability;
   } = {},
 ) {
-  const registry = { get: async () => capability };
+  const active = options.capability ?? capability;
+  const registry = { get: async () => active };
   const executors = new Map([
     [
-      capability.id,
+      active.id,
       {
         run: async () => {
           effects.count++;
@@ -117,11 +119,49 @@ test("gobernado completo ejecuta una vez y deja el claim en done", async () => {
   assert.equal(claims[0].status, "done");
 });
 
-test("el perfil legacy conserva la ruta sin principal", async () => {
+test("un efecto externo sin principal se niega aunque el perfil sea legacy", async () => {
   const effects = { count: 0 };
   const runner = runnerFor(effects, { store: db, profile: "legacy_v1" });
   const legacyCtx = { ...baseCtx, actorId: undefined, roleId: undefined } as unknown as ExecutionContext;
-  // Paso distinto: el claim de los tests gobernados ya esta en `done`.
-  await runner.run(legacyCtx, { ...step, id: "paso-legacy" });
+  await assert.rejects(
+    runner.run(legacyCtx, { ...step, id: "paso-legacy-sin-principal" }),
+    /GOVERNED_PRINCIPAL_REQUIRED/,
+  );
+  assert.equal(effects.count, 0, "la autoridad no depende del perfil de montaje");
+});
+
+test("un rol inactivo no autoriza el efecto", async () => {
+  const effects = { count: 0 };
+  const runner = runnerFor(effects, {
+    store: db,
+    governance: {
+      canExecuteTool: async () => ({ allowed: true }),
+      canExecuteAction: async () => ({ allowed: true }),
+    },
+    getAgentRole: async () => ({ id: "role-1", name: "Agent", active: false }),
+  });
+  await assert.rejects(runner.run(baseCtx, { ...step, id: "paso-rol-inactivo" }), /is inactive/);
+  assert.equal(effects.count, 0);
+});
+
+test("el perfil legacy conserva la ruta sin principal para una lectura", async () => {
+  const effects = { count: 0 };
+  const readCapability = {
+    id: "cap-trans01-read",
+    requiresApproval: false,
+    idempotency: "idempotent",
+    sideEffects: [{ kind: "read" }],
+  };
+  const runner = runnerFor(effects, {
+    store: db,
+    profile: "legacy_v1",
+    capability: readCapability as unknown as typeof capability,
+  });
+  const legacyCtx = { ...baseCtx, actorId: undefined, roleId: undefined } as unknown as ExecutionContext;
+  await runner.run(legacyCtx, {
+    ...step,
+    id: "paso-lectura",
+    capabilityId: readCapability.id,
+  });
   assert.equal(effects.count, 1);
 });

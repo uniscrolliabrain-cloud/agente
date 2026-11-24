@@ -62,7 +62,7 @@ function context(aborted = false) {
   return { signal: controller.signal, checkpoint: async () => {} } as never;
 }
 
-async function runStep(service: unknown, ctx: unknown) {
+async function runStep(service: unknown, ctx: unknown, taskOverride: unknown = task) {
   const executor = new SOPExecutor(service as never, undefined, undefined, undefined);
   const call = (
     executor as unknown as {
@@ -76,8 +76,32 @@ async function runStep(service: unknown, ctx: unknown) {
       ) => Promise<unknown>;
     }
   ).runStep.bind(executor);
-  return call("owner-sop", { id: "sop", name: "SOP", steps: [] }, step, task, ctx, {});
+  return call("owner-sop", { id: "sop", name: "SOP", steps: [] }, step, taskOverride, ctx, {});
 }
+
+test("sin rol activo el comando no se ejecuta", async () => {
+  // SOP_COMPUTER_NO_ROLE_DENIED_V1 - la ausencia de rol no es autorizacion.
+  const { service, calls } = fakeService({
+    governance: governanceAllowing,
+    role: { id: "role-1", name: "Agent" },
+  });
+  await assert.rejects(
+    runStep(service, context(), { ...(task as object), state: {} }),
+    /requires an active role/,
+  );
+  assert.equal(calls.start, 0);
+  assert.equal(calls.execute, 0);
+});
+
+test("un rol inactivo no ejecuta el comando", async () => {
+  const { service, calls } = fakeService({
+    governance: governanceAllowing,
+    role: { id: "role-1", name: "Agent", active: false },
+  });
+  await assert.rejects(runStep(service, context()), /is inactive/);
+  assert.equal(calls.start, 0);
+  assert.equal(calls.execute, 0);
+});
 
 test("sin governance un paso con rol no ejecuta el comando", async () => {
   const { service, calls } = fakeService({ role: { id: "role-1", name: "Agent" } });

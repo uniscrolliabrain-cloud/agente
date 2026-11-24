@@ -1,4 +1,11 @@
 // CAPABILITY_RUNNER_V2 - ejecuta capabilities por id.
+//
+// KERNEL_AUTHORITY_V1 - la autoridad no depende de la personalidad ni del
+// perfil de montaje para las operaciones privilegiadas. Toda capability con
+// efecto externo o que exige aprobacion necesita principal resuelto, rol
+// vigente, PDP y store de claims, en cualquier perfil. `governed_v2` extiende
+// esa exigencia a las capabilities de lectura; `legacy_v1` conserva la ruta
+// historica solo para lo que no produce efecto ni requiere aprobacion.
 
 import { randomUUID } from "node:crypto";
 import type { ExecutionContext, PlanStep } from "../../../../../packages/domain/src/index.ts";
@@ -6,13 +13,15 @@ import type { CapabilityRegistry } from "../capabilities/registry.ts";
 import type { StepRunner } from "./executor.ts";
 import type { ToolExecutor } from "./tool-executors.ts";
 import { agentActor } from "../../../../../packages/domain/src/actor.ts";
+import { classifyAdapterFailure, classifyAdapterResult } from "./outcome.ts";
+import { observeKernel } from "../observability/hooks.ts";
 
 /**
  * CAPABILITY_RUNNER_GOVERNED_PROFILE_V1 - perfil explicito de montaje.
- * `legacy_v1` conserva el comportamiento historico (V1) hasta inventariar
- * callers; `governed_v2` exige principal resuelto, PDP y store de claims.
- * El perfil NO se deduce de la presencia de dependencias: un montaje
- * incompleto no puede degradarse en silencio a la ruta sin autorizacion.
+ * `legacy_v1` conserva el comportamiento historico (V1) para las capabilities
+ * que no producen efecto; `governed_v2` exige principal resuelto, PDP y store
+ * de claims tambien para lecturas. El perfil NO se deduce de la presencia de
+ * dependencias: un montaje incompleto no puede degradarse en silencio.
  */
 export type CapabilityRunnerProfile = "legacy_v1" | "governed_v2";
 
@@ -26,12 +35,35 @@ interface ClaimRecord {
   status?: string;
   claimedAt?: string;
   failedAt?: string;
+  acceptedAt?: string;
   doneAt?: string;
   result?: unknown;
   error?: string | null;
   fence?: number;
   attemptId?: string;
   retrySafe?: boolean;
+  outcome?: string;
+}
+
+/**
+ * APPROVAL_BINDING_FIELDS_V1 - vista minima del registro `actions` que el
+ * kernel necesita para decidir si una aprobacion autoriza ESTE paso.
+ */
+interface ApprovalRecord {
+  id: string;
+  status?: string;
+  kind?: string;
+  taskId?: string;
+  tenantId?: string;
+  hash?: string;
+  revision?: string;
+  principal?: string;
+  expiresAt?: string;
+  data?: unknown;
+  connectionId?: string;
+  connectionGeneration?: string;
+  capabilityId?: string;
+  approvedBy?: string;
 }
 
 export class CapabilityRunner implements StepRunner {
@@ -49,62 +81,37 @@ export class CapabilityRunner implements StepRunner {
   ) {}
 
   async run(ctx: ExecutionContext, step: PlanStep): Promise<void> {
+    const startedAt = Date.now();
     if (!step.capabilityId) throw new Error(`Step ${step.id} has no capabilityId`);
     const capability = await this.registry.get(step.capabilityId);
     if (!capability) throw new Error(`Capability ${step.capabilityId} not found`);
     const isExternalWrite = capability.sideEffects.some((s) => s.kind === "external_write");
-    // CAPABILITY_RUNNER_GOVERNED_PROFILE_V1 - fail-closed antes de cualquier
-    // lectura de rol o de proveedor. El perfil legacy no cambia.
-    if (this.profile === "governed_v2") {
-      if (!this.governance || !this.getAgentRole || !ctx.actorId || !ctx.roleId)
+    // KERNEL_AUTHORITY_MATRIX_V1 - una operacion con efecto o con aprobacion
+    // obligatoria siempre atraviesa la frontera de autoridad, sea cual sea el
+    // perfil. La ausencia de rol, PDP o store no equivale a autorizacion.
+    const privileged = isExternalWrite || capability.requiresApproval === true;
+    const governed = this.profile === "governed_v2";
+    if (governed || privileged) {
+      if (!this.governance || !this.getAgentRole || !ctx.actorId || !ctx.roleId) {
+        observeKernel({
+          stage: "kernel.denial",
+          status: "denied",
+          durationMs: Date.now() - startedAt,
+          capabilityId: capability.id,
+          errorClass: "principal_missing",
+        });
         throw new Error("GOVERNED_PRINCIPAL_REQUIRED");
-      if ((capability.requiresApproval || isExternalWrite) && !this.db)
-        throw new Error("GOVERNED_CLAIM_STORE_REQUIRED");
-    }
-    // CAPABILITY_RUNNER_GOVERNANCE_V1 - authz antes de exec.run.
-    if (this.governance && this.getAgentRole && ctx.roleId && ctx.actorId) {
-      const role = await this.getAgentRole(ctx.tenantId, ctx.roleId);
-      if (!role) throw new Error(`AgentRole ${ctx.roleId} not found for authz`);
-      // ACTOR_AGENT_FACTORY_V1 - usa el constructor unico del dominio.
-      const actor = agentActor({
-        tenantId: ctx.tenantId,
-        actorId: ctx.actorId,
-        roleId: ctx.roleId,
-        ...(role.name ? { name: role.name } : {}),
-        ...(ctx.runtimeId ? { runtimeId: ctx.runtimeId } : {}),
-      });
-      const decision = capability.actionType
-        ? await this.governance.canExecuteAction(actor, ctx.owner, role, capability.id, "execute")
-        : await this.governance.canExecuteTool(actor, ctx.owner, role, capability.id);
-      if (!decision.allowed) throw new Error(`authz denied: ${decision.reason ?? capability.id}`);
-    }
-    // CAPABILITY_RUNNER_APPROVAL_REAL_V1 - valida approvalId contra tenant + accion.
-    // CAPABILITY_RUNNER_B10_V1 - solo executing/succeeded autorizan. awaiting_review NO autoriza.
-    if (capability.requiresApproval) {
-      const approvalId = ctx.sessionId;
-      if (!approvalId) throw new Error(`requires approval: ${capability.id}`);
-      if (this.db) {
-        // CAPABILITY_RUNNER_APPROVAL_OWNER_V1 - el store compone la clave como
-        // `${tenant}:${owner}`; aqui se pasaba ctx.tenantId como owner, asi que
-        // se buscaba `${tenant}:${tenant}` y NINGUNA aprobacion se encontraba.
-        // La accion se guarda con el owner real (ActionService.propose(owner)).
-        const approval = await this.db.get(ctx.owner, "actions", approvalId);
-        if (!approval) throw new Error(`approval not found: ${approvalId}`);
-        const a = approval as { status?: string; kind?: string; taskId?: string };
-        const validStatuses = ["executing", "succeeded"];
-        if (!a.status || !validStatuses.includes(a.status)) {
-          throw new Error(`approval not valid: ${approvalId} status=${a.status ?? "unknown"}`);
-        }
-        if (a.kind && capability.actionType && a.kind !== capability.actionType) {
-          throw new Error(`approval kind mismatch: ${a.kind} != ${capability.actionType}`);
-        }
       }
     }
-    const exec = this.executors.get(capability.id);
-    if (!exec) throw new Error(`No executor for capability ${capability.id}`);
-    // CAPABILITY_RUNNER_IDEMPOTENCY_V1 - si el contrato no es idempotente, generar key y pasarla.
+    if (privileged && !this.db) throw new Error("GOVERNED_CLAIM_STORE_REQUIRED");
+    if (governed || privileged) await this.authorize(ctx, capability, startedAt);
+
+    // CAPABILITY_RUNNER_IDEMPOTENCY_V1 - si el contrato no es idempotente,
+    // generar key y pasarla. KERNEL_APPROVAL_CONSUMPTION_V1 - una capability
+    // con aprobacion tambien necesita clave: es la prueba de que la aprobacion
+    // se consumio para ESTE paso y no para otro.
     let idempotencyKey: import("../idempotency.ts").IdempotencyKey | undefined;
-    if (capability.idempotency !== "idempotent") {
+    if (capability.idempotency !== "idempotent" || privileged) {
       const scope: import("../idempotency.ts").IdempotencyScope = capability.sideEffects[0]?.kind === "external_write" ? "computer" : "computer";
       idempotencyKey = (await import("../idempotency.ts")).makeIdempotencyKey(scope, {
         tenantId: ctx.tenantId,
@@ -113,8 +120,18 @@ export class CapabilityRunner implements StepRunner {
         inputs: step.inputs,
       });
     }
+
+    // CAPABILITY_RUNNER_APPROVAL_REAL_V1 - la aprobacion autoriza un contenido,
+    // una tarea, un tenant, un principal y una conexion concretos.
+    if (capability.requiresApproval) {
+      await this.assertApprovalBinding(ctx, step, capability, isExternalWrite, idempotencyKey?.key);
+    }
+
+    const exec = this.executors.get(capability.id);
+    if (!exec) throw new Error(`No executor for capability ${capability.id}`);
+
     // CAPABILITY_RUNNER_B10_V1 - claim con status + recuperacion de resultado.
-    if (idempotencyKey && isExternalWrite && this.db) {
+    if (idempotencyKey && (isExternalWrite || capability.requiresApproval) && this.db) {
       const claimId = idempotencyKey.key;
       const claimedAt = new Date().toISOString();
       const attemptId = randomUUID();
@@ -129,6 +146,11 @@ export class CapabilityRunner implements StepRunner {
         }
         if (existing.status === "outcome_unknown") {
           throw new Error(`idempotent: outcome_unknown, reconcile first ${claimId}`);
+        }
+        if (existing.status === "accepted") {
+          // EXECUTION_OUTCOME_ACCEPTED_V1 - aceptado no es confirmado. Un nuevo
+          // envio duplicaria un efecto que el proveedor ya acepto.
+          throw new Error(`idempotent: accepted awaiting confirmation, reconcile first ${claimId}`);
         }
         if (existing.status === "failed") {
           // CAPABILITY_RUNNER_RETRY_EVIDENCE_V1 - reintentar un fallo solo con
@@ -172,6 +194,13 @@ export class CapabilityRunner implements StepRunner {
             },
           );
           if (!moved) throw new Error(`idempotent: claim changed during stale reconciliation ${claimId}`);
+          observeKernel({
+            stage: "runtime.reconciliation",
+            status: "unknown",
+            durationMs: Date.now() - startedAt,
+            capabilityId: capability.id,
+            errorClass: "stale_claim",
+          });
           throw new Error(`idempotent: stale claim, reconcile first ${claimId}`);
         } else {
           throw new Error(`idempotent: unknown status ${existing.status} for ${claimId}`);
@@ -189,38 +218,56 @@ export class CapabilityRunner implements StepRunner {
         });
         if (!claimed) throw new Error(`idempotent: raced claim ${claimId}`);
       }
+      // KERNEL_EFFECT_BOUNDARY_REAUTH_V1 - la autoridad se revalida en el
+      // limite del efecto: una revocacion entre el claim y el despacho no
+      // ejecuta. No promete atomicidad con el proveedor remoto.
+      if (governed || privileged) await this.authorize(ctx, capability, startedAt);
+      if (capability.requiresApproval) {
+        await this.assertApprovalBinding(ctx, step, capability, isExternalWrite, claimId);
+      }
       let result: unknown;
       try {
         result = await exec.run(ctx, capability.id, step.inputs, idempotencyKey);
       } catch (error) {
-        // CAPABILITY_RUNNER_ERROR_KIND_V1 - `outcome_unknown` declarado por el
-        // adaptador conserva la ambiguedad; el resto se registra como fallo
-        // reintentable. La clasificacion fina de proveedores es de Trans03:
-        // hasta entonces, un error sin discriminante NO prueba ausencia de
-        // efecto y se documenta como riesgo residual, no como exito.
-        const unknown = isUnknownOutcome(error);
+        // CAPABILITY_RUNNER_ERROR_KIND_V1 - solo una declaracion positiva de
+        // ausencia de efecto permite reintentar. Un error generico posterior
+        // al despacho se conserva como resultado desconocido.
+        const failure = classifyAdapterFailure(error);
         const message = error instanceof Error ? error.message.slice(0, 2000) : "unknown";
         try {
           await this.transition(
             ctx.tenantId,
             claimId,
             { status: "claimed", fence: activeFence, attemptId },
-            unknown
+            failure.retrySafe
               ? {
-                  status: "outcome_unknown",
-                  fence: activeFence,
-                  attemptId,
-                  error: message,
-                  claimedAt,
-                }
-              : {
                   status: "failed",
                   fence: activeFence,
                   attemptId,
                   retrySafe: true,
+                  outcome: failure.outcome,
                   error: message,
                   failedAt: new Date().toISOString(),
-                },
+                }
+              : failure.outcome === "accepted"
+                ? {
+                    status: "accepted",
+                    fence: activeFence,
+                    attemptId,
+                    retrySafe: false,
+                    outcome: failure.outcome,
+                    error: message,
+                    acceptedAt: new Date().toISOString(),
+                  }
+                : {
+                    status: "outcome_unknown",
+                    fence: activeFence,
+                    attemptId,
+                    retrySafe: false,
+                    outcome: failure.outcome,
+                    error: message,
+                    claimedAt,
+                  },
           );
         } catch (persistenceError) {
           // CAPABILITY_RUNNER_PERSISTENCE_V1 - un fallo al persistir el estado
@@ -232,8 +279,16 @@ export class CapabilityRunner implements StepRunner {
             }`,
           );
         }
+        observeKernel({
+          stage: "runtime.result",
+          status: failure.retrySafe ? "failed" : "unknown",
+          durationMs: Date.now() - startedAt,
+          capabilityId: capability.id,
+          errorClass: failure.outcome,
+        });
         throw error;
       }
+      const outcomeClass = classifyAdapterResult(result);
       // CAPABILITY_RUNNER_CLAIM_FENCE_V1 - la finalizacion solo la escribe el
       // intento que sigue poseyendo el claim; un worker tardio no pisa `done`.
       const settled = await this.transition(
@@ -241,17 +296,147 @@ export class CapabilityRunner implements StepRunner {
         claimId,
         { status: "claimed", fence: activeFence, attemptId },
         {
-          status: "done",
+          status: outcomeClass === "accepted" ? "accepted" : "done",
           fence: activeFence,
           attemptId,
+          outcome: outcomeClass,
           result: typeof result === "string" ? result.slice(0, 2000) : JSON.stringify(result ?? null).slice(0, 2000),
-          doneAt: new Date().toISOString(),
+          ...(outcomeClass === "accepted"
+            ? { acceptedAt: new Date().toISOString() }
+            : { doneAt: new Date().toISOString() }),
         },
       );
       if (!settled) throw new Error(`CLAIM_FENCE_LOST ${claimId}`);
+      observeKernel({
+        stage: "runtime.result",
+        status: outcomeClass === "confirmed" ? "ok" : "unknown",
+        durationMs: Date.now() - startedAt,
+        capabilityId: capability.id,
+        errorClass: outcomeClass === "confirmed" ? undefined : outcomeClass,
+      });
+      if (outcomeClass === "accepted") {
+        // Un resultado aceptado no es un hecho confirmado: se detiene el paso
+        // para conciliacion en vez de declarar exito operativo.
+        throw Object.assign(
+          new Error(`OUTCOME_ACCEPTED_RECONCILE ${claimId}`),
+          { outcomeUnknown: true, code: "outcome_accepted" },
+        );
+      }
       return;
     }
+
+    // Ruta sin claim (capability idempotente y sin aprobacion).
+    if (governed || privileged) await this.authorize(ctx, capability, startedAt);
     await exec.run(ctx, capability.id, step.inputs, idempotencyKey);
+    observeKernel({
+      stage: "runtime.result",
+      status: "ok",
+      durationMs: Date.now() - startedAt,
+      capabilityId: capability.id,
+    });
+  }
+
+  /**
+   * KERNEL_AUTHORIZE_V1 - unica decision de autoridad del runner. Reutiliza el
+   * PDP existente; no crea un segundo motor de permisos.
+   */
+  private async authorize(
+    ctx: ExecutionContext,
+    capability: { id: string; actionType?: string },
+    startedAt: number,
+  ): Promise<void> {
+    if (!this.governance || !this.getAgentRole) throw new Error("GOVERNED_PRINCIPAL_REQUIRED");
+    if (!ctx.actorId || !ctx.roleId) throw new Error("GOVERNED_PRINCIPAL_REQUIRED");
+    const role = await this.getAgentRole(ctx.tenantId, ctx.roleId);
+    if (!role) throw new Error(`AgentRole ${ctx.roleId} not found for authz`);
+    if ((role as { active?: boolean }).active === false)
+      throw new Error(`AgentRole ${ctx.roleId} is inactive`);
+    // ACTOR_AGENT_FACTORY_V1 - usa el constructor unico del dominio.
+    const actor = agentActor({
+      tenantId: ctx.tenantId,
+      actorId: ctx.actorId,
+      roleId: ctx.roleId,
+      ...(role.name ? { name: role.name } : {}),
+      ...(ctx.runtimeId ? { runtimeId: ctx.runtimeId } : {}),
+    });
+    const decision = capability.actionType
+      ? await this.governance.canExecuteAction(actor, ctx.owner, role, capability.id, "execute")
+      : await this.governance.canExecuteTool(actor, ctx.owner, role, capability.id);
+    if (!decision.allowed) {
+      observeKernel({
+        stage: "kernel.denial",
+        status: "denied",
+        durationMs: Date.now() - startedAt,
+        capabilityId: capability.id,
+        errorClass: "pdp_denied",
+      });
+      throw new Error(`authz denied: ${decision.reason ?? capability.id}`);
+    }
+    observeKernel({
+      stage: "kernel.decision",
+      status: "ok",
+      durationMs: Date.now() - startedAt,
+      capabilityId: capability.id,
+    });
+  }
+
+  /**
+   * APPROVAL_BINDING_V1 - una aprobacion autoriza un contenido exacto, en una
+   * tarea y tenant concretos, para un principal y una generacion de conexion
+   * concretos, y se consume una sola vez por paso.
+   */
+  private async assertApprovalBinding(
+    ctx: ExecutionContext,
+    step: PlanStep,
+    capability: { id: string; actionType?: string },
+    isExternalWrite: boolean,
+    claimId?: string,
+  ): Promise<void> {
+    const approvalId = ctx.approvalId ?? ctx.sessionId;
+    if (!approvalId) throw new Error(`requires approval: ${capability.id}`);
+    if (!this.db) throw new Error("APPROVAL_STORE_REQUIRED");
+    // CAPABILITY_RUNNER_APPROVAL_OWNER_V1 - el store compone la clave como
+    // `${tenant}:${owner}`; la accion se guarda con el owner real.
+    const approval = (await this.db.get(ctx.owner, "actions", approvalId)) as ApprovalRecord | null;
+    if (!approval) throw new Error(`approval not found: ${approvalId}`);
+    if (!approval.status || !["executing", "succeeded"].includes(approval.status)) {
+      throw new Error(`approval not valid: ${approvalId} status=${approval.status ?? "unknown"}`);
+    }
+    // APPROVAL_ONE_EFFECT_V1 - una aprobacion ya consumida solo puede
+    // reutilizarse para el MISMO paso (claim `done`). Cualquier otro paso es
+    // una operacion distinta y no hereda la autorizacion.
+    if (approval.status === "succeeded") {
+      if (!claimId) throw new Error(`approval already consumed: ${approvalId}`);
+      const claim = (await this.db.get(ctx.tenantId, "idempotency-claims", claimId)) as ClaimRecord | null;
+      if (!claim || claim.status !== "done")
+        throw new Error(`approval already consumed: ${approvalId}`);
+    }
+    if (!approval.tenantId || approval.tenantId !== ctx.tenantId)
+      throw new Error(`approval tenant mismatch: ${approvalId}`);
+    if (ctx.taskId) {
+      if (approval.taskId !== ctx.taskId) throw new Error(`approval task mismatch: ${approvalId}`);
+    } else if (approval.taskId) {
+      throw new Error(`approval is bound to task ${approval.taskId}`);
+    }
+    if (!approval.hash || !approval.revision)
+      throw new Error(`approval is not bound to a reviewed revision: ${approvalId}`);
+    if (!approval.expiresAt || Date.parse(approval.expiresAt) <= Date.now())
+      throw new Error(`approval expired: ${approvalId}`);
+    if (!approval.principal || ![ctx.actorId, ctx.owner].includes(approval.principal))
+      throw new Error(`approval principal mismatch: ${approvalId}`);
+    if (approval.capabilityId && approval.capabilityId !== capability.id)
+      throw new Error(`approval capability mismatch: ${approval.capabilityId} != ${capability.id}`);
+    const inputs = (step.inputs ?? {}) as Record<string, unknown>;
+    if (typeof inputs.kind === "string" && approval.kind && inputs.kind !== approval.kind)
+      throw new Error(`approval kind mismatch: ${approval.kind} != ${inputs.kind}`);
+    if (inputs.data !== undefined && approval.data !== undefined) {
+      if (stableStringify(inputs.data) !== stableStringify(approval.data))
+        throw new Error(`approval content mismatch: ${approvalId}`);
+    }
+    // APPROVAL_CONNECTION_GENERATION_V1 - un efecto externo exige que la
+    // revision se haya preparado contra una generacion de credencial concreta.
+    if (isExternalWrite && !approval.connectionGeneration)
+      throw new Error(`approval has no bound connection generation: ${approvalId}`);
   }
 
   /**
@@ -286,10 +471,12 @@ export class CapabilityRunner implements StepRunner {
   }
 }
 
-// CAPABILITY_RUNNER_ERROR_KIND_V1 - unico discriminante acordado hoy con los
-// ejecutores: el error declara explicitamente que el resultado es incierto.
-function isUnknownOutcome(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  if ("outcomeUnknown" in error && (error as { outcomeUnknown?: unknown }).outcomeUnknown === true) return true;
-  return "code" in error && (error as { code?: unknown }).code === "outcome_unknown";
+/** Orden estable para comparar contenido aprobado con contenido a ejecutar. */
+function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, entry]) => entry !== undefined)
+    .sort(([a], [b]) => a.localeCompare(b));
+  return `{${entries.map(([key, entry]) => `${JSON.stringify(key)}:${stableStringify(entry)}`).join(",")}}`;
 }

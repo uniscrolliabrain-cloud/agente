@@ -32,16 +32,28 @@ const step = (id: string): PlanStep => ({
   status: "pending",
 });
 
+const governance = {
+  canExecuteTool: async () => ({ allowed: true }),
+  canExecuteAction: async () => ({ allowed: true }),
+};
+
 function runnerFor(run: () => Promise<unknown>) {
   const registry = { get: async () => capability };
   const executors = new Map([[capability.id, { run }]]);
-  return new CapabilityRunner(registry as never, executors as never, undefined, undefined, db);
+  return new CapabilityRunner(
+    registry as never,
+    executors as never,
+    governance as never,
+    (async () => ({ id: "role-1", name: "Agent" })) as never,
+    db,
+  );
 }
 
 const ctx: ExecutionContext = {
   tenantId: "tenant-claim",
   owner: "owner-claim",
   role: "agent",
+  roleId: "role-1",
   requestId: "req-claim",
   actorId: "actor-claim",
 };

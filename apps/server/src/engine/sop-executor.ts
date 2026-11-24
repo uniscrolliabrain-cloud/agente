@@ -486,6 +486,23 @@ export class SOPExecutor {
     return this.service.finish(owner, task, ctx, `SOP Ã¢â‚¬Å“${sop.name}Ã¢â‚¬Â completed ${sop.steps.length} step(s).`);
   }
 
+  /**
+   * SOP_STEP_AUTHORITY_MAP_V1 - clasificacion de cada caso de `runStep`.
+   *
+   * - Transformacion determinista interna: `ask_user`, `llm_generate`
+   *   (devuelve texto no confiable), `save_artifact`.
+   * - Lectura gobernada: `read_workspace`, `read_mail_thread`, `read_web`,
+   *   `query_business`, `recall_memory`, `inspect_pdf`, `import_pdf`.
+   * - Escritura interna: `fill_pdf` (archivo del workspace).
+   * - Efecto externo: `computer_command` (sandbox persistente).
+   * - Operacion privilegiada: `transition_entity` (maquina de estados).
+   * - Propuesta pendiente de decision: `prepare_email`, `prepare_event`
+   *   (crean una propuesta; no ejecutan el efecto).
+   * - Interaccion humana: `ask_user` (waiting_input).
+   *
+   * Un SOP decide QUE se propone y CUANDO; no concede autoridad. Los casos
+   * con efecto o privilegio revalidan rol y governance aqui, en el limite.
+   */
   private async runStep(
     owner: string,
     sop: SOP,
@@ -525,38 +542,53 @@ export class SOPExecutor {
         // SOP_COMPUTER_AUTHZ_FAIL_CLOSED_V1 - con rol activo, governance es
         // obligatoria: antes un rol borrado o un montaje sin governance saltaban
         // la autorizacion y el comando se ejecutaba.
+        // SOP_COMPUTER_NO_ROLE_DENIED_V1 - un comando es un efecto externo:
+        // exige rol activo, governance y PDP. La ausencia de rol ya NO equivale
+        // a autorizacion; antes un SOP sin `state.roleId` llegaba a
+        // `computer.start` y `computer.execute` sin pasar por ninguna frontera.
         if (ctx.signal?.aborted) throw new Error("computer_command aborted before dispatch");
         const activeRoleId = typeof task.state.roleId === "string" ? task.state.roleId : undefined;
-        if (activeRoleId) {
-          if (!this.service.governance)
+        if (!activeRoleId)
+          throw new AppError(
+            "computer_command requires an active role: no role is not authorization",
+            403,
+          );
+        if (!this.service.governance)
+          throw new AppError(
+            "computer_command requires governance for a role-scoped task",
+            403,
+          );
+        const role = await this.service.db.get<
+          import("../../../../packages/domain/src/agent.ts").AgentRole
+        >(owner, "agent-roles", activeRoleId);
+        if (!role) throw new AppError(`AgentRole ${activeRoleId} not found for authz`, 403);
+        if (role.active === false)
+          throw new AppError(`AgentRole ${activeRoleId} is inactive`, 403);
+        {
+          // SOP_ACTOR_PRINCIPAL_V1 - el actor es el principal que encargo la
+          // tarea (o el owner autenticado), nunca la personalidad visible.
+          const requestingPrincipal = task.assignedBy ?? owner;
+          const decision = await this.service.governance.canExecuteTool(
+            agentActor({
+              // SOP_ACTOR_TENANT_V1 - el tenant sale de la tarea; runStep no lo recibe.
+              tenantId: task.tenantId,
+              actorId: requestingPrincipal,
+              roleId: role.id,
+              name: role.name,
+            }),
+            owner,
+            role,
+            "computer_command",
+          );
+          if (!decision.allowed)
             throw new AppError(
-              "computer_command requires governance for a role-scoped task",
+              decision.reason ?? `Tool computer_command not allowed for role ${role.id}`,
               403,
             );
-          const role = await this.service.db.get<
-            import("../../../../packages/domain/src/agent.ts").AgentRole
-          >(owner, "agent-roles", activeRoleId);
-          if (!role) throw new AppError(`AgentRole ${activeRoleId} not found for authz`, 403);
-          {
-            const decision = await this.service.governance.canExecuteTool(
-              agentActor({
-                // SOP_ACTOR_TENANT_V1 - el tenant sale de la tarea; runStep no lo recibe.
-                tenantId: task.tenantId,
-                actorId: owner,
-                roleId: role.id,
-                name: role.name,
-              }),
-              owner,
-              role,
-              "computer_command",
-            );
-            if (!decision.allowed)
-              throw new AppError(
-                decision.reason ?? `Tool computer_command not allowed for role ${role.id}`,
-                403,
-              );
-          }
         }
+        // SOP_EFFECT_BOUNDARY_REAUTH_V1 - revalidacion inmediatamente antes del
+        // efecto: el rol o la peticion pudieron revocarse durante la decision.
+        if (ctx.signal?.aborted) throw new Error("computer_command aborted before dispatch");
         await this.service.computer.start(owner);
         const command = String(params.command ?? prompt);
         const operationId = String(
@@ -679,10 +711,22 @@ export class SOPExecutor {
       }
 
       case "transition_entity": {
+        // SOP_TRANSITION_AUTHZ_V1 - una transicion de estado es privilegiada:
+        // si declara rol, ese rol debe existir y estar vigente. No se inventa
+        // autoridad a partir del owner ni de la personalidad.
+        if (ctx.signal?.aborted) throw new Error("transition_entity aborted before dispatch");
         const entityId = String(params.entityId ?? "");
         const machineId = String(step.stateMachine ?? params.machineId ?? "");
         const to = String(params.to ?? "");
         const roleId = typeof params.roleId === "string" ? params.roleId : undefined;
+        if (roleId) {
+          const role = await this.service.db.get<
+            import("../../../../packages/domain/src/agent.ts").AgentRole
+          >(owner, "agent-roles", roleId);
+          if (!role) throw new AppError(`AgentRole ${roleId} not found for transition authz`, 403);
+          if (role.active === false)
+            throw new AppError(`AgentRole ${roleId} is inactive`, 403);
+        }
         if (!entityId || !machineId || !to)
           throw new AppError(
             "transition_entity requires params.entityId, step.stateMachine (o params.machineId) y params.to",
