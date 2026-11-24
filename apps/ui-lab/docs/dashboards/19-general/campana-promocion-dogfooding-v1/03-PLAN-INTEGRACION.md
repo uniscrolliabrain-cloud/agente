@@ -21,9 +21,10 @@
 
 ## Fase C — Superficies operativas
 
-- [ ] Centro de Mando editorial.
-- [ ] Chat principal con el refinamiento UX V2.
-- [ ] Chat transversal V3.
+- [x] Centro de Mando editorial con `getCompanyOverview` y permisos reales.
+- [x] Chat principal UX V2 sobre `useChat`, adjuntos y stream reales.
+- [ ] Chat transversal V3 (sigue en UI Lab).
+- [ ] Deploy de las dos superficies nuevas: mañana, con Vercel.
 
 ## Fase D — Navegación empresarial
 

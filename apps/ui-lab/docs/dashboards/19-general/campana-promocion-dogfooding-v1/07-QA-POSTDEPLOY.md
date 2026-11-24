@@ -38,3 +38,14 @@ Verificado en el dominio real el 2026-11-24 tras el run `45483309302`.
 
 - `capturas/live-login.png` (1024×768, dominio real, banner visible).
 - `capturas/live-legal.png` (deep link `#privacidad`).
+
+## Fase C verificada en preview (aún no desplegada)
+
+- Centro de Mando editorial: carga `getCompanyOverview` del tenant demo, muestra briefing,
+  KPIs, filtros y modales; sin errores de consola.
+- Chat principal UX V2: conversación demo real, envío, tarjeta de herramienta y respuesta
+  del stream; adjunto y dictado conservan el compositor original.
+- Ambas a 1024×768. El intento de viewport móvil con Playwright agotó el tiempo del
+  entorno y **no se verificó**; queda pendiente para el QA de mañana.
+- Capturas: `centro-editorial-preview.png`, `chat-ux-preview.png`,
+  `chat-ux-stream-preview.png`.

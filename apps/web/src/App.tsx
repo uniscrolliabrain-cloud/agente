@@ -12,6 +12,7 @@ import SidebarV2, { type AppView } from "./components/SidebarV2";
 import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
 import CommandCenterView from "./components/CommandCenterView";
+import CommandCenterEditorialView from "./components/CommandCenterEditorialView";
 import Login from "./components/Login";
 import LoginV3 from "./components/login-v3/LoginV3";
 
@@ -19,6 +20,8 @@ import LoginV3 from "./components/login-v3/LoginV3";
 // revertir sin tocar código con VITE_LOGIN_V3=false. La autenticación es la
 // misma en ambos casos: ningún contrato OAuth o de sesión cambia.
 const USE_LOGIN_V3 = import.meta.env.VITE_LOGIN_V3 !== "false";
+// COMMAND_CENTER_V2_SWITCH - composición editorial reversible.
+const USE_COMMAND_CENTER_V2 = import.meta.env.VITE_COMMAND_CENTER_V2 !== "false";
 import TasksView from "./components/TasksView";
 import DocumentsView from "./components/DocumentsView";
 import MemoryView from "./components/MemoryView";
@@ -281,7 +284,17 @@ export default function App() {
         />
 
         <div className="v2-content">
-          {view === "today" && (
+          {view === "today" && USE_COMMAND_CENTER_V2 && (
+            <CommandCenterEditorialView
+              onOpenTask={(id) => setOpenTaskId(id)}
+              onReviewTask={(id) => setReviewTaskId(id)}
+              onOpenTasksView={() => setView("tasks")}
+              onOpenAgentsView={() => setView("team")}
+              onOpenChat={() => setView("chat")}
+              {...(auth.user?.role === "admin" ? { onOpenTeamView: () => setView("users") } : {})}
+            />
+          )}
+          {view === "today" && !USE_COMMAND_CENTER_V2 && (
             <CommandCenterView
               onOpenTask={(id) => setOpenTaskId(id)}
               onReviewTask={(id) => setReviewTaskId(id)}

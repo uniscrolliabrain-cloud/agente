@@ -7,8 +7,20 @@ import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import SuggestionChips from "./SuggestionChips";
 import RoleSelector from "./RoleSelector";
-import type { ChatMessage } from "../types/api";
+import type { ChatAttachment, ChatMessage } from "../types/api";
 import type { ToolCall } from "../lib/toolsReducer";
+import { uploadFile } from "../api/files";
+import ChatPanelUX from "./chat-ux-v2/ChatPanelUX";
+import { ChatUXFrame } from "./chat-ux-v2/ChatUXFrame";
+
+// CHAT_UX_V2_SWITCH - la composición nueva queda activa salvo que se pida lo
+// contrario en build. No cambia ningún contrato: usa el mismo `chat` real.
+const USE_CHAT_UX_V2 = import.meta.env.VITE_CHAT_UX_V2 !== "false";
+
+async function uploadForChat(file: File): Promise<ChatAttachment> {
+  const uploaded = await uploadFile(file);
+  return { id: uploaded.id, name: uploaded.name, size: uploaded.size };
+}
 
 interface ChatState {
   roleId?: string;
@@ -76,6 +88,7 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
   // La clave incluye thread e id para que el streaming o un re-render no
   // vuelvan a pedir la misma vista.
   useEffect(() => {
+    if (USE_CHAT_UX_V2) return;
     if (!onResolveView) return;
     const lastUser = [...chat.messages].reverse().find((m) => m.role === "user");
     if (!lastUser?.content) return;
@@ -84,6 +97,14 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
     lastResolvedRef.current = key;
     onResolveView(lastUser.content, lastUser.id);
   }, [chat.messages, chat.threadId, onResolveView]);
+
+  if (USE_CHAT_UX_V2) {
+    return (
+      <ChatUXFrame>
+        <ChatPanelUX chat={chat} upload={uploadForChat} {...(onResolveView ? { onResolveView } : {})} {...(userName ? { userName } : {})} />
+      </ChatUXFrame>
+    );
+  }
 
   if (isEmpty) {
     return (
