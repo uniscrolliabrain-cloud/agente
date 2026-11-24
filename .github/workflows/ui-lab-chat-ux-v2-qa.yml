@@ -1,0 +1,83 @@
+name: UI Lab - Chat UX V2 QA (no deploy)
+
+# Campaña 09-chat · solo UI Lab. Ejecuta typecheck, build, QA de navegador real
+# y publica el artifact para Chromebook. No despliega ni publica en Vercel.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/ui-lab-chat-ux-v2
+    paths:
+      - "apps/ui-lab/src/chat-ux-v2/**"
+      - "apps/ui-lab/qa/**"
+      - "apps/ui-lab/docs/dashboards/09-chat/**"
+      - "apps/ui-lab/src/registry.tsx"
+      - "apps/ui-lab/package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/ui-lab-chat-ux-v2-qa.yml"
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ui-lab-chat-ux-v2-qa-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck UI Lab
+        run: pnpm --filter @agente/ui-lab typecheck
+      - name: Build UI Lab
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+        run: pnpm --filter @agente/ui-lab build
+      - name: Install pinned Chromium
+        run: pnpm --filter @agente/ui-lab exec playwright install --with-deps chromium
+      - name: Serve built UI Lab
+        run: |
+          set -euo pipefail
+          nohup pnpm --filter @agente/ui-lab preview --port 4173 > /tmp/ui-lab-preview.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -fsS http://127.0.0.1:4173/ -o /dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/ui-lab-preview.log
+          exit 1
+      - name: Run Chat UX V2 browser QA
+        env:
+          QA_BASE_URL: http://127.0.0.1:4173
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+        run: pnpm --filter @agente/ui-lab exec node qa/chat-ux-v2.qa.mjs
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chat-ux-v2-qa-${{ github.sha }}
+          path: apps/ui-lab/qa/out/chat-ux-v2/
+          retention-days: 7
+      - name: Build Chromebook artifact
+        if: success()
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+        run: bash apps/ui-lab/qa/build-chat-ux-v2-artifact.sh
+      - name: Upload Chromebook artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chat-ux-v2-chromebook-${{ github.sha }}
+          path: apps/ui-lab/artifacts/chat-ux-v2-chromebook.zip
+          retention-days: 7
+      - name: Confirm no deployment step exists
+        if: always()
+        run: |
+          echo "Chat UX V2 workflow has no deploy job by design (deploy=false)."
