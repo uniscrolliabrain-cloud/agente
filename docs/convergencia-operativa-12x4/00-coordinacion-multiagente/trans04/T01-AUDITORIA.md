@@ -23,3 +23,11 @@ El paquete histórico `docs/agntia-demo/` está disponible en `d0c05b9e` y fue m
 ## Reserva solicitada
 
 [T01-PATHS.txt](T01-PATHS.txt) enumera paths exactos para revisión. Solicitar también reserva de `tests/trans04-observability-contract.test.ts` y `tests/trans04-fixture-contract.test.ts`; suites existentes se ejecutan como lectura. Deploy, DB de producción, Vercel y generación editorial quedan fuera del patchset de CI. `infra/compose.yaml` y cualquier manifiesto de collector requieren reserva específica. Sin cambios de runtime, CI, dependencias, secrets ni infraestructura en P1.
+
+## Dependencias y señales de operación
+
+- API y worker pueden arrancar como procesos distintos (`index.ts`, `worker-entry.ts`); Cognition worker tiene su propio entrypoint. Cada proceso requiere identidad de servicio y lifecycle explícitos. Un gauge de API no acredita la salud del worker remoto.
+- `readInstallation` y las consultas de instalaciones de `provision-vertical-slice.ts` tienen catches a null/[]: diferenciar ausencia y fallo de Store antes de un apply real. El plan de owner necesita identidad, memberships, capacidades y consentimiento aprobados, DB aislada para pruebas y un check que contraste journal y estado persistido.
+- `vendor/agntia-ciberseguridad-0.1.0-alpha.2.tgz` es el artefacto local existente. `agntia-ciberseguridad` y `agntia-gestoria` son upstreams localizados por README. Reconciliar versiones, licencias y SBOM antes de cambiar dependencias. Limitar esta línea a autorización, auditoría pasiva y aislamiento. Para gestoría, mantener propuestas fiscales separadas de datos conciliados y efectos sujetos a aprobación.
+- Para fase 09, distinguir con series de baja cardinalidad OAuth autorizado/revocado, aceptación/entrega WhatsApp, operación Google y resultado durable, observación pasiva y resultado conciliado. Ante lag, comprobar salud y watermark antes de revisar cola y DLQ. Ante fallo de collector, validar que el exporter pierda sólo telemetría y que el servicio mantenga latencia y disponibilidad. Ante subida de coste, contrastar llamadas, tokens y reintentos por proceso.
+- Para recompilación, usar el parser y bootstrap existentes. El inventario de SOP debe fijar versión, rol, capacidad, fuente y receipt antes de migrar referencias; preservar hechos, histórico y personalizaciones al revertir.
