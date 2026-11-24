@@ -111,6 +111,9 @@ page.on("response", (response) => {
   if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.url()}`);
 });
 page.on("crash", () => console.error("La página se ha caído (crash del renderer)."));
+page.on("requestfailed", (request) => {
+  failedResponses.push(`FALLO ${request.failure()?.errorText ?? "?"} ${request.url()}`);
+});
 
 async function shot(name) {
   if (!SHOT_DIR) return;
