@@ -31,3 +31,13 @@ El paquete histórico `docs/agntia-demo/` está disponible en `d0c05b9e` y fue m
 - `vendor/agntia-ciberseguridad-0.1.0-alpha.2.tgz` es el artefacto local existente. `agntia-ciberseguridad` y `agntia-gestoria` son upstreams localizados por README. Reconciliar versiones, licencias y SBOM antes de cambiar dependencias. Limitar esta línea a autorización, auditoría pasiva y aislamiento. Para gestoría, mantener propuestas fiscales separadas de datos conciliados y efectos sujetos a aprobación.
 - Para fase 09, distinguir con series de baja cardinalidad OAuth autorizado/revocado, aceptación/entrega WhatsApp, operación Google y resultado durable, observación pasiva y resultado conciliado. Ante lag, comprobar salud y watermark antes de revisar cola y DLQ. Ante fallo de collector, validar que el exporter pierda sólo telemetría y que el servicio mantenga latencia y disponibilidad. Ante subida de coste, contrastar llamadas, tokens y reintentos por proceso.
 - Para recompilación, usar el parser y bootstrap existentes. El inventario de SOP debe fijar versión, rol, capacidad, fuente y receipt antes de migrar referencias; preservar hechos, histórico y personalizaciones al revertir.
+
+## Reconciliaciones de referencia
+
+| Rama auditada en lectura | Resultado para Trans04 |
+|---|---|
+| `docs/observability-dogfooding-audit-20261117@8ce08698` | Propuesta previa separa ledger con ACL y telemetría con sampling. El ADR B1 conserva esa división y limita OTLP a trazas para evitar duplicar métricas. IDs W3C y de negocio mantienen funciones distintas. No se adopta el bridge como API sin revisión de propietarios. |
+| `docs/doppler-auth@6ef939ae` | Un patch equivalente sobre base Trans04, sin motivo para cherry-pick en este turno. Las credenciales de deploy no se consultaron durante la auditoría. |
+| `audit/c06-p03a-slow-observation-20261123@6d4e7eb3` | El informe de CI registra 11 verdes focalizados y HTTP 0/1 en otra revisión. `chat-agent.ts`, `runtime.ts` y `slow-observation.ts` son superficie trans02; solicitar baseline por SHA antes de integrar P03b. Identidad y ownership del receipt son prerrequisitos de traza y lag. |
+| `audit/cognition-v2-independent-20261123@32f20ce7` | Conservar como evidencia de alcance parcial. La existencia de worker y rutas no acredita el circuito, y PostgreSQL restringido sigue siendo gate propio. |
+| `release/landing-legal-20261122`, `release/public-site-legal-20261121` | Mantener procedencia y excluir merge. Reconciliación posterior sólo de contratos backend aprobados con comparación por path. |
