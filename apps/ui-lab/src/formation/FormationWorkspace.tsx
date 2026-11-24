@@ -17,7 +17,7 @@ const formationImages = [
 function CourseArtwork({course,hero=false}:{course:FormationCourse;hero?:boolean}){
   // Twelve approved editorial photographs are shared across 120 synthetic course records.
   // Keep stable assignments independent of filtering and sort order.
-  const numericId = Number.parseInt(course.id.replace(/\\D/g,""),10) || 1;
+  const numericId = Number.parseInt(course.id.replace(/\D/g,""),10) || 1;
   const trackOffset = course.track==="ia-profesional"?0:course.track==="trabaja-con-laia"?4:8;
   const imageId = formationImages[(numericId-1+trackOffset)%formationImages.length];
   return <div className={`fm-art fm-art-photo ${hero?"fm-art-hero":""}`}>
