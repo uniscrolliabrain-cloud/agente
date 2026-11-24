@@ -144,17 +144,35 @@ El manifiesto anterior listaba `apps/ui-lab/src/vite.config.ts`; el archivo real
 
 ## 7. Verificación del artifact
 
-Run 234 (`workflow_dispatch`, deploy=false) · artifact `login-v3-chromebook` · 8.188.033 bytes ·
-sha256 `4bdc74fafabbe6d6a884331cae5d2b098fdd817eef17287f43f123ece1e6ab30`, idéntico al digest de GitHub.
-Dentro del ZIP: `site/index.html`, `site/version.json` con el SHA del código, `site/assets/LoginV3-*.js` y
-`*.css`, `INSTRUCCIONES.txt` e `iniciar.sh`. Servido con `python3 -m http.server` en `127.0.0.1:8080`
-(HTTP 200) y renderizado en navegador real: título «Login V3 · Acceso», H1 de 60 px, card y tres chips
-presentes. El job `deploy` quedó `skipped`, como corresponde.
+Ejecución de referencia (la que produce el paquete entregado): run **335** · `workflow_dispatch` con
+`deploy: false` y `browser_qa: true` · build **`ebb01b226ee9717531107d544c85680ece4eeda0`**
+→ https://github.com/uniscrolliabrain-cloud/agente/actions/runs/45447368111
 
-Ese artifact corresponde al commit `c6cf874…` y por tanto **no** incluye estas correcciones: hace falta
-una nueva ejecución de `workflow_dispatch` (con `deploy: false`) para publicar el paquete actualizado.
-El contenido nuevo del paquete se validó localmente con los mismos comandos del workflow (guard, woff2
-en `assets/`, `QA.md`, bitácora, 10 capturas y `qa/`).
+| Dato | Valor |
+|---|---|
+| Conclusión del job | `success` (packaging, QA de navegador, uploads y, en su caso, deploy `skipped`) |
+| Checks de navegador | **43/43** (`VERSION.txt`: `browserQa: 43/43 checks in 45447368111`) |
+| Playwright / Chromium | 1.65.1 / 159.0.8154.6 |
+| Artifact | `login-v3-chromebook`, id 14947575006, **10.785.888 bytes** |
+| sha256 | `62c574cc703583b411fa503a78852191d28b2589978839c7b329a9a7ce138079` |
+| sha256 calculado al descargarlo | idéntico al digest que declara GitHub |
+| Evidencias | `login-v3-qa-evidence`, id 14944354845, 789.989 bytes (`qa.log`, `qa-report.json`, `entorno.log`, `npm.log`, `preview.log`, 7 capturas) |
+
+Dentro del ZIP: `site/index.html`, `site/version.json` con `"version":"ebb01b2…"`, los assets del build,
+`QA.md`, `BITACORA-EJECUCION.md`, `INSTRUCCIONES.txt`, `iniciar.sh`, `capturas/` (10 imágenes),
+`capturas-ci/` (7, tomadas por el runner) y `qa/` (`qa-login-v3.mjs` + `qa-report.json` con `43/43` y
+`failed: 0`). El job `deploy` quedó `skipped`, como corresponde a `deploy: false`.
+
+Regla de correspondencia: el `VERSION.txt` de cada paquete declara el SHA de su build y `site/version.json`
+lo repite; ambos deben coincidir con el commit empaquetado. Esta tabla se añadió a la documentación
+*después* de ese build, así que el paquete que la contiene procede de un commit posterior en el que solo
+cambian archivos `.md`: el código y los estilos de la vista son los mismos, como comprueba el manifiesto
+SHA256 de `componentes-finales/`. Si el `VERSION.txt` que ves no coincide con el build de la tabla, es
+porque el paquete es más reciente que la ejecución de referencia; el SHA que manda es el del paquete y el
+QA ejecutado sigue siendo válido mientras no cambie código.
+
+Evidencia histórica (no representa el código actual): el run 234 empaquetó `c6cf874…`, con 8.188.033
+bytes y sha256 `4bdc74fa…`, sobre el CSS dinámico antiguo y con el orden móvil previo a la corrección.
 
 ## 8. Desviaciones y límites reales
 

@@ -105,11 +105,25 @@ Verificación: `typecheck` y `build` en verde; medidas y capturas tomadas en nav
 (`login-v3-390.png`, `login-v3-1366.png`, `login-v3-invitacion-390.png`,
 `login-v3-invitacion-viewport-1366.png`). El escritorio queda como estaba.
 
+### Cierre en CI (2026-11-24)
+
+El run 335 sobre `ebb01b2` terminó en `success`: empaquetado, QA de navegador **43/43** y uploads. Los dos
+fallos que destapó el runner no eran visuales sino de la propia QA: la comprobación de la card usaba la x
+absoluta (el runner tiene scrollbar clásica de 15 px, el navegador de escritorio superpuesta) y el helper
+de foco devolvía cadena vacía para elementos sin `id`, así que el CTA de invitación nunca podía darse por
+enfocado. La primera se resolvió comparando con el borde derecho del contenido; la segunda, componiendo
+`id` y clase. Además el foco vuelve al CTA en el siguiente frame, que es lo que el navegador respeta al
+cerrar un `<dialog>`.
+
+El artifact `login-v3-chromebook` del run 335 (10.785.888 bytes, sha256 `62c574cc…`) se descargó y su
+sha256 coincide con el digest de GitHub; `site/version.json` declara `ebb01b2…` y `qa/qa-report.json`
+informa 43/43 con Playwright 1.65.1.
+
 ## Pendientes
 
 - Aprobación visual del founder (no se declara 10/10).
-- Nueva ejecución de `workflow_dispatch` (`deploy: false`) para regenerar el artifact con estas correcciones,
-  y activación de `browser_qa` si se quiere ejecutar el QA de navegador en CI.
+- Repetir `workflow_dispatch` (`deploy: false`, `browser_qa: true`) si se toca el código: el paquete debe
+  volver a declarar el SHA del commit empaquetado en `VERSION.txt` y `site/version.json`.
 - Separación en componentes (`LoginHeader`, `LoginEditorialHero`, `OAuthButtons`, `PasswordAccess`,
   `InvitationDialog`…): recomendación de mantenibilidad, no bloqueante, sin cambios visuales.
 - Integración con backend real de OAuth, autenticación, conversación anónima e invitaciones: fuera de
