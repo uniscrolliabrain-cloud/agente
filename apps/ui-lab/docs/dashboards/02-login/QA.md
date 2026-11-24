@@ -3,10 +3,15 @@
 Fecha: 2026-11-24 · Rama `feat/ui-lab-login-v3` · Prototipo aislado, sin backend conectado.
 Rutas: `/?embed=1&view=login-v3` (solo diseño) y `/?view=login-v3` (selector del laboratorio).
 
+Esta pasada corrige exclusivamente las desviaciones señaladas en la auditoría del founder. No hay
+rediseño, ni cambios de copy, ni de composición, ni de orden de bloques.
+
 ## 1. Alcance construido
 
 - `apps/ui-lab/src/login-v3/LoginV3.tsx` y `login-v3.css` (namespace `.login-v3`, tokens `--ag-*`).
+- Fuentes locales en `apps/ui-lab/src/login-v3/fonts/` (Fraunces y Manrope, licencia OFL).
 - Registro `login-v3` en `apps/ui-lab/src/registry.tsx` con `status: "fixture"`.
+- QA de navegador versionado en `apps/ui-lab/scripts/qa-login-v3.mjs`.
 - Paso `login-v3-chromebook` en `.github/workflows/ui-lab.yml` (job build, sin tocar deploy).
 - Sin cambios en `apps/web/src/components/Login.tsx`, landing, Studio, kernel, rutas ni backend.
 - Sin llamadas de red productivas: OAuth, contraseña, chat e invitación declaran entorno de prueba.
@@ -14,13 +19,13 @@ Rutas: `/?embed=1&view=login-v3` (solo diseño) y `/?view=login-v3` (selector de
 ## 2. Comandos ejecutados y resultado real
 
 ```
-pnpm install --frozen-lockfile                                   → OK (15,4 s)
-pnpm --filter @agente/ui-lab typecheck                          → OK (exit 0, tsc --noEmit)
-UI_LAB_BUILD_SHA=<sha> pnpm --filter @agente/ui-lab build       → OK (5,6 s; LoginV3 js 13,74 kB, css 13,89 kB)
+pnpm --filter @agente/ui-lab typecheck                 → OK (exit 0)
+pnpm --filter @agente/ui-lab build                     → OK (LoginV3 js 14,80 kB, css 14,94 kB)
+node apps/ui-lab/scripts/qa-login-v3.mjs               → 41 comprobaciones (ver §4)
 ```
 
-Build local verificado: `apps/ui-lab/dist/version.json` = `c6cf87408e4dcd088a4ccbb7661372701a07e91c`.
-Build del artifact (GitHub Actions run 234): `version.json` = `c6cf87408e4dcd088a4ccbb7661372701a07e91c`, comprobado dentro del ZIP descargado.
+El bundle incluye `assets/fraunces-latin-*.woff2` (120.764 B) y `assets/manrope-latin-*.woff2`
+(24.532 B): la tipografía ya no viaja por Google Fonts.
 
 ## 3. Medidas medidas en navegador (1366×1002, DPR 1)
 
@@ -33,29 +38,50 @@ Build del artifact (GitHub Actions run 234): `version.json` = `c6cf87408e4dcd088
 | Hero | y=124 + offset 18, H1 60 px, 2 líneas (alto 124) | offset 18, H1 60, 2 líneas |
 | H1 desktop | 60 px, line-height 1,035, tracking −0,052em | igual |
 | H1 1024 / 768 / 390 | 52 / 46 / 38 px | 52 / ≤1023 / ≤430 38 |
-| Overflow horizontal | 0 en 320, 360, 390, 768, 1024, 1280, 1366, 1440, 1920 | ninguno |
-| Fuentes | Fraunces 400 y Manrope 400–800 con `status: loaded` | sin fallback silencioso |
+| Chips | 11 px, padding 6 × 10, radio 100 | 11 px, padding 6 × 10 (CONTRATO-VISUAL) |
+| CTA violeta | `rgb(101, 80, 221)` sobre `#fff` (estilos computados) | `--ag-violet`, texto blanco |
+| Overflow horizontal | 0 en 320, 360, 390, 430, 768, 1024, 1280, 1366, 1440, 1920 | ninguno |
+| Fuentes | Fraunces y Manrope `status: loaded` con Google Fonts bloqueado | sin fallback silencioso |
 
-## 4. Estados verificados (navegador real, consola sin errores)
+## 4. Estados verificados
+
+Ejecutado sobre el bundle construido. La sesión de este entorno no puede lanzar un Chromium local
+(faltan `libnspr4`/`libnss3` y no hay `sudo`), así que las comprobaciones se ejecutaron en el
+navegador Cloud contra el `dist/` servido en el puerto 3000, con las mismas aserciones que el script
+versionado. El script queda listo para reproducirlas donde Playwright con Chromium esté disponible.
 
 | Caso | Resultado |
 |---|---|
-| Chip «Quiero más clientes» | abre chat, precarga input, foco en el campo, no envía, `aria-expanded=true` |
-| Enviar mensaje | no añade mensajes; aviso «El chat público no está conectado en esta maqueta…» |
-| «Cerrar chat» | colapsa, conserva borrador, `aria-expanded=false` |
-| Google / GitHub | no navega (misma URL); aviso de entorno de prueba |
-| Contraseña: email inválido | «Escribe un email válido.», `role="alert"`, foco en email |
-| Contraseña: mostrar/ocultar | `type` password → text, `aria-pressed` correcto |
-| Contraseña válida sin backend | aviso de autenticación no conectada, sin éxito ficticio ni persistencia |
-| Invitación: vacío | «Indica tu nombre.», foco en primer campo |
-| Invitación: válido | aviso de servicio no conectado; ningún dato guardado |
+| H1 60 px, dos líneas, Fraunces local | OK |
+| Rejilla 616/500, card 500 en x=756 | OK |
+| Chips 11 px y padding 6 × 10 | OK |
+| CTA violeta no anulado por la cascada | OK (`rgb(101, 80, 221)`, texto blanco) |
+| Marca una sola vez | OK |
+| Sin overflow horizontal en 320–1920 | OK |
+| Email mal formado → foco en el email | OK (corregido) |
+| Email válido y contraseña vacía → foco en la contraseña | OK |
+| Aviso de entorno sin simular acceso | OK |
+| Mostrar/ocultar contraseña (`type`, `aria-pressed`) | OK |
+| Contraseña: cierre animado de altura y limpieza al reabrir | OK |
+| Chip: abre chat, precarga, no envía, `aria-expanded=true` | OK |
+| Enviar mensaje: aviso de servicio no conectado, sin mensajes ficticios | OK |
+| Chat: cierre animado, desmontaje y borrador conservado | OK |
+| Invitación: vacío → foco en nombre | OK |
+| Invitación: email inválido → foco en email | OK (corregido) |
+| Invitación: sin empresa → foco en empresa | OK (corregido) |
+| Modal: entrada `lv3-dialog-in`, salida `lv3-dialog-out` y cierre | OK |
 | Escape en modal | cierra y devuelve foco a «Conseguir una invitación» |
-| Reduced motion | `animation-name: none` en grupos de entrada; sin desplazamientos |
+| Persistencia | ninguna clave nueva ni contraseña/email en `localStorage` |
+| Reduced motion | `animation-name: none` y aperturas instantáneas |
 | Skip link | «Ir al acceso» visible al foco y enlaza al bloque de acceso |
+
+Motion medido dentro de la página (altura real del contenedor, no solo estado final): el acceso con
+contraseña y el chat pasan de su altura completa a 0 px en ~260 ms con varios valores intermedios; el
+modal anima entrada de 260 ms y salida de 180 ms antes de cerrarse.
 
 ## 5. Capturas
 
-En `capturas/`:
+En `capturas/` (regeneradas en esta pasada):
 
 - `login-v3-1366.png` — estado inicial, 1366×1002.
 - `login-v3-chat-chip-1366.png` — chat abierto con chip precargado.
@@ -63,18 +89,30 @@ En `capturas/`:
 - `login-v3-invitacion-viewport-1366.png` — modal de invitación sin recorte de captura.
 - `login-v3-invitacion-390.png` — modal en móvil.
 - `login-v3-390.png`, `login-v3-768.png`, `login-v3-1920.png` — responsive.
-- `login-v3-artifact-1366.png` — render del artifact `login-v3-chromebook` servido con Python 3, sin Node.
+- `login-v3-artifact-1366.png` — render del artifact `login-v3-chromebook` (run 234).
 - `landing-baseline-1366.png` — baseline de landing para identidad.
 
-## 6. Desviaciones y bloqueos reales
+## 6. Correcciones de la auditoría
 
-- Iconos de beneficios sin círculo: el PNG los muestra con círculo lila, el contrato visual exige iconos de 18 px `#918575` «sin círculos añadidos». Prevalece el contrato.
-- Alturas de card e invitación son naturales (546 / 233 px) y no las del PNG, como autoriza el contrato.
-- El baseline de landing en el laboratorio muestra imágenes 404 (`/landing/*.png`): `publicDir` apunta a `apps/web/public`, que no existe en este árbol. Es una limitación previa del laboratorio; la comparación de identidad se hizo por tipografía, color y marca, no por fotografía.
-- El login productivo original (`apps/web/src/components/Login.tsx`) no tiene ruta en el laboratorio; se conserva intacto y su snapshot documental sigue en `componentes-reales/`.
-- Sin backend anónimo, sin invitaciones y sin OAuth en el laboratorio: los estados lo declaran explícitamente; no se simula éxito.
-- Fraunces y Manrope se cargan desde Google Fonts: sin Internet la vista cae a Georgia/system-ui. Declarado en INSTRUCCIONES.txt del artifact.
-- No se ha ejecutado auditoría automatizada de accesibilidad (axe/Lighthouse) ni lector de pantalla; foco, teclado, roles y contraste por token se revisaron de forma manual.
+| Hallazgo | Estado | Evidencia |
+|---|---|---|
+| Foco al campo incorrecto con email mal formado | Corregido | validación con campo culpable; foco verificado en email |
+| Chips a 12 px y 7 × 12 | Corregido a 11 px y 6 × 10 | estilos computados |
+| Modal enfoca siempre el primer campo | Corregido | foco en email o empresa según el error |
+| Contraseña se expande de golpe | Corregido | 0fr → 1fr en 260 ms, altura medida |
+| Modal sin coreografía de entrada y salida | Corregido | `lv3-dialog-in` / `lv3-dialog-out` + fundido de backdrop |
+| Chat sin cierre ni continuidad de layout | Corregido | misma mecánica de altura, desmontaje al terminar |
+| Fuentes dependientes de Google Fonts | Corregido | woff2 locales con OFL; carga comprobada con Google bloqueado |
+| Contraseña y «mostrar» persisten al colapsar | Corregido | campos vaciados y `type` restaurado |
+| CTA violeta anulado por el CSS general | No era un fallo | `.login-v3 .lv3-cta-violet` gana la cascada; medido `rgb(101, 80, 221)` |
+| Fallo de empaquetado: sin QA ni capturas en el ZIP | Corregido | el paso copia `QA.md`, `BITACORA-EJECUCION.md`, `capturas/` y `qa/` |
+| Empaquetado sin comprobar que la vista exista | Corregido | `grep 'id:"login-v3"'` antes de empaquetar |
+| Sin pruebas de navegador versionadas | Corregido | `scripts/qa-login-v3.mjs` (41 comprobaciones) |
+| Sin pruebas de navegador en el workflow | Añadido, opt-in | input `browser_qa` (por defecto `false`); no verificado en CI desde aquí |
+| Arquitectura monolítica | No aplicado | recomendación de mantenibilidad, no bloqueante; queda como siguiente campaña |
+
+El manifiesto anterior listaba `apps/ui-lab/src/vite.config.ts`; el archivo real es
+`apps/ui-lab/vite.config.ts`. Corregido en `componentes-finales/MANIFEST-SHA256.txt`.
 
 ## 7. Verificación del artifact
 
@@ -85,9 +123,30 @@ Dentro del ZIP: `site/index.html`, `site/version.json` con el SHA del código, `
 (HTTP 200) y renderizado en navegador real: título «Login V3 · Acceso», H1 de 60 px, card y tres chips
 presentes. El job `deploy` quedó `skipped`, como corresponde.
 
-## 8. Rúbrica (aspiración, no certificación)
+Ese artifact corresponde al commit `c6cf874…` y por tanto **no** incluye estas correcciones: hace falta
+una nueva ejecución de `workflow_dispatch` (con `deploy: false`) para publicar el paquete actualizado.
+El contenido nuevo del paquete se validó localmente con los mismos comandos del workflow (guard, woff2
+en `assets/`, `QA.md`, bitácora, 10 capturas y `qa/`).
 
-Composición 23/25 · Identidad 24/25 · Tipografía/espaciado 13/15 · Responsive 9/10 ·
-Interacción 9/10 · Motion 4/5 · Accesibilidad 4/5 · Distribución 5/5 → **91/100**.
+## 8. Desviaciones y límites reales
 
-No se declara 10/10 ni aceptación: la decisión visual final es del founder.
+- Iconos de beneficios sin círculo: el PNG los muestra con círculo lila, el contrato visual exige iconos
+  de 18 px `#918575` «sin círculos añadidos». Prevalece el contrato.
+- Alturas de card e invitación son naturales (546 / 233 px) y no las del PNG, como autoriza el contrato.
+- El baseline de landing en el laboratorio muestra imágenes 404 (`/landing/*.png`): `publicDir` apunta a
+  `apps/web/public`, que no existe en este árbol. Limitación previa del laboratorio.
+- El login productivo (`apps/web/src/components/Login.tsx`) no tiene ruta en el laboratorio; se conserva
+  intacto y su snapshot documental sigue en `componentes-reales/`.
+- Sin backend anónimo, sin invitaciones y sin OAuth: los estados lo declaran; no se simula éxito.
+- Sin auditoría automatizada de accesibilidad (axe/Lighthouse) ni lector de pantalla; foco, teclado,
+  roles y contraste por token se revisaron de forma manual.
+- Pruebas de navegador en CI añadidas como paso opt-in y no ejecutadas desde este entorno (`gh` sin
+  sesión). El script sí se ejecutó aquí en el navegador Cloud con las mismas aserciones.
+
+## 9. Rúbrica interna de esta pasada
+
+Composición 23/25 · Identidad 24/25 · Tipografía/espaciado 14/15 · Responsive 9/10 ·
+Interacción 9/10 · Motion 5/5 · Accesibilidad 4/5 · Distribución 5/5 → **93/100**.
+
+Es la medición interna del constructor, no una certificación: la nota estética y la aceptación visual
+siguen siendo del founder. No se declara 10/10.

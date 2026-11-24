@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowRight,
   ArrowUp,
@@ -59,6 +59,40 @@ function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+// Presencia animada: monta antes de expandir y desmonta al terminar el cierre,
+// de modo que la altura se anima con continuidad de layout (grid 0fr → 1fr).
+function useCollapse(open: boolean, duration = 260) {
+  const [mounted, setMounted] = useState(open);
+  const [expanded, setExpanded] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      if (prefersReducedMotion()) {
+        setExpanded(true);
+        return;
+      }
+      let inner = 0;
+      const outer = window.requestAnimationFrame(() => {
+        inner = window.requestAnimationFrame(() => setExpanded(true));
+      });
+      return () => {
+        window.cancelAnimationFrame(outer);
+        window.cancelAnimationFrame(inner);
+      };
+    }
+    setExpanded(false);
+    if (prefersReducedMotion()) {
+      setMounted(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setMounted(false), duration);
+    return () => window.clearTimeout(timer);
+  }, [open, duration]);
+
+  return { mounted, expanded };
+}
+
 export default function LoginV3({ onLogin }: LoginV3Props) {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
@@ -72,6 +106,7 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordNotice, setPasswordNotice] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [inviteClosing, setInviteClosing] = useState(false);
   const [invite, setInvite] = useState({ name: "", email: "", company: "", time: "" });
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteNotice, setInviteNotice] = useState<string | null>(null);
@@ -83,6 +118,20 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
   const inviteDialogRef = useRef<HTMLDialogElement>(null);
   const inviteTriggerRef = useRef<HTMLButtonElement>(null);
   const inviteNameRef = useRef<HTMLInputElement>(null);
+  const inviteEmailRef = useRef<HTMLInputElement>(null);
+  const inviteCompanyRef = useRef<HTMLInputElement>(null);
+
+  const chatPanel = useCollapse(chatOpen);
+  const passwordPanel = useCollapse(showPassword);
+
+  // Al colapsar el acceso con contraseña no se conserva ningún dato sensible.
+  useEffect(() => {
+    if (showPassword) return;
+    setPassword("");
+    setPasswordVisible(false);
+    setPasswordError(null);
+    setPasswordNotice(null);
+  }, [showPassword]);
 
   function openChat() {
     setChatOpen(true);
@@ -118,13 +167,21 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
     event.preventDefault();
     const cleanEmail = email.trim();
     let error: string | null = null;
-    if (!cleanEmail) error = "Escribe el email de tu empresa.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) error = "Escribe un email válido.";
-    else if (!password) error = "Escribe tu contraseña.";
+    let invalidField: "email" | "password" | null = null;
+    if (!cleanEmail) {
+      error = "Escribe el email de tu empresa.";
+      invalidField = "email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      error = "Escribe un email válido.";
+      invalidField = "email";
+    } else if (!password) {
+      error = "Escribe tu contraseña.";
+      invalidField = "password";
+    }
     setPasswordError(error);
     setPasswordNotice(null);
-    if (error) {
-      (cleanEmail ? passwordRef : emailRef).current?.focus();
+    if (invalidField) {
+      (invalidField === "email" ? emailRef : passwordRef).current?.focus();
       return;
     }
     if (!onLogin) {
@@ -144,30 +201,49 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
   function openInvite() {
     setInviteNotice(null);
     setInviteError(null);
+    setInviteClosing(false);
     setInviteOpen(true);
     inviteDialogRef.current?.showModal();
   }
 
   function closeInvite() {
-    inviteDialogRef.current?.close();
+    const dialog = inviteDialogRef.current;
+    if (!dialog?.open || inviteClosing) return;
+    if (prefersReducedMotion()) {
+      dialog.close();
+      return;
+    }
+    setInviteClosing(true);
+    window.setTimeout(() => {
+      setInviteClosing(false);
+      dialog.close();
+    }, 180);
   }
 
   function submitInvite(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const missing =
-      !invite.name.trim()
-        ? "Indica tu nombre."
-        : !invite.email.trim()
-          ? "Indica el email de tu empresa."
-          : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(invite.email.trim())
-            ? "Escribe un email válido."
-            : !invite.company.trim()
-              ? "Indica el nombre de tu empresa."
-              : null;
+    const cleanEmail = invite.email.trim();
+    let missing: string | null = null;
+    let invalidField: "name" | "email" | "company" | null = null;
+    if (!invite.name.trim()) {
+      missing = "Indica tu nombre.";
+      invalidField = "name";
+    } else if (!cleanEmail) {
+      missing = "Indica el email de tu empresa.";
+      invalidField = "email";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      missing = "Escribe un email válido.";
+      invalidField = "email";
+    } else if (!invite.company.trim()) {
+      missing = "Indica el nombre de tu empresa.";
+      invalidField = "company";
+    }
     setInviteError(missing);
     setInviteNotice(null);
-    if (missing) {
-      inviteNameRef.current?.focus();
+    if (invalidField) {
+      const target =
+        invalidField === "name" ? inviteNameRef : invalidField === "email" ? inviteEmailRef : inviteCompanyRef;
+      target.current?.focus();
       return;
     }
     setInviteNotice(INVITE_NOTICE);
@@ -305,45 +381,48 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
             </div>
 
             <div
-              className="lv3-chat"
+              className={`lv3-chat-space lv3-collapse${chatPanel.expanded ? " is-open" : ""}`}
               id={chatId}
               ref={chatSectionRef}
-              hidden={!chatOpen}
               aria-label="Conversación con LAIA"
             >
-              <div className="lv3-chat-head">
+              {chatPanel.mounted && (
+                <div className="lv3-chat">
+                  <div className="lv3-chat-head">
                 <span className="lv3-chat-name">LAIA</span>
                 <span className="lv3-chat-status">Servicio no conectado</span>
               </div>
-              <div className="lv3-chat-log" role="log" aria-live="polite" aria-label="Mensajes">
-                <p className="lv3-msg lv3-msg-laia">
-                  Hola, soy LAIA. ¿Qué te gustaría quitarte de encima?
-                </p>
-              </div>
-              {chatNotice && (
-                <p className="lv3-inline-notice" role="status">
-                  {chatNotice}
-                </p>
+                  <div className="lv3-chat-log" role="log" aria-live="polite" aria-label="Mensajes">
+                    <p className="lv3-msg lv3-msg-laia">
+                      Hola, soy LAIA. ¿Qué te gustaría quitarte de encima?
+                    </p>
+                  </div>
+                  {chatNotice && (
+                    <p className="lv3-inline-notice" role="status">
+                      {chatNotice}
+                    </p>
+                  )}
+                  <form className="lv3-composer" onSubmit={submitChat}>
+                    <input
+                      ref={chatInputRef}
+                      value={chatInput}
+                      onChange={(event) => setChatInput(event.target.value)}
+                      placeholder="Cuéntale a LAIA qué necesitas…"
+                      aria-label="Mensaje para LAIA"
+                      autoComplete="off"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.nativeEvent.isComposing) {
+                          event.preventDefault();
+                          event.currentTarget.form?.requestSubmit();
+                        }
+                      }}
+                    />
+                    <button type="submit" className="lv3-send" aria-label="Enviar mensaje">
+                      <ArrowUp size={16} aria-hidden="true" />
+                    </button>
+                  </form>
+                </div>
               )}
-              <form className="lv3-composer" onSubmit={submitChat}>
-                <input
-                  ref={chatInputRef}
-                  value={chatInput}
-                  onChange={(event) => setChatInput(event.target.value)}
-                  placeholder="Cuéntale a LAIA qué necesitas…"
-                  aria-label="Mensaje para LAIA"
-                  autoComplete="off"
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !event.nativeEvent.isComposing) {
-                      event.preventDefault();
-                      event.currentTarget.form?.requestSubmit();
-                    }
-                  }}
-                />
-                <button type="submit" className="lv3-send" aria-label="Enviar mensaje">
-                  <ArrowUp size={16} aria-hidden="true" />
-                </button>
-              </form>
             </div>
 
             <div className="lv3-password">
@@ -362,7 +441,8 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
                 />
               </button>
 
-              {showPassword && (
+              <div className={`lv3-collapse${passwordPanel.expanded ? " is-open" : ""}`}>
+                {passwordPanel.mounted && (
                 <form id="login-v3-password-form" className="lv3-form" onSubmit={submitPassword} noValidate>
                   <label htmlFor="login-v3-email">Email de tu empresa</label>
                   <input
@@ -410,11 +490,12 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
                     </p>
                   )}
 
-                  <button type="submit" className="lv3-cta lv3-cta-dark" disabled={passwordBusy}>
-                    {passwordBusy ? "Entrando…" : "Entrar"}
-                  </button>
+                                      <button type="submit" className="lv3-cta lv3-cta-dark" disabled={passwordBusy}>
+                      {passwordBusy ? "Entrando…" : "Entrar"}
+                    </button>
                 </form>
-              )}
+                )}
+              </div>
             </div>
           </section>
 
@@ -451,8 +532,12 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
 
       <dialog
         ref={inviteDialogRef}
-        className="lv3-dialog"
+        className={inviteClosing ? "lv3-dialog is-closing" : "lv3-dialog"}
         aria-labelledby="login-v3-invite-dialog-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          closeInvite();
+        }}
         onClose={() => {
           setInviteOpen(false);
           inviteTriggerRef.current?.focus();
@@ -483,6 +568,7 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
             <label htmlFor="lv3-invite-email">Email de empresa</label>
             <input
               id="lv3-invite-email"
+              ref={inviteEmailRef}
               type="email"
               value={invite.email}
               onChange={(event) => setInvite({ ...invite, email: event.target.value })}
@@ -492,6 +578,7 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
             <label htmlFor="lv3-invite-company">Empresa</label>
             <input
               id="lv3-invite-company"
+              ref={inviteCompanyRef}
               value={invite.company}
               onChange={(event) => setInvite({ ...invite, company: event.target.value })}
               autoComplete="organization"

@@ -1,6 +1,24 @@
 /* LOGIN_V3_LAB_V1 - scoped bajo .login-v3. Tokens canónicos de agntia-tokens.css.
    Medidas del contrato visual V3; no se importa landing.css global. */
 
+/* Fuentes locales con licencia OFL (fonts/OFL-*.txt). Mismas familias que la
+   landing, servidas desde el propio bundle: la tipografía no depende de la red. */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("./fonts/fraunces-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Manrope";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./fonts/manrope-latin.woff2") format("woff2");
+}
+
 .login-v3 {
   min-height: 100dvh;
   padding-top: env(safe-area-inset-top, 0px);
@@ -314,11 +332,11 @@
 }
 
 .login-v3 .lv3-chips button {
-  padding: 7px 12px;
+  padding: 6px 10px;
   border: 1px solid var(--ag-line);
   border-radius: 100px;
   background: var(--ag-surface);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   line-height: 1.4;
   transition:
@@ -535,18 +553,32 @@
   background: #403e39;
 }
 
+/* Presencia animada de chat y contraseña: altura real, no solo opacidad. */
+.login-v3 .lv3-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.login-v3 .lv3-collapse.is-open {
+  grid-template-rows: 1fr;
+}
+
+.login-v3 .lv3-collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.login-v3 .lv3-chat-space {
+  margin-top: 16px;
+}
+
 /* Chat inline. */
 .login-v3 .lv3-chat {
-  margin-top: 16px;
   border: 1px solid var(--ag-line);
   border-radius: 13px;
   background: var(--ag-surface);
   overflow: hidden;
-  animation: lv3-expand 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.login-v3 .lv3-chat[hidden] {
-  display: none;
 }
 
 .login-v3 .lv3-chat-head {
@@ -678,6 +710,12 @@
   gap: 8px;
   margin-top: 18px;
   text-align: left;
+}
+
+/* Dentro del colapso el hueco es padding: se recorta en 0fr sin dejar residuo. */
+.login-v3 .lv3-password .lv3-collapse > .lv3-form {
+  margin-top: 0;
+  padding-top: 18px;
 }
 
 .login-v3 .lv3-form label {
@@ -829,6 +867,23 @@
   background: #24242166;
 }
 
+/* Coreografía del modal: entrada 260 ms, salida breve de 180 ms. */
+.login-v3 .lv3-dialog[open] {
+  animation: lv3-dialog-in 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.login-v3 .lv3-dialog[open]::backdrop {
+  animation: lv3-fade-in 0.26s ease both;
+}
+
+.login-v3 .lv3-dialog.is-closing {
+  animation: lv3-dialog-out 0.18s ease both;
+}
+
+.login-v3 .lv3-dialog.is-closing::backdrop {
+  animation: lv3-fade-out 0.18s ease both;
+}
+
 .login-v3 .lv3-dialog-inner {
   padding: 24px;
 }
@@ -887,14 +942,43 @@
   }
 }
 
-@keyframes lv3-expand {
+@keyframes lv3-dialog-in {
   from {
     opacity: 0;
-    transform: translateY(-4px);
+    transform: translateY(10px) scale(0.985);
   }
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+@keyframes lv3-dialog-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+}
+
+@keyframes lv3-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lv3-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 
@@ -997,7 +1081,9 @@
 @media (prefers-reduced-motion: reduce) {
   .login-v3 .lv3-anim,
   .login-v3 .lv3-chat,
-  .login-v3 .lv3-msg {
+  .login-v3 .lv3-msg,
+  .login-v3 .lv3-dialog,
+  .login-v3 .lv3-dialog::backdrop {
     animation: none;
   }
 

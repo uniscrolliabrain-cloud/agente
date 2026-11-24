@@ -1,11 +1,16 @@
-LOGIN V3 — CLONES BYTE A BYTE · origen:  repositorio uniscrolliabrain-cloud/agente
-Commit de origen: 9f6b5a188a5fdc84787623e2fd4f08ae9397a2b0
-Generado: 2026-11-24T14:36:19Z
+LOGIN V3 — CLONES BYTE A BYTE · origen: repositorio uniscrolliabrain-cloud/agente
+Rama: feat/ui-lab-login-v3 · base a98ba12 + refinamiento de auditoría
+Generado: 2026-11-24T15:24:32Z
 
-af31d54bdd4bc685061e0d971e2ca9040eb3046be73d117fa979b0ced8f52ed8  .github/workflows/ui-lab.yml
+f21d5daa84dc5d32e3c265bceeb7218cd8d33ebf448c5964aac9b8d191182a1c  .github/workflows/ui-lab.yml
+9dc3d19b51c5d501ee794ba9b142f15bf44d5162976b04a60ddca26f74e66270  apps/ui-lab/scripts/qa-login-v3.mjs
 a91d089ea047d318ffd9d9c6d74bdf152772e5a8b8f4d7c2391bcbb2f2f8fc5e  apps/ui-lab/src/design-system/agntia-tokens.css
-9e94a94537ed1a76f4901d9f2e442b597ad6a2b4a4fc155d6a0f0e968af24c1a  apps/ui-lab/src/login-v3/LoginV3.tsx
-b2fbe775fe2e91c093509d4ec235eed83689b8f48d7427eb44da63c1ea9e62e0  apps/ui-lab/src/login-v3/login-v3.css
+89be06673709868d89ab82960780ff2dec9940c3f5e5c916f91c3e08ceaa59e7  apps/ui-lab/src/login-v3/LoginV3.tsx
+a4c5a00e3d93b40cfdd528d267a403772700a3fa397718cd2d4c4f7f5527c9bd  apps/ui-lab/src/login-v3/login-v3.css
+bdf4c22802eaf804f998195871c6b8938aac2ac14b2d78a8bd66a6f1eced833b  apps/ui-lab/src/login-v3/fonts/OFL-Fraunces.txt
+58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b  apps/ui-lab/src/login-v3/fonts/OFL-Manrope.txt
+7453f89453b477c25b4fe236722f93b909d93c8b4cf5342ee6009b660974c5a4  apps/ui-lab/src/login-v3/fonts/fraunces-latin.woff2
+8c2def024c1bf31aacf3624ae3c4d701269b4ec3dc765c04830839f0d36b2d9e  apps/ui-lab/src/login-v3/fonts/manrope-latin.woff2
 a0a57ffe8013b561027950f95e18506c5698bf656239d1f95cea941ae30ecfee  apps/ui-lab/src/registry.tsx
-e20e81e8825f239bf2c6fa8439971449bc6c29ba13ee2b43c30f57fef6b478b1  apps/ui-lab/src/vite.config.ts
+e20e81e8825f239bf2c6fa8439971449bc6c29ba13ee2b43c30f57fef6b478b1  apps/ui-lab/vite.config.ts
 2eaee7116d2d874f072ad02013579d5b771ab2088c8750ebb9f5458cdb87c602  apps/web/src/components/BrandMark.tsx

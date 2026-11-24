@@ -65,9 +65,37 @@ Workflow disparado con `workflow_dispatch` y `deploy=false`:
 Commits posteriores de esta bitácora y capturas son documentales: no cambian el código entregado, que
 sigue siendo `c6cf874…` (SHA de build del artifact).
 
+## T07 · Refinamiento tras la auditoría del founder (2026-11-24)
+
+Alcance: solo las desviaciones señaladas. Sin rediseño, sin cambios de copy ni de composición.
+
+1. Foco de validación: `submitPassword` distingue email y contraseña; el email mal formado devuelve el
+   foco al email. La invitación enfoca nombre, email o empresa según el campo que falla.
+2. Chips a 11 px y padding 6 × 10 (contrato visual vinculante), antes 12 px y 7 × 12.
+3. Contraseña y chat: colapso real de altura con `grid-template-rows 0fr → 1fr` (260 ms), desmontaje al
+   terminar y borrador conservado en el chat.
+4. Modal: entrada de 260 ms, salida de 180 ms, fundido de backdrop y cierre animado también con Escape
+   (`cancel` interceptado).
+5. Contraseña: al colapsar se vacía el valor, se restaura `type=password` y se limpian error y aviso.
+6. Fuentes: Fraunces y Manrope empaquetadas en woff2 desde Google Fonts, con OFL, servidas por el bundle.
+   Comprobado con `fonts.googleapis.com` y `fonts.gstatic.com` bloqueados.
+7. QA versionado: `apps/ui-lab/scripts/qa-login-v3.mjs` (41 comprobaciones de medidas, foco, motion,
+   persistencia, consola y reduced motion).
+8. Empaquetado: el ZIP incluye `QA.md`, la bitácora, `capturas/` y `qa/`; se comprueba que la vista exista
+   en la rama y que los woff2 estén en `assets/`. Pruebas de navegador en CI como paso opt-in (`browser_qa`).
+9. Manifiesto de clones: corregida la ruta de `vite.config.ts` (`apps/ui-lab/vite.config.ts`).
+
+Verificación: `typecheck` y `build` en verde; 41 comprobaciones de navegador ejecutadas sobre el bundle
+en el navegador Cloud (el entorno no puede lanzar Chromium local: faltan `libnspr4`/`libnss3` y no hay
+`sudo`). Capturas regeneradas. El artifact de run 234 sigue siendo el de `c6cf874…`: requiere un nuevo
+`workflow_dispatch` con `deploy: false` para publicar este estado.
+
 ## Pendientes
 
 - Aprobación visual del founder (no se declara 10/10).
+- Nueva ejecución de `workflow_dispatch` (`deploy: false`) para regenerar el artifact con estas correcciones,
+  y activación de `browser_qa` si se quiere ejecutar el QA de navegador en CI.
+- Separación en componentes (`LoginHeader`, `LoginEditorialHero`, `OAuthButtons`, `PasswordAccess`,
+  `InvitationDialog`…): recomendación de mantenibilidad, no bloqueante, sin cambios visuales.
 - Integración con backend real de OAuth, autenticación, conversación anónima e invitaciones: fuera de
-  alcance de esta campaña visual.
-- Sustituir la dependencia de Google Fonts por fuentes empaquetadas si se exige uso offline estricto.
+alcance de esta campaña visual.

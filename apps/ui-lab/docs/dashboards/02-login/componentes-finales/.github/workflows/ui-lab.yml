@@ -7,6 +7,11 @@ on:
         type: boolean
         default: false
         required: true
+      browser_qa:
+        description: "Run the versioned Login V3 browser QA (Playwright)?"
+        type: boolean
+        default: false
+        required: false
   push:
     branches:
       - feat/ui-lab-main-isolated
@@ -82,9 +87,23 @@ jobs:
           name: formacion-v4-chromebook
           path: /tmp/formacion-v4-chromebook/
           retention-days: 7
+      - name: Browser QA Login V3 (opt-in)
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa == true }}
+        run: |
+          set -euo pipefail
+          test -f apps/ui-lab/scripts/qa-login-v3.mjs
+          grep -q 'id:"login-v3"' apps/ui-lab/src/registry.tsx
+          npm i --prefix /tmp/pw playwright
+          /tmp/pw/node_modules/.bin/playwright install --with-deps chromium
+          (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
+          sleep 2
+          NODE_PATH=/tmp/pw/node_modules node apps/ui-lab/scripts/qa-login-v3.mjs
       - name: Prepare Login V3 Chromebook package
         run: |
           set -euo pipefail
+          # Solo empaquetar si la vista existe en esta rama.
+          grep -q 'id:"login-v3"' apps/ui-lab/src/registry.tsx
+          test -f apps/ui-lab/scripts/qa-login-v3.mjs
           rm -rf /tmp/login-v3-chromebook
           mkdir -p /tmp/login-v3-chromebook/site
           cp -a apps/ui-lab/dist/. /tmp/login-v3-chromebook/site/
@@ -104,14 +123,25 @@ jobs:
           La carpeta site/ contiene el UI Lab compilado completo.
           Este paquete funciona sin Vercel. No hay OAuth, autenticación,
           chat ni invitaciones conectados: los estados lo indican.
-          Las fuentes Fraunces y Manrope se cargan desde Google Fonts, por lo
-          que la tipografía exacta requiere conexión a Internet.
+          Las fuentes Fraunces y Manrope viajan dentro de site/assets, con
+          licencia OFL, así que el diseño se ve igual sin conexión a Internet.
+          QA.md recoge lo comprobado y capturas/ las pruebas visuales.
+          qa/qa-login-v3.mjs reproduce la QA de navegador con Playwright.
           EOF
           printf '#!/usr/bin/env bash\nset -e\ncd "$(dirname "$0")/site"\necho "Abre http://localhost:8080/?embed=1&view=login-v3"\npython3 -m http.server 8080 --bind 127.0.0.1\n' > /tmp/login-v3-chromebook/iniciar.sh
           chmod +x /tmp/login-v3-chromebook/iniciar.sh
           test -f /tmp/login-v3-chromebook/site/index.html
           test -f /tmp/login-v3-chromebook/site/version.json
           grep -q 'id="root"' /tmp/login-v3-chromebook/site/index.html
+          test -f /tmp/login-v3-chromebook/site/assets/$(cd apps/ui-lab/dist && ls assets | grep -m1 '^fraunces-latin-.*\.woff2$')
+          test -f /tmp/login-v3-chromebook/site/assets/$(cd apps/ui-lab/dist && ls assets | grep -m1 '^manrope-latin-.*\.woff2$')
+          cp apps/ui-lab/docs/dashboards/02-login/QA.md /tmp/login-v3-chromebook/QA.md
+          cp apps/ui-lab/docs/dashboards/02-login/BITACORA-EJECUCION.md /tmp/login-v3-chromebook/BITACORA-EJECUCION.md
+          mkdir -p /tmp/login-v3-chromebook/capturas /tmp/login-v3-chromebook/qa
+          cp apps/ui-lab/docs/dashboards/02-login/capturas/login-v3-*.png /tmp/login-v3-chromebook/capturas/
+          cp apps/ui-lab/scripts/qa-login-v3.mjs /tmp/login-v3-chromebook/qa/
+          test -f /tmp/login-v3-chromebook/QA.md
+          test $(ls /tmp/login-v3-chromebook/capturas | wc -l) -ge 6
       - uses: actions/upload-artifact@v4
         with:
           name: login-v3-chromebook
