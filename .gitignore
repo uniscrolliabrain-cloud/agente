@@ -40,3 +40,9 @@ repomix-*.md
 scripts/fixes/*.ps1
 apps/server/src/engine/service.ts
 *.corrupt.bak
+
+# TRANS01_M12_LOCAL_V1 - Postgres efimero y datos de prueba locales (no entregables)
+.pgdebs/
+.pgdata/
+.pgsock/
+.test-data/

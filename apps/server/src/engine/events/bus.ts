@@ -24,13 +24,11 @@ import type {
 import { ulid } from "./ulid.ts";
 import { globalSubscribers } from "./subscriber.ts";
 import { observeKernel } from "../observability/hooks.ts";
+// SERVICE_PRINCIPAL_V1 - identidad de servicio autenticada por contexto.
+import { currentServicePrincipal } from "./service-principal.ts";
 
 const KIND = "system-events";
 const DEDUPE_KIND = "dedupe-state";
-// EVENTS_SERVICE_ACTOR_SOURCES_V1 - procesos internos legitimamente sin
-// principal humano. Un evento de tarea, accion o persona NO puede declararse
-// servicio para saltarse la autenticidad del actor.
-const SERVICE_ACTOR_SOURCES = new Set<SystemEventSource["kind"]>(["system", "kernel", "monitor"]);
 // EVENTBUS_DEDUPE_TTL_V1 - TTL configurable.
 const DEDUPE_TTL_MS = Number(process.env.EVENTBUS_DEDUPE_TTL_MS ?? "60000") || 60_000;
 // EVENTBUS_DEDUPE_LRU_V1 - LRU configurable.
@@ -146,19 +144,32 @@ export class EventBus {
         if (!options.tenantId) throw new Error("CAUSAL_TENANT_REQUIRED");
         if (!options.correlationId) throw new Error("CAUSAL_CORRELATION_REQUIRED");
         const declared = options.actorId;
-        if (!declared && !scopedActor) throw new Error("CAUSAL_ACTOR_REQUIRED");
+        // SERVICE_PRINCIPAL_AUTHENTICATED_V1 - la identidad de servicio no se
+        // deduce de un prefijo: solo existe si el kernel abrio el scope del
+        // principal registrado con `runAsServicePrincipal`. El `actorKind` del
+        // llamador se contrasta con la identidad ambiente; nunca la crea. Un
+        // principal ambiente puede aportar el actor; un campo declarado, no.
+        const principal = currentServicePrincipal();
+        if (!declared && !scopedActor && !principal) throw new Error("CAUSAL_ACTOR_REQUIRED");
         if (declared && scopedActor && declared !== scopedActor)
           throw new Error("ACTOR_NOT_AUTHENTICATED");
-        const actorId = declared ?? scopedActor!;
-        if (options.actorKind === "service" && scopedActor)
-          throw new Error("ACTOR_KIND_MISMATCH");
-        actorKind = options.actorKind ?? (scopedActor ? "human" : undefined);
-        if (!scopedActor) {
-          if (actorKind !== "service") throw new Error("ACTOR_NOT_AUTHENTICATED");
-          if (!/^service:[a-z0-9][a-z0-9._-]*$/.test(actorId))
-            throw new Error("SERVICE_ACTOR_ID_INVALID");
-          if (!SERVICE_ACTOR_SOURCES.has(source.kind))
+        let actorId: string;
+        if (principal) {
+          if (scopedActor) throw new Error("SERVICE_SCOPE_CONFLICT");
+          if (options.actorKind === "human") throw new Error("ACTOR_KIND_MISMATCH");
+          if (declared && declared !== principal.id)
+            throw new Error("ACTOR_NOT_AUTHENTICATED");
+          if (!principal.sources.includes(source.kind))
             throw new Error("SERVICE_ACTOR_SOURCE_INVALID");
+          actorId = principal.id;
+          actorKind = "service";
+        } else {
+          if (options.actorKind === "service") throw new Error("ACTOR_NOT_AUTHENTICATED");
+          // Un id humano declarado sin contexto autorizado es exactamente la
+          // identidad inventada que este perfil no acepta.
+          if (!scopedActor) throw new Error("ACTOR_NOT_AUTHENTICATED");
+          actorId = declared ?? scopedActor;
+          actorKind = "human";
         }
         if (source.personaId && source.personaId === actorId)
           throw new Error("PERSONA_IS_NOT_AN_ACTOR");

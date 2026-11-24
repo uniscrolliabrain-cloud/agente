@@ -17,6 +17,9 @@ import { after, before, test } from "node:test";
 import { ActionService } from "../../apps/server/src/actions.ts";
 import { createStore, type Store } from "../../apps/server/src/db.ts";
 import { CapabilityRunner } from "../../apps/server/src/engine/execution/capability-runner.ts";
+// EXECUTION_OUTCOME_RESULT_EXPLICIT_V1 - un efecto declara su resultado; el
+// mecanismo de idempotencia medido no cambia, solo el discriminante exigido.
+import { confirmed } from "../../apps/server/src/engine/execution/outcome.ts";
 import type { ActionProposal, ExecutionContext, PlanStep } from "../../packages/domain/src/index.ts";
 
 let db: Store;
@@ -117,7 +120,7 @@ function runnerFor(effects: { count: number }) {
       {
         run: async () => {
           effects.count++;
-          return { receipt: "r-1" };
+          return confirmed({ receipt: "r-1" });
         },
       },
     ],
@@ -185,7 +188,7 @@ test("ruta 3: un fallo confirmado sin efecto permite el reintento", async () => 
             throw Object.assign(new Error("proveedor rechazo la solicitud"), {
               outcome: "rejected_before_dispatch",
             });
-          return { receipt: "r-2" };
+          return confirmed({ receipt: "r-2" });
         },
       },
     ],

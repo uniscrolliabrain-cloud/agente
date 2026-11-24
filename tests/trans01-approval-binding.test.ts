@@ -1,10 +1,12 @@
-// TRANS01_K02_APPROVAL_BINDING_V1 - una aprobacion autoriza un contenido, una
-// tarea, un tenant, un principal y una generacion de conexion concretos. No es
-// reutilizable para otra operacion ni sobrevive a la caducidad o la rotacion.
+// TRANS01_K02B_APPROVAL_MANDATORY_V1 - en una ruta gobernada la ausencia de un
+// campo obligatorio deniega; no se omite la comprobacion. El vinculo es
+// completo: capability, operacion, payload, tenant, tarea, principal, revision,
+// caducidad, conexion y generacion VIGENTE, con consumo unico por paso.
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { CapabilityRunner } from "../apps/server/src/engine/execution/capability-runner.ts";
+import { confirmed } from "../apps/server/src/engine/execution/outcome.ts";
 import type { ExecutionContext, PlanStep } from "../packages/domain/src/index.ts";
 
 let db: Store;
@@ -35,7 +37,10 @@ const approvalId = "approval-1";
 const owner = "owner-approval";
 const tenantId = "tenant-approval";
 
-function runnerFor(effects: { count: number }) {
+function runnerFor(
+  effects: { count: number },
+  options: { generation?: string | null; verifier?: boolean } = {},
+) {
   const registry = { get: async () => capability };
   const executors = new Map([
     [
@@ -43,7 +48,7 @@ function runnerFor(effects: { count: number }) {
       {
         run: async () => {
           effects.count += 1;
-          return { receipt: "r-1" };
+          return confirmed({ receipt: "r-1" });
         },
       },
     ],
@@ -58,6 +63,12 @@ function runnerFor(effects: { count: number }) {
     (async () => ({ id: "role-1", name: "Agent" })) as never,
     db,
     "governed_v2",
+    options.verifier === false
+      ? undefined
+      : ({
+          generationFor: async () =>
+            options.generation === undefined ? "g1" : options.generation,
+        } as never),
   );
 }
 
@@ -96,6 +107,7 @@ async function seedApproval(patch: Record<string, unknown> = {}) {
     data: draft,
     connectionId: "conn-1",
     connectionGeneration: "g1",
+    capabilityId: capability.id,
     ...patch,
   });
 }
@@ -111,6 +123,14 @@ test("sin aprobacion no hay efecto", async () => {
   await db.remove(owner, "actions", approvalId).catch(() => {});
   const effects = { count: 0 };
   await assert.rejects(runnerFor(effects).run(ctx, step), /approval not found/);
+  assert.equal(effects.count, 0);
+});
+
+test("una sesion no sustituye a la aprobacion", async () => {
+  await seedApproval();
+  const effects = { count: 0 };
+  const sessionOnly = { ...ctx, approvalId: undefined, sessionId: approvalId } as ExecutionContext;
+  await assert.rejects(runnerFor(effects).run(sessionOnly, step), /requires approval/);
   assert.equal(effects.count, 0);
 });
 
@@ -156,10 +176,83 @@ test("una aprobacion de otro principal no autoriza este paso", async () => {
   assert.equal(effects.count, 0);
 });
 
+test("una aprobacion sin capability vinculada deniega", async () => {
+  await seedApproval({ capabilityId: undefined });
+  const effects = { count: 0 };
+  await assert.rejects(runnerFor(effects).run(ctx, step), /has no bound capability/);
+  assert.equal(effects.count, 0);
+});
+
+test("una aprobacion de otra capability deniega", async () => {
+  await seedApproval({ capabilityId: "cap-otra" });
+  const effects = { count: 0 };
+  await assert.rejects(runnerFor(effects).run(ctx, step), /approval capability mismatch/);
+  assert.equal(effects.count, 0);
+});
+
+test("una aprobacion sin operacion vinculada deniega", async () => {
+  await seedApproval({ kind: undefined });
+  const effects = { count: 0 };
+  await assert.rejects(runnerFor(effects).run(ctx, step), /has no bound operation/);
+  assert.equal(effects.count, 0);
+});
+
+test("una aprobacion sin payload vinculado deniega", async () => {
+  await seedApproval({ data: undefined });
+  const effects = { count: 0 };
+  await assert.rejects(runnerFor(effects).run(ctx, step), /has no bound payload/);
+  assert.equal(effects.count, 0);
+});
+
+test("un paso sin payload no puede compararse contra una aprobacion", async () => {
+  await seedApproval();
+  const effects = { count: 0 };
+  const noPayload = { ...step, inputs: { kind: "email.send" } };
+  await assert.rejects(runnerFor(effects).run(ctx, noPayload), /step has no bound payload/);
+  assert.equal(effects.count, 0);
+});
+
+test("una aprobacion sin conexion vinculada deniega un efecto externo", async () => {
+  await seedApproval({ connectionId: undefined });
+  const effects = { count: 0 };
+  await assert.rejects(runnerFor(effects).run(ctx, step), /has no bound connection/);
+  assert.equal(effects.count, 0);
+});
+
 test("un efecto externo sin generacion de conexion no se autoriza", async () => {
   await seedApproval({ connectionGeneration: undefined });
   const effects = { count: 0 };
   await assert.rejects(runnerFor(effects).run(ctx, step), /no bound connection generation/);
+  assert.equal(effects.count, 0);
+});
+
+test("una generacion que ya no es la vigente no autoriza el efecto", async () => {
+  await seedApproval();
+  const effects = { count: 0 };
+  await assert.rejects(
+    runnerFor(effects, { generation: "g2" }).run(ctx, step),
+    /approval connection rotated/,
+  );
+  assert.equal(effects.count, 0);
+});
+
+test("una conexion que ya no existe no autoriza el efecto", async () => {
+  await seedApproval();
+  const effects = { count: 0 };
+  await assert.rejects(
+    runnerFor(effects, { generation: null }).run(ctx, step),
+    /connection is not available/,
+  );
+  assert.equal(effects.count, 0);
+});
+
+test("sin verificador de conexion el efecto externo se deniega", async () => {
+  await seedApproval();
+  const effects = { count: 0 };
+  await assert.rejects(
+    runnerFor(effects, { verifier: false }).run(ctx, step),
+    /CONNECTION_VERIFIER_REQUIRED/,
+  );
   assert.equal(effects.count, 0);
 });
 

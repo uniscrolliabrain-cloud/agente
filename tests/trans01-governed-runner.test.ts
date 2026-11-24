@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { CapabilityRunner } from "../apps/server/src/engine/execution/capability-runner.ts";
+import { confirmed } from "../apps/server/src/engine/execution/outcome.ts";
 import type { ExecutionContext, PlanStep } from "../packages/domain/src/index.ts";
 
 let db: Store;
@@ -40,7 +41,7 @@ function runnerFor(
       {
         run: async () => {
           effects.count++;
-          return { receipt: "r-1" };
+          return confirmed({ receipt: "r-1" });
         },
       },
     ],

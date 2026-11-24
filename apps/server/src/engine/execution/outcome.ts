@@ -81,11 +81,31 @@ export function classifyAdapterFailure(error: unknown): AdapterFailureClassifica
   };
 }
 
+/** Declaracion de resultado de un adaptador que si termino bien. */
+export interface DeclaredOutcome<T = unknown> {
+  outcome: AdapterOutcomeClass;
+  value?: T;
+}
+
+/** EXECUTION_OUTCOME_CONFIRMED_V1 - el adaptador confirma el efecto. */
+export function confirmed<T>(value?: T): DeclaredOutcome<T> {
+  return { outcome: "confirmed", value };
+}
+
+/** EXECUTION_OUTCOME_ACCEPTED_V1 - el proveedor acepto, no confirmo. */
+export function accepted<T>(value?: T): DeclaredOutcome<T> {
+  return { outcome: "accepted", value };
+}
+
 /**
  * EXECUTION_OUTCOME_RESULT_V1 - clasifica el valor devuelto por un adaptador.
- * Sin declaracion explicita se asume `confirmed`: el adaptador devolvio un
- * resultado normal. Un adaptador que solo acepta la operacion debe declarar
- * `outcome: "accepted"` para que el claim no se cierre como `done`.
+ *
+ * EXECUTION_OUTCOME_RESULT_EXPLICIT_V1 - un valor devuelto NO es prueba de
+ * exito. Sin discriminante explicito no se puede saber si el proveedor confirmo
+ * el efecto, si solo lo acepto o si el adaptador no lo sabe, asi que se conserva
+ * como `unknown` y el paso exige conciliacion. El adaptador declara con
+ * `confirmed(...)` o `accepted(...)`; un exito que declare ausencia de efecto es
+ * contradictorio y tambien queda desconocido.
  */
 export function classifyAdapterResult(result: unknown): AdapterOutcomeClass {
   if (result && typeof result === "object") {
@@ -94,7 +114,7 @@ export function classifyAdapterResult(result: unknown): AdapterOutcomeClass {
       return declared;
     }
   }
-  return "confirmed";
+  return "unknown";
 }
 
 /** `true` si el estado del claim impide un nuevo envio automatico. */

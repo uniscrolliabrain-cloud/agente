@@ -69,6 +69,15 @@ export class TenantScopedStore {
     return this.store.insertIfAbsent(await this.key(owner), kind, value);
   }
 
+  /**
+   * DB_APPEND_SEQUENCE_V1 - el scope ya identifica la particion (el tenant del
+   * evento), asi que se delega sin volver a componer la clave: el contador debe
+   * ser el mismo para todos los escritores de esa particion.
+   */
+  async nextSequence(scope: string, kind: string): Promise<number> {
+    return this.store.nextSequence(scope, kind);
+  }
+
   // DB_CLAIM_HASH_V1 - propaga la revision esperada tras componer la clave.
   async claim<T>(
     owner: string,

@@ -5,6 +5,10 @@
 
 import type { ExecutionContext } from "../../../../../packages/domain/src/index.ts";
 import type { AgentService } from "../service.ts";
+// EXECUTION_OUTCOME_CONTRACT_V1 - un executor que produce un efecto declara el
+// resultado; devolver un valor sin discriminante no prueba que el efecto se
+// confirmo, y el runner lo trata como desconocido.
+import { confirmed } from "./outcome.ts";
 
 // TOOL_EXECUTORS_IDEMPOTENCY_V1 - firma opcional con idempotencyKey. Los executors que la usan la reciben; los que no, la ignoran.
 export interface ToolExecutor {
@@ -54,14 +58,16 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
       ctx.taskId,
     );
     if (!task) throw new Error("save_artifact requires an existing task");
-    return service.artifact(
-      ctx.owner,
-      task,
-      "report",
-      String(inputs.title ?? "artifact"),
-      String(inputs.summary ?? ""),
-      (inputs.data as Record<string, unknown>) ?? {},
-      String(inputs.title ?? "artifact"),
+    return confirmed(
+      await service.artifact(
+        ctx.owner,
+        task,
+        "report",
+        String(inputs.title ?? "artifact"),
+        String(inputs.summary ?? ""),
+        (inputs.data as Record<string, unknown>) ?? {},
+        String(inputs.title ?? "artifact"),
+      ),
     );
   });
 
@@ -79,11 +85,13 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
   wrap("computer_command", async (ctx, inputs, key) => {
     const command = String(inputs.command ?? "");
     if (!command) throw new Error("command required");
-    return service.computer.execute(ctx.owner, {
-      command,
-      cwd: String(inputs.cwd ?? "/workspace"),
-      ...(key ? { idempotencyKey: key.key } : {}),
-    });
+    return confirmed(
+      await service.computer.execute(ctx.owner, {
+        command,
+        cwd: String(inputs.cwd ?? "/workspace"),
+        ...(key ? { idempotencyKey: key.key } : {}),
+      }),
+    );
   });
 
   wrap("ask_user", async (_ctx, inputs) => {
@@ -122,11 +130,11 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
       undefined,
       ctx.taskId,
     );
-    return {
+    return confirmed({
       actionId: proposal.id,
       status: proposal.status,
       ...(threadId ? { threadId } : {}),
-    };
+    });
   });
 
   // CALENDAR_SLOT_EXECUTOR_V1 (campana 16) - el borrador se construye campo a
@@ -158,14 +166,14 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
       undefined,
       ctx.taskId,
     );
-    return {
+    return confirmed({
       actionId: proposal.id,
       status: proposal.status,
       calendarId: data.calendarId,
       start: data.start,
       end: data.end,
       timeZone: data.timeZone,
-    };
+    });
   });
 
   // TOOL_EXECUTOR_LLM_GENERATE_V2 - llamada real al modelo con timeout.
@@ -187,11 +195,13 @@ export function buildToolExecutors(service: AgentService): Map<string, ToolExecu
     const to = String(inputs.to ?? "");
     if (!entityId || !to) throw new Error("entityId and to required");
     if (!service.graph) throw new Error("graph not wired");
-    return service.graph.updateEntity(ctx.owner, entityId, {
-      status: to,
-      actor: `runtime:${ctx.runtimeId ?? "unknown"}`,
-      source: "executor",
-    });
+    return confirmed(
+      await service.graph.updateEntity(ctx.owner, entityId, {
+        status: to,
+        actor: `runtime:${ctx.runtimeId ?? "unknown"}`,
+        source: "executor",
+      }),
+    );
   });
 
   return map;

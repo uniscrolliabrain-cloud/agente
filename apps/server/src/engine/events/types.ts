@@ -163,6 +163,13 @@ export interface SystemEvent<T = Record<string, unknown>> {
   // sigue siendo presentacion y nunca se promueve a actor.
   actorKind?: "human" | "service";
   causalKind?: "root" | "derived";
+  /**
+   * EVENTS_COMMIT_SEQUENCE_V1 - posicion durable por tenant asignada en el
+   * append, bajo el lock del contador y en la misma transaccion que la fila.
+   * Es el cursor de replay: refleja orden de commit, no de inicio. Ausente solo
+   * en filas anteriores a la migracion (el store las numera al arrancar).
+   */
+  seq?: number;
   payload: T;
 }
 

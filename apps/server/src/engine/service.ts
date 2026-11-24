@@ -347,6 +347,17 @@ export class AgentService {
       // SERVICE_CAPABILITY_RUNNER_DB_V1 - db para idempotency claims.
       this.db,
       capabilityProfile,
+      // KERNEL_CONNECTION_VERIFIER_V1 - la generacion aprobada se contrasta con
+      // la conexion VIVA del owner. Una rotacion entre la revision y el efecto
+      // invalida la aprobacion en vez de ejecutarse con la credencial nueva.
+      {
+        generationFor: async (ctx, approval) => {
+          const connection = await this.workspace.connection(ctx.owner).catch(() => null);
+          if (!connection) return null;
+          if (connection.id !== approval.connectionId) return null;
+          return (connection as { generation?: string | null }).generation ?? null;
+        },
+      },
     );
     this.executor = new Executor(capabilityRunner);
     this.learning = new LearningService(this.memory);

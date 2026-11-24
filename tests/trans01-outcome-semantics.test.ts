@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { CapabilityRunner } from "../apps/server/src/engine/execution/capability-runner.ts";
-import { classifyAdapterFailure, classifyAdapterResult } from "../apps/server/src/engine/execution/outcome.ts";
+import { classifyAdapterFailure, classifyAdapterResult, confirmed } from "../apps/server/src/engine/execution/outcome.ts";
 import type { ExecutionContext, PlanStep } from "../packages/domain/src/index.ts";
 
 let db: Store;
@@ -99,7 +99,7 @@ test("un rechazo confirmado antes del despacho si permite reintentar", async () 
     calls += 1;
     if (calls === 1)
       throw Object.assign(new Error("invalid recipient"), { outcome: "rejected_before_dispatch" });
-    return { receipt: "r-1" };
+    return confirmed({ receipt: "r-1" });
   });
   await assert.rejects(runner.run(ctx, step("rechazo")), /invalid recipient/);
   const failed = await claimOf("rechazo");
@@ -116,7 +116,7 @@ test("un fallo confirmado sin efecto si permite reintentar", async () => {
     calls += 1;
     if (calls === 1)
       throw Object.assign(new Error("validation"), { outcome: "failed_without_effect" });
-    return "ok";
+    return confirmed("ok");
   });
   await assert.rejects(runner.run(ctx, step("sin-efecto")));
   assert.equal((await claimOf("sin-efecto"))?.retrySafe, true);
@@ -140,6 +140,20 @@ test("un resultado aceptado no se declara confirmado ni se reenvia", async () =>
   assert.equal(calls, 1, "un aceptado no confirmado no se despacha dos veces");
 });
 
+test("un exito sin discriminante no cierra el paso como confirmado", async () => {
+  let calls = 0;
+  const runner = runnerFor(async () => {
+    calls += 1;
+    return { receipt: "sin-declaracion" };
+  });
+  await assert.rejects(runner.run(ctx, step("sin-discriminante")), /OUTCOME_UNCLASSIFIED_RECONCILE/);
+  const claim = await claimOf("sin-discriminante");
+  assert.equal(claim?.status, "outcome_unknown");
+  assert.equal(claim?.outcome, "unknown");
+  await assert.rejects(runner.run(ctx, step("sin-discriminante")), /outcome_unknown, reconcile first/);
+  assert.equal(calls, 1, "un exito no declarado no se reenvia a ciegas");
+});
+
 test("el contrato distingue rechazo, fallo sin efecto y ambiguedad", () => {
   assert.deepEqual(
     classifyAdapterFailure(Object.assign(new Error("x"), { outcome: "rejected_before_dispatch" })),
@@ -159,7 +173,16 @@ test("el contrato distingue rechazo, fallo sin efecto y ambiguedad", () => {
     classifyAdapterFailure(Object.assign(new Error("x"), { code: "outcome_unknown" })).outcome,
     "unknown",
   );
-  assert.equal(classifyAdapterResult({ receipt: "r" }), "confirmed");
+  // EXECUTION_OUTCOME_RESULT_EXPLICIT_V1 - un valor devuelto sin discriminante
+  // no prueba que el proveedor confirmo el efecto.
+  assert.equal(classifyAdapterResult({ receipt: "r" }), "unknown");
+  assert.equal(classifyAdapterResult("ok"), "unknown");
+  assert.equal(classifyAdapterResult(confirmed({ receipt: "r" })), "confirmed");
   assert.equal(classifyAdapterResult({ outcome: "accepted" }), "accepted");
   assert.equal(classifyAdapterResult({ outcome: "unknown" }), "unknown");
+  assert.equal(
+    classifyAdapterResult({ outcome: "rejected_before_dispatch" }),
+    "unknown",
+    "un exito que declara ausencia de efecto es contradictorio",
+  );
 });

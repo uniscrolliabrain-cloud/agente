@@ -3,6 +3,7 @@
 // tardia con `emittedAt` anterior al cursor ya no desaparece, los timestamps
 // iguales se paginan sin perdidas y el fallback sin SQL falla explicitamente.
 import assert from "node:assert/strict";
+import { rm } from "node:fs/promises";
 import { after, before, test } from "node:test";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { EventBus } from "../apps/server/src/engine/events/index.ts";
@@ -45,6 +46,9 @@ test("una insercion tardia con emittedAt anterior al cursor se recupera", async 
   // Evento insertado DESPUES del cursor, pero con un emittedAt anterior.
   await db.insertIfAbsent(owner, "system-events", {
     id: "late-1",
+    // EVENTS_COMMIT_SEQUENCE_V1 - la posicion se asigna al insertar: una
+    // insercion tardia siempre queda DESPUES del cursor.
+    seq: await db.nextSequence(tenant, "system-events"),
     schemaVersion: "1.0",
     tenantId: tenant,
     owner,
@@ -66,6 +70,7 @@ test("timestamps iguales se paginan sin perder ni repetir eventos", async () => 
   for (let index = 0; index < 6; index += 1) {
     await db.insertIfAbsent(owner, "system-events", {
       id: `equal-${index}`,
+      seq: await db.nextSequence(equalTenant, "system-events"),
       schemaVersion: "1.0",
       tenantId: equalTenant,
       owner,
@@ -117,6 +122,59 @@ test("un cursor de otro tenant sigue denegando", async () => {
     tenantId: "tenant-replay-foreign",
   });
   await assert.rejects(page({ limit: 5, sinceId: foreign.id }), /EVENT_CURSOR_NOT_FOUND/);
+});
+
+test("al arrancar se numera el log anterior y el contador queda por encima", async () => {
+  // DB_EVENT_SEQUENCE_BACKFILL_V1 - un log escrito antes del cursor por
+  // secuencia no queda inaccesible: al abrir el store se numera en su orden
+  // durable y el contador arranca por encima del maximo migrado.
+  const dir = `.test-data/replay-backfill-${Date.now()}`;
+  const backfillTenant = "tenant-replay-backfill";
+  const first = await createStore({ dataDir: dir });
+  for (const id of ["legacy-a", "legacy-b"]) {
+    await first.insertIfAbsent(owner, "system-events", {
+      id,
+      schemaVersion: "1.0",
+      tenantId: backfillTenant,
+      owner,
+      type: "task.created",
+      emittedAt: new Date().toISOString(),
+      source: { kind: "task", id },
+      payload: { title: id, kind: "agent" },
+    } as SystemEvent & { id: string });
+  }
+  await first.close();
+
+  const reopened = await createStore({ dataDir: dir });
+  try {
+    const a = await reopened.get<SystemEvent>(owner, "system-events", "legacy-a");
+    const b = await reopened.get<SystemEvent>(owner, "system-events", "legacy-b");
+    assert.equal(a?.seq, 1);
+    assert.equal(b?.seq, 2);
+    assert.equal(await reopened.nextSequence(backfillTenant, "system-events"), 3);
+  } finally {
+    await reopened.close();
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("un cursor sin posicion durable deniega en vez de adivinar", async () => {
+  const legacyTenant = "tenant-replay-legacy";
+  await db.insertIfAbsent(owner, "system-events", {
+    id: "legacy-1",
+    schemaVersion: "1.0",
+    tenantId: legacyTenant,
+    owner,
+    type: "task.created",
+    emittedAt: new Date().toISOString(),
+    source: { kind: "task", id: "legacy" },
+    payload: { title: "L", kind: "agent" },
+  } as SystemEvent & { id: string });
+  await assert.rejects(
+    bus.replayTenant(legacyTenant, { limit: 5, sinceId: "legacy-1" }, () => {}),
+    /EVENT_CURSOR_NOT_ORDERED/,
+    "sin posicion no hay orden de commit que prometer",
+  );
 });
 
 test("el fallback sin SQL no finge una recuperacion completa", async () => {

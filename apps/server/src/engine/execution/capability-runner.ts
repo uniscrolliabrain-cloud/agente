@@ -78,6 +78,16 @@ export class CapabilityRunner implements StepRunner {
     // expone, las transiciones del claim son CAS y nunca pisan otro intento.
     private readonly db?: { insertIfAbsent: (tenantId: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<unknown>; put: (tenantId: string, kind: string, value: { id: string } & Record<string, unknown>) => Promise<unknown>; get: (tenantId: string, kind: string, id: string) => Promise<unknown>; compareAndSwap?: (tenantId: string, kind: string, id: string, expected: Record<string, unknown>, patch: Record<string, unknown>) => Promise<unknown> },
     private readonly profile: CapabilityRunnerProfile = "legacy_v1",
+    // KERNEL_CONNECTION_VERIFIER_V1 - resuelve la generacion VIGENTE de la
+    // conexion aprobada. Sin verificador, un efecto externo no se autoriza:
+    // que la aprobacion nombre una generacion no prueba que siga siendo la
+    // activa (la credencial pudo rotar entre la revision y el efecto).
+    private readonly connections?: {
+      generationFor: (
+        ctx: ExecutionContext,
+        approval: { id: string; connectionId: string },
+      ) => Promise<string | null>;
+    },
   ) {}
 
   async run(ctx: ExecutionContext, step: PlanStep): Promise<void> {
@@ -90,8 +100,18 @@ export class CapabilityRunner implements StepRunner {
     // obligatoria siempre atraviesa la frontera de autoridad, sea cual sea el
     // perfil. La ausencia de rol, PDP o store no equivale a autorizacion.
     const privileged = isExternalWrite || capability.requiresApproval === true;
+    // KERNEL_CLAIM_REQUIREMENT_V1 - `idempotency: "idempotent"` es una etiqueta
+    // declarativa, no evidencia de que repetir sea inocuo. Toda capability que
+    // declare CUALQUIER efecto (write, external_write, notification) exige
+    // claim durable, no solo las de efecto externo. Solo una lectura pura (sin
+    // efectos declarados) puede ejecutarse sin claim.
+    const producesEffect = capability.sideEffects.some((s) => s.kind !== "read");
+    const needsClaim = producesEffect || privileged;
     const governed = this.profile === "governed_v2";
-    if (governed || privileged) {
+    // La autoridad sigue al efecto, no al perfil: un efecto en `legacy_v1`
+    // tambien exige principal, rol vigente y PDP.
+    const requiresAuthority = governed || needsClaim;
+    if (requiresAuthority) {
       if (!this.governance || !this.getAgentRole || !ctx.actorId || !ctx.roleId) {
         observeKernel({
           stage: "kernel.denial",
@@ -103,15 +123,20 @@ export class CapabilityRunner implements StepRunner {
         throw new Error("GOVERNED_PRINCIPAL_REQUIRED");
       }
     }
-    if (privileged && !this.db) throw new Error("GOVERNED_CLAIM_STORE_REQUIRED");
-    if (governed || privileged) await this.authorize(ctx, capability, startedAt);
+    if (needsClaim && !this.db) throw new Error("GOVERNED_CLAIM_STORE_REQUIRED");
+    // KERNEL_CAS_REQUIRED_V1 - el claim solo protege si su transicion es CAS.
+    // Un store sin `compareAndSwap` no puede dar exclusion concurrente, asi que
+    // la ruta gobernada deniega en vez de escribir a ciegas.
+    if (needsClaim && typeof this.db?.compareAndSwap !== "function")
+      throw new Error("GOVERNED_CAS_REQUIRED");
+    if (requiresAuthority) await this.authorize(ctx, capability, startedAt);
 
     // CAPABILITY_RUNNER_IDEMPOTENCY_V1 - si el contrato no es idempotente,
     // generar key y pasarla. KERNEL_APPROVAL_CONSUMPTION_V1 - una capability
     // con aprobacion tambien necesita clave: es la prueba de que la aprobacion
     // se consumio para ESTE paso y no para otro.
     let idempotencyKey: import("../idempotency.ts").IdempotencyKey | undefined;
-    if (capability.idempotency !== "idempotent" || privileged) {
+    if (capability.idempotency !== "idempotent" || needsClaim) {
       const scope: import("../idempotency.ts").IdempotencyScope = capability.sideEffects[0]?.kind === "external_write" ? "computer" : "computer";
       idempotencyKey = (await import("../idempotency.ts")).makeIdempotencyKey(scope, {
         tenantId: ctx.tenantId,
@@ -131,7 +156,7 @@ export class CapabilityRunner implements StepRunner {
     if (!exec) throw new Error(`No executor for capability ${capability.id}`);
 
     // CAPABILITY_RUNNER_B10_V1 - claim con status + recuperacion de resultado.
-    if (idempotencyKey && (isExternalWrite || capability.requiresApproval) && this.db) {
+    if (idempotencyKey && needsClaim && this.db) {
       const claimId = idempotencyKey.key;
       const claimedAt = new Date().toISOString();
       const attemptId = randomUUID();
@@ -221,7 +246,7 @@ export class CapabilityRunner implements StepRunner {
       // KERNEL_EFFECT_BOUNDARY_REAUTH_V1 - la autoridad se revalida en el
       // limite del efecto: una revocacion entre el claim y el despacho no
       // ejecuta. No promete atomicidad con el proveedor remoto.
-      if (governed || privileged) await this.authorize(ctx, capability, startedAt);
+      if (requiresAuthority) await this.authorize(ctx, capability, startedAt);
       if (capability.requiresApproval) {
         await this.assertApprovalBinding(ctx, step, capability, isExternalWrite, claimId);
       }
@@ -289,6 +314,15 @@ export class CapabilityRunner implements StepRunner {
         throw error;
       }
       const outcomeClass = classifyAdapterResult(result);
+      // EXECUTION_OUTCOME_RESULT_EXPLICIT_V1 - solo `confirmed` cierra el paso
+      // como `done`. `accepted` espera confirmacion y `unknown` (incluido un
+      // valor sin discriminante) exige conciliacion: ninguno declara exito.
+      const settledStatus =
+        outcomeClass === "confirmed"
+          ? "done"
+          : outcomeClass === "accepted"
+            ? "accepted"
+            : "outcome_unknown";
       // CAPABILITY_RUNNER_CLAIM_FENCE_V1 - la finalizacion solo la escribe el
       // intento que sigue poseyendo el claim; un worker tardio no pisa `done`.
       const settled = await this.transition(
@@ -296,14 +330,16 @@ export class CapabilityRunner implements StepRunner {
         claimId,
         { status: "claimed", fence: activeFence, attemptId },
         {
-          status: outcomeClass === "accepted" ? "accepted" : "done",
+          status: settledStatus,
           fence: activeFence,
           attemptId,
           outcome: outcomeClass,
           result: typeof result === "string" ? result.slice(0, 2000) : JSON.stringify(result ?? null).slice(0, 2000),
-          ...(outcomeClass === "accepted"
-            ? { acceptedAt: new Date().toISOString() }
-            : { doneAt: new Date().toISOString() }),
+          ...(settledStatus === "done"
+            ? { doneAt: new Date().toISOString() }
+            : settledStatus === "accepted"
+              ? { acceptedAt: new Date().toISOString() }
+              : { claimedAt }),
         },
       );
       if (!settled) throw new Error(`CLAIM_FENCE_LOST ${claimId}`);
@@ -322,11 +358,17 @@ export class CapabilityRunner implements StepRunner {
           { outcomeUnknown: true, code: "outcome_accepted" },
         );
       }
+      if (outcomeClass === "unknown") {
+        throw Object.assign(
+          new Error(`OUTCOME_UNCLASSIFIED_RECONCILE ${claimId}`),
+          { outcomeUnknown: true, code: "outcome_unknown" },
+        );
+      }
       return;
     }
 
-    // Ruta sin claim (capability idempotente y sin aprobacion).
-    if (governed || privileged) await this.authorize(ctx, capability, startedAt);
+    // Ruta sin claim (lectura pura: sin efectos declarados ni aprobacion).
+    if (requiresAuthority) await this.authorize(ctx, capability, startedAt);
     await exec.run(ctx, capability.id, step.inputs, idempotencyKey);
     observeKernel({
       stage: "runtime.result",
@@ -392,7 +434,11 @@ export class CapabilityRunner implements StepRunner {
     isExternalWrite: boolean,
     claimId?: string,
   ): Promise<void> {
-    const approvalId = ctx.approvalId ?? ctx.sessionId;
+    // KERNEL_APPROVAL_ID_REQUIRED_V1 - una sesion no es una aprobacion. Antes
+    // se aceptaba `ctx.sessionId` como fallback, de modo que un id de
+    // conversacion hacia de autorizacion. Solo `approvalId` nombra la decision
+    // que autoriza este paso.
+    const approvalId = ctx.approvalId;
     if (!approvalId) throw new Error(`requires approval: ${capability.id}`);
     if (!this.db) throw new Error("APPROVAL_STORE_REQUIRED");
     // CAPABILITY_RUNNER_APPROVAL_OWNER_V1 - el store compone la clave como
@@ -424,25 +470,56 @@ export class CapabilityRunner implements StepRunner {
       throw new Error(`approval expired: ${approvalId}`);
     if (!approval.principal || ![ctx.actorId, ctx.owner].includes(approval.principal))
       throw new Error(`approval principal mismatch: ${approvalId}`);
-    if (approval.capabilityId && approval.capabilityId !== capability.id)
+    // APPROVAL_COMPLETE_BINDING_V1 - en una ruta gobernada la ausencia de un
+    // campo obligatorio deniega; antes las comprobaciones se omitian cuando
+    // faltaba informacion (`if (approval.capabilityId && ...)`), asi que una
+    // aprobacion sin vinculo pasaba. El vinculo es completo: capability,
+    // operacion (kind), payload, tenant, tarea, principal, revision y conexion.
+    if (!approval.capabilityId)
+      throw new Error(`approval has no bound capability: ${approvalId}`);
+    if (approval.capabilityId !== capability.id)
       throw new Error(`approval capability mismatch: ${approval.capabilityId} != ${capability.id}`);
+    if (!approval.kind) throw new Error(`approval has no bound operation: ${approvalId}`);
     const inputs = (step.inputs ?? {}) as Record<string, unknown>;
-    if (typeof inputs.kind === "string" && approval.kind && inputs.kind !== approval.kind)
-      throw new Error(`approval kind mismatch: ${approval.kind} != ${inputs.kind}`);
-    if (inputs.data !== undefined && approval.data !== undefined) {
-      if (stableStringify(inputs.data) !== stableStringify(approval.data))
-        throw new Error(`approval content mismatch: ${approvalId}`);
+    const inputKind = typeof inputs.kind === "string" ? inputs.kind : undefined;
+    if (!inputKind) throw new Error(`step has no bound operation: ${step.id}`);
+    if (inputKind !== approval.kind)
+      throw new Error(`approval kind mismatch: ${approval.kind} != ${inputKind}`);
+    if (approval.data === undefined)
+      throw new Error(`approval has no bound payload: ${approvalId}`);
+    if (inputs.data === undefined) throw new Error(`step has no bound payload: ${step.id}`);
+    if (stableStringify(inputs.data) !== stableStringify(approval.data))
+      throw new Error(`approval content mismatch: ${approvalId}`);
+
+    // APPROVAL_CONNECTION_GENERATION_V1 - un efecto externo exige conexion y
+    // generacion aprobadas, y ademas que esa generacion sea la VIGENTE. Nombrar
+    // una generacion no prueba que siga activa: la credencial pudo rotar entre
+    // la revision y el efecto.
+    if (isExternalWrite) {
+      if (!approval.connectionId)
+        throw new Error(`approval has no bound connection: ${approvalId}`);
+      if (!approval.connectionGeneration)
+        throw new Error(`approval has no bound connection generation: ${approvalId}`);
+      if (!this.connections) throw new Error("CONNECTION_VERIFIER_REQUIRED");
+      const generation = await this.connections.generationFor(ctx, {
+        id: approval.id,
+        connectionId: approval.connectionId,
+      });
+      if (!generation) throw new Error(`approval connection is not available: ${approvalId}`);
+      if (generation !== approval.connectionGeneration)
+        throw new Error(
+          `approval connection rotated: ${approvalId} ${approval.connectionGeneration} != ${generation}`,
+        );
     }
-    // APPROVAL_CONNECTION_GENERATION_V1 - un efecto externo exige que la
-    // revision se haya preparado contra una generacion de credencial concreta.
-    if (isExternalWrite && !approval.connectionGeneration)
-      throw new Error(`approval has no bound connection generation: ${approvalId}`);
   }
 
   /**
-   * CAPABILITY_RUNNER_CLAIM_CAS_V1 - transicion con expectativa. Con CAS real
-   * (Store.compareAndSwap) la escritura es atomica; sin CAS se conserva el
-   * `put` historico para stores de test, sin prometer fencing.
+   * CAPABILITY_RUNNER_CLAIM_CAS_V1 - transicion con expectativa.
+   *
+   * KERNEL_CAS_REQUIRED_V1 - sin CAS no hay expectativa atomica: el `put`
+   * historico pisa el claim de otro intento y convierte el fencing en una
+   * convencion. En la ruta gobernada el CAS es una dependencia obligatoria; si
+   * el store no lo expone, la operacion se deniega.
    */
   private async transition(
     tenantId: string,
@@ -450,24 +527,22 @@ export class CapabilityRunner implements StepRunner {
     expected: Record<string, unknown>,
     patch: Record<string, unknown>,
   ): Promise<boolean> {
-    if (!this.db) return false;
-    if (typeof this.db.compareAndSwap === "function") {
-      // Un campo `undefined` no debe relajar la expectativa del CAS: el store
-      // compara con `@>` y JSON descarta esas claves.
-      const expectation = Object.fromEntries(
-        Object.entries(expected).filter(([, value]) => value !== undefined),
-      );
-      const updated = await this.db.compareAndSwap(
-        tenantId,
-        "idempotency-claims",
-        claimId,
-        expectation,
-        patch,
-      );
-      return Boolean(updated);
-    }
-    await this.db.put(tenantId, "idempotency-claims", { id: claimId, tenantId, ...patch });
-    return true;
+    if (!this.db) throw new Error("GOVERNED_CLAIM_STORE_REQUIRED");
+    if (typeof this.db.compareAndSwap !== "function")
+      throw new Error("GOVERNED_CAS_REQUIRED");
+    // Un campo `undefined` no debe relajar la expectativa del CAS: el store
+    // compara con `@>` y JSON descarta esas claves.
+    const expectation = Object.fromEntries(
+      Object.entries(expected).filter(([, value]) => value !== undefined),
+    );
+    const updated = await this.db.compareAndSwap(
+      tenantId,
+      "idempotency-claims",
+      claimId,
+      expectation,
+      patch,
+    );
+    return Boolean(updated);
   }
 }
 

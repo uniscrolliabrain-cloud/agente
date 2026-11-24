@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
 import { createStore, type Store } from "../apps/server/src/db.ts";
-import { EventBus } from "../apps/server/src/engine/events/index.ts";
+import { EventBus, runAsServicePrincipal } from "../apps/server/src/engine/events/index.ts";
 import type { SystemEvent } from "../apps/server/src/engine/events/types.ts";
 import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 
@@ -139,18 +139,21 @@ test("sin contexto autorizado no se acepta un actor humano inventado", async () 
 });
 
 test("un principal de servicio legitimo emite con identidad de servicio", async () => {
-  const result = await bus.emit(
-    "owner-f",
-    "system.maintenance",
-    { kind: "system", id: "worker" },
-    { tasks: 0, monitors: 0 },
-    {
-      tenantId: "tenant-f",
-      actorId: "service:cognition-worker",
-      actorKind: "service",
-      correlationId: "corr-f",
-      causal: { kind: "root" },
-    },
+  // SERVICE_PRINCIPAL_V1 - la identidad sale del scope del kernel, no de un
+  // campo declarado por el llamador.
+  const result = await runAsServicePrincipal("service:cognition-worker", () =>
+    bus.emit(
+      "owner-f",
+      "system.maintenance",
+      { kind: "system", id: "worker" },
+      { tasks: 0, monitors: 0 },
+      {
+        tenantId: "tenant-f",
+        actorKind: "service",
+        correlationId: "corr-f",
+        causal: { kind: "root" },
+      },
+    ),
   );
   const event = await stored("owner-f", result.id);
   assert.equal(event?.actorId, "service:cognition-worker");
@@ -158,7 +161,8 @@ test("un principal de servicio legitimo emite con identidad de servicio", async 
 });
 
 test("un servicio no puede usar un id de actor humano", async () => {
-  const result = await bus.emit(
+  // Sin scope de servicio, declarar `actorKind: "service"` no autentica nada.
+  const unauthenticated = await bus.emit(
     "owner-g",
     "system.maintenance",
     { kind: "system", id: "worker" },
@@ -171,8 +175,27 @@ test("un servicio no puede usar un id de actor humano", async () => {
       causal: { kind: "root" },
     },
   );
-  assert.equal(result.persisted, false);
-  assert.match(String(result.error), /SERVICE_ACTOR_ID_INVALID/);
+  assert.equal(unauthenticated.persisted, false);
+  assert.match(String(unauthenticated.error), /ACTOR_NOT_AUTHENTICATED/);
+
+  // Dentro del scope, la identidad declarada debe ser la del principal.
+  const impersonated = await runAsServicePrincipal("service:cognition-worker", () =>
+    bus.emit(
+      "owner-g",
+      "system.maintenance",
+      { kind: "system", id: "worker" },
+      { tasks: 0, monitors: 0 },
+      {
+        tenantId: "tenant-g",
+        actorId: "user-disfrazado",
+        actorKind: "service",
+        correlationId: "corr-g",
+        causal: { kind: "root" },
+      },
+    ),
+  );
+  assert.equal(impersonated.persisted, false);
+  assert.match(String(impersonated.error), /ACTOR_NOT_AUTHENTICATED/);
 });
 
 test("un servicio no puede emitir como una tarea o una persona", async () => {
@@ -192,7 +215,9 @@ test("un servicio no puede emitir como una tarea o una persona", async () => {
     ),
   );
   assert.equal(result.persisted, false);
-  assert.match(String(result.error), /ACTOR_KIND_MISMATCH/);
+  // SERVICE_PRINCIPAL_V1 - un actor de contexto no se convierte en servicio
+  // porque su id empiece por `service:`.
+  assert.match(String(result.error), /ACTOR_NOT_AUTHENTICATED/);
 });
 
 test("la personalidad de presentacion no se convierte en actor", async () => {

@@ -336,6 +336,11 @@ export class ActionService {
       taskId,
       title,
       kind: input.kind,
+      // APPROVAL_CAPABILITY_BINDING_V1 - la aprobacion declara que capability
+      // autoriza, con la misma convencion que el recibo formal
+      // (`action:<kind>`). El runner exige ese vinculo en vez de omitirlo si
+      // falta, asi que la propuesta lo escribe al nacer.
+      capabilityId: `action:${input.kind}`,
       data: input.data,
       account: connection?.account,
       connectionId: connection?.id,

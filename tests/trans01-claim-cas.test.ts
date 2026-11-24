@@ -6,6 +6,7 @@ import { after, before, test } from "node:test";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import { CapabilityRunner } from "../apps/server/src/engine/execution/capability-runner.ts";
 import { makeIdempotencyKey } from "../apps/server/src/engine/idempotency.ts";
+import { confirmed } from "../apps/server/src/engine/execution/outcome.ts";
 import type { ExecutionContext, PlanStep } from "../packages/domain/src/index.ts";
 
 let db: Store;
@@ -37,7 +38,7 @@ const governance = {
   canExecuteAction: async () => ({ allowed: true }),
 };
 
-function runnerFor(run: () => Promise<unknown>) {
+function runnerFor(run: () => Promise<unknown>, store: Store | undefined = db) {
   const registry = { get: async () => capability };
   const executors = new Map([[capability.id, { run }]]);
   return new CapabilityRunner(
@@ -45,7 +46,7 @@ function runnerFor(run: () => Promise<unknown>) {
     executors as never,
     governance as never,
     (async () => ({ id: "role-1", name: "Agent" })) as never,
-    db,
+    store,
   );
 }
 
@@ -62,7 +63,7 @@ test("dos workers concurrentes producen un solo efecto y un solo claim", async (
   let calls = 0;
   const runner = runnerFor(async () => {
     calls++;
-    return { receipt: "r-1" };
+    return confirmed({ receipt: "r-1" });
   });
   const results = await Promise.allSettled([
     runner.run(ctx, step("dos-workers")),
@@ -151,6 +152,56 @@ test("un worker tardio no puede pisar un done ajeno", async () => {
   assert.equal(claim?.status, "done");
   assert.equal(claim?.result, "resultado-ajeno", "la finalizacion tardia no reescribe el resultado");
   assert.equal(claim?.attemptId, "otro-intento");
+});
+
+test("sin CAS el runner deniega en vez de escribir el claim a ciegas", async () => {
+  const noCas = {
+    get: async () => null,
+    put: async () => undefined,
+    insertIfAbsent: async () => ({}),
+  } as unknown as Store;
+  let calls = 0;
+  const runner = runnerFor(async () => {
+    calls++;
+    return confirmed("no deberia ejecutarse");
+  }, noCas);
+  await assert.rejects(runner.run(ctx, step("sin-cas")), /GOVERNED_CAS_REQUIRED/);
+  assert.equal(calls, 0, "sin exclusion concurrente no hay efecto");
+});
+
+test("una capability declarada idempotente con efectos exige claim", async () => {
+  const writeCapability = {
+    id: "cap-trans01-write",
+    requiresApproval: false,
+    idempotency: "idempotent",
+    sideEffects: [{ kind: "write" }],
+  };
+  let calls = 0;
+  const registry = { get: async () => writeCapability };
+  const executors = new Map([
+    [
+      writeCapability.id,
+      {
+        run: async () => {
+          calls++;
+          return confirmed("ok");
+        },
+      },
+    ],
+  ]);
+  const runner = new CapabilityRunner(
+    registry as never,
+    executors as never,
+    governance as never,
+    (async () => ({ id: "role-1", name: "Agent" })) as never,
+    db,
+  );
+  const writeStep = { ...step("idempotente-write"), capabilityId: writeCapability.id };
+  await runner.run(ctx, writeStep);
+  await runner.run(ctx, writeStep);
+  assert.equal(calls, 1, "la etiqueta idempotent no exime del claim");
+  const claims = await db.list<{ stepId?: string; status?: string }>(ctx.tenantId, "idempotency-claims");
+  assert.equal(claims.find((row) => row.stepId === "idempotente-write")?.status, "done");
 });
 
 test("un claim failed sin fencing no se reintenta", async () => {

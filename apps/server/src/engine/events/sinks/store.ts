@@ -24,11 +24,38 @@ export class StoreSink implements EventSink {
     // El aislamiento por tenant lo compone el db que se inyecta (TenantScopedStore).
     // Aqui solo se escribe bajo owner plano; si el db es un Store crudo, el bus
     // sigue funcionando igual que antes del multitenant.
-    await this.db.insertIfAbsent(
-      event.owner,
-      KIND,
-      event as unknown as { id: string },
-    );
+    // EVENTS_APPEND_LEGACY_STORE_V1 - un store que no expone el contador
+    // (dobles de test, adaptadores anteriores) no puede prometer orden de
+    // commit. Se escribe sin posicion y su replay es el scan historico, no el
+    // cursor: el bus no finge una garantia que el almacenamiento no da.
+    const canSequence =
+      typeof (this.db as { nextSequence?: unknown }).nextSequence === "function";
+    if (!canSequence) {
+      await this.db.insertIfAbsent(
+        event.owner,
+        KIND,
+        event as unknown as { id: string },
+      );
+      return;
+    }
+    const append = async () => {
+      // EVENTS_COMMIT_SEQUENCE_V1 - la posicion se asigna en el mismo append,
+      // bajo el lock del contador por tenant. Contador y fila deben commitear
+      // juntos: por eso el append sin transaccion propia abre una.
+      const seq = await this.db.nextSequence(event.tenantId, KIND);
+      event.seq = seq;
+      await this.db.insertIfAbsent(
+        event.owner,
+        KIND,
+        event as unknown as { id: string },
+      );
+    };
+    // EVENTS_APPEND_ATOMIC_V1 - dentro de una transaccion del llamador el lock
+    // del contador llega hasta su commit, que es justo la garantia que el
+    // cursor necesita. Sin transaccion, el append abre una para no dejar una
+    // posicion commiteada sin su fila (o al reves).
+    if (this.db.inTransaction) return append();
+    await this.db.transaction(append);
   }
 }
 
@@ -88,19 +115,25 @@ export class StoreQuery implements EventQuery {
   }
 
   /**
-   * EVENTS_PAGE_TENANT_V2 - lectura ascendente por tenant con cursor durable.
+   * EVENTS_PAGE_TENANT_V3 - lectura ascendente por tenant con cursor durable.
    *
-   * EVENTS_REPLAY_INSERTION_ORDER_V1 - el orden y el cursor usan `updated_at`,
-   * la posicion durable de insercion, no `emittedAt`. El timestamp de emision
-   * lo fija el productor: un evento insertado tarde con un `emittedAt` anterior
-   * al cursor desaparecia para siempre. Los eventos son append-only
-   * (insertIfAbsent), asi que `updated_at` es la secuencia real del log y una
-   * insercion tardia siempre cae despues del cursor. `id` desempata timestamps
-   * iguales y da un orden total estable para la paginacion por keyset.
+   * EVENTS_REPLAY_COMMIT_ORDER_V1 - el orden y el cursor usan `seq`, la posicion
+   * asignada en el append bajo el lock del contador por tenant, no `emittedAt`
+   * ni `updated_at`.
    *
-   * El cursor se resuelve a su evento dentro del mismo tenant; un cursor ajeno
-   * o inexistente deniega en vez de reiniciar la pagina por accidente. Filtros
-   * y limite se aplican en SQL, nunca despues de truncar.
+   * `emittedAt` lo fija el productor: una insercion tardia con un timestamp
+   * anterior al cursor desaparecia para siempre. `updated_at` usa `now()`, que
+   * en Postgres es la hora de INICIO de la transaccion: con dos transacciones
+   * concurrentes, la que empieza antes y commitea despues queda con posicion
+   * menor que una fila ya visible, y el cursor que avanzo la pierde. `seq` se
+   * asigna bajo el lock de fila del contador, que se mantiene hasta el commit,
+   * asi que dos escritores del mismo tenant se serializan y toda fila con
+   * posicion mayor implica que las menores ya commitearon. Un lector cuyo
+   * snapshot ve la posicion N ve tambien todas las anteriores.
+   *
+   * Un evento sin posicion no puede ordenarse: el cursor deniega en vez de
+   * adivinar. El store numera las filas antiguas al arrancar. Filtros y limite
+   * se aplican en SQL, nunca despues de truncar.
    */
   async pageTenant(
     tenantId: string,
@@ -116,18 +149,19 @@ export class StoreQuery implements EventQuery {
     const params: unknown[] = [KIND, tenantId];
     let sql = "SELECT data FROM records WHERE kind = $1 AND data->>'tenantId' = $2";
     if (filter.sinceId) {
-      const cursorRows = await selectFn<{ data: SystemEvent; updated_at: string }>(
-        `SELECT data, to_char(updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated_at
-           FROM records WHERE kind = $1 AND data->>'tenantId' = $2 AND id = $3`,
+      const cursorRows = await selectFn<{ data: SystemEvent }>(
+        "SELECT data FROM records WHERE kind = $1 AND data->>'tenantId' = $2 AND id = $3",
         [KIND, tenantId, filter.sinceId],
       );
-      const cursor = cursorRows[0];
-      if (!cursor?.data) throw new Error(`EVENT_CURSOR_NOT_FOUND: ${filter.sinceId}`);
-      params.push(cursor.updated_at);
-      const atParam = params.length;
-      params.push(cursor.data.id);
+      const cursor = cursorRows[0]?.data;
+      if (!cursor) throw new Error(`EVENT_CURSOR_NOT_FOUND: ${filter.sinceId}`);
+      if (typeof cursor.seq !== "number")
+        throw new Error(`EVENT_CURSOR_NOT_ORDERED: ${filter.sinceId}`);
+      params.push(cursor.seq);
+      const seqParam = params.length;
+      params.push(cursor.id);
       const idParam = params.length;
-      sql += ` AND (updated_at > $${atParam}::timestamptz OR (updated_at = $${atParam}::timestamptz AND id > $${idParam}))`;
+      sql += ` AND ((data->>'seq')::bigint > $${seqParam}::bigint OR ((data->>'seq')::bigint = $${seqParam}::bigint AND id > $${idParam}))`;
     }
     if (filter.since) {
       params.push(filter.since);
@@ -147,7 +181,7 @@ export class StoreQuery implements EventQuery {
       sql += ` AND (data->>'type') = ANY($${params.length}::text[])`;
     }
     params.push(limit);
-    sql += ` ORDER BY updated_at ASC, id ASC LIMIT $${params.length}`;
+    sql += ` ORDER BY (data->>'seq')::bigint ASC, id ASC LIMIT $${params.length}`;
     const rows = await selectFn<{ data: SystemEvent }>(sql, params);
     return rows.map((row) => row.data);
   }
