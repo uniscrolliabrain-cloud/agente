@@ -19,3 +19,9 @@ Cada bloque: leer código vivo y AGENTS.md; inventariar paths exactos y dependen
 - [02-coding-audit-transversal](02-coding-audit-transversal/README.md)
 - [03-reaudit-refactoring](03-reaudit-refactoring/README.md)
 - [04-reaudit-hardening](04-reaudit-hardening/README.md)
+
+## Ajuste de auditoría contra código vivo (24-11-2026)
+
+Reutilizar apps/server/src/metrics/registry.ts, metrics-exporter.ts, engine/metrics/collector.ts, kernel/subscribers/metrics-consumer.ts y middleware/request-logger.ts. Exportador Prometheus existente usa METRICS_TOKEN o admin y filtro tenant. Auditar cardinalidad y autenticación; evitar doble contabilización al añadir OTLP. Instrumentar API, worker-entry y cognition-worker-entry por separado.
+
+Estado: inspección estática; confirmar HEAD y ejecutar gates durante la campaña.
