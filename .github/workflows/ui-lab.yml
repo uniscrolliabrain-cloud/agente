@@ -120,9 +120,12 @@ jobs:
           echo "Published URL: $URL"
           curl --fail --location --retry 5 --retry-delay 3 "$URL/version.json" -o /tmp/ui-lab-version.json
           node -e 'const v=require("/tmp/ui-lab-version.json");if(v.version!==process.env.EXPECTED_SHA){console.error("Stale deployment",v.version);process.exit(1)}'
-          for view in full-app projects team users control operations comunicaciones; do
+          for view in full-app projects team users control operations comunicaciones formation formation-v4; do
             curl --fail --location --retry 3 "$URL/?embed=1&view=$view" -o /tmp/ui-lab-preview.html
             grep -q 'id="root"' /tmp/ui-lab-preview.html
           done
-          echo "UI Lab deployment manifest and preview entrypoints verified"
+          for image in formacion-01-pensamiento formacion-02-cognicion formacion-03-lenguaje formacion-04-espacio-trabajo formacion-05-agenda formacion-06-equipo formacion-07-datos formacion-08-automatizacion formacion-09-comunicacion formacion-10-creatividad formacion-11-decisiones formacion-12-futuro; do
+            curl --fail --location --retry 3 --silent --show-error "$URL/formation/images/$image.webp" -o /dev/null
+          done
+          echo "UI Lab deployment manifest, previews and 12 Formation images verified"
 
