@@ -1,7 +1,2 @@
-# Legal
-
-**Referencia:** `Rutas legales por verificar`
-
-Páginas legales públicas, consentimiento y enlaces.
-
-Superficie general de UI Lab, fuera del catálogo de 34 Apps. Documentar aquí el UX/UI, los estados, las interacciones, los componentes, las pruebas y la relación con el branding real de AgntiaPro. No confundir el Centro de Mando transversal con el workspace técnico 35; no modificar código.
+# 03 · Legal — Centro de confianza V2
+Estado: base visual definida, pendiente implementación autorizada. Leer PROMPT-MAESTRA-INTERFAZ-UX.md, CONTRATO-VISUAL.md, CONTRATO-FUNCIONAL.md, CAMPAÑA-EJECUCION.md, GATE-ACEPTACION-VISUAL.md y legacy/README.md. Screenshot y prompt founder 24/11/2026 son referencia de composición e interacción, no de branding ni copy jurídico. Landing manda sobre identidad. Seis documentos y tres banners reutilizables. No modificar producción ni publicar políticas sin aprobación. No generar otro mockup. Legacy preserva tres ramas legales.
