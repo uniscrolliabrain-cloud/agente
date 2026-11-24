@@ -44,6 +44,8 @@ export default defineConfig({
   // Vite 5.4 no lee el env var estándar de hosts permitidos: la allowlist llega
   // por proceso (p. ej. el hostname de preview del entorno) sin fijarla en el repo.
   server:{host:"0.0.0.0",port:5178,strictPort:true,allowedHosts:process.env.UI_LAB_ALLOWED_HOSTS?process.env.UI_LAB_ALLOWED_HOSTS.split(","):undefined},
-  build:{outDir:"dist",emptyOutDir:true},
+  // Un solo CSS: evita la precarga dinámica por chunk, que deja la vista en error
+  // si el navegador rechaza esa hoja (visto en CI) y no aporta nada aquí.
+  build:{outDir:"dist",emptyOutDir:true,cssCodeSplit:false},
   define:{"import.meta.env.VITE_UI_LAB":JSON.stringify("true")},
 });
