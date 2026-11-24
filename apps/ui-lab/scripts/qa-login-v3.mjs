@@ -91,9 +91,12 @@ page.on("console", (message) => {
   consoleErrors.push(`${message.text()} ${origin}`.trim());
 });
 const fontResponses = [];
+const failedResponses = [];
 page.on("response", (response) => {
   if (response.url().endsWith(".woff2")) fontResponses.push({ url: response.url(), status: response.status() });
+  if (response.status() >= 400) failedResponses.push(`${response.status()} ${response.url()}`);
 });
+page.on("crash", () => console.error("La página se ha caído (crash del renderer)."));
 
 async function shot(name) {
   if (!SHOT_DIR) return;
@@ -103,9 +106,30 @@ async function shot(name) {
 }
 
 // ---------------------------------------------------------------- carga base
-await page.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
-await page.waitForSelector("#login-v3-title");
-await page.evaluate(() => document.fonts.ready.then(() => true));
+// Un fallo de arranque debe explicarse solo: si la vista no monta, se informa de
+// la URL, el título, el HTML de #root y los errores recogidos antes de abortar.
+async function loadView(target) {
+  await target.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
+  try {
+    await target.waitForSelector("#login-v3-title", { timeout: 20000 });
+  } catch (error) {
+    const diagnostics = await target
+      .evaluate(() => ({
+        url: location.href,
+        title: document.title,
+        rootLength: document.getElementById("root")?.innerHTML.length ?? -1,
+        bodyText: (document.body?.innerText ?? "").slice(0, 200),
+      }))
+      .catch((cause) => ({ evaluateFailed: cause.message }));
+    console.error("La vista login-v3 no montó:", JSON.stringify(diagnostics, null, 2));
+    if (consoleErrors.length > 0) console.error("Errores de consola:", consoleErrors.join(" | "));
+    if (failedResponses.length > 0) console.error("Respuestas HTTP fallidas:", failedResponses.join(" | "));
+    throw error;
+  }
+  await target.evaluate(() => document.fonts.ready.then(() => true));
+}
+
+await loadView(page);
 
 // Une la evidencia con el código: el bundle servido declara su SHA en version.json.
 let servedBuildSha = "no disponible";
@@ -382,8 +406,7 @@ check("el foco vuelve a la invitación", (await focusedId()).includes("lv3-cta")
 // ------------------------------------------------- reduced motion
 const reduced = await browser.newContext({ viewport: { width: 1366, height: 1002 }, reducedMotion: "reduce" });
 const reducedPage = await reduced.newPage();
-await reducedPage.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
-await reducedPage.waitForSelector("#login-v3-title");
+await loadView(reducedPage);
 const reducedState = await reducedPage.evaluate(() => {
   const hero = document.querySelector(".lv3-hero .lv3-anim");
   return {
