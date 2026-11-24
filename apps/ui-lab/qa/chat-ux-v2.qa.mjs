@@ -188,10 +188,12 @@ async function main() {
     });
     await page.waitForTimeout(150);
     const flipMid = await page.evaluate(() => document.querySelector(".cux-dock").getBoundingClientRect().top);
+    await page.waitForTimeout(650);
+    const flipEnd = await page.evaluate(() => document.querySelector(".cux-dock").getBoundingClientRect().top);
     check(
       "Motion: continuidad espacial FLIP del compositor",
-      flipStart.running && flipMid > flipStart.top + 40,
-      `${flipStart.top.toFixed(0)} → ${flipMid.toFixed(0)} px`,
+      flipStart.running && flipEnd - flipMid > 40,
+      `${flipStart.top.toFixed(0)} → ${flipMid.toFixed(0)} → ${flipEnd.toFixed(0)} px`,
     );
     await page.waitForTimeout(90);
     await shot(page, "03a-transicion-90ms");
