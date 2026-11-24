@@ -15,7 +15,7 @@
 | `ChatCall.tsx` | Voz y vídeo: temporizador, ideas progresivas, cámara local con limpieza de tracks, informe con estado vacío y completo, modo compacto |
 | `chat-data.ts` | Tipos, sugerencias, respuestas sintéticas, ideas, siguiente paso, acciones, `formatDuration`, `uid`, retrato importado |
 | `chat-v3.css` | Capa visual completa bajo `.ctv`, diálogos incluidos, responsive, reduced motion, encaje con la insignia de UI Lab |
-| `assets/laia-videollamada.webp` | Retrato optimizado 900 × 900 (86,9 kB) |
+| `assets/laia-videollamada.webp` | Retrato optimizado 900 × 900 (68,2 kB) desde el PNG del founder |
 
 ## Estado
 

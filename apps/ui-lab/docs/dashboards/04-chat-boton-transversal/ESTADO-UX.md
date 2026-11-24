@@ -28,7 +28,6 @@ recuperada de `release/landing-legal-20261122` y la viste con el sistema visual 
 
 - Aprobación estética del founder: la responsabilidad de esta campaña es técnica y de ejecución.
 - Verificación con cámara concedida, micrófono y dictado reales (el navegador de QA no los expone).
-- Confirmar que `apps/ui-lab/public/landing/laia.png` es la fotografía oficial de LAIA: en
-  `assets/` no había ningún PNG al ejecutar la campaña.
+- Fotografía oficial: se usa el PNG del founder (`assets/file_00000000bad881f4a18a32b6c6edc2c8.png`), recibido a mitad de campaña y conservado con su nombre original.
 
 **Bitácora y milestones:** [Cuaderno de bitácora UX](../19-general/BITACORA-UX.md).

@@ -22,12 +22,12 @@ apps/ui-lab/src/chat-transversal-v3/
 
 | Dato | Valor |
 | --- | --- |
-| Archivo recibido en el repositorio | `apps/ui-lab/public/landing/laia.png` (no había PNG en `assets/` al ejecutar; incidencia documentada en `02-AUDITORIA-BASELINE.md`) |
-| Original conservado en la campaña | `campana-transversal-v3/assets/laia-original-founder.png` |
-| SHA-256 del original | `ab3fd712f77be6947eb42b7aa5dc3897345741439147770782d82d17df078a28` |
+| Archivo recibido del founder | `campana-transversal-v3/assets/file_00000000bad881f4a18a32b6c6edc2c8.png` (nombre numérico, conservado sin renombrar; llegó en `c9364fc4`) |
+| SHA-256 del original | `0aa55fbe7001e9fb1c7e2724692899b0fb8b25652a851e38d9550b8e0adeb24a` |
 | Dimensiones originales | 1254 × 1254, RGB |
-| Versión optimizada | `assets/laia-videollamada.webp`, 900 × 900, 86,9 kB |
-| SHA-256 del WebP | `6f92e67ce1146349af5f5b60748f0e623b2d3e997ed457e4e3dbd70adc7d854e` |
+| Versión optimizada | `assets/laia-videollamada.webp` y `src/chat-transversal-v3/assets/laia-videollamada.webp`, 900 × 900, 68,2 kB |
+| SHA-256 del WebP | `e5ca0db0ac58685d4ab63c7571d6467e712f4619b3701c81b71aa3fa86433f09` |
+| Descartado | Copia provisional de `public/landing/laia.png` (`ab3fd712…`): misma modelo, **otra fotografía**; sustituida por la del founder |
 | Encuadre | `object-fit: cover`, `object-position: center 26 %`; sin deformar el rostro |
 | Uso | Retrato protagonista de la videollamada; etiqueta «fotografía real, vídeo simulado» |
 

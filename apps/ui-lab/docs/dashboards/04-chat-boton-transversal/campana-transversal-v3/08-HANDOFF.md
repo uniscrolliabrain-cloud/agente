@@ -7,7 +7,7 @@
 - **Componentes finales con hashes**: [`componentes-finales/`](componentes-finales/README.md).
 - **QA**: [`07-QA.md`](07-QA.md), [`qa/qa-resultados.json`](qa/qa-resultados.json), [`qa/qa-chat-transversal-v3.mjs`](qa/qa-chat-transversal-v3.mjs) y capturas reales en [`qa/capturas/`](qa/capturas).
 - **Artifact Chromebook**: `artifact/build-artifact.py` produce el paquete; el workflow de UI Lab lo publica como `chat-transversal-v3-chromebook`.
-- **Fotografía optimizada**: [`assets/laia-videollamada.webp`](assets/laia-videollamada.webp) (900 × 900, 86,9 kB) y original en [`assets/laia-original-founder.png`](assets/laia-original-founder.png).
+- **Fotografía optimizada**: [`assets/laia-videollamada.webp`](assets/laia-videollamada.webp) (900 × 900, 68,2 kB) y original del founder en `assets/file_00000000bad881f4a18a32b6c6edc2c8.png`.
 
 ## Cómo verlo
 
@@ -27,7 +27,7 @@ Empaqueta `dist/`, el retrato, las capturas, la documentación y un `SHA256SUMS`
 
 1. **Dirección visual**: marfil, tinta, violeta y oro de la landing; Fraunces en momentos editoriales (vacío, llamada, acta); Manrope en la interfaz operativa. Sin tarjetas ni bordes compitiendo.
 2. **Voz**: escena abierta con marca real, anillos y medidor sutiles, rotulada como simulación. Sustituye el rectángulo lavanda anterior.
-3. **Vídeo**: LAIA como protagonista, PiP local, controles discretos y finalizar en rojo. El retrato viene de `public/landing/laia.png` porque `assets/` no tenía PNG: **conviene que confirmes que es la fotografía correcta**.
+3. **Vídeo**: LAIA como protagonista, PiP local, controles discretos y finalizar en rojo. El retrato es tu PNG `assets/file_00000000bad881f4a18a32b6c6edc2c8.png` (`0aa55fbe…`), conservado sin renombrar y optimizado a `laia-videollamada.webp` 900 × 900.
 4. **Menú «+»**: 10 acciones en dos grupos (Capturar / Trabajo), con «Grabar vídeo» separado de «Subir vídeo».
 5. **Workspace de contexto**: maqueta neutra rotulada «Contexto de demostración»; no se rediseñó ningún workspace real.
 
