@@ -1,0 +1,2 @@
+# Apps V2
+Rama feat/ui-lab-apps-launcher-v2. Integrar prototipo aislado apps-launcher-v2, BrandLockup real, fuentes locales, 35 IDs del catálogo, reposo, inicio, búsqueda, favoritos, carpetas, recientes, retorno con foco, reduced motion. Sin API ni OAuth, sin shell nuevo. Copiar iconos a assets UI Lab. QA 1440,1280,1024,390,360; comprobar imágenes, teclado, navegación, build y typecheck. Artifact Chromebook sin deploy ni merge. SVG provisionales, mejorar con workflow de imagen existente tras inspeccionarlo.

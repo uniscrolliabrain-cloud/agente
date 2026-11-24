@@ -1,0 +1,212 @@
+[
+  {
+    "id": "01-gmail",
+    "name": "Correo",
+    "glyph": "✉",
+    "icon": "iconos/01-gmail.svg"
+  },
+  {
+    "id": "02-whatsapp",
+    "name": "Conversaciones",
+    "glyph": "◉",
+    "icon": "iconos/02-whatsapp.svg"
+  },
+  {
+    "id": "03-hubspot",
+    "name": "Clientes",
+    "glyph": "◎",
+    "icon": "iconos/03-hubspot.svg"
+  },
+  {
+    "id": "04-holded",
+    "name": "Facturación",
+    "glyph": "▤",
+    "icon": "iconos/04-holded.svg"
+  },
+  {
+    "id": "05-google-drive",
+    "name": "Archivos",
+    "glyph": "▱",
+    "icon": "iconos/05-google-drive.svg"
+  },
+  {
+    "id": "06-google-calendar",
+    "name": "Agenda",
+    "glyph": "▦",
+    "icon": "iconos/06-google-calendar.svg"
+  },
+  {
+    "id": "07-linear",
+    "name": "Plan de trabajo",
+    "glyph": "✓",
+    "icon": "iconos/07-linear.svg"
+  },
+  {
+    "id": "08-chatgpt",
+    "name": "Asistente",
+    "glyph": "✦",
+    "icon": "iconos/08-chatgpt.svg"
+  },
+  {
+    "id": "09-airtable",
+    "name": "Registros",
+    "glyph": "▥",
+    "icon": "iconos/09-airtable.svg"
+  },
+  {
+    "id": "10-perdoo",
+    "name": "Objetivos",
+    "glyph": "◈",
+    "icon": "iconos/10-perdoo.svg"
+  },
+  {
+    "id": "11-holded-tesoreria",
+    "name": "Tesorería",
+    "glyph": "€",
+    "icon": "iconos/11-holded-tesoreria.svg"
+  },
+  {
+    "id": "12-odoo-purchase",
+    "name": "Compras",
+    "glyph": "◇",
+    "icon": "iconos/12-odoo-purchase.svg"
+  },
+  {
+    "id": "13-productive",
+    "name": "Rentabilidad",
+    "glyph": "↗",
+    "icon": "iconos/13-productive.svg"
+  },
+  {
+    "id": "14-zendesk",
+    "name": "Atención",
+    "glyph": "☏",
+    "icon": "iconos/14-zendesk.svg"
+  },
+  {
+    "id": "15-docusign",
+    "name": "Firmas",
+    "glyph": "✎",
+    "icon": "iconos/15-docusign.svg"
+  },
+  {
+    "id": "16-n8n",
+    "name": "Automatizaciones",
+    "glyph": "⌘",
+    "icon": "iconos/16-n8n.svg"
+  },
+  {
+    "id": "17-process-street",
+    "name": "Procedimientos",
+    "glyph": "☷",
+    "icon": "iconos/17-process-street.svg"
+  },
+  {
+    "id": "18-factorial",
+    "name": "Equipo",
+    "glyph": "♙",
+    "icon": "iconos/18-factorial.svg"
+  },
+  {
+    "id": "19-personio",
+    "name": "Personas",
+    "glyph": "♧",
+    "icon": "iconos/19-personio.svg"
+  },
+  {
+    "id": "20-ramp",
+    "name": "Gastos",
+    "glyph": "−",
+    "icon": "iconos/20-ramp.svg"
+  },
+  {
+    "id": "21-stripe",
+    "name": "Cobros",
+    "glyph": "+",
+    "icon": "iconos/21-stripe.svg"
+  },
+  {
+    "id": "22-canva",
+    "name": "Diseño",
+    "glyph": "◒",
+    "icon": "iconos/22-canva.svg"
+  },
+  {
+    "id": "23-buffer",
+    "name": "Publicaciones",
+    "glyph": "≋",
+    "icon": "iconos/23-buffer.svg"
+  },
+  {
+    "id": "24-shopify",
+    "name": "Tienda",
+    "glyph": "▣",
+    "icon": "iconos/24-shopify.svg"
+  },
+  {
+    "id": "25-intercom",
+    "name": "Soporte",
+    "glyph": "◌",
+    "icon": "iconos/25-intercom.svg"
+  },
+  {
+    "id": "26-odoo-inventory",
+    "name": "Inventario",
+    "glyph": "▧",
+    "icon": "iconos/26-odoo-inventory.svg"
+  },
+  {
+    "id": "27-maintainx",
+    "name": "Mantenimiento",
+    "glyph": "⚙",
+    "icon": "iconos/27-maintainx.svg"
+  },
+  {
+    "id": "28-odoo-manufacturing",
+    "name": "Producción",
+    "glyph": "⬡",
+    "icon": "iconos/28-odoo-manufacturing.svg"
+  },
+  {
+    "id": "29-isms-online",
+    "name": "Cumplimiento",
+    "glyph": "◆",
+    "icon": "iconos/29-isms-online.svg"
+  },
+  {
+    "id": "30-microsoft-entra",
+    "name": "Accesos",
+    "glyph": "⚿",
+    "icon": "iconos/30-microsoft-entra.svg"
+  },
+  {
+    "id": "31-suitedash",
+    "name": "Portal cliente",
+    "glyph": "▰",
+    "icon": "iconos/31-suitedash.svg"
+  },
+  {
+    "id": "32-notion",
+    "name": "Conocimiento",
+    "glyph": "▩",
+    "icon": "iconos/32-notion.svg"
+  },
+  {
+    "id": "33-langsmith",
+    "name": "Observabilidad IA",
+    "glyph": "∿",
+    "icon": "iconos/33-langsmith.svg"
+  },
+  {
+    "id": "34-trello",
+    "name": "Tableros",
+    "glyph": "▥",
+    "icon": "iconos/34-trello.svg"
+  },
+  {
+    "id": "35-centro-mando",
+    "name": "Centro de Mando",
+    "glyph": "◫",
+    "icon": "iconos/35-centro-mando.svg"
+  }
+]

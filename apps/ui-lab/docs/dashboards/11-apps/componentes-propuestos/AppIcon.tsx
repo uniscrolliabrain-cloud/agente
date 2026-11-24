@@ -1,0 +1,2 @@
+import type { ButtonHTMLAttributes } from 'react';
+export function AppIcon({label,src,...props}: ButtonHTMLAttributes<HTMLButtonElement>&{label:string;src:string}){return <button type="button" {...props} className="ag-app-icon"><img src={src} alt="" width={72} height={72}/><span>{label}</span></button>}

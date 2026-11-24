@@ -1,0 +1,75 @@
+{
+  "ranAt": "2026-11-24T18:26:00Z",
+  "branch": "feat/ui-lab-command-center-editorial",
+  "commit": "2bda0e581941",
+  "build": {
+    "command": "UI_LAB_BUILD_SHA=2bda0e581941 pnpm --filter @agente/ui-lab build",
+    "typecheck": "exit 0",
+    "build": "exit 0",
+    "distSize": "9.1 MB",
+    "editorialChunk": "CommandCenterEditorialPreview · 24.7 kB JS / 23 kB CSS"
+  },
+  "environment": {
+    "runner": "Navegador cloud del entorno (Chromium headless gestionado)",
+    "reason": "El sandbox no puede lanzar Chromium local (falta libnss3 y no hay root)",
+    "url": "https://pv-d3a30fbf9650-faba5dbd-aab8-427e-9bb7-2448a54dad1b.style.dev/?embed=1&view=today-editorial",
+    "harness": "qa/qa-cce.mjs queda listo para una máquina con Chromium instalado (PLAYWRIGHT_MODULE=<ruta playwright>)"
+  },
+  "totals": { "checks": 26, "passed": 26, "failed": 0 },
+  "checks": [
+    { "id": "A1", "name": "Un solo h1 y saludo en Fraunces", "ok": true, "evidence": "Fraunces 52px a 1440; 34px a 320" },
+    { "id": "A2", "name": "Contenedor 1248 px y ritmo de 40 px", "ok": true, "evidence": "max-width 1248px · row-gap 40px · padding 43,2/48/80" },
+    { "id": "A3", "name": "Estructura completa: 4 cifras, 5 filtros, 5 secciones, 6 bloques, 2 paneles, feed de 4 filas", "ok": true, "evidence": "medido en DOM" },
+    { "id": "A4", "name": "Filtro de aprobaciones acota las secciones y comparte estado con la cifra", "ok": true, "evidence": "títulos quedan en «Requiere tu atención» + «Estado operativo»; aria-pressed" },
+    { "id": "A5", "name": "Detalle operativo inline en escritorio con aria-expanded", "ok": true, "evidence": "1 bloque expandido, detalle visible" },
+    { "id": "A6", "name": "Alta de persona abre el modal real (permiso owner)", "ok": true, "evidence": ".modal-title = «Añadir persona»; se cierra con backdrop" },
+    { "id": "A7", "name": "Acción de navegación en laboratorio avisa y no simula", "ok": true, "evidence": "notice «Vista de laboratorio: la revisión se hace en el flujo existente…»" },
+    { "id": "A8", "name": "Foco visible en el primer tabulador", "ok": true, "evidence": "outline 2px solid, offset 3px" },
+    { "id": "A9", "name": "Refresco sin reanimar la vista", "ok": true, "evidence": "animaciones del hero en estado finished tras «Actualizar»" },
+    { "id": "A10", "name": "Consola limpia", "ok": true, "evidence": "0 errores de consola y 0 pageerror" },
+    { "id": "A11", "name": "Contraste AA en 13 pares texto/fondo", "ok": true, "evidence": "mínimo 4,57 (aviso de ejemplo); máximo 14,93" },
+    { "id": "B1", "name": "1920 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · 0 elementos <40px" },
+    { "id": "B2", "name": "1440 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · 0 elementos <40px" },
+    { "id": "B3", "name": "1366 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 4 col" },
+    { "id": "B4", "name": "1280 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 4 col" },
+    { "id": "B5", "name": "1024 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 4 col" },
+    { "id": "B6", "name": "768 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 2 col · h1 40,7px" },
+    { "id": "B7", "name": "430 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 2 col" },
+    { "id": "B8", "name": "390 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 2 col · acciones del hero en una fila de 44px" },
+    { "id": "B9", "name": "320 sin desbordamiento y táctiles ≥40 px", "ok": true, "evidence": "overflow -15px · cifras 2 col · h1 34px" },
+    { "id": "C1", "name": "Hoja móvil modal con foco inicial y scroll bloqueado", "ok": true, "evidence": "role=dialog aria-modal, foco en «Cerrar detalle», body overflow hidden" },
+    { "id": "C2", "name": "Escape cierra la hoja y devuelve el foco al bloque", "ok": true, "evidence": "foco final en «Aprobaciones»" },
+    { "id": "D1", "name": "Reduced motion anula animaciones y mantiene contenido", "ok": true, "evidence": "animation-duration 1e-05s · opacity 1" },
+    { "id": "E1", "name": "Fuentes propias cargan sin red externa", "ok": true, "evidence": "Fraunces y Manrope «loaded» con terceros bloqueados" },
+    { "id": "F1", "name": "Modo ejemplo con el componente real y su aviso", "ok": true, "evidence": ".cc-briefing presente dentro de .cce-root" },
+    { "id": "F2", "name": "Empresa sin actividad: copy de tenant no demo", "ok": true, "evidence": "«Todavía no hay actividad en Interfaz…»" },
+    { "id": "F3", "name": "Error recuperable con reintento", "ok": true, "evidence": "botón Reintentar presente" },
+    { "id": "F4", "name": "Carga anunciada con esqueleto suficiente", "ok": true, "evidence": "aria-busy=true · 11 barras de esqueleto" }
+  ],
+  "knownExternalRequests": [
+    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap",
+    "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Manrope:wght@400;500;600;700;800&display=swap"
+  ],
+  "externalRequestsNote": "Imports preexistentes de apps/web/src/index.css y apps/ui-lab/src/lab.css. La vista editorial no depende de ellos: con todas las peticiones de terceros bloqueadas, Fraunces y Manrope cargan desde el bundle (E1).",
+  "screenshots": [
+    "desktop-1920.png", "desktop-1440-poblado.png", "desktop-1366.png", "desktop-1280.png",
+    "tablet-1024.png", "tablet-768.png", "movil-430.png", "movil-390.png", "movil-320.png",
+    "movil-390-hoja.png", "desktop-1440-sample.png", "estado-vacio.png", "estado-error.png",
+    "estado-carga.png", "reduced-motion.png", "offline-sin-red.png", "referencia-landing-1440.png"
+  ],
+  "rubric": {
+    "identidad": { "max": 25, "score": 24 },
+    "composicion": { "max": 25, "score": 24 },
+    "paridadFuncional": { "max": 25, "score": 25 },
+    "responsiveAccesibilidad": { "max": 15, "score": 14 },
+    "motion": { "max": 5, "score": 5 },
+    "distribucion": { "max": 5, "score": 4 },
+    "total": 96
+  },
+  "notVerified": [
+    "Lector de pantalla real (VoiceOver/TalkBack) y zoom 200%: sin dispositivo ni emulación equivalente en este entorno",
+    "Tenant real contra /api/company: bloqueado por safety.ts en UI Lab; el estado poblado usa el router demo",
+    "Grabación de vídeo del movimiento: evidencia en capturas estáticas y en las duraciones medidas",
+    "Workflow ui-lab.yml y subida del artifact a GitHub Actions: no ejecutados en esta campaña"
+  ]
+}
