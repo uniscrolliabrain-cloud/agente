@@ -52,6 +52,36 @@ jobs:
           name: agntiapro-ui-lab-dist
           path: apps/ui-lab/dist
           retention-days: 7
+      - name: Prepare Formación V4 Chromebook package
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/formacion-v4-chromebook/site
+          cp -a apps/ui-lab/dist/. /tmp/formacion-v4-chromebook/site/
+          cat > /tmp/formacion-v4-chromebook/INSTRUCCIONES.txt <<'EOF'
+          AGNTIAPRO — FORMACIÓN V4 (12 fotografías)
+          
+          1. Descomprime el ZIP.
+          2. Abre una terminal Linux en la carpeta descomprimida.
+          3. Ejecuta: bash iniciar.sh
+          4. Abre: http://localhost:8080/?view=formation-v4
+          
+          No necesitas clonar el repositorio ni instalar Node o pnpm.
+          Solo necesitas Python 3 en el entorno Linux de Chromebook.
+          Para detener el servidor pulsa Ctrl+C.
+          La carpeta site/ contiene el UI Lab compilado completo,
+          porque Formación comparte recursos de JavaScript y CSS.
+          Este paquete funciona sin Vercel y no requiere conexión a Internet
+          para servir los archivos locales; algunas fuentes externas pueden
+          necesitar conexión.
+          EOF
+          printf '#!/usr/bin/env bash\nset -e\ncd "$(dirname "$0")/site"\necho "Abre http://localhost:8080/?view=formation-v4"\npython3 -m http.server 8080\n' > /tmp/formacion-v4-chromebook/iniciar.sh
+          chmod +x /tmp/formacion-v4-chromebook/iniciar.sh
+          test -f /tmp/formacion-v4-chromebook/site/formation/images/formacion-12-futuro.webp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formacion-v4-chromebook
+          path: /tmp/formacion-v4-chromebook/
+          retention-days: 7
   deploy:
     needs: build
     concurrency:
