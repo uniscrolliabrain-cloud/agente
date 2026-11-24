@@ -1,0 +1,12 @@
+/* CHAT_WORKSPACE_CSS_V1 */
+
+.chat-workspace {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.chat-workspace * {
+  scrollbar-width: thin;
+}
