@@ -1838,8 +1838,8 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .v2-composer:focus-within { border-color: #D8D0C4; }
 .v2-composer textarea { width: 100%; min-height: 54px; max-height: 120px; resize: none; outline: none; border: 0; background: transparent; padding: 8px 12px; font-size: 15px; color: var(--v2-text); font-family: inherit; }
 .v2-composer textarea::placeholder { color: #9A9590; }
-.v2-composer-bottom { display: flex; align-items: center; justify-content: space-between; padding-top: 4px; }
-.v2-composer-tools { display: flex; align-items: center; gap: 8px; }
+.v2-composer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding-top: 4px; }
+.v2-composer-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .v2-composer-tool { width: 32px; height: 32px; border-radius: 999px; border: 1px solid var(--v2-border-strong); background: transparent; color: var(--v2-text-3); display: grid; place-items: center; cursor: pointer; transition: background 150ms ease; }
 .v2-composer-tool:hover { background: var(--v2-bg-soft); }
 .v2-composer-chip { height: 32px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--v2-border); background: var(--v2-bg-soft); font-size: 12.5px; font-weight: 500; color: var(--v2-text); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; transition: background 150ms ease; }
@@ -1848,6 +1848,13 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .v2-send:hover { background: #4F40E8; transform: scale(1.02); }
 .v2-send:active { transform: scale(0.98); }
 .v2-send:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.v2-composer-tool,
+.v2-send { flex: 0 0 44px; width: 44px; height: 44px; }
+.v2-composer-tool:disabled { opacity: 0.6; cursor: not-allowed; }
+.v2-composer-availability { margin: 4px 0 0; font-size: 11px; color: var(--v2-text-2); }
+@media (prefers-reduced-motion: reduce) {
+  .v2-composer-tool, .v2-send { transition: none; }
+}
 
 .v2-suggestion-grid { width: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 24px; }
 @media (max-width: 600px) { .v2-suggestion-grid { grid-template-columns: 1fr; } }
@@ -4159,7 +4166,7 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
 .side-chat-foot .v2-composer textarea { min-height: 40px; padding: 6px 8px; font-size: 13.5px; }
 .side-chat-foot .v2-composer-chip { display: none; }
 .side-chat-foot .v2-composer-tools { gap: 6px; }
-.side-chat-foot .v2-composer-tool { width: 28px; height: 28px; }
+
 
 /* boton flotante del chat */
 .chat-fab {
@@ -4172,10 +4179,7 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
 .chat-fab:hover { transform: translateY(-1px); }
 .chat-fab.open { background: var(--v2-purple); }
 
-/* hoja de chat movil */
-.mobile-chat { position: fixed; inset: 0; z-index: 90; background: var(--v2-bg); }
-.mobile-chat .side-chat { height: 100%; border-right: 0; }
-.mobile-chat .side-chat-head { padding-top: calc(14px + env(safe-area-inset-top)); }
+/* MOBILE_SHEET_V2 - la hoja vive en components/MobileChatSheet.css. */
 
 /* menu de navegacion en movil */
 .v2-topbar-menu { display: none; }

@@ -1,0 +1,110 @@
+/* MOBILE_SHEET_V2 - hoja inferior. Vive aparte de index.css para no tocar 4.300
+   lineas de estilos ajenos. El alto lo escribe el gesto de MobileChatSheet.tsx. */
+
+.mobile-chat-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  /* Alto inicial; el componente lo ajusta al peldaño real en el primer pintado. */
+  height: 184px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--v2-bg);
+  border: 1px solid var(--v2-border);
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.22);
+  transition: height 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  /* El panel no debe meter su layout en el resto de la app. */
+  contain: layout paint;
+}
+
+/* Durante el gesto no hay animacion: el borde sigue al dedo. */
+.mobile-chat-sheet.dragging {
+  transition: none;
+}
+
+.mobile-sheet-bar {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--v2-bg-card);
+  border-bottom: 1px solid var(--v2-border);
+  border-radius: 18px 18px 0 0;
+}
+
+.mobile-sheet-bar .side-chat-icon {
+  flex: 0 0 auto;
+}
+
+.mobile-sheet-grip {
+  flex: 1 1 auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-sheet-grip::before {
+  content: "";
+  width: 46px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--v2-text-4);
+}
+
+.mobile-chat-sheet.dragging .mobile-sheet-grip {
+  cursor: grabbing;
+}
+
+.mobile-sheet-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+}
+
+/* SidebarChat dentro de la hoja: sin cabecera propia (los controles ya estan en
+   la fila del tirador) y sin borde de columna. */
+.mobile-chat-sheet .side-chat {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+  border-right: 0;
+  background: var(--v2-bg);
+}
+
+.mobile-chat-sheet .side-chat-empty {
+  padding-top: 6px;
+}
+
+/* Plegada al minimo: sin franja de mensaje cortado. */
+.mobile-chat-sheet.collapsed .side-chat-body {
+  visibility: hidden;
+  /* Sin el padding, el compositor queda pegado a la barra y se ve entero. */
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-chat-sheet {
+    transition: none;
+  }
+}
+
+.mobile-chat-sheet .side-chat-foot {
+  flex: 0 0 auto;
+}
+
+.mobile-chat-sheet .side-chat-foot textarea {
+  max-height: clamp(40px, calc(var(--sheet-visual-height, 184px) - 170px), 120px);
+}
