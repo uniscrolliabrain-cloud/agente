@@ -19,3 +19,9 @@ Cada bloque: leer código vivo y AGENTS.md; inventariar paths exactos y dependen
 - [02-coding-audit-transversal](02-coding-audit-transversal/README.md)
 - [03-reaudit-refactoring](03-reaudit-refactoring/README.md)
 - [04-reaudit-hardening](04-reaudit-hardening/README.md)
+
+## Ajuste de auditoría contra código vivo (24-11-2026)
+
+packages/integrations/src/stubs/whatsapp.ts no es solo stub: WhatsAppClient llama Evolution API y distingue OutcomeUnknownError; configured requiere API key, base URL e instance. app.ts monta webhook y rutas autenticadas. No reintentar envíos ambiguos sin reconciliar proveedor. Verificar si Evolution es canal elegido o migrar explícitamente a Cloud API; no imponer contratos de Meta a Evolution sin verificar.
+
+Estado: inspección estática; confirmar HEAD y ejecutar gates durante la campaña.
