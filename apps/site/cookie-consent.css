@@ -1,0 +1,146 @@
+/* COOKIE_CONSENT_LANDING_V1 - misma pieza que en la app, adaptada al tema oscuro
+   de la landing publicada. Fija, sin desplazar el contenido. */
+.ccb-banner {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 80;
+  width: min(520px, calc(100vw - 40px));
+  padding: 18px 20px;
+  border: 1px solid var(--border, #242a36);
+  border-radius: 16px;
+  background: var(--panel, #12151d);
+  color: var(--text, #e8eaf0);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  animation: ccb-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes ccb-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ccb-banner h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.ccb-banner p {
+  margin: 0;
+  color: var(--muted, #9aa3b2);
+  font-size: 13px;
+}
+
+.ccb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.ccb-btn {
+  appearance: none;
+  padding: 9px 16px;
+  border: 1px solid var(--border, #242a36);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text, #e8eaf0);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ccb-btn:hover { background: #1a1f2b; }
+
+.ccb-btn-primary {
+  border-color: var(--accent, #7c9cff);
+  background: var(--accent, #7c9cff);
+  color: #0b0d12;
+}
+
+.ccb-btn-primary:hover { background: #9db4ff; }
+
+.ccb-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 9px 4px;
+  color: var(--text, #e8eaf0);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ccb-btn:focus-visible,
+.ccb-link:focus-visible,
+.ccb-dialog button:focus-visible,
+.ccb-dialog input:focus-visible {
+  outline: 2px solid var(--accent, #7c9cff);
+  outline-offset: 3px;
+}
+
+.ccb-dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--border, #242a36);
+  border-radius: 16px;
+  background: var(--panel, #12151d);
+  color: var(--text, #e8eaf0);
+  font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.ccb-dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+
+.ccb-dialog-inner { padding: 20px; }
+
+.ccb-dialog h2 { margin: 0 0 8px; font-size: 17px; }
+
+.ccb-dialog p { margin: 0 0 16px; color: var(--muted, #9aa3b2); font-size: 13px; }
+
+.ccb-prefs { display: grid; gap: 10px; margin: 0 0 18px; padding: 0; list-style: none; }
+
+.ccb-pref {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--border, #242a36);
+  border-radius: 10px;
+  background: #0f1219;
+}
+
+.ccb-pref input { margin-top: 3px; accent-color: var(--accent, #7c9cff); }
+
+.ccb-pref span { display: grid; gap: 2px; }
+.ccb-pref strong { font-size: 13px; }
+.ccb-pref em { color: var(--muted, #9aa3b2); font-size: 12px; font-style: normal; }
+
+.ccb-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+
+.ccb-footer-settings {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+@media (max-width: 520px) {
+  .ccb-banner { right: 12px; bottom: 12px; width: calc(100vw - 24px); padding: 16px; }
+  .ccb-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .ccb-actions .ccb-link { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ccb-banner { animation: none; }
+}

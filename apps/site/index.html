@@ -3,11 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Agntia Pro — agentes de IA que atienden y venden por ti</title>
+    <title>AgntiaPro</title>
+    <meta name="application-name" content="AgntiaPro" />
+    <meta name="apple-mobile-web-app-title" content="AgntiaPro" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/agntiapro-icon.png" />
+    <link rel="apple-touch-icon" href="/agntiapro-icon.png" />
     <meta
       name="description"
       content="Agentes de IA para negocios pequenos: contestan WhatsApp y llamadas, agendan discovery calls y hacen seguimiento por email."
     />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600;700;800&amp;display=swap" />
     <style>
       :root {
         color-scheme: dark;
@@ -27,7 +32,12 @@
         line-height: 1.55;
       }
       main { max-width: 880px; margin: 0 auto; padding: 72px 24px 96px; }
-      .eyebrow { color: var(--accent); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; }
+      .brand { display: inline-flex; align-items: center; gap: 9px; font-family: "Instrument Sans", system-ui, sans-serif; }
+      .brand-copy { display: flex; flex-direction: column; gap: 4px; }
+      .brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1; }
+      .brand-name b { font-weight: 800; }
+      .brand-signature { display: flex; align-items: center; gap: 7px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.38em; text-indent: 0.38em; color: var(--muted); }
+      .brand-signature::before, .brand-signature::after { content: ""; width: 16px; height: 1px; background: #B8935C; }
       h1 { font-size: clamp(32px, 5vw, 54px); line-height: 1.1; margin: 16px 0 20px; letter-spacing: -0.02em; }
       p.lead { color: var(--muted); font-size: 19px; max-width: 640px; }
       .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 32px 0 56px; }
@@ -48,10 +58,19 @@
       footer { color: var(--muted); font-size: 13px; margin-top: 56px; }
       code { color: var(--text); }
     </style>
+    <link rel="stylesheet" href="/cookie-consent.css" />
   </head>
   <body>
     <main>
-      <div class="eyebrow">Agntia Pro</div>
+      <div class="brand">
+        <svg width="32" height="32" viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false">
+          <path d="M8.5 55 32 9.5 55.5 55M13 52 30.5 43.5M51 52 33.5 43.5" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="brand-copy">
+          <span class="brand-name">Agntia<b>Pro</b></span>
+          <span class="brand-signature">LAIA</span>
+        </div>
+      </div>
       <h1>Agentes de IA que atienden WhatsApp, llamadas y agenda por ti.</h1>
       <p class="lead">
         Instalamos agentes en tu negocio para que ningun lead se quede sin respuesta: contestan,
@@ -85,9 +104,19 @@
       </section>
 
       <footer>
-        Agntia Pro · automatizaciones con IA para negocios pequenos ·
+        AgntiaPro · automatizaciones con IA para negocios pequenos ·
         <a href="https://www.agntiapro.com" style="color: inherit">www.agntiapro.com</a>
+        <nav aria-label="Información legal" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px">
+          <a href="./aviso-legal.html" style="color:inherit">Aviso legal</a>
+          <a href="./privacidad.html" style="color:inherit">Privacidad</a>
+          <a href="./cookies.html" style="color:inherit">Cookies</a>
+          <a href="./terminos.html" style="color:inherit">Términos del servicio</a>
+          <a href="./transparencia-ia.html" style="color:inherit">Transparencia IA</a>
+          <a href="./confianza.html" style="color:inherit">Confianza y seguridad</a>
+          <button type="button" id="agntia-cookie-settings" class="ccb-footer-settings" style="color:inherit">Configurar cookies</button>
+        </nav>
       </footer>
     </main>
+    <script src="/cookie-consent.js" defer></script>
   </body>
 </html>

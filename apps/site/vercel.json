@@ -1,0 +1,11 @@
+{
+  "redirects": [
+    { "source": "/aviso-legal.html", "destination": "https://www.agntiapro.com/legal#aviso-legal", "permanent": false },
+    { "source": "/privacidad.html", "destination": "https://www.agntiapro.com/legal#privacidad", "permanent": false },
+    { "source": "/terminos.html", "destination": "https://www.agntiapro.com/legal#terminos", "permanent": false },
+    { "source": "/cookies.html", "destination": "https://www.agntiapro.com/legal#cookies", "permanent": false },
+    { "source": "/transparencia-ia.html", "destination": "https://www.agntiapro.com/legal#transparencia-ia", "permanent": false },
+    { "source": "/confianza.html", "destination": "https://www.agntiapro.com/legal#confianza-seguridad", "permanent": false },
+    { "source": "/legal", "destination": "https://www.agntiapro.com/legal", "permanent": false }
+  ]
+}
