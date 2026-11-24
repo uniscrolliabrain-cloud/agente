@@ -16,6 +16,13 @@ function versionManifest(): Plugin {
       for (const name of readdirSync(assetsDir)) {
         this.emitFile({ type: "asset", fileName: `landing/${name}`, source: readFileSync(fileURLToPath(new URL(`./public/landing/${name}`, import.meta.url))) });
       }
+      // UI Lab serves shared web/public by default; emit its own Formación artwork explicitly.
+      const formationDir = fileURLToPath(new URL("./public/formation/images/", import.meta.url));
+      for (const name of readdirSync(formationDir)) {
+        if (name.endsWith(".webp") || name === "assets-manifest.json") {
+          this.emitFile({ type: "asset", fileName: `formation/images/${name}`, source: readFileSync(fileURLToPath(new URL(`./public/formation/images/${name}`, import.meta.url))) });
+        }
+      }
       this.emitFile({ type: "asset", fileName: "robots.txt", source: "User-agent: *\\nDisallow: /\\n" });
       this.emitFile({ type: "asset", fileName: "_headers", source: "/*\\n  X-Robots-Tag: noindex, nofollow\\n  Referrer-Policy: no-referrer\\n  X-Content-Type-Options: nosniff\\n" });
       this.emitFile({
