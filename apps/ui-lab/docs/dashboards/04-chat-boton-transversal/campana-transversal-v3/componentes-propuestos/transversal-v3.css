@@ -1,0 +1,38 @@
+/* Scoped visual layer; preserve baseline geometry and pointer handlers. */
+.transversal-v3,.transversal-v3-actions{--v2-bg:#FCFAF6;--v2-bg-card:#fff;--v2-border:#E6E1D8;--v2-border-strong:#D8D2C8;--v2-text:#242421;--v2-text-2:#6E6C66;--v2-text-4:#B5B0A8;--v2-purple:#6550DD;--v2-purple-soft:#F0ECFC;font-family:Manrope,sans-serif;color:var(--v2-text)}
+.transversal-v3 .side-chat{display:flex;flex-direction:column;min-height:0;height:100%;background:var(--v2-bg)}
+.transversal-v3 .side-chat-head,.transversal-v3 .side-chat-identity,.transversal-v3 .side-chat-actions{display:flex;align-items:center;gap:8px}
+.transversal-v3 .side-chat-head{justify-content:space-between;padding:12px;border-bottom:1px solid var(--v2-border)}
+.transversal-v3 .side-chat-identity span:not(.side-chat-orb){display:block;font-size:11px;color:var(--v2-text-2)}
+.transversal-v3 .side-chat-icon{display:grid;place-items:center;min-width:36px;min-height:36px;border:0;background:transparent;color:var(--v2-text-2);border-radius:12px;cursor:pointer}
+.transversal-v3 .side-chat-body{flex:1;min-height:0;overflow:auto;padding:18px}
+.transversal-v3 .side-chat-foot{padding:12px;background:var(--v2-bg);border-top:1px solid var(--v2-border)}
+.transversal-v3 .side-chat-empty{display:grid;gap:12px;padding:12px 0}
+.transversal-v3 .side-chat-empty>b{font-size:21px;letter-spacing:-.035em;font-weight:650}
+.transversal-v3 .side-chat-empty p{margin:0;color:var(--v2-text-2);font-size:13px;line-height:1.6}
+.transversal-v3 .side-chat-orb{display:grid;place-items:center;width:32px;height:32px;border-radius:12px;background:#F0ECFC;color:#6550DD}
+.transversal-v3 .side-chat-orb.big{width:44px;height:44px}
+.transversal-v3 .side-chat-chips{display:grid;gap:0}
+.transversal-v3 .side-chat-chips button{font:inherit;font-size:13px;text-align:left;min-height:44px;padding:10px 0;border:0;border-bottom:1px solid var(--v2-border);background:transparent;color:var(--v2-text);cursor:pointer}
+.transversal-v3 .side-chat-chips button:hover,.transversal-v3 .side-chat-icon:hover{color:#6550DD;background:#F0ECFC}
+.transversal-v3 .mobile-chat-call{padding:20px 16px;gap:16px}
+.transversal-v3 .mobile-chat-call h2{font-family:Fraunces,Georgia,serif;font-weight:450;font-size:clamp(22px,3vw,28px);letter-spacing:-.035em;line-height:1.15}
+.transversal-v3 .mobile-chat-call header p{font-size:12px;margin-top:6px}
+.transversal-v3 .mobile-call-stage{background:transparent;flex:1 0 140px}
+.transversal-v3 .mobile-call-agent{gap:16px;color:#6550DD}
+.transversal-v3 .mobile-call-agent svg{width:72px;height:72px;padding:18px;border-radius:50%;background:#F0ECFC;box-shadow:0 0 0 12px #F0ECFC66}
+.transversal-v3 .mobile-call-agent span{color:#242421;font-size:15px}
+.transversal-v3 .video-mode .mobile-call-stage{background:#E6E1D8;border-radius:24px;flex:1 0 clamp(210px,40dvh,420px)}
+.transversal-v3 .mobile-call-portrait-veil{background:transparent}
+.transversal-v3 .mobile-call-self{border-radius:16px;background:#242421}
+.transversal-v3 .mobile-call-ideas{border:0;border-top:1px solid #E6E1D8;border-radius:0;background:transparent;padding:16px 0;line-height:1.6}
+.transversal-v3 .mobile-call-ideas h3{font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:450}
+.transversal-v3 .mobile-chat-call footer button{border-radius:999px;min-height:44px}
+.transversal-v3 .mobile-chat-call .end-call{background:#A82037;border-color:#A82037;color:white}
+.transversal-v3 .mobile-chat-sheet{box-shadow:0 -12px 48px #24242120;border-radius:24px 24px 0 0}
+.transversal-v3 .mobile-sheet-bar{background:#FCFAF6;border-radius:24px 24px 0 0}
+.transversal-v3-actions .mobile-chat-actions-grid button{border-color:#E6E1D8;background:#FCFAF6;min-height:76px}
+.transversal-v3-actions .mobile-chat-actions-grid button:hover{background:#F0ECFC}
+.transversal-v3 :focus-visible,.transversal-v3-actions :focus-visible{outline:2px solid #6550DD;outline-offset:3px}
+@media(prefers-reduced-motion:no-preference){.transversal-v3 .side-chat-empty,.transversal-v3 .mobile-chat-call header{animation:transversal-enter 260ms ease-out both}@keyframes transversal-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}}
+@media(prefers-reduced-motion:reduce){.transversal-v3 *,.transversal-v3-actions *{animation:none!important;transition:none!important}}
