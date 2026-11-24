@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AgntiaPro</title>
+    <meta name="application-name" content="AgntiaPro" />
+    <meta name="apple-mobile-web-app-title" content="AgntiaPro" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/agntiapro-icon.png" />
+    <link rel="apple-touch-icon" href="/agntiapro-icon.png" />
+    <meta
+      name="description"
+      content="Agentes de IA para negocios pequenos: contestan WhatsApp y llamadas, agendan discovery calls y hacen seguimiento por email."
+    />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@600;700;800&amp;display=swap" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d12;
+        --panel: #12151d;
+        --text: #e8eaf0;
+        --muted: #9aa3b2;
+        --accent: #7c9cff;
+        --border: #242a36;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.55;
+      }
+      main { max-width: 880px; margin: 0 auto; padding: 72px 24px 96px; }
+      .brand { display: inline-flex; align-items: center; gap: 9px; font-family: "Instrument Sans", system-ui, sans-serif; }
+      .brand-copy { display: flex; flex-direction: column; gap: 4px; }
+      .brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; line-height: 1; }
+      .brand-name b { font-weight: 800; }
+      .brand-signature { display: flex; align-items: center; gap: 7px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.38em; text-indent: 0.38em; color: var(--muted); }
+      .brand-signature::before, .brand-signature::after { content: ""; width: 16px; height: 1px; background: #B8935C; }
+      h1 { font-size: clamp(32px, 5vw, 54px); line-height: 1.1; margin: 16px 0 20px; letter-spacing: -0.02em; }
+      p.lead { color: var(--muted); font-size: 19px; max-width: 640px; }
+      .cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 32px 0 56px; }
+      a.button {
+        display: inline-block;
+        padding: 12px 22px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 600;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      a.button.primary { background: var(--accent); border-color: var(--accent); color: #0b0d12; }
+      section { border-top: 1px solid var(--border); padding-top: 32px; margin-top: 32px; }
+      h2 { font-size: 20px; margin: 0 0 16px; }
+      ul { padding-left: 20px; color: var(--muted); }
+      li { margin-bottom: 8px; }
+      footer { color: var(--muted); font-size: 13px; margin-top: 56px; }
+      code { color: var(--text); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">
+        <svg width="32" height="32" viewBox="0 0 64 64" fill="none" aria-hidden="true" focusable="false">
+          <path d="M8.5 55 32 9.5 55.5 55M13 52 30.5 43.5M51 52 33.5 43.5" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="brand-copy">
+          <span class="brand-name">Agntia<b>Pro</b></span>
+          <span class="brand-signature">LAIA</span>
+        </div>
+      </div>
+      <h1>Agentes de IA que atienden WhatsApp, llamadas y agenda por ti.</h1>
+      <p class="lead">
+        Instalamos agentes en tu negocio para que ningun lead se quede sin respuesta: contestan,
+        cualifican, agendan la discovery call y hacen seguimiento. Tu sigues vendiendo; ellos
+        sostienen el embudo.
+      </p>
+
+      <div class="cta">
+        <a class="button primary" href="https://www.agntiapro.com">Entrar al panel</a>
+        <a class="button" href="mailto:hola@agntiapro.com?subject=Quiero%20una%20demo">Pedir una demo</a>
+      </div>
+
+      <section>
+        <h2>Que hace un agente</h2>
+        <ul>
+          <li>Responde el primer mensaje en segundos, a cualquier hora.</li>
+          <li>Cualifica el lead con las preguntas que tu elijas.</li>
+          <li>Agenda la cita en tu Google Calendar y avisa al equipo.</li>
+          <li>Hace seguimiento por email cuando el lead se enfria.</li>
+          <li>Deja un resumen y el siguiente paso escrito en el panel.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Como se implanta</h2>
+        <ul>
+          <li>Semana 1: conectamos el canal (WhatsApp o telefono) y el calendario.</li>
+          <li>Semana 2: definimos guion, precios y limites; el agente responde con tu tono.</li>
+          <li>Semana 3: revision de conversaciones reales y ajuste del guion.</li>
+        </ul>
+      </section>
+
+      <footer>
+        AgntiaPro · automatizaciones con IA para negocios pequenos ·
+        <a href="https://www.agntiapro.com" style="color: inherit">www.agntiapro.com</a>
+        <nav aria-label="Información legal" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px">
+          <a href="./aviso-legal.html" style="color:inherit">Aviso legal</a>
+          <a href="./privacidad.html" style="color:inherit">Privacidad</a>
+          <a href="./cookies.html" style="color:inherit">Cookies</a>
+          <a href="./terminos.html" style="color:inherit">Términos del servicio</a>
+          <a href="./transparencia-ia.html" style="color:inherit">Transparencia IA</a>
+          <a href="./confianza.html" style="color:inherit">Confianza y seguridad</a>
+        </nav>
+      </footer>
+    </main>
+  </body>
+</html>
