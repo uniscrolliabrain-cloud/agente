@@ -74,7 +74,18 @@ function check(name, pass, detail = "") {
   results.push({ name, pass: Boolean(pass), detail: String(detail) });
 }
 
-const browser = await chromium.launch();
+// Se mide en el Chromium completo ("nuevo headless"), no en el headless shell: es
+// el motor que se comporta como un navegador real y el que sí resuelve la
+// precarga del CSS de los chunks dinámicos. Si el canal no está instalado, se
+// avisa y se sigue con el binario por defecto.
+const launchOptions = { args: ["--disable-dev-shm-usage"] };
+let browser;
+try {
+  browser = await chromium.launch({ channel: "chromium", ...launchOptions });
+} catch (error) {
+  console.warn(`Chromium completo no disponible (${error.message.split("\n")[0]}); se usa el binario por defecto.`);
+  browser = await chromium.launch(launchOptions);
+}
 const context = await browser.newContext({ viewport: { width: 1366, height: 1002 }, deviceScaleFactor: 1 });
 
 const externalRequests = [];
