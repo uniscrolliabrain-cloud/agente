@@ -50,3 +50,86 @@ test("the approval projection retains the tenant and decision actor on completio
     await db.close();
   }
 });
+
+test("an approval that loses the claim cannot overwrite the winning denial", async () => {
+  const db = await createStore();
+  try {
+    const connected = Promise.withResolvers<boolean>();
+    const checkingConnection = Promise.withResolvers<void>();
+    let adapterCalls = 0;
+    const service = new ActionService(db, {
+      connected: async () => {
+        checkingConnection.resolve();
+        return connected.promise;
+      },
+      execute: async () => {
+        adapterCalls++;
+        return "fixture-result";
+      },
+    });
+    const owner = "fixture-owner";
+    const proposal = await service.propose(owner, {
+      kind: "email.send",
+      data: {
+        to: ["fixture@example.invalid"], subject: "Fixture", body: "Fixture",
+        cc: [], bcc: [], attachmentIds: [],
+      },
+    });
+    const approval = service.decide(owner, proposal.id, proposal.hash, "approve", "approver");
+    try {
+      await checkingConnection.promise;
+      const denied = await service.decide(owner, proposal.id, proposal.hash, "deny", "reviewer");
+      assert.equal(denied.status, "denied");
+    } finally {
+      connected.resolve(true);
+    }
+    assert.equal((await approval).status, "denied");
+    assert.equal(adapterCalls, 0);
+    const projection = await db.get(owner, "approval-requests", proposal.id);
+    assert.equal(projection?.status, "rejected");
+    assert.equal(projection?.decidedBy, "reviewer");
+  } finally {
+    await db.close();
+  }
+});
+
+test("a failed approval write rolls back its claim before dispatch", async (t) => {
+  const db = await createStore();
+  try {
+    let adapterCalls = 0;
+    const service = new ActionService(db, {
+      connected: async () => true,
+      execute: async () => {
+        adapterCalls++;
+        return "fixture-result";
+      },
+    });
+    const owner = "fixture-owner";
+    const proposal = await service.propose(owner, {
+      kind: "email.send",
+      data: {
+        to: ["fixture@example.invalid"], subject: "Fixture", body: "Fixture",
+        cc: [], bcc: [], attachmentIds: [],
+      },
+    });
+    const fault = t.mock.method(db, "put", async () => {
+      throw new Error("fixture approval write failed");
+    });
+    try {
+      await assert.rejects(
+        service.decide(owner, proposal.id, proposal.hash, "approve", "reviewer"),
+        /fixture approval write failed/,
+      );
+    } finally {
+      fault.mock.restore();
+    }
+    assert.equal(adapterCalls, 0);
+    assert.equal((await db.get(owner, "actions", proposal.id))?.status, "awaiting_review");
+    assert.equal(await db.get(owner, "approval-requests", proposal.id), null);
+
+    const denied = await service.decide(owner, proposal.id, proposal.hash, "deny", "reviewer");
+    assert.equal(denied.status, "denied");
+  } finally {
+    await db.close();
+  }
+});

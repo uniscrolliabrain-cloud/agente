@@ -34,6 +34,7 @@ import type { GoogleMapsClient } from "../../../packages/integrations/src/google
 // el contrato que importa aqui: la accion se guarda con la misma clave de
 // tenant que leen el worker y las rutas de aprobacion.
 export interface ActionsStore {
+  transaction<T>(fn: (tx: Pick<ActionsStore, "claim" | "put">) => Promise<T>): Promise<T>;
   get<T = Record<string, unknown>>(owner: string, kind: string, id: string): Promise<T | null>;
   put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T>;
   insertIfAbsent<T extends { id: string }>(
@@ -458,13 +459,16 @@ export class ActionService {
       decidedAt: new Date(this.now()).toISOString(),
       ...(userId ? { decidedBy: userId } : {}),
     };
-    await this.db.put(owner, "approval-requests", approval);
-    const claimed = await this.db.claim<ActionProposal>(
-      owner,
-      id,
-      decision === "deny" ? "denied" : "executing",
-      new Date(this.now()).toISOString(),
-    );
+    const claimed = await this.db.transaction(async (tx) => {
+      const winner = await tx.claim<ActionProposal>(
+        owner,
+        id,
+        decision === "deny" ? "denied" : "executing",
+        new Date(this.now()).toISOString(),
+      );
+      if (winner) await tx.put(owner, "approval-requests", approval);
+      return winner;
+    });
     if (!claimed) {
       const current = await this.db.get<ActionProposal>(owner, "actions", id);
       if (!current) throw new AppError("Action not found", 404);
