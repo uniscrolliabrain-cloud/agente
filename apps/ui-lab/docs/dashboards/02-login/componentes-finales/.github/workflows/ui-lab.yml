@@ -1,0 +1,197 @@
+name: UI Lab - build and optional deploy
+on:
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Deploy to the dedicated UI Lab Vercel project?"
+        type: boolean
+        default: false
+        required: true
+  push:
+    branches:
+      - feat/ui-lab-main-isolated
+      - fix/ui-lab-centro-tailwind-landing-studio
+      - main
+      - feat/comunicaciones-telefono-v1
+      - feat/ui-lab-comunicaciones-whatsapp
+      - fix/ui-lab-synthetic-all-previews
+    paths:
+      - "apps/ui-lab/**"
+      - "apps/web/src/**"
+      - "packages/domain/src/**"
+      - "apps/web/public/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/ui-lab.yml"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ui-lab-build-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck UI Lab
+        run: pnpm --filter @agente/ui-lab typecheck
+      - name: Build UI Lab
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+        run: pnpm --filter @agente/ui-lab build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agntiapro-ui-lab-dist
+          path: apps/ui-lab/dist
+          retention-days: 7
+      - name: Prepare Formación V4 Chromebook package
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/formacion-v4-chromebook/site
+          cp -a apps/ui-lab/dist/. /tmp/formacion-v4-chromebook/site/
+          cat > /tmp/formacion-v4-chromebook/INSTRUCCIONES.txt <<'EOF'
+          AGNTIAPRO — FORMACIÓN V4 (12 fotografías)
+          
+          1. Descomprime el ZIP.
+          2. Abre una terminal Linux en la carpeta descomprimida.
+          3. Ejecuta: bash iniciar.sh
+          4. Abre: http://localhost:8080/?view=formation-v4
+          
+          No necesitas clonar el repositorio ni instalar Node o pnpm.
+          Solo necesitas Python 3 en el entorno Linux de Chromebook.
+          Para detener el servidor pulsa Ctrl+C.
+          La carpeta site/ contiene el UI Lab compilado completo,
+          porque Formación comparte recursos de JavaScript y CSS.
+          Este paquete funciona sin Vercel y no requiere conexión a Internet
+          para servir los archivos locales; algunas fuentes externas pueden
+          necesitar conexión.
+          EOF
+          printf '#!/usr/bin/env bash\nset -e\ncd "$(dirname "$0")/site"\necho "Abre http://localhost:8080/?view=formation-v4"\npython3 -m http.server 8080\n' > /tmp/formacion-v4-chromebook/iniciar.sh
+          chmod +x /tmp/formacion-v4-chromebook/iniciar.sh
+          test -f /tmp/formacion-v4-chromebook/site/formation/images/formacion-12-futuro.webp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: formacion-v4-chromebook
+          path: /tmp/formacion-v4-chromebook/
+          retention-days: 7
+      - name: Prepare Login V3 Chromebook package
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/login-v3-chromebook
+          mkdir -p /tmp/login-v3-chromebook/site
+          cp -a apps/ui-lab/dist/. /tmp/login-v3-chromebook/site/
+          cat > /tmp/login-v3-chromebook/INSTRUCCIONES.txt <<'EOF'
+          AGNTIAPRO — LOGIN V3 (prototipo UI Lab)
+          
+          1. Descomprime el ZIP.
+          2. Abre una terminal Linux en la carpeta descomprimida.
+          3. Ejecuta: bash iniciar.sh
+          4. Abre: http://localhost:8080/?embed=1&view=login-v3
+          
+          Alternativa con selector del laboratorio: http://localhost:8080/?view=login-v3
+          
+          No necesitas clonar el repositorio ni instalar Node o pnpm.
+          Solo necesitas Python 3 en el entorno Linux de Chromebook.
+          Para detener el servidor pulsa Ctrl+C.
+          La carpeta site/ contiene el UI Lab compilado completo.
+          Este paquete funciona sin Vercel. No hay OAuth, autenticación,
+          chat ni invitaciones conectados: los estados lo indican.
+          Las fuentes Fraunces y Manrope se cargan desde Google Fonts, por lo
+          que la tipografía exacta requiere conexión a Internet.
+          EOF
+          printf '#!/usr/bin/env bash\nset -e\ncd "$(dirname "$0")/site"\necho "Abre http://localhost:8080/?embed=1&view=login-v3"\npython3 -m http.server 8080 --bind 127.0.0.1\n' > /tmp/login-v3-chromebook/iniciar.sh
+          chmod +x /tmp/login-v3-chromebook/iniciar.sh
+          test -f /tmp/login-v3-chromebook/site/index.html
+          test -f /tmp/login-v3-chromebook/site/version.json
+          grep -q 'id="root"' /tmp/login-v3-chromebook/site/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: login-v3-chromebook
+          path: /tmp/login-v3-chromebook/
+          retention-days: 7
+          if-no-files-found: error
+  deploy:
+    needs: build
+    concurrency:
+      group: ui-lab-deploy
+      cancel-in-progress: false
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch' && inputs.deploy == true
+    runs-on: ubuntu-latest
+    environment: ui-lab
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pnpm install --no-frozen-lockfile
+      - name: Validate dedicated project secrets
+        env:
+          TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          ORG: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          PROJECT: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: |
+          test -n "$TOKEN" && test -n "$ORG" && test -n "$PROJECT" || { echo "UI Lab Vercel secrets missing"; exit 1; }
+      - name: Refuse deployment from non-main branch
+        run: test "$GITHUB_REF" = "refs/heads/main" || { echo "UI Lab deploy requires main"; exit 1; }
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull isolated UI Lab project settings
+        working-directory: apps/ui-lab
+        env:
+          VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build via Vercel
+        working-directory: apps/ui-lab
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+          VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: Deploy UI Lab only
+        # Vercel project Root Directory is apps/ui-lab. Deploy from the repository
+        # root so the CLI does not resolve apps/ui-lab/apps/ui-lab.
+        env:
+          VERCEL_TOKEN: ${{ secrets.UI_LAB_VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.UI_LAB_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.UI_LAB_VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          mkdir -p .vercel
+          cp apps/ui-lab/.vercel/project.json .vercel/project.json
+          cp -R apps/ui-lab/.vercel/output .vercel/output
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" | tee /tmp/ui-lab-deployment-url.txt
+          test -s /tmp/ui-lab-deployment-url.txt
+      - name: Verify published UI Lab manifest and required previews
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          URL="$(tail -n 1 /tmp/ui-lab-deployment-url.txt | tr -d '\\r')"
+          echo "Published URL: $URL"
+          curl --fail --location --retry 5 --retry-delay 3 "$URL/version.json" -o /tmp/ui-lab-version.json
+          node -e 'const v=require("/tmp/ui-lab-version.json");if(v.version!==process.env.EXPECTED_SHA){console.error("Stale deployment",v.version);process.exit(1)}'
+          for view in full-app projects team users control operations comunicaciones formation formation-v4; do
+            curl --fail --location --retry 3 "$URL/?embed=1&view=$view" -o /tmp/ui-lab-preview.html
+            grep -q 'id="root"' /tmp/ui-lab-preview.html
+          done
+          for image in formacion-01-pensamiento formacion-02-cognicion formacion-03-lenguaje formacion-04-espacio-trabajo formacion-05-agenda formacion-06-equipo formacion-07-datos formacion-08-automatizacion formacion-09-comunicacion formacion-10-creatividad formacion-11-decisiones formacion-12-futuro; do
+            curl --fail --location --retry 3 --silent --show-error "$URL/formation/images/$image.webp" -o /dev/null
+          done
+          echo "UI Lab deployment manifest, previews and 12 Formation images verified"
+

@@ -41,7 +41,9 @@ export default defineConfig({
   css: { postcss: { plugins: [tailwindcss({ ...webTailwindConfig, content: [fileURLToPath(new URL("../web/src/**/*.{ts,tsx,js,jsx}", import.meta.url)), fileURLToPath(new URL("./src/**/*.{ts,tsx,js,jsx}", import.meta.url))] }), autoprefixer()] } },
   resolve:{alias:{"@agente/domain":fileURLToPath(new URL("../../packages/domain/src",import.meta.url))}},
   publicDir:fileURLToPath(new URL("../web/public",import.meta.url)),
-  server:{host:"0.0.0.0",port:5178,strictPort:true},
+  // Vite 5.4 no lee el env var estándar de hosts permitidos: la allowlist llega
+  // por proceso (p. ej. el hostname de preview del entorno) sin fijarla en el repo.
+  server:{host:"0.0.0.0",port:5178,strictPort:true,allowedHosts:process.env.UI_LAB_ALLOWED_HOSTS?process.env.UI_LAB_ALLOWED_HOSTS.split(","):undefined},
   build:{outDir:"dist",emptyOutDir:true},
   define:{"import.meta.env.VITE_UI_LAB":JSON.stringify("true")},
 });

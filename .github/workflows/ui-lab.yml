@@ -82,6 +82,42 @@ jobs:
           name: formacion-v4-chromebook
           path: /tmp/formacion-v4-chromebook/
           retention-days: 7
+      - name: Prepare Login V3 Chromebook package
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/login-v3-chromebook
+          mkdir -p /tmp/login-v3-chromebook/site
+          cp -a apps/ui-lab/dist/. /tmp/login-v3-chromebook/site/
+          cat > /tmp/login-v3-chromebook/INSTRUCCIONES.txt <<'EOF'
+          AGNTIAPRO — LOGIN V3 (prototipo UI Lab)
+          
+          1. Descomprime el ZIP.
+          2. Abre una terminal Linux en la carpeta descomprimida.
+          3. Ejecuta: bash iniciar.sh
+          4. Abre: http://localhost:8080/?embed=1&view=login-v3
+          
+          Alternativa con selector del laboratorio: http://localhost:8080/?view=login-v3
+          
+          No necesitas clonar el repositorio ni instalar Node o pnpm.
+          Solo necesitas Python 3 en el entorno Linux de Chromebook.
+          Para detener el servidor pulsa Ctrl+C.
+          La carpeta site/ contiene el UI Lab compilado completo.
+          Este paquete funciona sin Vercel. No hay OAuth, autenticación,
+          chat ni invitaciones conectados: los estados lo indican.
+          Las fuentes Fraunces y Manrope se cargan desde Google Fonts, por lo
+          que la tipografía exacta requiere conexión a Internet.
+          EOF
+          printf '#!/usr/bin/env bash\nset -e\ncd "$(dirname "$0")/site"\necho "Abre http://localhost:8080/?embed=1&view=login-v3"\npython3 -m http.server 8080 --bind 127.0.0.1\n' > /tmp/login-v3-chromebook/iniciar.sh
+          chmod +x /tmp/login-v3-chromebook/iniciar.sh
+          test -f /tmp/login-v3-chromebook/site/index.html
+          test -f /tmp/login-v3-chromebook/site/version.json
+          grep -q 'id="root"' /tmp/login-v3-chromebook/site/index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: login-v3-chromebook
+          path: /tmp/login-v3-chromebook/
+          retention-days: 7
+          if-no-files-found: error
   deploy:
     needs: build
     concurrency:

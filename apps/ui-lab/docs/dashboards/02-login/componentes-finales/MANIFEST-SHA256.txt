@@ -1,0 +1,11 @@
+LOGIN V3 — CLONES BYTE A BYTE · origen:  repositorio uniscrolliabrain-cloud/agente
+Commit de origen: 9f6b5a188a5fdc84787623e2fd4f08ae9397a2b0
+Generado: 2026-11-24T14:36:19Z
+
+af31d54bdd4bc685061e0d971e2ca9040eb3046be73d117fa979b0ced8f52ed8  .github/workflows/ui-lab.yml
+a91d089ea047d318ffd9d9c6d74bdf152772e5a8b8f4d7c2391bcbb2f2f8fc5e  apps/ui-lab/src/design-system/agntia-tokens.css
+9e94a94537ed1a76f4901d9f2e442b597ad6a2b4a4fc155d6a0f0e968af24c1a  apps/ui-lab/src/login-v3/LoginV3.tsx
+b2fbe775fe2e91c093509d4ec235eed83689b8f48d7427eb44da63c1ea9e62e0  apps/ui-lab/src/login-v3/login-v3.css
+a0a57ffe8013b561027950f95e18506c5698bf656239d1f95cea941ae30ecfee  apps/ui-lab/src/registry.tsx
+e20e81e8825f239bf2c6fa8439971449bc6c29ba13ee2b43c30f57fef6b478b1  apps/ui-lab/src/vite.config.ts
+2eaee7116d2d874f072ad02013579d5b771ab2088c8750ebb9f5458cdb87c602  apps/web/src/components/BrandMark.tsx
