@@ -36,7 +36,7 @@ La versión de Playwright está fijada en `.github/workflows/ui-lab.yml` (`PLAYW
 que instala `playwright@1.65.1` y, por tanto, la revisión de Chromium que ese paquete trae. El script
 comprueba la versión instalada y aborta con código 3 si no coincide con la fijada, de modo que no se
 puede medir con otro motor por descuido. Con `EXPECTED_BUILD_SHA` exige además que el bundle servido
-declare ese commit en `version.json`, y con `REPORT` escribe un JSON con SHA, versiones y los 41 checks.
+declare ese commit en `version.json`, y con `REPORT` escribe un JSON con SHA, versiones y los 43 checks.
 
 El `dist/` se sirve con `vite preview` (Node), no con `python3 -m http.server`: ese servidor de Python
 tiene una cola de conexiones de 5 y, cuando Chromium pide en paralelo el CSS de un chunk dinámico,
@@ -132,7 +132,7 @@ propia ejecución de QA a partir de su propio build.
 | CTA violeta anulado por el CSS general | No era un fallo | `.login-v3 .lv3-cta-violet` gana la cascada; medido `rgb(101, 80, 221)` |
 | Fallo de empaquetado: sin QA ni capturas en el ZIP | Corregido | el paso copia `QA.md`, `BITACORA-EJECUCION.md`, `capturas/` y `qa/` |
 | Empaquetado sin comprobar que la vista exista | Corregido | `grep 'id:"login-v3"'` antes de empaquetar |
-| Sin pruebas de navegador versionadas | Corregido | `scripts/qa-login-v3.mjs` (41 comprobaciones) |
+| Sin pruebas de navegador versionadas | Corregido | `scripts/qa-login-v3.mjs` (43 comprobaciones en CI) |
 | Sin pruebas de navegador en el workflow | Añadido, opt-in | input `browser_qa` (por defecto `false`), Playwright fijado y resultado en `qa/qa-report.json` |
 | El empaquetado hacía fallar el job en ramas sin la vista | Corregido | paso `Detect Login V3 view`; empaquetado y artifact condicionados a `present == 'true'` |
 | Arquitectura monolítica | No aplicado | recomendación de mantenibilidad, no bloqueante; queda como siguiente campaña |

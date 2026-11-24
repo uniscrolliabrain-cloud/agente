@@ -79,13 +79,13 @@ Alcance: solo las desviaciones señaladas. Sin rediseño, sin cambios de copy ni
 5. Contraseña: al colapsar se vacía el valor, se restaura `type=password` y se limpian error y aviso.
 6. Fuentes: Fraunces y Manrope empaquetadas en woff2 desde Google Fonts, con OFL, servidas por el bundle.
    Comprobado con `fonts.googleapis.com` y `fonts.gstatic.com` bloqueados.
-7. QA versionado: `apps/ui-lab/scripts/qa-login-v3.mjs` (41 comprobaciones de medidas, foco, motion,
+7. QA versionado: `apps/ui-lab/scripts/qa-login-v3.mjs` (43 comprobaciones en CI —42 en local— de medidas, foco, motion,
    persistencia, consola y reduced motion).
 8. Empaquetado: el ZIP incluye `QA.md`, la bitácora, `capturas/` y `qa/`; se comprueba que la vista exista
    en la rama y que los woff2 estén en `assets/`. Pruebas de navegador en CI como paso opt-in (`browser_qa`).
 9. Manifiesto de clones: corregida la ruta de `vite.config.ts` (`apps/ui-lab/vite.config.ts`).
 
-Verificación: `typecheck` y `build` en verde; 41 comprobaciones de navegador ejecutadas sobre el bundle
+Verificación: `typecheck` y `build` en verde; 43 comprobaciones de navegador ejecutadas en CI (42 en local) sobre el bundle
 en el navegador Cloud (el entorno no puede lanzar Chromium local: faltan `libnspr4`/`libnss3` y no hay
 `sudo`). Capturas regeneradas. El artifact de run 234 sigue siendo el de `c6cf874…`: requiere un nuevo
 `workflow_dispatch` con `deploy: false` para publicar este estado.

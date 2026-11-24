@@ -209,6 +209,7 @@ const metrics = await page.evaluate(() => {
   const card = document.querySelector(".lv3-card");
   const chip = document.querySelector(".lv3-chips button");
   const cta = document.querySelector(".lv3-cta-violet");
+  const wrap = document.querySelector(".lv3-wrap.lv3-main");
   const style = (element) => getComputedStyle(element);
   const h1Style = style(h1);
   const lineHeight = parseFloat(h1Style.lineHeight);
@@ -218,7 +219,13 @@ const metrics = await page.evaluate(() => {
     h1Lines: Math.round(h1.getBoundingClientRect().height / lineHeight),
     h1Tracking: h1Style.letterSpacing,
     cardWidth: Math.round(card.getBoundingClientRect().width),
-    cardX: Math.round(card.getBoundingClientRect().x),
+    // Alineación con el borde derecho del contenido: la x absoluta depende de si el
+    // sistema usa scrollbar clásica (15 px en el runner) o superpuesta.
+    cardRightGap: Math.round(
+      wrap.getBoundingClientRect().right -
+        parseFloat(style(wrap).paddingRight) -
+        card.getBoundingClientRect().right,
+    ),
     chipFontSize: parseFloat(style(chip).fontSize),
     chipPadding: `${style(chip).paddingTop} ${style(chip).paddingRight}`,
     chipRadius: style(chip).borderRadius,
@@ -231,7 +238,11 @@ const metrics = await page.evaluate(() => {
 check("H1 60 px a 1366", metrics.h1FontSize === 60, `${metrics.h1FontSize}px`);
 check("H1 en dos líneas", metrics.h1Lines === 2, `${metrics.h1Lines} líneas`);
 check("H1 con Fraunces local", /Fraunces/i.test(metrics.h1FontFamily), metrics.h1FontFamily);
-check("card de 500 px en x=756", metrics.cardWidth === 500 && metrics.cardX === 756, `${metrics.cardWidth}×${metrics.cardX}`);
+check(
+  "card de 500 px pegada al borde derecho del contenido",
+  metrics.cardWidth === 500 && Math.abs(metrics.cardRightGap) <= 1,
+  `${metrics.cardWidth} px, hueco ${metrics.cardRightGap} px`,
+);
 check("chips 11 px / 6-10 de padding", metrics.chipFontSize === 11 && metrics.chipPadding === "6px 10px", `${metrics.chipFontSize}px ${metrics.chipPadding}`);
 check("chip pill", metrics.chipRadius === "100px", metrics.chipRadius);
 check("CTA violeta no anulado por la cascada", metrics.ctaBackground === "rgb(101, 80, 221)" && metrics.ctaColor === "rgb(255, 255, 255)", `${metrics.ctaBackground} / ${metrics.ctaColor}`);

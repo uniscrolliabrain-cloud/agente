@@ -543,7 +543,9 @@ export default function LoginV3({ onLogin }: LoginV3Props) {
         }}
         onClose={() => {
           setInviteOpen(false);
-          inviteTriggerRef.current?.focus();
+          // En el siguiente frame: el navegador aún devuelve el foco por su cuenta
+          // al cerrar el diálogo y puede dejarlo en <body>.
+          requestAnimationFrame(() => inviteTriggerRef.current?.focus());
         }}
         onClick={(event) => {
           if (event.target === event.currentTarget) closeInvite();
