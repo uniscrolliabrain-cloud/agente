@@ -27,6 +27,7 @@ const TodayEditorial=lazy(()=>import("./command-center-editorial/CommandCenterEd
 const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
 const AppsLauncher=lazy(()=>import("./apps-launcher/AppsLauncher"));
 const ChatTransversalV3=lazy(()=>import("./chat-transversal-v3/ChatTransversalV3"));
+const DocumentsExplorer=lazy(()=>import("./documents-explorer/DocumentsExplorer"));
 export type Preview={id:string;name:string;category:string;description:string;Component:ComponentType;status:"fixture"|"demo"|"api";};
 export const previews:Preview[]=[
 {id:"full-app",name:"Aplicación completa",category:"Aplicación",description:"App.tsx original, navegación y shell reales en tenant demo",Component:FullApp,status:"demo"},
@@ -45,6 +46,7 @@ export const previews:Preview[]=[
 {id:"today",name:"Inicio / Hoy",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:Today,status:"demo"},
 {id:"today-editorial",name:"Inicio · Editorial V2",category:"Trabajo",description:"Refinamiento editorial del Centro de Mando sobre los mismos datos demo, filtros, permisos y callbacks",Component:TodayEditorial,status:"demo"},
 {id:"tasks",name:"Tareas",category:"Trabajo",description:"Componente original con tareas ficticias",Component:()=> <Tasks tasks={tasks} currentUserId={null} onOpenTask={()=>{}} onReviewTask={()=>{}}/>,status:"fixture"},
+{id:"documents-explorer",name:"Documentos · Explorador V1",category:"Trabajo",description:"Explorador experimental con navegación y operaciones locales sintéticas",Component:DocumentsExplorer,status:"fixture"},
 {id:"documents",name:"Documentos",category:"Trabajo",description:"Vista original con archivos ficticios",Component:()=> <Docs files={files}/>,status:"api"},
 {id:"projects",name:"Proyectos",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:()=> <Projects enabled={true}/>,status:"api"},
 {id:"team",name:"Equipo",category:"Trabajo",description:"Vista original con sesión demo aislada",Component:Team,status:"api"},
