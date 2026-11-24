@@ -1,8 +1,4 @@
-# 02 · Login
-
-Rediseño editorial propuesto del acceso a AgntiaPro, sin cambiar autenticación existente.
-
-- [Prompt maestra Login V2](./PROMPT-MAESTRA-LOGIN-V2.md)
-- [Auditoría Login V2](./AUDITORIA-LOGIN-V2.md)
-
-Estado: documentación. Sin cambios de código ni despliegue.
+# 02 · Login — paquete de ejecución V3
+Estado: composición objetivo definida por PNG del founder; branding de landing activa; pendiente de render y aprobación. No ejecutar hasta orden expresa. Una vez autorizada, ejecutar campaña completa sin paradas intermedias.
+Orden único: 1. [Prompt maestra V3 (nombre histórico V2)](./PROMPT-MAESTRA-LOGIN-V2.md) y [PNG](./login-mockup-falta-adaptar-branding-y-copy.png). 2. [Contrato visual](./CONTRATO-VISUAL.md). 3. [Campaña](./CAMPAÑA-EJECUCION.md). 4. [Gate](./GATE-ACEPTACION-VISUAL.md). 5. [Snapshot](./componentes-reales/README.md) y fuentes activas citadas. Leer guía branding en landing y kickoffs pertinentes. No leer Studio/Formación como requisito de diseño.
+Precedencia: código activo para contratos; PNG para composición; landing para identidad; contrato visual para medidas; V3 para copy y estados; campaña para ejecución. Handoff y auditoría anteriores quedan subordinados. No nuevo mockup ni rediseño. Entrega: preview login-v3, clones finales, QA y artifact Chromebook. No producción ni deploy.
