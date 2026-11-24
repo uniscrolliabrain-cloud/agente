@@ -49,3 +49,15 @@ Estado: W0 PENDING. Base común 751eab413aef2ca124d42dcba602b91696b71c9d. Tests 
 - Validación: `pnpm typecheck` exit 0; 82/82 pruebas focales; regresión ampliada 92 pruebas (90 PASS, 2 SKIP, 0 FAIL); 8/8 audits exit 0. `pnpm gate` completo, Postgres restringido, proveedores reales y OTLP: NOT_RUN.
 - Bloqueos vivos: C01 (ABI trans02), E03 (recibo compartido), A03-adapters (Trans03 declare `outcome`), `capabilityId` en la propuesta (trans02) y activación certificada de `governed_v2` (B2).
 - **M1.1 · READY FOR REVIEW · B2 PENDING SUPERVISOR.** Sin autorización para T03/M2.
+
+## M1.2 · Eliminar garantías condicionales · 24 de noviembre de 2026
+
+- Continuación sobre `fac25f8`; campaña leída en `2d6aecf` sin integrarla. Sin merge, rebase, deploy, secretos ni efectos externos. No se inicia M2 ni T03. [Índice M1.2](M1.2-PATCHSETS.md), [evidencia](M1.2-EVIDENCIA.md) y [contratos](M1.2-CONTRATOS.md).
+- **K08.** La aprobación deja de tener comprobaciones condicionales: `capabilityId`, operación, payload, tenant, tarea, principal, hash, revisión y caducidad son obligatorios, y su ausencia deniega. La generación de conexión debe ser la **vigente**, resuelta por un verificador inyectado desde `service.ts`; sin verificador, el efecto externo se deniega. `sessionId` deja de valer como aprobación.
+- **K08b.** `prepare_email` / `prepare_event` dejan de declararse `external_write` + `requiresApproval`: preparar crea una propuesta local y la aprobación pertenece al envío, que es donde hay efecto y donde el vínculo puede comprobarse.
+- **K09.** La identidad de servicio sale de un scope del kernel (`runAsServicePrincipal`) con principal registrado y fuentes declaradas. Un `service:*` escrito por el llamador ya no autentica; el bus contrasta la identidad declarada con la ambiente.
+- **K10.** El cursor de replay pasa a `seq`, una posición por tenant asignada bajo el lock del contador que se mantiene hasta el commit. `updated_at` era la hora de inicio de la transacción y no probaba visibilidad: con dos transacciones concurrentes una fila podía quedar antes del cursor y perderse. Un cursor sin posición deniega; al arrancar se numera el log anterior y se siembra el contador.
+- **K11.** El CAS es dependencia obligatoria de la ruta gobernada (`GOVERNED_CAS_REQUIRED`, sin fallback a `put`); toda capability con efecto declarado exige claim aunque se llame `idempotent`; y un resultado sin discriminante queda `outcome_unknown`, no `done`.
+- Validación: `pnpm typecheck` exit 0; **101/101** pruebas focales (15 ficheros); **2/2** pruebas de concurrencia contra PostgreSQL 16.15 real; regresión ampliada 91 pruebas (81 PASS, 1 SKIP, 0 FAIL) en dos lotes más 10 del gate; 8/8 audits exit 0. `pnpm gate` completo, proveedores reales, OTLP y caída en proceso separado: NOT_RUN.
+- Bloqueos vivos: C01 (ABI trans02), E03 (recibo compartido), A03-adapters (Trans03 declare `outcome`), activación certificada de `governed_v2` (B2). El clúster Postgres de la prueba es efímero del sandbox y no se versiona.
+- **M1.2 · READY FOR REVIEW · B2 PENDING SUPERVISOR.** Sin autorización para T03/M2.
