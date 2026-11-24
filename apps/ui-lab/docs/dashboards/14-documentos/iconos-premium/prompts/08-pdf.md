@@ -5,9 +5,10 @@ Create a world-class luxury industrial design 3D icon for AgntiaPro, a premium a
 ## Subject and geometry
 Translate the master folder's industrial design language into a single upright portrait document slab: warm ivory matte porcelain, gently rounded lower corners, a recognizable folded upper-right corner, thin champagne brass structural edging and a recessed satin violet backing. Establish this as the shared document silhouette across icons 05–16. The slab is thin and refined, never a bulky tablet. Match the approved folder's optical weight and near-frontal camera angle.
 
-## Sculptural semantic emblem
-A portrait ivory document with a folded upper-right corner revealing muted burgundy ceramic. Center a sculptural continuous ribbon forming a simple three-lobed abstract document mark in deep red satin ceramic, with a small precise PDF type mark beneath. No corporate logo, no additional writing.
-The emblem must be physically integrated into the main surface, with precision bevels, convincing contact shadows and generous breathing room. Prioritize instant recognition at 32 pixels; no tiny ornamental details.
+## Individual art direction and sculptural construction
+Preserve the master violet backing and dog-ear; burgundy belongs exclusively to the semantic emblem and type mark. Create a single continuous sculptural ribbon of deep burgundy satin ceramic (#A4424B), folded into an abstract triangular three-loop motif with a clearly visible central opening. Its broad, consistent ribbon width and gently rounded turns should evoke a fixed-format document seal without reproducing a corporate logo. The ribbon sits in low relief on the porcelain, with controlled overlap at one crossing and no impossible intersections. Occupy roughly 56% of the face width, with generous clear space around it. Center PDF in the master lower type zone in matching burgundy. The mark must read as a coherent silhouette at thumbnail size; if the ribbon becomes ambiguous, simplify its curves rather than adding detail. No red page backing, Adobe logo, wax seal, printed paragraphs or gradients.
+
+Treat these proportions as optical design targets, not visible annotations. Match the approved reference's material roughness, edge highlights and contact shadows. The emblem must be recognizable without relying on its type mark.
 
 ## Materials
 Warm matte ivory porcelain (#FCFAF6), rich satin violet (#6550DD), genuine brushed champagne brass (#B49665). Use only the semantic accent specified above, if any. Fine microtexture, realistic ceramic roughness, anisotropic brushed metal, controlled highlights and precision-machined edges. No shiny plastic. Material separation must be physically believable.
@@ -24,5 +25,5 @@ Photorealistic premium CGI, physically based rendering, global illumination, exc
 ## Strict exclusions
 No watermarks, corporate logos, borders, decorative backgrounds, floating particles, exaggerated reflections, cartoon aesthetics or extra objects. No text except the exact file-type mark explicitly requested above. No external captions. Generate one square 1024 × 1024 image.
 
-## Acceptance gate (not part of the image)
-Compare against the three founder-approved images before accepting. Reject inconsistent camera, background, material finish, optical scale, ambiguous emblem, misspelled type marks or visible artifacts. For document icons, compare against the approved 05 document silhouette once available. Inspect at 1024, 128 and 32 pixels. Regenerate individually if needed; never batch-generate a contact sheet.
+## Acceptance gate (operator only; exclude from image prompt)
+Attach the actual three founder-approved PNG references to the image generation request; a textual reference alone is insufficient. For 06–16 also attach the approved 05 DOCX render. If these assets are unavailable, stop and request them rather than improvising. Compare against the references before accepting. Reject inconsistent camera, background, material finish, optical scale, ambiguous emblem, misspelled type marks or visible artifacts. For document icons, compare against the approved 05 document silhouette once available. Inspect at 1024, 128 and 32 pixels. Regenerate individually if needed; never batch-generate a contact sheet.
