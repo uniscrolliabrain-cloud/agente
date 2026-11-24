@@ -195,10 +195,25 @@ async function main() {
       flipStart.running && flipEnd - flipMid > 40,
       `${flipStart.top.toFixed(0)} → ${flipMid.toFixed(0)} → ${flipEnd.toFixed(0)} px`,
     );
-    await page.waitForTimeout(90);
     await shot(page, "03a-transicion-90ms");
-    await page.waitForTimeout(700);
-    await shot(page, "03b-transicion-790ms");
+    await page.waitForTimeout(200);
+
+    // Streaming real: texto creciente, cursor y control de detener.
+    const stream = await page.evaluate(() => ({
+      text: document.querySelector(".cux-stream-text")?.textContent ?? "",
+      cursor: Boolean(document.querySelector(".cux-cursor")),
+      stop: Boolean(document.querySelector(".cux-send[aria-label='Detener respuesta']")),
+      textareaDisabled: document.querySelector(".cux-composer textarea")?.disabled,
+    }));
+    check(
+      "Streaming: texto creciente con cursor",
+      stream.text.length > 20 && stream.cursor,
+      `${stream.text.length} chars`,
+    );
+    check("Streaming: control de detener visible", stream.stop === true);
+    check("Streaming: compositor bloqueado mientras responde", stream.textareaDisabled === true);
+    await shot(page, "04-streaming-1440x900");
+
     const after = await page.evaluate(() => {
       const dock = document.querySelector(".cux-dock").getBoundingClientRect();
       return {
@@ -235,22 +250,7 @@ async function main() {
       `${after.height}/${after.innerHeight}`,
     );
 
-    // Streaming real: texto creciente, cursor, cancelacion.
-    await page.waitForTimeout(900);
-    const stream = await page.evaluate(() => ({
-      text: document.querySelector(".cux-stream-text")?.textContent ?? "",
-      cursor: Boolean(document.querySelector(".cux-cursor")),
-      stop: Boolean(document.querySelector(".cux-send[aria-label='Detener respuesta']")),
-      textareaDisabled: document.querySelector(".cux-composer textarea")?.disabled,
-    }));
-    check(
-      "Streaming: texto creciente con cursor",
-      stream.text.length > 20 && stream.cursor,
-      `${stream.text.length} chars`,
-    );
-    check("Streaming: control de detener visible", stream.stop === true);
-    check("Streaming: compositor bloqueado mientras responde", stream.textareaDisabled === true);
-    await shot(page, "04-streaming-1440x900");
+    await shot(page, "03b-transicion-790ms");
     await page.locator(".cux-send[aria-label='Detener respuesta']").click();
     await page.waitForTimeout(500);
     const cancelled = await page.evaluate(() => ({

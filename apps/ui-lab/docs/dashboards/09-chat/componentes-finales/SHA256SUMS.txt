@@ -10,4 +10,4 @@ d4810bc86bf43dcf2c88b92163394be7b643793339236fe033c59a175bcba237  apps/ui-lab/sr
 e9d4366a103ce0342c35b17da0450251435ca4de38b172eb7ef90139f32032b0  apps/ui-lab/src/chat-ux-v2/chat-ux-v2.css
 8dfd3cb8eba20f98a7fcdb11a754b2ea77cae6d5deaf1c49853362420f256e5b  apps/ui-lab/src/chat-ux-v2/fixture.ts
 8c2def024c1bf31aacf3624ae3c4d701269b4ec3dc765c04830839f0d36b2d9e  apps/ui-lab/src/chat-ux-v2/fonts/manrope-latin-var.woff2
-b25587989e8498e51ebe84cd185f368bdc724e57f4c292314cfe83b964421416  apps/ui-lab/src/chat-ux-v2/useChatFixture.ts
+0a35aa879271e3b76d5ccb11a8c0b7eb37db653915e4a005a7f4d0452dce9c28  apps/ui-lab/src/chat-ux-v2/useChatFixture.ts

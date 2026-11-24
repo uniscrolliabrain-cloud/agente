@@ -37,7 +37,9 @@ export function useChatFixture(state: FixtureState, initialRole?: string) {
     const started = Date.now();
     setTools([{ id: "fixture-tool-running", name: "consultar_proyectos", status: "running", startedAt: started }]);
 
-    const chunks = streamingReply.match(/.{1,18}(\s|$)/g) ?? [streamingReply];
+          // Trozos pequeños para que la fixture mantenga el streaming durante los
+      // recorridos de QA (no es la velocidad del backend real).
+      const chunks = streamingReply.match(/.{1,12}(\s|$)/g) ?? [streamingReply];
     let buffer = "";
     let index = 0;
 
@@ -95,7 +97,7 @@ export function useChatFixture(state: FixtureState, initialRole?: string) {
           buffer += chunks[index];
           index += 1;
           setStreamBuf(buffer);
-          timers.current.push(setTimeout(tick, 46 + Math.round(Math.random() * 34)));
+                      timers.current.push(setTimeout(tick, 60 + Math.round(Math.random() * 40)));
         };
         tick();
       }, 520),
