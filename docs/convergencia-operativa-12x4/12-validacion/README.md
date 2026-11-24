@@ -19,3 +19,9 @@ Cada bloque: leer código vivo y AGENTS.md; inventariar paths exactos y dependen
 - [02-coding-audit-transversal](02-coding-audit-transversal/README.md)
 - [03-reaudit-refactoring](03-reaudit-refactoring/README.md)
 - [04-reaudit-hardening](04-reaudit-hardening/README.md)
+
+## Ajuste de auditoría contra código vivo (24-11-2026)
+
+Usar pnpm gate, pnpm test:cognition-v2, pnpm verify:slice, pnpm release:check y pnpm release:verify según scripts reales. gate:cognition-v2 consume artifacts/gate/report.json y actualmente emite NO_GO con exit 1 aun si gate base verde; actualizar bloqueos solo con evidencia, no neutralizar exit. Distinguir PGlite, Postgres restringido, sandbox y producción.
+
+Estado: inspección estática; confirmar HEAD y ejecutar gates.
