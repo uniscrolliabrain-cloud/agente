@@ -1195,7 +1195,13 @@ app.route("/api/computer", computerRoutes(computer, files, tenantService));
     join(here, "../../../apps/web/dist"),
     join(here, "../../../../apps/web/dist"),
   ].find((dir) => existsSync(dir));
-  if (webDist) app.use("/*", serveStatic({ root: webDist }));
+  if (webDist) {
+    app.use("/*", serveStatic({ root: webDist }));
+    // PUBLIC_ROUTE_LEGAL_V1 - /legal es una ruta pública del cliente; sin este
+    // fallback el servidor devolvería 404 al recargar o abrir un enlace directo.
+    app.get("/legal", serveStatic({ root: webDist, path: "index.html" }));
+    app.get("/legal/", serveStatic({ root: webDist, path: "index.html" }));
+  }
   app.get("/", (c) =>
     c.json({ name: "Laia", app: "http://localhost:8081", health: "/api/health" }),
   );

@@ -40,3 +40,5 @@ repomix-*.md
 scripts/fixes/*.ps1
 apps/server/src/engine/service.ts
 *.corrupt.bak
+
+.qa/
