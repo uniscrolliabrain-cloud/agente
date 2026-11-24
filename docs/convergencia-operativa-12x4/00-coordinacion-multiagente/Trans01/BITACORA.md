@@ -34,3 +34,18 @@ Estado: W0 PENDING. Base común 751eab413aef2ca124d42dcba602b91696b71c9d. Tests 
 - **M1 · READY FOR REVIEW · B2 PENDING SUPERVISOR.** Bloqueos: C01 selector (ABI trans02), H01 hooks (interfaz Trans04), E03 recibo empresarial (contrato compartido), A03 clasificación de errores de adaptador (Trans03) y activación de `governed_v2` en `service.ts` (inventario de callers + B2).
 - Reserva registrada: `apps/server/src/db.ts` y `db-tenant.ts` para el quinto argumento del claim, aditivo y opcional; `null` conserva el comportamiento previo. Confirmar en B2.
 - Riesgo residual: sin el discriminante de Trans03, un error no clasificado posterior al despacho se registra como `failed` reintentable (comportamiento previo conservado); los errores que declaran `outcomeUnknown` ya quedan ambiguos. Sin migración nueva. Próximo paso: revisión combinada B2; no se autoriza T03.
+
+## M1.1 · Consolidación de la autoridad del kernel · 24 de noviembre de 2026
+
+- Continuación sobre `fe6eea8`; campaña leída en `2d6aecf` sin integrarla. Sin merge, rebase, deploy, secretos ni efectos externos. No se inicia M2.
+- [Índice M1.1](M1.1-PATCHSETS.md), [evidencia M1.1](M1.1-EVIDENCIA.md) y [contratos publicados](M1.1-CONTRATOS.md).
+- **K01.** `engine/execution/outcome.ts` define una sola taxonomía (`rejected_before_dispatch`, `failed_without_effect`, `accepted`, `confirmed`, `unknown`). `retrySafe` exige evidencia positiva; un error genérico posterior al despacho queda `outcome_unknown`; el claim nuevo `accepted` no se reenvía. Se aplica también a `ActionService.run`. Esto **cierra el riesgo residual 1 de M1**: el error no clasificado ya no se reintenta.
+- **K02.** La autoridad no depende del perfil para lo privilegiado: efecto externo o aprobación exigen actor, rol vigente, PDP y store en cualquier perfil; `governed_v2` extiende la exigencia a lecturas y se elige con `CAPABILITY_RUNNER_PROFILE`, reversible. La aprobación queda atada a tenant, tarea, hash, revisión, caducidad, principal, generación de conexión y consumo único por paso, y se revalida justo antes de `exec.run`.
+- **K03.** `computer_command` sin rol se deniega (antes continuaba hacia el sandbox), rol inactivo se deniega, actor = principal que encargó la tarea y abort antes del efecto; `transition_entity` valida rol. Los demás casos de `runStep` quedan clasificados en el código.
+- **K04.** El actor causal sale del contexto autorizado; un id distinto es `ACTOR_NOT_AUTHENTICATED`; los procesos internos usan `service:*` con fuente de la allowlist; la personalidad nunca es actor; el legacy sigue legible sin garantías retroactivas.
+- **K05.** El replay ordena y pagina por `(updated_at, id)`, la posición durable de inserción: una inserción tardía con `emittedAt` anterior al cursor ya se recupera. El fallback sin SQL falla explícitamente en vez de devolver una ventana truncada.
+- **K06.** Decisión + recibo + auditoría + actividad + intención `action-dispatch` en una transacción; `maintain` reconcilia intenciones huérfanas a `outcome_unknown` sin reenviar el efecto.
+- **K07.** Seam de telemetría no bloqueante con allowlist de atributos (etapa, estado, duración, capability, clase de error) para T04-H01; una denegación se observa como denegación y un rollback como rollback.
+- Validación: `pnpm typecheck` exit 0; 82/82 pruebas focales; regresión ampliada 92 pruebas (90 PASS, 2 SKIP, 0 FAIL); 8/8 audits exit 0. `pnpm gate` completo, Postgres restringido, proveedores reales y OTLP: NOT_RUN.
+- Bloqueos vivos: C01 (ABI trans02), E03 (recibo compartido), A03-adapters (Trans03 declare `outcome`), `capabilityId` en la propuesta (trans02) y activación certificada de `governed_v2` (B2).
+- **M1.1 · READY FOR REVIEW · B2 PENDING SUPERVISOR.** Sin autorización para T03/M2.
