@@ -1,19 +1,39 @@
 # QA post-deploy
 
-Se completa **solo con evidencia del dominio real**. No se considera terminado porque
-Vercel o GitHub Actions digan «success».
+Verificado en el dominio real el 2026-11-24 tras el run `45483309302`.
 
-## Pendiente
+## Comprobado
 
-- [ ] `https://www.agntiapro.com/` sirve Login V3.
-- [ ] `/legal`, `/legal#privacidad`, `/legal#cookies` y recarga directa responden 200.
-- [ ] Redirects `agntiapro.com/{aviso-legal,privacidad,terminos,cookies,transparencia-ia,confianza}.html`.
-- [ ] Landing sin cambios visuales; banner a los 5 s y preferencias desde footer.
-- [ ] OAuth Google/GitHub y contraseña con una cuenta autorizada.
-- [ ] Logout y restauración de sesión.
-- [ ] Consola sin errores y recursos (Manrope/Fraunces) cargados.
-- [ ] Móvil 390×844 y 360×800.
+- [x] `https://www.agntiapro.com/` sirve Login V3 con el bundle nuevo
+  (`assets/index-CbQzsTvG.js`, idéntico al `dist` local).
+- [x] `/legal` responde 200 y renderiza la portada editorial.
+- [x] `/legal#privacidad` abre directamente el documento correcto, con scroll y título
+  `Política de privacidad · Legal · AgntiaPro`.
+- [x] Los seis documentos aparecen como `PUBLICADO`, versión 21-nov-2026, con contenido
+  real (titular, NIF, domicilio, derechos).
+- [x] OAuth: `/api/auth/oauth/google/start` y `/github/start` responden 302 a Google y
+  GitHub con `redirect_uri=https://www.agntiapro.com/api/auth/oauth/.../callback` y
+  `state`. No se completó el consentimiento (requiere cuenta).
+- [x] Demo: «Entrar en el espacio de ejemplo» autentica contra la API real y monta el
+  shell completo, con aviso «Tenant demo · Datos sintéticos».
+- [x] Logout: «Salir» vuelve al login y limpia la sesión.
+- [x] `/api/health` en verde (database, bus, worker, agentConfigured).
+- [x] Fuentes Manrope/Fraunces servidas desde el dominio; sin errores de JS.
+- [x] Landing del ápice intacta (`last-modified` 22-nov, cache HIT).
+- [x] `favicon.ico` es el único 404 de consola (no bloqueante).
 
-## Verificación mínima ya hecha en preview
+## Pendiente / no verificado
 
-Descrita en `05-QA-PREDEPLOY.md`. No sustituye a la comprobación del dominio.
+- [ ] Login completo con Google/GitHub o contraseña y restauración de sesión con una
+  cuenta real. Requiere credenciales del founder; no se solicitan por chat.
+- [ ] Redirects de `agntiapro.com/{aviso-legal,privacidad,...}.html`: el job de Vercel
+  falló por cuota, así que las URLs antiguas siguen respondiendo 200 con su HTML.
+- [ ] Banner de cookies en la landing: no publicado por el mismo bloqueo.
+- [ ] Viewports 1440×900, 1366×768, 768×1024, 360×800 y 320×568. La comprobación real se
+  hizo a 1024×768; el QA de preview cubrió 390×844.
+- [ ] Centro de Mando, chat principal, chat transversal y Launcher: no integrados.
+
+## Capturas reales
+
+- `capturas/live-login.png` (1024×768, dominio real, banner visible).
+- `capturas/live-legal.png` (deep link `#privacidad`).

@@ -15,16 +15,31 @@
 - Rama: `feat/dogfooding-v1`.
 - Commit desplegado: `cc5752453a03d907586a4b726fbf960d669ad5d0`.
 - Run: [45483309302](https://github.com/uniscrolliabrain-cloud/agente/actions/runs/45483309302).
-- Resultado: **pendiente de terminar** en el momento de escribir este documento.
-- SHA anterior en producción: no verificable sin `FLY_API_TOKEN`/Vercel; ver rollback.
+- Resultado global: **failure**, por el job de Vercel. No es un fallo de código.
 
-## Precauciones tomadas
+| Job | Resultado | Detalle |
+|---|---|---|
+| `gate` | success | install, typecheck, `pnpm test` (3 min 32 s) y `audit:coherence` |
+| `fly (api + worker)` | success | imagen `cc57524` en `agntiapro-api` y `agntiapro-worker` |
+| `vercel (sitio publico)` | **failure** | `api-deployments-free-per-day`: más de 100 deployments/día en el plan gratuito |
+| `humo en produccion` | skipped | depende de Vercel |
 
-- No se ha tocado `main`; el deploy sale de una rama con el snapshot exacto de la landing.
-- `apps/site` se sincronizó con el contenido vivo antes de publicar.
-- No hay migraciones ni cambios de esquema.
-- El servidor solo añade el fallback estático de `/legal`; no cambia contratos de API.
+## Qué quedó publicado
 
-## Si el gate falla
+- Panel real en `https://www.agntiapro.com` con el bundle `index-CbQzsTvG.js`:
+  Login V3 y `/legal` activos.
+- API y worker con la misma etiqueta `cc57524`; `/api/health` responde
+  `{"ok":true,"mode":"live","checks":{"database":true,"bus":true,"worker":true,"agentConfigured":true}}`.
+- Landing del ápice **sin cambios**: sigue el deployment del 22-nov-2026
+  (`last-modified: Sun, 22 Nov 2026 14:03:37 GMT`, `x-vercel-cache: HIT`).
 
-No se despliega nada: Fly y Vercel dependen de `gate`. El detalle quedará en el run.
+## Bloqueo de Vercel
+
+El log del job muestra que el CLI autentica, resuelve `uniscroll2/agntiapro-site` y sube
+15,5 KB, pero la API rechaza el deployment por cuota diaria del plan gratuito. No es un
+problema de token, proyecto ni `vercel.json`.
+
+Consecuencia: el banner de la landing y los redirects de las URLs legales antiguas **no
+están activos** todavía. No afecta al panel ni a `/legal`. Se puede reintentar el job
+`vercel` cuando la cuota se restablezca (24 h) o promover el deployment desde el panel de
+Vercel; no requiere cambios de código.

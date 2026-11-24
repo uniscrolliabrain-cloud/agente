@@ -10,6 +10,13 @@
 3. **Legal V1 no tenía texto.** Se recuperaron los seis documentos publicados; no se
    inventó contenido ni se presentó un borrador como oficial.
 
+## Bloqueo externo al código
+
+- **Cuota diaria de Vercel agotada.** El job `vercel` autenticó y subió 15,5 KB, pero la
+  API respondió `api-deployments-free-per-day` (>100 deployments/día). La landing sigue
+  intacta, pero el banner y los redirects legales del ápice no se publicaron. Reintentar
+  cuando se restablezca la cuota; no hay cambio de código pendiente.
+
 ## No bloqueantes / deuda
 
 - **Solo dos superficies promovidas.** Chat transversal, Centro de Mando editorial,
@@ -24,6 +31,7 @@
   `www.agntiapro.com/legal#…`; dependen de que el panel esté desplegado.
 - **SHA desplegado desconocido.** Sin `FLY_API_TOKEN` no se pudo leer la release previa;
   el rollback usa `flyctl releases`.
+- **`favicon.ico` devuelve 404.** Cosmético, no rompe la carga.
 - **Banner sobre la tarjeta de login a 1024×768.** Es fijo, no desplaza contenido, pero
   tapa la zona baja de la tarjeta mientras está visible. Se puede mover a ancho completo
   en una próxima iteración.

@@ -34,5 +34,7 @@
 - [x] Typecheck global y build de `apps/web`.
 - [x] QA de navegador de Login, Legal, consentimiento y móvil.
 - [x] Commit pequeño por superficie y rama publicada.
-- [x] Workflow de producción lanzado (`run 45483309302`).
-- [ ] Verificación post-deploy en dominio y con sesión real.
+- [x] Workflow de producción lanzado (`run 45483309302`); Fly y gate en verde.
+- [x] Verificación en dominio: Login V3, `/legal`, OAuth 302, demo y logout.
+- [ ] Landing y redirects del ápice: bloqueados por cuota diaria de Vercel.
+- [ ] Login completo y restauración con una cuenta real.
