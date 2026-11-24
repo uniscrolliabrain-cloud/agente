@@ -19,3 +19,9 @@ Cada bloque: leer código vivo y AGENTS.md; inventariar paths exactos y dependen
 - [02-coding-audit-transversal](02-coding-audit-transversal/README.md)
 - [03-reaudit-refactoring](03-reaudit-refactoring/README.md)
 - [04-reaudit-hardening](04-reaudit-hardening/README.md)
+
+## Ajuste de auditoría contra código vivo (24-11-2026)
+
+Reutilizar apps/server/src/google-auth.ts: GoogleConnection, vault cifrado, OAuth state/PKCE, generation CAS, membership. READ_SCOPES Gmail/Calendar/Drive; WRITE_SCOPES actuales incluyen permisos amplios y WRITE_MARKER Gmail full. Auditar scopes mínimos por capacidad y compatibilidad de revocación antes de ampliar Docs; Maps es credencial/egress distinto. No crear OAuth paralelo.
+
+Estado: inspección estática; confirmar HEAD y ejecutar gates durante la campaña.
