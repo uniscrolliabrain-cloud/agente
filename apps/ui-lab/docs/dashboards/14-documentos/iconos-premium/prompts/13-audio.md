@@ -5,9 +5,10 @@ Create a world-class luxury industrial design 3D icon for AgntiaPro, a premium a
 ## Subject and geometry
 Translate the master folder's industrial design language into a single upright portrait document slab: warm ivory matte porcelain, gently rounded lower corners, a recognizable folded upper-right corner, thin champagne brass structural edging and a recessed satin violet backing. Establish this as the shared document silhouette across icons 05–16. The slab is thin and refined, never a bulky tablet. Match the approved folder's optical weight and near-frontal camera angle.
 
-## Sculptural semantic emblem
-A portrait ivory document with folded corner. Center five sculptural vertical waveform bars of carefully varied heights, with rounded ends, alternating violet ceramic and brushed champagne brass. Keep the waveform symmetrical and visually distinct from a spreadsheet. Add a small MP3 type mark.
-The emblem must be physically integrated into the main surface, with precision bevels, convincing contact shadows and generous breathing room. Prioritize instant recognition at 32 pixels; no tiny ornamental details.
+## Individual art direction and sculptural construction
+Create a tactile acoustic waveform as five upright capsule-shaped ceramic and metal bars, centered on a shared horizontal midline. Use relative heights 40:70:100:70:40, equal widths and equal visible gaps. The center and outer bars are satin violet; the two intermediate bars are brushed champagne brass. Each capsule has rounded ends, shallow consistent relief and a fine bevel; metal brushing follows its vertical axis. The overall waveform occupies approximately 65% of face width. Avoid a baseline or bottom alignment so it reads as sound rather than a financial bar chart. Center MP3 in the common lower type zone in violet. No musical notes, headphones, speakers or extra oscillations. The result should feel like a miniature high-end audio hardware control, with clear rhythm and symmetry.
+
+Treat these proportions as optical design targets, not visible annotations. Match the approved reference's material roughness, edge highlights and contact shadows. The emblem must be recognizable without relying on its type mark.
 
 ## Materials
 Warm matte ivory porcelain (#FCFAF6), rich satin violet (#6550DD), genuine brushed champagne brass (#B49665). Use only the semantic accent specified above, if any. Fine microtexture, realistic ceramic roughness, anisotropic brushed metal, controlled highlights and precision-machined edges. No shiny plastic. Material separation must be physically believable.
@@ -24,5 +25,5 @@ Photorealistic premium CGI, physically based rendering, global illumination, exc
 ## Strict exclusions
 No watermarks, corporate logos, borders, decorative backgrounds, floating particles, exaggerated reflections, cartoon aesthetics or extra objects. No text except the exact file-type mark explicitly requested above. No external captions. Generate one square 1024 × 1024 image.
 
-## Acceptance gate (not part of the image)
-Compare against the three founder-approved images before accepting. Reject inconsistent camera, background, material finish, optical scale, ambiguous emblem, misspelled type marks or visible artifacts. For document icons, compare against the approved 05 document silhouette once available. Inspect at 1024, 128 and 32 pixels. Regenerate individually if needed; never batch-generate a contact sheet.
+## Acceptance gate (operator only; exclude from image prompt)
+Attach the actual three founder-approved PNG references to the image generation request; a textual reference alone is insufficient. For 06–16 also attach the approved 05 DOCX render. If these assets are unavailable, stop and request them rather than improvising. Compare against the references before accepting. Reject inconsistent camera, background, material finish, optical scale, ambiguous emblem, misspelled type marks or visible artifacts. For document icons, compare against the approved 05 document silhouette once available. Inspect at 1024, 128 and 32 pixels. Regenerate individually if needed; never batch-generate a contact sheet.
