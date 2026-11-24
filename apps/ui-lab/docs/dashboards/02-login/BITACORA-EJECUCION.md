@@ -42,7 +42,7 @@ UI_LAB_BUILD_SHA=<sha> pnpm --filter @agente/ui-lab build → OK
 
 Navegador real a 320/360/390/768/1024/1280/1366/1440/1920: sin overflow horizontal, fuentes cargadas,
 estados y teclado verificados (detalle en `QA.md`). Clones byte a byte en `componentes-finales/` con
-`MANIFEST-SHA256.txt` (7 archivos; `cmp` verificado en la generación).
+`MANIFEST-SHA256.txt` (12 archivos con hash; `cmp` verificado en la generación).
 
 ## T05–T06 — Artifact y publicación de rama
 

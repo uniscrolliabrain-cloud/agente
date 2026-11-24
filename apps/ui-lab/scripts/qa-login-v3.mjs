@@ -8,33 +8,63 @@
  * Uso:
  *   pnpm --filter @agente/ui-lab build
  *   (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
- *   npm i --prefix /tmp/pw playwright
+ *   npm i --prefix /tmp/pw --no-save playwright@1.65.1
  *   /tmp/pw/node_modules/.bin/playwright install chromium
  *   NODE_PATH=/tmp/pw/node_modules node apps/ui-lab/scripts/qa-login-v3.mjs
  *
+ * Reproducibilidad: la versión de Playwright está fijada (PLAYWRIGHT_VERSION,
+ * por defecto 1.65.1; el workflow la inyecta). Si la instalada no coincide, el
+ * script aborta con código 3 en lugar de medir con otro motor.
+ *
  * Variables: BASE_URL (por defecto http://127.0.0.1:4173),
  *            VIEW (por defecto /?embed=1&view=login-v3),
- *            SHOT_DIR (opcional; guarda capturas de los estados comprobados).
+ *            SHOT_DIR (opcional; guarda capturas de los estados comprobados),
+ *            REPORT (opcional; escribe el informe JSON con SHA, versiones y checks),
+ *            EXPECTED_BUILD_SHA (opcional; exige que el bundle servido sea de ese commit).
  *
  * Google Fonts se bloquea a propósito: si la tipografía se sirve en local, el
  * diseño sobrevive sin red. Cualquier llamada externa se registra y se informa.
  */
+import { readFileSync, writeFileSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { createRequire } from "node:module";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const BASE_URL = process.env.BASE_URL ?? "http://127.0.0.1:4173";
 const VIEW = process.env.VIEW ?? "/?embed=1&view=login-v3";
 const SHOT_DIR = process.env.SHOT_DIR ?? "";
+const REPORT = process.env.REPORT ?? "";
+const EXPECTED_BUILD_SHA = process.env.EXPECTED_BUILD_SHA ?? "";
+const EXPECTED_PLAYWRIGHT = process.env.PLAYWRIGHT_VERSION ?? "1.65.1";
 
+const requireFromHere = createRequire(import.meta.url);
 let chromium;
+let playwrightVersion = "desconocida";
 try {
   // require (no import) para que NODE_PATH permita instalarlo fuera del repo.
-  ({ chromium } = createRequire(import.meta.url)("playwright"));
+  ({ chromium } = requireFromHere("playwright"));
 } catch {
   console.error("Falta Playwright. Instálalo aparte (ver cabecera) sin tocar package.json.");
   process.exit(2);
 }
+try {
+  playwrightVersion = requireFromHere("playwright/package.json").version;
+} catch {
+  try {
+    const main = requireFromHere.resolve("playwright");
+    playwrightVersion = JSON.parse(readFileSync(join(dirname(main), "..", "package.json"), "utf8")).version;
+  } catch {
+    playwrightVersion = "desconocida";
+  }
+}
+if (playwrightVersion !== EXPECTED_PLAYWRIGHT) {
+  console.error(
+    `Playwright ${playwrightVersion} no coincide con la versión fijada ${EXPECTED_PLAYWRIGHT}. ` +
+      "Instala la versión fijada para que la medición sea reproducible.",
+  );
+  process.exit(3);
+}
+console.log(`Playwright ${playwrightVersion} (fijado)`);
 
 const results = [];
 function check(name, pass, detail = "") {
@@ -76,6 +106,26 @@ async function shot(name) {
 await page.goto(new URL(VIEW, BASE_URL).href, { waitUntil: "load" });
 await page.waitForSelector("#login-v3-title");
 await page.evaluate(() => document.fonts.ready.then(() => true));
+
+// Une la evidencia con el código: el bundle servido declara su SHA en version.json.
+let servedBuildSha = "no disponible";
+let servedBuiltAt = "no disponible";
+try {
+  const manifest = await page.evaluate(async (url) => (await fetch(url)).json(), new URL("/version.json", BASE_URL).href);
+  servedBuildSha = String(manifest?.version ?? "no disponible");
+  servedBuiltAt = String(manifest?.builtAt ?? "no disponible");
+} catch (error) {
+  servedBuildSha = `no se pudo leer version.json: ${error.message}`;
+}
+if (EXPECTED_BUILD_SHA) {
+  check(
+    "el bundle servido es del commit esperado",
+    servedBuildSha === EXPECTED_BUILD_SHA,
+    `${servedBuildSha} esperado ${EXPECTED_BUILD_SHA}`,
+  );
+} else {
+  console.log(`version.json del bundle: ${servedBuildSha} (${servedBuiltAt})`);
+}
 
 check("título de la vista", (await page.title()).includes("Login V3"), await page.title());
 const storageBaseline = await page.evaluate(() => Object.keys(localStorage).sort().join(","));
@@ -351,6 +401,7 @@ await reduced.close();
 // ------------------------------------------------------------- consola
 check("consola sin errores propios", consoleErrors.length === 0, consoleErrors.join(" | "));
 
+const browserVersion = browser.version();
 await browser.close();
 
 const failed = results.filter((entry) => !entry.pass);
@@ -360,5 +411,26 @@ for (const entry of results) {
 console.log(`\n${results.length - failed.length}/${results.length} comprobaciones correctas`);
 if (externalRequests.length > 0) {
   console.log(`Google Fonts bloqueado a propósito: ${externalRequests.length} peticiones abortadas.`);
+}
+if (REPORT) {
+  const report = {
+    generatedAt: new Date().toISOString(),
+    baseUrl: BASE_URL,
+    view: VIEW,
+    buildSha: servedBuildSha,
+    builtAt: servedBuiltAt,
+    expectedBuildSha: EXPECTED_BUILD_SHA || null,
+    playwright: playwrightVersion,
+    chromium: browserVersion,
+    runId: process.env.GITHUB_RUN_ID ?? null,
+    commit: process.env.GITHUB_SHA ?? null,
+    total: results.length,
+    passed: results.length - failed.length,
+    failed: failed.length,
+    checks: results,
+  };
+  await mkdir(dirname(REPORT), { recursive: true });
+  writeFileSync(REPORT, `${JSON.stringify(report, null, 2)}\n`);
+  console.log(`Informe: ${REPORT} (build ${servedBuildSha}, chromium ${browserVersion})`);
 }
 process.exit(failed.length === 0 ? 0 : 1);

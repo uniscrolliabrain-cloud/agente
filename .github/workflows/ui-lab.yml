@@ -27,6 +27,10 @@ on:
       - "apps/web/public/**"
       - "pnpm-lock.yaml"
       - ".github/workflows/ui-lab.yml"
+# Versión fijada a propósito: la QA de Login V3 debe repetirse con el mismo
+# Playwright y, por tanto, con la misma revisión de Chromium.
+env:
+  PLAYWRIGHT_VERSION: "1.65.1"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -52,6 +56,20 @@ jobs:
         env:
           UI_LAB_BUILD_SHA: ${{ github.sha }}
         run: pnpm --filter @agente/ui-lab build
+      - name: Detect Login V3 view in this branch
+        id: login_v3
+        run: |
+          set -euo pipefail
+          # Nunca falla: informa si la vista existe para que el resto de pasos
+          # de Login se omitan en ramas que no la incluyen.
+          present=false
+          if [ -f apps/ui-lab/src/registry.tsx ] &&
+             grep -q 'id:"login-v3"' apps/ui-lab/src/registry.tsx &&
+             [ -f apps/ui-lab/scripts/qa-login-v3.mjs ]; then
+            present=true
+          fi
+          echo "present=$present" >> "$GITHUB_OUTPUT"
+          echo "Login V3 present in $GITHUB_REF: $present"
       - uses: actions/upload-artifact@v4
         with:
           name: agntiapro-ui-lab-dist
@@ -88,22 +106,35 @@ jobs:
           path: /tmp/formacion-v4-chromebook/
           retention-days: 7
       - name: Browser QA Login V3 (opt-in)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa == true }}
+        id: login_v3_qa
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.browser_qa == true && steps.login_v3.outputs.present == 'true' }}
+        env:
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+          SHOT_DIR: /tmp/login-v3-qa/capturas-ci
+          REPORT: /tmp/login-v3-qa/qa-report.json
         run: |
           set -euo pipefail
-          test -f apps/ui-lab/scripts/qa-login-v3.mjs
-          grep -q 'id:"login-v3"' apps/ui-lab/src/registry.tsx
-          npm i --prefix /tmp/pw playwright
+          npm i --prefix /tmp/pw --no-audit --no-fund --no-save "playwright@${PLAYWRIGHT_VERSION}"
+          INSTALLED="$(node -p "require('/tmp/pw/node_modules/playwright/package.json').version")"
+          test "$INSTALLED" = "$PLAYWRIGHT_VERSION"
+          echo "Playwright $INSTALLED"
           /tmp/pw/node_modules/.bin/playwright install --with-deps chromium
           (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
-          sleep 2
-          NODE_PATH=/tmp/pw/node_modules node apps/ui-lab/scripts/qa-login-v3.mjs
+          for _ in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/version.json >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:4173/version.json
+          mkdir -p /tmp/login-v3-qa
+          NODE_PATH=/tmp/pw/node_modules \
+            PLAYWRIGHT_VERSION="$PLAYWRIGHT_VERSION" \
+            EXPECTED_BUILD_SHA="$UI_LAB_BUILD_SHA" \
+            node apps/ui-lab/scripts/qa-login-v3.mjs
       - name: Prepare Login V3 Chromebook package
+        # Omitido (no fallido) en ramas sin la vista: el job build sigue verde.
+        if: ${{ steps.login_v3.outputs.present == 'true' }}
         run: |
           set -euo pipefail
-          # Solo empaquetar si la vista existe en esta rama.
-          grep -q 'id:"login-v3"' apps/ui-lab/src/registry.tsx
-          test -f apps/ui-lab/scripts/qa-login-v3.mjs
           rm -rf /tmp/login-v3-chromebook
           mkdir -p /tmp/login-v3-chromebook/site
           cp -a apps/ui-lab/dist/. /tmp/login-v3-chromebook/site/
@@ -126,7 +157,9 @@ jobs:
           Las fuentes Fraunces y Manrope viajan dentro de site/assets, con
           licencia OFL, así que el diseño se ve igual sin conexión a Internet.
           QA.md recoge lo comprobado y capturas/ las pruebas visuales.
-          qa/qa-login-v3.mjs reproduce la QA de navegador con Playwright.
+          qa/qa-login-v3.mjs reproduce la QA de navegador con Playwright;
+          qa/qa-report.json y capturas-ci/ solo aparecen si esta ejecución
+          activó browser_qa, y llevan el SHA de build de este artifact.
           EOF
           printf '#!/usr/bin/env bash\nset -e\ncd "$(dirname "$0")/site"\necho "Abre http://localhost:8080/?embed=1&view=login-v3"\npython3 -m http.server 8080 --bind 127.0.0.1\n' > /tmp/login-v3-chromebook/iniciar.sh
           chmod +x /tmp/login-v3-chromebook/iniciar.sh
@@ -140,9 +173,25 @@ jobs:
           mkdir -p /tmp/login-v3-chromebook/capturas /tmp/login-v3-chromebook/qa
           cp apps/ui-lab/docs/dashboards/02-login/capturas/login-v3-*.png /tmp/login-v3-chromebook/capturas/
           cp apps/ui-lab/scripts/qa-login-v3.mjs /tmp/login-v3-chromebook/qa/
+          if [ -f /tmp/login-v3-qa/qa-report.json ]; then
+            cp /tmp/login-v3-qa/qa-report.json /tmp/login-v3-chromebook/qa/qa-report.json
+          fi
+          if [ -d /tmp/login-v3-qa/capturas-ci ]; then
+            mkdir -p /tmp/login-v3-chromebook/capturas-ci
+            cp /tmp/login-v3-qa/capturas-ci/*.png /tmp/login-v3-chromebook/capturas-ci/ 2>/dev/null || true
+          fi
+          # El paquete declara con qué build se generó y con qué Playwright se probó.
+          node -e '
+            const fs=require("node:fs");
+            const site=JSON.parse(fs.readFileSync("/tmp/login-v3-chromebook/site/version.json","utf8"));
+            const reportPath="/tmp/login-v3-chromebook/qa/qa-report.json";
+            const report=fs.existsSync(reportPath)?JSON.parse(fs.readFileSync(reportPath,"utf8")):null;
+            fs.writeFileSync("/tmp/login-v3-chromebook/VERSION.txt",[`build: ${site.version}`,`builtAt: ${site.builtAt}`,`playwright: ${process.env.PLAYWRIGHT_VERSION}`,`browserQa: ${report?`${report.passed}/${report.total} checks in ${report.runId||"esta ejecución"}`:"omitida (browser_qa=false)"}`,``].join("\n"));
+          '
           test -f /tmp/login-v3-chromebook/QA.md
           test $(ls /tmp/login-v3-chromebook/capturas | wc -l) -ge 6
       - uses: actions/upload-artifact@v4
+        if: ${{ steps.login_v3.outputs.present == 'true' }}
         with:
           name: login-v3-chromebook
           path: /tmp/login-v3-chromebook/

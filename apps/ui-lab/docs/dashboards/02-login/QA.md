@@ -18,14 +18,25 @@ rediseño, ni cambios de copy, ni de composición, ni de orden de bloques.
 
 ## 2. Comandos ejecutados y resultado real
 
-```
-pnpm --filter @agente/ui-lab typecheck                 → OK (exit 0)
-pnpm --filter @agente/ui-lab build                     → OK (LoginV3 js 14,80 kB, css 14,94 kB)
-node apps/ui-lab/scripts/qa-login-v3.mjs               → 41 comprobaciones (ver §4)
-```
+Se separa lo que se ejecutó en este entorno de lo que ejecutó GitHub Actions, porque no es lo mismo:
+
+| Comando | Dónde | Resultado |
+|---|---|---|
+| `pnpm --filter @agente/ui-lab typecheck` | este entorno | OK (exit 0) |
+| `pnpm --filter @agente/ui-lab build` | este entorno y CI | OK (exit 0); `LoginV3-*.js` 14,80 kB y CSS 14,94 kB |
+| `node apps/ui-lab/scripts/qa-login-v3.mjs` | este entorno | **no ejecutable**: falta `libnspr4`/`libnss3` y no hay `sudo` para `playwright install-deps`. Las mismas aserciones se ejecutaron en el navegador Cloud contra el `dist/` local (§4). |
+| `node apps/ui-lab/scripts/qa-login-v3.mjs` | GitHub Actions, `browser_qa=true` | ver §7 |
 
 El bundle incluye `assets/fraunces-latin-*.woff2` (120.764 B) y `assets/manrope-latin-*.woff2`
 (24.532 B): la tipografía ya no viaja por Google Fonts.
+
+### Reproducibilidad de la QA
+
+La versión de Playwright está fijada en `.github/workflows/ui-lab.yml` (`PLAYWRIGHT_VERSION: "1.65.1"`),
+que instala `playwright@1.65.1` y, por tanto, la revisión de Chromium que ese paquete trae. El script
+comprueba la versión instalada y aborta con código 3 si no coincide con la fijada, de modo que no se
+puede medir con otro motor por descuido. Con `EXPECTED_BUILD_SHA` exige además que el bundle servido
+declare ese commit en `version.json`, y con `REPORT` escribe un JSON con SHA, versiones y los 41 checks.
 
 ## 3. Medidas medidas en navegador (1366×1002, DPR 1)
 
@@ -89,8 +100,14 @@ En `capturas/` (regeneradas en esta pasada):
 - `login-v3-invitacion-viewport-1366.png` — modal de invitación sin recorte de captura.
 - `login-v3-invitacion-390.png` — modal en móvil.
 - `login-v3-390.png`, `login-v3-768.png`, `login-v3-1920.png` — responsive.
-- `login-v3-artifact-1366.png` — render del artifact `login-v3-chromebook` (run 234).
+- `login-v3-artifact-1366.png` — **evidencia histórica**: render del artifact de run 234 (`c6cf874…`),
+  anterior a estas correcciones. Se conserva como registro, no describe el estado actual.
 - `landing-baseline-1366.png` — baseline de landing para identidad.
+
+Las capturas de esta carpeta se generaron sobre el código `login-v3` de `a9e9eff…`, que es byte a byte el
+mismo que el del artifact actual (verificado con `componentes-finales/MANIFEST-SHA256.txt`): el workflow
+no toca `LoginV3.tsx` ni `login-v3.css`. El artifact incluye además `capturas-ci/`, generadas por su
+propia ejecución de QA a partir de su propio build.
 
 ## 6. Correcciones de la auditoría
 
@@ -108,7 +125,8 @@ En `capturas/` (regeneradas en esta pasada):
 | Fallo de empaquetado: sin QA ni capturas en el ZIP | Corregido | el paso copia `QA.md`, `BITACORA-EJECUCION.md`, `capturas/` y `qa/` |
 | Empaquetado sin comprobar que la vista exista | Corregido | `grep 'id:"login-v3"'` antes de empaquetar |
 | Sin pruebas de navegador versionadas | Corregido | `scripts/qa-login-v3.mjs` (41 comprobaciones) |
-| Sin pruebas de navegador en el workflow | Añadido, opt-in | input `browser_qa` (por defecto `false`); no verificado en CI desde aquí |
+| Sin pruebas de navegador en el workflow | Añadido, opt-in | input `browser_qa` (por defecto `false`), Playwright fijado y resultado en `qa/qa-report.json` |
+| El empaquetado hacía fallar el job en ramas sin la vista | Corregido | paso `Detect Login V3 view`; empaquetado y artifact condicionados a `present == 'true'` |
 | Arquitectura monolítica | No aplicado | recomendación de mantenibilidad, no bloqueante; queda como siguiente campaña |
 
 El manifiesto anterior listaba `apps/ui-lab/src/vite.config.ts`; el archivo real es
@@ -140,8 +158,11 @@ en `assets/`, `QA.md`, bitácora, 10 capturas y `qa/`).
 - Sin backend anónimo, sin invitaciones y sin OAuth: los estados lo declaran; no se simula éxito.
 - Sin auditoría automatizada de accesibilidad (axe/Lighthouse) ni lector de pantalla; foco, teclado,
   roles y contraste por token se revisaron de forma manual.
-- Pruebas de navegador en CI añadidas como paso opt-in y no ejecutadas desde este entorno (`gh` sin
-  sesión). El script sí se ejecutó aquí en el navegador Cloud con las mismas aserciones.
+- Pruebas de navegador en CI: paso opt-in (`browser_qa`) descrito en §7 con su ejecución real. Desde este
+  entorno no se puede lanzar `gh` (sin sesión); el disparo se hizo por la API de GitHub.
+- El script versionado no se ejecutó en este entorno por falta de bibliotecas de Chromium; lo que aquí se
+  midió fue su contenido de aserciones, reproducido en el navegador Cloud. Esa distinción se mantiene en
+  todo el documento.
 
 ## 9. Rúbrica interna de esta pasada
 
