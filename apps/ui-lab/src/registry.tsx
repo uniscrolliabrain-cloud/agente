@@ -10,6 +10,7 @@ const Studio=lazy(()=>import("./vendor/studio/BusinessCommandStudio"));
 const Formation=lazy(()=>import("./formation/FormationWorkspace"));
 const FormationV4=lazy(()=>import("./formation-v4/FormationV4Workspace"));
 const LoginV3=lazy(()=>import("./login-v3/LoginV3"));
+const Legal=lazy(()=>import("./legal/LegalV1"));
 
 const Knowledge=lazy(()=>import("../../web/src/components/MemoryView"));
 
@@ -29,6 +30,7 @@ export const previews:Preview[]=[
 {id:"landing",name:"Landing",category:"Público",description:"Landing real recuperada de la rama de diseño, aislada en UI Lab",Component:Landing,status:"demo"},
 {id:"login-v3",name:"Login V3 · Acceso",category:"Público",description:"Acceso editorial V3: OAuth, LAIA sin cuenta, contraseña e invitación, sin servicios conectados",Component:LoginV3,status:"fixture"},
 {id:"studio",name:"Estudio de Operaciones",category:"Trabajo",description:"Business Command Studio original recuperado como vista de laboratorio",Component:Studio,status:"demo"},
+{id:"legal",name:"Legal V1 · Transparencia",category:"Público",description:"Lectura editorial de los seis documentos legales: índices reales, estados de borrador y banners de consentimiento sin simular acciones",Component:Legal,status:"fixture"},
 {id:"formation",name:"Formación · Legacy",category:"Trabajo",description:"Interfaz anterior preservada para comparación y rollback",Component:Formation,status:"fixture"},
 {id:"formation-v4",name:"Formación V4 · Editorial",category:"Trabajo",description:"Nueva biblioteca editorial con 12 lecciones de demostración, fotografía y fichas accesibles",Component:FormationV4,status:"fixture"},
 {id:"brand",name:"Identidad visual",category:"Componentes",description:"Marca real y tokens visuales",Component:Brand,status:"demo"},

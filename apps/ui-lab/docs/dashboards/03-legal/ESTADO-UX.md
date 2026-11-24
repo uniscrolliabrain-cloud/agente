@@ -1,17 +1,25 @@
 # Estado UX — 03-legal
 
-**Fecha de clasificación:** 2026-11-23  
-**Estado:** POR DISEÑAR  
-**Origen:** decisión del founder; no es una prueba de implementación.
+**Fecha de clasificación:** 2026-11-23 · **Actualizado:** 2026-11-24
+**Estado:** IMPLEMENTADO EN UI LAB · PENDIENTE DE TEXTO LEGAL Y APROBACIÓN VISUAL
 
-Esta superficie debe diseñarse y revisarse antes de usarla como patrón visual aprobado.
+Existe una vista aislada (`legal`) en UI Lab con la estructura editorial, el lector por documento, los
+estados declarados y los tres banners. No es una publicación ni un documento legal: no hay textos
+aprobados y las seis rutas públicas siguen sin página.
 
-**Tratamiento:** recopilar componentes actuales, definir objetivos y flujos, producir mock desktop/móvil y someterlo a aprobación antes de implementar.
+**Tratamiento:** la estructura ya está construida; lo que falta es contenido jurídico validado, las
+páginas públicas y la revisión del founder.
 
 **Bitácora y milestones:** [Cuaderno de bitácora UX](../19-general/BITACORA-UX.md).
 
 ## Notas y seguimiento
 
-- Pendiente: capturas de referencia y mapeo preciso de componentes.
-- Pendiente: estados responsive, accesibilidad, navegación y vacíos/errores.
-- Pendiente: decisiones de diseño registradas con fecha y evidencia.
+- Hecho: portada editorial, entrada destacada de Transparencia IA, índice de seis documentos, lector con
+  índice activo, buscador de secciones, enlace por sección y estados de documento no disponible.
+- Hecho: banners de cookies (consentimiento guardado en el navegador), IA (explicación desplegable) e
+  invitación (declara que el servicio no está conectado).
+- Hecho: mediciones a 1366 y 390 y capturas en `capturas/`; ver [CAMPANA-LEGAL-V1.md](./CAMPANA-LEGAL-V1.md).
+- Pendiente: textos legales aprobados y fechas reales de vigencia.
+- Pendiente: páginas públicas para `aviso-legal.html`, `privacidad.html`, `terminos.html`, `cookies.html`,
+  `transparencia-ia.html` y `confianza.html`.
+- Pendiente: aprobación visual del founder; contraste con herramienta dedicada y lector de pantalla.
