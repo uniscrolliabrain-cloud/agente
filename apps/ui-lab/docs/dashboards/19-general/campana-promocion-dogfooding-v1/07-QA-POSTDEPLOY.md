@@ -29,8 +29,9 @@ Verificado en el dominio real el 2026-11-24 tras el run `45483309302`.
 - [ ] Redirects de `agntiapro.com/{aviso-legal,privacidad,...}.html`: el job de Vercel
   falló por cuota, así que las URLs antiguas siguen respondiendo 200 con su HTML.
 - [ ] Banner de cookies en la landing: no publicado por el mismo bloqueo.
-- [ ] Viewports 1440×900, 1366×768, 768×1024, 360×800 y 320×568. La comprobación real se
-  hizo a 1024×768; el QA de preview cubrió 390×844.
+- [x] Responsive en 1440×900, 1366×768, 1024×768, 768×1024, 390×844, 360×800 y
+  320×568: sin overflow horizontal, `<h1>` y enlaces OAuth presentes en los siete.
+  (`scrollWidth` = viewport − ancho de scrollbar en todos).
 - [ ] Centro de Mando, chat principal, chat transversal y Launcher: no integrados.
 
 ## Capturas reales
