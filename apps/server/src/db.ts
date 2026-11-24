@@ -354,16 +354,26 @@ export class Store {
   }
 
   // DB_CLAIM_SQL_V1
-  async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
+  // DB_CLAIM_HASH_V1 - `expectedHash` opcional: el predicado corre en la misma
+  // escritura atomica que estado/expiry/tarea, asi que una edicion concurrente
+  // hace que el claim no devuelva fila en vez de aprobar otra revision.
+  async claim<T>(
+    owner: string,
+    id: string,
+    status: string,
+    now: string,
+    expectedHash?: string,
+  ): Promise<T | null> {
     const result = await this.db.query(
       `UPDATE records AS action SET data=jsonb_set(data,'\{status\}',$4::jsonb),updated_at=now()
        WHERE owner=$1 AND kind='actions' AND id=$2 AND data->>'status'='awaiting_review'
        AND (data->>'expiresAt')::timestamptz>$3::timestamptz
+       AND ($5::text IS NULL OR data->>'hash'=$5)
        AND ($4::jsonb <> '"executing"'::jsonb OR data->>'taskId' IS NULL OR EXISTS (
          SELECT 1 FROM records task WHERE task.owner=action.owner AND task.kind='tasks'
          AND task.id=action.data->>'taskId' AND task.data->>'status' IN ('running','waiting_approval')
        )) RETURNING data`,
-      [owner, id, now, JSON.stringify(status)],
+      [owner, id, now, JSON.stringify(status), expectedHash ?? null],
     );
     return (result.rows[0]?.data as T | undefined) ?? null;
   }

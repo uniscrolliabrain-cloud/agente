@@ -69,8 +69,15 @@ export class TenantScopedStore {
     return this.store.insertIfAbsent(await this.key(owner), kind, value);
   }
 
-  async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
-    return this.store.claim(await this.key(owner), id, status, now);
+  // DB_CLAIM_HASH_V1 - propaga la revision esperada tras componer la clave.
+  async claim<T>(
+    owner: string,
+    id: string,
+    status: string,
+    now: string,
+    expectedHash?: string,
+  ): Promise<T | null> {
+    return this.store.claim(await this.key(owner), id, status, now, expectedHash);
   }
 
   async take<T>(owner: string, kind: string, id: string): Promise<T | null> {

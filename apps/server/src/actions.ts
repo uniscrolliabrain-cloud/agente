@@ -49,7 +49,16 @@ export interface ActionsStore {
     expected: Record<string, unknown>,
     patch: Record<string, unknown>,
   ): Promise<T | null>;
-  claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null>;
+  // APPROVAL_HASH_CLAIM_V1 - el quinto argumento ata la reclamacion a la
+  // revision revisada. Sin el, editar entre la lectura y el claim aprobaba
+  // un contenido que el usuario nunca vio.
+  claim<T>(
+    owner: string,
+    id: string,
+    status: string,
+    now: string,
+    expectedHash?: string,
+  ): Promise<T | null>;
   // LEAD_FOLLOW_UP_V1 - la guarda del seguimiento necesita releer el hilo cuando
   // el store lo permite; el resto de acciones no depende de esta lectura.
   list?<T = Record<string, unknown>>(owner: string, kind: string): Promise<T[]>;
@@ -398,27 +407,7 @@ export class ActionService {
     }
     if (decision === "approve" && !(await this.options.connected(owner)))
       throw new AppError("Google is disconnected. Reconnect before approving this action.", 409);
-    if (decision === "approve" && this.options.connection) {
-      const connection = await this.options.connection(owner);
-      if (
-        !connection ||
-        connection.id !== proposal.connectionId ||
-        connection.account !== proposal.account
-      )
-        throw new AppError(
-          "Google account or connection changed. Prepare a new action for the connected account.",
-          409,
-        );
-      // APPROVAL_GENERATION_CHECK_V1 - reconectar rota la generacion: la
-      // revision anterior no puede ejecutarse contra la credencial nueva.
-      const proposedGeneration =
-        (proposal as { connectionGeneration?: string }).connectionGeneration ?? null;
-      if ((connection.generation ?? null) !== proposedGeneration)
-        throw new AppError(
-          "Google connection rotated. Review a fresh proposal for the current connection.",
-          409,
-        );
-    }
+    if (decision === "approve") await this.assertConnectionCurrent(owner, proposal);
     // POLICY_GATE_V1 Ã¢â‚¬â€ si la accion esta vinculada a una tarea con rol activo,
     // consultamos PolicyEngine antes de aprobar. Deny es siempre libre.
     if (decision === "approve" && this.policy && proposal.taskId) {
@@ -465,13 +454,28 @@ export class ActionService {
         id,
         decision === "deny" ? "denied" : "executing",
         new Date(this.now()).toISOString(),
+        hash,
       );
-      if (winner) await tx.put(owner, "approval-requests", approval);
+      // APPROVAL_HASH_CLAIM_V1 - el recibo formal se construye desde el
+      // ganador del claim, no desde la copia leida antes de la transaccion.
+      if (winner)
+        await tx.put(owner, "approval-requests", {
+          ...approval,
+          payload: { data: winner.data, hash: winner.hash, decision },
+        });
       return winner;
     });
     if (!claimed) {
       const current = await this.db.get<ActionProposal>(owner, "actions", id);
       if (!current) throw new AppError("Action not found", 404);
+      // APPROVAL_HASH_RACE_V1 - si la revision cambio entre la lectura y el
+      // claim, decidir ejecutaria algo distinto de lo revisado. Mismo hash
+      // conserva APPROVAL_DECIDE_IDEMPOTENT_V1 (devolver estado actual).
+      if (current.hash !== hash)
+        throw new AppError(
+          "This proposal changed. Open its latest review before deciding.",
+          409,
+        );
       return current;
     }
     await this.record(
@@ -538,6 +542,36 @@ export class ActionService {
   }
 
   /**
+   * EFFECT_BOUNDARY_AUTHZ_V1 - vinculo revision/conexion vigente. Se usa al
+   * decidir y otra vez inmediatamente antes de `options.execute`.
+   */
+  private async assertConnectionCurrent(
+    owner: string,
+    proposal: ActionProposal,
+  ): Promise<void> {
+    if (!this.options.connection) return;
+    const connection = await this.options.connection(owner);
+    if (
+      !connection ||
+      connection.id !== proposal.connectionId ||
+      connection.account !== proposal.account
+    )
+      throw new AppError(
+        "Google account or connection changed. Prepare a new action for the connected account.",
+        409,
+      );
+    // APPROVAL_GENERATION_CHECK_V1 - reconectar rota la generacion: la
+    // revision anterior no puede ejecutarse contra la credencial nueva.
+    const proposedGeneration =
+      (proposal as { connectionGeneration?: string }).connectionGeneration ?? null;
+    if ((connection.generation ?? null) !== proposedGeneration)
+      throw new AppError(
+        "Google connection rotated. Review a fresh proposal for the current connection.",
+        409,
+      );
+  }
+
+  /**
    * APPROVAL_RUN_V1 (campana 14) - la unica puerta al proveedor. Persiste el
    * proveedor, el recibo confirmado o la ambiguedad, y nunca reintenta solo.
    */
@@ -549,6 +583,10 @@ export class ActionService {
     const executedAt = new Date(this.now()).toISOString();
     let finished: ActionProposal;
     try {
+      // EFFECT_BOUNDARY_AUTHZ_V1 - la autorizacion de conexion se revalida
+      // justo antes del efecto: una rotacion entre claim y despacho no puede
+      // ejecutarse con la credencial nueva. No promete atomicidad remota.
+      await this.assertConnectionCurrent(owner, claimed);
       const input = proposalSchema.parse({ kind: claimed.kind, data: claimed.data });
       const result = await this.options.execute(
         owner,
