@@ -19,3 +19,9 @@ Cada bloque: leer código vivo y AGENTS.md; inventariar paths exactos y dependen
 - [02-coding-audit-transversal](02-coding-audit-transversal/README.md)
 - [03-reaudit-refactoring](03-reaudit-refactoring/README.md)
 - [04-reaudit-hardening](04-reaudit-hardening/README.md)
+
+## Ajuste de auditoría contra código vivo (24-11-2026)
+
+Reutilizar scripts/provision-vertical-slice.ts y scripts/lib/vertical-slice-bundle.ts, TenantService, UserService, bootstrapAgency. Ya existen plan/apply/check, reservationId y pasos tenant→actors→complete. Auditar catches que convierten fallos de store en null/[] y concurrencia real; plan sin escritura antes de apply. Consentimientos Google pendientes explícitos.
+
+Estado: inspección estática; confirmar HEAD y ejecutar gates durante la campaña.
