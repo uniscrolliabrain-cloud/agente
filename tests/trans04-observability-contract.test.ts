@@ -31,9 +31,9 @@ test("metrics export derives p99 from the requested scope without mutating the r
     const histogram = "agente_http_request_duration_ms";
     globalMetrics.observe(histogram, 5, { tenant: "fixture-a" });
     globalMetrics.observe(histogram, 500, { tenant: "fixture-b" });
-    const scrape = (query: string) => app.request("/" + query, {
+    const scrape = async (query: string) => (await app.request("/" + query, {
       headers: { "x-metrics-token": "fixture-metrics-token" },
-    }).then((res) => res.text());
+    })).text();
 
     assert.match(await scrape("?tenant=fixture-a"), /^agente_http_latency_p99_ms 5$/m);
     assert.match(await scrape("?tenant=fixture-b"), /^agente_http_latency_p99_ms 500$/m);
