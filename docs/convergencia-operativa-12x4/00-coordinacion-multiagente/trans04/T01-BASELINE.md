@@ -35,3 +35,27 @@ NODE
 ```
 
 Exit 0. Buckets HTTP del registry en ms: 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000 y +Inf. Series HTTP con método, ruta, estado y tenant si está disponible. Tareas con sum/count en segundos y gauges de concurrencia; LLM registra familias por velocidad/modelo; eventos kernel y bus tienen productores separados. Series de métricas viven en memoria por proceso, mientras que MetricsCollector usa Store. La migración de unidades o nombres necesita compatibilidad de scraping y dashboards.
+
+## Regresión de cardinalidad pendiente de T02
+
+Este probe en memoria se ejecutó con `ALLOW_NETWORK=0 LOG_LEVEL=error`. Exit 1, `2 !== 1`. Dos peticiones a una misma plantilla producen dos series de una misma familia. La corrección candidata debe preservar etiquetas compatibles y acotar rutas desconocidas; requiere reserva y revisión B1.
+
+```sh
+ALLOW_NETWORK=0 LOG_LEVEL=error node --import tsx --input-type=module <<'NODE'
+import assert from "node:assert/strict";
+import { Hono } from "hono";
+import { requestLogger } from "./apps/server/src/middleware/request-logger.ts";
+import { globalMetrics } from "./apps/server/src/metrics/registry.ts";
+
+const app = new Hono();
+app.use("*", requestLogger());
+app.get("/baseline/:id", (c) => c.text("ok"));
+for (const id of ["fixture-alpha", "fixture-beta"]) {
+  assert.equal((await app.request("/baseline/" + id)).status, 200);
+}
+const series = globalMetrics.render().split("\n").filter((line) =>
+  line.startsWith("agente_http_requests_total{") && line.includes("/baseline/"),
+);
+assert.equal(series.length, 1);
+NODE
+```
