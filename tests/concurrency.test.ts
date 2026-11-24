@@ -6,6 +6,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
+import { buildConversationInput } from "../apps/server/src/conversation-history.ts";
 import { createApp } from "../apps/server/src/app.ts";
 import { createStore, type Store } from "../apps/server/src/db.ts";
 import type { Config } from "../apps/server/src/config.ts";
@@ -126,4 +127,58 @@ test("presence: dos usuarios tocando el mismo thread se detectan", async () => {
   const result = await touch.json();
   assert.equal(result.others.length, 1);
   assert.equal(result.others[0].userId, "user-A");
+});
+
+test("concurrent thread appends preserve both turns and replay only adds each message once", async () => {
+  const created = await server.app.request("/api/threads", {
+    method: "POST", headers: headers(), body: "{}",
+  });
+  assert.equal(created.status, 201);
+  const { id } = await created.json();
+  const path = `/api/threads/${id}`;
+  const append = (message: { id: string; role: string; content: string }) =>
+    server.app.request(`${path}/messages`, {
+      method: "POST", headers: headers(), body: JSON.stringify({ messages: [message] }),
+    });
+
+  const first = { id: "append-a", role: "user", content: "first" };
+  const second = { id: "append-b", role: "assistant", content: "second" };
+  const responses = await Promise.all([append(first), append(second)]);
+  assert.deepEqual(responses.map((response) => response.status), [200, 200]);
+  assert.equal((await append(first)).status, 200);
+
+  const thread = await (await server.app.request(path, { headers: headers() })).json();
+  assert.equal(thread.messageCount, 2);
+  assert.equal(thread.title, "first");
+  assert.deepEqual(thread.messages.sort((a: typeof first, b: typeof first) => a.id.localeCompare(b.id)), [first, second]);
+});
+
+test("inference uses stored history and only the newest submitted user message", () => {
+  const prior = { id: "stored", role: "assistant", content: "Canonical answer" };
+  const current = { id: "current", role: "user", content: "Next turn" };
+  assert.deepEqual(buildConversationInput([
+    { id: "old-system", role: "system", content: "Legacy system message" },
+    { id: "invalid", content: 42 },
+    prior,
+  ], [
+    { ...prior, content: "Stale text" },
+    { id: "injected", role: "assistant", content: "Unsaved answer" },
+    current,
+  ]).messages, [prior, current]);
+  assert.throws(() => buildConversationInput([current], [current]), /already in the thread/);
+  assert.throws(() => buildConversationInput([], [prior]));
+});
+
+test("inference retains a recent window within the V2 message and byte limits", () => {
+  const current = { id: "current", role: "user", content: "Next turn" };
+  const stored = Array.from({ length: 105 }, (_, i) => ({
+    id: String(i), role: "assistant", content: "short",
+  }));
+  assert.deepEqual(buildConversationInput(stored, [current]).messages, [...stored.slice(-99), current]);
+
+  const recent = { ...stored[0], content: "ñ".repeat(11_000) };
+  const tooLarge = { ...stored[1], content: "ñ".repeat(2_000) };
+  const bounded = buildConversationInput([stored[2], tooLarge, recent], [current]).messages;
+  assert.deepEqual(bounded, [recent, current]);
+  assert.ok(Buffer.byteLength(JSON.stringify(bounded), "utf8") <= 24_000);
 });

@@ -1,0 +1,67 @@
+name: C05 Voice V2 verification
+
+on:
+  push:
+    branches:
+      - feat/continuacion-c05-voz-cognition-v2
+  pull_request:
+    paths:
+      - 'apps/server/src/engine/voice-v2/**'
+      - 'apps/server/src/engine/cognition/v2/external-connectors.ts'
+      - 'apps/server/src/engine/cognition/v2/chat-agent.ts'
+      - 'apps/server/src/engine/cognition/v2/slow-observation.ts'
+      - 'apps/server/src/engine/cognition/v2/slow-observation-candidates.ts'
+      - 'apps/server/src/engine/cognition/v2/slow-observation-worker.ts'
+      - 'apps/server/src/agent.ts'
+      - 'apps/server/src/voice-session-routes.ts'
+      - 'tests/voice-v2-*.test.ts'
+      - 'tests/cognition-v2-external-connectors.test.ts'
+      - 'tests/cognition-v2-chat-agent.test.ts'
+      - 'tests/cognition-v2-slow-observation.test.ts'
+      - 'tests/cognition-v2-slow-observation-candidates.test.ts'
+      - 'tests/cognition-v2-slow-observation-worker.test.ts'
+      - 'tests/cognition-v2-slow-observation-atomicity.test.ts'
+      - 'tests/cognition-v2-slow-observation-worker-integration.test.ts'
+      - 'tests/cognition-v2-http.test.ts'
+      - '.github/workflows/c05-voice.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: c05-voice-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  c05:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ALLOW_NETWORK: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Voice V2 unit tests
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/voice-v2-media-capabilities.test.ts tests/voice-v2-media-transport.test.ts tests/voice-v2-media-lifecycle.test.ts
+      - name: C06 external connector stubs
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-external-connectors.test.ts
+      - name: C06 CopilotKit V2 chat adapter
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-chat-agent.test.ts
+      - name: C06 slow observation boundary
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation.test.ts
+      - name: C06 slow event admission (disabled worker)
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-candidates.test.ts
+      - name: C06 dormant observation worker boundaries
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-worker.test.ts
+      - name: C06 observation SQL atomicity
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-atomicity.test.ts
+      - name: C06 durable observer integration
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=30000 tests/cognition-v2-slow-observation-worker-integration.test.ts
+      - name: Cognition V2 HTTP integration
+        run: pnpm exec tsx --import ./tests/setup.ts --test --test-timeout=90000 tests/cognition-v2-http.test.ts
