@@ -16,7 +16,7 @@
 ## Ejecución
 
 - Módulo completo en `apps/ui-lab/src/chat-transversal-v3/` y registro `chat-transversal-v3`.
-- Typecheck 0 y build 0.
+- Typecheck 0 y build 0. Build del artifact: `3fb825730787` (el paquete empaqueta ese código; los commits posteriores son solo documentación).
 - QA real: 47 comprobaciones en navegador cloud (escritorio 1440/1366/1280/1024; móvil y tablet 768/390/360/320; gestos, teclado, acciones, llamadas, acta, reduced motion, consola).
 - Corrección tras la primera pasada: el workspace medía 375 px a 390 de viewport y la página scrolleaba 26 px por la insignia del laboratorio; se corrigió con el encaje `:has()` y se repitió la matriz completa.
 - Refinamiento de la escena de voz: anillos más contenidos (escala 1,55), capas y composición centrada para que el texto no se cruce con los anillos.
