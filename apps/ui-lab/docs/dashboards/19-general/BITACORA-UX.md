@@ -80,3 +80,12 @@ No confundir **Estudio Demo** con **Estudio de Operaciones**; son nombres distin
 - No declarar una superficie aprobada solo porque tiene carpeta o prompt.
 - No cambiar la estructura principal de 19 carpetas sin autorización.
 - No desplegar ni cambiar código por actualizar esta bitácora.
+
+## 2026-11-24 · Dogfooding V1 · promoción al producto real
+
+- Superficie / ruta: `apps/web` (`Login V3`, `/legal`), `apps/site` (landing y consentimiento).
+- Hallazgo: la landing viva no coincidía con `main`; Login V3 y Legal V1 eran piezas de laboratorio sin contratos reales.
+- Decisión: preservar la landing viva, conectar Login/Legal a los contratos existentes y no promover superficies con fixtures sin cablear.
+- Evidencia: `docs/dashboards/19-general/campana-promocion-dogfooding-v1/`.
+- Estado: Login V3 y Legal V1 integrados y verificados en preview; deploy lanzado por el workflow real. Chat transversal, Centro de Mando, chat principal y Launcher siguen pendientes.
+- Siguiente paso: verificar el dominio y cablear las cuatro superficies operativas.
