@@ -19,7 +19,8 @@ pnpm --filter @agente/ui-lab typecheck                          → OK (exit 0, 
 UI_LAB_BUILD_SHA=<sha> pnpm --filter @agente/ui-lab build       → OK (5,6 s; LoginV3 js 13,74 kB, css 13,89 kB)
 ```
 
-Build local verificado: `apps/ui-lab/dist/version.json` = `9f6b5a188a5fdc84787623e2fd4f08ae9397a2b0`.
+Build local verificado: `apps/ui-lab/dist/version.json` = `c6cf87408e4dcd088a4ccbb7661372701a07e91c`.
+Build del artifact (GitHub Actions run 234): `version.json` = `c6cf87408e4dcd088a4ccbb7661372701a07e91c`, comprobado dentro del ZIP descargado.
 
 ## 3. Medidas medidas en navegador (1366×1002, DPR 1)
 
@@ -62,6 +63,7 @@ En `capturas/`:
 - `login-v3-invitacion-viewport-1366.png` — modal de invitación sin recorte de captura.
 - `login-v3-invitacion-390.png` — modal en móvil.
 - `login-v3-390.png`, `login-v3-768.png`, `login-v3-1920.png` — responsive.
+- `login-v3-artifact-1366.png` — render del artifact `login-v3-chromebook` servido con Python 3, sin Node.
 - `landing-baseline-1366.png` — baseline de landing para identidad.
 
 ## 6. Desviaciones y bloqueos reales
@@ -74,7 +76,16 @@ En `capturas/`:
 - Fraunces y Manrope se cargan desde Google Fonts: sin Internet la vista cae a Georgia/system-ui. Declarado en INSTRUCCIONES.txt del artifact.
 - No se ha ejecutado auditoría automatizada de accesibilidad (axe/Lighthouse) ni lector de pantalla; foco, teclado, roles y contraste por token se revisaron de forma manual.
 
-## 7. Rúbrica (aspiración, no certificación)
+## 7. Verificación del artifact
+
+Run 234 (`workflow_dispatch`, deploy=false) · artifact `login-v3-chromebook` · 8.188.033 bytes ·
+sha256 `4bdc74fafabbe6d6a884331cae5d2b098fdd817eef17287f43f123ece1e6ab30`, idéntico al digest de GitHub.
+Dentro del ZIP: `site/index.html`, `site/version.json` con el SHA del código, `site/assets/LoginV3-*.js` y
+`*.css`, `INSTRUCCIONES.txt` e `iniciar.sh`. Servido con `python3 -m http.server` en `127.0.0.1:8080`
+(HTTP 200) y renderizado en navegador real: título «Login V3 · Acceso», H1 de 60 px, card y tres chips
+presentes. El job `deploy` quedó `skipped`, como corresponde.
+
+## 8. Rúbrica (aspiración, no certificación)
 
 Composición 23/25 · Identidad 24/25 · Tipografía/espaciado 13/15 · Responsive 9/10 ·
 Interacción 9/10 · Motion 4/5 · Accesibilidad 4/5 · Distribución 5/5 → **91/100**.

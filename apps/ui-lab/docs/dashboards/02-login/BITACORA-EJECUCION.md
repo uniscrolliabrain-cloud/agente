@@ -51,8 +51,19 @@ completo, genera `INSTRUCCIONES.txt` e `iniciar.sh` (Python 3, `127.0.0.1:8080`)
 y `version.json` y sube el artifact con `if-no-files-found: error`. El job `deploy` no se modifica y
 sigue exigiendo `main` + `workflow_dispatch` + `deploy=true`.
 
-Estado de la ejecución del workflow y del artifact: ver la sección final de este archivo, actualizada
-tras el push.
+Rama publicada: `feat/ui-lab-login-v3` (commit de código `c6cf87408e4dcd088a4ccbb7661372701a07e91c`).
+Workflow disparado con `workflow_dispatch` y `deploy=false`:
+
+- Run 234: https://github.com/uniscrolliabrain-cloud/agente/actions/runs/45416203697 → `success` (build),
+  `deploy` `skipped` como corresponde.
+- Artifact `login-v3-chromebook`: 8.188.033 bytes, expira 2026-12-01, digest
+  `sha256:4bdc74fafabbe6d6a884331cae5d2b098fdd817eef17287f43f123ece1e6ab30` (coincide con el ZIP descargado).
+- Contenido verificado: `site/index.html`, `site/version.json` con `c6cf874…`, `assets/LoginV3-*.js|css`,
+  `INSTRUCCIONES.txt`, `iniciar.sh`. Servido con Python 3 en `127.0.0.1:8080` y renderizado real del id
+  `login-v3` en navegador (título, H1 60 px, card y chips presentes).
+
+Commits posteriores de esta bitácora y capturas son documentales: no cambian el código entregado, que
+sigue siendo `c6cf874…` (SHA de build del artifact).
 
 ## Pendientes
 
