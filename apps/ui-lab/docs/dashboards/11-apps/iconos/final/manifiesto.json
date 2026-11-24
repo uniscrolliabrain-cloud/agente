@@ -1,0 +1,714 @@
+{
+  "collection": "AgntiaPro Apps · iconos V3",
+  "generatedAt": "2026-11-24",
+  "count": 35,
+  "artDirection": {
+    "material": "cerámica marfil satinada, esmalte violeta, metal oro champán",
+    "background": "#F0ECFC",
+    "lighting": "estudio, reflejos delicados, contacto realista",
+    "constraints": "sin tipografía, sin logotipos externos, sin marcas de agua, sin UI"
+  },
+  "approval": "pendiente de auditoría estética del founder",
+  "items": [
+    {
+      "id": "01-gmail",
+      "name": "Correo",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a single sealed envelope, folded thick ivory ceramic with a soft crease, closed by a violet wax-seal disc with a fine champagne-gold rim.",
+      "original": "original/01-gmail.jpg",
+      "png": "final/png/01-gmail.png",
+      "webp": "final/webp/01-gmail.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/01-gmail.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "dc0d7bbe8a05fed833dbcd9b8e6f390cc424e8c956067645d22e0b52d0e69f08",
+        "webp": "7c120f0d7e0720b21f6992a92a7e877e6c0c4086afebf9a09cd89e885474fa23",
+        "appIcon": "6a1165b1c960943d34b5716288068cb19b4f6cfa830f34b3b7f4b5dfeba8b21a"
+      }
+    },
+    {
+      "id": "02-whatsapp",
+      "name": "Conversaciones",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: two overlapping rounded speech bubbles, the larger in ivory ceramic and the smaller in violet enamel, joined by a fine champagne-gold seam.",
+      "original": "original/02-whatsapp.jpg",
+      "png": "final/png/02-whatsapp.png",
+      "webp": "final/webp/02-whatsapp.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/02-whatsapp.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "4d088ff189c1336b2d92eaf4dfbce2142a5384c63b38e29bb3ff88fbdbdae519",
+        "webp": "e215a22be556dac899a23c2cb4fa76123c3412d290404b5a530fd8ffb0f0248e",
+        "appIcon": "ddce3d49ae5480b7a834cb6e23567f8dfb1f784ecea16aa020e3c0a843758bdd"
+      }
+    },
+    {
+      "id": "03-hubspot",
+      "name": "Clientes",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three ivory ceramic spheres of different sizes connected by slender champagne-gold arcs, like a small constellation of relationships.",
+      "original": "original/03-hubspot.jpg",
+      "png": "final/png/03-hubspot.png",
+      "webp": "final/webp/03-hubspot.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/03-hubspot.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "e6dda90a961a40e15c41d4da48bf034e3b99b8f90497ce630973053f8b40586e",
+        "webp": "594c489606370365a1ea33e7539a6ec6b55ebf6876cfe2daf5b53321282e94a5",
+        "appIcon": "c3685189c96efd32cf13c141a2f7616122187068f7b2918eaf3a6f0fcdcb5e7c"
+      }
+    },
+    {
+      "id": "04-holded",
+      "name": "Facturación",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a crisp ivory ceramic invoice sheet with softly embossed horizontal ruled lines and a raised violet circular seal edged in champagne gold, tilted slightly in space.",
+      "original": "original/04-holded.jpg",
+      "png": "final/png/04-holded.png",
+      "webp": "final/webp/04-holded.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/04-holded.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "c761128aaeb216683fc7d8ea5c11518956e4d6194689feb47da46b2bf54dee45",
+        "webp": "858fb6092054cdb26ca29f88c953fd12c25dd4b3a99ef14156dd6672436c1a86",
+        "appIcon": "4fa2c45d512fe48ad40fba31954fa11f50452e5a6e71315e1f6d0fad4487dc8e"
+      }
+    },
+    {
+      "id": "05-google-drive",
+      "name": "Archivos",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three stacked ivory ceramic file folders with softly rounded corners, the front folder opening in violet enamel and a thin champagne-gold tab.",
+      "original": "original/05-google-drive.jpg",
+      "png": "final/png/05-google-drive.png",
+      "webp": "final/webp/05-google-drive.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/05-google-drive.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "77a787b8f9ae6c52b4f8f21e1b9e47d5488b82df339adb2f93837b66a5c3e78e",
+        "webp": "eb152a28b649c36237603039318e7d5331846b907098783e228e3449443a68d5",
+        "appIcon": "d4153496f528600f7d652aa345cfff92b5eab9356361f45efe1940286cbba784"
+      }
+    },
+    {
+      "id": "06-google-calendar",
+      "name": "Agenda",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a single calendar tile in ivory ceramic with rounded corners, one raised violet date block and a champagne-gold ring binding at the top.",
+      "original": "original/06-google-calendar.jpg",
+      "png": "final/png/06-google-calendar.png",
+      "webp": "final/webp/06-google-calendar.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/06-google-calendar.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "37622adc23206485303b0a9808c8101830cd5efb89413b682de0f41f1c5d0b03",
+        "webp": "131200d0d50deba7faf4d3a97c0a7fb3cf58bf7449daecb80618758b8d927678",
+        "appIcon": "38a3e9710ddaf26908abbc9b0bbdb255f4b169bb4dcb98a2349531706999b0fd"
+      }
+    },
+    {
+      "id": "07-linear",
+      "name": "Plan de trabajo",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three stacked ivory ceramic task cards fanned in depth, the front card carrying a single raised champagne-gold check mark.",
+      "original": "original/07-linear.jpg",
+      "png": "final/png/07-linear.png",
+      "webp": "final/webp/07-linear.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/07-linear.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "d036677766d1fe88484a7d28173a0a64e3f5930afbcac6cfea575b8c3d062d42",
+        "webp": "84dccd6e9299c018ba4ad18aafb8cebab506d2e52d3ca00d2fca71352736ecb7",
+        "appIcon": "599dfdb585912a94c10dfa500a03182830fe0e9634ab43832ba245fd1e563fd6"
+      }
+    },
+    {
+      "id": "08-chatgpt",
+      "name": "Asistente",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a faceted four-pointed star sculpted in violet enamel with a small champagne-gold sphere at its center, floating above a subtle ivory ceramic base.",
+      "original": "original/08-chatgpt.jpg",
+      "png": "final/png/08-chatgpt.png",
+      "webp": "final/webp/08-chatgpt.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/08-chatgpt.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "1f4f1c7f3147522bb3e90716a0c6bb932b994063990cb5295604b2cfa10b8bf1",
+        "webp": "20baab1b6ca570a6aae30ab51dcd20c395bcbb5d8c3db07f4de1d3c07c5f3557",
+        "appIcon": "33819ecbb9f4dc7fa6dc0b0124d3ab867ccd6800d32e7ace73599674f2bd6809"
+      }
+    },
+    {
+      "id": "09-airtable",
+      "name": "Registros",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a precise three-by-three grid of nine small ivory ceramic tiles set in a violet enamel frame, with one tile slightly raised in champagne gold like a selected record.",
+      "original": "original/09-airtable.jpg",
+      "png": "final/png/09-airtable.png",
+      "webp": "final/webp/09-airtable.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/09-airtable.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "c31204207b34f17f64856f29a4f840f6ea979a2875259e4551dd6e3e43781a11",
+        "webp": "6c862b469b65a66b28638b10c914af645871245a5f9c8e711a1dbdb685bd7180",
+        "appIcon": "2a4383e22a192b45b74246fff5110ad069d1aca25b45af2770a62d4b62538eb4"
+      }
+    },
+    {
+      "id": "10-perdoo",
+      "name": "Objetivos",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a concentric target of three ivory ceramic rings with violet inner rings and a small champagne-gold sphere at the exact center.",
+      "original": "original/10-perdoo.jpg",
+      "png": "final/png/10-perdoo.png",
+      "webp": "final/webp/10-perdoo.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/10-perdoo.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "5811d83b5cec9142c00c8bfdc79d1ad86d21d9959a8171d46f8ac8bed30d6eb4",
+        "webp": "67094795a5f5bb27eb003c3895a1864fbbb4a94a7d547c1fa36d03ef018ca1a6",
+        "appIcon": "2830750b36228b782e17b2c8e3554f7a14490c5f2dc2ce97f44696244951ab0d"
+      }
+    },
+    {
+      "id": "11-holded-tesoreria",
+      "name": "Tesorería",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a short stack of thick ivory ceramic coins with champagne-gold rims and one coin standing upright on edge in violet enamel.",
+      "original": "original/11-holded-tesoreria.jpg",
+      "png": "final/png/11-holded-tesoreria.png",
+      "webp": "final/webp/11-holded-tesoreria.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/11-holded-tesoreria.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "2852026b43ddd7d08fe0b916c661ea23eb7a6d24d1d2f43ef09177e17f55d360",
+        "webp": "227b6084f35db09e5411e6450d89b959bf29642d7629c9df545918acfebc0ec8",
+        "appIcon": "015e385bf0ee9793d9aedf715fb906170dbd0cfc3085581addd01ec7953f7331"
+      }
+    },
+    {
+      "id": "12-odoo-purchase",
+      "name": "Compras",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a sculptural ivory ceramic shopping bag with softly inflated body, a violet enamel handle and a small champagne-gold tag.",
+      "original": "original/12-odoo-purchase.jpg",
+      "png": "final/png/12-odoo-purchase.png",
+      "webp": "final/webp/12-odoo-purchase.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/12-odoo-purchase.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "17da54f39c499ee6bf7214ab3b415369a1ec845795263b230f019876a24c4530",
+        "webp": "3e89556a4edecdc9425a7028598c24dfedca3a1b538cc765998c28228b1c1fec",
+        "appIcon": "51f3f4b2b8bc9841ed98e6aae94b9b0ad990d36f1caa87849ee0c77109b275d8"
+      }
+    },
+    {
+      "id": "13-productive",
+      "name": "Rentabilidad",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three ascending beveled ivory ceramic bars of increasing height with champagne-gold top edges, the middle bar inlaid with a thin violet enamel stripe.",
+      "original": "original/13-productive.jpg",
+      "png": "final/png/13-productive.png",
+      "webp": "final/webp/13-productive.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/13-productive.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "7e79af61eac94ab1b6eed699d41c435debf0594fc95d96ea45f2a43fb40bd7cf",
+        "webp": "0f9df05a0a291ba14a688edd9491f001bbe708a116dcc6b24d1fea277d1579ac",
+        "appIcon": "04398be69cc2a0eacaa252aae023fd18ea4713ca209a08563d0c4187ccaecdc2"
+      }
+    },
+    {
+      "id": "14-zendesk",
+      "name": "Atención",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a sculptural customer-support headset in ivory ceramic with two violet enamel ear cushions connected by a slim champagne-gold arch, one earpiece turned toward the viewer with a fine boom microphone.",
+      "original": "original/14-zendesk.jpg",
+      "png": "final/png/14-zendesk.png",
+      "webp": "final/webp/14-zendesk.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/14-zendesk.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "918f5ed7add590ee9ec990e6b57936859f666bc9d1b6ab7a74099f4ad67c7c88",
+        "webp": "d4317462128610e6d6ba5cbabbf1546b55fe92d6392545a7383d319e4dffcfdd",
+        "appIcon": "9f85a14359a8284bc18d5a73a5f62eb9f014f0f34260c2a528ac42a4da3d09a0"
+      }
+    },
+    {
+      "id": "15-docusign",
+      "name": "Firmas",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: an elegant fountain-pen nib sculpted in champagne gold standing upright, set into a violet enamel grip section, its slit and breather hole crisply defined.",
+      "original": "original/15-docusign.jpg",
+      "png": "final/png/15-docusign.png",
+      "webp": "final/webp/15-docusign.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/15-docusign.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "e6232e8889ce2caa3a42849a507c49e2161fc36f28c99fb54095fdbf63f83b21",
+        "webp": "e380fda99e6cb87f945b051d2aa682a7fbca674c3b7d1ec814c63de2c5b5374a",
+        "appIcon": "78f19edceea1eb25a46c51dd0cf7bb6dff268dbf1c74571348ef4f9e2f8c6c72"
+      }
+    },
+    {
+      "id": "16-n8n",
+      "name": "Automatizaciones",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: two interlocking mechanical gears, one in ivory ceramic and one in violet enamel, with champagne-gold tooth edges and a visible machined axle hole.",
+      "original": "original/16-n8n.jpg",
+      "png": "final/png/16-n8n.png",
+      "webp": "final/webp/16-n8n.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/16-n8n.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "dd04e5b08c2b923f8f73c01a346e7bdda42a9413d52227600ebe747ba22bd500",
+        "webp": "36a58231c9123d05716e44dea26f01ddf051b5fdb437c88367c196d6893bb939",
+        "appIcon": "0a4bb58a081027c536aa0e31f166311de1398de9e997e5f7f96799754d369325"
+      }
+    },
+    {
+      "id": "17-process-street",
+      "name": "Procedimientos",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three stepped ivory ceramic slabs ascending like a staircase, each with a shallow engraved rounded square, the top step inlaid with a small champagne-gold check mark.",
+      "original": "original/17-process-street.jpg",
+      "png": "final/png/17-process-street.png",
+      "webp": "final/webp/17-process-street.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/17-process-street.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "91a9fba1d5f63cdb10dc153b9732841bc32e5a4047a9e064edf967d7971de5ab",
+        "webp": "031812d7baf7bfe102c788fef55e75d6bdeb203780284de24014e7275c66e59c",
+        "appIcon": "8edddd96a62942172cd3d9ef0ca55dc2f5911c24413155f0d4485335d6c0dfb2"
+      }
+    },
+    {
+      "id": "18-factorial",
+      "name": "Equipo",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three abstract figures sculpted as smooth ivory ceramic forms with rounded heads and softly tapered shoulders, standing shoulder to shoulder, the central figure in violet enamel, a fine champagne-gold line unifying their bases.",
+      "original": "original/18-factorial.jpg",
+      "png": "final/png/18-factorial.png",
+      "webp": "final/webp/18-factorial.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/18-factorial.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "5ec55712bf500f63ede7b067fc6ee0ad6d97322fe35dd1044837929a14a9eb0a",
+        "webp": "3d4966945d8df3605b51c576f983dbc5df59e0bf22c284722d4f366031771798",
+        "appIcon": "d5457f6052e200985224e1437c328a4bccad10577b0bfe832f0ee2e2b1661ffa"
+      }
+    },
+    {
+      "id": "19-personio",
+      "name": "Personas",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a single abstract portrait bust sculpted in smooth ivory ceramic with a softly rounded head and shoulders, a slender champagne-gold arc tracing the back of the head like a delicate hairline, on a violet enamel base.",
+      "original": "original/19-personio.jpg",
+      "png": "final/png/19-personio.png",
+      "webp": "final/webp/19-personio.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/19-personio.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "95fc10dbac1dd00fb62b517802f1270a9bd8b41eb92856ffb01c55195017b42b",
+        "webp": "2a76a0d429860bf164da82fc4733a18848e7cb0109c6ddf2bab191b6d1c66b50",
+        "appIcon": "9e4e828a66a09f3ad179d4e2bd0a6a885dfbb816b98b45120814d1f8efa77748"
+      }
+    },
+    {
+      "id": "20-ramp",
+      "name": "Gastos",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a rolled ivory ceramic receipt scroll with softly curling edges, wrapped by a violet enamel band with a tiny champagne-gold clasp.",
+      "original": "original/20-ramp.jpg",
+      "png": "final/png/20-ramp.png",
+      "webp": "final/webp/20-ramp.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/20-ramp.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "4a8d95fdef75b66cfd5224716473886a8d1516892738cd424ec8eb83bbd6a081",
+        "webp": "e031b376276305103e8aa77310d066e70be2a79e3aa4497aa3e302dfa752a232",
+        "appIcon": "7d04f397cb8152b82d7f21ab915276fe942e288ee75cf8a6311c389bff8b0860"
+      }
+    },
+    {
+      "id": "21-stripe",
+      "name": "Cobros",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a thick ivory ceramic payment card standing slightly tilted with a champagne-gold chip and one embossed stripe, accompanied by a small violet enamel sphere resting beside it.",
+      "original": "original/21-stripe.jpg",
+      "png": "final/png/21-stripe.png",
+      "webp": "final/webp/21-stripe.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/21-stripe.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "4ef7da1e024289b41f8fcff02f2411e220eb7f158dd3a9e0557bbeacc388cae9",
+        "webp": "30dc6d2880872f1bf4fee652a8c4a42fe9d8cc5563bcaf3958c2ca398f7591e2",
+        "appIcon": "ed4f18befb59b71445d8701259ebeae3bcf1cde82be4860d58c8e6d975e44de0"
+      }
+    },
+    {
+      "id": "22-canva",
+      "name": "Diseño",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: an artist's oval palette sculpted in ivory ceramic with a violet enamel thumb hole and a small mound of violet paint, alongside a slim champagne-gold brush resting across it.",
+      "original": "original/22-canva.jpg",
+      "png": "final/png/22-canva.png",
+      "webp": "final/webp/22-canva.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/22-canva.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "ed8be1b3366f0dd41ed84a9c7d6711f5fc53ad2556808b80087933327b5ef633",
+        "webp": "9f62ea12e4bfe279f989b0f77ffb8645b67068f3277dc4bf2039439b3092284b",
+        "appIcon": "281f7a707824de681376d7ba865b68fb1c1f5441be3b1f731f86a72b3e4c42ba"
+      }
+    },
+    {
+      "id": "23-buffer",
+      "name": "Publicaciones",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three slim ivory ceramic cards floating in a fanned stack, the front card inlaid with a violet enamel broadcast arc and a small champagne-gold dot at its origin.",
+      "original": "original/23-buffer.jpg",
+      "png": "final/png/23-buffer.png",
+      "webp": "final/webp/23-buffer.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/23-buffer.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "b2cdccca1ee59bff64afe786cb6bbf2b21734bd416b5f8d1bea5d6ff46786914",
+        "webp": "d8783cbfa846061901b8acb4fc103bff1a2b589fcfc54007deb461eadb0d186f",
+        "appIcon": "fe9c513ff53dbe1950e2a1f422239f3ae53a311f23a9f4f9971e35fbb8287071"
+      }
+    },
+    {
+      "id": "24-shopify",
+      "name": "Tienda",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a miniature sculptural shopfront with a softly arched ivory ceramic facade and a scalloped awning of alternating violet and ivory panels, a champagne-gold door handle at the center.",
+      "original": "original/24-shopify.jpg",
+      "png": "final/png/24-shopify.png",
+      "webp": "final/webp/24-shopify.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/24-shopify.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "da99570d51dfac9cd753e219e73b5946160de4ce0b580d2efdfb3c3bda246569",
+        "webp": "c4ce760446d029b2e476165eae1c24ea731b4f7ada3e6697b9ebe68c72bf0103",
+        "appIcon": "e73ae1dd01a8e2edd4590c2b95d87c1532197252226b3dc0a2b08ad496d20f11"
+      }
+    },
+    {
+      "id": "25-intercom",
+      "name": "Soporte",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a sculptural lifebuoy ring in ivory ceramic with four violet enamel segments and a fine champagne-gold rope looped around it.",
+      "original": "original/25-intercom.jpg",
+      "png": "final/png/25-intercom.png",
+      "webp": "final/webp/25-intercom.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/25-intercom.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "3a951ca20c848c4e999cb8214cf56300d58c1035f322a1afae08b27fae03a564",
+        "webp": "96a0b6dd03fbf5d396af6c5f8280bd437abf060170eca1fec52aec29bb3fa75c",
+        "appIcon": "725fd6febd5d11c1e3804a04191b6d15cfb37aece468544dbff028ca303c3e56"
+      }
+    },
+    {
+      "id": "26-odoo-inventory",
+      "name": "Inventario",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: two stacked ivory ceramic storage crates with softly rounded edges and slatted sides, the upper crate bearing a small violet enamel label plate with a champagne-gold corner.",
+      "original": "original/26-odoo-inventory.jpg",
+      "png": "final/png/26-odoo-inventory.png",
+      "webp": "final/webp/26-odoo-inventory.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/26-odoo-inventory.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "4cf84044a3a4ad0f68214eef394940ba9d73abdde6d45b39deee116368d96ee2",
+        "webp": "0cbfb9c80aa31ae37a023dfae455c40e9dbd787531535739bc38ea084c5e31e4",
+        "appIcon": "ca50b1e857fdb045f64e5bcc1f28c621e5b9bd37ec4684785c100b03ed1731e1"
+      }
+    },
+    {
+      "id": "27-maintainx",
+      "name": "Mantenimiento",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: an elegant open-end wrench sculpted in champagne-gold metal with a violet enamel handle insert, angled diagonally with a crisp jaw opening.",
+      "original": "original/27-maintainx.jpg",
+      "png": "final/png/27-maintainx.png",
+      "webp": "final/webp/27-maintainx.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/27-maintainx.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "931ba52932d954f1064c3dde2778a27cd8385338e29e6a35237200466b4b0dbb",
+        "webp": "eacd04e0082a589a2aa614bdc8a1f8b44a678a56cc3990846793e48eecfee8aa",
+        "appIcon": "701534415a79dc9e53c33a9c5d56aaf7870ed44927d901e5ad1db1dbec772408"
+      }
+    },
+    {
+      "id": "28-odoo-manufacturing",
+      "name": "Producción",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a compact sculptural production line: an ivory ceramic base with three small violet enamel blocks moving along it and a slim champagne-gold robotic arm arched above the middle block.",
+      "original": "original/28-odoo-manufacturing.jpg",
+      "png": "final/png/28-odoo-manufacturing.png",
+      "webp": "final/webp/28-odoo-manufacturing.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/28-odoo-manufacturing.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "7dd5145d73d243e7c4bdf4d0a3ab415f1fd0e12f521fab5a181df241f458586b",
+        "webp": "70da8b55b3836ee30495a6bfd0b75abe16eb1112b6acf7e3be8e800f1574326d",
+        "appIcon": "eafbc356948798e20d8663819c00949e6c58005b1b3d965881d82e7447214fd3"
+      }
+    },
+    {
+      "id": "29-isms-online",
+      "name": "Cumplimiento",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a heraldic shield sculpted in ivory ceramic with a softly beveled border, a violet enamel field and a raised champagne-gold check mark at its center.",
+      "original": "original/29-isms-online.jpg",
+      "png": "final/png/29-isms-online.png",
+      "webp": "final/webp/29-isms-online.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/29-isms-online.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "79067a3d3e040f7a221d81fe73386fd307ae571d8f60a52f695975b0cb298232",
+        "webp": "928364de6f27013c4dd1dade0809319e9d08a4260094455608cdfb2b5cdbd205",
+        "appIcon": "13f883bf2207e63a1673fc302f0a0a5688f004ec566cb443a7ae530ab94db92f"
+      }
+    },
+    {
+      "id": "30-microsoft-entra",
+      "name": "Accesos",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a large sculptural key with a rounded violet enamel bow, an ivory ceramic shaft and two crisp champagne-gold teeth.",
+      "original": "original/30-microsoft-entra.jpg",
+      "png": "final/png/30-microsoft-entra.png",
+      "webp": "final/webp/30-microsoft-entra.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/30-microsoft-entra.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "2c363996c7ca1c10160669971583ddc5fccbc8b96a53b9a3663e36ab78cc0b98",
+        "webp": "5394933f1fa53940f33e1d4fcc9f417b9d69553af38b92e08e34a237b10733e7",
+        "appIcon": "3dc6c55d76a421a7b39d84f3bbdd7c67f47430b70a286853e6597e3daaafd405"
+      }
+    },
+    {
+      "id": "31-suitedash",
+      "name": "Portal cliente",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: an elegant arched portal sculpted in ivory ceramic with a deep violet enamel interior, standing on a slim champagne-gold threshold, like a private client doorway.",
+      "original": "original/31-suitedash.jpg",
+      "png": "final/png/31-suitedash.png",
+      "webp": "final/webp/31-suitedash.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/31-suitedash.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "28325e12b3dc5ff197181eb783993556ca4288ee0cc1219ada3889f0a6f1c643",
+        "webp": "7502df0ed0d5188754f51da92ec52584e08c3cdc3df8064f02a63e15d8143e24",
+        "appIcon": "65a92fd86f0939b41711b469e063a1b32242190a712a55d3f6cce41e61221cc6"
+      }
+    },
+    {
+      "id": "32-notion",
+      "name": "Conocimiento",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: an open book sculpted in ivory ceramic with softly curved pages, a violet enamel spine and delicate champagne-gold page edges, seen from a three-quarter angle.",
+      "original": "original/32-notion.jpg",
+      "png": "final/png/32-notion.png",
+      "webp": "final/webp/32-notion.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/32-notion.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "85e402476cdbdb6b6dfdbb3450da0bc710e02d18879f4af43c065a99e02a3804",
+        "webp": "bfe759a460f5610c43a037811a5ea6230eadfd1363c75b63ed0f76224b59810a",
+        "appIcon": "b59cdf7c3c923a04c2db8e9396410bedb952a1f6a1823bbf15340224d5ca50fd"
+      }
+    },
+    {
+      "id": "33-langsmith",
+      "name": "Observabilidad IA",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a circular instrument dial in ivory ceramic with a violet enamel outer ring and a slender champagne-gold needle pointing upward, like a precision observability gauge.",
+      "original": "original/33-langsmith.jpg",
+      "png": "final/png/33-langsmith.png",
+      "webp": "final/webp/33-langsmith.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/33-langsmith.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "0616fd75c82b0e74edae1e0bbecc88df30cd6a96d44fc9d2c6453507ce68e306",
+        "webp": "07ab51a29ae6e79c5a33019a68056b9eb7a45ba0cb75d430d928cafa868c1027",
+        "appIcon": "5bba51d5f91bc3a036ada9821f100b9b7cb3d6289a1e5fb3a53f1f1e3810b514"
+      }
+    },
+    {
+      "id": "34-trello",
+      "name": "Tableros",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: three vertical ivory ceramic board columns of different heights, each holding two or three small violet enamel tiles, the tallest column topped with a champagne-gold cap.",
+      "original": "original/34-trello.jpg",
+      "png": "final/png/34-trello.png",
+      "webp": "final/webp/34-trello.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/34-trello.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "12f4081233aae1cf9c512609896b267625b89e4e0f9dc3d6e32d2f9ee90a4430",
+        "webp": "74717a89a32a30dce1c2265589a1a5d94769b0b27d870b9f8272174023e87c16",
+        "appIcon": "30cf96849b04a82c67a51e92f9405fc7906a4a3af9c8d5ae2a347e4c37330109"
+      }
+    },
+    {
+      "id": "35-centro-mando",
+      "name": "Centro de Mando",
+      "prompt": "Create a single premium three-dimensional enterprise application icon for AgntiaPro. Design an exquisite sculptural object using warm ivory ceramic with a satin finish, sophisticated violet enamel and restrained champagne-gold metallic accents, placed against a seamless soft lavender studio background (#F0ECFC). Use carefully art-directed studio lighting, delicate reflections, precise rounded bevels, realistic material depth and subtle contact shadows. The composition must feel like luxury industrial product photography rather than generic SaaS illustration. Give the object a distinctive, immediately recognizable silhouette, centered with generous negative space. Square composition, high resolution, no typography, no labels, no external logos, no watermarks, no interface elements, no additional icons. Subject: a circular command console sculpted in ivory ceramic with a violet enamel inset ring and a champagne-gold compass needle, four subtle gold cardinal marks around the bezel.",
+      "original": "original/35-centro-mando.jpg",
+      "png": "final/png/35-centro-mando.png",
+      "webp": "final/webp/35-centro-mando.webp",
+      "appIcon": "apps/ui-lab/src/apps-launcher/icons/35-centro-mando.webp",
+      "dimensions": {
+        "original": "1024x1024",
+        "png": "1024x1024",
+        "webp": "512x512",
+        "appIcon": "320x320"
+      },
+      "sha256": {
+        "png": "ab0dfa45ac27ca19ab5340fafdbb977edb6858c030bc2d34e6b0475f264aa81e",
+        "webp": "db8f0290f578dacacf1e44caa13f5a23a457abbca6f97371391fa46c9a9cc926",
+        "appIcon": "ee47d05f419687c324140e12462e759ae652ee3515149b61bc495f1ec0fc7cd8"
+      }
+    }
+  ]
+}

@@ -64,3 +64,18 @@ Fuente: directorios numerados existentes en `apps/web/src/workspaces/` de `main`
 Esta ficha define el **launcher/metadashboard de la sección Apps**, no una app adicional del catálogo ni una sustitución de las 35 fichas. Las 35 fichas existentes siguen en `apps/ui-lab/docs/dashboards/`. Para la experiencia del launcher, documentar en futuras pasadas: especificación visual desktop/móvil; flujos de acceso y búsqueda; personalización y ranking contextual; contratos de iconos/tiles/widgets; fixtures demo; componentes; pruebas de estabilidad de navegación, accesibilidad y capturas. Preservar la explicación original del founder como fuente prioritaria.
 
 **Estado:** definición conceptual aprobada en conversación; documentación solamente. Sin implementación, cambios de backend, merges a main ni despliegue.
+
+## Campaña Launcher V3 ejecutada (2026-11-24)
+
+Implementada la preview aislada `apps-launcher-v3` en UI Lab, con los 35 iconos originales, launcher
+completo (reposo, escritorio, cajón, carpetas, recientes y apertura de apps), QA en navegador y
+artifact para Chromebook. Producción, kernel, runtime e integraciones sin cambios.
+
+- Código: `apps/ui-lab/src/apps-launcher/` · preview `/?view=apps-launcher-v3`.
+- Documentación de campaña: [`campana-launcher-v3/`](campana-launcher-v3/00-BITACORA.md).
+- Iconos: [`iconos/final/`](iconos/final/manifiesto.json) (PNG 1024, WebP 512, manifiesto con prompts).
+- QA: [`qa/qa-resultados.json`](qa/qa-resultados.json) y [`qa/capturas/`](qa/capturas/).
+- Artifact: [`artifact/`](artifact/build-artifact.py) · workflow `UI Lab` → `apps-launcher-v3-chromebook`.
+
+La aprobación estética de los iconos corresponde al founder; aquí solo se certifica el cumplimiento
+técnico y la coherencia de la dirección artística.

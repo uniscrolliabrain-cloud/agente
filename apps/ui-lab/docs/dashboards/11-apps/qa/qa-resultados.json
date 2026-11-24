@@ -1,0 +1,74 @@
+{
+  "campaign": "apps-launcher-v3",
+  "ranAt": "2026-11-24T19:50:00Z",
+  "branch": "main",
+  "build": {
+    "version": "e3652cfc33b6",
+    "typecheck": "exit 0",
+    "build": "exit 0"
+  },
+  "environment": {
+    "runner": "Navegador cloud (Chromium headless gestionado)",
+    "url": "https://pv-d3a30fbf9650-faba5dbd-aab8-427e-9bb7-2448a54dad1b.style.dev/?embed=1&view=apps-launcher-v3",
+    "touch": "Emulación táctil real vía CDP (Emulation.setTouchEmulationEnabled + Input.dispatchTouchEvent)",
+    "note": "Con emulación táctil activa Playwright deja de entregar teclado en esa pestaña; el teclado se verificó en pestaña limpia del mismo contexto autenticado."
+  },
+  "totals": { "checks": 33, "passed": 33, "failed": 0 },
+  "checks": [
+    { "id": "R1", "area": "reposo", "name": "Reloj Fraunces HH:MM y 3 notificaciones", "ok": true, "evidence": "14:21 · Fraunces · 3 tarjetas" },
+    { "id": "R2", "area": "reposo", "name": "Sin overflow a 1440", "ok": true, "evidence": "scrollWidth - innerWidth = -15" },
+    { "id": "H1", "area": "escritorio", "name": "6 favoritas, 3 carpetas, 4 widgets, dock de 4 apps", "ok": true },
+    { "id": "H2", "area": "escritorio", "name": "Saludo como único h1", "ok": true, "evidence": "«Buenas tardes, Ana»" },
+    { "id": "H3", "area": "escritorio", "name": "Altura exacta del viewport, sin scroll de página", "ok": true, "evidence": "scrollHeight 900 = innerHeight 900; dock visible" },
+    { "id": "I1", "area": "iconos", "name": "35 iconos y 35 imágenes decodificadas", "ok": true, "evidence": "35/35 naturalWidth > 0" },
+    { "id": "I2", "area": "iconos", "name": "Hover revela el nombre", "ok": true, "evidence": "opacity 1 · «Agenda»" },
+    { "id": "I3", "area": "iconos", "name": "El nombre no desplaza la cuadrícula", "ok": true, "evidence": "posiciones idénticas antes/después" },
+    { "id": "I4", "area": "iconos", "name": "Clic abre desde el icono con origen calculado", "ok": true, "evidence": "transform-origin 109px" },
+    { "id": "T1", "area": "táctil", "name": "Primer toque selecciona y revela sin abrir", "ok": true, "evidence": "seleccionadas 1 · superficie 0" },
+    { "id": "T2", "area": "táctil", "name": "Segundo toque sobre el mismo abre", "ok": true },
+    { "id": "T3", "area": "táctil", "name": "Tocar otro icono mueve la selección", "ok": true, "evidence": "índice 1 · una sola app" },
+    { "id": "T4", "area": "táctil", "name": "Tocar espacio vacío cancela", "ok": true, "evidence": "1 → 0" },
+    { "id": "T5", "area": "táctil", "name": "Modalidad detectada por dispositivo", "ok": true, "evidence": "alp-mod-touch con emulación real" },
+    { "id": "D1", "area": "cajón", "name": "35 apps en 6 grupos", "ok": true },
+    { "id": "D2", "area": "cajón", "name": "Sin nombres permanentes", "ok": true, "evidence": "0 etiquetas visibles" },
+    { "id": "D3", "area": "cajón", "name": "Foco inicial en el buscador", "ok": true },
+    { "id": "D4", "area": "cajón", "name": "Búsqueda instantánea", "ok": true, "evidence": "«correo» → 1 resultado" },
+    { "id": "D5", "area": "cajón", "name": "Estado sin resultados", "ok": true },
+    { "id": "F1", "area": "carpetas", "name": "Carpeta Finanzas con 4 apps y foco en Cerrar", "ok": true },
+    { "id": "K1", "area": "teclado", "name": "Foco revela nombre y anillo violeta", "ok": true, "evidence": "outline 2px rgb(101,80,221)" },
+    { "id": "K2", "area": "teclado", "name": "Enter abre la app enfocada", "ok": true, "evidence": "Agenda" },
+    { "id": "K3", "area": "teclado", "name": "Escape cierra la app al primer intento", "ok": true, "evidence": "3/3 rondas" },
+    { "id": "K4", "area": "teclado", "name": "Escape cierra cajón, carpeta y recientes al primer intento", "ok": true, "evidence": "carpeta 2/2 · cajón 1/1 · recientes 1/1" },
+    { "id": "A1", "area": "apps", "name": "Superficie con etiqueta Demostración y 2 paneles", "ok": true },
+    { "id": "A2", "area": "apps", "name": "Cierre devuelve el foco al icono", "ok": true, "evidence": "«Correo»" },
+    { "id": "A3", "area": "apps", "name": "Recientes con apps abiertas y recuperación", "ok": true, "evidence": "4 tarjetas · reapertura correcta" },
+    { "id": "A4", "area": "apps", "name": "Volver al escritorio desde la app", "ok": true },
+    { "id": "V1", "area": "responsive", "name": "1440/1366/1280/1024/768/390/360 sin overflow", "ok": true, "evidence": "-15px en los siete anchos" },
+    { "id": "V2", "area": "responsive", "name": "Columnas de favoritas 6/6/6/4/4/3/3", "ok": true },
+    { "id": "V3", "area": "responsive", "name": "Cajón con 6 columnas a 768 y 4 a 390", "ok": true },
+    { "id": "V4", "area": "accesibilidad", "name": "Objetivos táctiles ≥40 px", "ok": true, "evidence": "0 controles por debajo en 1440 y 390" },
+    { "id": "M1", "area": "motion", "name": "Reduced motion anula animaciones y conserva contenido", "ok": true, "evidence": "animation-duration 1e-05s · opacity 1" },
+    { "id": "C1", "area": "aislamiento", "name": "Consola limpia", "ok": true, "evidence": "0 errores · 0 pageerror" },
+    { "id": "C2", "area": "aislamiento", "name": "Producción sin cambios", "ok": true, "evidence": "git diff sin apps/web" }
+  ],
+  "screenshots": [
+    "reposo-1440.png", "escritorio-1440.png", "cajon-1440.png", "app-1440.png", "carpeta-1440.png",
+    "recientes-1440.png", "reposo-768.png", "escritorio-768.png", "reposo-390.png", "escritorio-390.png",
+    "cajon-390.png", "app-390.png"
+  ],
+  "fixedDuringQa": [
+    "Foco de retorno a un nodo desmontado → se resuelve por nombre del icono montado",
+    "Primer Escape perdido → manejador propio en app, cajón, carpeta y recientes",
+    "Selección táctil cancelada por burbujeo del clic → el contenedor ignora clics en controles",
+    "Scroll de 26 px por el badge de UI Lab → encaje con :has()",
+    "Objetivos táctiles de 38–40 px → 40–44 px"
+  ],
+  "notVerified": [
+    "Aprobación estética de los 35 iconos (competencia del founder)",
+    "Lector de pantalla real (VoiceOver/TalkBack)",
+    "Zoom 200 % y teclado virtual en dispositivo físico",
+    "Safari y Firefox (solo Chromium)",
+    "Ejecución del workflow de GitHub Actions y descarga del artifact",
+    "Regeneración con el pipeline OpenRouter (sin OPEN_ROUTER_API_KEY)"
+  ]
+}
