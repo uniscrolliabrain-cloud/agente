@@ -1,0 +1,9 @@
+# Contrato de generación de proyecciones · lote 1/4
+
+Estado: propuesta para revisión del founder, no dataset ejecutable ni migración. Fuentes canónicas existentes en apps/ui-lab/docs/agntia-demo/03-compilacion-y-dataset/DATASET-SINTETICO.md, 04-plantilla-derivada/CONTRATO-FIXTURES.md y 06-diagnostico-copy-data-sintetica/01-COPY-Y-REGISTROS-NUEVOS-PROPUESTOS.md. La ruta apps/ui-lab/agntia-demo/ solicitada para datos futuros aún no existe como implementación; crear allí la fuente central solo en campaña autorizada. No confundir docs con runtime.
+
+Usar tenantId agntia-demo, businessId business-agntiapro, scenarioId agntia-owner-journey-v1, human-founder-demo como propuesta de identidad de la revisión 06. El documento inicial usa otros IDs; registrar alias y aprobar migración antes de materializar. El runtime actual usa interfaz; no cambiarlo en esta fase. Los ocho clientes propuestos no equivalen a ocho suscripciones activas. Reloj lógico fijo de 90 días, semilla reproducible, IDs únicos, referencias válidas, correos .example, simulationMode synthetic, datasetVersion y sourceKind. No Date.now() para hechos del escenario. Separar hechos simulados, capacidad técnica y estado UI.
+
+Propuesta de organización futura: apps/ui-lab/agntia-demo/{contracts,entities,events,scenarios,projections,validation}/. Un generador central crea entidades maestras y eventos; cada proyección es una función pura de dataset + contexto + estado de presentación. No duplicar hechos por dashboard. Validar unicidad, tenant, referencias, cronología, permisos, ausencia de secretos y determinismo; probar aislamiento público/privado. Los estados UI efímeros no se registran como actividad empresarial. Ningún agente de UX escribe entidades maestras unilateralmente.
+
+Lote 1: landing, login, legal, chat transversal, perfil. Lotes posteriores ampliarán el contrato; no fijar cifras financieras ni crear nuevos clientes aquí.
