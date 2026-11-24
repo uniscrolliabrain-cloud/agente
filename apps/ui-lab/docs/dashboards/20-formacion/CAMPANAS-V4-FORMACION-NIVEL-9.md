@@ -1,3 +1,5 @@
+> **DECISIÓN DEL FOUNDER · 2026-11-24 — CAMBIO DE ALCANCE EJECUTADO:** la V4 NO necesita los 120 cursos. Se ha implementado un vertical slice editorial de **12 lecciones** en `apps/ui-lab/src/formation-v4/`, registrado en UI Lab como `formation-v4`. Los 120 registros del catálogo anterior quedan en **legacy**, solo como fuente de datos para las 12 selecciones. Los gates que exigían 120/120 quedan sustituidos por 12/12, navegación de colecciones y prueba de todos los recorridos. **C09 (promoción)** no sustituye legacy sin aceptación. Las campañas C00–C08 deben evaluarse por evidencia real; la creación del código no equivale a QA ni a despliegue satisfactorio.
+
 # FORMACIÓN · CAMPAÑAS V4.1 · PLAN MAESTRO PREMIUM 9+/10
 **Fecha:** 2026-11-24 · **Estado:** especificación de implementación, NO implementación. **Fuente vigente:** este documento sustituye íntegramente el plan V4 anterior; no cambia el código actual. **Destino:** UI Lab. **Versión actual:** LEGACY FUNCIONAL, preservada hasta validación de la nueva versión.
 
