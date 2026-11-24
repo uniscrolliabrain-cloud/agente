@@ -125,9 +125,13 @@ jobs:
           test "$INSTALLED" = "$PLAYWRIGHT_VERSION"
           echo "Playwright $INSTALLED"
           /tmp/pw/node_modules/.bin/playwright install --with-deps chromium 2>&1 | tail -20
-          (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
+          # vite preview sirve el dist con Node (cola de conexiones amplia);
+          # el http.server de Python se queda sin backlog cuando Chromium pide
+          # el CSS de un chunk dinámico en paralelo y la vista no monta.
+          nohup pnpm --filter @agente/ui-lab exec vite preview --host 127.0.0.1 --port 4173 --strictPort \
+            > /tmp/login-v3-qa/preview.log 2>&1 &
           for _ in $(seq 1 30); do
-            curl -fsS http://127.0.0.1:4173/version.json >/dev/null && break
+            curl -fsS http://127.0.0.1:4173/version.json >/dev/null 2>&1 && break
             sleep 1
           done
           curl -fsS http://127.0.0.1:4173/version.json

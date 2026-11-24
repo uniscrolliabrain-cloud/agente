@@ -7,7 +7,10 @@
  *
  * Uso:
  *   pnpm --filter @agente/ui-lab build
- *   (cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1 &)
+ *   pnpm --filter @agente/ui-lab exec vite preview --host 127.0.0.1 --port 4173 &
+ *   (alternativa: cd apps/ui-lab/dist && python3 -m http.server 4173 --bind 127.0.0.1;
+ *    con muchos assets en paralelo el servidor de Python puede agotar su cola de
+ *    conexiones y fallar la precarga del CSS de un chunk: por eso CI usa vite)
  *   npm i --prefix /tmp/pw --no-save playwright@1.65.1
  *   /tmp/pw/node_modules/.bin/playwright install chromium
  *   NODE_PATH=/tmp/pw/node_modules node apps/ui-lab/scripts/qa-login-v3.mjs

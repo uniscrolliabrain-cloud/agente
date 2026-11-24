@@ -38,6 +38,12 @@ comprueba la versión instalada y aborta con código 3 si no coincide con la fij
 puede medir con otro motor por descuido. Con `EXPECTED_BUILD_SHA` exige además que el bundle servido
 declare ese commit en `version.json`, y con `REPORT` escribe un JSON con SHA, versiones y los 41 checks.
 
+El `dist/` se sirve con `vite preview` (Node), no con `python3 -m http.server`: ese servidor de Python
+tiene una cola de conexiones de 5 y, cuando Chromium pide en paralelo el CSS de un chunk dinámico,
+alcanza a rechazar alguna petición. En CI eso se veía como `Unable to preload CSS for
+/assets/agntia-tokens-*.css` y la vista no montaba; el diagnóstico queda en `qa/qa.log` del artifact
+`login-v3-qa-evidence`.
+
 ## 3. Medidas medidas en navegador (1366×1002, DPR 1)
 
 | Elemento | Medido | Contrato |
