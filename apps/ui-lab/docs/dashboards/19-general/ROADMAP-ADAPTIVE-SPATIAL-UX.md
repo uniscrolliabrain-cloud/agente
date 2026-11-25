@@ -26,3 +26,9 @@ A: inventario shell/router/gestos y prototipo UI Lab con tres workspaces; B: gra
 
 ## Gates
 No perder scroll, texto sin guardar, foco, historial ni filtros al cambiar vista. No saltos involuntarios, reordenamientos mientras se interactúa ni conflictos con gestos del SO. Probar teclado, lector de pantalla, touch, ratón, reduced motion, memoria y latencia. Mantener navegación tradicional. No tocar backend/kernel/runtime/tenancy ni desplegar producción en esta fase documental. Las ideas son técnicamente viables en aplicación web, pero compatibilidad de gestos y ventanas fuera de la app requieren validación específica. No se ha implementado ni probado nada de esta campaña.
+
+## Principio del founder: profundidad opcional, no intrusiva
+Las interacciones reutilizan hábitos digitales conocidos. Si quieres las usas; si no, ni te enteras de que existen. Simplicidad por defecto, profundidad por descubrimiento, personalización por elección. No añadir ruido visual ni tutoriales obligatorios.
+
+## Identidad cromática dinámica — idea del founder
+El acento actual es lavanda. En el futuro incorporar siete colores, blanco y negro, combinaciones personalizadas y transiciones cromáticas configurables durante el día. La paleta exacta queda por definir por el founder. Mantener tipografía, composición, materiales, identidad y jerarquía. Propuesta: tokens CSS semánticos, presets y editor de combinaciones, horario local configurable, interpolación gradual, override manual y reset. Separar acento decorativo de colores semánticos de alertas y estados; validar contraste WCAG y reduced motion. No modificar el branding PMV ni implementar ahora.
