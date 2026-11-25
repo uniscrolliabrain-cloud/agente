@@ -9,3 +9,9 @@
   height: 100%;
   min-height: 0;
 }
+
+/* Formación V4 pagina en vertical: crece con el contenido y deja que scrollee
+   el área de contenido del shell, sin fijar alto. */
+.v2-content > .fv-root {
+  min-height: 100%;
+}

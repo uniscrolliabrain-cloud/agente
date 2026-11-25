@@ -2,6 +2,7 @@ import { StrictMode, lazy, Suspense, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { demoUser } from "../../web/src/demo/fixtures";
 import { DEMO_TOKEN } from "../../web/src/demo/tenant";
+import type { AppView } from "../../web/src/components/SidebarV2";
 import "../../web/src/index.css";
 import "./clone-views.css";
 
@@ -17,6 +18,7 @@ const KnowledgeWorkspace = lazy(() => import("./knowledge-v1/KnowledgeWorkspace"
 const DocumentsExplorer = lazy(() => import("./documents-explorer/DocumentsExplorer"));
 const ComunicacionesWorkspace = lazy(() => import("./comunicaciones/ComunicacionesWorkspace"));
 const AppsLauncher = lazy(() => import("./apps-launcher/AppsLauncher"));
+const FormationV4 = lazy(() => import("./formation-v4/FormationV4Workspace"));
 const LegalV1 = lazy(() => import("./legal/LegalV1"));
 
 function View({ children }: { children: ReactNode }) {
@@ -30,9 +32,11 @@ function View({ children }: { children: ReactNode }) {
 }
 
 const demoViews = {
-  memory: (
+  // NAV_KNOWLEDGE_V1 - recibe la navegación del shell para que su menú general
+  // cambie de vista de verdad en lugar de dejar los botones muertos.
+  memory: (nav: (view: AppView) => void) => (
     <View>
-      <KnowledgeWorkspace />
+      <KnowledgeWorkspace onNavigate={nav} />
     </View>
   ),
   documents: (
@@ -48,6 +52,11 @@ const demoViews = {
   apps: (
     <View>
       <AppsLauncher />
+    </View>
+  ),
+  formation: (
+    <View>
+      <FormationV4 />
     </View>
   ),
 };

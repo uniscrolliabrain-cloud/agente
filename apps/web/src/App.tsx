@@ -92,7 +92,11 @@ export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
 // DEMO_VIEWS_V1 - el clon de demostración (UI Lab / GitHub Pages) inyecta aquí
 // los workspaces nuevos sin cambiar producción: sin este prop, la app monta
 // exactamente las mismas vistas de siempre.
-export default function App({ demoViews }: { demoViews?: Partial<Record<AppView, ReactNode>> } = {}) {
+// DEMO_VIEWS_V1 - cada entrada es un nodo o una función que recibe la
+// navegación del shell, para que los menús internos de la demo cambien de vista.
+type DemoView = ReactNode | ((nav: (view: AppView) => void) => ReactNode);
+
+export default function App({ demoViews }: { demoViews?: Partial<Record<AppView, DemoView>> } = {}) {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const threads = useThreads(auth.isAuthenticated);
@@ -215,6 +219,12 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
     setMobileNav(false);
   };
 
+  // DEMO_VIEWS_V1 - resuelve un nodo o una función de navegación de la demo.
+  const renderDemoView = (key: AppView): ReactNode => {
+    const entry = demoViews?.[key];
+    return typeof entry === "function" ? entry(selectView) : entry;
+  };
+
   const toggleChat = () => {
     if (isMobile) {
       setMobileChat((open) => !open);
@@ -257,6 +267,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
       }}
       tenant={sessionTenant ? { id: sessionTenant } : null}
       showApps={Boolean(demoViews?.apps)}
+      showFormation={Boolean(demoViews?.formation)}
       collapsed={chatDockActive || (collapsed && !isMobile)}
       onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}
@@ -313,7 +324,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
             />
           )}
           {view === "chat" &&
-            (demoViews?.chat ?? (
+            (renderDemoView("chat") ?? (
               <ChatPanel
                 chat={chat}
                 onResolveView={handleResolveView}
@@ -328,15 +339,16 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
               onReviewTask={reviewTask}
             />
           )}
-          {view === "documents" && (demoViews?.documents ?? <DocumentsView files={files} />)}
-          {view === "whatsapp" && (demoViews?.whatsapp ?? <WhatsAppView />)}
+          {view === "documents" && (renderDemoView("documents") ?? <DocumentsView files={files} />)}
+          {view === "whatsapp" && (renderDemoView("whatsapp") ?? <WhatsAppView />)}
+          {view === "formation" && (renderDemoView("formation") ?? null)}
           {view === "operations" && (
             <VerticalSliceOperationsView
               enabled={auth.isAuthenticated}
               onOpenTask={(id) => setOpenTaskId(id)}
             />
           )}
-          {view === "memory" && (demoViews?.memory ?? <MemoryView memories={memories} />)}
+          {view === "memory" && (renderDemoView("memory") ?? <MemoryView memories={memories} />)}
           {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
           {view === "control-center" && (
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
@@ -350,7 +362,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
               onSelectWorkspace={setActiveWorkspaceId}
             />
           )}
-          {view === "apps" && (demoViews?.apps ?? null)}
+          {view === "apps" && (renderDemoView("apps") ?? null)}
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
           {view === "command-studio" && (

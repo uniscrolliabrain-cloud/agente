@@ -11,6 +11,7 @@ import {
   Files,
   FolderKanban,
   Gauge,
+  GraduationCap,
   LayoutDashboard,
   LayoutGrid,
   MessageSquareText,
@@ -31,7 +32,7 @@ import { WhatsAppIcon } from "./WhatsAppIcon";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
-export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio" | "apps";
+export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio" | "apps" | "formation";
 
 interface Props {
   activeView: AppView;
@@ -59,6 +60,8 @@ interface Props {
   /** DEMO_VIEWS_V1 - el clon de demostracion anade la entrada Apps; en
    *  produccion el prop va apagado y el menu queda igual. */
   showApps?: boolean;
+  /** DEMO_VIEWS_V1 - igual que Apps: Formación solo existe en el clon. */
+  showFormation?: boolean;
 }
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
@@ -100,11 +103,18 @@ export default function SidebarV2({
   onToggleCollapsed,
   onOpenSettings,
   showApps,
+  showFormation,
 }: Props) {
   // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
-  const navItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = showApps
-    ? [...PRIMARY.slice(0, 2), { id: "apps", label: "Apps", icon: LayoutGrid }, ...PRIMARY.slice(2)]
-    : PRIMARY;
+  const demoItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
+    ...(showApps ? [{ id: "apps" as const, label: "Apps", icon: LayoutGrid }] : []),
+    ...(showFormation ? [{ id: "formation" as const, label: "Formación", icon: GraduationCap }] : []),
+  ];
+  const navItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
+    ...PRIMARY.slice(0, 2),
+    ...demoItems,
+    ...PRIMARY.slice(2),
+  ];
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
   // la columna. Antes solo se veían tres y los demás desaparecían sin aviso.
