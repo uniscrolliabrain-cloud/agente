@@ -20,12 +20,9 @@ const Tasks=lazy(()=>import("../../web/src/components/TasksView"));
 const Docs=lazy(()=>import("../../web/src/components/DocumentsView"));
 const Projects=lazy(()=>import("../../web/src/components/ProjectsView"));
 const Team=lazy(()=>import("../../web/src/components/TeamView"));
-const Users=lazy(()=>import("../../web/src/components/UsersView"));
 const Comunicaciones=lazy(()=>import("./comunicaciones/ComunicacionesWorkspace"));
-const Control=lazy(()=>import("../../web/src/components/ControlCenterView"));
 const Today=lazy(()=>import("../../web/src/components/CommandCenterView"));
 const TodayEditorial=lazy(()=>import("./command-center-editorial/CommandCenterEditorialPreview"));
-const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperationsView"));
 const AppsLauncher=lazy(()=>import("./apps-launcher/AppsLauncher"));
 const ChatTransversalV3=lazy(()=>import("./chat-transversal-v3/ChatTransversalV3"));
 const DocumentsExplorer=lazy(()=>import("./documents-explorer/DocumentsExplorer"));
@@ -56,10 +53,7 @@ export const previews:Preview[]=[
 {id:"documents",name:"Documentos",category:"Trabajo",description:"Vista original con archivos ficticios",Component:()=> <Docs files={files}/>,status:"api"},
 {id:"projects",name:"Proyectos",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:()=> <Projects enabled={true}/>,status:"api"},
 {id:"team",name:"Equipo",category:"Trabajo",description:"Vista original con sesión demo aislada",Component:Team,status:"api"},
-{id:"users",name:"Usuarios",category:"Trabajo",description:"Vista original con API sintética del navegador",Component:()=> <Users currentUserId="ui-lab"/>,status:"api"},
 {id:"comunicaciones",name:"Comunicación",category:"Canales",description:"WhatsApp Business, llamadas y SMS, Slack · demo agéntica con supervisión humana",Component:Comunicaciones,status:"demo"},
-{id:"control",name:"Control de actividad",category:"Trabajo",description:"Vista original en modo desconectado",Component:()=> <Control enabled={true}/>,status:"api"},
-{id:"operations",name:"Operaciones",category:"Trabajo",description:"Vista original con datos sintéticos del navegador",Component:()=> <Operations enabled={true}/>,status:"api"},
 {id:"apps-launcher-v3",name:"Apps · Launcher V3",category:"Trabajo",description:"Launcher empresarial: reposo, escritorio, cajón de 35 apps, carpetas, recientes y apertura con transición",Component:AppsLauncher,status:"demo"},
 {id:"chat-transversal-v3",name:"Chat transversal V3",category:"Canales",description:"Chat transversal sobre cualquier workspace: panel izquierdo en PC con cuatro anchos, hoja inferior móvil, voz y videollamada de demostración",Component:ChatTransversalV3,status:"demo"},
 ];

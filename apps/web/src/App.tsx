@@ -268,6 +268,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
       tenant={sessionTenant ? { id: sessionTenant } : null}
       showApps={Boolean(demoViews?.apps)}
       showFormation={Boolean(demoViews?.formation)}
+      hideLegacyViews={Boolean(demoViews)}
       collapsed={chatDockActive || (collapsed && !isMobile)}
       onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}
@@ -310,7 +311,9 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
               onOpenTasksView={() => setView("tasks")}
               onOpenAgentsView={() => setView("team")}
               onOpenChat={() => setView("chat")}
-              {...(auth.user?.role === "admin" ? { onOpenTeamView: () => setView("users") } : {})}
+              {...(auth.user?.role === "admin"
+                ? { onOpenTeamView: () => setView(demoViews ? "team" : "users") }
+                : {})}
             />
           )}
           {view === "today" && !USE_COMMAND_CENTER_V2 && (
@@ -320,7 +323,9 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
               onOpenTasksView={() => setView("tasks")}
               onOpenAgentsView={() => setView("team")}
               onOpenChat={() => setView("chat")}
-              {...(auth.user?.role === "admin" ? { onOpenTeamView: () => setView("users") } : {})}
+              {...(auth.user?.role === "admin"
+                ? { onOpenTeamView: () => setView(demoViews ? "team" : "users") }
+                : {})}
             />
           )}
           {view === "chat" &&

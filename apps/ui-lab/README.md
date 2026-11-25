@@ -4,7 +4,7 @@ UI Lab es una aplicación Vite separada en `apps/ui-lab` para visualizar compone
 
 ## Navegación y previsualización
 
-El laboratorio no tiene menú lateral propio. Un selector compacto **Vista** en la barra superior permite cambiar entre las 29 previews registradas en `src/registry.tsx`. Se conservan modos móvil/tablet/PC, zoom, comparación, recarga y pantalla completa. El selector de versiones históricas se retiró del menú anterior; `src/versions.ts` solo define vistas registradas, no snapshots reales. El catálogo de vistas no equivale a las 34 Apps documentadas individualmente ni al identificador técnico 35 del Centro de Mando. La nomenclatura de las 19 pantallas y las 34 Apps está en [NOMENCLATURA-UI-FINAL.md](./docs/dashboards/19-general/NOMENCLATURA-UI-FINAL.md).
+El laboratorio no tiene menú lateral propio. Un selector compacto **Vista** en la barra superior permite cambiar entre las 26 previews registradas en `src/registry.tsx`. Se conservan modos móvil/tablet/PC, zoom, comparación, recarga y pantalla completa. Usuarios, Centro de control, Operaciones y Workspaces se retiraron el 25/11/2026 por decisión del founder: son legacy y su estado vive en [docs/attention-legacy.md](./docs/attention-legacy.md). El selector de versiones históricas se retiró del menú anterior; `src/versions.ts` solo define vistas registradas, no snapshots reales. El catálogo de vistas no equivale a las 34 Apps documentadas individualmente ni al identificador técnico 35 del Centro de Mando. La nomenclatura de las 19 pantallas y las 34 Apps está en [NOMENCLATURA-UI-FINAL.md](./docs/dashboards/19-general/NOMENCLATURA-UI-FINAL.md).
 
 ## Desarrollo
 
@@ -24,6 +24,15 @@ El botón Buscar actualización consulta `version.json`; no despliega. El manifi
 ## Límites
 
 Las previews pueden usar fixtures o depender de APIs no conectadas. El guard de red bloquea fetch salvo `version.json`, XHR, WebSocket, EventSource y sendBeacon, pero no es un sandbox de seguridad completo. No cargar cuentas ni secretos reales. El iframe actual permite scripts y same-origin: válido solo para este laboratorio interno de código confiable y datos sintéticos. No hay certificación pixel-perfect ni pruebas visuales automatizadas. No se afirma aquí que un despliegue concreto haya terminado: verificarlo en GitHub Actions.
+
+## Vistas retiradas (legacy)
+
+Usuarios, Centro de control, Operaciones y Workspaces ya no están en la demo: el founder cubrió esas
+superficies en otros workspaces. `SidebarV2` recibe `hideLegacyViews` y el clon lo enciende con
+`Boolean(demoViews)`; producción no pasa el prop y conserva su menú igual. Los componentes siguen en
+`apps/web/src` porque producción aún los monta, y sus copias en `docs/` quedan como archivo con una
+nota `NOTA-LEGACY.md`. Alcance, tabla de correspondencias y reglas en
+[`docs/attention-legacy.md`](./docs/attention-legacy.md).
 
 ## Formación
 

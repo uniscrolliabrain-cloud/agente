@@ -12,6 +12,7 @@ este árbol**. Esta carpeta está versionada en `main` junto al laboratorio.
 | Leer o tocar el código | [`apps/ui-lab/src/`](../src/) y [`apps/ui-lab/README.md`](../README.md) |
 | Saber cómo se publica | [`apps/ui-lab/README.md`](../README.md#publicación-pages-primero-vercel-aparte) |
 | Revisar una superficie concreta (landing, login, chat, apps…) | [`dashboards/`](./dashboards/README.md) |
+| Saber qué vistas se retiraron y por qué (legacy) | [`attention-legacy.md`](./attention-legacy.md) |
 | Entender las campañas y la simulación de empresa | [`agntia-demo/`](./agntia-demo/README.md) |
 | Operar el laboratorio (builds, clone, entrega) | [`AGENT-DEMO-WORKFLOW.md`](./AGENT-DEMO-WORKFLOW.md) · [`FULL-APP-CLONE.md`](./FULL-APP-CLONE.md) · [`IMPLEMENTATION.md`](./IMPLEMENTATION.md) · [`AUTO-PREVIEW.md`](./AUTO-PREVIEW.md) |
 

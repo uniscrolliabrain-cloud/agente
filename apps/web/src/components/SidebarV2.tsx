@@ -62,7 +62,14 @@ interface Props {
   showApps?: boolean;
   /** DEMO_VIEWS_V1 - igual que Apps: Formación solo existe en el clon. */
   showFormation?: boolean;
+  /** UI_LAB_LEGACY_V1 - el clon retiró Usuarios, Centro de control, Operaciones
+   *  y Workspaces: su superficie vive ya en otros workspaces. Producción no
+   *  pasa el prop, así que su menú queda exactamente igual. */
+  hideLegacyViews?: boolean;
 }
+
+// UI_LAB_LEGACY_V1 - vistas retiradas solo en el clon de demostración.
+const LEGACY_VIEWS: AppView[] = ["control-center", "operations", "workspace"];
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
   // COMMAND_CENTER_VIEW_V1 - la entrada que abre la empresa al arrancar.
@@ -104,16 +111,20 @@ export default function SidebarV2({
   onOpenSettings,
   showApps,
   showFormation,
+  hideLegacyViews,
 }: Props) {
   // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
   const demoItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
     ...(showApps ? [{ id: "apps" as const, label: "Apps", icon: LayoutGrid }] : []),
     ...(showFormation ? [{ id: "formation" as const, label: "Formación", icon: GraduationCap }] : []),
   ];
+  const primary = hideLegacyViews
+    ? PRIMARY.filter((item) => !LEGACY_VIEWS.includes(item.id))
+    : PRIMARY;
   const navItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
-    ...PRIMARY.slice(0, 2),
+    ...primary.slice(0, 2),
     ...demoItems,
-    ...PRIMARY.slice(2),
+    ...primary.slice(2),
   ];
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
@@ -199,7 +210,7 @@ export default function SidebarV2({
               </button>
             );
           })}
-          {isAdmin && (
+          {isAdmin && !hideLegacyViews && (
             <button
               type="button"
               className={`v2-nav-item ${activeView === "users" ? "active" : ""}`}
