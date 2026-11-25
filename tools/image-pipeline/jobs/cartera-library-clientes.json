@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "outputDir": "assets/generated/cartera/library-v2/clientes",
+  "images": [
+    {
+      "id": "clientes-restaurant",
+      "size": "1536x1024",
+      "alt": "Restaurante mediterráneo",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Sunlit restaurant terrace, linen tables, olive branches and violet awning."
+    },
+    {
+      "id": "clientes-clinic",
+      "size": "1536x1024",
+      "alt": "Clínica privada",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Calm contemporary reception, frosted glass, ivory seating and discreet violet accents."
+    },
+    {
+      "id": "clientes-hotel",
+      "size": "1536x1024",
+      "alt": "Hotel boutique",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Elegant hotel lobby, luggage, brass reception bell and lavender upholstery."
+    },
+    {
+      "id": "clientes-retail",
+      "size": "1536x1024",
+      "alt": "Tienda de moda",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Curated clothing racks, tactile textiles and warm boutique lighting."
+    },
+    {
+      "id": "clientes-workshop",
+      "size": "1536x1024",
+      "alt": "Taller industrial",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Clean precision workshop with tools and machined components."
+    },
+    {
+      "id": "clientes-architecture",
+      "size": "1536x1024",
+      "alt": "Estudio de arquitectura",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Architectural scale model on a spacious drafting table."
+    },
+    {
+      "id": "clientes-fitness",
+      "size": "1536x1024",
+      "alt": "Centro deportivo",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Refined fitness studio with mats, weights and daylight."
+    },
+    {
+      "id": "clientes-education",
+      "size": "1536x1024",
+      "alt": "Academia",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Contemporary classroom with notebooks and empty chairs."
+    },
+    {
+      "id": "clientes-beauty",
+      "size": "1536x1024",
+      "alt": "Salón de belleza",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Elegant salon mirrors, ceramic products and soft lighting."
+    },
+    {
+      "id": "clientes-logistics",
+      "size": "1536x1024",
+      "alt": "Empresa logística",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Orderly warehouse aisle with parcels and loading equipment."
+    },
+    {
+      "id": "clientes-property",
+      "size": "1536x1024",
+      "alt": "Inmobiliaria",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Modern apartment interior with keys on a stone counter."
+    },
+    {
+      "id": "clientes-farm",
+      "size": "1536x1024",
+      "alt": "Productor local",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Fresh produce in wooden crates inside a sunlit greenhouse."
+    }
+  ]
+}
