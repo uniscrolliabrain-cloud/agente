@@ -1,91 +1,24 @@
 {
-  "version": 1,
-  "outputDir": "apps/ui-lab/public/formation/images",
+  "schemaVersion": 1,
+  "outputDir": "assets/generated/automation-nodes/pilot",
   "images": [
     {
-      "id": "formacion-01-pensamiento",
-      "courseId": "IA01",
-      "size": "1536x1024",
-      "alt": "Libro abierto y escultura de cristal sobre escritorio marfil",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. An open linen-bound book and a single faceted clear glass sculpture on a pale ivory writing desk, late morning window light, architectural shadows, human thought and deliberate attention, warm paper, restrained violet reflection, exquisite editorial still life, ample negative space on the left."
+      "id": "01-webhook",
+      "size": "1024x1024",
+      "alt": "Webhook entrante",
+      "prompt": "Create exactly ONE square 1024x1024 three-dimensional AgntiaPro workflow-node artwork. Art direction: exquisite sculptural industrial product photography in the same family as the approved Apps icons: warm ivory satin ceramic, deep sophisticated violet enamel, restrained brushed champagne brass, seamless soft lavender studio background (#F0ECFC). The object must feel manufactured, tactile and refined, not an extruded flat glyph. Use broad continuous surfaces, believable wall thickness, carefully rounded bevels, subtle material-specific reflections and soft contact shadow. Keep ivory warm rather than white, violet visibly saturated on selected surfaces rather than washed-out pastel, brass a fine accent rather than dominant gold. Background is a continuous lavender cyclorama, softly shaded darker behind the upper object and lighter below, no horizon line or visible tile. Camera: near-frontal three-quarter product view, modest elevation, long-lens-like perspective, consistent scale; broad softbox upper left, gentle right fill, delicate occlusion in recesses. Center the complete object and shadow within a 76% diameter safe circle; dominant object span approximately 62–68% of canvas, with generous negative space and optical centering. The final UI applies the circular crop; do not draw a circular frame or ports. Prioritize a strong silhouette and contrast at 48–96px. No typography, numerals, logos, watermarks, UI, graph edges, pedestal, decorative particles, excessive gloss, toy clay or multiple unrelated objects. Subject: Receiving webhook: a monolithic upright ivory ceramic docking arch, like a refined architectural doorway with a deep violet enamel concave interior. A short thick satin-brass arrow enters diagonally from upper left and ends visibly inside the cavity. The arch has a broad flat foot and rounded shoulders, not a horseshoe magnet. Show the inner wall thickness and a soft violet reflection on the ivory lip. Keep arrow and arch as one tightly grouped composition; no external cables. The dark open cavity is the dominant feature."
     },
     {
-      "id": "formacion-02-cognicion",
-      "courseId": "IA02",
-      "size": "1536x1024",
-      "alt": "Capas transparentes de información sobre una mesa de trabajo",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Translucent glass sheets hovering subtly above neatly arranged handwritten paper notes, a pencil and a ceramic cup, quiet augmented cognition made tangible, warm cream daylight, a single restrained violet detail, precise cinematic editorial photography."
+      "id": "04-agent",
+      "size": "1024x1024",
+      "alt": "Agente IA",
+      "prompt": "Create exactly ONE square 1024x1024 three-dimensional AgntiaPro workflow-node artwork. Art direction: exquisite sculptural industrial product photography in the same family as the approved Apps icons: warm ivory satin ceramic, deep sophisticated violet enamel, restrained brushed champagne brass, seamless soft lavender studio background (#F0ECFC). The object must feel manufactured, tactile and refined, not an extruded flat glyph. Use broad continuous surfaces, believable wall thickness, carefully rounded bevels, subtle material-specific reflections and soft contact shadow. Keep ivory warm rather than white, violet visibly saturated on selected surfaces rather than washed-out pastel, brass a fine accent rather than dominant gold. Background is a continuous lavender cyclorama, softly shaded darker behind the upper object and lighter below, no horizon line or visible tile. Camera: near-frontal three-quarter product view, modest elevation, long-lens-like perspective, consistent scale; broad softbox upper left, gentle right fill, delicate occlusion in recesses. Center the complete object and shadow within a 76% diameter safe circle; dominant object span approximately 62–68% of canvas, with generous negative space and optical centering. The final UI applies the circular crop; do not draw a circular frame or ports. Prioritize a strong silhouette and contrast at 48–96px. No typography, numerals, logos, watermarks, UI, graph edges, pedestal, decorative particles, excessive gloss, toy clay or multiple unrelated objects. Subject: Agent: a substantial four-pointed violet enamel star, directly related to the Apps Asistente icon, with concave edges and four sculpted facets converging on a small satin champagne sphere embedded at its center. One ivory ceramic rear facet is visible at the lower right, revealing real thickness. The star is upright, not lying flat, and has a broad strong violet face with delicate reflections. No pedestal, robot, face, glow or extra stars."
     },
     {
-      "id": "formacion-03-lenguaje",
-      "courseId": "IA03",
-      "size": "1536x1024",
-      "alt": "Páginas escultóricas que representan modelos de lenguaje",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Sculptural curled sheets of handmade paper arranged in a gentle wave, delicate light and shadow implying the structure of language, neutral parchment background, violet refractions, contemporary art direction, tactile, understated."
-    },
-    {
-      "id": "formacion-04-espacio-trabajo",
-      "courseId": "R01",
-      "size": "1536x1024",
-      "alt": "Mesa de trabajo contemporánea con ordenador y cuaderno",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Inviting real contemporary small-business workspace, thin elegant laptop with screen turned away, open notebook, warm timber and linen, bright natural window light, quiet human-scale productivity, sophisticated European editorial photography, generous clear space."
-    },
-    {
-      "id": "formacion-05-agenda",
-      "courseId": "R02",
-      "size": "1536x1024",
-      "alt": "Agenda física y reloj analógico en escritorio cálido",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Minimal analogue clock, open weekly paper planner and a beautiful black pen on pale travertine, soft morning sunlight and gentle long shadows, visual metaphor for coordinated work and time, premium calm editorial photography."
-    },
-    {
-      "id": "formacion-06-equipo",
-      "courseId": "R03",
-      "size": "1536x1024",
-      "alt": "Reunión humana alrededor de una mesa luminosa",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Candid editorial photograph of a small diverse professional team collaborating around a light oak table, natural gestures and authentic expressions, notebooks and simple tools, daylight studio, warmth and dignity, spacious framing, subtle violet accent in the environment."
-    },
-    {
-      "id": "formacion-07-datos",
-      "courseId": "IA04",
-      "size": "1536x1024",
-      "alt": "Piezas translúcidas ordenadas como sistema de datos",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Architectural still life of twelve translucent glass tiles carefully organized on warm ivory stone, a few violet-tinted elements suggesting data relationships, precise soft shadows, no screen, no charts, premium art magazine photography."
-    },
-    {
-      "id": "formacion-08-automatizacion",
-      "courseId": "R04",
-      "size": "1536x1024",
-      "alt": "Secuencia de objetos conectados que sugiere un proceso",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Editorial tabletop composition of a flowing sequence of folded paper shapes and fine brass links, a coherent work process visualized with physical materials, warm off-white background, sunlight, tiny violet accent, refined tactile photography."
-    },
-    {
-      "id": "formacion-09-comunicacion",
-      "courseId": "R05",
-      "size": "1536x1024",
-      "alt": "Teléfono y libreta como símbolo de comunicación profesional",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Elegant modern smartphone face down next to a handwritten notebook and a cup of tea on a calm warm desk, an open doorway and daylight beyond, natural realistic textures, human-centered communication, premium editorial composition."
-    },
-    {
-      "id": "formacion-10-creatividad",
-      "courseId": "IA05",
-      "size": "1536x1024",
-      "alt": "Taller creativo con papeles y formas de color contenido",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. A serene designer's studio table with carefully cut ivory paper, one muted violet sculptural ribbon and a brass ruler, visual exploration of creative thinking, soft cinematic daylight, tactile premium magazine still life."
-    },
-    {
-      "id": "formacion-11-decisiones",
-      "courseId": "R06",
-      "size": "1536x1024",
-      "alt": "Dos caminos de luz en una composición arquitectónica",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Minimal warm architectural interior with two gentle paths of daylight across limestone floor converging toward a quiet open threshold, metaphor for thoughtful decisions, restrained composition, elegant premium editorial architectural photography."
-    },
-    {
-      "id": "formacion-12-futuro",
-      "courseId": "IA06",
-      "size": "1536x1024",
-      "alt": "Paisaje arquitectónico cálido y humano orientado al futuro",
-      "prompt": "Consistent AgntiaPro art direction: warm editorial European design magazine, ivory #fcfaf6, ink #242421, subtle violet #6550dd and champagne gold #b49665 only as accents, beautiful natural materials, refined realism, quiet cinematic light, generous negative space, excellent photographic composition. No readable text, letters, logos, branding, UI, watermarks, neon, futuristic dashboards, stock-photo clichés. Quiet sunlit contemporary pavilion of warm limestone and translucent glass opening onto a green garden, one small human figure walking naturally, hopeful human-scale technology future, calm sophisticated editorial photography, no science-fiction motifs."
+      "id": "06-condition",
+      "size": "1024x1024",
+      "alt": "Condición y bifurcación",
+      "prompt": "Create exactly ONE square 1024x1024 three-dimensional AgntiaPro workflow-node artwork. Art direction: exquisite sculptural industrial product photography in the same family as the approved Apps icons: warm ivory satin ceramic, deep sophisticated violet enamel, restrained brushed champagne brass, seamless soft lavender studio background (#F0ECFC). The object must feel manufactured, tactile and refined, not an extruded flat glyph. Use broad continuous surfaces, believable wall thickness, carefully rounded bevels, subtle material-specific reflections and soft contact shadow. Keep ivory warm rather than white, violet visibly saturated on selected surfaces rather than washed-out pastel, brass a fine accent rather than dominant gold. Background is a continuous lavender cyclorama, softly shaded darker behind the upper object and lighter below, no horizon line or visible tile. Camera: near-frontal three-quarter product view, modest elevation, long-lens-like perspective, consistent scale; broad softbox upper left, gentle right fill, delicate occlusion in recesses. Center the complete object and shadow within a 76% diameter safe circle; dominant object span approximately 62–68% of canvas, with generous negative space and optical centering. The final UI applies the circular crop; do not draw a circular frame or ports. Prioritize a strong silhouette and contrast at 48–96px. No typography, numerals, logos, watermarks, UI, graph edges, pedestal, decorative particles, excessive gloss, toy clay or multiple unrelated objects. Subject: Condition: a single substantial ivory ceramic Y junction, with one broad lower stem and two curved upper arms spreading symmetrically. One terminal face is violet enamel, the other ivory with a fine champagne rim. The fork has a deep clean negative space between arms, rounded continuous junction and visible thickness; no diamond, arrows or extra branches. Make the branching silhouette dominant, like a beautifully machined routing component."
     }
-  ],
-  "requestNote": "Founder approved paid generation of all 12 editorial images on 2026-11-23. Assets require visual review; no deployment."
+  ]
 }
