@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "outputDir": "assets/generated/analytics/v1",
+  "images": [
+    {
+      "id": "revenue",
+      "size": "1536x1024",
+      "alt": "revenue",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Six ascending rounded rectangular ceramic bars in ivory to violet, thin elegant brushed gold rising arrow above, front-facing slight elevated camera, wide composition. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+    },
+    {
+      "id": "distribution",
+      "size": "1536x1024",
+      "alt": "distribution",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Front-facing thick sculptural donut ring, exactly 78 percent violet, 16 percent ivory, 6 percent pale lavender, empty central hole. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+    },
+    {
+      "id": "pipeline",
+      "size": "1536x1024",
+      "alt": "pipeline",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Four separate stacked tapered funnel bowls, ivory, lavender, violet and small gold bottom, frontal view. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+    },
+    {
+      "id": "areas",
+      "size": "1536x1024",
+      "alt": "areas",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Four overlapping smooth flowing area-chart ribbons on a shared horizontal baseline, violet lavender ivory and gold, wide front-facing composition. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+    },
+    {
+      "id": "roi",
+      "size": "1536x1024",
+      "alt": "roi",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Two stacks of ivory and violet ceramic coins with a rising brushed gold arrow. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+    },
+    {
+      "id": "health",
+      "size": "1536x1024",
+      "alt": "health",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Three concentric segmented ceramic rings in ivory lavender and violet, empty center, frontal view. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+    }
+  ]
+}
