@@ -1,0 +1,3 @@
+# Conocimiento V1
+
+Preview `knowledge-v1`, aislada de MemoryView. Páginas editables, árbol contextual, apertura móvil 70%, tirador, búsqueda, favoritos, enlaces y referencias entrantes, bloques de texto/encabezado/nota, creación de subpáginas, vistas preliminares de actividad, mapa y cuadernos. Datos en memoria, sin backend. Chat local de demostración, no integración con ChatDock/ChatSheet. Mapa preliminar sin aristas ni zoom; cuadernos son páginas de ejemplo. Pendientes: reutilización efectiva del chat transversal, menú general, editor rico, arrastre de bloques, bases inline, historial, fuentes, avatares, refinamiento visual y pruebas. No se ejecutó build/typecheck ni navegador. No desplegar.
