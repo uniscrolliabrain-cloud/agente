@@ -1,0 +1,10 @@
+export const kinds = ["webhook","schedule","event","agent","sop","condition","transform","http","record","message","task","approval","wait","result"] as const;
+export type Kind=typeof kinds[number];
+export const labels=["Webhook","Horario","Evento","Agente IA","SOP","Condición","Transformación","API","Registro","Comunicación","Tarea","Aprobación","Espera","Evidencia"];
+export const asset=(kind:Kind)=>import.meta.env.BASE_URL+"automation-nodes/"+String(kinds.indexOf(kind)+1).padStart(2,"0")+"-"+kind+".webp";
+export type Task={id:number;title:string;owner:string;status:string;relations:string[];date:string;priority:string};
+export const statuses=["Pendiente","En curso","Revisión","Completada"];
+export const seed:Task[]=[{id:1,title:"Revisar propuesta ACME",owner:"LAIA",status:"Pendiente",relations:["Cliente ACME","Proyecto ACME Q4"],date:"Hoy",priority:"Alta"},{id:2,title:"Validar factura Verifactu",owner:"Marta",status:"Pendiente",relations:["Beta Consulting"],date:"Hoy",priority:"Alta"},{id:3,title:"Preparar propuesta ACME Q4",owner:"LAIA",status:"En curso",relations:["Cliente ACME"],date:"Hoy",priority:"Media"},{id:4,title:"Informe Beta — revisión",owner:"Bruno",status:"Revisión",relations:["Beta Consulting"],date:"Mañana",priority:"Media"},{id:5,title:"Conciliar cobros Delta",owner:"Marta",status:"En curso",relations:["Delta Servicios"],date:"Esta semana",priority:"Media"}];
+export type Node={id:number;kind:Kind;title:string;x:number;y:number};
+export const initialNodes:Node[]=[{id:1,kind:"webhook",title:"Nuevo lead ACME",x:100,y:100},{id:2,kind:"record",title:"Consultar cliente",x:290,y:100},{id:3,kind:"agent",title:"LAIA propone",x:480,y:100},{id:4,kind:"condition",title:"Datos suficientes",x:670,y:100},{id:5,kind:"sop",title:"Preparar propuesta",x:860,y:100},{id:6,kind:"task",title:"Completar datos",x:670,y:310},{id:7,kind:"approval",title:"Revisión humana",x:1050,y:100},{id:8,kind:"message",title:"Enviar propuesta",x:1240,y:100},{id:9,kind:"result",title:"Guardar evidencia",x:1430,y:100}];
+export const edges=[[1,2],[2,3],[3,4],[4,5],[4,6],[5,7],[7,8],[8,9]];
