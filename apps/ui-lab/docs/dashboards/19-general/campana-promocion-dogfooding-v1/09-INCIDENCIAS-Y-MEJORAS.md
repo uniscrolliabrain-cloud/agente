@@ -1,5 +1,17 @@
 # Incidencias y mejoras
 
+## Regresión en producción (25-nov-2026) — resuelta
+
+El deploy del 24-nov publicó un árbol sin el trabajo del 21-22 nov: desaparecieron la
+landing premium, el estudio de mando, el chat móvil multimodal y 43 archivos. El dominio
+seguía devolviendo 200, así que no lo detectó el humo. Se restauró con los merges
+`624507a5` + `effbbc7b`, se unificó `main` y se redesplegó en el run `45595680068`
+(gate, Fly, Vercel y humo en verde). Detalle y comprobaciones en `06-DEPLOY.md`.
+
+Lección: desplegar solo desde `main`; una rama de campaña puede no contener lo que ya
+está vivo. El humo debe comprobar que el bundle servido contiene las superficies
+esperadas, no solo que el dominio responde.
+
 ## Bloqueantes encontrados y resueltos
 
 1. **`apps/site` no coincidía con la landing viva.** Un deploy desde `main` habría
