@@ -15,3 +15,10 @@ pnpm --filter @agente/ui-lab dev
 Abrir `/?embed=1&view=documents-explorer`. Comprobar 320/360/390/768/1024/1440/1920 px. Verificar navegación, historial, filtros combinados en papelera, selección y movimiento, carga de metadatos, foco, lector limitado a seis recientes, Escape, reduced motion, ausencia de overflow. Registrar capturas y resultados por resolución. No desplegar.
 
 Sin cambios de branding, runtime ni otros workspaces. Iconos finales pendientes.
+
+## V9 — Alineación transversal autorizada
+Referencias: Landing, Login V3, Legal V1, Chat transversal V3, Centro de Mando editorial, ChatPanel y Apps Launcher V3 en main. Comparación estática, no de artefactos desplegados.
+
+Aplicado: tokens --ag-*, fuentes locales, títulos editoriales, iconos Lucide de navegación, botones de 9px, foco del buscador, acciones primarias explícitas, curvas de movimiento, adaptación por contenedor, ajuste del marco embed, lector limitado a la lista mostrada. Se conserva el mockup, sus datos sintéticos y la paleta. No se toca producción ni otros workspaces.
+
+Pendiente: avatares definitivos, assets de carpetas/documentos, consolidación completa del CSS, integración real con shell/chat y pruebas visuales y de compilación. Comprobar especialmente contenedor estrecho con viewport ancho, navegación del lector y contraste de botones. No certificar V9 sin estas pruebas.
