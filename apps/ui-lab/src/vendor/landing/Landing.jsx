@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import "./landing.css";
-import { legalPages } from "../config/publicSite";
+// LEGAL_LINKS_V1 - el footer enlaza a la onepage legal real, no a ficheros
+// sueltos: con base /agente/ las rutas absolutas /aviso-legal.html daban 404.
+const legalAnchors = {
+  notice: "aviso-legal",
+  privacy: "privacidad",
+  terms: "terminos",
+  cookies: "cookies",
+  ai: "transparencia-ia",
+  trust: "confianza-seguridad",
+};
+const legalHref = (page) => `${import.meta.env.BASE_URL}legal/#${legalAnchors[page]}`;
+// LEGAL_NOTICE_DELAY_V1 - el aviso legal espera cinco segundos: la primera
+// impresión es la portada, no el banner.
+const LEGAL_NOTICE_DELAY_MS = 5000;
 import { BrandLockup } from "../../../../web/src/components/BrandMark";
 import {
   ArrowUp,
@@ -165,7 +178,7 @@ function Dialog({ title, onClose, children, className = "" }) {
 }
 
 export default function Landing({ loginHref = "/?acceso=1" }) {
-  const [legalVisible, setLegalVisible] = useState(true);
+  const [legalVisible, setLegalVisible] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
@@ -186,6 +199,12 @@ export default function Landing({ loginHref = "/?acceso=1" }) {
   const responseTimer = useRef(null);
   const sending = useRef(false);
   const tabRefs = useRef([]);
+
+  // El aviso legal y de cookies no interrumpe la portada: aparece a los 5 s.
+  useEffect(() => {
+    const timer = window.setTimeout(() => setLegalVisible(true), LEGAL_NOTICE_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 36);
@@ -933,12 +952,12 @@ export default function Landing({ loginHref = "/?acceso=1" }) {
             </div>
           </div>
           <nav className="lp-legal-links" aria-label="Información legal">
-            <a href={`/${legalPages.notice}`}>Aviso legal</a>
-            <a href={`/${legalPages.privacy}`}>Privacidad</a>
-            <a href={`/${legalPages.cookies}`}>Cookies</a>
-            <a href={`/${legalPages.terms}`}>Términos del servicio</a>
-            <a href={`/${legalPages.ai}`}>Transparencia IA</a>
-            <a href={`/${legalPages.trust}`}>Confianza y seguridad</a>
+            <a href={legalHref("notice")}>Aviso legal</a>
+            <a href={legalHref("privacy")}>Privacidad</a>
+            <a href={legalHref("cookies")}>Cookies</a>
+            <a href={legalHref("terms")}>Términos del servicio</a>
+            <a href={legalHref("ai")}>Transparencia IA</a>
+            <a href={legalHref("trust")}>Confianza y seguridad</a>
           </nav>
           <div className="lp-footer-bottom">
             <span>© {new Date().getFullYear()} AgntiaPro</span>
@@ -951,8 +970,8 @@ export default function Landing({ loginHref = "/?acceso=1" }) {
           <div>
             <strong>Información legal y privacidad</strong>
             <p>Consulta cómo tratamos los datos y qué tecnologías utiliza esta web.</p>
-            <a href={`/${legalPages.privacy}`}>Privacidad</a>{" · "}
-            <a href={`/${legalPages.cookies}`}>Cookies</a>
+            <a href={legalHref("privacy")}>Privacidad</a>{" · "}
+            <a href={legalHref("cookies")}>Cookies</a>
           </div>
           <button type="button" aria-label="Cerrar aviso legal" onClick={() => setLegalVisible(false)}>
             <X size={18} aria-hidden="true" />

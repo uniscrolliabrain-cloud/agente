@@ -12,119 +12,18 @@ import {
   X,
 } from "lucide-react";
 import { BrandLockup } from "../../../web/src/components/BrandMark";
+import { LEGAL_DOCS } from "../../../web/src/components/legal/legal-content";
 import { legalUrl } from "../vendor/config/publicSite";
 import "../design-system/agntia-tokens.css";
 import "./legal-v1.css";
 
-// LEGAL_V1_LAB_V1 - superficie legal editoral aislada en UI Lab.
-// No hay textos jurídicos aprobados ni páginas publicadas: cada documento se
-// muestra como esquema de secciones con su estado real. No se inventan
-// vigencias, sellos, certificaciones ni acciones que no existan.
+// LEGAL_V1_LAB_V2 - la onepage aprobada, ahora con los textos reales.
+// El contenido viene de apps/web/src/components/legal/legal-content.ts, la
+// fuente que publica agntiapro.com desde el 21/11/2026: titular, NIF, domicilio
+// y contacto reales. Aquí solo se cambia la presentación, no los datos.
+// Si un documento cambiara, se cambia en esa fuente y esta página lo hereda.
 
-type Section = { id: string; title: string; note: string };
-type LegalDoc = {
-  id: string;
-  label: string;
-  kind: string;
-  summary: string;
-  route: keyof ReturnType<typeof routeTable>;
-  status: "outline" | "missing";
-  sections: Section[];
-};
-
-// Rutas declaradas en publicSite.ts (legalPages); ninguna tiene página publicada
-// todavía en apps/site. La UI lo dice en lugar de simular un documento.
-function routeTable() {
-  return {
-    notice: legalUrl("notice"),
-    privacy: legalUrl("privacy"),
-    terms: legalUrl("terms"),
-    cookies: legalUrl("cookies"),
-    ai: legalUrl("ai"),
-    trust: legalUrl("trust"),
-  };
-}
-
-const documents: LegalDoc[] = [
-  {
-    id: "aviso-legal",
-    label: "Aviso legal",
-    kind: "Quién está detrás",
-    summary: "Titular, contacto y reglas de uso de este sitio.",
-    route: "notice",
-    status: "outline",
-    sections: [
-      { id: "titular", title: "Titular y contacto", note: "Quién presta el servicio y por dónde se le escribe." },
-      { id: "sitio", title: "Qué se puede hacer en este sitio", note: "Uso previsto de las páginas públicas y límites." },
-      { id: "responsabilidad", title: "Responsabilidad", note: "Qué cubre AgntiaPro y qué depende de ti." },
-    ],
-  },
-  {
-    id: "privacidad",
-    label: "Privacidad",
-    kind: "Tus datos",
-    summary: "Qué se recoge, para qué y cuánto tiempo se guarda.",
-    route: "privacy",
-    status: "outline",
-    sections: [
-      { id: "datos", title: "Qué datos tratamos", note: "Los que pides tú, los que llegan de tu equipo y los opcionales." },
-      { id: "finalidad", title: "Para qué los usamos", note: "Prestar el servicio, avisarte y nada más." },
-      { id: "conservacion", title: "Cuánto tiempo", note: "Plazos de conservación y qué pasa al cerrar la cuenta." },
-      { id: "derechos", title: "Tus derechos", note: "Acceso, corrección, borrado y por dónde pedirlo." },
-    ],
-  },
-  {
-    id: "terminos",
-    label: "Términos",
-    kind: "El contrato",
-    summary: "Qué incluye el servicio y qué se espera de cada parte.",
-    route: "terms",
-    status: "outline",
-    sections: [
-      { id: "servicio", title: "Qué incluye el servicio", note: "Alcance, límites y cómo se contrata." },
-      { id: "uso", title: "Uso aceptable", note: "Lo que no está permitido hacer con la plataforma." },
-      { id: "cambios", title: "Cambios de condiciones", note: "Cómo y cuándo se avisa de una modificación." },
-    ],
-  },
-  {
-    id: "cookies",
-    label: "Cookies",
-    kind: "Tu navegador",
-    summary: "Qué se guarda en el navegador y cómo cambiarlo.",
-    route: "cookies",
-    status: "outline",
-    sections: [
-      { id: "necesarias", title: "Necesarias", note: "Sesión, seguridad y preferencias que no se pueden desactivar." },
-      { id: "medicion", title: "Medición", note: "Opcionales: qué se mide y qué no." },
-      { id: "control", title: "Cómo cambiar la elección", note: "Desde el banner, desde aquí y borrando los datos del sitio." },
-    ],
-  },
-  {
-    id: "ia",
-    label: "Transparencia IA",
-    kind: "Cómo decide LAIA",
-    summary: "Qué prepara la IA, qué decides tú y dónde se pide permiso.",
-    route: "ai",
-    status: "outline",
-    sections: [
-      { id: "papel", title: "Qué hace LAIA y qué no", note: "Prepara y propone; no aprueba por su cuenta." },
-      { id: "datos", title: "Qué datos usa", note: "Contexto de tu cuenta y qué no se envía al modelo." },
-      { id: "supervision", title: "Dónde decides tú", note: "Los puntos de aprobación antes de actuar." },
-    ],
-  },
-  {
-    id: "confianza",
-    label: "Confianza",
-    kind: "Garantías",
-    summary: "Compromisos verificables sobre datos, IA y disponibilidad.",
-    route: "trust",
-    status: "missing",
-    sections: [],
-  },
-];
-
-const DRAFT_NOTE = "Esquema de secciones. El texto jurídico no está aprobado: aquí no hay contenido que puedas citar.";
-const MISSING_NOTE = "Este documento no está disponible todavía.";
+const DRAFTLESS = "Documento publicado. La versión vigente es la que figura en la cabecera.";
 
 const normalize = (value: string) =>
   value
@@ -132,63 +31,49 @@ const normalize = (value: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-type CookieChoice = { measurement: boolean; savedAt: string } | null;
-const COOKIE_KEY = "agente_cookies_v1";
-
-function readCookieChoice(): CookieChoice {
-  try {
-    const raw = window.localStorage.getItem(COOKIE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { measurement?: boolean; savedAt?: string };
-    if (typeof parsed.measurement !== "boolean") return null;
-    return { measurement: parsed.measurement, savedAt: parsed.savedAt ?? "" };
-  } catch {
-    return null;
-  }
-}
-
 function prefersReducedMotion() {
   return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
+function docFromHash(hash: string) {
+  const value = decodeURIComponent(hash.replace(/^#/, ""));
+  if (!value) return { docId: LEGAL_DOCS[0].id, sectionId: "" };
+  const doc = [...LEGAL_DOCS]
+    .sort((a, b) => b.id.length - a.id.length)
+    .find((item) => value === item.id || value.startsWith(`${item.id}-`));
+  if (!doc) return { docId: LEGAL_DOCS[0].id, sectionId: "" };
+  return { docId: doc.id, sectionId: value === doc.id ? "" : value };
+}
+
 export default function LegalV1() {
-  const [docId, setDocId] = useState<string>("aviso-legal");
+  const initial = docFromHash(typeof window === "undefined" ? "" : window.location.hash);
+  const [docId, setDocId] = useState<string>(initial.docId);
   const [query, setQuery] = useState("");
   const [activeSection, setActiveSection] = useState<string>("");
   const [copyState, setCopyState] = useState<{ hash: string; ok: boolean } | null>(null);
-  const [choice, setChoice] = useState<CookieChoice>(null);
-  const [measurement, setMeasurement] = useState(false);
   const [iaOpen, setIaOpen] = useState(false);
   const [inviteNotice, setInviteNotice] = useState(false);
 
   const readerRef = useRef<HTMLElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const articleRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const copyTimer = useRef<number | undefined>(undefined);
 
-  const doc = documents.find((item) => item.id === docId) ?? documents[0];
-  const routes = routeTable();
-  const origin = new URL(routes.notice).origin;
+  const doc = LEGAL_DOCS.find((item) => item.id === docId) ?? LEGAL_DOCS[0];
+  const origin = new URL(legalUrl("notice")).origin;
+
+  const sections = doc.sections.filter((section) => {
+    if (!query.trim()) return true;
+    const haystack = normalize(
+      `${section.title} ${section.paragraphs.join(" ")} ${(section.items ?? []).join(" ")}`,
+    );
+    return haystack.includes(normalize(query));
+  });
+
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
   useEffect(() => {
-    setChoice(readCookieChoice());
-    return () => window.clearTimeout(copyTimer.current);
-  }, []);
-
-  const sections = doc.status === "outline"
-    ? doc.sections.filter((section) => {
-        if (!query.trim()) return true;
-        return normalize(`${section.title} ${section.note}`).includes(normalize(query));
-      })
-    : [];
-
-  // Índice con sección activa: el lector sabe dónde está sin adivinar.
-  useEffect(() => {
-    if (doc.status !== "outline" || typeof IntersectionObserver === "undefined") {
-      setActiveSection("");
-      return;
-    }
+    if (typeof IntersectionObserver === "undefined") return;
     const nodes = articleRef.current?.querySelectorAll<HTMLElement>("[data-section]");
     if (!nodes || nodes.length === 0) return;
     const observer = new IntersectionObserver(
@@ -202,20 +87,66 @@ export default function LegalV1() {
     );
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, [doc.id, doc.status, query]);
+  }, [doc.id, query]);
+
+  // Atrás/adelante y enlaces compartidos: el hash manda sobre el documento.
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = docFromHash(window.location.hash);
+      setDocId(next.docId);
+      setQuery("");
+      window.requestAnimationFrame(() => {
+        if (next.sectionId) {
+          document.getElementById(next.sectionId)?.scrollIntoView({
+            behavior: prefersReducedMotion() ? "auto" : "smooth",
+            block: "start",
+          });
+        } else if (window.location.hash) {
+          readerRef.current?.scrollIntoView({
+            behavior: prefersReducedMotion() ? "auto" : "smooth",
+            block: "start",
+          });
+        }
+      });
+    };
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Entrada directa: un documento concreto lleva a su lector; una sección
+  // concreta lleva a esa sección. Sin hash, la página se queda en la portada.
+  useEffect(() => {
+    if (!window.location.hash) return;
+    const timer = window.setTimeout(() => {
+      const target = initial.sectionId ? document.getElementById(initial.sectionId) : readerRef.current;
+      target?.scrollIntoView({
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
+    }, 60);
+    return () => window.clearTimeout(timer);
+    // Solo en el montaje: los cambios posteriores llegan por hashchange.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    document.title = `${doc.label} · Legal · AgntiaPro`;
+  }, [doc.label]);
 
   const scrollToReader = useCallback(() => {
-    readerRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    readerRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
   }, []);
 
   const selectDoc = (id: string, options?: { scroll?: boolean }) => {
-    if (id === docId) {
-      if (options?.scroll) scrollToReader();
-      return;
-    }
     setDocId(id);
     setQuery("");
     setCopyState(null);
+    if (window.location.hash !== `#${id}`) {
+      window.history.replaceState(null, "", `#${id}`);
+    }
     if (options?.scroll) scrollToReader();
     window.requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
   };
@@ -234,34 +165,6 @@ export default function LegalV1() {
     copyTimer.current = window.setTimeout(() => setCopyState(null), 3200);
   };
 
-  const openPreferences = () => {
-    setMeasurement(choice?.measurement ?? false);
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (typeof dialog.showModal === "function") dialog.showModal();
-  };
-
-  const saveChoice = (value: boolean) => {
-    const next: CookieChoice = { measurement: value, savedAt: new Date().toISOString() };
-    try {
-      window.localStorage.setItem(COOKIE_KEY, JSON.stringify(next));
-    } catch {
-      /* Sin almacenamiento: la elección vive solo en esta visita. */
-    }
-    setChoice(next);
-    setMeasurement(value);
-    dialogRef.current?.close();
-  };
-
-  const clearChoice = () => {
-    try {
-      window.localStorage.removeItem(COOKIE_KEY);
-    } catch {
-      /* Nada que borrar. */
-    }
-    setChoice(null);
-  };
-
   return (
     <div className="agntia-workspace legal-v1">
       <a className="lg-skip" href="#documento">
@@ -274,9 +177,9 @@ export default function LegalV1() {
             <BrandLockup markSize={32} />
           </a>
           <nav className="lg-header-nav" aria-label="Acciones de la página">
-            <button type="button" className="lg-ghost" onClick={openPreferences}>
-              Gestionar cookies
-            </button>
+            <a className="lg-ghost" href="#cookies" onClick={() => selectDoc("cookies", { scroll: true })}>
+              Política de cookies
+            </a>
             <a className="lg-pill" href={`${origin}/`}>
               Volver a AgntiaPro
               <ArrowUpRight size={15} aria-hidden="true" />
@@ -293,18 +196,24 @@ export default function LegalV1() {
             <span>Sin letra pequeña.</span>
           </h1>
           <p className="lg-lead">
-            Qué hace AgntiaPro con tus datos, qué papel tiene LAIA y dónde decides tú. Sin jerga y sin
-            promesas que no podamos sostener.
+            Qué hace AgntiaPro con tus datos, qué papel tiene LAIA y dónde decides tú. Escrito para que
+            se entienda a la primera, con el titular y el contacto a la vista.
           </p>
           <div className="lg-cover-meta">
-            <span className="lg-chip lg-chip-warn">
-              <Info size={14} aria-hidden="true" />
-              Textos en preparación
+            <span className="lg-chip">
+              <ShieldCheck size={14} aria-hidden="true" />
+              Documentos publicados
             </span>
-            <span className="lg-meta-text">Sin fecha de vigencia: no hay documento aprobado que citar.</span>
+            <span className="lg-meta-text">
+              Versión del {doc.version} · Alfonso Luna de Prado, NIF 45736999G, Santa Cruz de Tenerife.
+            </span>
           </div>
           <div className="lg-cover-actions">
-            <button type="button" className="lg-cta" onClick={() => selectDoc("ia", { scroll: true })}>
+            <button
+              type="button"
+              className="lg-cta"
+              onClick={() => selectDoc("transparencia-ia", { scroll: true })}
+            >
               Cómo decide LAIA
               <ArrowRight size={16} aria-hidden="true" />
             </button>
@@ -330,16 +239,20 @@ export default function LegalV1() {
                 alguien de tu equipo lo aprueba.
               </p>
               <div className="lg-feature-foot">
-                <button type="button" className="lg-cta lg-cta-sm" onClick={() => selectDoc("ia", { scroll: true })}>
-                  Ver el esquema
+                <button
+                  type="button"
+                  className="lg-cta lg-cta-sm"
+                  onClick={() => selectDoc("transparencia-ia", { scroll: true })}
+                >
+                  Leer documento
                   <ArrowRight size={15} aria-hidden="true" />
                 </button>
-                <span className="lg-status">Sin texto aprobado</span>
+                <span className="lg-status">Publicado</span>
               </div>
             </article>
 
             <ul className="lg-doclist">
-              {documents.map((item, position) => (
+              {LEGAL_DOCS.map((item, position) => (
                 <li key={item.id}>
                   <button
                     type="button"
@@ -355,9 +268,7 @@ export default function LegalV1() {
                       </span>
                       <span className="lg-docrow-summary">{item.summary}</span>
                     </span>
-                    <span className={item.status === "missing" ? "lg-docrow-state is-missing" : "lg-docrow-state"}>
-                      {item.status === "missing" ? "No disponible" : "Esquema"}
-                    </span>
+                    <span className="lg-docrow-state">Publicado</span>
                     <ChevronDown size={16} className="lg-docrow-arrow" aria-hidden="true" />
                   </button>
                 </li>
@@ -376,173 +287,183 @@ export default function LegalV1() {
             <dl className="lg-doc-facts">
               <div>
                 <dt>Estado</dt>
-                <dd>{doc.status === "missing" ? "No disponible" : "Esquema de secciones"}</dd>
+                <dd>Publicado</dd>
               </div>
               <div>
                 <dt>Ruta pública</dt>
-                <dd>{routes[doc.route].replace(/^https?:\/\//, "")}</dd>
+                <dd>/legal#{doc.id}</dd>
               </div>
               <div>
                 <dt>Vigencia</dt>
-                <dd>Sin fecha aprobada</dd>
+                <dd>{doc.version}</dd>
               </div>
             </dl>
           </div>
 
-          {doc.status === "missing" ? (
-            <div className="lg-empty">
-              <FileText size={22} aria-hidden="true" />
-              <h3>{MISSING_NOTE}</h3>
-              <p>
-                La ruta está declarada en el sitio público, pero no hay página publicada ni texto aprobado. No
-                se ha inventado contenido para rellenar el hueco.
+          <div className="lg-toolbar">
+            <label className="lg-search">
+              <Search size={16} aria-hidden="true" />
+              <span className="lg-sr">Buscar en este documento</span>
+              <input
+                type="search"
+                value={query}
+                placeholder="Buscar en el documento"
+                onChange={(event) => setQuery(event.target.value)}
+              />
+              {query && (
+                <button
+                  type="button"
+                  className="lg-search-clear"
+                  onClick={() => setQuery("")}
+                  aria-label="Limpiar búsqueda"
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              )}
+            </label>
+            <p className="lg-toolbar-note" aria-live="polite">
+              {query
+                ? `${sections.length} de ${doc.sections.length} secciones coinciden`
+                : `${doc.sections.length} secciones · versión ${doc.version}`}
+            </p>
+          </div>
+
+          <div className="lg-reader-grid">
+            <aside className="lg-aside" aria-label="Secciones del documento">
+              <p className="lg-aside-title">En este documento</p>
+              <ol className="lg-aside-list">
+                {doc.sections.map((section, position) => (
+                  <li key={section.id}>
+                    <a
+                      href={`#${doc.id}-${section.id}`}
+                      aria-current={activeSection === `${doc.id}-${section.id}` ? "true" : undefined}
+                      className={
+                        query && !sections.some((item) => item.id === section.id) ? "is-dimmed" : undefined
+                      }
+                    >
+                      <span>{String(position + 1).padStart(2, "0")}</span>
+                      {section.title}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+              <p className="lg-aside-foot">
+                <Info size={13} aria-hidden="true" />
+                Se resalta la sección que estás leyendo.
               </p>
-              <a className="lg-cta-ghost" href="#documentos">
-                Volver al índice de documentos
-              </a>
-            </div>
-          ) : (
-            <>
-              <div className="lg-toolbar">
-                <label className="lg-search">
-                  <Search size={16} aria-hidden="true" />
-                  <span className="lg-sr">Buscar secciones de este documento</span>
-                  <input
-                    type="search"
-                    value={query}
-                    placeholder="Buscar en las secciones"
-                    onChange={(event) => setQuery(event.target.value)}
-                  />
-                  {query && (
-                    <button type="button" className="lg-search-clear" onClick={() => setQuery("")} aria-label="Limpiar búsqueda">
-                      <X size={14} aria-hidden="true" />
-                    </button>
-                  )}
-                </label>
-                <p className="lg-toolbar-note" aria-live="polite">
-                  {query
-                    ? `${sections.length} de ${doc.sections.length} secciones coinciden`
-                    : `${doc.sections.length} secciones · sin texto aprobado`}
-                </p>
-              </div>
+            </aside>
 
-              <div className="lg-reader-grid">
-                <aside className="lg-aside" aria-label="Secciones del documento">
-                  <p className="lg-aside-title">En este documento</p>
-                  <ol className="lg-aside-list">
-                    {doc.sections.map((section, position) => (
-                      <li key={section.id}>
-                        <a
-                          href={`#${doc.id}-${section.id}`}
-                          aria-current={activeSection === `${doc.id}-${section.id}` ? "true" : undefined}
-                          className={query && !sections.some((item) => item.id === section.id) ? "is-dimmed" : undefined}
-                        >
-                          <span>{String(position + 1).padStart(2, "0")}</span>
-                          {section.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="lg-aside-foot">
-                    <Info size={13} aria-hidden="true" />
-                    Índice real del documento: se resalta la sección que estás leyendo.
-                  </p>
-                </aside>
+            <div className="lg-article" ref={articleRef}>
+              <p className="lg-draft-note">{DRAFTLESS}</p>
 
-                <div className="lg-article" ref={articleRef}>
-                  <p className="lg-draft-note">{DRAFT_NOTE}</p>
-
-                  {sections.length === 0 ? (
-                    <div className="lg-empty lg-empty-sm">
-                      <Search size={20} aria-hidden="true" />
-                      <h3>Ninguna sección coincide con «{query.trim()}»</h3>
-                      <p>La búsqueda solo recorre los títulos y el resumen de cada sección de este documento.</p>
-                      <button type="button" className="lg-cta-ghost" onClick={() => setQuery("")}>
-                        Limpiar búsqueda
-                      </button>
-                    </div>
-                  ) : (
-                    <ol className="lg-sections">
-                      {sections.map((section) => {
-                        const hash = `${doc.id}-${section.id}`;
-                        const position = doc.sections.findIndex((item) => item.id === section.id);
-                        return (
-                          <li key={section.id}>
-                            <section
-                              id={hash}
-                              data-section
-                              className="lg-section"
-                              aria-labelledby={`${hash}-title`}
-                            >
-                              <div className="lg-section-head">
-                                <span className="lg-section-num">{String(position + 1).padStart(2, "0")}</span>
-                                <h3 id={`${hash}-title`}>{section.title}</h3>
-                                <button
-                                  type="button"
-                                  className="lg-copy"
-                                  onClick={() => copySectionLink(hash)}
-                                  aria-label={`Copiar enlace a la sección ${section.title}`}
-                                >
-                                  <Copy size={14} aria-hidden="true" />
-                                  Enlace
-                                </button>
-                              </div>
-                              <p className="lg-section-note">{section.note}</p>
-                              <p className="lg-pending">Texto pendiente de validación jurídica.</p>
-                              {copyState?.hash === hash && (
-                                <p className="lg-copy-status" role="status">
-                                  {copyState.ok
-                                    ? `Enlace copiado: #${hash}`
-                                    : `No se pudo usar el portapapeles. Enlace: #${hash}`}
-                                </p>
-                              )}
-                            </section>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  )}
+              {sections.length === 0 ? (
+                <div className="lg-empty lg-empty-sm">
+                  <Search size={20} aria-hidden="true" />
+                  <h3>Ninguna sección coincide con «{query.trim()}»</h3>
+                  <p>La búsqueda recorre el texto de este documento.</p>
+                  <button type="button" className="lg-cta-ghost" onClick={() => setQuery("")}>
+                    Limpiar búsqueda
+                  </button>
                 </div>
-              </div>
-            </>
-          )}
+              ) : (
+                <ol className="lg-sections">
+                  {sections.map((section) => {
+                    const hash = `${doc.id}-${section.id}`;
+                    const position = doc.sections.findIndex((item) => item.id === section.id);
+                    return (
+                      <li key={section.id}>
+                        <section
+                          id={hash}
+                          data-section
+                          className="lg-section"
+                          aria-labelledby={`${hash}-title`}
+                        >
+                          <div className="lg-section-head">
+                            <span className="lg-section-num">{String(position + 1).padStart(2, "0")}</span>
+                            <h3 id={`${hash}-title`}>{section.title}</h3>
+                            <button
+                              type="button"
+                              className="lg-copy"
+                              onClick={() => copySectionLink(hash)}
+                              aria-label={`Copiar enlace a la sección ${section.title}`}
+                            >
+                              <Copy size={14} aria-hidden="true" />
+                              Enlace
+                            </button>
+                          </div>
+                          {section.paragraphs.map((paragraph) => (
+                            <p
+                              key={paragraph}
+                              className="lg-section-text"
+                              dangerouslySetInnerHTML={{ __html: paragraph }}
+                            />
+                          ))}
+                          {section.items && section.items.length > 0 && (
+                            <ul className="lg-section-list">
+                              {section.items.map((item) => (
+                                <li key={item} dangerouslySetInnerHTML={{ __html: item }} />
+                              ))}
+                            </ul>
+                          )}
+                          {copyState?.hash === hash && (
+                            <p className="lg-copy-status" role="status">
+                              {copyState.ok
+                                ? `Enlace copiado: #${hash}`
+                                : `No se pudo usar el portapapeles. Enlace: #${hash}`}
+                            </p>
+                          )}
+                        </section>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="lg-wrap lg-reader-meta" aria-label="Ayuda sobre estos documentos">
+          <div className="lg-empty lg-empty-sm">
+            <FileText size={20} aria-hidden="true" />
+            <h3>¿Necesitas una aclaración?</h3>
+            <p>
+              Escríbenos a <a href="mailto:laia@agntiapro.com">laia@agntiapro.com</a>. También puedes
+              revisar cómo tratamos tus datos o cómo cambias tus cookies desde el navegador.
+            </p>
+            <a className="lg-cta-ghost" href="#cookies" onClick={() => selectDoc("cookies", { scroll: true })}>
+              Leer la política de cookies
+            </a>
+          </div>
         </section>
 
         <section className="lg-wrap lg-banners" id="banners" aria-labelledby="lg-banners-title">
-          <p className="lg-kicker">Componentes reutilizables</p>
+          <p className="lg-kicker">Cómo trabajamos</p>
           <h2 id="lg-banners-title" className="lg-section-title">
             Banners honestos, sin letra pequeña
           </h2>
           <p className="lg-banners-lead">
-            Tres piezas con el mismo lenguaje visual. Cada botón hace lo que dice: guarda una elección real,
+            Tres piezas con el mismo lenguaje visual. Cada botón hace lo que dice: guarda una elección,
             abre una explicación o declara que el servicio no está conectado.
           </p>
 
           <div className="lg-banner-grid">
             <article className="lg-banner lg-banner-cookies">
               <p className="lg-banner-kicker">Cookies</p>
-              <h3>Usamos cookies para que todo funcione mejor</h3>
+              <h3>Solo lo necesario</h3>
               <p className="lg-banner-text">
-                Las necesarias no se pueden desactivar. Las de medición son opcionales y puedes cambiarlas
-                cuando quieras.
+                Esta web no usa cookies de analítica ni de publicidad. No hay nada opcional que aceptar:
+                la política explica qué recibe la infraestructura al servir la página.
               </p>
               <div className="lg-banner-actions">
-                <button type="button" className="lg-cta lg-cta-sm lg-cta-ink" onClick={() => saveChoice(false)}>
-                  Solo esenciales
-                </button>
-                <button type="button" className="lg-cta-ghost lg-cta-ghost-sm" onClick={openPreferences}>
-                  Preferencias
-                </button>
+                <a className="lg-cta lg-cta-sm lg-cta-ink" href="#cookies" onClick={() => selectDoc("cookies", { scroll: true })}>
+                  Leer la política
+                </a>
+                <a className="lg-cta-ghost lg-cta-ghost-sm" href="mailto:laia@agntiapro.com">
+                  Preguntar
+                </a>
               </div>
               <p className="lg-banner-state" role="status">
-                {choice
-                  ? `Guardada en este navegador · medición ${choice.measurement ? "activada" : "desactivada"}`
-                  : "Sin elección guardada en este navegador"}
-                {choice && (
-                  <button type="button" className="lg-linkish" onClick={clearChoice}>
-                    Borrar
-                  </button>
-                )}
+                Sin analítica, sin píxeles y sin perfiles publicitarios.
               </p>
             </article>
 
@@ -595,17 +516,17 @@ export default function LegalV1() {
 
           <p className="lg-banners-foot">
             <ShieldCheck size={15} aria-hidden="true" />
-            La elección de cookies se guarda solo en este navegador: no hay backend de consentimiento
-            conectado.
+            Titular: Alfonso Luna de Prado · NIF 45736999G · calle Valle-Inclán s/n, 38007 Santa Cruz de
+            Tenerife · laia@agntiapro.com
           </p>
         </section>
       </main>
 
       <footer className="lg-footer">
         <div className="lg-wrap lg-footer-inner">
-          <p>© 2026 AgntiaPro · UI Lab</p>
+          <p>© 2026 AgntiaPro · Alfonso Luna de Prado</p>
           <ul className="lg-footer-links">
-            {documents.map((item) => (
+            {LEGAL_DOCS.map((item) => (
               <li key={item.id}>
                 <button type="button" onClick={() => selectDoc(item.id, { scroll: true })}>
                   {item.label}
@@ -615,65 +536,6 @@ export default function LegalV1() {
           </ul>
         </div>
       </footer>
-
-      <dialog
-        ref={dialogRef}
-        className="lg-dialog"
-        aria-labelledby="lg-dialog-title"
-        onClose={() => setMeasurement(choice?.measurement ?? false)}
-        onClick={(event) => {
-          if (event.target === event.currentTarget) dialogRef.current?.close();
-        }}
-      >
-        <div className="lg-dialog-inner">
-          <div className="lg-dialog-head">
-            <h2 id="lg-dialog-title">Preferencias de cookies</h2>
-            <button
-              type="button"
-              className="lg-icon-btn"
-              onClick={() => dialogRef.current?.close()}
-              aria-label="Cerrar preferencias"
-            >
-              <X size={17} aria-hidden="true" />
-            </button>
-          </div>
-          <p className="lg-dialog-lead">
-            Necesarias siempre activas. La medición es opcional y se guarda solo en este navegador.
-          </p>
-          <ul className="lg-prefs">
-            <li>
-              <label className="lg-pref">
-                <input type="checkbox" checked disabled />
-                <span>
-                  <strong>Necesarias</strong>
-                  <em>Sesión, seguridad y esta misma preferencia. No se pueden desactivar.</em>
-                </span>
-              </label>
-            </li>
-            <li>
-              <label className="lg-pref">
-                <input
-                  type="checkbox"
-                  checked={measurement}
-                  onChange={(event) => setMeasurement(event.target.checked)}
-                />
-                <span>
-                  <strong>Medición</strong>
-                  <em>Saber qué páginas se leen. Nada de publicidad ni de perfiles.</em>
-                </span>
-              </label>
-            </li>
-          </ul>
-          <div className="lg-dialog-actions">
-            <button type="button" className="lg-cta-ghost" onClick={() => saveChoice(false)}>
-              Solo esenciales
-            </button>
-            <button type="button" className="lg-cta lg-cta-sm" onClick={() => saveChoice(measurement)}>
-              Guardar elección
-            </button>
-          </div>
-        </div>
-      </dialog>
     </div>
   );
 }

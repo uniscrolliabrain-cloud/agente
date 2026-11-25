@@ -1308,3 +1308,41 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Texto publicado: párrafos y listas reales en el cuerpo del documento. */
+.legal-v1 .lg-section-text {
+  margin: 0 0 12px;
+  color: #4d4640;
+  font-size: 14.5px;
+  line-height: 1.72;
+}
+
+.legal-v1 .lg-section-text:last-child {
+  margin-bottom: 0;
+}
+
+.legal-v1 .lg-section-text a,
+.legal-v1 .lg-section-list a,
+.legal-v1 .lg-reader-meta a {
+  color: var(--ag-violet);
+  text-underline-offset: 3px;
+}
+
+.legal-v1 .lg-section-list {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  color: #4d4640;
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+
+.legal-v1 .lg-section-list li::marker {
+  color: var(--ag-gold);
+}
+
+.legal-v1 .lg-reader-meta {
+  margin-top: 28px;
+  margin-bottom: 48px;
+}
