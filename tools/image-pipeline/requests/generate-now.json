@@ -1,54 +1,42 @@
 {
   "schemaVersion": 1,
-  "outputDir": "assets/generated/cartera/v1",
+  "outputDir": "assets/generated/analytics/v1",
   "images": [
     {
-      "id": "web",
+      "id": "revenue",
       "size": "1536x1024",
-      "alt": "Desarrollo web",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. A refined open ivory laptop showing abstract lavender website panels, large sculptural violet checkmark beside it, brass details, warm studio light."
+      "alt": "revenue",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Six ascending rounded rectangular ceramic bars in ivory to violet, thin elegant brushed gold rising arrow above, front-facing slight elevated camera, wide composition. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
     },
     {
-      "id": "sales",
+      "id": "distribution",
       "size": "1536x1024",
-      "alt": "Ventas",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Ivory envelopes with violet seals and a sculptural ascending champagne gold chart, premium desktop still life."
+      "alt": "distribution",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Front-facing thick sculptural donut ring, exactly 78 percent violet, 16 percent ivory, 6 percent pale lavender, empty central hole. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
     },
     {
-      "id": "money",
+      "id": "pipeline",
       "size": "1536x1024",
-      "alt": "Facturación",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Ivory invoice sheets with abstract non-readable lines, violet calculator, restrained gold coins, elegant desk."
+      "alt": "pipeline",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Four separate stacked tapered funnel bowls, ivory, lavender, violet and small gold bottom, frontal view. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
     },
     {
-      "id": "meeting",
+      "id": "areas",
       "size": "1536x1024",
-      "alt": "Consultoría",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Photorealistic contemporary meeting room, warm ivory architecture, lavender upholstered chairs, brass pendant lights, soft daylight."
+      "alt": "areas",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Four overlapping smooth flowing area-chart ribbons on a shared horizontal baseline, violet lavender ivory and gold, wide front-facing composition. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
     },
     {
-      "id": "campaign",
+      "id": "roi",
       "size": "1536x1024",
-      "alt": "Marketing",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Premium camera and violet megaphone, restrained gold accents, creative studio with cinematic lighting."
+      "alt": "roi",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Two stacks of ivory and violet ceramic coins with a rising brushed gold arrow. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
     },
     {
-      "id": "work",
+      "id": "health",
       "size": "1536x1024",
-      "alt": "Proyectos",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Open laptop with abstract checklist, violet folders, gold pen, warm editorial workspace."
-    },
-    {
-      "id": "legal",
-      "size": "1536x1024",
-      "alt": "Contratos",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Elegant ivory document folders, violet ribbons and champagne brass seal stamps, tactile legal still life."
-    },
-    {
-      "id": "shop",
-      "size": "1536x1024",
-      "alt": "Comercio y hostelería",
-      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Photorealistic charming boutique storefront with violet awning, ivory stone facade, brass fixtures and inviting warm evening light, no signage text."
+      "alt": "health",
+      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Three concentric segmented ceramic rings in ivory lavender and violet, empty center, frontal view. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
     }
   ]
 }
