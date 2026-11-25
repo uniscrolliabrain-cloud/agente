@@ -33,7 +33,10 @@ function View({ children }: { children: ReactNode }) {
 
 const TasksAutomationsWorkspace = lazy(() => import("./tasks-automations-v1/TasksAutomationsWorkspace"));
 
+const TeamWorkspace = lazy(() => import("./team-v1/TeamWorkspace"));
+
 const demoViews = {
+  team: (nav: (view: AppView) => void) => <View><TeamWorkspace onNavigate={nav} /></View>,
   tasks: <View><TasksAutomationsWorkspace /></View>,
   // NAV_KNOWLEDGE_V1 - recibe la navegación del shell para que su menú general
   // cambie de vista de verdad en lugar de dejar los botones muertos.
