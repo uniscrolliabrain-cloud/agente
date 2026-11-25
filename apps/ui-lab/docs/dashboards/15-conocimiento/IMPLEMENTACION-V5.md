@@ -1,0 +1,3 @@
+# Conocimiento V5
+
+V3: primer mockup aprobado como referencia canónica; segundo como referencia de cabecera espaciosa y limpieza UX. V4: composición trasladada a LibraryHome, SVG provisional, iconos y avatares provisionales. V5: ArticleEditor separado, lectura/edición, índice navegable, panel contextual, referencias entrantes/salientes, seis tipos de bloque, inserción, duplicado, borrado, arrastre HTML y botones de ordenación. Todo sintético en memoria. No hay historial de versiones real, fuentes documentales, editor rich text ni persistencia. No se ha ejecutado compilación ni navegador. No desplegar.
