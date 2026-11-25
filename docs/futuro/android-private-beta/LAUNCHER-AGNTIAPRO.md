@@ -38,3 +38,13 @@ Pruebas unitarias de estados, contract tests TS/Kotlin, instrumentación Android
 - https://capacitorjs.com/docs
 
 No se han auditado aún los contratos reales ni versiones SDK. Paths y tipos definitivos quedan pendientes de L0.
+
+
+## Evolución del founder: tres modos, un mismo sistema (2026-11-25)
+1. **App convencional:** Agntia como aplicación Android normal, sin sustituir HOME.
+2. **AgntiaPro:** launcher empresarial durante la jornada, LAIA, equipo, workspaces, comunicaciones y centro de mando.
+3. **AgntiaGo:** launcher personal y familiar, inspirado conceptualmente en asistentes personales multimodales como Muse de Meta (referencia del founder, no equivalencia técnica verificada). Compras, presupuestos domésticos, agenda familiar, viajes, ocio, alimentación, documentos, trámites y hogar.
+
+AgntiaGo reutiliza kernel, runtime, Cognition, motor SOP, contratos, observabilidad y renderer; cambia catálogo de dominio, agentes, memorias, branding y permisos. No crear otro motor. Separar contexto personal, familiar y empresarial con scopes/tenants independientes, miembros y roles; no transferir memorias ni datos entre ellos sin autorización explícita. Compras, pagos y acciones externas requieren política y aprobación según riesgo; no conceder acceso familiar implícito.
+
+El rol HOME de Android es independiente del modo de producto: una vez elegido el launcher, alternar Pro/Go dentro de él sin cambiar el rol; abrir la app convencional desde cualquier HOME, y ofrecer ajustes del sistema para restaurar launcher externo. La transición de dominio cancela o invalida comandos pendientes de UI, limpia caché visible y revalida sesión y permisos. Las tareas remotas continúan según su propia política, no por el modo visual. Notificaciones y conversaciones separadas por scope. Prototipar selector explícito, salida segura y pruebas de aislamiento, cambio de modo, cuentas familiares, revocación y compras. Packaging de una APK frente a módulos separados pendiente de ADR. No implementar todavía.
