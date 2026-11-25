@@ -69,3 +69,6 @@ Al reanudar: **audita el estado real de main y ramas antes de tocar código**. C
 - https://developer.android.com/developer-verification
 - https://support.google.com/googleplay/android-developer/
 - https://docs.github.com/en/actions
+
+## Extensión futura: launcher empresarial
+[AgntiaPro Launcher — arquitectura futura](LAUNCHER-AGNTIAPRO.md). Complemento opcional de la APK, sujeto a auditoría y aprobación independiente.
