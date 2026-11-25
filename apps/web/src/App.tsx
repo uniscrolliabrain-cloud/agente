@@ -369,7 +369,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
           )}
           {view === "apps" && (renderDemoView("apps") ?? null)}
           {/* APP_CENTRO_MANDO_V1 */}
-          {view === "centro-mando" && <CentroMandoWorkspace />}
+          {view === "centro-mando" && (renderDemoView("centro-mando") ?? <CentroMandoWorkspace />)}
           {view === "command-studio" && (
             <WorkspaceLoadBoundary>
               <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
