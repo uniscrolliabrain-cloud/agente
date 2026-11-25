@@ -1,0 +1,5 @@
+import {STATUS_LABEL,initialsOf,type TeamMember} from "../../../web/src/components/team/data";
+const portraits:Record<string,string>={laia:"laia",antonio:"antonio",pedro:"pedro"};
+export function Portrait({member}:{member:TeamMember}){const p=member.kind==="ai"?portraits[member.name.toLowerCase()]:undefined;return <div className="tev-portrait" data-kind={member.kind}>{p?<img src={import.meta.env.BASE_URL+"landing/"+p+".png"} alt={member.name}/>:<span>{initialsOf(member.name)}</span>}</div>}
+export function Status({member}:{member:TeamMember}){return <span className="tev-status" data-status={member.status}><i/>{STATUS_LABEL[member.status]}</span>}
+export function TeamCard({member,onOpen}:{member:TeamMember;onOpen:()=>void}){return <button className="tev-card" onClick={onOpen}><Portrait member={member}/><div className="tev-card-body"><small>{member.kind==="ai"?"Agente IA":"Persona"}</small><h2>{member.name}</h2><p>{member.role}</p><div className="tev-work">{member.work}</div><footer><Status member={member}/><span aria-hidden="true">↗</span></footer></div></button>}
