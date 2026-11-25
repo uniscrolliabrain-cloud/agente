@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "02-schedule",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/02-schedule.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Programación temporal",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "03-event",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/03-event.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Evento empresarial",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "05-sop",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/05-sop.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Ejecutar SOP",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "07-transform",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/07-transform.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Transformar datos",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "08-http",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/08-http.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Petición API / HTTP",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "09-record",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/09-record.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Consultar o guardar registro",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "10-message",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/10-message.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Enviar comunicación",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "11-task",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/11-task.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Crear o asignar tarea",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "12-approval",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/12-approval.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Aprobación humana",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "13-wait",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/13-wait.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Espera y reintento",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "14-result",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/remaining/14-result.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Resultado y evidencia",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    }
+  ]
+}
