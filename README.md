@@ -77,6 +77,23 @@ LAIA, Marcos y otros personajes representan roles especializados mediante prompt
 
 El objetivo de producto incluye conversación por texto, voz y visión, interfaces empresariales y coordinación entre humanos. Estas superficies no deben crear canales alternativos de autoridad.
 
+## Experiencia de producto
+
+La aplicación empresarial es un escritorio de trabajo, no únicamente un chat. El diseño combina navegación transversal, espacios especializados y una interfaz conversacional disponible desde cualquier workspace.
+
+| Superficie | Experiencia prevista |
+|---|---|
+| Centro de mando | Briefing contextual, prioridades, decisiones pendientes, actividad verificable y estado operativo de la empresa. |
+| Apps | Escritorio de aplicaciones, dock, accesos recientes y agrupación por finanzas, operaciones y equipo. |
+| Tareas y automatizaciones | Kanban, timeline, calendario, creación de tareas, relaciones con clientes y proyectos, revisión y automatización. |
+| Documentos y conocimiento | Acceso al conocimiento empresarial y a los artefactos generados por el sistema. |
+| Conversación multimodal | Chat, voz y videoconferencia con LAIA y otros roles especializados, mediante avatares. |
+| Interfaces servidas dinámicamente | El usuario puede solicitar conversacionalmente una vista contextual; el sistema selecciona y presenta interfaces y datos autorizados sin obligarle a navegar manualmente. |
+
+La interfaz conversacional y los workspaces son dos formas complementarias de acceder al mismo sistema. El objetivo es poder hablar con un rol durante una videoconferencia y recibir, cuando resulte útil, una vista de trabajo interactiva en el contexto de esa conversación. La selección y presentación de vistas no concede autoridad operativa al modelo conversacional.
+
+**Estado:** existen interfaces y prototipos de producto, incluyendo landing, Apps, Centro de Mando y Tareas. Las capturas de referencia utilizan datos sintéticos y no acreditan operaciones reales. La videoconferencia con roles, la presentación dinámica integral de interfaces y el wiring completo de estas experiencias todavía no están terminados. Su desarrollo no debe confundirse con la campaña actual de consolidación cognitiva.
+
 ## Compilación empresarial: visión de producto
 
 Compilar una empresa significa configurar su conocimiento, procesos, políticas, roles, conexiones y superficies de trabajo sobre el núcleo existente.
