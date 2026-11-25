@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "revenue",
+      "courseId": null,
+      "path": "assets/generated/analytics/v1/revenue.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "revenue",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "distribution",
+      "courseId": null,
+      "path": "assets/generated/analytics/v1/distribution.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "distribution",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "pipeline",
+      "courseId": null,
+      "path": "assets/generated/analytics/v1/pipeline.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "pipeline",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "areas",
+      "courseId": null,
+      "path": "assets/generated/analytics/v1/areas.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "areas",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "roi",
+      "courseId": null,
+      "path": "assets/generated/analytics/v1/roi.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "roi",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "health",
+      "courseId": null,
+      "path": "assets/generated/analytics/v1/health.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "health",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    }
+  ]
+}
