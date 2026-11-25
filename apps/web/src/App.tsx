@@ -359,7 +359,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}
           {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "team" && <TeamView onOpenChat={() => setView("chat")} />}
+          {view === "team" && (renderDemoView("team") ?? <TeamView onOpenChat={() => setView("chat")} />)}
           {view === "workspace" && (
             <WorkspaceShell
               workspaces={workspaces}
