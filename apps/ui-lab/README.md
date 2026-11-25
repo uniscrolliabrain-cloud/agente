@@ -10,9 +10,14 @@ El laboratorio no tiene menú lateral propio. Un selector compacto **Vista** en 
 
 Desde raíz: `pnpm install --frozen-lockfile`, `pnpm --filter @agente/ui-lab typecheck`, `pnpm --filter @agente/ui-lab build`, `pnpm --filter @agente/ui-lab dev`. Vite HMR actualiza durante desarrollo.
 
-## Publicación automática (decisión del founder)
+## Publicación: Pages primero, Vercel aparte
 
-El workflow `.github/workflows/ui-lab.yml` ejecuta typecheck y build en pushes relevantes a `main` y ramas listadas. **En `main`, un push relevante dispara también el job deploy**, si build pasa y existen los secrets dedicados. También permite ejecución manual desde `main` con `deploy=true`. El job utiliza el environment `ui-lab` y el proyecto Vercel independiente configurado con `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID` y `UI_LAB_VERCEL_PROJECT_ID`. Si el environment exige aprobación, esta puede frenar la publicación. El workflow no despliega `agntiapro.com` por diseño; hay que configurar correctamente los IDs.
+Hay dos destinos y no comparten nada:
+
+- **GitHub Pages (preview antes del deploy real).** `.github/workflows/ui-lab-pages.yml` publica el clon navegable de la app (`full-app.html` → `index.html`, base `/agente/`) en https://uniscrolliabrain-cloud.github.io/agente/ con cada push a `main` que toque `apps/ui-lab/**`, `apps/web/src/**`, `apps/web/public/**`, `packages/domain/src/**` o el lockfile, y también a mano con `workflow_dispatch`. Ahí se ven los workspaces reales (Conocimiento, Documentos, WhatsApp, Apps, Legal) con datos sintéticos y sin backend. Es el sitio para revisar componentes y pantallas antes de desplegar.
+- **Vercel (proyecto independiente).** El job `deploy` de `.github/workflows/ui-lab.yml` solo corre con `workflow_dispatch` y `deploy=true` sobre `main`; no se dispara con un push. Usa el environment `ui-lab` y los secrets `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID` y `UI_LAB_VERCEL_PROJECT_ID`. Ninguno de los dos flujos despliega `agntiapro.com`.
+
+Los workspaces nuevos entran en el clon por el prop opcional `demoViews` de `apps/web/src/App.tsx`: sin ese prop, producción monta exactamente las mismas vistas de siempre.
 
 El botón Buscar actualización consulta `version.json`; no despliega. El manifiesto identifica el commit compilado.
 
