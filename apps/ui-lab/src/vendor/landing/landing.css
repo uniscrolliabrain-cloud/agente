@@ -3121,6 +3121,13 @@ html:has(.lp-premium) {
   color: var(--lp-ink);
   border-bottom-color: currentColor;
 }
+.lp-premium .lp-legal-links-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8c8579;
+}
 .lp-premium .lp-legal-notice a:hover,
 .lp-premium .lp-legal-notice a:focus-visible {
   color: var(--lp-violet);

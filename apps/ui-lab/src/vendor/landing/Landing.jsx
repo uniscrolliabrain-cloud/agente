@@ -952,6 +952,7 @@ export default function Landing({ loginHref = "/?acceso=1" }) {
             </div>
           </div>
           <nav className="lp-legal-links" aria-label="Información legal">
+            <span className="lp-legal-links-label">Legal</span>
             <a href={legalHref("notice")}>Aviso legal</a>
             <a href={legalHref("privacy")}>Privacidad</a>
             <a href={legalHref("cookies")}>Cookies</a>

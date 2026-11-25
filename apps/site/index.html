@@ -56,6 +56,54 @@
       ul { padding-left: 20px; color: var(--muted); }
       li { margin-bottom: 8px; }
       footer { color: var(--muted); font-size: 13px; margin-top: 56px; }
+      footer p { margin: 0; }
+      footer a {
+        color: inherit;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        padding-bottom: 1px;
+        transition: color 0.16s, border-color 0.16s;
+      }
+      footer a:hover,
+      footer a:focus-visible {
+        color: var(--text);
+        border-bottom-color: currentColor;
+      }
+      /* El bloque legal comparte tipografía, retícula y separador con el resto
+         del footer: etiqueta propia, enlaces sin subrayado y el mismo ritmo. */
+      .footer-legal {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 18px;
+        margin-top: 20px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .footer-legal-label {
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .footer-legal a,
+      .footer-legal .ccb-footer-settings {
+        font: inherit;
+        color: var(--muted);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        padding-bottom: 1px;
+      }
+      .footer-legal a:hover,
+      .footer-legal a:focus-visible,
+      .footer-legal .ccb-footer-settings:hover,
+      .footer-legal .ccb-footer-settings:focus-visible {
+        color: var(--text);
+        border-bottom-color: currentColor;
+      }
       code { color: var(--text); }
     </style>
     <link rel="stylesheet" href="/cookie-consent.css" />
@@ -104,16 +152,19 @@
       </section>
 
       <footer>
-        AgntiaPro · automatizaciones con IA para negocios pequenos ·
-        <a href="https://www.agntiapro.com" style="color: inherit">www.agntiapro.com</a>
-        <nav aria-label="Información legal" style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px">
-          <a href="./aviso-legal.html" style="color:inherit">Aviso legal</a>
-          <a href="./privacidad.html" style="color:inherit">Privacidad</a>
-          <a href="./cookies.html" style="color:inherit">Cookies</a>
-          <a href="./terminos.html" style="color:inherit">Términos del servicio</a>
-          <a href="./transparencia-ia.html" style="color:inherit">Transparencia IA</a>
-          <a href="./confianza.html" style="color:inherit">Confianza y seguridad</a>
-          <button type="button" id="agntia-cookie-settings" class="ccb-footer-settings" style="color:inherit">Configurar cookies</button>
+        <p>
+          AgntiaPro · automatizaciones con IA para negocios pequenos ·
+          <a href="https://www.agntiapro.com">www.agntiapro.com</a>
+        </p>
+        <nav class="footer-legal" aria-label="Información legal">
+          <span class="footer-legal-label">Legal</span>
+          <a href="./aviso-legal.html">Aviso legal</a>
+          <a href="./privacidad.html">Privacidad</a>
+          <a href="./cookies.html">Cookies</a>
+          <a href="./terminos.html">Términos del servicio</a>
+          <a href="./transparencia-ia.html">Transparencia IA</a>
+          <a href="./confianza.html">Confianza y seguridad</a>
+          <button type="button" id="agntia-cookie-settings" class="ccb-footer-settings">Configurar cookies</button>
         </nav>
       </footer>
     </main>
