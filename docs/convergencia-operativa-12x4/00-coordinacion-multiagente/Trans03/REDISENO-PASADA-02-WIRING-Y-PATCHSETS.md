@@ -1,0 +1,45 @@
+# Pasada 02 — wiring y patchsets P01–P14
+Complementa pasada 01 (44b8505). No aplicar código en esta fase. Corrección: media-transport.ts no existe en HEAD Trans03; C05 es candidato externo. No montar segundo coordinador.
+## Contrato transversal y orden
+CapabilityRunner blob 493a3bea, ToolExecutor 6e00a903: run(ctx,capabilityId,inputs,key?) devuelve unknown, runner devuelve void. No registrar IDs imaginados. prepare_email y prepare_event ya llaman actions.propose con email.send/calendar.create; conservarlos como preparación, no efecto. Runner actual permite omitir governance si faltan dependencias y reintenta failed; A02/A03 de Trans01 son prerrequisito de activación gobernada, no corregir en rama ajena. Fast no invoca prepare para proponer operaciones; intención autenticada → Slow → kernel → runtime. ActionService y WhatsAppOutbound son rutas existentes: un único propietario de claim por operación; no envolver ledger existente en segundo dispatcher. E03 produce receipt durable, Trans02 P03 verifica familia; H03 Trans04 observa CAS ganador. No convertir return string/void en confirmación.
+## P01/P04 transporte: contrato de resultado
+Mantener firmas públicas. En google.ts request y requestBytes sustituir bloque !response.ok por cancelación y GoogleApiError(status,"Request rejected"); conservar 429/408/5xx como unknown en write. Antes de fetch validar configuración y serializar body fuera del try de red (fallo local no es remoto). Meta/Evolution mantener AppError de validación predispatch; candidato de rechazo definitivo explícito solo tras respuesta autenticada y semántica upstream comprobada. Hasta entonces P06 clasifica error posterior a llamada como unknown. Test spy: invalid input=0, write 429=1, read error sin cuerpo privado, malformed success=unknown. No retries añadidos.
+## P02/P03 OAuth: separar scope de refresh
+En GoogleAuth.accessToken extraer private assertOperationalBinding(owner,tokens) con guard de pasada 01; invocarlo antes de token fresco y después de refresh, releyendo tokens y comparando connectionId. No devolver resultado de pending directamente: await pending y revalidar; task compartida solo transporte, no autorización. En finishCallback usar state.authorizer??state.owner para membership antes de fetch y antes de save. En refresh usar tokens.authorizer??owner, preservar refresh token rotado y scope reducido. Introducir puerto de operación sin exponer token a Fast:
+```ts
+type GoogleOperation = "gmail.read"|"gmail.send"|"gmail.reply"|"calendar.read"|"calendar.write"|"drive.read"|"drive.write";
+const authScope=(s:string)=>"https://www.googleapis.com/auth/"+s;
+const required:Record<GoogleOperation,string[][]>={
+ "gmail.read":[[authScope("gmail.readonly"),authScope("gmail.modify"),"https://mail.google.com/"]],
+ "gmail.send":[[authScope("gmail.send"),authScope("gmail.modify"),"https://mail.google.com/"]],
+ "gmail.reply":[[authScope("gmail.readonly"),authScope("gmail.modify"),"https://mail.google.com/"],[authScope("gmail.send"),authScope("gmail.modify"),"https://mail.google.com/"]],
+ "calendar.read":[[authScope("calendar.events.readonly"),authScope("calendar.events"),authScope("calendar")]],
+ "calendar.write":[[authScope("calendar.events"),authScope("calendar")]],
+ "drive.read":[[authScope("drive.readonly"),authScope("drive")]],
+ "drive.write":[[authScope("drive")]]
+};
+function permits(scopes:string[],op:GoogleOperation){return required[op].every(group=>group.some(s=>scopes.includes(s)));}
+```
+Conservative map candidate: calendar list requires separate calendarlist scope; gmail send implementation reads profile so require read group as well until refactored; drive.file excluded until resource-specific ACL proven. En accessTokenFor(owner,expectedConnectionId,op) require binding before and after accessToken, compare connectionId and permits both times; caller obtains token through closure per request, not cached client token. Do not change connect consent UI yet. Test reduced scope refresh, two callers with different actor same refresh, disconnect after await, missing PDP. No network real.
+## P05 ingress
+Preserve existing HMAC, binding, stable inbox ID, createTask idempotency. Refine conflict guard: compare immutable payload and identity, not current sopId on already queued replay; for received recovery require original sopId still authorized or block. Re-read inbox after CAS loss, return only matching queued taskId; otherwise 503. No duplicate task. Bound raw body via existing app middleware if present; else add streaming bounded reader before JSON/HMAC (cap candidate 256KiB, validate provider batch limits). Tests existing whatsapp-inbound/webhook plus oversized stream, malformed JSON, same ID different payload, rotated binding and crash.
+## P06 outbound
+Use existing Operation status/attemptId CAS. Candidate replace result guard:
+```ts
+if(result.accepted!==true||typeof result.id!=="string"||!result.id.trim()||result.id.length>300)
+ throw new OutcomeUnknownError();
+status="accepted";providerId=result.id.trim();
+```
+After insert revalidate current membership/PDP, draft expiry and connection generation, then dispatch once. Pre-dispatch failed vs postdispatch unknown as pasada 01. Operator reconcile schema providerChecked is assertion only; mark provenance operator_reported, never verified by boolean. Trans01 E03 adapter must reference existing operation ID/attempt, no second send. Test stale CAS, late response, forged reconcile, expired draft after claim.
+## P07–P09 Google wiring
+prepare_email/prepare_event existing IDs and action kinds preserved. Map email.send→sendEmail→messageReceipt; calendar.create→createEvent→eventReceipt; update/delete and Drive mutations only existing authorized paths. Bind approved target revision, connectionId, policy, attachment digest. Calendar eventReceipt compare returned id before emitting; Gmail receipt proves message resource not delivery. Drive read ACL from current binding and resource, not URL or same text; RAG source revocation Trans02. Docs create/update out of scope. Test actual existing google.test.ts and vertical-slice-google-connection.test.ts plus scope/receipt mismatch. No new registry entries until Trans01 ABI.
+## P10 Places
+Apply finite integer limit guard and dedup from pasada 01. Response parser distinguish missing places valid empty per verified upstream from malformed null/array; no false success on parse error. Cost budget per tenant in runtime, no contact effects. Test 0/NaN/fraction, duplicate IDs, invalid rating, 429, missing key zero fetch.
+## P11 media/JEV/Composio
+Actual voice-v2/coordinator.ts ae734008 already owns consent, sessions, turns, epoch and receipts; preserve. media-transport absent; no import until C05 merged by owner. Adapter lifecycle must consume existing consent/epoch and cancellation, no transcript/audio persistence beyond current contract. JEV egress 6acd8474 already tenant-specific, evidence, quota; Trans02 owns cross-midnight lane lock and uncertain billing. No second transport. Composio default deny, no generic executor. Tests voice existing plus stale epoch/consent revoke and no egress. Vendor ABI verification remains before implementation.
+## P12 cyber
+sdk-adapter fbb5574e actual governedRead one-use delegation; validate grant.oneUseToken nonempty and expiry after second current check immediately before invocation. Do not retry. Bound result.data count before map (candidate 1000, verify SDK pagination); no truncate silently. capabilities.ts 753e3cfb exposes governedSecurityTools, not automatic registry; do not inject into Fast. event-relay 81bbd950 optional project can ACK without projection: production factory require project, tests may explicitly use transport-only mode without ACK in production. cognitive-adapter 98755875 checks same Store/inTransaction, writes reported_fact not verified; verify sink transactional behavior with Trans02. Cursor Number conversion guard Number.isSafeInteger and >=0 before outbox, reject overflow; lease/fence and ACK recovery owned jointly with Trans02. Tests missing project zero ACK, wrong tenant/hash, duplicate sequence, lost ACK, revoke after read, no security guarantee.
+## P13/P14 evidence and gate
+H03 proposed enum provider/stage/outcome, no IDs or payload; count CAS winner postcommit, distinguish accepted/confirmed/reported/unknown. Fixture matrix two tenants same IDs, two actors, binding rotate, 429, crash before/after effect, late receipt, replay, policy outage. Existing tests discovered: whatsapp-{adapter,inbound,outbound,webhook}, google, vertical-slice-google-connection, cognition-v2-{voice,runtime-outcome}; verify oauth and JEV tests by tree before runner. Run focal then combined typecheck and gates; no skipped PG as pass. Rollback flags off, preserve ledgers/receipts, no blind retry.
+## Evaluación
+Arquitectura 9.2; granularidad 8.3; anclas 9.0; código 8.3; wiring 8.4; tests 8.5; autonomía 8.3; rollback 8.8. Media 8.60. Candidatos estáticos no compilados; falta contrastar todos los callers Workspace/ActionService, 48 bloques canónicos, ABI Trans01/04 y upstream. No GO.
