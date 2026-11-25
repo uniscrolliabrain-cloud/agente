@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "web",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/web.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Desarrollo web",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "sales",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/sales.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Ventas",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "money",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/money.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Facturación",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "meeting",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/meeting.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Consultoría",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "campaign",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/campaign.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Marketing",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "work",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/work.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Proyectos",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "legal",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/legal.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Contratos",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "shop",
+      "courseId": null,
+      "path": "assets/generated/cartera/v1/shop.webp",
+      "width": 1536,
+      "height": 1024,
+      "alt": "Comercio y hostelería",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    }
+  ]
+}
