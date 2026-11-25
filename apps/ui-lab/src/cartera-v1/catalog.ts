@@ -1,7 +1,7 @@
 export type Kind="Cliente"|"Proyecto"|"Lead"|"Campaña"|"Propuesta"|"Factura"|"Contrato"|"Soporte";
 export type Entry={id:string;kind:Kind;title:string;client:string;amount:number;progress:number;status:string;cover:string;description:string};
 export const covers=[["web","Software y web"],["sales","Ventas"],["money","Finanzas"],["meeting","Consultoría"],["campaign","Marketing"],["work","Operaciones"],["legal","Contratos"],["shop","Comercio"]] as const;
-export const coverUrl=(key:string)=>import.meta.env.BASE_URL+"cartera/"+key+".webp";
+export const coverUrl=(key:string)=>key.startsWith("data:image/")?key:import.meta.env.BASE_URL+"cartera/"+key+".webp";
 export const money=(n:number)=>n.toLocaleString("es-ES",{style:"currency",currency:"EUR",maximumFractionDigits:0});
 export const entries:Entry[]=[
 {id:"acme",kind:"Proyecto",title:"Lanzamiento web ACME",client:"ACME",amount:42000,progress:78,status:"Pendiente",cover:"web",description:"La nueva web está preparada para la revisión de lanzamiento."},
