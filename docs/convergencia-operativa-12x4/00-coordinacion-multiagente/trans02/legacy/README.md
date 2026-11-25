@@ -1,0 +1,2 @@
+# Legacy Trans02
+Archivo histórico de auditorías incrementales y revisión de turno anterior. Los cinco blobs se verificaron idénticos al original antes de sustituir sus rutas por punteros. No ejecutar estos documentos como campaña vigente. Entrada actual: [consolidado P01–P14](../REDISENO-FINAL-P01-P14.md). Backlog futuro: [sublimación](../REPORT-SUBLIMACION-FUTURA.md). Los documentos T1–T4 y M1/M3 permanecen en sus rutas porque el consolidado depende de sus detalles técnicos. No se ha movido código funcional ni documentación de otras campañas.
