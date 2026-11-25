@@ -336,14 +336,14 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
                 userName={auth.user?.name}
               />
             ))}
-          {view === "tasks" && (
+          {view === "tasks" && (renderDemoView("tasks") ?? (
             <TasksView
               tasks={tasks.tasks}
               currentUserId={auth.user?.id ?? null}
               onOpenTask={openTask}
               onReviewTask={reviewTask}
             />
-          )}
+          ))}
           {view === "documents" && (renderDemoView("documents") ?? <DocumentsView files={files} />)}
           {view === "whatsapp" && (renderDemoView("whatsapp") ?? <WhatsAppView />)}
           {view === "formation" && (renderDemoView("formation") ?? null)}
