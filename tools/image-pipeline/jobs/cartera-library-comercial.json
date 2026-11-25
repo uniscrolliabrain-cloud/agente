@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "outputDir": "assets/generated/cartera/library-v2/comercial",
+  "images": [
+    {
+      "id": "comercial-prospecting",
+      "size": "1536x1024",
+      "alt": "Prospección",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Binoculars and a folded city map on a refined desk."
+    },
+    {
+      "id": "comercial-qualification",
+      "size": "1536x1024",
+      "alt": "Cualificación de leads",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Ordered set of blank profile cards and a magnifying glass."
+    },
+    {
+      "id": "comercial-outreach",
+      "size": "1536x1024",
+      "alt": "Contacto comercial",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Smartphone, sealed envelopes and a notebook."
+    },
+    {
+      "id": "comercial-meeting-sales",
+      "size": "1536x1024",
+      "alt": "Reunión comercial",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Two coffee cups and open presentation folders across a meeting table."
+    },
+    {
+      "id": "comercial-negotiation",
+      "size": "1536x1024",
+      "alt": "Negociación",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Two hands exchanging an unmarked folder across a table."
+    },
+    {
+      "id": "comercial-proposal",
+      "size": "1536x1024",
+      "alt": "Propuesta comercial",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Open premium presentation folio with abstract diagrams."
+    },
+    {
+      "id": "comercial-followup",
+      "size": "1536x1024",
+      "alt": "Seguimiento",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Desk calendar with unmarked pages, phone and violet pen."
+    },
+    {
+      "id": "comercial-conversion",
+      "size": "1536x1024",
+      "alt": "Conversión",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Two interlocking sculptural ivory and violet pieces."
+    },
+    {
+      "id": "comercial-renewal",
+      "size": "1536x1024",
+      "alt": "Renovación",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Circular brass sculpture surrounding two neatly bound folders."
+    },
+    {
+      "id": "comercial-referral",
+      "size": "1536x1024",
+      "alt": "Referencias",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Three elegant business cards without text arranged in a branching composition."
+    },
+    {
+      "id": "comercial-pipeline",
+      "size": "1536x1024",
+      "alt": "Pipeline comercial",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Sequence of progressively taller violet and ivory blocks."
+    },
+    {
+      "id": "comercial-reactivation",
+      "size": "1536x1024",
+      "alt": "Reactivación",
+      "prompt": "Create ONE cinematic premium editorial photograph for AgntiaPro's business portfolio, landscape 3:2 source composed for a 16:9 crop. Warm ivory, sophisticated violet, muted lavender and restrained champagne brass; natural believable materials, refined commercial photography, spacious composition, subtle depth and lighting. Main subject toward right, quiet left area suitable for dynamic HTML text overlay; preserve important elements within central 80% height. Vary camera angle and setting naturally; avoid repetitive generic desk compositions. No readable text, numbers, logos, watermark or baked-in UI. Opened archival drawer with one illuminated violet folder."
+    }
+  ]
+}
