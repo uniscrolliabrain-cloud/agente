@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "outputDir": "assets/generated/cartera/v1",
+  "images": [
+    {
+      "id": "web",
+      "size": "1536x1024",
+      "alt": "Desarrollo web",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. A refined open ivory laptop showing abstract lavender website panels, large sculptural violet checkmark beside it, brass details, warm studio light."
+    },
+    {
+      "id": "sales",
+      "size": "1536x1024",
+      "alt": "Ventas",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Ivory envelopes with violet seals and a sculptural ascending champagne gold chart, premium desktop still life."
+    },
+    {
+      "id": "money",
+      "size": "1536x1024",
+      "alt": "Facturación",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Ivory invoice sheets with abstract non-readable lines, violet calculator, restrained gold coins, elegant desk."
+    },
+    {
+      "id": "meeting",
+      "size": "1536x1024",
+      "alt": "Consultoría",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Photorealistic contemporary meeting room, warm ivory architecture, lavender upholstered chairs, brass pendant lights, soft daylight."
+    },
+    {
+      "id": "campaign",
+      "size": "1536x1024",
+      "alt": "Marketing",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Premium camera and violet megaphone, restrained gold accents, creative studio with cinematic lighting."
+    },
+    {
+      "id": "work",
+      "size": "1536x1024",
+      "alt": "Proyectos",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Open laptop with abstract checklist, violet folders, gold pen, warm editorial workspace."
+    },
+    {
+      "id": "legal",
+      "size": "1536x1024",
+      "alt": "Contratos",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Elegant ivory document folders, violet ribbons and champagne brass seal stamps, tactile legal still life."
+    },
+    {
+      "id": "shop",
+      "size": "1536x1024",
+      "alt": "Comercio y hostelería",
+      "prompt": "Create ONE premium cinematic editorial landscape photograph for AgntiaPro's Netflix-like business portfolio. Warm ivory #FCFAF6, sophisticated violet #6550DD, restrained brushed champagne brass #B49665, soft lavender atmosphere. Photorealistic high-end advertising, tactile materials, subtle shadows, elegant composition, no cartoon, no logos, no readable text, no watermark. Wide composition designed for a centered 16:9 crop from 3:2 source; keep important objects in central vertical 80%, place main subject on right half and leave quiet darker tonal space on left for dynamic HTML overlay. No embedded titles or metrics. Photorealistic charming boutique storefront with violet awning, ivory stone facade, brass fixtures and inviting warm evening light, no signage text."
+    }
+  ]
+}
