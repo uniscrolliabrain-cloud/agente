@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "assets": [
+    {
+      "id": "01-webhook",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/pilot/01-webhook.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Webhook entrante",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "04-agent",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/pilot/04-agent.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Agente IA",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    },
+    {
+      "id": "06-condition",
+      "courseId": null,
+      "path": "assets/generated/automation-nodes/pilot/06-condition.webp",
+      "width": 1024,
+      "height": 1024,
+      "alt": "Condición y bifurcación",
+      "model": "openai/gpt-image-2",
+      "sourceJob": "tools/image-pipeline/requests/generate-now.json",
+      "status": "review-required"
+    }
+  ]
+}
