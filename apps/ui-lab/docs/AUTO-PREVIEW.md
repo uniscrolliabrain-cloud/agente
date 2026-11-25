@@ -6,7 +6,9 @@
 
 ## GitHub Actions actual
 
-`.github/workflows/ui-lab.yml` hace typecheck y build con cada push relevante a `main` y a las ramas expresamente listadas. Tras un build correcto en `main`, el job `deploy` **se ejecuta automáticamente**; no depende de la variable `UI_LAB_AUTO_DEPLOY`. También puede iniciarse manualmente en `main` con `workflow_dispatch` y `deploy=true`. Requiere secrets `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID`, `UI_LAB_VERCEL_PROJECT_ID` y environment `ui-lab`. Las aprobaciones configuradas en el environment pueden bloquear el deploy hasta su autorización.
+`.github/workflows/ui-lab.yml` hace typecheck y build con cada push relevante a `main` y a las ramas expresamente listadas. El job `deploy` **no** se ejecuta con un push: solo con `workflow_dispatch` en `main` y `deploy=true` (`if: github.event_name == 'workflow_dispatch' && inputs.deploy`). Requiere secrets `UI_LAB_VERCEL_TOKEN`, `UI_LAB_VERCEL_ORG_ID`, `UI_LAB_VERCEL_PROJECT_ID` y environment `ui-lab`. Las aprobaciones configuradas en el environment pueden bloquear el deploy hasta su autorización.
+
+El preview que se revisa antes de cualquier deploy real es **GitHub Pages**, no Vercel: `.github/workflows/ui-lab-pages.yml` publica el clon navegable de la app en https://uniscrolliabrain-cloud.github.io/agente/ con cada push a `main` que toque el laboratorio. Ver la sección «Publicación» de [`../README.md`](../README.md).
 
 El despliegue usa `vercel build --prod` y `vercel deploy --prebuilt --prod` **sobre el proyecto dedicado de UI Lab**, no sobre el proyecto de producción de AgntiaPro. No configurar otra integración automática redundante si se quieren evitar builds duplicados.
 
@@ -16,4 +18,4 @@ El botón Buscar actualización consulta `/version.json` y ofrece recargar cuand
 
 ## Política
 
-El founder mantiene auto-deploy de UI Lab desde `main`. El laboratorio es interno y sintético, no requiere nivel de producción; evitar credenciales y datos reales y verificar builds en Actions.
+Pages publica automáticamente desde `main`; Vercel solo bajo `workflow_dispatch`. El laboratorio es interno y sintético, no requiere nivel de producción; evitar credenciales y datos reales y verificar builds en Actions antes de anunciar una publicación.

@@ -9,7 +9,7 @@ la vista original. Producción, shell, workspace 35 y Control de actividad sin c
 
 - Documentación de campaña: [`campana-editorial-v2/`](campana-editorial-v2/00-BITACORA.md)
   (bitácora, auditoría, dirección visual, storyboard, patchset, matriz de paridad, QA, artifact).
-- Componentes finales clonados: [`campana-editorial-v2/componentes-finales/`](campana-editorial-v2/componentes-finales/README.md).
+- Código final: [`apps/ui-lab/src/command-center-editorial/`](../../../src/command-center-editorial). El clon con SHA256 se retiró el 25/11/2026 por ser byte a byte idéntico.
 - QA: 26/26 comprobaciones, 96/100 en la rúbrica del gate. Evidencias en
   [`qa/capturas/`](qa/capturas/) y [`qa/qa-resultados.json`](qa/qa-resultados.json).
 - Artifact para Chromebook: [`artifact/`](artifact/build-artifact.py) (`command-center-editorial-chromebook.zip`,

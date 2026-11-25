@@ -6,7 +6,7 @@
 |---|---|
 | Preview registrada | `/?view=apps-launcher-v3` (id `apps-launcher-v3`) |
 | Código | `apps/ui-lab/src/apps-launcher/` |
-| Clon documental con hashes | `campana-launcher-v3/componentes-finales/` |
+| Código final (fuente de verdad) | `apps/ui-lab/src/apps-launcher/` — el clon con hashes se retiró el 25/11/2026 |
 | Iconos | `11-apps/iconos/final/` (PNG 1024, WebP 512, manifiesto) |
 | Iconos de la app | `apps/ui-lab/src/apps-launcher/icons/` (WebP 320) |
 | Prompts | `11-apps/iconos/prompts-definitivos.json` |

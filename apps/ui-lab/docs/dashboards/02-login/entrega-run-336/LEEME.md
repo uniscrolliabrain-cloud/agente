@@ -13,20 +13,27 @@ Paquete y evidencias de la campaña Login V3, tal como los produjo el workflow
 
 ## Archivos
 
+Los dos ZIP se retiraron del repositorio el 25/11/2026 (11,4 MB de binarios versionados que el
+workflow regenera). Se conservan este LEEME y `SHA256SUMS.txt` como registro de la entrega; los
+paquetes siguen descargables desde el run 336 de Actions y su contenido no cambió.
+
 - `login-v3-chromebook.zip` — paquete servible: `site/` con el build, `version.json` con el SHA,
   `QA.md`, `BITACORA-EJECUCION.md`, `INSTRUCCIONES.txt`, `iniciar.sh`, `capturas/` (10) y `qa/`.
+  Retirado del repo; descargar del run 336.
 - `login-v3-qa-evidence.zip` — evidencias del runner: `qa.log`, `qa-report.json`, `entorno.log`,
   `npm.log`, `preview.log` y `capturas-ci/` (7 capturas a 390, 768, 1366 y 1920).
+  Retirado del repo; descargar del run 336.
 - `SHA256SUMS.txt` — hashes de los dos ZIP; ambos coinciden con el `digest` que declara GitHub.
+  Se mantiene como registro: `sha256sum -c` solo pasa si vuelves a descargar los ZIP en esta carpeta.
 
 ## Abrir el paquete
+
+Descarga `login-v3-chromebook.zip` del run y después:
 
 ```bash
 unzip login-v3-chromebook.zip -d login-v3 && cd login-v3
 sh iniciar.sh            # sirve site/ en http://127.0.0.1:8080
 ```
-
-Comprobar los hashes: `sha256sum -c SHA256SUMS.txt`.
 
 ## Correspondencia
 
