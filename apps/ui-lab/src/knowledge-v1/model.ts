@@ -1,4 +1,4 @@
-export type Block={id:string;kind:"text"|"heading"|"link"|"note";text:string;target?:string};
+export type Block={id:string;kind:"text"|"heading"|"link"|"note"|"list"|"quote";text:string;target?:string};
 export type Page={id:string;title:string;parent:string|null;author:string;blocks:Block[]};
 const names=["Empresa","Equipo humano","Agentes IA","Clientes","Proyectos","Procesos y SOPs","Productos y servicios","Mercado e industria","Tecnología","Normativa","Ideas e innovación","Formación"];
 const block=(id:string,text:string,kind:Block["kind"]="text",target?:string):Block=>({id,text,kind,target});
