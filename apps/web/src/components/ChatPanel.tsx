@@ -27,6 +27,7 @@ interface ChatState {
   setRoleId?: (id: string | undefined) => void;
   messages: ChatMessage[];
   streaming: boolean;
+  sendDisabled?: boolean;
   streamBuf: string;
   tools: ToolCall[];
   error: string | null;
@@ -115,6 +116,7 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
           onSend={chat.send}
           onCancel={chat.cancel}
           streaming={chat.streaming}
+          sendDisabled={chat.sendDisabled}
           seed={seed}
           onSeedConsumed={() => setSeed("")}
         />
@@ -138,6 +140,7 @@ export default function ChatPanel({ chat, onResolveView, userName }: Props) {
           onSend={chat.send}
           onCancel={chat.cancel}
           streaming={chat.streaming}
+          sendDisabled={chat.sendDisabled}
           seed=""
           onSeedConsumed={() => {}}
         />

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -15,6 +15,7 @@ import CommandCenterView from "./components/CommandCenterView";
 import CommandCenterEditorialView from "./components/CommandCenterEditorialView";
 import Login from "./components/Login";
 import LoginV3 from "./components/login-v3/LoginV3";
+import Landing from "./landing/Landing.jsx";
 
 // LOGIN_V3_SWITCH_V1 - la interfaz nueva queda activa por defecto y se puede
 // revertir sin tocar código con VITE_LOGIN_V3=false. La autenticación es la
@@ -49,6 +50,11 @@ import SidebarChat from "./components/SidebarChat";
 import SettingsMenu from "./components/SettingsMenu";
 import { MessageSquare, X } from "lucide-react";
 import type { AgentTask } from "./types/api";
+import MobileChatSheet from "./components/MobileChatSheet";
+import MobileSheetDiagnostics from "./components/MobileSheetDiagnostics";
+import WorkspaceLoadBoundary from "./components/WorkspaceLoadBoundary";
+
+const BusinessCommandStudio = lazy(() => import("./workspaces/business-command-studio/BusinessCommandStudio"));
 
 function useTheme() {
   const [dark, setDark] = useState(() => {
@@ -114,18 +120,19 @@ export default function App() {
   // SIDEBAR_CHAT_V1 - el chat ocupa la columna izquierda sin cambiar de vista.
   const [chatDock, setChatDock] = useState(false);
   const [mobileChat, setMobileChat] = useState(false);
+  const chatFabRef = useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey)) return;
+      if (!auth.isAuthenticated || !(e.metaKey || e.ctrlKey)) return;
       const k = e.key.toLowerCase();
       if (k === "k") { e.preventDefault(); setPaletteOpen((v) => !v); }
       if (k === "n") { e.preventDefault(); setView("chat"); void threads.createNew(); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [threads.createNew]);
+  }, [auth.isAuthenticated, threads.createNew]);
 
   useEffect(() => {
     if (!auth.isAuthenticated) return;
@@ -159,6 +166,9 @@ export default function App() {
   }
 
   if (!auth.isAuthenticated) {
+    // PUBLIC_LANDING_KEEP_V1 - la landing publica que ya estaba en produccion se
+    // conserva en la raiz; el acceso al panel sigue en ?acceso=1 y usa Login V3.
+    if (new URLSearchParams(window.location.search).get("acceso") !== "1") return <Landing />;
     return USE_LOGIN_V3 ? (
       <LoginV3 onLogin={auth.login} onEnterDemo={auth.loginDemo} error={auth.error} />
     ) : (
@@ -191,21 +201,15 @@ export default function App() {
 
   const demoSession = isDemoSession();
   const chatDockActive = chatDock && !isMobile;
-  const chatOpen = chatDockActive || mobileChat;
+  const mobileSheetOpen = isMobile && mobileChat;
+  const chatOpen = chatDockActive || mobileSheetOpen;
+  // MOBILE_SHEET_V2 - con la hoja abierta sus controles ya ofrecen cerrar; el boton
+  // flotante solo hace falta cuando la hoja no esta (si no, queda encima y salta).
+  const showChatFab = !mobileNav && !mobileSheetOpen;
 
   const selectView = (next: AppView) => {
     setView(next);
     setMobileNav(false);
-  };
-
-  const openDockChat = () => {
-    if (isMobile) {
-      setMobileNav(false);
-      setMobileChat(true);
-      return;
-    }
-    setCollapsed(false);
-    setChatDock(true);
   };
 
   const toggleChat = () => {
@@ -217,11 +221,10 @@ export default function App() {
       setChatDock(false);
       return;
     }
-    setCollapsed(false);
     setChatDock(true);
   };
 
-  const sidebar = chatDockActive ? (
+  const dockedChat = chatDockActive ? (
     <SidebarChat
       chat={chat}
       tenantLabel={contextLabel}
@@ -229,7 +232,9 @@ export default function App() {
       onOpenFullChat={() => { setChatDock(false); setView("chat"); }}
       onOpenSettings={() => setSettingsOpen(true)}
     />
-  ) : (
+  ) : undefined;
+
+  const sidebar = (
     <SidebarV2
       activeView={view}
       onSelectView={selectView}
@@ -248,10 +253,9 @@ export default function App() {
         onExit: () => { void auth.logout(); },
       }}
       tenant={sessionTenant ? { id: sessionTenant } : null}
-      collapsed={collapsed && !isMobile}
-      onToggleCollapsed={() => setCollapsed((value) => !value)}
+      collapsed={chatDockActive || (collapsed && !isMobile)}
+      onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}
-      onOpenChat={openDockChat}
     />
   );
 
@@ -270,7 +274,7 @@ export default function App() {
         sidebar={sidebar}
         panel={panel}
         collapsed={collapsed && !isMobile}
-        chatDock={chatDockActive}
+        chatDock={dockedChat}
         mobileOpen={mobileNav}
         onCloseMobile={() => setMobileNav(false)}
       >
@@ -343,15 +347,22 @@ export default function App() {
           )}
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
+          {view === "command-studio" && (
+            <WorkspaceLoadBoundary>
+              <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
+                <BusinessCommandStudio />
+              </Suspense>
+            </WorkspaceLoadBoundary>
+          )}
         </div>
       </AppShell>
 
       {/* SIDEBAR_CHAT_V1 - boton flotante persistente: el agente esta siempre a
-          un toque, en cualquier pantalla. En escritorio convierte la columna
-          izquierda en el chat; en movil abre una hoja a pantalla completa. */}
-      {!mobileNav && (
+          un toque; en movil abre una hoja inferior sin abandonar la pantalla. */}
+      {showChatFab && (
         <button
           type="button"
+          ref={chatFabRef}
           className={`chat-fab ${chatOpen ? "open" : ""}`}
           onClick={toggleChat}
           aria-label={chatOpen ? "Cerrar chat" : "Hablar con tu agente"}
@@ -362,17 +373,21 @@ export default function App() {
         </button>
       )}
 
-      {isMobile && mobileChat && (
-        <div className="mobile-chat" role="dialog" aria-modal="true" aria-label="Chat con tu agente">
-          <SidebarChat
-            chat={chat}
-            tenantLabel={contextLabel}
-            variant="sheet"
-            onClose={() => setMobileChat(false)}
-            onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
-            onOpenSettings={() => setSettingsOpen(true)}
-          />
-        </div>
+      {mobileSheetOpen && (
+        <MobileChatSheet
+          chat={chat}
+          tenantLabel={contextLabel}
+          onClose={() => {
+            setMobileChat(false);
+            requestAnimationFrame(() => chatFabRef.current?.focus({ preventScroll: true }));
+          }}
+          onOpenFullChat={() => { setMobileChat(false); setView("chat"); }}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      )}
+
+      {import.meta.env.DEV && new URLSearchParams(location.search).get("sheetDebug") === "1" && (
+        <MobileSheetDiagnostics />
       )}
 
       <SettingsMenu

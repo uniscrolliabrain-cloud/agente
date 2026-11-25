@@ -1,6 +1,6 @@
 // BUG03_MESSAGELIST_V3 - typewriter + ToolCallsGroup.
 import { ThinkingSpiral } from "./chat/ThinkingSpiral";
-import { useEffect, useRef } from "react";
+import { Fragment, type ReactNode, useEffect, useRef } from "react";
 import type { ChatMessage } from "../types/api";
 import MessageBubble from "./MessageBubble";
 import { useTypewriter } from "../hooks/useTypewriter";
@@ -11,6 +11,8 @@ interface Props {
   streaming: boolean;
   streamBuf: string;
   tools: ToolCall[];
+  beforeMessages?: ReactNode;
+  afterMessage?: (index: number) => ReactNode;
   onQuickAction?: (kind: "responder" | "resumir" | "traducir", text: string) => void;
 }
 
@@ -18,7 +20,7 @@ interface Props {
 // todos; con 500 mensajes eran ~5.000 DOM nodes y el scroll caia por debajo
 // de 30 FPS.
 const MAX_RENDERED_MESSAGES = 50;
-export default function MessageList({ messages, streaming, streamBuf, tools, onQuickAction }: Props) {
+export default function MessageList({ messages, streaming, streamBuf, tools, onQuickAction, beforeMessages, afterMessage }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { text: typed, typing } = useTypewriter(streamBuf, !streaming);
   const visibleMessages = messages.length > MAX_RENDERED_MESSAGES
@@ -31,8 +33,12 @@ export default function MessageList({ messages, streaming, streamBuf, tools, onQ
 
   return (
     <div className="v2-assistant-body" ref={ref} style={{ overflow: "visible" }}>
-      {visibleMessages.map((m) => (
-        <MessageBubble key={m.id} message={m} onQuickAction={onQuickAction} />
+      {beforeMessages}
+      {visibleMessages.map((m, index) => (
+        <Fragment key={m.id}>
+          <MessageBubble message={m} onQuickAction={onQuickAction} />
+          {afterMessage?.(messages.length - visibleMessages.length + index)}
+        </Fragment>
       ))}
 
       {streaming && !streamBuf && <ThinkingSpiral />}

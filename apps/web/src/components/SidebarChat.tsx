@@ -3,19 +3,22 @@
 // el mismo hook que la vista Chat, asi que la conversacion continua estes en la
 // pantalla que estes. En movil se monta como hoja a pantalla completa.
 import { useEffect, useRef, useState } from "react";
-import { Maximize2, PanelLeftClose, Settings, Sparkles, X } from "lucide-react";
+import { Maximize2, PanelLeftClose, Settings, Sparkles } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
-import type { ChatMessage } from "../types/api";
+import MobileAudioNote, { type AudioNote } from "./MobileAudioNote";
+import MobileChatCall, { type MobileCallMode, type MobileCallReport } from "./MobileChatCall";
+import type { ChatAttachment, ChatMessage } from "../types/api";
 import type { ToolCall } from "../lib/toolsReducer";
 
 export interface DockChat {
   messages: ChatMessage[];
   streaming: boolean;
+  sendDisabled?: boolean;
   streamBuf: string;
   tools: ToolCall[];
   error: string | null;
-  send: (text: string) => void;
+  send: (text: string, attachment?: ChatAttachment) => void;
   cancel: () => void;
   threadId: string | null;
 }
@@ -27,6 +30,7 @@ interface Props {
   onClose: () => void;
   onOpenFullChat: () => void;
   onOpenSettings: () => void;
+  onRevealMobileBody?: () => void;
 }
 
 const QUICK_PROMPTS = [
@@ -42,17 +46,75 @@ export default function SidebarChat({
   onClose,
   onOpenFullChat,
   onOpenSettings,
+  onRevealMobileBody,
 }: Props) {
   const [seed, setSeed] = useState("");
+  const [selectedCall, setCall] = useState<{ thread: string | null; mode: MobileCallMode; report?: MobileCallReport } | null>(null);
+  const [notes, setNotes] = useState<{ thread: string | null; after: number; note: AudioNote }[]>([]);
+  const [reports, setReports] = useState<{ thread: string | null; report: MobileCallReport }[]>([]);
+  const mounted = useRef(false);
+  const urls = useRef<string[]>([]);
+  const callTrigger = useRef<HTMLElement | null>(null);
+  const threadRef = useRef(chat.threadId);
+  threadRef.current = chat.threadId;
   const bodyRef = useRef<HTMLDivElement>(null);
+  const call = selectedCall?.thread === chat.threadId ? selectedCall : null;
+
+  useEffect(() => {
+    setCall((current) => current?.thread === chat.threadId ? current : null);
+  }, [chat.threadId]);
 
   useEffect(() => {
     const node = bodyRef.current;
     if (node) node.scrollTop = node.scrollHeight;
-  }, [chat.messages.length, chat.streamBuf, chat.streaming]);
+  }, [chat.messages.length, chat.streamBuf, chat.streaming, notes.length, reports.length, call]);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      urls.current.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, []);
+
+  const multimodal = {
+    onCall: (mode: MobileCallMode) => {
+      callTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      onRevealMobileBody?.();
+      setCall({ thread: chat.threadId, mode });
+    },
+    onNote: (blob: Blob, seconds: number) => {
+      if (!mounted.current || threadRef.current !== chat.threadId) return;
+      const id = crypto.randomUUID();
+      const url = URL.createObjectURL(blob);
+      urls.current.push(url);
+      const extension = blob.type.includes("mp4") ? "m4a" : blob.type.includes("ogg") ? "ogg" : "webm";
+      setNotes((previous) => [...previous, { thread: chat.threadId, after: chat.messages.length, note: { id, blob, url, seconds, name: `nota-de-voz-${id}.${extension}` } }]);
+      onRevealMobileBody?.();
+    },
+  };
+  const threadNotes = notes.filter(({ thread }) => thread === chat.threadId);
+  const threadReports = reports.filter(({ thread }) => thread === chat.threadId);
+  const hasLocalEntries = threadNotes.length > 0 || threadReports.length > 0;
+
+  const footer = (
+    <div className="side-chat-foot" hidden={Boolean(call)}>
+      <ChatInput
+        multimodal={multimodal}
+        onSend={chat.send}
+        onCancel={chat.cancel}
+        streaming={chat.streaming}
+        sendDisabled={chat.sendDisabled}
+        seed={seed}
+        onSeedConsumed={() => setSeed("")}
+      />
+    </div>
+  );
 
   return (
     <section className={`side-chat ${variant === "sheet" ? "sheet" : ""}`} aria-label="Chat con tu agente">
+      {/* MOBILE_SHEET_V2 - en la hoja los controles viven en la fila del tirador. */}
+      {variant === "dock" && (
       <header className="side-chat-head">
         <div className="side-chat-identity">
           <span className="side-chat-orb" aria-hidden="true">
@@ -80,16 +142,32 @@ export default function SidebarChat({
             type="button"
             className="side-chat-icon"
             onClick={onClose}
-            title={variant === "sheet" ? "Cerrar chat" : "Volver al menú"}
-            aria-label={variant === "sheet" ? "Cerrar chat" : "Volver al menú"}
+            title="Cerrar chat lateral"
+            aria-label="Cerrar chat lateral"
           >
-            {variant === "sheet" ? <X size={16} /> : <PanelLeftClose size={15} />}
+            <PanelLeftClose size={15} />
           </button>
         </div>
       </header>
+      )}
 
-      <div className="side-chat-body" ref={bodyRef}>
-        {chat.messages.length === 0 ? (
+      {call && (
+        <MobileChatCall
+          mode={call.mode}
+          initialReport={call.report}
+          onExpand={onRevealMobileBody}
+          onReport={(report) => {
+            setReports((previous) => [...previous, { thread: chat.threadId, report }]);
+            onRevealMobileBody?.();
+          }}
+          onClose={() => {
+            setCall(null);
+            requestAnimationFrame(() => callTrigger.current?.focus({ preventScroll: true }));
+          }}
+        />
+      )}
+      <div className="side-chat-body" ref={bodyRef} hidden={Boolean(call)}>
+        {chat.messages.length === 0 && !hasLocalEntries ? (
           <div className="side-chat-empty">
             <span className="side-chat-orb big" aria-hidden="true">
               <Sparkles size={20} />
@@ -110,20 +188,21 @@ export default function SidebarChat({
             streaming={chat.streaming}
             streamBuf={chat.streamBuf}
             tools={chat.tools}
+            afterMessage={hasLocalEntries ? (index) => threadNotes.filter(({ after }) => after === index + 1).map(({ note }) => <MobileAudioNote key={note.id} note={note} />) : undefined}
+            beforeMessages={threadNotes.filter(({ after }) => after === 0 || after > chat.messages.length).map(({ note }) => <MobileAudioNote key={note.id} note={note} />)}
           />
         )}
+        {threadReports.map(({ report }) => (
+          <button className="mobile-chat-report-link" type="button" key={report.id} onClick={(event) => {
+            callTrigger.current = event.currentTarget;
+            onRevealMobileBody?.();
+            setCall({ thread: chat.threadId, mode: report.mode, report });
+          }}>Ver informe de la {report.mode === "video" ? "videollamada" : "conversación por voz"}</button>
+        ))}
         {chat.error && <div className="chat-error">{chat.error}</div>}
       </div>
 
-      <div className="side-chat-foot">
-        <ChatInput
-          onSend={chat.send}
-          onCancel={chat.cancel}
-          streaming={chat.streaming}
-          seed={seed}
-          onSeedConsumed={() => setSeed("")}
-        />
-      </div>
+      {footer}
     </section>
   );
 }

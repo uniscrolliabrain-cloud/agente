@@ -1,6 +1,6 @@
 // NOTIFICATIONS_DROPDOWN_V1 - campana en el topbar con lista.
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { apiFetch } from "../api/client";
 import { fetchNotifications } from "../api/notifications";
@@ -29,6 +29,8 @@ export default function NotificationsDropdown() {
   const [open, setOpen] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
 
   const load = async () => {
     try {
@@ -69,11 +71,20 @@ export default function NotificationsDropdown() {
   };
 
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <div className="v2-notifications" ref={ref} onKeyDown={(event) => {
+      if (event.key !== "Escape" || !open) return;
+      event.stopPropagation();
+      setOpen(false);
+      trigger.current?.focus();
+    }}>
       <button
-        className="v2-pill"
-        style={{ position: "relative" }}
-        onClick={() => setOpen(!open)}
+        ref={trigger}
+        type="button"
+        className="v2-pill v2-notifications-trigger"
+        onClick={() => setOpen((previous) => !previous)}
+        aria-label="Notificaciones"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
         title="Notificaciones"
       >
         <Bell size={14} />
@@ -98,19 +109,7 @@ export default function NotificationsDropdown() {
       </button>
 
       {open && (
-        <div
-          className="v3-cc-panel"
-          style={{
-            position: "absolute",
-            top: 36,
-            right: 0,
-            width: 340,
-            maxHeight: 460,
-            overflowY: "auto",
-            zIndex: 100,
-            boxShadow: "0 12px 40px rgba(0,0,0,0.12)",
-          }}
-        >
+        <section id={panelId} className="v3-cc-panel v2-notifications-panel" aria-label="Notificaciones">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
             <strong style={{ fontSize: 13 }}>Notificaciones</strong>
             {unread > 0 && (
@@ -148,7 +147,7 @@ export default function NotificationsDropdown() {
               </span>
               <div className="v3-task-body">
                 <div className="v3-task-title">{n.title}</div>
-                <div className="v3-task-sub">{n.body.slice(0, 120)}</div>
+                <div className="v3-task-sub">{n.body}</div>
                 <div className="v3-task-sub" style={{ fontSize: 10 }}>
                   {new Date(n.createdAt).toLocaleString("es-ES")}
                 </div>
@@ -156,7 +155,7 @@ export default function NotificationsDropdown() {
               {!n.read && <Check size={12} style={{ color: "var(--v2-purple)" }} />}
             </div>
           ))}
-        </div>
+        </section>
       )}
     </div>
   );

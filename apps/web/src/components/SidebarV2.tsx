@@ -12,7 +12,8 @@ import {
   FolderKanban,
   Gauge,
   LayoutDashboard,
-  MessageSquare,
+  MessageSquareText,
+  PanelsTopLeft,
   PanelLeftClose,
   Search,
   Settings,
@@ -24,11 +25,12 @@ import type { Thread } from "../api/threads";
 // SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
 import SidebarThreads, { type ThreadPatch } from "./SidebarThreads";
 // BRAND_MARK_V1 - la marca AgntiaPro tambien en la barra lateral.
-import { BrandMark } from "./BrandMark";
+import { BrandLockup } from "./BrandMark";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
-export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations";
+export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio";
 
 interface Props {
   activeView: AppView;
@@ -50,19 +52,18 @@ interface Props {
   tenant?: { id: string } | null;
   /** SIDEBAR_RAIL_V1 - plegada deja solo los iconos. */
   collapsed: boolean;
-  onToggleCollapsed: () => void;
+  onToggleCollapsed?: () => void;
   /** SIDEBAR_SETTINGS_V1 - menu de cuenta y cierre de sesion. */
   onOpenSettings: () => void;
-  /** SIDEBAR_CHAT_V1 - convierte la barra en el chat del agente. */
-  onOpenChat: () => void;
 }
 
-const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
+const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
   // COMMAND_CENTER_VIEW_V1 - la entrada que abre la empresa al arrancar.
   { id: "today", label: "Centro de mando", icon: Gauge },
-  { id: "chat", label: "Chat", icon: MessageSquare },
+  { id: "command-studio", label: "Estudio · Demo", icon: PanelsTopLeft },
+  { id: "chat", label: "Chat", icon: MessageSquareText },
   { id: "tasks", label: "Tareas", icon: LayoutDashboard },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageSquare },
+  { id: "whatsapp", label: "WhatsApp", icon: WhatsAppIcon },
   { id: "documents", label: "Documentos", icon: Files },
   { id: "memory", label: "Conocimiento", icon: Brain },
   { id: "projects", label: "Proyectos", icon: FolderKanban },
@@ -71,7 +72,7 @@ const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquare }[] = [
   // TEAM_VIEW_V1 - personas y agentes IA en la misma pantalla.
   { id: "team", label: "Equipo", icon: Users },
   // WS_UI_SIDEBAR_ITEM_V1
-  { id: "workspace", label: "Workspaces", icon: FolderKanban },
+  { id: "workspace", label: "Workspaces", icon: PanelsTopLeft },
   // COMMAND_CENTER_VIEW_V1 - la analitica del tenant, separada del centro de mando.
   { id: "centro-mando", label: "Analítica", icon: BarChart3 },
 ];
@@ -94,7 +95,6 @@ export default function SidebarV2({
   collapsed,
   onToggleCollapsed,
   onOpenSettings,
-  onOpenChat,
 }: Props) {
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
@@ -121,13 +121,9 @@ export default function SidebarV2({
             onClick={() => onSelectView("today")}
             aria-label="Ir al inicio"
           >
-            <div className="v2-sidebar-brand-mark">
-              <BrandMark size={16} />
-            </div>
-            {!collapsed && <span className="v2-sidebar-brand-name">AGNTia OS</span>}
-            {!collapsed && <span className="v2-sidebar-brand-beta">BETA</span>}
+            <BrandLockup compact={collapsed} />
           </button>
-          <button
+          {onToggleCollapsed && <button
             type="button"
             className="v2-rail-toggle"
             onClick={onToggleCollapsed}
@@ -136,7 +132,7 @@ export default function SidebarV2({
             title={collapsed ? "Desplegar menú" : "Plegar menú"}
           >
             {collapsed ? <ChevronsRight size={15} /> : <PanelLeftClose size={15} />}
-          </button>
+          </button>}
         </div>
 
         {!collapsed && demo?.active && (
@@ -174,7 +170,6 @@ export default function SidebarV2({
                 onClick={() => onSelectView(item.id)}
                 onMouseEnter={showTip(item.label)}
                 onMouseLeave={hideTip}
-                title={collapsed ? item.label : undefined}
                 aria-label={collapsed ? item.label : undefined}
               >
                 <span className="v2-nav-main">
@@ -192,7 +187,6 @@ export default function SidebarV2({
               onClick={() => onSelectView("users")}
               onMouseEnter={showTip("Usuarios")}
               onMouseLeave={hideTip}
-              title={collapsed ? "Usuarios" : undefined}
               aria-label={collapsed ? "Usuarios" : undefined}
             >
               <span className="v2-nav-main">
@@ -226,22 +220,10 @@ export default function SidebarV2({
           <div className="v2-rail-actions">
             <button
               type="button"
-              className="v2-rail-action"
-              onClick={onOpenChat}
-              onMouseEnter={showTip("Hablar con tu agente")}
-              onMouseLeave={hideTip}
-              title="Abrir chat"
-              aria-label="Abrir chat"
-            >
-              <MessageSquare size={17} />
-            </button>
-            <button
-              type="button"
               className="v2-rail-action accent"
               onClick={onOpenSettings}
               onMouseEnter={showTip("Ajustes")}
               onMouseLeave={hideTip}
-              title="Ajustes"
               aria-label="Ajustes"
             >
               <Settings size={17} />

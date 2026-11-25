@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrandLockup } from "./BrandMark";
 
 interface Props {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -40,11 +41,7 @@ export default function Login({ onLogin, onEnterDemo, error }: Props) {
     <div className="login-root">
       <div className="login-card">
         <div className="login-logo">
-          <div className="logo-grad">AI</div>
-          <div>
-            <div className="logo-title">Agntia Pro</div>
-            <div className="logo-sub">Automatizaciones con IA</div>
-          </div>
+          <BrandLockup />
         </div>
 
         <h1>Entra en tu cuenta</h1>
@@ -133,8 +130,6 @@ export default function Login({ onLogin, onEnterDemo, error }: Props) {
             Entrar con contrasena
           </button>
         )}
-
-        <div className="login-footer">Agntia Pro · Laia</div>
       </div>
     </div>
   );

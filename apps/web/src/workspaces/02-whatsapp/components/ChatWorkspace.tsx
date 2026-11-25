@@ -2,6 +2,7 @@
 import "./ChatWorkspace.css"
 import { useMemo, useState } from "react"
 import { MoreHorizontal } from "lucide-react"
+import { BrandLockup } from "../../../components/BrandMark"
 import { useChatWorkspace } from "../hooks/useChatWorkspace.ts"
 import { Composer } from "./Composer.tsx"
 import { ContextPanel } from "./ContextPanel.tsx"
@@ -49,7 +50,7 @@ export function ChatWorkspace() {
         <div className="flex shrink-0 flex-col gap-3 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-tight">AGNTia OS</h1>
+              <BrandLockup markSize={28} />
               <span className="rounded-md bg-purple-soft px-2 py-0.5 text-xs font-medium text-purple">Simple</span>
             </div>
             <button type="button" aria-label="Mas opciones" className="text-text-2 hover:text-text">

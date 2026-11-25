@@ -39,19 +39,19 @@ export default function TopBarV2({
         )}
         <span className="v2-status-pill">
           <span style={{ width: 8, height: 8, borderRadius: 999, background: dotColor }} />
-          {contextLabel} · {statusLabel}
+          <span className="v2-status-label">{contextLabel} · {statusLabel}</span>
         </span>
       </div>
       <div className="v2-topbar-right">
         <NotificationsDropdown />
         <button className="v2-search-pill" onClick={onOpenPalette} aria-label="Buscar">
           <Search size={14} />
-          Buscar
+          <span className="v2-topbar-action-label">Buscar</span>
           <span className="v2-search-kbd">⌘K</span>
         </button>
         <button className="v2-btn-new" onClick={onNewChat} aria-label="Nuevo chat">
           <Plus size={16} />
-          Nuevo chat
+          <span className="v2-topbar-action-label">Nuevo chat</span>
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { AlertCircle, CheckCircle2, MessageCircle, RefreshCw, Send } from "lucide-react";
+import { WhatsAppIcon } from "./WhatsAppIcon";
+import { AlertCircle, CheckCircle2, RefreshCw, Send } from "lucide-react";
 import { decideWhatsApp, getWhatsAppConnection, getWhatsAppDraft, listWhatsAppDrafts, listWhatsAppInbox, prepareWhatsApp, prepareWhatsAppReply, reconcileWhatsApp,
   type WhatsAppConnection, type WhatsAppDraft, type WhatsAppInboxMessage } from "../api/whatsapp";
 import "./WhatsAppView.css";
@@ -95,7 +96,7 @@ export default function WhatsAppView() {
   const unresolved = drafts.filter((d) => d.requiresReconciliation).length;
   return <section className="wa-view" aria-labelledby="wa-title">
     <header className="wa-header">
-      <div><div className="wa-eyebrow"><MessageCircle size={15} /> COMUNICACIÓN</div><h1 id="wa-title">WhatsApp</h1><p>Prepara, revisa y aprueba cada mensaje.</p></div>
+      <div><div className="wa-eyebrow"><WhatsAppIcon size={15} aria-hidden="true" /> COMUNICACIÓN</div><h1 id="wa-title">WhatsApp</h1><p>Prepara, revisa y aprueba cada mensaje.</p></div>
       <button className="wa-button" disabled={loading || Boolean(busy)} onClick={() => { setLoading(true); void load(); }}><RefreshCw size={15} /> Actualizar</button>
     </header>
     <div className="wa-summary">
@@ -130,7 +131,7 @@ export default function WhatsAppView() {
         <div className="wa-compose-footer"><span className="wa-muted">{text.length} / 4000</span><button className="wa-button wa-primary" disabled={!connection?.enabled || !to || !text.trim() || Boolean(busy)} type="submit">{busy === "prepare" ? "Preparando…" : "Crear borrador"}</button></div>
       </form>
       <section className="wa-drafts" aria-labelledby="wa-drafts-title"><h2 id="wa-drafts-title">Revisión y seguimiento</h2>
-        {loading && !drafts.length ? <p className="wa-muted" role="status">Cargando mensajes…</p> : !drafts.length ? <div className="wa-card wa-empty"><MessageCircle size={28} /><h3>Aún no hay borradores</h3><p>Prepara el primero. Lo verás aquí antes de aprobarlo.</p></div> : drafts.map((draft) => {
+        {loading && !drafts.length ? <p className="wa-muted" role="status">Cargando mensajes…</p> : !drafts.length ? <div className="wa-card wa-empty"><WhatsAppIcon size={28} aria-hidden="true" /><h3>Aún no hay borradores</h3><p>Prepara el primero. Lo verás aquí antes de aprobarlo.</p></div> : drafts.map((draft) => {
           const expired = Boolean(draft.expiresAt && Date.parse(draft.expiresAt) <= Date.now());
           const canReview = draft.status === "awaiting_review" && !draft.needsReprepare && !expired && Boolean(draft.revision);
           return <article className="wa-card" key={draft.id}>

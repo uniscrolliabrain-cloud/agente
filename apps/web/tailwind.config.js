@@ -1,6 +1,6 @@
 /** Tailwind config — tokens exactos del V2 warm beige. */
 export default {
-  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+  content: ["./index.html", "./src/**/*.{ts,tsx,jsx}"],
   theme: {
     extend: {
       colors: {

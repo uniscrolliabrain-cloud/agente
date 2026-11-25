@@ -1,7 +1,10 @@
 // BUG04_VITE_ALIAS_V1 - alias @agente/domain/* al paquete local.
-import { defineConfig } from "vite";
+import { readFileSync } from "node:fs";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { fileURLToPath, URL } from "node:url";
+
+import { legalPages } from "./src/config/publicSite";
 
 const allowedHosts = process.env.VITE_ALLOWED_HOSTS
   ? process.env.VITE_ALLOWED_HOSTS.split(",")
@@ -9,8 +12,28 @@ const allowedHosts = process.env.VITE_ALLOWED_HOSTS
       .filter(Boolean)
   : undefined;
 
+function publicLegalPages(): Plugin {
+  const files = new Set<string>(Object.values(legalPages));
+  const read = (file: string) => readFileSync(new URL(`../site/${file}`, import.meta.url));
+
+  return {
+    name: "public-legal-pages",
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const file = request.url?.split("?")[0].slice(1);
+        if (!file || !files.has(file)) return next();
+        response.setHeader("Content-Type", "text/html; charset=utf-8");
+        response.end(read(file));
+      });
+    },
+    generateBundle() {
+      files.forEach((file) => this.emitFile({ type: "asset", fileName: file, source: read(file) }));
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), publicLegalPages()],
   resolve: {
     alias: {
       "@agente/domain": fileURLToPath(new URL("../../packages/domain/src", import.meta.url)),
