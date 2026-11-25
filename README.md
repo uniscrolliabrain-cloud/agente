@@ -1,6 +1,59 @@
-# Laia
+# AgntiaPro — infraestructura de inteligencia distribuida
 
-Asistente de negocio con kernel cognitivo durable, tareas multi-tenant y runtime LLM. Hono + TypeScript + PGlite/Postgres.
+AgntiaPro es una plataforma generalista para compilar y operar empresas diferentes sobre un mismo sustrato cognitivo y operativo. LAIA es una interfaz conversacional de esa infraestructura, no el sistema completo. AgntiaPro Demo es una instancia de referencia y dogfooding, no el dominio del núcleo.
+
+## Leer primero: arquitectura e invariantes del fundador
+
+La etapa actual cierra la **consciencia operativa sintética**: mecanismos de conocimiento, interpretación, gobierno y ejecución que sostendrán las futuras aplicaciones empresariales. No se presupone consciencia subjetiva. La inferencia LLM es probabilística; las decisiones de autoridad, transiciones y ejecución deben estar gobernadas por contratos deterministas.
+
+**LLM propone, kernel valida y autoriza, runtime ejecuta.**
+
+| Componente | Responsabilidad arquitectónica objetivo |
+|---|---|
+| Fast LLM | Conversar, comprender el contexto conversacional y comunicar; no elaborar propuestas operativas ni ejecutar herramientas. |
+| LAIA, Marcos y otros roles | Interfaces narrativas especializadas mediante prompts, RAG y fine-tuning cuando corresponda. No son agentes autónomos ni runtimes independientes. |
+| Slow LLM | Observar, comprender, relacionar, interpretar y elaborar propuestas estructuradas, incluidas cards y propuestas operativas. |
+| JEV | Clasificación y evaluación semántica; no concede autoridad de ejecución. |
+| Kernel | Invariantes, permisos, validación y autorización de propuestas. |
+| Runtime | Ejecutar operaciones autorizadas y producir resultados y evidencias. |
+| Bus | Distribuir acontecimientos con identidad, causalidad y trazabilidad. |
+| Grafo y RAG | Organizar relaciones y recuperar conocimiento autorizado. |
+| Attention vectors | Seleccionar conocimiento pertinente para el contexto. |
+| Cards y memorias | Representaciones persistentes, versionadas, con metadata, procedencia y estado epistémico; reutilizables más allá de la UI. |
+| Metacognición | Observar y reorganizar conocimiento sobre los propios procesos cognitivos. |
+| Observabilidad | Trazabilidad transversal de los circuitos operativos y cognitivos. |
+
+### Circuitos complementarios
+
+- Operativo: interacción humana → registro/contextualización de la intención → circuito de observación y propuesta Slow → validación y autorización del kernel → ejecución por el runtime → receipts y acontecimientos.
+- Cognitivo: acontecimientos y evidencias → grafo/bus y observación Slow → interpretación y evaluación JEV → propuestas de cards → validación/proyección y biblioteca de conocimiento → selección por atención → contexto inyectado en Fast → comunicación al humano.
+
+Son circuitos conceptuales, no una afirmación de que todos los enlaces estén ya implementados o certificados. Fast puede recoger y comunicar una petición humana sin convertirse en su autoridad propositiva. Los roles pueden narrar lo que hizo el sistema, pero no deben inventar ejecuciones ni delegaciones sin evidencia.
+
+Las cards pueden encapsular observaciones, hipótesis, patrones y estructuras cognitivas reutilizables (incluidas representaciones tipo skill). No son necesariamente elementos visuales ni código ejecutable. Las memorias episódica, semántica, procedimental, autobiográfica y de trabajo conservan conocimiento con procedencia; una interpretación no adquiere por sí sola categoría de hecho verificado ni permiso de ejecución.
+
+### Alcance de la etapa actual
+
+Core, kernel, runtime, bus, grafo, vectores de atención, cards y metadata, metacognición, memorias, RAG, Slow, JEV, Fast, observabilidad, voz y visión; middleware de ciberseguridad existente como superficie de integración y certificación.
+
+Fuera de alcance: desarrollar agentes especializados, nuevos SOPs empresariales, dominios, ontologías empresariales y brancheado de UX. La ontología cognitiva de cards no debe confundirse con las futuras ontologías de cada empresa. Las capacidades y SOPs existentes pueden servir de pruebas del sustrato sin especializarlo para la demo.
+
+## Coordinación de ingeniería
+
+La campaña de referencia es [convergencia operativa 12×4](https://github.com/uniscrolliabrain-cloud/agente/tree/campaign/convergencia-operativa-12x4/docs/convergencia-operativa-12x4). Sus documentos deben reconciliarse con esta aclaración del fundador y el código real; no se modifican automáticamente por este README.
+
+- Trans01: kernel, runtime, autoridad y causalidad.
+- Trans02: Cognition e inteligencia distribuida.
+- Trans03: proveedores, puertos y adaptadores.
+- Trans04: infraestructura, observabilidad y certificación.
+
+Comprobar las referencias activas y su capitalización en GitHub antes de trabajar. No confundir ramas históricas con ramas autorizadas.
+
+Cada campaña técnica se contrasta con la canónica y el código real de la rama objetivo y de integración. Preservar capacidades existentes; identificar blobs, contratos, consumidores y wiring antes de diseñar patchsets. Exigir diffs concretos, pruebas positivas, negativas y de recuperación, y rollback. Objetivo de calidad superior a 9/10. Los macroturnos deben permitir ejecución autónoma hasta las barreras autorizadas, sin paradas conversacionales entre pasos; los bloqueos reales se documentan y se continúa el trabajo independiente seguro. Los cambios de arquitectura canónica requieren participación y aprobación del fundador.
+
+## Referencia técnica existente
+
+Las secciones siguientes conservan la información técnica e histórica del README anterior. Las referencias a campañas, ramas activas, cifras de tests, instrucciones de patchsets y estado multi-tenant pertenecen a esa etapa histórica y **no constituyen certificación del estado actual**. Verificar contra el código, CI y protocolo de la campaña vigente. En particular, Cognition V2 puede bloquear el modo compartido hasta certificar RLS; no inferir que todo el sistema está certificado por activar una variable.
 
 ## Stack
 
