@@ -42,14 +42,14 @@
 .dx-sheet label{font-weight:600;font-size:13px}
 .dx-sheet input,.dx-sheet select,.dx-sheet>button:not(.dx-close){min-height:44px;border-radius:9px}
 .dx-sheet>button:not(.dx-close):hover:not(:disabled){background:var(--ag-soft)}
-.dx-sheet>button:last-child:not(.dx-close){background:var(--ink);color:white}
-.dx-sheet>button:last-child:not(.dx-close):hover:not(:disabled){background:#403e39}
+.dx-sheet>button.dx-primary{background:var(--ink);color:white}
+.dx-sheet>button.dx-primary:hover:not(:disabled){background:#403e39}
 .dx-close{width:40px;height:40px;display:grid;place-items:center;border-radius:50%}
 .dx-close:hover{background:var(--ag-soft)}
 .dx-preview-paper{line-height:1.65}
 .dx-preview-paper h3{font-weight:400;letter-spacing:-.02em}
 @container dx-shell (max-width:900px){.dx-sidebar{display:none}.dx-tools>.dx-mobile-new{display:flex}.dx-mobile-nav{display:flex;overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}.dx-mobile-nav button{flex:none;white-space:nowrap}.dx-main{padding-inline:24px}}
 @container dx-main (max-width:650px){.dx-folders{grid-template-columns:repeat(2,minmax(0,1fr))}.dx-list{grid-template-columns:1fr}.dx-table-head{display:none}.dx-row{grid-template-columns:minmax(0,1fr) 32px 32px;gap:8px}.dx-file{grid-column:1;grid-row:1}.dx-author,.dx-date{grid-column:1;padding-left:50px;font-size:12px}.dx-row>button:not(.dx-file){grid-row:1}.dx-row.dx-trashed>button:last-child{grid-column:3}.dx-files-grid .dx-row.dx-trashed>button:last-child{grid-column:auto}.dx-files-grid .dx-author,.dx-files-grid .dx-date{padding-left:0}.dx-search{order:-1;flex-basis:100%}.dx-art{height:110px}}
-@container dx-main (max-width:300px){.dx-files-grid{grid-template-columns:1fr}.dx-main{padding-inline:14px}}
+@container dx-main (max-width:300px){.dx-files-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.dx-sheet{border-radius:24px 24px 0 0;padding-top:32px}.dx-sheet:before{content:"";position:absolute;top:8px;left:calc(50% - 18px);width:36px;height:4px;border-radius:4px;background:#d8d1c4}.dx-tools button,.dx-tools select{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.dx-root *{animation:none!important;transition:none!important}}
