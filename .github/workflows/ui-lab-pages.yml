@@ -1,0 +1,70 @@
+name: UI Lab - full app demo (GitHub Pages)
+
+# Publica el clon navegable de la aplicación real (datos sintéticos) en
+# GitHub Pages desde `main`: es la preview que se revisa antes de un deploy
+# real. Sin backend: apps/web/src/demo/router responde en el navegador.
+# No toca Vercel ni el dominio de producción.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/ui-lab/**"
+      - "apps/web/src/**"
+      - "apps/web/public/**"
+      - "packages/domain/src/**"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/ui-lab-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ui-lab-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build UI Lab (base /agente/)
+        env:
+          UI_LAB_BASE: /agente/
+          UI_LAB_BUILD_SHA: ${{ github.sha }}
+        run: pnpm --filter @agente/ui-lab build
+      - name: Publish the demo as the site root
+        run: |
+          set -euo pipefail
+          test -f apps/ui-lab/dist/full-app.html
+          cp apps/ui-lab/dist/full-app.html apps/ui-lab/dist/index.html
+          # Pages no tiene fallback SPA: /agente/legal necesita un 404 que monte
+          # el entry y resuelva la ruta en el navegador.
+          cp apps/ui-lab/dist/index.html apps/ui-lab/dist/404.html
+          touch apps/ui-lab/dist/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/ui-lab/dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

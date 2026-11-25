@@ -12,6 +12,7 @@ import {
   FolderKanban,
   Gauge,
   LayoutDashboard,
+  LayoutGrid,
   MessageSquareText,
   PanelsTopLeft,
   PanelLeftClose,
@@ -30,7 +31,7 @@ import { WhatsAppIcon } from "./WhatsAppIcon";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
-export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio";
+export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio" | "apps";
 
 interface Props {
   activeView: AppView;
@@ -55,6 +56,9 @@ interface Props {
   onToggleCollapsed?: () => void;
   /** SIDEBAR_SETTINGS_V1 - menu de cuenta y cierre de sesion. */
   onOpenSettings: () => void;
+  /** DEMO_VIEWS_V1 - el clon de demostracion anade la entrada Apps; en
+   *  produccion el prop va apagado y el menu queda igual. */
+  showApps?: boolean;
 }
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
@@ -95,7 +99,12 @@ export default function SidebarV2({
   collapsed,
   onToggleCollapsed,
   onOpenSettings,
+  showApps,
 }: Props) {
+  // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
+  const navItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = showApps
+    ? [...PRIMARY.slice(0, 2), { id: "apps", label: "Apps", icon: LayoutGrid }, ...PRIMARY.slice(2)]
+    : PRIMARY;
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
   // la columna. Antes solo se veían tres y los demás desaparecían sin aviso.
@@ -159,7 +168,7 @@ export default function SidebarV2({
         )}
 
         <nav className="v2-sidebar-nav" aria-label="Principal">
-          {PRIMARY.map((item) => {
+          {navItems.map((item) => {
             const Icon = item.icon;
             const active = activeView === item.id;
             return (

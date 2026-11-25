@@ -1,0 +1,11 @@
+/* Los workspaces del UI Lab se diseñaron a pantalla completa (100dvh). Dentro
+   del shell del clon deben medir el área de contenido, que empieza bajo la
+   barra superior; si no, cada vista añade el alto del topbar y aparece un
+   segundo scroll. */
+.v2-content > .agntia-workspace,
+.v2-content > .ctv,
+.v2-content > .alp-root,
+.v2-content > .comms {
+  height: 100%;
+  min-height: 0;
+}
