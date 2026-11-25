@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -89,7 +89,10 @@ export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
   producto: "projects",
 };
 
-export default function App() {
+// DEMO_VIEWS_V1 - el clon de demostración (UI Lab) inyecta aquí los workspaces
+// nuevos sin cambiar el comportamiento de producción: sin este prop, la app
+// monta exactamente las mismas vistas de siempre.
+export default function App({ demoViews }: { demoViews?: Partial<Record<AppView, ReactNode>> } = {}) {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const threads = useThreads(auth.isAuthenticated);
@@ -308,13 +311,14 @@ export default function App() {
               {...(auth.user?.role === "admin" ? { onOpenTeamView: () => setView("users") } : {})}
             />
           )}
-          {view === "chat" && (
-            <ChatPanel
-              chat={chat}
-              onResolveView={handleResolveView}
-              userName={auth.user?.name}
-            />
-          )}
+          {view === "chat" &&
+            (demoViews?.chat ?? (
+              <ChatPanel
+                chat={chat}
+                onResolveView={handleResolveView}
+                userName={auth.user?.name}
+              />
+            ))}
           {view === "tasks" && (
             <TasksView
               tasks={tasks.tasks}
@@ -323,15 +327,15 @@ export default function App() {
               onReviewTask={reviewTask}
             />
           )}
-          {view === "documents" && <DocumentsView files={files} />}
-          {view === "whatsapp" && <WhatsAppView />}
+          {view === "documents" && (demoViews?.documents ?? <DocumentsView files={files} />)}
+          {view === "whatsapp" && (demoViews?.whatsapp ?? <WhatsAppView />)}
           {view === "operations" && (
             <VerticalSliceOperationsView
               enabled={auth.isAuthenticated}
               onOpenTask={(id) => setOpenTaskId(id)}
             />
           )}
-          {view === "memory" && <MemoryView memories={memories} />}
+          {view === "memory" && (demoViews?.memory ?? <MemoryView memories={memories} />)}
           {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
           {view === "control-center" && (
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
@@ -345,6 +349,7 @@ export default function App() {
               onSelectWorkspace={setActiveWorkspaceId}
             />
           )}
+          {view === "apps" && (demoViews?.apps ?? null)}
           {/* APP_CENTRO_MANDO_V1 */}
           {view === "centro-mando" && <CentroMandoWorkspace />}
           {view === "command-studio" && (

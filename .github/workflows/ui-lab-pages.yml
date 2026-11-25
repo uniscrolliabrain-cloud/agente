@@ -49,6 +49,9 @@ jobs:
           set -euo pipefail
           test -f apps/ui-lab/dist/full-app.html
           cp apps/ui-lab/dist/full-app.html apps/ui-lab/dist/index.html
+          # Pages no tiene fallback SPA: /agente/legal necesita un 404 que monte
+          # el entry y resuelva la ruta en el navegador.
+          cp apps/ui-lab/dist/index.html apps/ui-lab/dist/404.html
           touch apps/ui-lab/dist/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

@@ -12,6 +12,7 @@ import {
   FolderKanban,
   Gauge,
   LayoutDashboard,
+  LayoutGrid,
   MessageSquareText,
   PanelsTopLeft,
   PanelLeftClose,
@@ -30,7 +31,7 @@ import { WhatsAppIcon } from "./WhatsAppIcon";
 
 // WS_UI_APPVIEW_V1 - anadida entrada workspace.
 // SIDEBAR_BRAND_AGNTIA_V1
-export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio";
+export type AppView = "today" | "chat" | "tasks" | "documents" | "projects" | "control-center" | "memory" | "users" | "team" | "workspace" | "centro-mando" | "whatsapp" | "operations" | "command-studio" | "apps";
 
 interface Props {
   activeView: AppView;
@@ -61,6 +62,7 @@ const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] 
   // COMMAND_CENTER_VIEW_V1 - la entrada que abre la empresa al arrancar.
   { id: "today", label: "Centro de mando", icon: Gauge },
   { id: "command-studio", label: "Estudio · Demo", icon: PanelsTopLeft },
+  { id: "apps", label: "Apps", icon: LayoutGrid },
   { id: "chat", label: "Chat", icon: MessageSquareText },
   { id: "tasks", label: "Tareas", icon: LayoutDashboard },
   { id: "whatsapp", label: "WhatsApp", icon: WhatsAppIcon },
