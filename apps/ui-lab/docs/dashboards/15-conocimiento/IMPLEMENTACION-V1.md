@@ -1,3 +1,6 @@
 # Conocimiento V1
 
 Preview `knowledge-v1`, aislada de MemoryView. Páginas editables, árbol contextual, apertura móvil 70%, tirador, búsqueda, favoritos, enlaces y referencias entrantes, bloques de texto/encabezado/nota, creación de subpáginas, vistas preliminares de actividad, mapa y cuadernos. Datos en memoria, sin backend. Chat local de demostración, no integración con ChatDock/ChatSheet. Mapa preliminar sin aristas ni zoom; cuadernos son páginas de ejemplo. Pendientes: reutilización efectiva del chat transversal, menú general, editor rico, arrastre de bloques, bases inline, historial, fuentes, avatares, refinamiento visual y pruebas. No se ejecutó build/typecheck ni navegador. No desplegar.
+
+## V2
+Reutiliza ChatDock y ChatSheet originales con contenido sintético local. Menú general de muestra (solo Conocimiento activo), historial de navegación, inserción mediante barra en bloque vacío, densidad editorial y paneles mutuamente excluyentes. No se integra el shell real. Pendientes: editor rico, grafo, bases inline, historial editorial, accesibilidad de paneles y verificación CSS/compilación/navegador. Los callbacks de expansión y ajustes del chat cierran provisionalmente el panel; no son funcionalidades terminadas. No desplegar.
