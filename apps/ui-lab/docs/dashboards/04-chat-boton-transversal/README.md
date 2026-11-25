@@ -11,7 +11,7 @@ Superficie general de UI Lab, fuera del catálogo de 34 Apps. Documentar aquí e
 - **Preview:** `/?embed=1&view=chat-transversal-v3` — registro `chat-transversal-v3` en UI Lab.
 - **Código:** [`apps/ui-lab/src/chat-transversal-v3/`](../../../src/chat-transversal-v3).
 - **Campaña completa:** [campana-transversal-v3/](campana-transversal-v3/) — auditoría del baseline, arquitectura, contrato de interacciones, motion, patchset, QA (45 comprobaciones), handoff y bitácora.
-- **Componentes finales con SHA256:** [campana-transversal-v3/componentes-finales/](campana-transversal-v3/componentes-finales/README.md).
+- **Código final:** [`apps/ui-lab/src/chat-transversal-v3/`](../../../src/chat-transversal-v3). El clon con SHA256 se retiró el 25/11/2026 por ser byte a byte idéntico.
 - **QA y capturas:** [campana-transversal-v3/qa/](campana-transversal-v3/qa/).
 - **Artifact Chromebook:** `chat-transversal-v3-chromebook` (script en [artifact/](campana-transversal-v3/artifact/), publicado por el workflow de UI Lab).
 - **Material histórico intacto:** `baseline/`, `componentes-propuestos/`, `componentes-reales/` y `legacy/` se conservan como referencia; lo definitivo vive en el módulo de `src`.

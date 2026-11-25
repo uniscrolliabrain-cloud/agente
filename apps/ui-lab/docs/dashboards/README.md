@@ -1,6 +1,12 @@
 # UI Lab — estructura documental aprobada
 
-Las 19 carpetas principales conservan el orden aprobado por el founder.
+Las 20 carpetas principales conservan el orden aprobado por el founder.
+
+**Código:** aquí no se copia implementación. Cada superficie apunta a su módulo en
+[`apps/ui-lab/src/`](../../src/); los clones `componentes-finales/` se retiraron el 25/11/2026 por ser
+byte a byte idénticos. **Marca:** una única guía, la de
+[galeria-branding](./19-general/galeria-branding/GUIA-MAESTRA-BRANDING-UX-V2.md). Detalle en el
+[índice de la documentación](../README.md#consolidación-del-25112026).
 
 01. [landing](./01-landing/README.md) — **APROVECHABLE AHORA**
 02. [login](./02-login/README.md) — **POR DISEÑAR**

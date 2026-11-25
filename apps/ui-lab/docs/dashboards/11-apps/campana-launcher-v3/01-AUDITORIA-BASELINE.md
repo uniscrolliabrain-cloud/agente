@@ -10,7 +10,7 @@
 | `11-apps/componentes-reales/` | Snapshot de `registry`, `WorkspaceShell`, hooks y sidebar | Baseline intacto; no se modifica |
 | `11-apps/PROTOTIPO-LAUNCHER-ANDROID.md` | Decisión 24/11: reposo, cajón, recientes, sin conexiones | Cumplida |
 | `11-apps/HANDOFF-REDISENO-PREMIUM.md` | Estándar de campaña (C00–C07) | Proceso seguido |
-| `11-apps/GUIA-MAESTRA-BRANDING-UX-V2.md` | Tokens y reglas de motion | Autoridad de estilo |
+| `19-general/galeria-branding/GUIA-MAESTRA-BRANDING-UX-V2.md` | Tokens y reglas de motion | Autoridad de estilo |
 | `apps/ui-lab/src/vendor/landing/`, `design-system/agntia-tokens.css` | Branding real | Tokens copiados, no reinterpretados |
 | `tools/image-pipeline/` + `generate-editorial-images.yml` | Pipeline OpenRouter con `OPEN_ROUTER_API_KEY` | Documentado; no ejecutable aquí (sin secreto) |
 | `11-apps/iconos/` (35 SVG provisionales, `manifest.json`, `PROMPTS-INDIVIDUALES-V3.md`, `generacion-v3.json`) | Existen en `main` por trabajo paralelo, incorporados durante esta campaña | Se conservan como referencia histórica; el acabado final son los 35 renders propios en `iconos/final/` |

@@ -4,7 +4,7 @@ Fecha: 2026-11-24. Sustituye íntegramente V2 en este mismo archivo para conserv
 ## 0. Misión y precedencia
 Eres diseñador de producto senior e ingeniero frontend de AgntiaPro. Construye exactamente la composición del PNG [mockup original](./login-mockup-falta-adaptar-branding-y-copy.png), pero con la dirección artística efectiva de la landing nueva. No diseñes otra pantalla. La captura manda en distribución, orden, anatomía y proporciones; la landing manda en marca, tipografía, color, geometría y acabados; esta V3 manda en copy y comportamiento objetivo. El código real manda en contratos y disponibilidad. No copies los tokens históricos del PNG. No introduzcas fotografías grandes, navegación comercial, nuevas secciones ni un dashboard.
 Antes de escribir código, abre el PNG y lee completos:
-- ../01-landing/GUIA-MAESTRA-BRANDING-UX-V2.md
+- ../19-general/galeria-branding/GUIA-MAESTRA-BRANDING-UX-V2.md
 - apps/ui-lab/src/vendor/landing/Landing.jsx, landing.css, ProductScene.jsx
 - apps/ui-lab/src/design-system/agntia-tokens.css
 - apps/web/src/components/BrandMark.tsx y Login.tsx

@@ -4,7 +4,7 @@
 
 - **Código ejecutable**: [`apps/ui-lab/src/chat-transversal-v3/`](../../../../../src/chat-transversal-v3) con los siete componentes, datos demo, CSS aislado y el retrato optimizado.
 - **Preview**: `/?embed=1&view=chat-transversal-v3` (o `/?view=chat-transversal-v3` desde el selector de UI Lab).
-- **Componentes finales con hashes**: [`componentes-finales/`](componentes-finales/README.md).
+- **Código final**: [`apps/ui-lab/src/chat-transversal-v3/`](../../../../../src/chat-transversal-v3). El clon documental con hashes se retiró el 25/11/2026: era byte a byte idéntico.
 - **QA**: [`07-QA.md`](07-QA.md), [`qa/qa-resultados.json`](qa/qa-resultados.json), [`qa/qa-chat-transversal-v3.mjs`](qa/qa-chat-transversal-v3.mjs) y capturas reales en [`qa/capturas/`](qa/capturas).
 - **Artifact Chromebook**: `artifact/build-artifact.py` produce el paquete; el workflow de UI Lab lo publica como `chat-transversal-v3-chromebook`.
 - **Fotografía optimizada**: [`assets/laia-videollamada.webp`](assets/laia-videollamada.webp) (900 × 900, 68,2 kB) y original del founder en `assets/file_00000000bad881f4a18a32b6c6edc2c8.png`.
