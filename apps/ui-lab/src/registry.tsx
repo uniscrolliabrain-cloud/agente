@@ -29,6 +29,7 @@ const Operations=lazy(()=>import("../../web/src/components/VerticalSliceOperatio
 const AppsLauncher=lazy(()=>import("./apps-launcher/AppsLauncher"));
 const ChatTransversalV3=lazy(()=>import("./chat-transversal-v3/ChatTransversalV3"));
 const DocumentsExplorer=lazy(()=>import("./documents-explorer/DocumentsExplorer"));
+const KnowledgeV1=lazy(()=>import("./knowledge-v1/KnowledgeWorkspace"));
 export type Preview={id:string;name:string;category:string;description:string;Component:ComponentType;status:"fixture"|"demo"|"api";};
 export const previews:Preview[]=[
 {id:"full-app",name:"Aplicación completa",category:"Aplicación",description:"App.tsx original, navegación y shell reales en tenant demo",Component:FullApp,status:"demo"},
@@ -43,6 +44,7 @@ export const previews:Preview[]=[
 {id:"kpi",name:"Tarjetas KPI",category:"Componentes",description:"KpiCard original con datos sintéticos",Component:()=> <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,padding:24}}><Kpi label="Actividades" value={128} meta="+12 esta semana" icon="purple" series={[4,6,5,9,7,12]}/><Kpi label="Completadas" value={94} meta="Datos de ejemplo" icon="green" series={[2,3,6,7,8,11]}/><Kpi label="Pendientes" value={12} icon="orange" series={[8,7,6,7,5,4]}/></div>,status:"fixture"},
 {id:"chat",name:"Chat",category:"Componentes",description:"ChatPanel original con conversación ficticia",Component:()=> <Chat chat={{messages:[],streaming:false,streamBuf:"",tools:[],error:null,send:()=>{},cancel:()=>{},threadId:"ui-lab"}} userName="Demo"/>,status:"fixture"},
 {id:"chat-ux-v2",name:"Chat UX V2 · Refinamiento",category:"Componentes",description:"Propuesta aislada del chat: acabados, tipografía, motion y contenedor estrecho, con fixture interactiva sin red",Component:ChatUXV2,status:"fixture"},
+{id:"knowledge-v1",name:"Conocimiento · V1",category:"Trabajo",description:"Prototipo editorial de páginas y bloques, navegación contextual y relaciones sintéticas",Component:KnowledgeV1,status:"fixture"},
 {id:"knowledge",name:"Conocimiento",category:"Trabajo",description:"Biblioteca editorial C01",Component:()=> <Knowledge memories={memories}/>,status:"fixture"},
 {id:"centro",name:"Centro de Mando",category:"Trabajo",description:"Workspace 35; inspeccionar dependencias",Component:Centro,status:"demo"},
 {id:"today",name:"Inicio / Hoy",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:Today,status:"demo"},
