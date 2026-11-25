@@ -2,7 +2,7 @@
 
 > **Estado: IDEAS NO APROBADAS.** Esta carpeta no autoriza desarrollo, despliegues, compras ni decisiones de roadmap. Las inspiraciones son referencias de diseño a investigar, no certificaciones de éxito comercial ni de compatibilidad técnica.
 
-Se reúnen **43 capacidades** (incluyendo las ideas complementarias surgidas de la conversación), cada una en su propio archivo. Las fichas son hipótesis técnicas y deben contrastarse con ramas y código vigentes antes de elegir.
+Se reúnen **44 capacidades** (incluyendo las ideas complementarias surgidas de la conversación), cada una en su propio archivo. Las fichas son hipótesis técnicas y deben contrastarse con ramas y código vigentes antes de elegir.
 
 ## Invariantes de AgntiaPro
 - Fast/LAIA: conversación mínima, tarjetas de pocos tokens. Runtime, kernel, grafo, cinco memorias, Slow y JEV conservan estado, conocimiento y autoridad.
@@ -55,6 +55,8 @@ Se reúnen **43 capacidades** (incluyendo las ideas complementarias surgidas de 
 - [41 · Narrativa operacional con recibos](capacidades/41-narrativa-operacional-con-recibos.md)
 - [42 · Microtarjetas UI orientadas a misión](capacidades/42-microtarjetas-ui-orientadas-a-mision.md)
 - [43 · Interoperabilidad A2UI con vistas existentes](capacidades/43-interoperabilidad-a2ui-con-vistas-existentes.md)
+
+- [44 · AgntiaPro Launcher — Android](capacidades/44-agntiapro-launcher-android.md)
 
 ## Cómo elegir
 Para cada idea evaluar: novedad real respecto al código actual, valor para microempresa, complejidad, latencia, privacidad, dependencias, riesgos, reutilización de componentes y evidencia empírica. No priorizar sin auditar implementación existente.
