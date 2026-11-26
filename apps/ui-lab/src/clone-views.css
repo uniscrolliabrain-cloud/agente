@@ -21,6 +21,24 @@
   display: none;
 }
 
+/* FONDO_UNICO_V2 - el rail seguía en beige #F3F0EB y junto al lavanda del
+   puesto se veía sucio. Pasa al mismo papel lavanda, y los hovers dejan el
+   beige. */
+.shell__left {
+  background: #f6f3f9;
+}
+
+.v2-sidebar .v2-nav-item:hover,
+.v2-sidebar .v2-rail-toggle:hover,
+.v2-sidebar .v2-sidebar-recent-item:hover,
+.v2-sidebar .v2-user-chip:hover {
+  background: #ece6f6;
+}
+
+.v2-sidebar .v2-nav-item.active {
+  border-color: #e7e0f2;
+}
+
 /* Los workspaces del UI Lab se diseñaron a pantalla completa (100dvh). Dentro
    del shell del clon deben medir el área de contenido, que empieza bajo la
    barra superior; si no, cada vista añade el alto del topbar y aparece un
