@@ -1,0 +1,92 @@
+# PROBE_CONECTORES_B_V1 - segunda mitad del diagnostico (C03..C06).
+#
+# Salida compacta a proposito: el log del primer run se trunco antes de C03.
+# El detalle de cada sonda se enmascara (email, telefono, dominios) porque el
+# repositorio es publico y estos logs tambien.
+
+name: probe-conectores-b
+
+on:
+  push:
+    branches: [probe/conectores-2]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      DOPPLER_PROJECT: ${{ vars.DOPPLER_PROJECT || 'agntiapro' }}
+      DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: preparar CLI de Doppler
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: "C03 leads"
+        continue-on-error: true
+        run: |
+          set +e
+          out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=leads 2>&1)
+          code=$?
+          printf '%s\n' "$out" \
+            | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]' \
+            | sed -E -e 's/  */ /g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' -e 's/\+[0-9]{6,}/<tel>/g'
+          echo "== C03 exit=$code"
+
+      - name: "C04 canales"
+        continue-on-error: true
+        run: |
+          set +e
+          out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=whatsapp,google,email,voice 2>&1)
+          code=$?
+          printf '%s\n' "$out" \
+            | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]' \
+            | sed -E -e 's/  */ /g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' -e 's/\+[0-9]{6,}/<tel>/g'
+          echo "== C04 exit=$code"
+
+      - name: "C05 responder-lead"
+        continue-on-error: true
+        run: |
+          set +e
+          out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=llm 2>&1)
+          code=$?
+          printf '%s\n' "$out" \
+            | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]' \
+            | sed -E -e 's/  */ /g'
+          echo "== C05 exit=$code"
+
+      - name: "C06 deploy"
+        continue-on-error: true
+        run: |
+          set +e
+          out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=core,deploy,observability 2>&1)
+          code=$?
+          printf '%s\n' "$out" \
+            | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]' \
+            | sed -E -e 's/  */ /g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g'
+          echo "== C06 exit=$code"
