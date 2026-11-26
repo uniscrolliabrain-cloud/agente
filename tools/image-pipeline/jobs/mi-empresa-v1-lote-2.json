@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "outputDir": "assets/generated/mi-empresa/v1/lote-2",
+  "images": [
+    {
+      "id": "03-marca-01",
+      "size": "1536x1024",
+      "alt": "03-marca — ilustración editorial",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una ilustración de producto para AgntiaPro, sección Marca del compilador empresarial. Representa muestrario editorial de papel, tipografía abstracta y materiales de marca. Composición horizontal 3:2, objeto agrupado en el centro con 18% de margen libre, perspectiva tres cuartos suave, fondo papel uniforme, escala humana y tactilidad discreta. Debe comunicar la acción de diseñar la empresa, no la ejecución operativa. Sin interfaz dibujada ni texto. Entregar una imagen independiente 1536×1024, PNG maestro y WebP optimizado tras aprobación. Uso previsto: galería de referencias y guía de marca; reservar espacio real para copy HTML, no usar como fondo de tablas."
+    },
+    {
+      "id": "03-marca-02",
+      "size": "1024x1024",
+      "alt": "03-marca — icono principal",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera un único icono escultórico de Marca: muestrario cromático. Silueta inequívoca, volumen compacto, vista tres cuartos casi frontal, 72% del lienzo, margen uniforme, fondo #FCFAF6, cerámica marfil mate con detalle tierra y un acento violeta discreto. Sin pedestal, marco, texto ni letras. Cuadrado 1024×1024. Debe distinguirse a 48 px. Exportar WebP 512/320 después de aprobación."
+    },
+    {
+      "id": "03-marca-03",
+      "size": "1024x1024",
+      "alt": "03-marca — icono pluma",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de pluma, para Marca en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "03-marca-04",
+      "size": "1024x1024",
+      "alt": "03-marca — icono marco de imagen",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de marco de imagen, para Marca en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "04-estrategia-01",
+      "size": "1536x1024",
+      "alt": "04-estrategia — ilustración editorial",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una ilustración de producto para AgntiaPro, sección Estrategia del compilador empresarial. Representa ruta topográfica con tres hitos y horizonte abierto. Composición horizontal 3:2, objeto agrupado en el centro con 18% de margen libre, perspectiva tres cuartos suave, fondo papel uniforme, escala humana y tactilidad discreta. Debe comunicar la acción de diseñar la empresa, no la ejecución operativa. Sin interfaz dibujada ni texto. Entregar una imagen independiente 1536×1024, PNG maestro y WebP optimizado tras aprobación. Uso previsto: objetivos trimestrales, anuales e iniciativas; reservar espacio real para copy HTML, no usar como fondo de tablas."
+    },
+    {
+      "id": "04-estrategia-02",
+      "size": "1024x1024",
+      "alt": "04-estrategia — icono principal",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera un único icono escultórico de Estrategia: diana. Silueta inequívoca, volumen compacto, vista tres cuartos casi frontal, 72% del lienzo, margen uniforme, fondo #FCFAF6, cerámica marfil mate con detalle tierra y un acento violeta discreto. Sin pedestal, marco, texto ni letras. Cuadrado 1024×1024. Debe distinguirse a 48 px. Exportar WebP 512/320 después de aprobación."
+    },
+    {
+      "id": "04-estrategia-03",
+      "size": "1024x1024",
+      "alt": "04-estrategia — icono hito",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de hito, para Estrategia en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "04-estrategia-04",
+      "size": "1024x1024",
+      "alt": "04-estrategia — icono brújula",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de brújula, para Estrategia en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "05-organizacion-01",
+      "size": "1536x1024",
+      "alt": "05-organizacion — ilustración editorial",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una ilustración de producto para AgntiaPro, sección Organización del compilador empresarial. Representa estructura modular de personas y agentes representados por figuras geométricas sin rostros. Composición horizontal 3:2, objeto agrupado en el centro con 18% de margen libre, perspectiva tres cuartos suave, fondo papel uniforme, escala humana y tactilidad discreta. Debe comunicar la acción de diseñar la empresa, no la ejecución operativa. Sin interfaz dibujada ni texto. Entregar una imagen independiente 1536×1024, PNG maestro y WebP optimizado tras aprobación. Uso previsto: organigrama y responsabilidades; reservar espacio real para copy HTML, no usar como fondo de tablas."
+    },
+    {
+      "id": "05-organizacion-02",
+      "size": "1024x1024",
+      "alt": "05-organizacion — icono principal",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera un único icono escultórico de Organización: grupo humano. Silueta inequívoca, volumen compacto, vista tres cuartos casi frontal, 72% del lienzo, margen uniforme, fondo #FCFAF6, cerámica marfil mate con detalle tierra y un acento violeta discreto. Sin pedestal, marco, texto ni letras. Cuadrado 1024×1024. Debe distinguirse a 48 px. Exportar WebP 512/320 después de aprobación."
+    },
+    {
+      "id": "05-organizacion-03",
+      "size": "1024x1024",
+      "alt": "05-organizacion — icono nodo coordinador",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de nodo coordinador, para Organización en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "05-organizacion-04",
+      "size": "1024x1024",
+      "alt": "05-organizacion — icono puesto de trabajo",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de puesto de trabajo, para Organización en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    }
+  ]
+}
