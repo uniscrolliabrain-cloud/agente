@@ -1,0 +1,169 @@
+{
+  "tenant": "agntia-demo",
+  "synthetic": true,
+  "logicalDay": 90,
+  "active": "V7",
+  "draft": "V8",
+  "clients": [
+    {
+      "id": "C01",
+      "name": "Taller Horizonte",
+      "month": 1,
+      "services": [
+        "Atención y agenda",
+        "Gestión comercial"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C02",
+      "name": "Clínica Alba",
+      "month": 1,
+      "services": [
+        "Atención y agenda",
+        "Administración"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C03",
+      "name": "Estudio Olivo",
+      "month": 2,
+      "services": [
+        "Captación B2B",
+        "Gestión comercial"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C04",
+      "name": "Reformas Brisa",
+      "month": 2,
+      "services": [
+        "Reactivación comercial",
+        "Gestión comercial"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C05",
+      "name": "Academia Faro",
+      "month": 2,
+      "services": [
+        "Atención y agenda",
+        "Marketing"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C06",
+      "name": "Distribuciones Nexo",
+      "month": 3,
+      "services": [
+        "Captación B2B",
+        "Administración"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C07",
+      "name": "Asesoría Cedro",
+      "month": 3,
+      "services": [
+        "Administración",
+        "Seguridad digital"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    },
+    {
+      "id": "C08",
+      "name": "Comercio Marea",
+      "month": 3,
+      "services": [
+        "Marketing",
+        "Reactivación comercial"
+      ],
+      "setup": 1500,
+      "mrr": 1000
+    }
+  ],
+  "ideas": [
+    {
+      "id": "I01",
+      "title": "Recuperar oportunidades comerciales",
+      "status": "en revisión",
+      "revision": "V8",
+      "client": "C01"
+    },
+    {
+      "id": "I02",
+      "title": "Canal de agencias colaboradoras",
+      "status": "explorando",
+      "revision": "ALT-B"
+    },
+    {
+      "id": "I03",
+      "title": "Reducir coste de atención",
+      "status": "aparcada",
+      "revision": "ALT-C"
+    }
+  ],
+  "sources": [
+    {
+      "id": "F01",
+      "title": "Kickoff CEO",
+      "kind": "documento de referencia"
+    },
+    {
+      "id": "F02",
+      "title": "Visión founder",
+      "kind": "documento de referencia"
+    },
+    {
+      "id": "F03",
+      "title": "Entrevista simulada Marcos",
+      "kind": "testimonio ficticio"
+    },
+    {
+      "id": "F04",
+      "title": "Registro simulado de Taller Horizonte",
+      "kind": "fixture"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "D01",
+      "idea": "I01",
+      "title": "Aprobar seguimiento comercial",
+      "status": "pendiente"
+    },
+    {
+      "id": "D02",
+      "idea": "I02",
+      "title": "Validar comisión de canal",
+      "status": "pendiente"
+    }
+  ],
+  "finance": {
+    "monthlyCosts": {
+      "models": 480,
+      "voice": 320,
+      "hosting": 180,
+      "connectors": 220,
+      "support": 1400,
+      "collaborators": 600,
+      "other": 300
+    },
+    "month3Invoices": 12500,
+    "month3Receipts": 11500,
+    "month3Outstanding": 1000,
+    "assumption": "Todos los clientes facturan mes completo desde mes de alta; importes sin impuestos, sin saldo inicial ni atrasos anteriores."
+  }
+}
