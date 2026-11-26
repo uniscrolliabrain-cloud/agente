@@ -1,6 +1,6 @@
 // TU_EMPRESA_V1 - andamio de la meta-app.
 // Clon del shell de AgntiaPro abierto desde Ajustes → Tu Empresa. Todo el
-// contenido es lorem ipsum a propósito: primero se valida la estructura y el
+// contenido es día 90 a propósito: primero se valida la estructura y el
 // comportamiento del entorno, después se sustituye texto e imágenes una a una.
 // No hay motor de compilación ni backend; los botones solo describen el gesto.
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
@@ -11,13 +11,10 @@ import {
   BarChart3,
   Copy,
   Boxes,
-  Building2,
   CalendarDays,
   Check,
   ChevronDown,
   ChevronRight,
-  CircleAlert,
-  Clock3,
   Compass,
   Cpu,
   FileText,
@@ -26,7 +23,6 @@ import {
   Globe2,
   GraduationCap,
   Handshake,
-  Image as ImageIcon,
   Layers,
   Lock,
   Menu,
@@ -47,6 +43,7 @@ import {
 } from "lucide-react";
 import "../design-system/agntia-tokens.css";
 import "./company.css";
+import { COMPANY_DATA } from "./company-data";
 
 type Icon = typeof Compass;
 type SectionId =
@@ -106,12 +103,7 @@ const SECTIONS: Section[] = [
   { id: "versiones", label: "Versiones y publicación", icon: Layers, group: "Publicación", variant: "timeline" },
 ];
 
-const LOREM =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Cras mattis consectetur purus sit amet fermentum.";
-const SHORT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-const TINY = "Lorem ipsum dolor sit amet.";
-
-const VERSIONS = ["V1.3 · borrador", "V1.2 · activa", "V1.1", "V1.0"];
+const VERSIONS = ["V8 · borrador", "V7 · activa", "ALT-B · explorando", "ALT-C · aparcada"];
 
 /* ------------------------------------------------------------- ideas y chats
  * Las conversaciones del compilador pertenecen a una idea, no a la empresa
@@ -122,570 +114,46 @@ type Idea = { n: number; id: string; name: string; short: string; branch: string
 type Chat = { id: string; idea: number; title: string; preview: string; when: string; state: ChatState };
 
 const IDEAS: Idea[] = [
-  { n: 1, id: "idea-01", name: "Lorem ipsum · nueva línea", short: "Idea 01 · Lorem", branch: "V1.3 borrador" },
-  { n: 2, id: "idea-02", name: "Dolor sit · reorganización", short: "Idea 02 · Dolor", branch: "Alternativa B" },
+  { n: 1, id: "I01", name: "Recuperar oportunidades comerciales", short: "Idea 01 · Seguimiento", branch: "V8 borrador" },
+  { n: 2, id: "I02", name: "Canal de agencias colaboradoras", short: "Idea 02 · Agencias", branch: "ALT-B" },
+  { n: 3, id: "I03", name: "Reducir coste de atención", short: "Idea 03 · Costes", branch: "ALT-C" },
 ];
-
 const SEED_CHATS: Chat[] = [
-  { id: "c1", idea: 1, title: "Lorem ipsum dolor sit", preview: "Consectetur adipiscing elit, sed do eiusmod tempor.", when: "Hoy", state: "Con propuesta" },
-  { id: "c2", idea: 1, title: "Integer posuere erat", preview: "A ante venenatis dapibus posuere velit aliquet.", when: "Ayer", state: "Explorando" },
-  { id: "c3", idea: 1, title: "Cras mattis consectetur", preview: "Purus sit amet fermentum, lorem ipsum dolor.", when: "12 nov", state: "Explorando" },
-  { id: "c4", idea: 2, title: "Donec ullamcorper nulla", preview: "Non metus auctor fringilla, sed posuere.", when: "18 nov", state: "Aparcada" },
-  { id: "c5", idea: 2, title: "Maecenas sed diam eget", preview: "Risus varius blandit sit amet non magna.", when: "9 nov", state: "Explorando" },
+  { id: "c1", idea: 1, title: "Seguimiento de Taller Horizonte", preview: "Diseñar SOP01 y revisar D01.", when: "Día 90", state: "Con propuesta" },
+  { id: "c2", idea: 1, title: "Entrevista con Marcos", preview: "Medir propuestas olvidadas.", when: "Día 86", state: "Explorando" },
+  { id: "c3", idea: 2, title: "Modelo de colaboración", preview: "Comisión propuesta de 150 € por cliente.", when: "Día 89", state: "Explorando" },
+  { id: "c4", idea: 3, title: "Coste de voz y atención", preview: "Comparar alternativas sin cambiar proveedores.", when: "Día 87", state: "Aparcada" },
 ];
-
-const initials = (name: string) => name.slice(0, 2).toUpperCase();
-
-/* ------------------------------------------------------------------ piezas */
-
-function Img({ tall = false }: { tall?: boolean }) {
-  return (
-    <div className={"co-img" + (tall ? " co-img--tall" : "")} aria-label="Imagen de ejemplo">
-      <ImageIcon size={18} aria-hidden="true" />
-      <span>imagen · lorem</span>
-    </div>
-  );
+type Content = typeof COMPANY_DATA[SectionId];
+function Panel({title,hint,children,className=""}:{title:string;hint?:string;children:ReactNode;className?:string}) {
+ return <section className={"co-panel "+className}><header className="co-panel-head"><div><h2>{title}</h2>{hint&&<p>{hint}</p>}</div></header>{children}</section>;
 }
-
-function Panel({
-  title,
-  hint,
-  action,
-  children,
-  className = "",
-}: {
-  title: string;
-  hint?: string;
-  action?: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={"co-panel " + className}>
-      <header className="co-panel-head">
-        <div>
-          <h2>{title}</h2>
-          {hint && <p>{hint}</p>}
-        </div>
-        {action && (
-          <button type="button" className="co-mini">
-            {action} <ArrowUpRight size={13} />
-          </button>
-        )}
-      </header>
-      {children}
-    </section>
-  );
+function Table({rows,headers=["Elemento","Detalle","Estado"],onSelect}:{rows:string[][];headers?:string[];onSelect:(row:string[])=>void}) {
+ const [query,setQuery]=useState("");
+ const filtered=rows.filter(row=>row.join(" ").toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+ return <><label className="co-search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar registros…" aria-label="Buscar registros"/></label><div className="co-table-wrap"><table className="co-table"><thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{filtered.map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j}>{j===0?<button type="button" className="co-mini" onClick={()=>onSelect(row)}>{cell}<ChevronRight size={13}/></button>:j===row.length-1?<span className="co-tag">{cell}</span>:cell}</td>)}</tr>)}</tbody></table>{!filtered.length&&<p className="co-text">No hay registros que coincidan.</p>}</div></>;
 }
-
-function Table({ cols = 5, rows = 6 }: { cols?: number; rows?: number }) {
-  return (
-    <div className="co-table-wrap">
-      <table className="co-table">
-        <thead>
-          <tr>
-            {Array.from({ length: cols }, (_, i) => (
-              <th key={i}>{i === 0 ? "Lorem" : `Lorem ${i + 1}`}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: rows }, (_, r) => (
-            <tr key={r}>
-              {Array.from({ length: cols }, (_, c) => (
-                <td key={c}>
-                  {c === 0 ? (
-                    <span className="co-cell-main">
-                      <span className="co-dot" /> Lorem ipsum {String(r + 1).padStart(2, "0")}
-                    </span>
-                  ) : c === cols - 1 ? (
-                    <span className="co-tag">Lorem</span>
-                  ) : (
-                    TINY
-                  )}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+function Progress({label,value}:{label:string;value:number}) {return <div className="co-progress"><div><span>{label}</span><b>{value} %</b></div><span className="co-progress-track"><i style={{width:value+"%"}}/></span></div>;}
+function Workspace({section,onSelect}:{section:Section;onSelect:(row:string[])=>void}) {
+ const d:Content=COMPANY_DATA[section.id];
+ const primary=d.primary;
+ const rows=d.rows;
+ const stats=()=> <div className="co-stats">{primary.map(([label,value])=><button type="button" className="co-stat" key={label} onClick={()=>onSelect([label,value])}><small>{label}</small><strong>{value}</strong><span>Escenario simulado</span></button>)}</div>;
+ const table=()=> <Panel title={section.variant==="table"?section.label:"Registros y propuestas"} hint="Selecciona un registro para consultar su detalle."><Table rows={rows} headers={section.variant==="table"?primary[0]:undefined} onSelect={onSelect}/></Panel>;
+ switch(section.variant){
+ case "dashboard": return <>{stats()}<div className="co-cols"><Panel title="Ideas en desarrollo">{rows.map(row=><button type="button" className="co-row" key={row[0]} onClick={()=>onSelect(row)}><span className="co-row-icon"><Sparkles size={14}/></span><span className="co-row-body"><b>{row[0]}</b><small>{row[1]}</small></span><span className="co-tag">{row[2]}</span><ChevronRight size={15}/></button>)}</Panel><Panel title="Tu siguiente paso"><p className="co-text">{d.next}</p><Progress label="Objetivo de clientes" value={80}/></Panel></div></>;
+ case "table": return table();
+ case "cards": return <>{section.id==="branding"&&<Panel title="Identidad visual" hint="Paleta de referencia del andamio"><div className="co-swatches">{["#2b2a26","#8c7a5f","#c9b99c","#e6ded0","#f4f0e6"].map(color=><div key={color}><span style={{background:color}}/><small>{color}</small></div>)}</div></Panel>}<div className="co-cards">{rows.map(row=><article className="co-card" key={row[0]}><div className="co-img"><FileText size={24}/><span>{section.id==="branding"?"Activo de marca":"Entrevista simulada"}</span></div><div><h3>{row[0]}</h3><p>{row[1]}</p><div className="co-card-foot"><span className="co-tag">{row[2]}</span><button type="button" aria-label={"Abrir "+row[0]} onClick={()=>onSelect(row)}><ArrowUpRight size={16}/></button></div></div></article>)}</div><Panel title="Siguiente paso"><p className="co-text">{d.next}</p></Panel></>;
+ case "editorial": return <><div className="co-editorial"><div><span className="co-kicker">Nuestra identidad</span><h2>{d.hero}</h2>{primary.map(([label,value])=><div key={label}><h3>{label}</h3><p className="co-text">{value}</p></div>)}<blockquote>«La tecnología tiene que adaptarse a las personas.»<small>Visión founder · síntesis editorial</small></blockquote></div><aside className="co-facts">{rows.map(row=><div key={row[0]}><small>{row[2]}</small><b>{row[0]}</b><span>{row[1]}</span></div>)}</aside></div></>;
+ case "canvas": return <><div className="co-canvas" style={{"--cols":3} as CSSProperties}>{primary.map(([label,value],i)=><section className="co-node" key={label}><header><span>{String(i+1).padStart(2,"0")}</span><button type="button" aria-label={"Revisar "+label} onClick={()=>onSelect([label,value])}><ChevronDown size={14}/></button></header><h3>{label}</h3><p>{value}</p></section>)}</div>{table()}</>;
+ case "chart": {const finance=section.id==="economia";const values=finance?[5000,9500,12500]:[2,5,8];return <>{stats()}<div className="co-cols co-cols--wide"><Panel title={finance?"Facturación por mes":"Clientes acumulados"} hint="Tres meses · escenario sintético"><div className="co-bars" aria-label={values.join(", ")}>{values.map((v,i)=><span key={i} title={"Mes "+(i+1)+": "+v} style={{height:(v/(finance?12500:10)*100)+"%"}}/>)}</div><div className="co-legend">{values.map((v,i)=><span key={i}>Mes {i+1}: {v.toLocaleString("es-ES")}{finance?" €":""}</span>)}</div></Panel><Panel title="Lectura del escenario"><p className="co-text">{d.next}</p>{!finance&&<Progress label="Objetivo de clientes" value={80}/>}</Panel></div>{table()}</>;}
+ case "flow": return <><div className="co-flow">{primary.map(([label,value],i)=><div className="co-flow-step" key={label}><div className="co-flow-node"><span className="co-flow-icon"><Workflow size={16}/></span><div><small>Paso {i+1}</small><b>{label}</b><span>{value}</span></div><span className="co-tag">Diseño</span></div>{i<primary.length-1&&<ChevronDown className="co-flow-arrow" size={16}/>}</div>)}</div>{table()}</>;
+ case "matrix": return <><Panel title={section.id==="mercado"?"Segmentos y necesidades":"Mapa de aprendizaje"} hint="Evidencia y estados de la simulación"><Table rows={rows} headers={primary[0]} onSelect={onSelect}/></Panel><Panel title="Qué necesitamos comprobar"><p className="co-text">{d.next}</p></Panel></>;
+ case "org": return <><Panel title="Organigrama funcional" hint="Equipo híbrido · escenario simulado"><div className="co-org"><div className="co-org-top"><div className="co-person co-person--lead"><span className="co-avatar">OW</span><div><b>Owner</b><small>Autoridad final</small></div></div></div><div className="co-org-line"/><div className="co-org-row co-org-row--agents">{primary.slice(1).map(([label,value])=><div className="co-person co-person--ai" key={label}><span className="co-avatar"><Sparkles size={14}/></span><div><b>{label}</b><small>{value}</small></div><span className="co-tag">IA</span></div>)}</div></div></Panel>{table()}</>;
+ case "timeline": return <><div className="co-cols co-cols--wide"><Panel title="Versiones y alternativas"><ol className="co-versions">{primary.map(([label,value],i)=><li key={label} className={i===0?"is-draft":""}><span className="co-version-dot"/><div><b>{label}</b><p>{value}</p></div><span className="co-tag">{["Borrador","Activa demo","Explorando","Aparcada"][i]}</span></li>)}</ol></Panel><Panel title="Publicación pendiente"><div className="co-publish"><Lock size={18}/><p>{d.next}</p></div></Panel></div>{table()}</>;
+ }
 }
-
-function Bars({ n = 7 }: { n?: number }) {
-  const values = [46, 62, 54, 78, 70, 88, 96, 74, 82, 68];
-  return (
-    <div className="co-bars" aria-label="Gráfico de ejemplo">
-      {values.slice(0, n).map((v, i) => (
-        <span key={i} style={{ height: `${v}%` }} />
-      ))}
-    </div>
-  );
-}
-
-function Progress({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="co-progress">
-      <div>
-        <span>{label}</span>
-        <b>{value} %</b>
-      </div>
-      <span className="co-progress-track">
-        <i style={{ width: `${value}%` }} />
-      </span>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------------- variantes */
-
-function Dashboard() {
-  return (
-    <>
-      <div className="co-stats">
-        {["Lorem ipsum", "Dolor sit", "Amet consectetur", "Adipiscing elit"].map((label, i) => (
-          <button type="button" className="co-stat" key={label}>
-            <small>{label}</small>
-            <strong>{["00", "0,0", "00 %", "0"][i]}</strong>
-            <span>{TINY}</span>
-          </button>
-        ))}
-      </div>
-      <div className="co-cols">
-        <Panel title="Lorem ipsum dolor" hint={SHORT} action="Lorem">
-          {["Lorem ipsum dolor sit", "Consectetur adipiscing", "Integer posuere erat", "Cras mattis consectetur"].map(
-            (row, i) => (
-              <button type="button" className="co-row" key={row}>
-                <span className="co-row-icon">
-                  <Check size={14} />
-                </span>
-                <span className="co-row-body">
-                  <b>{row}</b>
-                  <small>{TINY}</small>
-                </span>
-                <span className="co-tag">{i < 2 ? "Lorem" : "Ipsum"}</span>
-                <ChevronRight size={15} />
-              </button>
-            ),
-          )}
-        </Panel>
-        <Panel title="Dolor sit amet" hint={SHORT}>
-          <div className="co-progress-list">
-            {["Lorem", "Ipsum dolor", "Sit amet", "Consectetur", "Adipiscing"].map((label, i) => (
-              <Progress key={label} label={label} value={[82, 64, 47, 31, 18][i]} />
-            ))}
-          </div>
-        </Panel>
-      </div>
-      <Panel title="Lorem ipsum" hint={SHORT}>
-        <div className="co-hero">
-          <Img tall />
-          <div>
-            <span className="co-kicker">Lorem ipsum dolor</span>
-            <h3>Consectetur adipiscing elit</h3>
-            <p>{LOREM}</p>
-            <button type="button" className="co-btn co-btn--ghost">
-              Lorem ipsum <ArrowUpRight size={15} />
-            </button>
-          </div>
-        </div>
-      </Panel>
-    </>
-  );
-}
-
-function TableView({ cols = 5 }: { cols?: number }) {
-  return (
-    <>
-      <div className="co-toolbar">
-        <label className="co-search">
-          <Search size={16} />
-          <input placeholder="Lorem ipsum dolor sit…" aria-label="Buscar (lorem)" />
-        </label>
-        <div className="co-chips">
-          {["Lorem", "Ipsum", "Dolor", "Sit amet"].map((c, i) => (
-            <button type="button" key={c} className={"co-chip" + (i === 0 ? " is-on" : "")}>
-              {c}
-            </button>
-          ))}
-        </div>
-        <button type="button" className="co-btn co-btn--ghost">
-          <Plus size={15} /> Lorem
-        </button>
-      </div>
-      <Panel title="Lorem ipsum dolor" hint={SHORT} action="Lorem ipsum">
-        <Table cols={cols} rows={7} />
-      </Panel>
-    </>
-  );
-}
-
-function Cards({ swatches = false }: { swatches?: boolean }) {
-  return (
-    <>
-      {swatches ? (
-        <Panel title="Lorem ipsum palette" hint={SHORT}>
-          <div className="co-swatches">
-            {["#2b2a26", "#8c7a5f", "#c9b99c", "#e6ded0", "#f4f0e6"].map((color) => (
-              <div key={color}>
-                <span style={{ background: color }} />
-                <b>{TINY}</b>
-                <small>{color}</small>
-              </div>
-            ))}
-          </div>
-        </Panel>
-      ) : (
-        <div className="co-cards">
-          {Array.from({ length: 4 }, (_, i) => (
-            <article className="co-card" key={i}>
-              <Img />
-              <div>
-                <span className="co-kicker">Lorem · {String(i + 1).padStart(2, "0")}</span>
-                <h3>Lorem ipsum dolor</h3>
-                <p>{SHORT}</p>
-                <div className="co-card-foot">
-                  <span className="co-tag">{i % 2 ? "Ipsum" : "Lorem"}</span>
-                  <button type="button" aria-label="Abrir lorem">
-                    <ArrowUpRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-      <div className="co-cols">
-        <Panel title="Lorem ipsum" hint={SHORT}>
-          <div className="co-progress-list">
-            {["Lorem", "Ipsum", "Dolor sit", "Amet"].map((l, i) => (
-              <Progress key={l} label={l} value={[72, 58, 34, 21][i]} />
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Dolor sit amet" hint={SHORT}>
-          <p className="co-text">{LOREM}</p>
-          <p className="co-text">{LOREM}</p>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-function Editorial() {
-  return (
-    <>
-      <div className="co-editorial">
-        <div>
-          <span className="co-kicker">Lorem ipsum dolor</span>
-          <h2>Consectetur adipiscing elit, sed do eiusmod tempor.</h2>
-          <p className="co-text">{LOREM}</p>
-          <p className="co-text">{LOREM}</p>
-          <blockquote>
-            «Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis.»
-            <small>Lorem ipsum · dolor sit</small>
-          </blockquote>
-          <p className="co-text">{LOREM}</p>
-        </div>
-        <aside className="co-facts">
-          {["Lorem ipsum", "Dolor sit", "Amet consectetur", "Adipiscing"].map((l, i) => (
-            <div key={l}>
-              <small>{l}</small>
-              <b>{["00", "00", "0 %", "000"][i]}</b>
-              <span>{TINY}</span>
-            </div>
-          ))}
-        </aside>
-      </div>
-      <Panel title="Lorem ipsum dolor" hint={SHORT}>
-        <div className="co-tag-grid">
-          {["Lorem", "Ipsum dolor", "Sit amet", "Consectetur", "Adipiscing", "Eiusmod", "Tempor", "Labore"].map(
-            (t) => (
-              <span key={t} className="co-tag co-tag--lg">
-                {t}
-              </span>
-            ),
-          )}
-        </div>
-      </Panel>
-    </>
-  );
-}
-
-function Canvas({ cols = 3 }: { cols?: number }) {
-  return (
-    <>
-      <div className="co-canvas" style={{ "--cols": cols } as CSSProperties}>
-        {Array.from({ length: 6 }, (_, i) => (
-          <section className="co-node" key={i}>
-            <header>
-              <span>{String(i + 1).padStart(2, "0")}</span>
-              <button type="button" aria-label="Acciones lorem">
-                <ChevronDown size={14} />
-              </button>
-            </header>
-            <h3>Lorem ipsum</h3>
-            <p>{SHORT}</p>
-            <ul>
-              <li>{TINY}</li>
-              <li>{TINY}</li>
-            </ul>
-          </section>
-        ))}
-      </div>
-      <Panel title="Lorem ipsum dolor sit amet" hint={SHORT} action="Lorem">
-        <div className="co-doc">
-          <div>
-            <span className="co-kicker">Documento · lorem</span>
-            <h3>Lorem ipsum dolor sit amet</h3>
-            <p className="co-text">{LOREM}</p>
-            <p className="co-text">{LOREM}</p>
-          </div>
-          <div className="co-doc-lines" aria-hidden="true">
-            {[92, 78, 86, 64, 88, 72, 54].map((w, i) => (
-              <span key={i} style={{ width: `${w}%` }} />
-            ))}
-          </div>
-        </div>
-      </Panel>
-    </>
-  );
-}
-
-function Chart() {
-  return (
-    <>
-      <div className="co-stats co-stats--3">
-        {["Lorem ipsum", "Dolor sit amet", "Consectetur"].map((l, i) => (
-          <div className="co-stat" key={l}>
-            <small>{l}</small>
-            <strong>{["00.000 €", "0,0 %", "000"][i]}</strong>
-            <span>{TINY}</span>
-          </div>
-        ))}
-      </div>
-      <div className="co-cols co-cols--wide">
-        <Panel title="Lorem ipsum dolor" hint={SHORT} action="Lorem">
-          <Bars n={8} />
-          <div className="co-legend">
-            {["Lorem", "Ipsum", "Dolor"].map((l) => (
-              <span key={l}>
-                <i /> {l}
-              </span>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Dolor sit" hint={SHORT}>
-          <div className="co-progress-list">
-            {["Lorem", "Ipsum", "Dolor", "Amet"].map((l, i) => (
-              <Progress key={l} label={l} value={[88, 66, 44, 27][i]} />
-            ))}
-          </div>
-        </Panel>
-      </div>
-      <Panel title="Consectetur adipiscing" hint={SHORT}>
-        <Table cols={4} rows={5} />
-      </Panel>
-    </>
-  );
-}
-
-function Flow() {
-  return (
-    <>
-      <div className="co-flow">
-        {["Lorem", "Ipsum dolor", "Sit amet", "Consectetur"].map((label, i) => (
-          <div className="co-flow-step" key={label}>
-            <div className="co-flow-node">
-              <span className="co-flow-icon">
-                {i === 0 ? <Sparkles size={16} /> : i === 1 ? <Users size={16} /> : i === 2 ? <Workflow size={16} /> : <Check size={16} />}
-              </span>
-              <div>
-                <small>{`Paso 0${i + 1}`}</small>
-                <b>{label}</b>
-                <span>{TINY}</span>
-              </div>
-              <span className="co-tag">{i === 3 ? "Lorem" : "Ipsum"}</span>
-            </div>
-            {i < 3 && <ChevronDown className="co-flow-arrow" size={16} />}
-          </div>
-        ))}
-      </div>
-      <div className="co-cols">
-        <Panel title="Lorem ipsum" hint={SHORT} action="Lorem">
-          <Table cols={4} rows={5} />
-        </Panel>
-        <Panel title="Dolor sit amet" hint={SHORT}>
-          <div className="co-progress-list">
-            {["Lorem", "Ipsum", "Dolor", "Amet", "Consectetur"].map((l, i) => (
-              <Progress key={l} label={l} value={[94, 76, 61, 38, 22][i]} />
-            ))}
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-function Matrix({ size = 6 }: { size?: number }) {
-  const values = [3, 1, 2, 0, 1, 2, 2, 3, 1, 1, 0, 2, 1, 2, 3, 2, 1, 0, 2, 2, 1, 3, 2, 1, 1, 0, 2, 1, 2, 3, 2, 1, 1, 0, 2, 1];
-  return (
-    <>
-      <div className="co-cols co-cols--wide">
-        <Panel title="Lorem ipsum dolor" hint={SHORT} action="Lorem">
-          <div className="co-matrix" style={{ "--size": size } as CSSProperties}>
-            {values.slice(0, size * size).map((v, i) => (
-              <span key={i} data-v={v} title={TINY} />
-            ))}
-          </div>
-          <div className="co-legend">
-            {["0", "1", "2", "3"].map((l) => (
-              <span key={l}>
-                <i data-v={l} /> Lorem {l}
-              </span>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Dolor sit amet" hint={SHORT}>
-          <div className="co-quote">
-            <CircleAlert size={18} />
-            <p>{LOREM}</p>
-          </div>
-          <div className="co-quote">
-            <CircleAlert size={18} />
-            <p>{SHORT}</p>
-          </div>
-        </Panel>
-      </div>
-      <Panel title="Consectetur adipiscing elit" hint={SHORT}>
-        <Table cols={5} rows={6} />
-      </Panel>
-    </>
-  );
-}
-
-function Org() {
-  return (
-    <>
-      <Panel title="Lorem ipsum dolor" hint={SHORT} action="Lorem">
-        <div className="co-org">
-          <div className="co-org-top">
-            <div className="co-person co-person--lead">
-              <span className="co-avatar">LO</span>
-              <div>
-                <b>Lorem ipsum</b>
-                <small>Dolor sit amet</small>
-              </div>
-            </div>
-          </div>
-          <div className="co-org-line" aria-hidden="true" />
-          <div className="co-org-row">
-            {["Lorem", "Ipsum", "Dolor"].map((l, i) => (
-              <div className="co-person" key={l}>
-                <span className="co-avatar">{initials(l)}</span>
-                <div>
-                  <b>{l} dolor</b>
-                  <small>{["Sit amet", "Consectetur", "Adipiscing"][i]}</small>
-                </div>
-                <span className="co-tag">Lorem</span>
-              </div>
-            ))}
-          </div>
-          <div className="co-org-row co-org-row--agents">
-            {["Ipsum", "Amet", "Elit"].map((l) => (
-              <div className="co-person co-person--ai" key={l}>
-                <span className="co-avatar">
-                  <Sparkles size={14} />
-                </span>
-                <div>
-                  <b>Agente · {l}</b>
-                  <small>Lorem ipsum</small>
-                </div>
-                <span className="co-tag">IA</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Panel>
-      <div className="co-cols">
-        <Panel title="Lorem ipsum" hint={SHORT}>
-          <Table cols={3} rows={5} />
-        </Panel>
-        <Panel title="Dolor sit" hint={SHORT}>
-          <div className="co-progress-list">
-            {["Lorem", "Ipsum", "Dolor", "Amet"].map((l, i) => (
-              <Progress key={l} label={l} value={[92, 78, 55, 33][i]} />
-            ))}
-          </div>
-        </Panel>
-      </div>
-    </>
-  );
-}
-
-function Timeline() {
-  return (
-    <>
-      <div className="co-cols co-cols--wide">
-        <Panel title="Lorem ipsum versiones" hint={SHORT} action="Comparar">
-          <ol className="co-versions">
-            {VERSIONS.map((v, i) => (
-              <li key={v} className={i === 0 ? "is-draft" : ""}>
-                <span className="co-version-dot" />
-                <div>
-                  <b>{v}</b>
-                  <small>{["Hoy · 14:20", "18 nov 2026", "9 nov 2026", "28 oct 2026"][i]}</small>
-                  <p>{SHORT}</p>
-                </div>
-                {i === 0 ? <span className="co-tag co-tag--warn">Borrador</span> : <span className="co-tag">Publicada</span>}
-              </li>
-            ))}
-          </ol>
-        </Panel>
-        <Panel title="Lorem ipsum" hint={SHORT}>
-          <div className="co-publish">
-            <Lock size={18} />
-            <h3>Lorem ipsum dolor sit amet</h3>
-            <p>{LOREM}</p>
-            <ul>
-              {["Lorem ipsum dolor", "Consectetur adipiscing", "Integer posuere erat"].map((l) => (
-                <li key={l}>
-                  <Check size={14} /> {l}
-                </li>
-              ))}
-            </ul>
-            <button type="button" className="co-btn co-btn--solid">
-              Lorem ipsum <ArrowUpRight size={15} />
-            </button>
-          </div>
-        </Panel>
-      </div>
-      <Panel title="Lorem ipsum diff" hint={SHORT}>
-        <div className="co-diff">
-          {Array.from({ length: 4 }, (_, i) => (
-            <div key={i}>
-              <span className="co-tag">{i % 2 ? "Lorem" : "Ipsum"}</span>
-              <p>{SHORT}</p>
-              <small>{TINY}</small>
-            </div>
-          ))}
-        </div>
-      </Panel>
-    </>
-  );
-}
-
 /* ------------------------------------------------------------- conversación */
-
-const TURNS: { who: "laia" | "owner"; text: string; meta: string }[] = [
-  { who: "owner", text: LOREM, meta: "Tú · 16:02" },
-  { who: "laia", text: SHORT, meta: "LAIA · 16:02" },
-  { who: "laia", text: LOREM, meta: "LAIA · 16:04" },
-  { who: "owner", text: TINY, meta: "Tú · 16:07" },
-  { who: "laia", text: LOREM, meta: "LAIA · 16:08" },
-  { who: "owner", text: SHORT, meta: "Tú · 16:12" },
-];
 
 function ChatView({
   chat,
@@ -698,6 +166,7 @@ function ChatView({
   onBack: () => void;
   onToast: (message: string) => void;
 }) {
+  const turns = [{who:"owner",meta:"Tú · día 90",text:chat.title},{who:"laia",meta:"LAIA · demo",text:chat.preview},{who:"laia",meta:"LAIA · demo",text:idea.n===1?"Podemos preparar un recordatorio a las 48 horas y revisar la autorización antes de contactar.":idea.n===2?"Comparemos venta directa con una comisión de 150 € por cliente al mes.":"Revisemos los costes de voz antes de cambiar proveedores."}];
   return (
     <main className="co-page">
       <header className="co-page-head co-chat-head">
@@ -729,9 +198,9 @@ function ChatView({
       <div className="co-conv-layout">
         <section className="co-conv" aria-label="Conversación con LAIA">
           <div className="co-conv-day">
-            <span>Hoy · lorem ipsum</span>
+            <span>Hoy · día 90</span>
           </div>
-          {TURNS.map((turn, i) => (
+          {turns.map((turn, i) => (
             <div className={`co-msg co-msg--${turn.who}`} key={i}>
               <span className="co-msg-avatar">{turn.who === "laia" ? <Sparkles size={13} /> : "AF"}</span>
               <div>
@@ -744,7 +213,7 @@ function ChatView({
           <div className="co-conv-note">
             <Sparkles size={15} />
             <p>
-              Lorem ipsum dolor sit amet: esta conversación no toca la empresa activa. Lo que se acuerde aquí vive en el
+              Recuerda: esta conversación no toca la empresa activa. Lo que se acuerde aquí vive en el
               borrador hasta que se publique.
             </p>
           </div>
@@ -752,8 +221,8 @@ function ChatView({
           <article className="co-proposal">
             <header>
               <span className="co-kicker">Propuesta de esta conversación</span>
-              <h3>Lorem ipsum dolor sit amet</h3>
-              <p>{SHORT}</p>
+              <h3>Seguimiento comercial</h3>
+              <p>{chat.preview}</p>
             </header>
             <div className="co-proposal-grid">
               {[
@@ -773,7 +242,7 @@ function ChatView({
               <button
                 type="button"
                 className="co-btn co-btn--solid"
-                onClick={() => onToast("Propuesta añadida al borrador V1.3 en la demo.")}
+                onClick={() => onToast("Propuesta añadida al borrador V8 en la demo.")}
               >
                 Añadir al borrador <ArrowUpRight size={14} />
               </button>
@@ -798,14 +267,14 @@ function ChatView({
           <section className="co-insp-card co-idea-card">
             <span className="co-kicker">Idea en desarrollo</span>
             <h3>{idea.name}</h3>
-            <p>{SHORT}</p>
+            <p>{chat.preview}</p>
             <div className="co-idea-meta">
               <span>Rama</span>
               <b>{idea.branch}</b>
             </div>
             <div className="co-idea-meta">
               <span>Empresa activa</span>
-              <b>V1.2 · intacta</b>
+              <b>V7 · intacta</b>
             </div>
           </section>
 
@@ -824,7 +293,7 @@ function ChatView({
               <div className="co-linked" key={label}>
                 <span>
                   <b>{label}</b>
-                  <small>{TINY}</small>
+                  <small>{idea.branch}</small>
                 </span>
                 <em className={state === "Propuesta" ? "is-hot" : state === "Sin tocar" ? "is-off" : ""}>{state}</em>
               </div>
@@ -836,11 +305,11 @@ function ChatView({
               <span className="co-kicker">Documentos generados</span>
             </header>
             {["One pager", "Business plan", "Presupuesto"].map((doc) => (
-              <button type="button" className="co-evidence" key={doc} onClick={() => onToast("Documento de ejemplo. Sin contenido real todavía.")}>
+              <button type="button" className="co-evidence" key={doc} onClick={() => onToast("Documento previsto; apertura no conectada.")}>
                 <FileText size={15} />
                 <span>
                   <b>{doc}</b>
-                  <small>Lorem ipsum · versión de trabajo</small>
+                  <small>Agntia Demo · versión de trabajo</small>
                 </span>
                 <ArrowUpRight size={13} />
               </button>
@@ -849,7 +318,7 @@ function ChatView({
 
           <section className="co-insp-card co-insp-card--next">
             <span className="co-kicker">Siguiente paso</span>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nada de esto afecta a la empresa que ya está operando.</p>
+            <p>Revisa la propuesta y sus dependencias. Nada de esto afecta a la empresa que ya está operando.</p>
             <button type="button" className="co-btn co-btn--ghost" onClick={() => onToast("Comparativa de alternativas: pendiente de conectar.")}>
               Comparar alternativas <ArrowUpRight size={14} />
             </button>
@@ -860,19 +329,6 @@ function ChatView({
   );
 }
 
-const VARIANTS: Record<Variant, ReactNode> = {
-  dashboard: <Dashboard />,
-  table: <TableView cols={5} />,
-  cards: <Cards />,
-  editorial: <Editorial />,
-  canvas: <Canvas />,
-  chart: <Chart />,
-  flow: <Flow />,
-  matrix: <Matrix />,
-  org: <Org />,
-  timeline: <Timeline />,
-};
-
 /* ------------------------------------------------------------------ shell */
 
 export default function CompanyApp({ onClose }: { onClose: () => void }) {
@@ -882,18 +338,20 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
   const [drawer, setDrawer] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [notice, setNotice] = useState("");
+  const [selected, setSelected] = useState<string[] | null>(null);
   const [chats, setChats] = useState<Chat[]>(SEED_CHATS);
   const [chatId, setChatId] = useState<string | null>(null);
   const [chatsOpen, setChatsOpen] = useState(true);
   const scroller = useRef<HTMLDivElement>(null);
   const section = SECTIONS.find((s) => s.id === sectionId) ?? SECTIONS[0];
+  const content = COMPANY_DATA[section.id];
   const activeChat = chats.find((c) => c.id === chatId) ?? null;
   const activeIdea = activeChat ? IDEAS.find((i) => i.n === activeChat.idea) ?? IDEAS[0] : null;
 
   const newChat = () => {
     const id = `chat-${Date.now()}`;
     setChats((list) => [
-      { id, idea: 1, title: "Lorem ipsum dolor", preview: "Nueva conversación de ejemplo.", when: "Ahora", state: "Explorando" },
+      { id, idea: 1, title: section.label, preview: content.next, when: "Ahora", state: "Explorando" },
       ...list,
     ]);
     setChatId(id);
@@ -924,6 +382,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
 
   const choose = (id: SectionId) => {
     setSectionId(id);
+    setSelected(null);
     setChatId(null);
     setDrawer(false);
   };
@@ -957,7 +416,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
             <span className="co-version-dot" />
             <span>
               <b>{version}</b>
-              <small>No publicada</small>
+              <small>Vista simulada</small>
             </span>
             <ChevronDown size={14} />
           </button>
@@ -1057,13 +516,13 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
         <div className="co-rail-foot">
           <div className="co-completeness">
             <div>
-              <span>Compilación</span>
-              <b>68 %</b>
+              <span>Objetivo clientes</span>
+              <b>8 / 10</b>
             </div>
             <span className="co-progress-track">
-              <i style={{ width: "68%" }} />
+              <i style={{ width: "80%" }} />
             </span>
-            <small>Lorem ipsum dolor sit amet</small>
+            <small>Escenario de 90 días</small>
           </div>
           <button type="button" className="co-back" onClick={onClose}>
             <ArrowLeft size={15} />
@@ -1072,7 +531,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
           <div className="co-user">
             <span className="co-avatar">AF</span>
             <div>
-              <b>Lorem ipsum</b>
+              <b>Agntia Demo</b>
               <small>Propietario · demo</small>
             </div>
             <PanelLeft size={15} />
@@ -1107,7 +566,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
               <input placeholder="Buscar en la compilación…" aria-label="Buscar en la compilación" />
             </label>
             <button type="button" className="co-btn co-btn--ghost co-only-desktop">
-              <Plus size={15} /> Lorem
+              <Plus size={15} /> Nuevo
             </button>
             <button type="button" className="co-btn co-btn--solid" onClick={() => setNotice("Publicar llegará cuando conectemos el backend.")}>
               Publicar borrador
@@ -1127,102 +586,34 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
                   {section.group} · {String(SECTIONS.findIndex((s) => s.id === sectionId) + 1).padStart(2, "0")}
                 </span>
                 <h1>{section.label}</h1>
-                <p>{LOREM}</p>
+                <p>{content.hero} {content.desc}</p>
               </div>
               <div className="co-head-actions">
                 <span className="co-status">
-                  <span className="co-status-dot" /> Borrador · {version.split(" ·")[0]}
+                  <span className="co-status-dot" /> {version}
                 </span>
-                <button type="button" className="co-btn co-btn--ghost">
+                <button type="button" className="co-btn co-btn--ghost" onClick={newChat}>
                   <Sparkles size={15} /> Abrir con LAIA
                 </button>
-                <button type="button" className="co-btn co-btn--solid">
-                  Lorem ipsum <Plus size={15} />
+                <button type="button" className="co-btn co-btn--solid" onClick={()=>setNotice("Acción prevista: "+content.action+". Sin cambios reales.")}>
+                  {content.action} <Plus size={15} />
                 </button>
               </div>
             </header>
 
             <div className="co-page-body">
-              <div className="co-main">{VARIANTS[section.variant]}</div>
+              <div className="co-main"><Workspace key={sectionId} section={section} onSelect={setSelected}/></div>
 
               <aside className="co-inspector" aria-label="Inspector contextual">
-                <section className="co-insp-card">
-                  <header>
-                    <span className="co-kicker">Estado</span>
-                    <b>68 %</b>
-                  </header>
-                  <div className="co-progress-list">
-                    <Progress label="Lorem ipsum" value={72} />
-                    <Progress label="Dolor sit" value={54} />
-                    <Progress label="Amet consectetur" value={31} />
-                  </div>
-                </section>
-
-                <section className="co-insp-card">
-                  <header>
-                    <span className="co-kicker">Evidencias</span>
-                    <button type="button" className="co-mini">Ver todas</button>
-                  </header>
-                  {["Lorem ipsum dolor", "Consectetur adipiscing", "Integer posuere"].map((l, i) => (
-                    <button type="button" className="co-evidence" key={l}>
-                      {i === 0 ? <FileText size={15} /> : i === 1 ? <Clock3 size={15} /> : <Building2 size={15} />}
-                      <span>
-                        <b>{l}</b>
-                        <small>{TINY}</small>
-                      </span>
-                      <ArrowUpRight size={13} />
-                    </button>
-                  ))}
-                </section>
-
-                <section className="co-insp-card">
-                  <header>
-                    <span className="co-kicker">Decisiones pendientes</span>
-                    <em className="co-count">2</em>
-                  </header>
-                  {["Lorem ipsum dolor sit amet", "Consectetur adipiscing elit"].map((l) => (
-                    <div className="co-decision" key={l}>
-                      <p>{l}</p>
-                      <div>
-                        <button type="button" className="co-mini co-mini--on" onClick={() => setNotice("Propuesta lorem aceptada en la demo.")}>
-                          <Check size={13} /> Aprobar
-                        </button>
-                        <button type="button" className="co-mini">Revisar</button>
-                      </div>
-                    </div>
-                  ))}
-                </section>
-
-                <section className="co-insp-card co-insp-card--next">
-                  <span className="co-kicker">Siguiente paso</span>
-                  <p>{SHORT}</p>
-                  <button type="button" className="co-btn co-btn--ghost">
-                    Lorem ipsum <ArrowUpRight size={14} />
-                  </button>
-                </section>
-
-                <section className="co-insp-card">
-                  <header>
-                    <span className="co-kicker">Procedencia</span>
-                  </header>
-                  <div className="co-prov">
-                    {["Lorem ipsum", "Dolor sit amet", "Consectetur"].map((l) => (
-                      <div key={l}>
-                        <span className="co-prov-dot" />
-                        <span>
-                          <b>{l}</b>
-                          <small>{TINY}</small>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              </aside>
+ <section className="co-insp-card"><span className="co-kicker">Contexto · {section.label}</span><h3>{selected?.[0]??content.hero}</h3><p>{selected?selected.slice(1).join(" · "):content.desc}</p>{selected&&<button className="co-mini" onClick={()=>setSelected(null)}>Cerrar detalle</button>}</section>
+ <section className="co-insp-card"><span className="co-kicker">Siguiente paso</span><p>{content.next}</p><button className="co-btn co-btn--ghost" onClick={newChat}>Hablar con LAIA <ArrowUpRight size={14}/></button></section>
+ <section className="co-insp-card"><span className="co-kicker">Procedencia</span><p>Kickoff CEO · Visión founder · Dataset Agntia Demo</p><p>Datos sintéticos. No certifican capacidades operativas.</p><button className="co-mini" onClick={()=>choose("fuentes")}>Ver fuentes</button></section>
+ </aside>
             </div>
 
             <footer className="co-page-foot">
               <span>AGNTIAPRO · TU EMPRESA · DEMO</span>
-              <span>Lorem ipsum dolor sit amet · contenido de ejemplo</span>
+              <span>Seguimiento comercial · contenido de ejemplo</span>
               <span className="co-foot-icons">
                 <BarChart3 size={14} />
                 <CalendarDays size={14} />
