@@ -4,7 +4,7 @@ Revisión de partida `1a70bbc2c6f78c49fe6b51ed18297f27a9822149`. Superficie audi
 
 ## Propuesta original y código actual
 
-P10 exige revisiones de fuente, derechos de uso y retiro de derivados. Trans05 comparte la revisión de código de contexto de Trans02. El selector carga un conjunto reciente acotado antes de aplicar el ranking.
+P10 exige revisiones de fuente, derechos de uso y retiro de derivados. Trans05 comparte la revisión de código de contexto de Trans02. El selector carga un conjunto acotado antes de aplicar el ranking. CognitiveProjectionStore.latest elige la revisión más alta por id y ordena las filas elegibles por id antes del límite SQL. La antigüedad no determina la entrada en esa ventana.
 
 ## Diagnóstico
 
@@ -12,7 +12,7 @@ Un ancla antigua fuera de la ventana no participa en el ranking, independienteme
 
 ## Decisión propuesta
 
-MEJORAR la recuperación anterior al ranking. Aceptar referencias de ancla en el ámbito del hilo, cargarlas por id/revisión mediante resolve y unirlas al conjunto reciente. Deduplicar antes del único selector. Para skills, resolver también licencia, uso permitido y referencias a hechos al entregar.
+MEJORAR la recuperación anterior al ranking. Aceptar referencias de ancla en el ámbito del hilo, cargarlas por id/revisión mediante resolve y unirlas al conjunto acotado por id. Deduplicar antes del único selector. Para skills, resolver también licencia, uso permitido y referencias a hechos al entregar.
 
 ## Contrato e invariantes
 
@@ -20,8 +20,8 @@ La representación preparada conserva el vector de dependencias de la revisión 
 
 ## Prueba discriminante pendiente
 
-Fijar maxRefs=5 y desplazar el ancla con más de 41 revisiones recientes diferentes. Medir recall por id y tokens. Cambiar su revisión, retirar una licencia y pasar la misma consulta en otro hilo. Exigir que cada salida derivada se regenere o se abstenga. Evaluar recuperación y fidelidad por separado.
+Fijar maxRefs=5 y desplazar el ancla con más de 41 registros cuyos ids sean anteriores al del ancla en el orden SQL. Medir recall por id y tokens. Cambiar su revisión, retirar una licencia y pasar la misma consulta en otro hilo. Exigir que cada salida derivada se regenere o se abstenga. Evaluar recuperación y fidelidad por separado.
 
 ## Compatibilidad y rollback
 
-Desactivar la incorporación de anclas y volver al conjunto reciente. Invalidar briefs que dependan del serializador nuevo. Preservar procedencia y revocaciones durante rollback.
+Desactivar la incorporación de anclas y volver al conjunto acotado por id. Invalidar briefs que dependan del serializador nuevo. Preservar procedencia y revocaciones durante rollback.
