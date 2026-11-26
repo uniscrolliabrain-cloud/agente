@@ -24,7 +24,7 @@ for (const backend of ["memory", "pglite"]) {
       assert.equal((await store.getTurn("T", turn.id))?.thoughtIds.length, 1);
       await assert.rejects(() => store.append({...thought,content:"different"}), /conflict/);
       assert.equal((await store.thoughtsOf("T", turn.id))[0].content, "original");
-      await store.closeTurn("T", turn.id, "user", "user");
+      await store.closeTurn("T", turn.id, "response", "user");
       assert.deepEqual(await store.append(thought), thought);
     } finally { await db.close(); }
   });
