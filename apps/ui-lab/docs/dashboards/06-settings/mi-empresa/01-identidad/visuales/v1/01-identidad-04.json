@@ -1,0 +1,11 @@
+{
+  "id": "01-identidad-04",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/01-identidad/visuales/v1/01-identidad-04.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "01-identidad — icono raíces",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-1.json",
+  "status": "review-required"
+}

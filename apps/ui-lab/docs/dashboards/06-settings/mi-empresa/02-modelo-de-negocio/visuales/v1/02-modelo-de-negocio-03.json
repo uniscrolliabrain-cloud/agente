@@ -1,0 +1,11 @@
+{
+  "id": "02-modelo-de-negocio-03",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/02-modelo-de-negocio/visuales/v1/02-modelo-de-negocio-03.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "02-modelo-de-negocio — icono balanza de valor",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-1.json",
+  "status": "review-required"
+}

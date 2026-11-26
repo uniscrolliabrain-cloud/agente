@@ -1,0 +1,11 @@
+{
+  "id": "02-modelo-de-negocio-02",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/02-modelo-de-negocio/visuales/v1/02-modelo-de-negocio-02.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "02-modelo-de-negocio — icono principal",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-1.json",
+  "status": "review-required"
+}
