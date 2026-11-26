@@ -1,0 +1,66 @@
+# Trans06 — Pasada 04: wiring cognitivo y empresarial
+26-11-2026. Precedencia founder > CAMPAIGN > P4 > P3 > P2 > P1. Baseline funcional main 93236a34. Solo documentación y hunks candidatos; no GO.
+## 1. Estrategia
+El trasvase no convierte entidades de negocio en cards ni instala un segundo grafo. Representa la organización de una empresa mediante referencias a sus estructuras existentes, evaluaciones contextuales, relaciones y propuestas. Los procesos profesionales permanecen lenguaje, configuración compilada y SOPs tipados. La misma primitiva se aplica a tres empresas distintas sin fijar dominio. La espiral es feedback de estado autorizado, no un proceso recursivo autónomo que escribe en negocio.
+## 2. Diagnóstico del wiring real (Trans06)
+- app.ts 6bdb5675 L160–164 crea CognitionV2Runtime opt-in antes de Bus; L186–224 BusinessGraph(db,bus), kernelGraph resolveNode para kind no entity/unknown devuelve id/kind sin resolver instancia; entity usa tenantId como owner y catch null; neighbors catch y devuelve etiquetas, timeline [] explícito. GraphPort c1755a2a no actor/policy/revisión. No es resolver de autoridad ni historial. L266–281 Kernel; L323–330 PDP/governance posteriores; L333 FieldFilter. App es superficie reservada, no crear segundo graph.
+- runtime.ts 32a65f0b L42–54 autoriza identidad fresca, CardOntologyService.assertApproved si ontology/runtimeOutcome, documentos por preparedRag.valid, private self-read; L64–67 projector/slow/fast; L108 prepared, L117–127 ledger y contexto, L134 readSnapshot, L138 tools:[], L152–155 commit/ACK. Serving único; no contexto directo ni espera Slow. No asumir blobs Trans02/05.
+- projector.ts 4e173086: record.proposed parsea, assertApproved si ontology, compara tenant y ownerActorId, niega verified_fact/runtimeOutcome; aplica y escribe derived_from; from kind memory si memory, card para los demás. No usar entity_ref o claim como card exacta. Slow status solo RuntimeOutcomeProjector.fromSlowReceipt; source.revoked invalidación. Sidecar no cabe en strict record; no cast ni evento inventado.
+- business-routes.ts ffe2f9e2 L11–35 create/update acepta actor/source; updateEntityBody no version. Rutas owner-scoped localmente, no prueban authz global. /export y /neighborhood no son lectura acotada. No aceptar actor cliente en nuevo circuito.
+- business/graph.ts fc6bcd22 L139–207 update compare opcional y put; L218+ delete cascada y eventos; L310–370 createRelation endpoints, tipos, cardinalidad tx pero sin índice único concurrente (comentario explícito); insertIfAbsent false retorna objeto construido, no reread winner. L405+ neighborhood carga todas entities/relations y frontier puede revisitar. Relations sin revision explícita en business.ts. No crear CognitiveRef(kind:"relation").
+- state-machines.ts e9d5216e apply(...,roleId?) delega transition; BusinessGraph pasa patch.actor como último parámetro; actor y roleId no equivalentes. App constructor graph sin registry visible L197; confirmar otros mounts antes de afirmar no cableado. Upsert put sin version; no asumir atomicidad con update. Trans01 dueño tx/autoridad.
+- business/resolver.ts 4ad7a9a0 findCandidates(tenantId,owner,...) usa owner list y void tenantId; heurística nombre/email/cif, confidence >=.8 auto_merge es etiqueta, no permiso ni efecto. No identidad exacta por afinidad.
+- truth-resolver.ts f2744f76: reliability*confidence*freshness, Date.now, future timestamps pueden dar factor >1, invalid dates NaN; winner.kind conserva fuente y conflicts hasta10. BusinessTruth 124456fc project usa procedencia entidad, no receipt; resolver != verified_fact. No duplicar truth engine ni usar clock-dependent ranking como invariante.
+- business-read.ts 314cc808 solo internal read_workspace, devuelve receiptId/completed, no entidad. Reusar PDP/identity patterns, no ampliar arbitrariamente.
+- field-filter.ts c1a5336b: no classification map retorna record; filtra campos clasificados, no garantiza desconocidos/nested. Nuevo puerto exige allowlist explícita, no export ni FieldFilter como whitelist universal.
+- capability.ts cc0069a3: version, inputs/outputs unknown, preconditions strings, sideEffects, reversibility/risk/cost/idempotency/approval. Strings no evaluador automático, no eval ni DSL. CapabilityRunner 493a3bea governance/approval/claims condicionales; A02/A03 Trans01. SOPExecutor 1ab7a390 es Trans01.
+- vertical-slice-bundle.ts 6e74c61b V1 plan, template id/operationKey, version, profile/persons/memberships/automations/connections refs; no axes/criteria. Secret paths corta depth8, Trans04 P09 ya endurece. provision-client.ts 65dfa332 --bundle plan before apply; legacy SOP list catch []; no tocar provision real. business-schema.ts f86fc0d3 y ontologyBundle son vocabulario existente, no otro instalador.
+## 3. Circuito único
+Human intent journal o authorized event → Slow existing queue (coalesced) → draft evidence → JEV optional → server validates definition/criteria/scope → existing durable projection → context selector Trans02/05 → Fast. Si propone transformación: retorna a Trans01 proposal/admission/PDP/review/claim → runtime/SOP capability → adapter Trans03 → durable receipt/outbox → projection y watermark. H02/H03 Trans04 mide fases. Ninguna relación lanza SOP; no nueva ruta HTTP ni worker infinito.
+### P06 persistencia mínima
+Primera opción reutilizar card ontology para seis polos/evidence refs. Solo si evaluación multiwhole no cabe, sidecar descriptivo candidato; no ABI aprobado. Una revisión dueña de proyección, sin duplicar hechos o entidades. Datos: exact cardRef + draft P2 + bound identity/context/definition/criteria + evaluator metadata + event/revision/watermark. Key digest canonical binding; append immutable, same key/different digest conflict; publicar con parent/evidence valid same tx/inbox. Private default; no tenant sharing implícito. Excluido hasta revocation Trans02, RLS Trans04, packing Trans05. No DDL/event finalized.
+### P07 lectura empresarial exacta
+GraphPort legacy intacto. Puerto candidato estructural consumido solo por dueño de proyección, no segundo grafo. Identity server-bound, real tenant-scoped Store + PDP resource/type and field allowlist; schema/entity version explícitos. Mapear entity.version a ref.revision solo si resolución probada. Relation endpoints mediante evento autorizado y refs de entidades exactas; relation no kind. Denied/unavailable outward genérico, no existencia filtrada.
+```ts
+import type {CognitiveIdentity} from "../../../../../../packages/domain/src/cognition-v2.ts";
+import type {CognitiveRef} from "../../../../../../packages/domain/src/cognitive-reference.ts";
+type View={ref:CognitiveRef;contentDigest:string;fields:Readonly<Record<string,unknown>>};
+type ExactBusinessRead=(scope:CognitiveIdentity,ref:CognitiveRef)=>Promise<View|null>;
+export async function resolveEntityForAssessment(
+ identity:CognitiveIdentity,ref:CognitiveRef,read:ExactBusinessRead,
+ reauthorize:(scope:CognitiveIdentity)=>Promise<void>
+):Promise<View|null>{
+ if(ref.kind!=="entity"||ref.tenantId!==identity.tenantId)return null;
+ await reauthorize(identity);
+ const v=await read(identity,ref);
+ if(!v||v.ref.tenantId!==ref.tenantId||v.ref.kind!==ref.kind||
+ v.ref.id!==ref.id||v.ref.revision!==ref.revision||
+ !/^[a-f0-9]{64}$/.test(v.contentDigest))return null;
+ await reauthorize(identity);
+ return v;
+}
+```
+Proposed path engine/cognition/v2/organizational-read.ts reserve Trans02. Wrapper not proof: validate result schema, authenticated identity/current policy, whitelist before digest, bounded DB read, unknown classification deny, immutable canonical hash; recheck revision+policy at commit/serve. Default unavailable reader async()=>null. No graph.getEntity fallback. Digest != authority. If no exact adapter, pure tests and no activation. Multiworker tests on Trans01 DB.
+### P08 transformación y receipt
+Propuesta describe resource ref, desired state en lenguaje, goal, expected revisions, capability id/version y input digest resolved by contract, side effect family, evidence. No segundo approval schema. Capability contract supplies validation/preconditions; no eval strings. Adopt exact Trans01 action ABI after agreement, no authorized selection from model. Local update CAS + state machine binding same tx/outbox Trans01. Retirement through authorized status/definition if supported; otherwise blocked, no delete default. External accepted/unknown/confirmed Trans03, family verifier; never fromSlowReceipt for business effect. Compensation another authorized proposal, not inverse polarity. Pure display guard candidate:
+```ts
+type EffectState="accepted"|"confirmed"|"unknown"|"failed_without_effect";
+export function effectInterpretation(state:EffectState,verified:boolean){
+ if(state==="confirmed"&&verified)return "confirmed" as const;
+ if(state==="failed_without_effect"&&verified)return "failed_without_effect" as const;
+ return state==="accepted"?"reported_accepted" as const:"unresolved" as const;
+}
+```
+verified only from approved verifier over durable receipt/operation, never caller/model. Confirmed effect != verified benefit or goal satisfaction. Evaluate consequence independently.
+### P09 propagación
+P3 boundedReach only authorized exact refs; reader caps IO/edges before materialization, not neighborhood. Actual relation type/direction allowlist; path discovers context not transitive claim or permission. Revision advance invalidates old serving via approved source mechanism. No forged revoke on missing row. Transient adjacency, no persistent graph. Cycles/diamond/dedupe, same event once, derived event no self-trigger, finite budget/coalescing. No cascading writes.
+### P10 Slow/JEV/Fast
+Registry gate is mounted in runtime/projector; reuse approved six poles. Slow stays hypothesis/inference/unknown; JEV optional and egress owner Trans02/03. Use Trans05 authorized anchors/brief/skills with exact context and thread. Propose semantic framing in existing prompt templates, not new private reasoning storage; no arbitrary field injection. Select only compact authorized assessment summaries, preserve uncertainty/dispute and source references, exclude raw evaluator internals. Fast stream uses existing snapshot/ledger, no tools, no proposal, no direct lookup. If sidecar not integrated or invalid, no summary. Feature off = existing behavior. Context budget shared, no hard 20% requirement.
+### P11 compilación
+Prefer existing versioned bundle/ontology mechanisms; proposed criteria manifest contains only template ID, version, declared axis refs/digest, scope/goal selectors bound at install, bounded experimental settings, policy references (not permission override), retirement/approval receipt. No tenant IDs or entity IDs fabricated at template stage; resolve authorized refs after provision. Plan-only validation first, no secrets, no new domain or SOP. Founder approves exact version. Trans04 owns provisioning and integrity. Candidate pure comparison: same manifest digest + same authorized binding means replay noop; differing revision or missing binding means conflict, no auto apply.
+## 4. Matriz de ownership y orden
+P01–03 pure inventory/contracts/registry owner; P04–05 reuse cromos/attention with Trans02; P06–07 projection/read Trans02, authority Trans01; P08 Trans01 A02/A03/E03 and Trans03 effect families; P09 durable event/inbox and exact endpoints; P10 Trans02 journal/snapshot/JEV and Trans05 thread/skills; P11 Trans04 plan/manifest; P12 combined gate. W1 independent pure tests; W2 contracts/reservations; W3 mount behind default-off flags; W4 cert. No shared files or canonical edits without explicit owner. No bypass if dependency absent.
+## 5. Simulación y pruebas
+A) create relation loser same id/different payload: not evidence until authoritative reread; B) role mismatch actor vs roleId: deny, no transition; C) relation endpoint missing or stale: no projection; D) private field can be read by owner but not another actor, unknown classification excluded; E) old card snapshot after revocation: no serve; F) same operation accepted→unknown→confirmed, no retry or business benefit inferred; G) retirement changes department and company assessments independently, no delete; H) compiled goal changes: old context obsolete, no policy relaxation; I) model sets actor/permission/verified_fact: reject. Existing tests business-graph, kernel, cognition-v2-ontology, runtime, security-context; new trans06-business-read, transform, wiring (candidate). Actual runner and PG restricted role in P5/P6. No tests run.
+## 6. Feedback y reauditoría
+P3 uncertain mount resolved. Exact entity reads not available today; do not pretend GraphPort sufficient. TruthResolver is ranking not evidence. Bundle extension needs existing installer ownership, no new compiler. P5 will simulate three synthetic businesses, ablation, fault and metrics; P6 consolidated handoff. Remaining complete caller scan, canonical 48 blocks, actual ABI/migration/PG proof. No functional modifications. Rollback disable proposed projection/selector/manifest, preserve receipts/history, no fallback effect. Self-score architecture 9.5 granularity 9.0 anchors 9.4 hunks 8.9 wiring 9.2 tests 9.0 autonomy 8.9 rollback 9.2 = 9.1375/10. Documentary estimate, not independent certification.
