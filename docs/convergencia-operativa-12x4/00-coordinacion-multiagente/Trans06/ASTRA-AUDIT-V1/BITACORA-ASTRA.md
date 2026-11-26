@@ -11,3 +11,5 @@
 ## Punto de continuidad
 
 Completar la pasada 1 siguiendo `registerKernelListeners` hasta el cierre y la persistencia de cada turno. Trazar autorizaciones y revisiones desde las rutas de Cognition V2 hasta el selector, y desde el resolutor de verdad empresarial hasta el proyector. Comparar los blobs de contrato compartidos entre las seis ramas. Después confrontar cada patchset de Trans06 con un caller real, con evidencia sobre procedencia, revisión, alcance y causalidad. Repetir el inventario con el alcance específico de cada una de las otras cinco ramas. La especificación horizontal depende de esas seis revisiones.
+
+Segunda entrega. Comparación estática de siete árboles por blob, revisión de seis contratos, matriz de responsabilidades y catorce circuitos de prueba especificados. Los resultados de pruebas de rama se publican en sus respectivos árboles.

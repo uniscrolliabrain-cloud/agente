@@ -15,3 +15,5 @@ Resultado del runner. Ocho pruebas aprobadas, cero fallidas, omitidas o pendient
 | `tests/kernel-meta-context.test.ts` | Cuatro casos de clasificación de progreso de Slow. Evidencia unitaria sobre los hints de Meta. |
 
 Estas pruebas no cubren concurrencia real en Postgres, autorización de operaciones empresariales, rutas completas de Fast ni comportamiento de proveedores. El resultado de replay de cards no alcanza por sí solo el replay de cualquier escritura disparada por el bus. La revisión de propuestas todavía requiere contrastar el comportamiento en cada punto de montaje.
+
+Experimento puro sobre fieldEnergy importado directamente de kernel/cromos/physics/field.ts. Los pesos [] y [0] devolvieron 0, [1,0] y [0,1] devolvieron 0.5 y [1,1] devolvió 1. El escalar pierde la identidad del polo y equipara ausencia a observación en cero.

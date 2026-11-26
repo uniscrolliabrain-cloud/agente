@@ -7,3 +7,7 @@ Estado al 26 de noviembre de 2026. Primera pasada abierta. Este checkpoint fija 
 - [Bitácora y punto de continuidad](BITACORA-ASTRA.md)
 - [Mandato original de auditoría](../HANDOFF-ASTRA.md)
 - [Campaña original de Trans06](../CAMPAIGN.md)
+
+- [Inventario del corpus de la rama](FUENTES-VERSIONADAS.md)
+- [Comparación del contrato y prueba pendiente](CONTRASTE-DE-CONTRATO.md)
+- [Convergencia horizontal y circuitos propuestos](convergencia-horizontal/README.md)
