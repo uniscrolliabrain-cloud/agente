@@ -412,7 +412,15 @@ export class Store {
   // DB_RECOVER_INTERRUPTED_ACTIONS_V1
   async recoverInterruptedActions(): Promise<void> {
     await this.db.query(
-      `UPDATE records SET data=data || '{"status":"outcome_unknown","error":"Server restarted during execution. Check the provider before creating another action."}'::jsonb WHERE kind='actions' AND data->>'status'='executing'`,
+      `UPDATE records AS action SET data=action.data || '{"status":"outcome_unknown","reconciliationRequired":true,"errorKind":"outcome_unknown","error":"No active execution lease remains. Check the provider before creating another action."}'::jsonb
+       WHERE action.kind='actions' AND action.data->>'status'='executing'
+       AND NOT EXISTS (
+         SELECT 1 FROM records AS intent
+         WHERE intent.owner=action.owner AND intent.kind='action-dispatch' AND intent.id=action.id
+         AND intent.data->>'status'='pending'
+         AND (COALESCE(NULLIF(intent.data->>'leaseExpiresAt','')::timestamptz,
+                       intent.updated_at + interval '5 minutes')) > now()
+       )`,
     );
   }
   async take<T>(owner: string, kind: string, id: string): Promise<T | null> {

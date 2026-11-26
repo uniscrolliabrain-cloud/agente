@@ -486,33 +486,6 @@ export class AgentService {
       await this.actions
         .reconcileDispatchIntents()
         .catch((error) => backgroundFailure("maintain reconcileDispatchIntents", error));
-      // STUCK_5MIN_V1 - baja de 10 a 5 min para reconciliar antes.
-      const STUCK_MS = Number(process.env.OUTCOME_UNKNOWN_STUCK_MS ?? "300000") || 300000;
-      const stuckCutoff = new Date(Date.now() - STUCK_MS).toISOString();
-      const stuckActions = await this.db.scanByStatus<{
-        id: string;
-        status: string;
-        updatedAt?: string;
-      }>("actions", ["executing"], 200);
-      for (const { owner, value } of stuckActions) {
-        const lastUpdate = value.updatedAt ? Date.parse(value.updatedAt) : 0;
-        if (lastUpdate && lastUpdate > Date.parse(stuckCutoff)) continue;
-        await this.db
-          .compareAndSwap(
-            owner,
-            "actions",
-            value.id,
-            { status: "executing" },
-            {
-              status: "outcome_unknown",
-              error:
-                "Action was executing for more than 10 minutes without resolution. " +
-                "Check the provider before retrying.",
-            },
-          )
-          .catch((error) => backgroundFailure("reconcile outcome_unknown", error));
-      }
-
       const nowIso = new Date().toISOString();
       const pendingActions = await this.db.scanByStatus<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
       for (const { owner, value } of pendingActions) {

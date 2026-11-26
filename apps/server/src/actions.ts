@@ -89,6 +89,8 @@ export interface ActionDispatchIntent {
   settledAt?: string;
   reconciledAt?: string;
   actionStatus?: string;
+  workerId?: string;
+  leaseExpiresAt?: string;
 }
 
 /**
@@ -154,6 +156,8 @@ interface Options {
 // informal. En la proxima fase se envuelve como primitiva formal con
 // runtimeId + capabilityId + risk, sin cambiar la firma.
 export class ActionService {
+  private readonly workerId = randomUUID();
+  private readonly dispatchLeaseMs = 300000;
   private readonly now: () => number;
   private readonly bus?: EventBus;
   private readonly policy?: PolicyEngine;
@@ -510,6 +514,8 @@ export class ActionService {
             hash: winner.hash,
             decidedBy: userId ?? owner,
             decidedAt: new Date(this.now()).toISOString(),
+            workerId: this.workerId,
+            leaseExpiresAt: new Date(Date.now() + this.dispatchLeaseMs).toISOString(),
           } as ActionDispatchIntent & { id: string });
         }
       }
@@ -624,12 +630,28 @@ export class ActionService {
     // ACTION_DISPATCH_STARTED_V1 - distingue un rechazo confirmado antes de
     // invocar al proveedor de un error posterior al despacho.
     let dispatched = false;
+    const renew = () => this.db.compareAndSwap<ActionDispatchIntent>(
+      owner, "action-dispatch", claimed.id,
+      { status: "pending", workerId: this.workerId },
+      { leaseExpiresAt: new Date(Date.now() + this.dispatchLeaseMs).toISOString() },
+    );
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
     try {
+      if (!await renew()) throw new AppError("Dispatch lease unavailable", 409);
+      heartbeat = setInterval(() => { void renew().catch(() => null); }, 30000);
+      heartbeat.unref?.();
       // EFFECT_BOUNDARY_AUTHZ_V1 - la autorizacion de conexion se revalida
       // justo antes del efecto: una rotacion entre claim y despacho no puede
       // ejecutarse con la credencial nueva. No promete atomicidad remota.
       await this.assertConnectionCurrent(owner, claimed);
       const input = proposalSchema.parse({ kind: claimed.kind, data: claimed.data });
+      const live = await this.db.transaction(async () => {
+        const current = await this.db.compareAndSwap<ActionProposal>(
+          owner, "actions", claimed.id, { status: "executing", hash: claimed.hash }, {},
+        );
+        return current && await renew();
+      });
+      if (!live) throw new AppError("Dispatch authority expired", 409);
       dispatched = true;
       const result = await this.options.execute(
         owner,
@@ -677,6 +699,7 @@ export class ActionService {
           : { errorKind }),
       } as unknown as ActionProposal;
     }
+    clearInterval(heartbeat);
     await this.db.transaction(async () => {
       await this.db.put(owner, "actions", finished);
       await this.settleDispatch(owner, finished.id, finished.status);
@@ -770,13 +793,20 @@ export class ActionService {
         return { executed: false, reason: "connection_changed" };
       }
     }
-    const claimed = await this.db.compareAndSwap<ActionProposal>(
-      owner,
-      "actions",
-      actionId,
-      { status: "scheduled" },
-      { status: "executing", executeAt: null },
-    );
+    const claimed = await this.db.transaction(async (tx) => {
+      const winner = await this.db.compareAndSwap<ActionProposal>(
+        owner, "actions", actionId,
+        { status: "scheduled", hash: proposal.hash },
+        { status: "executing", executeAt: null },
+      );
+      if (winner) await tx.put(owner, "action-dispatch", {
+        id: actionId, actionId, status: "pending", hash: winner.hash,
+        decidedAt: new Date(this.now()).toISOString(),
+        workerId: this.workerId,
+        leaseExpiresAt: new Date(Date.now() + this.dispatchLeaseMs).toISOString(),
+      } satisfies ActionDispatchIntent);
+      return winner;
+    });
     if (!claimed) return { executed: false, reason: "already_dispatched" };
     const finished = await this.run(owner, claimed);
     return finished.status === "succeeded"
@@ -928,6 +958,7 @@ export class ActionService {
     let reconciled = 0;
     for (const { owner, value } of rows) {
       await this.db.transaction(async () => {
+        if (Date.parse(value.leaseExpiresAt ?? "") > Date.now()) return;
         const decidedAt = Date.parse(value.decidedAt ?? "");
         if (!Number.isFinite(decidedAt) || decidedAt > cutoff) return;
         const action = await this.db.get<ActionProposal>(owner, "actions", value.actionId);
