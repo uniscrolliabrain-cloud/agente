@@ -1129,6 +1129,86 @@ const threadMessages: Record<string, ChatMessage[]> = {
       timestamp: "Ayer",
     },
   ],
+  "thread-3": [
+    { id: "m1", role: "user", content: "Prepara la propuesta para Taller Bruma.", timestamp: "11:02" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Borrador listo: atención por WhatsApp y reservas con aprobación humana. He dejado el precio sin cerrar y la puesta en marcha pendiente de confirmar contigo.",
+      timestamp: "11:04",
+    },
+  ],
+  "thread-4": [
+    { id: "m1", role: "user", content: "¿Qué facturas de octubre siguen pendientes?", timestamp: "10:18" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Tres: Casa Botànica (vencida hace cuatro días), Mercado Ladera y estudio Caliza. He preparado el recordatorio para las dos primeras.",
+      timestamp: "10:19",
+    },
+  ],
+  "thread-5": [
+    { id: "m1", role: "user", content: "Planifica el onboarding de Costa Nido.", timestamp: "09:40" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Cuatro pasos en dos semanas: accesos, importación de contactos, primera campaña y revisión conjunta. La sesión de cierre queda por agendar.",
+      timestamp: "09:41",
+    },
+  ],
+  "thread-6": [
+    { id: "m1", role: "user", content: "Ideas para la campaña de diciembre.", timestamp: "Ayer" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Tres líneas: anticipación de compras, soporte extendido y una guía breve de regalos. Te dejo un calendario con dos publicaciones por semana.",
+      timestamp: "Ayer",
+    },
+  ],
+  "thread-7": [
+    { id: "m1", role: "user", content: "Resume las incidencias del portal de clientes.", timestamp: "Ayer" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Cinco incidencias, dos repetidas por el mismo fallo de sesión. La corrección está propuesta y sin aprobar; no he tocado nada en producción.",
+      timestamp: "Ayer",
+    },
+  ],
+  "thread-8": [
+    { id: "m1", role: "user", content: "Organiza las entrevistas de equipo de la semana que viene.", timestamp: "Hace 2 días" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Seis entrevistas repartidas en tres días, con huecos de quince minutos entre ellas. Falta confirmar dos horarios.",
+      timestamp: "Hace 2 días",
+    },
+  ],
+  "thread-9": [
+    { id: "m1", role: "user", content: "¿Qué cambia en el contrato de Atlas Formación?", timestamp: "Hace 3 días" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Sube el número de usuarios incluidos y añade una revisión trimestral. El resto de condiciones se mantiene; la firma sigue pendiente.",
+      timestamp: "Hace 3 días",
+    },
+  ],
+  "thread-10": [
+    { id: "m1", role: "user", content: "Prepara el resumen para el consejo del jueves.", timestamp: "Hace 5 días" },
+    {
+      id: "m2",
+      role: "assistant",
+      content:
+        "Cuatro puntos: ingresos, margen, automatización y riesgos abiertos. Las cifras son del escenario sintético de noviembre.",
+      timestamp: "Hace 5 días",
+    },
+  ],
 };
 
 const threads: ThreadWithMessages[] = [
@@ -1147,6 +1227,70 @@ const threads: ThreadWithMessages[] = [
     updatedAt: iso(1200),
     messageCount: threadMessages["thread-2"].length,
     messages: threadMessages["thread-2"],
+  },
+  {
+    id: "thread-3",
+    title: "Propuesta para Taller Bruma",
+    createdAt: iso(320),
+    updatedAt: iso(26),
+    messageCount: threadMessages["thread-3"].length,
+    messages: threadMessages["thread-3"],
+  },
+  {
+    id: "thread-4",
+    title: "Facturas de octubre",
+    createdAt: iso(1200),
+    updatedAt: iso(95),
+    messageCount: threadMessages["thread-4"].length,
+    messages: threadMessages["thread-4"],
+  },
+  {
+    id: "thread-5",
+    title: "Onboarding de Costa Nido",
+    createdAt: iso(1800),
+    updatedAt: iso(280),
+    messageCount: threadMessages["thread-5"].length,
+    messages: threadMessages["thread-5"],
+  },
+  {
+    id: "thread-6",
+    title: "Campaña de diciembre",
+    createdAt: iso(2600),
+    updatedAt: iso(1440),
+    messageCount: threadMessages["thread-6"].length,
+    messages: threadMessages["thread-6"],
+  },
+  {
+    id: "thread-7",
+    title: "Incidencias del portal",
+    createdAt: iso(3200),
+    updatedAt: iso(1600),
+    messageCount: threadMessages["thread-7"].length,
+    messages: threadMessages["thread-7"],
+  },
+  {
+    id: "thread-8",
+    title: "Entrevistas de equipo",
+    createdAt: iso(4300),
+    updatedAt: iso(2880),
+    messageCount: threadMessages["thread-8"].length,
+    messages: threadMessages["thread-8"],
+  },
+  {
+    id: "thread-9",
+    title: "Cambios en el contrato",
+    createdAt: iso(5600),
+    updatedAt: iso(4320),
+    messageCount: threadMessages["thread-9"].length,
+    messages: threadMessages["thread-9"],
+  },
+  {
+    id: "thread-10",
+    title: "Resumen para el consejo",
+    createdAt: iso(7200),
+    updatedAt: iso(7200),
+    messageCount: threadMessages["thread-10"].length,
+    messages: threadMessages["thread-10"],
   },
 ];
 

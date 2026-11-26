@@ -3,7 +3,7 @@
 // tarjetas. El menu (tres puntos) permite renombrar, mover a proyecto y enviar
 // la conversacion a una persona del equipo o a un agente del tenant.
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { FolderKanban, MoreHorizontal, Send, Trash2, UserRound } from "lucide-react";
+import { FolderKanban, MoreHorizontal, Pin, Send, Trash2, UserRound } from "lucide-react";
 import type { Thread } from "../api/threads";
 import { listProjects, type Project } from "../api/projects";
 import { getCompanyOverview, type CompanyAgent, type CompanyMember } from "../api/company";
@@ -21,6 +21,9 @@ interface Props {
   onRename: (id: string, title: string) => Promise<unknown> | void;
   onPatch: (id: string, patch: ThreadPatch) => Promise<unknown> | void;
   onDelete?: (id: string) => Promise<unknown> | void;
+  /** CHATS_PANEL_V1 - fijar conversaciones solo en el clon de demostración. */
+  pinned?: string[];
+  onTogglePin?: (id: string) => void;
 }
 
 interface MenuAnchor {
@@ -47,7 +50,10 @@ export default function SidebarThreads({
   onRename,
   onPatch,
   onDelete,
+  pinned,
+  onTogglePin,
 }: Props) {
+  const isPinned = (id: string) => Boolean(pinned?.includes(id));
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -150,7 +156,14 @@ export default function SidebarThreads({
                 onClick={() => onSelect(thread.id)}
                 title={thread.title}
               >
-                <span className="conv-title">{thread.title}</span>
+                <span className="conv-title">
+                  {isPinned(thread.id) && (
+                    <span className="conv-pin" title="Fijado">
+                      <Pin size={11} aria-hidden="true" />
+                    </span>
+                  )}
+                  {thread.title}
+                </span>
                 <span className="conv-meta">{meta || shortTime(thread.updatedAt)}</span>
               </button>
             )}
@@ -176,6 +189,19 @@ export default function SidebarThreads({
             <button type="button" className="conv-menu-item" role="menuitem" onClick={() => startRename(menuThread)}>
               Renombrar
             </button>
+            {onTogglePin && (
+              <button
+                type="button"
+                className="conv-menu-item"
+                role="menuitem"
+                onClick={() => {
+                  closeMenu();
+                  onTogglePin(menuThread.id);
+                }}
+              >
+                <Pin size={12} aria-hidden="true" /> {isPinned(menuThread.id) ? "Desfijar de Chats" : "Fijar en Chats"}
+              </button>
+            )}
 
             <div className="conv-menu-label">
               <FolderKanban size={12} aria-hidden="true" /> Proyecto

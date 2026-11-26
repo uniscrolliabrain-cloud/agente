@@ -1763,6 +1763,17 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .v2-nav-slot::after { content: ""; position: absolute; left: 8px; right: 8px; top: 50%; height: 2px; border-radius: 2px; background: var(--v2-purple); transform: translateY(-50%); }
 .v2-nav-ghost { position: fixed; z-index: 90; display: flex; align-items: center; gap: 12px; padding: 0 12px; border-radius: 12px; background: #fff; border: 1px solid var(--v2-border); box-shadow: 0 12px 28px #0000001f; color: var(--v2-text); font-size: 13.5px; font-weight: 500; pointer-events: none; white-space: nowrap; }
 .v2-nav-ghost .v2-nav-icon { width: 18px; height: 18px; flex-shrink: 0; color: var(--v2-purple); }
+/* CHATS_PANEL_V1 - panel de Chats con altura propia: el menú y la lista de
+   conversaciones se desplazan por separado; arriba del todo el menú desaparece. */
+.v2-sidebar[data-chats="true"] .v2-sidebar-top { overflow: hidden; }
+.v2-sidebar[data-chats="true"] .v2-sidebar-nav { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+.v2-sidebar[data-chats="true"] .v2-sidebar-recent-block { flex: 0 0 auto; display: flex; flex-direction: column; min-height: 52px; padding-top: 4px; overflow: hidden; }
+.v2-sidebar[data-chats="true"] .v2-sidebar-recent-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin; padding-bottom: 6px; }
+.v2-chats-handle { flex: 0 0 9px; display: grid; place-items: center; cursor: ns-resize; touch-action: none; }
+.v2-chats-handle > span { width: 26px; height: 2px; border-radius: 2px; background: var(--v2-border-strong); transition: background 120ms ease; }
+.v2-chats-handle:hover > span, .v2-chats-handle:focus-visible > span { background: var(--v2-purple); }
+.v2-chats-handle:focus-visible { outline: 2px solid var(--v2-purple); outline-offset: 1px; border-radius: 3px; }
+.conv-pin { display: inline-flex; vertical-align: -1px; margin-right: 5px; color: var(--v2-purple); }
 .v2-nav-item > span { display: flex; align-items: center; gap: 12px; }
 .v2-nav-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--v2-orange); }
 

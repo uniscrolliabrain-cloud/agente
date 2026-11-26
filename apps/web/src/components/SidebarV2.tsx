@@ -74,6 +74,9 @@ interface Props {
    *  Solo el clon de demostración lo enciende; producción no pasa el prop y
    *  conserva su menú exactamente igual. */
   reorderableNav?: boolean;
+  /** CHATS_PANEL_V1 - panel de Chats redimensionable y fijable. También solo
+   *  en el clon de demostración. */
+  chatsPanel?: boolean;
 }
 
 // UI_LAB_LEGACY_V1 - vistas retiradas solo en el clon de demostración.
@@ -90,6 +93,28 @@ function readNavOrder(): AppView[] {
     const raw = localStorage.getItem(NAV_ORDER_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
     return Array.isArray(parsed) ? parsed.filter((value): value is AppView => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+// CHATS_PANEL_V1 - altura del panel de Chats y conversaciones fijadas.
+const CHATS_HEIGHT_KEY = "agntia_chats_panel_height_v1";
+const PINNED_KEY = "agntia_pinned_threads_v1";
+const CHATS_MIN = 52;
+function readChatsHeight(): number {
+  try {
+    const stored = Number(localStorage.getItem(CHATS_HEIGHT_KEY));
+    return Number.isFinite(stored) && stored >= CHATS_MIN ? stored : 232;
+  } catch {
+    return 232;
+  }
+}
+function readPinnedThreads(): string[] {
+  try {
+    const raw = localStorage.getItem(PINNED_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
   } catch {
     return [];
   }
@@ -138,6 +163,7 @@ export default function SidebarV2({
   hideLegacyViews,
   projectsLabel,
   reorderableNav,
+  chatsPanel,
 }: Props) {
   // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
   const demoItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
@@ -300,10 +326,88 @@ export default function SidebarV2({
     const entry = navItems.find((item) => item.id === id);
     setNavAnnounce(`${entry?.label ?? id}, posición ${to + 1} de ${next.length}`);
   };
+  // CHATS_PANEL_V1 - el panel de Chats se arrastra desde su separador: crece
+  // hasta quedarse con toda la barra y, si solo sube un poco, el menú sigue
+  // desplazándose por separado. Los fijados van primero.
+  const [chatsHeight, setChatsHeight] = useState<number>(() => readChatsHeight());
+  const [pinned, setPinned] = useState<string[]>(() => readPinnedThreads());
+  const topRef = useRef<HTMLDivElement>(null);
+  const recentRef = useRef<HTMLDivElement>(null);
+  const chatsMax = useRef(0);
+
+  useEffect(() => {
+    if (!chatsPanel) return;
+    try {
+      localStorage.setItem(CHATS_HEIGHT_KEY, String(Math.round(chatsHeight)));
+    } catch {
+      // Sin almacenamiento, la altura dura la sesión.
+    }
+  }, [chatsPanel, chatsHeight]);
+
+  useEffect(() => {
+    if (!chatsPanel) return;
+    try {
+      localStorage.setItem(PINNED_KEY, JSON.stringify(pinned));
+    } catch {
+      // Sin almacenamiento, los fijados duran la sesión.
+    }
+  }, [chatsPanel, pinned]);
+
+  const measureChatsMax = () => {
+    const top = topRef.current;
+    if (!top) return CHATS_MIN;
+    let fixed = 0;
+    for (const child of Array.from(top.children) as HTMLElement[]) {
+      if (child === recentRef.current || child.classList.contains("v2-sidebar-nav")) continue;
+      fixed += child.getBoundingClientRect().height;
+    }
+    return Math.max(CHATS_MIN + 60, Math.round(top.clientHeight - fixed));
+  };
+
+  const startChatsDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!chatsPanel) return;
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = chatsHeight;
+    chatsMax.current = measureChatsMax();
+    const move = (pointer: PointerEvent) => {
+      setChatsHeight(Math.min(chatsMax.current, Math.max(CHATS_MIN, startHeight + (startY - pointer.clientY))));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const onChatsKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const max = measureChatsMax();
+    setChatsHeight((height) => {
+      if (event.key === "Home") return CHATS_MIN;
+      if (event.key === "End") return max;
+      return Math.min(max, Math.max(CHATS_MIN, height + (event.key === "ArrowUp" ? 24 : -24)));
+    });
+  };
+
+  const togglePin = (id: string) =>
+    setPinned((previous) => (previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id]));
+
+  const sortedThreads = chatsPanel && pinned.length
+    ? [...threads].sort((a, b) => {
+        const rank = (id: string) => {
+          const at = pinned.indexOf(id);
+          return at < 0 ? Number.MAX_SAFE_INTEGER : at;
+        };
+        return rank(a.id) - rank(b.id);
+      })
+    : threads;
+
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
   // la columna. Antes solo se veían tres y los demás desaparecían sin aviso.
-  const recent = threads;
   const hasPendingTasks = false;
   // El tooltip del rail se pinta en coordenadas de ventana para que no lo
   // recorte el scroll interno de la barra.
@@ -316,8 +420,8 @@ export default function SidebarV2({
   const hideTip = () => setRailTip(null);
 
   return (
-    <aside className="v2-sidebar" data-collapsed={collapsed}>
-      <div className="v2-sidebar-top">
+    <aside className="v2-sidebar" data-collapsed={collapsed} data-chats={chatsPanel ? "true" : undefined}>
+      <div className="v2-sidebar-top" ref={topRef}>
         <div className="v2-sidebar-head">
           <button
             type="button"
@@ -425,19 +529,41 @@ export default function SidebarV2({
         </nav>
 
         {!collapsed && (
-          <div className="v2-sidebar-recent-block">
+          <div
+            className="v2-sidebar-recent-block"
+            ref={recentRef}
+            style={chatsPanel ? { height: chatsHeight } : undefined}
+          >
+            {chatsPanel && (
+              <div
+                className="v2-chats-handle"
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label="Altura de Chats"
+                aria-valuemin={CHATS_MIN}
+                aria-valuenow={Math.round(chatsHeight)}
+                tabIndex={0}
+                onPointerDown={startChatsDrag}
+                onKeyDown={onChatsKeyDown}
+              >
+                <span aria-hidden="true" />
+              </div>
+            )}
             <div className="v2-sidebar-recent-title">
-              <span className="v2-sidebar-label" style={{ padding: 0, margin: 0 }}>Recientes</span>
+              <span className="v2-sidebar-label" style={{ padding: 0, margin: 0 }}>Chats</span>
               <Search size={14} style={{ color: "var(--v2-text-3)" }} />
             </div>
-            <SidebarThreads
-              threads={recent}
-              activeThreadId={activeThreadId}
-              onSelect={onSelectThread}
-              onRename={onRenameThread}
-              onPatch={onPatchThread}
-              {...(onDeleteThread ? { onDelete: onDeleteThread } : {})}
-            />
+            <div className="v2-sidebar-recent-list">
+              <SidebarThreads
+                threads={sortedThreads}
+                activeThreadId={activeThreadId}
+                onSelect={onSelectThread}
+                onRename={onRenameThread}
+                onPatch={onPatchThread}
+                {...(onDeleteThread ? { onDelete: onDeleteThread } : {})}
+                {...(chatsPanel ? { pinned, onTogglePin: togglePin } : {})}
+              />
+            </div>
           </div>
         )}
       </div>
