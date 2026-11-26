@@ -118,12 +118,12 @@ export class SlowCognitionQueue {
         signal.throwIfAborted();
         return this.provider.infer({ ...job.data, context: preparedContext, contextDigest }, signal);
       }, AbortSignal.any([cancellation.signal, ...(shutdown ? [shutdown] : [])]));
+      const output = slowOutputSchema.parse(raw);
       if (Buffer.byteLength(JSON.stringify(raw), "utf8") > 32000) throw Error("SLOW_OUTPUT_BUDGET");
       const saved = await this.db.rawQuery(`UPDATE cognition_v2_slow_jobs SET output=$4::jsonb WHERE tenant=$1 AND id=$2 AND fence=$3 AND state='running' AND lease_until>$5 RETURNING id`,
         [tenant, job.id, job.fence, JSON.stringify(raw), new Date(this.clock()).toISOString()]);
       if (!saved.length) throw Error("STALE_SLOW_FENCE");
       // Durable raw output receipt precedes structured extraction/verification.
-      const output = slowOutputSchema.parse(raw);
       if (output.evidence.some((r) => !job.data.evidence.some((e) => digest(e) === digest(r)))) throw Error("FABRICATED_EVIDENCE");
       // Classification is optional and bounded; it never promotes factuality.
       let classification = await new RulesClassifier().classify(output.body);
@@ -150,12 +150,13 @@ export class SlowCognitionQueue {
         const [current] = await this.db.rawQuery<{ fence: string; state: string; valid: boolean }>(`SELECT fence,state,lease_until>$3 AS valid FROM cognition_v2_slow_jobs WHERE tenant=$1 AND id=$2 FOR UPDATE`, [tenant, job.id, new Date(this.clock()).toISOString()]);
         if (!current || current.state !== "running" || current.fence !== job.fence || !current.valid) throw Error("STALE_SLOW_FENCE");
         await this.context.assertAuthorized(job.data.identity);
-        for (const ref of output.evidence) if (!await this.context.resolve(job.data.identity, ref.id, ref.revision)) throw Error("EVIDENCE_REVOKED");
+        for (const ref of job.data.evidence) if (!await this.context.resolve(job.data.identity, ref.id, ref.revision)) throw Error("EVIDENCE_REVOKED");
         if (!this.capture) throw Error("KERNEL_CAPTURE_UNCONFIGURED");
         const createdAt = new Date(this.clock()).toISOString();
         const thought = await this.capture(job.data.identity, { operationId: job.id, content: output.body, createdAt, epistemic: output.epistemic });
         const record = cognitiveRecordSchema.parse({ schemaVersion: "2.0", id: `slow:${job.id}`, tenantId: tenant, revision: 1,
           kind: "card", title: output.title, body: output.body, epistemic: output.epistemic, evidence: [...output.evidence, { tenantId: tenant, kind: "thought", id: thought.id, revision: 1 }],
+          inferenceDependencies: job.data.evidence,
           sourceEventId: job.id, sourceRevision: 1, visibility: { tenantId: tenant, ownerActorId: job.data.identity.actorId,
             scope: "private", allowedActorIds: [], policyRevision: job.data.identity.policyRevision },
           signals: { relevance: .5, confidence: 0, novelty: .5, urgency: 0, contradiction: 0 }, classification, ontology, lifecycle: "active", createdAt: new Date(this.clock()).toISOString() });
@@ -168,12 +169,13 @@ export class SlowCognitionQueue {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
-      const code = ["DENIED", "EVIDENCE_REVOKED", "FABRICATED_EVIDENCE", "INFERENCE_TIMEOUT", "INFERENCE_CANCELLED", "LANE_SATURATED", "LANE_BUDGET_EXHAUSTED", "STALE_SLOW_FENCE", "SLOW_CONTEXT_BUDGET"].includes(message) ? message : "SLOW_EXECUTION_FAILED";
+      const terminal = error instanceof z.ZodError || ["FABRICATED_EVIDENCE", "SLOW_OUTPUT_BUDGET", "EVIDENCE_REVOKED", "DENIED"].includes(message);
+      const code = error instanceof z.ZodError ? "SLOW_INVALID_OUTPUT" : ["DENIED", "EVIDENCE_REVOKED", "FABRICATED_EVIDENCE", "INFERENCE_TIMEOUT", "INFERENCE_CANCELLED", "LANE_SATURATED", "LANE_BUDGET_EXHAUSTED", "STALE_SLOW_FENCE", "SLOW_CONTEXT_BUDGET"].includes(message) ? message : "SLOW_EXECUTION_FAILED";
       await this.db.transaction(async () => {
         const rows = await this.db.rawQuery(`UPDATE cognition_v2_slow_jobs SET state=$4,next_at=$5,lease_until=NULL,failure_code=$6
           WHERE tenant=$1 AND id=$2 AND fence=$3 AND state='running' RETURNING id`, [tenant, job.id, job.fence,
-          job.attempts >= 5 ? "failed" : "queued", new Date(this.clock() + 1000 * 2 ** job.attempts).toISOString(), code]);
-        if (rows.length && job.attempts >= 5) await this.emit(job.data, job.id, "failed", "failed");
+          terminal || job.attempts >= 5 ? "failed" : "queued", new Date(this.clock() + 1000 * 2 ** job.attempts).toISOString(), code]);
+        if (rows.length && (terminal || job.attempts >= 5)) await this.emit(job.data, job.id, "failed", "failed");
       });
     }
     finally { clearInterval(monitor); }

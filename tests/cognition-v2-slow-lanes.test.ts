@@ -43,7 +43,7 @@ test("C07/C08 Slow is durable, validates output/evidence and publishes a reusabl
     assert.equal(await queue.tick("A"), false);
   } finally { await db.close(); }
 });
-test("C11 saturated Slow and Slow failures never occupy Fast lane; timeout releases its lease", async () => {
+test("C11 saturated Slow and Slow failures never occupy Fast lane; timeout retains its uncertain lease until expiry", async () => {
   const db = await createStore();
   try {
     await installCognitionV2(db);
@@ -57,6 +57,8 @@ test("C11 saturated Slow and Slow failures never occupy Fast lane; timeout relea
     release(); assert.equal(await waiting, "slow");
     const short = new InferenceLane(db, "slow", 1, 20, 10);
     await assert.rejects(short.run("A", async () => new Promise(() => {})), /INFERENCE_TIMEOUT/);
+    await assert.rejects(short.run("A", async () => "premature"), /LANE_SATURATED/);
+    await db.rawQuery("UPDATE cognition_v2_lane_slots SET expires_at=now()-interval '1 second' WHERE tenant='A' AND lane='slow'");
     assert.equal(await short.run("A", async () => "recovered"), "recovered");
     assert.throws(() => fastOnlyModel({ SLOW_LLM_MODEL: "reasoner", SLOW_LLM_API_KEY: "key" }), /FAST_PROFILE_UNCONFIGURED/);
   } finally { await db.close(); }

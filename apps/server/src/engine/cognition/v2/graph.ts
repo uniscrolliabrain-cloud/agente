@@ -9,24 +9,32 @@ export class CognitiveGraphQuery {
     if (!root) return null;
     const visited = new Set<string>([id]), nodes = [root], edges: unknown[] = [];
     let frontier = [id];
+    const edgeIds = new Set<string>();
+    let truncated = false;
     for (let step = 0; step < Math.min(3, Math.max(0, depth)) && frontier.length; step++) {
       const next: string[] = [];
       for (const nodeId of frontier) {
-        const rows = await this.context.projections.db.rawQuery<{ data: { from: { id: string }; to: { id: string }; relation: string } }>(
+        const rows = await this.context.projections.db.rawQuery<{ data: { id: string; from: { id: string; revision: number; kind: string }; to: { id: string; revision: number; kind: string }; relation: string } }>(
           `SELECT data FROM cognition_v2_edges WHERE tenant=$1 AND (data->'from'->>'id'=$2 OR data->'to'->>'id'=$2) ORDER BY id LIMIT 50`, [identity.tenantId, nodeId]);
         for (const { data } of rows) {
-          const otherId = data.from.id === nodeId ? data.to.id : data.from.id;
-          const other = await this.context.resolve(identity, otherId);
-          if (!other) continue; // No title/ID leakage for an inaccessible endpoint.
+          if (edgeIds.has(data.id)) continue;
+          const from = await this.context.resolve(identity, data.from.id, data.from.revision);
+          const to = await this.context.resolve(identity, data.to.id, data.to.revision);
+          if (!from || !to || from.kind !== data.from.kind || to.kind !== data.to.kind) continue;
+          const other = data.from.id === nodeId ? to : from;
+          if (!visited.has(other.id)) {
+            if (nodes.length >= 50) { truncated = true; continue; }
+            visited.add(other.id); nodes.push(other); next.push(other.id);
+          }
+          edgeIds.add(data.id);
           edges.push(data);
-          if (!visited.has(otherId) && nodes.length < 50) { visited.add(otherId); nodes.push(other); next.push(otherId); }
         }
       }
       frontier = next;
     }
     await this.context.assertAuthorized(identity);
     for (const node of nodes) if (!await this.context.resolve(identity, node.id, node.revision)) throw Error("GRAPH_CHANGED_RETRY");
-    return { nodes, edges, truncated: nodes.length >= 50 };
+    return { nodes, edges, truncated: truncated || nodes.length >= 50 };
   }
   async evidence(identity: CognitiveIdentity, id: string) {
     const record = await this.context.resolve(identity, id);

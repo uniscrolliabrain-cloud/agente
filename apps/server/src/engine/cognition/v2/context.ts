@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import type { CognitiveIdentity, CognitiveRecord } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import { cognitiveIdentitySchema, contextRequestV2Schema, deliveryAckV2Schema } from "../../../../../../packages/domain/src/cognition-v2.ts";
-import { CognitiveProjectionStore, digest } from "./storage.ts";
+import { CognitiveProjectionStore, digest, canonicalJson } from "./storage.ts";
 /** Shared scoring for the prepared snapshot and the attention view of its references. */
 export function contextScorer(query: string): (record: CognitiveRecord) => number {
   const words = query.toLocaleLowerCase().split(/\W+/u).filter(Boolean);
@@ -13,6 +13,32 @@ export function contextScorer(query: string): (record: CognitiveRecord) => numbe
       words.filter((word) => content.includes(word)).length;
   };
 }
+function renderRecord(record: CognitiveRecord): string {
+  return canonicalJson({
+    title: record.title,
+    content: record.body,
+    epistemic: record.epistemic,
+    evidence: record.evidence,
+    ...(record.ontology ? {
+      ontology: {
+        version: record.ontology.ontologyVersion,
+        family: record.ontology.family,
+        review: record.ontology.review,
+        disputed: record.ontology.disputed,
+        profile: record.ontology.profile,
+      },
+    } : {}),
+    ...(record.runtimeOutcome ? {
+      ontology: {
+        version: record.runtimeOutcome.ontologyVersion,
+        family: "outcome",
+        review: "runtime_receipt",
+        scope: record.runtimeOutcome.scope,
+      },
+    } : {}),
+  });
+}
+
 export interface CognitivePolicy {
   // Must revalidate current membership/policy, not trust claims from a prompt.
   authorize(identity: CognitiveIdentity, record?: CognitiveRecord): Promise<boolean>;
@@ -24,6 +50,8 @@ export interface ContextSnapshotV2 {
   watermark: string; usedTokens: number; maxTokens: number; createdAt: string;
   expiresAt: string; digest: string; truncated: boolean;
   queryDigest?: string;
+  maxRefs?: number;
+  sourceGeneration?: string;
 }
 export class ContextServingFacade {
   constructor(readonly projections: CognitiveProjectionStore, readonly policy: CognitivePolicy,
@@ -45,7 +73,7 @@ export class ContextServingFacade {
         (v.allowedActorIds.length > 0 && !v.allowedActorIds.includes(identity.actorId))) throw Error("DENIED");
       if (record.lifecycle !== "active" || (record.expiresAt && Date.parse(record.expiresAt) <= this.clock()) ||
         await this.projections.revoked(record.tenantId, record.sourceEventId) || await this.projections.revoked(record.tenantId, record.id)) throw Error("REVOKED");
-      for (const evidence of record.evidence) {
+      for (const evidence of [...record.evidence, ...(record.inferenceDependencies ?? [])]) {
         if (await this.projections.revoked(identity.tenantId, evidence.id)) throw Error("EVIDENCE_REVOKED");
         if (evidence.kind === "card" || evidence.kind === "memory") {
           const [parent] = await this.projections.db.rawQuery<{ data: CognitiveRecord }>(`SELECT data FROM cognition_v2_objects WHERE tenant=$1 AND id=$2 ORDER BY revision DESC LIMIT 1`, [identity.tenantId, evidence.id]);
@@ -65,10 +93,17 @@ export class ContextServingFacade {
     if (!row || (revision !== undefined && row.data.revision !== revision)) return null;
     try { await this.assertAuthorized(identity, row.data); return row.data; } catch { return null; }
   }
+  private async sourceGeneration(tenant: string): Promise<string> {
+    const [row] = await this.projections.db.rawQuery<{ version: string }>(
+      `SELECT (SELECT count(*) FROM cognition_v2_objects WHERE tenant=$1)::text || ':' ||
+              (SELECT count(*) FROM cognition_v2_revocations WHERE tenant=$1)::text AS version`, [tenant]);
+    return row.version;
+  }
   async getSnapshot(identity: CognitiveIdentity, options: { query: string; maxTokens: number; maxRefs: number }): Promise<ContextSnapshotV2> {
     options = contextRequestV2Schema.parse(options);
     await this.assertAuthorized(identity);
-    const records = await this.projections.latest(identity.tenantId, Math.min(200, options.maxRefs * 8) + 1, identity.actorId);
+    const sourceGeneration = await this.sourceGeneration(identity.tenantId);
+    const records = await this.projections.latest(identity.tenantId, Math.min(200, options.maxRefs * 8) + 1, identity.actorId, {query:options.query,policyRevision:identity.policyRevision,now:new Date(this.clock()).toISOString(),publicOnly:true});
     const eligible: CognitiveRecord[] = [];
     for (const r of records) {
       // Internal Thought references are not public reasoning/context.
@@ -81,10 +116,7 @@ export class ContextServingFacade {
     let usedTokens = 0;
     for (const r of eligible) {
       if (refs.length >= options.maxRefs) break;
-      const text = JSON.stringify({ title: r.title, content: r.body, epistemic: r.epistemic, evidence: r.evidence,
-        ...(r.ontology ? { ontology: { version: r.ontology.ontologyVersion, family: r.ontology.family,
-          review: r.ontology.review, disputed: r.ontology.disputed, profile: r.ontology.profile } } : {}),
-        ...(r.runtimeOutcome ? { ontology: { version: r.runtimeOutcome.ontologyVersion, family: "outcome", review: "runtime_receipt", scope: r.runtimeOutcome.scope } } : {}) });
+      const text = renderRecord(r);
       const tokens = this.countTokens(text);
       if (tokens + usedTokens > options.maxTokens) continue;
       refs.push({ id: r.id, revision: r.revision, sourceEventId: r.sourceEventId });
@@ -97,7 +129,8 @@ export class ContextServingFacade {
     // Revalidation catches a membership/policy change during preparation.
     await this.assertAuthorized(identity);
     const [counter] = await this.projections.db.rawQuery<{ sequence: string }>(`SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer='cognitive-v2.1'`, [identity.tenantId]);
-    const content = { identity, refs, segments, watermark: String(counter?.sequence ?? "0"), usedTokens, maxTokens: options.maxTokens, queryDigest: digest(options.query) };
+    if (sourceGeneration !== await this.sourceGeneration(identity.tenantId)) throw Error("CONTEXT_CHANGED_RETRY");
+    const content = { sourceGeneration, maxRefs: options.maxRefs, identity, refs, segments, watermark: String(counter?.sequence ?? "0"), usedTokens, maxTokens: options.maxTokens, queryDigest: digest(options.query) };
     const snapshot: ContextSnapshotV2 = { schemaVersion: "2.0", id: randomUUID(), ...content,
       createdAt: new Date(this.clock()).toISOString(), expiresAt: new Date(this.clock() + 60000).toISOString(),
       digest: digest(content), truncated: records.length > Math.min(200, options.maxRefs * 8) || eligible.length > refs.length };
@@ -106,13 +139,15 @@ export class ContextServingFacade {
   }
   async prepared(identity: CognitiveIdentity, query: string, maxTokens = 4000, maxRefs = 10): Promise<ContextSnapshotV2> {
     await this.assertAuthorized(identity);
+    contextRequestV2Schema.parse({query,maxTokens,maxRefs});
+    const generation = await this.sourceGeneration(identity.tenantId);
     const candidates = await this.projections.db.rawQuery<{ id: string }>(`SELECT id FROM cognition_v2_snapshots WHERE tenant=$1 AND actor=$2
       AND data->'identity'->>'policyRevision'=$3 AND (data->>'expiresAt')::timestamptz>$4 AND data->>'queryDigest'=$5
       ORDER BY data->>'createdAt' DESC LIMIT 5`, [identity.tenantId, identity.actorId, identity.policyRevision, new Date(this.clock()).toISOString(), digest(query)]);
     const [cursor] = await this.projections.db.rawQuery<{ sequence: string }>(`SELECT sequence FROM cognition_v2_cursors WHERE tenant=$1 AND consumer='cognitive-v2.1'`, [identity.tenantId]);
     for (const candidate of candidates) {
       const snapshot = await this.readSnapshot(identity, candidate.id);
-      if (snapshot && snapshot.maxTokens <= maxTokens && snapshot.refs.length <= maxRefs && snapshot.watermark === String(cursor?.sequence ?? "0")) return snapshot;
+      if (snapshot && snapshot.maxTokens === maxTokens && snapshot.maxRefs === maxRefs && snapshot.sourceGeneration === generation && snapshot.watermark === String(cursor?.sequence ?? "0") && generation === await this.sourceGeneration(identity.tenantId)) return snapshot;
     }
     // Cold start remains bounded SQL only. Slow, embeddings and external RAG
     // never run on this path; prepared sources are refreshed separately.
@@ -122,8 +157,27 @@ export class ContextServingFacade {
     await this.assertAuthorized(identity);
     const [row] = await this.projections.db.rawQuery<{ data: ContextSnapshotV2 }>(`SELECT data FROM cognition_v2_snapshots WHERE tenant=$1 AND id=$2 AND actor=$3`, [identity.tenantId, id, identity.actorId]);
     const s = row?.data;
-    if (!s || digest(s.identity) !== digest(identity) || Date.parse(s.expiresAt) <= this.clock()) return null;
-    for (const r of s.refs) if (!await this.resolve(identity, r.id, r.revision)) return null;
+    if (!s || s.id !== id || s.schemaVersion !== "2.0" || !cognitiveIdentitySchema.safeParse(s.identity).success ||
+        digest(s.identity) !== digest(identity) || !Number.isFinite(Date.parse(s.expiresAt)) || Date.parse(s.expiresAt) <= this.clock() ||
+        !Array.isArray(s.refs) || !Array.isArray(s.segments) || s.refs.length !== s.segments.length ||
+        !Number.isSafeInteger(s.maxTokens) || s.maxTokens < 64 || s.maxTokens > 16000) return null;
+    const { id: snapshotId, schemaVersion, createdAt, expiresAt, digest: expectedDigest, truncated, ...content } = s;
+    if (digest(content) !== expectedDigest) return null;
+    let tokens = 0;
+    const seen = new Set<string>();
+    for (let i = 0; i < s.refs.length; i++) {
+      const ref = s.refs[i], segment = s.segments[i];
+      if (!ref || !segment || typeof ref.id !== "string" || !Number.isSafeInteger(ref.revision) ||
+          ref.revision < 1 || seen.has(ref.id) || segment.refId !== ref.id || segment.trust !== "untrusted_data") return null;
+      seen.add(ref.id);
+      const record = await this.resolve(identity, ref.id, ref.revision);
+      if (!record || record.sourceEventId !== ref.sourceEventId || segment.text !== renderRecord(record)) return null;
+      const measured = this.countTokens(segment.text);
+      if (measured !== segment.tokens) return null;
+      tokens += measured;
+    }
+    if (tokens !== s.usedTokens || tokens > s.maxTokens || (s.maxRefs !== undefined && s.refs.length > s.maxRefs)) return null;
+    await this.assertAuthorized(identity);
     return s;
   }
   async getDelta(identity: CognitiveIdentity, baseId: string, nextId: string) {

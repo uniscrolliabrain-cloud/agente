@@ -10,7 +10,8 @@ function canonical(value: unknown): unknown {
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => [key, canonical(val)]));
   return value;
 }
-export const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(canonical(value))).digest("hex");
+export const canonicalJson = (value: unknown): string => JSON.stringify(canonical(value));
+export const digest = (value: unknown) => createHash("sha256").update(canonicalJson(value)).digest("hex");
 export type SqlStore = Pick<Store, "rawQuery" | "transaction">;
 export async function installCognitionV2(db: Store): Promise<void> {
   // No destructive changes; event source records and legacy readers remain intact.
@@ -144,7 +145,7 @@ export class CognitiveProjectionStore {
   constructor(readonly db: Store) {}
   async apply(raw: unknown, sequence: string): Promise<void> {
     const record = cognitiveRecordSchema.parse(raw);
-    const dependencies = [record.id, record.sourceEventId, ...record.evidence.map((e) => e.id)];
+    const dependencies = [record.id, record.sourceEventId, ...[...record.evidence, ...(record.inferenceDependencies ?? [])].map((e) => e.id)];
     for (const source of dependencies) {
       if (await this.revoked(record.tenantId, source)) {
         await this.revoke(record.tenantId, record.id);
@@ -166,7 +167,7 @@ export class CognitiveProjectionStore {
       await this.db.rawQuery(`WITH RECURSIVE invalid(id) AS (
         SELECT $2::text UNION
         SELECT o.id FROM cognition_v2_objects o JOIN invalid i ON
-          (o.data->>'sourceEventId'=i.id OR EXISTS(SELECT 1 FROM jsonb_array_elements(o.data->'evidence') e WHERE e->>'id'=i.id))
+          (o.data->>'sourceEventId'=i.id OR EXISTS(SELECT 1 FROM jsonb_array_elements((o.data->'evidence') || COALESCE(o.data->'inferenceDependencies','[]'::jsonb)) e WHERE e->>'id'=i.id))
           WHERE o.tenant=$1
       ) INSERT INTO cognition_v2_revocations(tenant,source) SELECT $1,id FROM invalid ON CONFLICT DO NOTHING`, [tenant, source]);
     });
@@ -174,12 +175,25 @@ export class CognitiveProjectionStore {
   async revoked(tenant: string, source: string): Promise<boolean> {
     return (await this.db.rawQuery(`SELECT source FROM cognition_v2_revocations WHERE tenant=$1 AND source=$2`, [tenant, source])).length > 0;
   }
-  async latest(tenant: string, limit = 500, actor?: string): Promise<CognitiveRecord[]> {
+  async latest(tenant: string, limit = 500, actor?: string,
+    options: { query?: string; memoryKind?: CognitiveRecord["memoryKind"]; policyRevision?: string; now?: string; publicOnly?: boolean } = {}): Promise<CognitiveRecord[]> {
+    const words = (options.query ?? "").toLocaleLowerCase().split(/\W+/u).filter(Boolean);
     const rows = await this.db.rawQuery<{ data: CognitiveRecord }>(`SELECT latest.data FROM (
       SELECT DISTINCT ON (id) id,data FROM cognition_v2_objects WHERE tenant=$1 ORDER BY id,revision DESC
-    ) latest WHERE NOT EXISTS (SELECT 1 FROM cognition_v2_revocations r WHERE r.tenant=$1 AND r.source=latest.data->>'sourceEventId')
+    ) latest WHERE NOT EXISTS (SELECT 1 FROM cognition_v2_revocations r WHERE r.tenant=$1
+      AND (r.source=latest.data->>'sourceEventId' OR r.source=latest.id))
     AND ($3::text IS NULL OR (latest.data->'visibility'->>'scope'='tenant' OR latest.data->'visibility'->>'ownerActorId'=$3))
-    ORDER BY latest.id LIMIT $2`, [tenant, Math.min(limit, 2000), actor ?? null]);
+    AND ($4::text IS NULL OR latest.data->>'memoryKind'=$4)
+    AND ($5::text IS NULL OR latest.data->'visibility'->>'policyRevision'=$5)
+    AND ($6::timestamptz IS NULL OR latest.data->>'expiresAt' IS NULL OR (latest.data->>'expiresAt')::timestamptz>$6)
+    AND (NOT $7::boolean OR (latest.data->>'kind' NOT IN ('thought_ref','entity_ref') AND latest.data->>'lifecycle'='active'
+      AND (jsonb_array_length(latest.data->'visibility'->'allowedActorIds')=0 OR latest.data->'visibility'->'allowedActorIds' ? $3)))
+    ORDER BY CASE WHEN $9::boolean THEN ((SELECT count(*) FROM unnest($8::text[]) AS word WHERE strpos(lower((latest.data->>'title') || ' ' || (latest.data->>'body')),word)>0)
+      + (latest.data->'signals'->>'relevance')::double precision * 0.5
+      + (latest.data->'signals'->>'urgency')::double precision * 0.3
+      + (latest.data->'signals'->>'novelty')::double precision * 0.2) ELSE 0 END DESC, latest.id
+    LIMIT $2`, [tenant, Math.min(limit, 2000), actor ?? null, options.memoryKind ?? null,
+      options.policyRevision ?? null, options.now ?? null, options.publicOnly ?? false, words, options.query !== undefined]);
     return rows.map((r) => cognitiveRecordSchema.parse(r.data));
   }
 }

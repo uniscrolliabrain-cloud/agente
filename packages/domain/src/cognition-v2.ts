@@ -37,6 +37,7 @@ export const cognitiveRecordSchema = z.strictObject({
   memoryKind: memoryKindSchema.optional(),
   title: z.string().min(1).max(160), body: z.string().min(1).max(16000),
   epistemic: epistemicSchema, evidence: z.array(cognitiveRefSchema).min(1).max(100),
+  inferenceDependencies: z.array(cognitiveRefSchema).max(30).optional(),
   sourceEventId: id, sourceRevision: z.number().int().positive(),
   visibility: cognitiveVisibilitySchema, signals: attentionSignalsSchema,
   classification: classificationV2Schema.optional(),
@@ -45,7 +46,7 @@ export const cognitiveRecordSchema = z.strictObject({
   lifecycle: z.enum(["active", "superseded", "revoked", "expired"]),
   createdAt: time, expiresAt: time.optional(),
 }).superRefine((r, ctx) => {
-  if (r.visibility.tenantId !== r.tenantId || r.evidence.some((e) => e.tenantId !== r.tenantId))
+  if (r.visibility.tenantId !== r.tenantId || [...r.evidence, ...(r.inferenceDependencies ?? [])].some((e) => e.tenantId !== r.tenantId))
     ctx.addIssue({ code: "custom", message: "cross-tenant reference" });
   if ((r.kind === "memory") !== Boolean(r.memoryKind))
     ctx.addIssue({ code: "custom", message: "memoryKind only on memory" });

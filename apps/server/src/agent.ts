@@ -10,6 +10,7 @@ import type { Auth } from "./auth.ts";
 import type { Config } from "./config.ts";
 import { ConversationAgent } from "./engine/conversation.ts";
 import type { AgentService } from "./engine/service.ts";
+import { CognitionV2ChatAgent } from "./engine/cognition/v2/chat-agent.ts";
 
 export function agentConfigured(config: Config) {
   return (
@@ -28,25 +29,19 @@ export function makeRuntime(config: Config, service: AgentService, auth: Auth) {
   const ownerFor = async (request: Request) => service.cognitionV2?.enabledForRequest()
     ? currentTenantScope()!.actorId
     : auth.owner(request.headers.get("authorization") ?? undefined);
-  const agents: AgentsFactory = async ({ request }) => ({
-    default:
-      config.agentBackend === "sample"
-        ? new ConversationAgent(
-            config,
-            service,
-            await ownerFor(request),
-          )
-        : config.agentBackend === "agui"
-          ? new HttpAgent({
-              url: config.agentUrl ?? "http://127.0.0.1:1/unconfigured",
-              headers: config.agentToken ? { Authorization: `Bearer ${config.agentToken}` } : {},
-            })
-          : new ConversationAgent(
-              config,
-              service,
-              await ownerFor(request),
-            ),
-  });
+  const agents: AgentsFactory = async ({ request }) => {
+    if (config.agentBackend === "agui") {
+      return { default: new HttpAgent({
+        url: config.agentUrl ?? "http://127.0.0.1:1/unconfigured",
+        headers: config.agentToken ? { Authorization: `Bearer ${config.agentToken}` } : {},
+      }) };
+    }
+    const owner = await ownerFor(request);
+    const cognition = service.cognitionV2;
+    return { default: cognition?.enabledForRequest()
+      ? new CognitionV2ChatAgent(cognition, owner)
+      : new ConversationAgent(config, service, owner) };
+  };
   const runtime = new CopilotRuntime({ agents });
   return createCopilotHonoHandler({ runtime, basePath: "/api/copilotkit" });
 }
