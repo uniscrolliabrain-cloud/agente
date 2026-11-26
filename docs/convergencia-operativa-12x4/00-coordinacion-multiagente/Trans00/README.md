@@ -22,7 +22,7 @@ No modificar main, canónica, Trans01–06, UI-lab, UX aprobada, demo ni infraes
 - D-M2: nueva pasada integral de falsación: consumidores reales, comparación de deltas, anclas y pruebas, resolver colisiones, depurar inventario; elaborar adendas mínimas y prompts finales. Revisar todas las superficies, no dividir la pasada por módulo.
 - D-M3: nueva pasada integral de simulación: arranque desde base común, dependencia rota, fallos, integración incremental, evidencia y rollback; revisar contra las seis campañas y canónica; congelar handoff y solicitar autorización de ejecución.
 
-En cada pasada: estrategia → diagnóstico → diseño → simulación → feedback/rediseño → ejecución documental y reauditoría. Si falta fuente o herramienta, registrar límite, no declarar cierre. Estado actual: D-M1 entregado como primera pasada documental, no todos los contratos están verificados y no existe SHA funcional integrado. D-M2 pendiente.
+En cada pasada: estrategia → diagnóstico → diseño → simulación → feedback/rediseño → ejecución documental y reauditoría. Si falta fuente o herramienta, registrar límite, no declarar cierre. Estado actual: D-M1 y D-M2 entregados documentalmente; D-M3 pendiente. Existe manifest candidato de 50 deltas, 37 diagnósticos clasificados y seis prompts candidatos. No existe SHA funcional integrado ni autorización ejecutora. Los refinamientos 08–13 prevalecen sobre propuestas anteriores en caso de conflicto.
 
 ## Índice
 
@@ -33,6 +33,13 @@ En cada pasada: estrategia → diagnóstico → diseño → simulación → feed
 - [05-PROTOCOLO-EJECUCION.md](05-PROTOCOLO-EJECUCION.md)
 - [06-CERTIFICACION-Y-OBSERVACION.md](06-CERTIFICACION-Y-OBSERVACION.md)
 - [07-HANDOFF-PREPARACION.md](07-HANDOFF-PREPARACION.md)
+- [08-DM2-BASE-COMUN-Y-DELTA-EXACTO.md](08-DM2-BASE-COMUN-Y-DELTA-EXACTO.md)
+- [09-DM2-DELTA-MANIFEST.json](09-DM2-DELTA-MANIFEST.json)
+- [10-DM2-CLASIFICACION-Y-REGRESIONES.md](10-DM2-CLASIFICACION-Y-REGRESIONES.md)
+- [11-DM2-RESERVAS-Y-ABI.md](11-DM2-RESERVAS-Y-ABI.md)
+- [12-PROMPT-COMUN-EJECUCION.md](12-PROMPT-COMUN-EJECUCION.md)
+- Prompts candidatos: [Trans01](PROMPTS/Trans01.md) · [Trans02](PROMPTS/Trans02.md) · [Trans03](PROMPTS/Trans03.md) · [Trans04](PROMPTS/Trans04.md) · [Trans05](PROMPTS/Trans05.md) · [Trans06](PROMPTS/Trans06.md)
+- [13-DM2-CHECKPOINT.md](13-DM2-CHECKPOINT.md)
 - [BITACORA.md](BITACORA.md)
 
 No existe autorización implícita de ejecución funcional por publicar estos documentos.

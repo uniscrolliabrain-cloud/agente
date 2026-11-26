@@ -1,0 +1,17 @@
+# Trans03 — prompt de ejecución candidato D-M2
+
+Lee primero [12-PROMPT-COMUN-EJECUCION.md](../12-PROMPT-COMUN-EJECUCION.md) íntegro, no es opcional. No ejecutar hasta D-M3 y autorización de macroturno con rama y SHA de integración. 
+
+Rama documental original: `Trans03` fijada en `7e847bf86c46b192d79d76e96ed791af52a21bd6`. Carpeta exacta `docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/`. [Campaña consolidada](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/REDISENO-PASADA-05-EJECUCION-CONSOLIDADA.md), [Codex](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/ASTRA-AUDIT-V1/DIAGNOSTICO.md), [GPT](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md). Leer todos sus documentos de campaña anteriores necesarios y HANDOFF. La rama de ejecución será proporcionada por Trans00, no asumir que es la histórica.
+
+## Mandato exclusivo
+
+Proveedores, puertos y adaptadores. Patchsets originales P01–P14 original. Adendas mínimas A04/A05/A13; A01 receipt con 01; A15 S3. [Inventario/disposición](../10-DM2-CLASIFICACION-Y-REGRESIONES.md) y [reservas](../11-DM2-RESERVAS-Y-ABI.md) obligatorios.
+
+Importación 3 paths google-auth, meta-whatsapp y stub; P01/P04/P10 valida config/response redacted y category, Places malformed no empty, Resend id/error no cast, conservar test Meta 422 sin cuerpo. P02/P03 revalidar scope y refresh CAS independiente de binding, no HTTP bajo lock. P05/P06 inbox immutable y ledger único, no segundo envío. A01 Calendar cache fail mantiene aceptación y proof, WorkspaceEffect sobre outcome.ts existente con 01. A05 oposición comercial: no me escribas más vs precio baja; gracias posterior no borra baja; persistir control existente y pedir a 01 guard en actions. A13 voice coordinator y fast-adapter binding del snapshot realmente servido, epoch/consent/playback; T02 runtime. Anam/ElevenLabs ABI y tokens efímeros si soportados, Composio gobernado, falta credencial fail-closed. JEV profile 02. No segundo OAuth ni adapter.
+
+## Gates y trabajo integral
+
+B1 contracts/provider fixtures, no red real. B2 validación, OAuth binding, receipt shape con 01. B3/B4 slices Google/WhatsApp/voz/ciber existentes, aceptación vs entrega. B5/B6 cache failure, refresh multiproceso, revoke, malformed, unknown no retry y provider sandbox si autorizado. No enviar comunicaciones reales ni hacer búsquedas pagadas sin permiso. 02 conserva tests/cognition-v2-voice.test.ts hasta transferencia.
+
+Cada macroturno revisa los doce requisitos y 48 bloques de la campaña, registra estado por bloque, implementa únicamente las ventanas autorizadas, no omite fases independientes seguras. Si una corrección ya está en original, no abrir otra campaña. Entrega a Trans00 las pruebas, deltas y bitácora; no informar por archivo. No despliegue ni efecto real. 

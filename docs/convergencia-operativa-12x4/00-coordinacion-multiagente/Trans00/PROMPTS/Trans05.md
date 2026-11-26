@@ -1,0 +1,17 @@
+# Trans05 — prompt de ejecución candidato D-M2
+
+Lee primero [12-PROMPT-COMUN-EJECUCION.md](../12-PROMPT-COMUN-EJECUCION.md) íntegro, no es opcional. No ejecutar hasta D-M3 y autorización de macroturno con rama y SHA de integración. 
+
+Rama documental original: `Trans05` fijada en `46529cabd8479c9e1be6da8459485137999f40f2`. Carpeta exacta `docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/`. [Campaña consolidada](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/PASADA-06-EJECUCION-CONSOLIDADA.md), [Codex](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/ASTRA-AUDIT-V1/DIAGNOSTICO.md), [GPT](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md). Leer todos sus documentos de campaña anteriores necesarios y HANDOFF. La rama de ejecución será proporcionada por Trans00, no asumir que es la histórica.
+
+## Mandato exclusivo
+
+Continuidad cognitiva y skills. Patchsets originales P01–P12 original, P10 compiler. Adendas mínimas C05-01/02/03/04, G05-01/02 como pruebas consumidoras de A03/A08. [Inventario/disposición](../10-DM2-CLASIFICACION-Y-REGRESIONES.md) y [reservas](../11-DM2-RESERVAS-Y-ABI.md) obligatorios.
+
+Los 10 deltas de tu rama son idénticos a 02: no importarlos dos veces. 02 es único escritor de context/storage/graph/memory/rag/slow/runtime; entrega tests de anchors, recall por tipo, revisión autobiográfica, relaciones exactas y separación conocimiento/atención. Preserva objetivo de continuidad 100k+, brief vivo, skills cognitivos y narrativos, catálogo/segmentación/fixtures P02–P10. No convertirlo en otro motor o segundo grafo; sidecar solo si especificación existente lo exige, revisar identity tenant/actor/thread/policy/revisions y transacción/procedencia con 02. No usar actor-only fallback. Compiler declarativo en scope estructural y fixtures autorizados, no corpus real masivo sin permisos. No fine-tuning aún ni calibrar pesos/recall por intuición. Mantener fuente/revisión/epistemic y no generar SOP ejecutable directamente desde memoria.
+
+## Gates y trabajo integral
+
+B1 pure schemas/catalog/selector tests y contratos con 02. B2 journal/snapshot integrity y anchors; preparar tests sin escribir store ajeno. B3/B4 integración longitudinal y skills/brief según ABI existente, 03 source/media y 04 RLS. B5/B6 corpus sintético, 10k–500k objetivos de evaluación no promesa, ablation, revocation, no cross-thread/actor, rollback. Sin sidecar si no demostrada necesidad. Dogfooding posterior para calidad.
+
+Cada macroturno revisa los doce requisitos y 48 bloques de la campaña, registra estado por bloque, implementa únicamente las ventanas autorizadas, no omite fases independientes seguras. Si una corrección ya está en original, no abrir otra campaña. Entrega a Trans00 las pruebas, deltas y bitácora; no informar por archivo. No despliegue ni efecto real. 

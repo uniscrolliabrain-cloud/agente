@@ -1,0 +1,590 @@
+{
+  "schemaVersion": "1.0",
+  "state": "CANDIDATE_NOT_IMPORTED",
+  "main": "55655cdba0348539a0169881794968761af85443",
+  "canonical": "8672f8c1035067e77de76080aabbe8d4c8030fe5",
+  "sourceHeads": {
+    "Trans01": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+    "Trans02": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+    "Trans03": "7e847bf86c46b192d79d76e96ed791af52a21bd6",
+    "Trans04": "7c422f9a0f6d5686434466669c7df2f12255311e",
+    "Trans05": "46529cabd8479c9e1be6da8459485137999f40f2",
+    "Trans06": "db5da93775401fe0d582d3cffe30f8d33a8b21c6"
+  },
+  "scope": "apps/server, packages, tests, scripts, .github/workflows, vendor, root manifests/lock/env/fly/Dockerfile",
+  "treeTruncated": false,
+  "uniqueFunctionalDeltas": 50,
+  "conflictsWithMainByBlob": 0,
+  "entries": [
+    {
+      "path": "apps/server/src/actions.ts",
+      "baseBlob": "b8af1e88b7901970ae084add44085598ea82a2b5",
+      "canonicalBlob": "b8af1e88b7901970ae084add44085598ea82a2b5",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "1299d51bf99948c5c010f217def209cc7869f4d6",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/db-tenant.ts",
+      "baseBlob": "581b242b25d5a83ed63d6eb983a4a2921e8f647e",
+      "canonicalBlob": "581b242b25d5a83ed63d6eb983a4a2921e8f647e",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "83c36c737f4061cb5c1e67dcceb230d1d86b835e",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/db.ts",
+      "baseBlob": "d57a47395f41bda1ab4917f875f66e804b4eae4d",
+      "canonicalBlob": "d57a47395f41bda1ab4917f875f66e804b4eae4d",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "30a66bfccfa492f91b4436baa26e727f95ef5705",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/capabilities/bootstrap.ts",
+      "baseBlob": "c2fa779fd06652ce8638ffd3c85d964bfed1a051",
+      "canonicalBlob": "c2fa779fd06652ce8638ffd3c85d964bfed1a051",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "05bdceb1c6f4cd8d4a2c45ae941c2378a0d5a21f",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/cognition/v2/attention.ts",
+      "baseBlob": "9342866a3506d6cfb29fb1f1e205823bfcf873fb",
+      "canonicalBlob": "9342866a3506d6cfb29fb1f1e205823bfcf873fb",
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "45312a2fc9e6a6d048beaf803cc96dbd2d683521",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/cognition/v2/chat-agent.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "3ab50c7e78a173aa52877252793ce9be87ff6d85",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/cognition/v2/context.ts",
+      "baseBlob": "539e6bedd84846e0d7d33e244afadb8e329923de",
+      "canonicalBlob": "539e6bedd84846e0d7d33e244afadb8e329923de",
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "84d17ebc6eec8da95eb798568658332e71928924",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/cognition/v2/runtime.ts",
+      "baseBlob": "32a65f0b6923a92bbe652fae8ba6bc0fdff89965",
+      "canonicalBlob": "32a65f0b6923a92bbe652fae8ba6bc0fdff89965",
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "776d1567f99e6c2688496c4f4942ee15e2cbc9ba",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/cognition/v2/slow-observation.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "09c39a2296efbe2db43025245fc0ba21f159468c",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/events/bus.ts",
+      "baseBlob": "6dfd601db9fd60ad1f0276021fbd5d4c2e9f86ec",
+      "canonicalBlob": "6dfd601db9fd60ad1f0276021fbd5d4c2e9f86ec",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "574533725890d19623bcb7ac2368e31ce0c2e4ae",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/events/index.ts",
+      "baseBlob": "f3aebba346f86458160da2023c4fcd0c3c57072a",
+      "canonicalBlob": "f3aebba346f86458160da2023c4fcd0c3c57072a",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "1f8d9120702b69e1970b9f91ce73b1b784d5c2f4",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/events/service-principal.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "063274db6ebbed1c188d178d6b5985f00173a4e5",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/events/sinks/store.ts",
+      "baseBlob": "659fd85a1d0f9bf62ba5f730235defcc97260055",
+      "canonicalBlob": "659fd85a1d0f9bf62ba5f730235defcc97260055",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "a2109ccc689cb183f697595afced11444d8bb887",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/events/types.ts",
+      "baseBlob": "8fa15f614276942e085a8112a0790b94d0d95d22",
+      "canonicalBlob": "8fa15f614276942e085a8112a0790b94d0d95d22",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "c33a9fb14b8a08e3fb3c7cb5f72af8950d0ee89b",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/execution/capability-runner.ts",
+      "baseBlob": "493a3beaecee2510af52e53e7b7be713784ba9f6",
+      "canonicalBlob": "493a3beaecee2510af52e53e7b7be713784ba9f6",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "6c3778ed6520c6940cdbcdd8f567678cf128a448",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/execution/outcome.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "006ce2ae34aa9ddb96b56fd4dcdd303b7dd2304b",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/execution/tool-executors.ts",
+      "baseBlob": "6e00a90323d4d2d73457f317ebf7db7e9df473bd",
+      "canonicalBlob": "6e00a90323d4d2d73457f317ebf7db7e9df473bd",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "ff75733832c2ecd8a1149b97221c98c51ae42394",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/observability/hooks.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "4d2d8c68cf15f4fca3a0bf02290fedbe536f7c59",
+      "alsoPresentIn": [],
+      "owner": "Trans04",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/service.ts",
+      "baseBlob": "8b47bf2619e0b501cdd3a5e49ea030056eefce47",
+      "canonicalBlob": "8b47bf2619e0b501cdd3a5e49ea030056eefce47",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "6000721c566cf6f644438e5ed9aaf32e4e942e2f",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/engine/sop-executor.ts",
+      "baseBlob": "1ab7a390ac0866021b62e0a8632e684ebb4ab377",
+      "canonicalBlob": "1ab7a390ac0866021b62e0a8632e684ebb4ab377",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "1243cab4a380fd9a5d7de5fa1da197ea242d19e6",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/google-auth.ts",
+      "baseBlob": "8bdc2f34db375d3b4e65fac4bd3a34b13af632a9",
+      "canonicalBlob": "8bdc2f34db375d3b4e65fac4bd3a34b13af632a9",
+      "sourceBranch": "Trans03",
+      "sourceCommit": "7e847bf86c46b192d79d76e96ed791af52a21bd6",
+      "sourceBlob": "09125166d777825b33f393ddae788a4b29de7bf6",
+      "alsoPresentIn": [],
+      "owner": "Trans03",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/metrics-exporter.ts",
+      "baseBlob": "bb1686246e8f350b40794523daa4031144449c70",
+      "canonicalBlob": "bb1686246e8f350b40794523daa4031144449c70",
+      "sourceBranch": "Trans04",
+      "sourceCommit": "7c422f9a0f6d5686434466669c7df2f12255311e",
+      "sourceBlob": "ca222271ad7737b7e16d64f8d83c491651daf65a",
+      "alsoPresentIn": [],
+      "owner": "Trans04",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/metrics/registry.ts",
+      "baseBlob": "03c8a656d3eff68a995646128846ad514a9e38c2",
+      "canonicalBlob": "03c8a656d3eff68a995646128846ad514a9e38c2",
+      "sourceBranch": "Trans04",
+      "sourceCommit": "7c422f9a0f6d5686434466669c7df2f12255311e",
+      "sourceBlob": "6e048687f330e3439091abd6d75a357f29e9393c",
+      "alsoPresentIn": [],
+      "owner": "Trans04",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "apps/server/src/middleware/request-logger.ts",
+      "baseBlob": "e5ee5f98d26ed55717cbd97390c5b1c47307b37c",
+      "canonicalBlob": "e5ee5f98d26ed55717cbd97390c5b1c47307b37c",
+      "sourceBranch": "Trans04",
+      "sourceCommit": "7c422f9a0f6d5686434466669c7df2f12255311e",
+      "sourceBlob": "60a311c080d952df76d805341ae46020fd2991a7",
+      "alsoPresentIn": [],
+      "owner": "Trans04",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "packages/domain/src/execution-context.ts",
+      "baseBlob": "44b8552b035c19a1931378b72e9559e8c489582a",
+      "canonicalBlob": "44b8552b035c19a1931378b72e9559e8c489582a",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "f96148cd0d8b4f86952ac12167f24cd59df9a767",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "packages/domain/src/index.ts",
+      "baseBlob": "4cd981b79f96e20a2c87f6cd9cf7f36ab3d59787",
+      "canonicalBlob": "4cd981b79f96e20a2c87f6cd9cf7f36ab3d59787",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "adbf97cec2b68ba054143be1dd2258a5b27e082c",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "packages/integrations/src/meta-whatsapp.ts",
+      "baseBlob": "5e976274fb0a0c82acd3f167fa29e3c173e76140",
+      "canonicalBlob": "5e976274fb0a0c82acd3f167fa29e3c173e76140",
+      "sourceBranch": "Trans03",
+      "sourceCommit": "7e847bf86c46b192d79d76e96ed791af52a21bd6",
+      "sourceBlob": "25162f8866927d605b29e45bfb348e8f101cf01e",
+      "alsoPresentIn": [],
+      "owner": "Trans03",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "packages/integrations/src/stubs/whatsapp.ts",
+      "baseBlob": "ca3d0e7fe53abb41ae5660d82d5cb39eaf72b618",
+      "canonicalBlob": "ca3d0e7fe53abb41ae5660d82d5cb39eaf72b618",
+      "sourceBranch": "Trans03",
+      "sourceCommit": "7e847bf86c46b192d79d76e96ed791af52a21bd6",
+      "sourceBlob": "2c0f5c327bc1b8b414b23256de84970edecca551",
+      "alsoPresentIn": [],
+      "owner": "Trans03",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/gate/idempotency-execution.test.ts",
+      "baseBlob": "9203b594bc619de5dddf5dd42237a547b3d94e1b",
+      "canonicalBlob": "9203b594bc619de5dddf5dd42237a547b3d94e1b",
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "812e502784c494d04ac6bfe1a472b46ff2a67371",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-approval-binding.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "972cf5d3cc45e5f244dd2be82944dd1ac302f1d4",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-approval-hash-race.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "2b336e5da413fb3db7334b83bf5081dca58a1d07",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-causal-envelope.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "33f74ea64ddb6829b49662d5aaee10044293f7da",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-claim-cas.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "7ab69aaf9be67b9328d79215abe2e4369a94d0f4",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-dispatch-outbox.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "8ae764b666794fc57f90535239f456245b9ee83f",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-effect-boundary.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "a2ea1c92f38fa78df8a05f0073f4fac273e359be",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-emit-commit.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "e1b51c9d6a11559a57ed2a95f888148f0496655f",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-event-page.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "1c1b69d292303f8f761722113583d63823d3e8e9",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-governed-runner.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "10bc2664d05523ec0434d5b47443bf2d9bb85381",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-outcome-semantics.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "476395aa8eb6362ee1fad0cf07c90f5f42fe1f45",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-replay-concurrency.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "d1cb211da6b0e442d374ad6957184b3b898937c1",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-replay-durable.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "5aa20d7da4f8dd2a7c6b21884ec4f4b874b38f95",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-service-principal.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "b999441d79dd678aba3e457ca5713cbf561f873d",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-sop-authz.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "2b7ea21e2be3c789f870abd306bc7091b3b227d6",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans01-telemetry-hooks.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans01",
+      "sourceCommit": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+      "sourceBlob": "dbc1eb92e19e40993ef8e303ec3ae45d775a6674",
+      "alsoPresentIn": [],
+      "owner": "Trans01",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans02-attention.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "c78c805dbb8c1b9ccc8fa40540ffcac4a1f44c2f",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans02-candidate-routing.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "97882a023a9cfd4be656f89a6e0e89926a32d213",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans02-chat-agent.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "2240b2eff4bbffd3e8850939db0232cfc72ad4fa",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans02-fast-revocation.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "438184c2fc0d159fc27f781040b31d78ab3eee0c",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans02-slow-observation.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans02",
+      "sourceCommit": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+      "sourceBlob": "7eb5022f7c7e701c009e155ade9709d271149134",
+      "alsoPresentIn": [
+        "Trans05"
+      ],
+      "owner": "Trans02",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    },
+    {
+      "path": "tests/trans04-observability-contract.test.ts",
+      "baseBlob": null,
+      "canonicalBlob": null,
+      "sourceBranch": "Trans04",
+      "sourceCommit": "7c422f9a0f6d5686434466669c7df2f12255311e",
+      "sourceBlob": "8d743491a00ce4752b86a94a99b6cb1f081c5722",
+      "alsoPresentIn": [],
+      "owner": "Trans04",
+      "state": "CANDIDATE_NOT_IMPORTED"
+    }
+  ]
+}

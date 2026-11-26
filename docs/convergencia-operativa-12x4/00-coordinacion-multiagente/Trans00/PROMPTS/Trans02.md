@@ -1,0 +1,17 @@
+# Trans02 — prompt de ejecución candidato D-M2
+
+Lee primero [12-PROMPT-COMUN-EJECUCION.md](../12-PROMPT-COMUN-EJECUCION.md) íntegro, no es opcional. No ejecutar hasta D-M3 y autorización de macroturno con rama y SHA de integración. 
+
+Rama documental original: `Trans02` fijada en `5fc0ec4a90c3ce22755cb87b57c3d224664d2018`. Carpeta exacta `docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/`. [Campaña consolidada](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/REDISENO-FINAL-P01-P14.md), [Codex](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/ASTRA-AUDIT-V1/DIAGNOSTICO.md), [GPT](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md). Leer todos sus documentos de campaña anteriores necesarios y HANDOFF. La rama de ejecución será proporcionada por Trans00, no asumir que es la histórica.
+
+## Mandato exclusivo
+
+Cognition e inteligencia distribuida. Patchsets originales P01–P14 original, P02/P03/P04/P06/P08/P13. Adendas mínimas A03/A08/A12; A02 caller y A13 runtime; C05 anchors y memoria. [Inventario/disposición](../10-DM2-CLASIFICACION-Y-REGRESIONES.md) y [reservas](../11-DM2-RESERVAS-Y-ABI.md) obligatorios.
+
+Importación única de 10 paths compartidos con Trans05; chat-agent/slow-observation ya existen, no otro factory ni observer. A03 C1–C3: vista coherente (direct apply/revoke no comparten cursor), budgets exactos, renderer/digest/refs, candidatos exactos antes de LIMIT; getDelta null conserva full refresh. A08 exact revisions, graph dedupe, RAG identity estable sin query score, autobiographical versionada. A12 manifest dependencias de inferencia vs citas y raw inválido terminal/retry seguro. P06 quota/cancel con breaker 01, no liberar uncertainty local como éxito. P11/P12 bridges existentes no activar sin receipt. P01 agent.ts y V2 mount coordinado con 01; AGUI explícito y legacy. JEV API key nombre candidato y consent, no fallback de Fast. P10 RLS review 04. T05/06 aportan corpus/criterios, tú escribes store/runtime/context/graph/memory/rag. No implementar nuevos motores.
+
+## Gates y trabajo integral
+
+B1 schema/fixture/receipt port y preflight RLS. B2 snapshot, authorization, Slow/JEV independiente, V2 opt-in, prueba de entrada real. B3/B4 receipts, voz/WhatsApp/Google, source ACL/revocation, longitudinal consume journal. B5/B6 test PG, egress, long context, cold/warm, crash/replay, gate. No atribuir verified_fact a salida LLM. Preservar private self-read hasta PDP real.
+
+Cada macroturno revisa los doce requisitos y 48 bloques de la campaña, registra estado por bloque, implementa únicamente las ventanas autorizadas, no omite fases independientes seguras. Si una corrección ya está en original, no abrir otra campaña. Entrega a Trans00 las pruebas, deltas y bitácora; no informar por archivo. No despliegue ni efecto real. 

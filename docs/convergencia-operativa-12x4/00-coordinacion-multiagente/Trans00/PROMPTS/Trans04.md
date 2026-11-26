@@ -1,0 +1,17 @@
+# Trans04 — prompt de ejecución candidato D-M2
+
+Lee primero [12-PROMPT-COMUN-EJECUCION.md](../12-PROMPT-COMUN-EJECUCION.md) íntegro, no es opcional. No ejecutar hasta D-M3 y autorización de macroturno con rama y SHA de integración. 
+
+Rama documental original: `Trans04` fijada en `7c422f9a0f6d5686434466669c7df2f12255311e`. Carpeta exacta `docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/`. [Campaña consolidada](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/REDISENO-PASADA-05-EJECUCION-CONSOLIDADA.md), [Codex](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/ASTRA-AUDIT-V1/DIAGNOSTICO.md), [GPT](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md). Leer todos sus documentos de campaña anteriores necesarios y HANDOFF. La rama de ejecución será proporcionada por Trans00, no asumir que es la histórica.
+
+## Mandato exclusivo
+
+Infraestructura, observabilidad, provisionamiento y certificación. Patchsets originales P01–P14 original + T04-S. Adendas mínimas A06/A07/A14/A15; H01/H02/H03; S0–S2/S4. [Inventario/disposición](../10-DM2-CLASIFICACION-Y-REGRESIONES.md) y [reservas](../11-DM2-RESERVAS-Y-ABI.md) obligatorios.
+
+Importación 4 paths metrics-exporter/registry/request logger/test. Transferir hooks de 01 con registro antes de escribir. No await ni I/O síncrono, queue bounded, lifecycle y redact; index/app 01, productores dueños. Alertas reales/unknown, p99 overflow no null ambiguo, dedup scope, gate full manifest. T04-S GitHub-first, manifest explícito, profiles strict, Doppler optional, preserve legal check y env validate, no secret value ni hash, no prod overwrite, Supabase intacto. Deriva api/worker/cognition-worker por consumidor, no asumir nombres candidatos implementados. P08–P11 synthetic bundle/provision gate, no owner real. Backup manifest/inventario/hash/tenant y staging restore, DB externa separada; no tocar Supabase productivo. P10 RLS código 02, DB 01; certificar login runtime restricted, actor ACL y tenant. CI conserva web/worker/integration, full report y artefactos.
+
+## Gates y trabajo integral
+
+B1 hook ABI y fixture local, gate baseline. B2 instrumentación core desde primera operación, preflight sin credenciales reales. B3/B4 synthetic slices, señales bus/grafo/cards, Grafana preview autorizado, no datos sensibles. B5/B6 observabilidad, RLS concurrente, recovery/restore, gate estricto, auditoría independiente. No tags/workflow_dispatch ni despliegue. No sustituir estado NO_GO por key presente.
+
+Cada macroturno revisa los doce requisitos y 48 bloques de la campaña, registra estado por bloque, implementa únicamente las ventanas autorizadas, no omite fases independientes seguras. Si una corrección ya está en original, no abrir otra campaña. Entrega a Trans00 las pruebas, deltas y bitácora; no informar por archivo. No despliegue ni efecto real. 
