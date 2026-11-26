@@ -12,6 +12,7 @@
 //   - MAX_THOUGHTS_PER_TURN evita que un bucle infinito infle el turno.
 
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { thoughtSchema, type Thought } from "./thought.ts";
 import { turnSchema, type Turn, type TurnCloseReason, type TurnClosedBy } from "./turn.ts";
@@ -126,12 +127,21 @@ export class StoreTurnStore implements TurnStore {
   async append(thought: Thought): Promise<Thought> {
     const parsed = thoughtSchema.parse(thought);
     return this.store.transaction(async (tx) => {
+      await tx.lockKey?.(parsed.tenantId, parsed.id);
+      await tx.lockKey?.(parsed.tenantId, parsed.turnId);
+      const existing = await tx.get(parsed.tenantId, THOUGHTS_KIND, parsed.id);
+      if (existing) {
+        const saved = thoughtSchema.parse(existing);
+        if (!isDeepStrictEqual(saved, parsed)) throw new AppError("Thought identity conflict", 409);
+        return saved;
+      }
       const raw = await tx.get(parsed.tenantId, TURNS_KIND, parsed.turnId);
       if (!raw) throw new AppError(`Turn not found: ${parsed.turnId}`, 404);
       const turn = turnSchema.parse(raw);
       if (turn.status !== "open") throw new AppError(`Turn is not open: ${parsed.turnId}`, 409);
       if (turn.tenantId !== parsed.tenantId)
         throw tenantMismatch(parsed.tenantId, turn.tenantId);
+      if (turn.owner !== parsed.owner) throw new AppError("Thought owner mismatch", 409);
       // KERNEL_STORE_MAX_THOUGHTS_HONOR_V1
       const maxForTenant = this.limitFor(parsed.tenantId); // FIX_8A_MAX_THOUGHTS_V1
       if (turn.thoughtIds.length >= maxForTenant)
