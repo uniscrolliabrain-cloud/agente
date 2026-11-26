@@ -772,23 +772,216 @@ No construyas un segundo kernel, una segunda ontología, un segundo grafo o un s
 ---
 
 ## 14. Auditoría horizontal de las seis campañas
-Son seis superficies de un único sistema, no proyectos independientes. Detecta duplicación funcional/conceptual, contratos paralelos, interfaces incompatibles, ownership ambiguo, dependencias circulares, conflictos de identidad, autoridad, estado, receipts, revocación y archivos compartidos. Mapa integral productor/consumidor/contrato/evento/evidencia/estado. Cierra ABI común antes de integración, no inventar contratos por dependencia ausente.
-Circuitos mínimos: (1) intención→propuesta→aprobación→efecto→receipt; (2) receipt→evento→grafo→observación→conocimiento; (3) conocimiento→selección→Fast; (4) corrección→revisión→invalidación→contexto; (5) revocación→bloqueo→invalidación; (6) resultado externo desconocido→reconciliación; (7) duplicado→dedupe sin segundo efecto; (8) conversación larga→anclas→skills→brief; (9) transformación empresarial→representación→evaluación multiescala; (10) compilación→configuración→capacidad→operación gobernada; (11) caída Slow/JEV→continuidad Fast/runtime; (12) caída workers→replay seguro; (13) aislamiento empresas/usuarios; (14) observabilidad→evidencia→certificación. Cada circuito incluye precondiciones, estados, contratos, fallos, recuperación y pruebas. Tests de componentes no prueban circuito.
 
-## 15. Metodología
-En cada macroturno: estrategia→diagnóstico→diseño→simulación→feedback→ejecución documental→reauditoría. Primeros principios, invariantes, descomposición/recomposición, dependencias, simulación adversarial, contrafactuales y alternativas. Contrasta cada iteración con founder, código, canónica, seis ramas y conclusiones anteriores. Corrige tus errores; no sustituir por preferencia estética. Justifica coste/beneficio.
+Una vez comprendidas las seis ramas, debes analizarlas como un sistema único.
 
-## 16. Seis pasadas mínimas por rama
-1. Reconstrucción arquitectónica: estado verificable y callers.
-2. Auditoría crítica de propuesta original: errores, omisiones, supuestos, alternativas y evidencia.
-3. Rediseño superior: contratos, estructuras, algoritmos y recuperación más sólidos y simples.
-4. Ingeniería de implementación: archivos, símbolos, firmas, imports, schemas, migraciones, tests, flags y rollback.
-5. Simulación, pruebas y hardening: ejecutar pruebas existentes seguras y prototipos aislados; adversarial, concurrencia, seguridad, aislamiento, causalidad, rendimiento.
-6. Reauditoría de tu propio trabajo: intenta refutarlo, contrasta de nuevo, elimina abstracciones y ambigüedades, especificación consolidada y handoff.
-Más pasadas si son necesarias. No usar cantidad como sustituto de calidad.
+No son seis proyectos independientes.
 
-## 17. Patchsets de ingeniería ejecutable
-Cada patchset: ID, problema, evidencia, commit/blob, paths/símbolos reales, comportamiento actual/propuesto, alternativas y justificación, dependencias, ownership, contratos entrada/salida, invariantes, código candidato y hunks concretos, migraciones/compatibilidad, wiring/mounts, pruebas unitarias/integración/negativas/concurrencia, fault injection, observabilidad, criterios de aceptación, rollback, bloqueos y orden. No aceptar "mejorar seguridad", "añadir tests", "cablear grafo" como instrucciones suficientes. Distingue código candidato no compilado de evidencia ejecutada. No afirmar que un hunk funciona sin comprobar contratos.
+Son seis superficies de desarrollo de una misma arquitectura.
+
+Debes identificar especialmente:
+
+- Duplicaciones funcionales.
+- Duplicaciones conceptuales.
+- Contratos paralelos.
+- Incompatibilidades de interfaces.
+- Responsabilidades ambiguas.
+- Dependencias circulares.
+- Problemas de integración.
+- Problemas de ownership.
+- Diferencias epistemológicas.
+- Diferencias en la definición de autoridad.
+- Diferencias en las máquinas de estados.
+- Diferencias en la semántica de receipts.
+- Diferencias en los modelos de identidad.
+- Diferencias en los mecanismos de revocación.
+- Cambios incompatibles sobre archivos compartidos.
+
+Diseña un mapa integral de productores, consumidores, contratos, eventos, evidencias y estados.
+
+Identifica qué contratos deben ser acordados antes de que los seis agentes comiencen a implementar.
+
+No permitas que cada agente invente su propio contrato porque el contrato de otra rama todavía no esté disponible.
+
+### Circuitos de extremo a extremo
+
+Debes estudiar y diseñar, como mínimo:
+
+1. Intención humana → propuesta → aprobación → ejecución → receipt.
+2. Receipt → evento → grafo → observación → conocimiento.
+3. Conocimiento → selección contextual → Fast.
+4. Corrección humana → revisión → invalidación → nuevo contexto.
+5. Revocación → bloqueo de acceso → invalidación de proyecciones y snapshots.
+6. Error externo → resultado desconocido → reconciliación.
+7. Evento duplicado → deduplicación → ausencia de efectos repetidos.
+8. Conversación larga → anclas → skills → brief → continuidad.
+9. Transformación empresarial → nueva representación → evaluación multiescala.
+10. Compilación de empresa → configuración → capacidades → operación gobernada.
+11. Fallo de Slow/JEV → continuidad de Fast y runtime.
+12. Recuperación tras caída de workers → replay seguro → convergencia.
+13. Aislamiento entre empresas y entre usuarios de una empresa.
+14. Observabilidad → evidencia verificable → certificación.
+
+Cada circuito debe tener condiciones iniciales, componentes implicados, estados, contratos, fallos posibles, comportamiento esperado, mecanismos de recuperación y pruebas.
+
+No des por cerrado un circuito porque cada componente individual tenga un test.
+
+---
+
+## 15. Metodología de pensamiento e ingeniería
+
+No quiero que realices una única lectura y redactes una conclusión.
+
+Quiero que trabajes mediante pasadas integrales sucesivas.
+
+Cada pasada debe observar el sistema desde un ángulo diferente y producir una mejora acumulativa.
+
+En cada macroturno aplica el siguiente ciclo:
+
+**Estrategia → diagnóstico → diseño → simulación → retroalimentación → ejecución documental → reauditoría.**
+
+Utiliza primeros principios, análisis de dependencias, descomposición, recomposición, análisis de invariantes, simulación de estados, casos adversariales, análisis contrafactual y evaluación de alternativas.
+
+Cada nueva iteración debe contrastarse con:
+
+- La intención del fundador.
+- El código real.
+- La campaña canónica.
+- Las propuestas de las seis ramas.
+- Las conclusiones de tus propias iteraciones anteriores.
+
+Sé capaz de detectar y corregir tus errores.
+
+No preservas una propuesta equivocada simplemente porque tú mismo la hayas escrito en la pasada anterior.
+
+Tampoco debes sustituir componentes existentes únicamente porque prefieras una arquitectura diferente.
+
+Justifica el coste de cada modificación frente a su beneficio real.
+
+---
+
+## 16. Seis pasadas mínimas de auditoría por rama
+
+### Pasada 1 — Reconstrucción arquitectónica
+
+Comprensión de la intención, código real, responsabilidades, documentación, dependencias, contratos y puntos de montaje.
+
+Resultado: mapa verificable del estado actual.
+
+### Pasada 2 — Auditoría de nuestras propuestas
+
+Contraste exhaustivo de nuestros patchsets con el código vivo.
+
+Busca errores, omisiones, incompatibilidades, supuestos incorrectos, duplicaciones y soluciones insuficientemente desarrolladas.
+
+Resultado: informe crítico con evidencia y alternativas.
+
+### Pasada 3 — Rediseño superior
+
+Construye tu alternativa.
+
+No basta con mejorar nombres o añadir validaciones superficiales.
+
+Busca mejores invariantes, estructuras más pequeñas, contratos más expresivos, algoritmos más eficientes y mejores mecanismos de recuperación.
+
+Resultado: nueva arquitectura técnica.
+
+### Pasada 4 — Ingeniería de implementación
+
+Convierte la arquitectura en patchsets concretos.
+
+Determina archivos, funciones, firmas, imports, schemas, migraciones, pruebas, dependencias, feature flags y rollback.
+
+Resultado: campaña ejecutable.
+
+### Pasada 5 — Simulación, pruebas y hardening
+
+Somete tu propuesta a escenarios adversariales.
+
+Ejecuta las pruebas existentes relevantes cuando el entorno lo permita.
+
+Utiliza experimentos locales aislados para comprobar las hipótesis más importantes.
+
+Revisa las garantías de concurrencia, seguridad, aislamiento, integridad, causalidad, recuperación y rendimiento.
+
+Resultado: evidencia, correcciones y propuesta endurecida.
+
+### Pasada 6 — Reauditoría independiente de tu propio trabajo
+
+Intenta destruir intelectualmente tu propia propuesta.
+
+Compárala nuevamente con nuestras campañas.
+
+Identifica cualquier supuesto que no hayas comprobado.
+
+Elimina abstracciones innecesarias.
+
+Detecta las instrucciones que un agente ejecutor podría interpretar incorrectamente.
+
+Resultado: especificación consolidada y handoff.
+
+Si seis pasadas no son suficientes, realiza las adicionales necesarias.
+
+No utilices el número de pasadas como sustituto de la calidad.
+
+---
+
+## 17. Nivel técnico exigido a los patchsets
+
+Cada patchset debe contener como mínimo:
+
+- Identificador.
+- Problema que resuelve.
+- Evidencia del problema.
+- Commit y blob de referencia.
+- Archivo o archivos reales.
+- Funciones o símbolos afectados.
+- Comportamiento actual.
+- Comportamiento propuesto.
+- Alternativas consideradas.
+- Justificación de la solución elegida.
+- Dependencias.
+- Ownership.
+- Contrato de entrada.
+- Contrato de salida.
+- Invariantes.
+- Código candidato.
+- Diff o hunk cuando sea apropiado.
+- Migraciones y compatibilidad.
+- Wiring.
+- Puntos de montaje.
+- Pruebas unitarias.
+- Pruebas de integración.
+- Pruebas negativas.
+- Pruebas de concurrencia cuando sean necesarias.
+- Fault injection.
+- Observabilidad.
+- Criterios de aceptación.
+- Rollback.
+- Condiciones de bloqueo.
+- Orden de ejecución.
+
+No acepto patchsets que únicamente indiquen:
+
+«Mejorar la seguridad».
+
+«Añadir tests».
+
+«Implementar observabilidad».
+
+«Revisar el runtime».
+
+«Cablear el grafo».
+
+Eso no es ingeniería ejecutable.
+
+El agente que reciba la campaña debe poder comprender exactamente qué debe realizar, dónde debe realizarlo, por qué debe hacerlo y cómo determinar que lo ha realizado correctamente.
+
+Si propones código que no has compilado, identifícalo como candidato.
+
+No afirmes que un hunk funciona si no has comprobado sus contratos y dependencias.
+
+---
 
 ## 18. Seis campañas ejecutables
 Doce fases y 48 bloques individuales por campaña como referencia. A: diseño/inventario/contratos; B: implementación especificada y pruebas; C: reauditoría/refactor/integración; D: hardening/recuperación/certificación. No solo tabla. Cada bloque debe ser directamente ejecutable por agente de coding. Otra distribución solo si justificada y trazable a original, no rellenar artificialmente. Conserva granularidad y autonomía.
