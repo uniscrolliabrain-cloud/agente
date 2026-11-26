@@ -44,6 +44,8 @@ import {
 import "../design-system/agntia-tokens.css";
 import "./company.css";
 import { COMPANY_DATA } from "./company-data";
+import { COMPANY_VISUALS } from "./company-visuals";
+import "./company-visuals.css";
 
 type Icon = typeof Compass;
 type SectionId =
@@ -134,6 +136,13 @@ function Table({rows,headers=["Elemento","Detalle","Estado"],onSelect}:{rows:str
  return <><label className="co-search"><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Buscar registros…" aria-label="Buscar registros"/></label><div className="co-table-wrap"><table className="co-table"><thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{filtered.map((row,i)=><tr key={i}>{row.map((cell,j)=><td key={j}>{j===0?<button type="button" className="co-mini" onClick={()=>onSelect(row)}>{cell}<ChevronRight size={13}/></button>:j===row.length-1?<span className="co-tag">{cell}</span>:cell}</td>)}</tr>)}</tbody></table>{!filtered.length&&<p className="co-text">No hay registros que coincidan.</p>}</div></>;
 }
 function Progress({label,value}:{label:string;value:number}) {return <div className="co-progress"><div><span>{label}</span><b>{value} %</b></div><span className="co-progress-track"><i style={{width:value+"%"}}/></span></div>;}
+function SectionVisual({section}:{section:Section}) {
+ const visual=COMPANY_VISUALS[section.id];
+ return <section className="co-section-visual" aria-label={"Identidad visual de "+section.label}>
+   <img className="co-section-art" src={visual.hero} alt="" width={1536} height={1024} decoding="async"/>
+   <div className="co-section-symbols">{visual.icons.map(icon=><div key={icon.label}><img src={icon.src} alt="" width={1024} height={1024} decoding="async"/><span>{icon.label}</span></div>)}</div>
+ </section>;
+}
 function Workspace({section,onSelect}:{section:Section;onSelect:(row:string[])=>void}) {
  const d:Content=COMPANY_DATA[section.id];
  const primary=d.primary;
@@ -602,7 +611,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
             </header>
 
             <div className="co-page-body">
-              <div className="co-main"><Workspace key={sectionId} section={section} onSelect={setSelected}/></div>
+              <div className="co-main"><SectionVisual key={"visual-"+sectionId} section={section}/><Workspace key={sectionId} section={section} onSelect={setSelected}/></div>
 
               <aside className="co-inspector" aria-label="Inspector contextual">
  <section className="co-insp-card"><span className="co-kicker">Contexto · {section.label}</span><h3>{selected?.[0]??content.hero}</h3><p>{selected?selected.slice(1).join(" · "):content.desc}</p>{selected&&<button className="co-mini" onClick={()=>setSelected(null)}>Cerrar detalle</button>}</section>
