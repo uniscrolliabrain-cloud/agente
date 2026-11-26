@@ -983,38 +983,248 @@ No afirmes que un hunk funciona si no has comprobado sus contratos y dependencia
 
 ---
 
-## 18. Seis campañas ejecutables
-Doce fases y 48 bloques individuales por campaña como referencia. A: diseño/inventario/contratos; B: implementación especificada y pruebas; C: reauditoría/refactor/integración; D: hardening/recuperación/certificación. No solo tabla. Cada bloque debe ser directamente ejecutable por agente de coding. Otra distribución solo si justificada y trazable a original, no rellenar artificialmente. Conserva granularidad y autonomía.
+## 18. Campañas ejecutables de doce fases y 48 bloques
 
-## 19. Paralelización
-Plan topológico para seis agentes simultáneos con founder/supervisores auditando commits. Define superficies de escritura exclusivas, reserva temporal de archivos compartidos, dependencias reales, waves y criterios entrada/salida. Independientes puros/fixtures/tests continúan con ABI pendiente; adapter default-deny cuando corresponda, jamás mock de éxito operativo. Minimiza esperas, conflictos, repetición, preguntas menores y dependencias implícitas. Sincroniza solo lo necesario.
+Cada una de las seis nuevas campañas debe conservar el nivel de granularidad metodológica de nuestras campañas originales y superarlo cuando sea necesario.
 
-## 20. Investigación externa
-Estudia cuando aporte valor: sistemas distribuidos, kernels mínimos, event sourcing, state machines, workflows durables, GWT/blackboard, compiladores, reglas, procedencia, autorización, atención, propagación, papers y repos open source. Contrasta patrones con código; cita fuentes verificadas. No incorporar dependencias por popularidad ni proponer Kafka/K8s/microservicios/nuevas DB por defecto. Demuestra necesidad y coste de mantenimiento para founder individual y agentes IA.
+Utiliza como estructura de referencia doce fases y cuatro bloques por fase:
+
+- Bloque A: recuperación del contexto, diseño, inventario y contratos.
+- Bloque B: implementación especificada y pruebas.
+- Bloque C: reauditoría, refactorización e integración.
+- Bloque D: hardening, recuperación y certificación.
+
+No te limites a crear una tabla de doce fases.
+
+Desarrolla individualmente los 48 bloques.
+
+Cada bloque debe contener instrucciones suficientemente precisas para que un agente de coding pueda ejecutarlo.
+
+Si técnicamente resulta superior utilizar una distribución diferente, puedes proponerla, siempre que justifiques el cambio y mantengas la trazabilidad respecto a nuestros bloques originales.
+
+No inventes fases artificiales para cumplir formalmente el número.
+
+La granularidad debe servir a la autonomía y la calidad de ejecución.
+
+---
+
+## 19. Paralelización de los seis agentes
+
+El resultado debe permitir que seis agentes de coding puedan trabajar simultáneamente, mientras el fundador y sus supervisores auditan su trabajo.
+
+Necesitamos minimizar:
+
+- Esperas innecesarias.
+- Bloqueos artificiales.
+- Conflictos Git.
+- Repetición de trabajo.
+- Cambios sobre los mismos archivos.
+- Dependencias implícitas.
+- Preguntas innecesarias al fundador.
+
+Diseña una planificación topológica de ejecución.
+
+Identifica cuáles son las operaciones independientes que pueden comenzar inmediatamente tras la autorización.
+
+Identifica los contratos que deben cerrarse primero.
+
+Identifica las barreras reales de integración.
+
+Define ownership exclusivo de superficies de escritura.
+
+Define cómo solicitar una reserva temporal de un archivo compartido.
+
+Define cómo un agente puede avanzar sobre contratos puros, fixtures y pruebas mientras una dependencia de otra rama todavía no esté disponible.
+
+Define cuándo debe utilizar un adapter fail-closed y cuándo debe esperar una interfaz real.
+
+No permitas que un agente sustituya una dependencia ausente por un mock que simule éxito operativo.
+
+Diseña oleadas de trabajo, con criterios precisos de entrada y salida.
+
+Nuestro objetivo es paralelizar el máximo trabajo independiente posible y sincronizar únicamente aquello que realmente lo necesite.
+
+---
+
+## 20. Investigación y experimentación
+
+Puedes utilizar investigación técnica externa cuando proporcione valor real.
+
+Puedes estudiar:
+
+- Arquitecturas de sistemas distribuidos.
+- Kernels mínimos.
+- Event sourcing.
+- Máquinas de estados.
+- Sistemas de workflow.
+- Arquitecturas cognitivas.
+- Global Workspace.
+- Sistemas blackboard.
+- Compiladores.
+- Sistemas de reglas.
+- Lógicas de conocimiento.
+- Modelos de atención.
+- Sistemas de procedencia.
+- Arquitecturas de autorización.
+- Runtimes durables.
+- Algoritmos de propagación.
+- Papers relevantes.
+- Repositorios open source.
+
+Pero no conviertas la investigación en una recopilación académica sin aplicación práctica.
+
+Cada patrón externo debe contrastarse con nuestro software.
+
+No recomiendes incorporar un framework porque sea popular.
+
+No propongas migraciones tecnológicas innecesarias.
+
+No propongas Kafka, Kubernetes, microservicios, nuevas bases de datos u otros sistemas complejos por defecto.
+
+Demuestra que cualquier dependencia nueva resuelve un problema que no podemos resolver suficientemente bien con nuestra infraestructura existente.
+
+Ten en cuenta que trabajamos con un fundador individual y múltiples agentes de IA.
+
+El coste de mantenimiento, complejidad, infraestructura y coordinación importa.
+
+---
 
 ## 21. Nueva escala de evaluación
-Aplica idéntica rúbrica a originales y Astra, con criterios observables por nivel, evidencia, deficiencia, gravedad, incertidumbre y mejora siguiente. Pesos: alineación founder 10%; anclaje código 12%; contratos/invariantes 12%; patchsets ejecutables 14%; seguridad/autoridad/aislamiento 10%; wiring transversal 12%; pruebas/evidencia 12%; simplicidad/coste 6%; paralelización/autonomía 6%; recuperación/rollback/evolución 6%. Distingue calidad documental de madurez funcional. No 10 por elegancia, no máximos con ABI inventada o garantías no probadas. Objetivo de elevar estándar hasta que 9,2 original pueda equivaler a 7 si se justifica, no forzar resultado. Explica si nuestras soluciones ya eran difíciles de superar.
 
-## 22. Entregables obligatorios por rama
-Crea exclusivamente ASTRA-AUDIT-V1/ dentro de la carpeta documental existente de cada rama. No modificar originales.
-- 00-README-ASTRA.md: índice, estado, alcance, precedencia.
-- 01-BASELINE-CODIGO-REAL.md: HEAD, merge-base, blobs, callers, wiring, estado.
-- 02-AUDITORIA-CRITICA-PROPUESTA-ORIGINAL.md: hallazgos con evidencia.
-- 03-CONTRASTE-FOUNDER-CANONICA-CODIGO.md: triple contraste.
-- 04-REDISENO-ARQUITECTONICO-ASTRA.md: alternativa superior.
-- 05-CONTRATOS-E-INVARIANTES.md: schemas, estados, garantías.
-- 06-PATCHSETS-CONSOLIDADOS.md: hunks y secuencia.
-- 07-WIRING-TRANSVERSAL.md: cinco otras ramas.
-- 08-PLAN-DE-PRUEBAS-Y-FAULT-INJECTION.md.
-- 09-MIGRACIONES-COMPATIBILIDAD-ROLLBACK.md.
-- 10-PARALELIZACION-Y-DEPENDENCIAS.md.
-- 11-EVIDENCIA-Y-REAUDITORIA.md: pruebas reales y límites.
-- 12-EVALUACION-COMPARATIVA.md.
-- 13-ESPECIFICACION-FINAL-DE-EJECUCION.md: autosuficiente.
-- 14-PROMPT-HANDOFF-AGENTE-EJECUTOR.md.
-- BITACORA-ASTRA.md: pasadas, errores propios, correcciones, commits, checkpoint.
-- campaign/: fases y 48 bloques individuales (o distribución justificada).
-Documentación navegable, granular, versionada, no monolito.
+Necesito que construyas un estándar de evaluación más exigente que el utilizado por los agentes anteriores.
+
+Debes evaluar las propuestas originales y tus nuevas propuestas bajo exactamente el mismo estándar.
+
+Utiliza al menos estas dimensiones:
+
+| Dimensión | Peso |
+|---|---:|
+| Comprensión arquitectónica y alineación con el fundador | 10 % |
+| Anclaje y trazabilidad respecto al código real | 12 % |
+| Calidad de contratos e invariantes | 12 % |
+| Precisión y ejecutabilidad de patchsets | 14 % |
+| Seguridad, autoridad y aislamiento | 10 % |
+| Wiring e integración transversal | 12 % |
+| Pruebas, simulaciones y evidencia | 12 % |
+| Simplicidad y coste de mantenimiento | 6 % |
+| Paralelización y autonomía del ejecutor | 6 % |
+| Recuperación, rollback y evolución | 6 % |
+
+Define criterios objetivos para cada nivel.
+
+Un 10 no debe significar una documentación elegante.
+
+Debe representar una propuesta extraordinariamente rigurosa, contrastada, coherente y verificable dentro del alcance evaluado.
+
+Distingue la calidad documental de la madurez funcional.
+
+No puedes certificar producción mediante una evaluación documental.
+
+No puedes otorgar puntuaciones máximas a una propuesta que depende de interfaces inventadas, código no contrastado o garantías que no se han comprobado.
+
+Incluye siempre:
+
+- Evidencia que justifica la puntuación.
+- Deficiencias encontradas.
+- Gravedad.
+- Incertidumbre de la evaluación.
+- Mejora necesaria para alcanzar el siguiente nivel.
+
+No presupongas que nuestras propuestas originales son excelentes.
+
+No presupongas tampoco que son deficientes.
+
+Tu trabajo debe demostrarlo.
+
+Quiero que seas capaz de construir algo tan superior que, al aplicar una escala técnicamente más exigente, nuestro trabajo de 9,2 pueda quedar en un 7, mientras el tuyo supere ese nivel de manera evidente.
+
+Si no eres capaz de lograrlo, explica honestamente qué aspectos de nuestras propuestas ya eran difíciles de mejorar.
+
+---
+
+## 22. Entregables obligatorios en cada rama
+
+Dentro de la carpeta documental existente de cada rama, crea exclusivamente una nueva subcarpeta:
+
+`ASTRA-AUDIT-V1/`
+
+No modifiques los archivos originales.
+
+Dentro de esa carpeta crea como mínimo:
+
+### `00-README-ASTRA.md`
+
+Índice de tu propuesta, estado, enlaces, metodología, alcance, precedencia y navegación.
+
+### `01-BASELINE-CODIGO-REAL.md`
+
+Inventario completo, HEAD, merge-base, blobs, arquitectura actual, componentes, callers, wiring y estado funcional.
+
+### `02-AUDITORIA-CRITICA-PROPUESTA-ORIGINAL.md`
+
+Auditoría de nuestro trabajo con evidencias concretas.
+
+### `03-CONTRASTE-FOUNDER-CANONICA-CODIGO.md`
+
+Triple contraste y resolución propuesta de divergencias.
+
+### `04-REDISENO-ARQUITECTONICO-ASTRA.md`
+
+Tu alternativa superior de arquitectura.
+
+### `05-CONTRATOS-E-INVARIANTES.md`
+
+Contratos exactos, schemas, estados, responsabilidades y garantías.
+
+### `06-PATCHSETS-CONSOLIDADOS.md`
+
+Patchsets concretos y ordenados.
+
+### `07-WIRING-TRANSVERSAL.md`
+
+Integración con las otras cinco ramas.
+
+### `08-PLAN-DE-PRUEBAS-Y-FAULT-INJECTION.md`
+
+Pruebas, escenarios adversariales y condiciones de aceptación.
+
+### `09-MIGRACIONES-COMPATIBILIDAD-ROLLBACK.md`
+
+Evolución segura del software existente.
+
+### `10-PARALELIZACION-Y-DEPENDENCIAS.md`
+
+Orden topológico, oleadas, ownership y barreras.
+
+### `11-EVIDENCIA-Y-REAUDITORIA.md`
+
+Resultados reales de análisis, pruebas y simulaciones, con sus limitaciones.
+
+### `12-EVALUACION-COMPARATIVA.md`
+
+Evaluación original frente a propuesta Astra bajo el nuevo estándar.
+
+### `13-ESPECIFICACION-FINAL-DE-EJECUCION.md`
+
+Documento consolidado, autosuficiente y preciso.
+
+### `14-PROMPT-HANDOFF-AGENTE-EJECUTOR.md`
+
+Prompt completa para el futuro agente encargado de ejecutar tu campaña.
+
+### `BITACORA-ASTRA.md`
+
+Historial de pasadas, decisiones, errores detectados, correcciones, commits y estado.
+
+### Directorio `campaign/`
+
+Contendrá las fases y los bloques individuales de tu nueva campaña ejecutable.
+
+No quiero un único documento gigantesco difícil de utilizar.
+
+Quiero una infraestructura documental navegable, granular, versionada y directamente utilizable por los agentes.
+
+---
 
 ## 23. Entregable horizontal
 Publica en rama Trans06, carpeta Trans06/ASTRA-AUDIT-V1/convergencia-horizontal/ (bajo raíz documental). No nueva rama ni edición canónica. Inventario de seis ramas, matriz contratos/responsabilidades, mapa causal, grafo dependencias, archivos conflictivos, orden integración, reconciliación ABI, barreras, waves, pruebas conjuntas, certificación, riesgos residuales y supervisión. En otras cinco carpetas ASTRA enlaza revisión exacta de propuesta horizontal. Preserva auditoría horizontal anterior.
