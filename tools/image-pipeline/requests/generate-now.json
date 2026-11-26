@@ -1,42 +1,78 @@
 {
   "schemaVersion": 1,
-  "outputDir": "assets/generated/analytics/v1",
+  "outputDir": "assets/generated/mi-empresa/v1/lote-1",
   "images": [
     {
-      "id": "revenue",
+      "id": "00-inicio-01",
       "size": "1536x1024",
-      "alt": "revenue",
-      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Six ascending rounded rectangular ceramic bars in ivory to violet, thin elegant brushed gold rising arrow above, front-facing slight elevated camera, wide composition. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+      "alt": "00-inicio — ilustración editorial",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una ilustración de producto para AgntiaPro, sección Inicio del compilador empresarial. Representa maqueta de empresa formada por módulos de madera clara y cerámica, una pieza aún separada. Composición horizontal 3:2, objeto agrupado en el centro con 18% de margen libre, perspectiva tres cuartos suave, fondo papel uniforme, escala humana y tactilidad discreta. Debe comunicar la acción de diseñar la empresa, no la ejecución operativa. Sin interfaz dibujada ni texto. Entregar una imagen independiente 1536×1024, PNG maestro y WebP optimizado tras aprobación. Uso previsto: mapa de dimensiones, ideas en desarrollo y siguiente paso; reservar espacio real para copy HTML, no usar como fondo de tablas."
     },
     {
-      "id": "distribution",
-      "size": "1536x1024",
-      "alt": "distribution",
-      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Front-facing thick sculptural donut ring, exactly 78 percent violet, 16 percent ivory, 6 percent pale lavender, empty central hole. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+      "id": "00-inicio-02",
+      "size": "1024x1024",
+      "alt": "00-inicio — icono principal",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera un único icono escultórico de Inicio: brújula de mesa. Silueta inequívoca, volumen compacto, vista tres cuartos casi frontal, 72% del lienzo, margen uniforme, fondo #FCFAF6, cerámica marfil mate con detalle tierra y un acento violeta discreto. Sin pedestal, marco, texto ni letras. Cuadrado 1024×1024. Debe distinguirse a 48 px. Exportar WebP 512/320 después de aprobación."
     },
     {
-      "id": "pipeline",
-      "size": "1536x1024",
-      "alt": "pipeline",
-      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Four separate stacked tapered funnel bowls, ivory, lavender, violet and small gold bottom, frontal view. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+      "id": "00-inicio-03",
+      "size": "1024x1024",
+      "alt": "00-inicio — icono módulo encajable",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de módulo encajable, para Inicio en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
     },
     {
-      "id": "areas",
-      "size": "1536x1024",
-      "alt": "areas",
-      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Four overlapping smooth flowing area-chart ribbons on a shared horizontal baseline, violet lavender ivory and gold, wide front-facing composition. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+      "id": "00-inicio-04",
+      "size": "1024x1024",
+      "alt": "00-inicio — icono cuaderno abierto",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de cuaderno abierto, para Inicio en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
     },
     {
-      "id": "roi",
+      "id": "01-identidad-01",
       "size": "1536x1024",
-      "alt": "roi",
-      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Two stacks of ivory and violet ceramic coins with a rising brushed gold arrow. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+      "alt": "01-identidad — ilustración editorial",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una ilustración de producto para AgntiaPro, sección Identidad del compilador empresarial. Representa libro de historia abierto con raíz vegetal estilizada y piedra fundacional. Composición horizontal 3:2, objeto agrupado en el centro con 18% de margen libre, perspectiva tres cuartos suave, fondo papel uniforme, escala humana y tactilidad discreta. Debe comunicar la acción de diseñar la empresa, no la ejecución operativa. Sin interfaz dibujada ni texto. Entregar una imagen independiente 1536×1024, PNG maestro y WebP optimizado tras aprobación. Uso previsto: cabecera editorial de propósito, misión, visión y cultura; reservar espacio real para copy HTML, no usar como fondo de tablas."
     },
     {
-      "id": "health",
+      "id": "01-identidad-02",
+      "size": "1024x1024",
+      "alt": "01-identidad — icono principal",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera un único icono escultórico de Identidad: huella grabada. Silueta inequívoca, volumen compacto, vista tres cuartos casi frontal, 72% del lienzo, margen uniforme, fondo #FCFAF6, cerámica marfil mate con detalle tierra y un acento violeta discreto. Sin pedestal, marco, texto ni letras. Cuadrado 1024×1024. Debe distinguirse a 48 px. Exportar WebP 512/320 después de aprobación."
+    },
+    {
+      "id": "01-identidad-03",
+      "size": "1024x1024",
+      "alt": "01-identidad — icono horizonte",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de horizonte, para Identidad en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "01-identidad-04",
+      "size": "1024x1024",
+      "alt": "01-identidad — icono raíces",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de raíces, para Identidad en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "02-modelo-de-negocio-01",
       "size": "1536x1024",
-      "alt": "health",
-      "prompt": "Premium Blender Cycles product render for AgntiaPro analytics. Three concentric segmented ceramic rings in ivory lavender and violet, empty center, frontal view. Soft warm ivory studio background, realistic matte ceramic, satin violet, brushed champagne brass, soft ambient shadows, rounded bevels. Isolated centered object, generous margins, no letters, no numbers, no labels, no UI, no watermark. Chart geometry must be legible, not a generic icon."
+      "alt": "02-modelo-de-negocio — ilustración editorial",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una ilustración de producto para AgntiaPro, sección Modelo de negocio del compilador empresarial. Representa piezas de un modelo empresarial encajando sobre una mesa de trabajo. Composición horizontal 3:2, objeto agrupado en el centro con 18% de margen libre, perspectiva tres cuartos suave, fondo papel uniforme, escala humana y tactilidad discreta. Debe comunicar la acción de diseñar la empresa, no la ejecución operativa. Sin interfaz dibujada ni texto. Entregar una imagen independiente 1536×1024, PNG maestro y WebP optimizado tras aprobación. Uso previsto: canvas de propuesta de valor, clientes, ingresos y costes; reservar espacio real para copy HTML, no usar como fondo de tablas."
+    },
+    {
+      "id": "02-modelo-de-negocio-02",
+      "size": "1024x1024",
+      "alt": "02-modelo-de-negocio — icono principal",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera un único icono escultórico de Modelo de negocio: pieza de encaje. Silueta inequívoca, volumen compacto, vista tres cuartos casi frontal, 72% del lienzo, margen uniforme, fondo #FCFAF6, cerámica marfil mate con detalle tierra y un acento violeta discreto. Sin pedestal, marco, texto ni letras. Cuadrado 1024×1024. Debe distinguirse a 48 px. Exportar WebP 512/320 después de aprobación."
+    },
+    {
+      "id": "02-modelo-de-negocio-03",
+      "size": "1024x1024",
+      "alt": "02-modelo-de-negocio — icono balanza de valor",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de balanza de valor, para Modelo de negocio en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
+    },
+    {
+      "id": "02-modelo-de-negocio-04",
+      "size": "1024x1024",
+      "alt": "02-modelo-de-negocio — icono documento one-pager",
+      "prompt": "Paleta papel#FCFAF6, marfil, tinta #242421, madera clara, tierra suave, violeta #6550DD solo como acento y latón satinado mínimo. Evitar rosa dominante, oro brillante, lujo ostentoso, neón, glassmorphism, robots, circuitos luminosos y estética SaaS genérica. Material cerámico mate, luz difusa superior izquierda, sombra de contacto suave, geometría legible. Sin texto generado, logotipos, cifras ni marcas de agua. No alterar el shell ni crear nuevos workspaces.\nGenera una imagen independiente de documento one-pager, para Modelo de negocio en Tu Empresa. Usa como referencia visual el icono principal aprobado de esta carpeta y la familia Apps/Documentos aprobada. Mantén cámara, iluminación, escala del 72%, fondo papel, cerámica mate y acentos tierra/violeta; cambia únicamente la silueta y detalles semánticos necesarios. Sin letras, números, pedestal ni borde de tarjeta. 1024×1024, legible a 48 px. Propuesta preliminar pendiente de comparación con referencia aprobada."
     }
   ]
 }
