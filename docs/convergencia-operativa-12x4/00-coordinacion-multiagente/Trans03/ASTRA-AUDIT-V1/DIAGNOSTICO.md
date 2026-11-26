@@ -7,3 +7,9 @@ La decisión de repetir una escritura externa depende de saber si el proveedor l
 **Impacto.** El historial pierde la confirmación observada y vuelve a ofrecer para aprobación una operación ya ejecutada por el doble. El ensayo terminó al volver a revisión, antes de un segundo envío.
 
 [Código examinado](https://github.com/uniscrolliabrain-cloud/agente/blob/fd032cdba91701d2f99cc4507df9056b46a805fb/apps/server/src/workspace.ts#L845)
+
+## Google Places presenta una respuesta ilegible como búsqueda vacía
+
+Probé `searchLeads` con tres respuestas HTTP 200 de un proveedor simulado. Un cuerpo JSON truncado (`{`) y una respuesta válida con `places: []` devolvieron la misma lista vacía. Una respuesta válida con un lugar devolvió un resultado. El adaptador convierte el error de lectura en `null` y el servicio de leads recibe cero coincidencias incluso cuando desconoce el resultado real de la búsqueda.
+
+[Adaptador de Places](https://github.com/uniscrolliabrain-cloud/agente/blob/32f75479c5bed56e2debf2de4db70d27f6c23481/packages/integrations/src/google-maps.ts#L102) · [Consumidor](https://github.com/uniscrolliabrain-cloud/agente/blob/32f75479c5bed56e2debf2de4db70d27f6c23481/apps/server/src/engine/leads.ts#L293)
