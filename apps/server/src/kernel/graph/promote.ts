@@ -15,7 +15,7 @@ import type { Thought } from "./thought.ts";
 import type { Kernel } from "../kernel.ts";
 import { classifyWithTenant } from "./rules.ts";
 // PROMOTE_USE_CLASSIFY_WITH_TENANT_DONE_V1
-import { consolidate, type ConsolidationResult } from "./consolidate.ts";
+import { consolidate, thoughtContentKey, type ConsolidationResult } from "./consolidate.ts";
 
 export interface PromotionDeps {
   kernel: Kernel;
@@ -206,14 +206,20 @@ export class Promoter {
     for (const id of survivors) {
       const thought = thoughts.find((t) => t.id === id);
       if (!thought) continue;
-      const normalized =
-        typeof thought.content === "string"
-          ? thought.content.trim().toLowerCase().replace(/\s+/g, " ").slice(0, 500)
-          : JSON.stringify(thought.content).slice(0, 500);
-      const key = `${thought.role}:${normalized}`;
+      const key = thoughtContentKey(thought);
       if (contentSeen.has(key)) continue;
       contentSeen.set(key, id);
       survivorsDedup.push(id);
+    }
+    const retained = new Set(survivorsDedup);
+    for (const id of survivors) if (!retained.has(id)) discarded.push(id);
+    for (const decision of decisions) {
+      if (decision.survives && !retained.has(decision.thoughtId)) {
+        decision.survives = false; decision.destination = "discard"; decision.ruleId = "duplicate_content";
+      }
+    }
+    for (const destination of Object.keys(destinations) as Array<keyof typeof destinations>) {
+      destinations[destination] = destinations[destination].filter(id => retained.has(id));
     }
     // CONSOLIDATE_PERSIST_V1 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â persiste el resultado para no recalcular.
     // Ver: auditorÃƒÆ’Ã‚Â­a profunda 09.
@@ -261,8 +267,8 @@ export class Promoter {
     }
     void this.deps.kernel.deps.audit
       .append({
-        tenantId: thoughts[0].tenantId,
-        owner: thoughts[0].owner,
+        tenantId: ctx.tenantId,
+        owner: ctx.owner,
         action: "promotion.executed",
         actor: { kind: "system", id: "promoter" },
         payload: {
@@ -307,13 +313,13 @@ export class Promoter {
 
     return {
       turnId,
-      tenantId: thoughts[0].tenantId,
-      owner: thoughts[0].owner,
+      tenantId: ctx.tenantId,
+      owner: ctx.owner,
       totalThoughts: thoughts.length,
       // PROMOTER_METRICS_COUNTERS_V1
       // PROMOTER_METRICS_V1
       counts,
-      survivors,
+      survivors: survivorsDedup,
       discarded,
       decisions,
       destinations,

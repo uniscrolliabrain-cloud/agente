@@ -19,8 +19,8 @@
 
 import { z } from "zod";
 import type { Thought } from "../graph/thought.ts";
-import type { ProgressEvent } from "../graph/progress.ts";
-import { attentionOverlap } from "../graph/attention.ts";
+import { progressEventSchema, type ProgressEvent } from "../graph/progress.ts";
+import { attentionOverlap, totalAttention } from "../graph/attention.ts";
 
 export const metaRuleSchema = z.enum([
   "slow_ready_fast_idle",
@@ -48,6 +48,7 @@ export interface MetaInput {
 // FAST_IDLE_MS_WIRE_V1 - respeta TenantConfig.fastIdleMs.
 export interface MetaDeps {
   longNoOutputMs?: number;
+  fastIdleMs?: number;
 }
 
 // META_HINT_CONSUMED_V1 â€” el Meta recuerda quÃ© hints ya emitiÃ³ para no
@@ -60,84 +61,34 @@ export interface MetaDeps {
 
   export class Meta {
   private readonly longNoOutputMs: number;
+  private readonly fastIdleMs: number;
 
   constructor(deps: MetaDeps = {}) {
     this.longNoOutputMs = deps.longNoOutputMs ?? 30_000;
+    this.fastIdleMs = deps.fastIdleMs ?? 1000;
+    if ([this.longNoOutputMs, this.fastIdleMs].some(value => !Number.isFinite(value) || value < 0)) throw Error("INVALID_META_DURATION");
   }
 
   // META_HINT_CONSUMED_V1 â€” estado de hints ya emitidos.
   private readonly seenHints = new Set<string>();
-  private lastCleanupAt = 0;
-
-  /** Marca un hint como consumido (el fast lo leyÃ³). */
-  // META_HINT_TTL_V1
+  /** Consumption is bounded instance-local state, not a durable ACK. */
   consumeHint(hintId: string): void {
+    if (!hintId || hintId.length > 200) return;
     this.seenHints.add(hintId);
-  }
-
-  /** Limpia la lista de hints si crece demasiado. */
-  // META_HINT_CONSUMED_CLEANUP_V1
-  private maybeCleanup(): void {
-    if (this.seenHints.size < 200) return;
-    const now = Date.now();
-    if (now - this.lastCleanupAt < 60_000) return;
-    this.lastCleanupAt = now;
-    this.seenHints.clear();
+    if (this.seenHints.size > 1000) this.seenHints.delete(this.seenHints.values().next().value!);
   }
 
   evaluate(input: MetaInput): MetaHint[] {
-    // META_EVALUATE_TENANT_AWARE_V1
-    const hints: MetaHint[] = [];
-    const nowMs = Date.parse(input.now);
-    const fastActivityMs = input.lastFastActivityAt
-      ? Date.parse(input.lastFastActivityAt)
-      : 0;
-
+    const progress: ProgressEvent[] = [];
+    const thoughtIdByProgressIndex: Record<number, string> = {};
     for (const thought of input.thoughts) {
-      const progress = this.extractProgress(thought);
-      if (!progress) continue;
-      const progressMs = Date.parse(progress.timestamp);
-
-      if (progress.kind === "ready") {
-        const fastIsIdle = !input.lastFastActivityAt || nowMs - fastActivityMs > 1000;
-        if (fastIsIdle) {
-          hints.push({
-            rule: "slow_ready_fast_idle",
-            urgency: "medium",
-            message: `Slow completo: ${progress.message.slice(0, 200)}`,
-            thoughtId: thought.id,
-          });
-        }
-      }
-
-      if (progress.kind === "failed") {
-        hints.push({
-          rule: "slow_failed_urgent",
-          urgency: "high",
-          message: `Slow fallo: ${progress.message.slice(0, 200)}`,
-          thoughtId: thought.id,
-        });
-      }
-
-      if (progress.kind === "progress" && nowMs - progressMs > this.longNoOutputMs) {
-        hints.push({
-          rule: "slow_long_no_output",
-          urgency: "low",
-          message: `Slow sigue trabajando: ${progress.message.slice(0, 200)}`,
-          thoughtId: thought.id,
-        });
-      }
+      const parsed = progressEventSchema.safeParse(thought.attention?.metadata?.progress);
+      if (!parsed.success) continue;
+      thoughtIdByProgressIndex[progress.length] = thought.id;
+      progress.push(parsed.data);
     }
-
-    if (hints.length === 0) {
-      hints.push({
-        rule: "nothing_to_report",
-        urgency: "low",
-        message: "Nada relevante que reportar al fast.",
-      });
-    }
-
-    return hints;
+    return this.evaluateWithProgress({ progress, thoughtIdByProgressIndex,
+      now: input.now, lastFastActivityAt: input.lastFastActivityAt });
   }
 
   /**
@@ -148,28 +99,17 @@ export interface MetaDeps {
    */
   // META_EVALUATE_ATTENTION_CONFLICT_V1
   detectAttentionConflict(thoughts: Thought[]): boolean {
-    if (thoughts.length < 2) return false;
-    const [first, ...rest] = thoughts;
-    for (const other of rest) {
-      if (attentionOverlap(first.attention, other.attention) < 0.3) return true;
+    const representatives = new Map<string, Thought>();
+    for (const thought of thoughts) {
+      if (totalAttention(thought.attention) <= 0) continue;
+      const scope = JSON.stringify([thought.tenantId, thought.owner, thought.turnId]);
+      const first = representatives.get(scope);
+      if (!first) representatives.set(scope, thought);
+      else if (attentionOverlap(first.attention, thought.attention) < 0.3) return true;
     }
     return false;
   }
 
-  // META_EXTRACT_PROGRESS_V2
-  private extractProgress(thought: Thought): ProgressEvent | undefined {
-    // META_EXTRACT_PROGRESS_FIX_V1 - el progress real vive en
-    // thought.attention.metadata.progress (asi lo escribe slow-author.ts).
-    const fromAttention = (thought.attention?.metadata as { progress?: unknown } | undefined)?.progress;
-    if (fromAttention && typeof fromAttention === "object") {
-      return fromAttention as ProgressEvent;
-    }
-    // META_READ_PROGRESS_FROM_ATTENTION_V1
-    const raw = (thought as unknown as { attention?: { metadata?: { progress?: unknown } } })
-      .attention?.metadata?.progress;
-    if (!raw || typeof raw !== "object") return undefined;
-    return raw as ProgressEvent;
-  }
 
   /**
    * KERNEL_META_PROGRESS_V1 - evalua directamente sobre ProgressEvent[].
@@ -193,12 +133,15 @@ export interface MetaDeps {
       : 0;
 
     for (let i = 0; i < input.progress.length; i += 1) {
-      const progress = input.progress[i];
+      const parsed = progressEventSchema.safeParse(input.progress[i]);
+      if (!parsed.success || !Number.isFinite(nowMs) || (input.lastFastActivityAt && !Number.isFinite(fastActivityMs))) continue;
+      const progress = parsed.data;
       const progressMs = Date.parse(progress.timestamp);
       const thoughtId = input.thoughtIdByProgressIndex?.[i];
+      if (progressMs > nowMs || (thoughtId && this.seenHints.has(thoughtId))) continue;
 
       if (progress.kind === "ready") {
-        const fastIsIdle = !input.lastFastActivityAt || nowMs - fastActivityMs > 1000;
+        const fastIsIdle = !input.lastFastActivityAt || nowMs - fastActivityMs > this.fastIdleMs;
         if (fastIsIdle) {
           hints.push({
             rule: "slow_ready_fast_idle",
