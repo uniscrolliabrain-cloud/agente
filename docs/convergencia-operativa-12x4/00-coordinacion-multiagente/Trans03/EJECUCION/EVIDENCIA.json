@@ -1,0 +1,41 @@
+{
+  "testedCommit": "1c7a7a7ed2b14cbc2276475af928e20dda13eb73",
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/oauth.test.ts tests/google.test.ts tests/whatsapp-adapter.test.ts tests/whatsapp-inbound.test.ts tests/whatsapp-outbound.test.ts tests/whatsapp-webhook.test.ts tests/vertical-slice-google-connection.test.ts tests/vertical-slice-calendar.test.ts tests/vertical-slice-drive.test.ts tests/vertical-slice-leads.test.ts tests/vertical-slice-follow-up.test.ts tests/connections-adapters.test.ts tests/actions.test.ts tests/cognition-v2-voice.test.ts tests/trans03-*.test.ts",
+    "typecheck": "corepack pnpm typecheck"
+  },
+  "logs": {
+    "clean-sha": {
+      "path": "/tmp/trans03-clean-sha.log",
+      "sha256": "d6799d8ba564ee1bbb2405ca6341910552c6c1691685b9c58ee5529022c64606"
+    },
+    "typecheck-certified-local": {
+      "path": "/tmp/trans03-typecheck-certified-local.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    "red-worktree": {
+      "path": "/tmp/trans03-red-worktree.log",
+      "sha256": "c1a28f28b703a472d03f342464e4f2bc3a62b667ba4e6a10fddc281d9ca86289"
+    },
+    "binding": {
+      "path": "/tmp/trans03-binding.log",
+      "sha256": "55b0aaf35ccc08852ccfdb488ee17dc3f4b141be0d8811cf9a3934e04412370a"
+    },
+    "whatsapp-regressions": {
+      "path": "/tmp/trans03-whatsapp-regressions.log",
+      "sha256": "aed187534bc775c1549106e09bd5b67d056c626a6c93f1147a80984c6ad300fc"
+    },
+    "voice-binding": {
+      "path": "/tmp/trans03-voice-binding.log",
+      "sha256": "43d21450b86d5cdfa8cabd5cdb4509568ba08628972ae1123c6a1df29012f3fe"
+    },
+    "cache": {
+      "path": "/tmp/trans03-cache.log",
+      "sha256": "036ffb48266d733a9bb4dad87794cd823ba7559bafbf0c98c75ab3b5cb82e266"
+    },
+    "final": {
+      "path": "/tmp/trans03-final.log",
+      "sha256": "d9bc2b42713c68132bac586d0f576b950161720283fa2a4dfc870f2ff8b645a8"
+    }
+  }
+}
