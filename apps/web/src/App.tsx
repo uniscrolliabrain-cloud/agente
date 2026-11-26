@@ -268,6 +268,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
       tenant={sessionTenant ? { id: sessionTenant } : null}
       showApps={Boolean(demoViews?.apps)}
       showFormation={Boolean(demoViews?.formation)}
+      projectsLabel={demoViews?.projects ? "Cartera" : undefined}
       hideLegacyViews={Boolean(demoViews)}
       collapsed={chatDockActive || (collapsed && !isMobile)}
       onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
@@ -354,7 +355,9 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
             />
           )}
           {view === "memory" && (renderDemoView("memory") ?? <MemoryView memories={memories} />)}
-          {view === "projects" && <ProjectsView enabled={auth.isAuthenticated} />}
+          {view === "projects" && (
+            renderDemoView("projects") ?? <ProjectsView enabled={auth.isAuthenticated} />
+          )}
           {view === "control-center" && (
             <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
           )}

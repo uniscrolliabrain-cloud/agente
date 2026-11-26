@@ -66,6 +66,10 @@ interface Props {
    *  y Workspaces: su superficie vive ya en otros workspaces. Producción no
    *  pasa el prop, así que su menú queda exactamente igual. */
   hideLegacyViews?: boolean;
+  /** CARTERA_DEMO_V1 - en el clon, Proyectos pasa a llamarse Cartera porque lo
+   *  que se monta es la cartera V2. Producción no pasa el prop y el menú queda
+   *  exactamente igual. */
+  projectsLabel?: string;
 }
 
 // UI_LAB_LEGACY_V1 - vistas retiradas solo en el clon de demostración.
@@ -112,15 +116,16 @@ export default function SidebarV2({
   showApps,
   showFormation,
   hideLegacyViews,
+  projectsLabel,
 }: Props) {
   // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
   const demoItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
     ...(showApps ? [{ id: "apps" as const, label: "Apps", icon: LayoutGrid }] : []),
     ...(showFormation ? [{ id: "formation" as const, label: "Formación", icon: GraduationCap }] : []),
   ];
-  const primary = hideLegacyViews
-    ? PRIMARY.filter((item) => !LEGACY_VIEWS.includes(item.id))
-    : PRIMARY;
+  const primary = (
+    hideLegacyViews ? PRIMARY.filter((item) => !LEGACY_VIEWS.includes(item.id)) : PRIMARY
+  ).map((item) => (item.id === "projects" && projectsLabel ? { ...item, label: projectsLabel } : item));
   const navItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
     ...primary.slice(0, 2),
     ...demoItems,

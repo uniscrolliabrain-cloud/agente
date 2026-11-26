@@ -37,8 +37,17 @@ const TeamWorkspace = lazy(() => import("./team-v1/TeamWorkspace"));
 
 const AnalyticsWorkspace = lazy(() => import("./analytics-v1/AnalyticsWorkspace"));
 
+// CARTERA_DEMO_V1 - Cartera ocupa la entrada Proyectos del menú: es el mismo
+// puesto de trabajo, con la cartera V2 en lugar de la vista antigua.
+const PortfolioWorkspace = lazy(() => import("./cartera-v1/PortfolioWorkspace"));
+
 const demoViews = {
   "centro-mando": <View><AnalyticsWorkspace /></View>,
+  projects: (
+    <View>
+      <PortfolioWorkspace />
+    </View>
+  ),
   team: (nav: (view: AppView) => void) => <View><TeamWorkspace onNavigate={nav} /></View>,
   tasks: <View><TasksAutomationsWorkspace /></View>,
   // NAV_KNOWLEDGE_V1 - recibe la navegación del shell para que su menú general

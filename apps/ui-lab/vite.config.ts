@@ -23,6 +23,13 @@ function versionManifest(): Plugin {
           this.emitFile({ type: "asset", fileName: `formation/images/${name}`, source: readFileSync(fileURLToPath(new URL(`./public/formation/images/${name}`, import.meta.url))) });
         }
       }
+      // CARTERA_DEMO_V1 - las portadas de la cartera tampoco viven en web/public.
+      const carteraDir = fileURLToPath(new URL("./public/cartera/", import.meta.url));
+      for (const name of readdirSync(carteraDir)) {
+        if (name.endsWith(".webp")) {
+          this.emitFile({ type: "asset", fileName: `cartera/${name}`, source: readFileSync(fileURLToPath(new URL(`./public/cartera/${name}`, import.meta.url))) });
+        }
+      }
       this.emitFile({ type: "asset", fileName: "robots.txt", source: "User-agent: *\\nDisallow: /\\n" });
       this.emitFile({ type: "asset", fileName: "_headers", source: "/*\\n  X-Robots-Tag: noindex, nofollow\\n  Referrer-Policy: no-referrer\\n  X-Content-Type-Options: nosniff\\n" });
       this.emitFile({
