@@ -1,46 +1,232 @@
-# Tu Empresa — Construye la empresa que quieres tener
+# Tu Empresa
 
-AgntiaPro te ofrece dos maneras de trabajar: dirigir tu empresa y construir la empresa que quieres tener.
+**TU NEGOCIO. TU VISIÓN. TU SIGUIENTE PASO.**
 
-En tu entorno habitual trabajas con tus clientes, tu equipo y tus agentes. Desde Ajustes → Tu Empresa puedes entrar en un estudio completo donde pensar, diseñar y mejorar tu organización.
+## Tu empresa, como siempre quisiste que funcionara.
 
-No necesitas saber redactar un business plan, diseñar un proceso ni aprender inteligencia artificial. Puedes empezar contando cómo funciona tu negocio, qué te preocupa y qué quieres conseguir. LAIA te acompaña, organiza la información contigo y te presenta propuestas que puedes revisar y mejorar.
+Hay días para sacar el trabajo adelante. Y hay momentos para pensar cómo hacerlo mejor.
 
-Tu empresa sigue trabajando mientras preparas su siguiente versión. Tú decides cuándo está lista.
+Tu Empresa es ese lugar. Un espacio para poner en orden tus ideas, conocer mejor tu negocio y construir una organización preparada para crecer contigo.
 
-## La navegación que verá el propietario
+No tienes que empezar de cero. Empieza por lo que ya sabes.
 
-| Entrada | Qué puedes hacer |
-|---|---|
-| Tu Empresa | Ver cómo está tomando forma tu empresa y continuar donde lo dejaste. |
-| Identidad | Contar quién eres, qué quieres construir y qué valores te representan. |
-| Modelo de negocio | Definir cómo aportas valor, a quién ayudas y cómo ganas dinero. |
-| Marca | Construir tu identidad visual, tu manera de comunicar y tu presencia. |
-| Estrategia | Decidir adónde quieres llegar y qué pasos dar. |
-| Organización | Diseñar tu equipo humano y digital, sus responsabilidades y su colaboración. |
-| Productos y servicios | Definir qué vendes, a qué precio y cómo lo entregas. |
-| Mercado | Conocer a tus clientes, tu competencia y las oportunidades de tu negocio. |
-| Finanzas | Comprender tus ingresos, gastos, presupuestos y posibilidades de crecimiento. |
-| Relaciones | Organizar tus proveedores, socios, colaboradores y contactos. |
-| Operaciones | Mejorar cómo se trabaja cada día en tu empresa. |
-| Tecnología | Elegir las herramientas y capacidades que te ayudan a trabajar mejor. |
-| Gobierno de tu empresa | Decidir quién puede hacer qué y cómo mantienes el control. |
+**Acciones:** Hablar con LAIA · Explorar mi empresa
 
-Herramientas transversales: Fuentes, Entrevistas, Formación, Historial de versiones, Vista previa y Publicar. Accesibles desde el estudio y desde el contexto pertinente, sin convertirlas en dimensiones empresariales adicionales. LAIA permanece disponible durante todo el recorrido.
+### Dos maneras de trabajar. Una misma empresa.
 
-## Una empresa que sigue creciendo
+En AgntiaPro tienes tu día a día: clientes, tareas, conversaciones, equipo y resultados. En Tu Empresa tienes el espacio para decidir cómo quieres que todo eso funcione.
 
-Puedes empezar hablando, aportando documentos, vídeos, audios, hojas de cálculo o invitando a tu equipo a contar cómo trabaja. La información original se conserva. Las propuestas se construyen a partir de ella, se revisan contigo y se convierten en una nueva versión de tu empresa cuando las apruebas.
+Trabaja en tu empresa cuando toca trabajar. Vuelve aquí cuando quieras mejorarla.
 
-En el entorno operativo puedes decir: «LAIA, prepara una propuesta para este cliente». En Tu Empresa puedes decir: «LAIA, quiero mejorar nuestra manera de vender. Habla con mi equipo y ayúdame a diseñar una forma de trabajar mejor».
+Desde Ajustes → Tu Empresa, cambia toda la aplicación. Encontrarás un entorno dedicado a construir tu negocio, con sus propias herramientas y navegación. Puedes volver a tu actividad habitual en cualquier momento.
 
-No es un onboarding que termina al contratar. Es el lugar al que vuelves para seguir construyendo tu empresa. AgntiaPro se ocupa de la complejidad tecnológica; tú puedes centrarte en dirigir, liderar y decidir.
+### Tú conoces tu negocio. Nosotros te ayudamos a darle forma.
 
-## Voz de marca y reglas de diseño
+Quizá tienes una idea que llevas tiempo queriendo poner en marcha. Quizá tu empresa ha crecido y ya no puedes estar pendiente de todo. O quizá simplemente quieres recuperar tiempo y tener las cosas más claras.
 
-La landing vigente es la autoridad de voz comercial. Utilizar lenguaje cotidiano, cálido, profesional y preciso. Hablar de resultados, personas y decisiones. Evitar en la interfaz términos como ontología, fixture, runtime, gate, blueprint o ingeniería de procesos cuando una expresión normal comunica lo mismo. No prometer activaciones reales desde una demo. Mantener la distinción entre trabajar en la empresa y construirla. No reducir la meta-app a un workspace ni a un asistente lineal.
+Cuéntaselo a LAIA. Habla de tus clientes, de tu equipo, de lo que funciona y de lo que te gustaría cambiar. Comparte los documentos que ya tienes. Invita a tu equipo a aportar su experiencia.
 
-Las doce dimensiones son la propuesta de navegación preferente. Las dieciocho fichas técnicas que siguen son un inventario interno de capacidades, no dieciocho entradas obligatorias. Fuentes y entrevistas se agrupan como herramientas de captura; Ingeniería de Procesos se integra en Operaciones; Desarrollo del Talento se distribuye entre Organización y Formación; Versiones y Publicación se sitúan en los controles transversales. La denominación final queda abierta a revisión del founder.
+No necesitas preparar una presentación ni aprender a utilizar herramientas nuevas para empezar.
+
+## Todo lo que hace que tu empresa sea tuya
+
+Los nombres siguientes son la propuesta de navegación visible. Cada dimensión es un workspace completo de la meta-app, no una pestaña de formulario. Los títulos editoriales, descripciones, acciones y conversaciones son copy de producto propuesto.
+
+### Inicio — Tu empresa, con perspectiva.
+
+Mira dónde estás, qué has construido y qué te queda por decidir. Retoma una conversación, revisa una propuesta o abre cualquier parte de tu empresa. No hay un orden obligatorio.
+
+**Acciones:** Continuar donde lo dejé · Ver mi empresa · Hablar con LAIA
+
+**Estado inicial:** Todavía no hemos empezado a construir tu empresa. Cuéntanos un poco de ella y vamos dando forma a lo que necesitas.
+
+**LAIA:** ¿Qué te gustaría que funcionara mejor en tu negocio?
+
+### 01. Identidad — Lo que te mueve. Lo que te hace diferente.
+
+Toda empresa tiene una historia. La tuya también. Reúne las ideas que te hicieron empezar, las cosas en las que crees y la manera en que quieres trabajar. Dales una forma que tu equipo pueda entender y compartir.
+
+Aquí construyes tu historia, propósito, misión, visión, valores y cultura. Puedes escribir, conversar, incorporar documentos y revisar las propuestas de LAIA. Todo queda conectado con las fuentes de las que nace.
+
+**Acciones:** Contar mi historia · Definir nuestro propósito · Revisar nuestros valores
+
+**LAIA:** Si alguien empezara mañana a trabajar contigo, ¿qué te gustaría que entendiera de tu empresa?
+
+### 02. Modelo de negocio — Entiende cómo creas valor.
+
+Qué haces, para quién lo haces y por qué te eligen. Pon las piezas de tu negocio sobre la mesa y descubre cómo encajan. Desde una idea inicial hasta un plan empresarial que puedas compartir y revisar.
+
+Aquí construyes tu propuesta de valor, segmentos, canales, ingresos, costes, one-pager y business plan. Puedes comparar alternativas sin comprometerte con ninguna.
+
+**Acciones:** Describir mi negocio · Crear mi plan de empresa · Comparar ideas
+
+**LAIA:** ¿Qué problema resuelves para tus clientes? ¿Qué hace que vuelvan a elegirte?
+
+### 03. Marca — Que tu empresa se reconozca.
+
+Tu manera de hablar, de presentarte y de cuidar cada detalle dice mucho de tu negocio. Reúne todo eso en un lugar y construye una marca que se parezca a ti.
+
+Aquí organizas logotipo, colores, tipografías, imágenes, tono de voz, mensajes y guía de marca. Puedes aportar referencias, revisar propuestas y preparar materiales coherentes para tu equipo.
+
+**Acciones:** Explorar mi marca · Añadir referencias · Preparar mi guía de marca
+
+**LAIA:** ¿Qué te gustaría que sintiera alguien la primera vez que conoce tu empresa?
+
+### 04. Estrategia — Saber adónde vas cambia cómo trabajas.
+
+No todo tiene la misma importancia. Decide qué quieres conseguir este trimestre, este año y más adelante. Convierte esas prioridades en objetivos que tu equipo pueda entender y seguir.
+
+Aquí defines objetivos, indicadores, planes trimestrales y anuales, iniciativas, responsables y fechas. Revisa lo que ha funcionado y ajusta el rumbo cuando haga falta.
+
+**Acciones:** Marcar mis prioridades · Preparar el trimestre · Revisar mis objetivos
+
+**LAIA:** Si dentro de tres meses solo pudieras haber mejorado tres cosas, ¿cuáles elegirías?
+
+### 05. Organización — Personas distintas. Un mismo rumbo.
+
+Tu empresa funciona mejor cuando cada persona sabe qué aporta y con quién cuenta. Diseña un equipo humano y digital que trabaje de forma coordinada, sin que tengas que estar en todas partes.
+
+Aquí construyes el organigrama, puestos, responsabilidades, horarios, capacidades, perfiles de agentes y necesidades de formación. Puedes comparar tu organización actual con la que quieres tener.
+
+**Acciones:** Diseñar mi equipo · Repartir responsabilidades · Conocer mis agentes
+
+**LAIA:** ¿Qué tareas siguen dependiendo de ti aunque podrían estar en manos de otra persona?
+
+### 06. Productos y servicios — Lo que ofreces, explicado en claro.
+
+Ordena lo que vendes, lo que incluye cada servicio y lo que necesitas para entregarlo bien. Así tu equipo sabe qué promete y tus clientes saben qué esperar.
+
+Aquí preparas catálogo, precios, alcance, costes, márgenes, condiciones, entregables y estándares de servicio. Relaciona cada oferta con los procesos y recursos necesarios.
+
+**Acciones:** Añadir un servicio · Revisar mis precios · Mejorar una oferta
+
+**LAIA:** ¿Qué servicio disfrutan más tus clientes? ¿Y cuál te cuesta más entregar?
+
+### 07. Mercado — Conoce mejor a quienes te eligen.
+
+Escucha a tus clientes, entiende qué necesitan y descubre dónde hay oportunidades para tu empresa. No se trata de perseguir todas las tendencias, sino de encontrar las que tienen sentido para ti.
+
+Aquí reúnes perfiles de clientes, investigaciones, competencia, segmentos, canales y oportunidades. Separa lo que sabes de lo que todavía necesitas comprobar.
+
+**Acciones:** Conocer a mis clientes · Explorar oportunidades · Investigar mi mercado
+
+**LAIA:** ¿De dónde llegan hoy tus mejores clientes? ¿Hay otros a los que te gustaría llegar?
+
+### 08. Finanzas — Tus números, en claro.
+
+Entender tus cuentas te permite decidir con más tranquilidad. Reúne lo que entra, lo que sale y lo que necesitas para seguir creciendo. Sin perderte en hojas de cálculo ni confundir previsiones con dinero disponible.
+
+Aquí organizas libros de cuentas, ingresos, gastos, presupuestos, tesorería, costes, rentabilidad y escenarios. Antonio y Juan pueden aportar su perspectiva dentro de sus permisos. Los registros históricos se conservan; las previsiones se trabajan por separado.
+
+**Acciones:** Organizar mis cuentas · Preparar un presupuesto · Explorar escenarios
+
+**LAIA:** ¿Qué te gustaría entender mejor de tus números antes de tomar tu próxima decisión?
+
+### 09. Relaciones — Tu empresa no trabaja sola.
+
+Detrás de cada negocio hay personas y organizaciones que lo hacen posible. Ten a mano quiénes son, qué aportan y qué acuerdos tienes con ellos.
+
+Aquí construyes tu agenda de proveedores, colaboradores, socios y contactos, con servicios, acuerdos, vencimientos, condiciones y relaciones. Conecta cada ficha con documentos y responsabilidades.
+
+**Acciones:** Añadir un proveedor · Organizar mis contactos · Revisar acuerdos
+
+**LAIA:** ¿Con quién cuentas para que tu empresa funcione cada día?
+
+### 10. Operaciones — Que las cosas salgan bien, también cuando no estás.
+
+Hay trabajos que repites cada semana y otros que solo salen bien porque tú sabes cómo hacerlos. Convierte esa experiencia en una manera de trabajar que todo tu equipo pueda compartir.
+
+Aquí dibujas cómo funciona tu negocio, identificas dificultades, diseñas procesos y preparas procedimientos, automatizaciones, excepciones y controles. Ensaya una forma de trabajar antes de ponerla en marcha.
+
+**Acciones:** Contar cómo trabajamos · Mejorar un proceso · Preparar un procedimiento
+
+**LAIA:** ¿Qué pasa desde que un cliente te llama hasta que recibe lo que necesita?
+
+### 11. Tecnología — Las herramientas adecuadas. Sin complicarte la vida.
+
+La tecnología cambia rápido. Tu negocio no tiene por qué ir detrás de cada novedad. Elige qué capacidades necesitas y deja que AgntiaPro te ayude a incorporarlas cuando tengan sentido.
+
+Aquí revisas aplicaciones, conexiones, agentes, herramientas, automatizaciones y necesidades de seguridad. Distingue lo que quieres incorporar de lo que ya está disponible y autorizado.
+
+**Acciones:** Explorar capacidades · Revisar mis herramientas · Preparar una mejora
+
+**LAIA:** ¿Qué trabajo te gustaría dejar de hacer a mano?
+
+### 12. Gobierno de tu empresa — Delegar trabajo. Conservar el control.
+
+Tener un equipo que avanza no significa dejar de decidir. Establece quién puede acceder a cada información, qué puede hacer y qué decisiones deben pasar por ti.
+
+Aquí defines permisos, responsabilidades, políticas, privacidad, riesgos, aprobaciones y límites de actuación. Revisa qué cambios se proponen y quién debe autorizarlos.
+
+**Acciones:** Revisar permisos · Definir mis reglas · Ver decisiones pendientes
+
+**LAIA:** ¿Qué decisiones quieres seguir tomando personalmente, aunque tu equipo pueda preparar todo lo demás?
+
+## Empieza por lo que tienes
+
+### Fuentes — Todo lo que tu empresa ya sabe.
+
+Una factura, una libreta, un vídeo, una hoja de cálculo o una conversación pueden contener información importante. Reúne tus materiales sin tener que ordenarlos antes. Conservamos el original y te ayudamos a relacionarlo con las partes de tu empresa que corresponden.
+
+**Acciones:** Añadir archivos · Grabar un audio · Importar información · Ver fuentes
+
+### Entrevistas — Cuéntalo con tus palabras.
+
+Puedes hablar con LAIA durante unos minutos o dedicar una tarde a contarle cómo funciona tu negocio. Tu equipo también puede aportar su experiencia, con los permisos y consentimientos correspondientes. Las preguntas surgen de lo que falta por entender, no de un cuestionario obligatorio.
+
+**Acciones:** Empezar una conversación · Invitar a mi equipo · Revisar entrevistas
+
+### Formación — Crecer como empresa. Crecer como equipo.
+
+Cada cambio trae una nueva manera de trabajar. Prepara a las personas que van a llevarla a cabo, con ejemplos de su propio negocio y ejercicios que puedan practicar antes de trabajar en real.
+
+**Acciones:** Preparar a mi equipo · Explorar itinerarios · Practicar en la demo
+
+## Así toma forma tu empresa
+
+**Tú cuentas.** Tu experiencia es el punto de partida.
+
+**LAIA te acompaña.** Organiza la información, te pregunta lo que falta y te presenta propuestas.
+
+**Tu equipo aporta.** Cada persona puede contribuir desde lo que conoce.
+
+**Tú revisas.** Corrige, compara y decide qué encaja con tu negocio.
+
+**Tu empresa evoluciona.** Cuando la nueva versión está preparada y autorizada, puedes publicarla.
+
+El proceso es continuo y no lineal: capturar, comprender, estructurar, diseñar, validar, compilar, activar y evolucionar. El vocabulario técnico se reserva al anexo interno.
+
+## Tu próxima versión, sin detener tu empresa
+
+Mientras tu negocio sigue funcionando, puedes preparar cambios con calma. Guarda un borrador, vuelve mañana, compara lo que has cambiado y mira cómo quedaría antes de publicarlo.
+
+**Barra transversal:** Tu Empresa · Versión 8 · Borrador · Cambios guardados · Vista previa · Publicar
+
+**Historial:** Cada versión conserva sus decisiones y sus fuentes. Consulta qué cambió y por qué.
+
+**Vista previa:** Así quedaría tu empresa con los cambios que estás preparando. Todavía no se han aplicado.
+
+**Revisión antes de publicar:** Revisa los cambios, sus efectos y las autorizaciones pendientes. Tu empresa actual seguirá funcionando hasta que la nueva versión esté autorizada y activada.
+
+**Confirmación demo:** Has publicado esta versión en tu empresa de demostración. No se han realizado cambios en una empresa real.
+
+**Bloqueo:** Todavía hay decisiones por revisar. Puedes seguir trabajando en tu borrador.
+
+**Guardado:** Tus cambios están guardados. Puedes continuar cuando quieras.
+
+Las revisiones V1–V8 son ejemplos, no ocho pasos obligatorios. La publicación no modifica retroactivamente libros de cuentas ni ejecuta pagos.
+
+## Una empresa que aprende contigo
+
+No necesitas transformar todo de una vez. Empieza por lo que más importa hoy. Cuando tu equipo esté preparado, incorpora nuevas capacidades, mejora tus procesos y vuelve a revisar tus objetivos.
+
+AgntiaPro te acompaña también después de la implantación. Tu empresa cambia. La tecnología también. El lugar donde ambas se encuentran es Tu Empresa.
+
+**Tú marcas el rumbo. Tu empresa avanza contigo.**
+
+## Guía de voz y composición
+
+Referencia inspeccionada: apps/ui-lab/src/vendor/landing/Landing.jsx, rama main. Su voz usa titulares breves, ritmo en dos frases, segunda persona, ejemplos concretos y control humano. El copy anterior es nuevo, no texto aprobado de la landing. Mantener encabezados editoriales, aire y jerarquía Fraunces/Manrope; no convertir cada párrafo en tarjeta. El texto largo sirve de biblioteca editorial: mostrar solo lo pertinente a cada pantalla, con ayuda contextual progresiva. Acciones breves con verbo; estados y errores explican qué ocurrió y qué hacer. Evitar promesas absolutas y tecnicismos internos. No confundir capacidades demo con servicios activos. Mantener las doce dimensiones como navegación preferente; fuentes, entrevistas, formación y versiones son herramientas transversales. Las dieciocho fichas siguientes conservan el inventario técnico, no son el menú visible.
 
 ---
 
