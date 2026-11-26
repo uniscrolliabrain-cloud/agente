@@ -7,3 +7,9 @@ La comparación de atención del kernel debería dar el mismo valor al reordenar
 **Impacto.** El segundo valor cae por debajo del umbral 0,3 de Meta.detectAttentionConflict y puede clasificar una permutación como conflicto. La discrepancia se verificó en la función. No se acreditó una alerta visible en producción. Los axiomas futuros descritos por el fundador siguen abiertos y quedan fuera de este hallazgo.
 
 [Código examinado](https://github.com/uniscrolliabrain-cloud/agente/blob/78d8199d6537df8470eb0686f2f052b2a6c00215/apps/server/src/kernel/graph/attention.ts#L39) · [README general](https://github.com/uniscrolliabrain-cloud/agente/blob/19e78b055948796865d2af815e7219eae78d646e/README.md) · [Consumidor Meta](https://github.com/uniscrolliabrain-cloud/agente/blob/78d8199d6537df8470eb0686f2f052b2a6c00215/apps/server/src/kernel/observers/meta.ts#L150)
+
+## El observador declara inactividad antes del umbral del tenant
+
+Con un pensamiento `ready` y 2000 ms desde la última actividad de Fast, `Meta.evaluate` emitió `slow_ready_fast_idle` tanto con `fastIdleMs=1000` como con `fastIdleMs=60000`. En el segundo caso faltaban 58 segundos para el umbral configurado. La conversación pasa la configuración al crear `Meta`, pero el observador compara con 1000 ms fijos. Además, esa llamada de conversación omite la hora de última actividad, lo que satisface por sí solo la condición de inactividad.
+
+[Configuración y llamada](https://github.com/uniscrolliabrain-cloud/agente/blob/9e4dee6e8adbcac1016d89959723286a1e0c596c/apps/server/src/engine/conversation.ts#L1306) · [Condición del observador](https://github.com/uniscrolliabrain-cloud/agente/blob/9e4dee6e8adbcac1016d89959723286a1e0c596c/apps/server/src/kernel/observers/meta.ts#L102)
