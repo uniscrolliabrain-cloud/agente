@@ -250,6 +250,7 @@ export class GoogleAuth {
       throw new AppError("Google sign-in changed or was disconnected. Connect again.", 409);
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
+      redirect: "error",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         client_id: this.config.googleClientId ?? "",
@@ -264,6 +265,7 @@ export class GoogleAuth {
     if (!response.ok) throw new AppError("Google could not complete sign-in. Connect again.", 502);
     const token = tokenSchema.parse(await response.json());
     const profile = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+      redirect: "error",
       headers: { Authorization: `Bearer ${token.access_token}` },
       signal: AbortSignal.timeout(this.config.toolTimeouts?.googleHttpMs ?? 15000),
     });
@@ -345,6 +347,7 @@ export class GoogleAuth {
     await this.assertMembership(owner, tokens.tenantId);
     const response = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
+      redirect: "error",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
         client_id: this.config.googleClientId ?? "",
@@ -377,6 +380,7 @@ export class GoogleAuth {
     if (tokens) {
       const response = await fetch("https://oauth2.googleapis.com/revoke", {
         method: "POST",
+        redirect: "error",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({ token: tokens.refreshToken ?? tokens.accessToken }),
         signal: AbortSignal.timeout(this.config.toolTimeouts?.googleHttpMs ?? 15000),

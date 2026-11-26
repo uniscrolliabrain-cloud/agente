@@ -5,8 +5,7 @@
 // esa mitad con el minimo que usa el motor de aprobaciones: enviar texto y
 // marcar como leido.
 //
-// Misma regla de resultado que el resto de canales: un 4xx es rechazo definitivo
-// (se puede corregir y reintentar), un 5xx o un corte de red dejan el envio en
+// Un rechazo definitivo se puede corregir. Un 408, 429, 5xx o corte de red dejan el envio en
 // DESCONOCIDO y no se debe reintentar a ciegas: WhatsApp no acepta una clave de
 // idempotencia propia.
 import { AppError, OutcomeUnknownError } from "../../domain/src/errors.ts";
@@ -74,15 +73,11 @@ export class MetaWhatsAppClient {
         "Meta no confirmo el envio; comprueba el numero antes de reintentar.",
       );
     }
-    const payload = await response.json().catch(() => null);
     if (!response.ok) {
-      const error = (payload as { error?: { message?: string } } | null)?.error;
-      throw new AppError(
-        `Meta rechazo el mensaje: ${(error?.message ?? `HTTP ${response.status}`).slice(0, 200)}`,
-        422,
-      );
+      await response.body?.cancel().catch(() => {});
+      throw new AppError(`Meta rechazo el mensaje (HTTP ${response.status})`, 422);
     }
-    return payload;
+    return response.json().catch(() => null);
   }
 
   async sendText(to: string, text: string): Promise<MetaSendResult> {
@@ -97,9 +92,11 @@ export class MetaWhatsAppClient {
       to: recipient,
       type: "text",
       text: { preview_url: false, body: text },
-    })) as { messages?: { id?: string }[] } | null;
+    })) as { messages?: { id?: unknown }[] } | null;
     const id = payload?.messages?.[0]?.id;
-    if (!id?.trim()) throw new OutcomeUnknownError("Meta acepto la peticion sin id de mensaje.");
+    if (typeof id !== "string" || !id.trim()) {
+      throw new OutcomeUnknownError("Meta acepto la peticion sin id de mensaje.");
+    }
     return { id: id.trim(), accepted: true, to: recipient };
   }
 

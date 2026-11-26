@@ -58,7 +58,10 @@ export class WhatsAppClient {
       throw new OutcomeUnknownError("Evolution no confirmo el resultado; revisa el proveedor antes de reintentar.");
     }
     if (!response.ok) {
-      if (response.status >= 500 || response.status === 408) throw new OutcomeUnknownError();
+      await response.body?.cancel().catch(() => {});
+      if (response.status >= 500 || response.status === 408 || response.status === 429) {
+        throw new OutcomeUnknownError();
+      }
       throw new AppError("Evolution rechazo la solicitud", 422);
     }
     return response.json().catch(() => { throw new OutcomeUnknownError(); });
