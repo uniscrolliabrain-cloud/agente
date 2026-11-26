@@ -1,3 +1,26 @@
+/* FONDO_UNICO_V1 - el clon mezclaba cuatro fondos: lavanda arriba (Cartera,
+   Equipo, Tareas, Analítica, Apps), crema plano (Conocimiento, Documentos,
+   Formación) y blanco (Chat). Todos los puestos comparten ahora el mismo
+   lavanda sutil, tomado del reposo del Launcher V3 pero rebajado, sobre papel
+   cálido. Las raíces se vuelven transparentes para no taparlo. */
+.v2-content {
+  background:
+    radial-gradient(120% 64% at 50% -12%, rgba(223, 211, 246, 0.46) 0%, rgba(223, 211, 246, 0) 60%),
+    linear-gradient(180deg, #fcfaf8 0%, #fcfaf6 42%);
+  background-attachment: local;
+  background-repeat: no-repeat;
+}
+
+.v2-content > * {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* El reposo del Launcher ya no aporta su propio halo lavanda: el fondo es común. */
+.v2-content .alp-rest-glow {
+  display: none;
+}
+
 /* Los workspaces del UI Lab se diseñaron a pantalla completa (100dvh). Dentro
    del shell del clon deben medir el área de contenido, que empieza bajo la
    barra superior; si no, cada vista añade el alto del topbar y aparece un
