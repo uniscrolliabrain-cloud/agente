@@ -24,3 +24,26 @@
 | versiones | Versiones y publicación | [17-versiones](./17-versiones/README.md) | timeline |
 
 El clon se abre desde Ajustes en UI Lab mediante companyArea. Tiene shell propio, rail claro, inspector, selector de versiones y conversaciones agrupadas por idea. El estado de chats y versión es local React; no hay persistencia ni publicación real acreditadas. Los textos y gráficos son placeholders. Pendiente validar en navegador, build y paridad con la app original. Mantener la propuesta editorial de doce dimensiones y herramientas transversales como referencia, sin eliminar las 18 superficies existentes. No tocar código funcional ni desplegar en esta fase.
+
+## Catálogo prospectivo: 224 capacidades
+
+- [00-inicio: capacidades futuras](./00-inicio/CAPACIDADES-FUTURAS.md)
+- [13-fuentes: capacidades futuras](./13-fuentes/CAPACIDADES-FUTURAS.md)
+- [14-entrevistas: capacidades futuras](./14-entrevistas/CAPACIDADES-FUTURAS.md)
+- [01-identidad: capacidades futuras](./01-identidad/CAPACIDADES-FUTURAS.md)
+- [02-modelo-de-negocio: capacidades futuras](./02-modelo-de-negocio/CAPACIDADES-FUTURAS.md)
+- [03-marca: capacidades futuras](./03-marca/CAPACIDADES-FUTURAS.md)
+- [04-estrategia: capacidades futuras](./04-estrategia/CAPACIDADES-FUTURAS.md)
+- [07-mercado: capacidades futuras](./07-mercado/CAPACIDADES-FUTURAS.md)
+- [05-organizacion: capacidades futuras](./05-organizacion/CAPACIDADES-FUTURAS.md)
+- [06-productos-y-servicios: capacidades futuras](./06-productos-y-servicios/CAPACIDADES-FUTURAS.md)
+- [08-finanzas: capacidades futuras](./08-finanzas/CAPACIDADES-FUTURAS.md)
+- [09-relaciones: capacidades futuras](./09-relaciones/CAPACIDADES-FUTURAS.md)
+- [10-operaciones: capacidades futuras](./10-operaciones/CAPACIDADES-FUTURAS.md)
+- [15-procesos: capacidades futuras](./15-procesos/CAPACIDADES-FUTURAS.md)
+- [11-tecnologia: capacidades futuras](./11-tecnologia/CAPACIDADES-FUTURAS.md)
+- [16-talento: capacidades futuras](./16-talento/CAPACIDADES-FUTURAS.md)
+- [12-gobierno: capacidades futuras](./12-gobierno/CAPACIDADES-FUTURAS.md)
+- [17-versiones: capacidades futuras](./17-versiones/CAPACIDADES-FUTURAS.md)
+
+Catálogo inicial de producto, no inventario de backend implementado. Los contratos por capacidad son orientativos y requieren diseño técnico posterior. Cada workspace tiene un escenario sintético contextualizado y reglas de interacción demo.
