@@ -1,0 +1,26 @@
+# Fuentes versionadas de la campaña
+
+Inventario del árbol `731604c865cb6193047ad6bd10bba204ca35f47d`. La tabla registra identidad y extensión de las fuentes originales. El recuento de líneas no acredita una lectura de contenido.
+
+| Documento relativo | Blob | Líneas |
+|---|---|---:|
+| `00-EJECUTAR-M1-M2-M3.md` | `a112a3329708be04c58c76433e10f47120cb17f1` | 16 |
+| `AUDITORIA-RENOVADA-M1.md` | `e995ef143180b2ea0e633db36d1454f99b04c648` | 5 |
+| `BITACORA.md` | `c43f757a248b2345d91e9f430f0670b361d4b898` | 14 |
+| `HANDOFF.md` | `a8a1d5cffcfdf5654e6ca70ccf5b78ba942e46b2` | 29 |
+| `PROMPT-HANDOFF-EJECUCION.md` | `46a704d47295c388ecc5870ca4c4ee02331f02c9` | 14 |
+| `REAUDIT-TRANSVERSAL-M1-V2.md` | `835451cdae209d86a6f0abe385dd6aa6de5359a4` | 14 |
+| `REAUDIT-TRANSVERSAL-M1-V3.md` | `6426922e39deb74befc294170e3c1b5e562a9dc6` | 9 |
+| `REAUDIT-TRANSVERSAL-M1.md` | `f7b767535997aa25a73cc460ca7ea39f2a53e4c5` | 12 |
+| `REDISENO-PASADA-01-P01-P14.md` | `5e7230dcca1f778dd98e4757fd103637a6a19dbc` | 52 |
+| `REDISENO-PASADA-02-CONTRATOS-Y-EVIDENCIA.md` | `accfde23472138be14903ad98ecbb86c38db9870` | 38 |
+| `REDISENO-PASADA-03-CONCURRENCIA-Y-RECUPERACION.md` | `7f8f9b3e9861944fe1f6629178ad8bd35abfb31d` | 36 |
+| `REDISENO-PASADA-04-CONVERGENCIA-Y-CERTIFICACION.md` | `7683e0ef968fb510c08838f85b72bb4e5d3aa430` | 27 |
+| `REDISENO-PASADA-05-EJECUCION-CONSOLIDADA.md` | `3c0220804cd37b6587d1b38560fcfd989527f9c1` | 41 |
+| `T01-AUDITORIA.md` | `498b3bc54cdf314a46f5aba7ca69d98a97749bbe` | 45 |
+| `T01-BASELINE.md` | `0334dab505603414a37d546f016d637df39ef32b` | 75 |
+| `T01-CONTRATOS-B1.md` | `0ba151ce7b48c4bda37d45cec1c23a54425d25d3` | 42 |
+| `T01-PATHS.txt` | `39a875bc2e54c43cd1e28611a56aa68499e31243` | 13 |
+| `T01-RAMAS.tsv` | `cab1209e65ff7f983d2628be841b8ece42e97f94` | 60 |
+| `T02-RECONCILIACION.md` | `86b98cb5befff88f66e00923723f80d9b0ab9fd4` | 30 |
+| `TURNOS.md` | `53f3228ab713663f75c7743083631f0741149055` | 61 |
