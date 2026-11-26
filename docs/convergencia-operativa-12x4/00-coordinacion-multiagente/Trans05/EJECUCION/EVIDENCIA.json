@@ -1,0 +1,25 @@
+{
+  "testedCommit": "5d48d27c13f96533df3815f1829b54007d046dcd",
+  "state": "PARTIAL_PURE_UNMOUNTED",
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test tests/trans05-pure-longitudinal.test.ts",
+    "typecheck": "corepack pnpm typecheck"
+  },
+  "tests": {
+    "total": 6,
+    "pass": 6,
+    "fail": 0,
+    "skip": 0
+  },
+  "rootAndWorkerTypecheck": 0,
+  "logs": {
+    "tests": {
+      "path": "/tmp/trans05-clean-sha.log",
+      "sha256": "1dccf0ce74cb59a7475cdba626e0b05bd711caf8c94f37fe89c628c99ae24fd5"
+    },
+    "typecheck": {
+      "path": "/tmp/trans05-clean-typecheck.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    }
+  }
+}
