@@ -26,8 +26,14 @@ export function bootstrapCapabilities(registry: CapabilityRegistry): void {
     { id: "import_pdf", actionType: "Retrieve", family: "DOCUMENTS", risk: "low", sideEffects: [{ kind: "read", target: "files", reversible: true }], requiresApproval: false },
     { id: "inspect_pdf", actionType: "Read", family: "DOCUMENTS", risk: "low", sideEffects: [{ kind: "read", target: "files", reversible: true }], requiresApproval: false },
     { id: "fill_pdf", actionType: "Write", family: "DOCUMENTS", risk: "low", sideEffects: [{ kind: "write", target: "files", reversible: true }], requiresApproval: false },
-    { id: "prepare_email", actionType: "Communicate", family: "COMMUNICATION", risk: "medium", sideEffects: [{ kind: "external_write", target: "email", reversible: false }], requiresApproval: true },
-    { id: "prepare_event", actionType: "Create", family: "AUTOMATION", risk: "medium", sideEffects: [{ kind: "external_write", target: "calendar", reversible: false }], requiresApproval: true },
+    // APPROVAL_BINDS_EFFECT_V1 - preparar NO escribe en el proveedor: crea una
+    // propuesta local. Declararla `external_write` + `requiresApproval` ponia la
+    // aprobacion sobre el borrador en vez de sobre el envio, de modo que el
+    // vinculo aprobacion/efecto no podia comprobarse. La aprobacion pertenece a
+    // la capability que ejecuta el efecto (`send_email`, `create_calendar_event`)
+    // y viaja con la propuesta; preparar solo exige claim de escritura local.
+    { id: "prepare_email", actionType: "Communicate", family: "COMMUNICATION", risk: "medium", sideEffects: [{ kind: "write", target: "actions", reversible: true }], requiresApproval: false },
+    { id: "prepare_event", actionType: "Create", family: "AUTOMATION", risk: "medium", sideEffects: [{ kind: "write", target: "actions", reversible: true }], requiresApproval: false },
     { id: "read_web", actionType: "Read", family: "WEB", risk: "low", sideEffects: [{ kind: "read", target: "web", reversible: true }], requiresApproval: false },
     { id: "save_artifact", actionType: "Write", family: "DATA", risk: "low", sideEffects: [{ kind: "write", target: "artifacts", reversible: true }], requiresApproval: false },
     { id: "ask_user", actionType: "Communicate", family: "COMMUNICATION", risk: "low", sideEffects: [], requiresApproval: false },

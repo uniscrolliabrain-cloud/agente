@@ -23,6 +23,9 @@ import type {
 } from "./types.ts";
 import { ulid } from "./ulid.ts";
 import { globalSubscribers } from "./subscriber.ts";
+import { observeKernel } from "../observability/hooks.ts";
+// SERVICE_PRINCIPAL_V1 - identidad de servicio autenticada por contexto.
+import { currentServicePrincipal } from "./service-principal.ts";
 
 const KIND = "system-events";
 const DEDUPE_KIND = "dedupe-state";
@@ -31,9 +34,22 @@ const DEDUPE_TTL_MS = Number(process.env.EVENTBUS_DEDUPE_TTL_MS ?? "60000") || 6
 // EVENTBUS_DEDUPE_LRU_V1 - LRU configurable.
 const DEDUPE_MAX_ENTRIES = Number(process.env.EVENTBUS_DEDUPE_LRU ?? "64") || 64;
 
+/** EVENTS_CAUSAL_ENVELOPE_V1 - vinculo causal explicito del productor gobernado. */
+export type CausalLink = { kind: "root" } | { kind: "derived"; causationId: string };
+
 export interface EmitOptions {
   correlationId?: string;
   causationId?: string;
+  /** EVENTS_CAUSAL_ENVELOPE_V1 - actor autenticado o principal de servicio. */
+  actorId?: string;
+  /**
+   * EVENTS_ACTOR_PROVENANCE_V1 - naturaleza del actor. Un principal de servicio
+   * debe declararse como tal y usar un id con prefijo `service:`; un actor
+   * humano solo se acepta si coincide con el actor del contexto autorizado.
+   */
+  actorKind?: "human" | "service";
+  /** EVENTS_CAUSAL_ENVELOPE_V1 - exige actor, tenant y correlacion explicitos. */
+  causal?: CausalLink;
   /**
    * EVENTBUS_DEDUPE_KEY_V1 - clave de deduplicacion explicita.
    *
@@ -92,6 +108,7 @@ export class EventBus {
     payload: T,
     options: EmitOptions = {},
   ): Promise<EmitResult> {
+    const startedAt = Date.now();
     let proposedEvent: { id: string; tenantId: string } | undefined;
     let committed: EmitResult | undefined;
     try {
@@ -112,6 +129,67 @@ export class EventBus {
       // resuelve por owner; fijamos el tenant ya validado durante las escrituras.
       const emitInTenant = <T>(operation: () => T): T =>
         runInTenantScope({ tenantId, actorId: requestTenant ? currentTenantScope()?.actorId ?? owner : owner }, operation);
+      // EVENTS_CAUSAL_ENVELOPE_V1 - admision del perfil causal-1. No se deduce
+      // root de la ausencia de causationId y no se admite un derivado cuyo
+      // antecedente no exista en el mismo tenant y correlacion.
+      const causal = options.causal;
+      const scopedActor = currentTenantScope()?.actorId;
+      // EVENTS_ACTOR_AUTHENTICITY_V1 - exigir `actorId` no lo autentica. En el
+      // perfil causal-1 el actor sale del contexto autorizado; un id aportado
+      // por el llamador solo se acepta si coincide con el. Un proceso interno
+      // usa una identidad de servicio explicita (`service:*`), nunca una
+      // identidad humana inventada ni la personalidad visible.
+      let actorKind: "human" | "service" | undefined;
+      if (causal) {
+        if (!options.tenantId) throw new Error("CAUSAL_TENANT_REQUIRED");
+        if (!options.correlationId) throw new Error("CAUSAL_CORRELATION_REQUIRED");
+        const declared = options.actorId;
+        // SERVICE_PRINCIPAL_AUTHENTICATED_V1 - la identidad de servicio no se
+        // deduce de un prefijo: solo existe si el kernel abrio el scope del
+        // principal registrado con `runAsServicePrincipal`. El `actorKind` del
+        // llamador se contrasta con la identidad ambiente; nunca la crea. Un
+        // principal ambiente puede aportar el actor; un campo declarado, no.
+        const principal = currentServicePrincipal();
+        if (!declared && !scopedActor && !principal) throw new Error("CAUSAL_ACTOR_REQUIRED");
+        if (declared && scopedActor && declared !== scopedActor)
+          throw new Error("ACTOR_NOT_AUTHENTICATED");
+        let actorId: string;
+        if (principal) {
+          if (scopedActor) throw new Error("SERVICE_SCOPE_CONFLICT");
+          if (options.actorKind === "human") throw new Error("ACTOR_KIND_MISMATCH");
+          if (declared && declared !== principal.id)
+            throw new Error("ACTOR_NOT_AUTHENTICATED");
+          if (!principal.sources.includes(source.kind))
+            throw new Error("SERVICE_ACTOR_SOURCE_INVALID");
+          actorId = principal.id;
+          actorKind = "service";
+        } else {
+          if (options.actorKind === "service") throw new Error("ACTOR_NOT_AUTHENTICATED");
+          // Un id humano declarado sin contexto autorizado es exactamente la
+          // identidad inventada que este perfil no acepta.
+          if (!scopedActor) throw new Error("ACTOR_NOT_AUTHENTICATED");
+          actorId = declared ?? scopedActor;
+          actorKind = "human";
+        }
+        if (source.personaId && source.personaId === actorId)
+          throw new Error("PERSONA_IS_NOT_AN_ACTOR");
+        options = { ...options, actorId };
+        if (causal.kind === "root" && options.causationId)
+          throw new Error("CAUSAL_ROOT_WITH_CAUSATION");
+        if (causal.kind === "derived") {
+          if (options.causationId && options.causationId !== causal.causationId)
+            throw new Error("CAUSAL_CAUSATION_MISMATCH");
+          const antecedent = await emitInTenant(() =>
+            this.db.get<SystemEvent>(owner, KIND, causal.causationId),
+          );
+          if (!antecedent)
+            throw new Error(`CAUSAL_ANTECEDENT_NOT_FOUND: ${causal.causationId}`);
+          if (antecedent.tenantId !== tenantId)
+            throw new Error("CAUSAL_ANTECEDENT_TENANT_MISMATCH");
+          if (antecedent.correlationId !== options.correlationId)
+            throw new Error("CAUSAL_ANTECEDENT_CORRELATION_MISMATCH");
+        }
+      }
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
       // EVENTBUS_DEDUPE_OWNER_FIX_V1 - antes pasabamos `${owner}:${dedupeKey}`
@@ -127,7 +205,8 @@ export class EventBus {
       // EVENTBUS_CTX_FALLBACK_V1 - hereda correlationId/causationId si no vienen.
       const logCtx = (await import("../../log.ts")).logContext.getStore();
       const finalCorrelationId = options.correlationId ?? logCtx?.correlationId;
-      const finalCausationId = options.causationId;
+      const finalCausationId =
+        options.causationId ?? (causal?.kind === "derived" ? causal.causationId : undefined);
       const event: SystemEvent<T> = {
         id: ulid(),
         schemaVersion: "1.0",
@@ -139,6 +218,9 @@ export class EventBus {
         source,
         ...(finalCorrelationId ? { correlationId: finalCorrelationId } : {}),
         ...(finalCausationId ? { causationId: finalCausationId } : {}),
+        ...(options.actorId ? { actorId: options.actorId } : {}),
+        ...(actorKind ? { actorKind } : {}),
+        ...(causal ? { causalKind: causal.kind } : {}),
         payload: parsed,
       };
       proposedEvent = { id: event.id, tenantId };
@@ -148,6 +230,14 @@ export class EventBus {
       committed = result;
       const notifyCommitted = async () => {
         result.persisted = true; result.pendingCommit = false;
+        // KERNEL_TELEMETRY_BUS_COMMIT_V1 - la etapa se publica DESPUES del
+        // commit durable; un sink lento no puede retrasar ni cambiar el emit.
+        observeKernel({
+          stage: "bus.commit",
+          status: "ok",
+          durationMs: Date.now() - startedAt,
+          ...(finalCorrelationId ? { correlationId: finalCorrelationId } : {}),
+        });
         try {
       // EVENTS_BUS_PUBLISH_V1 Ã¢â‚¬â€ publicar a subscribers en vivo (SSE, mÃƒÂ©tricas).
       // Ver: docs/audits/08-bus-de-eventos/miniaudit.md ("Sin SSE").
@@ -190,9 +280,16 @@ export class EventBus {
       };
       if (typeof this.db.afterCommit === "function" && this.db.afterCommit(notifyCommitted, (error) => {
         result.persisted = false; result.pendingCommit = false;
-        if (transactionOutcome(error) === "unknown") {
+        const outcome = transactionOutcome(error);
+        if (outcome === "unknown") {
           result.commitOutcome = "unknown"; result.error = "OUTER_TRANSACTION_OUTCOME_UNKNOWN";
         } else result.error = "OUTER_TRANSACTION_ROLLED_BACK";
+        observeKernel({
+          stage: "bus.rollback",
+          status: outcome === "unknown" ? "unknown" : "failed",
+          durationMs: Date.now() - startedAt,
+          errorClass: outcome === "unknown" ? "commit_unknown" : "rolled_back",
+        });
       })) return result;
       await notifyCommitted();
       return result;
@@ -255,8 +352,30 @@ export class EventBus {
         limit?: number,
       ) => Promise<{ owner: string; value: U }[]>;
     };
-    if (typeof db.scanByPrefix !== "function") return 0;
     const limit = Math.min(Math.max(1, filter.limit ?? 200), 200);
+    // EVENTS_PAGE_BEFORE_LIMIT_V1 - el cursor y los filtros se aplican en el
+    // store ANTES del limite. Antes, `scanByPrefix(...,limit)` podia devolver
+    // solo eventos anteriores al cursor y la recuperacion quedaba vacia pese a
+    // existir filas posteriores.
+    if (typeof this.query.pageTenant === "function") {
+      const page = await this.query.pageTenant(tenantId, filter, limit);
+      if (page) {
+        for (const event of page) await handler(event);
+        return page.length;
+      }
+    }
+    // EVENTS_REPLAY_FALLBACK_EXPLICIT_V1 - el camino sin SQL no puede aplicar
+    // cursor ni filtros antes de truncar. Antes devolvia una ventana truncada
+    // que parecia una recuperacion completa; ahora falla explicitamente. Solo
+    // se conserva el scan historico para una relectura sin filtros.
+    const filtered = Boolean(
+      filter.sinceId || filter.type || filter.since || filter.until || filter.sourceId || filter.projectId,
+    );
+    if (filtered)
+      throw new Error(
+        "EVENT_REPLAY_UNSUPPORTED: durable paging requires a store with select(); refusing a truncated replay",
+      );
+    if (typeof db.scanByPrefix !== "function") return 0;
     const rows = await db.scanByPrefix<SystemEvent>("system-events", tenantId, limit);
     const events = rows
       .map((row) => row.value)

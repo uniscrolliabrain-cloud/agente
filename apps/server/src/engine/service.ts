@@ -333,6 +333,12 @@ export class AgentService {
     // SERVICE_TOOL_EXECUTORS_V1 - executors reales.
     const toolExecutors = buildToolExecutors(this);
     // SERVICE_CAPABILITY_RUNNER_WIRE_V1 - inyecta governance + getAgentRole en CapabilityRunner.
+    // SERVICE_CAPABILITY_RUNNER_PROFILE_V1 - el perfil se elige de forma
+    // explicita y reversible. `governed_v2` exige autoridad tambien para
+    // lecturas; el valor por defecto conserva V1. Las capabilities con efecto
+    // externo o aprobacion ya son gobernadas en cualquier perfil.
+    const capabilityProfile =
+      process.env.CAPABILITY_RUNNER_PROFILE === "governed_v2" ? "governed_v2" : "legacy_v1";
     const capabilityRunner = new CapabilityRunner(
       this.capabilities,
       toolExecutors,
@@ -340,6 +346,18 @@ export class AgentService {
       (tid: string, rid: string) => this.db.get<import("../../../../packages/domain/src/agent.ts").AgentRole>(tid, "agent-roles", rid),
       // SERVICE_CAPABILITY_RUNNER_DB_V1 - db para idempotency claims.
       this.db,
+      capabilityProfile,
+      // KERNEL_CONNECTION_VERIFIER_V1 - la generacion aprobada se contrasta con
+      // la conexion VIVA del owner. Una rotacion entre la revision y el efecto
+      // invalida la aprobacion en vez de ejecutarse con la credencial nueva.
+      {
+        generationFor: async (ctx, approval) => {
+          const connection = await this.workspace.connection(ctx.owner).catch(() => null);
+          if (!connection) return null;
+          if (connection.id !== approval.connectionId) return null;
+          return (connection as { generation?: string | null }).generation ?? null;
+        },
+      },
     );
     this.executor = new Executor(capabilityRunner);
     this.learning = new LearningService(this.memory);
@@ -461,6 +479,13 @@ export class AgentService {
       await this.db.recoverInterruptedActions().catch((error) =>
         backgroundFailure("maintain recoverInterruptedActions", error),
       );
+      // ACTION_DISPATCH_RECOVERY_V1 - una caida entre el commit de la decision
+      // y el receipt deja un intento durable pendiente. Se concilia aqui: si
+      // la accion sigue `executing` sin recibo, pasa a `outcome_unknown`; nunca
+      // se reenvia el efecto.
+      await this.actions
+        .reconcileDispatchIntents()
+        .catch((error) => backgroundFailure("maintain reconcileDispatchIntents", error));
       // STUCK_5MIN_V1 - baja de 10 a 5 min para reconciliar antes.
       const STUCK_MS = Number(process.env.OUTCOME_UNKNOWN_STUCK_MS ?? "300000") || 300000;
       const stuckCutoff = new Date(Date.now() - STUCK_MS).toISOString();
