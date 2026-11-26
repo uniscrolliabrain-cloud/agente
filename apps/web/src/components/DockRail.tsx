@@ -84,6 +84,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import type { AppView } from "./SidebarV2";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { WhatsAppIcon } from "./WhatsAppIcon";
 
 type IconComponent = typeof MessageSquare;
@@ -201,7 +202,17 @@ interface Props {
 export default function DockRail({ activeView, onSelectView }: Props) {
   const [order, setOrder] = useState<string[]>(initialOrder);
   const [pins, setPins] = useState<string[]>(() => readIds(PIN_KEY));
-  const [drag, setDrag] = useState<{ id: string; y: number; grab: number; left: number; width: number; height: number } | null>(null);
+  // DOCK_RAIL_MOBILE_V1 - en movil la barra pasa a ser una tira horizontal.
+  const horizontal = useMediaQuery("(max-width: 900px)");
+  const [drag, setDrag] = useState<{
+    id: string;
+    x: number;
+    y: number;
+    grabX: number;
+    grabY: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const [slot, setSlot] = useState(0);
   const [tip, setTip] = useState<{ label: string; x: number; y: number } | null>(null);
   const [note, setNote] = useState<{ text: string; x: number; y: number } | null>(null);
@@ -211,7 +222,8 @@ export default function DockRail({ activeView, onSelectView }: Props) {
   const suppress = useRef(0);
   const base = useRef<string[]>([]);
   const insert = useRef(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const axis = useRef<"x" | "y">("y");
+  const scrollBox = useRef<HTMLElement | null>(null);
   const noteTimer = useRef<number | null>(null);
 
   useEffect(() => writeIds(ORDER_KEY, order), [order]);
@@ -232,25 +244,42 @@ export default function DockRail({ activeView, onSelectView }: Props) {
     press.current = null;
   };
 
-  const beginDrag = (id: string, el: HTMLButtonElement, clientY: number) => {
+  // El temporizador de pulsación larga no debe sobrevivir al desmontaje.
+  useEffect(() => clearHold, []);
+
+  const beginDrag = (id: string, el: HTMLButtonElement, clientX: number, clientY: number) => {
     const rect = el.getBoundingClientRect();
+    axis.current = horizontal ? "x" : "y";
+    scrollBox.current = el.closest<HTMLElement>(".dock-pin, .dock-scroll");
     base.current = displayed;
     insert.current = Math.max(0, displayed.indexOf(id));
     setSlot(insert.current);
     suppress.current = Number.POSITIVE_INFINITY;
+    press.current = null;
     setTip(null);
-    setDrag({ id, y: clientY, grab: clientY - rect.top, left: rect.left, width: rect.width, height: rect.height });
+    setDrag({
+      id,
+      x: clientX,
+      y: clientY,
+      grabX: clientX - rect.left,
+      grabY: clientY - rect.top,
+      width: rect.width,
+      height: rect.height,
+    });
   };
 
   useEffect(() => {
     if (!drag) return;
     const moving = drag.id;
     const onMove = (event: PointerEvent) => {
-      setDrag((value) => (value ? { ...value, y: event.clientY } : value));
-      const scroller = scrollRef.current;
+      setDrag((value) => (value ? { ...value, x: event.clientX, y: event.clientY } : value));
+      const scroller = scrollBox.current;
       if (scroller) {
         const box = scroller.getBoundingClientRect();
-        if (event.clientY < box.top + 26) scroller.scrollTop -= 9;
+        if (axis.current === "x") {
+          if (event.clientX < box.left + 30) scroller.scrollLeft -= 9;
+          else if (event.clientX > box.right - 30) scroller.scrollLeft += 9;
+        } else if (event.clientY < box.top + 26) scroller.scrollTop -= 9;
         else if (event.clientY > box.bottom - 26) scroller.scrollTop += 9;
       }
       let index = 0;
@@ -259,7 +288,11 @@ export default function DockRail({ activeView, onSelectView }: Props) {
         const el = rows.current.get(id);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
-        if (event.clientY > rect.top + rect.height / 2) index += 1;
+        const after =
+          axis.current === "x"
+            ? event.clientX > rect.left + rect.width / 2
+            : event.clientY > rect.top + rect.height / 2;
+        if (after) index += 1;
       }
       if (index !== insert.current) {
         insert.current = index;
@@ -301,12 +334,14 @@ export default function DockRail({ activeView, onSelectView }: Props) {
     const startX = event.clientX;
     const startY = event.clientY;
     const touch = event.pointerType === "touch";
+    const scroller = el.closest<HTMLElement>(".dock-pin, .dock-scroll");
+    const startScroll = scroller?.scrollLeft ?? 0;
     press.current = { id: entry.id, x: startX, y: startY, el };
     if (hold.current) window.clearTimeout(hold.current);
     hold.current = window.setTimeout(() => {
       hold.current = null;
       const held = press.current;
-      if (held) beginDrag(held.id, held.el, held.y);
+      if (held) beginDrag(held.id, held.el, startX, startY);
     }, HOLD_MS);
 
     const detach = () => {
@@ -320,14 +355,25 @@ export default function DockRail({ activeView, onSelectView }: Props) {
         detach();
         return;
       }
-      const moved =
-        Math.abs(move.clientX - held.x) > MOVE_TOLERANCE || Math.abs(move.clientY - held.y) > MOVE_TOLERANCE;
+      const dx = move.clientX - startX;
+      const dy = move.clientY - startY;
+      const moved = Math.abs(dx) > MOVE_TOLERANCE || Math.abs(dy) > MOVE_TOLERANCE;
       if (!moved) return;
-      clearHold();
-      detach();
-      // En táctil el arrastre largo sigue siendo el gesto: así el dedo puede
-      // seguir scrolleando la barra sin reordenar sin querer.
-      if (!touch) beginDrag(entry.id, el, move.clientY);
+      // Al moverse se cancela la pulsacion larga: en el movil ese mismo gesto
+      // desplaza la tira en horizontal, sin robarle el gesto al reordenar.
+      if (hold.current) {
+        window.clearTimeout(hold.current);
+        hold.current = null;
+      }
+      if (!touch) {
+        detach();
+        beginDrag(entry.id, el, move.clientX, move.clientY);
+        return;
+      }
+      if (horizontal && scroller) {
+        scroller.scrollLeft = startScroll - dx;
+        suppress.current = performance.now() + 220;
+      }
     };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", detach);
@@ -344,7 +390,11 @@ export default function DockRail({ activeView, onSelectView }: Props) {
       return;
     }
     const rect = event.currentTarget.getBoundingClientRect();
-    setNote({ text: entry.label, x: rect.right + 10, y: rect.top + rect.height / 2 });
+    setNote(
+      horizontal
+        ? { text: entry.label, x: rect.left + rect.width / 2, y: rect.bottom + 14 }
+        : { text: entry.label, x: rect.right + 10, y: rect.top + rect.height / 2 },
+    );
     if (noteTimer.current) window.clearTimeout(noteTimer.current);
     noteTimer.current = window.setTimeout(() => setNote(null), 1900);
   };
@@ -364,7 +414,7 @@ export default function DockRail({ activeView, onSelectView }: Props) {
   };
 
   const showTip = (entry: DockEntry) => (event: ReactMouseEvent<HTMLButtonElement>) => {
-    if (drag) return;
+    if (drag || horizontal) return;
     const rect = event.currentTarget.getBoundingClientRect();
     setTip({ label: entry.label, x: rect.right + 10, y: rect.top + rect.height / 2 });
   };
@@ -404,7 +454,7 @@ export default function DockRail({ activeView, onSelectView }: Props) {
   const dragging = drag ? ENTRIES.find((entry) => entry.id === drag.id) : undefined;
 
   return (
-    <aside className="shell__dock" aria-label="Accesos rápidos">
+    <aside className="shell__dock" data-orient={horizontal ? "row" : "col"} aria-label="Accesos rápidos">
       <div className="dock">
         <div className="dock-pin" data-empty={divider === 0}>
           {displayed.slice(0, divider).map((id, index) => {
@@ -413,7 +463,7 @@ export default function DockRail({ activeView, onSelectView }: Props) {
           })}
         </div>
         {divider > 0 && <span className="dock-divider" aria-hidden="true" />}
-        <div className="dock-scroll" ref={scrollRef}>
+        <div className="dock-scroll">
           {displayed.slice(divider).map((id, offset) => {
             const entry = ENTRIES.find((item) => item.id === id);
             return entry ? renderRow(entry, divider + offset) : null;
@@ -437,7 +487,12 @@ export default function DockRail({ activeView, onSelectView }: Props) {
       {drag && dragging && (
         <span
           className="dock-ghost"
-          style={{ left: drag.left, top: drag.y - drag.grab, width: drag.width, height: drag.height }}
+          style={{
+            left: drag.x - drag.grabX,
+            top: drag.y - drag.grabY,
+            width: drag.width,
+            height: drag.height,
+          }}
           aria-hidden="true"
         >
           <dragging.icon size={17} strokeWidth={1.7} />

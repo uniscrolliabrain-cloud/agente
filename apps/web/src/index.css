@@ -4479,7 +4479,72 @@ html[data-theme="dark"] .dock-ghost { background: #2a2436; box-shadow: 0 12px 26
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* DOCK_RAIL_MOBILE_V1 - en móvil la barra se convierte en una tira horizontal
+   bajo la barra superior: mismo orden, mismos fijados y mismo arrastre, pero
+   en el eje horizontal. El contenido no pierde ancho, solo 46 px de alto. */
 @media (max-width: 900px) {
   .shell[data-dock="true"] .shell__main { padding-left: 0; }
-  .shell__dock { display: none; }
+  .shell[data-dock="true"] .shell__dock { order: 1; }
+  .shell[data-dock="true"] .v2-content { order: 2; }
+  .shell__dock {
+    position: relative; inset: auto; z-index: 5;
+    width: 100%; height: 46px; flex: 0 0 46px; flex-direction: row;
+    border-right: 0; border-bottom: 1px solid #eee9f3;
+    background: linear-gradient(90deg, #f7f5fa 0%, #f4f1f8 100%);
+    overflow: hidden;
+  }
+  html[data-theme="dark"] .shell__dock {
+    border-right-color: transparent; border-bottom-color: #2b2833;
+    background: linear-gradient(90deg, #1d1b22 0%, #1a181f 100%);
+  }
+  /* Se cualifica con .shell__dock: hay otro `.dock` genérico en la hoja con
+     flex-shrink: 0 que impedía que la tira se ajustara al ancho del móvil. */
+  .shell__dock .dock {
+    flex: 1 1 auto; flex-direction: row; justify-content: flex-start; align-items: center; gap: 2px;
+    width: 100%; min-width: 0;
+    height: 100%; padding: 0 10px;
+    background: none;
+  }
+  .dock-pin {
+    flex: 0 1 auto; flex-direction: row; align-items: center;
+    min-width: 0; max-width: 46%; max-height: none;
+    padding: 0 2px; height: 100%;
+    overflow-x: auto; overflow-y: hidden;
+  }
+  .dock-divider {
+    flex: 0 0 auto; width: 1px; height: 20px; margin: 0 6px;
+    background: linear-gradient(180deg, transparent, #ddd4ec, transparent);
+  }
+  html[data-theme="dark"] .dock-divider {
+    background: linear-gradient(180deg, transparent, #3a3446, transparent);
+  }
+  .dock-scroll {
+    flex: 1 1 auto; flex-direction: row; align-items: center;
+    min-width: 0; height: 100%; padding: 0 2px;
+    overflow-x: auto; overflow-y: hidden;
+    overscroll-behavior-x: contain;
+  }
+  /* pan-y deja el gesto horizontal a la barra (scroll propio y reordenar) y
+     mantiene el desplazamiento vertical de la página. */
+  .dock-btn { width: 38px; height: 38px; touch-action: pan-y; }
+  .dock-btn[data-pinned="true"]::before {
+    left: 50%; top: auto; bottom: 0; width: 9px; height: 2px;
+    margin: 0 0 0 -4.5px;
+  }
+  .dock-btn[data-pinned="true"]:hover::before {
+    width: 13px; height: 2px; margin: 0 0 0 -6.5px;
+  }
+  .dock-slot {
+    width: 2px; height: 22px; margin: auto 2px;
+    background: linear-gradient(180deg, transparent, #b7a8dd, transparent);
+  }
+  .dock-tip { display: none; }
+  .shell__dock[data-orient="row"] .dock-note {
+    transform: translate(-50%, 0);
+    animation: dock-note-row 160ms ease-out both;
+  }
+}
+@keyframes dock-note-row {
+  from { opacity: 0; transform: translate(-50%, -4px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
