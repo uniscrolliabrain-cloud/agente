@@ -2,7 +2,7 @@
 // Antes el icono de engranaje no hacia nada y no habia forma de cerrar sesion
 // desde el panel: solo borrando el almacenamiento del navegador.
 import { useEffect } from "react";
-import { Building2, ChevronRight, Compass, LogOut, Sparkles, UserRound } from "lucide-react";
+import { Building2, ChevronRight, Code2, Compass, LogOut, Sparkles, UserRound } from "lucide-react";
 import { BrandLockup } from "./BrandMark";
 import { initialsOf } from "./team/data";
 
@@ -19,6 +19,9 @@ interface Props {
    *  compilación a pantalla completa. Producción no lo recibe y el menú no
    *  cambia. */
   onOpenCompany?: () => void;
+  /** AGNTIA_CODE_V1 - tercer clon del demo: plataforma de IA coding. Igual que
+   *  Tu Empresa, solo se monta cuando el clon pasa el prop. */
+  onOpenCode?: () => void;
   onExitDemo: () => void;
   onLogout: () => void;
 }
@@ -33,6 +36,7 @@ export default function SettingsMenu({
   demo,
   onOpenProfile,
   onOpenCompany,
+  onOpenCode,
   onExitDemo,
   onLogout,
 }: Props) {
@@ -84,6 +88,21 @@ export default function SettingsMenu({
             >
               <Compass size={15} />
               <span>Tu Empresa</span>
+              <small>Demo</small>
+              <ChevronRight size={14} className="settings-chevron" />
+            </button>
+          )}
+          {onOpenCode && (
+            <button
+              type="button"
+              className="settings-item"
+              onClick={() => {
+                onClose();
+                onOpenCode();
+              }}
+            >
+              <Code2 size={15} />
+              <span>Agntia Code</span>
               <small>Demo</small>
               <ChevronRight size={14} className="settings-chevron" />
             </button>

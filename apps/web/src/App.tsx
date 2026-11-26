@@ -101,11 +101,18 @@ type DemoView = ReactNode | ((nav: (view: AppView) => void) => ReactNode);
 // TU_EMPRESA_V1 - el clon demo inyecta aquí el estudio de compilación. Sin
 // este prop, producción no monta la capa ni muestra la entrada en Ajustes.
 type CompanyArea = (opts: { onClose: () => void }) => ReactNode;
+// AGNTIA_CODE_V1 - tercer clon: plataforma de IA coding, también solo demo.
+type CodeArea = (opts: { onClose: () => void }) => ReactNode;
 
 export default function App({
   demoViews,
   companyArea,
-}: { demoViews?: Partial<Record<AppView, DemoView>>; companyArea?: CompanyArea } = {}) {
+  codeArea,
+}: {
+  demoViews?: Partial<Record<AppView, DemoView>>;
+  companyArea?: CompanyArea;
+  codeArea?: CodeArea;
+} = {}) {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const threads = useThreads(auth.isAuthenticated);
@@ -140,6 +147,8 @@ export default function App({
   const [settingsOpen, setSettingsOpen] = useState(false);
   // TU_EMPRESA_V1 - la meta-app sustituye el shell mientras está abierta.
   const [companyOpen, setCompanyOpen] = useState(false);
+  // AGNTIA_CODE_V1 - mismo patrón para el clon de código.
+  const [codeOpen, setCodeOpen] = useState(false);
   // SPLIT_PANE_V1 - arrastrar una entrada de la barra lateral al contenido abre
   // esa vista al lado de la actual: a la derecha en escritorio y arriba en móvil.
   // Solo el clon de demostración lo usa.
@@ -539,6 +548,7 @@ export default function App({
         demo={demoSession}
         onOpenProfile={() => setProfileOpen(true)}
         {...(companyArea ? { onOpenCompany: () => setCompanyOpen(true) } : {})}
+        {...(codeArea ? { onOpenCode: () => setCodeOpen(true) } : {})}
         onExitDemo={() => { void auth.logout(); }}
         onLogout={() => { void auth.logout(); }}
       />
@@ -576,6 +586,7 @@ export default function App({
       )}
 
       {companyOpen && companyArea?.({ onClose: () => setCompanyOpen(false) })}
+      {codeOpen && codeArea?.({ onClose: () => setCodeOpen(false) })}
     </>
   );
 }

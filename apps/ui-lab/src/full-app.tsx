@@ -23,6 +23,8 @@ const FormationV4 = lazy(() => import("./formation-v4/FormationV4Workspace"));
 const LegalV1 = lazy(() => import("./legal/LegalV1"));
 // TU_EMPRESA_V1 - meta-app del clon: se abre desde Ajustes y tapa el shell.
 const CompanyApp = lazy(() => import("./company-v2/CompanyApp"));
+// AGNTIA_CODE_V1 - plataforma de IA coding del clon, con su propio shell.
+const CodeApp = lazy(() => import("./code-v1/CodeApp"));
 
 function View({ children }: { children: ReactNode }) {
   return (
@@ -104,6 +106,11 @@ createRoot(document.getElementById("root")!).render(
           companyArea={({ onClose }) => (
             <View>
               <CompanyApp onClose={onClose} />
+            </View>
+          )}
+          codeArea={({ onClose }) => (
+            <View>
+              <CodeApp onClose={onClose} />
             </View>
           )}
         />
