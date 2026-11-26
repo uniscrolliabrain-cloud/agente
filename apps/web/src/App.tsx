@@ -270,6 +270,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
       showFormation={Boolean(demoViews?.formation)}
       projectsLabel={demoViews?.projects ? "Cartera" : undefined}
       hideLegacyViews={Boolean(demoViews)}
+      reorderableNav={Boolean(demoViews)}
       collapsed={chatDockActive || (collapsed && !isMobile)}
       onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}

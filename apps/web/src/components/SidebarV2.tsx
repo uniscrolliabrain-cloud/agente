@@ -22,7 +22,7 @@ import {
   UserCog,
   Users,
 } from "lucide-react";
-import { useState, type MouseEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { Thread } from "../api/threads";
 // SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
 import SidebarThreads, { type ThreadPatch } from "./SidebarThreads";
@@ -70,10 +70,30 @@ interface Props {
    *  que se monta es la cartera V2. Producción no pasa el prop y el menú queda
    *  exactamente igual. */
   projectsLabel?: string;
+  /** SIDEBAR_ORDER_V1 - pulsación larga y arrastre para reordenar el menú.
+   *  Solo el clon de demostración lo enciende; producción no pasa el prop y
+   *  conserva su menú exactamente igual. */
+  reorderableNav?: boolean;
 }
 
 // UI_LAB_LEGACY_V1 - vistas retiradas solo en el clon de demostración.
 const LEGACY_VIEWS: AppView[] = ["control-center", "operations", "workspace"];
+
+// SIDEBAR_ORDER_V1 - orden manual del menú, guardado en el navegador.
+type NavEntry = { id: AppView; label: string; icon: typeof MessageSquareText };
+type NavDrag = { id: AppView; y: number; left: number; width: number; height: number; grab: number };
+const NAV_ORDER_KEY = "agntia_sidebar_order_v1";
+const NAV_HOLD_MS = 260;
+const NAV_MOVE_TOLERANCE = 6;
+function readNavOrder(): AppView[] {
+  try {
+    const raw = localStorage.getItem(NAV_ORDER_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed.filter((value): value is AppView => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 const PRIMARY: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
   // COMMAND_CENTER_VIEW_V1 - la entrada que abre la empresa al arrancar.
@@ -117,6 +137,7 @@ export default function SidebarV2({
   showFormation,
   hideLegacyViews,
   projectsLabel,
+  reorderableNav,
 }: Props) {
   // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
   const demoItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
@@ -131,6 +152,154 @@ export default function SidebarV2({
     ...demoItems,
     ...primary.slice(2),
   ];
+
+  // SIDEBAR_ORDER_V1 - pulsación larga y arrastre para reordenar. El gesto no
+  // añade ajustes ni botones: al coger un elemento aparece el hueco con la línea
+  // y al soltarlo se queda ahí.
+  const navSignature = navItems.map((item) => item.id).join("|");
+  const [navOrder, setNavOrder] = useState<AppView[]>([]);
+  const [navDrag, setNavDrag] = useState<NavDrag | null>(null);
+  const [navDrop, setNavDrop] = useState(0);
+  const [navAnnounce, setNavAnnounce] = useState("");
+  const navRows = useRef(new Map<AppView, HTMLButtonElement>());
+  const navHold = useRef<number | null>(null);
+  const navPress = useRef<{ id: AppView; x: number; y: number; el: HTMLButtonElement } | null>(null);
+  const navInsert = useRef(0);
+  const navSuppress = useRef(0);
+  const navBase = useRef<AppView[]>([]);
+
+  useEffect(() => {
+    if (!reorderableNav) return;
+    const ids = navSignature.split("|").filter(Boolean) as AppView[];
+    const stored = readNavOrder();
+    setNavOrder([...stored.filter((id) => ids.includes(id)), ...ids.filter((id) => !stored.includes(id))]);
+  }, [reorderableNav, navSignature]);
+
+  const saveNavOrder = (ids: AppView[]) => {
+    setNavOrder(ids);
+    try {
+      localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(ids));
+    } catch {
+      // Sin almacenamiento, el orden dura la sesión.
+    }
+  };
+
+  const navRank = (id: AppView) => {
+    const at = navOrder.indexOf(id);
+    return at < 0 ? Number.MAX_SAFE_INTEGER : at;
+  };
+  const orderedNav: NavEntry[] = reorderableNav && navOrder.length ? [...navItems].sort((a, b) => navRank(a.id) - navRank(b.id)) : navItems;
+
+  const clearNavHold = () => {
+    if (navHold.current) {
+      window.clearTimeout(navHold.current);
+      navHold.current = null;
+    }
+    navPress.current = null;
+  };
+
+  const beginNavDrag = (entry: NavEntry, el: HTMLButtonElement, clientY: number) => {
+    const rect = el.getBoundingClientRect();
+    navBase.current = orderedNav.map((item) => item.id);
+    const index = navBase.current.indexOf(entry.id);
+    navInsert.current = index < 0 ? 0 : index;
+    navSuppress.current = Number.POSITIVE_INFINITY;
+    setNavDrop(navInsert.current);
+    setNavDrag({ id: entry.id, y: clientY, left: rect.left, width: rect.width, height: rect.height, grab: clientY - rect.top });
+  };
+
+  useEffect(() => {
+    if (!navDrag) return;
+    const moving = navDrag.id;
+    const onMove = (event: PointerEvent) => {
+      setNavDrag((value) => (value ? { ...value, y: event.clientY } : value));
+      let index = 0;
+      for (const id of navBase.current) {
+        if (id === moving) continue;
+        const el = navRows.current.get(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (event.clientY > rect.top + rect.height / 2) index += 1;
+      }
+      if (index !== navInsert.current) {
+        navInsert.current = index;
+        setNavDrop(index);
+      }
+    };
+    const onUp = () => {
+      const without = navBase.current.filter((id) => id !== moving);
+      without.splice(Math.min(navInsert.current, without.length), 0, moving);
+      saveNavOrder(without);
+      const entry = navItems.find((item) => item.id === moving);
+      setNavAnnounce(`${entry?.label ?? moving}, posición ${Math.min(navInsert.current + 1, without.length)} de ${without.length}`);
+      navSuppress.current = performance.now() + 400;
+      setNavDrag(null);
+    };
+    const onCancel = () => {
+      navSuppress.current = performance.now() + 200;
+      setNavDrag(null);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    const stopTouch = (event: TouchEvent) => event.preventDefault();
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("touchmove", stopTouch, { passive: false });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("touchmove", stopTouch);
+    };
+  }, [navDrag?.id, navSignature]);
+
+  const onNavPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!reorderableNav) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    const id = event.currentTarget.dataset.navId as AppView | undefined;
+    const entry = id ? navItems.find((item) => item.id === id) : undefined;
+    if (!id || !entry) return;
+    const el = event.currentTarget;
+    navPress.current = { id, x: event.clientX, y: event.clientY, el };
+    if (navHold.current) window.clearTimeout(navHold.current);
+    navHold.current = window.setTimeout(() => {
+      navHold.current = null;
+      const held = navPress.current;
+      if (held) beginNavDrag(entry, held.el, held.y);
+    }, NAV_HOLD_MS);
+  };
+
+  const onNavPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (navDrag) return;
+    const held = navPress.current;
+    if (!held) return;
+    if (Math.abs(event.clientX - held.x) > NAV_MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > NAV_MOVE_TOLERANCE) clearNavHold();
+  };
+
+  const onNavKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, id: AppView) => {
+    if (!reorderableNav || !event.altKey) return;
+    const direction = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+    if (!direction) return;
+    event.preventDefault();
+    const ids = orderedNav.map((item) => item.id);
+    const from = ids.indexOf(id);
+    const to = from + direction;
+    if (from < 0) return;
+    if (to < 0 || to >= ids.length) {
+      setNavAnnounce("Extremo del menú");
+      return;
+    }
+    const next = [...ids];
+    next.splice(from, 1);
+    next.splice(to, 0, id);
+    saveNavOrder(next);
+    const entry = navItems.find((item) => item.id === id);
+    setNavAnnounce(`${entry?.label ?? id}, posición ${to + 1} de ${next.length}`);
+  };
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
   // la columna. Antes solo se veían tres y los demás desaparecían sin aviso.
@@ -193,28 +362,51 @@ export default function SidebarV2({
           </div>
         )}
 
-        <nav className="v2-sidebar-nav" aria-label="Principal">
-          {navItems.map((item) => {
+        <nav className="v2-sidebar-nav" aria-label="Principal" aria-describedby={reorderableNav ? "v2-nav-order-help" : undefined}>
+          {orderedNav.map((item, index) => {
             const Icon = item.icon;
             const active = activeView === item.id;
             return (
-              <button
-                key={item.id}
-                type="button"
-                className={`v2-nav-item ${active ? "active" : ""}`}
-                onClick={() => onSelectView(item.id)}
-                onMouseEnter={showTip(item.label)}
-                onMouseLeave={hideTip}
-                aria-label={collapsed ? item.label : undefined}
-              >
-                <span className="v2-nav-main">
-                  <Icon className="v2-nav-icon" />
-                  {!collapsed && <span className="v2-nav-label">{item.label}</span>}
-                </span>
-                {!collapsed && item.id === "tasks" && hasPendingTasks && <span className="v2-nav-dot" />}
-              </button>
+              <Fragment key={item.id}>
+                {navDrag && navDrop === index && (
+                  <span className="v2-nav-slot" style={{ height: navDrag.height }} aria-hidden="true" />
+                )}
+                <button
+                  type="button"
+                  data-nav-id={item.id}
+                  ref={(node) => {
+                    if (node) navRows.current.set(item.id, node);
+                    else navRows.current.delete(item.id);
+                  }}
+                  className={`v2-nav-item ${active ? "active" : ""}`}
+                  onClick={() => {
+                    if (performance.now() < navSuppress.current) return;
+                    onSelectView(item.id);
+                  }}
+                  onPointerDown={onNavPointerDown}
+                  onPointerMove={onNavPointerMove}
+                  onPointerUp={clearNavHold}
+                  onPointerCancel={clearNavHold}
+                  onPointerLeave={() => {
+                    if (!navDrag) clearNavHold();
+                  }}
+                  onKeyDown={(event) => onNavKeyDown(event, item.id)}
+                  onMouseEnter={showTip(item.label)}
+                  onMouseLeave={hideTip}
+                  aria-label={collapsed ? item.label : undefined}
+                >
+                  <span className="v2-nav-main">
+                    <Icon className="v2-nav-icon" />
+                    {!collapsed && <span className="v2-nav-label">{item.label}</span>}
+                  </span>
+                  {!collapsed && item.id === "tasks" && hasPendingTasks && <span className="v2-nav-dot" />}
+                </button>
+              </Fragment>
             );
           })}
+          {reorderableNav && navDrag && navDrop === orderedNav.length && (
+            <span className="v2-nav-slot" style={{ height: navDrag.height }} aria-hidden="true" />
+          )}
           {isAdmin && !hideLegacyViews && (
             <button
               type="button"
@@ -305,6 +497,31 @@ export default function SidebarV2({
         >
           {railTip.label}
         </span>
+      )}
+      {navDrag && (() => {
+        const entry = orderedNav.find((item) => item.id === navDrag.id);
+        const Icon = entry?.icon ?? MessageSquareText;
+        return (
+          <span
+            className="v2-nav-ghost"
+            style={{ left: navDrag.left, top: navDrag.y - navDrag.grab, width: navDrag.width, height: navDrag.height }}
+            aria-hidden="true"
+          >
+            <Icon className="v2-nav-icon" />
+            {!collapsed && <span>{entry?.label}</span>}
+          </span>
+        );
+      })()}
+
+      {reorderableNav && (
+        <>
+          <span id="v2-nav-order-help" className="sr-only">
+            Mantén pulsado un elemento del menú y arrástralo para reordenarlo. Con teclado, Alt y flechas arriba o abajo.
+          </span>
+          <span className="sr-only" role="status" aria-live="polite">
+            {navAnnounce}
+          </span>
+        </>
       )}
     </aside>
   );

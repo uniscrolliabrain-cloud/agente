@@ -1,0 +1,151 @@
+/* ADAPTIVE_MENU_V2 — menú lateral con el lenguaje editorial vigente
+   (papel cálido, Manrope para etiquetas, Fraunces para títulos, lavanda de
+   acento) y el riel de iconos de producción al plegarlo. */
+
+.am-root {
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+  transition: grid-template-columns 180ms ease;
+}
+.am-root[data-collapsed="true"] { grid-template-columns: 76px minmax(0, 1fr); }
+
+/* ---------- Barra lateral ---------- */
+.am-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 10px;
+  padding: 16px 12px 14px;
+  background: #fbf8f2;
+  border-right: 1px solid var(--ag-line);
+}
+.am-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px; min-height: 34px; }
+.am-brand { display: flex; align-items: center; min-width: 0; }
+.am-brand .cc-brand-name { font-family: Fraunces, Georgia, serif; font-weight: 500; }
+.am-root[data-collapsed="true"] .am-brand-row { flex-direction: column; gap: 8px; }
+
+.am-rail-toggle {
+  width: 26px; height: 26px; flex: none;
+  display: grid; place-items: center;
+  border: 1px solid transparent; border-radius: 8px;
+  background: transparent; color: #8a857e; cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.am-rail-toggle:hover { background: #f2ede3; color: var(--ag-ink); }
+
+/* ---------- Lista ---------- */
+.am-nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+.am-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.am-row { position: relative; }
+
+.am-item {
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #4f4c46;
+  font: 500 13px/1 Manrope, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+.am-item:hover { background: #f2ede3; color: var(--ag-ink); }
+.am-item.is-active { background: #fff; border-color: #e7e1d6; box-shadow: 0 1px 6px #2424210d; color: var(--ag-ink); }
+.am-item.is-active .am-ico { color: var(--ag-violet); }
+.am-ico { flex: none; color: #8a857e; }
+.am-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Hueco con la línea donde caerá el elemento. */
+.am-slot { display: block; height: 40px; position: relative; }
+.am-slot::after {
+  content: "";
+  position: absolute;
+  left: 6px; right: 6px; top: 50%;
+  height: 2px; border-radius: 2px;
+  background: var(--ag-violet);
+  opacity: 0.9;
+  transform: translateY(-50%);
+}
+
+/* Pieza que sigue al puntero. */
+.am-item.is-drag {
+  position: fixed;
+  z-index: 60;
+  margin: 0;
+  background: #fff;
+  border-color: #ded6f5;
+  box-shadow: 0 12px 26px #2424211f;
+  color: var(--ag-ink);
+  pointer-events: none;
+}
+.am-root[data-dragging="true"], .am-root[data-dragging="true"] .am-item { cursor: grabbing; }
+
+/* Riel de iconos: igual que el menú de producción al plegarse. */
+.am-root[data-collapsed="true"] .am-item { justify-content: center; padding: 0; }
+.am-root[data-collapsed="true"] .am-label { display: none; }
+
+/* ---------- Contenido ---------- */
+.am-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.am-top { display: flex; align-items: center; gap: 10px; padding: 14px 26px; border-bottom: 1px solid var(--ag-line); }
+.am-kicker { font: 800 9px Manrope, sans-serif; letter-spacing: 0.16em; color: var(--ag-gold); }
+.am-burger { display: none; }
+.am-content { flex: 1; min-height: 0; overflow: auto; padding: 30px 26px 40px; }
+.am-paper { max-width: 720px; background: #fff; border: 1px solid var(--ag-line); border-radius: 14px; padding: 28px 30px; }
+.am-paper small { font: 800 9.5px Manrope, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; color: #8a857e; }
+.am-paper h1 { margin: 10px 0 12px; font: 400 30px/1.15 Fraunces, Georgia, serif; color: var(--ag-ink); }
+.am-paper p { margin: 0; max-width: 58ch; color: #5c5952; font-size: 14.5px; line-height: 1.6; }
+.am-lines { display: flex; flex-direction: column; gap: 9px; margin-top: 24px; }
+.am-lines span { height: 9px; border-radius: 6px; background: var(--ag-soft); }
+.am-lines span:nth-child(1) { width: 82%; }
+.am-lines span:nth-child(2) { width: 64%; }
+.am-lines span:nth-child(3) { width: 73%; }
+
+/* ---------- Accesibilidad ---------- */
+.am-item:focus-visible, .am-rail-toggle:focus-visible, .am-burger:focus-visible, .am-scrim:focus-visible {
+  outline: 2px solid var(--ag-violet);
+  outline-offset: 2px;
+}
+.am-sr {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- Móvil: el menú se abre como hoja lateral ---------- */
+.am-scrim { display: none; }
+@media (max-width: 900px) {
+  .am-root, .am-root[data-collapsed="true"] { grid-template-columns: minmax(0, 1fr); }
+  .am-sidebar {
+    position: fixed; inset: 0 auto 0 0; width: 272px; z-index: 50;
+    transform: translateX(-102%);
+    transition: transform 200ms ease;
+    box-shadow: 0 0 40px #24242126;
+  }
+  .am-sidebar[data-open="true"] { transform: none; }
+  .am-scrim { display: block; position: fixed; inset: 0; z-index: 45; padding: 0; border: 0; background: #2424214d; }
+  .am-burger {
+    display: grid; place-items: center; width: 30px; height: 30px;
+    border: 1px solid var(--ag-line); border-radius: 8px;
+    background: #fff; color: #4f4c46; cursor: pointer;
+  }
+  .am-rail-toggle { display: none; }
+  .am-root[data-collapsed="true"] .am-item { justify-content: flex-start; padding: 0 10px; }
+  .am-root[data-collapsed="true"] .am-label { display: inline; }
+  .am-top { padding: 12px 16px; }
+  .am-content { padding: 20px 16px 32px; }
+  .am-paper { padding: 22px 18px; }
+  .am-paper h1 { font-size: 26px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .am-root, .am-sidebar, .am-item, .am-rail-toggle { transition: none; }
+}

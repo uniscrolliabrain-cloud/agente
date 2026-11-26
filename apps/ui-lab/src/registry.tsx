@@ -4,6 +4,7 @@ const FullApp=lazy(()=>import("./FullAppPreview"));
 const TopBar=lazy(()=>import("../../web/src/components/TopBarV2"));
 const Chat=lazy(()=>import("../../web/src/components/ChatPanel"));
 const ChatUXV2=lazy(()=>import("./chat-ux-v2/ChatUXV2Preview"));
+const AdaptiveMenu=lazy(()=>import("./adaptive-menu/AdaptiveMenuWorkspace"));
 const Kpi=lazy(()=>import("../../web/src/components/KpiCard"));
 const Brand=lazy(()=>import("./BrandGallery"));
 const Landing=lazy(()=>import("./vendor/landing/Landing.jsx"));
@@ -41,6 +42,7 @@ export const previews:Preview[]=[
 {id:"topbar",name:"Barra superior",category:"Componentes",description:"TopBarV2 original, sin backend",Component:()=> <TopBar status="ok" statusLabel="Agente activo" contextLabel="DEMO" onNewChat={()=>{}} onOpenPalette={()=>{}} onOpenMenu={()=>{}}/>,status:"demo"},
 {id:"kpi",name:"Tarjetas KPI",category:"Componentes",description:"KpiCard original con datos sintéticos",Component:()=> <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:16,padding:24}}><Kpi label="Actividades" value={128} meta="+12 esta semana" icon="purple" series={[4,6,5,9,7,12]}/><Kpi label="Completadas" value={94} meta="Datos de ejemplo" icon="green" series={[2,3,6,7,8,11]}/><Kpi label="Pendientes" value={12} icon="orange" series={[8,7,6,7,5,4]}/></div>,status:"fixture"},
 {id:"chat",name:"Chat",category:"Componentes",description:"ChatPanel original con conversación ficticia",Component:()=> <Chat chat={{messages:[],streaming:false,streamBuf:"",tools:[],error:null,send:()=>{},cancel:()=>{},threadId:"ui-lab"}} userName="Demo"/>,status:"fixture"},
+{id:"adaptive-menu",name:"Menú adaptativo · Reordenar",category:"Componentes",description:"Menú de producción con riel de iconos; pulsación larga y arrastre para reordenar, con hueco y línea de destino",Component:AdaptiveMenu,status:"fixture"},
 {id:"chat-ux-v2",name:"Chat UX V2 · Refinamiento",category:"Componentes",description:"Propuesta aislada del chat: acabados, tipografía, motion y contenedor estrecho, con fixture interactiva sin red",Component:ChatUXV2,status:"fixture"},
 {id:"knowledge-v4",name:"Conocimiento · V4",category:"Trabajo",description:"Biblioteca editorial, artículos, colecciones, grafo y cuadernos con datos locales",Component:KnowledgeV4,status:"fixture"},
 {id:"knowledge-v1",name:"Conocimiento · V1",category:"Trabajo",description:"Prototipo editorial de páginas y bloques, navegación contextual y relaciones sintéticas",Component:KnowledgeV1,status:"fixture"},
