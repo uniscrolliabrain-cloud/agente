@@ -1226,17 +1226,177 @@ Quiero una infraestructura documental navegable, granular, versionada y directam
 
 ---
 
-## 23. Entregable horizontal
-Publica en rama Trans06, carpeta Trans06/ASTRA-AUDIT-V1/convergencia-horizontal/ (bajo raíz documental). No nueva rama ni edición canónica. Inventario de seis ramas, matriz contratos/responsabilidades, mapa causal, grafo dependencias, archivos conflictivos, orden integración, reconciliación ABI, barreras, waves, pruebas conjuntas, certificación, riesgos residuales y supervisión. En otras cinco carpetas ASTRA enlaza revisión exacta de propuesta horizontal. Preserva auditoría horizontal anterior.
+## 23. Entregable de auditoría horizontal
 
-## 24. Comparación
-Por cada decisión: aspecto | original | Astra | evidencia | beneficio esperado | coste/riesgo. Clasifica PRESERVAR, MEJORAR, SIMPLIFICAR, SUSTITUIR, ELIMINAR, POSPONER, REQUIERE EVIDENCIA ADICIONAL. ELIMINAR solo en futura propuesta, jamás borrar documentación. Justifica superioridad, conserva aciertos originales. Founder podrá elegir una combinación.
+Además de los documentos individuales, crea una propuesta de convergencia integral de las seis campañas.
 
-## 25. Autonomía y publicación
-Investiga y soluciona decisiones menores de ingeniería sin preguntar al founder. Continúa independientes ante dependencia o autorización ausente; respeta barreras reales. Commits documentales pequeños. Antes de push comprueba rama, diff, solo ASTRA-AUDIT-V1/, cero eliminaciones originales, cero cambios funcionales, cero secretos, enlaces válidos. Relee HEAD si otro agente modifica rama. No force push ni merge. Persiste checkpoint y bitácora. No afirmar trabajo no realizado.
+Para no crear una rama adicional ni alterar la canónica, publica este trabajo dentro de:
 
-## 26. Cierre
-Seis auditorías profundas, seis alternativas superiores, seis campañas ejecutables, seis especificaciones consolidadas, seis handoffs, seis evaluaciones comparativas, auditoría horizontal, plan de paralelización, matriz común de contratos/ownership, certificación integral y evidencia reproducible de tests ejecutados y pendientes. Publicado en ramas respectivas. No declarar completo por seis informes iniciales, nota alta o componentes sin comprender. Si sesión insuficiente, publica evidencia realizada, bitácora y checkpoint preciso; no simular cierre.
+`Trans06/ASTRA-AUDIT-V1/convergencia-horizontal/`
 
-## 27. Instrucción final
-No seas complaciente. No confirmes nuestro trabajo sin evidencia ni produzcas más texto técnicamente equivalente. Estudia el software con mayor profundidad, descubre lo que omitimos, construye mejores contratos, algoritmos, validaciones, pruebas, patchsets y estrategia de integración. Reduce complejidad innecesaria, aumenta precisión, propone alternativas justificadas y conserva lo valioso. No destruyas meses de trabajo imponiendo arquitectura genérica. Demuestra capacidad comprendiendo nuestro software, no sustituyéndolo por otro. Entrega segundo nivel de ingeniería independiente y considerablemente más exigente para que posteriormente contrastemos ambas propuestas y elijamos la campaña definitiva. Comienza ahora: recupera contexto, inspecciona seis ramas y código, realiza pasadas y publica entregables. No respondas solo explicando qué vas a hacer.
+En la rama `Trans06`.
+
+Incluye:
+
+- Inventario de las seis ramas.
+- Matriz de contratos compartidos.
+- Matriz de responsabilidades.
+- Mapa causal integral.
+- Grafo de dependencias.
+- Archivos con riesgo de conflictos.
+- Orden de integración.
+- Campaña de reconciliación de interfaces.
+- Barreras de ejecución.
+- Oleadas paralelas.
+- Plan de pruebas conjunto.
+- Certificación integral.
+- Riesgos residuales.
+- Propuesta de supervisión humana y mediante agentes.
+
+En cada una de las otras cinco ramas, incluye dentro de tu propia documentación un enlace y una referencia de revisión exacta a esta propuesta horizontal.
+
+No modifiques nuestra auditoría horizontal anterior.
+
+---
+
+## 24. Comparación obligatoria entre nuestra propuesta y Astra
+
+No basta con redactar tu nueva propuesta.
+
+Necesito poder comparar claramente ambas.
+
+Para cada decisión arquitectónica relevante, documenta:
+
+| Aspecto | Propuesta original | Propuesta Astra | Evidencia | Beneficio esperado | Coste o riesgo |
+|---|---|---|---|---|---|
+
+Clasifica las decisiones originales como:
+
+- PRESERVAR.
+- MEJORAR.
+- SIMPLIFICAR.
+- SUSTITUIR.
+- ELIMINAR.
+- POSPONER.
+- REQUIERE EVIDENCIA ADICIONAL.
+
+La clasificación ELIMINAR se refiere a tu futura propuesta de implementación, no a borrar nuestra documentación.
+
+No cambies algo si no puedes justificar que el cambio resulta técnicamente superior.
+
+Identifica también las decisiones originales que merecen conservarse íntegramente.
+
+La comparación debe permitir que el fundador pueda seleccionar nuestras soluciones, tus soluciones o una combinación de ambas en una futura campaña consolidada.
+
+---
+
+## 25. Autonomía, commits y publicación
+
+Trabaja de forma autónoma.
+
+No interrumpas el trabajo para preguntar al fundador sobre decisiones menores de ingeniería que puedas resolver mediante lectura, pruebas y razonamiento.
+
+El fundador se ocupa de la dirección conceptual y las decisiones estratégicas.
+
+Tú te ocupas de la ingeniería.
+
+Si encuentras un problema, investígalo.
+
+Si encuentras una inconsistencia, contrástala.
+
+Si encuentras una dependencia, analiza qué trabajo independiente puede continuar.
+
+Si encuentras una limitación técnica, diseña la solución más robusta que puedas justificar.
+
+Si falta una autorización imprescindible, conserva la frontera y continúa con el resto del trabajo.
+
+Realiza commits documentales pequeños y coherentes.
+
+Antes de cada push:
+
+1. Comprueba la rama activa.
+2. Comprueba el diff.
+3. Comprueba que únicamente se modifican archivos de `ASTRA-AUDIT-V1/`.
+4. Comprueba que no se elimina documentación original.
+5. Comprueba que no existen cambios funcionales.
+6. Comprueba que no introduces secretos.
+7. Comprueba la integridad de los enlaces y la navegación.
+
+No publiques cambios de código funcional.
+
+No hagas force push.
+
+No fusiones ramas.
+
+Si otra persona o agente modifica una rama simultáneamente, vuelve a comprobar su HEAD y reconcilia tus cambios documentales sin sobrescribir los suyos.
+
+Persiste el progreso en la bitácora para poder recuperar el contexto entre sesiones.
+
+No afirmes haber realizado trabajos que todavía no has realizado.
+
+---
+
+## 26. Condiciones de cierre
+
+Tu trabajo no estará terminado hasta que hayas producido:
+
+- Seis auditorías independientes y profundas.
+- Seis propuestas arquitectónicas superiores.
+- Seis campañas detalladas y ejecutables.
+- Seis especificaciones consolidadas.
+- Seis prompts de handoff.
+- Seis evaluaciones comparativas.
+- Una auditoría horizontal completa.
+- Un plan de paralelización de los seis agentes.
+- Una matriz común de contratos y responsabilidades.
+- Un plan de certificación integral.
+- Evidencias verificables de todas las pruebas realmente ejecutadas.
+- Un inventario explícito de las pruebas y comprobaciones pendientes.
+
+Todo ello debe quedar publicado en las ramas correspondientes.
+
+No debes declarar el trabajo completo por haber escrito seis informes iniciales.
+
+No debes declarar el trabajo completo porque hayas alcanzado una determinada puntuación.
+
+No debes declarar el trabajo completo si todavía existen componentes que no has comprendido.
+
+La profundidad de la auditoría debe ser proporcional a la importancia de la arquitectura.
+
+Si los límites de una sesión impiden completar la totalidad, publica el trabajo verificable realizado, actualiza la bitácora y deja un checkpoint preciso para continuar sin perder contexto. No simules que has terminado.
+
+---
+
+## 27. Instrucción final del fundador
+
+No quiero que seas un revisor complaciente.
+
+No quiero que seas un agente que simplemente confirme que nuestro trabajo está bien.
+
+No quiero que produzcas una documentación más extensa pero técnicamente equivalente.
+
+Quiero que estudies nuestro software con una profundidad superior a la nuestra.
+
+Quiero que descubras aquello que no hemos sido capaces de descubrir.
+
+Quiero que seas capaz de construir mejores contratos, mejores algoritmos, mejores mecanismos de validación, mejores pruebas, mejores patchsets y una estrategia de integración más rigurosa.
+
+Quiero que reduzcas complejidad cuando nosotros hayamos introducido demasiada.
+
+Quiero que introduzcas precisión cuando nosotros hayamos sido demasiado abstractos.
+
+Quiero que propongas alternativas cuando nuestras soluciones no sean suficientes.
+
+Quiero que conserves aquello que realmente sea valioso.
+
+No destruyas meses de trabajo por imponer una arquitectura genérica que desconoce la intención del sistema.
+
+Demuestra tu capacidad comprendiendo nuestro software, no sustituyéndolo por otro.
+
+Tu misión consiste en entregarnos un segundo nivel de ingeniería, independiente y considerablemente más exigente, para que después podamos confrontar ambas propuestas y construir la campaña definitiva de implementación.
+
+**Comienza ahora. Recupera el contexto, inspecciona las seis ramas, estudia el código real, realiza las pasadas integrales y publica tus entregables.**
+
+No respondas únicamente explicando lo que vas a hacer.
+
+Empieza a realizar el trabajo.
