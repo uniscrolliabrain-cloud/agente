@@ -23,7 +23,7 @@
 //   DATABASE_URL=... pnpm provision:slice check --bundle ...
 
 import { randomBytes, randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Config } from "../apps/server/src/config.ts";
@@ -110,7 +110,7 @@ function nowIso(): string {
 
 /** `system` es el owner de los registros de plataforma (igual que el registry). */
 export function readInstallation(db: Store, operationKey: string): Promise<InstallationRecord | null> {
-  return db.get<InstallationRecord>("system", PROVISION_COLLECTION, operationKey).catch(() => null);
+  return db.get<InstallationRecord>("system", PROVISION_COLLECTION, operationKey);
 }
 
 function highestRole(roles: string[]): InstallationActor["role"] {
@@ -120,7 +120,7 @@ function highestRole(roles: string[]): InstallationActor["role"] {
 }
 
 async function readClaimedNames(db: Store): Promise<Record<string, string>> {
-  const installations = await db.list<InstallationRecord>("system", PROVISION_COLLECTION).catch(() => []);
+  const installations = await db.list<InstallationRecord>("system", PROVISION_COLLECTION);
   const claimed: Record<string, string> = {};
   for (const installation of installations) {
     if (!installation?.displayName) continue;
@@ -149,7 +149,7 @@ export async function planProvision(
       "tenant-membership",
       bundle.template.slug,
     )
-    .catch(() => null);
+    ;
   return planVerticalSlice(bundle, {
     ...(registry?.templateId ? { templateId: registry.templateId } : {}),
     ...(typeof registry?.bundleVersion === "number" ? { version: registry.bundleVersion } : {}),
@@ -177,7 +177,7 @@ async function ensureActors(
   // El owner de la cuenta es el primer actor de la empresa.
   const ownerUser = await db
     .get<{ id: string; email?: string; name?: string }>("system", "users", owner)
-    .catch(() => null);
+    ;
   if (!ownerUser) throw new Error(`ACTOR_OWNER_AUSENTE: no existe el usuario ${owner}`);
   await tenants.setMembership(owner, tenantId);
   await tenants.addMembership(owner, tenantId, "owner");
@@ -201,7 +201,7 @@ async function ensureActors(
     const email = person.email.toLowerCase().trim();
     const role = highestRole(roleByPerson.get(person.id) ?? []);
     const cached = known.get(person.id);
-    let user = cached ? await db.get<{ id: string }>("system", "users", cached.userId).catch(() => null) : null;
+    let user = cached ? await db.get<{ id: string }>("system", "users", cached.userId) : null;
     if (!user) user = await users.getByEmail(email);
     if (!user) {
       user = await users.create({
@@ -357,7 +357,7 @@ export async function applyProvision(
       "tenant-membership",
       tenantId,
     )
-    .catch(() => null);
+    ;
   const displayName = currentRegistry?.displayName?.trim() || bundle.profile.displayName;
 
   // 2) Tenant + perfil + SOPs (bootstrap idempotente, marcado incompleto).
@@ -433,7 +433,7 @@ export async function checkProvision(
       "tenant-membership",
       tenantId,
     )
-    .catch(() => null);
+    ;
 
   if (!installation) problems.push(`sin instalacion para ${bundle.operationKey}`);
   if (!registry) problems.push(`tenant ${tenantId} sin registrar`);
@@ -500,7 +500,20 @@ async function main(): Promise<void> {
     console.error("Falta DATABASE_URL: el instalador escribe en la DB del deployment.");
     process.exit(2);
   }
-  const input: unknown = JSON.parse(await readFile(resolve(process.cwd(), bundlePath), "utf8"));
+  const file = await open(resolve(process.cwd(), bundlePath), "r");
+  let input: unknown;
+  try {
+    const limit = 1024 * 1024;
+    const buffer = Buffer.alloc(limit + 1);
+    let bytes = 0;
+    while (bytes < buffer.length) {
+      const read = await file.read(buffer, bytes, buffer.length - bytes, null);
+      if (read.bytesRead === 0) break;
+      bytes += read.bytesRead;
+    }
+    if (bytes > limit) throw Error("Bundle exceeds 1 MiB limit");
+    input = JSON.parse(buffer.subarray(0, bytes).toString("utf8"));
+  } finally { await file.close(); }
   const db = await createStore({ databaseUrl });
   const config = {} as Config;
   try {

@@ -104,6 +104,8 @@ async function smoke(): Promise<StepResult> {
   const started = Date.now();
 
   // Entorno determinista: no queremos el .env del operador ni sus credenciales.
+  const keep = new Set(["PATH", "HOME", "TMPDIR", "TMP", "TEMP", "SYSTEMROOT", "WINDIR", "LANG", "LC_ALL", "TZ"]);
+  for (const key of Object.keys(process.env)) if (!keep.has(key)) delete process.env[key];
   process.env.WORKSPACE_MODE = "sample";
   process.env.HOST = "127.0.0.1";
   process.env.TASK_WORKER_ENABLED = "false";
@@ -203,8 +205,8 @@ function seleccionados(argv: string[]): Step[] {
   if (solo === -1) return pasos;
   const pedidos = (argv[solo + 1] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   const desconocidos = pedidos.filter((p) => !pasos.some((paso) => paso.name === p));
-  if (desconocidos.length > 0) {
-    console.error(`[verify:slice] paso desconocido: ${desconocidos.join(", ")}`);
+  if (pedidos.length === 0 || desconocidos.length > 0) {
+    console.error(`[verify:slice] selección vacía o desconocida: ${desconocidos.join(", ")}`);
     console.error(`[verify:slice] disponibles: ${pasos.map((p) => p.name).join(", ")}`);
     process.exit(2);
   }

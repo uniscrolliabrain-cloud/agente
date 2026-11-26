@@ -55,7 +55,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
   return async (c: Context, next: Next) => {
     const correlationId = correlationIdFrom(c);
     const startedAt = performance.now();
-    const method = c.req.method;
+    const method = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE"].includes(c.req.method) ? c.req.method : "OTHER";
     const path = matchedRoutes(c).findLast((route) => route.method !== "ALL")?.path ?? "unmatched";
 
     // Cabecera de vuelta para que el cliente pueda trazar.
@@ -73,10 +73,16 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
       { correlationId, ...(tenantId ? { tenantId } : {}), ...(preCtx?.owner ? { owner: preCtx.owner } : {}) },
       async () => {
         // METRICS_TENANT_LABEL_V1 — tenantId del logContext para logs y métricas.
-      const tenantIdForLabels = logContext.getStore()?.tenantId;
+      let tenantIdForLabels = logContext.getStore()?.tenantId;
       logInfo("http.request", { method, path, ...(tenantIdForLabels ? { tenantId: tenantIdForLabels } : {}) });
       try {
         await next();
+        // Auth middleware resolves ctx only after this middleware starts.
+        // Use the verified context, never an incoming tenant header.
+        const authenticated = c.get("ctx") as { tenantId?: unknown } | undefined;
+        if (typeof authenticated?.tenantId === "string" && authenticated.tenantId) {
+          tenantIdForLabels = authenticated.tenantId;
+        }
         const durationMs = Math.round(performance.now() - startedAt);
         const status = c.res.status;
         const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";

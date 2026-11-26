@@ -2,13 +2,11 @@
 // into provider, RLS, pilot, founder approval or production certification.
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { validateExecutedGate } from "./gate-report.ts";
 const argument = process.argv.find((value) => value.startsWith("--from-gate="));
 const path = resolve(argument?.slice("--from-gate=".length) ?? "artifacts/gate/report.json");
 try {
-  const source = JSON.parse(readFileSync(path, "utf8")) as {
-    git?: { head?: string }; steps?: { name: string; exitCode: number | null; ok: boolean; logFile: string | null }[];
-  };
-  if (!source.git?.head || !Array.isArray(source.steps) || !source.steps.some((step) => step.name === "test")) throw Error("A full executed repository gate is required");
+  const source = validateExecutedGate(JSON.parse(readFileSync(path, "utf8")));
   const blockers = [
     { campaign: "C05", status: "PARTIAL", reason: "Founder approved agntiapro.cards 1.0.0; implementation requires current integration, ablation and scale evidence" },
     { campaign: "C08", status: "BLOCKED_EXTERNAL", reason: "TypeSafe/JEV API contract verified and durable egress gateway tested locally; provider sandbox, DPA/consent configuration and real cost/calibration evidence remain unverified" },
@@ -17,7 +15,7 @@ try {
     { campaign: "C15", status: "PARTIAL", reason: "Shared restricted-role RLS, provider costs/SLO, canary, complete legacy retirement and founder GO remain pending" },
   ];
   const report = { schemaVersion: "2.0", testedCommit: source.git.head, sourceGate: path,
-    generatedAt: new Date().toISOString(), steps: source.steps, repositoryGateOk: source.steps.every((step) => step.ok),
+    generatedAt: new Date().toISOString(), steps: source.steps, repositoryGateOk: source.ok,
     blockers, certification: "NOT_CERTIFIED", productionReady: false, decision: "NO_GO" };
   mkdirSync("artifacts/cognition-v2", { recursive: true });
   writeFileSync("artifacts/cognition-v2/acceptance.json", JSON.stringify(report, null, 2));

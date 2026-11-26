@@ -97,16 +97,34 @@ const SECRET_KEYS =
 
 /** Ruta de cualquier material secreto dentro del bundle, si lo hay. */
 export function findSecretPaths(value: unknown, path = "bundle", depth = 0): string[] {
-  if (depth > 8 || value === null || typeof value !== "object") return [];
   const found: string[] = [];
-  const entries = Array.isArray(value)
-    ? value.map((item, index) => [String(index), item] as const)
-    : Object.entries(value as Record<string, unknown>);
-  for (const [key, child] of entries) {
-    const here = `${path}.${key}`;
-    if (!Array.isArray(value) && SECRET_KEYS.test(key)) found.push(here);
-    else found.push(...findSecretPaths(child, here, depth + 1));
-  }
+  const seen = new WeakSet<object>();
+  let visited = 0;
+  const walk = (node: unknown, here: string, level: number): void => {
+    if (found.length >= 100) return;
+    if (++visited > 10_000 || level > 8) {
+      found.push(`${here}.[scan-limit]`);
+      return;
+    }
+    if (typeof node === "string" && node.length > 64_000) {
+      found.push(`${here}.[string-limit]`);
+      return;
+    }
+    if (node === null || typeof node !== "object") return;
+    if (seen.has(node)) { found.push(`${here}.[cycle-or-alias]`); return; }
+    seen.add(node);
+    for (const key in node) {
+      if (!Object.hasOwn(node, key)) continue;
+      if (visited > 10_000 || found.length >= 100) break;
+      const childPath = `${here}.${key.slice(0, 128)}`;
+      if (key.length > 128 || (!Array.isArray(node) && SECRET_KEYS.test(key))) found.push(childPath);
+      else {
+        try { walk((node as Record<string, unknown>)[key], childPath, level + 1); }
+        catch { found.push(`${childPath}.[unreadable]`); }
+      }
+    }
+  };
+  walk(value, path, depth);
   return found;
 }
 
@@ -127,6 +145,12 @@ export function parseVerticalSliceBundle(input: unknown): ParseResult {
     return { ok: false, bundle: null, errors: [{ code: "BUNDLE_NO_OBJETO", message: "el bundle debe ser un objeto" }] };
   }
   const raw = input as Record<string, unknown>;
+  // Reject unscannable material before iterating schema collections.
+  const unsafePaths = findSecretPaths(raw);
+  if (unsafePaths.length) return { ok: false, bundle: null, errors: unsafePaths.map(path => ({
+    code: "SECRETO_EN_BUNDLE", message: `material secreto o no verificable: ${path}`,
+  })) };
+
 
   if (raw.schema !== BUNDLE_SCHEMA) {
     fail("BUNDLE_SCHEMA_INVALIDO", `se esperaba schema ${BUNDLE_SCHEMA}`);

@@ -45,3 +45,18 @@ test("metrics export derives p99 from the requested scope without mutating the r
     else process.env.METRICS_TOKEN = token;
   }
 });
+
+
+test("HTTP metrics use the tenant resolved by authentication after logger entry", async () => {
+  const app = new Hono<{ Variables: { ctx: { tenantId: string } } }>();
+  app.use("*", requestLogger());
+  app.use("*", async (c, next) => {
+    c.set("ctx", { tenantId: "verified-trans04" });
+    await next();
+  });
+  app.get("/trans04-auth-scope", c => c.text("ok"));
+  await app.request("/trans04-auth-scope", { headers: { "x-tenant-id": "forged-trans04" } });
+  const output = globalMetrics.render();
+  assert.match(output, /agente_http_requests_total\{method="GET",path="\/trans04-auth-scope",status="200",tenant="verified-trans04"\} 1/);
+  assert.doesNotMatch(output, /forged-trans04/);
+});

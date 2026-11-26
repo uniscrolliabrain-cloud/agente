@@ -65,3 +65,36 @@ export function observeKernel(observation: KernelObservation): void {
     }
   }
 }
+
+/** Bounded local metrics sink. No payloads, identifiers or I/O on producer path. */
+export function startKernelMetricsSink(registry: import("../../metrics/registry.ts").MetricsRegistry, capacity = 256) {
+  if (!Number.isSafeInteger(capacity) || capacity < 1) throw new RangeError("Invalid telemetry queue capacity");
+  registry.counter("agente_kernel_observations_total", "Durable kernel stage observations");
+  registry.counter("agente_kernel_telemetry_dropped_total", "Rejected or dropped local telemetry observations");
+  registry.histogram("agente_kernel_stage_duration_ms", "Durable kernel stage duration in milliseconds");
+  const stages = new Set<KernelStage>(["kernel.decision", "kernel.denial", "runtime.claim", "runtime.result", "runtime.reconciliation", "bus.commit", "bus.rollback"]);
+  const statuses = new Set<KernelStageStatus>(["ok", "denied", "failed", "unknown"]);
+  const queue: Array<Pick<KernelObservation, "stage" | "status" | "durationMs">> = [];
+  let scheduled: ReturnType<typeof setImmediate> | undefined;
+  let stopped = false;
+  const flush = () => {
+    if (scheduled) clearImmediate(scheduled);
+    scheduled = undefined;
+    for (const item of queue.splice(0)) {
+      const labels = { stage: item.stage, status: item.status };
+      registry.inc("agente_kernel_observations_total", labels);
+      registry.observe("agente_kernel_stage_duration_ms", item.durationMs, labels);
+    }
+  };
+  const unregister = registerKernelTelemetrySink({ record(observation) {
+    if (stopped) return;
+    if (queue.length >= capacity || !stages.has(observation.stage) || !statuses.has(observation.status) ||
+        !Number.isFinite(observation.durationMs) || observation.durationMs < 0) {
+      registry.inc("agente_kernel_telemetry_dropped_total");
+      return;
+    }
+    queue.push({ stage: observation.stage, status: observation.status, durationMs: observation.durationMs });
+    if (!scheduled) { scheduled = setImmediate(flush); scheduled.unref(); }
+  } });
+  return { flush, stop() { stopped = true; unregister(); flush(); } };
+}
