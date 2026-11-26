@@ -1,0 +1,57 @@
+# D-M1 — inventario de fuentes y divergencia funcional
+
+Fecha 2026-11-26. Ocho árboles recursivos recuperados completos (truncated=false). Alcance de comparación por blob: apps/server, packages, tests, scripts, .github/workflows, vendor, package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .env.example, fly*.toml y Dockerfile raíz. No es comparación de todo el monorepo ni de interfaces web. 1489 paths distintos en unión; 58 presentan alguna diferencia de existencia o contenido entre los ocho árboles.
+
+| Ref | SHA fijado | Diferencias vs main | vs canónica |
+|---|---|---:|---:|
+| main | 26b9902d4b5a5e344969cfacab578025b8573b72 | 0 | 8 |
+| canónica | 8672f8c1035067e77de76080aabbe8d4c8030fe5 | 8 | 0 |
+| Trans01 | 61b76ac514039fd9d3188dffc33abf2a2c28016a | 41 | 33 |
+| Trans02 | 5fc0ec4a90c3ce22755cb87b57c3d224664d2018 | 18 | 10 |
+| Trans03 | 7e847bf86c46b192d79d76e96ed791af52a21bd6 | 11 | 3 |
+| Trans04 | 7c422f9a0f6d5686434466669c7df2f12255311e | 12 | 4 |
+| Trans05 | 46529cabd8479c9e1be6da8459485137999f40f2 | 18 | 10 |
+| Trans06 | db5da93775401fe0d582d3cffe30f8d33a8b21c6 | 0 | 8 |
+
+## Lecturas de control
+
+Se recuperaron los seis documentos finales y se examinaron sus secciones de precedencia, patchsets, contratos, ownership, gates y rollback, los seis DIAGNOSTICO completos y los seis informes GPT (anclas, evidencia, destino), más extractos de los seis informes Astra de evidencia. También canónica raíz, contrato, wiring, protocolos y B1; README main y propuesta T04-S completa. Whitepapers leídos en pasada previa; referencias fijadas, no nueva lectura integral de los 288 bloques ni de todo el historial. No se acredita haber inspeccionado cada consumidor todavía. AGENTS.md raíz devolvió 404; en ejecución localizar instrucciones por subárbol, no asumir que no existen.
+
+| Rama | Especificación | Codex | GPT | Evidencia Astra |
+|---|---|---|---|---|
+| Trans01 | [Final](https://github.com/uniscrolliabrain-cloud/agente/blob/61b76ac514039fd9d3188dffc33abf2a2c28016a/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/ESPECIFICACION-IMPLEMENTACION-V3.md) | [Diagnóstico](https://github.com/uniscrolliabrain-cloud/agente/blob/61b76ac514039fd9d3188dffc33abf2a2c28016a/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/ASTRA-AUDIT-V1/DIAGNOSTICO.md) | [Hallazgos](https://github.com/uniscrolliabrain-cloud/agente/blob/61b76ac514039fd9d3188dffc33abf2a2c28016a/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md) | [Evidencia](https://github.com/uniscrolliabrain-cloud/agente/blob/61b76ac514039fd9d3188dffc33abf2a2c28016a/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/ASTRA-AUDIT-V1/11-EVIDENCIA-Y-REAUDITORIA.md) |
+| Trans02 | [Final](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/REDISENO-FINAL-P01-P14.md) | [Diagnóstico](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/ASTRA-AUDIT-V1/DIAGNOSTICO.md) | [Hallazgos](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md) | [Evidencia](https://github.com/uniscrolliabrain-cloud/agente/blob/5fc0ec4a90c3ce22755cb87b57c3d224664d2018/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans02/ASTRA-AUDIT-V1/11-EVIDENCIA-Y-REAUDITORIA.md) |
+| Trans03 | [Final](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/REDISENO-PASADA-05-EJECUCION-CONSOLIDADA.md) | [Diagnóstico](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/ASTRA-AUDIT-V1/DIAGNOSTICO.md) | [Hallazgos](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md) | [Evidencia](https://github.com/uniscrolliabrain-cloud/agente/blob/7e847bf86c46b192d79d76e96ed791af52a21bd6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/ASTRA-AUDIT-V1/11-EVIDENCIA-Y-REAUDITORIA.md) |
+| Trans04 | [Final](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/REDISENO-PASADA-05-EJECUCION-CONSOLIDADA.md) | [Diagnóstico](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/ASTRA-AUDIT-V1/DIAGNOSTICO.md) | [Hallazgos](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md) | [Evidencia](https://github.com/uniscrolliabrain-cloud/agente/blob/7c422f9a0f6d5686434466669c7df2f12255311e/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/trans04/ASTRA-AUDIT-V1/11-EVIDENCIA-Y-REAUDITORIA.md) |
+| Trans05 | [Final](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/PASADA-06-EJECUCION-CONSOLIDADA.md) | [Diagnóstico](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/ASTRA-AUDIT-V1/DIAGNOSTICO.md) | [Hallazgos](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md) | [Evidencia](https://github.com/uniscrolliabrain-cloud/agente/blob/46529cabd8479c9e1be6da8459485137999f40f2/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/ASTRA-AUDIT-V1/11-EVIDENCIA-Y-REAUDITORIA.md) |
+| Trans06 | [Final](https://github.com/uniscrolliabrain-cloud/agente/blob/db5da93775401fe0d582d3cffe30f8d33a8b21c6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/PASADA-06-EJECUCION-CONSOLIDADA.md) | [Diagnóstico](https://github.com/uniscrolliabrain-cloud/agente/blob/db5da93775401fe0d582d3cffe30f8d33a8b21c6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/ASTRA-AUDIT-V1/DIAGNOSTICO.md) | [Hallazgos](https://github.com/uniscrolliabrain-cloud/agente/blob/db5da93775401fe0d582d3cffe30f8d33a8b21c6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/AUDITORIA-GPT-HALLAZGOS-VERIFICADOS.md) | [Evidencia](https://github.com/uniscrolliabrain-cloud/agente/blob/db5da93775401fe0d582d3cffe30f8d33a8b21c6/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/ASTRA-AUDIT-V1/11-EVIDENCIA-Y-REAUDITORIA.md) |
+
+## Divergencia histórica
+
+Comparación GitHub main...rama (merge base, ahead/behind):
+- Trans01: base 12e535a264d0c4a5da17d7b049e04c82cbcc681c; 145/538.
+- Trans02: misma base; 152/538.
+- Trans03: misma base; 131/538.
+- Trans04: misma base; 121/538.
+- Trans05: misma base; 163/538.
+- Trans06: base 93236a34b2d636debb340bba70cd9c9bbf9cf441; 21/108.
+
+No confundir commits divergentes con archivos funcionales modificados. Los árboles funcionales de Trans02 y Trans05 son idénticos dentro del alcance comparado. Trans06 coincide con main dentro del alcance comparado, no afirmar que toda la rama sea idéntica. Integrar la familia de código Trans02 una sola vez. No fusionar las ramas antiguas completas para recuperar 33+10+3+4 deltas.
+
+## Estrategia propuesta: baseline de integración desde main actual, no desde una rama especializada
+
+Trans00 documental parte de main fijado. Tras autorización funcional, crear una referencia separada de integración (nombre candidato integration/trans00-core), desde main vuelto a fijar; no usar Trans00 como rama de código. Preservar todos los cambios recientes de main. En el baseline preparar PRs/deltas por propietario con pruebas de equivalencia. No reemplazar archivos completos por blobs antiguos sin revisar imports/callers. No forzar las seis refs históricas a HEAD común: conservarlas y usar worktrees/ramas de ejecución nuevas si el founder autoriza, o commits de merge no destructivos revisados. Cada ejecutor trabaja en una rama exclusiva derivada del mismo SHA aprobado. No activar CI de deploy ni merge a main por crear integración. Validar workflow triggers antes de crear ramas funcionales. No se ha creado integración funcional.
+
+## Familias de deltas y responsables
+
+- main vs canónica: .github/workflows/deploy.yml (c43e66c05 vs 94225e416), ui-lab-chat-ux-v2-qa.yml y ui-lab-pages.yml nuevos, ui-lab.yml, app.ts (6bdb5675a vs 96b0aaf5b), pnpm-lock.yaml, scripts/check-legal-site.mjs, tests/business-command-studio.test.ts. Conservar main; no sustituir UX/legal/lock, resolver wiring en app por delta mínimo.
+- Trans01 (33 paths vs canónica): 18 código/contrato + 15 tests (14 nuevos trans01, uno test gate modificado). actions.ts, db.ts/db-tenant.ts, bootstrap, bus/index/service-principal/sinks/store/types, capability-runner/outcome/tool-executors, observability/hooks, service, sop-executor, domain execution-context/index. Los 15 tests: gate/idempotency-execution y trans01-{approval-binding,approval-hash-race,causal-envelope,claim-cas,dispatch-outbox,effect-boundary,emit-commit,event-page,governed-runner,outcome-semantics,replay-concurrency,replay-durable,service-principal,sop-authz,telemetry-hooks}. Recuento de categorías corregible por matriz exacta: conservar lista y no inferir cobertura del número. El compare también detectó .gitignore fuera del alcance; revisar sin incorporar automáticamente.
+- Trans02/05 (10): cognition/v2 attention, chat-agent (nuevo), context, runtime, slow-observation (nuevo); tests/trans02-{attention,candidate-routing,chat-agent,fast-revocation,slow-observation}. Propiedad Trans02, Trans05 consumidor/revisor.
+- Trans03 (3): google-auth.ts, packages/integrations/src/meta-whatsapp.ts, stubs/whatsapp.ts. No asumir que P01–P14 están implementados.
+- Trans04 (4): metrics-exporter.ts, metrics/registry.ts, middleware/request-logger.ts, tests/trans04-observability-contract.test.ts.
+- Trans06: cero deltas funcionales propios en alcance vs main; preservar documentación y convertir solo propuestas autorizadas en parches futuros.
+- .gitignore de Trans01: diferencia reportada por compare, verificar intención, no incorporar por defecto.
+
+## Evidencia funcional previa (atribuida)
+
+Trans01 99 aprobadas/2 omitidas en selección y luego dos pruebas replay PostgreSQL 17.12 como owner; no RLS real. Trans02 83 aprobadas incluyendo 13 previas, no sumar; experimentos de watermark/presupuesto reproducidos en PGlite/PG. Trans03 48/49, discrepancia de mensaje Meta OAuth; preservar redacción y categoría. Trans04 11/11 focales y dos RLS con SET LOCAL ROLE restringido; no certifica login real ni ACL por actor. Trans05 3 focales y experimento anchor. Trans06 8 focales. Son evidencias de autores en SHA propios, no ejecución de Trans00. No combinarlas para declarar gate verde. Todo PASS requiere nueva ejecución sobre candidato exacto. B1 histórico técnico NO_GO.
