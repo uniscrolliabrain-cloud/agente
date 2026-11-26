@@ -13,6 +13,8 @@ interface Props {
   collapsed?: boolean;
   /** La columna izquierda es el chat del agente. */
   chatDock?: ReactNode;
+  /** DOCK_RAIL_V1 - barra de accesos independiente, a la izquierda del contenido. */
+  dock?: ReactNode;
   /** Drawer movil abierto. */
   mobileOpen: boolean;
   onCloseMobile: () => void;
@@ -26,6 +28,7 @@ export default function AppShell({
   panel,
   collapsed = false,
   chatDock,
+  dock,
   mobileOpen,
   onCloseMobile,
   rightOpen = false,
@@ -39,6 +42,7 @@ export default function AppShell({
       data-right={rightVisible}
       data-collapsed={collapsed}
       data-chat={Boolean(chatDock)}
+      data-dock={Boolean(dock)}
       data-mobile-open={mobileOpen}
     >
       <button
@@ -60,6 +64,7 @@ export default function AppShell({
         {chatDock && <DesktopChatDock>{chatDock}</DesktopChatDock>}
       </aside>
       <main className="shell__main">
+        {dock}
         {children}
       </main>
       {panel && (

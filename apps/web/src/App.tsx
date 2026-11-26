@@ -9,6 +9,8 @@ import { useViewResolver } from "./hooks/useViewResolver";
 import { usePanel } from "./hooks/usePanel";
 import { useMediaQuery } from "./hooks/useMediaQuery";
 import SidebarV2, { type AppView } from "./components/SidebarV2";
+// DOCK_RAIL_V1 - barra de accesos independiente, solo en el clon de demostración.
+import DockRail from "./components/DockRail";
 import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
 import CommandCenterView from "./components/CommandCenterView";
@@ -433,6 +435,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
         panel={panel}
         collapsed={collapsed && !isMobile}
         chatDock={dockedChat}
+        dock={demoViews ? <DockRail activeView={view} onSelectView={selectView} /> : undefined}
         mobileOpen={mobileNav}
         onCloseMobile={() => setMobileNav(false)}
       >
