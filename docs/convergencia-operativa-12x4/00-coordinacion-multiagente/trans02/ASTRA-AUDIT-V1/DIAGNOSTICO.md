@@ -13,3 +13,11 @@ El contexto preparado debe indicar qué estado de la proyección observó Fast. 
 En PGlite generé dos snapshots para el mismo actor y la misma política. El primero contenía `card-1` en revisión 1 y el segundo, la misma tarjeta corregida en revisión 2. Comparar el primero consigo mismo devolvió `changed: []`. Comparar ambas revisiones devolvió `null`. La lectura de la base exige que sus referencias sigan vigentes, por lo que `getDelta` descarta la base antes de comunicar la corrección en `changed`. El consumidor debe usar el snapshot completo para ver el cambio.
 
 [Lectura y cálculo del delta](https://github.com/uniscrolliabrain-cloud/agente/blob/3a5a277a9c8dfd514973a5fc9a5693909e3e8e6a/apps/server/src/engine/cognition/v2/context.ts#L121)
+
+## Las solicitudes rechazadas por circuito abierto agotan la cuota diaria
+
+En PGlite configuré ocho llamadas diarias. Cinco intentos alcanzaron al proveedor simulado y fallaron. Los tres siguientes dieron `circuit_open` antes de invocarlo. El contador durable llegó a ocho y la siguiente solicitud dio `LANE_BUDGET_EXHAUSTED`. Aunque el proveedor se recupere, esas tres unidades ya están consumidas. [inference.ts, línea 21](https://github.com/uniscrolliabrain-cloud/agente/blob/73729c28f34a7992aa0b2bf55e80c8c9218a6672/apps/server/src/engine/cognition/v2/inference.ts#L21)
+
+## Cancelar una inferencia borra los fallos anteriores del proveedor
+
+En otro tenant provoqué cuatro fallos, cancelé una inferencia en curso y provoqué un quinto fallo del proveedor. La siguiente llamada entró. Como control, cinco fallos sin cancelación abrieron el circuito. La cancelación se devuelve como valor dentro de `circuit.call`, que la contabiliza como éxito antes de que el carril propague el error al solicitante. [inference.ts, línea 46](https://github.com/uniscrolliabrain-cloud/agente/blob/73729c28f34a7992aa0b2bf55e80c8c9218a6672/apps/server/src/engine/cognition/v2/inference.ts#L46) · [circuit-breaker.ts, línea 63](https://github.com/uniscrolliabrain-cloud/agente/blob/73729c28f34a7992aa0b2bf55e80c8c9218a6672/apps/server/src/engine/circuit-breaker.ts#L63)
