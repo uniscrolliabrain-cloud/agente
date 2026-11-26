@@ -1,0 +1,42 @@
+{
+  "breaker-red": {
+    "sha256": "89af12a26752e7bb0cb65611382fb83d0f8386e0b141b8b68f2f09c28f12885b",
+    "file": "/tmp/trans01-breaker-red.log"
+  },
+  "breaker-green": {
+    "sha256": "239733a3edc2f95c5f943aa01acfd7b0ea89773472ad1810382595486e8d7032",
+    "file": "/tmp/trans01-breaker-green.log"
+  },
+  "audit-red": {
+    "sha256": "7bab64d0d5b40ee513b2b2a462e24d5dd0b39cd291b9a107fa120690120b8144",
+    "file": "/tmp/trans01-audit-red.log"
+  },
+  "audit-green": {
+    "sha256": "c25e63124446fdbe28c88eb2ff3027e481280eb7db6d48b6e00e7d65e2653186",
+    "file": "/tmp/trans01-audit-green.log"
+  },
+  "turn-red": {
+    "sha256": "c31fadbd86613fd0080be4c7eebc90b8cb99e925c0766d9793e02bd1e524d404",
+    "file": "/tmp/trans01-turn-red.log"
+  },
+  "turn-green": {
+    "sha256": "d4223c16e9b51cd2e5876c6986d547fbef16219aa60951b38c0b41586bb694a9",
+    "file": "/tmp/trans01-turn-green.log"
+  },
+  "lease-red": {
+    "sha256": "ef80e01171842fa7238ddf0d2b85078ee4c25ebd2d2855f7c1beac308541adb7",
+    "file": "/tmp/trans01-lease-red.log"
+  },
+  "lease": {
+    "sha256": "948667b10ee7e60b770f9fb054ccfac06f23db962b353994257a6ac282d0ad6c",
+    "file": "/tmp/trans01-lease.log"
+  },
+  "regression": {
+    "sha256": "c49d806cfd6101810669234862aa11b488560feffe6364ab18212d09106a1598",
+    "file": "/tmp/trans01-regression.log"
+  },
+  "tsc": {
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "file": "/tmp/trans01-tsc.log"
+  }
+}
