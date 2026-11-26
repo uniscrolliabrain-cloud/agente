@@ -61,3 +61,11 @@ Estado: W0 PENDING. Base común 751eab413aef2ca124d42dcba602b91696b71c9d. Tests 
 - Validación: `pnpm typecheck` exit 0; **101/101** pruebas focales (15 ficheros); **2/2** pruebas de concurrencia contra PostgreSQL 16.15 real; regresión ampliada 91 pruebas (81 PASS, 1 SKIP, 0 FAIL) en dos lotes más 10 del gate; 8/8 audits exit 0. `pnpm gate` completo, proveedores reales, OTLP y caída en proceso separado: NOT_RUN.
 - Bloqueos vivos: C01 (ABI trans02), E03 (recibo compartido), A03-adapters (Trans03 declare `outcome`), activación certificada de `governed_v2` (B2). El clúster Postgres de la prueba es efímero del sandbox y no se versiona.
 - **M1.2 · READY FOR REVIEW · B2 PENDING SUPERVISOR.** Sin autorización para T03/M2.
+
+## B2 · Plan de reconciliación · 26 de noviembre de 2026
+
+- Turno **documental**. Rama `Trans01` puesta al día por fast-forward de `8e0b0f64` a `c1e2f365`; campaña leída en `8672f8c1` sin integrarla. Sin código, tests, merge, deploy ni efecto externo.
+- [Plan B2 reconciliado](B2-PATCHSETS-RECONCILIADOS.md): mapa de los trece hallazgos de la reauditoría V3 y de los patchsets R1–R3 de Astra a ocho patchsets B2.0–B2.7 con orden topológico, paths, cambio, pruebas, rollback y dependencias externas.
+- Decisiones de reconciliación: R2 sustituye el `put` + `settleDispatch` de `run` por una finalización transaccional de dos filas (acción antes que intención, rollback si pierde cualquiera); R1 separa decisión humana de resultado del intento y elimina el `rejected` sintético; R3 unifica arranque y `maintain` en un camino paginado con reloj inyectable. Se conservan de M1.2 el binding completo, el CAS obligatorio y el claim por efecto.
+- B2.1 exige lector dual con Trans02 y B2.5 exige ABI con SOP antes de migrar llamadas; B2.7 depende de la firma de Trans03. K09/K10 quedan fuera de B2 (series S y E). `governed_v2` por defecto y gate combinado siguen sin autorización.
+- **B2 · PLAN DOCUMENTAL · NO_GO vigente.** No se declara ningún patchset aprobado ni ejecutable sin reserva de paths y autorización del supervisor.
