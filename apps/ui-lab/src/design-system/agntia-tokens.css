@@ -8,8 +8,8 @@
   --ag-ink: #242421;
   --ag-muted: #6e6c66;
   --ag-line: #e6e1d8;
-  --ag-violet: #6550dd;
-  --ag-lilac: #f0ecfc;
+  --ag-violet: var(--themed-accent, #6550dd);
+  --ag-lilac: var(--themed-soft, #f0ecfc);
   --ag-gold: #b49665;
   color-scheme: light;
   color: var(--ag-ink);

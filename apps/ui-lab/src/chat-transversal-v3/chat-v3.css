@@ -26,9 +26,9 @@
   --ctv-ink: #242421;
   --ctv-ink-2: #6e6c66;
   --ctv-ink-3: #97938b;
-  --ctv-violet: #6550dd;
-  --ctv-violet-deep: #4b39b8;
-  --ctv-lavender: #f0ecfc;
+  --ctv-violet: var(--themed-accent, #6550dd);
+  --ctv-violet-deep: var(--themed-deep, #4b39b8);
+  --ctv-lavender: var(--themed-soft, #f0ecfc);
   --ctv-gold: #b49665;
   --ctv-line: #e6e1d8;
   --ctv-line-soft: #f0ece4;

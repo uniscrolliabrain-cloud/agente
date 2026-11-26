@@ -547,6 +547,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
 
       {profileOpen && auth.user && (
         <ProfileModal
+          appearance={Boolean(demoViews)}
           user={auth.user}
           onClose={() => setProfileOpen(false)}
           onSaved={(u) => { localStorage.setItem("agente_user", JSON.stringify(u)); }}

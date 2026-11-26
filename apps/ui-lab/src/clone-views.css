@@ -5,7 +5,7 @@
    cálido. Las raíces se vuelven transparentes para no taparlo. */
 .v2-content {
   background:
-    radial-gradient(120% 64% at 50% -12%, rgba(223, 211, 246, 0.46) 0%, rgba(223, 211, 246, 0) 60%),
+    radial-gradient(120% 64% at 50% -12%, var(--themed-band) 0%, rgba(252, 250, 246, 0) 60%),
     linear-gradient(180deg, #fcfaf8 0%, #fcfaf6 42%);
   background-attachment: local;
   background-repeat: no-repeat;
@@ -25,18 +25,18 @@
    puesto se veía sucio. Pasa al mismo papel lavanda, y los hovers dejan el
    beige. */
 .shell__left {
-  background: #f6f3f9;
+  background: color-mix(in srgb, var(--themed-accent) 6%, #fbf9f6);
 }
 
 .v2-sidebar .v2-nav-item:hover,
 .v2-sidebar .v2-rail-toggle:hover,
 .v2-sidebar .v2-sidebar-recent-item:hover,
 .v2-sidebar .v2-user-chip:hover {
-  background: #ece6f6;
+  background: color-mix(in srgb, var(--themed-accent) 11%, #fbf9f6);
 }
 
 .v2-sidebar .v2-nav-item.active {
-  border-color: #e7e0f2;
+  border-color: color-mix(in srgb, var(--themed-accent) 18%, #fbf9f6);
 }
 
 /* CENTRO_MANDO_ETIQUETAS_V1 - en el centro de mando del clon convivían seis
@@ -57,9 +57,9 @@
 .v2-content .cce-root .cce-tag--ok,
 .v2-content .cce-root .cce-tag--info,
 .v2-content .cce-root .cce-tag--live {
-  background: #f4f0fb;
-  border-color: #e3daf4;
-  color: #5b5273;
+  background: color-mix(in srgb, var(--themed-accent) 6%, #ffffff);
+  border-color: color-mix(in srgb, var(--themed-accent) 14%, #ffffff);
+  color: color-mix(in srgb, var(--themed-accent) 58%, #4a4742);
 }
 
 /* La tarjeta de un asunto fallido marcaba el borde en rojo: único resto de
@@ -84,4 +84,265 @@
    el área de contenido del shell, sin fijar alto. */
 .v2-content > .fv-root {
   min-height: 100%;
+}
+
+/* ========================================================== APARIENCIA ====
+ * APARIENCIA_V1 - paletas del color de la aplicación, elegidas en «Mi perfil».
+ *
+ * Cinco familias pensadas para convivir con el papel cálido y el lavanda que ya
+ * tiene la app: lavanda (la de siempre, sin cambios), grafito, mostaza, naranja
+ * terroso y rojo de YouTube. Cada una define la misma docena de variables
+ * (--themed-*) y el resto del CSS las consume; no hay reglas por color.
+ *
+ * `--themed-band` es la banda del contenido, `--themed-veil` el lavado de los
+ * degradados suaves, y `--themed-soft` / `--themed-border` los fondos y bordes
+ * de pastillas, chips y estados seleccionados.
+ */
+:root {
+  --themed-accent: #6550dd;
+  --themed-deep: #4f3fc9;
+  --themed-soft: #f0ecfc;
+  --themed-soft-2: #e6dcfb;
+  --themed-border: #d9cff6;
+  --themed-on: #ffffff;
+  --themed-band: rgba(223, 211, 246, 0.46);
+  --themed-veil: rgba(223, 211, 246, 0.3);
+
+  --themed-accent-dark: #8179ff;
+  --themed-deep-dark: #b3adff;
+  --themed-soft-dark: #1d1a35;
+  --themed-border-dark: #393568;
+  --themed-on-dark: #ffffff;
+  --themed-band-dark: rgba(129, 121, 255, 0.22);
+
+  /* El shell y los componentes antiguos ya leen estos tokens. */
+  --accent: var(--themed-accent);
+  --accent-soft: var(--themed-soft);
+  --accent-border: var(--themed-border);
+  --accent-fg: var(--themed-on);
+  --v2-purple: var(--themed-accent);
+  --v2-purple-soft: var(--themed-soft);
+  --v2-purple-border: var(--themed-border);
+}
+
+html[data-accent="grafito"] {
+  --themed-accent: #2c2c31;
+  --themed-deep: #151517;
+  --themed-soft: #eeede9;
+  --themed-soft-2: #e2e0da;
+  --themed-border: #d5d2cb;
+  --themed-on: #ffffff;
+  --themed-band: rgba(44, 44, 49, 0.16);
+  --themed-veil: rgba(44, 44, 49, 0.1);
+  --themed-accent-dark: #bdbdc8;
+  --themed-deep-dark: #dedee6;
+  --themed-soft-dark: #24242a;
+  --themed-border-dark: #3b3b43;
+  --themed-on-dark: #17171b;
+  --themed-band-dark: rgba(189, 189, 200, 0.14);
+}
+
+html[data-accent="amarillo"] {
+  --themed-accent: #d0a01b;
+  --themed-deep: #a67c08;
+  --themed-soft: #fbf3d6;
+  --themed-soft-2: #f5e6b4;
+  --themed-border: #ecd9a1;
+  --themed-on: #241d09;
+  --themed-band: rgba(226, 183, 52, 0.26);
+  --themed-veil: rgba(226, 183, 52, 0.18);
+  --themed-accent-dark: #e8c465;
+  --themed-deep-dark: #f3db9a;
+  --themed-soft-dark: #2a2314;
+  --themed-border-dark: #4a3d1c;
+  --themed-on-dark: #1a1509;
+  --themed-band-dark: rgba(232, 196, 101, 0.16);
+}
+
+html[data-accent="naranja"] {
+  --themed-accent: #c4651b;
+  --themed-deep: #9a4b0f;
+  --themed-soft: #fbeee1;
+  --themed-soft-2: #f4dcc2;
+  --themed-border: #eed0b1;
+  --themed-on: #fffdfa;
+  --themed-band: rgba(224, 133, 58, 0.24);
+  --themed-veil: rgba(224, 133, 58, 0.16);
+  --themed-accent-dark: #ee9a5f;
+  --themed-deep-dark: #f6bd92;
+  --themed-soft-dark: #2b1d12;
+  --themed-border-dark: #4b3220;
+  --themed-on-dark: #1c1109;
+  --themed-band-dark: rgba(238, 154, 95, 0.16);
+}
+
+html[data-accent="rojo"] {
+  --themed-accent: #d21f1f;
+  --themed-deep: #a51212;
+  --themed-soft: #fbe9e9;
+  --themed-soft-2: #f6d2d2;
+  --themed-border: #f0c4c4;
+  --themed-on: #ffffff;
+  --themed-band: rgba(210, 31, 31, 0.15);
+  --themed-veil: rgba(210, 31, 31, 0.1);
+  --themed-accent-dark: #f47878;
+  --themed-deep-dark: #ffb0b0;
+  --themed-soft-dark: #2c1616;
+  --themed-border-dark: #4d2222;
+  --themed-on-dark: #1c1010;
+  --themed-band-dark: rgba(244, 120, 120, 0.16);
+}
+
+html[data-theme="dark"] {
+  --accent: var(--themed-accent-dark);
+  --accent-soft: var(--themed-soft-dark);
+  --accent-border: var(--themed-border-dark);
+  --accent-fg: var(--themed-on-dark);
+  --v2-purple: var(--themed-accent-dark);
+  --v2-purple-soft: var(--themed-soft-dark);
+  --v2-purple-border: var(--themed-border-dark);
+}
+
+html[data-theme="dark"] .v2-content {
+  background:
+    radial-gradient(120% 64% at 50% -12%, var(--themed-band-dark) 0%, rgba(28, 26, 25, 0) 60%),
+    linear-gradient(180deg, #1c1a19 0%, #171514 42%);
+}
+
+/* --- puente con los workspaces: cada uno ya tenía su token de acento ---
+ * Los CSS de los workspaces viajan en chunks perezosos y se inyectan después
+ * de este fichero, así que el puente necesita más especificidad que su regla
+ * original (una clase). De ahí el prefijo html[data-accent]. */
+html[data-accent] .cce-root {
+  --cce-violet: var(--themed-accent);
+  --cce-violet-deep: var(--themed-deep);
+  --cce-lilac: var(--themed-soft);
+  --cce-focus: var(--themed-accent);
+}
+
+html[data-accent] .dx-root {
+  --violet: var(--themed-accent);
+}
+
+html[data-accent] .ta-root {
+  --ta-violet: var(--themed-accent);
+}
+
+html[data-accent] .alp-root {
+  --alp-violet: var(--themed-accent);
+  --alp-violet-deep: var(--themed-deep);
+  --alp-lilac: var(--themed-soft);
+}
+
+html[data-accent] .ctv,
+html[data-accent] .ctv-actions,
+html[data-accent] .ctv-settings {
+  --ctv-violet: var(--themed-accent);
+  --ctv-violet-deep: var(--themed-deep);
+  --ctv-lavender: var(--themed-soft);
+}
+
+html[data-accent] .chat-ux-v2 {
+  --cux-violet: var(--themed-accent);
+  --cux-lilac: var(--themed-soft);
+}
+
+html[data-accent] .fv-root {
+  --fv-violet: var(--themed-accent);
+}
+
+html[data-accent] .comms {
+  --cm-purple: var(--themed-accent);
+  --cm-wash: var(--themed-soft);
+}
+
+html[data-accent] .fm-root {
+  --fm-violet: var(--themed-accent);
+}
+
+/* --- selector del perfil --- */
+.accent-title {
+  margin: 20px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--v2-text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.accent-hint {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--v2-text-2);
+}
+
+.accent-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.accent-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border: 1px solid var(--v2-border);
+  border-radius: 12px;
+  background: var(--v2-bg-card);
+  color: var(--v2-text);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+
+.accent-option:hover {
+  border-color: var(--v2-border-strong);
+  background: var(--v2-bg-softer);
+}
+
+.accent-option.is-active {
+  border-color: var(--themed-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--themed-accent) 22%, transparent);
+}
+
+.accent-option:focus-visible {
+  outline: 2px solid var(--themed-accent);
+  outline-offset: 2px;
+}
+
+.accent-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.accent-name {
+  line-height: 1.15;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .accent-grid {
+    gap: 6px;
+  }
+
+  .accent-option {
+    padding: 7px 2px;
+    border-radius: 10px;
+  }
+
+  .accent-dot {
+    width: 22px;
+    height: 22px;
+  }
+
+  .accent-name {
+    font-size: 9.5px;
+  }
 }

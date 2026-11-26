@@ -1,6 +1,7 @@
 import { StrictMode, lazy, Suspense, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { demoUser } from "../../web/src/demo/fixtures";
+import { initAccent } from "../../web/src/lib/accent";
 import { DEMO_TOKEN } from "../../web/src/demo/tenant";
 import type { AppView } from "../../web/src/components/SidebarV2";
 import "../../web/src/index.css";
@@ -78,6 +79,10 @@ const demoViews = {
     </View>
   ),
 };
+
+// APARIENCIA_V1 - el color elegido en el perfil se aplica antes del primer
+// pintado para que la banda no cambie de color al abrir la vista.
+initAccent();
 
 // Sin sesión, App decide entre landing y login. El clon siembra la demo para
 // entrar directo al panel; la landing/login siguen alcanzables al salir.

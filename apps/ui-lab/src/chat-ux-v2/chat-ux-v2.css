@@ -46,8 +46,8 @@
   --cux-muted: #6e6c66;
   --cux-line: #e6e1d8;
   --cux-line-strong: #ded7cb;
-  --cux-violet: #6550dd;
-  --cux-lilac: #f0ecfc;
+  --cux-violet: var(--themed-accent, #6550dd);
+  --cux-lilac: var(--themed-soft, #f0ecfc);
   --cux-gold: #b49665;
   --cux-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --cux-ease-control: cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -533,7 +533,7 @@
   font-size: 13px;
 }
 .cux-stream-row .thinking-spiral {
-  color: #6550dd;
+  color: var(--themed-accent, #6550dd);
   animation-duration: 2.6s;
 }
 .cux-stream-row--text .cux-assistant-text {

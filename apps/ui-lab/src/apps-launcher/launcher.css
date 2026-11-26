@@ -22,9 +22,9 @@ body:has(.alp-root) { overflow: hidden; }
   --alp-ink: #242421;
   --alp-muted: #6e6c66;
   --alp-line: #e6e1d8;
-  --alp-violet: #6550dd;
-  --alp-violet-deep: #4f3fc9;
-  --alp-lilac: #f0ecfc;
+  --alp-violet: var(--themed-accent, #6550dd);
+  --alp-violet-deep: var(--themed-deep, #4f3fc9);
+  --alp-lilac: var(--themed-soft, #f0ecfc);
   --alp-gold: #b49665;
   --alp-serif: Fraunces, Georgia, "Times New Roman", serif;
   --alp-sans: Manrope, "Segoe UI", system-ui, sans-serif;
@@ -36,7 +36,7 @@ body:has(.alp-root) { overflow: hidden; }
   overflow: hidden;
   color: var(--alp-ink);
   background:
-    radial-gradient(1100px 700px at 88% -12%, #ebe1fb 0%, rgba(235, 225, 251, 0) 62%),
+    radial-gradient(1100px 700px at 88% -12%, var(--themed-soft-2, #ebe1fb) 0%, rgba(235, 225, 251, 0) 62%),
     radial-gradient(900px 620px at -8% 104%, #f4ead8 0%, rgba(244, 234, 216, 0) 58%),
     var(--alp-paper);
   font-family: var(--alp-sans);

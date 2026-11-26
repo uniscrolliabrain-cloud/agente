@@ -3,10 +3,18 @@ import { AlertCircle, X } from "lucide-react";
 import { updateMe, type AuthUser } from "../api/auth";
 import { ApiError } from "../api/client";
 import { connectGoogle, disconnectGoogle, googleStatus, type GoogleStatus } from "../api/google";
+import { ACCENTS, applyAccent, readAccent, type AccentId } from "../lib/accent";
 
-interface Props { user: AuthUser; onClose: () => void; onSaved: (u: AuthUser) => void; }
+interface Props {
+  user: AuthUser;
+  onClose: () => void;
+  onSaved: (u: AuthUser) => void;
+  /** APARIENCIA_V1: solo el clon demo ofrece el color de la aplicación. */
+  appearance?: boolean;
+}
 
-export default function ProfileModal({ user, onClose, onSaved }: Props) {
+export default function ProfileModal({ user, onClose, onSaved, appearance = false }: Props) {
+  const [accent, setAccent] = useState<AccentId>(() => readAccent());
   const [name, setName] = useState(user.name);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -59,6 +67,11 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
     const n = { ...fieldErrors }; delete n[f]; setFieldErrors(n);
   };
 
+  const pickAccent = (id: AccentId) => {
+    setAccent(id);
+    applyAccent(id);
+  };
+
   const submit = async () => {
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "El nombre es obligatorio";
@@ -101,6 +114,32 @@ export default function ProfileModal({ user, onClose, onSaved }: Props) {
           <label className="modal-label">Nombre</label>
           <input type="text" value={name} onChange={(e) => { setName(e.target.value); clearField("name"); }} style={fstyle("name")} />
           <FE field="name" />
+          {appearance && (
+            <>
+              <div className="accent-title">Apariencia</div>
+              <p className="accent-hint">Color de la banda, los botones y los acentos en toda la aplicación.</p>
+              <div className="accent-grid" role="radiogroup" aria-label="Color de la aplicación">
+                {ACCENTS.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={accent === option.id}
+                    className={`accent-option${accent === option.id ? " is-active" : ""}`}
+                    onClick={() => pickAccent(option.id)}
+                    title={option.hint}
+                  >
+                    <span
+                      className="accent-dot"
+                      style={{ background: `linear-gradient(135deg, ${option.swatch[0]}, ${option.swatch[1]})` }}
+                      aria-hidden="true"
+                    />
+                    <span className="accent-name">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <div style={{ marginTop: 20, marginBottom: 8, fontSize: 11, fontWeight: 600, color: "var(--v2-text-2)", textTransform: "uppercase", letterSpacing: "0.04em" }}>Conexiones</div>
           {googleError && (<div className="modal-error"><AlertCircle size={16} /><span>{googleError}</span></div>)}
           <div className="modal-label">Google Workspace (Gmail, Calendar, Drive)</div>
