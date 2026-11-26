@@ -182,21 +182,258 @@ No utilices únicamente las conclusiones finales de los agentes anteriores.
 
 ---
 
-## 5. Arquitectura fundamental vinculante
-AgntiaPro no es chatbot, wrapper, swarm de agentes autónomos ni un conjunto de runtimes por personaje. Es infraestructura generalista para compilar, operar y evolucionar miles de empresas sobre un núcleo común.
-**Slow observa, interpreta y propone. JEV clasifica y evalúa semánticamente, sin autoridad. Kernel valida y autoriza. Runtime ejecuta. Bus/grafo registran evidencia. Fast comunica.**
-Los agentes visibles LAIA, Marcos, Antonio, Juan, Ana, Pedro y demás son especializaciones conversacionales y profesionales, no identidades de seguridad ni procesos independientes con autoridad. El trabajo real se realiza con SOPs, skills, capacidades, máquinas de estados, workers, adaptadores y software determinista. El conocimiento profesional permanece mayoritariamente lingüístico (RAG, fine-tuning, prompts, contexto, memorias, cards, skills). La compilación empresarial personaliza procesos, preferencias, políticas, capacidades y comunicación, sin introducir dominios profesionales dentro del kernel.
-Fast responde rápido e independientemente, con contexto estructurado seleccionado. No herramientas empresariales directas ni propuestas operativas de Fast. Distingue registro autenticado de intención humana de generación de propuesta. Slow observa, relaciona, abstrae, contextualiza y propone; no certifica hechos ni ejecuta. JEV clasifica, confianza alta no equivale a evidencia. Kernel contiene invariantes, runtime ejecución durable. Deny-by-default, fail-closed, aprobación exacta, tenant/actor autenticado, idempotencia, leases/fences, outbox/inbox, retries acotados, DLQ, replay, causalidad, receipts verificables, reconciliación, auditoría y rollback. No prometas exactly-once externo si solo controlamos local.
-Consciencia operativa significa observar, conservar y organizar representaciones lingüísticas para mejorar comunicación y coordinación; no experiencia subjetiva ni simulación del cerebro. Cards son conocimiento estructurado persistente, no meros widgets. Esta etapa no autoriza nuevos agentes, interfaces, dominios o SOPs empresariales.
+## 5. Comprensión de la arquitectura fundamental de AgntiaPro
+
+AgntiaPro no es un chatbot empresarial.
+
+No es un wrapper de LLM.
+
+No es un conjunto de agentes autónomos que se delegan tareas entre ellos mediante lenguaje natural.
+
+Es una infraestructura de inteligencia distribuida para compilar, operar y evolucionar empresas sobre un núcleo común.
+
+La arquitectura separa inteligencia semántica, autoridad, ejecución, comunicación, conocimiento y observabilidad.
+
+### Invariante central
+
+**Slow propone. JEV clasifica y evalúa semánticamente. El kernel valida y autoriza. El runtime ejecuta. Fast comunica.**
+
+Los LLM nunca constituyen la autoridad efectiva del sistema.
+
+El software determinista gobierna las operaciones.
+
+Los agentes visibles, como LAIA, Marcos, Antonio, Juan, Ana o Pedro, son especializaciones conversacionales y profesionales del mismo sistema distribuido.
+
+No son runtimes independientes.
+
+No son identidades de seguridad.
+
+No son procesos autónomos con autoridad propia.
+
+No deben convertirse en un swarm convencional de agentes.
+
+El trabajo real se realiza mediante capacidades, skills, SOPs, contratos, máquinas de estados, workers, adaptadores y mecanismos deterministas de ejecución.
+
+El conocimiento profesional permanece predominantemente lingüístico, contextualizado mediante RAG, prompts, fine-tuning, memorias, cards y skills.
+
+La compilación empresarial personaliza los procesos, criterios, capacidades, políticas y formas de comunicación de cada organización.
+
+No queremos introducir el conocimiento de todos los dominios empresariales dentro del kernel.
+
+### Fast LLM
+
+Fast debe ser independiente, rápido, conversacional y capaz de comunicar información compleja mediante lenguaje natural.
+
+Su contexto debe enriquecerse con representaciones estructuradas seleccionadas por el sistema.
+
+Fast no debe generar propuestas operativas autoritativas ni ejecutar herramientas empresariales directamente.
+
+Si una instrucción humana requiere una transformación, esa intención debe registrarse y entrar en el circuito gobernado correspondiente.
+
+No confundas registrar una intención humana con permitir que Fast diseñe o autorice una operación.
+
+### Slow LLM
+
+Slow constituye la capa de interpretación profunda.
+
+Observa, relaciona, abstrae, interpreta, contextualiza, utiliza modelos de conocimiento, identifica contradicciones y propone representaciones o transformaciones.
+
+Debe trabajar de forma desacoplada respecto a Fast.
+
+No queremos que Fast espere sistemáticamente a Slow.
+
+Slow puede producir propuestas, pero no convertirlas directamente en acciones, hechos verificados o permisos.
+
+### JEV
+
+JEV proporciona clasificación y evaluación semántica estructurada.
+
+No es una autoridad lógica absoluta.
+
+No debe verificar hechos empresariales por el mero hecho de producir una clasificación de alta confianza.
+
+No debe conceder permisos, aprobar operaciones ni sustituir al kernel.
+
+### Kernel y runtime
+
+El kernel conserva las invariantes.
+
+El runtime administra la ejecución durable.
+
+Debes preservar y mejorar principios como:
+
+- Deny-by-default.
+- Fail-closed.
+- Aprobaciones vinculadas a revisiones exactas.
+- Aislamiento de tenants.
+- Identidades autenticadas.
+- Idempotencia.
+- Leases y fences.
+- Máquinas de estados.
+- Reintentos acotados.
+- Outbox e inbox.
+- Dead-letter queues.
+- Replay.
+- Causalidad.
+- Receipts verificables.
+- Recuperación ante errores.
+- Auditoría.
+- Reconciliación de efectos externos ambiguos.
+
+No propongas garantías imposibles de demostrar.
+
+No prometas exactly-once en un proveedor externo si únicamente controlamos la ejecución local.
+
+### Consciencia operativa
+
+La expresión consciencia operativa se refiere a la capacidad funcional del software para observar lo que sucede, conservar conocimiento, relacionar representaciones, identificar información relevante y utilizarla para mejorar la comunicación y la coordinación empresarial.
+
+No se refiere a consciencia subjetiva, experiencia humana, alma ni simulación del cerebro.
+
+No queremos reproducir el pensamiento humano.
+
+Queremos organizar representaciones lingüísticas y su relación con operaciones reales.
+
+---
 
 ## 6. Triple contraste obligatorio
-Contrasta en cada decisión A) intención founder, B) documentación canónica y seis propuestas, C) código real actual. Sigue imports, constructores, entrypoints, rutas, productores/consumidores, transacciones, persistencia y efectos. Distingue DECLARADO, IMPLEMENTADO, CABLEADO, PROBADO, INTEGRADO, CERTIFICADO y OPERATIVO. No consideres operativo un archivo solo porque existe. Cita paths, símbolos, líneas, SHA/blob y tests para afirmaciones materiales. Registra incertidumbre y alcance, no inventes evidencia.
 
-## 7. Auditoría Git
-Registra HEAD, merge-base, baseline, árbol y estado de las seis ramas y canónica. Contrasta cambios funcionales/documentales, blobs de archivos compartidos, divergencias, contratos incompatibles y cambios posteriores a informes. Usa worktrees locales independientes si están disponibles; integración experimental únicamente local desechable. No publiques una fusión. No bloquees análisis independiente por conflictos de integración. Fija baseline de lectura y revalida cambios concurrentes antes de cada publicación.
+Cada propuesta deberá construirse mediante el contraste permanente entre tres fuentes:
 
-## 8. Trans01: autoridad y ejecución
-Audita Kernel, ActionService, CapabilityRunner, SOPExecutor, EventBus, PDP, approvals, Store/TenantScopedStore, claims, CAS, transacciones, state machines, snapshots, replay, outbox/inbox, receipts, ejecución diferida y recuperación. Estudia A01/A02/A03/E01/E02/E03/S01 y demás patchsets. Descubre todos los caminos de materialización de efectos, bypass de aprobación, diferencia actor/owner/tenant/role/persona/service principal/delegación. Analiza ACK perdido, fallos después de efecto, claims reactivados, worker stale y revocación entre autorización y despacho. Separa accepted, confirmed, failed_without_effect y outcome_unknown según evidencia; no retry automático de resultado ambiguo. Garantiza historia causal desde intención y aprobación exacta hasta observación. Propón contratos y hunks mejores, pruebas adversariales, migraciones y orden de integración. Reduce complejidad sin perder garantías.
+### Fuente A: intención arquitectónica
+
+Qué quiere construir el fundador.
+
+Qué invariantes deben mantenerse.
+
+Qué resultado empresarial y cognitivo se pretende conseguir.
+
+### Fuente B: documentación técnica existente
+
+Qué propone la campaña canónica.
+
+Qué propone cada campaña transversal.
+
+Qué decisiones han sido tomadas durante las iteraciones anteriores.
+
+Qué contratos, patchsets y pruebas han sido diseñados.
+
+### Fuente C: código funcional real
+
+Qué existe efectivamente.
+
+Qué está cableado.
+
+Qué está declarado pero no montado.
+
+Qué está implementado parcialmente.
+
+Qué funciona bajo pruebas sintéticas.
+
+Qué funciona con proveedores reales.
+
+Qué no tiene cobertura.
+
+Qué pertenece a versiones legacy.
+
+Qué componentes son utilizados por los entrypoints reales.
+
+No debes considerar un componente funcional únicamente porque existe un archivo con su nombre.
+
+Debes seguir sus imports, constructores, registros, dependencias, rutas, productores, consumidores, estados, transacciones, persistencia y efectos.
+
+Distingue rigurosamente:
+
+- Declarado.
+- Implementado.
+- Cableado.
+- Probado.
+- Integrado.
+- Certificado.
+- Operativo en producción.
+
+Cada afirmación importante sobre el software debe poder rastrearse hasta evidencia concreta.
+
+---
+
+## 7. Auditoría Git y divergencia entre ramas
+
+Antes del rediseño, registra para las seis ramas y la campaña canónica:
+
+- HEAD exacto.
+- Merge-base.
+- Commit de referencia.
+- Estado del árbol.
+- Diferencias funcionales.
+- Diferencias documentales.
+- Archivos compartidos.
+- Archivos modificados por diferentes ramas.
+- Contratos incompatibles.
+- Dependencias divergentes.
+- Conflictos previsibles de integración.
+- Cambios realizados después de las auditorías originales.
+
+No asumas que un archivo tiene el mismo contenido en todas las ramas.
+
+Una propuesta técnicamente excelente puede resultar inaplicable si está anclada a una versión antigua del código.
+
+Contrasta los blobs reales.
+
+Cuando sea posible, utiliza worktrees locales independientes para estudiar las ramas sin interferir entre ellas.
+
+Puedes preparar una integración experimental exclusivamente local y desechable si resulta necesario para comprobar incompatibilidades, siempre que no publiques la integración, no sobrescribas trabajo y no alteres ninguna de las ramas remotas.
+
+No utilices conflictos de integración como excusa para abandonar el trabajo independiente de las demás ramas.
+
+---
+
+## 8. Auditoría específica de Trans01
+
+Trans01 es responsable del núcleo de autoridad, ejecución y causalidad.
+
+Debes auditar especialmente:
+
+- Kernel.
+- ActionService.
+- CapabilityRunner.
+- SOPExecutor.
+- EventBus.
+- PolicyDecisionPoint.
+- ApprovalService y mecanismos equivalentes.
+- Contextos de ejecución.
+- Store y TenantScopedStore.
+- Claims durables.
+- Transacciones.
+- CAS.
+- Máquinas de estados.
+- Snapshots.
+- Replay.
+- Outbox e inbox.
+- Receipts.
+- Ejecución diferida.
+- Recuperación de efectos externos ambiguos.
+
+Estudia profundamente los patchsets A01, A02, A03, E01, E02, E03, S01 y los restantes contratos de la propuesta consolidada.
+
+No te limites a verificar su corrección superficial.
+
+Investiga si existe una manera más pequeña, robusta, coherente y composable de garantizar autoridad y ejecución.
+
+Analiza todos los puntos desde los que puede materializarse un efecto empresarial.
+
+Busca caminos que eludan el circuito de aprobación.
+
+Busca diferencias entre actor, owner, tenant, role, persona, principal de servicio y delegación.
+
+Analiza la pérdida de una confirmación de commit, los errores posteriores a un efecto externo, la reactivación de claims, los workers antiguos y los efectos que pueden suceder después de una revocación.
+
+Evalúa si la separación entre aceptación, confirmación, fallo demostrado sin efecto y resultado desconocido resulta suficiente.
+
+Determina cómo garantizar que un efecto autorizado tenga una historia causal íntegra desde su propuesta hasta su observación cognitiva.
+
+Tu campaña superior debe ofrecer soluciones concretas, código candidato, contratos, migraciones cuando sean necesarias, pruebas adversariales y orden de integración.
+
+---
 
 ## 9. Trans02: Cognition V2
 Audita CognitionV2Runtime, CognitiveProjectionStore, ContextServingFacade, GlobalAttentionWorkspace, SlowCognitionQueue, SlowObservationBridge, JEV/egress, cinco memorias, grafo/cards/ontología cromática, snapshots/RAG, RuntimeOutcomeProjector, CardDeliveryLedger, workers, presenter y harness. Contrasta rutas legacy y montaje real. Sigue registro de intención humana, receipt→evidencia, hipótesis vs verified_fact, selección pre-Fast. Revisa ranking antes/después de cap, referencias antiguas, budgets, snapshots manipulados, revocación, concurrencia, identidad, revisión, scope y ACL. No segundo selector ni memoria paralela. Slow/JEV/provider caídos no bloquean innecesariamente Fast ni runtime. Diseña transición compatible y elimina legacy solo con consumidores migrados y autorización futura. Audita P01–P14 y dependencias Trans01/05.
