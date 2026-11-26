@@ -47,3 +47,28 @@ El clon se abre desde Ajustes en UI Lab mediante companyArea. Tiene shell propio
 - [17-versiones: capacidades futuras](./17-versiones/CAPACIDADES-FUTURAS.md)
 
 Catálogo inicial de producto, no inventario de backend implementado. Los contratos por capacidad son orientativos y requieren diseño técnico posterior. Cada workspace tiene un escenario sintético contextualizado y reglas de interacción demo.
+
+## Data sintética por workspace
+
+[Semilla común JSON](./DATASET-COMPARTIDO.json): ocho clientes, tres ideas, dos decisiones, costes y revisiones. Referencias: kickoff CEO, visión founder y DATASET-SINTETICO de agntia-demo. Escenario 90 días; V7/V8 son etiquetas nuevas propuestas, no revisiones reales. Meses completos desde alta, sin impuestos; facturación 5000/9500/12500, acumulado 27000, MRR 8000. No sustituye el dataset operativo.
+
+- [00-inicio: data sintética](./00-inicio/DATA-SINTETICA.md)
+- [13-fuentes: data sintética](./13-fuentes/DATA-SINTETICA.md)
+- [14-entrevistas: data sintética](./14-entrevistas/DATA-SINTETICA.md)
+- [01-identidad: data sintética](./01-identidad/DATA-SINTETICA.md)
+- [02-modelo-de-negocio: data sintética](./02-modelo-de-negocio/DATA-SINTETICA.md)
+- [03-marca: data sintética](./03-marca/DATA-SINTETICA.md)
+- [04-estrategia: data sintética](./04-estrategia/DATA-SINTETICA.md)
+- [07-mercado: data sintética](./07-mercado/DATA-SINTETICA.md)
+- [05-organizacion: data sintética](./05-organizacion/DATA-SINTETICA.md)
+- [06-productos-y-servicios: data sintética](./06-productos-y-servicios/DATA-SINTETICA.md)
+- [08-finanzas: data sintética](./08-finanzas/DATA-SINTETICA.md)
+- [09-relaciones: data sintética](./09-relaciones/DATA-SINTETICA.md)
+- [10-operaciones: data sintética](./10-operaciones/DATA-SINTETICA.md)
+- [15-procesos: data sintética](./15-procesos/DATA-SINTETICA.md)
+- [11-tecnologia: data sintética](./11-tecnologia/DATA-SINTETICA.md)
+- [16-talento: data sintética](./16-talento/DATA-SINTETICA.md)
+- [12-gobierno: data sintética](./12-gobierno/DATA-SINTETICA.md)
+- [17-versiones: data sintética](./17-versiones/DATA-SINTETICA.md)
+
+Semilla editorial y funcional inicial; faltan fixtures ejecutables, validación automatizada de referencias y cobertura individual detallada de cada capacidad. No se modificó código.
