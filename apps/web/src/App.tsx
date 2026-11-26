@@ -516,8 +516,10 @@ export default function App({
           aria-label={chatOpen ? "Cerrar chat" : "Hablar con tu agente"}
           aria-expanded={chatOpen}
         >
-          {chatOpen ? <X size={18} /> : <MessageSquare size={18} />}
-          <span>{chatOpen ? "Cerrar chat" : "Chat"}</span>
+          <span className="chat-fab-mark" aria-hidden="true">
+            {chatOpen ? <X size={16} /> : <MessageSquare size={16} />}
+          </span>
+          <span className="chat-fab-label">{chatOpen ? "Cerrar chat" : "Chat"}</span>
         </button>
       )}
 

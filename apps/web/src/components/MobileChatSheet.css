@@ -14,10 +14,10 @@
   min-height: 0;
   overflow: hidden;
   background: var(--v2-bg);
-  border: 1px solid var(--v2-border);
+  border: 1px solid color-mix(in srgb, var(--v2-border) 90%, transparent);
   border-bottom: 0;
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.22);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -12px 40px rgba(36, 36, 33, 0.16);
   transition: height 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
   /* El panel no debe meter su layout en el resto de la app. */
   contain: layout paint;
@@ -28,21 +28,45 @@
   transition: none;
 }
 
+/* MOBILE_SHEET_BAR_V2 - el handler adelgaza de 61 a 50 px (-18 %): mismo
+   alcance táctil de 44 px, pero sin banda blanca gruesa. La barra comparte el
+   papel de la hoja, el tirador se afina y los iconos pasan a ser discretos
+   botones circulares. */
 .mobile-sheet-bar {
   position: relative;
   flex: 0 0 auto;
   display: grid;
-  grid-template-columns: 90px minmax(44px, 1fr) 90px;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 8px 10px;
-  background: var(--v2-bg-card);
-  border-bottom: 1px solid var(--v2-border);
-  border-radius: 18px 18px 0 0;
+  padding: 3px 10px 2px;
+  background: var(--v2-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--v2-border) 60%, transparent);
+  border-radius: 22px 22px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+html[data-theme="dark"] .mobile-sheet-bar {
+  border-bottom-color: color-mix(in srgb, var(--border) 70%, transparent);
+  box-shadow: none;
 }
 
 .mobile-sheet-bar .side-chat-icon {
   width: 44px;
   height: 44px;
+  border-radius: 999px;
+  color: var(--v2-text-3);
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+.mobile-sheet-bar > .side-chat-icon { justify-self: start; }
+.mobile-sheet-bar .side-chat-icon:hover,
+.mobile-sheet-bar .side-chat-icon:focus-visible {
+  background: color-mix(in srgb, var(--v2-bg-card) 75%, transparent);
+  color: var(--v2-text);
+}
+.mobile-sheet-bar .side-chat-icon:active { transform: scale(.96); }
+html[data-theme="dark"] .mobile-sheet-bar .side-chat-icon:hover,
+html[data-theme="dark"] .mobile-sheet-bar .side-chat-icon:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text);
 }
 
 .mobile-sheet-grip {
@@ -58,10 +82,15 @@
 
 .mobile-sheet-grip::before {
   content: "";
-  width: 46px;
-  height: 5px;
+  width: 38px;
+  height: 4px;
   border-radius: 999px;
-  background: var(--v2-text-4);
+  background: color-mix(in srgb, var(--v2-text-3) 55%, transparent);
+  transition: width 180ms cubic-bezier(.22, .61, .36, 1), background 180ms ease;
+}
+.mobile-chat-sheet.dragging .mobile-sheet-grip::before {
+  width: 46px;
+  background: var(--v2-purple);
 }
 
 .mobile-chat-sheet.dragging .mobile-sheet-grip {
@@ -70,7 +99,8 @@
 
 .mobile-sheet-actions {
   display: flex;
-  gap: 2px;
+  justify-self: end;
+  gap: 0;
 }
 
 /* SidebarChat dentro de la hoja: sin cabecera propia (los controles ya estan en
@@ -96,6 +126,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-chat-sheet {
+    transition: none;
+  }
+  .mobile-sheet-grip::before,
+  .mobile-sheet-bar .side-chat-icon {
     transition: none;
   }
 }

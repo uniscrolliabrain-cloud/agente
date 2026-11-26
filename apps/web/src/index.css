@@ -4158,16 +4158,51 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
 .side-chat-foot .v2-composer-tools { gap: 6px; }
 
 
-/* boton flotante del chat */
+/* CHAT_FAB_V2 - boton transversal del chat. Deja de ser una pastilla negra
+   ajena al papel cálido: superficie de tarjeta, borde fino y la marca del
+   agente en lavanda, como el orbe del panel. Solo estética; el gesto y el
+   estado son los de siempre. */
 .chat-fab {
   position: fixed; right: 22px; bottom: 22px; z-index: 70;
-  display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 18px;
-  border: 0; border-radius: 999px; background: #111; color: #FFF; font-size: 13px;
-  font-weight: 600; cursor: pointer; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-  transition: transform 150ms ease, background 150ms ease;
+  display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 16px 0 8px;
+  border: 1px solid color-mix(in srgb, var(--v2-border) 85%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--v2-bg-card) 92%, transparent);
+  color: var(--v2-text); font-size: 12.5px; font-weight: 600; letter-spacing: .01em;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(36, 36, 33, 0.14), 0 1px 2px rgba(36, 36, 33, 0.05);
+  backdrop-filter: blur(14px) saturate(1.05);
+  transition: transform 180ms cubic-bezier(.22, .61, .36, 1), box-shadow 180ms cubic-bezier(.22, .61, .36, 1), background 180ms ease;
+  animation: chat-fab-in 220ms cubic-bezier(.22, .61, .36, 1) both;
 }
-.chat-fab:hover { transform: translateY(-1px); }
-.chat-fab.open { background: var(--v2-purple); }
+.chat-fab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 32px rgba(36, 36, 33, 0.18), 0 1px 2px rgba(36, 36, 33, 0.06);
+}
+.chat-fab:active { transform: translateY(0) scale(.985); }
+.chat-fab-mark {
+  display: grid; place-items: center; flex: 0 0 auto;
+  width: 30px; height: 30px; border-radius: 10px;
+  background: var(--v2-purple-soft); color: var(--v2-purple);
+  transition: background 160ms ease, color 160ms ease;
+}
+.chat-fab.open .chat-fab-mark { background: var(--v2-purple); color: #FFF; }
+.chat-fab-label { white-space: nowrap; }
+html[data-theme="dark"] .chat-fab {
+  border-color: color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+html[data-theme="dark"] .chat-fab:hover {
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+html[data-theme="dark"] .chat-fab-mark { background: var(--accent-soft); color: var(--accent); }
+html[data-theme="dark"] .chat-fab.open .chat-fab-mark { background: var(--accent); color: #FFF; }
+@keyframes chat-fab-in {
+  from { opacity: 0; transform: translateY(4px) scale(.98); }
+  to { opacity: 1; transform: none; }
+}
 
 /* MOBILE_SHEET_V2 - la hoja vive en components/MobileChatSheet.css. */
 
@@ -4234,10 +4269,15 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
   .shell__left > .v2-sidebar { padding-top: 8px; }
   .shell__left .v2-sidebar-head { min-height: 40px; padding-inline-start: 60px; }
   .chat-fab {
-    right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
-    width: 56px; height: 56px; padding: 0; justify-content: center;
+    right: calc(16px + env(safe-area-inset-right));
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    width: 52px; height: 52px; padding: 0; gap: 0; justify-content: center;
+    box-shadow: 0 8px 24px rgba(36, 36, 33, 0.16), 0 1px 2px rgba(36, 36, 33, 0.05);
   }
-  .chat-fab span { display: none; }
+  .chat-fab-label { display: none; }
+  .chat-fab-mark { width: 32px; height: 32px; border-radius: 11px; background: transparent; }
+  .chat-fab.open .chat-fab-mark { background: transparent; color: var(--v2-purple); }
+  .chat-fab-mark svg { width: 21px; height: 21px; }
   .settings-menu {
     left: 12px; right: 12px; width: auto;
     bottom: calc(80px + env(safe-area-inset-bottom));
