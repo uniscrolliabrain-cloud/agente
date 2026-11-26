@@ -1,6 +1,6 @@
 # Trans00 — convergencia, supervisión e integración de las seis campañas
 
-2026-11-26 · M1 documental · INCOMPLETE respecto a preparación total · NO_GO funcional.
+2026-11-26 · D-M2 documental · INCOMPLETE respecto a preparación total · NO_GO funcional.
 
 ## Mandato del founder
 
