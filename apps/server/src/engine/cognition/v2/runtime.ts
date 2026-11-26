@@ -85,7 +85,10 @@ export class CognitionV2Runtime {
     return { tenantId, actorId, owner, purpose, policyRevision: digest(membership) };
   }
   enabledForRequest(): boolean { return this.tenants.has(currentTenantScope()?.tenantId ?? ""); }
-  chat(owner: string, input: RunAgentInput): Observable<BaseEvent> {
+  chat(owner: string, input: RunAgentInput, prepared?: {
+    contextSnapshotId: string;
+    onReceipt?: (receipt: { id: string; contextSnapshotId: string }) => void;
+  }): Observable<BaseEvent> {
     const scope = currentTenantScope();
     return new Observable<BaseEvent>((subscriber) => {
       const controller = new AbortController();
@@ -105,7 +108,10 @@ export class CognitionV2Runtime {
           accepted = true;
           subscriber.next({ type: EventType.RUN_STARTED, threadId: input.threadId, runId: input.runId });
           const latest = input.messages.filter((m) => m.role === "user").at(-1);
-          const snapshot = await this.context.prepared(identity, typeof latest?.content === "string" ? latest.content : "");
+          const snapshot = prepared
+            ? await this.context.readSnapshot(identity, prepared.contextSnapshotId)
+            : await this.context.prepared(identity, typeof latest?.content === "string" ? latest.content : "");
+          if (!snapshot) throw Error("CONTEXT_REVOKED_BEFORE_DISPATCH");
           let checkingRevocation = false;
           revocationMonitor = setInterval(() => {
             if (checkingRevocation) return;
@@ -157,6 +163,7 @@ export class CognitionV2Runtime {
               if (!await this.ledger.ack(identity, lease.id, lease.fence, receiptId)) throw Error("DELIVERY_ACK_UNAVAILABLE");
             }
           });
+          prepared?.onReceipt?.({ id: receiptId, contextSnapshotId: snapshot.id });
           ended = true;
           subscriber.next({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId }); subscriber.complete();
         } catch {
