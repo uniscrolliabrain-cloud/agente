@@ -7,3 +7,9 @@ El runtime debe permitir reconstruir qué ocurrió con una operación autorizada
 **Impacto.** Dos lectores pueden informar resultados distintos sobre el mismo despacho. El experimento acredita la divergencia de datos con un proveedor simulado.
 
 [Código examinado](https://github.com/uniscrolliabrain-cloud/agente/blob/97f5671cd06793c2c907fb027f31461decf379c2/apps/server/src/actions.ts#L926) · [Evidencia del ensayo](https://github.com/uniscrolliabrain-cloud/agente/blob/c1e2f365d8c54d2603f404af58ae6dfae16cb109/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/ASTRA-AUDIT-V1/EXPERIMENTO-RECONCILIACION.md)
+
+## El mantenimiento marca como interrumpidas acciones que siguen en curso
+
+Aprobé una acción con un proveedor simulado y lo mantuve a la espera de respuesta. En ese mismo proceso, al invocar la recuperación que llama `maintain()` cada minuto, el estado pasó de `executing` a `outcome_unknown`. Al liberar el proveedor, pasó a `succeeded`. Durante ese intervalo, quien consulta la acción recibe un aviso de reinicio aunque el proceso y la llamada continúan activos. El barrido se ejecuta antes del filtro de antigüedad.
+
+[Mantenimiento](https://github.com/uniscrolliabrain-cloud/agente/blob/4b0e9b9ce7750a4a22863c8bbe8affb5cf3da033/apps/server/src/engine/service.ts#L479) · [Actualización de estado](https://github.com/uniscrolliabrain-cloud/agente/blob/4b0e9b9ce7750a4a22863c8bbe8affb5cf3da033/apps/server/src/db.ts#L413)
