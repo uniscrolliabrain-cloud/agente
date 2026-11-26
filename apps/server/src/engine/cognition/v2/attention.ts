@@ -1,5 +1,5 @@
 import type { CognitiveIdentity } from "../../../../../../packages/domain/src/cognition-v2.ts";
-import type { ContextServingFacade } from "./context.ts";
+import { contextScorer, type ContextServingFacade } from "./context.ts";
 import { digest } from "./storage.ts";
 /** Global means competition inside this authorized actor, never cross-tenant access. */
 export class GlobalAttentionWorkspace {
@@ -7,15 +7,14 @@ export class GlobalAttentionWorkspace {
   async select(identity: CognitiveIdentity, query: string, maxTokens: number) {
     const snapshot = await this.context.getSnapshot(identity, { query, maxTokens, maxRefs: 50 });
     const selected = [];
+    const score = contextScorer(query);
     for (const ref of snapshot.refs) {
       const r = await this.context.resolve(identity, ref.id, ref.revision);
       if (!r) throw Error("ATTENTION_SOURCE_CHANGED");
       // All dimensions are kept separate. Confidence never changes epistemia.
-      const score = .5 * r.signals.relevance + .3 * r.signals.urgency + .2 * r.signals.novelty;
-      selected.push({ id: r.id, revision: r.revision, signals: r.signals, score, epistemic: r.epistemic });
+      selected.push({ id: r.id, revision: r.revision, signals: r.signals, score: score(r), epistemic: r.epistemic });
     }
-    selected.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
-    const data = { identity, algorithmVersion: "attention-v2.1", contextSnapshotId: snapshot.id,
+    const data = { identity, algorithmVersion: "attention-v2.2", contextSnapshotId: snapshot.id,
       sourceWatermark: snapshot.watermark, selected, expiresAt: snapshot.expiresAt };
     const id = digest({ identity, algorithmVersion: data.algorithmVersion, contextDigest: snapshot.digest, selected });
     await this.context.projections.db.rawQuery(`INSERT INTO cognition_v2_attention(tenant,id,actor,data) VALUES($1,$2,$3,$4::jsonb) ON CONFLICT(tenant,id) DO UPDATE SET data=$4::jsonb`, [identity.tenantId, id, identity.actorId, JSON.stringify(data)]);
