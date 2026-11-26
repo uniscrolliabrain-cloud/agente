@@ -109,7 +109,7 @@ test("two refreshers cannot overwrite a winning credential and ambiguous rotatio
     await assert.rejects(() => new GoogleAuth(db, config).accessToken("owner"), { status: 401 });
     assert.equal(calls, 2);
     t.mock.restoreAll();
-    t.mock.method(globalThis, "fetch", async (input) =>
+    t.mock.method(globalThis, "fetch", async (input: string | URL | Request) =>
       String(input).includes("/token")
         ? Response.json({ access_token: "fresh-consent", refresh_token: "fresh-refresh", expires_in: 3600 })
         : Response.json({ emailAddress: "alice@example.test" }),
