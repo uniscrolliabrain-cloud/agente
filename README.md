@@ -104,6 +104,12 @@ El producto futuro incluye equipo digital, planificación, centro de control, ap
 
 AgntiaPro Demo sirve como dogfooding y referencia de integración. No define las ontologías ni los procesos de todos los clientes.
 
+## Investigación futura: núcleo axiomático
+
+El núcleo inicial es el propio fundador, con su observación y criterio. Primero compilará tres empresas propias diferentes, hará dogfooding y observará su funcionamiento real. Después diseñará un núcleo axiomático central: operadores binarios como crear/destruir y una jerarquía recursiva de aspectos cognitivos del 0 al 8, en loop, con geometría conceptual de espiral de caracola y relación con las cards cognitivas. Los axiomas, sus relaciones y transiciones quedan abiertos hasta esa experiencia. No es un requisito de las campañas actuales ni una autorización para modificar el kernel.
+
+[Nota de investigación original](https://github.com/uniscrolliabrain-cloud/agente/blob/Trans05/docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/FUTURO-NUCLEO-AXIOMATICO.md).
+
 ## Etapa actual: convergencia del core
 
 La prioridad es consolidar kernel, runtime, bus, grafo, attention vectors, cards, metacognición, memorias, RAG, Slow, JEV, Fast, observabilidad, voz y visión. El middleware de ciberseguridad ya figura como dependencia del monorepo y constituye una superficie de integración.
