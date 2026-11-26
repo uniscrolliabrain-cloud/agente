@@ -435,23 +435,341 @@ Tu campaña superior debe ofrecer soluciones concretas, código candidato, contr
 
 ---
 
-## 9. Trans02: Cognition V2
-Audita CognitionV2Runtime, CognitiveProjectionStore, ContextServingFacade, GlobalAttentionWorkspace, SlowCognitionQueue, SlowObservationBridge, JEV/egress, cinco memorias, grafo/cards/ontología cromática, snapshots/RAG, RuntimeOutcomeProjector, CardDeliveryLedger, workers, presenter y harness. Contrasta rutas legacy y montaje real. Sigue registro de intención humana, receipt→evidencia, hipótesis vs verified_fact, selección pre-Fast. Revisa ranking antes/después de cap, referencias antiguas, budgets, snapshots manipulados, revocación, concurrencia, identidad, revisión, scope y ACL. No segundo selector ni memoria paralela. Slow/JEV/provider caídos no bloquean innecesariamente Fast ni runtime. Diseña transición compatible y elimina legacy solo con consumidores migrados y autorización futura. Audita P01–P14 y dependencias Trans01/05.
+## 9. Auditoría específica de Trans02
 
-## 10. Trans03: adaptadores
-Audita OAuth, Gmail, Calendar, Drive, Maps/Places, WhatsApp/Meta/Evolution, voz/visión/media, JEV, Composio si aplica, middleware cyber, inferencia y demás adaptadores reales. Repositorios instalables: verifica contratos y versiones; no inventar métodos/endpoints/scopes/SDK. Investiga OAuth binding, rotation/revoke, scope efectivo, actor y propietario de conexión, credenciales, webhooks duplicados, ingress/egress, idempotencia, timeout/429, respuesta parcial, caché, efecto ambiguo y reconciliación. Respuesta aceptada no implica entregada ni confirmada. Preserva semántica de receipts hasta Fast; integra E03 Trans01, no segundo ledger. No bypass runtime por rutas de proveedor. Identifica qué se puede certificar en sandbox y qué permanece externo.
+Trans02 es responsable de Cognition V2 y de la inteligencia distribuida.
 
-## 11. Trans04: infraestructura y certificación
-Audita Postgres/PGlite, RLS, Store scoped, migraciones, provisionamiento, bundles, datos sintéticos, workers/leases, concurrencia, telemetría, métricas, OTel, logs, gates, CI/GitHub Actions, recuperación, backups y rollback. Examina H01/H02/H03 y circuitos de certificación. PGlite no demuestra concurrencia PG; rol propietario no demuestra RLS; heartbeat no demuestra progreso. Distingue readiness/liveness/backlog/freshness/throughput. No PASS con cero tests, skips o evidencia parcial. Certifica mediante SHA, entorno, comandos, exits, conteos, hashes, reviewer y estado NOT_RUN/BLOCKED/PARTIAL/FAIL/PASS. Coste y simplicidad importan para fundador individual. Métricas de cardinalidad acotada y sin datos sensibles. Verifica plan-only, fencing y CAS de provisionamiento.
+Debes estudiar:
 
-## 12. Trans05: continuidad y skills longitudinales
-Mantener ideas, axiomas conversacionales, modelos de conocimiento, anclas y marcos de interpretación durante 100k+ tokens acumulados sin reducir todo a resúmenes destructivos. Global Workspace registra conocimiento y lo selecciona, grafo multicapa y brief vivo de ~120 palabras como hipótesis. Audita procedencia, revisiones, correcciones, invalidación, scope thread/actor/tenant, selectores, metacognición funcional, budgets y recuperación. Skills cognitivas: primeros principios, perspectivas múltiples, abstracción, concreción, contradicción, causalidad, síntesis, estrategia, contrafactual, deriva, metacognición y feedback. No una inferencia por skill por defecto. Diseña selección, composición, abstención, coalescing y evaluación eficiente.
-P10 compilador narrativo: conocimiento empresarial, documentos, libros, transcripciones autorizadas, expertos, vídeos de actores, material humano y generación LLM. Fast expresa ideas, relatos, analogías, argumentos y explicaciones con sus palabras, preservando hechos, restricciones, vigencia, referencias, derechos y revocación. No guiones rígidos ni historias personales inventadas. Audita derechos, consentimiento, segmentación, extracción, clasificación, merge, revisión de digest, publicación, selección y revocación; no reutilizar consentimiento de voz sin base. Distingue skills cognitivas y narrativas. Contrasta P10 y especificación final, no duplica selector Trans02.
+- CognitiveRuntime.
+- CognitiveProjectionStore.
+- ContextServingFacade.
+- GlobalAttentionWorkspace.
+- SlowCognitionQueue.
+- SlowObservationBridge.
+- Clasificación JEV.
+- Egress gateway.
+- Las cinco memorias.
+- Grafo cognitivo.
+- Cards cognitivas.
+- Ontología cromática.
+- Snapshots.
+- RAG.
+- RuntimeOutcomeProjector.
+- CardDeliveryLedger.
+- Workers.
+- Presenter.
+- Harness conversacional.
 
-## 13. Trans06: núcleo axiomático y trasvase empresarial
-Lee ocho documentos originales de Trans06, nota FUTURO-NUCLEO-AXIOMATICO.md de Trans05 y README. Núcleo original es el founder, su ojo y criterio. Compilará y operará tres empresas propias distintas y observará antes de definir axiomas finales. Todo, positivo y negativo: unidad todo respecto a componentes, parte de otra escala; polaridad relativa a contexto, relaciones, objetivos y escala, no moral. Estado manifiesto y posibilidad latente; retirada de estructura cambia espacio de posibilidades; atracción/repulsión como afinidad/incompatibilidad, no física. Espiral de caracola y 0–8 recursivo son hipótesis abiertas. Deseo/rechazo, crear/destruir, producir/desechar, crear/vender, adquirir/vender son ejemplos provisionales. No obligar complementariedad matemática ni simulación biológica.
-Audita kernel/cromos/cromo.ts, logic/axioms.ts, physics/field.ts, graph/attention.ts, rules.ts, promote.ts, consolidate.ts, cognition/cycle.ts, observers/meta.ts; packages/domain/src/card-ontology.ts y cognition-v2.ts; engine/cognition/chromatic/ontology-registry.ts y card-ontology.ts; BusinessGraph, BusinessTruth, TruthResolver, EntityResolver, state machines, business schema, capabilities y SOPs. Comprueba paths reales. Ya existen ocho familias, seis polos independientes explorar/aplicar, generar/verificar, expandir/proteger, valores null, registry versionado y aprobación revocable. No reducir pares a un escalar que pierda información. No confundir cromo legacy pending con card V2 montada.
-Trasvase a entidades, recursos, relaciones, procesos, objetivos: una factura es registro empresarial, una card representa conocimiento sobre ella. Propagación semántica no propaga autoridad ni ejecuta acciones. Separa axioma/invariante, orientación cromática, epistemología, criterio empresarial y autoridad. Revisa evaluación contextual, tri-state, afinidad, composición bounded y simulaciones. Pure first, no almacenamiento nuevo por defecto; sidecar solo si evidencia y ADR. No segundo kernel, PDP, grafo, ontología, selector ni simulador físico. Máxima complejidad semántica sobre mínima complejidad axiomática. Mantén 0–8 abierto al founder.
+Contrasta la arquitectura V2 con las rutas legacy y los puntos reales de entrada del chat.
+
+Investiga si las componentes diseñadas como inteligencia distribuida se encuentran efectivamente integradas o constituyen módulos aislados.
+
+Revisa cómo se registra la intención humana.
+
+Revisa cómo una operación real se convierte en evidencia.
+
+Revisa cómo una hipótesis se diferencia de un hecho verificado.
+
+Revisa cómo se selecciona el contexto antes de llegar a Fast.
+
+Analiza los límites del ranking actual, la recuperación de referencias antiguas, los presupuestos de contexto, los snapshots manipulados, la revocación y las carreras concurrentes.
+
+No propongas un segundo sistema de atención o una memoria paralela.
+
+Si encuentras una manera superior de organizar estas piezas, diseña la transición de forma que el software existente conserve sus capacidades.
+
+Diseña explícitamente cómo funciona el sistema cuando Slow, JEV o un proveedor externo no están disponibles.
+
+La conversación y el runtime no deben quedar innecesariamente bloqueados.
+
+---
+
+## 10. Auditoría específica de Trans03
+
+Trans03 es responsable de conectar AgntiaPro con el mundo exterior.
+
+Debes auditar todas las integraciones pertinentes, incluyendo las existentes y las contempladas en las campañas:
+
+- OAuth.
+- Gmail.
+- Google Calendar.
+- Google Drive.
+- Google Maps y Places.
+- WhatsApp.
+- Meta.
+- Evolution.
+- Voz.
+- Visión.
+- Media.
+- JEV.
+- Composio cuando corresponda.
+- Middleware de ciberseguridad.
+- Proveedores de inferencia.
+- Otros adaptadores reales presentes en el repositorio.
+
+Estudia la capa de capacidades instalables y los contratos de los repositorios externos utilizados por el sistema.
+
+Distingue contratos comprobados de contratos supuestos.
+
+No inventes endpoints, SDKs, scopes, firmas, métodos ni capacidades de proveedores.
+
+Verifica documentación y código real de los adaptadores cuando sea necesario.
+
+Investiga:
+
+- Rotación concurrente de credenciales.
+- Revocación.
+- OAuth binding.
+- Scope efectivo.
+- Autorización del actor.
+- Propietario de la conexión.
+- Reutilización de credenciales.
+- Webhooks duplicados.
+- Ingress malicioso.
+- Egress.
+- Idempotencia.
+- Timeouts.
+- HTTP 429.
+- Respuestas parciales.
+- Errores posteriores a la aceptación de una operación.
+- Reconciliación.
+- Cachés.
+- Receipts.
+
+Una respuesta exitosa del proveedor no siempre significa que el efecto empresarial se haya completado.
+
+Tu campaña debe garantizar que esta distinción se preserve desde el adaptador hasta la comunicación de Fast.
+
+No permitas que una integración eluda el runtime mediante rutas alternativas.
+
+No generes un segundo ledger si Trans01 ya contempla la infraestructura necesaria.
+
+---
+
+## 11. Auditoría específica de Trans04
+
+Trans04 es responsable de la infraestructura que permite operar, observar y certificar el software.
+
+Debes auditar:
+
+- Postgres.
+- PGlite.
+- RLS.
+- TenantScopedStore.
+- Migraciones.
+- Provisionamiento.
+- Compilación de bundles.
+- Datos sintéticos.
+- Workers.
+- Leases.
+- Concurrencia.
+- Telemetría.
+- Métricas.
+- OpenTelemetry cuando corresponda.
+- Logs.
+- Gates.
+- CI.
+- GitHub Actions.
+- Recuperación.
+- Backups.
+- Rollback.
+- Certificación.
+
+Estudia cuidadosamente las propuestas de H01, H02, H03 y los circuitos de certificación.
+
+No consideres que un test local con PGlite acredita el comportamiento concurrente de Postgres.
+
+No consideres que una conexión a Postgres con el usuario propietario de las tablas demuestra aislamiento efectivo por RLS.
+
+No consideres que un heartbeat demuestra que un worker esté realizando correctamente su trabajo.
+
+No confundas readiness, liveness, backlog, freshness y throughput.
+
+No aceptes una ejecución parcial de tests como evidencia de certificación completa.
+
+No aceptes un gate que declare PASS cuando no se han ejecutado pruebas relevantes.
+
+Diseña una infraestructura de evidencia que permita determinar con precisión qué se ha probado, en qué commit, bajo qué condiciones, con qué configuración, qué falló y qué permanece sin certificar.
+
+Investiga cómo mejorar la metodología anterior sin convertir la infraestructura en una carga desproporcionada para una empresa desarrollada por un fundador con agentes de IA.
+
+---
+
+## 12. Auditoría específica de Trans05
+
+Trans05 es una extensión de la arquitectura cognitiva orientada a la continuidad longitudinal del conocimiento.
+
+Su propósito es evitar que los LLM pierdan el contexto fundamental durante conversaciones profesionales largas, especialmente cuando se acumulan decenas o cientos de miles de tokens.
+
+Debes comprender la idea del fundador:
+
+El sistema debe mantener anclajes relevantes, ideas fundamentales, axiomas conversacionales, modelos de conocimiento, marcos conceptuales y estructuras de atención a lo largo de una conversación.
+
+No queremos resumir repetidamente conversaciones hasta destruir sus aspectos fundamentales.
+
+Queremos conservar una representación viva, organizada y actualizable del contexto.
+
+Estudia:
+
+- Anclas cognitivas.
+- Procedencia.
+- Revisiones.
+- Correcciones.
+- Axiomas expresados por el humano.
+- Global Workspace.
+- Grafos multicapa.
+- Selectores.
+- Skills cognitivas.
+- Metacognición funcional.
+- Brief dinámico de aproximadamente 120 palabras como hipótesis de diseño.
+- Recuperación de contexto.
+- Presupuestos.
+- Atención longitudinal.
+- Compilador de skills narrativas.
+
+Las skills cognitivas deben permitir que Slow utilice distintos marcos de interpretación, como:
+
+- Primeros principios.
+- Perspectivas múltiples.
+- Abstracción.
+- Concreción.
+- Contradicción.
+- Causalidad.
+- Síntesis.
+- Estrategia.
+- Contrafactuales.
+- Detección de deriva.
+- Metacognición.
+- Retroalimentación.
+
+No conviertas esta clasificación en una obligación de ejecutar múltiples llamadas a LLM para cada situación.
+
+Busca algoritmos eficientes de selección, composición, abstención, presupuestación y activación contextual.
+
+### Skills narrativas
+
+Estudia profundamente la propuesta de compilación de skills narrativas a partir de:
+
+- Conocimiento empresarial.
+- Documentos.
+- Libros.
+- Transcripciones autorizadas.
+- Vídeos de expertos.
+- Vídeos de actores de la empresa.
+- Conocimiento generado por LLM.
+- Material aportado por humanos.
+
+Estas skills permiten que Fast pueda expresar ideas, historias, analogías, explicaciones, argumentos y conocimiento profesional con sus propias palabras, manteniendo las condiciones y referencias fundamentales.
+
+No queremos respuestas rígidas ni guiones repetitivos.
+
+Tampoco queremos que Fast invente hechos empresariales o experiencias personales.
+
+Debes diseñar un sistema que conserve riqueza expresiva, procedencia, vigencia, permisos, derechos de uso y capacidad de revocación.
+
+Contrasta especialmente los documentos finales de Trans05 y su campaña P10 de compilación narrativa.
+
+---
+
+## 13. Auditoría específica de Trans06
+
+Trans06 es la extensión más reciente de nuestra arquitectura.
+
+Debes leer íntegramente sus ocho documentos y la nota:
+
+`FUTURO-NUCLEO-AXIOMATICO.md`
+
+En Trans05.
+
+También debes leer la sección correspondiente del README principal.
+
+El núcleo original es el propio fundador, su observación y su capacidad de discriminación.
+
+El fundador desea compilar y operar tres empresas propias diferentes y observar su funcionamiento antes de establecer definitivamente el núcleo axiomático sintético.
+
+Trans06 pretende preparar y extender ese sustrato.
+
+### Fundamento conceptual
+
+El todo, lo positivo y lo negativo.
+
+Una unidad puede ser una totalidad respecto a sus componentes y, simultáneamente, parte de una estructura superior.
+
+Las polaridades son relativas al contexto, las relaciones, los objetivos y la escala.
+
+Un estado manifiesto puede coexistir con posibilidades latentes.
+
+La retirada de una estructura puede liberar recursos y crear condiciones para otras configuraciones.
+
+La atracción y la repulsión se interpretan como relaciones organizativas de afinidad, preferencia, compatibilidad, oposición e incompatibilidad.
+
+No queremos reproducir la física ni la biología.
+
+La espiral de caracola y la jerarquía recursiva del 0 al 8 son hipótesis conceptuales abiertas.
+
+No debes definirlas definitivamente sin el fundador.
+
+### Sustrato existente
+
+Audita especialmente:
+
+- `kernel/cromos/cromo.ts`.
+- `kernel/cromos/logic/axioms.ts`.
+- `kernel/cromos/physics/field.ts`.
+- `kernel/graph/attention.ts`.
+- `kernel/graph/rules.ts`.
+- `kernel/graph/promote.ts`.
+- `kernel/graph/consolidate.ts`.
+- `kernel/cognition/cycle.ts`.
+- `kernel/observers/meta.ts`.
+- `packages/domain/src/card-ontology.ts`.
+- `packages/domain/src/cognition-v2.ts`.
+- `engine/cognition/chromatic/ontology-registry.ts`.
+- `engine/cognition/chromatic/card-ontology.ts`.
+- BusinessGraph.
+- BusinessTruth.
+- TruthResolver.
+- EntityResolver.
+- Las máquinas de estados.
+- El metamodelo empresarial.
+- Los contratos de capacidades y SOPs.
+
+Ya existen tres ejes cromáticos y seis polos:
+
+Explorar / Aplicar.
+
+Generar / Verificar.
+
+Expandir / Proteger.
+
+Los polos son independientes, pueden coexistir con intensidades elevadas y admiten valores desconocidos.
+
+No los reduzcas arbitrariamente a una oposición matemática complementaria.
+
+### Trasvase empresarial
+
+La misión de Trans06 consiste en estudiar cómo determinados principios organizativos pueden aplicarse no solamente al conocimiento, sino también a entidades, recursos, relaciones, procesos, objetivos y estructuras empresariales.
+
+Una factura sigue siendo una factura.
+
+Una card puede representar conocimiento sobre ella, pero no sustituye el registro autorizado.
+
+Una transformación local puede modificar la interpretación de una estructura superior.
+
+Eso no significa que la propagación semántica pueda desencadenar operaciones automáticamente.
+
+Revisa nuestras propuestas de primitivas puras, evaluaciones contextuales, validaciones ternarias, campos de afinidad, composición acotada, propagación y simulaciones empresariales.
+
+Busca una solución más sencilla y potente.
+
+La mejor solución podría consistir en eliminar abstracciones innecesarias y reutilizar mejor el sustrato existente.
+
+No construyas un segundo kernel, una segunda ontología, un segundo grafo o un segundo selector.
+
+**La máxima complejidad semántica posible sobre la mínima complejidad axiomática necesaria.**
+
+---
 
 ## 14. Auditoría horizontal de las seis campañas
 Son seis superficies de un único sistema, no proyectos independientes. Detecta duplicación funcional/conceptual, contratos paralelos, interfaces incompatibles, ownership ambiguo, dependencias circulares, conflictos de identidad, autoridad, estado, receipts, revocación y archivos compartidos. Mapa integral productor/consumidor/contrato/evento/evidencia/estado. Cierra ABI común antes de integración, no inventar contratos por dependencia ausente.
