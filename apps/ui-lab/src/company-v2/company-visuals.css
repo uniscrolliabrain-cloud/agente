@@ -1,0 +1,8 @@
+/* Editorial assets are scoped to the compiler; controls retain their Lucide glyphs. */
+.co-root .co-section-visual {display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:center;gap:clamp(12px,2vw,24px);padding:12px;border:1px solid var(--co-line);border-radius:13px;background:var(--co-card);margin-bottom:16px;min-width:0;}
+.co-root .co-section-art {display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:contain;border-radius:8px;}
+.co-root .co-section-symbols {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:start;}
+.co-root .co-section-symbols > div {display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;text-align:center;}
+.co-root .co-section-symbols img {display:block;width:100%;max-width:88px;height:auto;aspect-ratio:1;object-fit:contain;border-radius:8px;}
+.co-root .co-section-symbols span {font-size:11px;line-height:1.4;color:var(--co-muted);overflow-wrap:anywhere;}
+@media(max-width:860px){.co-root .co-section-visual{grid-template-columns:minmax(0,1fr);gap:10px}.co-root .co-section-art{max-height:240px}.co-root .co-section-symbols img{max-width:72px}}
