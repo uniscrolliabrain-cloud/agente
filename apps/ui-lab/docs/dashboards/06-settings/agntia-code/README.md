@@ -2,7 +2,7 @@
 
 Tercer clon del demo: plataforma de IA coding, vibe coding y bitácora de proyectos conectada a GitHub, Vercel y Cloudflare. Se abre desde Ajustes en UI Lab mediante `codeArea`.
 
-Estado: **propuesta de producto**. El clon de [CodeApp.tsx](../../../../src/code-v1/CodeApp.tsx) es andamiaje de interfaz con datos locales; no hay backend, ni llamadas a GitHub/Vercel/Cloudflare, ni ejecución real de código. Todo lo que sigue describe lo que cada superficie **debería** poder hacer y cómo debería comportarse cuando se conecte, no funcionalidad acreditada.
+Estado: **propuesta de producto con datos reales**. El clon de [CodeApp.tsx](../../../../src/code-v1/CodeApp.tsx) ya no usa lorem: muestra los 17 repos de la cuenta con su commit, estado, comandos, variables y pruebas declaradas (`src/code-v1/code-data.ts`, leídos el 26 nov 2026). Sigue sin backend: no hay llamadas a GitHub/Vercel/Cloudflare ni ejecución real de código. Todo lo que sigue describe lo que cada superficie **debería** poder hacer y cómo debería comportarse cuando se conecte, no funcionalidad acreditada.
 
 ## Las 18 superficies
 
