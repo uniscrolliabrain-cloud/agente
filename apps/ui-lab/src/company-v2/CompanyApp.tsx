@@ -23,6 +23,7 @@ import {
   Globe2,
   GraduationCap,
   Handshake,
+  Keyboard,
   Layers,
   Lock,
   Menu,
@@ -30,6 +31,7 @@ import {
   Mic,
   Palette,
   PanelLeft,
+  Pin,
   Plus,
   Search,
   Send,
@@ -46,6 +48,13 @@ import "./company.css";
 import { COMPANY_DATA } from "./company-data";
 import { COMPANY_VISUALS } from "./company-visuals";
 import "./company-visuals.css";
+import {
+  SmartCommandPalette,
+  SmartShortcuts,
+  useSmartNav,
+  type SmartCommand,
+  type SmartShortcut,
+} from "../smart-ux/smart-ux";
 
 type Icon = typeof Compass;
 type SectionId =
@@ -105,6 +114,8 @@ const SECTIONS: Section[] = [
   { id: "versiones", label: "Versiones y publicación", icon: Layers, group: "Publicación", variant: "timeline" },
 ];
 
+const SECTION_IDS = SECTIONS.map((section) => section.id);
+
 const VERSIONS = ["V8 · borrador", "V7 · activa", "ALT-B · explorando", "ALT-C · aparcada"];
 
 /* ------------------------------------------------------------- ideas y chats
@@ -112,6 +123,7 @@ const VERSIONS = ["V8 · borrador", "V7 · activa", "ALT-B · explorando", "ALT-
  * activa. Varias ideas conviven en paralelo y cada una tiene su propia rama de
  * borrador: hablar no cambia nada hasta que una propuesta se publica. */
 type ChatState = "Explorando" | "Con propuesta" | "Aparcada";
+type ChatTurn = { who: "laia" | "owner"; text: string; meta: string };
 type Idea = { n: number; id: string; name: string; short: string; branch: string };
 type Chat = { id: string; idea: number; title: string; preview: string; when: string; state: ChatState };
 
@@ -125,6 +137,20 @@ const SEED_CHATS: Chat[] = [
   { id: "c2", idea: 1, title: "Entrevista con Marcos", preview: "Medir propuestas olvidadas.", when: "Día 86", state: "Explorando" },
   { id: "c3", idea: 2, title: "Modelo de colaboración", preview: "Comisión propuesta de 150 € por cliente.", when: "Día 89", state: "Explorando" },
   { id: "c4", idea: 3, title: "Coste de voz y atención", preview: "Comparar alternativas sin cambiar proveedores.", when: "Día 87", state: "Aparcada" },
+];
+const seedTurns = (chat: Chat, idea: Idea): ChatTurn[] => [
+  { who: "owner", meta: "Tú · " + chat.when, text: chat.title },
+  { who: "laia", meta: "LAIA · demo", text: chat.preview },
+  {
+    who: "laia",
+    meta: "LAIA · demo",
+    text:
+      idea.n === 1
+        ? "Podemos preparar un recordatorio a las 48 horas y revisar la autorización antes de contactar."
+        : idea.n === 2
+          ? "Comparemos venta directa con una comisión de 150 € por cliente al mes."
+          : "Revisemos los costes de voz antes de cambiar proveedores.",
+  },
 ];
 type Content = (typeof COMPANY_DATA)[SectionId];
 function Panel({title,hint,children,className=""}:{title:string;hint?:string;children:ReactNode;className?:string}) {
@@ -166,15 +192,30 @@ function Workspace({section,onSelect}:{section:Section;onSelect:(row:string[])=>
 function ChatView({
   chat,
   idea,
+  turns,
+  draft,
+  thinking,
+  onDraft,
+  onSend,
   onBack,
   onToast,
 }: {
   chat: Chat;
   idea: Idea;
+  turns: ChatTurn[];
+  draft: string;
+  thinking: boolean;
+  onDraft: (value: string) => void;
+  onSend: (text: string) => void;
   onBack: () => void;
   onToast: (message: string) => void;
 }) {
-  const turns = [{who:"owner",meta:"Tú · día 90",text:chat.title},{who:"laia",meta:"LAIA · demo",text:chat.preview},{who:"laia",meta:"LAIA · demo",text:idea.n===1?"Podemos preparar un recordatorio a las 48 horas y revisar la autorización antes de contactar.":idea.n===2?"Comparemos venta directa con una comisión de 150 € por cliente al mes.":"Revisemos los costes de voz antes de cambiar proveedores."}];
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "nearest" });
+  }, [turns.length, thinking]);
+
   return (
     <main className="co-page">
       <header className="co-page-head co-chat-head">
@@ -208,6 +249,15 @@ function ChatView({
           <div className="co-conv-day">
             <span>Hoy · día 90</span>
           </div>
+          {turns.length === 0 && (
+            <div className="co-chat-empty">
+              <span className="co-chat-empty-mark">
+                <Sparkles size={16} />
+              </span>
+              <b>Empieza por lo que quieres cambiar</b>
+              <p>Cuéntale la idea a LAIA. Nada toca la empresa activa hasta que publiques una versión.</p>
+            </div>
+          )}
           {turns.map((turn, i) => (
             <div className={`co-msg co-msg--${turn.who}`} key={i}>
               <span className="co-msg-avatar">{turn.who === "laia" ? <Sparkles size={13} /> : "OW"}</span>
@@ -217,6 +267,22 @@ function ChatView({
               </div>
             </div>
           ))}
+          {thinking && (
+            <div className="co-msg co-msg--laia co-msg--typing" role="status">
+              <span className="co-msg-avatar">
+                <Sparkles size={13} />
+              </span>
+              <div>
+                <span className="co-msg-meta">LAIA · escribiendo</span>
+                <span className="co-typing" aria-label="LAIA está escribiendo">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </div>
+            </div>
+          )}
+          <div ref={endRef} />
 
           <div className="co-conv-note">
             <Sparkles size={15} />
@@ -261,11 +327,18 @@ function ChatView({
             className="co-composer"
             onSubmit={(event) => {
               event.preventDefault();
-              onToast("Envío no conectado. No se ha guardado el mensaje.");
+              onSend(draft);
             }}
           >
-            <input placeholder="Sigue pensando en voz alta…" aria-label="Escribir a LAIA" />
-            <button type="submit" aria-label="Enviar">
+            <input
+              value={draft}
+              onChange={(event) => onDraft(event.target.value)}
+              placeholder="Sigue pensando en voz alta…"
+              aria-label="Escribir a LAIA"
+              autoComplete="off"
+            />
+            <span className="co-composer-hint" aria-hidden="true">↵</span>
+            <button type="submit" aria-label="Enviar" disabled={!draft.trim() || thinking}>
               <Send size={15} />
             </button>
           </form>
@@ -340,21 +413,59 @@ function ChatView({
 /* ------------------------------------------------------------------ shell */
 
 export default function CompanyApp({ onClose }: { onClose: () => void }) {
-  const [sectionId, setSectionId] = useState<SectionId>("estudio");
-  const [version, setVersion] = useState(VERSIONS[0]);
+  const {
+    sectionId,
+    go,
+    recents,
+    pins,
+    collapsed,
+    isPinned,
+    togglePin,
+    setCollapsed,
+    paletteOpen,
+    openPalette,
+    closePalette,
+    shortcutsOpen,
+    openShortcuts,
+    closeShortcuts,
+  } = useSmartNav<SectionId>({
+    storageKey: "agntia_company_smart_v1",
+    ids: SECTION_IDS,
+    initial: "estudio",
+  });
+  const choose = (id: SectionId) => {
+    go(id);
+    setSelected(null);
+    setChatId(null);
+    setDrawer(false);
+  };
+  const [version, setVersion] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem("agntia_company_version");
+      return stored && VERSIONS.includes(stored) ? stored : VERSIONS[0];
+    } catch {
+      return VERSIONS[0];
+    }
+  });
   const [versionOpen, setVersionOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const [notice, setNotice] = useState("");
   const [selected, setSelected] = useState<string[] | null>(null);
   const [chats, setChats] = useState<Chat[]>(SEED_CHATS);
   const [chatId, setChatId] = useState<string | null>(null);
   const [chatsOpen, setChatsOpen] = useState(true);
+  const [messages, setMessages] = useState<Record<string, ChatTurn[]>>({});
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [thinking, setThinking] = useState<string | null>(null);
+  const timers = useRef<number[]>([]);
   const scroller = useRef<HTMLDivElement>(null);
   const section = SECTIONS.find((s) => s.id === sectionId) ?? SECTIONS[0];
   const content = COMPANY_DATA[section.id];
   const activeChat = chats.find((c) => c.id === chatId) ?? null;
   const activeIdea = activeChat ? IDEAS.find((i) => i.n === activeChat.idea) ?? IDEAS[0] : null;
+  const activeTurns = activeChat
+    ? messages[activeChat.id] ?? seedTurns(activeChat, activeIdea ?? IDEAS[0])
+    : [];
 
   const newChat = () => {
     const id = `chat-${Date.now()}`;
@@ -362,25 +473,59 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
       { id, idea: sectionId==="mercado"||sectionId==="modelo"||sectionId==="ecosistema"?2:sectionId==="economia"||sectionId==="tecnologia"?3:1, title: section.label, preview: content.next, when: "Ahora", state: "Explorando" },
       ...list,
     ]);
+    setMessages((prev) => ({ ...prev, [id]: [] }));
     setChatId(id);
     setChatsOpen(true);
     setDrawer(false);
   };
+
+  const nowTime = () => new Date().toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+
+  const sendMessage = (chat: Chat, text: string) => {
+    const clean = text.trim();
+    if (!clean || thinking === chat.id) return;
+    const seed = SEED_CHATS.some((entry) => entry.id === chat.id)
+      ? seedTurns(chat, IDEAS.find((i) => i.n === chat.idea) ?? IDEAS[0])
+      : [];
+    setMessages((prev) => ({
+      ...prev,
+      [chat.id]: [...(prev[chat.id] ?? seed), { who: "owner", text: clean, meta: `Tú · ${nowTime()}` }],
+    }));
+    setDrafts((prev) => ({ ...prev, [chat.id]: "" }));
+    setThinking(chat.id);
+    const timer = window.setTimeout(() => {
+      setMessages((prev) => ({
+        ...prev,
+        [chat.id]: [
+          ...(prev[chat.id] ?? []),
+          {
+            who: "laia",
+            text: "Anotado. Lo dejo en el borrador de esta idea; si quieres, lo convierto en propuesta y lo revisamos juntos.",
+            meta: `LAIA · ${nowTime()}`,
+          },
+        ],
+      }));
+      setThinking((current) => (current === chat.id ? null : current));
+      timers.current = timers.current.filter((id) => id !== timer);
+    }, 900);
+    timers.current.push(timer);
+  };
+
+  useEffect(() => () => {
+    timers.current.forEach((timer) => window.clearTimeout(timer));
+  }, []);
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
   }, [sectionId, chatId]);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (drawer) setDrawer(false);
-      else if (versionOpen) setVersionOpen(false);
-      else onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawer, versionOpen, onClose]);
+    try {
+      window.localStorage.setItem("agntia_company_version", version);
+    } catch {
+      // La demo sigue funcionando sin memoria de preferencias.
+    }
+  }, [version]);
 
   useEffect(() => {
     if (!notice) return;
@@ -388,12 +533,148 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  const choose = (id: SectionId) => {
-    setSectionId(id);
-    setSelected(null);
-    setChatId(null);
+  const openChat = (chat: Chat) => {
+    setChatId(chat.id);
+    setChatsOpen(true);
     setDrawer(false);
   };
+
+  const shortcuts: SmartShortcut[] = [
+    { group: "Navegación", keys: "⌘ K", label: "Buscar secciones y acciones" },
+    { group: "Navegación", keys: "/", label: "Abrir la búsqueda" },
+    { group: "Navegación", keys: "⌘ B", label: "Plegar o expandir el menú" },
+    { group: "Navegación", keys: "Esc", label: "Cerrar capas y volver" },
+    { group: "General", keys: "?", label: "Mostrar esta ayuda" },
+  ];
+
+  const paletteCommands: SmartCommand[] = [
+    ...SECTIONS.map((entry): SmartCommand => {
+      const Icon = entry.icon;
+      return {
+        id: entry.id,
+        label: entry.label,
+        group: entry.group,
+        hint: `${entry.group} · ${version.split(" ·")[0]}`,
+        keywords: `${entry.variant} ${entry.id}`,
+        icon: <Icon size={15} />,
+        canPin: true,
+        run: () => choose(entry.id),
+      };
+    }),
+    ...chats.map((chat): SmartCommand => ({
+      id: `chat-${chat.id}`,
+      label: chat.title,
+      group: "Conversaciones",
+      hint: `${chat.when} · ${chat.state}`,
+      keywords: chat.preview,
+      icon: <MessageSquare size={15} />,
+      run: () => openChat(chat),
+    })),
+    {
+      id: "action-new-chat",
+      label: "Nueva conversación",
+      group: "Acciones",
+      hint: "Abre una idea en paralelo",
+      icon: <Plus size={15} />,
+      run: newChat,
+    },
+    {
+      id: "action-publish",
+      label: "Publicar borrador",
+      group: "Acciones",
+      hint: version,
+      icon: <ArrowUpRight size={15} />,
+      run: () => setNotice("Publicar llegará cuando conectemos el backend."),
+    },
+    {
+      id: "action-version",
+      label: "Cambiar de versión",
+      group: "Acciones",
+      hint: VERSIONS.join(" · "),
+      icon: <Layers size={15} />,
+      run: () => setVersionOpen(true),
+    },
+    {
+      id: "action-rail",
+      label: collapsed ? "Expandir menú" : "Plegar menú",
+      group: "Acciones",
+      shortcut: "⌘ B",
+      icon: <PanelLeft size={15} />,
+      run: () => setCollapsed((value) => !value),
+    },
+    {
+      id: "action-shortcuts",
+      label: "Atajos del teclado",
+      group: "Acciones",
+      shortcut: "?",
+      icon: <Keyboard size={15} />,
+      run: openShortcuts,
+    },
+    {
+      id: "action-exit",
+      label: "Volver a la app",
+      group: "Sesión",
+      icon: <ArrowLeft size={15} />,
+      run: onClose,
+    },
+  ];
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target !== null &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          Boolean(target.isContentEditable));
+      const mod = event.metaKey || event.ctrlKey;
+      const key = event.key.toLowerCase();
+
+      if (mod && key === "k") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (paletteOpen) closePalette();
+        else openPalette();
+        return;
+      }
+      if (mod && key === "b") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setCollapsed((value) => !value);
+        return;
+      }
+      if (!mod && !typing && (event.key === "/" || event.key === "?")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.key === "?") openShortcuts();
+        else openPalette();
+        return;
+      }
+      if (event.key !== "Escape") return;
+      event.stopImmediatePropagation();
+      if (paletteOpen) closePalette();
+      else if (shortcutsOpen) closeShortcuts();
+      else if (drawer) setDrawer(false);
+      else if (versionOpen) setVersionOpen(false);
+      else onClose();
+    };
+    // Captura: la meta-app tiene prioridad sobre los atajos del shell que queda
+    // debajo, para que ⌘K no abra dos paletas a la vez.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    paletteOpen,
+    shortcutsOpen,
+    drawer,
+    versionOpen,
+    onClose,
+    openPalette,
+    closePalette,
+    openShortcuts,
+    closeShortcuts,
+    setCollapsed,
+  ]);
 
   return (
     <div className="co-root" role="dialog" aria-modal="true" aria-label="Tu Empresa · estudio de compilación">
@@ -500,6 +781,32 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
         </div>
 
         <nav className="co-nav" aria-label="Secciones del compilador">
+          {pins.length > 0 && (
+            <div className="co-nav-group co-nav-group--pins">
+              <small>
+                <Pin size={10} aria-hidden="true" /> Fijados
+              </small>
+              {pins.map((id) => {
+                const pinned = SECTIONS.find((entry) => entry.id === id);
+                if (!pinned) return null;
+                const Icon = pinned.icon;
+                return (
+                  <button
+                    type="button"
+                    key={`pin-${id}`}
+                    className={id === sectionId ? "is-active" : ""}
+                    aria-current={id === sectionId ? "page" : undefined}
+                    title={`${pinned.label} · fijada`}
+                    onClick={() => choose(pinned.id)}
+                  >
+                    <Icon size={16} />
+                    <span>{pinned.label}</span>
+                    <Pin size={11} className="co-nav-pinmark" aria-hidden="true" />
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {GROUPS.map((group) => (
             <div className="co-nav-group" key={group}>
               <small>{group}</small>
@@ -514,6 +821,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
                 >
                   <Icon size={16} />
                   <span>{label}</span>
+                  {isPinned(id) && <Pin size={11} className="co-nav-pinmark" aria-hidden="true" />}
                   {id === "versiones" && <em className="co-nav-badge">3</em>}
                 </button>
               ))}
@@ -562,17 +870,38 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
               <PanelLeft size={17} />
             </button>
             <nav className="co-crumb" aria-label="Ruta">
-              <span>Tu Empresa</span>
+              <button type="button" className="co-crumb-root" onClick={() => choose("estudio")}>
+                Tu Empresa
+              </button>
               <ChevronRight size={13} />
-              <b>{activeChat ? "Conversaciones" : section.label}</b>
+              <span>{activeChat ? "Conversaciones" : section.group}</span>
+              <ChevronRight size={13} />
+              <b aria-current="page">{activeChat ? activeChat.title : section.label}</b>
             </nav>
           </div>
           <div className="co-top-right">
+            <button
+              type="button"
+              className="co-icon-btn co-search-btn"
+              aria-label="Buscar en la compilación"
+              aria-haspopup="dialog"
+              onClick={openPalette}
+            >
+              <Search size={16} />
+            </button>
             <span className="co-demo"><span /> Datos sintéticos</span>
-            <label className="co-top-search">
+            <button
+              type="button"
+              className="co-top-search"
+              onClick={openPalette}
+              aria-haspopup="dialog"
+              aria-keyshortcuts="Meta+K Control+K"
+              title="Buscar secciones y acciones (⌘K)"
+            >
               <Search size={14} />
-              <input placeholder="Buscar en la compilación…" aria-label="Buscar en la compilación" />
-            </label>
+              <span>Buscar en la compilación…</span>
+              <kbd>⌘K</kbd>
+            </button>
             <button type="button" className="co-btn co-btn--ghost co-only-desktop">
               <Plus size={15} /> Nuevo
             </button>
@@ -585,7 +914,18 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
 
         <div className="co-scroll" ref={scroller}>
           {activeChat && activeIdea ? (
-            <ChatView chat={activeChat} idea={activeIdea} onBack={() => setChatId(null)} onToast={setNotice} />
+            <ChatView
+              key={activeChat.id}
+              chat={activeChat}
+              idea={activeIdea}
+              turns={activeTurns}
+              draft={drafts[activeChat.id] ?? ""}
+              thinking={thinking === activeChat.id}
+              onDraft={(value) => setDrafts((prev) => ({ ...prev, [activeChat.id]: value }))}
+              onSend={(text) => sendMessage(activeChat, text)}
+              onBack={() => setChatId(null)}
+              onToast={setNotice}
+            />
           ) : (
           <main className="co-page">
             <header className="co-page-head">
@@ -632,6 +972,27 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
           )}
         </div>
       </div>
+
+      <SmartCommandPalette
+        open={paletteOpen}
+        tone="company"
+        title="Buscar en Tu Empresa"
+        subtitle={`${SECTIONS.length} secciones · ${chats.length} conversaciones`}
+        placeholder="Buscar secciones, acciones o ideas…"
+        commands={paletteCommands}
+        recents={recents}
+        pins={pins}
+        onTogglePin={togglePin}
+        onClose={closePalette}
+        onShowShortcuts={openShortcuts}
+      />
+      <SmartShortcuts
+        open={shortcutsOpen}
+        tone="company"
+        title="Atajos de Tu Empresa"
+        shortcuts={shortcuts}
+        onClose={closeShortcuts}
+      />
 
       {notice && (
         <div className="co-toast" role="status">

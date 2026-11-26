@@ -26,11 +26,13 @@ import {
   Globe,
   GraduationCap,
   KeyRound,
+  Keyboard,
   Lock,
   Menu,
   MessagesSquare,
   NotebookPen,
   PanelLeft,
+  Pin,
   Play,
   Plus,
   Rocket,
@@ -43,6 +45,13 @@ import {
   X,
 } from "lucide-react";
 import "../design-system/agntia-tokens.css";
+import {
+  SmartCommandPalette,
+  SmartShortcuts,
+  useSmartNav,
+  type SmartCommand,
+  type SmartShortcut,
+} from "../smart-ux/smart-ux";
 import "./code.css";
 import {
   ACTIVITY,
@@ -123,6 +132,8 @@ const SECTIONS: Section[] = [
   { id: "academia", label: "Academia", icon: GraduationCap, group: "Aprender", variant: "academy" },
   { id: "bitacora", label: "Bitácora", icon: NotebookPen, group: "Aprender", variant: "journal" },
 ];
+
+const SECTION_IDS = SECTIONS.map((section) => section.id);
 
 const RepoCtx = createContext<Repo>(REPOS[0]);
 const useRepo = () => useContext(RepoCtx);
@@ -555,10 +566,21 @@ function TerminalView() {
     "$ ",
   ]);
   const [value, setValue] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [cursor, setCursor] = useState(-1);
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
   }, [lines]);
+
+  const submit = () => {
+    const command = value.trim();
+    if (!command) return;
+    setLines((list) => [...list, `$ ${command}`, "◇ la demo no ejecuta comandos", "$ "]);
+    setHistory((list) => [...list, command]);
+    setCursor(-1);
+    setValue("");
+  };
   return (
     <>
       <div className="ac-term">
@@ -584,13 +606,43 @@ function TerminalView() {
           className="ac-term-input"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!value.trim()) return;
-            setLines((list) => [...list, `$ ${value.trim()}`, "◇ la demo no ejecuta comandos", "$ "]);
-            setValue("");
+            submit();
           }}
         >
           <span className="ac-mono">$</span>
-          <input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Escribe un comando…" aria-label="Comando" />
+          <input
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setCursor(-1);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                if (!history.length) return;
+                const next = cursor < 0 ? history.length - 1 : Math.max(0, cursor - 1);
+                setCursor(next);
+                setValue(history[next]);
+              } else if (event.key === "ArrowDown") {
+                event.preventDefault();
+                if (cursor < 0) return;
+                const next = cursor + 1;
+                if (next >= history.length) {
+                  setCursor(-1);
+                  setValue("");
+                } else {
+                  setCursor(next);
+                  setValue(history[next]);
+                }
+              }
+            }}
+            placeholder="Escribe un comando…"
+            aria-label="Comando"
+            title="↑ y ↓ recorren el historial"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <kbd className="ac-term-kbd">↵</kbd>
         </form>
       </div>
       <div className="ac-cols">
@@ -1299,11 +1351,43 @@ const VARIANTS: Record<Variant, ReactNode> = {
 /* -------------------------------------------------------------------- shell */
 
 export default function CodeApp({ onClose }: { onClose: () => void }) {
-  const [sectionId, setSectionId] = useState<SectionId>("estudio");
-  const [repoName, setRepoName] = useState("agente");
+  const {
+    sectionId,
+    go,
+    recents,
+    pins,
+    collapsed,
+    isPinned,
+    togglePin,
+    setCollapsed,
+    paletteOpen,
+    openPalette,
+    closePalette,
+    shortcutsOpen,
+    openShortcuts,
+    closeShortcuts,
+  } = useSmartNav<SectionId>({
+    storageKey: "agntia_code_smart_v1",
+    ids: SECTION_IDS,
+    initial: "estudio",
+  });
+  const [repoName, setRepoName] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem("agntia_code_repo");
+      return stored && REPOS.some((entry) => entry.name === stored) ? stored : "agente";
+    } catch {
+      return "agente";
+    }
+  });
   const [projectOpen, setProjectOpen] = useState(false);
-  const [env, setEnv] = useState("Preview");
-  const [collapsed, setCollapsed] = useState(false);
+  const [env, setEnv] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem("agntia_code_env");
+      return stored === "Producción" ? "Producción" : "Preview";
+    } catch {
+      return "Preview";
+    }
+  });
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
@@ -1315,15 +1399,13 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
   }, [sectionId]);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (drawer) setDrawer(false);
-      else if (projectOpen) setProjectOpen(false);
-      else onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawer, projectOpen, onClose]);
+    try {
+      window.localStorage.setItem("agntia_code_repo", repoName);
+      window.localStorage.setItem("agntia_code_env", env);
+    } catch {
+      // La demo sigue funcionando sin memoria de preferencias.
+    }
+  }, [repoName, env]);
 
   useEffect(() => {
     if (!notice) return;
@@ -1332,11 +1414,175 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
   }, [notice]);
 
   const choose = (id: SectionId) => {
-    setSectionId(id);
+    go(id);
     setDrawer(false);
   };
 
   const run = (message: string) => setNotice(message);
+
+  const shortcuts: SmartShortcut[] = [
+    { group: "Navegación", keys: "⌘ K", label: "Buscar workspaces y acciones" },
+    { group: "Navegación", keys: "/", label: "Abrir la búsqueda" },
+    { group: "Navegación", keys: "⌘ J", label: "Abrir la terminal" },
+    { group: "Navegación", keys: "⌘ B", label: "Plegar o expandir el menú" },
+    { group: "Navegación", keys: "Esc", label: "Cerrar capas y volver" },
+    { group: "General", keys: "?", label: "Mostrar esta ayuda" },
+  ];
+
+  const paletteCommands: SmartCommand[] = [
+    ...SECTIONS.map((entry): SmartCommand => {
+      const Icon = entry.icon;
+      return {
+        id: entry.id,
+        label: entry.label,
+        group: entry.group,
+        hint: `${entry.group} · ${entry.variant}`,
+        keywords: `${entry.variant} ${entry.id}`,
+        icon: <Icon size={15} />,
+        canPin: true,
+        run: () => choose(entry.id),
+      };
+    }),
+    ...REPOS.map((entry): SmartCommand => ({
+      id: `repo-${entry.name}`,
+      label: entry.name,
+      group: "Proyectos",
+      hint: `${entry.state} · ${entry.language}`,
+      keywords: `${entry.summary} ${entry.project}`,
+      icon: <FolderGit2 size={15} />,
+      run: () => {
+        setRepoName(entry.name);
+        choose("estudio");
+      },
+    })),
+    {
+      id: "action-project",
+      label: "Nuevo proyecto",
+      group: "Acciones",
+      hint: "Crea un proyecto de ejemplo",
+      icon: <Plus size={15} />,
+      run: () => run("Nuevo proyecto de ejemplo. En la demo no se crea nada real."),
+    },
+    {
+      id: "action-sync",
+      label: "Sincronizar con GitHub",
+      group: "Acciones",
+      hint: `Repositorio ${repo.name}`,
+      icon: <Github size={15} />,
+      run: () => run("Sincronización simulada: datos de main del 26 nov."),
+    },
+    {
+      id: "action-deploy",
+      label: "Desplegar a producción",
+      group: "Acciones",
+      hint: `Entorno actual: ${env}`,
+      icon: <Rocket size={15} />,
+      run: () => run("Despliegue simulado: no hay backend conectado."),
+    },
+    {
+      id: "action-env",
+      label: `Cambiar entorno a ${env === "Preview" ? "Producción" : "Preview"}`,
+      group: "Acciones",
+      icon: <Globe size={15} />,
+      run: () => setEnv(env === "Preview" ? "Producción" : "Preview"),
+    },
+    {
+      id: "action-terminal",
+      label: "Abrir terminal",
+      group: "Acciones",
+      shortcut: "⌘ J",
+      icon: <SquareTerminal size={15} />,
+      run: () => choose("terminal"),
+    },
+    {
+      id: "action-rail",
+      label: collapsed ? "Expandir menú" : "Plegar menú",
+      group: "Acciones",
+      shortcut: "⌘ B",
+      icon: <PanelLeft size={15} />,
+      run: () => setCollapsed((value) => !value),
+    },
+    {
+      id: "action-shortcuts",
+      label: "Atajos del teclado",
+      group: "Acciones",
+      shortcut: "?",
+      icon: <Keyboard size={15} />,
+      run: openShortcuts,
+    },
+    {
+      id: "action-exit",
+      label: "Volver a la app",
+      group: "Sesión",
+      icon: <ArrowLeft size={15} />,
+      run: onClose,
+    },
+  ];
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target !== null &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          Boolean(target.isContentEditable));
+      const mod = event.metaKey || event.ctrlKey;
+      const key = event.key.toLowerCase();
+
+      if (mod && key === "k") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (paletteOpen) closePalette();
+        else openPalette();
+        return;
+      }
+      if (mod && key === "b") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setCollapsed((value) => !value);
+        return;
+      }
+      if (mod && key === "j") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        go("terminal");
+        setDrawer(false);
+        return;
+      }
+      if (!mod && !typing && (event.key === "/" || event.key === "?")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.key === "?") openShortcuts();
+        else openPalette();
+        return;
+      }
+      if (event.key !== "Escape") return;
+      event.stopImmediatePropagation();
+      if (paletteOpen) closePalette();
+      else if (shortcutsOpen) closeShortcuts();
+      else if (drawer) setDrawer(false);
+      else if (projectOpen) setProjectOpen(false);
+      else onClose();
+    };
+    // Captura: la meta-app tiene prioridad sobre los atajos del shell que queda
+    // debajo, para que ⌘K no abra dos paletas a la vez.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    paletteOpen,
+    shortcutsOpen,
+    drawer,
+    projectOpen,
+    onClose,
+    openPalette,
+    closePalette,
+    openShortcuts,
+    closeShortcuts,
+    setCollapsed,
+    go,
+  ]);
 
   return (
     <RepoCtx.Provider value={repo}>
@@ -1401,6 +1647,32 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
           </div>
 
           <nav className="ac-nav" aria-label="Workspaces de Agntia Code">
+            {pins.length > 0 && (
+              <div className="ac-nav-group ac-nav-group--pins">
+                <small>
+                  <Pin size={10} aria-hidden="true" /> Fijados
+                </small>
+                {pins.map((id) => {
+                  const pinned = SECTIONS.find((entry) => entry.id === id);
+                  if (!pinned) return null;
+                  const Icon = pinned.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={`pin-${id}`}
+                      className={id === sectionId ? "is-active" : ""}
+                      aria-current={id === sectionId ? "page" : undefined}
+                      title={`${pinned.label} · fijada`}
+                      onClick={() => choose(pinned.id)}
+                    >
+                      <Icon size={15} />
+                      <span>{pinned.label}</span>
+                      <Pin size={11} className="ac-nav-pinmark" aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             {GROUPS.map((group) => (
               <div className="ac-nav-group" key={group}>
                 <small>{group}</small>
@@ -1415,6 +1687,7 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
                   >
                     <Icon size={15} />
                     <span>{label}</span>
+                    {isPinned(id) && <Pin size={11} className="ac-nav-pinmark" aria-hidden="true" />}
                     {id === "ramas" && <em className="ac-nav-badge">0</em>}
                   </button>
                 ))}
@@ -1466,12 +1739,25 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
                 <PanelLeft size={16} />
               </button>
               <nav className="ac-crumb" aria-label="Ruta">
-                <span className="ac-mono">agntia code</span>
+                <button type="button" className="ac-crumb-root" onClick={() => choose("estudio")}>
+                  agntia code
+                </button>
                 <ChevronRight size={12} />
-                <b>{section.label}</b>
+                <span>{section.group}</span>
+                <ChevronRight size={12} />
+                <b aria-current="page">{section.label}</b>
               </nav>
             </div>
             <div className="ac-top-right">
+              <button
+                type="button"
+                className="ac-icon-btn ac-search-btn"
+                aria-label="Buscar en el código"
+                aria-haspopup="dialog"
+                onClick={openPalette}
+              >
+                <Search size={15} />
+              </button>
               <span className="ac-env">
                 {["Preview", "Producción"].map((e) => (
                   <button type="button" key={e} className={env === e ? "is-active" : ""} onClick={() => setEnv(e)}>
@@ -1479,10 +1765,18 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
                   </button>
                 ))}
               </span>
-              <label className="ac-top-search">
+              <button
+                type="button"
+                className="ac-top-search"
+                onClick={openPalette}
+                aria-haspopup="dialog"
+                aria-keyshortcuts="Meta+K Control+K"
+                title="Buscar workspaces y acciones (⌘K)"
+              >
                 <Search size={13} />
-                <input placeholder="Buscar en el código…" aria-label="Buscar en el código" />
-              </label>
+                <span>Buscar en el código…</span>
+                <kbd>⌘K</kbd>
+              </button>
               <button
                 type="button"
                 className="ac-icon-btn"
@@ -1563,6 +1857,27 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
             <span className="ac-mono">{repo.language}</span>
           </div>
         </div>
+
+        <SmartCommandPalette
+          open={paletteOpen}
+          tone="code"
+          title="Buscar en Agntia Code"
+          subtitle={`${SECTIONS.length} workspaces · ${REPOS.length} repos`}
+          placeholder="Buscar workspaces, repos o acciones…"
+          commands={paletteCommands}
+          recents={recents}
+          pins={pins}
+          onTogglePin={togglePin}
+          onClose={closePalette}
+          onShowShortcuts={openShortcuts}
+        />
+        <SmartShortcuts
+          open={shortcutsOpen}
+          tone="code"
+          title="Atajos de Agntia Code"
+          shortcuts={shortcuts}
+          onClose={closeShortcuts}
+        />
 
         {notice && (
           <div className="ac-toast" role="status">
