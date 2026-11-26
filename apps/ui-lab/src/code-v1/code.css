@@ -612,13 +612,15 @@
   transition: background 130ms ease, border-color 130ms ease;
 }
 
-.ac-btn--solid {
+/* La regla base `.ac-root button` (color: inherit) gana a una clase suelta:
+ * el texto de los botones sólidos quedaba negro sobre negro. */
+.ac-root .ac-btn--solid {
   background: var(--ac-ink);
   border-color: var(--ac-ink);
   color: #fbf8f1;
 }
 
-.ac-btn--solid:hover {
+.ac-root .ac-btn--solid:hover {
   background: #000;
 }
 
@@ -1988,7 +1990,10 @@
   overflow-x: auto;
 }
 
-.ac-stage {
+/* Las etapas del pipeline llevan su propio nombre: `.ac-stage` es la columna
+ * del shell y, compartido, el `white-space:nowrap` del pipeline se heredaba a
+ * toda la página y la estiraba más allá del móvil. */
+.ac-pipe-stage {
   position: relative;
   display: flex;
   align-items: center;
@@ -1997,7 +2002,7 @@
   white-space: nowrap;
 }
 
-.ac-stage:last-child {
+.ac-pipe-stage:last-child {
   padding-right: 0;
 }
 
@@ -2018,7 +2023,7 @@
   color: #a89e8f;
 }
 
-.ac-stage b {
+.ac-pipe-stage b {
   font-size: 10px;
   font-weight: 600;
 }

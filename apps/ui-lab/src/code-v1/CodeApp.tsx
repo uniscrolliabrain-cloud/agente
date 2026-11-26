@@ -864,7 +864,7 @@ function Deploys() {
           ].map(([label, Icon, state], i) => {
             const I = Icon as Icon;
             return (
-              <div className="ac-stage" key={String(label)}>
+              <div className="ac-pipe-stage" key={String(label)}>
                 <span className={"ac-stage-icon" + (state === "wait" ? " is-wait" : "")}>
                   {state === "wait" ? <Clock3 size={14} /> : <I size={14} />}
                 </span>

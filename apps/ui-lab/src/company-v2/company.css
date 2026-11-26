@@ -625,13 +625,15 @@
   transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
-.co-btn--solid {
+/* Ver nota en code.css: `.co-root button` (color: inherit) necesita esta
+ * especificidad para que el texto claro se vea sobre el botón sólido. */
+.co-root .co-btn--solid {
   background: var(--co-ink);
   color: #fbf8f1;
   border-color: var(--co-ink);
 }
 
-.co-btn--solid:hover {
+.co-root .co-btn--solid:hover {
   background: #000;
 }
 
