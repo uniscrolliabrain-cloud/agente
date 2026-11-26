@@ -68,12 +68,13 @@ export class MetricsRegistry {
 
   // HISTOGRAM_QUANTILE_V1 - calcula un cuantil (0..1) sobre el histograma.
   // METRICS_QUANTILE_P99_V1
-  quantile(name: string, q: number): number | undefined {
+  quantile(name: string, q: number, filter?: { tenant?: string }): number | undefined {
     const h = this.histograms.get(name);
     if (!h || h.samples.size === 0) return undefined;
     let total = 0;
     const rows: { le: number; cumulative: number }[] = [];
     for (const s of h.samples.values()) {
+      if (filter?.tenant && s.labels.tenant !== filter.tenant) continue;
       let cumulative = 0;
       for (let i = 0; i < h.buckets.length; i += 1) {
         cumulative += s.counts[i];
@@ -183,6 +184,7 @@ export const globalMetrics = new MetricsRegistry();
 
 // Registro de los contadores y gauges base.
 globalMetrics.counter("agente_http_requests_total", "Requests HTTP por mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©todo, ruta y status");
+globalMetrics.counter("http_errors_by_route_total", "HTTP errors by route and status");
 globalMetrics.counter("agente_tasks_created_total", "Tareas creadas por tenant y tipo");
 globalMetrics.counter("agente_tasks_completed_total", "Tareas completadas por tenant y estado");
 globalMetrics.counter("agente_llm_calls_total", "Llamadas al LLM por velocidad, modelo, source");
