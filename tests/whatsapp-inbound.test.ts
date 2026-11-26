@@ -216,3 +216,13 @@ test("parser never invents a provider id and preserves all extended text message
   assert.equal(extractIncomingMessages(body, "evolution").length, 1);
   assert.equal(extractIncomingMessages({ ...body, data: [body.data, { ...body.data, key: { ...body.data.key, id: "ev-2" }, message: { extendedTextMessage: { text: "Segundo" } } }] }, "evolution").length, 2);
 });
+
+test("a replayed provider message cannot replace the original text or sender", async () => {
+  const f = await harness();
+  assert.equal((await f.post(meta([message("immutable", "Original")]))).status, 200);
+  assert.equal((await f.post(meta([message("immutable", "Changed")]))).status, 409);
+  assert.equal((await f.post(meta([{...message("immutable", "Original"),from:"34600999999"}]))).status, 409);
+  assert.equal((await f.post(meta([message("immutable", "Original")]))).status, 200);
+  assert.equal((await f.tasks()).length, 1);
+  assert.equal((await f.tasks())[0].input.text, "Original");
+});

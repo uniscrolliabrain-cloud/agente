@@ -181,11 +181,12 @@ test("Meta WhatsApp sin token responde 503 y un 401 es rechazo visible", async (
   const rejected = new MetaWhatsAppClient({
     token: "EAAG_test",
     phoneNumberId: "123456",
-    fetch: fakeFetch(401, { error: { message: "Invalid OAuth access token" } }),
+    fetch: fakeFetch(401, { error: { message: "Invalid OAuth access token EAAG_synthetic_secret" } }),
   });
   await assert.rejects(
     () => rejected.sendText("+34600111222", "Hola"),
     (error: { status?: number; message?: string }) =>
-      error.status === 422 && Boolean(error.message?.includes("Invalid OAuth")),
+      error.status === 422 && Boolean(error.message?.includes("HTTP 401")) &&
+      !error.message?.includes("Invalid OAuth") && !error.message?.includes("EAAG_synthetic_secret"),
   );
 });

@@ -18,9 +18,22 @@ import { agentConfigured } from "./agent.ts";
 import type { Config } from "./config.ts";
 import type { Store } from "./db.ts";
 import { AppError } from "./errors.ts";
+import { logWarn } from "./log.ts";
 import type { Files } from "./files.ts";
 import type { GoogleAuth } from "./google-auth.ts";
 import type { RagService } from "./engine/rag.ts";
+
+export type WorkspaceEffect =
+  | { mode: "sample"; state: "simulated"; summary: string }
+  | {
+      mode: "live";
+      state: "accepted";
+      summary: string;
+      evidence:
+        | { family: "gmail"; messageId: string; threadId?: string }
+        | { family: "calendar"; calendarId: string; eventId: string; operation: "create" | "update" | "delete" }
+        | { family: "drive"; fileId: string; operation: "rename" | "trash" };
+    };
 
 // GMAIL_REPLY_GUARD_V1 (campana 15) - direcciones canonicas de una cabecera.
 // El texto del correo es dato, no instruccion: solo se responde a quien ya
@@ -730,6 +743,16 @@ export class WorkspaceService {
     connectionId?: string,
     targetVersion?: string,
   ): Promise<string> {
+    const effect = await this.executeEffect(owner, input, connectionId, targetVersion);
+    return effect.summary;
+  }
+
+  async executeEffect(
+    owner: string,
+    input: ProposalInput,
+    connectionId?: string,
+    targetVersion?: string,
+  ): Promise<WorkspaceEffect> {
     if (this.config.mode === "sample") {
       if (input.kind === "drive.trash" || input.kind === "drive.rename")
         throw new AppError(
@@ -751,15 +774,15 @@ export class WorkspaceService {
           label: "Sent · local",
           attachments: input.data.attachmentIds,
         });
-        return `Saved to local sent mail · ${id}`;
+        return { mode: "sample", state: "simulated", summary: `Saved to local sent mail · ${id}` };
       }
       if (input.kind === "calendar.delete") {
         await this.db.remove(owner, "events", input.data.eventId);
-        return "Removed from local calendar";
+        return { mode: "sample", state: "simulated", summary: "Removed from local calendar" };
       }
       const id = input.kind === "calendar.update" ? input.data.eventId : randomUUID();
       await this.db.put(owner, "events", { ...input.data, id });
-      return `Saved to local calendar · ${id}`;
+      return { mode: "sample", state: "simulated", summary: `Saved to local calendar · ${id}` };
     }
     const tokens = await this.googleAuth.tokens(owner);
     if (!tokens) throw new AppError("Google is disconnected", 409);
@@ -781,9 +804,14 @@ export class WorkspaceService {
       try {
         return await call();
       } catch (error) {
-        if (error instanceof AppError && error.status < 500) throw error;
+        const markedUnknown =
+          (error as { outcomeUnknown?: boolean; code?: string })?.outcomeUnknown === true ||
+          (error as { code?: string })?.code === "outcome_unknown";
+        const transient = [408, 429].includes((error as { status?: number })?.status ?? 0);
+        if (markedUnknown) throw error;
+        if (!transient && error instanceof AppError && error.status < 500) throw error;
         const status = (error as { status?: number })?.status;
-        if (typeof status === "number" && status >= 400 && status < 500) throw error;
+        if (!transient && typeof status === "number" && status >= 400 && status < 500) throw error;
         throw Object.assign(
           new AppError(
             "The provider did not confirm the write; its outcome is uncertain. Check it there before retrying.",
@@ -813,17 +841,36 @@ export class WorkspaceService {
       // GMAIL_SEND_RECEIPT_V1 - el recibo conserva el hilo real que devuelve el
       // proveedor, no solo el id: es lo que Laia relee como evidencia.
       const sentThread = receipt.threadId ?? input.data.threadId;
-      return `Gmail sent message · ${receipt.id}${sentThread ? ` · thread ${sentThread}` : ""}`;
+      return {
+        mode: "live",
+        state: "accepted",
+        evidence: {
+          family: "gmail",
+          messageId: receipt.id,
+          ...(receipt.threadId ? { threadId: receipt.threadId } : {}),
+        },
+        summary: `Gmail sent message · ${receipt.id}${sentThread ? ` · thread ${sentThread}` : ""}`,
+      };
     }
     if (input.kind === "drive.trash") {
       await providerWrite(() => google.trashDriveFile(input.data.fileId));
-      return `Moved Google Drive file to trash · ${input.data.name}`;
+      return {
+        mode: "live",
+        state: "accepted",
+        evidence: { family: "drive", fileId: input.data.fileId, operation: "trash" },
+        summary: `Moved Google Drive file to trash · ${input.data.name}`,
+      };
     }
     if (input.kind === "drive.rename") {
       const file = await providerWrite(() =>
         google.renameDriveFile(input.data.fileId, input.data.name),
       );
-      return `Renamed Google Drive file · ${file.name}`;
+      return {
+        mode: "live",
+        state: "accepted",
+        evidence: { family: "drive", fileId: file.id, operation: "rename" },
+        summary: `Renamed Google Drive file · ${file.name}`,
+      };
     }
     if (input.kind === "calendar.create") {
       const calendar = await this.writableCalendar(owner, connectionId, input.data.calendarId);
@@ -831,38 +878,80 @@ export class WorkspaceService {
         // CALENDAR_REVALIDATE_V1 - entre la revision y la aprobacion el hueco
         // pudo ocuparse: se comprueba dentro del turno serializado.
         const busy = await this.busyEvent(owner, { ...input.data, calendarId: calendar.id });
-        if (busy) throw new AppError(`That slot was taken before writing: ${busy.title}`, 409);
+        if (busy)
+          throw Object.assign(
+            new AppError(`That slot was taken before writing: ${busy.title}`, 409),
+            { outcome: "rejected_before_dispatch" },
+          );
         const created = await providerWrite(() =>
           google.createEvent({ ...input.data, calendarId: calendar.id }),
         );
         // CALENDAR_EVENT_LINK_V1 - el evento y su enlace quedan persistidos; el
         // recibo puede releerse con eventReceipt si el proveedor no responde.
-        await this.db.put(owner, "events", created);
+        await this.db.put(owner, "events", created).catch(() => {
+          logWarn("workspace.cache_degraded", { provider: "google", operation: "calendar.create" });
+        });
         return created;
       });
-      return `Google Calendar event · ${event.id}${event.link ? ` · ${event.link}` : ""}`;
+      return {
+        mode: "live",
+        state: "accepted",
+        evidence: {
+          family: "calendar",
+          calendarId: calendar.id,
+          eventId: event.id,
+          operation: "create",
+        },
+        summary: `Google Calendar event · ${event.id}${event.link ? ` · ${event.link}` : ""}`,
+      };
     }
     if (input.kind === "calendar.delete") {
       await providerWrite(() =>
         google.deleteEvent(input.data.calendarId, input.data.eventId, targetVersion),
       );
-      await this.db.remove(owner, "events", input.data.eventId);
-      return `Deleted Google Calendar event · ${input.data.eventId}`;
+      await this.db.remove(owner, "events", input.data.eventId).catch(() => {
+        logWarn("workspace.cache_degraded", { provider: "google", operation: "calendar.delete" });
+      });
+      return {
+        mode: "live",
+        state: "accepted",
+        evidence: {
+          family: "calendar",
+          calendarId: input.data.calendarId,
+          eventId: input.data.eventId,
+          operation: "delete",
+        },
+        summary: `Deleted Google Calendar event · ${input.data.eventId}`,
+      };
     }
     const event = await providerWrite(() =>
       google.updateEvent(input.data.eventId, input.data, targetVersion),
     );
-    await this.db.put(owner, "events", event);
-    return `Google Calendar event · ${event.id}`;
+    await this.db.put(owner, "events", event).catch(() => {
+      logWarn("workspace.cache_degraded", { provider: "google", operation: "calendar.update" });
+    });
+    return {
+      mode: "live",
+      state: "accepted",
+      evidence: {
+        family: "calendar",
+        calendarId: event.calendarId ?? input.data.calendarId ?? "primary",
+        eventId: event.id,
+        operation: "update",
+      },
+      summary: `Google Calendar event · ${event.id}`,
+    };
   }
   /** GMAIL_RECEIPT_EVIDENCE_V1 (campana 15) - evidencia minima del envio real. */
-  async emailReceipt(owner: string, messageId: string) {
+  async emailReceipt(owner: string, messageId: string, expectedConnectionId?: string) {
     const connection = await this.connection(owner);
     if (!connection) throw new AppError("Google is disconnected", 409);
+    if (expectedConnectionId && connection.id !== expectedConnectionId)
+      throw new AppError("Google connection changed before receipt verification", 409);
     return this.google(owner, connection.id).messageReceipt(messageId);
   }
   /** CALENDAR_EVENT_RECEIPT_V1 (campana 16) - evidencia minima del evento real. */
-  async eventReceipt(owner: string, calendarId: string, eventId: string) {
+  async eventReceipt(owner: string, calendarId: string, eventId: string, expectedConnectionId?: string) {
     if (this.config.mode === "sample")
       throw new AppError(
         "Calendar evidence requires live mode with a connected Google account",
@@ -870,6 +959,8 @@ export class WorkspaceService {
       );
     const connection = await this.connection(owner);
     if (!connection) throw new AppError("Google is disconnected", 409);
+    if (expectedConnectionId && connection.id !== expectedConnectionId)
+      throw new AppError("Google connection changed before receipt verification", 409);
     return this.google(owner, connection.id).eventReceipt(calendarId, eventId);
   }
   async importAttachment(owner: string, reference: string): Promise<Artifact> {

@@ -147,10 +147,11 @@ export class ResendClient {
       | null;
 
     if (!response.ok) {
-      const detail = payload?.message ?? payload?.name ?? `HTTP ${response.status}`;
+      const detail = typeof payload?.message === "string" ? payload.message
+        : typeof payload?.name === "string" ? payload.name : `HTTP ${response.status}`;
       throw new AppError(`Resend rechazo el envio: ${detail.slice(0, 200)}`, 422);
     }
-    if (!payload?.id?.trim()) {
+    if (typeof payload?.id !== "string" || !payload.id.trim()) {
       throw new OutcomeUnknownError("Resend acepto la peticion sin devolver id de mensaje.");
     }
     return { id: payload.id.trim(), accepted: true };

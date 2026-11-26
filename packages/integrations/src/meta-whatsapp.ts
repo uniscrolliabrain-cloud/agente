@@ -75,7 +75,7 @@ export class MetaWhatsAppClient {
     }
     if (!response.ok) {
       await response.body?.cancel().catch(() => {});
-      throw new AppError(`Meta rechazo el mensaje (HTTP ${response.status})`, 422);
+      throw Object.assign(new AppError(`Meta rechazo el mensaje (HTTP ${response.status})`, 422), { outcome: "failed_without_effect" });
     }
     return response.json().catch(() => null);
   }

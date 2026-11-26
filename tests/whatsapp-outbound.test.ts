@@ -146,7 +146,7 @@ test("ambiguous transport failure is durable and retry never dispatches again", 
 });
 test("definite provider rejection becomes failed and also requires a new intent", async () => {
   const f = await fixture(), draft = await f.create();
-  f.setSend(async () => { throw new AppError("Rejected", 422); });
+  f.setSend(async () => { throw Object.assign(new AppError("Rejected", 422), { outcome: "failed_without_effect" }); });
   assert.equal((await f.approve(draft.id, draft.revision!)).status, "failed");
   await f.approve(draft.id, draft.revision!); assert.equal(f.calls.length, 1);
 });
@@ -480,4 +480,20 @@ test("changing the requested intent or channel cannot authorize a different appr
     assert.deepEqual(await response.json(), { error: "Actor de aprobacion no valido" });
     assert.ok(!(await f.operation(draft.id)));
   }
+});
+
+test("an unclassified error after sender invocation remains unknown even with a 4xx status", async () => {
+  const f = await fixture(), draft = await f.create();
+  f.setSend(async () => { throw new AppError("Response lost after effect", 422); });
+  assert.equal((await f.approve(draft.id,draft.revision!)).status,"outcome_unknown");
+  await f.approve(draft.id,draft.revision!);
+  assert.equal(f.calls.length,1);
+});
+
+test("a malformed sender confirmation cannot become an accepted operation", async () => {
+  const f = await fixture(), draft = await f.create();
+  f.setSend(async () => JSON.parse('{"accepted":true,"id":7,"to":"synthetic"}'));
+  assert.equal((await f.approve(draft.id,draft.revision!)).status,"outcome_unknown");
+  await f.approve(draft.id,draft.revision!);
+  assert.equal(f.calls.length,1);
 });

@@ -74,19 +74,19 @@ const tokenSchema = z.object({
   expires_in: z.number(),
   scope: z.string().optional(),
 });
-interface Tokens {
-  connectionId: string;
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt: number;
-  scopes: string[];
-  account: string;
-  /** GOOGLE_CONNECTION_ATTRIBUTION_V1 - empresa y autorizante del consentimiento. */
-  tenantId?: string;
-  authorizer?: string;
-  provider?: "google";
-  connectedAt?: string;
-}
+const storedTokensSchema = z.object({
+  connectionId: z.string().min(1),
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1).optional(),
+  expiresAt: z.number().finite(),
+  scopes: z.array(z.string()),
+  account: z.string().min(1),
+  tenantId: z.string().optional(),
+  authorizer: z.string().optional(),
+  provider: z.literal("google").optional(),
+  connectedAt: z.string().optional(),
+});
+type Tokens = z.infer<typeof storedTokensSchema>;
 interface OAuthState {
   id: string;
   owner: string;
@@ -107,6 +107,7 @@ interface Credential {
   /** Empresa a la que pertenece la credencial, si esta atribuida. */
   tenantId?: string;
   provider?: string;
+  requiresReconnect?: boolean;
 }
 export class GoogleAuth {
   private readonly refreshing = new Map<string, Promise<string>>();
@@ -131,10 +132,15 @@ export class GoogleAuth {
     return this.decodeTokens(await this.db.get<Credential>(owner, "credentials", "google"));
   }
   private decodeTokens(stored: Credential | null): Tokens | null {
+    if (stored?.requiresReconnect) throw new AppError("Google session requires reconnection", 401);
     if (!stored?.secret) return null;
     if (!this.config.encryptionKey)
       throw new AppError("TOKEN_ENCRYPTION_KEY is not configured", 503);
-    return JSON.parse(decryptSecret(stored.secret, this.config.encryptionKey));
+    try {
+      return storedTokensSchema.parse(JSON.parse(decryptSecret(stored.secret, this.config.encryptionKey)));
+    } catch {
+      throw new AppError("Google credential is invalid. Connect again.", 409);
+    }
   }
   private async save(owner: string, tokens: Tokens, generation: string) {
     if (!this.config.encryptionKey)
@@ -148,6 +154,7 @@ export class GoogleAuth {
         generation: randomUUID(),
         connectionId: tokens.connectionId,
         provider: "google",
+        requiresReconnect: false,
         ...(tokens.tenantId ? { tenantId: tokens.tenantId } : {}),
         secret: encryptSecret(JSON.stringify(tokens), this.config.encryptionKey),
       },
@@ -272,7 +279,9 @@ export class GoogleAuth {
     if (!profile.ok)
       throw new AppError("Google did not grant Gmail read access. Connect again.", 403);
     const { emailAddress } = z.object({ emailAddress: z.email() }).parse(await profile.json());
-    const previous = await this.tokens(state.owner);
+    const previous = credential?.requiresReconnect ? null : await this.tokens(state.owner);
+    await this.assertMembership(state.authorizer ?? state.owner, state.tenantId);
+    await this.assertMembership(state.owner, state.tenantId);
     await this.save(
       state.owner,
       {
@@ -293,18 +302,37 @@ export class GoogleAuth {
     );
   }
   async accessToken(owner: string, expectedConnectionId?: string): Promise<string> {
-    const tokens = await this.tokens(owner);
-    if (!tokens) throw new AppError("Google is disconnected", 409);
-    if (expectedConnectionId && tokens.connectionId !== expectedConnectionId)
+    const initial = await this.tokens(owner);
+    if (!initial) throw new AppError("Google is disconnected", 409);
+    if (expectedConnectionId && initial.connectionId !== expectedConnectionId)
       throw new AppError("Google account or connection changed. Prepare a new action.", 409);
-    if (tokens.expiresAt > Date.now() + 60000) return tokens.accessToken;
-    const refreshKey = `${owner}:${tokens.connectionId}`;
-    const pending = this.refreshing.get(refreshKey);
-    if (pending) return pending;
-    const task = this.refresh(owner, tokens).finally(() => this.refreshing.delete(refreshKey));
-    this.refreshing.set(refreshKey, task);
-    return task;
+    await this.assertOperationalBinding(owner, initial);
+    if (initial.expiresAt <= Date.now() + 60000) {
+      const key = JSON.stringify([initial.tenantId ?? null, owner, initial.connectionId]);
+      let pending = this.refreshing.get(key);
+      if (!pending) {
+        pending = this.refresh(owner, initial).finally(() => this.refreshing.delete(key));
+        this.refreshing.set(key, pending);
+      }
+      await pending;
+    }
+    const current = await this.tokens(owner);
+    if (!current || current.connectionId !== initial.connectionId)
+      throw new AppError("Google account or connection changed. Prepare a new action.", 409);
+    await this.assertOperationalBinding(owner, current);
+    if (current.expiresAt <= Date.now()) throw new AppError("Google session expired. Connect again.", 401);
+    return current.accessToken;
   }
+
+  private async assertOperationalBinding(owner: string, tokens: Tokens): Promise<void> {
+    if (!tokens.tenantId) return;
+    const scope = currentTenantScope();
+    if (!scope || scope.tenantId !== tokens.tenantId || !this.checks.membership)
+      throw new AppError("Google connection scope unavailable", 403);
+    await this.assertMembership(tokens.authorizer ?? owner, tokens.tenantId);
+    await this.assertMembership(scope.actorId, tokens.tenantId);
+  }
+
   /**
    * GOOGLE_MEMBERSHIP_RECHECK_V1 (campana 11) - sin esta comprobacion un
    * miembro expulsado seguia refrescando el token y operando con la cuenta de
@@ -343,6 +371,12 @@ export class GoogleAuth {
     };
   }
   private async refresh(owner: string, tokens: Tokens) {
+    const credential = await this.db.get<Credential>(owner, "credentials", "google");
+    const current = this.decodeTokens(credential);
+    if (!current || current.connectionId !== tokens.connectionId)
+      throw new AppError("Google account changed or was disconnected during refresh", 409);
+    if (current.expiresAt > Date.now() + 60000) return current.accessToken;
+    tokens = current;
     if (!tokens.refreshToken) throw new AppError("Google session expired. Connect again.", 401);
     await this.assertMembership(owner, tokens.tenantId);
     const response = await fetch("https://oauth2.googleapis.com/token", {
@@ -359,24 +393,37 @@ export class GoogleAuth {
     });
     if (!response.ok) throw new AppError("Google session expired. Connect again.", 401);
     const token = tokenSchema.parse(await response.json());
+    await this.assertMembership(tokens.authorizer ?? owner, tokens.tenantId);
     const refreshed = {
       ...tokens,
       accessToken: token.access_token,
+      refreshToken: token.refresh_token ?? tokens.refreshToken,
+      scopes: token.scope ? token.scope.split(" ").filter((scope) => tokens.scopes.includes(scope)) : tokens.scopes,
       expiresAt: Date.now() + token.expires_in * 1000,
     };
     if (!this.config.encryptionKey) throw new AppError("Token encryption is not configured", 503);
-    const updated = await this.db.updateCredential(
-      owner,
-      tokens.connectionId,
-      encryptSecret(JSON.stringify(refreshed), this.config.encryptionKey),
+    const updated = await this.db.compareAndSwap<Credential>(
+      owner, "credentials", "google",
+      { connectionId: tokens.connectionId, secret: credential!.secret },
+      { secret: encryptSecret(JSON.stringify(refreshed), this.config.encryptionKey) },
     );
-    if (!updated)
+    if (!updated) {
+      // Concurrent rotation can invalidate the winning token. Preserve it and
+      // require a fresh consent when the provider rotated the refresh token.
+      if (token.refresh_token) {
+        const winner = await this.db.get<Credential>(owner, "credentials", "google");
+        if (winner?.connectionId === tokens.connectionId) {
+          await this.db.compareAndSwap(owner, "credentials", "google",
+            { connectionId: winner.connectionId, secret: winner.secret }, { requiresReconnect: true });
+        }
+      }
       throw new AppError("Google account changed or was disconnected during refresh", 409);
+    }
     return token.access_token;
   }
   async disconnect(owner: string) {
     const { previous } = await this.rotateGeneration(owner, true);
-    const tokens = this.decodeTokens(previous);
+    const tokens = previous?.requiresReconnect ? null : this.decodeTokens(previous);
     if (tokens) {
       const response = await fetch("https://oauth2.googleapis.com/revoke", {
         method: "POST",
