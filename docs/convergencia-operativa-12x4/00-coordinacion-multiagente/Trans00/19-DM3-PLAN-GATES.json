@@ -1,0 +1,306 @@
+{
+  "schemaVersion": "1.0",
+  "state": "READY_DOCUMENTAL_NO_GO_FUNCTIONAL",
+  "candidateMain": "6d06cf364321ee169a3caf47ac3bf922c299c55b",
+  "canonical": "8672f8c1035067e77de76080aabbe8d4c8030fe5",
+  "previousManifest": {
+    "docCommit": "8fe3e8b18e5b7d0fbb6136902b408575e261b4ad",
+    "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans00/09-DM2-DELTA-MANIFEST.json",
+    "entries": 50,
+    "checkedAgainstCandidateMain": true
+  },
+  "sourceHeads": {
+    "Trans01": "61b76ac514039fd9d3188dffc33abf2a2c28016a",
+    "Trans02": "5fc0ec4a90c3ce22755cb87b57c3d224664d2018",
+    "Trans03": "7e847bf86c46b192d79d76e96ed791af52a21bd6",
+    "Trans04": "7c422f9a0f6d5686434466669c7df2f12255311e",
+    "Trans05": "46529cabd8479c9e1be6da8459485137999f40f2",
+    "Trans06": "db5da93775401fe0d582d3cffe30f8d33a8b21c6"
+  },
+  "execution": {
+    "authorized": false,
+    "proposedIntegrationRef": "integration/trans00-core",
+    "proposedExecutionRefs": [
+      "exec/Trans01",
+      "exec/Trans02",
+      "exec/Trans03",
+      "exec/Trans04",
+      "exec/Trans05",
+      "exec/Trans06"
+    ],
+    "I0": null,
+    "I1": null,
+    "I2": null,
+    "I3": null
+  },
+  "gates": [
+    {
+      "id": "B1",
+      "macro": "E-M1",
+      "requires": [],
+      "scope": "baseline/contract",
+      "proofs": [
+        "baseVerified",
+        "baselineRecorded",
+        "ownerRegistry",
+        "contractsReviewed",
+        "noUnauthorizedEffect"
+      ],
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "B2",
+      "macro": "E-M1",
+      "requires": [
+        "B1"
+      ],
+      "scope": "core F01–03",
+      "proofs": [
+        "integratedSha",
+        "focusedTests",
+        "typecheck",
+        "coreWiring",
+        "noUnauthorizedEffect"
+      ],
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "B3",
+      "macro": "E-M2",
+      "requires": [
+        "B2"
+      ],
+      "scope": "synthetic slices/security",
+      "proofs": [
+        "integratedSha",
+        "sliceTests",
+        "tenantIsolation",
+        "externalDisabledOrAuthorized",
+        "noUnauthorizedEffect"
+      ],
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "B4",
+      "macro": "E-M2",
+      "requires": [
+        "B3"
+      ],
+      "scope": "complete local wiring",
+      "proofs": [
+        "integratedSha",
+        "circuitTests",
+        "regressions",
+        "telemetry",
+        "noUnauthorizedEffect"
+      ],
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "B5",
+      "macro": "E-M3",
+      "requires": [
+        "B4"
+      ],
+      "scope": "independent reaud/refactor",
+      "proofs": [
+        "integratedSha",
+        "crossReview",
+        "regressions",
+        "typecheck",
+        "noUnauthorizedEffect"
+      ],
+      "state": "NOT_RUN"
+    },
+    {
+      "id": "B6",
+      "macro": "E-M3",
+      "requires": [
+        "B5"
+      ],
+      "scope": "hardening/release candidate",
+      "proofs": [
+        "integratedSha",
+        "fullGate",
+        "restrictedPostgres",
+        "multiprocess",
+        "restore",
+        "faultInjection",
+        "redactedEvidence",
+        "noUnauthorizedEffect"
+      ],
+      "state": "NOT_RUN"
+    }
+  ],
+  "localSimulation": {
+    "kind": "coordination_model_only",
+    "count": 27,
+    "passed": 27,
+    "results": [
+      {
+        "name": "No autorizar por publicar documentación",
+        "expected": "BLOCKED",
+        "actual": "BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "HEAD movido",
+        "expected": "BLOCKED",
+        "actual": "BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "Dos escritores o path ajeno",
+        "expected": "BLOCKED",
+        "actual": "BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "SHA no coincide con pruebas",
+        "expected": "BLOCKED",
+        "actual": "BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "Efecto externo no autorizado",
+        "expected": "BLOCKED",
+        "actual": "BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "Secreto expuesto",
+        "expected": "BLOCKED",
+        "actual": "BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "B2 intenta saltar B1",
+        "expected": "BLOCKED_DEPENDENCY",
+        "actual": "BLOCKED_DEPENDENCY",
+        "pass": true
+      },
+      {
+        "name": "B4 intenta saltar B3",
+        "expected": "BLOCKED_DEPENDENCY",
+        "actual": "BLOCKED_DEPENDENCY",
+        "pass": true
+      },
+      {
+        "name": "No test ejecutado",
+        "expected": "NOT_RUN",
+        "actual": "NOT_RUN",
+        "pass": true
+      },
+      {
+        "name": "Informe parcial B6",
+        "expected": "INCOMPLETE",
+        "actual": "INCOMPLETE",
+        "pass": true
+      },
+      {
+        "name": "PG owner no prueba RLS",
+        "expected": "INCOMPLETE",
+        "actual": "INCOMPLETE",
+        "pass": true
+      },
+      {
+        "name": "Restore sin prueba",
+        "expected": "INCOMPLETE",
+        "actual": "INCOMPLETE",
+        "pass": true
+      },
+      {
+        "name": "Proveedor ausente sin activación, local completo",
+        "expected": "LOCAL_PASS_EXTERNAL_BLOCKED",
+        "actual": "LOCAL_PASS_EXTERNAL_BLOCKED",
+        "pass": true
+      },
+      {
+        "name": "Proveedor ausente intentando activación",
+        "expected": "BLOCKED_EXTERNAL",
+        "actual": "BLOCKED_EXTERNAL",
+        "pass": true
+      },
+      {
+        "name": "Unknown no resend",
+        "expected": "RECONCILE_NO_RESEND",
+        "actual": "RECONCILE_NO_RESEND",
+        "pass": true
+      },
+      {
+        "name": "Accepted no resend ni confirmed",
+        "expected": "RECONCILE_NO_RESEND",
+        "actual": "RECONCILE_NO_RESEND",
+        "pass": true
+      },
+      {
+        "name": "Revocado aunque hubiera receipt",
+        "expected": "DENY",
+        "actual": "DENY",
+        "pass": true
+      },
+      {
+        "name": "Confirmación no vinculada",
+        "expected": "DENY",
+        "actual": "DENY",
+        "pass": true
+      },
+      {
+        "name": "Confirmación exacta",
+        "expected": "RECORD_CONFIRMED",
+        "actual": "RECORD_CONFIRMED",
+        "pass": true
+      },
+      {
+        "name": "Retry sin nueva autorización",
+        "expected": "DENY",
+        "actual": "DENY",
+        "pass": true
+      },
+      {
+        "name": "Retry permitido con ausencia de efecto",
+        "expected": "RETRY_ELIGIBLE",
+        "actual": "RETRY_ELIGIBLE",
+        "pass": true
+      },
+      {
+        "name": "Secuencia nominal B1",
+        "expected": "PASS_SCOPE",
+        "actual": "PASS_SCOPE",
+        "pass": true
+      },
+      {
+        "name": "Secuencia nominal B2",
+        "expected": "PASS_SCOPE",
+        "actual": "PASS_SCOPE",
+        "pass": true
+      },
+      {
+        "name": "Secuencia nominal B3",
+        "expected": "PASS_SCOPE",
+        "actual": "PASS_SCOPE",
+        "pass": true
+      },
+      {
+        "name": "Secuencia nominal B4",
+        "expected": "PASS_SCOPE",
+        "actual": "PASS_SCOPE",
+        "pass": true
+      },
+      {
+        "name": "Secuencia nominal B5",
+        "expected": "PASS_SCOPE",
+        "actual": "PASS_SCOPE",
+        "pass": true
+      },
+      {
+        "name": "Secuencia nominal B6",
+        "expected": "PASS_SCOPE",
+        "actual": "PASS_SCOPE",
+        "pass": true
+      }
+    ]
+  },
+  "externalCertification": "NOT_RUN",
+  "release": "NO_GO"
+}

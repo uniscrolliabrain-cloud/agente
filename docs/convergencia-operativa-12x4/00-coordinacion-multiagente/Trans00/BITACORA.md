@@ -16,3 +16,11 @@
 - Nuevos HEADs: main 55655cdba0348539a0169881794968761af85443; restantes canónica y seis Trans sin cambios. 50 deltas únicos, 0 conflictos de blob con main en selección; manifest exacto.
 - Relectura de los cinco documentos Astra (R1–R3, C1–C3 y 3 experimentos), contraste de code anchors y montaje; se conserva arquitectura y se clasifican 37 entradas. FIX_NEEDED=27, PRESERVE=1, COVERED_BY_EXISTING_PATCH=9. C03-01: mitigation de retry en T01, falta receipt. C02-02 preservar.
 - Reserva propuesta concreta por path, contratos existentes K1–K7, seis prompts candidatos y común. Ningún archivo funcional editado. No tests nuevos ejecutados, no rama funcional creada. D-M3 pendiente: simulación y freeze de handoff, autorización de ejecución separada. Ver 13-DM2-CHECKPOINT.md.
+
+## 2026-11-26 · D-M3 — cierre documental
+
+- Estrategia: preservar las seis campañas, supervisar integración incremental sin nuevo diseño. Main candidato 6d06cf364321ee169a3caf47ac3bf922c299c55b; canónica y seis originales sin cambios respecto D-M2. Manifest 50/50 blobs verificado, 37/37 IDs emparejados, 16 familias, 48 bloques canónicos confirmados. Siete workflows inspeccionados; settings de hosting y GitHub Apps no verificados.
+- Diseño: protocolo supervisor I0/I1/I2/I3, seis barreras y tres actos de macroturno, separación de refs históricas/ejecución, namespaces de patchset, ownership y revisión cruzada. Plantilla 48 bloques, plan gates machine-readable y autorización explícita pendiente.
+- Simulación: 27/27 aserciones JavaScript del modelo de coordinación, 14 escenarios de análisis manual; no tests del repositorio ni efectos. D-M3 refinó el riesgo de stale HEAD, dependencia, provider sin config, rollback y acto de promoción. No certificar desde informe parcial.
+- Feedback: preservar comportamiento getDelta null, transferir hook una sola vez, evitar doble importación T02/T05, conservar Supabase y secretos prod intactos, no axiomas/optimización sin datos. 
+- Ejecución documental: siete prompts actualizados (común + seis), índice, bitácora y seis documentos de cierre; no se crea integración ni ramas exec. Estado READY_DOCUMENTAL / NO_GO funcional. Pendiente autorización E-M1 y runner real; ver 16. No se declara lectura íntegra nueva de 288 bloques ni todos los consumidores.

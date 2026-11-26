@@ -1,6 +1,6 @@
 # Trans00 — convergencia, supervisión e integración de las seis campañas
 
-2026-11-26 · D-M2 documental · INCOMPLETE respecto a preparación total · NO_GO funcional.
+2026-11-26 · D-M3 documental · READY_DOCUMENTAL · EJECUCIÓN NO AUTORIZADA · NO_GO funcional.
 
 ## Mandato del founder
 
@@ -22,7 +22,7 @@ No modificar main, canónica, Trans01–06, UI-lab, UX aprobada, demo ni infraes
 - D-M2: nueva pasada integral de falsación: consumidores reales, comparación de deltas, anclas y pruebas, resolver colisiones, depurar inventario; elaborar adendas mínimas y prompts finales. Revisar todas las superficies, no dividir la pasada por módulo.
 - D-M3: nueva pasada integral de simulación: arranque desde base común, dependencia rota, fallos, integración incremental, evidencia y rollback; revisar contra las seis campañas y canónica; congelar handoff y solicitar autorización de ejecución.
 
-En cada pasada: estrategia → diagnóstico → diseño → simulación → feedback/rediseño → ejecución documental y reauditoría. Si falta fuente o herramienta, registrar límite, no declarar cierre. Estado actual: D-M1 y D-M2 entregados documentalmente; D-M3 pendiente. Existe manifest candidato de 50 deltas, 37 diagnósticos clasificados y seis prompts candidatos. No existe SHA funcional integrado ni autorización ejecutora. Los refinamientos 08–13 prevalecen sobre propuestas anteriores en caso de conflicto.
+En cada pasada: estrategia → diagnóstico → diseño → simulación → feedback/rediseño → ejecución documental y reauditoría. Si falta fuente o herramienta, registrar límite, no declarar cierre. Estado actual: D-M1, D-M2 y D-M3 cerrados documentalmente. Manifest de 50 deltas revalidado, 37 diagnósticos clasificados y seis prompts definitivos documentales; 27 aserciones de simulación de coordinación satisfechas (no tests del repo). No existe SHA funcional integrado ni autorización ejecutora. 14–19 y acto de autorización prevalecen sobre candidatos anteriores. Para comenzar, leer [cierre D-M3](14-DM3-CIERRE-Y-DECISIONES.md) y [autorización](16-AUTORIZACION-Y-ARRANQUE.md).
 
 ## Índice
 
@@ -38,8 +38,14 @@ En cada pasada: estrategia → diagnóstico → diseño → simulación → feed
 - [10-DM2-CLASIFICACION-Y-REGRESIONES.md](10-DM2-CLASIFICACION-Y-REGRESIONES.md)
 - [11-DM2-RESERVAS-Y-ABI.md](11-DM2-RESERVAS-Y-ABI.md)
 - [12-PROMPT-COMUN-EJECUCION.md](12-PROMPT-COMUN-EJECUCION.md)
-- Prompts candidatos: [Trans01](PROMPTS/Trans01.md) · [Trans02](PROMPTS/Trans02.md) · [Trans03](PROMPTS/Trans03.md) · [Trans04](PROMPTS/Trans04.md) · [Trans05](PROMPTS/Trans05.md) · [Trans06](PROMPTS/Trans06.md)
+- Prompts definitivos documentales: [Trans01](PROMPTS/Trans01.md) · [Trans02](PROMPTS/Trans02.md) · [Trans03](PROMPTS/Trans03.md) · [Trans04](PROMPTS/Trans04.md) · [Trans05](PROMPTS/Trans05.md) · [Trans06](PROMPTS/Trans06.md)
 - [13-DM2-CHECKPOINT.md](13-DM2-CHECKPOINT.md)
+- [14-DM3-CIERRE-Y-DECISIONES.md](14-DM3-CIERRE-Y-DECISIONES.md)
+- [15-PROTOCOLO-SUPERVISOR.md](15-PROTOCOLO-SUPERVISOR.md)
+- [16-AUTORIZACION-Y-ARRANQUE.md](16-AUTORIZACION-Y-ARRANQUE.md)
+- [17-DM3-SIMULACION-COORDINACION.md](17-DM3-SIMULACION-COORDINACION.md)
+- [18-PLANTILLA-48-BLOQUES.json](18-PLANTILLA-48-BLOQUES.json)
+- [19-DM3-PLAN-GATES.json](19-DM3-PLAN-GATES.json)
 - [BITACORA.md](BITACORA.md)
 
 No existe autorización implícita de ejecución funcional por publicar estos documentos.
