@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "batches": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "status": "requested",
+  "destination": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa"
+}
