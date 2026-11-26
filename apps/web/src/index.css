@@ -4055,6 +4055,9 @@ html[data-theme="dark"] .v3-chat-reopen { background: var(--v2-bg-card); color: 
   color: var(--v2-purple); box-shadow: none;
 }
 .v2-sidebar[data-collapsed="true"] .v2-nav-item:hover { color: var(--v2-purple); }
+/* En el rail, el primer toque enseña el nombre y el segundo abre: sin esto el
+   doble toque en táctil se lo comería el zoom. */
+.v2-sidebar[data-collapsed="true"] .v2-nav-item { touch-action: manipulation; }
 .v2-rail-tip-fixed {
   position: fixed; z-index: 120; transform: translateY(-50%); padding: 6px 10px;
   border-radius: 8px; background: #111; color: #FFF; font-size: 11.5px;

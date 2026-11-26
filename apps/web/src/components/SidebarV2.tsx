@@ -526,6 +526,20 @@ export default function SidebarV2({
     setRailTip({ label, x: rect.right + 12, y: rect.top + rect.height / 2 });
   };
   const hideTip = () => setRailTip(null);
+  // SIDEBAR_RAIL_V1 - plegada, un clic enseña el nombre y el segundo clic (o el
+  // doble clic) abre la vista, como en la aplicación.
+  const tipTimer = useRef<number | null>(null);
+  const pinTip = (label: string, el: HTMLElement) => {
+    const rect = el.getBoundingClientRect();
+    setRailTip({ label, x: rect.right + 12, y: rect.top + rect.height / 2 });
+    if (tipTimer.current) window.clearTimeout(tipTimer.current);
+    tipTimer.current = window.setTimeout(() => setRailTip(null), 2600);
+  };
+  const openFromRail = (id: AppView) => {
+    if (tipTimer.current) window.clearTimeout(tipTimer.current);
+    setRailTip(null);
+    onSelectView(id);
+  };
 
   return (
     <aside
@@ -602,9 +616,16 @@ export default function SidebarV2({
                     else navRows.current.delete(item.id);
                   }}
                   className={`v2-nav-item ${active ? "active" : ""}`}
-                  onClick={() => {
+                  onClick={(event) => {
                     if (performance.now() < navSuppress.current) return;
+                    if (collapsed) {
+                      pinTip(item.label, event.currentTarget);
+                      return;
+                    }
                     onSelectView(item.id);
+                  }}
+                  onDoubleClick={() => {
+                    if (collapsed) openFromRail(item.id);
                   }}
                   onPointerDown={onNavPointerDown}
                   onPointerMove={onNavPointerMove}
@@ -613,7 +634,14 @@ export default function SidebarV2({
                   onPointerLeave={() => {
                     if (!navDrag) clearNavHold();
                   }}
-                  onKeyDown={(event) => onNavKeyDown(event, item.id)}
+                  onKeyDown={(event) => {
+                    if (collapsed && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      openFromRail(item.id);
+                      return;
+                    }
+                    onNavKeyDown(event, item.id);
+                  }}
                   onMouseEnter={showTip(item.label)}
                   onMouseLeave={hideTip}
                   aria-label={collapsed ? item.label : undefined}
@@ -634,7 +662,16 @@ export default function SidebarV2({
             <button
               type="button"
               className={`v2-nav-item ${activeView === "users" ? "active" : ""}`}
-              onClick={() => onSelectView("users")}
+              onClick={(event) => {
+                if (collapsed) {
+                  pinTip("Usuarios", event.currentTarget);
+                  return;
+                }
+                onSelectView("users");
+              }}
+              onDoubleClick={() => {
+                if (collapsed) openFromRail("users");
+              }}
               onMouseEnter={showTip("Usuarios")}
               onMouseLeave={hideTip}
               aria-label={collapsed ? "Usuarios" : undefined}
