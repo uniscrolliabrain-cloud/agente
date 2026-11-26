@@ -1,3 +1,51 @@
+# Tu Empresa — Construye la empresa que quieres tener
+
+AgntiaPro te ofrece dos maneras de trabajar: dirigir tu empresa y construir la empresa que quieres tener.
+
+En tu entorno habitual trabajas con tus clientes, tu equipo y tus agentes. Desde Ajustes → Tu Empresa puedes entrar en un estudio completo donde pensar, diseñar y mejorar tu organización.
+
+No necesitas saber redactar un business plan, diseñar un proceso ni aprender inteligencia artificial. Puedes empezar contando cómo funciona tu negocio, qué te preocupa y qué quieres conseguir. LAIA te acompaña, organiza la información contigo y te presenta propuestas que puedes revisar y mejorar.
+
+Tu empresa sigue trabajando mientras preparas su siguiente versión. Tú decides cuándo está lista.
+
+## La navegación que verá el propietario
+
+| Entrada | Qué puedes hacer |
+|---|---|
+| Tu Empresa | Ver cómo está tomando forma tu empresa y continuar donde lo dejaste. |
+| Identidad | Contar quién eres, qué quieres construir y qué valores te representan. |
+| Modelo de negocio | Definir cómo aportas valor, a quién ayudas y cómo ganas dinero. |
+| Marca | Construir tu identidad visual, tu manera de comunicar y tu presencia. |
+| Estrategia | Decidir adónde quieres llegar y qué pasos dar. |
+| Organización | Diseñar tu equipo humano y digital, sus responsabilidades y su colaboración. |
+| Productos y servicios | Definir qué vendes, a qué precio y cómo lo entregas. |
+| Mercado | Conocer a tus clientes, tu competencia y las oportunidades de tu negocio. |
+| Finanzas | Comprender tus ingresos, gastos, presupuestos y posibilidades de crecimiento. |
+| Relaciones | Organizar tus proveedores, socios, colaboradores y contactos. |
+| Operaciones | Mejorar cómo se trabaja cada día en tu empresa. |
+| Tecnología | Elegir las herramientas y capacidades que te ayudan a trabajar mejor. |
+| Gobierno de tu empresa | Decidir quién puede hacer qué y cómo mantienes el control. |
+
+Herramientas transversales: Fuentes, Entrevistas, Formación, Historial de versiones, Vista previa y Publicar. Accesibles desde el estudio y desde el contexto pertinente, sin convertirlas en dimensiones empresariales adicionales. LAIA permanece disponible durante todo el recorrido.
+
+## Una empresa que sigue creciendo
+
+Puedes empezar hablando, aportando documentos, vídeos, audios, hojas de cálculo o invitando a tu equipo a contar cómo trabaja. La información original se conserva. Las propuestas se construyen a partir de ella, se revisan contigo y se convierten en una nueva versión de tu empresa cuando las apruebas.
+
+En el entorno operativo puedes decir: «LAIA, prepara una propuesta para este cliente». En Tu Empresa puedes decir: «LAIA, quiero mejorar nuestra manera de vender. Habla con mi equipo y ayúdame a diseñar una forma de trabajar mejor».
+
+No es un onboarding que termina al contratar. Es el lugar al que vuelves para seguir construyendo tu empresa. AgntiaPro se ocupa de la complejidad tecnológica; tú puedes centrarte en dirigir, liderar y decidir.
+
+## Voz de marca y reglas de diseño
+
+La landing vigente es la autoridad de voz comercial. Utilizar lenguaje cotidiano, cálido, profesional y preciso. Hablar de resultados, personas y decisiones. Evitar en la interfaz términos como ontología, fixture, runtime, gate, blueprint o ingeniería de procesos cuando una expresión normal comunica lo mismo. No prometer activaciones reales desde una demo. Mantener la distinción entre trabajar en la empresa y construirla. No reducir la meta-app a un workspace ni a un asistente lineal.
+
+Las doce dimensiones son la propuesta de navegación preferente. Las dieciocho fichas técnicas que siguen son un inventario interno de capacidades, no dieciocho entradas obligatorias. Fuentes y entrevistas se agrupan como herramientas de captura; Ingeniería de Procesos se integra en Operaciones; Desarrollo del Talento se distribuye entre Organización y Formación; Versiones y Publicación se sitúan en los controles transversales. La denominación final queda abierta a revisión del founder.
+
+---
+
+# Anexo interno — Especificación de construcción
+
 # Tu Empresa — Meta-app de compilación empresarial
 Fecha: 2026-11-26. Propuesta UX para PMV en UI Lab, no autorización de implementación ni activación real.
 
@@ -17,7 +65,7 @@ Leer íntegramente antes de implementar:
 - SidebarV2 en apps/web/src/components/SidebarV2.tsx y FullAppPreview en apps/ui-lab/src/FullAppPreview.tsx.
 Las fuentes raw prevalecen sobre derivados. Este documento propone una IA de navegación, no sustituye fuentes. La landing sigue siendo puerta comercial; actualización tecnológica continua enriquece el servicio. El compilador se usa por owner y colaboradores autorizados; no obliga a aprender tecnología.
 
-## 3. Menú lateral propuesto
+## 3. Inventario técnico de superficies (propuesta anterior, no menú visible)
 Usar el rail y menú expandible existentes, reordenamiento y split view si están disponibles. Identidad Tu Empresa, indicador permanente Draft / Publicada, selector de revisión y volver a empresa. Nombres de producto propuestos, no IDs de rutas existentes.
 
 | Grupo | Entrada | Icono conceptual | Base UX a reutilizar | Taxonomías |
@@ -44,7 +92,7 @@ Usar el rail y menú expandible existentes, reordenamiento y split view si está
 Chat con LAIA es transversal y conserva identidad; contexto de compilación siempre visible. No crear una entrada genérica Chat que sustituya entrevistas. Los 18 dominios ontológicos no tienen por qué corresponder 1:1 a estas 18 entradas. Orden y nombres sujetos a revisión founder. Los iconos son conceptos para una familia nueva coherente con branding; no copiar iconos operativos indiscriminadamente.
 
 ## 4. Fichas funcionales completas del menú
-Cada ficha debe implementarse como superficie completa, con estado vacío útil, versión poblada, revisión y estado de publicación. No esconder funciones detrás de un wizard. Los ejemplos siguientes son propuestas sintéticas derivadas del kickoff, no registros verificados.
+Cada ficha describe una capacidad que debe integrarse en las doce dimensiones o herramientas transversales; no exige una entrada independiente. Cada experiencia debe implementarse como superficie completa, con estado vacío útil, versión poblada, revisión y estado de publicación. No esconder funciones detrás de un wizard. Los ejemplos siguientes son propuestas sintéticas derivadas del kickoff, no registros verificados.
 
 ### 01 Estudio de Compilación
 Inicio editorial: saludo LAIA, propósito de la empresa en construcción, revisión seleccionada, mapa de dimensiones, decisiones y bloqueos, próxima actividad. Alternar resumen, mapa y timeline de compilación; inspector de procedencia. Acciones: abrir sección, revisar propuesta, crear revisión, previsualizar. Vacío: «Cuéntanos cómo funciona tu negocio», importar fuente o explorar plantilla. Agntia Demo: owner, LAIA y nueve dominios, oferta 1500 EUR implantación y desde 1000 EUR/mes, dos servicios prioritarios por cliente; objetivo diez clientes, escenario ocho. No inventar porcentaje de compilación: calcular desde cobertura declarada. Salida: índice del blueprint y decisiones enlazadas.
