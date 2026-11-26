@@ -677,24 +677,21 @@ export class ActionService {
           : { errorKind }),
       } as unknown as ActionProposal;
     }
-    await this.db.put(owner, "actions", finished);
-    await this.settleDispatch(owner, finished.id, finished.status);
+    await this.db.transaction(async () => {
+      await this.db.put(owner, "actions", finished);
+      await this.settleDispatch(owner, finished.id, finished.status);
+    });
     if (finished.status === "succeeded") await this.markFollowUpSent(owner, finished);
-    // APPROVAL_SYNC_V2 - reflejar el estado final en approval-requests.
-    const finalStatus =
-      finished.status === "succeeded"
-        ? "approved"
-        : finished.status === "failed" || finished.status === "outcome_unknown"
-          ? "rejected"
-          : "pending";
+    // Preserve the human decision independently of the provider outcome.
     const approval = await this.db.get<ApprovalRequest>(owner, "approval-requests", finished.id);
-    void this.db
+    await this.db
       .put(owner, "approval-requests", {
         ...approval,
         id: finished.id,
         tenantId: currentTenantScope()?.tenantId ?? approval?.tenantId ?? owner,
         owner,
-        status: finalStatus,
+        status: approval?.status ?? "approved",
+        executionStatus: finished.status,
         decidedAt: approval?.decidedAt ?? new Date().toISOString(),
         decidedBy: approval?.decidedBy ?? owner,
         result: finished.result ?? finished.error ?? null,
@@ -930,56 +927,61 @@ export class ActionService {
       Date.now() - (Number(process.env.ACTION_DISPATCH_STUCK_MS ?? "300000") || 300000);
     let reconciled = 0;
     for (const { owner, value } of rows) {
-      const decidedAt = Date.parse(value.decidedAt ?? "");
-      if (!Number.isFinite(decidedAt) || decidedAt > cutoff) continue;
-      const action = await this.db.get<ActionProposal>(owner, "actions", value.actionId);
-      if (!action) {
+      await this.db.transaction(async () => {
+        const decidedAt = Date.parse(value.decidedAt ?? "");
+        if (!Number.isFinite(decidedAt) || decidedAt > cutoff) return;
+        const action = await this.db.get<ActionProposal>(owner, "actions", value.actionId);
+        if (!action) {
+          await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
+            status: "orphaned",
+            reconciledAt: new Date(this.now()).toISOString(),
+          });
+          return;
+        }
+        if (action.status !== "executing") {
+          await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
+            status: "settled",
+            actionStatus: action.status,
+            settledAt: new Date(this.now()).toISOString(),
+          });
+          return;
+        }
+        const moved = await this.db.compareAndSwap<ActionProposal>(
+          owner,
+          "actions",
+          action.id,
+          { status: "executing" },
+          {
+            status: "outcome_unknown",
+            error:
+              "Decision committed but no receipt was persisted. Check the provider before retrying.",
+            errorKind: "outcome_unknown",
+            reconciliationRequired: true,
+          },
+        );
+        if (!moved) return;
         await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
-          status: "orphaned",
+          status: "reconciled",
+          actionStatus: "outcome_unknown",
           reconciledAt: new Date(this.now()).toISOString(),
         });
-        continue;
-      }
-      if (action.status !== "executing") {
-        await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
-          status: "settled",
-          actionStatus: action.status,
-          settledAt: new Date(this.now()).toISOString(),
-        });
-        continue;
-      }
-      const moved = await this.db.compareAndSwap<ActionProposal>(
-        owner,
-        "actions",
-        action.id,
-        { status: "executing" },
-        {
-          status: "outcome_unknown",
-          error:
-            "Decision committed but no receipt was persisted. Check the provider before retrying.",
-          errorKind: "outcome_unknown",
-          reconciliationRequired: true,
-        },
-      );
-      await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
-        status: "reconciled",
-        actionStatus: "outcome_unknown",
-        reconciledAt: new Date(this.now()).toISOString(),
+        if (moved) reconciled += 1;
       });
-      if (moved) reconciled += 1;
     }
     return reconciled;
   }
 
   /** Cierra la intencion de despacho cuando la accion ya tiene receipt. */
   private async settleDispatch(owner: string, actionId: string, status: string): Promise<void> {
-    await this.db
-      .compareAndSwap(owner, "action-dispatch", actionId, { status: "pending" }, {
-        status: "settled",
-        actionStatus: status,
-        settledAt: new Date(this.now()).toISOString(),
-      })
-      .catch(() => null);
+    const patch = {
+      status: "settled",
+      actionStatus: status,
+      settledAt: new Date(this.now()).toISOString(),
+    };
+    const settled = await this.db.compareAndSwap(owner, "action-dispatch", actionId, { status: "pending" }, patch);
+    if (!settled) {
+      await this.db.compareAndSwap(owner, "action-dispatch", actionId, { status: "reconciled" }, patch);
+    }
   }
 
   private async audit(owner: string, action: ActionProposal, kind: string, detail: string, actorId?: string) {

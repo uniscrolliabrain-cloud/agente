@@ -175,3 +175,44 @@ test("un rechazo confirmado antes del despacho deja la accion fallida y reintent
   const retried = await service.retry(owner, proposal.id);
   assert.equal(retried.status, "awaiting_review");
 });
+
+test("an approved human decision remains approved when the provider outcome is unknown", async () => {
+  const owner = "decision-preserved";
+  const service = new ActionService(db, {
+    connected: async () => true,
+    execute: async () => { throw new Error("provider response lost"); },
+  });
+  const proposal = await service.propose(owner, email);
+  const result = await service.decide(owner, proposal.id, proposal.hash, "approve");
+  assert.equal(result.status, "outcome_unknown");
+  // The existing writer is asynchronous, so allow its persistence to finish.
+  await new Promise((resolve) => setImmediate(resolve));
+  const decision = await db.get<{ status: string }>(owner, "approval-requests", proposal.id);
+  assert.equal(decision?.status, "approved");
+});
+
+test("a late provider receipt settles an intent that recovery marked unknown", async () => {
+  const owner = "late-receipt";
+  let enter!: () => void;
+  let release!: () => void;
+  const entered = new Promise<void>((resolve) => { enter = resolve; });
+  const pending = new Promise<void>((resolve) => { release = resolve; });
+  const service = new ActionService(db, {
+    connected: async () => true,
+    execute: async () => { enter(); await pending; return "receipt"; },
+  });
+  const proposal = await service.propose(owner, email);
+  const deciding = service.decide(owner, proposal.id, proposal.hash, "approve");
+  await entered;
+  try {
+    const intent = await db.get<ActionDispatchIntent>(owner, "action-dispatch", proposal.id);
+    await db.put(owner, "action-dispatch", { ...intent!, decidedAt: "2001-01-01T00:00:00Z" });
+    await service.reconcileDispatchIntents();
+  } finally { release(); }
+  await deciding;
+  const action = await db.get<ActionProposal>(owner, "actions", proposal.id);
+  const intent = await db.get<ActionDispatchIntent>(owner, "action-dispatch", proposal.id);
+  assert.equal(action?.status, "succeeded");
+  assert.equal(intent?.status, "settled");
+  assert.equal(intent?.actionStatus, action?.status);
+});
