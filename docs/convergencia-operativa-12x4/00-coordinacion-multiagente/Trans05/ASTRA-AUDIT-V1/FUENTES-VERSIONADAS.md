@@ -1,0 +1,17 @@
+# Fuentes versionadas de la campaña
+
+Inventario del árbol `1a70bbc2c6f78c49fe6b51ed18297f27a9822149`. La tabla registra identidad y extensión de las fuentes originales. El recuento de líneas no acredita una lectura de contenido.
+
+| Documento relativo | Blob | Líneas |
+|---|---|---:|
+| `AUDITORIA-HORIZONTAL-01-CONVERGENCIA.md` | `6d87b7638f502766bf2c90cd7d38781f12ceaece` | 21 |
+| `CAMPAIGN.md` | `5b9ef1d46383327ba00b34678d605b28fa24091e` | 14 |
+| `FUTURO-NUCLEO-AXIOMATICO.md` | `ca51105bfa6dabecea3e8517099a4d8831a02b07` | 13 |
+| `P10-COMPILADOR-DE-SKILLS-NARRATIVAS.md` | `955c95eeca0579996dd9e02e09ac53eff4b91337` | 15 |
+| `PASADA-01-SUSTRATO-Y-PATCHSETS.md` | `634442648a996196d5dd084889f16dd2578cb084` | 29 |
+| `PASADA-02-EPISTEMOLOGIA-Y-LIFECYCLE.md` | `a859884e5b34427d0aee93d5addedee6e1b523d5` | 30 |
+| `PASADA-03-ALGORITMOS-Y-SKILLS-COGNITIVAS.md` | `44cd0f704402e27768e8f30d93f40ef169ab33d5` | 42 |
+| `PASADA-04-COMPILADOR-NARRATIVO-Y-WIRING.md` | `75a624a65454f9f0a9e2e4099c865710d5b00f5e` | 45 |
+| `PASADA-05-DINAMICA-LONGITUDINAL-Y-OBSERVABILIDAD.md` | `bca987ad04b2a24690c92e090409d5cdac75b28a` | 31 |
+| `PASADA-06-EJECUCION-CONSOLIDADA.md` | `c863ac77def4432c0425688e55a0a95f2c373161` | 52 |
+| `PROMPT-HANDOFF-EJECUCION.md` | `3b99753df82913a039a059eb49b1811ad11a95d3` | 6 |
