@@ -4413,6 +4413,8 @@ html[data-theme="dark"] .dock-divider { background: linear-gradient(90deg, trans
   color: #8f8a9c; cursor: pointer;
   transition: background 170ms ease, color 170ms ease, transform 200ms cubic-bezier(.2, .8, .2, 1);
   touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
 }
 html[data-theme="dark"] .dock-btn { color: #7e7889; }
 .dock-btn:hover { background: #ece7f7; color: #5a5170; transform: translateY(-1px); }

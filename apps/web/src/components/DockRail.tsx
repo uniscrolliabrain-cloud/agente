@@ -317,11 +317,15 @@ export default function DockRail({ activeView, onSelectView }: Props) {
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", onCancel);
     window.addEventListener("keydown", onKey);
+    // Si la ventana pierde el foco a mitad de arrastre no llega pointerup:
+    // el fantasma se quedaba vivo y la barra dejaba de responder.
+    window.addEventListener("blur", onCancel);
     return () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onCancel);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("blur", onCancel);
     };
     // `displayed` solo cambia al fijar; durante el arrastre se mantiene estable.
   }, [drag?.id]);
@@ -341,14 +345,26 @@ export default function DockRail({ activeView, onSelectView }: Props) {
     hold.current = window.setTimeout(() => {
       hold.current = null;
       const held = press.current;
-      if (held) beginDrag(held.id, held.el, startX, startY);
+      // Solo en táctil: con ratón el arrastre empieza al mover, nunca por
+      // esperar; si no, un clic normal se convertía en un arrastre fantasma
+      // que se quedaba colgado y bloqueaba la barra.
+      if (held && touch) beginDrag(held.id, held.el, startX, startY);
     }, HOLD_MS);
 
-    const detach = () => {
+    function detach() {
       window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", detach);
-      window.removeEventListener("pointercancel", detach);
-    };
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+    }
+
+    function release() {
+      if (hold.current) {
+        window.clearTimeout(hold.current);
+        hold.current = null;
+      }
+      press.current = null;
+      detach();
+    }
     const onMove = (move: PointerEvent) => {
       const held = press.current;
       if (!held) {
@@ -376,8 +392,8 @@ export default function DockRail({ activeView, onSelectView }: Props) {
       }
     };
     window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", detach);
-    window.addEventListener("pointercancel", detach);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
   };
 
   const onPick = (entry: DockEntry, event: ReactMouseEvent<HTMLButtonElement>) => {
