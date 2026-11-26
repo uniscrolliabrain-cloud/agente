@@ -1,0 +1,116 @@
+# PROBE_CONECTORES_V1 - diagnostico de conectores por campana.
+#
+# No despliega nada. Inyecta el entorno del config de Doppler del repo
+# (vars.DOPPLER_CONFIG, por defecto prd) y ejecuta `pnpm connections` una vez
+# por campana, para tener el veredicto de cada una en un log reproducible.
+#
+# Las sondas son de solo lectura (subscription, domains, assistant, balance,
+# token/verify, geocode) y `scripts/connections.ts` nunca imprime valores:
+# solo estado, nombre que aporta el valor y detalle de la respuesta.
+#
+# Se dispara con push a esta misma rama (workflow_dispatch exige que el fichero
+# exista en la rama por defecto, asi que no se usa como via principal).
+
+name: probe-conectores
+
+on:
+  push:
+    branches: [probe/conectores]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-conectores-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      DOPPLER_PROJECT: ${{ vars.DOPPLER_PROJECT || 'agntiapro' }}
+      DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: preparar CLI de Doppler
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/doppler" --version
+
+      # Nunca imprime valores: solo el config y cuantas claves trae.
+      - name: preflight de Doppler
+        run: |
+          set -euo pipefail
+          count=$(doppler secrets download --no-file --format json \
+            --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" | jq 'length')
+          echo "doppler ok: project=$DOPPLER_PROJECT config=$DOPPLER_CONFIG claves=$count"
+          doppler secrets --only-names --json \
+            --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" \
+            | jq -r 'keys[]' | sort > "$RUNNER_TEMP/nombres.txt"
+          echo "nombres distintos: $(wc -l < "$RUNNER_TEMP/nombres.txt")"
+          # Nombres que el contrato espera y este config no publica.
+          for name in AUTH_PROVIDER WHATSAPP_VERIFY_TOKEN WHATSAPP_APP_SECRET EMAIL_FROM \
+                      VAPI_ASSISTANT_ID FAST_LLM_API_KEY SLOW_LLM_API_KEY \
+                      EMBEDDINGS_LLM_API_KEY METRICS_TOKEN; do
+            if grep -qx "$name" "$RUNNER_TEMP/nombres.txt"; then
+              echo "  presente  $name"
+            else
+              echo "  AUSENTE   $name"
+            fi
+          done
+
+      # Cada campana en su propio paso: un fallo no oculta el veredicto del resto.
+      - name: "C01 suite-verde (contrato, sin red)"
+        continue-on-error: true
+        run: |
+          doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --only=core
+
+      - name: "C02 authz-tenant"
+        continue-on-error: true
+        run: |
+          doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=auth
+
+      - name: "C03 leads"
+        continue-on-error: true
+        run: |
+          doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=leads
+
+      - name: "C04 canales (whatsapp, google, email, voice)"
+        continue-on-error: true
+        run: |
+          doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=whatsapp,google,email,voice
+
+      - name: "C05 responder-lead (llm)"
+        continue-on-error: true
+        run: |
+          doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=llm
+
+      - name: "C06 deploy (core, deploy, observability)"
+        continue-on-error: true
+        run: |
+          doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=core,deploy,observability
