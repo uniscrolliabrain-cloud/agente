@@ -2,7 +2,7 @@
 // Cada fila mide una linea + meta, para que la columna no parezca una pila de
 // tarjetas. El menu (tres puntos) permite renombrar, mover a proyecto y enviar
 // la conversacion a una persona del equipo o a un agente del tenant.
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { FolderKanban, MoreHorizontal, Pin, Send, Trash2, UserRound } from "lucide-react";
 import type { Thread } from "../api/threads";
 import { listProjects, type Project } from "../api/projects";
@@ -24,7 +24,27 @@ interface Props {
   /** CHATS_PANEL_V1 - fijar conversaciones solo en el clon de demostración. */
   pinned?: string[];
   onTogglePin?: (id: string) => void;
+  /** CHATS_ORDER_V1 - pulsación larga para reordenar y triple clic para subir
+   *  un chat arriba, también solo en el clon. */
+  reorderable?: boolean;
+  onReorder?: (ids: string[]) => void;
+  onMoveToTop?: (id: string) => void;
 }
+
+// CHATS_ORDER_V1 - misma mecánica que el menú: pulsación larga, hueco con
+// línea y pieza que sigue al puntero; un triple clic sube la fila arriba.
+interface ConvDrag {
+  id: string;
+  title: string;
+  y: number;
+  left: number;
+  width: number;
+  height: number;
+  grab: number;
+}
+const HOLD_MS = 260;
+const MOVE_TOLERANCE = 6;
+const TRIPLE_MS = 700;
 
 interface MenuAnchor {
   id: string;
@@ -52,6 +72,9 @@ export default function SidebarThreads({
   onDelete,
   pinned,
   onTogglePin,
+  reorderable,
+  onReorder,
+  onMoveToTop,
 }: Props) {
   const isPinned = (id: string) => Boolean(pinned?.includes(id));
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
@@ -69,6 +92,120 @@ export default function SidebarThreads({
     inputRef.current?.focus();
     inputRef.current?.select();
   }, [renamingId]);
+
+  // CHATS_ORDER_V1 - reordenar con pulsación larga y subir con triple clic.
+  const [drag, setDrag] = useState<ConvDrag | null>(null);
+  const [drop, setDrop] = useState(0);
+  const rows = useRef(new Map<string, HTMLDivElement>());
+  const hold = useRef<number | null>(null);
+  const press = useRef<{ id: string; x: number; y: number } | null>(null);
+  const insert = useRef(0);
+  const suppress = useRef(0);
+  const base = useRef<string[]>([]);
+  const clicks = useRef<{ id: string; count: number; at: number }>({ id: "", count: 0, at: 0 });
+  const reorderRef = useRef(onReorder);
+
+  useEffect(() => {
+    reorderRef.current = onReorder;
+  }, [onReorder]);
+
+  const clearHold = () => {
+    if (hold.current) window.clearTimeout(hold.current);
+    hold.current = null;
+    press.current = null;
+  };
+
+  const beginDrag = (thread: Thread, el: HTMLElement, clientY: number) => {
+    const rect = el.getBoundingClientRect();
+    base.current = threads.map((item) => item.id);
+    insert.current = Math.max(0, base.current.indexOf(thread.id));
+    suppress.current = Number.POSITIVE_INFINITY;
+    setDrop(insert.current);
+    setDrag({ id: thread.id, title: thread.title, y: clientY, left: rect.left, width: rect.width, height: rect.height, grab: clientY - rect.top });
+  };
+
+  useEffect(() => {
+    if (!drag) return;
+    const moving = drag.id;
+    const onMove = (event: PointerEvent) => {
+      setDrag((value) => (value ? { ...value, y: event.clientY } : value));
+      let index = 0;
+      for (const id of base.current) {
+        if (id === moving) continue;
+        const el = rows.current.get(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (event.clientY > rect.top + rect.height / 2) index += 1;
+      }
+      if (index !== insert.current) {
+        insert.current = index;
+        setDrop(index);
+      }
+    };
+    const onUp = () => {
+      const next = base.current.filter((id) => id !== moving);
+      next.splice(Math.min(insert.current, next.length), 0, moving);
+      reorderRef.current?.(next);
+      suppress.current = performance.now() + 400;
+      setDrag(null);
+    };
+    const onCancel = () => {
+      suppress.current = performance.now() + 200;
+      setDrag(null);
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    const stopTouch = (event: TouchEvent) => event.preventDefault();
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onCancel);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("touchmove", stopTouch, { passive: false });
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onCancel);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("touchmove", stopTouch);
+    };
+  }, [drag?.id]);
+
+  const onRowPointerDown = (thread: Thread) => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!reorderable) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (renamingId) return;
+    const el = event.currentTarget;
+    clearHold();
+    press.current = { id: thread.id, x: event.clientX, y: event.clientY };
+    hold.current = window.setTimeout(() => {
+      hold.current = null;
+      if (press.current) beginDrag(thread, el, press.current.y);
+    }, HOLD_MS);
+  };
+
+  const onRowPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (drag) return;
+    const held = press.current;
+    if (!held) return;
+    if (Math.abs(event.clientX - held.x) > MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > MOVE_TOLERANCE) clearHold();
+  };
+
+  const onRowClick = (thread: Thread) => () => {
+    if (performance.now() < suppress.current) return;
+    if (reorderable && onMoveToTop) {
+      const now = performance.now();
+      const state = clicks.current;
+      const count = state.id === thread.id && now - state.at < TRIPLE_MS ? state.count + 1 : 1;
+      clicks.current = { id: thread.id, count, at: now };
+      if (count >= 3) {
+        clicks.current = { id: thread.id, count: 0, at: 0 };
+        onMoveToTop(thread.id);
+        return;
+      }
+    }
+    onSelect(thread.id);
+  };
 
   const openMenu = (id: string, event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -129,12 +266,23 @@ export default function SidebarThreads({
   }
 
   return (
-    <div className="conv-list">
-      {threads.map((thread) => {
+    <div className="conv-list" data-reorder={reorderable ? "true" : undefined}>
+      {threads.map((thread, index) => {
         const active = thread.id === activeThreadId;
         const meta = [assignedName(thread), projectName(thread.projectId)].filter(Boolean).join(" · ");
         return (
-          <div key={thread.id} className="conv-row" data-active={active || undefined}>
+          <Fragment key={thread.id}>
+          {drag && drop === index && (
+            <span className="conv-slot" style={{ height: drag.height }} aria-hidden="true" />
+          )}
+          <div
+            className="conv-row"
+            data-active={active || undefined}
+            ref={(node) => {
+              if (node) rows.current.set(thread.id, node);
+              else rows.current.delete(thread.id);
+            }}
+          >
             {renamingId === thread.id ? (
               <input
                 ref={inputRef}
@@ -153,7 +301,14 @@ export default function SidebarThreads({
               <button
                 type="button"
                 className="conv-main"
-                onClick={() => onSelect(thread.id)}
+                onClick={onRowClick(thread)}
+                onPointerDown={onRowPointerDown(thread)}
+                onPointerMove={onRowPointerMove}
+                onPointerUp={clearHold}
+                onPointerCancel={clearHold}
+                onPointerLeave={() => {
+                  if (!drag) clearHold();
+                }}
                 title={thread.title}
               >
                 <span className="conv-title">
@@ -179,8 +334,23 @@ export default function SidebarThreads({
               <MoreHorizontal size={15} />
             </button>
           </div>
+          </Fragment>
         );
       })}
+
+      {drag && drop === threads.length && (
+        <span className="conv-slot" style={{ height: drag.height }} aria-hidden="true" />
+      )}
+
+      {drag && (
+        <span
+          className="conv-ghost"
+          style={{ left: drag.left, top: drag.y - drag.grab, width: drag.width, height: drag.height }}
+          aria-hidden="true"
+        >
+          {drag.title}
+        </span>
+      )}
 
       {anchor && menuThread && (
         <>

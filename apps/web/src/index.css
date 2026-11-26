@@ -1774,6 +1774,11 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .v2-chats-handle:hover > span, .v2-chats-handle:focus-visible > span { background: var(--v2-purple); }
 .v2-chats-handle:focus-visible { outline: 2px solid var(--v2-purple); outline-offset: 1px; border-radius: 3px; }
 .conv-pin { display: inline-flex; vertical-align: -1px; margin-right: 5px; color: var(--v2-purple); }
+/* CHATS_ORDER_V1 - al reordenar: hueco con línea y fila que sigue al puntero. */
+.conv-slot { display: block; height: 44px; position: relative; }
+.conv-slot::after { content: ""; position: absolute; left: 10px; right: 10px; top: 50%; height: 2px; border-radius: 2px; background: var(--v2-purple); transform: translateY(-50%); }
+.conv-ghost { position: fixed; z-index: 90; display: flex; align-items: center; padding: 0 10px; border-radius: 9px; background: #fff; border: 1px solid var(--v2-border); box-shadow: 0 12px 28px #0000001f; color: var(--v2-text); font-size: 12.5px; font-weight: 500; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv-list[data-reorder="true"] .conv-main { user-select: none; -webkit-user-select: none; }
 .v2-nav-item > span { display: flex; align-items: center; gap: 12px; }
 .v2-nav-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--v2-orange); }
 

@@ -101,6 +101,8 @@ function readNavOrder(): AppView[] {
 // CHATS_PANEL_V1 - altura del panel de Chats y conversaciones fijadas.
 const CHATS_HEIGHT_KEY = "agntia_chats_panel_height_v1";
 const PINNED_KEY = "agntia_pinned_threads_v1";
+// CHATS_ORDER_V1 - orden manual de los chats, guardado en el navegador.
+const CHAT_ORDER_KEY = "agntia_chats_order_v1";
 const CHATS_MIN = 52;
 function readChatsHeight(): number {
   try {
@@ -113,6 +115,15 @@ function readChatsHeight(): number {
 function readPinnedThreads(): string[] {
   try {
     const raw = localStorage.getItem(PINNED_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
+  } catch {
+    return [];
+  }
+}
+function readChatOrder(): string[] {
+  try {
+    const raw = localStorage.getItem(CHAT_ORDER_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
     return Array.isArray(parsed) ? parsed.filter((value): value is string => typeof value === "string") : [];
   } catch {
@@ -331,6 +342,7 @@ export default function SidebarV2({
   // desplazándose por separado. Los fijados van primero.
   const [chatsHeight, setChatsHeight] = useState<number>(() => readChatsHeight());
   const [pinned, setPinned] = useState<string[]>(() => readPinnedThreads());
+  const [chatOrder, setChatOrder] = useState<string[]>(() => readChatOrder());
   const topRef = useRef<HTMLDivElement>(null);
   const recentRef = useRef<HTMLDivElement>(null);
   const chatsMax = useRef(0);
@@ -395,15 +407,44 @@ export default function SidebarV2({
   const togglePin = (id: string) =>
     setPinned((previous) => (previous.includes(id) ? previous.filter((value) => value !== id) : [...previous, id]));
 
-  const sortedThreads = chatsPanel && pinned.length
-    ? [...threads].sort((a, b) => {
-        const rank = (id: string) => {
-          const at = pinned.indexOf(id);
-          return at < 0 ? Number.MAX_SAFE_INTEGER : at;
-        };
-        return rank(a.id) - rank(b.id);
-      })
+  const saveChatOrder = (ids: string[]) => {
+    setChatOrder(ids);
+    try {
+      localStorage.setItem(CHAT_ORDER_KEY, JSON.stringify(ids));
+    } catch {
+      // Sin almacenamiento, el orden dura la sesión.
+    }
+  };
+
+  // CHATS_ORDER_V1 - al arrastrar, los fijados conservan su bloque arriba pero
+  // se recolocan entre ellos para que el gesto no se deshaga al soltar.
+  const reorderChats = (ids: string[]) => {
+    saveChatOrder(ids);
+    setPinned((previous) => {
+      const ordered = ids.filter((id) => previous.includes(id));
+      return [...ordered, ...previous.filter((id) => !ordered.includes(id))];
+    });
+  };
+
+  // CHATS_ORDER_V1 - triple clic: el chat sube arriba del todo de su bloque.
+  const moveChatToTop = (id: string) => {
+    const rest = sortedThreads.map((thread) => thread.id).filter((value) => value !== id);
+    setPinned((previous) => (previous.includes(id) ? [id, ...previous.filter((value) => value !== id)] : previous));
+    saveChatOrder([id, ...rest]);
+  };
+
+  const chatRank = (id: string) => {
+    const at = chatOrder.indexOf(id);
+    return at < 0 ? Number.MAX_SAFE_INTEGER : at;
+  };
+  const pinRank = (id: string) => {
+    const at = pinned.indexOf(id);
+    return at < 0 ? Number.MAX_SAFE_INTEGER : at;
+  };
+  const orderedThreads = chatsPanel && (pinned.length || chatOrder.length)
+    ? [...threads].sort((a, b) => pinRank(a.id) - pinRank(b.id) || chatRank(a.id) - chatRank(b.id))
     : threads;
+  const sortedThreads = orderedThreads;
 
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
@@ -561,7 +602,7 @@ export default function SidebarV2({
                 onRename={onRenameThread}
                 onPatch={onPatchThread}
                 {...(onDeleteThread ? { onDelete: onDeleteThread } : {})}
-                {...(chatsPanel ? { pinned, onTogglePin: togglePin } : {})}
+                {...(chatsPanel ? { pinned, onTogglePin: togglePin, reorderable: true, onReorder: reorderChats, onMoveToTop: moveChatToTop } : {})}
               />
             </div>
           </div>
