@@ -124,7 +124,7 @@ const SEED_CHATS: Chat[] = [
   { id: "c3", idea: 2, title: "Modelo de colaboración", preview: "Comisión propuesta de 150 € por cliente.", when: "Día 89", state: "Explorando" },
   { id: "c4", idea: 3, title: "Coste de voz y atención", preview: "Comparar alternativas sin cambiar proveedores.", when: "Día 87", state: "Aparcada" },
 ];
-type Content = typeof COMPANY_DATA[SectionId];
+type Content = (typeof COMPANY_DATA)[SectionId];
 function Panel({title,hint,children,className=""}:{title:string;hint?:string;children:ReactNode;className?:string}) {
  return <section className={"co-panel "+className}><header className="co-panel-head"><div><h2>{title}</h2>{hint&&<p>{hint}</p>}</div></header>{children}</section>;
 }
@@ -186,10 +186,10 @@ function ChatView({
           <span className="co-status">
             <span className="co-status-dot" /> Sin publicar
           </span>
-          <button type="button" className="co-btn co-btn--ghost" onClick={() => onToast("Idea duplicada como alternativa en la demo.")}>
+          <button type="button" className="co-btn co-btn--ghost" onClick={() => onToast("Duplicar idea: acción prevista, sin cambios guardados.")}>
             <Copy size={15} /> Duplicar idea
           </button>
-          <button type="button" className="co-btn co-btn--solid" onClick={() => onToast("Idea aparcada. No se ha publicado ningún cambio.")}>
+          <button type="button" className="co-btn co-btn--solid" onClick={() => onToast("Aparcar idea: acción prevista, sin cambios guardados.")}>
             <Archive size={15} /> Aparcar
           </button>
         </div>
@@ -202,7 +202,7 @@ function ChatView({
           </div>
           {turns.map((turn, i) => (
             <div className={`co-msg co-msg--${turn.who}`} key={i}>
-              <span className="co-msg-avatar">{turn.who === "laia" ? <Sparkles size={13} /> : "AF"}</span>
+              <span className="co-msg-avatar">{turn.who === "laia" ? <Sparkles size={13} /> : "OW"}</span>
               <div>
                 <span className="co-msg-meta">{turn.meta}</span>
                 <p>{turn.text}</p>
@@ -221,7 +221,7 @@ function ChatView({
           <article className="co-proposal">
             <header>
               <span className="co-kicker">Propuesta de esta conversación</span>
-              <h3>Seguimiento comercial</h3>
+              <h3>{idea.name}</h3>
               <p>{chat.preview}</p>
             </header>
             <div className="co-proposal-grid">
@@ -242,7 +242,7 @@ function ChatView({
               <button
                 type="button"
                 className="co-btn co-btn--solid"
-                onClick={() => onToast("Propuesta añadida al borrador V8 en la demo.")}
+                onClick={() => onToast("Añadir propuesta: acción prevista, sin cambios guardados.")}
               >
                 Añadir al borrador <ArrowUpRight size={14} />
               </button>
@@ -253,7 +253,7 @@ function ChatView({
             className="co-composer"
             onSubmit={(event) => {
               event.preventDefault();
-              onToast("Mensaje registrado en la demo. No hay modelo conectado.");
+              onToast("Envío no conectado. No se ha guardado el mensaje.");
             }}
           >
             <input placeholder="Sigue pensando en voz alta…" aria-label="Escribir a LAIA" />
@@ -351,7 +351,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
   const newChat = () => {
     const id = `chat-${Date.now()}`;
     setChats((list) => [
-      { id, idea: 1, title: section.label, preview: content.next, when: "Ahora", state: "Explorando" },
+      { id, idea: sectionId==="mercado"||sectionId==="modelo"||sectionId==="ecosistema"?2:sectionId==="economia"||sectionId==="tecnologia"?3:1, title: section.label, preview: content.next, when: "Ahora", state: "Explorando" },
       ...list,
     ]);
     setChatId(id);
@@ -529,7 +529,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
             <span>Volver a la app</span>
           </button>
           <div className="co-user">
-            <span className="co-avatar">AF</span>
+            <span className="co-avatar">OW</span>
             <div>
               <b>Agntia Demo</b>
               <small>Propietario · demo</small>
@@ -571,7 +571,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
             <button type="button" className="co-btn co-btn--solid" onClick={() => setNotice("Publicar llegará cuando conectemos el backend.")}>
               Publicar borrador
             </button>
-            <span className="co-avatar co-avatar--sm">AF</span>
+            <span className="co-avatar co-avatar--sm">OW</span>
           </div>
         </header>
 
