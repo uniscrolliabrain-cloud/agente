@@ -247,6 +247,45 @@ const maps: Probe = async ({ read }) => {
   return { ok: true, detail: "geocoding operativo" };
 };
 
+const composio: Probe = async ({ read }) => {
+  const { status, body } = await httpJson("https://backend.composio.dev/api/v3.1/toolkits?limit=1", {
+    headers: { "x-api-key": read("COMPOSIO_API_KEY")! },
+  });
+  if (status !== 200) return { ok: false, detail: `api responde ${status}: ${text(body, 90)}` };
+  const row = body as { items?: unknown[]; total_items?: number } | null;
+  return {
+    ok: true,
+    detail: `${row?.total_items ?? row?.items?.length ?? 0} toolkits visibles en el proyecto`,
+  };
+};
+
+const anam: Probe = async ({ read }) => {
+  const { status, body } = await httpJson("https://api.anam.ai/v1/personas?perPage=10", {
+    headers: { Authorization: `Bearer ${read("ANAM_API_KEY")!}` },
+  });
+  if (status !== 200) return { ok: false, detail: `api responde ${status}: ${text(body, 90)}` };
+  const row = body as { data?: unknown[]; items?: unknown[]; total?: number } | null;
+  const count = row?.total ?? row?.items?.length ?? row?.data?.length ?? 0;
+  return { ok: true, detail: `${count} personas en la cuenta` };
+};
+
+// TYPESAFE_JEV_PROBE_V1 - el clasificador JEV usa POST /v1/systemone con Bearer.
+// Un 401/403 prueba que la key no vale; 400/422 prueba que la key se acepta pero
+// el contrato de 7 preguntas no se ejercita aqui (eso lo cubre tests/cognition-v2-jev).
+const typesafe: Probe = async ({ read }) => {
+  const { status, body } = await httpJson("https://api.typesafe.ai/v1/systemone", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${read("TYPESAFE_API_KEY", "JEV_API_KEY")!}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ model: "jev-1.14.0", questions: {} }),
+  });
+  if (status === 200 || status === 400 || status === 422)
+    return { ok: true, detail: `key aceptada (systemone responde ${status} al payload minimo)` };
+  return { ok: false, detail: `systemone responde ${status}: ${text(body, 90)}` };
+};
+
 const gemini: Probe = async ({ read }) => {
   const key = read("GEMINI_API_KEY", "GOOGLE_API_KEY")!;
   const { status, body } = await httpJson(
@@ -595,6 +634,15 @@ export const CONNECTIONS: ConnectionSpec[] = [
     note: "Voces para el agente de telefono cuando no se usa la voz nativa de Vapi.",
     probe: elevenlabs,
   },
+  {
+    id: "anam",
+    label: "Anam (avatar de video)",
+    feature: "voice",
+    names: ["ANAM_API_KEY"],
+    need: "optional",
+    note: "Avatar y media de C13; sin key la campana queda BLOCKED_EXTERNAL.",
+    probe: anam,
+  },
 
   // leads
   {
@@ -613,6 +661,18 @@ export const CONNECTIONS: ConnectionSpec[] = [
     names: ["COMPOSIO_API_KEY"],
     need: "optional",
     note: "Conectores gestionados para el agente comercial.",
+    probe: composio,
+  },
+
+  // kernel: clasificador JEV de TypeSafe
+  {
+    id: "typesafe",
+    label: "TypeSafe JEV (clasificador)",
+    feature: "kernel",
+    names: ["TYPESAFE_API_KEY", "JEV_API_KEY"],
+    need: "optional",
+    note: "Sin key el clasificador cae a la linea base de reglas (rules).",
+    probe: typesafe,
   },
 
   // cobros
