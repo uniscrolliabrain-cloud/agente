@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTasks } from "./hooks/useTasks";
 import { useChat } from "./hooks/useChat";
@@ -133,6 +133,10 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
   // esa vista al lado de la actual: a la derecha en escritorio y arriba en móvil.
   // Solo el clon de demostración lo usa.
   const [split, setSplit] = useState<AppView | null>(null);
+  // SPLIT_PANE_V1 - reparto ajustable con el separador; no tiene por qué ser 50/50.
+  const [splitRatio, setSplitRatio] = useState(0.5);
+  const splitArea = useRef<HTMLDivElement>(null);
+  const SPLIT_MIN = 0.2;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -261,6 +265,39 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
       onOpenSettings={() => setSettingsOpen(true)}
     />
   ) : undefined;
+
+  // SPLIT_PANE_V1 - el separador ajusta el reparto: vertical en escritorio,
+  // horizontal cuando los paneles van apilados.
+  const startSplitDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const area = splitArea.current?.getBoundingClientRect();
+    if (!area) return;
+    const move = (pointer: PointerEvent) => {
+      const next = isMobile ? (pointer.clientY - area.top) / area.height : (pointer.clientX - area.left) / area.width;
+      setSplitRatio(Math.min(1 - SPLIT_MIN, Math.max(SPLIT_MIN, next)));
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const onSplitKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 0.1 : 0.02;
+    const grow = isMobile ? event.key === "ArrowDown" : event.key === "ArrowRight";
+    const shrink = isMobile ? event.key === "ArrowUp" : event.key === "ArrowLeft";
+    if (!grow && !shrink) return;
+    event.preventDefault();
+    setSplitRatio((value) => Math.min(1 - SPLIT_MIN, Math.max(SPLIT_MIN, value + (grow ? step : -step))));
+  };
+
+  const splitStyle: CSSProperties | undefined = split
+    ? isMobile
+      ? { gridTemplateColumns: "minmax(0, 1fr)", gridTemplateRows: `${splitRatio}fr 10px ${1 - splitRatio}fr` }
+      : { gridTemplateColumns: `${splitRatio}fr 10px ${1 - splitRatio}fr` }
+    : undefined;
 
   // SPLIT_PANE_V1 - una sola descripción de vistas para los dos paneles, así el
   // panel dividido monta exactamente lo mismo que la vista principal.
@@ -408,12 +445,26 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
           onOpenMenu={() => setMobileNav(true)}
         />
 
-        <div className="v2-content" data-split={split ? "true" : undefined}>
+        <div className="v2-content" data-split={split ? "true" : undefined} ref={splitArea} style={splitStyle}>
           {split ? (
             <>
               <section className="v2-pane" data-pane="main" aria-label="Vista actual">
                 {renderViewContent(view)}
               </section>
+              <div
+                className="v2-split-handle"
+                role="separator"
+                aria-orientation={isMobile ? "horizontal" : "vertical"}
+                aria-label="Ajustar el reparto de la pantalla"
+                aria-valuemin={Math.round(SPLIT_MIN * 100)}
+                aria-valuemax={Math.round((1 - SPLIT_MIN) * 100)}
+                aria-valuenow={Math.round(splitRatio * 100)}
+                tabIndex={0}
+                onPointerDown={startSplitDrag}
+                onKeyDown={onSplitKeyDown}
+              >
+                <span aria-hidden="true" />
+              </div>
               <section className="v2-pane" data-pane="split" aria-label="Vista dividida">
                 {renderViewContent(split)}
               </section>
