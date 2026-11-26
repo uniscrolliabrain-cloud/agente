@@ -39,6 +39,35 @@
   border-color: #e7e0f2;
 }
 
+/* CENTRO_MANDO_ETIQUETAS_V1 - en el centro de mando del clon convivían seis
+   colores de etiqueta (verde, ámbar, rojo, azul, beige) entre tarjetas blancas
+   y avatares lavanda. Se leían como bloques sueltos y rompían el papel del
+   resto de puestos. Todas las etiquetas pasan a una sola familia lavanda; el
+   estado lo dice el texto (Completado, Pendiente, Factura vencida), no el
+   relleno. Cubre las dos variantes: cc-tag (contenido de ejemplo) y cce-tag
+   (datos reales). */
+.v2-content .cce-root .cc-tag,
+.v2-content .cce-root .cc-tag.warn,
+.v2-content .cce-root .cc-tag.live,
+.v2-content .cce-root .cc-tag.danger,
+.v2-content .cce-root .cc-tag.ok,
+.v2-content .cce-root .cce-tag,
+.v2-content .cce-root .cce-tag--warn,
+.v2-content .cce-root .cce-tag--danger,
+.v2-content .cce-root .cce-tag--ok,
+.v2-content .cce-root .cce-tag--info,
+.v2-content .cce-root .cce-tag--live {
+  background: #f4f0fb;
+  border-color: #e3daf4;
+  color: #5b5273;
+}
+
+/* La tarjeta de un asunto fallido marcaba el borde en rojo: único resto de
+   color frío en la vista. Pasa al oro editorial, que ya señala atención. */
+.v2-content .cce-root .cce-card--alert {
+  border-left-color: var(--cce-gold);
+}
+
 /* Los workspaces del UI Lab se diseñaron a pantalla completa (100dvh). Dentro
    del shell del clon deben medir el área de contenido, que empieza bajo la
    barra superior; si no, cada vista añade el alto del topbar y aparece un
