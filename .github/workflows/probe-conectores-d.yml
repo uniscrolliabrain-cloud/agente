@@ -1,5 +1,5 @@
-# PROBE_CONECTORES_D_V1 - inventario de nombres + sondas nuevas (Composio,
-# Anam, TypeSafe JEV) y repaso de las seis campanas.
+# PROBE_CONECTORES_D_V2 - mismo diagnostico que V1, un job por campana para
+# que cada log quepa entero y se pueda leer sin recortes.
 #
 # No despliega nada y no imprime valores: solo presencia de nombres, estado de
 # cada conexion y el detalle que devuelve el servicio.
@@ -19,9 +19,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  inventario:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      DOPPLER_PROJECT: ${{ vars.DOPPLER_PROJECT || 'agntiapro' }}
+      DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+    steps:
+      - name: preparar CLI de Doppler
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # Nombres, nunca valores. Responde que credencial existe y cual no.
+      - name: nombres presentes y ausentes
+        run: |
+          set -euo pipefail
+          doppler secrets --only-names --json \
+            --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" \
+            | jq -r 'keys[]' | sort > "$RUNNER_TEMP/nombres.txt"
+          echo "config=$DOPPLER_CONFIG claves=$(wc -l < "$RUNNER_TEMP/nombres.txt")"
+          for name in COMPOSIO_API_KEY ANAM_API_KEY TYPESAFE_API_KEY JEV_API_KEY \
+                      GOOGLE_REFRESH_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET \
+                      GOOGLE_MAPS_API_KEY GEMINI_API_KEY ELEVENLABS_API_KEY \
+                      WHATSAPP_TOKEN WHATSAPP_ACCESS_TOKEN WHATSAPP_PHONE_NUMBER_ID \
+                      WHATSAPP_VERIFY_TOKEN WHATSAPP_APP_SECRET VAPI_API_KEY \
+                      VAPI_ASSISTANT_ID RESEND_API_KEY EMAIL_FROM SENTRY_DSN \
+                      GRAFANA_URL AUTH_PROVIDER METRICS_TOKEN; do
+            if grep -qx "$name" "$RUNNER_TEMP/nombres.txt"; then
+              echo "  presente  $name"
+            else
+              echo "  AUSENTE   $name"
+            fi
+          done
+
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: C01
+            only: core
+          - id: C02
+            only: auth
+          - id: C03
+            only: leads
+          - id: C04
+            only: email,whatsapp,voice,google
+          - id: C05
+            only: llm,kernel
+          - id: C06
+            only: deploy,observability,billing
+    name: ${{ matrix.id }} (${{ matrix.only }})
     env:
       DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
       DOPPLER_PROJECT: ${{ vars.DOPPLER_PROJECT || 'agntiapro' }}
@@ -48,44 +102,16 @@ jobs:
           curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # Nombres, nunca valores. Responde que credencial existe y cual no.
-      - name: inventario de nombres
-        run: |
-          set -euo pipefail
-          doppler secrets --only-names --json \
-            --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" \
-            | jq -r 'keys[]' | sort > "$RUNNER_TEMP/nombres.txt"
-          echo "config=$DOPPLER_CONFIG claves=$(wc -l < "$RUNNER_TEMP/nombres.txt")"
-          for name in COMPOSIO_API_KEY ANAM_API_KEY TYPESAFE_API_KEY JEV_API_KEY \
-                      GOOGLE_REFRESH_TOKEN GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET \
-                      GOOGLE_MAPS_API_KEY GEMINI_API_KEY ELEVENLABS_API_KEY \
-                      WHATSAPP_TOKEN WHATSAPP_ACCESS_TOKEN WHATSAPP_PHONE_NUMBER_ID \
-                      WHATSAPP_VERIFY_TOKEN WHATSAPP_APP_SECRET VAPI_API_KEY \
-                      VAPI_ASSISTANT_ID RESEND_API_KEY EMAIL_FROM SENTRY_DSN \
-                      GRAFANA_URL AUTH_PROVIDER METRICS_TOKEN; do
-            if grep -qx "$name" "$RUNNER_TEMP/nombres.txt"; then
-              echo "  presente  $name"
-            else
-              echo "  AUSENTE   $name"
-            fi
-          done
-
-      - name: "C01-C06 sondas"
+      - name: sondas
         continue-on-error: true
         run: |
           set +e
-          for group in "C01 core" "C02 auth" "C03 leads" "C04 email,whatsapp,voice,google" \
-                       "C05 llm,kernel" "C06 deploy,observability,billing"; do
-            id=${group%% *}
-            only=${group#* }
-            echo "== $id ($only)"
-            out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
-              pnpm connections --mode=live --probe --only="$only" 2>&1)
-            code=$?
-            printf '%s\n' "$out" \
-              | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]|^ *- ' \
-              | sed -E -e 's/  */ /g' \
-                       -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' \
-                       -e 's/(\+[0-9][0-9 ()-]{6,})/<tel>/g'
-            echo "== $id exit=$code"
-          done
+          out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe "--only=${{ matrix.only }}" 2>&1)
+          code=$?
+          printf '%s\n' "$out" \
+            | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]|^ *- ' \
+            | sed -E -e 's/  */ /g' \
+                     -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g' \
+                     -e 's/(\+[0-9][0-9 ()-]{6,})/<tel>/g'
+          echo "== ${{ matrix.id }} exit=$code"
