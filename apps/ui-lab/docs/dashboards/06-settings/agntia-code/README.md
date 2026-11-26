@@ -46,6 +46,11 @@ Cada carpeta contiene tres documentos:
 7. **Accesibilidad y móvil.** 360 px como ancho mínimo real, navegación por teclado, foco visible, contraste AA y estados vacíos/error siempre escritos.
 8. **Editorial.** Voz de producto AgntiaPro, español de España, sin promesas de disponibilidad ni cifras inventadas presentadas como reales.
 
+## Documentos transversales
+
+- [Auditoría de GitHub](./AUDITORIA-GITHUB.md): inventario real de los 17 repos, hallazgos, mapa repo→superficie y plan de migración.
+- [Fichas de repositorio](./fichas/README.md): una ficha por repo, leída de `main` el 2026-11-26, con estado, comandos y variables.
+
 ## Lo que este conjunto de documentos no es
 
 No es un inventario de endpoints, ni un compromiso de calendario, ni una auditoría del clon. Los nombres de recursos y campos son orientativos y necesitan diseño técnico, contrato de API y pruebas reales antes de implementarse.

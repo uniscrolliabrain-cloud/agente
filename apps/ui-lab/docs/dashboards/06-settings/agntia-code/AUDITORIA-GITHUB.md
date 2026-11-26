@@ -142,7 +142,7 @@ Una ficha por repo, en `docs/FICHA.md` dentro del propio repo (fuente de verdad 
 - `PRODUCT_LOCAL`: producto usable en local, sin despliegue gestionado.
 - `DEPLOYED`: sirviendo en una URL con checks verdes y evidencia fechada.
 
-Con esto, los 17 repos quedan así: `DOCS_ONLY` 4 (seguros, formación, comunicación, diseño); `SCAFFOLD` 7 (ventas, finanzas, redes, branding, legal, clientes, acme); `IMPLEMENTATION` 2 (marketing, por su Postgres y worker verificados, y ciberseguridad, con API y tests pero `production_enabled=false`); `PRODUCT_LOCAL` 2 (`agntia-gestoria`, `agntia-video`); `DEPLOYED` 0; **sin clasificar 1** (`agntia-iadev`, cuyo README tiene 14 bytes y no permite afirmar estado). `agente` se marca aparte como plataforma en desarrollo y no entra en el recuento anterior.
+Con esto, los 17 repos quedan así: `DOCS_ONLY` 5 (seguros, formación, comunicación, diseño, acme); `SCAFFOLD` 5 (ventas, finanzas, redes, branding, clientes); `IMPLEMENTATION` 3 (marketing, por su Postgres y worker verificados; legal, con 221 tests y 401 por defecto; ciberseguridad, con API y tests pero `production_enabled=false`); `PRODUCT_LOCAL` 2 (`agntia-gestoria`, `agntia-video`); `DEPLOYED` 0; **sin clasificar 1** (`agntia-iadev`, cuyo README tiene 14 bytes y no permite afirmar estado). `agente` se marca aparte como plataforma en desarrollo y no entra en el recuento anterior.
 
 ## 6. Plan de migración
 
