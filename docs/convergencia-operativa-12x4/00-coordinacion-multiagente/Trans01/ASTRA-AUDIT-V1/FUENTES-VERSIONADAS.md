@@ -1,0 +1,43 @@
+# Fuentes versionadas de la campaña
+
+Inventario del árbol `8967243326ccf5e22224e0693ac9155ea70d9765`. La tabla registra identidad y extensión de las fuentes originales. El recuento de líneas no acredita una lectura de contenido.
+
+| Documento relativo | Blob | Líneas |
+|---|---|---:|
+| `AUDITORIA-RENOVADA-M1.md` | `870bf7ae0a87b3749c4d5d5b8c57eac73b6db2e1` | 2 |
+| `BITACORA.md` | `fc258d687398736e1d49132c82785989f18e0e86` | 63 |
+| `ESPECIFICACION-CODIGO-T02-T03.md` | `022573622c42c3b479c2093a1ec754fc459341ce` | 10 |
+| `ESPECIFICACION-IMPLEMENTACION-V3.md` | `0ef3132b4330f6b634701d82a4cdc202a714ca27` | 78 |
+| `EVALUACION-INGENIERIA-Y-PLAN-DE-PATCHSETS.md` | `31c5882fb9fe21afdb1732f51cc541ddcc3fca56` | 349 |
+| `HANDOFF.md` | `35b54260f0281d0b55f1458873e1c88e656e0a46` | 29 |
+| `M1-EVIDENCIA.md` | `ca23bd09f7e05607c03c42728e8e215696d4e716` | 82 |
+| `M1-PATCHSETS.md` | `49d026f2de9b97cbeab914a56f7c97af25cd7bbf` | 47 |
+| `M1.1-CONTRATOS.md` | `f96c31e6241bc3edc6641c6bf8273e5a52a7d14a` | 109 |
+| `M1.1-EVIDENCIA.md` | `37e3b1e05cee8fa1199d591a125b97ce7cfad180` | 95 |
+| `M1.1-PATCHSETS.md` | `aea7cf1f323f1f156ca7c60dc460a051a0534652` | 46 |
+| `M1.2-CONTRATOS.md` | `ea8c2441b796be930f84135bb7bbe6255d512c68` | 121 |
+| `M1.2-EVIDENCIA.md` | `3d7fa4d261453ee049c66834502b216af8de957c` | 117 |
+| `M1.2-PATCHSETS.md` | `845925248c71e9b45480649271e279c6f3b035d3` | 56 |
+| `PLAN-EJECUCION-3-MACROTURNOS.md` | `9dd8bf2ad2ebc93696ec5bcab881daecdccd7c6e` | 16 |
+| `PROMPT-HANDOFF-EJECUCION.md` | `10bf70003c9481e06d5962bfafb7604a7a9b2aad` | 14 |
+| `PROTOCOLO-3-MACROTURNOS.md` | `70d15811d46c88efdc9772deeadd016a89e49dac` | 19 |
+| `REAUDIT-TRANSVERSAL-M1-V2.md` | `87c6d20166acdcbd45ca7c4fefe0c39f74a06630` | 2 |
+| `REAUDIT-TRANSVERSAL-M1-V3.md` | `5224f836d718e5215c66a4dca63de83eab91c9f4` | 2 |
+| `REAUDIT-TRANSVERSAL-M1.md` | `fb3a10ccf1312da7da977c0ab92ff35332720e3b` | 2 |
+| `REVISION-EVALUACION-INGENIERIA.md` | `0a90ba8fc80fec3f33390ac28a89b7ebea87e6d9` | 35 |
+| `REVISION-SIGUIENTE-TURNO.md` | `e9dd0eac167e725a8d0e180e1c20da4e6188f76c` | 2 |
+| `T01-AUDITORIA.md` | `b67b38548b24b78795b6a7329965d955c31a4964` | 56 |
+| `T01-CONTRATOS-B1.md` | `57e6c9bdde9243b071c9c5b541dfa637d40608eb` | 42 |
+| `T01-EVIDENCIA.md` | `22695b7d8259b3627cb207ca5c1816c4ae257737` | 35 |
+| `T01-FUENTES.tsv` | `24ed43b7d88db9ec31b8f45b00fa7d01ade61c05` | 104 |
+| `T01-RAMAS.tsv` | `67fa22690183e0274587701cafc305855ff9f663` | 28 |
+| `T02-EVIDENCIA.md` | `d9e6556475080055397caf8ceae92648fd86b87d` | 62 |
+| `T02-RECONCILIACION.md` | `b1748bb170d09d1b8512a8e9aac2111cde5f6f23` | 27 |
+| `T02-approval-scope.test.ts` | `3f2f0308248c30c74496af8833d52ceababad44f` | 135 |
+| `TURNOS.md` | `c78d28a51d1b31e462d1b5d50bc2cf6ac49601c0` | 61 |
+| `legacy/AUDITORIA-RENOVADA-M1.md` | `2ab43e56278ca2eb09d15405f127fdd4e5bbac53` | 5 |
+| `legacy/README.md` | `b94c3d85e6e1bc3bb049cc813add864b2694883b` | 2 |
+| `legacy/REAUDIT-TRANSVERSAL-M1-V2.md` | `835451cdae209d86a6f0abe385dd6aa6de5359a4` | 14 |
+| `legacy/REAUDIT-TRANSVERSAL-M1-V3.md` | `6426922e39deb74befc294170e3c1b5e562a9dc6` | 9 |
+| `legacy/REAUDIT-TRANSVERSAL-M1.md` | `f7b767535997aa25a73cc460ca7ea39f2a53e4c5` | 12 |
+| `legacy/REVISION-SIGUIENTE-TURNO.md` | `4f24d05311373cecca5e1fcc1eee5797eb573742` | 4 |
