@@ -59,7 +59,7 @@ test("source segmentation preserves exact UTF16 offsets, Unicode and complete co
   const covered = new Set<number>();
   for (const segment of segments) {
     assert.equal(segment.text, source.slice(segment.start, segment.end));
-    assert.equal(segment.text.isWellFormed(), true);
+    assert.equal(Buffer.from(segment.text, "utf8").toString("utf8"), segment.text);
     assert.match(segment.digest, /^[a-f0-9]{64}$/);
     for (let i = segment.start; i < segment.end; i++) covered.add(i);
   }
