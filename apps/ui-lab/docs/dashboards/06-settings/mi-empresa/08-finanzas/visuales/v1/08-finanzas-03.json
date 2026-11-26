@@ -1,0 +1,11 @@
+{
+  "id": "08-finanzas-03",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/08-finanzas/visuales/v1/08-finanzas-03.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "08-finanzas — icono calculadora",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-3.json",
+  "status": "review-required"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "06-productos-y-servicios-03",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/06-productos-y-servicios/visuales/v1/06-productos-y-servicios-03.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "06-productos-y-servicios — icono ficha de servicio",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-3.json",
+  "status": "review-required"
+}

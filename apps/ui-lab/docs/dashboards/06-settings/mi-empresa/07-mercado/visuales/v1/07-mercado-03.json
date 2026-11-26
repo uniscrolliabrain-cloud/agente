@@ -1,0 +1,11 @@
+{
+  "id": "07-mercado-03",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/07-mercado/visuales/v1/07-mercado-03.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "07-mercado — icono segmentos",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-3.json",
+  "status": "review-required"
+}
