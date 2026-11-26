@@ -29,3 +29,25 @@ for (const backend of ["memory", "pglite"]) {
     } finally { await db.close(); }
   });
 }
+
+test("quiescence is checked again after an append during the waiting interval", async () => {
+  const db = await createStore();
+  const port: StorePort = {
+    put: async (tenant, kind, id, data) => { await db.put(tenant, kind, { ...data as object, id }); },
+    get: (tenant, kind, id) => db.get(tenant, kind, id),
+    list: async () => [],
+    transaction: (fn) => db.transaction(() => fn(port)),
+  };
+  const store = new StoreTurnStore(port);
+  try {
+    const turn = await store.openTurn("T", "alice", "test");
+    await db.put("T", "cognitive-turns", {...turn,quiescenceMs:100,quiescentAt:new Date().toISOString()});
+    const closing = store.closeTurn("T", turn.id, "quiescence", "quiescence");
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    const timestamp = new Date().toISOString();
+    await store.append(thoughtSchema.parse({id:"during-wait",tenantId:"T",owner:"alice",turnId:turn.id,role:"observation",actor:{kind:"system",id:"fixture"},content:"later",attention:{id:"attention",author:"system",primary:"x",query:"x",intent:"observe",confidence:1,scope:"turn",timestamp},provenance:{source:"test",timestamp}}));
+    const lastActivity = (await store.getTurn("T", turn.id))!.quiescentAt!;
+    const closed = await closing;
+    assert.ok(Date.parse(closed.closedAt!) - Date.parse(lastActivity) >= 100);
+  } finally { await db.close(); }
+});

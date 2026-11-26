@@ -227,31 +227,28 @@ export class StoreTurnStore implements TurnStore {
     reason: TurnCloseReason,
     closedBy: TurnClosedBy,
   ): Promise<Turn> {
-    // STORE_QUIESCENCE_MS_V1 - si reason es quiescence, esperar a que pase quiescenceMs desde quiescentAt.
-    if (reason === "quiescence") {
-      const rawTurn = await this.store.get(tenantId, TURNS_KIND, turnId);
-      if (rawTurn) {
-        const turnPre = turnSchema.parse(rawTurn);
-        if (turnPre.quiescentAt && turnPre.quiescenceMs > 0) {
-          const elapsed = Date.now() - Date.parse(turnPre.quiescentAt);
-          const wait = Math.min(turnPre.quiescenceMs - elapsed, 600_000);
-          if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    for (;;) {
+      const result = await this.store.transaction(async (tx): Promise<{ turn?: Turn; waitMs?: number }> => {
+        await tx.lockKey?.(tenantId, turnId);
+        const raw = await tx.get(tenantId, TURNS_KIND, turnId);
+        if (!raw) throw new AppError(`Turn not found: ${turnId}`, 404);
+        const turn = turnSchema.parse(raw);
+        if (turn.tenantId !== tenantId) throw tenantMismatch(tenantId, turn.tenantId);
+        if (turn.status !== "open") return { turn };
+        if (reason === "quiescence" && turn.quiescentAt) {
+          const remaining = turn.quiescenceMs - (Date.now() - Date.parse(turn.quiescentAt));
+          if (remaining > 0) return { waitMs: Math.min(remaining, 60000) };
         }
-      }
+        turn.status = "closed";
+        turn.closedAt = new Date().toISOString();
+        turn.closeReason = reason;
+        turn.closedBy = closedBy;
+        await tx.put(tenantId, TURNS_KIND, turn.id, turn);
+        return { turn };
+      });
+      if (result.turn) return result.turn;
+      await new Promise((resolve) => setTimeout(resolve, result.waitMs));
     }
-    return this.store.transaction(async (tx) => {
-      const raw = await tx.get(tenantId, TURNS_KIND, turnId);
-      if (!raw) throw new AppError(`Turn not found: ${turnId}`, 404);
-      const turn = turnSchema.parse(raw);
-      if (turn.tenantId !== tenantId) throw tenantMismatch(tenantId, turn.tenantId);
-      if (turn.status !== "open") return turn;
-      turn.status = "closed";
-      turn.closedAt = new Date().toISOString();
-      turn.closeReason = reason;
-      turn.closedBy = closedBy;
-      await tx.put(tenantId, TURNS_KIND, turn.id, turn);
-      return turn;
-    });
   }
 
   /**
