@@ -1,0 +1,32 @@
+# Fuentes versionadas de la campaña
+
+Inventario del árbol `24c232c8bf8239155d9afa45a234be1a2edf322e`. La tabla registra identidad y extensión de las fuentes originales. El recuento de líneas no acredita una lectura de contenido.
+
+| Documento relativo | Blob | Líneas |
+|---|---|---:|
+| `00-EJECUTAR-M1-M2-M3.md` | `6114e9fceae49a2cc1423bd00b1c3fe199625aa7` | 16 |
+| `AUDITORIA-RENOVADA-M1.md` | `bdd1639b4ce6e88f222eecd36735fcc747ae7aa9` | 2 |
+| `BITACORA.md` | `a86f21495930de8b3c415fcd58e9d11092ef04f6` | 21 |
+| `ESPECIFICACION-CODIGO-T02-T03.md` | `6771610f7ec837628d5f364910fb9798146acda9` | 9 |
+| `HANDOFF.md` | `62291e89f0110919024ab0bf019549204d40912f` | 29 |
+| `PLAN-EJECUCION-3-MACROTURNOS.md` | `f69795070fab5031a390f8ecc8ad71089c791ffb` | 14 |
+| `PROMPT-HANDOFF-EJECUCION.md` | `d92dd8e4d624b1891dfb8d3aaf3823540ad748c8` | 14 |
+| `PROTOCOLO-3-MACROTURNOS.md` | `70d15811d46c88efdc9772deeadd016a89e49dac` | 19 |
+| `REAUDIT-TRANSVERSAL-M1-V2.md` | `58da5cb74a53bfe32323dbaf52283fb7b6c8d831` | 2 |
+| `REAUDIT-TRANSVERSAL-M1-V3.md` | `42ac24282bcfa99d6bcf0961f5b5c61f479d9561` | 2 |
+| `REAUDIT-TRANSVERSAL-M1.md` | `b64d0286a7a161ae2207b24d0181060024e433f7` | 2 |
+| `REDISENO-PASADA-01-P01-P14.md` | `a586b7ef1158d84f6177576c354d08e9bdecb494` | 87 |
+| `REDISENO-PASADA-02-WIRING-Y-PATCHSETS.md` | `ac21e8a16954382b914f797dc82bb0b743564429` | 45 |
+| `REDISENO-PASADA-03-CIRCUITOS-Y-FAULT-MATRIX.md` | `83de2ba0f64664c12d4bbd5f313fa31a6f6cf390` | 82 |
+| `REDISENO-PASADA-04-CONVERGENCIA-Y-REGRESION.md` | `2efb61fc9482a9cc8aae2622e3550869acfe6a9c` | 64 |
+| `REDISENO-PASADA-05-EJECUCION-CONSOLIDADA.md` | `f44858ae7580a439893239023d743a129fd7ae86` | 42 |
+| `REVISION-SIGUIENTE-TURNO.md` | `9e16b896f29ba58feff2d6800ea28f729ebb0caa` | 2 |
+| `T01-B1.md` | `66ac06121bbdeb6388122dd995a82b5273e8c9bb` | 65 |
+| `T02-B2.md` | `9c02cfa1cd1c98250c8299276409f5ffb97952ef` | 32 |
+| `TURNOS.md` | `1c8f137e792dd9c53be43e79a51e6281b2c6abec` | 61 |
+| `legacy/AUDITORIA-RENOVADA-M1.md` | `af798a42f005de80d61b44970f9f78de0da7d78d` | 5 |
+| `legacy/README.md` | `965cc3be1a00e795b06aaf12d1e3ca92c29f5ba1` | 2 |
+| `legacy/REAUDIT-TRANSVERSAL-M1-V2.md` | `835451cdae209d86a6f0abe385dd6aa6de5359a4` | 14 |
+| `legacy/REAUDIT-TRANSVERSAL-M1-V3.md` | `6426922e39deb74befc294170e3c1b5e562a9dc6` | 9 |
+| `legacy/REAUDIT-TRANSVERSAL-M1.md` | `f7b767535997aa25a73cc460ca7ea39f2a53e4c5` | 12 |
+| `legacy/REVISION-SIGUIENTE-TURNO.md` | `41fe5b839bcac841d4a1217d4fe671d47db6f583` | 4 |
