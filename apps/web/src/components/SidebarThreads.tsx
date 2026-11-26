@@ -103,7 +103,7 @@ export default function SidebarThreads({
   const [drop, setDrop] = useState(0);
   const rows = useRef(new Map<string, HTMLDivElement>());
   const hold = useRef<number | null>(null);
-  const press = useRef<{ id: string; x: number; y: number } | null>(null);
+  const press = useRef<{ id: string; x: number; y: number; el: HTMLElement } | null>(null);
   const insert = useRef(0);
   const suppress = useRef(0);
   const base = useRef<string[]>([]);
@@ -207,7 +207,7 @@ export default function SidebarThreads({
     if (renamingId) return;
     const el = event.currentTarget;
     clearHold();
-    press.current = { id: thread.id, x: event.clientX, y: event.clientY };
+    press.current = { id: thread.id, x: event.clientX, y: event.clientY, el };
     hold.current = window.setTimeout(() => {
       hold.current = null;
       if (press.current) beginDrag(thread, el, press.current.y);
@@ -218,7 +218,19 @@ export default function SidebarThreads({
     if (drag) return;
     const held = press.current;
     if (!held) return;
-    if (Math.abs(event.clientX - held.x) > MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > MOVE_TOLERANCE) clearHold();
+    const moved =
+      Math.abs(event.clientX - held.x) > MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > MOVE_TOLERANCE;
+    if (!moved) return;
+    // Con ratón el arrastre arranca al moverse; en táctil, con la pulsación
+    // larga, para que el dedo siga desplazando la lista.
+    if (event.pointerType !== "touch") {
+      const thread = threads.find((item) => item.id === held.id);
+      const el = held.el;
+      clearHold();
+      if (thread) beginDrag(thread, el, event.clientY);
+      return;
+    }
+    clearHold();
   };
 
   const onRowClick = (thread: Thread) => () => {

@@ -1779,6 +1779,7 @@ html[data-theme="dark"] .modal-success { background: color-mix(in srgb, #16a36a 
 .conv-slot::after { content: ""; position: absolute; left: 10px; right: 10px; top: 50%; height: 2px; border-radius: 2px; background: var(--v2-purple); transform: translateY(-50%); }
 .conv-ghost { position: fixed; z-index: 90; display: flex; align-items: center; padding: 0 10px; border-radius: 9px; background: #fff; border: 1px solid var(--v2-border); box-shadow: 0 12px 28px #0000001f; color: var(--v2-text); font-size: 12.5px; font-weight: 500; pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .conv-list[data-reorder="true"] .conv-main { user-select: none; -webkit-user-select: none; }
+.v2-sidebar-nav[data-reorder="true"] .v2-nav-item { user-select: none; -webkit-user-select: none; }
 /* SPLIT_PANE_V1 - dos vistas a la vez: zona de destino al arrastrar y dos
    paneles que se reparten el contenido (derecha en escritorio, arriba en móvil). */
 .split-drop { position: fixed; z-index: 70; display: grid; place-items: center; border: 2px dashed var(--v2-purple); border-radius: 18px; background: rgba(108, 79, 224, 0.07); color: var(--v2-purple); font-size: 13px; font-weight: 600; letter-spacing: 0.01em; pointer-events: none; }

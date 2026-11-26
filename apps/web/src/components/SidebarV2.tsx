@@ -348,7 +348,21 @@ export default function SidebarV2({
     if (navDrag) return;
     const held = navPress.current;
     if (!held) return;
-    if (Math.abs(event.clientX - held.x) > NAV_MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > NAV_MOVE_TOLERANCE) clearNavHold();
+    const moved =
+      Math.abs(event.clientX - held.x) > NAV_MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > NAV_MOVE_TOLERANCE;
+    if (!moved) return;
+    // SPLIT_PANE_V1 - con ratón el arrastre empieza al moverse, sin esperar la
+    // pulsación larga: quien coge la entrada y tira hacia el contenido ve el
+    // gesto al instante. En táctil se mantiene la pulsación larga para no
+    // robar el scroll.
+    if (event.pointerType !== "touch") {
+      const entry = navItems.find((item) => item.id === held.id);
+      const el = held.el;
+      clearNavHold();
+      if (entry) beginNavDrag(entry, el, event.clientY);
+      return;
+    }
+    clearNavHold();
   };
 
   const onNavKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, id: AppView) => {
@@ -566,7 +580,12 @@ export default function SidebarV2({
           </div>
         )}
 
-        <nav className="v2-sidebar-nav" aria-label="Principal" aria-describedby={reorderableNav ? "v2-nav-order-help" : undefined}>
+        <nav
+          className="v2-sidebar-nav"
+          data-reorder={reorderableNav ? "true" : undefined}
+          aria-label="Principal"
+          aria-describedby={reorderableNav ? "v2-nav-order-help" : undefined}
+        >
           {orderedNav.map((item, index) => {
             const Icon = item.icon;
             const active = activeView === item.id;
