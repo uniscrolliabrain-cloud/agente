@@ -1,0 +1,47 @@
+# PROBE_CONECTORES_C_V1 - solo C06 (deploy + observability), salida compacta.
+
+name: probe-conectores-c
+
+on:
+  push:
+    branches: [probe/conectores-3]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+      DOPPLER_PROJECT: ${{ vars.DOPPLER_PROJECT || 'agntiapro' }}
+      DOPPLER_CONFIG: ${{ vars.DOPPLER_CONFIG || 'prd' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: preparar CLI de Doppler
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -sL https://cli.doppler.com/install.sh | sh -s -- --install-path "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: "C06 deploy + observability"
+        continue-on-error: true
+        run: |
+          set +e
+          out=$(doppler run --project "$DOPPLER_PROJECT" --config "$DOPPLER_CONFIG" -- \
+            pnpm connections --mode=live --probe --only=deploy,observability 2>&1)
+          code=$?
+          printf '%s\n' "$out" \
+            | grep -E '^ *(OK|FALTA|ROTA|SHELL|opcional|\?)|^\[connections\]|^ *- ' \
+            | sed -E -e 's/  */ /g' -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+/<email>/g'
+          echo "== C06 exit=$code"
