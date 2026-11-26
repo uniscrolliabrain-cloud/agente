@@ -29,6 +29,9 @@ interface Props {
   reorderable?: boolean;
   onReorder?: (ids: string[]) => void;
   onMoveToTop?: (id: string) => void;
+  /** SPLIT_PANE_V1 - sacar la fila de la barra abre el chat en el otro panel. */
+  onSplitDrop?: (id: string) => void;
+  onSplitHover?: (over: boolean) => void;
 }
 
 // CHATS_ORDER_V1 - misma mecánica que el menú: pulsación larga, hueco con
@@ -75,6 +78,8 @@ export default function SidebarThreads({
   reorderable,
   onReorder,
   onMoveToTop,
+  onSplitDrop,
+  onSplitHover,
 }: Props) {
   const isPinned = (id: string) => Boolean(pinned?.includes(id));
   const [anchor, setAnchor] = useState<MenuAnchor | null>(null);
@@ -104,10 +109,16 @@ export default function SidebarThreads({
   const base = useRef<string[]>([]);
   const clicks = useRef<{ id: string; count: number; at: number }>({ id: "", count: 0, at: 0 });
   const reorderRef = useRef(onReorder);
+  const splitRef = useRef(onSplitDrop);
+  const splitHoverRef = useRef(onSplitHover);
+  const outside = useRef(false);
+  const asideBox = useRef<DOMRect | null>(null);
 
   useEffect(() => {
     reorderRef.current = onReorder;
-  }, [onReorder]);
+    splitRef.current = onSplitDrop;
+    splitHoverRef.current = onSplitHover;
+  }, [onReorder, onSplitDrop, onSplitHover]);
 
   const clearHold = () => {
     if (hold.current) window.clearTimeout(hold.current);
@@ -117,6 +128,8 @@ export default function SidebarThreads({
 
   const beginDrag = (thread: Thread, el: HTMLElement, clientY: number) => {
     const rect = el.getBoundingClientRect();
+    asideBox.current = document.querySelector(".v2-sidebar")?.getBoundingClientRect() ?? null;
+    outside.current = false;
     base.current = threads.map((item) => item.id);
     insert.current = Math.max(0, base.current.indexOf(thread.id));
     suppress.current = Number.POSITIVE_INFINITY;
@@ -129,6 +142,12 @@ export default function SidebarThreads({
     const moving = drag.id;
     const onMove = (event: PointerEvent) => {
       setDrag((value) => (value ? { ...value, y: event.clientY } : value));
+      const leave = Boolean(splitRef.current && asideBox.current && event.clientX > asideBox.current.right + 8);
+      if (leave !== outside.current) {
+        outside.current = leave;
+        splitHoverRef.current?.(leave);
+      }
+      if (leave) return;
       let index = 0;
       for (const id of base.current) {
         if (id === moving) continue;
@@ -143,6 +162,15 @@ export default function SidebarThreads({
       }
     };
     const onUp = () => {
+      if (outside.current) {
+        // SPLIT_PANE_V1 - soltar fuera de la barra abre ese chat al lado.
+        outside.current = false;
+        splitHoverRef.current?.(false);
+        splitRef.current?.(moving);
+        suppress.current = performance.now() + 400;
+        setDrag(null);
+        return;
+      }
       const next = base.current.filter((id) => id !== moving);
       next.splice(Math.min(insert.current, next.length), 0, moving);
       reorderRef.current?.(next);
@@ -151,6 +179,8 @@ export default function SidebarThreads({
     };
     const onCancel = () => {
       suppress.current = performance.now() + 200;
+      outside.current = false;
+      splitHoverRef.current?.(false);
       setDrag(null);
     };
     const onKey = (event: KeyboardEvent) => {

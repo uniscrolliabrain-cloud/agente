@@ -22,7 +22,7 @@ import {
   UserCog,
   Users,
 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { Thread } from "../api/threads";
 // SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
 import SidebarThreads, { type ThreadPatch } from "./SidebarThreads";
@@ -77,6 +77,9 @@ interface Props {
   /** CHATS_PANEL_V1 - panel de Chats redimensionable y fijable. También solo
    *  en el clon de demostración. */
   chatsPanel?: boolean;
+  /** SPLIT_PANE_V1 - soltar una entrada fuera de la barra abre la vista dividida,
+   *  también solo en el clon de demostración. */
+  onSplitDrop?: (target: { kind: "view" | "thread"; id: string }) => void;
 }
 
 // UI_LAB_LEGACY_V1 - vistas retiradas solo en el clon de demostración.
@@ -175,6 +178,7 @@ export default function SidebarV2({
   projectsLabel,
   reorderableNav,
   chatsPanel,
+  onSplitDrop,
 }: Props) {
   // DEMO_VIEWS_V1 - Apps solo aparece cuando el clon inyecta su workspace.
   const demoItems: { id: AppView; label: string; icon: typeof MessageSquareText }[] = [
@@ -204,6 +208,17 @@ export default function SidebarV2({
   const navInsert = useRef(0);
   const navSuppress = useRef(0);
   const navBase = useRef<AppView[]>([]);
+  // SPLIT_PANE_V1 - al sacar la entrada de la barra se ofrece la vista dividida.
+  const asideEl = useRef<HTMLElement>(null);
+  const asideBox = useRef<DOMRect | null>(null);
+  const navOutside = useRef(false);
+  const [navOver, setNavOver] = useState(false);
+  const [chatsOver, setChatsOver] = useState(false);
+  const splitDrop = useRef(onSplitDrop);
+
+  useEffect(() => {
+    splitDrop.current = onSplitDrop;
+  }, [onSplitDrop]);
 
   useEffect(() => {
     if (!reorderableNav) return;
@@ -237,6 +252,8 @@ export default function SidebarV2({
 
   const beginNavDrag = (entry: NavEntry, el: HTMLButtonElement, clientY: number) => {
     const rect = el.getBoundingClientRect();
+    asideBox.current = asideEl.current?.getBoundingClientRect() ?? null;
+    navOutside.current = false;
     navBase.current = orderedNav.map((item) => item.id);
     const index = navBase.current.indexOf(entry.id);
     navInsert.current = index < 0 ? 0 : index;
@@ -250,6 +267,12 @@ export default function SidebarV2({
     const moving = navDrag.id;
     const onMove = (event: PointerEvent) => {
       setNavDrag((value) => (value ? { ...value, y: event.clientY } : value));
+      const outside = Boolean(splitDrop.current && asideBox.current && event.clientX > asideBox.current.right + 8);
+      if (outside !== navOutside.current) {
+        navOutside.current = outside;
+        setNavOver(outside);
+      }
+      if (outside) return;
       let index = 0;
       for (const id of navBase.current) {
         if (id === moving) continue;
@@ -264,6 +287,15 @@ export default function SidebarV2({
       }
     };
     const onUp = () => {
+      if (navOutside.current) {
+        // SPLIT_PANE_V1 - soltar fuera de la barra: la entrada abre el otro panel.
+        navOutside.current = false;
+        setNavOver(false);
+        splitDrop.current?.({ kind: "view", id: moving });
+        navSuppress.current = performance.now() + 400;
+        setNavDrag(null);
+        return;
+      }
       const without = navBase.current.filter((id) => id !== moving);
       without.splice(Math.min(navInsert.current, without.length), 0, moving);
       saveNavOrder(without);
@@ -274,6 +306,8 @@ export default function SidebarV2({
     };
     const onCancel = () => {
       navSuppress.current = performance.now() + 200;
+      navOutside.current = false;
+      setNavOver(false);
       setNavDrag(null);
     };
     const onKey = (event: KeyboardEvent) => {
@@ -446,6 +480,25 @@ export default function SidebarV2({
     : threads;
   const sortedThreads = orderedThreads;
 
+  // SPLIT_PANE_V1 - la zona de destino: media derecha en escritorio, media
+  // superior en móvil, que es donde se monta el panel nuevo.
+  const dropStyle: CSSProperties | undefined = (() => {
+    if (typeof window === "undefined") return undefined;
+    const content = document.querySelector(".v2-content")?.getBoundingClientRect() ?? null;
+    const edge = asideBox.current?.right ?? 320;
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      return { left: 8, right: 8, top: (content?.top ?? 56) + 6, height: Math.max(180, (content?.height ?? 480) * 0.46) };
+    }
+    // La pista dibuja la mitad exacta donde caerá el panel nuevo.
+    const half = content ? content.left + content.width / 2 : Math.max(edge, 320);
+    return {
+      left: half + 6,
+      right: 8,
+      top: (content?.top ?? 8) + 8,
+      bottom: 12,
+    };
+  })();
+
   const initials = userName.split(" ").map((s) => s[0]).slice(0, 2).join("").toUpperCase();
   // SIDEBAR_THREADS_V2 - todos los hilos, en una lista que ya hace scroll con
   // la columna. Antes solo se veían tres y los demás desaparecían sin aviso.
@@ -461,7 +514,13 @@ export default function SidebarV2({
   const hideTip = () => setRailTip(null);
 
   return (
-    <aside className="v2-sidebar" data-collapsed={collapsed} data-chats={chatsPanel ? "true" : undefined}>
+    <aside
+      className="v2-sidebar"
+      ref={asideEl}
+      data-collapsed={collapsed}
+      data-chats={chatsPanel ? "true" : undefined}
+      data-split={navOver || chatsOver ? "true" : undefined}
+    >
       <div className="v2-sidebar-top" ref={topRef}>
         <div className="v2-sidebar-head">
           <button
@@ -603,6 +662,12 @@ export default function SidebarV2({
                 onPatch={onPatchThread}
                 {...(onDeleteThread ? { onDelete: onDeleteThread } : {})}
                 {...(chatsPanel ? { pinned, onTogglePin: togglePin, reorderable: true, onReorder: reorderChats, onMoveToTop: moveChatToTop } : {})}
+                {...(onSplitDrop
+                  ? {
+                      onSplitDrop: (id: string) => onSplitDrop({ kind: "thread" as const, id }),
+                      onSplitHover: setChatsOver,
+                    }
+                  : {})}
               />
             </div>
           </div>
@@ -655,6 +720,12 @@ export default function SidebarV2({
           </div>
         )}
       </div>
+
+      {(navOver || chatsOver) && (
+        <div className="split-drop" style={dropStyle} aria-hidden="true">
+          <span>Suelta para dividir la pantalla</span>
+        </div>
+      )}
 
       {collapsed && railTip && (
         <span

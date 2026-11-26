@@ -129,6 +129,10 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
   const [mobileChat, setMobileChat] = useState(false);
   const chatFabRef = useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // SPLIT_PANE_V1 - arrastrar una entrada de la barra lateral al contenido abre
+  // esa vista al lado de la actual: a la derecha en escritorio y arriba en móvil.
+  // Solo el clon de demostración lo usa.
+  const [split, setSplit] = useState<AppView | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -219,6 +223,17 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
     setMobileNav(false);
   };
 
+  // SPLIT_PANE_V1 - el destino soltado a la derecha: una vista o una conversación.
+  const openSplit = (target: { kind: "view" | "thread"; id: string }) => {
+    setMobileNav(false);
+    if (target.kind === "thread") {
+      threads.select(target.id);
+      setSplit("chat");
+      return;
+    }
+    setSplit(target.id as AppView);
+  };
+
   // DEMO_VIEWS_V1 - resuelve un nodo o una función de navegación de la demo.
   const renderDemoView = (key: AppView): ReactNode => {
     const entry = demoViews?.[key];
@@ -247,6 +262,92 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
     />
   ) : undefined;
 
+  // SPLIT_PANE_V1 - una sola descripción de vistas para los dos paneles, así el
+  // panel dividido monta exactamente lo mismo que la vista principal.
+  const renderViewContent = (current: AppView): ReactNode => {
+    if (current === "today" && USE_COMMAND_CENTER_V2) {
+      return (
+        <CommandCenterEditorialView
+          onOpenTask={(id) => setOpenTaskId(id)}
+          onReviewTask={(id) => setReviewTaskId(id)}
+          onOpenTasksView={() => setView("tasks")}
+          onOpenAgentsView={() => setView("team")}
+          onOpenChat={() => setView("chat")}
+          {...(auth.user?.role === "admin"
+            ? { onOpenTeamView: () => setView(demoViews ? "team" : "users") }
+            : {})}
+        />
+      );
+    }
+    if (current === "today") {
+      return (
+        <CommandCenterView
+          onOpenTask={(id) => setOpenTaskId(id)}
+          onReviewTask={(id) => setReviewTaskId(id)}
+          onOpenTasksView={() => setView("tasks")}
+          onOpenAgentsView={() => setView("team")}
+          onOpenChat={() => setView("chat")}
+          {...(auth.user?.role === "admin"
+            ? { onOpenTeamView: () => setView(demoViews ? "team" : "users") }
+            : {})}
+        />
+      );
+    }
+    if (current === "chat") {
+      return renderDemoView("chat") ?? (
+        <ChatPanel chat={chat} onResolveView={handleResolveView} userName={auth.user?.name} />
+      );
+    }
+    if (current === "tasks") {
+      return (
+        renderDemoView("tasks") ?? (
+          <TasksView
+            tasks={tasks.tasks}
+            currentUserId={auth.user?.id ?? null}
+            onOpenTask={openTask}
+            onReviewTask={reviewTask}
+          />
+        )
+      );
+    }
+    if (current === "documents") return renderDemoView("documents") ?? <DocumentsView files={files} />;
+    if (current === "whatsapp") return renderDemoView("whatsapp") ?? <WhatsAppView />;
+    if (current === "formation") return renderDemoView("formation") ?? null;
+    if (current === "operations") {
+      return <VerticalSliceOperationsView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />;
+    }
+    if (current === "memory") return renderDemoView("memory") ?? <MemoryView memories={memories} />;
+    if (current === "projects") {
+      return renderDemoView("projects") ?? <ProjectsView enabled={auth.isAuthenticated} />;
+    }
+    if (current === "control-center") {
+      return <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />;
+    }
+    if (current === "users" && auth.user) return <UsersView currentUserId={auth.user.id} />;
+    if (current === "team") return renderDemoView("team") ?? <TeamView onOpenChat={() => setView("chat")} />;
+    if (current === "workspace") {
+      return (
+        <WorkspaceShell
+          workspaces={workspaces}
+          workspaceId={activeWorkspaceId}
+          onSelectWorkspace={setActiveWorkspaceId}
+        />
+      );
+    }
+    if (current === "apps") return renderDemoView("apps") ?? null;
+    if (current === "centro-mando") return renderDemoView("centro-mando") ?? <CentroMandoWorkspace />;
+    if (current === "command-studio") {
+      return (
+        <WorkspaceLoadBoundary>
+          <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
+            <BusinessCommandStudio />
+          </Suspense>
+        </WorkspaceLoadBoundary>
+      );
+    }
+    return null;
+  };
+
   const sidebar = (
     <SidebarV2
       activeView={view}
@@ -272,6 +373,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
       hideLegacyViews={Boolean(demoViews)}
       reorderableNav={Boolean(demoViews)}
       chatsPanel={Boolean(demoViews)}
+      {...(demoViews ? { onSplitDrop: openSplit } : {})}
       collapsed={chatDockActive || (collapsed && !isMobile)}
       onToggleCollapsed={chatDockActive ? undefined : () => setCollapsed((value) => !value)}
       onOpenSettings={() => setSettingsOpen(true)}
@@ -306,81 +408,27 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
           onOpenMenu={() => setMobileNav(true)}
         />
 
-        <div className="v2-content">
-          {view === "today" && USE_COMMAND_CENTER_V2 && (
-            <CommandCenterEditorialView
-              onOpenTask={(id) => setOpenTaskId(id)}
-              onReviewTask={(id) => setReviewTaskId(id)}
-              onOpenTasksView={() => setView("tasks")}
-              onOpenAgentsView={() => setView("team")}
-              onOpenChat={() => setView("chat")}
-              {...(auth.user?.role === "admin"
-                ? { onOpenTeamView: () => setView(demoViews ? "team" : "users") }
-                : {})}
-            />
-          )}
-          {view === "today" && !USE_COMMAND_CENTER_V2 && (
-            <CommandCenterView
-              onOpenTask={(id) => setOpenTaskId(id)}
-              onReviewTask={(id) => setReviewTaskId(id)}
-              onOpenTasksView={() => setView("tasks")}
-              onOpenAgentsView={() => setView("team")}
-              onOpenChat={() => setView("chat")}
-              {...(auth.user?.role === "admin"
-                ? { onOpenTeamView: () => setView(demoViews ? "team" : "users") }
-                : {})}
-            />
-          )}
-          {view === "chat" &&
-            (renderDemoView("chat") ?? (
-              <ChatPanel
-                chat={chat}
-                onResolveView={handleResolveView}
-                userName={auth.user?.name}
-              />
-            ))}
-          {view === "tasks" && (renderDemoView("tasks") ?? (
-            <TasksView
-              tasks={tasks.tasks}
-              currentUserId={auth.user?.id ?? null}
-              onOpenTask={openTask}
-              onReviewTask={reviewTask}
-            />
-          ))}
-          {view === "documents" && (renderDemoView("documents") ?? <DocumentsView files={files} />)}
-          {view === "whatsapp" && (renderDemoView("whatsapp") ?? <WhatsAppView />)}
-          {view === "formation" && (renderDemoView("formation") ?? null)}
-          {view === "operations" && (
-            <VerticalSliceOperationsView
-              enabled={auth.isAuthenticated}
-              onOpenTask={(id) => setOpenTaskId(id)}
-            />
-          )}
-          {view === "memory" && (renderDemoView("memory") ?? <MemoryView memories={memories} />)}
-          {view === "projects" && (
-            renderDemoView("projects") ?? <ProjectsView enabled={auth.isAuthenticated} />
-          )}
-          {view === "control-center" && (
-            <ControlCenterView enabled={auth.isAuthenticated} onOpenTask={(id) => setOpenTaskId(id)} />
-          )}
-          {view === "users" && auth.user && <UsersView currentUserId={auth.user.id} />}
-          {view === "team" && (renderDemoView("team") ?? <TeamView onOpenChat={() => setView("chat")} />)}
-          {view === "workspace" && (
-            <WorkspaceShell
-              workspaces={workspaces}
-              workspaceId={activeWorkspaceId}
-              onSelectWorkspace={setActiveWorkspaceId}
-            />
-          )}
-          {view === "apps" && (renderDemoView("apps") ?? null)}
-          {/* APP_CENTRO_MANDO_V1 */}
-          {view === "centro-mando" && (renderDemoView("centro-mando") ?? <CentroMandoWorkspace />)}
-          {view === "command-studio" && (
-            <WorkspaceLoadBoundary>
-              <Suspense fallback={<p style={{ padding: 24 }}>Preparando el estudio demo…</p>}>
-                <BusinessCommandStudio />
-              </Suspense>
-            </WorkspaceLoadBoundary>
+        <div className="v2-content" data-split={split ? "true" : undefined}>
+          {split ? (
+            <>
+              <section className="v2-pane" data-pane="main" aria-label="Vista actual">
+                {renderViewContent(view)}
+              </section>
+              <section className="v2-pane" data-pane="split" aria-label="Vista dividida">
+                {renderViewContent(split)}
+              </section>
+              <button
+                type="button"
+                className="v2-split-close"
+                onClick={() => setSplit(null)}
+                aria-label="Cerrar vista dividida"
+                title="Cerrar vista dividida"
+              >
+                <X size={14} />
+              </button>
+            </>
+          ) : (
+            renderViewContent(view)
           )}
         </div>
       </AppShell>
