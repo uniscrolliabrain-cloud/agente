@@ -98,7 +98,14 @@ export const WORKSPACE_VIEW_BY_ROLE: Record<string, AppView> = {
 // navegación del shell, para que los menús internos de la demo cambien de vista.
 type DemoView = ReactNode | ((nav: (view: AppView) => void) => ReactNode);
 
-export default function App({ demoViews }: { demoViews?: Partial<Record<AppView, DemoView>> } = {}) {
+// TU_EMPRESA_V1 - el clon demo inyecta aquí el estudio de compilación. Sin
+// este prop, producción no monta la capa ni muestra la entrada en Ajustes.
+type CompanyArea = (opts: { onClose: () => void }) => ReactNode;
+
+export default function App({
+  demoViews,
+  companyArea,
+}: { demoViews?: Partial<Record<AppView, DemoView>>; companyArea?: CompanyArea } = {}) {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
   const threads = useThreads(auth.isAuthenticated);
@@ -131,6 +138,8 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
   const [mobileChat, setMobileChat] = useState(false);
   const chatFabRef = useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // TU_EMPRESA_V1 - la meta-app sustituye el shell mientras está abierta.
+  const [companyOpen, setCompanyOpen] = useState(false);
   // SPLIT_PANE_V1 - arrastrar una entrada de la barra lateral al contenido abre
   // esa vista al lado de la actual: a la derecha en escritorio y arriba en móvil.
   // Solo el clon de demostración lo usa.
@@ -529,6 +538,7 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
         tenantLabel={demoSession ? "Interfaz · demo" : contextLabel}
         demo={demoSession}
         onOpenProfile={() => setProfileOpen(true)}
+        {...(companyArea ? { onOpenCompany: () => setCompanyOpen(true) } : {})}
         onExitDemo={() => { void auth.logout(); }}
         onLogout={() => { void auth.logout(); }}
       />
@@ -564,6 +574,8 @@ export default function App({ demoViews }: { demoViews?: Partial<Record<AppView,
           onChanged={tasks.refresh}
         />
       )}
+
+      {companyOpen && companyArea?.({ onClose: () => setCompanyOpen(false) })}
     </>
   );
 }

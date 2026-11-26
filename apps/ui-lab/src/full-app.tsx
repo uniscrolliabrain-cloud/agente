@@ -21,6 +21,8 @@ const ComunicacionesWorkspace = lazy(() => import("./comunicaciones/Comunicacion
 const AppsLauncher = lazy(() => import("./apps-launcher/AppsLauncher"));
 const FormationV4 = lazy(() => import("./formation-v4/FormationV4Workspace"));
 const LegalV1 = lazy(() => import("./legal/LegalV1"));
+// TU_EMPRESA_V1 - meta-app del clon: se abre desde Ajustes y tapa el shell.
+const CompanyApp = lazy(() => import("./company-v2/CompanyApp"));
 
 function View({ children }: { children: ReactNode }) {
   return (
@@ -94,7 +96,18 @@ const isLegal = /\/legal\/?$/.test(window.location.pathname);
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Suspense fallback={<div style={{ padding: 32 }}>Preparando la aplicación en modo demo…</div>}>
-      {isLegal ? <LegalV1 /> : <RealApp demoViews={demoViews} />}
+      {isLegal ? (
+        <LegalV1 />
+      ) : (
+        <RealApp
+          demoViews={demoViews}
+          companyArea={({ onClose }) => (
+            <View>
+              <CompanyApp onClose={onClose} />
+            </View>
+          )}
+        />
+      )}
     </Suspense>
   </StrictMode>,
 );

@@ -2,7 +2,7 @@
 // Antes el icono de engranaje no hacia nada y no habia forma de cerrar sesion
 // desde el panel: solo borrando el almacenamiento del navegador.
 import { useEffect } from "react";
-import { Building2, ChevronRight, LogOut, Sparkles, UserRound } from "lucide-react";
+import { Building2, ChevronRight, Compass, LogOut, Sparkles, UserRound } from "lucide-react";
 import { BrandLockup } from "./BrandMark";
 import { initialsOf } from "./team/data";
 
@@ -15,6 +15,10 @@ interface Props {
   tenantLabel: string;
   demo: boolean;
   onOpenProfile: () => void;
+  /** TU_EMPRESA_V1 - solo el clon demo pasa este prop: abre el estudio de
+   *  compilación a pantalla completa. Producción no lo recibe y el menú no
+   *  cambia. */
+  onOpenCompany?: () => void;
   onExitDemo: () => void;
   onLogout: () => void;
 }
@@ -28,6 +32,7 @@ export default function SettingsMenu({
   tenantLabel,
   demo,
   onOpenProfile,
+  onOpenCompany,
   onExitDemo,
   onLogout,
 }: Props) {
@@ -68,6 +73,21 @@ export default function SettingsMenu({
             <span>Mi perfil</span>
             <ChevronRight size={14} className="settings-chevron" />
           </button>
+          {onOpenCompany && (
+            <button
+              type="button"
+              className="settings-item"
+              onClick={() => {
+                onClose();
+                onOpenCompany();
+              }}
+            >
+              <Compass size={15} />
+              <span>Tu Empresa</span>
+              <small>Demo</small>
+              <ChevronRight size={14} className="settings-chevron" />
+            </button>
+          )}
           <div className="settings-item static">
             <Building2 size={15} />
             <span>{tenantLabel}</span>
