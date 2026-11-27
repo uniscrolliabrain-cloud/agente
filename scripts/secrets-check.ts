@@ -1,6 +1,6 @@
 // SECRETS_CHECK_V1 - auditoria del contrato de secretos.
 //
-// Doppler inyecta el entorno en el proceso; este script no lee Doppler ni
+// El runner inyecta el entorno (GitHub-first, Doppler opcional); este script no lee almacenes ni
 // escribe nada: comprueba que lo que la app necesita para arrancar en un modo
 // concreto esta presente, y dice exactamente que falta y para que sirve.
 //
@@ -9,8 +9,9 @@
 //   pnpm secrets:check --mode=live
 //   pnpm secrets:check --only=auth,llm
 //
-// Sale con codigo 1 si falta algo obligatorio: es un gate de despliegue, no un
-// informe. Los opcionales se listan marcados como tal y nunca hacen fallar.
+// Sale con codigo 1 si falta algo obligatorio o falla una coherencia en estricto.
+// Sin --strict/perfil, conserva las coherencias como informacion local.
+// --json solo emite presencia y nombres; opciones invalidas salen con codigo 2.
 type Mode = "sample" | "live";
 
 interface Secret {
