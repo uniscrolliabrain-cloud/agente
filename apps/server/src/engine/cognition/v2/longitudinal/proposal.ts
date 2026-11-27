@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  type AnchorAnnotation,
+  type LongitudinalDelta,
+  type LongitudinalScope,
   anchorAnnotationSchema,
   longitudinalDeltaSchema,
   longitudinalScopeSchema,
@@ -14,9 +17,13 @@ const bindingSchema = z.strictObject({
   evidence: z.array(cognitiveRefSchema).min(1).max(30),
   anchors: z.array(anchorAnnotationSchema).max(1000),
 });
+type ProposalBinding = Omit<z.input<typeof bindingSchema>, "scope" | "anchors"> & {
+  scope: LongitudinalScope;
+  anchors: readonly AnchorAnnotation[];
+};
 const key = (ref: z.infer<typeof cognitiveRefSchema>) => JSON.stringify([ref.tenantId, ref.kind, ref.id, ref.revision]);
 /** Validate model information against server-owned, freshly authorized job bindings. No persistence. */
-export function validateLongitudinalProposal(raw: unknown, serverBinding: z.input<typeof bindingSchema>) {
+export function validateLongitudinalProposal(raw: unknown, serverBinding: ProposalBinding): LongitudinalDelta {
   const binding = bindingSchema.parse(serverBinding),
     delta = longitudinalDeltaSchema.parse(raw);
   if (
