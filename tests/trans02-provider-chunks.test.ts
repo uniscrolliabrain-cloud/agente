@@ -42,7 +42,8 @@ test("real CopilotKit SDK streaming returns visible Slow text instead of an empt
   const saved = Object.fromEntries(names.map((name) => [name, process.env[name]]));
   const original = globalThis.fetch;
   let calls = 0,
-    empty = false;
+    empty = false,
+    malicious = false;
   try {
     for (const name of names) delete process.env[name];
     process.env.OPEN_ROUTER_API_KEY = "slow-synthetic";
@@ -52,24 +53,51 @@ test("real CopilotKit SDK streaming returns visible Slow text instead of an empt
       assert.equal(new Headers(options?.headers).get("authorization"), "Bearer slow-synthetic");
       const body = JSON.parse(String(options?.body));
       assert.equal(body.model, "deepseek/deepseek-v3.2");
+      assert.ok(!body.tools || body.tools.length === 0);
       const base = { id: "synthetic", object: "chat.completion.chunk", created: 1, model: body.model };
-      const chunks = [
-        {
-          ...base,
-          choices: [
+      const chunks = malicious
+        ? [
             {
-              index: 0,
-              delta: { role: "assistant", content: empty ? undefined : "Visible answer", reasoning_content: "PRIVATE" },
-              finish_reason: null,
+              ...base,
+              choices: [
+                {
+                  index: 0,
+                  delta: {
+                    tool_calls: [
+                      {
+                        index: 0,
+                        id: "synthetic-call",
+                        type: "function",
+                        function: { name: "AGUISendStateSnapshot", arguments: "{}" },
+                      },
+                    ],
+                  },
+                  finish_reason: "tool_calls",
+                },
+              ],
             },
-          ],
-        },
-        {
-          ...base,
-          choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
-          usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
-        },
-      ];
+          ]
+        : [
+            {
+              ...base,
+              choices: [
+                {
+                  index: 0,
+                  delta: {
+                    role: "assistant",
+                    content: empty ? undefined : "Visible answer",
+                    reasoning_content: "PRIVATE",
+                  },
+                  finish_reason: null,
+                },
+              ],
+            },
+            {
+              ...base,
+              choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
+              usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+            },
+          ];
       return new Response(chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join("") + "data: [DONE]\n\n", {
         headers: { "content-type": "text/event-stream" },
       });
@@ -121,6 +149,28 @@ test("real CopilotKit SDK streaming returns visible Slow text instead of an empt
       /PROVIDER_EMPTY_RESPONSE/,
     );
     assert.equal(calls, 2);
+    malicious = true;
+    await assert.rejects(
+      new CopilotInferenceProvider().stream(
+        {
+          threadId: "t",
+          runId: "tool",
+          state: {},
+          messages: [{ id: "m", role: "user", content: "fixture" }],
+          context: [],
+          tools: [],
+          forwardedProps: {},
+        },
+        "Synthetic prompt",
+        "slow",
+        new AbortController().signal,
+        () => {
+          throw Error("UNEXPECTED_TOOL_EVENT");
+        },
+      ),
+      /PROVIDER_ERROR/,
+    );
+    assert.equal(calls, 3);
   } finally {
     globalThis.fetch = original;
     for (const [name, value] of Object.entries(saved)) {

@@ -13,8 +13,36 @@ export class CopilotInferenceProvider implements StreamingProvider, SlowProvider
   async stream(input: RunAgentInput, prompt: string, profile: "fast" | "slow", signal: AbortSignal,
     onEvent: (event: BaseEvent) => void): Promise<string> {
     const languageModel = languageModelForProfile(requireLaneProfile(profile));
-    const agent = new BuiltInAgent({ model: languageModel,
-      maxRetries: 0, maxSteps: 1, maxOutputTokens: profile === "fast" ? 2048 : 4096, tools: [], prompt });
+    // Classic mode injects AG-UI state tools even with tools:[]. The supported
+    // custom factory keeps the same lifecycle while making one text-only call.
+    const agent = new BuiltInAgent({ type: "custom", factory: async function* ({ input: runInput, abortSignal }) {
+      const messageId = crypto.randomUUID();
+      const messages = runInput.messages.flatMap(message =>
+        (message.role === "user" || message.role === "assistant") && typeof message.content === "string"
+          ? [{ role: message.role, content: [{ type: "text" as const, text: message.content }] }] : []);
+      try {
+        abortSignal.throwIfAborted();
+        const response = await languageModel.doStream({
+          prompt: [{ role: "system", content: prompt }, ...messages],
+          maxOutputTokens: profile === "fast" ? 2048 : 4096,
+          abortSignal,
+        });
+        const reader = response.stream.getReader();
+        const cancel = () => { void reader.cancel().catch(() => {}); };
+        abortSignal.addEventListener("abort", cancel, { once: true });
+        try {
+          if (abortSignal.aborted) { await reader.cancel(); abortSignal.throwIfAborted(); }
+          while (true) {
+            const next = await reader.read();
+            abortSignal.throwIfAborted();
+            if (next.done) break;
+            const part = next.value;
+            if (part.type === "error" || part.type.startsWith("tool-")) throw Error("PROVIDER_TEXT_ONLY_REQUIRED");
+            if (part.type === "text-delta") yield { type: EventType.TEXT_MESSAGE_CHUNK, messageId, role: "assistant", delta: part.delta };
+          }
+        } finally { abortSignal.removeEventListener("abort", cancel); await reader.cancel().catch(() => {}); reader.releaseLock(); }
+      } catch { throw Error(abortSignal.aborted ? "INFERENCE_CANCELLED" : "PROVIDER_ERROR"); }
+    } });
     return new Promise((resolve, reject) => {
       let text = "", done = false;
       const publicStream = new PublicTextStream();
