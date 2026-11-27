@@ -1,3 +1,4 @@
+import { cognitiveHumanTurnPayloadSchema } from "../../../../../packages/domain/src/cognition-v2.ts";
 import { createHash } from "node:crypto";
 import { transactionOutcome, type Store } from "../../db.ts";
 import type { TenantScopedStore } from "../../db-tenant.ts";
@@ -189,6 +190,13 @@ export class EventBus {
           if (antecedent.correlationId !== options.correlationId)
             throw new Error("CAUSAL_ANTECEDENT_CORRELATION_MISMATCH");
         }
+      }
+      if (type === "cognition.v2.turn.admitted") {
+        const turn = cognitiveHumanTurnPayloadSchema.parse(parsed);
+        if (causal?.kind !== "root" || actorKind !== "human" || source.kind !== "context" ||
+            turn.identity.tenantId !== tenantId || turn.identity.actorId !== options.actorId ||
+            turn.identity.owner !== owner || scopedActor !== owner)
+          throw new Error("HUMAN_TURN_ENVELOPE_DENIED");
       }
       // EVENTBUS_DEDUPE_KEY_V1 - solo deduplicamos si el emisor lo pide.
       // Sin dedupeKey explicita, cada emision es un hecho nuevo.
