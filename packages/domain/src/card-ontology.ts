@@ -7,10 +7,10 @@ const score=z.number().min(0).max(1);
 const nullableScore=score.nullable();
 const providerChoiceSchema=z.strictObject({type:z.literal('choice'),choice:z.string().min(1).max(100),confidence:score,
  probabilities:z.record(z.string().min(1).max(100),score).refine(p=>Object.keys(p).length<=9&&Math.abs(Object.values(p).reduce((a,b)=>a+b,0)-1)<=.001,'invalid probability distribution')});
-export const semanticProviderEvidenceSchema=z.strictObject({provider:z.literal('typesafe'),model:z.string().min(1).max(200),
+export const semanticProviderEvidenceSchema=z.strictObject({provider:z.enum(['typesafe','openrouter']),model:z.string().min(1).max(200),
  calibration:z.literal('not_locally_verified'),egressReceiptId:z.string().min(1).max(200),
  requestDigest:z.string().regex(/^[a-f0-9]{64}$/),
- usage:z.strictObject({input_tokens:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),output_tokens:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)}),
+ usage:z.strictObject({input_tokens:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),output_tokens:z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),cost:z.number().finite().nonnegative().optional()}),
  answers:z.strictObject({family:providerChoiceSchema,explore:providerChoiceSchema,apply:providerChoiceSchema,generate:providerChoiceSchema,verify:providerChoiceSchema,expand:providerChoiceSchema,protect:providerChoiceSchema})});
 const range=z.strictObject({min:z.number().nonnegative(),max:z.number().nonnegative()}).refine(v=>v.min<=v.max,'invalid range');
 const money=z.strictObject({range,currency:z.string().regex(/^[A-Z]{3}$/)});

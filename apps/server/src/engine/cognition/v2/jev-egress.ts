@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { Store } from "../../../db.ts";
 import type { SemanticEvaluationContext } from "./slow.ts";
-import type { JevEgressGate, JevEgressGrant } from "./jev-classifier.ts";
+import { jevTargetSchema, type JevEgressGate, type JevEgressGrant } from "./jev-classifier.ts";
 import type { ContextServingFacade } from "./context.ts";
 import { digest } from "./storage.ts";
 
@@ -18,7 +18,7 @@ export interface JevEgressPolicy {
 const resultSchema = z.strictObject({ state: z.enum(["succeeded", "failed"]), requestDigest: z.string().regex(/^[a-f0-9]{64}$/),
   reason: z.string().regex(/^JEV_[A-Z0-9_]+$/).max(100).optional(), model: z.string().max(200).optional(),
   usage: z.strictObject({ input_tokens: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
-    output_tokens: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) }).optional() });
+    output_tokens: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER), cost: z.number().finite().nonnegative().optional() }).optional() });
 interface Receipt { actor: string; state: string; grant_digest: string; binding: { policyDigest: string; scopeDigest: string }; result_digest: string | null }
 const targetOf = (grant: JevEgressGrant): Target => ({ provider: grant.provider, model: grant.model, ontologyId: grant.ontologyId, ontologyVersion: grant.ontologyVersion });
 const grantDigest = (grant: JevEgressGrant) => digest({ ...grant, text: digest(grant.text) });
@@ -42,7 +42,7 @@ export class DurableJevEgressGate implements JevEgressGate {
   private async authorize(scope: SemanticEvaluationContext, target: Target, signal: AbortSignal) {
     signal.throwIfAborted();
     if (scope.identity.tenantId !== this.tenant || !scope.operationId || scope.operationId.length > 200 || !scope.evidence.length || scope.evidence.length > 30) throw Error("JEV_EGRESS_DENIED");
-    if (target.provider !== "typesafe" || !["jev-1.14.0", "jev-1.13.0"].includes(target.model) || target.ontologyId !== "agntiapro.cards" || target.ontologyVersion !== "1.0.0") throw Error("JEV_EGRESS_DENIED");
+    if (!jevTargetSchema.safeParse({provider:target.provider,model:target.model}).success || target.ontologyId !== "agntiapro.cards" || target.ontologyVersion !== "1.0.0") throw Error("JEV_EGRESS_DENIED");
     await this.context.assertAuthorized(scope.identity);
     for (const ref of scope.evidence) {
       if (ref.tenantId !== this.tenant || !["card", "memory"].includes(ref.kind) || !await this.context.resolve(scope.identity, ref.id, ref.revision)) throw Error("JEV_EGRESS_DENIED");
