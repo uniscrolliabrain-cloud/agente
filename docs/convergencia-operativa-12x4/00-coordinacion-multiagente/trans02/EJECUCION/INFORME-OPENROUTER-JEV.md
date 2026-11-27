@@ -1,0 +1,9 @@
+# JEV mediante OpenRouter
+
+Código `5069891d`: añade OpenRouterJevClassifier y composición explícita por entorno; conserva TypeSafe directo y el mismo gate durable. Endpoint oficial POST https://openrouter.ai/api/alpha/decisions; modelo solicitado typesafe/jev-1.14 (alternativa explícita 1.13). Se acepta únicamente esa versión major/minor y su identificador canónico fechado documentado; se conserva el nombre exacto devuelto, sin aceptar latest ni otra familia.
+
+OPENROUTER_API_KEY o JEV_OPENROUTER_API_KEY para JEV; OPEN_ROUTER_API_KEY nunca sirve de fallback. JEV_API_KEY deja de ser necesario para este transporte. Se mantienen minimización, autorización/revocación antes/después, siete preguntas tipadas, probabilidades validadas, cuotas, recibo durable, cero reintentos y resultados proposed. usage.cost opcional se conserva tal como lo declara OpenRouter, sin estimar ni convertir moneda.
+
+Fuentes oficiales leídas desde OpenRouterTeam/docs `6b2906b9a76453c750faab9c8aa1cb0876ea62a7` (guides/community/jev.mdx y jev-tutorial.mdx) y SDK TypeScript `5f342ec8d9361124956f1de09ad4a10d8f794d28` (decisionsresponse.ts). El dominio público OpenRouter estaba bloqueado por la red del entorno; el repositorio oficial de documentación sí fue accesible. No se afirma haber comprobado saldo, credencial ni catálogo en vivo.
+
+Suite local 17 pruebas: 16 PASS, cero FAIL, 1 SKIP PostgreSQL nativo no configurado. Incluye TypeSafe anterior, separación de claves, contrato Decisions, coste, revocación/429, denegación cruzada y replay mediante gate real PGlite. Typecheck raíz/worker exit 0; contratos sin huérfanos ni allowlist. Logs /tmp/trans02-openrouter-jev-{final,complete-tsc,worker-tsc,contracts}.log. Ejecución local previa al commit. Presencia de clave no concede permiso de egress: el montaje requiere la política server-side existente, nunca permiso desde modelo o HTTP.
