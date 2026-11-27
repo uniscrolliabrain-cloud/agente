@@ -5,6 +5,10 @@ export interface ProvenanceSegment {
   text: string;
   digest: string;
 }
+/** Exact original text and offsets, shared with extraction validation. */
+export function provenanceSegmentDigest(start: number, end: number, text: string): string {
+  return createHash("sha256").update(JSON.stringify(["original-utf16-v1", start, end, text])).digest("hex");
+}
 /** Offsets are UTF-16 code units into the exact original text; no normalization. */
 export function segmentText(source: string, max = 2400, overlap = 200): ProvenanceSegment[] {
   if (
@@ -34,9 +38,7 @@ export function segmentText(source: string, max = 2400, overlap = 200): Provenan
     if (end < source.length && last >= 0xd800 && last <= 0xdbff) end--;
     if (end <= start || out.length >= 10_000) throw Error("SEGMENT_BUDGET");
     const text = source.slice(start, end);
-    const digest = createHash("sha256")
-      .update(JSON.stringify(["original-utf16-v1", start, end, text]))
-      .digest("hex");
+    const digest = provenanceSegmentDigest(start, end, text);
     out.push({ start, end, text, digest });
     if (end === source.length) break;
     let next = Math.max(start + 1, end - overlap);
