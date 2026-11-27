@@ -9,7 +9,7 @@ import type { CompanyOverview, CompanyTask } from "../../api/company";
 import AgentCreateModal from "../../components/AgentCreateModal";
 import { AddMemberModal } from "../../components/command-center/AddMemberModal";
 import { briefingText } from "../../components/command-center/BriefingCard";
-import SampleDashboard from "../../components/command-center/SampleDashboard";
+import SampleDashboardLegacy from "../../components/command-center/SampleDashboardLegacy";
 import { ROLE_LABEL, isAttention, type CommandFilter } from "../../components/command-center/labels";
 import { relativeTime } from "../../lib/format";
 import { EditorialFrame } from "./EditorialFrame";
@@ -204,7 +204,7 @@ export function CommandCenterEditorial({
             onRetry={onRefresh}
           />
         ) : showSample ? (
-          <SampleDashboard {...(onOpenChat || labNavigation ? { onOpenChat: action("Abrir LAIA", onOpenChat) } : {})} />
+          <SampleDashboardLegacy {...(onOpenChat || labNavigation ? { onOpenChat: action("Abrir LAIA", onOpenChat) } : {})} />
         ) : (
           <>
             <EditorialBriefing

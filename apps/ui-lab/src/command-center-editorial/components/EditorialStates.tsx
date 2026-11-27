@@ -54,14 +54,16 @@ export function SampleBanner({
     <div className="cce-sample" role="status">
       <Sparkles size={15} aria-hidden="true" />
       <p>
-        <b>Datos de ejemplo.</b>{" "}
-        {demoSession
-          ? "Tenant demo · Interfaz."
-          : `Todavía no hay actividad en ${tenantName}.`}{" "}
-        Así se verá el centro de mando cuando los agentes empiecen a trabajar.
+        {showingSample ? (
+          <><b>Ejemplo histórico (legacy).</b> Contenido de demostración estático, no procede del estado de la empresa.</>
+        ) : demoSession ? (
+          <><b>Datos de demo.</b> {tenantName} · escenario sintético conectado a la vista actual.</>
+        ) : (
+          <><b>Todavía no hay actividad en {tenantName}.</b> El resumen se actualizará cuando haya tareas registradas.</>
+        )}
       </p>
       <button type="button" className="cce-btn cce-btn--small" onClick={onToggle}>
-        {showingSample ? "Ver datos reales" : "Ver ejemplo"}
+        {showingSample ? (demoSession ? "Volver a la demo actual" : "Ver datos reales") : "Ver ejemplo legacy"}
       </button>
     </div>
   );

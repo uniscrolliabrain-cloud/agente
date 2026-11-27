@@ -227,7 +227,7 @@ function SampleCard({ item }: { item: SampleItem }) {
   );
 }
 
-export default function SampleDashboard({ onOpenChat }: { onOpenChat?: () => void }) {
+export default function SampleDashboardLegacy({ onOpenChat }: { onOpenChat?: () => void }) {
   const [filter, setFilter] = useState<SampleFilter>("todo");
   const [block, setBlock] = useState<string | null>(null);
   const currentBlock = BLOCKS.find((item) => item.id === block) ?? null;

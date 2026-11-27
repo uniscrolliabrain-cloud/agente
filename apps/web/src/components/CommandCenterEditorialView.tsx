@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { isDemoSession } from "../api/client";
 import { getCompanyOverview, type CompanyOverview } from "../api/company";
-import CommandCenterEditorial, { type CommandCenterEditorialProps } from "./command-center-editorial/CommandCenterEditorial";
+import CommandCenterEditorial, { type CommandCenterEditorialProps } from "./command-center-editorial-legacy/CommandCenterEditorial";
 
 export type CommandCenterPresentation = ComponentType<CommandCenterEditorialProps>;
 

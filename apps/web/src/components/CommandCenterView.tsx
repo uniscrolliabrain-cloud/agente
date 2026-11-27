@@ -15,7 +15,7 @@ import { CommandCenterHero } from "./command-center/CommandCenterHero";
 import { CommandFilters } from "./command-center/CommandFilters";
 import { CompanyPanels } from "./command-center/CompanyPanels";
 import { OperationalStatus } from "./command-center/OperationalStatus";
-import SampleDashboard from "./command-center/SampleDashboard";
+import SampleDashboardLegacy from "./command-center/SampleDashboardLegacy";
 import { AttentionSection, DoneSection, RunningSection } from "./command-center/TaskSections";
 import { ROLE_LABEL, isAttention, type CommandFilter } from "./command-center/labels";
 
@@ -188,7 +188,7 @@ export default function CommandCenterView({
           </button>
         </div>
       ) : showSample ? (
-        <SampleDashboard {...(onOpenChat ? { onOpenChat } : {})} />
+        <SampleDashboardLegacy {...(onOpenChat ? { onOpenChat } : {})} />
       ) : (
         <>
           <BriefingCard

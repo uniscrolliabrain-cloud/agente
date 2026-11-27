@@ -48,7 +48,7 @@ export const previews:Preview[]=[
 {id:"knowledge-v1",name:"Conocimiento · V1",category:"Trabajo",description:"Prototipo editorial de páginas y bloques, navegación contextual y relaciones sintéticas",Component:KnowledgeV1,status:"fixture"},
 {id:"knowledge",name:"Conocimiento",category:"Trabajo",description:"Biblioteca editorial C01",Component:()=> <Knowledge memories={memories}/>,status:"fixture"},
 {id:"centro",name:"Centro de Mando",category:"Trabajo",description:"Workspace 35; inspeccionar dependencias",Component:Centro,status:"demo"},
-{id:"today",name:"Inicio / Hoy",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:Today,status:"demo"},
+{id:"today",name:"Inicio / Hoy · Legacy",category:"Trabajo",description:"Vista original con API simulada en memoria",Component:Today,status:"demo"},
 {id:"today-editorial",name:"Inicio · Ingeniería perceptiva V5",category:"Trabajo",description:"Refinamiento editorial del Centro de Mando sobre los mismos datos demo, filtros, permisos y callbacks",Component:TodayEditorial,status:"demo"},
 {id:"tasks",name:"Tareas",category:"Trabajo",description:"Componente original con tareas ficticias",Component:()=> <Tasks tasks={tasks} currentUserId={null} onOpenTask={()=>{}} onReviewTask={()=>{}}/>,status:"fixture"},
 {id:"documents-explorer",name:"Documentos · Explorador V1",category:"Trabajo",description:"Explorador experimental con navegación y operaciones locales sintéticas",Component:DocumentsExplorer,status:"fixture"},

@@ -10,7 +10,7 @@ import type { CompanyOverview, CompanyTask } from "../../../web/src/api/company"
 import AgentCreateModal from "../../../web/src/components/AgentCreateModal";
 import { AddMemberModal } from "../../../web/src/components/command-center/AddMemberModal";
 import { briefingText } from "../../../web/src/components/command-center/BriefingCard";
-import SampleDashboard from "../../../web/src/components/command-center/SampleDashboard";
+import SampleDashboardLegacy from "../../../web/src/components/command-center/SampleDashboardLegacy";
 import { ROLE_LABEL, isAttention, type CommandFilter } from "../../../web/src/components/command-center/labels";
 import { relativeTime } from "../../../web/src/lib/format";
 import { EditorialFrame } from "./EditorialFrame";
@@ -70,7 +70,8 @@ export function CommandCenterEditorial({
   labNavigation = false,
 }: CommandCenterEditorialProps) {
   const [filter, setFilter] = useState<CommandFilter>("todo");
-  const [sampleHidden, setSampleHidden] = useState(false);
+  // La presentación V5 es la normal, también con la API sintética.
+  const [sampleHidden, setSampleHidden] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [agentModal, setAgentModal] = useState(false);
   const [memberModal, setMemberModal] = useState(false);
@@ -102,8 +103,7 @@ export function CommandCenterEditorial({
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 6);
 
-  // El ejemplo solo aparece cuando el tenant demo lo pide o cuando la empresa aún
-  // no tiene ninguna tarea registrada, exactamente como en la vista original.
+  // El ejemplo histórico es opt-in y no sustituye por defecto al CompanyOverview.
   const sampleAvailable = overview !== null && (demoSession || overview.tasks.total === 0);
   const showSample = sampleAvailable && !sampleHidden;
 
@@ -219,7 +219,7 @@ export function CommandCenterEditorial({
             onRetry={onRefresh}
           />
         ) : showSample ? (
-          <SampleDashboard {...(onOpenChat || labNavigation ? { onOpenChat: action("Abrir LAIA", onOpenChat) } : {})} />
+          <SampleDashboardLegacy {...(onOpenChat || labNavigation ? { onOpenChat: action("Abrir LAIA", onOpenChat) } : {})} />
         ) : (
           <>
             <EditorialBriefing
