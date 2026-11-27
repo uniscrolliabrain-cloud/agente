@@ -1,0 +1,20 @@
+{
+  "futureBoost": {
+    "expected": "current",
+    "actual": "future"
+  },
+  "fieldMismatch": {
+    "expected": "reject mismatched field",
+    "actual": "unrelated"
+  },
+  "invalidDate": {
+    "expected": "reject malformed candidate",
+    "actual": "malformed"
+  },
+  "scope": "Direct public method using synthetic candidates; no HTTP or persistence claim.",
+  "testedCommit": "ab4e7be3",
+  "sourceBlob": "f2744f767f1dde82e6d348d9c2c6a1138823fd56",
+  "execution": "Direct synthetic method calls, no unit-test PASS count and no external effects",
+  "source": "apps/server/src/engine/business/truth-resolver.ts",
+  "owner": "Trans01"
+}
