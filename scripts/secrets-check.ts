@@ -23,7 +23,7 @@ interface Secret {
 
 const SECRETS: Secret[] = [
   // --- nucleo -------------------------------------------------------------
-  { name: "DATABASE_URL", need: "live", group: "core", note: "Postgres durable (Neon). Sin esto cae a PGlite y las DB se corrompen al cortar el proceso" },
+  { name: "DATABASE_URL", need: "live", group: "core", note: "Postgres durable existente (incluye Supabase); conservar DSN y proveedor" },
   { name: "PUBLIC_API_URL", need: "live", group: "core", note: "origen publico del API; de aqui se deriva el redirect de Google" },
   { name: "TOKEN_ENCRYPTION_KEY", need: "live", group: "core", note: "32 bytes base64; cifra los tokens OAuth de Google en reposo" },
   { name: "AGENTE_ACCESS_KEY", need: "live", group: "core", note: ">=24 chars; live mode no arranca sin ella" },
@@ -83,23 +83,41 @@ const SECRETS: Secret[] = [
   { name: "GOOGLE_MAPS_API_KEY", need: "optional", group: "leads", note: "Google Places API: busqueda de negocios locales para leads" },
 ];
 
-const args = new Map(
-  process.argv.slice(2).map((arg) => {
-    const [key, value = "true"] = arg.replace(/^--/, "").split("=");
-    return [key, value] as const;
-  }),
-);
-
-// No se usa readConfig(): en live lanza si faltan claves, y este script existe
-// justo para decir CUALES faltan. Se lee el entorno en crudo.
-const mode: Mode =
-  (args.get("mode") ?? process.env.WORKSPACE_MODE ?? "sample").trim() === "live"
-    ? "live"
-    : "sample";
+const profiles: Record<string, string[]> = {
+  "suite-verde": [], leads: ["leads"], "authz-tenant": ["auth", "bootstrap"],
+  canales: ["google", "email", "whatsapp", "vapi"],
+  "responder-lead": ["leads", "google", "email", "whatsapp", "vapi", "llm", "kernel"],
+  deploy: ["core", "auth", "bootstrap", "llm"], convergencia: ["kernel"],
+};
+function usageError(): never {
+  process.stderr.write("secrets:check: invalid mode, profile, group or option\n");
+  process.exit(2);
+}
+const args = new Map<string, string>();
+for (const arg of process.argv.slice(2)) {
+  const match = /^--(mode|only|profile|strict|json)(?:=(.*))?$/.exec(arg);
+  if (!match || args.has(match[1])) usageError();
+  const [, key, value] = match;
+  if (key === "strict" || key === "json") {
+    if (value !== undefined && value !== "true") usageError();
+    args.set(key, "true");
+  } else {
+    if (!value?.trim()) usageError();
+    args.set(key, value.trim());
+  }
+}
+const profile = args.get("profile");
+if (profile && !Object.hasOwn(profiles, profile)) usageError();
+if (profile && args.has("only")) usageError();
+const requestedMode = args.get("mode") ?? process.env.WORKSPACE_MODE ?? (profile === "deploy" ? "live" : "sample");
+if (requestedMode !== "live" && requestedMode !== "sample") usageError();
+const mode: Mode = requestedMode;
+const strict = args.has("strict") || Boolean(profile);
 const authProvider = (process.env.AUTH_PROVIDER ?? "session").trim();
-const only = args.get("only")
-  ? new Set(args.get("only")!.split(",").map((g) => g.trim()).filter(Boolean))
-  : null;
+const only = profile ? new Set(profiles[profile]) : args.has("only") ? new Set(args.get("only")!.split(",").map(g => g.trim())) : null;
+const groups = new Set(SECRETS.map(secret => secret.group));
+if (only && [...only].some(group => !groups.has(group))) usageError();
+const includes = (group: string) => !only || only.has(group);
 
 // Doppler publica varios secretos con el nombre del proveedor. Estas son las
 // mismas equivalencias que normaliza apps/server/src/config.ts al arrancar; sin
@@ -126,7 +144,8 @@ function requiredIn(secret: Secret): boolean {
   return false;
 }
 
-const rows: { ok: boolean; line: string }[] = [];
+const rows: { name: string; group: string; present: boolean; required: boolean; line: string }[] = [];
+const missing: string[] = [];
 let missingRequired = 0;
 
 for (const secret of SECRETS) {
@@ -134,31 +153,31 @@ for (const secret of SECRETS) {
   const value = present(secret.name);
   const required = requiredIn(secret);
   const ok = Boolean(value);
-  if (!ok && required) missingRequired += 1;
+  if (!ok && required) { missingRequired += 1; missing.push(secret.name); }
   const tag = ok ? "OK  " : required ? "FALTA" : "opcional";
-  // Nunca se imprime el valor: solo si existe y su longitud.
-  const detail = ok ? `${value!.length} chars` : secret.note;
-  rows.push({ ok, line: `${tag.padEnd(8)} ${secret.name.padEnd(26)} ${secret.group.padEnd(10)} ${detail}` });
+  // Presence only: values, lengths and hashes never leave this process.
+  const detail = ok ? "presente" : secret.note;
+  rows.push({ name: secret.name, group: secret.group, present: ok, required, line: `${tag.padEnd(8)} ${secret.name.padEnd(26)} ${secret.group.padEnd(10)} ${detail}` });
 }
 
 // --- coherencias entre variables (lo que ningun check por variable ve) -----
 const coherence: string[] = [];
-if (authProvider === "supabase") {
+if (includes("auth") && authProvider === "supabase") {
   if (!present("SUPABASE_URL") && !present("SUPABASE_JWT_SECRET")) {
     coherence.push(
       "AUTH_PROVIDER=supabase sin SUPABASE_URL ni SUPABASE_JWT_SECRET: todo /api/* responde 503 (fail-closed).",
     );
   }
 }
-if (present("AGENTE_ACCESS_KEY") && present("AGENTE_ACCESS_KEY")!.length < 24) {
+if (includes("core") && present("AGENTE_ACCESS_KEY") && present("AGENTE_ACCESS_KEY")!.length < 24) {
   coherence.push("AGENTE_ACCESS_KEY tiene menos de 24 caracteres: live mode no arranca.");
 }
-if (present("DATABASE_URL") && !present("BUSINESS_DATABASE_URL")) {
+if (includes("core") && present("DATABASE_URL") && !present("BUSINESS_DATABASE_URL")) {
   coherence.push(
     "Sin BUSINESS_DATABASE_URL: query_business de las SOPs leera con el rol de escritura de la base principal.",
   );
 }
-if (present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
+if (includes("core") && present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
   const main = present("DATABASE_URL")!;
   const business = present("BUSINESS_DATABASE_URL")!;
   if (main === business) {
@@ -169,21 +188,21 @@ if (present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
 }
 const googleId = present("GOOGLE_CLIENT_ID");
 const googleSecret = present("GOOGLE_CLIENT_SECRET");
-if (Boolean(googleId) !== Boolean(googleSecret)) {
+if (includes("google") && Boolean(googleId) !== Boolean(googleSecret)) {
   coherence.push("GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET deben ir juntas o ninguna.");
 }
 // El cliente de Resend exige key Y remitente: tener solo uno no envia nada.
-if (present("RESEND_API_KEY") && !present("EMAIL_FROM")) {
+if (includes("email") && present("RESEND_API_KEY") && !present("EMAIL_FROM")) {
   coherence.push(
     "RESEND_API_KEY sin EMAIL_FROM: el adaptador exige remitente y no enviara el email de verificacion.",
   );
 }
-if (present("WHATSAPP_TOKEN") && !present("WHATSAPP_APP_SECRET")) {
+if (includes("whatsapp") && present("WHATSAPP_TOKEN") && !present("WHATSAPP_APP_SECRET")) {
   coherence.push(
     "WHATSAPP_TOKEN sin WHATSAPP_APP_SECRET: el webhook no podria verificar X-Hub-Signature-256 y cualquiera podria inyectar mensajes.",
   );
 }
-if (present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
+if (includes("whatsapp") && present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
   coherence.push(
     "WHATSAPP_APP_SECRET sin WHATSAPP_VERIFY_TOKEN: Meta no podria completar el handshake del webhook y el numero no quedaria suscrito.",
   );
@@ -193,36 +212,56 @@ if (present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
 const modelSpec = present("MODEL") ?? "";
 const modelProvider = modelSpec.split("/")[0]?.trim().toLowerCase() ?? "";
 const gatewayKey = present("OPENROUTER_API_KEY") ?? present("OPENAI_API_KEY");
-if (modelProvider === "google" && !present("GEMINI_API_KEY") && !gatewayKey) {
+if (includes("llm") && modelProvider === "google" && !present("GEMINI_API_KEY") && !gatewayKey) {
   coherence.push(
-    `MODEL=${modelSpec} sin GEMINI_API_KEY ni pasarela OpenAI-compatible: el chat arranca sin motor.`,
+    "MODEL configurado sin GEMINI_API_KEY ni pasarela OpenAI-compatible: el chat arranca sin motor.",
   );
 }
-if (modelProvider && modelProvider !== "google" && !gatewayKey) {
+if (includes("llm") && modelProvider && modelProvider !== "google" && !gatewayKey) {
   coherence.push(
-    `MODEL=${modelSpec} sin OPENAI_API_KEY ni OPENROUTER_API_KEY: el chat arranca sin motor.`,
+    "MODEL configurado sin OPENAI_API_KEY ni OPENROUTER_API_KEY: el chat arranca sin motor.",
   );
 }
 // The API destination is not necessarily the browser's Origin. Validate the URL
 // without claiming a split-origin panel must include the API origin in CORS.
 const publicApiUrl = present("PUBLIC_API_URL");
-if (mode === "live" && publicApiUrl) {
+if (includes("core") && mode === "live" && publicApiUrl) {
   try {
-    new URL(publicApiUrl);
+    const url = new URL(publicApiUrl);
+    if (url.protocol !== "https:" || url.username || url.password) throw Error("INVALID_ORIGIN");
   } catch {
-    coherence.push(`PUBLIC_API_URL no es una URL valida: ${publicApiUrl}`);
+    coherence.push("PUBLIC_API_URL debe ser un origen HTTPS sin credenciales.");
   }
 }
 
-console.log(`\n[secrets:check] modo=${mode}${only ? ` grupos=${[...only].join(",")}` : ""}`);
-console.log("[secrets:check] (Doppler inyecta el entorno; este script no imprime valores)\n");
-for (const row of rows) console.log(row.line);
-if (coherence.length > 0) {
-  console.log("\n[secrets:check] incoherencias:");
-  for (const line of coherence) console.log(`  - ${line}`);
+// Validate only enabled, implemented lane consumers. Candidate providers do
+// not become configured integrations merely by appearing in an environment.
+if (includes("kernel")) {
+  for (const lane of ["FAST", "SLOW"]) {
+    const names = [`${lane}_LLM_API_KEY`, `${lane}_LLM_PROVIDER`, `${lane}_LLM_MODEL`];
+    if (names.some(name => present(name))) {
+      if (!names.every(name => present(name))) coherence.push(`${lane}_LLM_PROFILE_INCOMPLETE`);
+      const provider = present(`${lane}_LLM_PROVIDER`);
+      if (provider && !["google", "openai", "openrouter", "anthropic"].includes(provider)) coherence.push(`${lane}_LLM_PROVIDER_INVALID`);
+    }
+  }
 }
-console.log(
-  `\n[secrets:check] ${missingRequired === 0 ? "contrato cumplido" : `${missingRequired} obligatorias ausentes`}`,
-);
-// Una incoherencia no bloquea el arranque local, pero si el contrato obligatorio.
-process.exit(missingRequired > 0 ? 1 : 0);
+if (includes("core") && present("TOKEN_ENCRYPTION_KEY")) {
+  const key = present("TOKEN_ENCRYPTION_KEY")!;
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(key) || Buffer.from(key, "base64").length !== 32) coherence.push("TOKEN_ENCRYPTION_KEY_INVALID");
+}
+const ok = missingRequired === 0 && (!strict || coherence.length === 0);
+if (args.has("json")) {
+  process.stdout.write(JSON.stringify({ schemaVersion: "1.0", mode, profile: profile ?? null, strict, ok,
+    rows: rows.map(({ line, ...row }) => row), missingRequired: missing, issues: coherence }) + "\n");
+} else {
+  console.log(`\n[secrets:check] modo=${mode}${only ? ` grupos=${[...only].join(",")}` : ""}`);
+  console.log("[secrets:check] GitHub-first; entorno ya inyectado, Doppler opcional. Solo presencia.\n");
+  for (const row of rows) console.log(row.line);
+  if (coherence.length > 0) {
+    console.log("\n[secrets:check] incoherencias:");
+    for (const line of coherence) console.log(`  - ${line}`);
+  }
+  console.log(`\n[secrets:check] ${ok ? "contrato cumplido" : "contrato incumplido"}`);
+}
+process.exit(ok ? 0 : 1);
