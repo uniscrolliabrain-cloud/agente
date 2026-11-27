@@ -1,41 +1,72 @@
 {
-  "testedCommit": "1c7a7a7ed2b14cbc2276475af928e20dda13eb73",
+  "turno": "Trans03/T1-integraciones",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "5a7ea97a",
+  "state": "PARTIAL_LOCAL",
+  "git": { "branch": "converge/trans00-core", "dirty": 0 },
   "commands": {
-    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/oauth.test.ts tests/google.test.ts tests/whatsapp-adapter.test.ts tests/whatsapp-inbound.test.ts tests/whatsapp-outbound.test.ts tests/whatsapp-webhook.test.ts tests/vertical-slice-google-connection.test.ts tests/vertical-slice-calendar.test.ts tests/vertical-slice-drive.test.ts tests/vertical-slice-leads.test.ts tests/vertical-slice-follow-up.test.ts tests/connections-adapters.test.ts tests/actions.test.ts tests/cognition-v2-voice.test.ts tests/trans03-*.test.ts",
-    "typecheck": "corepack pnpm typecheck"
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=60000 --test-force-exit tests/trans03-*.test.ts",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json"
   },
+  "tests": {
+    "suites": 5,
+    "total": 14,
+    "pass": 14,
+    "fail": 0,
+    "skip": 0,
+    "todo": 0,
+    "newSuite": "tests/trans03-meta-failures.test.ts",
+    "newSuiteTests": 6,
+    "corpusExpected": { "suites": 4, "total": 8 }
+  },
+  "exitCodes": { "tests": 0, "typecheck": 0 },
   "logs": {
-    "clean-sha": {
-      "path": "/tmp/trans03-clean-sha.log",
-      "sha256": "d6799d8ba564ee1bbb2405ca6341910552c6c1691685b9c58ee5529022c64606"
+    "tests": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/EJECUCION/EVIDENCIA/logs/trans03-suites.log",
+      "sha256": "5a31ef0c3531b62c1d1ba3a178f7e4f2ebb32252abe000e4e20bdf554a59b995"
     },
-    "typecheck-certified-local": {
-      "path": "/tmp/trans03-typecheck-certified-local.log",
-      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
-    },
-    "red-worktree": {
-      "path": "/tmp/trans03-red-worktree.log",
-      "sha256": "c1a28f28b703a472d03f342464e4f2bc3a62b667ba4e6a10fddc281d9ca86289"
-    },
-    "binding": {
-      "path": "/tmp/trans03-binding.log",
-      "sha256": "55b0aaf35ccc08852ccfdb488ee17dc3f4b141be0d8811cf9a3934e04412370a"
-    },
-    "whatsapp-regressions": {
-      "path": "/tmp/trans03-whatsapp-regressions.log",
-      "sha256": "aed187534bc775c1549106e09bd5b67d056c626a6c93f1147a80984c6ad300fc"
-    },
-    "voice-binding": {
-      "path": "/tmp/trans03-voice-binding.log",
-      "sha256": "43d21450b86d5cdfa8cabd5cdb4509568ba08628972ae1123c6a1df29012f3fe"
-    },
-    "cache": {
-      "path": "/tmp/trans03-cache.log",
-      "sha256": "036ffb48266d733a9bb4dad87794cd823ba7559bafbf0c98c75ab3b5cb82e266"
-    },
-    "final": {
-      "path": "/tmp/trans03-final.log",
-      "sha256": "d9bc2b42713c68132bac586d0f576b950161720283fa2a4dfc870f2ff8b645a8"
+    "exitCodes": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans03/EJECUCION/EVIDENCIA/logs/trans03-exit.log",
+      "sha256": "040881be76901fdb1f952c410c2767411e1ada539c3a6203b4c50bf4eb648623"
     }
-  }
+  },
+  "consumers": {
+    "meta-whatsapp": "apps/server/src/engine/whatsapp-outbound.ts:342",
+    "stubs/whatsapp": "apps/server/src/engine/whatsapp-outbound.ts:7, apps/server/src/engine/service.ts:81",
+    "google-auth": "apps/server/src/app.ts:119, apps/server/src/workspace.ts",
+    "vapi": "apps/server/src/voice-routes.ts:13",
+    "resend": "apps/server/src/auth-signup.ts:22"
+  },
+  "failureMatrix": {
+    "408/429/5xx": "OutcomeUnknownError (outcome_unknown): no exito silencioso y no rechazo definitivo",
+    "timeout/red": "OutcomeUnknownError",
+    "2xx sin messages[0].id": "OutcomeUnknownError",
+    "400/401/403": "AppError 422 con outcome failed_without_effect y sin copiar el body del proveedor",
+    "validacion local": "422 antes de cualquier llamada de red",
+    "markRead id invalido": "422 sin inventar id"
+  },
+  "idempotency": {
+    "inbound": "providerMessageId del proveedor + tenant/owner; nunca un timestamp local",
+    "outbound": "insertIfAbsent antes de despachar + compareAndSwap sobre {status:dispatching, attemptId}; replay devuelve la operacion existente",
+    "providerLimit": "WhatsApp Cloud API no acepta clave de idempotencia del cliente; por eso 408/429/5xx dejan outcome_unknown y exigen reconciliacion humana",
+    "reconciliation": "providerChecked:true + evidenceRef + providerId; no vuelve a despachar"
+  },
+  "done": {
+    "everyAdapterHasConsumer": true,
+    "channelCreatesNoAuthority": true,
+    "idempotencyByProviderIdAndTenant": true,
+    "failurePathsTested": true,
+    "secretsNeverPrinted": true,
+    "liveStatusDeclared": "LIVE_UNVERIFIED",
+    "ledgerPromoted": false,
+    "fullGate": false
+  },
+  "limitations": [
+    "Ningun proveedor fue contactado: Meta, Google, Vapi y Resend siguen LIVE_UNVERIFIED.",
+    "No hay prueba de entrega fisica de mensaje, audio ni correo.",
+    "El gate integral no se ejecuto y el ledger de Trans03 sigue con sus 48 bloques en PENDING.",
+    "07.01-07.04 siguen NOT_RUN.",
+    "La firma del webhook entrante se cubre en las suites existentes de WhatsApp, no en este turno."
+  ],
+  "notes": "Mapea adaptador -> consumidor real, fija los caminos de fallo de Meta WhatsApp y deja explicito el limite de idempotencia del proveedor. No sustituye una sonda en vivo autorizada."
 }
