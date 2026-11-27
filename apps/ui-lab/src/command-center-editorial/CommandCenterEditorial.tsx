@@ -4,7 +4,8 @@
 // mismos callbacks que `apps/web/src/components/command-center/CommandCenterView`.
 // Lo que cambia es la composición, la tipografía, el ritmo y el movimiento.
 // No toca el shell, ni el workspace 35, ni ControlCenterView, ni el backend.
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useEditorialEntrance } from "./editorial-motion";
 import type { CompanyOverview, CompanyTask } from "../../../web/src/api/company";
 import AgentCreateModal from "../../../web/src/components/AgentCreateModal";
 import { AddMemberModal } from "../../../web/src/components/command-center/AddMemberModal";
@@ -160,11 +161,13 @@ export function CommandCenterEditorial({
         };
 
   const updatedLabel = updatedAt ? relativeTime(updatedAt) : "";
+  const viewRef = useRef<HTMLDivElement>(null);
+  useEditorialEntrance(viewRef, overview !== null);
 
   return (
     <EditorialFrame>
       <PresentationChanges overview={!showSample && !error ? overview : null}>
-      <div className="cce-view">
+      <div className="cce-view" ref={viewRef}>
         <EditorialHero
           tenantName={overview?.tenant.name ?? "tu empresa"}
           role={overview?.role ?? null}

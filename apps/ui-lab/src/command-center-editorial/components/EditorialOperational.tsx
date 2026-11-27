@@ -166,7 +166,7 @@ export function EditorialOperational({
 
       {current && narrow && (
         <EditorialSheet title={`${current.title} · ${current.num}`} onClose={() => setSelected(null)}>
-          <div className="cce-block-detail" id="cce-block-detail" style={{ border: 0, padding: 0, background: "transparent" }}>
+          <div className="cce-block-detail cce-sheet-content" id="cce-block-detail" style={{ border: 0, padding: 0, background: "transparent" }}>
             <p>{current.detail}</p>
             {current.action && (
               <button

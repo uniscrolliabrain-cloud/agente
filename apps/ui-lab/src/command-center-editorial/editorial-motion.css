@@ -1,0 +1,50 @@
+/* V4 · dinámica de movimiento. Solo Centro de Mando.
+ * Separar entrada editorial, respuesta inmediata y hoja física.
+ * No animar cifras ni desplazamientos globales por polling.
+ */
+.cce-root {
+  --cce-motion-fast: 120ms;
+  --cce-motion-control: 180ms;
+  --cce-motion-ease: cubic-bezier(.22, 1, .36, 1);
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-block, .cc-block) {
+  transition: background-color var(--cce-motion-control) ease,
+    border-color var(--cce-motion-control) ease,
+    color var(--cce-motion-fast) ease,
+    box-shadow var(--cce-motion-control) ease,
+    transform var(--cce-motion-fast) var(--cce-motion-ease);
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-block, .cc-block):active:not(:disabled) {
+  transition-duration: 70ms;
+}
+.cce-root :is(.cce-filter, .cc-filters .v2-pill) {
+  transition: background-color var(--cce-motion-control) ease,
+    color var(--cce-motion-fast) ease,
+    border-color var(--cce-motion-control) ease;
+}
+.cce-root .cce-kpi::after {
+  transition: transform 210ms var(--cce-motion-ease);
+}
+/* La hoja usa solución analítica en editorial-motion.ts, nunca dos animaciones
+ * simultáneas. La capa permanece fija; solo se desplaza su contenido. */
+.cce-root.cce-physical-sheet,
+.cce-root.cce-physical-sheet .cce-sheet {
+  animation: none;
+}
+.cce-root.cce-physical-sheet {
+  background-color: rgba(36, 36, 33, 0);
+}
+.cce-root.cce-physical-sheet .cce-sheet {
+  transform: translate3d(0, 100%, 0);
+  transition: none;
+}
+.cce-root .cce-sheet-content { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) {
+  .cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-block, .cc-block):active {
+    transform: none;
+  }
+  .cce-root.cce-physical-sheet .cce-sheet {
+    transform: none;
+  }
+  .cce-root .cce-kpi::after { transition: none; }
+}

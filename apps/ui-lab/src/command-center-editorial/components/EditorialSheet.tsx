@@ -1,6 +1,7 @@
 // Hoja inferior para móvil: mismo contenido que el detalle de escritorio, con
 // foco inicial, Escape, cierre por fondo y devolución del foco al disparador.
-import { useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useSheetSpring } from "../editorial-motion";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -15,6 +16,11 @@ export function EditorialSheet({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const requestClose = useSheetSpring(panelRef, backdropRef, onClose);
+  const requestRef = useRef(requestClose);
+  useEffect(() => { requestRef.current = requestClose; }, [requestClose]);
+  const close = useCallback(() => requestRef.current(), []);
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -22,7 +28,7 @@ export function EditorialSheet({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onClose();
+        close();
         return;
       }
       if (event.key !== "Tab" || !panelRef.current) return;
@@ -48,12 +54,12 @@ export function EditorialSheet({
       document.body.style.overflow = previousOverflow;
       previous?.focus();
     };
-  }, [onClose]);
+  }, [close]);
 
   // Portal a <body>: el marco editorial usa container queries (contención de
   // layout), así que el overlay no debe vivir dentro del contenedor.
   return createPortal(
-    <div className="cce-root cce-sheet-backdrop" onClick={onClose} role="presentation">
+    <div className="cce-root cce-sheet-backdrop cce-physical-sheet" ref={backdropRef} onClick={close} role="presentation">
       <div
         className="cce-sheet"
         role="dialog"
@@ -70,7 +76,7 @@ export function EditorialSheet({
           <button
             type="button"
             className="cce-icon-btn"
-            onClick={onClose}
+            onClick={close}
             aria-label="Cerrar detalle"
             ref={closeRef}
           >

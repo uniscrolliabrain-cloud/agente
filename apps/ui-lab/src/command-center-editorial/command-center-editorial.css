@@ -453,14 +453,6 @@ button.cce-row:hover { background: rgba(242, 239, 232, 0.65); }
 @keyframes cce-sheet-in { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes cce-shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 
-.cce-view > .cce-hero { animation: cce-rise 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
-.cce-view > .cce-briefing { animation: cce-rise 540ms cubic-bezier(0.22, 1, 0.36, 1) 70ms both; }
-.cce-view > .cce-section,
-.cce-view > .cce-panels { animation: cce-rise 540ms cubic-bezier(0.22, 1, 0.36, 1) 130ms both; }
-.cce-view > :nth-child(n + 5) { animation-delay: 190ms; }
-.cce-view > :nth-child(n + 7) { animation-delay: 240ms; }
-.cce-view > :nth-child(n + 9) { animation-delay: 280ms; }
-
 /* ================================================ responsive (por contenido) */
 @container cce (max-width: 1080px) {
   .cce-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
