@@ -181,6 +181,56 @@ export class MetricsRegistry {
     return total;
   }
 
+  /** External scrape: reviewed families only, no tenant or business labels. */
+  renderAggregate(filter?: { tenant?: string }): string {
+    const matches = (labels: Labels) => !filter?.tenant || labels.tenant === filter.tenant;
+    const counters = new Set([
+      "agente_event_failures_total", "agente_events_total", "agente_http_requests_total", "http_errors_by_route_total",
+      "agente_kernel_observations_total", "agente_kernel_telemetry_dropped_total", "agente_kernel_thoughts_appended_total",
+      "agente_kernel_thoughts_total", "agente_kernel_turns_closed_total", "agente_kernel_turns_opened_total", "agente_kernel_turns_total",
+      "agente_llm_calls_total", "agente_llm_latency_ms_count", "agente_llm_latency_ms_sum", "agente_llm_tokens_total",
+      "agente_task_duration_seconds_count", "agente_task_duration_seconds_sum", "agente_tasks_completed_total", "agente_tasks_created_total",
+    ]);
+    const lines: string[] = [];
+    const header = (name: string, type: string) => { lines.push(`# HELP ${name} Aggregated ${name}`, `# TYPE ${name} ${type}`); };
+    for (const counter of this.counters.values()) {
+      if (!counters.has(counter.name)) continue;
+      header(counter.name, "counter");
+      lines.push(`${counter.name} ${[...counter.samples.values()].filter(sample => matches(sample.labels)).reduce((sum, sample) => sum + sample.value, 0)}`);
+    }
+    const gaugePolicies: Record<string, "sum" | "single" | "min"> = {
+      agente_tasks_active: "sum", agente_tenants_total: "single", agente_worker_active: "single",
+      agente_worker_max_active: "single", agente_worker_running: "single", agente_alert_source_available: "min",
+    };
+    for (const gauge of this.gauges.values()) {
+      const policy = gaugePolicies[gauge.name], values = [...gauge.samples.values()].filter(sample => matches(sample.labels));
+      if (!policy || !values.length || (policy === "single" && (values.length !== 1 || Object.keys(values[0].labels).length))) continue;
+      const value = policy === "sum" ? values.reduce((sum, sample) => sum + sample.value, 0)
+        : policy === "min" ? Math.min(...values.map(sample => sample.value)) : values[0].value;
+      header(gauge.name, "gauge"); lines.push(`${gauge.name} ${value}`);
+    }
+    for (const histogram of this.histograms.values()) {
+      if (!["agente_http_request_duration_ms", "agente_kernel_stage_duration_ms"].includes(histogram.name)) continue;
+      header(histogram.name, "histogram");
+      const counts = new Array<number>(histogram.buckets.length + 1).fill(0);
+      let sum = 0, count = 0;
+      for (const sample of histogram.samples.values()) {
+        if (!matches(sample.labels)) continue;
+        for (let index = 0; index < counts.length; index++) counts[index] += sample.counts[index];
+        sum += sample.sum; count += sample.count;
+      }
+      let cumulative = 0;
+      for (let index = 0; index < counts.length; index++) {
+        cumulative += counts[index];
+        lines.push(`${histogram.name}_bucket{le="${index < histogram.buckets.length ? histogram.buckets[index] : "+Inf"}"} ${cumulative}`);
+      }
+      lines.push(`${histogram.name}_sum ${sum}`, `${histogram.name}_count ${count}`);
+    }
+    header("agente_metrics_dropped_series_total", "counter");
+    lines.push(`agente_metrics_dropped_series_total ${this.droppedSeries}`);
+    return lines.join("\n") + "\n";
+  }
+
   render(filter?: { tenant?: string }): string {
     const matchesTenant = (labels: Record<string, string>): boolean =>
       !filter?.tenant || labels.tenant === filter.tenant;

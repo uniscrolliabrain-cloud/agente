@@ -134,6 +134,7 @@ export function checkSteps(root = process.cwd()): StepSpec[] {
         "./tests/setup.ts",
         "--test",
         "--test-reporter=tap",
+        "--test-concurrency=2",
         // GATE_TEST_TIMEOUT_V1 - 10 s mataba tests legitimos: el primero de
         // tests/auth.test.ts tarda 13 s solo (hash de password) y bajo carga de
         // suite completa pasa de 10 s. El fallo se veia como "test timed out",
@@ -366,10 +367,12 @@ export function validateExecutedGate(source: unknown, root = process.cwd()): Gat
   const specs = allSteps(root);
   if (report.steps.length !== specs.length || new Set(report.steps.map(s => s?.name)).size !== specs.length) fail("full unique step set required");
   const logRoot = realpathSync(join(root, "artifacts/gate/logs"));
+  if (logRoot !== join(realpathSync(root), "artifacts", "gate", "logs")) fail("symlink evidence directory");
   for (const spec of specs) {
     const step = report.steps.find(s => s.name === spec.name);
     if (!step || step.kind !== spec.kind || step.blocking !== spec.blocking ||
         step.command !== spec.command.join(" ") || step.cwd !== resolve(root, spec.cwd ?? "") ||
+        !Number.isSafeInteger(step.durationMs) || step.durationMs < 0 ||
         (step.exitCode !== null && !Number.isInteger(step.exitCode)) || step.ok !== (step.exitCode === 0)) return fail(`step contract ${spec.name}`);
     if (!step.logFile || !step.logSha256) return fail(`missing log ${spec.name}`);
     const logPath = realpathSync(step.logFile);
@@ -430,7 +433,7 @@ export function renderSummary(report: GateReport): string {
   lines.push("");
   const verdict = report.ok ? "GATE OK" : "GATE FALLA";
   const total = report.steps.length;
-  lines.push(`${verdict} · ${total - report.failed.length}/${total} steps en verde · ${seconds(report.durationMs)}`);
+  lines.push(`${verdict} · ${report.steps.filter(step => step.ok).length}/${total} steps en verde · ${seconds(report.durationMs)}`);
   if (report.advisory.length > 0) {
     lines.push(`advisory en rojo (se publica, no bloquea): ${report.advisory.join(", ")}`);
   }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync, readFileSync, renameSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -64,4 +64,13 @@ test("zero-test output and invented verdict are rejected", () => {
           stderr: "",
         }) as typeof spawnSync;
   assert.throws(() => validateExecutedGate(runGate({ root, spawn: emptySpawn }), root), /test counters/);
+});
+
+test("a symlinked log directory cannot relocate gate evidence outside its approved path", () => {
+  const { root, report } = fixture();
+  const original = join(root, "artifacts/gate/logs"),
+    outside = join(root, "artifacts", "moved-logs");
+  renameSync(original, outside);
+  symlinkSync(outside, original);
+  assert.throws(() => validateExecutedGate(report, root), /symlink evidence directory/);
 });
