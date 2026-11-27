@@ -1,4 +1,5 @@
 import "../config.ts";
+import { configuredModelForSpec } from "./language-model.ts";
 import type { Config } from "../config.ts";
 import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 import { createHash, randomUUID } from "node:crypto";
@@ -477,7 +478,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
     activeModel = model;
     const apiKey = credentialFor(model);
     return new BuiltInAgent({
-      model,
+      model: configuredModelForSpec(model, [roleSpec, tenantForRole?.slow, tenantForRole?.fast]) ?? model,
       ...(apiKey ? { apiKey } : {}),
       maxSteps: 16,
       maxRetries: 0,

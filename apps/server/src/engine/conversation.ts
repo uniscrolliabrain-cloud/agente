@@ -1,5 +1,6 @@
 // VIEW_RESOLUTION_HTTP_V1 - las vistas se resuelven por HTTP; el turno del
 // chat no emite specs de vista ni eventos view.resolved.
+import { configuredModelForSpec } from "./language-model.ts";
 import "../config.ts";
 import { createHash, randomUUID } from "node:crypto";
 import { AbstractAgent } from "@ag-ui/client";
@@ -1045,6 +1046,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
         // FAST del TenantConfig para el chat. El slow se usa para tareas
         // durables (en model.ts). Si el kernel falla, caemos al chain global.
         const modelApiKeys = new Map<string, string>();
+        const modelProfiles = new Map<string, import("../kernel/config/provider-spec.ts").ProviderSpec>();
         let chatModelChain: string[] = modelChain(this.config);
         try {
           if (this.service.kernel) {
@@ -1067,10 +1069,12 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
               const fastSpec = normalizeModelSpec(`${cfg.fast.provider}/${cfg.fast.model}`);
               chatModelChain = [fastSpec];
               modelApiKeys.set(fastSpec, cfg.fast.apiKey);
+              modelProfiles.set(fastSpec, cfg.fast);
               if (cfg.slow?.apiKey && cfg.slow?.provider && cfg.slow.model) {
                 const slowSpec = normalizeModelSpec(`${cfg.slow.provider}/${cfg.slow.model}`);
                 chatModelChain.push(slowSpec);
                 modelApiKeys.set(slowSpec, cfg.slow.apiKey);
+                modelProfiles.set(slowSpec, cfg.slow);
               }
               // MODEL_ROLE_CHAT_V1 - el chat tambien respeta el modelo propio
               // del rol, igual que las tareas durables.
@@ -1079,6 +1083,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
                 const roleModel = normalizeModelSpec(`${roleSpec.provider}/${roleSpec.model}`);
                 if (!chatModelChain.includes(roleModel)) chatModelChain.unshift(roleModel);
                 modelApiKeys.set(roleModel, roleSpec.apiKey);
+                modelProfiles.set(roleModel, roleSpec);
               }
               // FIX_CHAIN_FALLBACK_V1 - si solo hay fast, anadimos el chain
               // global como red de seguridad. Antes se quedaba en [fast] y si
@@ -1120,7 +1125,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
             activeModel = model;
             const apiKey = modelApiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model);
             return new BuiltInAgent({
-              model, // MAX_STEPS_CONFIG_V1 - configurable.
+              model: configuredModelForSpec(model, [modelProfiles.get(normalizeModelSpec(model))]) ?? model, // MAX_STEPS_CONFIG_V1 - configurable.
               ...(apiKey ? { apiKey } : {}),
               // CONV_MAX_STEPS_TENANT_V1 - maxSteps por tenant (fallback env).
               maxSteps:

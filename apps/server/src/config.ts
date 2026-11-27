@@ -7,13 +7,13 @@ process.env.COPILOTKIT_TELEMETRY_DISABLED ??= "true";
 
 // The CopilotKit runtime resolves "google/ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦" models from GOOGLE_API_KEY and every
 // OpenAI-compatible endpoint from OPENAI_API_KEY plus OPENAI_BASE_URL. Aliasing here keeps a
-// single source of truth for the provider keys, so GEMINI_API_KEY and OPENROUTER_API_KEY are
+// single source of truth for the provider keys, so GEMINI_API_KEY and OPEN_ROUTER_API_KEY are
 // enough on their own and existing OPENAI_*/GOOGLE_* values always win.
 const blank = (value?: string) => !value?.trim();
 if (blank(process.env.GOOGLE_API_KEY) && !blank(process.env.GEMINI_API_KEY))
   process.env.GOOGLE_API_KEY = process.env.GEMINI_API_KEY?.trim();
-if (blank(process.env.OPENAI_API_KEY) && !blank(process.env.OPENROUTER_API_KEY)) {
-  process.env.OPENAI_API_KEY = process.env.OPENROUTER_API_KEY?.trim();
+if (blank(process.env.OPENAI_API_KEY) && !blank(process.env.OPEN_ROUTER_API_KEY)) {
+  process.env.OPENAI_API_KEY = process.env.OPEN_ROUTER_API_KEY?.trim();
   process.env.OPENAI_BASE_URL ??= "https://openrouter.ai/api/v1";
 }
 // ENV_ALIASES_V1 - Doppler publica varios secretos con el nombre del proveedor
@@ -153,8 +153,8 @@ function readModel(): string | undefined {
 function readModelFallback(): string | undefined {
   const explicit = process.env.MODEL_FALLBACK?.trim();
   if (explicit) return explicit;
-  if (!process.env.OPENROUTER_API_KEY?.trim()) return undefined;
-  const model = process.env.OPENROUTER_MODEL?.trim() || "google/gemini-3.6-flash";
+  if (!process.env.OPEN_ROUTER_API_KEY?.trim()) return undefined;
+  const model = process.env.OPEN_ROUTER_MODEL?.trim() || "deepseek/deepseek-v3.2";
   return `openai/${model}`;
 }
 
