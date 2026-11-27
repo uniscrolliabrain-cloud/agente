@@ -32,7 +32,7 @@ test("Fast drops provider output after revocation aborts the run and records no 
     source.visibility.policyRevision = identity.policyRevision;
     await runtime.context.projections.apply(source, "1");
 
-    const request: RunAgentInput = { threadId: "t", runId: "r", messages: [], tools: [], state: {}, context: [], forwardedProps: {} };
+    const request: RunAgentInput = { threadId: "t", runId: "r", messages: [{ id: "human-request", role: "user", content: "Consulta el contexto autorizado." }], tools: [], state: {}, context: [], forwardedProps: {} };
     const stream = runInTenantScope({ tenantId: "A", actorId: "alice" }, () => runtime.chat("alice", request));
     const events: BaseEvent[] = [];
     await new Promise<void>((resolve, reject) => stream.subscribe({

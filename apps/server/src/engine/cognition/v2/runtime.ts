@@ -1,3 +1,4 @@
+import { HumanTurnJournal } from "./human-turns.ts";
 import { KernelReceiptProjector } from "./kernel-receipts.ts";
 import { publicTextEvent } from "./public-text-event.ts";
 import { randomUUID } from "node:crypto";
@@ -23,6 +24,7 @@ import { LegacyCardBackfill, legacyEvidenceResolver } from "./legacy-backfill.ts
 import { RuntimeOutcomeProjector } from "./runtime-outcome.ts";
 export class CognitionV2Runtime {
   readonly sink: DurableEventSink;
+  readonly humanTurns: HumanTurnJournal;
   readonly context: ContextServingFacade;
   readonly ledger: CardDeliveryLedger;
   readonly deliveryRecovery: DeliveryRecoveryWorker;
@@ -53,6 +55,7 @@ export class CognitionV2Runtime {
       return Boolean(fresh && fresh.policyRevision === identity.policyRevision &&
         (!record || (record.visibility.scope === "private" && record.visibility.ownerActorId === identity.actorId)));
     } });
+    this.humanTurns = new HumanTurnJournal(db, this.sink, this.context);
     this.memories = new FiveMemories(this.context, this.sink);
     this.legacyBackfill = new LegacyCardBackfill(db, this.context, this.sink, legacyEvidenceResolver(this.context));
     this.attention = new GlobalAttentionWorkspace(this.context);
@@ -96,18 +99,27 @@ export class CognitionV2Runtime {
       let revocationMonitor: ReturnType<typeof setInterval> | undefined;
       void (async () => {
         let accepted = false;
+        let admittedKey: string | undefined;
         try {
           if (!scope) throw Error("AUTHENTICATED_SCOPE_REQUIRED");
+          const request = { ...input, messages: structuredClone(input.messages) };
           // Bounded global envelope, not merely the cognitive sub-budget.
-          if (input.messages.length > 100 || Buffer.byteLength(JSON.stringify(input.messages), "utf8") > 24000) throw Error("CHAT_INPUT_BUDGET");
+          if (request.messages.length > 100 || Buffer.byteLength(JSON.stringify(request.messages), "utf8") > 24000) throw Error("CHAT_INPUT_BUDGET");
           const identity = await this.identity(scope.tenantId, scope.actorId, owner, "chat");
           controller.signal.throwIfAborted();
-          const key = digest([identity.tenantId, identity.actorId, input.threadId, input.runId]);
-          const inserted = await this.db.rawQuery(`INSERT INTO cognition_v2_chat_runs(tenant,id,actor,state) VALUES($1,$2,$3,'accepted') ON CONFLICT DO NOTHING RETURNING id`, [identity.tenantId, key, identity.actorId]);
-          if (!inserted.length) throw Error("RUN_ALREADY_ACCEPTED");
+          const key = digest([identity.tenantId, identity.actorId, request.threadId, request.runId]);
+          const latest = request.messages.filter((message) => message.role === "user").at(-1);
+          if (!latest || typeof latest.content !== "string") throw Error("HUMAN_TURN_TEXT_REQUIRED");
+          const humanText = latest.content;
+          admittedKey = key;
+          await this.db.transaction(async () => {
+            const inserted = await this.db.rawQuery(`INSERT INTO cognition_v2_chat_runs(tenant,id,actor,state) VALUES($1,$2,$3,'accepted') ON CONFLICT DO NOTHING RETURNING id`, [identity.tenantId, key, identity.actorId]);
+            if (!inserted.length) throw Error("RUN_ALREADY_ACCEPTED");
+            await this.humanTurns.admit(identity, { threadId: request.threadId, runId: request.runId,
+              messageId: latest.id, text: humanText, inputDigest: digest(request.messages.filter(message => message.role === "user" || message.role === "assistant")) });
+          });
           accepted = true;
-          subscriber.next({ type: EventType.RUN_STARTED, threadId: input.threadId, runId: input.runId });
-          const latest = input.messages.filter((m) => m.role === "user").at(-1);
+          subscriber.next({ type: EventType.RUN_STARTED, threadId: request.threadId, runId: request.runId });
           const snapshot = prepared
             ? await this.context.readSnapshot(identity, prepared.contextSnapshotId)
             : await this.context.prepared(identity, typeof latest?.content === "string" ? latest.content : "");
@@ -134,13 +146,13 @@ export class CognitionV2Runtime {
           // No legacy context, memory scan, Slow fallback, role override or
           // tool execution is on this path. Business actions remain in runtime V1
           // until their governed V2 capability migration is certified.
-          if (Buffer.byteLength(prompt, "utf8") + Buffer.byteLength(JSON.stringify(input.messages), "utf8") > 32000) throw Error("CHAT_GLOBAL_INPUT_BUDGET");
+          if (Buffer.byteLength(prompt, "utf8") + Buffer.byteLength(JSON.stringify(request.messages), "utf8") > 32000) throw Error("CHAT_GLOBAL_INPUT_BUDGET");
           let streamedResponse = "";
           const response = await this.fast.run(identity.tenantId, async (signal) => {
             if (!await this.context.readSnapshot(identity, snapshot.id)) throw Error("CONTEXT_REVOKED_BEFORE_DISPATCH");
             signal.throwIfAborted();
-            return this.provider.stream({ ...input,
-            messages: input.messages.filter((m) => m.role === "user" || m.role === "assistant").slice(-20),
+            return this.provider.stream({ ...request,
+            messages: request.messages.filter((m) => m.role === "user" || m.role === "assistant").slice(-20),
             state: {}, tools: [], context: [], forwardedProps: {} }, prompt, "fast", signal, (event) => {
               if (signal.aborted) return;
               if (event.type === EventType.RUN_ERROR) throw Error("PROVIDER_ERROR");
@@ -165,10 +177,10 @@ export class CognitionV2Runtime {
           });
           prepared?.onReceipt?.({ id: receiptId, contextSnapshotId: snapshot.id });
           ended = true;
-          subscriber.next({ type: EventType.RUN_FINISHED, threadId: input.threadId, runId: input.runId }); subscriber.complete();
+          subscriber.next({ type: EventType.RUN_FINISHED, threadId: request.threadId, runId: request.runId }); subscriber.complete();
         } catch {
-          if (accepted && scope) await this.db.rawQuery(`UPDATE cognition_v2_chat_runs SET state=$3 WHERE tenant=$1 AND id=$2 AND state<>'completed'`,
-            [scope.tenantId, digest([scope.tenantId, scope.actorId, input.threadId, input.runId]), controller.signal.aborted ? "cancelled" : "failed"]).catch(() => {});
+          if (accepted && scope && admittedKey) await this.db.rawQuery(`UPDATE cognition_v2_chat_runs SET state=$3 WHERE tenant=$1 AND id=$2 AND state<>'completed'`,
+            [scope.tenantId, admittedKey, controller.signal.aborted ? "cancelled" : "failed"]).catch(() => {});
           ended = true;
           if (!subscriber.closed) { subscriber.next({ type: EventType.RUN_ERROR, message: "No se ha podido completar la respuesta." }); subscriber.complete(); }
         } finally { clearInterval(revocationMonitor); }
