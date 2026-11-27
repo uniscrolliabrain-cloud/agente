@@ -1,0 +1,465 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-11-27",
+  "repository": "uniscrolliabrain-cloud/agente",
+  "sourceCommit": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
+  "classification": "internal operational metadata; never publish credentials or personal identifiers",
+  "canonicalContracts": [
+    "scripts/lib/connections.ts",
+    "scripts/connections.ts",
+    "scripts/secrets-check.ts",
+    ".env.example",
+    "apps/server/src/config.ts"
+  ],
+  "environments": {
+    "development": {
+      "doppler": {
+        "project": "agntiapro",
+        "config": "dev_campaign_transversal_leads_ia"
+      },
+      "publicApiUrlReported": "http://127.0.0.1:8787",
+      "flyAppReported": "agente-eb4t4a",
+      "databaseTarget": null,
+      "approvedTargets": [],
+      "allowDeploy": false,
+      "allowOutbound": false,
+      "allowPaidResources": false
+    },
+    "production": {
+      "dopplerConfigWorkflowDefault": "prd",
+      "apiAppRepoDefault": "agntiapro-api",
+      "workerAppRepoDefault": "agntiapro-worker",
+      "apiOriginRepoDefault": "https://www.agntiapro.com",
+      "readOnly": true
+    },
+    "whatsappLab": {
+      "proposedProject": "agntia-whatsapp-dev",
+      "target": "cloudflare",
+      "runtimeMode": "transport_only",
+      "approvedTargets": [],
+      "allowDeploy": false,
+      "allowOutbound": false
+    }
+  },
+  "providers": [
+    {
+      "id": "doppler",
+      "role": "secret-management",
+      "secretRefs": [
+        "DOPPLER_TOKEN"
+      ],
+      "metadataRequired": [
+        "project",
+        "config",
+        "token scope and expiry"
+      ],
+      "evidence": "DEV config verified by operator; agent access unverified",
+      "probe": "List names only; check token config and network; never list values.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "github",
+      "role": "source-ci",
+      "secretRefs": [
+        "GITHUB_TOKEN",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET"
+      ],
+      "metadataRequired": [
+        "repository",
+        "commit SHA",
+        "environment",
+        "workflow",
+        "runner network policy"
+      ],
+      "evidence": "repository read verified; agent permissions unverified",
+      "probe": "Inspect environments, workflow triggers and names only; no dispatch.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "cloudflare",
+      "role": "dns-edge",
+      "secretRefs": [
+        "CLOUDFLARE_API_TOKEN"
+      ],
+      "metadataRequired": [
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_ZONE_ID",
+        "dev project name",
+        "worker route",
+        "plan and limits"
+      ],
+      "evidence": "credential names reported; scope unverified",
+      "probe": "Token verification, account/zone/project inventory; no DNS or route edits.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "fly",
+      "role": "api-worker",
+      "secretRefs": [
+        "FLY_API_TOKEN"
+      ],
+      "metadataRequired": [
+        "FLY_APP_NAME",
+        "FLY_APP_API_PREVIEW",
+        "FLY_APP_WORKER_PREVIEW",
+        "region",
+        "image SHA",
+        "volume IDs"
+      ],
+      "evidence": "repo config known; actual target unverified",
+      "probe": "List apps, machines, image labels and health; never restart.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "vercel",
+      "role": "legacy-site",
+      "secretRefs": [
+        "VERCEL_TOKEN"
+      ],
+      "metadataRequired": [
+        "VERCEL_ORG_ID",
+        "VERCEL_PROJECT_ID"
+      ],
+      "evidence": "operator says former prototype unused; workflow still references site",
+      "probe": "Inventory only; no new Vercel deployments.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "supabase",
+      "role": "auth-database",
+      "secretRefs": [
+        "SUPABASE_SECRET_KEY",
+        "SUPABASE_DATABASE_URL",
+        "DATABASE_URL",
+        "TOKEN_ENCRYPTION_KEY"
+      ],
+      "metadataRequired": [
+        "SUPABASE_URL",
+        "project ref",
+        "region",
+        "DB role",
+        "AUTH_PROVIDER",
+        "RLS policy"
+      ],
+      "evidence": "operator identifies Supabase; historical docs cite Neon runtime",
+      "probe": "Verify DB target/role in read-only transaction, JWKS; no migration.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "neon",
+      "role": "historical-database",
+      "secretRefs": [
+        "DATABASE_URL"
+      ],
+      "metadataRequired": [
+        "project ID",
+        "branch ID",
+        "region",
+        "database role"
+      ],
+      "evidence": "historical evidence only; determine whether still used",
+      "probe": "Read-only metadata and identity check; do not assume it is production or DEV.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "google",
+      "role": "workspace-oauth",
+      "secretRefs": [
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REFRESH_TOKEN"
+      ],
+      "metadataRequired": [
+        "GOOGLE_CLIENT_ID",
+        "project ID",
+        "project number",
+        "OAuth redirect URI",
+        "scopes"
+      ],
+      "evidence": "operator verified refresh and Gmail Drive Calendar Meet People Tasks reads; Docs Sheets Slides scopes only",
+      "probe": "Inspect granted scopes and minimal read probes, no content or mutations.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "google-places",
+      "role": "leads",
+      "secretRefs": [
+        "GOOGLE_MAPS_API_KEY"
+      ],
+      "metadataRequired": [
+        "project",
+        "API restrictions",
+        "quota"
+      ],
+      "evidence": "operator reported search 200",
+      "probe": "Prefer metadata; one quota-consuming probe only with approval.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "gemini-vertex",
+      "role": "models-embeddings",
+      "secretRefs": [
+        "GEMINI_API_KEY"
+      ],
+      "metadataRequired": [
+        "project",
+        "location",
+        "model IDs",
+        "embedding dimensions",
+        "ADC identity"
+      ],
+      "evidence": "Gemini list models 200 reported; inference and Vertex unverified",
+      "probe": "List models/metadata; no inference or billable execution by default.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "whatsapp",
+      "role": "meta-channel",
+      "secretRefs": [
+        "WHATSAPP_ACCESS_TOKEN",
+        "WHATSAPP_VERIFY_TOKEN",
+        "WHATSAPP_APP_SECRET"
+      ],
+      "metadataRequired": [
+        "WHATSAPP_PHONE_NUMBER_ID",
+        "WHATSAPP_BUSINESS_ACCOUNT_ID",
+        "Meta app ID",
+        "WHATSAPP_GRAPH_VERSION",
+        "WHATSAPP_WEBHOOK_BINDINGS"
+      ],
+      "evidence": "five values stored per operator; token temporary; phone and WABA read 200; no webhook proven",
+      "probe": "Verify token app/scopes/expiry, WABA membership, existing callback and subscriptions read-only.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "resend",
+      "role": "email",
+      "secretRefs": [
+        "RESEND_API_KEY"
+      ],
+      "metadataRequired": [
+        "EMAIL_FROM",
+        "domain ID"
+      ],
+      "evidence": "name reported; current status unverified",
+      "probe": "List verified domains; no email.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "openrouter-slow",
+      "role": "slow-model",
+      "secretRefs": [
+        "OPEN_ROUTER_API_KEY"
+      ],
+      "metadataRequired": [
+        "SLOW_LLM model",
+        "endpoint",
+        "quota"
+      ],
+      "evidence": "operator designated separate account; actual resolver unverified",
+      "probe": "Check canonical resolver and account metadata; no generation.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "openrouter-jev",
+      "role": "jev",
+      "secretRefs": [
+        "OPENROUTER_API_KEY",
+        "JEV_API_KEY"
+      ],
+      "metadataRequired": [
+        "JEV model",
+        "endpoint"
+      ],
+      "evidence": "operator designated independent account; JEV_API_KEY only if wired",
+      "probe": "Inspect actual contract; do not alias with Slow.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "muse-fast",
+      "role": "fast-model",
+      "secretRefs": [
+        "MUSE_API_KEY"
+      ],
+      "metadataRequired": [
+        "FAST_LLM model",
+        "endpoint"
+      ],
+      "evidence": "reported; wiring unverified",
+      "probe": "Inspect resolver and metadata, no inference.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "groq",
+      "role": "models",
+      "secretRefs": [
+        "GROQ_API_KEY"
+      ],
+      "metadataRequired": [
+        "model ID",
+        "endpoint"
+      ],
+      "evidence": "name reported",
+      "probe": "List models if supported.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "grafana-otel",
+      "role": "observability",
+      "secretRefs": [
+        "GRAFANA_CLOUD_TOKEN",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN",
+        "OTEL_EXPORTER_OTLP_HEADERS",
+        "METRICS_TOKEN"
+      ],
+      "metadataRequired": [
+        "GRAFANA_URL",
+        "stack ID",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_PROTOCOL"
+      ],
+      "evidence": "some names reported; ingest unverified",
+      "probe": "Read stack metadata, no ingestion by default.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "sentry",
+      "role": "error-monitoring",
+      "secretRefs": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN"
+      ],
+      "metadataRequired": [
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "environment"
+      ],
+      "evidence": "names reported; receipt unverified",
+      "probe": "Read release/project metadata, no event ingestion.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "vapi",
+      "role": "voice",
+      "secretRefs": [
+        "VAPI_API_KEY",
+        "VAPI_WEBHOOK_SECRET"
+      ],
+      "metadataRequired": [
+        "VAPI_ASSISTANT_ID",
+        "VAPI_PHONE_NUMBER_ID"
+      ],
+      "evidence": "API key reported; config unverified",
+      "probe": "List assistants and numbers; no calls.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "elevenlabs",
+      "role": "voice",
+      "secretRefs": [
+        "ELEVENLABS_API_KEY"
+      ],
+      "metadataRequired": [
+        "ELEVENLABS_VOICE_ID"
+      ],
+      "evidence": "names reported",
+      "probe": "Subscription/voice metadata; no synthesis.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "anam",
+      "role": "avatar",
+      "secretRefs": [
+        "ANAM_API_KEY"
+      ],
+      "metadataRequired": [
+        "ANAM_AVATAR_ID_2"
+      ],
+      "evidence": "names reported",
+      "probe": "Metadata only; no session.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "apify",
+      "role": "web-data",
+      "secretRefs": [
+        "APIFY_TOKEN"
+      ],
+      "metadataRequired": [
+        "actor ID",
+        "quota"
+      ],
+      "evidence": "name reported",
+      "probe": "Metadata only; no actor run.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "composio",
+      "role": "integrations",
+      "secretRefs": [
+        "COMPOSIO_API_KEY"
+      ],
+      "metadataRequired": [
+        "project ID",
+        "toolkit IDs"
+      ],
+      "evidence": "name reported",
+      "probe": "Metadata only; no connected action.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "meta-pages",
+      "role": "social",
+      "secretRefs": [
+        "*_PAGE_TOKEN"
+      ],
+      "metadataRequired": [
+        "*_PAGE_ID",
+        "app ID"
+      ],
+      "evidence": "names reported; wildcard is inventory pattern, not literal key",
+      "probe": "Verify page metadata without posting.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    },
+    {
+      "id": "stripe",
+      "role": "payments",
+      "secretRefs": [
+        "STRIPE_API_KEY",
+        "STRIPE_WEBHOOK_SECRET"
+      ],
+      "metadataRequired": [
+        "test account",
+        "mode"
+      ],
+      "evidence": "optional repo contract; presence unknown",
+      "probe": "Test-mode metadata only; no payment or webhook changes.",
+      "resourceIds": {},
+      "status": "discovery_required"
+    }
+  ]
+}
