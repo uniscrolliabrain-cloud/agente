@@ -5,7 +5,7 @@
   "agent": "Trans05",
   "macroturn": "E-M1",
   "baseSha": "9c4fdac0",
-  "headSha": "5d48d27c13f96533df3815f1829b54007d046dcd",
+  "headSha": "b2cccd9b",
   "authorizationRef": "../../Trans00/EJECUCION/ACTA-ARRANQUE.md",
   "scope": "LOCAL_IMPLEMENTATION_AUTHORIZED",
   "blocks": [
@@ -18,7 +18,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "01.02",
@@ -26,10 +27,17 @@
       "pass": "02-coding-audit-transversal",
       "canonicalPath": "docs/convergencia-operativa-12x4/01-consolidacion/02-coding-audit-transversal/README.md",
       "canonicalBlob": "6671fe06104e5eed530f8a0aa694dcba727ef923",
-      "state": "PENDING",
-      "evidence": [],
-      "patchsets": [],
-      "dependency": null
+      "state": "IN_PROGRESS",
+      "evidence": [
+        "INFORME-EXTRACCION-NARRATIVA.md",
+        "INFORME-E-M1-EN-CURSO.md"
+      ],
+      "patchsets": [
+        "P10.2",
+        "P10.3"
+      ],
+      "dependency": null,
+      "reason": "Primitivas y validacion local; falta completar requisitos del bloque, persistencia, wiring y revision independiente."
     },
     {
       "id": "01.03",
@@ -37,10 +45,17 @@
       "pass": "03-reaudit-refactoring",
       "canonicalPath": "docs/convergencia-operativa-12x4/01-consolidacion/03-reaudit-refactoring/README.md",
       "canonicalBlob": "b03c708af107e47f513b57492bb4093d782a8523",
-      "state": "PENDING",
-      "evidence": [],
-      "patchsets": [],
-      "dependency": null
+      "state": "IN_PROGRESS",
+      "evidence": [
+        "INFORME-EXTRACCION-NARRATIVA.md",
+        "INFORME-E-M1-EN-CURSO.md"
+      ],
+      "patchsets": [
+        "P10.2",
+        "P10.3"
+      ],
+      "dependency": null,
+      "reason": "Primitivas y validacion local; falta completar requisitos del bloque, persistencia, wiring y revision independiente."
     },
     {
       "id": "01.04",
@@ -51,7 +66,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "02.01",
@@ -62,7 +78,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "02.02",
@@ -73,7 +90,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "02.03",
@@ -84,7 +102,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "02.04",
@@ -95,7 +114,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "03.01",
@@ -106,7 +126,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "03.02",
@@ -117,7 +138,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "03.03",
@@ -128,7 +150,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "03.04",
@@ -139,7 +162,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "04.01",
@@ -150,7 +174,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "04.02",
@@ -161,7 +186,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "04.03",
@@ -172,7 +198,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "04.04",
@@ -183,7 +210,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "05.01",
@@ -194,7 +222,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "05.02",
@@ -205,7 +234,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "05.03",
@@ -216,7 +246,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "05.04",
@@ -227,7 +258,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "06.01",
@@ -238,7 +270,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "06.02",
@@ -249,7 +282,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "06.03",
@@ -260,7 +294,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "06.04",
@@ -271,7 +306,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "07.01",
@@ -279,10 +315,11 @@
       "pass": "01-scaffold-docu",
       "canonicalPath": "docs/convergencia-operativa-12x4/07-owner-real/01-scaffold-docu/README.md",
       "canonicalBlob": "f92257187e271570b425e8f8dd71f9a417dc7ced",
-      "state": "PENDING",
+      "state": "NOT_RUN",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Owner y datos reales fuera del ambito aislado autorizado; no sustituido por fixture."
     },
     {
       "id": "07.02",
@@ -290,10 +327,11 @@
       "pass": "02-coding-audit-transversal",
       "canonicalPath": "docs/convergencia-operativa-12x4/07-owner-real/02-coding-audit-transversal/README.md",
       "canonicalBlob": "82e0dedef4607b8b3e6242dfca0c2d8081c0cd19",
-      "state": "PENDING",
+      "state": "NOT_RUN",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Owner y datos reales fuera del ambito aislado autorizado; no sustituido por fixture."
     },
     {
       "id": "07.03",
@@ -301,10 +339,11 @@
       "pass": "03-reaudit-refactoring",
       "canonicalPath": "docs/convergencia-operativa-12x4/07-owner-real/03-reaudit-refactoring/README.md",
       "canonicalBlob": "b243cae8cb1da7f398acdd23e70c213d85be9b4a",
-      "state": "PENDING",
+      "state": "NOT_RUN",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Owner y datos reales fuera del ambito aislado autorizado; no sustituido por fixture."
     },
     {
       "id": "07.04",
@@ -312,10 +351,11 @@
       "pass": "04-reaudit-hardening",
       "canonicalPath": "docs/convergencia-operativa-12x4/07-owner-real/04-reaudit-hardening/README.md",
       "canonicalBlob": "a0bc3d6b732c984adf548081cd77181c4035c88c",
-      "state": "PENDING",
+      "state": "NOT_RUN",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Owner y datos reales fuera del ambito aislado autorizado; no sustituido por fixture."
     },
     {
       "id": "08.01",
@@ -326,7 +366,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "08.02",
@@ -337,7 +378,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "08.03",
@@ -348,7 +390,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "08.04",
@@ -359,7 +402,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "09.01",
@@ -370,7 +414,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "09.02",
@@ -381,7 +426,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "09.03",
@@ -392,7 +438,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "09.04",
@@ -403,7 +450,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "10.01",
@@ -414,7 +462,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "10.02",
@@ -425,7 +474,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "10.03",
@@ -436,7 +486,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "10.04",
@@ -447,7 +498,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "11.01",
@@ -458,7 +510,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "11.02",
@@ -469,7 +522,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "11.03",
@@ -480,7 +534,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "11.04",
@@ -491,7 +546,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "12.01",
@@ -502,7 +558,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "12.02",
@@ -510,10 +567,17 @@
       "pass": "02-coding-audit-transversal",
       "canonicalPath": "docs/convergencia-operativa-12x4/12-validacion/02-coding-audit-transversal/README.md",
       "canonicalBlob": "28c159349ae04057ad73d39905e4322073c0732b",
-      "state": "PENDING",
-      "evidence": [],
-      "patchsets": [],
-      "dependency": null
+      "state": "IN_PROGRESS",
+      "evidence": [
+        "INFORME-EXTRACCION-NARRATIVA.md",
+        "INFORME-E-M1-EN-CURSO.md"
+      ],
+      "patchsets": [
+        "P10.2",
+        "P10.3"
+      ],
+      "dependency": null,
+      "reason": "Primitivas y validacion local; falta completar requisitos del bloque, persistencia, wiring y revision independiente."
     },
     {
       "id": "12.03",
@@ -524,7 +588,8 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     },
     {
       "id": "12.04",
@@ -535,8 +600,21 @@
       "state": "PENDING",
       "evidence": [],
       "patchsets": [],
-      "dependency": null
+      "dependency": null,
+      "reason": "Sin evidencia integral para completar este bloque; el gate general no acredita sus requisitos particulares."
     }
   ],
-  "notes": "Copiar por agente y actualizar sin eliminar IDs; 6\u00d748=288 estados. Los 48 bloques can\u00f3nicos son un \u00edndice de cobertura, no 48 m\u00f3dulos ni nuevos patchsets. Evidencia y comandos obligatorios para DONE; NOT_RUN si no ejecutado."
+  "notes": "Copiar por agente y actualizar sin eliminar IDs; 6×48=288 estados. Los 48 bloques canónicos son un índice de cobertura, no 48 módulos ni nuevos patchsets. Evidencia y comandos obligatorios para DONE; NOT_RUN si no ejecutado.",
+  "checkpoint": {
+    "codeCommit": "48e9a8bc",
+    "scope": "PARTIAL_PURE_UNMOUNTED",
+    "tests": {
+      "total": 11,
+      "pass": 11,
+      "fail": 0,
+      "skip": 0
+    },
+    "report": "INFORME-EXTRACCION-NARRATIVA.md",
+    "fullCampaignComplete": false
+  }
 }
