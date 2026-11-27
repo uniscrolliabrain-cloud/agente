@@ -1,0 +1,62 @@
+✔ overlapping evaluations send one notification (1.68788ms)
+✔ the durable cooldown survives a new service instance (1029.136579ms)
+{"ts":"2026-11-27T23:58:26.144Z","level":"warn","event":"alert.handler_failed","alertId":"local-alert"}
+✔ a synchronous notification failure is contained (0.52198ms)
+✔ alert snapshots read durable failures, unresolved DLQ and unknown actions (647.435091ms)
+✔ storage failure and missing producers remain unavailable rather than measured zero (0.56775ms)
+✔ concurrent alert readers share one in-flight storage query (0.53891ms)
+✔ unscannable deep and cyclic bundles fail closed (0.67077ms)
+✔ wide bundles and oversized fields fail closed without printing values (3.56035ms)
+✔ full synthetic execution evidence validates; a test-only report cannot certify (171.73707ms)
+✔ evidence rejects duplicate steps, stale commits and altered logs (148.413151ms)
+✔ untracked source and changed lockfile invalidate prior evidence (91.855424ms)
+✔ zero-test output and invented verdict are rejected (150.882051ms)
+✔ a symlinked log directory cannot relocate gate evidence outside its approved path (86.679895ms)
+✔ kernel metrics enqueue a bounded allowlisted observation and deregister (0.97277ms)
+{"ts":"2026-11-27T23:58:27.468Z","level":"info","event":"http.request","correlationId":"32ff4922-0988-40c9-b056-6c30b9239213","method":"GET","path":"/trans04-baseline/:id"}
+{"ts":"2026-11-27T23:58:27.470Z","level":"info","event":"http.response","correlationId":"32ff4922-0988-40c9-b056-6c30b9239213","method":"GET","path":"/trans04-baseline/:id","status":200,"durationMs":2}
+{"ts":"2026-11-27T23:58:27.470Z","level":"info","event":"http.request","correlationId":"34e0d0a0-9577-4c0b-86ec-e912720658dc","method":"GET","path":"unmatched"}
+{"ts":"2026-11-27T23:58:27.470Z","level":"warn","event":"http.response","correlationId":"34e0d0a0-9577-4c0b-86ec-e912720658dc","method":"GET","path":"unmatched","status":404,"durationMs":0}
+{"ts":"2026-11-27T23:58:27.471Z","level":"info","event":"http.request","correlationId":"6caf13a6-e0d7-4dc5-9488-03bb86ff9607","method":"GET","path":"/trans04-baseline/:id"}
+{"ts":"2026-11-27T23:58:27.471Z","level":"info","event":"http.response","correlationId":"6caf13a6-e0d7-4dc5-9488-03bb86ff9607","method":"GET","path":"/trans04-baseline/:id","status":200,"durationMs":0}
+{"ts":"2026-11-27T23:58:27.471Z","level":"info","event":"http.request","correlationId":"78724e77-4611-43f5-afaf-e1684f9ea020","method":"GET","path":"unmatched"}
+{"ts":"2026-11-27T23:58:27.471Z","level":"warn","event":"http.response","correlationId":"78724e77-4611-43f5-afaf-e1684f9ea020","method":"GET","path":"unmatched","status":404,"durationMs":0}
+✔ HTTP metrics use the registered template and a bounded unmatched label (21.923429ms)
+✔ metrics export derives p99 from the requested scope without mutating the registry (3.41142ms)
+{"ts":"2026-11-27T23:58:27.475Z","level":"info","event":"http.request","correlationId":"93f5ec2a-d1ba-4e34-b925-4f7a6e5a7e2d","method":"GET","path":"/trans04-auth-scope"}
+{"ts":"2026-11-27T23:58:27.476Z","level":"info","event":"http.response","correlationId":"93f5ec2a-d1ba-4e34-b925-4f7a6e5a7e2d","method":"GET","path":"/trans04-auth-scope","status":200,"durationMs":0}
+✔ HTTP metrics use the tenant resolved by authentication after logger entry (0.89965ms)
+✔ named GitHub settings override only nonempty application bindings and keep the two OpenRouter accounts distinct (144.996861ms)
+✔ invalid runtime secret input fails without leaking the received data (71.296486ms)
+✔ deploy workflow names GitHub secrets explicitly, preserves legal gate and keeps admin Sentry tokens out of runtime import (0.41469ms)
+✔ OpenRouter account probes choose their own keys and do not echo provider errors (1.33261ms)
+✔ Grafana verifies service account authentication and does not substitute its Cloud token (0.45564ms)
+✔ Sentry DSN validation remains explicit about ingestion not being verified (0.2976ms)
+✔ both actual workflow import scripts stage only synthetic credentials with correct GitHub precedence (146.847342ms)
+✔ strict preflight accepts documented Meta defaults and rejects routing its key to another host (254.268315ms)
+✔ installation read distinguishes a missing record from a storage failure (0.39311ms)
+✔ plan fails on either registry or name-claim read failure without writes (0.688279ms)
+✔ series identities cannot collide through label text and rendering escapes reserved characters (0.26139ms)
+✔ mutating caller labels never changes a previously registered series (0.14102ms)
+✔ series bounds preserve existing counters while rejecting new cardinality (0.16428ms)
+✔ invalid observations, buckets and reserved histogram labels are rejected (0.27047ms)
+✔ preflight rejects misspelled modes, groups, profiles and options (856.867529ms)
+✔ informational preflight remains informational; strict coherence blocks configured partial channels (377.187058ms)
+✔ JSON and text reports never echo values, secret lengths or URL credentials (249.204955ms)
+✔ campaign profiles require only their declared subset (252.565695ms)
+✔ strict lane validation respects real consumers and does not claim proposed integrations (398.236446ms)
+✔ deploy preflight accepts complete synthetic core without requiring an unused business DSN (126.387473ms)
+✔ external metrics aggregate counters and histogram buckets without private labels or arbitrary gauges (0.50097ms)
+✔ shared metrics require a dedicated token even for an admin and reject tenant query scope (1.932259ms)
+✔ admin fallback requires an explicit local sample profile (1.08276ms)
+✔ verified tenant restore replaces roots, including roots absent from the snapshot (13.33733ms)
+✔ modified backup content and wrong tenant fail before changing live files (6.189909ms)
+✔ tenant traversal and symlink content are rejected (6.7898ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5585.501737
