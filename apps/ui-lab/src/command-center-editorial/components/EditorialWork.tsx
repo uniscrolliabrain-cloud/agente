@@ -66,7 +66,7 @@ export function EditorialDone({
   onOpenTask?: ((taskId: string) => void) | undefined;
 }) {
   return (
-    <section className="cce-section" id="cce-timeline" aria-labelledby="cce-done-title">
+    <section className="cce-section" id="cce-timeline" data-cce-work-target tabIndex={-1} aria-labelledby="cce-done-title">
       <SectionHeader
         id="cce-done-title"
         icon={<CheckCircle2 size={16} aria-hidden="true" />}

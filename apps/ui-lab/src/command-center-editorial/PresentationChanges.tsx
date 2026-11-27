@@ -1,42 +1,39 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CompanyOverview } from "../../../web/src/api/company";
-import { changedPresentationKeys, presentationSnapshot, type PresentationSnapshot } from "./presentation-diff";
+import { presentationDeadlines, presentationSnapshot, type PresentationSnapshot } from "./presentation-diff";
 
 const EMPTY: ReadonlySet<string> = new Set<string>();
 const Context = createContext<ReadonlySet<string>>(EMPTY);
 const DISPLAY_MS = 6000;
 
-/** El estado efímero se limita a esta vista, nunca al store de la empresa.
- * El cambio de tenant, modo ejemplo o error invalida la comparación.
- */
+/** Estado efímero local. Cada observación conserva su propio vencimiento. */
 export function PresentationChanges({ overview, children }: { overview: CompanyOverview | null; children: ReactNode }) {
   const snapshot = useMemo(() => overview ? presentationSnapshot(overview) : null, [overview]);
   const previous = useRef<PresentationSnapshot | null>(null);
-  const [observed, setObserved] = useState<{
-    snapshot: PresentationSnapshot;
-    keys: ReadonlySet<string>;
-  } | null>(null);
+  const deadlines = useRef<ReadonlyMap<string, number>>(new Map());
+  const [observed, setObserved] = useState<ReadonlySet<string>>(EMPTY);
 
-  useEffect(() => {
-    const keys = changedPresentationKeys(previous.current, snapshot);
+  useLayoutEffect(() => {
+    deadlines.current = presentationDeadlines(previous.current, snapshot, deadlines.current, performance.now(), DISPLAY_MS);
     previous.current = snapshot;
-    if (!snapshot || keys.size === 0) {
-      setObserved(null);
-      return;
-    }
-    setObserved({ snapshot, keys });
-    const timeout = window.setTimeout(() => setObserved(null), DISPLAY_MS);
-    return () => window.clearTimeout(timeout);
+    let timeout: number | undefined;
+    const publish = () => {
+      const now = performance.now();
+      const active = new Map([...deadlines.current].filter(([, until]) => until > now));
+      deadlines.current = active;
+      setObserved(active.size ? new Set(active.keys()) : EMPTY);
+      if (active.size) timeout = window.setTimeout(publish, Math.max(1, Math.ceil(Math.min(...active.values()) - now)));
+    };
+    publish();
+    return () => { if (timeout !== undefined) window.clearTimeout(timeout); };
   }, [snapshot]);
 
-  return (
-    <Context.Provider value={observed?.snapshot === snapshot ? observed.keys : EMPTY}>
-      {children}
-    </Context.Provider>
-  );
+  useEffect(() => () => { previous.current = null; deadlines.current = new Map(); }, []);
+
+  return <Context.Provider value={snapshot ? observed : EMPTY}>{children}</Context.Provider>;
 }
 
-/** Reserva un hueco óptico constante. No genera toast, pulse ni aria-live. */
+/** Hueco fijo y marca que acompaña al dato, sin toast ni anuncio periódico. */
 export function ChangeMark({ observation }: { observation: string }) {
   const changed = useContext(Context).has(observation);
   return (

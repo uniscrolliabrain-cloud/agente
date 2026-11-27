@@ -4,7 +4,7 @@
 // mismos callbacks que `apps/web/src/components/command-center/CommandCenterView`.
 // Lo que cambia es la composición, la tipografía, el ritmo y el movimiento.
 // No toca el shell, ni el workspace 35, ni ControlCenterView, ni el backend.
-import { useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useEditorialEntrance } from "./editorial-motion";
 import type { CompanyOverview, CompanyTask } from "../../../web/src/api/company";
 import AgentCreateModal from "../../../web/src/components/AgentCreateModal";
@@ -127,13 +127,11 @@ export function CommandCenterEditorial({
     };
   };
 
+  const [workRequest, setWorkRequest] = useState(0);
+  const handledWork = useRef(0);
   const goToWork = () => {
     setFilter("todo");
-    window.setTimeout(() => {
-      const target = document.getElementById("cce-timeline");
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      target?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-    }, 60);
+    setWorkRequest((request) => request + 1);
   };
 
   /**
@@ -163,6 +161,17 @@ export function CommandCenterEditorial({
   const updatedLabel = updatedAt ? relativeTime(updatedAt) : "";
   const viewRef = useRef<HTMLDivElement>(null);
   useEditorialEntrance(viewRef, overview !== null);
+  // Después del commit de React, no un retraso arbitrario. Limitar búsqueda
+  // a la instancia actual (dos centros pueden convivir en el laboratorio).
+  useLayoutEffect(() => {
+    if (workRequest === handledWork.current || filter !== "todo") return;
+    handledWork.current = workRequest;
+    const target = viewRef.current?.querySelector<HTMLElement>("[data-cce-work-target]");
+    if (!target) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, [workRequest, filter]);
 
   return (
     <EditorialFrame>

@@ -51,3 +51,22 @@ export function changedPresentationKeys(
   }
   return changed;
 }
+
+/** Ventana de atención individual: una lectura idéntica no borra ni prolonga
+ * una marca. Una lectura incompatible invalida todas las observaciones.
+ */
+export function presentationDeadlines(
+  previous: PresentationSnapshot | null,
+  current: PresentationSnapshot | null,
+  deadlines: ReadonlyMap<string, number>,
+  now: number,
+  duration: number,
+): ReadonlyMap<string, number> {
+  const next = new Map<string, number>();
+  if (!previous || !current || previous.tenantId !== current.tenantId) return next;
+  for (const [key, until] of deadlines) {
+    if (until > now && previous.values.has(key) && current.values.has(key)) next.set(key, until);
+  }
+  for (const key of changedPresentationKeys(previous, current)) next.set(key, now + duration);
+  return next;
+}

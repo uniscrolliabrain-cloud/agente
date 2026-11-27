@@ -36,7 +36,8 @@ export function useEditorialEntrance(view: RefObject<HTMLDivElement>, ready: boo
     const animate = (node: HTMLElement | null, delay: number, distance: number, duration: number) => {
       if (!node || reduced || typeof node.animate !== "function") return;
       // Evitar animar contenido fuera del área visible y mantener la interacción.
-      if (node.getBoundingClientRect().top > window.innerHeight) return;
+      const bounds = node.getBoundingClientRect();
+      if (bounds.top >= window.innerHeight || bounds.bottom <= 0) return;
       const a = node.animate(
         [{ opacity: .55, transform: `translateY(${distance}px)` }, { opacity: 1, transform: "translateY(0)" }],
         { duration, delay, easing: CURVE, fill: "backwards" },
@@ -115,6 +116,10 @@ export function useSheetSpring(
     const close = () => {
       if (closing || finished) return;
       closing = true;
+      // Integrar hasta el instante exacto de interrupción con el objetivo anterior.
+      const now = performance.now();
+      if (frame && last) state = advanceSpring(state, target, Math.max(0, now - last) / 1000, 23);
+      last = now;
       target = 0;
       run();
     };

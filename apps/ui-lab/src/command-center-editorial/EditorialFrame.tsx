@@ -3,6 +3,7 @@ import "./command-center-editorial.css";
 import "./surface-materials.css";
 import "./information-presentation.css";
 import "./editorial-motion.css";
+import "./perceptual-precision.css";
 
 /**
  * Marco aislado del Centro de Mando editorial. Solo aporta tokens, tipografía y

@@ -1,0 +1,112 @@
+/* V5 · precisión psicofísica. Correcciones locales, no nuevas superficies.
+ * El tamaño visual no es el tamaño interactivo; el foco debe ser inequívoco.
+ */
+.cce-root {
+  --cce-optical-icon: 16px;
+  --cce-touch-min: 44px;
+  --cce-focus-gap: 3px;
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-filter, .cc-filters .v2-pill) {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-filter, .cce-block, .cc-block, .cce-kpi, .cc-kpi) > svg {
+  flex: none;
+}
+.cce-root :is(.cce-section-title, .cc-section-title, .cce-panel-title) svg {
+  inline-size: var(--cce-optical-icon);
+  block-size: var(--cce-optical-icon);
+}
+.cce-root .cce-hero-context {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cce-root .cce-updated-label {
+  display: inline;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.cce-root :is(.cce-card h3, .cc-card h3, .cce-person-name, .cce-row-title, .cce-timeline-title, .cc-timeline-title) {
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+.cce-root :is(.cce-card-context, .cce-person-meta, .cce-row-meta, .cce-timeline-meta, .cc-timeline-meta) {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.cce-root :is(.cce-kpi-value, .cc-kpi-value, .cce-block-num, .cc-block-num) {
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
+  font-kerning: normal;
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-filter, .cc-filters .v2-pill) {
+  text-align: center;
+  line-height: 1.35;
+}
+.cce-root :is(.cce-btn, .cc-btn) {
+  white-space: normal;
+}
+.cce-root .cce-person {
+  grid-template-columns: 34px minmax(0, 1fr) minmax(0, auto);
+}
+.cce-root .cce-person .cce-tag {
+  max-inline-size: 12ch;
+}
+.cce-root :is(.cce-filters, .cc-filters) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--cce-line) transparent;
+  overscroll-behavior-inline: contain;
+  padding-block: 6px;
+  padding-inline: 6px;
+}
+.cce-root :is(.cce-filters, .cc-filters)::-webkit-scrollbar {
+  display: block;
+  height: 4px;
+}
+.cce-root :is(.cce-filters, .cc-filters)::-webkit-scrollbar-thumb {
+  background: var(--cce-line);
+  border-radius: 2px;
+}
+.cce-root :is(.cce-kpi, .cc-kpi):focus-visible {
+  outline-offset: -3px;
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-filter, .cce-block, .cc-block):focus-visible {
+  outline: 2px solid var(--cce-focus);
+  outline-offset: var(--cce-focus-gap);
+}
+.cce-root [data-cce-work-target] {
+  scroll-margin-block-start: 20px;
+}
+.cce-root [data-cce-work-target]:focus-visible {
+  outline: 2px solid var(--cce-focus);
+  outline-offset: 5px;
+  border-radius: 6px;
+}
+.cce-root .cce-icon-btn[aria-disabled="true"] {
+  cursor: progress;
+}
+.cce-root .cce-sheet {
+  overscroll-behavior: contain;
+}
+@media (pointer: coarse) {
+  .cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-filter, .cc-filters .v2-pill) {
+    min-block-size: var(--cce-touch-min);
+  }
+  .cce-root .cce-icon-btn { min-inline-size: var(--cce-touch-min); }
+}
+@container cce (max-width: 620px) {
+  /* V1 usa márgenes compensatorios basados en el ritmo de sección.
+   * Mantener la misma variable que el gap real en la rama compacta. */
+  .cce-view {
+    --cce-section-space: 30px;
+    gap: var(--cce-section-space);
+  }
+  .cce-root .cce-person .cce-tag { max-inline-size: 10ch; }
+}
+@container cce (max-width: 360px) {
+  .cce-root .cce-person { grid-template-columns: 34px minmax(0, 1fr); }
+  .cce-root .cce-person > :last-child { grid-column: 2; justify-self: start; }
+  .cce-root .cce-person .cce-tag { max-inline-size: 100%; }
+  .cce-root .cce-card-actions > button { flex: 1 1 auto; }
+}
+@media (forced-colors: active) {
+  .cce-root :is(button, a):focus-visible { outline-color: Highlight; }
+}

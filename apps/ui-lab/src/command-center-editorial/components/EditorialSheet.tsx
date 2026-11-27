@@ -24,7 +24,7 @@ export function EditorialSheet({
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
-    closeRef.current?.focus();
+    closeRef.current?.focus({ preventScroll: true });
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -33,12 +33,15 @@ export function EditorialSheet({
       }
       if (event.key !== "Tab" || !panelRef.current) return;
       const nodes = panelRef.current.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
       );
       if (nodes.length === 0) return;
       const first = nodes[0]!;
       const last = nodes[nodes.length - 1]!;
-      if (!event.shiftKey && document.activeElement === last) {
+      if (!panelRef.current.contains(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus({ preventScroll: true });
+      } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
         first.focus();
       } else if (event.shiftKey && document.activeElement === first) {
@@ -46,13 +49,20 @@ export function EditorialSheet({
         last.focus();
       }
     };
+    const onFocus = (event: FocusEvent) => {
+      if (panelRef.current && event.target instanceof Node && !panelRef.current.contains(event.target)) {
+        closeRef.current?.focus({ preventScroll: true });
+      }
+    };
     document.addEventListener("keydown", onKey);
+    document.addEventListener("focusin", onFocus);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
+      document.removeEventListener("focusin", onFocus);
       document.body.style.overflow = previousOverflow;
-      previous?.focus();
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
   }, [close]);
 
