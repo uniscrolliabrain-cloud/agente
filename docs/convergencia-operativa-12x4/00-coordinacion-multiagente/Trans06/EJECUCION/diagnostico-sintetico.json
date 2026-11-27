@@ -1,0 +1,23 @@
+{
+  "field": "status",
+  "candidates": [
+    {
+      "field": "status",
+      "value": "active",
+      "source": "crm-sintetico",
+      "observedAt": "2026-11-27T10:00:00Z",
+      "reliability": 0.9,
+      "confidence": 0.9,
+      "kind": "fact"
+    },
+    {
+      "field": "status",
+      "value": "overdue",
+      "source": "erp-sintetico",
+      "observedAt": "2026-11-27T09:00:00Z",
+      "reliability": 0.7,
+      "confidence": 0.7,
+      "kind": "inference"
+    }
+  ]
+}
