@@ -1,0 +1,30 @@
+[kernel/env-resolver] tenant synthetic: FAST_LLM_API_KEY vacia. Chat usara chain global.
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+AI SDK Warning: System messages in the prompt or messages fields can be a security risk because they may enable prompt injection attacks. Use the system option instead when possible. Set allowSystemInMessages to true to suppress this warning, or false to throw an error.
+✔ Slow text generation uses the lane endpoint before an unrelated global model (1223.443767ms)
+✔ sin rol activo el comando no se ejecuta (1.17312ms)
+✔ un rol inactivo no ejecuta el comando (0.27345ms)
+✔ sin governance un paso con rol no ejecuta el comando (0.21287ms)
+✔ un rol borrado no permite el comando (0.18167ms)
+✔ una denegacion de governance no llega al computer (0.27177ms)
+✔ con autorizacion el comando se ejecuta una vez (0.36496ms)
+✔ un contexto abortado no inicia el computer (0.24934ms)
+✔ un commit de evento publica la etapa sin identidad ni payload (7.491949ms)
+✔ un sink que falla no rompe ni cambia el resultado del emit (2.91451ms)
+✔ un sink asincrono lento no retrasa el resultado (2.77531ms)
+✔ una denegacion del kernel se observa como denegacion, no como exito (0.83624ms)
+✔ future observation cannot amplify reliability above the same current-date scale (1.30753ms)
+✔ resolving one field cannot relabel a candidate from another field (0.24011ms)
+✔ malformed dates and nonfinite confidence cannot enter scoring (0.92195ms)
+✔ one captured clock determines freshness and resolvedAt without changing knowledge kind (0.29428ms)
+✔ memory preserves thought identity across retries and conflicting content (669.16716ms)
+✔ pglite preserves thought identity across retries and conflicting content (739.334296ms)
+✔ quiescence is checked again after an append during the waiting interval (871.725768ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4738.851178

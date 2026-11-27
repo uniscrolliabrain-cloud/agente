@@ -1,0 +1,89 @@
+✔ una aprobacion completa autoriza exactamente ese contenido (3515.589451ms)
+✔ sin aprobacion no hay efecto (4.899709ms)
+✔ una sesion no sustituye a la aprobacion (4.0148ms)
+✔ una aprobacion de otro contenido no autoriza este paso (5.33394ms)
+✔ una aprobacion de otra operacion (kind) no autoriza este paso (4.558939ms)
+✔ una aprobacion de otra tarea no autoriza este paso (4.30943ms)
+✔ una aprobacion de otro tenant no autoriza este paso (4.84031ms)
+✔ una aprobacion caducada no autoriza este paso (4.85025ms)
+✔ una aprobacion de otro principal no autoriza este paso (4.962619ms)
+✔ una aprobacion sin capability vinculada deniega (4.96379ms)
+✔ una aprobacion de otra capability deniega (3.78445ms)
+✔ una aprobacion sin operacion vinculada deniega (4.35245ms)
+✔ una aprobacion sin payload vinculado deniega (3.699699ms)
+✔ un paso sin payload no puede compararse contra una aprobacion (4.36796ms)
+✔ una aprobacion sin conexion vinculada deniega un efecto externo (4.62078ms)
+✔ un efecto externo sin generacion de conexion no se autoriza (4.079339ms)
+✔ una generacion que ya no es la vigente no autoriza el efecto (4.17659ms)
+✔ una conexion que ya no existe no autoriza el efecto (4.59725ms)
+✔ sin verificador de conexion el efecto externo se deniega (9.621149ms)
+✔ una aprobacion ya consumida no se reutiliza para otro paso (5.79775ms)
+✔ la misma aprobacion y el mismo paso son un replay idempotente (10.665499ms)
+✔ una edicion entre la lectura y el claim no aprueba la revision nueva (16.581439ms)
+✔ deny con revision vieja no deniega la revision nueva (7.01101ms)
+✔ el claim del store exige el hash revisado (17.291109ms)
+✔ un fallo al persistir la aprobacion revierte el claim (7.663859ms)
+✔ an entry write failure rolls back its audit anchor (702.032259ms)
+✔ verification errors prevent verifyAndAppend from writing (646.760601ms)
+✔ verification covers page boundaries, tied timestamps and the chain endpoints (3481.179003ms)
+{"ts":"2026-11-27T22:13:16.577Z","level":"warn","event":"circuit.open","circuit":"probe"}
+✔ half-open reserves one probe and rejects concurrent calls (1.38972ms)
+✔ call preserves the same deterministic failure policy as recordFailure (0.16584ms)
+✔ a neutral cancellation preserves the provider failure count (0.22789ms)
+{"ts":"2026-11-27T22:13:16.578Z","level":"warn","event":"circuit.open","circuit":"neutral"}
+✔ a response from an older generation cannot close a newly opened circuit (0.24114ms)
+{"ts":"2026-11-27T22:13:16.578Z","level":"warn","event":"circuit.open","circuit":"late"}
+✔ una raiz toma el actor del contexto autorizado (6.56672ms)
+✔ un derivado exige antecedente del mismo tenant y correlacion (5.79783ms)
+{"ts":"2026-11-27T22:13:16.596Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"CAUSAL_ANTECEDENT_NOT_FOUND: evento-inexistente","stack":"Error: CAUSAL_ANTECEDENT_NOT_FOUND: evento-inexistente\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:187:19)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:78:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ un derivado sin antecedente se deniega (6.598349ms)
+{"ts":"2026-11-27T22:13:16.600Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"CAUSAL_ANTECEDENT_TENANT_MISMATCH","stack":"Error: CAUSAL_ANTECEDENT_TENANT_MISMATCH\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:189:19)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:95:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ un antecedente de otro tenant se deniega (2.9729ms)
+{"ts":"2026-11-27T22:13:16.603Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"CAUSAL_ANTECEDENT_CORRELATION_MISMATCH","stack":"Error: CAUSAL_ANTECEDENT_CORRELATION_MISMATCH\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:191:19)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:110:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ un antecedente con otra correlacion se deniega (2.73151ms)
+{"ts":"2026-11-27T22:13:16.604Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:156:17)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:120:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ un actor declarado que no coincide con el contexto se rechaza (0.49715ms)
+{"ts":"2026-11-27T22:13:16.604Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:171:35)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:130:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ sin contexto autorizado no se acepta un actor humano inventado (0.41772ms)
+✔ un principal de servicio legitimo emite con identidad de servicio (3.02701ms)
+{"ts":"2026-11-27T22:13:16.608Z","level":"error","event":"background_failure","phase":"event emit system.maintenance","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:168:54)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:165:27)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+{"ts":"2026-11-27T22:13:16.608Z","level":"error","event":"background_failure","phase":"event emit system.maintenance","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:162:19)"}
+✔ un servicio no puede usar un id de actor humano (0.70079ms)
+{"ts":"2026-11-27T22:13:16.609Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:168:54)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:202:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ un servicio no puede emitir como una tarea o una persona (0.3081ms)
+{"ts":"2026-11-27T22:13:16.609Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"PERSONA_IS_NOT_AN_ACTOR","stack":"Error: PERSONA_IS_NOT_AN_ACTOR\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:176:17)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:224:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ la personalidad de presentacion no se convierte en actor (0.33593ms)
+{"ts":"2026-11-27T22:13:16.609Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"CAUSAL_TENANT_REQUIRED","stack":"Error: CAUSAL_TENANT_REQUIRED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:145:38)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:243:20)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+{"ts":"2026-11-27T22:13:16.609Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"CAUSAL_CORRELATION_REQUIRED","stack":"Error: CAUSAL_CORRELATION_REQUIRED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:146:43)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-causal-envelope.test.ts:243:20)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ el perfil gobernado exige tenant y correlacion explicitos (0.496479ms)
+✔ un evento legacy sigue siendo legible sin campos causales (2.64012ms)
+✔ dos workers concurrentes producen un solo efecto y un solo claim (5.98975ms)
+✔ un claim viejo pasa a outcome_unknown por CAS y no se reintenta (3.33698ms)
+✔ un resultado incierto del adaptador no se reintenta (4.596149ms)
+✔ un worker tardio no puede pisar un done ajeno (4.19734ms)
+✔ sin CAS el runner deniega en vez de escribir el claim a ciegas (0.23681ms)
+✔ una capability declarada idempotente con efectos exige claim (4.65126ms)
+✔ un claim failed sin fencing no se reintenta (1.4838ms)
+✔ claims isolate owners, request actors and distinct task operations (564.930196ms)
+✔ changing inputs under the same operation requires reconciliation rather than another effect (603.240544ms)
+✔ an unscoped historical claim blocks migration instead of dispatching a new key (595.769155ms)
+✔ caller mutation during an awaited lookup cannot replace the admitted operation inputs (532.287388ms)
+✔ canonical operation digests retain JSON keys named __proto__ (0.18324ms)
+✔ historical canonicalization collisions still block a v2 dispatch (537.801618ms)
+✔ aprobar escribe auditoria, actividad e intencion en la misma transaccion (13.975269ms)
+✔ si la transaccion falla no queda decision, auditoria ni intencion (6.76106ms)
+✔ una caida tras el commit deja intencion pendiente y se concilia sin reenviar (4.866179ms)
+✔ una intencion cuya accion ya termino se cierra sin tocarla (3.85013ms)
+✔ un error generico del proveedor deja la accion ambigua, no fallida (10.805259ms)
+✔ un rechazo confirmado antes del despacho deja la accion fallida y reintentable (11.83334ms)
+✔ an approved human decision remains approved when the provider outcome is unknown (15.584539ms)
+✔ a late provider receipt settles an intent that recovery marked unknown (15.646299ms)
+✔ startup recovery preserves another worker's live execution lease (12.800239ms)
+ℹ tests 67
+ℹ suites 0
+ℹ pass 67
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11876.090612

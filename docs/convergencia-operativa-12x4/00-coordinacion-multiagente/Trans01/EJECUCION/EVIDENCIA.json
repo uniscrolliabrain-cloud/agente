@@ -1,42 +1,65 @@
 {
-  "breaker-red": {
-    "sha256": "89af12a26752e7bb0cb65611382fb83d0f8386e0b141b8b68f2f09c28f12885b",
-    "file": "/tmp/trans01-breaker-red.log"
+  "turno": "Trans01/T1-evidencia",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "7dd328b0dda1974cba1e125f0d4d98c340d660e2",
+  "state": "LOCAL_PASS",
+  "git": {
+    "branch": "converge/trans00-core",
+    "head": "7dd328b0dda1974cba1e125f0d4d98c340d660e2",
+    "dirty": 0
   },
-  "breaker-green": {
-    "sha256": "239733a3edc2f95c5f943aa01acfd7b0ea89773472ad1810382595486e8d7032",
-    "file": "/tmp/trans01-breaker-green.log"
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=60000 --test-force-exit tests/trans01-*.test.ts (partido en 4 tandas por el limite de 5 min del runner; mismos flags)",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json  &&  npx --no-install tsc --noEmit -p apps/worker/tsconfig.json"
   },
-  "audit-red": {
-    "sha256": "7bab64d0d5b40ee513b2b2a462e24d5dd0b39cd291b9a107fa120690120b8144",
-    "file": "/tmp/trans01-audit-red.log"
+  "tests": {
+    "total": 142,
+    "pass": 139,
+    "fail": 0,
+    "skip": 3,
+    "todo": 0
   },
-  "audit-green": {
-    "sha256": "c25e63124446fdbe28c88eb2ff3027e481280eb7db6d48b6e00e7d65e2653186",
-    "file": "/tmp/trans01-audit-green.log"
+  "exitCodes": {
+    "tests": 0,
+    "typecheck": 0,
+    "typecheckWorker": 0
   },
-  "turn-red": {
-    "sha256": "c31fadbd86613fd0080be4c7eebc90b8cb99e925c0766d9793e02bd1e524d404",
-    "file": "/tmp/trans01-turn-red.log"
+  "logs": {
+    "trans01-suites-1.log": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/EJECUCION/EVIDENCIA/logs/trans01-suites-1.log",
+      "sha256": "de373297fc8b7ca3b0d4fa43f9570a001ad0fc82a2471b948097c96a2d954bcb"
+    },
+    "trans01-suites-2.log": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/EJECUCION/EVIDENCIA/logs/trans01-suites-2.log",
+      "sha256": "8c24fd74ca20816c50ea005fae7523bdb30e2542790c19e243b8a47347b3f0da"
+    },
+    "trans01-suites-3.log": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/EJECUCION/EVIDENCIA/logs/trans01-suites-3.log",
+      "sha256": "ca5d9e97efde7a71d561f8a0ede088ebaac0422876a28d7c5e86eef48a07219f"
+    },
+    "trans01-suites-4.log": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/EJECUCION/EVIDENCIA/logs/trans01-suites-4.log",
+      "sha256": "98e7bc72b23964e88894f49862ea5f013b7428773cc2634fb9380085ac981250"
+    },
+    "tsc": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/EJECUCION/EVIDENCIA/logs/trans01-tsc.log",
+      "sha256": "5bc9d5389bd1d13317f27824d44ef2ce760fb20c3791a81caf9f64c4fd4dde1b"
+    },
+    "tscWorker": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans01/EJECUCION/EVIDENCIA/logs/trans01-tsc-worker.log",
+      "sha256": "f87451a5be260a04ec97d50d3a6294097295bb7e21778aa8100f5fb5b7aec877"
+    }
   },
-  "turn-green": {
-    "sha256": "d4223c16e9b51cd2e5876c6986d547fbef16219aa60951b38c0b41586bb694a9",
-    "file": "/tmp/trans01-turn-green.log"
+  "h1": {
+    "closed": true,
+    "antes": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 (SHA-256 de fichero vacio)",
+    "despues": "5bc9d5389bd1d13317f27824d44ef2ce760fb20c3791a81caf9f64c4fd4dde1b",
+    "motivo": "el log de tsc se regenero desde el commit evaluado, con cabecera, salida real y exit"
   },
-  "lease-red": {
-    "sha256": "ef80e01171842fa7238ddf0d2b85078ee4c25ebd2d2855f7c1beac308541adb7",
-    "file": "/tmp/trans01-lease-red.log"
-  },
-  "lease": {
-    "sha256": "948667b10ee7e60b770f9fb054ccfac06f23db962b353994257a6ac282d0ad6c",
-    "file": "/tmp/trans01-lease.log"
-  },
-  "regression": {
-    "sha256": "c49d806cfd6101810669234862aa11b488560feffe6364ab18212d09106a1598",
-    "file": "/tmp/trans01-regression.log"
-  },
-  "tsc": {
-    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "file": "/tmp/trans01-tsc.log"
-  }
+  "limitations": [
+    "Las tres pruebas omitidas requieren PostgreSQL nativo; se conservan como SKIP, no como PASS.",
+    "La evidencia historica de Trans01 apunta a rutas /tmp (breaker-red, lease, regression, etc.): no es reproducible desde esta rama y no se usa como prueba en este turno; el fichero previo se conserva en EVIDENCIA-HISTORICA.json.",
+    "Ningun proveedor externo fue contactado; ALLOW_NETWORK=0 en todas las tandas."
+  ],
+  "notes": "Demuestra que las 29 suites focalizadas de kernel pasan sobre este arbol y que raiz y worker typechequean limpio. No demuestra el gate integral, ni concurrencia con PostgreSQL real, ni ningun comportamiento en vivo de proveedores."
 }

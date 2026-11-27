@@ -1,0 +1,50 @@
+✔ Meta Muse Contributor Fast uses its own direct endpoint and the real SDK's public streaming contract (2592.008685ms)
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] validado: 257 capabilities
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+[personas] tenant default: 12 cargadas, 0 fallidas
+✔ createApp mounts supplied JEV tenant policy into the existing Slow pipeline (1503.538081ms)
+✔ un error generico posterior al despacho queda como resultado desconocido (16.371489ms)
+✔ un timeout tras el envio no se reintenta aunque el mensaje sea generico (11.080189ms)
+✔ un rechazo confirmado antes del despacho si permite reintentar (10.315979ms)
+✔ un fallo confirmado sin efecto si permite reintentar (10.98381ms)
+✔ un resultado aceptado no se declara confirmado ni se reenvia (8.322739ms)
+✔ un exito sin discriminante no cierra el paso como confirmado (6.06167ms)
+✔ el contrato distingue rechazo, fallo sin efecto y ambiguedad (0.41723ms)
+✔ promotion memory receipt and curated memory commit together and replay once (795.691482ms)
+{"ts":"2026-11-27T22:13:42.097Z","level":"error","event":"background_failure","phase":"promotion memory persistence","retryable":false,"error":"Error","message":"synthetic failure","stack":"Error: synthetic failure\n    at MemoryService.memory.remember (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-promotion-composition.test.ts:82:23)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/service.ts:2640:29)\n    at async <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/db.ts:535:24)\n    at async <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/node_modules/@electric-sql/pglite/src/base.ts:494:24)"}
+✔ failed memory publication rolls back its receipt and permits a safe retry (795.786193ms)
+✔ oversize and wrong-scope thoughts cannot publish a truncated or foreign memory (794.126503ms)
+﹣ una transaccion que empieza antes y commitea despues no se pierde (0.11708ms) # TEST_DATABASE_URL no configurado
+﹣ un append no puede adelantar el commit de otro del mismo tenant (0.05614ms) # TEST_DATABASE_URL no configurado
+✔ una insercion tardia con emittedAt anterior al cursor se recupera (10.793579ms)
+✔ timestamps iguales se paginan sin perder ni repetir eventos (14.042979ms)
+✔ pagina mas de 200 eventos sin perder ninguno (471.799802ms)
+✔ un cursor de otro tenant sigue denegando (3.66939ms)
+✔ al arrancar se numera el log anterior y el contador queda por encima (1070.641206ms)
+✔ un cursor sin posicion durable deniega en vez de adivinar (2.10581ms)
+✔ el fallback sin SQL no finge una recuperacion completa (0.39316ms)
+﹣ normal Store bootstrap rejects a restricted runtime login without schema privileges (0.05908ms) # SKIP
+{"ts":"2026-11-27T22:13:44.474Z","level":"error","event":"background_failure","phase":"event emit system.maintenance","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:168:54)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-service-principal.test.ts:43:18)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ declararse servicio sin scope autenticado se deniega (1.67444ms)
+✔ un principal registrado emite con su identidad, no con la declarada (4.022339ms)
+{"ts":"2026-11-27T22:13:44.479Z","level":"error","event":"background_failure","phase":"event emit system.maintenance","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:162:19)"}
+✔ un principal no puede emitir con otra identidad de servicio (0.76659ms)
+{"ts":"2026-11-27T22:13:44.480Z","level":"error","event":"background_failure","phase":"event emit task.created","retryable":false,"error":"Error","message":"SERVICE_ACTOR_SOURCE_INVALID","stack":"Error: SERVICE_ACTOR_SOURCE_INVALID\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:164:19)"}
+✔ un principal no puede emitir con una fuente que no le corresponde (0.38219ms)
+{"ts":"2026-11-27T22:13:44.480Z","level":"error","event":"background_failure","phase":"event emit system.maintenance","retryable":false,"error":"Error","message":"ACTOR_KIND_MISMATCH","stack":"Error: ACTOR_KIND_MISMATCH\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:160:52)"}
+✔ un principal no puede presentarse como humano (0.52136ms)
+{"ts":"2026-11-27T22:13:44.481Z","level":"error","event":"background_failure","phase":"event emit system.maintenance","retryable":false,"error":"Error","message":"SERVICE_SCOPE_CONFLICT","stack":"Error: SERVICE_SCOPE_CONFLICT\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:159:34)"}
+✔ un scope de peticion con actor no convive con un principal de servicio (0.29475ms)
+✔ un principal no registrado no puede abrir scope (0.12213ms)
+✔ el camino humano sigue tomando el actor del contexto autorizado (2.80957ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 9925.741009
