@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import "./command-center-editorial.css";
+import "./surface-materials.css";
 
 /**
  * Marco aislado del Centro de Mando editorial. Solo aporta tokens, tipografía y
