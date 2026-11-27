@@ -47,6 +47,8 @@
     "// VERTICAL_SLICE_VERIFY_V1": "arranque + HTTP autenticado del vertical slice sin proveedores reales; no sustituye a gate",
     "verify:slice": "tsx scripts/verify-vertical-slice.ts",
     "secrets:check": "tsx scripts/secrets-check.ts",
+    "infra:readiness": "node scripts/trans-provider-readiness.mjs",
+    "infra:readiness:test": "node --test tests/trans-provider-readiness.test.mjs",
     "// CONNECTIONS_CLI_V1": "contrato + sondas en vivo de cada conexion; no imprime valores",
     "connections": "tsx scripts/connections.ts",
     "connections:probe": "tsx scripts/connections.ts --probe --json",
