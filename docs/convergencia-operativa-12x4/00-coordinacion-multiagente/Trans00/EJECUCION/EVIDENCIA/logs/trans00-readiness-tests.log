@@ -1,0 +1,20 @@
+✔ every contract name is registered or explicitly campaign-only (1.45278ms)
+✔ the registry keeps the two OpenRouter accounts apart (0.32519ms)
+✔ all 42 identifiers are unique and all campaigns covered (0.17697ms)
+✔ without credentials every provider remains an explicit stub (0.3639ms)
+✔ aliases preserve separation of Slow and JEV (0.28669ms)
+✔ database role guard rejects identical DSNs (0.13329ms)
+✔ missing config and pending wiring never invoke transport (0.45391ms)
+✔ configured probe uses correct credential but emits only status (17.918118ms)
+✔ 403 and transport errors are sanitized (2.68914ms)
+✔ Google refresh and twelve scopes, six API reads, no token in report (2.42947ms)
+✔ wrong Google account stops before other Workspace APIs (0.74467ms)
+✔ live probes need an explicit provider filter (0.47698ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 163.25626
