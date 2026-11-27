@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import type { CognitiveIdentity, CognitiveRecord } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import { cognitiveIdentitySchema, contextRequestV2Schema, deliveryAckV2Schema } from "../../../../../../packages/domain/src/cognition-v2.ts";
 import { CognitiveProjectionStore, digest, canonicalJson } from "./storage.ts";
+import type { LongitudinalMemory } from "./longitudinal/memory.ts";
 /** Shared scoring for the prepared snapshot and the attention view of its references. */
 export function contextScorer(query: string): (record: CognitiveRecord) => number {
   const words = query.toLocaleLowerCase().split(/\W+/u).filter(Boolean);
@@ -58,7 +59,10 @@ export class ContextServingFacade {
     private readonly clock = () => Date.now(),
     // UTF-8 bytes is an intentionally conservative byte-level upper bound for
     // byte/BPE tokenizers, not a claim of exact provider tokenization.
-    private readonly countTokens = (text: string) => Buffer.byteLength(text, "utf8")) {}
+    private readonly countTokens = (text: string) => Buffer.byteLength(text, "utf8"),
+    // LONGITUDINAL_CONTEXT_V1 - memoria longitudinal montada. Opcional: sin ella
+    // la atencion no inventa contexto narrativo, falla cerrado.
+    private readonly longitudinal?: Pick<LongitudinalMemory, "context">) {}
   async assertAuthorized(identity: CognitiveIdentity, record?: CognitiveRecord, seen = new Set<string>()): Promise<void> {
     cognitiveIdentitySchema.parse(identity);
     if (record && (record.tenantId !== identity.tenantId || record.visibility.tenantId !== identity.tenantId)) throw Error("DENIED");
@@ -83,6 +87,18 @@ export class ContextServingFacade {
       }
     }
   }
+  /** Pack narrativo autorizado. Revalida permiso antes y despues de leer. */
+  async longitudinalContext(
+    identity: CognitiveIdentity,
+    options: { query?: string; budget?: number; limit?: number } = {},
+  ) {
+    if (!this.longitudinal) throw Error("LONGITUDINAL_MEMORY_NOT_MOUNTED");
+    await this.assertAuthorized(identity);
+    const pack = await this.longitudinal.context(identity, options);
+    await this.assertAuthorized(identity);
+    return pack;
+  }
+
   async resolve(identity: CognitiveIdentity, id: string, revision?: number): Promise<CognitiveRecord | null> {
     await this.assertAuthorized(identity);
     // Query the latest revision directly. Never return a superseded historical
