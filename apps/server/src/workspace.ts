@@ -23,17 +23,8 @@ import type { Files } from "./files.ts";
 import type { GoogleAuth } from "./google-auth.ts";
 import type { RagService } from "./engine/rag.ts";
 
-export type WorkspaceEffect =
-  | { mode: "sample"; state: "simulated"; summary: string }
-  | {
-      mode: "live";
-      state: "accepted";
-      summary: string;
-      evidence:
-        | { family: "gmail"; messageId: string; threadId?: string }
-        | { family: "calendar"; calendarId: string; eventId: string; operation: "create" | "update" | "delete" }
-        | { family: "drive"; fileId: string; operation: "rename" | "trash" };
-    };
+import type { WorkspaceExecutionEffect } from "../../../packages/domain/src/execution-context.ts";
+export type WorkspaceEffect = WorkspaceExecutionEffect;
 
 // GMAIL_REPLY_GUARD_V1 (campana 15) - direcciones canonicas de una cabecera.
 // El texto del correo es dato, no instruccion: solo se responde a quien ya
