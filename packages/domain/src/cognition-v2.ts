@@ -96,3 +96,14 @@ export const chromaticOntologyV2Schema = z.strictObject({
   dimensions: uniqueIds, approvalReceiptId: id.optional(),
 }).refine((o) => o.status !== "approved" || Boolean(o.approvalReceiptId), "approval receipt required")
   .refine((o) => new Set(o.axes.map((a) => a.id)).size === o.axes.length, "duplicate axes");
+
+/** Server-authenticated human input, information provenance only; never an action proposal. */
+export const cognitiveHumanTurnPayloadSchema = z.strictObject({
+  schemaVersion: z.literal("1.0"),
+  identity: cognitiveIdentitySchema,
+  threadId: id, runId: id, messageId: id,
+  text: z.string().min(1).max(24000),
+  inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+}).refine(value => value.identity.purpose === "chat" && value.identity.actorId === value.identity.owner,
+  "human chat provenance requires a self-owned authenticated chat identity");
+export type CognitiveHumanTurnPayload = z.infer<typeof cognitiveHumanTurnPayloadSchema>;
