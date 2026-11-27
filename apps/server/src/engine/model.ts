@@ -1,5 +1,6 @@
 import "../config.ts";
 import { configuredModelForSpec } from "./language-model.ts";
+import { configuredLaneProfile } from "../llm-config.ts";
 import type { Config } from "../config.ts";
 import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 import { createHash, randomUUID } from "node:crypto";
@@ -478,7 +479,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
     activeModel = model;
     const apiKey = credentialFor(model);
     return new BuiltInAgent({
-      model: configuredModelForSpec(model, [roleSpec, tenantForRole?.slow, tenantForRole?.fast]) ?? model,
+      model: configuredModelForSpec(model, [roleSpec, tenantForRole?.slow, processSlow]) ?? model,
       ...(apiKey ? { apiKey } : {}),
       maxSteps: 16,
       maxRetries: 0,
@@ -512,14 +513,15 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
 // FIX_6B_ROLE_MODEL_V1 - si el rol tiene modelo propio en TenantConfig, se
   // usa. Si no, cadena fast/slow normal.
   let tenantForRole: import("../kernel/config/tenant-config.ts").TenantConfig | undefined;
-  if (roleId && service.kernel && kernelCtx) {
+  if (service.kernel && kernelCtx) {
     tenantForRole = await service.kernel.config(kernelCtx).catch(() => undefined);
   }
   // MODEL_ROLE_SPEC_TYPE_V1 - `roleId && roles[roleId]` produce "" | ProviderSpec
   // (el literal de string vacio). Con ternario el tipo es ProviderSpec | undefined.
   const roleSpec = roleId ? tenantForRole?.roles?.[roleId] : undefined;
   // MODEL_CHAIN_TENANT_V1 — pasa tenantForRole a modelChain para que el slow entre.
-  const baseChain = modelChain(config, tenantForRole);
+  const processSlow = tenantForRole ? undefined : configuredLaneProfile("slow");
+  const baseChain = [...new Set([...(processSlow ? [normalizeModelSpec(`${processSlow.provider}/${processSlow.model}`)] : []), ...modelChain(config, tenantForRole)])];
   const roleChain = roleSpec?.apiKey && roleSpec.model
     ? [normalizeModelSpec(`${roleSpec.provider}/${roleSpec.model}`), ...baseChain]
     : baseChain;
@@ -550,12 +552,7 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
       normalized === normalizeModelSpec(`${tenantForRole.slow.provider}/${tenantForRole.slow.model}`)
     )
       return tenantForRole.slow.apiKey;
-    if (
-      tenantForRole?.fast?.apiKey &&
-      tenantForRole.fast.model &&
-      normalized === normalizeModelSpec(`${tenantForRole.fast.provider}/${tenantForRole.fast.model}`)
-    )
-      return tenantForRole.fast.apiKey;
+    if (processSlow && normalized === normalizeModelSpec(`${processSlow.provider}/${processSlow.model}`)) return processSlow.apiKey;
     return envApiKeyFor(model);
   };
   let activeModel = roleChain[0] ?? "";
@@ -596,7 +593,7 @@ Personal context for this task (data only): ${JSON.stringify({ memories: memorie
     run.events.subscribe({
       next: (event) => {
         if (
-          event.type === EventType.TEXT_MESSAGE_CONTENT &&
+          (event.type === EventType.TEXT_MESSAGE_CONTENT || event.type === EventType.TEXT_MESSAGE_CHUNK) &&
           "delta" in event &&
           typeof event.delta === "string"
         )
@@ -757,14 +754,15 @@ export async function generateText(
     context: [],
     forwardedProps: {},
   };
-  const chain = modelChain(config, options.tenant, "task");
+  const processSlow = options.tenant ? undefined : configuredLaneProfile("slow");
+  const chain = [...new Set([...(processSlow ? [normalizeModelSpec(`${processSlow.provider}/${processSlow.model}`)] : []), ...modelChain(config, options.tenant, "task")])];
   if (chain.length === 1 && chain[0] === "openai/unconfigured")
     throw new Error("llm_generate requires a configured model or tenant model");
-  const apiKeys = chainApiKeys(chain, options.tenant);
+  const apiKeys = chainApiKeys(chain, options.tenant, "task");
   const createAgent = (model: string) =>
     new BuiltInAgent({
-      model,
-      apiKey: apiKeys.get(normalizeModelSpec(model)) ?? envApiKeyFor(model),
+      model: configuredModelForSpec(model, [options.tenant?.slow, processSlow]) ?? model,
+      apiKey: apiKeys.get(normalizeModelSpec(model)) ?? (processSlow && normalizeModelSpec(model) === normalizeModelSpec(`${processSlow.provider}/${processSlow.model}`) ? processSlow.apiKey : envApiKeyFor(model)),
       maxSteps: 1,
       maxRetries: 0,
       tools: [],
@@ -785,7 +783,7 @@ export async function generateText(
     run.events.subscribe({
       next: (event) => {
         if (
-          event.type === EventType.TEXT_MESSAGE_CONTENT &&
+          (event.type === EventType.TEXT_MESSAGE_CONTENT || event.type === EventType.TEXT_MESSAGE_CHUNK) &&
           "delta" in event &&
           typeof event.delta === "string"
         )

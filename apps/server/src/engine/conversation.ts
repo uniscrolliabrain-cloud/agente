@@ -1156,7 +1156,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           const inner = run!.events.subscribe({
             next: (event) => {
               if (
-                event.type === EventType.TEXT_MESSAGE_CONTENT &&
+                (event.type === EventType.TEXT_MESSAGE_CONTENT || event.type === EventType.TEXT_MESSAGE_CHUNK) &&
                 "delta" in event &&
                 typeof event.delta === "string"
               ) {

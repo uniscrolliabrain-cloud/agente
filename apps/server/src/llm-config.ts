@@ -33,3 +33,12 @@ export function requireLaneProfile(lane: "fast" | "slow", env: NodeJS.ProcessEnv
     throw Error(`${lane.toUpperCase()}_PROVIDER_UNSUPPORTED`);
   return profile as LaneProfile;
 }
+
+/** Optional legacy lane; a complete declared profile still gets strict validation. */
+export function configuredLaneProfile(
+  lane: "fast" | "slow",
+  env: NodeJS.ProcessEnv = process.env,
+): LaneProfile | undefined {
+  const profile = laneEnvironment(lane, env);
+  return profile.provider && profile.model && profile.apiKey ? requireLaneProfile(lane, env) : undefined;
+}
