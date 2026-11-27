@@ -196,6 +196,9 @@ export const SPECS = [
       ],
       [
         "GOOGLE_REFRESH_TOKEN"
+      ],
+      [
+        "GOOGLE_TEST_ACCOUNT_EMAIL"
       ]
     ],
     "probe": "google",
