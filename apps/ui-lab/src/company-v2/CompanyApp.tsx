@@ -1,3 +1,4 @@
+import MetaDock from "../smart-ux/MetaDock";
 // TU_EMPRESA_V1 - andamio de la meta-app.
 // Clon del shell de AgntiaPro abierto desde Ajustes → Tu Empresa. Todo el
 // contenido es día 90 a propósito: primero se valida la estructura y el
@@ -680,7 +681,8 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
   ]);
 
   return (
-    <div className="co-root" role="dialog" aria-modal="true" aria-label="Tu Empresa · estudio de compilación">
+    <div className="co-root meta-dock-root" role="dialog" aria-modal="true" aria-label="Tu Empresa · estudio de compilación">
+      <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_co"/>
       <button
         type="button"
         className={"co-scrim" + (drawer ? " is-on" : "")}
