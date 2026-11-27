@@ -38,7 +38,7 @@ export function EditorialHero({
             <span className="cce-chip" title={`Empresa · ${tenantName}`}>
               Empresa · {tenantName}
             </span>
-            <span className="cce-chip cce-chip--active">Centro de mando</span>
+            <span className="cce-chip cce-chip--active" aria-current="page">Centro de mando</span>
             {role && <span className="cce-chip">{ROLE_LABEL[role]}</span>}
           </div>
         </div>

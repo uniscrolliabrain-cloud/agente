@@ -95,7 +95,7 @@ export function LoadingState() {
           <div key={index} className="cce-skeleton-bar cce-skeleton-block" style={{ height: 78 }} />
         ))}
       </div>
-      <div className="cce-skeleton-grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+      <div className="cce-skeleton-grid cce-skeleton-grid--work">
         {[0, 1, 2].map((index) => (
           <div key={index} className="cce-skeleton-bar cce-skeleton-block" style={{ height: 132 }} />
         ))}
