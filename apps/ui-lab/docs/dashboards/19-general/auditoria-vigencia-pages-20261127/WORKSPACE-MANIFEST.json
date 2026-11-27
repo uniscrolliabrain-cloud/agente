@@ -1,0 +1,1602 @@
+{
+  "baseline": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
+  "tree": "f1029256d8248d910378927fe2ec60dbea8ebf3e",
+  "artifact": {
+    "run": 46012073962,
+    "id": 15203718762,
+    "version": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
+    "entry": "fullApp-CjpBwQdM.js",
+    "css": "style-Bwmcaq8V.css",
+    "browser": "blocked"
+  },
+  "workspaces": [
+    {
+      "slug": "01-gmail",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/01-gmail/README.md",
+          "sha": "62fdb474d105be89b804d428b41dbb364ac9b5ae"
+        },
+        {
+          "path": "apps/web/src/workspaces/01-gmail/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/01-gmail/docs/01-ui-map.md",
+          "sha": "09872301260c9ed048b6487745917eabc4690373"
+        },
+        {
+          "path": "apps/web/src/workspaces/01-gmail/docs/02-roadmap.md",
+          "sha": "41541e47ef20f50edaa2e5adae2c3d770dbe7abb"
+        },
+        {
+          "path": "apps/web/src/workspaces/01-gmail/docs/03-spec.md",
+          "sha": "5d49030083563f6281497e6cf2609ce675deb53b"
+        },
+        {
+          "path": "apps/web/src/workspaces/01-gmail/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/01-gmail/index.ts",
+          "sha": "cdfa53e9696869682e838cbaa246d945763f1c85"
+        }
+      ]
+    },
+    {
+      "slug": "02-whatsapp",
+      "tsxCount": 11,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/ChatWorkspace.css",
+          "sha": "d060188fc4d70a1d2c1c4e9fbf99611a86d70bd0"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/README.md",
+          "sha": "6dce676a19f05e44657febc1e0b60b4dde8dc956"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/api.ts",
+          "sha": "24d56d3d5c22215ba84746892f2f05a04de3d960"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/Avatar.tsx",
+          "sha": "2d9ea3d29430dbaada8f3afd19f67edf325bc502"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ChatWorkspace.tsx",
+          "sha": "948568aa632a84ef73345e6a171643b186899ada"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/Composer.tsx",
+          "sha": "ebbbebbc5fa1a141a4b8aca0b8a7b8b1808c1a01"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ContextPanel.tsx",
+          "sha": "9036209c0bdb56958f3aa0201c915c97ce990a05"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/MessageBubble.tsx",
+          "sha": "3527bf315fb850c285a65a10467957a9bda3ba0b"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/MessageList.tsx",
+          "sha": "c347a135e6c471358e6a625e1e7c347301cabf56"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ThreadFilters.tsx",
+          "sha": "34f20f26c77032f5a4ffe779f2f6bd3f51ee6350"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ThreadHeader.tsx",
+          "sha": "ca45d09edb108827c961f750063a00a219e4d646"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ThreadList.tsx",
+          "sha": "1dc57784438b445091e9ee3f5e569db76d02e79f"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ThreadListItem.tsx",
+          "sha": "0990439827ad7943339334ef214528b77328f647"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/components/ThreadSearch.tsx",
+          "sha": "2a1450ef5c53bf3fb9a7013ed9c940b2a50a0eb7"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/docs/01-ui-map.md",
+          "sha": "7bffd9af1c787bc7caefce9494816e16edd6c5e0"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/docs/02-roadmap.md",
+          "sha": "0e54466962f3c60052e9a4041faf920e8fb53d1c"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/docs/03-spec.md",
+          "sha": "f0ca1b5b10b46890d5fe62a60fef5cb99b103a66"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/docs/04-handoff-v2.md",
+          "sha": "23b5d750e946150031ce41a6f76819c870a75b14"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/format.ts",
+          "sha": "69572da6daecaff867bf2499de22a08c0ca72877"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/hooks/useChatWorkspace.ts",
+          "sha": "f352ecaa731db7934d8df7952db2eabdc7f9afa7"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/index.ts",
+          "sha": "d2594bc732d16e815f74586b749cfb23f870a91c"
+        },
+        {
+          "path": "apps/web/src/workspaces/02-whatsapp/types.ts",
+          "sha": "71d315d20317df04a8ca4f4ce3c3c7744949a222"
+        }
+      ]
+    },
+    {
+      "slug": "03-hubspot",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/README.md",
+          "sha": "cb834fd42d725e64b1c95766070eb99b80912d66"
+        },
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/docs/01-ui-map.md",
+          "sha": "62a0fdb70f1f26d41d8d62caad190c230115113c"
+        },
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/docs/02-roadmap.md",
+          "sha": "af0504285d45fa55da469337ad533a97f0f6b2e5"
+        },
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/docs/03-spec.md",
+          "sha": "eb777c56d666cff113e648c4797540012c9e5ce5"
+        },
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/03-hubspot/index.ts",
+          "sha": "4f7800d127ff2b6eae427719d69806187bf23d61"
+        }
+      ]
+    },
+    {
+      "slug": "04-holded",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/04-holded/README.md",
+          "sha": "8826adc1a41a6952408de774742e453160abcef6"
+        },
+        {
+          "path": "apps/web/src/workspaces/04-holded/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/04-holded/docs/01-ui-map.md",
+          "sha": "69959d869a439728d159d4680a5d1c507dbb3895"
+        },
+        {
+          "path": "apps/web/src/workspaces/04-holded/docs/02-roadmap.md",
+          "sha": "4280b04a7e6d285299d9d181719379633a9ecc14"
+        },
+        {
+          "path": "apps/web/src/workspaces/04-holded/docs/03-spec.md",
+          "sha": "dfa01a80173817e9fcd298f944014629edd636cc"
+        },
+        {
+          "path": "apps/web/src/workspaces/04-holded/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/04-holded/index.ts",
+          "sha": "0dc316d590811dc2923026091423cc624242b635"
+        }
+      ]
+    },
+    {
+      "slug": "05-google-drive",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/README.md",
+          "sha": "4216dfcb5b4fd0d2c6acff79073e3600f0175f45"
+        },
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/docs/01-ui-map.md",
+          "sha": "4843bf50501ca18893130b798dd2c310eb36faaa"
+        },
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/docs/02-roadmap.md",
+          "sha": "7f79b88e6240d5c061a12732a6a547da7167f942"
+        },
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/docs/03-spec.md",
+          "sha": "5e307f0146e288b8bc16bf9fe7bb38105cf27531"
+        },
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/05-google-drive/index.ts",
+          "sha": "0d05e77693086b585fb60c36dfb1b3094c4b651a"
+        }
+      ]
+    },
+    {
+      "slug": "06-google-calendar",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/README.md",
+          "sha": "c8f7512354ae7bcc7a3d7206d77b534718b8da93"
+        },
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/docs/01-ui-map.md",
+          "sha": "7c38ae985ae86a279af31bf8c9b4294cbe63e40e"
+        },
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/docs/02-roadmap.md",
+          "sha": "0de69cb66d98a88c5da41fc20bfb6287563bd716"
+        },
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/docs/03-spec.md",
+          "sha": "bc39d7f0ba5bd64fc3016de28bc38b61917420f3"
+        },
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/06-google-calendar/index.ts",
+          "sha": "c42f30dbd61844b4ca3295589c3b59208150d7f1"
+        }
+      ]
+    },
+    {
+      "slug": "07-linear",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/07-linear/README.md",
+          "sha": "7801818971d59f785c461c80ff55e021292f49f9"
+        },
+        {
+          "path": "apps/web/src/workspaces/07-linear/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/07-linear/docs/01-ui-map.md",
+          "sha": "052d6db414a38164594d47481b8267fc936e9165"
+        },
+        {
+          "path": "apps/web/src/workspaces/07-linear/docs/02-roadmap.md",
+          "sha": "2d0603cd844c9b442b0d5678e22f21c29920a1f1"
+        },
+        {
+          "path": "apps/web/src/workspaces/07-linear/docs/03-spec.md",
+          "sha": "a8cfc247d8e80c9f6daccb21c127e9b6c61b184e"
+        },
+        {
+          "path": "apps/web/src/workspaces/07-linear/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/07-linear/index.ts",
+          "sha": "c24bdbf2e7823a905fc652b0580fad940e3ede6b"
+        }
+      ]
+    },
+    {
+      "slug": "08-chatgpt",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/README.md",
+          "sha": "3e4f600b265ac23c260cadb66b6897246d10e226"
+        },
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/docs/01-ui-map.md",
+          "sha": "02c013ba3b92e1c482dd3f51dca96388b84f95cb"
+        },
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/docs/02-roadmap.md",
+          "sha": "145556f46280ee8b2182ffe3ada7f802e3ac7b26"
+        },
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/docs/03-spec.md",
+          "sha": "8e5f63e2aa580afc54a88a5fa7bcf7dab84251aa"
+        },
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/08-chatgpt/index.ts",
+          "sha": "22cd5e76ee98ed3159b0d67918219802154226bf"
+        }
+      ]
+    },
+    {
+      "slug": "09-airtable",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/09-airtable/README.md",
+          "sha": "3a113fc7e72d882f69fde6f5a881d958dad96981"
+        },
+        {
+          "path": "apps/web/src/workspaces/09-airtable/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/09-airtable/docs/01-ui-map.md",
+          "sha": "72034f5617cff89530a4a734c86aa971181e1f61"
+        },
+        {
+          "path": "apps/web/src/workspaces/09-airtable/docs/02-roadmap.md",
+          "sha": "6f090514100562fdba7a0c8aad73f6cb8e0fabbd"
+        },
+        {
+          "path": "apps/web/src/workspaces/09-airtable/docs/03-spec.md",
+          "sha": "9d91f40d385b2168e7633f410fd0aa222d72ba26"
+        },
+        {
+          "path": "apps/web/src/workspaces/09-airtable/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/09-airtable/index.ts",
+          "sha": "1eecf935fcfb2a4f3433c64d69fabf085f58973f"
+        }
+      ]
+    },
+    {
+      "slug": "10-perdoo",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/README.md",
+          "sha": "54dec8ae489ecffa187a250a36214851da78952a"
+        },
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/docs/01-ui-map.md",
+          "sha": "91887caaa2b59a7d717e8138f003c60969da677f"
+        },
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/docs/02-roadmap.md",
+          "sha": "3f43f7ee51e7ea57eb062cb7a3333f2170e01427"
+        },
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/docs/03-spec.md",
+          "sha": "e732e845cad3e84527cb1666b3741cdd40b9548a"
+        },
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/10-perdoo/index.ts",
+          "sha": "9d52479df2523403f144d61ed388d75b85f1818d"
+        }
+      ]
+    },
+    {
+      "slug": "11-holded-tesoreria",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/README.md",
+          "sha": "7d64dd7157832ba61de84990eef7ff6c113c066c"
+        },
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/docs/01-ui-map.md",
+          "sha": "a3bd4f7c1beff610919b2cc54e4aed2cf4de32d9"
+        },
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/docs/02-roadmap.md",
+          "sha": "a46d2f9e7276e68e1a96542932eb8b76d6fd4062"
+        },
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/docs/03-spec.md",
+          "sha": "3e87a24a417561ee10ee5a52fa957b20ea36eaa8"
+        },
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/11-holded-tesoreria/index.ts",
+          "sha": "0d1ca121736b94f00e7c2f3b5e1af609dc5c5c9e"
+        }
+      ]
+    },
+    {
+      "slug": "12-odoo-purchase",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/README.md",
+          "sha": "69d0c8536d35d54cff1c461127e0f246b37694cb"
+        },
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/docs/01-ui-map.md",
+          "sha": "dbb2060b71e0a82221ca38ab956920ea03987c83"
+        },
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/docs/02-roadmap.md",
+          "sha": "c3fee8971d32fa3e3f69abfd88323ca18d30eb52"
+        },
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/docs/03-spec.md",
+          "sha": "0c0d1d54687aa6ef0ef02273a1b8af668105a2ec"
+        },
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/12-odoo-purchase/index.ts",
+          "sha": "8f6459e7c71e620b408a7db6df99c1fd141762aa"
+        }
+      ]
+    },
+    {
+      "slug": "13-productive",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/13-productive/README.md",
+          "sha": "50863e92f4d8d9325282bd6e7bd8beec5ac9e509"
+        },
+        {
+          "path": "apps/web/src/workspaces/13-productive/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/13-productive/docs/01-ui-map.md",
+          "sha": "17e90cbbbca03e50e9b4e0d0eb042f2a3e79de63"
+        },
+        {
+          "path": "apps/web/src/workspaces/13-productive/docs/02-roadmap.md",
+          "sha": "ee5fcfab900a0333c927ad37707069fc65eeec3a"
+        },
+        {
+          "path": "apps/web/src/workspaces/13-productive/docs/03-spec.md",
+          "sha": "a81b79249fd5cdec7008c535f200e68b10a11d8c"
+        },
+        {
+          "path": "apps/web/src/workspaces/13-productive/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/13-productive/index.ts",
+          "sha": "e67f363c966963db2ecb4b292a633cc1d2bf2a35"
+        }
+      ]
+    },
+    {
+      "slug": "14-zendesk",
+      "tsxCount": 30,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/README.md",
+          "sha": "5627d74ea22419c1882d05dff9858f00149b82bc"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/ZendeskWorkspace.css",
+          "sha": "2af1471b5bc304e25222f39c3ee9c9c23b231508"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/api.ts",
+          "sha": "09cadca834defb63f93fb0c18420d12a78fc6d3e"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/AgentStatusPill.tsx",
+          "sha": "073555d7170179741ebbb910aa44c6a2122e4b77"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/Avatar.tsx",
+          "sha": "81502a4c432c837c4d3def4bf1c8ebdf869a25db"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/CoWriteEditor.tsx",
+          "sha": "b17ef57c6886b16b9ff9a3a580101774f1af7631"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/CoWritePanel.tsx",
+          "sha": "ad003f9714e74c47301b38295a34b338819ee145"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/CoWriteToggle.tsx",
+          "sha": "9e201e6e6f72c99cf206755511055898f744543f"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/CustomerHeader.tsx",
+          "sha": "ab41e4a2502a9f23a25a59d8a8377332f58d0072"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/CustomerQuickActions.tsx",
+          "sha": "c021e87518242e52215afcb11612c1fa61e4a6e0"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/EmptyState.tsx",
+          "sha": "2b99fb46e492f37ec62a2d24185213b421d89055"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/IconButton.tsx",
+          "sha": "07a81af73dc7e3a05943b5444705adc50b444560"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/InsightChips.tsx",
+          "sha": "64113ef767a80f344a54a3040fbb7342a724c1d4"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/InsightIntent.tsx",
+          "sha": "3b9c5027b76824d27edbea967d28e7a5316c8cb9"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/InsightUrgencyNextStep.tsx",
+          "sha": "45a1138e97186419a839b0bf1463645ce768026e"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/LeadBadge.tsx",
+          "sha": "ce6f3e18bc1e4b9334c3e35ddc0e8eb79e2b8ff2"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/NewTicketButton.tsx",
+          "sha": "61a357cb93e8e1e730dda39440be82597d403655"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/SidebarNavItem.tsx",
+          "sha": "4bad4bafa924e3e1dfa0826daeb5dcffd2c37547"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/SidebarSearch.tsx",
+          "sha": "06215124f7c24390fda4dab611b96a2034161058"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/SidebarSection.tsx",
+          "sha": "d66936336f693717c28b867d8da95c0a15a5366f"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketAvatar.tsx",
+          "sha": "e8797b12b6c6330931d0f3ba9bb27f1dde7be7fe"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketChips.tsx",
+          "sha": "5c0eed25a572689e07974feaa53452fa41c9687e"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketDetailPanel.tsx",
+          "sha": "21467790d2d492e35a03e0b04ce1e62783b2875f"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketFilterPill.tsx",
+          "sha": "b4a985620ce68244d79c43f838b8f8c89ec4dc79"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketInsightCard.tsx",
+          "sha": "14f29ba52baf32c467b990d861d242278061ccd8"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketList.tsx",
+          "sha": "2651995809ae8709b9d201d6ce700b1ed209ac85"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketListActions.tsx",
+          "sha": "ad96166d49cce71c6e4338eff6f65eee9516df0e"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketListHeader.tsx",
+          "sha": "f07ffd414199ca6473445b684a220e0cfa6d840b"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketListItem.tsx",
+          "sha": "60e1ac9dc1274181e35b719de3e408ba7923f85d"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/TicketListPanel.tsx",
+          "sha": "1449d3d6d015c20603ca0c1f3b313ce08bc3c2de"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/WorkspaceBrand.tsx",
+          "sha": "ed0d1998350d3f8a5f3c93d925a202f9e2bfe2b4"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/ZendeskSidebar.tsx",
+          "sha": "308d9316c37ab6188bd424074d3fa5cb30c59e07"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/components/ZendeskWorkspace.tsx",
+          "sha": "48165fcb4d17b155bb15ba88eed43f6116e83bf5"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/docs/01-ui-map.md",
+          "sha": "5bbba278ea25ee67ae872a98fa524b99e0d049a7"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/docs/02-roadmap.md",
+          "sha": "164b813f1efe1f5524ddd73dcdb2e32b5ba69523"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/docs/03-spec.md",
+          "sha": "acd0e36b4960d90f77b956093ab2f5c8ac11aab7"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/docs/04-handoff-v2.md",
+          "sha": "014a0eb6b5bf3359496daeb890ce8c0f676f9455"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/format.ts",
+          "sha": "22a35472788607e7ca191090fd0121eb8e732f34"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/hooks/useZendesk.ts",
+          "sha": "6174b5998ba3bc73aeb9dc3b0103bdfe835574a6"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/index.ts",
+          "sha": "986c3ad369928d98f2740e97414b95a2275050ba"
+        },
+        {
+          "path": "apps/web/src/workspaces/14-zendesk/types.ts",
+          "sha": "a049977848d7d6499671c97820328af669097dfb"
+        }
+      ]
+    },
+    {
+      "slug": "15-docusign",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/15-docusign/README.md",
+          "sha": "b87a863cfab829e5c69fe5580cb8774d14840ddc"
+        },
+        {
+          "path": "apps/web/src/workspaces/15-docusign/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/15-docusign/docs/01-ui-map.md",
+          "sha": "f126be15a8c675f526b28863c731c876848f1c10"
+        },
+        {
+          "path": "apps/web/src/workspaces/15-docusign/docs/02-roadmap.md",
+          "sha": "45e7086301b99069bda0f82c1095f0ec1d6effb7"
+        },
+        {
+          "path": "apps/web/src/workspaces/15-docusign/docs/03-spec.md",
+          "sha": "3cfd3ab98534dfb581311edfc6e7a3b7c08bd139"
+        },
+        {
+          "path": "apps/web/src/workspaces/15-docusign/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/15-docusign/index.ts",
+          "sha": "2e8c1aa557e4a8e438754548457d3da7628c7ad0"
+        }
+      ]
+    },
+    {
+      "slug": "16-n8n",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/16-n8n/README.md",
+          "sha": "1c12f755a14ad4b1f99a6b8319f5aa2ea06c9dc5"
+        },
+        {
+          "path": "apps/web/src/workspaces/16-n8n/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/16-n8n/docs/01-ui-map.md",
+          "sha": "c0f09db6cddfb360460d5dcfa8f6ebebd11f6d9c"
+        },
+        {
+          "path": "apps/web/src/workspaces/16-n8n/docs/02-roadmap.md",
+          "sha": "e8deb04e0eeeb3d2d24d247162bf53fbefb1ae40"
+        },
+        {
+          "path": "apps/web/src/workspaces/16-n8n/docs/03-spec.md",
+          "sha": "4f3b549b9cbe0af3e0b9b9054e19acb35fcbe0b1"
+        },
+        {
+          "path": "apps/web/src/workspaces/16-n8n/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/16-n8n/index.ts",
+          "sha": "6fe7c3191bd39c2975b1ce47b347fb65197ee91c"
+        }
+      ]
+    },
+    {
+      "slug": "17-process-street",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/17-process-street/README.md",
+          "sha": "2185026ecb5447c7d424ca356d2058f538e8595a"
+        },
+        {
+          "path": "apps/web/src/workspaces/17-process-street/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/17-process-street/docs/01-ui-map.md",
+          "sha": "300c98bfd173c2132f19ae344846047eea5150a5"
+        },
+        {
+          "path": "apps/web/src/workspaces/17-process-street/docs/02-roadmap.md",
+          "sha": "42924844ac32ac8f918400e4cf111262f4a9bfc5"
+        },
+        {
+          "path": "apps/web/src/workspaces/17-process-street/docs/03-spec.md",
+          "sha": "feb96a66b1ed85847f47272fae91e2d8caa2d59b"
+        },
+        {
+          "path": "apps/web/src/workspaces/17-process-street/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/17-process-street/index.ts",
+          "sha": "217d0c08fd5209d4ceb937ddf0bee734dfe0aafb"
+        }
+      ]
+    },
+    {
+      "slug": "18-factorial",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/18-factorial/README.md",
+          "sha": "b1478c6391c39395ab874860bd4a7d536c7dea4b"
+        },
+        {
+          "path": "apps/web/src/workspaces/18-factorial/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/18-factorial/docs/01-ui-map.md",
+          "sha": "36637a9cc3c1baccf54840e475593fe1c176dac1"
+        },
+        {
+          "path": "apps/web/src/workspaces/18-factorial/docs/02-roadmap.md",
+          "sha": "1b933685b5c53f19bdf8596df0d55aa3327fd721"
+        },
+        {
+          "path": "apps/web/src/workspaces/18-factorial/docs/03-spec.md",
+          "sha": "715ed840dcbca4436d4eea2c240580143bfd595b"
+        },
+        {
+          "path": "apps/web/src/workspaces/18-factorial/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/18-factorial/index.ts",
+          "sha": "7a2d05663cb151c21c7619971f082ba2c70d6ae7"
+        }
+      ]
+    },
+    {
+      "slug": "19-personio",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/19-personio/README.md",
+          "sha": "9a9aa11cdd78b6f4914890767d7348cab21acd3c"
+        },
+        {
+          "path": "apps/web/src/workspaces/19-personio/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/19-personio/docs/01-ui-map.md",
+          "sha": "cf732fd5e801f18ffc8415602f1f5480ee6b93c5"
+        },
+        {
+          "path": "apps/web/src/workspaces/19-personio/docs/02-roadmap.md",
+          "sha": "ae74157660933d497ad5f83aa96436032b48eb9c"
+        },
+        {
+          "path": "apps/web/src/workspaces/19-personio/docs/03-spec.md",
+          "sha": "7205ab0b6f10f2b79b9085237a7ed8f3b6477da7"
+        },
+        {
+          "path": "apps/web/src/workspaces/19-personio/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/19-personio/index.ts",
+          "sha": "9bded1988359bbadd7e50ffcf995748282169feb"
+        }
+      ]
+    },
+    {
+      "slug": "20-ramp",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/20-ramp/README.md",
+          "sha": "721c135582d16d72b7244530131136e6f9afb3ff"
+        },
+        {
+          "path": "apps/web/src/workspaces/20-ramp/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/20-ramp/docs/01-ui-map.md",
+          "sha": "0f25b516062ce45892474688f56aa6f3461f067a"
+        },
+        {
+          "path": "apps/web/src/workspaces/20-ramp/docs/02-roadmap.md",
+          "sha": "d06d08158477f3da5628046ac13ad4b5ee65e946"
+        },
+        {
+          "path": "apps/web/src/workspaces/20-ramp/docs/03-spec.md",
+          "sha": "df0351562c6b51916a3da980bd7a248c9fbc0f05"
+        },
+        {
+          "path": "apps/web/src/workspaces/20-ramp/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/20-ramp/index.ts",
+          "sha": "63b4323403d6a53db38a63e0407a20005782de16"
+        }
+      ]
+    },
+    {
+      "slug": "21-stripe",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/21-stripe/README.md",
+          "sha": "7c4e471cb0625f9d2a477b30e15c8c2b7cff5001"
+        },
+        {
+          "path": "apps/web/src/workspaces/21-stripe/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/21-stripe/docs/01-ui-map.md",
+          "sha": "5238b4d131dc59e567176861e1dbde740fa6389c"
+        },
+        {
+          "path": "apps/web/src/workspaces/21-stripe/docs/02-roadmap.md",
+          "sha": "44f6098399092c6133bf91b83fe1ab4078824d78"
+        },
+        {
+          "path": "apps/web/src/workspaces/21-stripe/docs/03-spec.md",
+          "sha": "b6f419d8c4c4129bbab3af3634cde0de5483fe81"
+        },
+        {
+          "path": "apps/web/src/workspaces/21-stripe/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/21-stripe/index.ts",
+          "sha": "3dc78c0edd47663a85e07bed1d7b9c077d2f176a"
+        }
+      ]
+    },
+    {
+      "slug": "22-canva",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/22-canva/README.md",
+          "sha": "aa6c024412b35c3c10de86142b183de1cdbcea98"
+        },
+        {
+          "path": "apps/web/src/workspaces/22-canva/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/22-canva/docs/01-ui-map.md",
+          "sha": "e029ad5a792596c0a0e263333384c203758a60bb"
+        },
+        {
+          "path": "apps/web/src/workspaces/22-canva/docs/02-roadmap.md",
+          "sha": "6dc2c59b00072c26a9f1f890349048077d642768"
+        },
+        {
+          "path": "apps/web/src/workspaces/22-canva/docs/03-spec.md",
+          "sha": "4817d5ae1f1701b875f574ddc5f9685781a469fc"
+        },
+        {
+          "path": "apps/web/src/workspaces/22-canva/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/22-canva/index.ts",
+          "sha": "b276db98ac3b8ac678a3961e2f5a7d5d51377c36"
+        }
+      ]
+    },
+    {
+      "slug": "23-buffer",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/23-buffer/README.md",
+          "sha": "7fedad6a95ced86effd4d9944c4434f614c3ed28"
+        },
+        {
+          "path": "apps/web/src/workspaces/23-buffer/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/23-buffer/docs/01-ui-map.md",
+          "sha": "b5d7751f062867f5a67139aacfb10547001d1ad0"
+        },
+        {
+          "path": "apps/web/src/workspaces/23-buffer/docs/02-roadmap.md",
+          "sha": "e9ea9a7a38edd6ec9de9d324e91529a666c4745e"
+        },
+        {
+          "path": "apps/web/src/workspaces/23-buffer/docs/03-spec.md",
+          "sha": "f02c36453260863f523ffd86e18a9e3ee27331f9"
+        },
+        {
+          "path": "apps/web/src/workspaces/23-buffer/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/23-buffer/index.ts",
+          "sha": "1e419d1befa8c8675f740ed313caa894f57f86b8"
+        }
+      ]
+    },
+    {
+      "slug": "24-shopify",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/24-shopify/README.md",
+          "sha": "bad538133066b309e2c11446b96d659e78052b7b"
+        },
+        {
+          "path": "apps/web/src/workspaces/24-shopify/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/24-shopify/docs/01-ui-map.md",
+          "sha": "389f9780c0ec45649cf55f5fcb18aa61d2513f3e"
+        },
+        {
+          "path": "apps/web/src/workspaces/24-shopify/docs/02-roadmap.md",
+          "sha": "ff25cff1dfb2d62098c9d78810dc578bac71248e"
+        },
+        {
+          "path": "apps/web/src/workspaces/24-shopify/docs/03-spec.md",
+          "sha": "5d7a0a9da18d0c8d3b867b28ee0b6083574d3bb4"
+        },
+        {
+          "path": "apps/web/src/workspaces/24-shopify/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/24-shopify/index.ts",
+          "sha": "915c1eb246b9e89e661e6fffb526b59b48c4c974"
+        }
+      ]
+    },
+    {
+      "slug": "25-intercom",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/25-intercom/README.md",
+          "sha": "35384cab196ef4a597ed49e1edace8fa3b823ce9"
+        },
+        {
+          "path": "apps/web/src/workspaces/25-intercom/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/25-intercom/docs/01-ui-map.md",
+          "sha": "b36b7fd4b246e5480397b01dec8d721292cb151b"
+        },
+        {
+          "path": "apps/web/src/workspaces/25-intercom/docs/02-roadmap.md",
+          "sha": "38ec8b670031f048f703eedbceb4cfecbe715e84"
+        },
+        {
+          "path": "apps/web/src/workspaces/25-intercom/docs/03-spec.md",
+          "sha": "43e9c385d6eb0d048591dbf5ad83dcfc9610f0ca"
+        },
+        {
+          "path": "apps/web/src/workspaces/25-intercom/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/25-intercom/index.ts",
+          "sha": "dbd32ce6cf2fd77e55805877c30776abf3241392"
+        }
+      ]
+    },
+    {
+      "slug": "26-odoo-inventory",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/README.md",
+          "sha": "46016cdb11950dee59577ec19adbf3d2d6ff76e5"
+        },
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/docs/01-ui-map.md",
+          "sha": "5e71f6eaa260fa5262732ae5ea66ce4797ef3d50"
+        },
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/docs/02-roadmap.md",
+          "sha": "97ce6184e250fa259fe2cf6451900c0025f5605a"
+        },
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/docs/03-spec.md",
+          "sha": "aa29140f1becc0afc12d43e062221766551a4d1c"
+        },
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/26-odoo-inventory/index.ts",
+          "sha": "1ec7e18e850ca7d48bd6a12ebb2e6b83640179c8"
+        }
+      ]
+    },
+    {
+      "slug": "27-maintainx",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/README.md",
+          "sha": "9aa0cd582d17825420fcbb0a0d3cc2074dabdb59"
+        },
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/docs/01-ui-map.md",
+          "sha": "05cc53606e5b2edfe8b0abd9697465e9946fb87e"
+        },
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/docs/02-roadmap.md",
+          "sha": "e57ef2951d101bc1993941c38caa36bddd0b8f1e"
+        },
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/docs/03-spec.md",
+          "sha": "cc5c793a1fc2fae1d3cfcf6a872726be2ba95075"
+        },
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/27-maintainx/index.ts",
+          "sha": "1cd773a806e9c5716291515b19bd2b0034c857c7"
+        }
+      ]
+    },
+    {
+      "slug": "28-odoo-manufacturing",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/README.md",
+          "sha": "1e6eaa12233cd5776e4361642b5eedffd80cb30c"
+        },
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/docs/01-ui-map.md",
+          "sha": "146c2f8725577c791ed198624ee911a17705d22b"
+        },
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/docs/02-roadmap.md",
+          "sha": "a0010ee1a8209672907828eac7df19025c33afc0"
+        },
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/docs/03-spec.md",
+          "sha": "41ced3d4791ebaa825ac70fa07bc4210b1fed982"
+        },
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/28-odoo-manufacturing/index.ts",
+          "sha": "70f9a795c3c99ffa666e30d0e823eb61d41762b4"
+        }
+      ]
+    },
+    {
+      "slug": "29-isms-online",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/README.md",
+          "sha": "2fc77918bebe68c800f6bfa8f61fcbb9b2d2bb6f"
+        },
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/docs/01-ui-map.md",
+          "sha": "d594dd9af425a8d8bf3582cb28f277cbd95e0c07"
+        },
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/docs/02-roadmap.md",
+          "sha": "59956e7e04f33405c5c21e69ae0fe52a5ef18a9e"
+        },
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/docs/03-spec.md",
+          "sha": "5ea6ca32dda81dbd44871d5c39d386de253884f9"
+        },
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/29-isms-online/index.ts",
+          "sha": "d90d5905e31ed757e4d43a55a8c46535e7f965e9"
+        }
+      ]
+    },
+    {
+      "slug": "30-microsoft-entra",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/README.md",
+          "sha": "c636ed9bbbeae55f1ac621a10ff6df0b49fb0207"
+        },
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/docs/01-ui-map.md",
+          "sha": "7da20612b5423c69ab37badb6c7d720fbca4ab3b"
+        },
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/docs/02-roadmap.md",
+          "sha": "0b46c99692e779beac39f3e7a6047bccc447fb05"
+        },
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/docs/03-spec.md",
+          "sha": "b00137cf23753bd8992403e510fa5a5365c6b746"
+        },
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/30-microsoft-entra/index.ts",
+          "sha": "e5337b610dce4e933f52f0b94016cdfdee16d719"
+        }
+      ]
+    },
+    {
+      "slug": "31-suitedash",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/README.md",
+          "sha": "923ca576e8aaab5cbf80c666d6d93d8bdd638ae8"
+        },
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/docs/01-ui-map.md",
+          "sha": "8cbf0038945b9d2b6307b0567becd4f80bf4b010"
+        },
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/docs/02-roadmap.md",
+          "sha": "db8c326823c060b33c37d582436d92e37ba64b31"
+        },
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/docs/03-spec.md",
+          "sha": "ac27b7635980c3e1ce1958b5898f5ec6d83afb05"
+        },
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/31-suitedash/index.ts",
+          "sha": "48e6f94319528032388102f8bed07ab5664d2c5e"
+        }
+      ]
+    },
+    {
+      "slug": "32-notion",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/32-notion/README.md",
+          "sha": "5a7e91bf0cc661b092e2af2e5c18dca31bfdb0c0"
+        },
+        {
+          "path": "apps/web/src/workspaces/32-notion/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/32-notion/docs/01-ui-map.md",
+          "sha": "8c400b633d68209cbe6edcadf26caeee14567cae"
+        },
+        {
+          "path": "apps/web/src/workspaces/32-notion/docs/02-roadmap.md",
+          "sha": "4fc27ef67c3cd7e4fd76b1c7a1923c943aabf5fd"
+        },
+        {
+          "path": "apps/web/src/workspaces/32-notion/docs/03-spec.md",
+          "sha": "9e0fb9a9c13b09d88d31112484cdf2d373592a49"
+        },
+        {
+          "path": "apps/web/src/workspaces/32-notion/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/32-notion/index.ts",
+          "sha": "4ab2339346beba5011808dabcbb1fa039cc105fb"
+        }
+      ]
+    },
+    {
+      "slug": "33-langsmith",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/README.md",
+          "sha": "d080f712b6bd1e2dd4f171082c65b0bd65374441"
+        },
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/docs/01-ui-map.md",
+          "sha": "e21cc32d1947d9f02fa99317bf1f8b21f5d31c9c"
+        },
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/docs/02-roadmap.md",
+          "sha": "6ec74e8917a5940506ad60593045abec2c546657"
+        },
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/docs/03-spec.md",
+          "sha": "3b13c6ee809623f1acfb44b6af83111fdd9b9610"
+        },
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/33-langsmith/index.ts",
+          "sha": "ef3a4c3e8b4d6796bac99a6e9e192abeb27d6b59"
+        }
+      ]
+    },
+    {
+      "slug": "34-trello",
+      "tsxCount": 0,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/34-trello/README.md",
+          "sha": "4e0e8f9cd11cc09c85de5dce7424ec1ecfb1a676"
+        },
+        {
+          "path": "apps/web/src/workspaces/34-trello/components/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/34-trello/docs/01-ui-map.md",
+          "sha": "f1b501d17402f80a2c229f6bfce2e1be24784b0e"
+        },
+        {
+          "path": "apps/web/src/workspaces/34-trello/docs/02-roadmap.md",
+          "sha": "52708879f09b5c1c564e6f45c6563eb2f5a8cc54"
+        },
+        {
+          "path": "apps/web/src/workspaces/34-trello/docs/03-spec.md",
+          "sha": "429f1bf6a5d7e946f8e5407d3ae35bfa43e5cdaf"
+        },
+        {
+          "path": "apps/web/src/workspaces/34-trello/hooks/.gitkeep",
+          "sha": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391"
+        },
+        {
+          "path": "apps/web/src/workspaces/34-trello/index.ts",
+          "sha": "9d146f6c823728de590e7db1923d64c74093bf68"
+        }
+      ]
+    },
+    {
+      "slug": "35-centro-mando",
+      "tsxCount": 27,
+      "launcher": "category-template",
+      "files": [
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/CentroMandoWorkspace.tsx",
+          "sha": "529f3f1c47e7f80f72d04bc97bc71edc92e3041a"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/README.md",
+          "sha": "128b946182270455e7f6d33c2614af9faea86af0"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/centro-mando.css",
+          "sha": "efd896bc53e6f1327b606279cdedf8fb80f84910"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/ActiveProjectsPanel.tsx",
+          "sha": "e174f23986d001100f4df710284c476b0c842658"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/AgentPerformanceCard.tsx",
+          "sha": "4524ceeae118ea5de1945c1014ca133b621f4bcd"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/AgentsPerformancePanel.tsx",
+          "sha": "7cae9f79aa91f46d4fa159d7e91bb24a3dfd5609"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/AiActionButton.tsx",
+          "sha": "f2bfb0a6d1b3fd964a4dbf0980862f0fa726ccc0"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/AiInsightsPanel.tsx",
+          "sha": "a6991775644572b50585e50e263762272ab5abdb"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/Avatar.tsx",
+          "sha": "1e85a110505897ec19d6101ad3d92914bda5f58f"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/BarList.tsx",
+          "sha": "e899ab447e87bdfa22f6122a4eee4ca2086b784e"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/ClientDetailModal.tsx",
+          "sha": "99a6045ec1b9d900bb5c8895ebace53608f1f2d0"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/CriticalTicketsPanel.tsx",
+          "sha": "920b8d1759cd40351109e439fc1bedb2f5cb749f"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/DateRangePicker.tsx",
+          "sha": "7ed0aa1e738feb12016db6d73fe6487cc659d768"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/InsightCard.tsx",
+          "sha": "6faebdf5c3c61a2835fa628d8291c7e785f22757"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/KpiCard.tsx",
+          "sha": "a7ba4e082d6ace841d641e2b82169bc04d761e7e"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/KpiGrid.tsx",
+          "sha": "da6245eaaa313ca93fc8b6db0fbf4947ef5ff041"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/PendingActionsList.tsx",
+          "sha": "ffbd2b9472657ee6c8f7f0e3f4994ca658315892"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/PipelineFunnel.tsx",
+          "sha": "708d3b79d0eba31cb6157ca221a23d2f9cbb0505"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/ProgressBar.tsx",
+          "sha": "3189c249970b023e478391d1b1527aa33e047380"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/ProjectProgressRow.tsx",
+          "sha": "02851ca390bedd27e869577dd84952f4fa9eb1a9"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/SectionHeader.tsx",
+          "sha": "8225ff39f918206b5b1c039f1024cd7b029c79ad"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/StatusBadge.tsx",
+          "sha": "14338a1dd26ea6a7d23ce85a0c025297d5c67685"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/TicketCard.tsx",
+          "sha": "51e08cd8cef635240b75ce6a7fd061fa55debc86"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/Toast.tsx",
+          "sha": "bdcb32365f5d2aa81616c97bf5d65ded1bb3a380"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/TopClientRow.tsx",
+          "sha": "061c925a0d2eb2d79e2282b1d86de081eb86a058"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/TopClientsPanel.tsx",
+          "sha": "d926d9cca35fdba0ffb6265d0626fa5dd54fff69"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/TopClientsTable.tsx",
+          "sha": "969d434b68f0f9dab7d5efc803c8fa3b50269c2a"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/UrgencyBadge.tsx",
+          "sha": "4477017152574632a59af36be3a776a02da95924"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/components/WorkspaceHeader.tsx",
+          "sha": "54f3c8f8dbb605c2505f49b791e09a4d464212d0"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/docs/01-ui-map.md",
+          "sha": "1f34acadc84f2e07597a49ac6dd325000c833bb3"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/docs/02-roadmap.md",
+          "sha": "27a35ef5fcbda83eaed41bf5ed238a81a32aaccb"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/docs/03-spec.md",
+          "sha": "93a7b5426c2e597f2b122cfa8ef911181e3c2b44"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/hooks/useCentroMandoData.ts",
+          "sha": "d7608a49330422e786966f400e293bfcfb1d8470"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/hooks/useClientSelection.ts",
+          "sha": "dd16a859709d565c5e311b9ee03068dece462932"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/hooks/useDateRange.ts",
+          "sha": "4171d5f8250b778d4440521a35381c142f45e8b0"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/hooks/useDemoCentroMandoData.ts",
+          "sha": "92b1fe3331a4c29f9df17b9215267ab9f3523e64"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/hooks/useToast.ts",
+          "sha": "11978ad02728696395848e4cfccadf5db7095d12"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/index.ts",
+          "sha": "5632dce016a4e86b2ff7f02cbf23cb7f7ea47f70"
+        },
+        {
+          "path": "apps/web/src/workspaces/35-centro-mando/types.ts",
+          "sha": "26f97a0b13df1712451596f7a60bf6c8f23639a6"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "studio",
+      "status": "newer-branch-variant",
+      "ref": "feat/agntia-demo-ui-lab-preview"
+    },
+    {
+      "id": "knowledge",
+      "status": "divergent-variants"
+    },
+    {
+      "id": "chat-css",
+      "status": "duplicate-conflict"
+    },
+    {
+      "id": "launcher",
+      "status": "generic-template-not-individual-workspace"
+    },
+    {
+      "id": "meta-apps",
+      "status": "latest-entrypoints-bundled-not-browser-certified"
+    }
+  ]
+}
