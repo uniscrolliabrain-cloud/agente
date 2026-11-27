@@ -1,3 +1,4 @@
+import MetaDock from "../smart-ux/MetaDock";
 // AGNTIA_CODE_V1 - tercer clon del demo.
 // Plataforma de IA coding y bitácora conectada a GitHub, Vercel y Cloudflare.
 // Los datos vienen de los 17 repos reales de uniscrolliabrain-cloud, leídos de
@@ -1586,7 +1587,8 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
 
   return (
     <RepoCtx.Provider value={repo}>
-      <div className="ac-root" role="dialog" aria-modal="true" aria-label="Agntia Code">
+      <div className="ac-root meta-dock-root" role="dialog" aria-modal="true" aria-label="Agntia Code">
+      <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_ac"/>
         <button
           type="button"
           className={"ac-scrim" + (drawer ? " is-on" : "")}
