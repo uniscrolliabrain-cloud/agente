@@ -1,12 +1,16 @@
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
-import { OPENROUTER_BASE_URL, type LaneProfile } from "../llm-config.ts";
+import { META_BASE_URL, OPENROUTER_BASE_URL, type LaneProfile } from "../llm-config.ts";
 import type { ProviderSpec } from "../kernel/config/provider-spec.ts";
 import { normalizeModelSpec } from "./model-chain.ts";
 /** Per-instance clients; no mutation of provider globals across concurrent lanes. */
 export function languageModelForProfile(profile: LaneProfile, transport?: typeof fetch) {
   const options = { apiKey: profile.apiKey, ...(transport ? { fetch: transport } : {}) };
+  if (profile.provider === "meta") {
+    if ((profile.baseUrl ?? META_BASE_URL).replace(/\/+$/, "") !== META_BASE_URL) throw Error("META_ENDPOINT_INVALID");
+    return createOpenAI({ ...options, baseURL: META_BASE_URL }).chat(profile.model);
+  }
   if (profile.provider === "openrouter" || profile.provider === "openai")
     return createOpenAI({
       ...options,

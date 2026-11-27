@@ -40,6 +40,7 @@ export function envApiKeyFor(spec: string): string | undefined {
   const provider = normalizeModelSpec(spec).split("/")[0]?.toLowerCase();
   const read = (name: string) => process.env[name]?.trim() || undefined;
   if (provider === "openai") return read("OPENAI_API_KEY") ?? read("OPEN_ROUTER_API_KEY");
+  if (provider === "meta") return read("MUSE_API_KEY");
   if (provider === "anthropic") return read("ANTHROPIC_API_KEY");
   if (provider === "google" || provider === "gemini") return read("GOOGLE_API_KEY") ?? read("GEMINI_API_KEY");
   if (provider === "minimax") return read("MINIMAX_API_KEY");

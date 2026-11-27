@@ -20,7 +20,7 @@ import type {
 
 import { laneEnvironment } from "../../llm-config.ts";
 
-type Provider = "google" | "anthropic" | "openai" | "openrouter";
+type Provider = "google" | "anthropic" | "openai" | "openrouter" | "meta";
 
 function boolEnv(name: string, fallback: boolean): boolean {
   const raw = process.env[name];
@@ -37,7 +37,7 @@ function numEnv(name: string, fallback: number): number {
 
 function providerEnv(name: string, fallback: Provider): Provider {
   const raw = process.env[name]?.trim().toLowerCase();
-  if (raw === "google" || raw === "anthropic" || raw === "openai" || raw === "openrouter") {
+  if (raw === "google" || raw === "anthropic" || raw === "openai" || raw === "openrouter" || raw === "meta") {
     return raw;
   }
   return fallback;

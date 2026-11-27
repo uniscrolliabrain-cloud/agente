@@ -1,4 +1,5 @@
 import "./config.ts";
+import { configuredLaneProfile } from "./llm-config.ts";
 import { currentTenantScope } from "./tenant-scope.ts";
 import { HttpAgent } from "@ag-ui/client";
 import {
@@ -13,15 +14,17 @@ import type { AgentService } from "./engine/service.ts";
 import { CognitionV2ChatAgent } from "./engine/cognition/v2/chat-agent.ts";
 
 export function agentConfigured(config: Config) {
+  let fastConfigured = false;
+  try { fastConfigured = Boolean(configuredLaneProfile("fast")); } catch { /* invalid lane stays unavailable */ }
   return (
     config.agentBackend === "sample" ||
     (config.agentBackend === "agui"
       ? Boolean(config.agentUrl)
       : Boolean(
-          config.model &&
+          fastConfigured || (config.model &&
             (process.env.OPENAI_API_KEY ||
               process.env.ANTHROPIC_API_KEY ||
-              process.env.GOOGLE_API_KEY),
+              process.env.GOOGLE_API_KEY)),
         ))
   );
 }

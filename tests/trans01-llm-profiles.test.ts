@@ -23,21 +23,37 @@ test("Slow selects DeepSeek on the old OpenRouter account and never takes JEV's 
   );
 });
 
-test("Muse presence alone cannot send its key to an unrelated provider or guessed endpoint", () => {
-  assert.throws(() => requireLaneProfile("fast", { MUSE_API_KEY: "meta-private" }), /UNCONFIGURED/);
-  assert.equal(
-    laneEnvironment("fast", { FAST_LLM_PROVIDER: "google", FAST_LLM_MODEL: "fixture", MUSE_API_KEY: "meta-private" })
-      .apiKey,
-    undefined,
+test("Muse defaults to the documented direct Meta Contributor model and never lends its key to another provider", () => {
+  assert.deepEqual(requireLaneProfile("fast", { MUSE_API_KEY: "meta-private" }), {
+    provider: "meta",
+    model: "muse-spark-1.3-contributor",
+    apiKey: "meta-private",
+    baseUrl: "https://api.meta.ai/v1",
+  });
+  for (const provider of ["google", "openrouter", "openai"])
+    assert.equal(
+      laneEnvironment("fast", { FAST_LLM_PROVIDER: provider, FAST_LLM_MODEL: "fixture", MUSE_API_KEY: "meta-private" })
+        .apiKey,
+      undefined,
+    );
+  assert.throws(
+    () =>
+      requireLaneProfile("fast", {
+        FAST_LLM_PROVIDER: "meta",
+        FAST_LLM_BASE_URL: "https://openrouter.ai/api/v1",
+        MUSE_API_KEY: "meta-private",
+      }),
+    /META_ENDPOINT_INVALID/,
   );
-  assert.equal(
-    requireLaneProfile("fast", {
-      FAST_LLM_PROVIDER: "openai",
-      FAST_LLM_MODEL: "fixture-muse",
-      FAST_LLM_BASE_URL: "https://muse.invalid.example/v1",
-      MUSE_API_KEY: "meta-private",
-    }).apiKey,
-    "meta-private",
+  assert.throws(
+    () =>
+      languageModelForProfile({
+        provider: "meta",
+        model: "muse-spark-1.3-contributor",
+        apiKey: "meta-private",
+        baseUrl: "https://unrelated.invalid/v1",
+      }),
+    /META_ENDPOINT_INVALID/,
   );
 });
 
@@ -57,15 +73,7 @@ test("concurrent compatible endpoints use separate clients, credentials and mode
   };
   const globalsBefore = [process.env.OPENAI_API_KEY, process.env.OPENAI_BASE_URL];
   const slow = languageModelForProfile(requireLaneProfile("slow", { OPEN_ROUTER_API_KEY: "slow-only" }), transport);
-  const fast = languageModelForProfile(
-    requireLaneProfile("fast", {
-      FAST_LLM_PROVIDER: "openai",
-      FAST_LLM_MODEL: "explicit-fast",
-      FAST_LLM_BASE_URL: "https://muse.invalid.example/v1",
-      MUSE_API_KEY: "fast-only",
-    }),
-    transport,
-  );
+  const fast = languageModelForProfile(requireLaneProfile("fast", { MUSE_API_KEY: "fast-only" }), transport);
   await Promise.all(
     [slow, fast].map((model) =>
       model.doGenerate({ prompt: [{ role: "user", content: [{ type: "text", text: "synthetic" }] }] }),
@@ -74,7 +82,7 @@ test("concurrent compatible endpoints use separate clients, credentials and mode
   assert.deepEqual(
     calls.sort((a, b) => a.key.localeCompare(b.key)),
     [
-      { url: "https://muse.invalid.example/v1/chat/completions", key: "Bearer fast-only", model: "explicit-fast" },
+      { url: "https://api.meta.ai/v1/chat/completions", key: "Bearer fast-only", model: "muse-spark-1.3-contributor" },
       {
         url: "https://openrouter.ai/api/v1/chat/completions",
         key: "Bearer slow-only",
