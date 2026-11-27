@@ -1,0 +1,184 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-27T11:14:44.221Z",
+  "finishedAt": "2026-11-27T11:20:55.380Z",
+  "durationMs": 371159,
+  "git": {
+    "branch": "integration/trans00-core",
+    "head": "94e9b15da4653d0c9942fa2f7e8f7c1f87b1105d",
+    "dirty": 0
+  },
+  "ok": true,
+  "failed": [],
+  "advisory": [],
+  "runManifest": {
+    "before": {
+      "branch": "integration/trans00-core",
+      "head": "94e9b15da4653d0c9942fa2f7e8f7c1f87b1105d",
+      "dirty": 0
+    },
+    "lockSha256": "1c2851bc2ce1f0eab66ed1fd60b01018d3f56e73dc0124cbaf28e30543fdace0",
+    "nodeVersion": "v24.22.3"
+  },
+  "sourceReportSha256": "aba467902552fe66236ee090c70947e297236582b4bfc0a4b7f42408ddf2e2ed",
+  "steps": [
+    {
+      "name": "typecheck",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 13026,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/typecheck.log",
+      "logSha256": "5cacaa6c84bdd3e11a6645cb5ad49c080b89258f004c92886ec41e43a6aee96c"
+    },
+    {
+      "name": "typecheck:worker",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/apps/worker/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/trans00-core/apps/worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1369,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/typecheck_worker.log",
+      "logSha256": "b8c3e7a30ba62a194b4b96069ccdb1fb3751f6efd2609932f36c6da5d4317cc5"
+    },
+    {
+      "name": "test",
+      "kind": "test",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/node_modules/tsx/dist/cli.mjs --import ./tests/setup.ts --test --test-reporter=tap --test-concurrency=2 --test-timeout=30000 --test-force-exit tests/**/*.test.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 344986,
+      "counters": {
+        "tests": 1131,
+        "pass": 1102,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 24,
+        "todo": 5
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/test.log",
+      "logSha256": "a625d5ff8c526a76881d2f40e35fed99aba416689dbe0c213d63f7ad71d779e2"
+    },
+    {
+      "name": "audit:layers",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/layers.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 217,
+      "counters": {
+        "violaciones": 0
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_layers.log",
+      "logSha256": "4199a975f21d666400eaace21d0195f5a413d77eb83fb29749fc10b0a3b0de6e"
+    },
+    {
+      "name": "audit:bridges",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/bridges.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 887,
+      "counters": {
+        "wired": 16,
+        "total": 16
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_bridges.log",
+      "logSha256": "1cf9cf8250db253c7e9eedf10bc1a96cd3dedb333a549974ceacdd681577fc2c"
+    },
+    {
+      "name": "audit:console",
+      "kind": "audit",
+      "blocking": false,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/no-console.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 287,
+      "counters": {
+        "ocurrencias": 24,
+        "ficheros": 297
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_console.log",
+      "logSha256": "1cb619a9074128847d1b2bbdad71f514f9c6ce79108a7d2b71b457c4ed154724"
+    },
+    {
+      "name": "audit:anchors",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/anchors.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 85,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_anchors.log",
+      "logSha256": "5c2ad3652ad67124fa52cb251aad87d831492a2c77cdfb213fa1e9c1818fc777"
+    },
+    {
+      "name": "audit:contracts",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/contracts.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 9665,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_contracts.log",
+      "logSha256": "38d5a624f01a1bb5c0cfbb3e5ba0912c3284ad5938ce7844746280f4c8f43044"
+    },
+    {
+      "name": "audit:idempotency",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/idempotency.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 400,
+      "counters": {
+        "duplicadas": 222,
+        "huerfanas": 0,
+        "repetidas": 181
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_idempotency.log",
+      "logSha256": "28ee7b738a140830d7f55c1d5c6b990665b98e41d63b5b5f7231d5e0b3bc64f2"
+    },
+    {
+      "name": "audit:tenant-default",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/tenant-default.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 224,
+      "counters": {
+        "permitidas": 161,
+        "prohibidas": 0
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_tenant-default.log",
+      "logSha256": "d534ffdffb5f062763888ea7fb0bafd9f7f901c846888eff77be00e029b1483c"
+    }
+  ],
+  "scope": "Actual full local gate; sanitized environment, synthetic fixtures, no configured provider or PostgreSQL URL. Skipped/TODO are not PASS.",
+  "acceptance": {
+    "repositoryGateOk": true,
+    "decision": "NO_GO",
+    "certification": "NOT_CERTIFIED"
+  }
+}

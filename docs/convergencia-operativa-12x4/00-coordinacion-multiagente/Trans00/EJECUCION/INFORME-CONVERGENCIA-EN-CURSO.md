@@ -1,0 +1,11 @@
+# Convergencia horizontal — checkpoint en curso
+
+Gate integral sobre `94e9b15da4653d0c9942fa2f7e8f7c1f87b1105d`, limpio antes y después: 10/10 comprobaciones PASS; tests 1.131, PASS 1.102, FAIL 0, SKIP 24, TODO 5. Typecheck raíz/worker y siete auditorías pasan; contratos sin huérfanos, 16/16 puentes detectados. Esto no demuestra por sí solo comportamiento correcto de todos los circuitos. Comandos, tiempos y hashes en EVIDENCIA-GATE-03.json; logs completos locales `/tmp/trans00-third-full-gate/gate`.
+
+Los gates anteriores fallaron de forma real: el primero detectó PDP ignorado, fixtures Gmail desactualizados y tres contratos sin consumidor; el segundo, dos fixtures del nuevo evento humano. Se corrigieron conservando los oráculos, contratos estrictos y rechazo por defecto. Se archivaron ambos informes completos antes de repetir. C15 valida el tercer gate y mantiene NO_GO por las condiciones de certificación pendientes.
+
+Avances posteriores, fuera del SHA de ese gate: Trans04 preflight estricto/JSON/perfiles sin divulgar valores (6/6 PASS); Trans02 registro de ontología ligado a nombre/versión y forma persistida (5/5 PASS). Trans01 prueba con LOGIN real y factory normal (1/1 PASS) confirma el rechazo esperado por falta de permisos de schema: no certifica runtime restringido. Los informes propios detallan código, límites y evidencias. No sumar estas suites solapadas.
+
+Las seis campañas siguen abiertas. Pendientes internos prioritarios: arranque sin migración con rol restringido y pruebas tenant/actor reales; autorización durable de observaciones Slow; persistencia longitudinal, journal consumidor y serving; evidencia de escala/ablación; provisión con fencing y recuperación; manifiesto/inyección de configuración y CI equivalente; telemetría completa y verificación de los circuitos integrados. Pendientes externos separados: contratos/sandbox/costes de proveedores y audio físico, configuración de delegaciones y observación autorizada. No se requiere producción para continuar los pendientes internos.
+
+Se preservan campañas y documentación originales. No merge a main, tags, despliegue, llamadas pagadas, secretos reales ni cambios en Supabase. Publicación incremental en exec/Trans01–06 y integration/trans00-core; ninguna campaña nueva de parches.
