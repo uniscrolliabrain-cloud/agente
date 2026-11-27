@@ -67,13 +67,14 @@ export function SampleBanner({
   );
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+export function ErrorState({ message, onRetry, retainingData = false }: { message: string; onRetry: () => void; retainingData?: boolean }) {
   return (
     <div className="cce-error" role="alert">
       <p style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <AlertTriangle size={16} aria-hidden="true" />
         {message}
       </p>
+      {retainingData && <p className="cce-retained-data">Se muestran los últimos datos disponibles; no se han podido actualizar.</p>}
       <button type="button" className="cce-btn cce-btn--primary" onClick={onRetry}>
         <RefreshCw size={14} aria-hidden="true" /> Reintentar
       </button>

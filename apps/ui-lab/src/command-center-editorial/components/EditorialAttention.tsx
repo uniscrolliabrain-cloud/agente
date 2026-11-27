@@ -2,19 +2,14 @@
 // (`onReviewTask`, ApprovalInbox): aquí no se aprueba nada directamente. Un
 // fallo solo se abre; no se ofrece "reintentar" porque la vista original no lo
 // tiene y no se inventan acciones de negocio.
+import { ChangeMark } from "../PresentationChanges";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import type { CompanyTask } from "../../../../web/src/api/company";
 import { relativeTime } from "../../../../web/src/lib/format";
-import { humanKind, isWaiting, statusLabel, statusTone } from "../../../../web/src/components/command-center/labels";
+import { humanKind, isWaiting, statusLabel } from "../../../../web/src/components/command-center/labels";
 import { SectionHeader } from "./EditorialStates";
+import { taskToneClass } from "./task-presentation";
 
-const TONE_CLASS: Record<string, string> = {
-  live: "cce-tag--live",
-  waiting: "cce-tag--warn",
-  failed: "cce-tag--danger",
-  done: "cce-tag--ok",
-  idle: "",
-};
 
 export function AttentionCard({
   task,
@@ -33,15 +28,15 @@ export function AttentionCard({
   return (
     <article className={`cce-card ${failed ? "cce-card--alert" : ""}`}>
       <div className="cce-card-top">
-        <span className={`cce-tag ${TONE_CLASS[statusTone(task.status)] ?? ""}`.trim()}>
+        <span className={`cce-tag ${taskToneClass(task.status)}`.trim()}>
           {statusLabel(task.status)}
         </span>
         <span className="cce-row-meta">{relativeTime(task.updatedAt) || "sin fecha"}</span>
       </div>
-      <h3>{task.title}</h3>
+      <h3>{task.title}<ChangeMark observation={`task:${task.id}`} /></h3>
       <p className="cce-card-context">
         {humanKind(task.kind)} · {who}
-        {failed ? " · revisa el error antes de relanzar" : isWaiting(task.status) ? " · trabajo preparado" : ""}
+        {failed ? " · revisa el error antes de relanzar" : task.status === "waiting_approval" ? " · pendiente de autorización" : isWaiting(task.status) ? " · pendiente de información" : ""}
       </p>
       <div className="cce-card-actions">
         {canReview && (
@@ -69,11 +64,13 @@ export function AttentionCard({
 
 export function EditorialAttention({
   tasks,
+  totalAttention,
   whoFor,
   onOpenTask,
   onReviewTask,
 }: {
   tasks: CompanyTask[];
+  totalAttention: number;
   whoFor: (task: CompanyTask) => string;
   onOpenTask?: ((taskId: string) => void) | undefined;
   onReviewTask?: ((taskId: string) => void) | undefined;
@@ -85,14 +82,20 @@ export function EditorialAttention({
         icon={<AlertTriangle size={17} aria-hidden="true" />}
         title="Requiere tu atención"
         sub={
-          tasks.length === 0
-            ? "Nada pendiente"
-            : `${tasks.length} ${tasks.length === 1 ? "asunto abierto" : "asuntos abiertos"}`
+          totalAttention > tasks.length
+            ? `${tasks.length} de ${totalAttention} asuntos abiertos en el listado reciente`
+            : tasks.length === 0
+              ? "Nada pendiente"
+              : `${tasks.length} ${tasks.length === 1 ? "asunto abierto" : "asuntos abiertos"}`
         }
       />
       {tasks.length === 0 ? (
         <div className="cce-empty">
-          <CheckCircle2 size={16} aria-hidden="true" /> Nada esperando tu decisión ahora mismo.
+          {totalAttention > 0 ? (
+            <><AlertTriangle size={16} aria-hidden="true" /> Hay asuntos pendientes fuera del listado reciente.</>
+          ) : (
+            <><CheckCircle2 size={16} aria-hidden="true" /> Nada esperando tu decisión ahora mismo.</>
+          )}
         </div>
       ) : (
         <div className="cce-grid">

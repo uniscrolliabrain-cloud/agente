@@ -1,6 +1,7 @@
 // En marcha y trabajo cerrado. Se mantienen las dos secciones de la vista
 // original: las tarjetas de ejecución y la trazabilidad de lo terminado con su
 // acción de "Ver prueba" solo cuando existe callback real.
+import { ChangeMark } from "../PresentationChanges";
 import { ArrowUpRight, CheckCircle2, Clock, Play } from "lucide-react";
 import type { CompanyTask } from "../../../../web/src/api/company";
 import { relativeTime } from "../../../../web/src/lib/format";
@@ -36,7 +37,7 @@ export function EditorialRunning({
                 <span className="cce-tag cce-tag--live">En curso</span>
                 <span className="cce-row-meta">{relativeTime(task.updatedAt) || "sin fecha"}</span>
               </div>
-              <h3>{task.title}</h3>
+              <h3>{task.title}<ChangeMark observation={`task:${task.id}`} /></h3>
               <p className="cce-card-context">
                 {humanKind(task.kind)} · {whoFor(task)}
               </p>
@@ -84,7 +85,7 @@ export function EditorialDone({
                   {who.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="cce-timeline-body">
-                  <span className="cce-timeline-title">{task.title}</span>
+                  <span className="cce-timeline-title">{task.title}<ChangeMark observation={`task:${task.id}`} /></span>
                   <span className="cce-timeline-meta">
                     {who} · {humanKind(task.kind)} · {relativeTime(task.updatedAt) || "sin fecha"}
                   </span>

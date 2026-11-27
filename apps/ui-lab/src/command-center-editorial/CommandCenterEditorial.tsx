@@ -13,6 +13,7 @@ import SampleDashboard from "../../../web/src/components/command-center/SampleDa
 import { ROLE_LABEL, isAttention, type CommandFilter } from "../../../web/src/components/command-center/labels";
 import { relativeTime } from "../../../web/src/lib/format";
 import { EditorialFrame } from "./EditorialFrame";
+import { PresentationChanges } from "./PresentationChanges";
 import { EditorialAttention } from "./components/EditorialAttention";
 import { EditorialBriefing } from "./components/EditorialBriefing";
 import { EditorialFeed } from "./components/EditorialFeed";
@@ -162,6 +163,7 @@ export function CommandCenterEditorial({
 
   return (
     <EditorialFrame>
+      <PresentationChanges overview={!showSample && !error ? overview : null}>
       <div className="cce-view">
         <EditorialHero
           tenantName={overview?.tenant.name ?? "tu empresa"}
@@ -177,9 +179,10 @@ export function CommandCenterEditorial({
 
         {notice && <Notice text={notice} onClose={() => setNotice(null)} />}
 
-        {error && (
+        {error && overview && (
           <ErrorState
             message={error}
+            retainingData
             onRetry={() => {
               setNotice(null);
               onRefresh();
@@ -231,6 +234,7 @@ export function CommandCenterEditorial({
             {show.attention && (
               <EditorialAttention
                 tasks={attention}
+                totalAttention={overview.tasks.waiting + overview.tasks.failed}
                 whoFor={whoFor}
                 onOpenTask={openTask}
                 onReviewTask={reviewTask}
@@ -267,6 +271,7 @@ export function CommandCenterEditorial({
           </>
         )}
       </div>
+      </PresentationChanges>
 
       {agentModal && (
         <AgentCreateModal
