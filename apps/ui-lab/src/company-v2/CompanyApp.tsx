@@ -1,3 +1,4 @@
+import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
 // TU_EMPRESA_V1 - andamio de la meta-app.
 // Clon del shell de AgntiaPro abierto desde Ajustes → Tu Empresa. Todo el
@@ -457,7 +458,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<string[] | null>(null);
   const [chats, setChats] = useState<Chat[]>(SEED_CHATS);
   const [chatId, setChatId] = useState<string | null>(null);
-  const [chatsOpen, setChatsOpen] = useState(true);
+  
   const [messages, setMessages] = useState<Record<string, ChatTurn[]>>({});
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [thinking, setThinking] = useState<string | null>(null);
@@ -479,7 +480,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
     ]);
     setMessages((prev) => ({ ...prev, [id]: [] }));
     setChatId(id);
-    setChatsOpen(true);
+
     setDrawer(false);
   };
 
@@ -539,7 +540,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
 
   const openChat = (chat: Chat) => {
     setChatId(chat.id);
-    setChatsOpen(true);
+
     setDrawer(false);
   };
 
@@ -736,55 +737,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="co-chats">
-          <button
-            type="button"
-            className="co-chats-head"
-            aria-expanded={chatsOpen}
-            onClick={() => setChatsOpen((value) => !value)}
-          >
-            <span>
-              <MessageSquare size={13} /> Conversaciones <em>{chats.length}</em>
-            </span>
-            <ChevronDown size={13} className={chatsOpen ? "" : "is-closed"} />
-          </button>
-          {chatsOpen && (
-            <div className="co-chats-list">
-              {IDEAS.map((idea) => {
-                const mine = chats.filter((c) => c.idea === idea.n);
-                if (!mine.length) return null;
-                return (
-                  <div className="co-chat-group" key={idea.id}>
-                    <small>
-                      <span className="co-idea-dot" data-idea={idea.n} /> {idea.short}
-                    </small>
-                    {mine.map((chat) => (
-                      <button
-                        type="button"
-                        key={chat.id}
-                        className={"co-chat" + (chat.id === chatId ? " is-active" : "")}
-                        onClick={() => {
-                          setChatId(chat.id);
-                          setDrawer(false);
-                        }}
-                      >
-                        <b>{chat.title}</b>
-                        <span>{chat.preview}</span>
-                        <em>
-                          {chat.when} · {chat.state}
-                        </em>
-                      </button>
-                    ))}
-                  </div>
-                );
-              })}
-              <button type="button" className="co-chat-new" onClick={newChat}>
-                <Plus size={12} /> Nueva conversación
-              </button>
-            </div>
-          )}
-        </div>
-
+        <MetaChats namespace="agntia_company" items={chats} active={chatId} onSelect={id=>{setChatId(id);setDrawer(false)}} onRename={(id,title)=>setChats(list=>list.map(c=>c.id===id?{...c,title}:c))} onNew={newChat}/>
         <nav className="co-nav" aria-label="Secciones del compilador">
           {pins.length > 0 && (
             <div className="co-nav-group co-nav-group--pins">
