@@ -3,7 +3,7 @@ import { languageModelForProfile } from "../../language-model.ts";
 import { BuiltInAgent } from "@copilotkit/runtime/v2";
 import { EventType, type BaseEvent, type RunAgentInput } from "@ag-ui/core";
 import type { SlowInferenceInput, SlowProvider } from "./slow.ts";
-import { publicTextEvent } from "./public-text-event.ts";
+import { PublicTextStream } from "./public-text-event.ts";
 import { emptyOntologyProposal } from "../chromatic/card-ontology.ts";
 export interface StreamingProvider {
   stream(input: RunAgentInput, prompt: string, profile: "fast" | "slow", signal: AbortSignal,
@@ -17,11 +17,17 @@ export class CopilotInferenceProvider implements StreamingProvider, SlowProvider
       maxRetries: 0, maxSteps: 1, maxOutputTokens: profile === "fast" ? 2048 : 4096, tools: [], prompt });
     return new Promise((resolve, reject) => {
       let text = "", done = false;
+      const publicStream = new PublicTextStream();
       let subscription: { unsubscribe(): void } | undefined;
       const finish = (error?: Error) => {
         if (done) return; done = true; signal.removeEventListener("abort", abort);
         subscription?.unsubscribe();
-        if (error) { agent.abortRun(); reject(error); } else resolve(text);
+        if (error) { agent.abortRun(); reject(error); }
+        else if (!text) { agent.abortRun(); reject(Error("PROVIDER_EMPTY_RESPONSE")); }
+        else {
+          try { for (const event of publicStream.finish()) onEvent(event); resolve(text); }
+          catch { agent.abortRun(); reject(Error("INVALID_PROVIDER_EVENT")); }
+        }
       };
       const abort = () => finish(Error("INFERENCE_CANCELLED"));
       if (signal.aborted) { abort(); return; }
@@ -31,12 +37,13 @@ export class CopilotInferenceProvider implements StreamingProvider, SlowProvider
           if (done) return;
           try {
             if (event.type === EventType.RUN_ERROR) { finish(Error("PROVIDER_ERROR")); return; }
-            if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") {
-              text += event.delta;
-              if (text.length > 16000) { finish(Error("OUTPUT_TOO_LARGE")); return; }
+            for (const publicEvent of publicStream.push(event)) {
+              if (publicEvent.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in publicEvent && typeof publicEvent.delta === "string") {
+                text += publicEvent.delta;
+                if (text.length > 16000) { finish(Error("OUTPUT_TOO_LARGE")); return; }
+              }
+              onEvent(publicEvent);
             }
-            const publicEvent = publicTextEvent(event);
-            if (publicEvent) onEvent(publicEvent);
           } catch { finish(Error("INVALID_PROVIDER_EVENT")); }
         },
         error: () => finish(Error("PROVIDER_ERROR")), complete: () => finish(),
