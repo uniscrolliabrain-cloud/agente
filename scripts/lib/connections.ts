@@ -34,6 +34,8 @@ export interface ConnectionSpec {
   feature: string;
   /** Nombres aceptados, en orden de preferencia. El primero es el documentado. */
   names: string[];
+  /** Nombres secundarios que la sonda lee y que NO son alternativas de `names`. */
+  companions?: string[];
   need: Requirement;
   note: string;
   probe?: Probe;
@@ -399,6 +401,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Supabase (JWKS del JWT)",
     feature: "auth",
     names: ["SUPABASE_URL"],
+    companions: ["SUPABASE_SECRET_KEY", "SUPABASE_ANON_KEY"],
     need: "required-live",
     note: "Con AUTH_PROVIDER=supabase la firma se verifica contra esta JWKS.",
     probe: supabaseJwks,
@@ -454,6 +457,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "OpenAI o gateway compatible",
     feature: "llm",
     names: ["OPENAI_API_KEY"],
+    companions: ["OPENAI_BASE_URL"],
     need: "optional",
     note: "Alternativa nativa al fallback de OpenRouter.",
     probe: openai,
@@ -508,6 +512,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Google OAuth (Gmail/Calendar/Drive)",
     feature: "google",
     names: ["GOOGLE_CLIENT_ID"],
+    companions: ["GOOGLE_CLIENT_SECRET"],
     need: "optional",
     // GOOGLE_TWO_REDIRECTS_V1 - hay dos vueltas distintas y las dos tienen que
     // estar en el cliente OAuth; registrar solo una deja el otro flujo roto.
@@ -538,6 +543,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "WhatsApp Cloud API token",
     feature: "whatsapp",
     names: ["WHATSAPP_TOKEN", "WHATSAPP_ACCESS_TOKEN"],
+    companions: ["WHATSAPP_GRAPH_VERSION"],
     need: "optional",
     note: "Doppler lo publica como WHATSAPP_ACCESS_TOKEN; el repo lo lee como WHATSAPP_TOKEN.",
     probe: whatsapp,
@@ -656,6 +662,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Grafana",
     feature: "observability",
     names: ["GRAFANA_URL"],
+    companions: ["GRAFANA_SERVICE_ACCOUNT_TOKEN"],
     need: "optional",
     note: "Dashboards de metricas.",
     probe: grafana,
@@ -674,6 +681,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Fly.io",
     feature: "deploy",
     names: ["FLY_API_TOKEN"],
+    companions: ["FLY_APP_NAME"],
     need: "optional",
     note: "Host del API y del worker.",
     probe: fly,
@@ -695,6 +703,68 @@ export const CONNECTIONS: ConnectionSpec[] = [
     need: "optional",
     note: "Login de desarrolladores y automatizaciones.",
   },
+
+  // --- deltas de Trans00 (readiness) ---------------------------------------
+  // Añadidas por el trasplante selectivo de infra/trans00-provider-readiness.
+  // No se duplican las que integration ya tenia con otro id: openrouter-slow
+  // sigue siendo la spec de OPEN_ROUTER_API_KEY y meta-muse la de MUSE_API_KEY.
+  {
+    id: "migrations-db",
+    label: "Postgres de migraciones (rol DDL)",
+    feature: "core",
+    names: ["DATABASE_MIGRATION_URL"],
+    need: "optional",
+    note: "Rol distinto del runtime y DSN distinto de DATABASE_URL. Ningun runner lo lee todavia: es propuesta, no conexion.",
+  },
+  {
+    id: "whatsapp-bindings",
+    label: "Binding de canales WhatsApp",
+    feature: "whatsapp",
+    names: ["WHATSAPP_WEBHOOK_BINDINGS"],
+    need: "optional",
+    note: "Lo lee apps/server/src/engine/whatsapp-inbound.ts; sin el, el inbound no sabe a que tenant/owner/SOP enrutar.",
+  },
+  {
+    id: "vapi-phone",
+    label: "Vapi numero emisor",
+    feature: "voice",
+    names: ["VAPI_PHONE_NUMBER_ID"],
+    need: "optional",
+    note: "Lo lee apps/server/src/voice-routes.ts; sin el, Vapi usa el numero del asistente.",
+  },
+  {
+    id: "vapi-webhook",
+    label: "Vapi secreto del webhook de voz",
+    feature: "voice",
+    names: ["VAPI_WEBHOOK_SECRET"],
+    need: "optional",
+    note: "El contrato lo exige y secrets-check lo rastrea; no hay consumidor en apps/server todavia.",
+  },
+  {
+    id: "metrics-token",
+    label: "Token de scrapeo de metricas",
+    feature: "observability",
+    names: ["METRICS_TOKEN"],
+    need: "optional",
+    note: "apps/server/src/metrics-exporter.ts lo exige para servir /metrics fuera de admin; sin el, la exposicion cae a solo-admin.",
+  },
+  {
+    id: "worker-token",
+    label: "Token del browser worker",
+    feature: "worker",
+    names: ["WORKER_TOKEN"],
+    need: "optional",
+    note: ">=32 caracteres; lo leen el worker y sus rutas. Es generable, no aprovisionable.",
+  },
+];
+
+/**
+ * Todos los nombres que el registro conoce: alternativas y companeras.
+ * Es la fuente unica del contrato de campana (scripts/trans-provider-readiness.mjs);
+ * si un nombre nuevo no esta aqui ni en CAMPAIGN_ONLY, el contrato falla.
+ */
+export const CONNECTION_NAMES: string[] = [
+  ...new Set(CONNECTIONS.flatMap((spec) => [...spec.names, ...(spec.companions ?? [])])),
 ];
 
 export interface Resolution {

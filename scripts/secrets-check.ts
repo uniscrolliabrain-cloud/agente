@@ -71,6 +71,7 @@ const SECRETS: Secret[] = [
   { name: "SLOW_LLM_API_KEY", need: "optional", group: "kernel", note: "key de la velocidad 'razona en background'" },
   { name: "EMBEDDINGS_LLM_API_KEY", need: "optional", group: "kernel", note: "embeddings de RAG; si falta usa la fast" },
   { name: "WORKER_TOKEN", need: "optional", group: "worker", note: ">=32 chars; browser worker local" },
+  { name: "METRICS_TOKEN", need: "optional", group: "observability", note: "token del scraper de /metrics; sin el, la exposicion cae a solo-admin" },
   { name: "BROWSER_WORKER_URL", need: "optional", group: "worker", note: "debe ser loopback si el worker corre en el host" },
 
   // --- canales (campanas siguientes) --------------------------------------
@@ -265,6 +266,15 @@ if (includes("observability") && Boolean(present("GRAFANA_URL")) !== Boolean(pre
 if (includes("core") && present("TOKEN_ENCRYPTION_KEY")) {
   const key = present("TOKEN_ENCRYPTION_KEY")!;
   if (!/^[A-Za-z0-9+/]{43}=$/.test(key) || Buffer.from(key, "base64").length !== 32) coherence.push("TOKEN_ENCRYPTION_KEY_INVALID");
+}
+// SLOW_LANE_PROVIDER_V1 - con el provider en google, OPEN_ROUTER_API_KEY no se
+// usa: el kernel lento no tendria motor propio y nadie lo advertia.
+if ((present("SLOW_LLM_PROVIDER") ?? "").trim().toLowerCase() === "openrouter") {
+  if (!present("SLOW_LLM_API_KEY") && !present("OPEN_ROUTER_API_KEY")) {
+    coherence.push(
+      "SLOW_LLM_PROVIDER=openrouter sin SLOW_LLM_API_KEY ni OPEN_ROUTER_API_KEY: el kernel lento arranca sin motor propio.",
+    );
+  }
 }
 const ok = missingRequired === 0 && (!strict || coherence.length === 0);
 if (args.has("json")) {
