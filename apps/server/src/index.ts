@@ -66,6 +66,11 @@ if (process.env.AGENTE_KERNEL_STORE !== "memory") {
   }
 }
 const { app, agent, bus } = await createApp(db, config);
+// One process lifecycle sink; createApp may be instantiated repeatedly by tests.
+const { startKernelMetricsSink } = await import("./engine/observability/hooks.ts");
+const { globalMetrics: kernelMetrics } = await import("./metrics/registry.ts");
+const kernelTelemetry = startKernelMetricsSink(kernelMetrics);
+
 // C07_EMBEDDED_COGNITION_V2: opt-in development lifecycle; no process starts on import.
 const cognitionWorkerAbort = new AbortController();
 if (agent.cognitionV2 && process.env.COGNITION_V2_EMBEDDED_WORKER === "true") {
@@ -224,7 +229,7 @@ const deferred = new DeferredActions(
 const { AlertService, LogAlertHandler } = await import("./alerts/service.ts");
 const { buildAlertDefinitions } = await import("./alerts/definitions.ts");
 const { globalMetrics: alertMetrics } = await import("./metrics/registry.ts");
-const alerts = new AlertService([new LogAlertHandler()]);
+const alerts = new AlertService([new LogAlertHandler()], 30_000, db);
 for (const def of buildAlertDefinitions({
   metricsSnapshot: () => {
     const httpCounter = (alertMetrics as unknown as { counters?: Map<string, { samples: Map<string, { labels: Record<string,string>; value: number }> }> }).counters?.get("agente_http_requests_total");
@@ -312,6 +317,8 @@ const server = serveHttp
     )
   : null;
 const shutdown = () => {
+  alerts.stop();
+  kernelTelemetry.stop();
   stopBackupScheduler();
   // SHUTDOWN_CLEAR_DEFERRED_V1 - el intervalo de 1 s no se paraba nunca: tras
   // `db.close()` seguia despertando y escribiendo contra el pool cerrado, que es

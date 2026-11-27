@@ -173,7 +173,9 @@ export async function createApp(
   // encontraba nunca. Se unifica en tdb, que es la zona del resto del engine.
   const actions = new ActionService(tdb, {
     execute: (owner, input, connectionId, targetVersion) =>
-      workspace.execute(owner, input, connectionId, targetVersion),
+      workspace.executeEffect(owner, input, connectionId, targetVersion),
+    requireTypedEffect: true,
+    expectedEffectMode: config.mode,
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     connected: (owner) => workspace.connected(owner),
     connection: (owner) => workspace.connection(owner),

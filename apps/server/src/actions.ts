@@ -27,6 +27,7 @@ import {
   type InboundFollowUpMessage,
 } from "./engine/leads.ts";
 import type { GoogleMapsClient } from "../../../packages/integrations/src/google-maps.ts";
+import { workspaceExecutionEffectSchema, type WorkspaceExecutionEffect } from "../../../packages/domain/src/execution-context.ts";
 import { classifyAdapterFailure } from "./engine/execution/outcome.ts";
 
 // ACTIONS_STORE_CONTRACT_V1 - ActionService solo usa estas cinco operaciones.
@@ -134,7 +135,10 @@ interface Options {
     input: ProposalInput,
     connectionId?: string,
     targetVersion?: string,
-  ) => Promise<string>;
+  ) => Promise<string | WorkspaceExecutionEffect>;
+  /** Production composition requires the typed producer receipt. */
+  requireTypedEffect?: boolean;
+  expectedEffectMode?: "sample" | "live";
   prepare?: (
     owner: string,
     input: ProposalInput,
@@ -659,12 +663,29 @@ export class ActionService {
         claimed.connectionId,
         claimed.targetVersion,
       );
+      const parsedEffect = workspaceExecutionEffectSchema.safeParse(result);
+      if (!parsedEffect.success && (this.options.requireTypedEffect || typeof result !== "string"))
+        throw Object.assign(new AppError("Adapter returned no valid effect receipt; reconcile before retrying.", 502), { outcome: "unknown" });
+      const effect = parsedEffect.success ? parsedEffect.data : undefined;
+      if (effect && this.options.expectedEffectMode && effect.mode !== this.options.expectedEffectMode)
+        throw Object.assign(new AppError("Effect receipt mode mismatch; reconcile before retrying.", 502), { outcome: "unknown" });
+      if (effect?.mode === "live") {
+        const evidence = effect.evidence;
+        const family = input.kind === "email.send" ? "gmail" : input.kind.startsWith("calendar.") ? "calendar" : "drive";
+        const operation = input.kind.split(".")[1];
+        if (evidence.family !== family || (evidence.family !== "gmail" && evidence.operation !== operation) ||
+            (evidence.family === "drive" && "fileId" in input.data && evidence.fileId !== input.data.fileId) ||
+            (evidence.family === "calendar" && "eventId" in input.data && evidence.eventId !== input.data.eventId))
+          throw Object.assign(new AppError("Effect receipt does not match the reviewed operation; reconcile before retrying.", 502), { outcome: "unknown" });
+      }
+      const summary = effect?.summary ?? (typeof result === "string" ? result : "Unknown effect");
       finished = {
         ...claimed,
         status: "succeeded",
-        result,
+        result: summary,
+        ...(effect ? { effectReceipt: effect } : {}),
         provider: "google",
-        providerResult: result,
+        providerResult: summary,
         settledAt: new Date(this.now()).toISOString(),
         executedAt,
         ...(decidedBy ? { approvedBy: decidedBy } : {}),

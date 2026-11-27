@@ -1294,12 +1294,8 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
       presenterText = "";
     }
     void presenterText;
-    // B-13 - Promoter con memory+graph para escritura directa (ademas de persistPromotionDestinations).
-    const result = await new Promoter({
-      kernel: this.service.kernel,
-      memory: this.service.memory,
-      graph: this.service.graph,
-    }).promote(ctx, turnId);
+    // Classify once; persistence below owns the actual memory write.
+    const result = await new Promoter({ kernel: this.service.kernel }).promote(ctx, turnId);
     // CONVERSATION_META_EVALUATE_CALLSITE_V1
     try {
       const { Meta } = await import("../kernel/observers/meta.ts");
@@ -1328,27 +1324,7 @@ let kernelCtx: import("../kernel/index.ts").KernelContext | KernelContextPort | 
           .persistPromotionDestinations(this.owner, ctx, turnId, result.destinations, "kernel")
           .catch(() => {});
       }
-      // KERNEL_PROMOTE_PERSIST_V1 - si el promotor dice destinos, escribimos.
-      // Hoy solo "memory" tiene un destino real: AgentMemory. Business graph
-      // y audit ya estan cubiertos por el kernel.
-      if (result?.destinations.memory.length) {
-        const thoughts = await this.service.kernel.thoughtsOf(ctx, turnId);
-        for (const memoryId of result.destinations.memory) {
-          const thought = thoughts.find((th) => th.id === memoryId);
-          if (!thought) continue;
-          const text =
-            typeof thought.content === "string"
-              ? thought.content
-              : JSON.stringify(thought.content);
-          if (!text.trim()) continue;
-          await this.service.memory
-            .remember(this.owner, text, {
-              source: `kernel:${turnId}:${thought.role}`,
-              category: "proceso",
-            })
-            .catch(() => {});
-        }
-      }
+
     } catch {
       // KERNEL_NONFATAL_V1 - el kernel no puede romper el chat.
     }

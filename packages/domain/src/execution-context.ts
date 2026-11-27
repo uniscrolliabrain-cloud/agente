@@ -29,3 +29,16 @@ export const executionContextSchema = z.object({
 
 export type ExecutionRole = z.infer<typeof executionRoleSchema>;
 export type ExecutionContext = z.infer<typeof executionContextSchema>;
+// Producer contract delivered by Trans03; acceptance never means delivery.
+const receiptId = z.string().trim().min(1).max(2000);
+export const workspaceExecutionEffectSchema = z.discriminatedUnion("mode", [
+  z.strictObject({ mode: z.literal("sample"), state: z.literal("simulated"), summary: z.string().min(1).max(16000) }),
+  z.strictObject({ mode: z.literal("live"), state: z.literal("accepted"), summary: z.string().min(1).max(16000),
+    evidence: z.discriminatedUnion("family", [
+      z.strictObject({ family: z.literal("gmail"), messageId: receiptId, threadId: receiptId.optional() }),
+      z.strictObject({ family: z.literal("calendar"), calendarId: receiptId, eventId: receiptId, operation: z.enum(["create", "update", "delete"]) }),
+      z.strictObject({ family: z.literal("drive"), fileId: receiptId, operation: z.enum(["rename", "trash"]) }),
+    ]),
+  }),
+]);
+export type WorkspaceExecutionEffect = z.infer<typeof workspaceExecutionEffectSchema>;

@@ -169,6 +169,7 @@ export interface ActionProposal {
   createdAt: string;
   expiresAt: string;
   result?: string;
+  effectReceipt?: import("./execution-context.ts").WorkspaceExecutionEffect;
   error?: string;
   // ACTION_PROPOSAL_ATTEMPTS_SCHEMA_V1
   attempts?: number;
