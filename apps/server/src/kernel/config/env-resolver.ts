@@ -56,14 +56,27 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
     const now = Date.now();
     const cached = this.cache.get(tenantId);
     if (cached && cached.expiresAt > now) return cached.config;
+    const fastProvider = providerEnv("FAST_LLM_PROVIDER", "google");
+    const slowProvider = providerEnv("SLOW_LLM_PROVIDER", "google");
     const fastKey = process.env.FAST_LLM_API_KEY?.trim() ?? "";
-    const slowKey = process.env.SLOW_LLM_API_KEY?.trim() ?? "";
+    // SLOW_LANE_OPENROUTER_V1 - la cuenta lenta de OpenRouter se publica como
+    // OPEN_ROUTER_API_KEY (cuenta propia de Trans02/05/06). Se lee aqui, no en el
+    // contrato: hasta ahora el nombre existia en el contrato y el kernel solo
+    // miraba SLOW_LLM_API_KEY, asi que el slow lane nunca usaba esa cuenta.
+    // Reglas: manda SLOW_LLM_API_KEY si existe; la cuenta propia solo entra con
+    // SLOW_LLM_PROVIDER=openrouter; y nunca se cae a OPENROUTER_API_KEY, que es
+    // la cuenta JEV y tiene su propio limite de gasto.
+    const slowKey =
+      process.env.SLOW_LLM_API_KEY?.trim() ||
+      (slowProvider === "openrouter" ? (process.env.OPEN_ROUTER_API_KEY?.trim() ?? "") : "");
     // FIX_2_VALIDATE_KEYS_V1 - warn si las API keys estan vacias.
     if (!fastKey) {
       console.warn(`[kernel/env-resolver] tenant ${tenantId}: FAST_LLM_API_KEY vacia. Chat usara chain global.`);
     }
     if (!slowKey) {
       console.warn(`[kernel/env-resolver] tenant ${tenantId}: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.`);
+    } else if (!process.env.SLOW_LLM_API_KEY?.trim() && slowProvider === "openrouter") {
+      console.info(`[kernel/env-resolver] tenant ${tenantId}: slow lane con OPEN_ROUTER_API_KEY (cuenta propia).`);
     }
     const embeddingsKey =
       process.env.EMBEDDINGS_LLM_API_KEY?.trim() || fastKey || slowKey || "";
@@ -84,13 +97,13 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
     const candidate = {
       tenantId,
       fast: {
-        provider: providerEnv("FAST_LLM_PROVIDER", "google"),
+        provider: fastProvider,
         model: process.env.FAST_LLM_MODEL?.trim() ?? "gemini-3.6-flash",
         apiKey: fastKey,
         ...(process.env.FAST_LLM_BASE_URL?.trim() ? { baseUrl: process.env.FAST_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1
       },
       slow: {
-        provider: providerEnv("SLOW_LLM_PROVIDER", "google"),
+        provider: slowProvider,
         model: process.env.SLOW_LLM_MODEL?.trim() ?? "gemini-3.6-flash",
         apiKey: slowKey,
         ...(process.env.SLOW_LLM_BASE_URL?.trim() ? { baseUrl: process.env.SLOW_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1

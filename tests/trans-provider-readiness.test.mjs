@@ -1,7 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { SPECS, inspect, probe, main } from "../scripts/trans-provider-readiness.mjs";
+import { SPECS, inspect, probe, main, unregisteredNames } from "../scripts/trans-provider-readiness.mjs";
+import { CONNECTIONS } from "../scripts/lib/connections.ts";
 const spec=id=>SPECS.find(s=>s.id===id);
+test("every contract name is registered or explicitly campaign-only",()=>{
+ assert.deepEqual(unregisteredNames(),[]);
+});
+test("the registry keeps the two OpenRouter accounts apart",()=>{
+ const slow=CONNECTIONS.find(c=>c.id==="slow-openrouter");
+ assert.deepEqual(slow.names,["OPEN_ROUTER_API_KEY"]);
+ assert.ok(CONNECTIONS.some(c=>c.names.includes("OPENROUTER_API_KEY")));
+});
 const ok=()=>new Response(null,{status:200});
 test("all 42 identifiers are unique and all campaigns covered",()=>{
  assert.equal(SPECS.length,new Set(SPECS.map(s=>s.id)).size);

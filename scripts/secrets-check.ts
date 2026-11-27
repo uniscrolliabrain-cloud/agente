@@ -50,7 +50,8 @@ const SECRETS: Secret[] = [
   { name: "MODEL", need: "live", group: "llm", note: "'<provider>/<modelo>', p.ej. openai/gpt-4.1-mini" },
   { name: "OPENAI_API_KEY", need: "optional", group: "llm", note: "proveedor principal si MODEL empieza por openai/" },
   { name: "GEMINI_API_KEY", need: "optional", group: "llm", note: "proveedor google/" },
-  { name: "OPENROUTER_API_KEY", need: "optional", group: "llm", note: "fallback OpenAI-compatible; tambien permite modelos gratuitos" },
+  { name: "OPENROUTER_API_KEY", need: "optional", group: "llm", note: "fallback OpenAI-compatible; tambien permite modelos gratuitos (cuenta JEV)" },
+  { name: "OPEN_ROUTER_API_KEY", need: "optional", group: "llm", note: "cuenta propia del slow lane del kernel; solo se lee con SLOW_LLM_PROVIDER=openrouter" },
   { name: "MODEL_FALLBACK", need: "optional", group: "llm", note: "segunda oportunidad cuando el primario falla antes de emitir texto" },
 
   // --- kernel de dos velocidades ------------------------------------------
@@ -60,6 +61,7 @@ const SECRETS: Secret[] = [
   { name: "SLOW_LLM_API_KEY", need: "optional", group: "kernel", note: "key de la velocidad 'razona en background'" },
   { name: "EMBEDDINGS_LLM_API_KEY", need: "optional", group: "kernel", note: "embeddings de RAG; si falta usa la fast" },
   { name: "WORKER_TOKEN", need: "optional", group: "worker", note: ">=32 chars; browser worker local" },
+  { name: "METRICS_TOKEN", need: "optional", group: "observability", note: "token del scraper de /metrics; sin el, la exposicion cae a solo-admin" },
   { name: "BROWSER_WORKER_URL", need: "optional", group: "worker", note: "debe ser loopback si el worker corre en el host" },
 
   // --- canales (campanas siguientes) --------------------------------------
@@ -187,6 +189,15 @@ if (present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
   coherence.push(
     "WHATSAPP_APP_SECRET sin WHATSAPP_VERIFY_TOKEN: Meta no podria completar el handshake del webhook y el numero no quedaria suscrito.",
   );
+}
+// El kernel lento solo usa la cuenta propia de OpenRouter si se lo dicen por
+// provider: con el provider en google, OPEN_ROUTER_API_KEY no hace nada.
+if ((present("SLOW_LLM_PROVIDER") ?? "").trim().toLowerCase() === "openrouter") {
+  if (!present("SLOW_LLM_API_KEY") && !present("OPEN_ROUTER_API_KEY")) {
+    coherence.push(
+      "SLOW_LLM_PROVIDER=openrouter sin SLOW_LLM_API_KEY ni OPEN_ROUTER_API_KEY: el kernel lento arranca sin motor propio.",
+    );
+  }
 }
 // MODEL es "<provider>/<modelo>": sin la key de ese proveedor el motor arranca
 // vacio y el chat no responde. Nadie relacionaba una variable con la otra.

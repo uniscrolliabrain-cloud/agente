@@ -10,8 +10,12 @@
 // Regla: este fichero NOMBRA secretos, nunca los imprime. Las sondas devuelven
 // un detalle sin valor sensible (nombre de la base, email de la cuenta, numero
 // de telefonos) para que el informe sea util sin ser un volcado de credenciales.
-
-import { Client } from "pg";
+//
+// PG_LAZY_IMPORT_V1 - `pg` se importa dentro de la sonda de base de datos y no
+// arriba: este modulo lo importa tambien el contrato offline de campanas
+// (scripts/trans-provider-readiness.mjs), que tiene que funcionar sin
+// node_modules. Con el import estatico, la tabla de nombres era inimportable
+// fuera de un `pnpm install` y por eso existian dos tablas que divergian.
 
 export type Requirement = "required-live" | "optional";
 
@@ -34,6 +38,8 @@ export interface ConnectionSpec {
   feature: string;
   /** Nombres aceptados, en orden de preferencia. El primero es el documentado. */
   names: string[];
+  /** Nombres secundarios que lee la sonda y que NO son alternativas de `names`. */
+  companions?: string[];
   need: Requirement;
   note: string;
   probe?: Probe;
@@ -79,6 +85,7 @@ function describeError(error: unknown): string {
 const database: Probe = async ({ read }) => {
   const connectionString = read("DATABASE_URL")!;
   const loopback = /@(localhost|127\.0\.0\.1|\[::1\])[:/]/.test(connectionString);
+  const { Client } = await import("pg");
   const client = new Client({
     connectionString,
     connectionTimeoutMillis: TIMEOUT_MS,
@@ -257,17 +264,26 @@ const gemini: Probe = async ({ read }) => {
   return { ok: true, detail: `${models.length} modelos disponibles` };
 };
 
-const openrouter: Probe = async ({ read }) => {
-  const { status, body } = await httpJson("https://openrouter.ai/api/v1/key", {
-    headers: { Authorization: `Bearer ${read("OPENROUTER_API_KEY")}` },
-  });
-  if (status !== 200) return { ok: false, detail: `api responde ${status}: ${text(body, 90)}` };
-  const row = (body as { data?: { limit?: number | null; usage?: number } } | null)?.data;
-  return {
-    ok: true,
-    detail: `uso ${row?.usage ?? 0}${row?.limit ? ` / limite ${row.limit}` : " (sin limite)"}`,
+// OPENROUTER_ACCOUNTS_V1 - dos cuentas, dos nombres y ninguna se resuelve por
+// alias de la otra: OPENROUTER_API_KEY es la de JEV y OPEN_ROUTER_API_KEY la del
+// kernel lento. La sonda se fabrica por nombre para que cada una pruebe su
+// propia credencial.
+function openrouterProbe(keyName: string): Probe {
+  return async ({ read }) => {
+    const { status, body } = await httpJson("https://openrouter.ai/api/v1/key", {
+      headers: { Authorization: `Bearer ${read(keyName)}` },
+    });
+    if (status !== 200) return { ok: false, detail: `api responde ${status}: ${text(body, 90)}` };
+    const row = (body as { data?: { limit?: number | null; usage?: number } } | null)?.data;
+    return {
+      ok: true,
+      detail: `uso ${row?.usage ?? 0}${row?.limit ? ` / limite ${row.limit}` : " (sin limite)"}`,
+    };
   };
-};
+}
+
+const openrouter = openrouterProbe("OPENROUTER_API_KEY");
+const slowOpenRouter = openrouterProbe("OPEN_ROUTER_API_KEY");
 
 const openai: Probe = async ({ read }) => {
   const base = (read("OPENAI_BASE_URL") ?? "https://api.openai.com/v1").replace(/\/+$/, "");
@@ -318,11 +334,24 @@ const vercel: Probe = async ({ read }) => {
   return { ok: true, detail: `cuenta ${user?.username ?? "?"}` };
 };
 
+// GRAFANA_AUTHENTICATED_PROBE_V1 - /api/health contesta 200 en cualquier Grafana
+// publico: la sonda decia verde sin probar credencial ni instancia. /api/org
+// exige el token y devuelve la organizacion real que se esta mirando.
 const grafana: Probe = async ({ read }) => {
   const base = read("GRAFANA_URL")!.replace(/\/+$/, "");
-  const { status, body } = await httpJson(`${base}/api/health`);
-  if (status !== 200) return { ok: false, detail: `health responde ${status}` };
-  return { ok: true, detail: `version ${(body as { version?: string } | null)?.version ?? "?"}` };
+  const token = read("GRAFANA_SERVICE_ACCOUNT_TOKEN");
+  if (!token) {
+    return {
+      ok: false,
+      detail: "falta GRAFANA_SERVICE_ACCOUNT_TOKEN: sin credencial la sonda no prueba acceso ni instancia",
+    };
+  }
+  const { status, body } = await httpJson(`${base}/api/org`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (status !== 200) return { ok: false, detail: `api/org responde ${status}: ${text(body, 80)}` };
+  const org = (body as { name?: string } | null)?.name;
+  return { ok: true, detail: `org ${org ?? "?"}` };
 };
 
 const sentryShape: Probe = async ({ read }) => {
@@ -330,7 +359,7 @@ const sentryShape: Probe = async ({ read }) => {
   const parsed = new URL(dsn);
   return {
     ok: Boolean(parsed.host && parsed.username && parsed.pathname.length > 1),
-    detail: `dsn para ${parsed.host}`,
+    detail: `dsn para ${parsed.host} (solo forma: apps/server no trae SDK de Sentry, la recepcion no es verificable)`,
   };
 };
 
@@ -354,6 +383,14 @@ export const CONNECTIONS: ConnectionSpec[] = [
     names: ["BUSINESS_DATABASE_URL"],
     need: "optional",
     note: "query_business de las SOPs. Sin ella las consultas leen la base de la app con rol de escritura.",
+  },
+  {
+    id: "migrations-db",
+    label: "Postgres de migraciones (rol DDL)",
+    feature: "core",
+    names: ["DATABASE_MIGRATION_URL"],
+    need: "optional",
+    note: "Rol distinto del runtime y DSN distinto de DATABASE_URL. Hoy ningun runner lo lee: es propuesta.",
   },
   {
     id: "public-url",
@@ -402,6 +439,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Supabase (JWKS del JWT)",
     feature: "auth",
     names: ["SUPABASE_URL"],
+    companions: ["SUPABASE_SECRET_KEY", "SUPABASE_ANON_KEY"],
     need: "required-live",
     note: "Con AUTH_PROVIDER=supabase la firma se verifica contra esta JWKS.",
     probe: supabaseJwks,
@@ -447,6 +485,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "OpenAI o gateway compatible",
     feature: "llm",
     names: ["OPENAI_API_KEY"],
+    companions: ["OPENAI_BASE_URL"],
     need: "optional",
     note: "Alternativa nativa al fallback de OpenRouter.",
     probe: openai,
@@ -466,6 +505,15 @@ export const CONNECTIONS: ConnectionSpec[] = [
     names: ["SLOW_LLM_API_KEY"],
     need: "optional",
     note: "Cuota separada del razonamiento en background.",
+  },
+  {
+    id: "slow-openrouter",
+    label: "OpenRouter del kernel lento (cuenta propia)",
+    feature: "llm",
+    names: ["OPEN_ROUTER_API_KEY"],
+    need: "optional",
+    note: "No es alias de OPENROUTER_API_KEY (cuenta JEV). env-resolver.ts la lee como slow lane solo con SLOW_LLM_PROVIDER=openrouter.",
+    probe: slowOpenRouter,
   },
   {
     id: "embeddings",
@@ -501,6 +549,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Google OAuth (Gmail/Calendar/Drive)",
     feature: "google",
     names: ["GOOGLE_CLIENT_ID"],
+    companions: ["GOOGLE_CLIENT_SECRET", "GOOGLE_REFRESH_TOKEN"],
     need: "optional",
     // GOOGLE_TWO_REDIRECTS_V1 - hay dos vueltas distintas y las dos tienen que
     // estar en el cliente OAuth; registrar solo una deja el otro flujo roto.
@@ -531,6 +580,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "WhatsApp Cloud API token",
     feature: "whatsapp",
     names: ["WHATSAPP_TOKEN", "WHATSAPP_ACCESS_TOKEN"],
+    companions: ["WHATSAPP_PHONE_ID", "WHATSAPP_GRAPH_VERSION"],
     need: "optional",
     note: "Doppler lo publica como WHATSAPP_ACCESS_TOKEN; el repo lo lee como WHATSAPP_TOKEN.",
     probe: whatsapp,
@@ -567,6 +617,14 @@ export const CONNECTIONS: ConnectionSpec[] = [
     need: "optional",
     note: "Sin el no se puede validar X-Hub-Signature-256: cualquiera podria inyectar mensajes.",
   },
+  {
+    id: "whatsapp-bindings",
+    label: "Binding de canales WhatsApp",
+    feature: "whatsapp",
+    names: ["WHATSAPP_WEBHOOK_BINDINGS"],
+    need: "optional",
+    note: "JSON de canal, tenant, responsable primario y SOP; sin el, el inbound no sabe a quien enrutar.",
+  },
 
   // voz
   {
@@ -585,6 +643,22 @@ export const CONNECTIONS: ConnectionSpec[] = [
     names: ["VAPI_ASSISTANT_ID"],
     need: "optional",
     note: "Asistente concreto que contesta. No viene en el entorno de Doppler.",
+  },
+  {
+    id: "vapi-phone",
+    label: "Vapi numero emisor",
+    feature: "voice",
+    names: ["VAPI_PHONE_NUMBER_ID"],
+    need: "optional",
+    note: "Lo lee apps/server/src/voice-routes.ts; sin el, Vapi usa el numero del asistente.",
+  },
+  {
+    id: "vapi-webhook",
+    label: "Vapi secreto del webhook de voz",
+    feature: "voice",
+    names: ["VAPI_WEBHOOK_SECRET"],
+    need: "optional",
+    note: "Solo con voz entrante habilitada; sin el no se verifica el origen de la llamada.",
   },
   {
     id: "elevenlabs",
@@ -649,9 +723,26 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Grafana",
     feature: "observability",
     names: ["GRAFANA_URL"],
+    companions: ["GRAFANA_SERVICE_ACCOUNT_TOKEN"],
     need: "optional",
-    note: "Dashboards de metricas.",
+    note: "Dashboards de metricas. La sonda usa GRAFANA_SERVICE_ACCOUNT_TOKEN contra /api/org: sin credencial no hay verde.",
     probe: grafana,
+  },
+  {
+    id: "metrics-token",
+    label: "Token de scrapeo de metricas",
+    feature: "observability",
+    names: ["METRICS_TOKEN"],
+    need: "optional",
+    note: "metrics-exporter.ts lo exige para servir /metrics fuera de admin; sin el, la exposicion cae a solo-admin.",
+  },
+  {
+    id: "worker-token",
+    label: "Token del browser worker",
+    feature: "worker",
+    names: ["WORKER_TOKEN"],
+    need: "optional",
+    note: ">=32 caracteres; lo leen el worker y sus rutas. Es generable, no aprovisionable.",
   },
   {
     id: "cloudflare",
@@ -667,6 +758,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Fly.io",
     feature: "deploy",
     names: ["FLY_API_TOKEN"],
+    companions: ["FLY_APP_NAME"],
     need: "optional",
     note: "Host del API y del worker.",
     probe: fly,
@@ -688,6 +780,11 @@ export const CONNECTIONS: ConnectionSpec[] = [
     need: "optional",
     note: "Login de desarrolladores y automatizaciones.",
   },
+];
+
+/** Todos los nombres que el registro conoce: alternativas y companeras. */
+export const CONNECTION_NAMES: string[] = [
+  ...new Set(CONNECTIONS.flatMap((spec) => [...spec.names, ...(spec.companions ?? [])])),
 ];
 
 export interface Resolution {

@@ -1,6 +1,53 @@
 // Supplemental contract for Trans00–06. No runtime authority, no fake success.
 // Explicitly named read-only probes only. No output of secrets or provider payloads.
 import { pathToFileURL } from "node:url";
+// CONTRACT_REGISTRY_LINK_V1 - los nombres de este contrato salen del registro
+// de conexiones del producto (scripts/lib/connections.ts), no de una segunda
+// tabla escrita a mano. Antes habia dos tablas que ya decian cosas distintas:
+// esta no cubria FAST/SLOW/EMBEDDINGS_LLM_API_KEY ni WORKER_TOKEN, y el registro
+// no cubria migraciones ni fixtures. Ahora un nombre nuevo de campana o esta en
+// el registro o se declara aqui como CAMPAIGN_ONLY; si no, el contrato falla.
+import { CONNECTION_NAMES } from "./lib/connections.ts";
+
+export const REGISTRY_NAMES = new Set(CONNECTION_NAMES);
+
+/** Nombres que solo existen para certificar una campana: fixtures y extras. */
+export const CAMPAIGN_ONLY = new Set([
+  "TEST_TENANT_ID",
+  "TEST_OWNER_ID",
+  "GOOGLE_TEST_ACCOUNT_EMAIL",
+  "GOOGLE_TEST_DOCUMENT_ID",
+  "GOOGLE_TEST_SPREADSHEET_ID",
+  "GOOGLE_TEST_PRESENTATION_ID",
+  "GOOGLE_CLOUD_PROJECT",
+  "GOOGLE_CLOUD_LOCATION",
+  "OTEL_EXPORTER_OTLP_ENDPOINT",
+  "OTEL_EXPORTER_OTLP_HEADERS",
+  "SENTRY_AUTH_TOKEN",
+  "SENTRY_ORG",
+  "SENTRY_PROJECT",
+  "GRAFANA_CLOUD_TOKEN",
+  "VERCEL_ORG_ID",
+  "VERCEL_PROJECT_ID",
+  "ANAM_API_KEY",
+  "ANAM_AVATAR_ID",
+  "ANAM_AVATAR_ID_2",
+  "JEV_API_KEY",
+  "MUSE_API_KEY",
+  "ELEVENLABS_VOICE_ID",
+  "SUPABASE_SECRET",
+  "FAST_LLM_MODEL",
+  "SLOW_LLM_MODEL",
+  "EMBEDDINGS_LLM_PROVIDER",
+  "EMBEDDINGS_LLM_MODEL",
+  "RESEND_FROM_EMAIL",
+]);
+
+/** Nombres que este contrato exige y el registro de conexiones no conoce. */
+export function unregisteredNames(){
+ return [...new Set(SPECS.flatMap(s=>s.requirements.flat()))].filter(n=>!REGISTRY_NAMES.has(n)&&!CAMPAIGN_ONLY.has(n));
+}
+
 export const SPECS = [
   {
     "id": "db-runtime",
@@ -719,7 +766,8 @@ export async function main(args,env=process.env){
  if(only.some(id=>!SPECS.some(s=>s.id===id)))throw new Error("Unknown provider id");
  const rows=[];
  for(const spec of SPECS.filter(s=>!only.length||only.includes(s.id)))rows.push(live?await probe(spec,env):inspect(spec,env));
- console.log(JSON.stringify({schemaVersion:1,mode:live?"read-only-probe":"offline-contract",certifiesRuntime:false,rows},null,2));
- return args.includes("--strict")&&rows.some(r=>r.status!=="probe_pass")?1:0;
+ const unregistered=unregisteredNames();
+ console.log(JSON.stringify({schemaVersion:1,mode:live?"read-only-probe":"offline-contract",certifiesRuntime:false,registry:{source:"scripts/lib/connections.ts",names:REGISTRY_NAMES.size,unregistered},rows},null,2));
+ return args.includes("--strict")&&(unregistered.length>0||rows.some(r=>r.status!=="probe_pass"))?1:0;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){try{process.exitCode=await main(process.argv.slice(2));}catch{console.error("Invalid invocation or internal readiness error");process.exitCode=2;}}
