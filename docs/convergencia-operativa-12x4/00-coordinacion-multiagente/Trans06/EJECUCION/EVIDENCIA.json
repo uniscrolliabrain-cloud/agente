@@ -1,29 +1,98 @@
 {
-  "testedCommit": "f3b1b3ec73059b8d3b3aed6218ec6a8bbd0a5c04",
+  "turno": "Trans06/T1-verdad",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "0da268c8ce9a287157c017050c0870321cbfe0d2",
   "state": "PARTIAL_LOCAL",
+  "git": {
+    "branch": "converge/trans00-core",
+    "head": "0da268c8ce9a287157c017050c0870321cbfe0d2",
+    "dirty": 0
+  },
   "commands": {
-    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/trans06-*.test.ts tests/kernel.test.ts tests/kernel-meta-context.test.ts tests/kernel-rules-attention.test.ts tests/kernel-consolidate.test.ts tests/roadmap/b07-meta-hint.test.ts tests/cognition-v2-ontology.test.ts",
-    "typecheck": "corepack pnpm typecheck"
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=60000 --test-force-exit tests/trans06-*.test.ts tests/trans01-truth-integrity.test.ts tests/kernel.test.ts tests/truth-resolver.test.ts",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json",
+    "diagnose": "npx tsx scripts/trans06-truth-diagnose.ts --candidates docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/EJECUCION/diagnostico-sintetico.json --now 2026-11-27T12:00:00Z"
   },
   "tests": {
-    "total": 37,
-    "pass": 37,
+    "total": 36,
+    "pass": 36,
     "fail": 0,
-    "skip": 0
+    "skip": 0,
+    "todo": 0,
+    "suites": 7,
+    "newSuite": "tests/trans06-truth-cases.test.ts",
+    "newSuiteTests": 9
   },
-  "rootAndWorkerTypecheck": 0,
+  "exitCodes": {
+    "tests": 0,
+    "typecheck": 0,
+    "diagnose": 0
+  },
   "logs": {
     "tests": {
-      "path": "/tmp/trans06-clean-sha.log",
-      "sha256": "45801a3d0f6be204d1f1e9726e311abb8180375adcfeb087d6a131ad1805fc2f"
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/EJECUCION/EVIDENCIA/logs/trans06-suites.log",
+      "sha256": "5616674b4a8c354c0ffb64eb4527e303c4644698a93174e939c133fc85450563"
     },
     "typecheck": {
-      "path": "/tmp/trans06-clean-typecheck.log",
-      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/EJECUCION/EVIDENCIA/logs/trans06-tsc.log",
+      "sha256": "ba9ca352081fd3da94a667eeb05cfd0f70a27d6fc898aefb8ad3516963747005"
     },
-    "red-control": {
-      "path": "/tmp/trans06-kernel-red.log",
-      "sha256": "044d6cd343f8b403808192460b3ecf26ac1e3a075232f5e45145498873791d26"
+    "diagnose": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/EJECUCION/EVIDENCIA/logs/trans06-diagnose.log",
+      "sha256": "89cbe0f7fc6a3650fc57658963df766ab290ad3d26c62be8d45aa24ed30fd026"
+    },
+    "exitCodes": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/EJECUCION/EVIDENCIA/logs/trans06-exit.log"
     }
-  }
+  },
+  "claims": {
+    "informe": "INFORME-TRUTH-DIAGNOSTICO.md",
+    "informeCommit": "ab4e7be328cd0b3b46f4fa838bf3fba4238b437e",
+    "informeBlob": "f2744f767f1dde82e6d348d9c2c6a1138823fd56",
+    "blobMatchesCommit": true,
+    "currentBlob": "4bcc283d690a8f43942645e96a594422a0f74e84",
+    "fixCommit": "64f160b3",
+    "fixPrecedesCurrent": true,
+    "total": 8,
+    "fixed": 3,
+    "verifiedTested": 2,
+    "verified": 1,
+    "documentedOnly": 1,
+    "superseded": 1
+  },
+  "truthCases": {
+    "contradiction": "conflicto explicito con perdedor visible; ganador independiente del orden de entrada",
+    "providerAmbiguity": "fallbackReason timeout/proposed no puede ser verified_fact; slowOutputSchema excluye kinds de hecho",
+    "repetition": "50 copias de una inferencia no elevan kind ni confianza; 30 fuentes se acotan a 10 conflictos",
+    "correction": "la correccion gana y el valor superado sigue visible; inferencia obsoleta no desplaza hecho fresco",
+    "authority": "verified_fact exige receipt del mismo tenant; TruthResolver nunca devuelve verified_fact"
+  },
+  "diagnose": {
+    "script": "scripts/trans06-truth-diagnose.ts",
+    "npmScript": "trans06:diagnose",
+    "fixture": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans06/EJECUCION/diagnostico-sintetico.json",
+    "personalData": false,
+    "receipt": "ausente por diseño: TruthCandidate no modela receipt; se declara, no se inventa",
+    "observedAt": "derivado del candidato ganador (fuente + valor); el resolver no lo devuelve",
+    "invalidInput": "exit 2 sin puntuar NaN"
+  },
+  "done": {
+    "claimsContrasted": true,
+    "fourCasesTested": true,
+    "diagnosisExecutable": true,
+    "inferenceNeverEscalates": true,
+    "evidenceWithRealHash": true,
+    "ledgerPromoted": false,
+    "fullGate": false
+  },
+  "limitations": [
+    "El gate integral no se ejecuto: 36 pruebas de campana y kernel no son las 12 fases x 4 pasadas.",
+    "El ledger ESTADO-48-BLOQUES.json no se toca: sus 48 bloques siguen PENDING; un pase no promueve DONE.",
+    "07.01-07.04 siguen NOT_RUN: no hay autorizacion ni datos del owner; el diagnostico se ejercito solo con fixtures sinteticos.",
+    "No existe ruta HTTP que exponga el diagnostico ni que llame a resolveField: no se acredita explotacion.",
+    "La ambiguedad de proveedor se prueba en el contrato (fallbackReason, slowOutputSchema), no contra un proveedor real.",
+    "La persistencia posterior del dato de negocio queda fuera de alcance: resolveField es puro.",
+    "Ningun proveedor externo fue contactado."
+  ],
+  "notes": "Contrasta el informe historico con el codigo vigente, demuestra los cuatro casos de verdad sobre datos sinteticos y entrega un diagnostico ejecutable que declara el receipt ausente en vez de inventarlo. No demuestra el gate integral, ni la verdad sobre datos reales del owner."
 }

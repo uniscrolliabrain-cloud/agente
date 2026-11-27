@@ -1,0 +1,46 @@
+[kernel/env-resolver] tenant default: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant default: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+✔ openTurn + appendThought + closeTurn deja el turno cerrado con thoughts (1405.479897ms)
+✔ appendThought sobre turno cerrado falla (14.104199ms)
+✔ Promoter.promote sobre turno con response produce survivors (39.481167ms)
+✔ StoreAuditStore verifica el hash chain tras varias operaciones (29.905509ms)
+✔ openChildTurn enlaza parent y child (15.959419ms)
+✔ closeTurnAndChildren cierra también los hijos abiertos (19.730568ms)
+✔ future observation cannot amplify reliability above the same current-date scale (0.97124ms)
+✔ resolving one field cannot relabel a candidate from another field (0.23862ms)
+✔ malformed dates and nonfinite confidence cannot enter scoring (0.99492ms)
+✔ one captured clock determines freshness and resolvedAt without changing knowledge kind (0.30214ms)
+✔ authorized diamond and cycle are traversed once with explicit bounds (2.73606ms)
+✔ materialized adjacency rejects foreign, missing, unordered and duplicate endpoints (1.5943ms)
+✔ zero-denominator coverage remains unknown and duplicate oracle refs fail (0.20815ms)
+✔ attention overlap aggregates duplicate aliases and is invariant under permutations (0.64257ms)
+✔ ambiguous untyped alias cannot bridge different node kinds (0.26611ms)
+✔ consolidation preserves separate actor, owner and turn identities (0.59989ms)
+✔ Meta respects configured fast idle duration, consumed hints and malformed progress (1.05568ms)
+✔ Promoter dedupe controls actual destinations and writes without truncating identity (0.7006ms)
+✔ Meta does not treat empty attention or different turns as a focus conflict (0.3125ms)
+✔ independent poles preserve high balance, zero balance and unknown (0.77386ms)
+✔ tri-state checks require a complete unique server-owned set and never return allow (0.76958ms)
+✔ drafts reject foreign references, unsafe revisions and injected context authority (1.4783ms)
+✔ rank experiment remains exactly unchanged when disabled or unknown (9.654729ms)
+✔ three synthetic enterprise perspectives stay independent across seeds and holdouts (2.50226ms)
+✔ two disagreeing sources keep the loser visible instead of resolving in silence (0.30481ms)
+✔ agreement between the same value is not reported as a conflict (0.1532ms)
+✔ an ambiguous provider answer cannot be promoted to a fact (3.4141ms)
+✔ provider output is limited to hypothesis, inference or unknown (0.53343ms)
+✔ the same inference repeated many times never becomes a fact (0.415149ms)
+✔ repetition from many sources is bounded conflict evidence, still not a fact (0.35714ms)
+✔ a corrected fact wins and the superseded value stays visible (0.16925ms)
+✔ a stale inference cannot displace a fresh fact even at maximum reliability (0.18238ms)
+✔ an inference never raises privileges: verified facts need their own receipt (0.33785ms)
+✔ diagnosis reports provenance, absence of receipt and no authority (0.33486ms)
+✔ diagnosis rejects malformed candidates instead of scoring them (0.17163ms)
+✔ resolver elige la fuente más fiable y detecta conflictos (0.49829ms)
+ℹ tests 36
+ℹ suites 0
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1928.989485

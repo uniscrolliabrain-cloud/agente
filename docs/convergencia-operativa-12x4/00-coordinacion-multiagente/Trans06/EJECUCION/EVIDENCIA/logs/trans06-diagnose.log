@@ -1,0 +1,13 @@
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Dato: status
+Valor: "active"
+Fuente: crm-sintetico
+Fecha de observacion: 2026-11-27T10:00:00Z
+Resuelto: 2026-11-27T12:00:00.000Z
+Estado epistemico: hecho_declarado
+Certeza: 0.9
+Receipt: ausente (no modelado en TruthCandidate)
+Conflictos: 1
+  - "overdue" · erp-sintetico · 2026-11-27T09:00:00Z · inferencia
+Autoridad: ninguna (el ranking no concede verified_fact ni permisos)
