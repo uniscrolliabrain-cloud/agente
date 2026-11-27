@@ -1,3 +1,4 @@
+import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
 // AGNTIA_CODE_V1 - tercer clon del demo.
 // Plataforma de IA coding y bitácora conectada a GitHub, Vercel y Cloudflare.
@@ -1381,6 +1382,9 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
     }
   });
   const [projectOpen, setProjectOpen] = useState(false);
+  const [sessionId,setSessionId]=useState<string|null>(null);
+  const [sessionTitles,setSessionTitles]=useState<Record<string,string>>({});
+  const sessionItems=SESSIONS.map(([title,repoName],index)=>({id:String(index),title:sessionTitles[String(index)]??title,preview:repoName}));
   const [env, setEnv] = useState(() => {
     try {
       const stored = window.localStorage.getItem("agntia_code_env");
@@ -1648,6 +1652,7 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
             )}
           </div>
 
+          <MetaChats namespace="agntia_code" items={sessionItems} active={sessionId} onSelect={id=>{setSessionId(id);const session=SESSIONS[Number(id)];if(session&&REPOS.some(r=>r.name===session[1]))setRepoName(session[1]);choose("chats")}} onRename={(id,title)=>setSessionTitles(prev=>({...prev,[id]:title}))}/>
           <nav className="ac-nav" aria-label="Workspaces de Agntia Code">
             {pins.length > 0 && (
               <div className="ac-nav-group ac-nav-group--pins">
