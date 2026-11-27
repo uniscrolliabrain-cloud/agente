@@ -114,7 +114,7 @@ export class CapabilityRunner implements StepRunner {
     const governed = this.profile === "governed_v2";
     // La autoridad sigue al efecto, no al perfil: un efecto en `legacy_v1`
     // tambien exige principal, rol vigente y PDP.
-    const requiresAuthority = governed || needsClaim;
+    const requiresAuthority = governed || needsClaim || Boolean(this.governance);
     if (requiresAuthority) {
       if (!this.governance || !this.getAgentRole || !ctx.actorId || !ctx.roleId) {
         observeKernel({
