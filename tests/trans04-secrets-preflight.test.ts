@@ -23,6 +23,7 @@ test("preflight rejects misspelled modes, groups, profiles and options", () => {
     ["--profile=deply"],
     ["--strict=no"],
     ["--unknown"],
+    ["--profile=deploy", "--mode=sample"],
   ]) {
     assert.equal(run(args).status, 2, args.join(" "));
   }
@@ -73,4 +74,23 @@ test("strict lane validation respects real consumers and does not claim proposed
     run(args, { FAST_LLM_API_KEY: "synthetic", FAST_LLM_PROVIDER: "unknown", FAST_LLM_MODEL: "fixture" }).status,
     1,
   );
+});
+
+test("deploy preflight accepts complete synthetic core without requiring an unused business DSN", () => {
+  const env = {
+    DATABASE_URL: "postgresql://fixture@invalid.example/synthetic",
+    PUBLIC_API_URL: "https://api.invalid.example",
+    TOKEN_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
+    AGENTE_ACCESS_KEY: "synthetic-access-key-24-characters",
+    ALLOWED_ORIGINS: "https://panel.invalid.example",
+    AUTH_PROVIDER: "supabase",
+    SUPABASE_URL: "https://fixture.supabase.co",
+    ADMIN_EMAIL: "fixture@example.invalid",
+    ADMIN_PASSWORD: "synthetic-password",
+    MODEL: "google/fixture",
+    GEMINI_API_KEY: "synthetic-provider-key",
+  };
+  const result = run(["--profile=deploy", "--json"], env);
+  assert.equal(result.status, 0, result.output);
+  assert.equal(JSON.parse(result.output).ok, true);
 });

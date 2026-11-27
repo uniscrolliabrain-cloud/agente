@@ -30,7 +30,7 @@ const SECRETS: Secret[] = [
   { name: "ALLOWED_ORIGINS", need: "live", group: "core", note: "CSV de origenes del panel (https://www.agntiapro.com)" },
   { name: "AUTH_PROVIDER", need: "live", group: "auth", note: "debe ser supabase para el modo multitenant con JWT" },
   { name: "DATA_DIR", need: "optional", group: "core", note: "directorio de datos (PGlite/backups); en Fly debe ser /data" },
-  { name: "BUSINESS_DATABASE_URL", need: "optional", group: "core", note: "base + rol read-only para query_business de las SOPs; sin ella las consultas corren contra la principal" },
+  { name: "BUSINESS_DATABASE_URL", need: "optional", group: "core", note: "DSN dedicado read-only para query_business; sin el se usa el dataset local del Store" },
   { name: "AGENTE_PROCESS_ROLE", need: "optional", group: "core", note: "all | api | worker; en Fly se separan en dos apps" },
   { name: "BACKUP_INTERVAL_HOURS", need: "optional", group: "core", note: "0 desactiva los backups automaticos" },
 
@@ -112,6 +112,7 @@ if (profile && args.has("only")) usageError();
 const requestedMode = args.get("mode") ?? process.env.WORKSPACE_MODE ?? (profile === "deploy" ? "live" : "sample");
 if (requestedMode !== "live" && requestedMode !== "sample") usageError();
 const mode: Mode = requestedMode;
+if (profile === "deploy" && mode !== "live") usageError();
 const strict = args.has("strict") || Boolean(profile);
 const authProvider = (process.env.AUTH_PROVIDER ?? "session").trim();
 const only = profile ? new Set(profiles[profile]) : args.has("only") ? new Set(args.get("only")!.split(",").map(g => g.trim())) : null;
@@ -172,17 +173,12 @@ if (includes("auth") && authProvider === "supabase") {
 if (includes("core") && present("AGENTE_ACCESS_KEY") && present("AGENTE_ACCESS_KEY")!.length < 24) {
   coherence.push("AGENTE_ACCESS_KEY tiene menos de 24 caracteres: live mode no arranca.");
 }
-if (includes("core") && present("DATABASE_URL") && !present("BUSINESS_DATABASE_URL")) {
-  coherence.push(
-    "Sin BUSINESS_DATABASE_URL: query_business de las SOPs leera con el rol de escritura de la base principal.",
-  );
-}
 if (includes("core") && present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
   const main = present("DATABASE_URL")!;
   const business = present("BUSINESS_DATABASE_URL")!;
   if (main === business) {
     coherence.push(
-      "DATABASE_URL y BUSINESS_DATABASE_URL son la misma: el query_business de las SOPs leeria todas las filas de todos los owners. Usa una base y un rol read-only aparte.",
+      "DATABASE_URL y BUSINESS_DATABASE_URL coinciden: usar un DSN dedicado con rol read-only y permisos revisados.",
     );
   }
 }
