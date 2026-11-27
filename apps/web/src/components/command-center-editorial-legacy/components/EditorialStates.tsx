@@ -17,22 +17,22 @@ export function SectionHeader({
   aside?: ReactNode;
 }) {
   return (
-    <div className="cce-section-head">
-      <h2 className="cce-section-title" id={id}>
+    <div className="cce-legacy-section-head">
+      <h2 className="cce-legacy-section-title" id={id}>
         {icon}
         {title}
       </h2>
-      {aside ?? (sub ? <p className="cce-section-sub">{sub}</p> : null)}
+      {aside ?? (sub ? <p className="cce-legacy-section-sub">{sub}</p> : null)}
     </div>
   );
 }
 
 export function Notice({ text, onClose }: { text: string; onClose: () => void }) {
   return (
-    <div className="cce-notice" role="status">
+    <div className="cce-legacy-notice" role="status">
       <CheckCircle2 size={16} aria-hidden="true" />
       <span>{text}</span>
-      <button type="button" className="cce-icon-btn" onClick={onClose} aria-label="Cerrar aviso">
+      <button type="button" className="cce-legacy-icon-btn" onClick={onClose} aria-label="Cerrar aviso">
         <X size={15} aria-hidden="true" />
       </button>
     </div>
@@ -51,7 +51,7 @@ export function SampleBanner({
   onToggle: () => void;
 }) {
   return (
-    <div className="cce-sample" role="status">
+    <div className="cce-legacy-sample" role="status">
       <Sparkles size={15} aria-hidden="true" />
       <p>
         <b>Datos de ejemplo.</b>{" "}
@@ -60,7 +60,7 @@ export function SampleBanner({
           : `Todavía no hay actividad en ${tenantName}.`}{" "}
         Así se verá el centro de mando cuando los agentes empiecen a trabajar.
       </p>
-      <button type="button" className="cce-btn cce-btn--small" onClick={onToggle}>
+      <button type="button" className="cce-legacy-btn cce-legacy-btn--small" onClick={onToggle}>
         {showingSample ? "Ver datos reales" : "Ver ejemplo"}
       </button>
     </div>
@@ -69,12 +69,12 @@ export function SampleBanner({
 
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div className="cce-error" role="alert">
+    <div className="cce-legacy-error" role="alert">
       <p style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <AlertTriangle size={16} aria-hidden="true" />
         {message}
       </p>
-      <button type="button" className="cce-btn cce-btn--primary" onClick={onRetry}>
+      <button type="button" className="cce-legacy-btn cce-legacy-btn--primary" onClick={onRetry}>
         <RefreshCw size={14} aria-hidden="true" /> Reintentar
       </button>
     </div>
@@ -83,28 +83,28 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry: () 
 
 export function LoadingState() {
   return (
-    <div className="cce-skeleton" aria-busy="true" aria-live="polite">
-      <span className="cce-visually-hidden">
+    <div className="cce-legacy-skeleton" aria-busy="true" aria-live="polite">
+      <span className="cce-legacy-visually-hidden">
         <Loader2 size={12} aria-hidden="true" /> Cargando la empresa…
       </span>
-      <div className="cce-skeleton-bar cce-skeleton-title" />
-      <div className="cce-skeleton-bar cce-skeleton-line" />
-      <div className="cce-skeleton-bar cce-skeleton-block" />
-      <div className="cce-skeleton-grid">
+      <div className="cce-legacy-skeleton-bar cce-legacy-skeleton-title" />
+      <div className="cce-legacy-skeleton-bar cce-legacy-skeleton-line" />
+      <div className="cce-legacy-skeleton-bar cce-legacy-skeleton-block" />
+      <div className="cce-legacy-skeleton-grid">
         {[0, 1, 2, 3].map((index) => (
-          <div key={index} className="cce-skeleton-bar cce-skeleton-block" style={{ height: 78 }} />
+          <div key={index} className="cce-legacy-skeleton-bar cce-legacy-skeleton-block" style={{ height: 78 }} />
         ))}
       </div>
-      <div className="cce-skeleton-grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+      <div className="cce-legacy-skeleton-grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
         {[0, 1, 2].map((index) => (
-          <div key={index} className="cce-skeleton-bar cce-skeleton-block" style={{ height: 132 }} />
+          <div key={index} className="cce-legacy-skeleton-bar cce-legacy-skeleton-block" style={{ height: 132 }} />
         ))}
       </div>
-      <div className="cce-skeleton-bar cce-skeleton-block" style={{ height: 190 }} />
+      <div className="cce-legacy-skeleton-bar cce-legacy-skeleton-block" style={{ height: 190 }} />
     </div>
   );
 }
 
 export function EmptyNote({ children }: { children: ReactNode }) {
-  return <div className="cce-empty">{children}</div>;
+  return <div className="cce-legacy-empty">{children}</div>;
 }

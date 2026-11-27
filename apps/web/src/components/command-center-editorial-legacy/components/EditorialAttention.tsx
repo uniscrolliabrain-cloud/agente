@@ -9,10 +9,10 @@ import { humanKind, isWaiting, statusLabel, statusTone } from "../../../componen
 import { SectionHeader } from "./EditorialStates";
 
 const TONE_CLASS: Record<string, string> = {
-  live: "cce-tag--live",
-  waiting: "cce-tag--warn",
-  failed: "cce-tag--danger",
-  done: "cce-tag--ok",
+  live: "cce-legacy-tag--live",
+  waiting: "cce-legacy-tag--warn",
+  failed: "cce-legacy-tag--danger",
+  done: "cce-legacy-tag--ok",
   idle: "",
 };
 
@@ -31,23 +31,23 @@ export function AttentionCard({
   const canReview = task.status === "waiting_approval" && Boolean(onReviewTask);
 
   return (
-    <article className={`cce-card ${failed ? "cce-card--alert" : ""}`}>
-      <div className="cce-card-top">
-        <span className={`cce-tag ${TONE_CLASS[statusTone(task.status)] ?? ""}`.trim()}>
+    <article className={`cce-legacy-card ${failed ? "cce-legacy-card--alert" : ""}`}>
+      <div className="cce-legacy-card-top">
+        <span className={`cce-legacy-tag ${TONE_CLASS[statusTone(task.status)] ?? ""}`.trim()}>
           {statusLabel(task.status)}
         </span>
-        <span className="cce-row-meta">{relativeTime(task.updatedAt) || "sin fecha"}</span>
+        <span className="cce-legacy-row-meta">{relativeTime(task.updatedAt) || "sin fecha"}</span>
       </div>
       <h3>{task.title}</h3>
-      <p className="cce-card-context">
+      <p className="cce-legacy-card-context">
         {humanKind(task.kind)} · {who}
         {failed ? " · revisa el error antes de relanzar" : isWaiting(task.status) ? " · trabajo preparado" : ""}
       </p>
-      <div className="cce-card-actions">
+      <div className="cce-legacy-card-actions">
         {canReview && (
           <button
             type="button"
-            className="cce-btn cce-btn--primary cce-btn--small"
+            className="cce-legacy-btn cce-legacy-btn--primary cce-legacy-btn--small"
             onClick={() => onReviewTask?.(task.id)}
           >
             Revisar y aprobar
@@ -56,7 +56,7 @@ export function AttentionCard({
         {onOpenTask && (
           <button
             type="button"
-            className={`cce-btn cce-btn--small ${!canReview ? "cce-btn--primary" : ""}`}
+            className={`cce-legacy-btn cce-legacy-btn--small ${!canReview ? "cce-legacy-btn--primary" : ""}`}
             onClick={() => onOpenTask(task.id)}
           >
             {canReview ? "Abrir tarea" : "Ver contexto"}
@@ -79,9 +79,9 @@ export function EditorialAttention({
   onReviewTask?: ((taskId: string) => void) | undefined;
 }) {
   return (
-    <section className="cce-section" aria-labelledby="cce-attention-title">
+    <section className="cce-legacy-section" aria-labelledby="cce-legacy-attention-title">
       <SectionHeader
-        id="cce-attention-title"
+        id="cce-legacy-attention-title"
         icon={<AlertTriangle size={17} aria-hidden="true" />}
         title="Requiere tu atención"
         sub={
@@ -91,11 +91,11 @@ export function EditorialAttention({
         }
       />
       {tasks.length === 0 ? (
-        <div className="cce-empty">
+        <div className="cce-legacy-empty">
           <CheckCircle2 size={16} aria-hidden="true" /> Nada esperando tu decisión ahora mismo.
         </div>
       ) : (
-        <div className="cce-grid">
+        <div className="cce-legacy-grid">
           {tasks.map((task) => (
             <AttentionCard
               key={task.id}

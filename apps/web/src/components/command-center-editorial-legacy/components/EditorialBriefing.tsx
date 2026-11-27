@@ -12,21 +12,21 @@ interface Props {
 
 export function EditorialBriefing({ text, hasFinishedWork, onSeeWork, onOpenChat }: Props) {
   return (
-    <section className="cce-briefing" aria-labelledby="cce-briefing-title">
-      <div className="cce-briefing-head">
+    <section className="cce-legacy-briefing" aria-labelledby="cce-legacy-briefing-title">
+      <div className="cce-legacy-briefing-head">
         <Sparkles size={14} aria-hidden="true" />
-        <span id="cce-briefing-title">Briefing de LAIA</span>
+        <span id="cce-legacy-briefing-title">Briefing de LAIA</span>
       </div>
-      <p className="cce-briefing-text">{text}</p>
+      <p className="cce-legacy-briefing-text">{text}</p>
       {(onOpenChat || hasFinishedWork) && (
-        <div className="cce-briefing-actions">
+        <div className="cce-legacy-briefing-actions">
           {onOpenChat && (
-            <button type="button" className="cce-btn cce-btn--primary" onClick={onOpenChat}>
+            <button type="button" className="cce-legacy-btn cce-legacy-btn--primary" onClick={onOpenChat}>
               <MessageSquare size={14} aria-hidden="true" /> Preguntar a LAIA
             </button>
           )}
           {hasFinishedWork && (
-            <button type="button" className="cce-btn" onClick={onSeeWork}>
+            <button type="button" className="cce-legacy-btn" onClick={onSeeWork}>
               Ver qué hizo
             </button>
           )}

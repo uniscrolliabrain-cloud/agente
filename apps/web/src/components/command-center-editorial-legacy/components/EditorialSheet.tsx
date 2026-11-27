@@ -53,23 +53,23 @@ export function EditorialSheet({
   // Portal a <body>: el marco editorial usa container queries (contención de
   // layout), así que el overlay no debe vivir dentro del contenedor.
   return createPortal(
-    <div className="cce-root cce-sheet-backdrop" onClick={onClose} role="presentation">
+    <div className="cce-legacy-root cce-legacy-sheet-backdrop" onClick={onClose} role="presentation">
       <div
-        className="cce-sheet"
+        className="cce-legacy-sheet"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="cce-sheet-title"
+        aria-labelledby="cce-legacy-sheet-title"
         ref={panelRef}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="cce-sheet-grab" aria-hidden="true" />
-        <div className="cce-sheet-head">
-          <h2 className="cce-sheet-title" id="cce-sheet-title">
+        <div className="cce-legacy-sheet-grab" aria-hidden="true" />
+        <div className="cce-legacy-sheet-head">
+          <h2 className="cce-legacy-sheet-title" id="cce-legacy-sheet-title">
             {title}
           </h2>
           <button
             type="button"
-            className="cce-icon-btn"
+            className="cce-legacy-icon-btn"
             onClick={onClose}
             aria-label="Cerrar detalle"
             ref={closeRef}

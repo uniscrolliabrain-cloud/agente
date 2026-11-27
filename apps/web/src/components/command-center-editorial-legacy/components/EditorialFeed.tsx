@@ -14,10 +14,10 @@ function feedTime(iso: string): string {
 }
 
 const TONE_CLASS: Record<string, string> = {
-  live: "cce-tag--live",
-  waiting: "cce-tag--warn",
-  failed: "cce-tag--danger",
-  done: "cce-tag--ok",
+  live: "cce-legacy-tag--live",
+  waiting: "cce-legacy-tag--warn",
+  failed: "cce-legacy-tag--danger",
+  done: "cce-legacy-tag--ok",
   idle: "",
 };
 
@@ -33,26 +33,26 @@ export function EditorialFeed({
   if (tasks.length === 0) return null;
 
   return (
-    <section className="cce-section" aria-labelledby="cce-feed-title">
+    <section className="cce-legacy-section" aria-labelledby="cce-legacy-feed-title">
       <SectionHeader
-        id="cce-feed-title"
+        id="cce-legacy-feed-title"
         icon={<Clock size={17} aria-hidden="true" />}
         title="Lo que te has perdido"
         sub={`${tasks.length} ${tasks.length === 1 ? "registro" : "registros"} · orden por última actualización`}
       />
-      <ul className="cce-list">
+      <ul className="cce-legacy-list">
         {tasks.map((task) => {
           const content = (
             <>
-              <span className="cce-row-time">{feedTime(task.updatedAt)}</span>
-              <span className="cce-row-body">
-                <span className="cce-row-title">{task.title}</span>
-                <span className="cce-row-meta">
+              <span className="cce-legacy-row-time">{feedTime(task.updatedAt)}</span>
+              <span className="cce-legacy-row-body">
+                <span className="cce-legacy-row-title">{task.title}</span>
+                <span className="cce-legacy-row-meta">
                   {humanKind(task.kind)} · {whoFor(task)}
                 </span>
               </span>
-              <span className="cce-row-side">
-                <span className={`cce-tag ${TONE_CLASS[statusTone(task.status)] ?? ""}`.trim()}>
+              <span className="cce-legacy-row-side">
+                <span className={`cce-legacy-tag ${TONE_CLASS[statusTone(task.status)] ?? ""}`.trim()}>
                   {statusLabel(task.status)}
                 </span>
               </span>
@@ -62,11 +62,11 @@ export function EditorialFeed({
           return (
             <li key={task.id}>
               {onOpenTask ? (
-                <button type="button" className="cce-row" onClick={() => onOpenTask(task.id)}>
+                <button type="button" className="cce-legacy-row" onClick={() => onOpenTask(task.id)}>
                   {content}
                 </button>
               ) : (
-                <div className="cce-row">{content}</div>
+                <div className="cce-legacy-row">{content}</div>
               )}
             </li>
           );

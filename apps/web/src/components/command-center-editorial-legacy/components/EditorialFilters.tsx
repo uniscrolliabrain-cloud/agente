@@ -18,13 +18,13 @@ export function EditorialFilters({
   onFilter: (filter: CommandFilter) => void;
 }) {
   return (
-    <div className="cce-filters-wrap">
-      <div className="cce-filters" role="group" aria-label="Filtrar el centro de mando">
+    <div className="cce-legacy-filters-wrap">
+      <div className="cce-legacy-filters" role="group" aria-label="Filtrar el centro de mando">
         {FILTERS.map((item) => (
           <button
             key={item.id}
             type="button"
-            className="cce-filter"
+            className="cce-legacy-filter"
             aria-pressed={filter === item.id}
             onClick={() => onFilter(item.id)}
           >

@@ -30,49 +30,49 @@ export function EditorialHero({
   onAddPerson,
 }: Props) {
   return (
-    <header className="cce-hero">
-      <div className="cce-hero-top">
-        <div className="cce-hero-identity">
+    <header className="cce-legacy-hero">
+      <div className="cce-legacy-hero-top">
+        <div className="cce-legacy-hero-identity">
           <BrandLockup markSize={30} />
-          <div className="cce-chips">
-            <span className="cce-chip" title={`Empresa · ${tenantName}`}>
+          <div className="cce-legacy-chips">
+            <span className="cce-legacy-chip" title={`Empresa · ${tenantName}`}>
               Empresa · {tenantName}
             </span>
-            <span className="cce-chip cce-chip--active">Centro de mando</span>
-            {role && <span className="cce-chip">{ROLE_LABEL[role]}</span>}
+            <span className="cce-legacy-chip cce-legacy-chip--active">Centro de mando</span>
+            {role && <span className="cce-legacy-chip">{ROLE_LABEL[role]}</span>}
           </div>
         </div>
 
-        <div className="cce-hero-actions">
+        <div className="cce-legacy-hero-actions">
           {canManageMembers && (
             <>
-              <button type="button" className="cce-btn" onClick={onAddAgent}>
+              <button type="button" className="cce-legacy-btn" onClick={onAddAgent}>
                 <Bot size={15} aria-hidden="true" /> Añadir agente
               </button>
-              <button type="button" className="cce-btn cce-btn--primary" onClick={onAddPerson}>
+              <button type="button" className="cce-legacy-btn cce-legacy-btn--primary" onClick={onAddPerson}>
                 <UserPlus size={15} aria-hidden="true" /> Añadir persona
               </button>
             </>
           )}
           <button
             type="button"
-            className="cce-icon-btn"
+            className="cce-legacy-icon-btn"
             onClick={onRefresh}
             aria-label="Actualizar"
             title="Actualizar"
           >
-            <RefreshCw size={16} className={refreshing ? "cce-spin" : undefined} aria-hidden="true" />
+            <RefreshCw size={16} className={refreshing ? "cce-legacy-spin" : undefined} aria-hidden="true" />
           </button>
         </div>
       </div>
 
-      <div className="cce-hero-title">
-        <h1 className="cce-greeting">Buenos días</h1>
-        <p className="cce-hero-context">
-          Esto necesita tu atención <span className="cce-dot">·</span> {todayLabel()}
+      <div className="cce-legacy-hero-title">
+        <h1 className="cce-legacy-greeting">Buenos días</h1>
+        <p className="cce-legacy-hero-context">
+          Esto necesita tu atención <span className="cce-legacy-dot">·</span> {todayLabel()}
           {updatedAt ? (
             <>
-              <span className="cce-dot">·</span>
+              <span className="cce-legacy-dot">·</span>
               <span aria-live="polite">
                 Actualizado {updatedLabel === "ahora" ? "ahora" : `hace ${updatedLabel}`}
               </span>

@@ -115,12 +115,12 @@ export function EditorialOperational({
 
   const detail = current ? (
     <>
-      <h3 className="cce-block-detail-title">
+      <h3 className="cce-legacy-block-detail-title">
         {current.title} · {current.num}
       </h3>
       <p>{current.detail}</p>
       {current.action && (
-        <button type="button" className="cce-btn cce-btn--primary cce-btn--small" onClick={current.action.run}>
+        <button type="button" className="cce-legacy-btn cce-legacy-btn--primary cce-legacy-btn--small" onClick={current.action.run}>
           {current.action.label}
         </button>
       )}
@@ -128,48 +128,48 @@ export function EditorialOperational({
   ) : null;
 
   return (
-    <section className="cce-section" aria-labelledby="cce-operational-title">
+    <section className="cce-legacy-section" aria-labelledby="cce-legacy-operational-title">
       <SectionHeader
-        id="cce-operational-title"
+        id="cce-legacy-operational-title"
         title="Estado operativo de la empresa"
         sub="Toda la empresa, no solo correo y calendario"
       />
 
-      <div className="cce-blocks">
+      <div className="cce-legacy-blocks">
         {blocks.map((block) => {
           const expanded = selected === block.id;
           return (
             <button
               key={block.id}
               type="button"
-              className="cce-block"
+              className="cce-legacy-block"
               aria-expanded={expanded}
-              aria-controls={expanded ? "cce-block-detail" : undefined}
+              aria-controls={expanded ? "cce-legacy-block-detail" : undefined}
               onClick={() => setSelected(expanded ? null : block.id)}
             >
-              <span className="cce-block-icon">{block.icon}</span>
-              <span className="cce-block-title">{block.title}</span>
-              <span className="cce-block-desc">{block.desc}</span>
-              <span className="cce-block-num">{block.num}</span>
+              <span className="cce-legacy-block-icon">{block.icon}</span>
+              <span className="cce-legacy-block-title">{block.title}</span>
+              <span className="cce-legacy-block-desc">{block.desc}</span>
+              <span className="cce-legacy-block-num">{block.num}</span>
             </button>
           );
         })}
       </div>
 
       {current && !narrow && (
-        <div className="cce-block-detail" id="cce-block-detail" role="region" aria-live="polite">
+        <div className="cce-legacy-block-detail" id="cce-legacy-block-detail" role="region" aria-live="polite">
           {detail}
         </div>
       )}
 
       {current && narrow && (
         <EditorialSheet title={`${current.title} · ${current.num}`} onClose={() => setSelected(null)}>
-          <div className="cce-block-detail" id="cce-block-detail" style={{ border: 0, padding: 0, background: "transparent" }}>
+          <div className="cce-legacy-block-detail" id="cce-legacy-block-detail" style={{ border: 0, padding: 0, background: "transparent" }}>
             <p>{current.detail}</p>
             {current.action && (
               <button
                 type="button"
-                className="cce-btn cce-btn--primary"
+                className="cce-legacy-btn cce-legacy-btn--primary"
                 onClick={() => {
                   current.action?.run();
                   setSelected(null);

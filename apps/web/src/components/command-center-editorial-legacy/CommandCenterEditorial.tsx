@@ -128,7 +128,7 @@ export function CommandCenterEditorial({
   const goToWork = () => {
     setFilter("todo");
     window.setTimeout(() => {
-      const target = document.getElementById("cce-timeline");
+      const target = document.getElementById("cce-legacy-timeline");
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       target?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
     }, 60);
@@ -162,7 +162,7 @@ export function CommandCenterEditorial({
 
   return (
     <EditorialFrame>
-      <div className="cce-view">
+      <div className="cce-legacy-view">
         <EditorialHero
           tenantName={overview?.tenant.name ?? "tu empresa"}
           role={overview?.role ?? null}

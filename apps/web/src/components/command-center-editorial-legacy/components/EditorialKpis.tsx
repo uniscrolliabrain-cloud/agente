@@ -44,20 +44,20 @@ export function EditorialKpis({
   ];
 
   return (
-    <section className="cce-kpis" aria-label="Resumen de la empresa">
+    <section className="cce-legacy-kpis" aria-label="Resumen de la empresa">
       {items.map((item) => {
         const active = filter === item.id;
         return (
           <button
             key={item.id}
             type="button"
-            className="cce-kpi"
+            className="cce-legacy-kpi"
             aria-pressed={active}
             onClick={() => onFilter(active ? "todo" : item.id)}
           >
-            <span className="cce-kpi-label">{item.label}</span>
-            <span className="cce-kpi-value">{item.value}</span>
-            <span className="cce-kpi-meta">{item.meta}</span>
+            <span className="cce-legacy-kpi-label">{item.label}</span>
+            <span className="cce-legacy-kpi-value">{item.value}</span>
+            <span className="cce-legacy-kpi-meta">{item.meta}</span>
           </button>
         );
       })}
