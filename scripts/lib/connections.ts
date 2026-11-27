@@ -447,7 +447,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
   {
     id: "meta-muse", label: "Meta Muse directo (Fast)", feature: "llm",
     names: ["MUSE_API_KEY"], need: "optional",
-    note: "Endpoint/modelo/protocolo y Contributor se verifican con Meta; presencia no significa conexion.",
+    note: "Meta directo api.meta.ai/v1; muse-spark-1.3-contributor. Presencia no acredita inferencia real.",
   },
   {
     id: "openai",

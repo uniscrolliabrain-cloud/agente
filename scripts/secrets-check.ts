@@ -1,4 +1,4 @@
-import { laneEnvironment } from "../apps/server/src/llm-config.ts";
+import { laneEnvironment, requireLaneProfile } from "../apps/server/src/llm-config.ts";
 // SECRETS_CHECK_V1 - auditoria del contrato de secretos.
 //
 // El runner inyecta el entorno (GitHub-first, Doppler opcional); este script no lee almacenes ni
@@ -56,7 +56,7 @@ const SECRETS: Secret[] = [
   { name: "JEV_OPENROUTER_API_KEY", need: "optional", group: "jev", note: "override dedicado para JEV" },
   { name: "JEV_MODEL", need: "optional", group: "jev", note: "default typesafe/jev-1.14; versiones explicitas 1.14 o 1.13" },
   { name: "OPEN_ROUTER_API_KEY", need: "optional", group: "kernel", note: "cuenta antigua para DeepSeek Slow" },
-  { name: "MUSE_API_KEY", need: "optional", group: "kernel", note: "Meta Muse directo; requiere endpoint/modelo/protocolo verificados" },
+  { name: "MUSE_API_KEY", need: "optional", group: "kernel", note: "Meta directo; default muse-spark-1.3-contributor en api.meta.ai" },
   { name: "SUPABASE_SECRET_KEY", need: "optional", group: "auth", note: "servicio Supabase, alias GitHub SUPABASE_SECRET; no es un JWT signing secret" },
   { name: "GRAFANA_URL", need: "optional", group: "observability", note: "URL de Grafana, no URL OTLP" },
   { name: "GRAFANA_SERVICE_ACCOUNT_TOKEN", need: "optional", group: "observability", note: "token de servicio Grafana API" },
@@ -249,7 +249,10 @@ if (includes("kernel")) {
     const prefix = lane.toUpperCase(), profile = laneEnvironment(lane);
     if (profile.provider || profile.model || profile.apiKey || (lane === "fast" && present("MUSE_API_KEY"))) {
       if (!profile.provider || !profile.model || !profile.apiKey) coherence.push(`${prefix}_LLM_PROFILE_INCOMPLETE`);
-      if (profile.provider && !["google", "openai", "openrouter", "anthropic"].includes(profile.provider)) coherence.push(`${prefix}_LLM_PROVIDER_INVALID`);
+      if (profile.provider && !["google", "openai", "openrouter", "anthropic", "meta"].includes(profile.provider)) coherence.push(`${prefix}_LLM_PROVIDER_INVALID`);
+      if (profile.provider === "meta" && profile.apiKey && profile.model) {
+        try { requireLaneProfile(lane); } catch { coherence.push(`${prefix}_META_PROFILE_INVALID`); }
+      }
     }
   }
 }

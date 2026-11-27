@@ -221,3 +221,23 @@ test("both actual workflow import scripts stage only synthetic credentials with 
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+test("strict preflight accepts documented Meta defaults and rejects routing its key to another host", () => {
+  const run = (extra: Record<string, string>) =>
+    spawnSync(
+      process.execPath,
+      ["--import", "tsx", "scripts/secrets-check.ts", "--mode=sample", "--only=kernel", "--strict", "--json"],
+      {
+        encoding: "utf8",
+        timeout: 15000,
+        env: { PATH: process.env.PATH, HOME: process.env.HOME, MUSE_API_KEY: "synthetic-meta-private", ...extra },
+      },
+    );
+  const valid = run({});
+  assert.equal(valid.status, 0, valid.stderr);
+  assert.equal(JSON.parse(valid.stdout).ok, true);
+  assert.ok(!valid.stdout.includes("synthetic-meta-private"));
+  const invalid = run({ FAST_LLM_PROVIDER: "meta", FAST_LLM_BASE_URL: "https://openrouter.ai/api/v1" });
+  assert.equal(invalid.status, 1);
+  assert.ok(JSON.parse(invalid.stdout).issues.includes("FAST_META_PROFILE_INVALID"));
+});
