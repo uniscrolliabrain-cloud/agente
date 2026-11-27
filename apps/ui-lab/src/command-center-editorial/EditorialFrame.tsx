@@ -10,5 +10,5 @@ import "./perceptual-precision.css";
  * el namespace `cce-*`; los hijos conservan su estado, permisos y callbacks.
  */
 export function EditorialFrame({ children }: { children: ReactNode }) {
-  return <div className="cce-root">{children}</div>;
+  return <div className="cce-root" data-cce-version="perceptual-v5">{children}</div>;
 }
