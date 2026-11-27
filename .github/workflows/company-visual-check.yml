@@ -1,0 +1,44 @@
+name: Company visual certification
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/company-visual-check.yml'
+      - 'apps/ui-lab/src/company-v2/**'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install Pillow
+      - name: Verify all 72 source images
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          from PIL import Image
+          root=Path('apps/ui-lab/src/company-v2')
+          source=(root/'company-visuals.ts').read_text()
+          paths=re.findall(r'from "([^"]+\.webp)\?url"',source)
+          assert len(paths)==len(set(paths))==72
+          for path in paths:
+              file=root/path
+              with Image.open(file) as im:
+                  assert im.format=='WEBP',file
+                  assert im.size==((1536,1024) if file.stem.endswith('-01') else (1024,1024)),file
+                  im.verify()
+          print('72/72 source images verified')
+          PY
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agente/ui-lab typecheck
+      - run: pnpm --filter @agente/ui-lab build
