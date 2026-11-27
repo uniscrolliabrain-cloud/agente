@@ -1,0 +1,11 @@
+# Trans06 — ejecución E-M1 en curso
+
+**PARTIAL_LOCAL**. Código probado `f3b1b3ec73059b8d3b3aed6218ec6a8bbd0a5c04`: 37/37 pruebas, cero fallos/skips; typecheck raíz y worker exit 0. Control sobre base anterior 0de40ec1: cinco regresiones fallan por los defectos corregidos. No certificación ni cierre de campaña.
+
+Atención agrega alias repetidos de forma determinista; un alias sin tipo no une entity y task cuando resulta ambiguo. Consolidación conserva tenant, owner, turno y actor exactos. Promotor usa los supervivientes deduplicados para destinos y escrituras, sin identificar contenidos distintos por sus primeros 500 caracteres. Meta respeta fastIdleMs, valida progreso, distingue ausencia de foco y conserva consumo acotado por instancia. Sus hints no son ACK durable ni verificación de contradicción semántica.
+
+Un módulo puro experimental reúne drafts relativos a subject/whole/goal, checks ternarios exhaustivos, pares independientes con unknown, ranking desactivable, recorrido autorizado acotado y coverage con denominador cero N/A. No DB, nuevos eventos, ejes, storage ni activación de fieldEnergy. Tres escenarios empresariales sintéticos y seis seeds comprueban únicamente descripciones puras; no prueban utilidad general, latency ni respuesta de un modelo. Ningún criterio de empresa se introduce en el kernel.
+
+Pendientes de composición: escritor Trans01 debe eliminar escrituras repetidas entre promotor, conversación y persistPromotionDestinations, verificar idempotencia del camino persistente y autoridad de business-graph. Trans02 conserva registry/ontology y seam de ranking; el guard del registry y lectura empresarial exacta necesitan su implementación. No hay nuevo resolver que conceda acceso. Ranking experimental permanece sin montaje, a falta de ablation A1. H02/H03, PG restringido, full gate y revisión independiente siguen abiertos. Los 48 bloques no se marcan cerrados por pruebas focalizadas.
+
+Leídos íntegros los 27 apartados HANDOFF-ASTRA y CAMPAIGN/P1–P6/prompt, incluida corrección de salida truncada de P4. La autorización posterior del founder y Trans00 gobierna esta ejecución funcional aislada; restricciones de preservación y no producción continúan. No se modificaron documentos históricos ni canónica.

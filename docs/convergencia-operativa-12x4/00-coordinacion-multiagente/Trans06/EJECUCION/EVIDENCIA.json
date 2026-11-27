@@ -1,0 +1,29 @@
+{
+  "testedCommit": "f3b1b3ec73059b8d3b3aed6218ec6a8bbd0a5c04",
+  "state": "PARTIAL_LOCAL",
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/trans06-*.test.ts tests/kernel.test.ts tests/kernel-meta-context.test.ts tests/kernel-rules-attention.test.ts tests/kernel-consolidate.test.ts tests/roadmap/b07-meta-hint.test.ts tests/cognition-v2-ontology.test.ts",
+    "typecheck": "corepack pnpm typecheck"
+  },
+  "tests": {
+    "total": 37,
+    "pass": 37,
+    "fail": 0,
+    "skip": 0
+  },
+  "rootAndWorkerTypecheck": 0,
+  "logs": {
+    "tests": {
+      "path": "/tmp/trans06-clean-sha.log",
+      "sha256": "45801a3d0f6be204d1f1e9726e311abb8180375adcfeb087d6a131ad1805fc2f"
+    },
+    "typecheck": {
+      "path": "/tmp/trans06-clean-typecheck.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    "red-control": {
+      "path": "/tmp/trans06-kernel-red.log",
+      "sha256": "044d6cd343f8b403808192460b3ecf26ac1e3a075232f5e45145498873791d26"
+    }
+  }
+}
