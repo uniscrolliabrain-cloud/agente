@@ -1,6 +1,5 @@
-import { createOpenAI } from "@ai-sdk/openai";
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { requireLaneProfile } from "../../../llm-config.ts";
+import { languageModelForProfile } from "../../language-model.ts";
 import { BuiltInAgent } from "@copilotkit/runtime/v2";
 import { EventType, type BaseEvent, type RunAgentInput } from "@ag-ui/core";
 import type { SlowInferenceInput, SlowProvider } from "./slow.ts";
@@ -13,22 +12,7 @@ export interface StreamingProvider {
 export class CopilotInferenceProvider implements StreamingProvider, SlowProvider {
   async stream(input: RunAgentInput, prompt: string, profile: "fast" | "slow", signal: AbortSignal,
     onEvent: (event: BaseEvent) => void): Promise<string> {
-    const prefix = profile.toUpperCase();
-    const provider = process.env[`${prefix}_LLM_PROVIDER`]?.trim();
-    const model = process.env[`${prefix}_LLM_MODEL`]?.trim();
-    const apiKey = process.env[`${prefix}_LLM_API_KEY`]?.trim();
-    if (!provider || !model || !apiKey) throw Error(`${prefix}_PROFILE_UNCONFIGURED`);
-    const configuredBase = process.env[`${prefix}_LLM_BASE_URL`]?.trim();
-    // Provider objects isolate endpoints and credentials by lane. No mutation
-    // of OPENAI_BASE_URL (which would race concurrent Fast and Slow calls).
-    const languageModel = provider === "openai" || provider === "openrouter"
-      ? createOpenAI({ apiKey, ...(configuredBase || provider === "openrouter" ? { baseURL: configuredBase ?? "https://openrouter.ai/api/v1" } : {}) }).chat(model)
-      : provider === "anthropic"
-        ? createAnthropic({ apiKey, ...(configuredBase ? { baseURL: configuredBase } : {}) })(model)
-        : provider === "google"
-          ? createGoogleGenerativeAI({ apiKey, ...(configuredBase ? { baseURL: configuredBase } : {}) })(model)
-          : undefined;
-    if (!languageModel) throw Error(`${prefix}_PROVIDER_UNSUPPORTED`);
+    const languageModel = languageModelForProfile(requireLaneProfile(profile));
     const agent = new BuiltInAgent({ model: languageModel,
       maxRetries: 0, maxSteps: 1, maxOutputTokens: profile === "fast" ? 2048 : 4096, tools: [], prompt });
     return new Promise((resolve, reject) => {

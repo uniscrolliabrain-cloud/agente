@@ -233,3 +233,93 @@ test("OpenRouter uses the existing durable gate and replay never bills the same 
     await db.close();
   }
 });
+
+test("runtime composition invokes OpenRouter only through the supplied tenant consent policy", async () => {
+  const { createStore } = await import("../apps/server/src/db.ts");
+  const { CognitionV2Runtime } = await import("../apps/server/src/engine/cognition/v2/runtime.ts");
+  const { installCognitionV2 } = await import("../apps/server/src/engine/cognition/v2/storage.ts");
+  const { openRouterJevFactory } = await import("../apps/server/src/engine/cognition/v2/jev-composition.ts");
+  const { TenantService } = await import("../apps/server/src/engine/tenant.ts");
+  const { testConfig } = await import("./helpers/config.ts");
+  const { record } = await import("./fixtures/cognition-v2/record.ts");
+  const { persistentKernel } = await import("./fixtures/cognition-v2/kernel.ts");
+  const db = await createStore();
+  try {
+    await installCognitionV2(db);
+    const memberships = new TenantService(db, testConfig());
+    await memberships.addMembership("alice", "A", "member");
+    await db.put("system", "users", { id: "alice", data: { active: true } });
+    let calls = 0;
+    const factory = openRouterJevFactory(
+      new Map([
+        [
+          "A",
+          {
+            authorize: async () => ({
+              consentId: "synthetic-consent",
+              revision: "1",
+              expiresAt: "2099-01-01T00:00:00Z",
+              maxDailyRequests: 10,
+              maxInFlight: 1,
+            }),
+            minimize: async () => "MINIMIZED FIXTURE",
+          },
+        ],
+      ]),
+      { OPENROUTER_API_KEY: "jev-only-key" },
+      async (_url, options) => {
+        calls++;
+        return Response.json(answer(JSON.parse(String(options?.body))));
+      },
+    );
+    const runtime = new CognitionV2Runtime(
+      db,
+      db,
+      new Set(["A"]),
+      memberships,
+      {
+        stream: async () => {
+          throw Error("UNEXPECTED_FAST_CALL");
+        },
+        infer: async (input) => ({
+          title: "Synthetic hypothesis",
+          body: "A possible risk",
+          epistemic: "hypothesis",
+          evidence: input.evidence,
+        }),
+      },
+      factory,
+    );
+    const identity = await runtime.identity("A", "alice", "alice", "chat");
+    const source = record();
+    source.visibility.policyRevision = identity.policyRevision;
+    await runtime.context.projections.apply(source, "1");
+    const kernel = persistentKernel(db);
+    runtime.slow.capture = (id, input) =>
+      kernel.captureAsyncResult(
+        { tenantId: id.tenantId, owner: id.owner, actorId: id.actorId, role: "system", requestId: input.operationId },
+        input,
+      );
+    const job = await runtime.slow.enqueue(
+      {
+        identity,
+        prompt: "Assess synthetic source",
+        evidence: [{ tenantId: "A", kind: "card", id: source.id, revision: source.revision }],
+      },
+      "router-composition",
+    );
+    await runtime.slow.tick("A");
+    await runtime.projector.tick("A");
+    const card = await runtime.context.resolve(identity, `slow:${job.id}`);
+    assert.equal(calls, 1);
+    assert.equal(card?.classification?.providerEvidence?.provider, "openrouter");
+    assert.equal(card?.epistemic, "hypothesis");
+    const unconfigured = openRouterJevFactory(new Map(), {})(runtime.context);
+    await assert.rejects(
+      unconfigured.classify("fixture", new AbortController().signal, { ...scope, identity }),
+      /EGRESS_DENIED/,
+    );
+  } finally {
+    await db.close();
+  }
+});

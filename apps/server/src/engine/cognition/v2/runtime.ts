@@ -38,7 +38,7 @@ export class CognitionV2Runtime {
   readonly attention: GlobalAttentionWorkspace;
   preparedRag?: PreparedRagContext;
   constructor(readonly db: Store, records: Store | TenantScopedStore, readonly tenants: ReadonlySet<string>,
-    readonly memberships: TenantService, readonly provider: StreamingProvider & Partial<SlowProvider> = new CopilotInferenceProvider(), classifier?: SemanticClassifier) {
+    readonly memberships: TenantService, readonly provider: StreamingProvider & Partial<SlowProvider> = new CopilotInferenceProvider(), classifier?: SemanticClassifier | ((context: ContextServingFacade) => SemanticClassifier)) {
     this.sink = new DurableEventSink(db, records, tenants);
     this.ontology = new CardOntologyService(db);
     this.context = new ContextServingFacade(new CognitiveProjectionStore(db), { authorize: async (identity, record) => {
@@ -66,10 +66,10 @@ export class CognitionV2Runtime {
     });
     this.projector = new CognitiveProjector(this.context.projections);
     this.kernelReceipts = new KernelReceiptProjector(db, records, tenants);
-    this.slow = new SlowCognitionQueue(db, this.sink, this.context, { infer: (input, signal) => provider.infer ? provider.infer(input, signal) : Promise.reject(Error("SLOW_PROVIDER_UNCONFIGURED")) }, classifier);
+    this.slow = new SlowCognitionQueue(db, this.sink, this.context, { infer: (input, signal) => provider.infer ? provider.infer(input, signal) : Promise.reject(Error("SLOW_PROVIDER_UNCONFIGURED")) }, typeof classifier === "function" ? classifier(this.context) : classifier);
     this.fast = new InferenceLane(db, "fast", 4, 15000, 1000);
   }
-  static async create(db: Store, records: Store | TenantScopedStore, tenants: ReadonlySet<string>, memberships: TenantService, rag?: PreparedRagPort, classifier?: SemanticClassifier) {
+  static async create(db: Store, records: Store | TenantScopedStore, tenants: ReadonlySet<string>, memberships: TenantService, rag?: PreparedRagPort, classifier?: SemanticClassifier | ((context: ContextServingFacade) => SemanticClassifier)) {
     // Shared Postgres tables require a verified RLS migration and separate
     // restricted-role integration gate. Until then the feature fails closed.
     if (process.env.MULTI_TENANT_SHARED === "true") throw Error("COGNITION_V2_SHARED_RLS_NOT_CERTIFIED");
