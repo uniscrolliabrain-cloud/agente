@@ -27,12 +27,12 @@ export interface IdempotencyKey {
  * Si dos llamadas tienen el mismo payload, obtienen la misma clave.
  */
 // IDEMPOTENCY_CANONICAL_V1 - canonicaliza recursivamente.
-function canonicalize(value: unknown): unknown {
+function canonicalize(value: unknown, legacy = false): unknown {
   if (value === null || typeof value !== "object") return value;
-  if (Array.isArray(value)) return value.map(canonicalize);
+  if (Array.isArray(value)) return value.map(item => canonicalize(item, legacy));
   const obj = value as Record<string, unknown>;
-  const out: Record<string, unknown> = {};
-  for (const k of Object.keys(obj).sort()) out[k] = canonicalize(obj[k]);
+  const out: Record<string, unknown> = legacy ? {} : Object.create(null);
+  for (const k of Object.keys(obj).sort()) out[k] = canonicalize(obj[k], legacy);
   return out;
 }
 
@@ -40,12 +40,21 @@ export function makeIdempotencyKey(
   scope: IdempotencyScope,
   payload: unknown,
 ): IdempotencyKey {
-  const canonical = JSON.stringify(canonicalize(payload));
-  const key = createHash("sha256")
+  const key = digestKey(scope, payload, false);
+  return { scope, key, createdAt: new Date().toISOString() };
+}
+
+/** Read historical claim keys only; never use this to dispatch a new effect. */
+export function legacyIdempotencyLookupKey(scope: IdempotencyScope, payload: unknown): string {
+  return digestKey(scope, payload, true);
+}
+
+function digestKey(scope: IdempotencyScope, payload: unknown, legacy: boolean): string {
+  const canonical = JSON.stringify(canonicalize(payload, legacy));
+  return createHash("sha256")
     .update(`${scope}:${canonical}`)
     .digest("hex")
     .slice(0, 32);
-  return { scope, key, createdAt: new Date().toISOString() };
 }
 
 /** Variante aleatoria para operaciones sin payload reproducible. */

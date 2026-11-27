@@ -43,6 +43,8 @@ interface ClaimRecord {
   attemptId?: string;
   retrySafe?: boolean;
   outcome?: string;
+  bindingDigest?: string;
+  keyVersion?: number;
 }
 
 /**
@@ -91,9 +93,11 @@ export class CapabilityRunner implements StepRunner {
   ) {}
 
   async run(ctx: ExecutionContext, step: PlanStep): Promise<void> {
+    ctx = { ...ctx };
+    step = { ...step, inputs: structuredClone(step.inputs) };
     const startedAt = Date.now();
     if (!step.capabilityId) throw new Error(`Step ${step.id} has no capabilityId`);
-    const capability = await this.registry.get(step.capabilityId);
+    const capability = structuredClone(await this.registry.get(step.capabilityId));
     if (!capability) throw new Error(`Capability ${step.capabilityId} not found`);
     const isExternalWrite = capability.sideEffects.some((s) => s.kind === "external_write");
     // KERNEL_AUTHORITY_MATRIX_V1 - una operacion con efecto o con aprobacion
@@ -136,14 +140,38 @@ export class CapabilityRunner implements StepRunner {
     // con aprobacion tambien necesita clave: es la prueba de que la aprobacion
     // se consumio para ESTE paso y no para otro.
     let idempotencyKey: import("../idempotency.ts").IdempotencyKey | undefined;
+    let operationBindingDigest: string | undefined;
     if (capability.idempotency !== "idempotent" || needsClaim) {
-      const scope: import("../idempotency.ts").IdempotencyScope = capability.sideEffects[0]?.kind === "external_write" ? "computer" : "computer";
-      idempotencyKey = (await import("../idempotency.ts")).makeIdempotencyKey(scope, {
-        tenantId: ctx.tenantId,
-        stepId: step.id,
-        capabilityId: capability.id,
-        inputs: step.inputs,
+      const { makeIdempotencyKey, legacyIdempotencyLookupKey } = await import("../idempotency.ts");
+      const legacy = { key: legacyIdempotencyLookupKey("computer", {
+        tenantId: ctx.tenantId, stepId: step.id, capabilityId: capability.id, inputs: step.inputs,
+      }) };
+      // A task/turn survives worker reassignment. Bare requests also bind their actor.
+      const operation = ctx.taskId ? { kind: "task", id: ctx.taskId }
+        : ctx.turnId ? { kind: "turn", id: ctx.turnId }
+        : { kind: "request", id: ctx.requestId, actorId: ctx.actorId };
+      idempotencyKey = makeIdempotencyKey("computer", {
+        keyVersion: 2, tenantId: ctx.tenantId, owner: ctx.owner, operation,
+        stepId: step.id, capabilityId: capability.id,
       });
+      operationBindingDigest = makeIdempotencyKey("computer", {
+        capabilityVersion: capability.version ?? "1.0.0", inputs: step.inputs,
+      }).key;
+      if (needsClaim && this.db) {
+        const historical = await this.db.get(ctx.tenantId, "idempotency-claims", legacy.key) as ClaimRecord | null;
+        // Never turn a key migration into permission to repeat a historical effect.
+        if (historical) {
+          if (historical.status === "claimed" && Date.now() - Date.parse(historical.claimedAt ?? "1970-01-01") >= 5 * 60 * 1000) {
+            await this.transition(ctx.tenantId, legacy.key,
+              { status: "claimed", fence: historical.fence, attemptId: historical.attemptId },
+              { status: "outcome_unknown", error: "stale claim" });
+            throw new Error(`idempotent: stale claim, reconcile first ${legacy.key}`);
+          }
+          if (historical.status === "outcome_unknown") throw new Error(`idempotent: outcome_unknown, reconcile first ${legacy.key}`);
+          if (historical.status === "failed") throw new Error(`idempotent: failed claim requires reconciliation ${legacy.key}`);
+          throw new Error("LEGACY_CLAIM_RECONCILIATION_REQUIRED");
+        }
+      }
     }
 
     // CAPABILITY_RUNNER_APPROVAL_REAL_V1 - la aprobacion autoriza un contenido,
@@ -164,6 +192,8 @@ export class CapabilityRunner implements StepRunner {
       const existing = (await this.db.get(ctx.tenantId, "idempotency-claims", claimId)) as ClaimRecord | null;
       let activeFence = 1;
       if (existing) {
+        if (existing.keyVersion !== 2 || existing.bindingDigest !== operationBindingDigest)
+          throw new Error("CLAIM_BINDING_CHANGED_RECONCILE");
         const previousFence = typeof existing.fence === "number" ? existing.fence : 0;
         if (existing.status === "done") {
           // B10.2 - devuelve el resultado cacheado, no re-ejecuta.
@@ -237,6 +267,8 @@ export class CapabilityRunner implements StepRunner {
           stepId: step.id,
           capabilityId: capability.id,
           status: "claimed",
+          keyVersion: 2,
+          bindingDigest: operationBindingDigest,
           fence: 1,
           attemptId,
           claimedAt,
