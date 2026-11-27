@@ -105,7 +105,7 @@ const database: Probe = async ({ read }) => {
 const supabaseJwks: Probe = async ({ read }) => {
   const base = read("SUPABASE_URL")!.replace(/\/+$/, "");
   const { status, body } = await httpJson(`${base}/auth/v1/.well-known/jwks.json`, {
-    headers: { apikey: read("SUPABASE_SECRET_KEY", "SUPABASE_ANON_KEY") ?? "" },
+    headers: { apikey: read("SUPABASE_SECRET_KEY", "SUPABASE_SECRET", "SUPABASE_ANON_KEY") ?? "" },
   });
   if (status !== 200) return { ok: false, detail: `jwks responde ${status}` };
   const keys = (body as { keys?: unknown[] } | null)?.keys;
@@ -257,17 +257,14 @@ const gemini: Probe = async ({ read }) => {
   return { ok: true, detail: `${models.length} modelos disponibles` };
 };
 
-const openrouter: Probe = async ({ read }) => {
-  const { status, body } = await httpJson("https://openrouter.ai/api/v1/key", {
-    headers: { Authorization: `Bearer ${read("OPENROUTER_API_KEY")}` },
+const openrouterKey = (...names: string[]): Probe => async ({ read }) => {
+  const { status } = await httpJson("https://openrouter.ai/api/v1/key", {
+    headers: { Authorization: `Bearer ${read(...names)}` },
   });
-  if (status !== 200) return { ok: false, detail: `api responde ${status}: ${text(body, 90)}` };
-  const row = (body as { data?: { limit?: number | null; usage?: number } } | null)?.data;
-  return {
-    ok: true,
-    detail: `uso ${row?.usage ?? 0}${row?.limit ? ` / limite ${row.limit}` : " (sin limite)"}`,
-  };
+  return { ok: status === 200, detail: status === 200 ? "credencial aceptada; no acredita inferencia" : `OpenRouter responde ${status}` };
 };
+const openrouter = openrouterKey("JEV_OPENROUTER_API_KEY", "OPENROUTER_API_KEY");
+const openrouterSlow = openrouterKey("OPEN_ROUTER_API_KEY");
 
 const openai: Probe = async ({ read }) => {
   const base = (read("OPENAI_BASE_URL") ?? "https://api.openai.com/v1").replace(/\/+$/, "");
@@ -320,18 +317,18 @@ const vercel: Probe = async ({ read }) => {
 
 const grafana: Probe = async ({ read }) => {
   const base = read("GRAFANA_URL")!.replace(/\/+$/, "");
-  const { status, body } = await httpJson(`${base}/api/health`);
-  if (status !== 200) return { ok: false, detail: `health responde ${status}` };
-  return { ok: true, detail: `version ${(body as { version?: string } | null)?.version ?? "?"}` };
+  const token = read("GRAFANA_SERVICE_ACCOUNT_TOKEN");
+  if (!token) return { ok: false, detail: "falta GRAFANA_SERVICE_ACCOUNT_TOKEN; health publico no valida autenticacion" };
+  const { status } = await httpJson(`${base}/api/org`, { headers: { Authorization: `Bearer ${token}` } });
+  return { ok: status === 200, detail: status === 200 ? "API Grafana autenticada" : `API Grafana responde ${status}` };
 };
 
 const sentryShape: Probe = async ({ read }) => {
-  const dsn = read("SENTRY_DSN")!;
-  const parsed = new URL(dsn);
-  return {
-    ok: Boolean(parsed.host && parsed.username && parsed.pathname.length > 1),
-    detail: `dsn para ${parsed.host}`,
-  };
+  try {
+    const parsed = new URL(read("SENTRY_DSN")!);
+    return { ok: Boolean(parsed.protocol === "https:" && parsed.host && parsed.username && parsed.pathname.length > 1),
+      detail: "Solo valida formato DSN; no acredita SDK instalado ni ingestion" };
+  } catch { return { ok: false, detail: "Formato DSN invalido; valor omitido" }; }
 };
 
 // --- la tabla -------------------------------------------------------------
@@ -435,12 +432,22 @@ export const CONNECTIONS: ConnectionSpec[] = [
   },
   {
     id: "openrouter",
-    label: "OpenRouter (fallback)",
+    label: "OpenRouter JEV (Decisions)",
     feature: "llm",
-    names: ["OPENROUTER_API_KEY"],
+    names: ["JEV_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"],
     need: "optional",
-    note: "Fallback OpenAI-compatible y modelos gratuitos.",
+    note: "Cuenta nueva de JEV; verificar clave no acredita inferencia ni egress autorizado.",
     probe: openrouter,
+  },
+  {
+    id: "openrouter-slow", label: "OpenRouter Slow (DeepSeek)", feature: "llm",
+    names: ["OPEN_ROUTER_API_KEY"], need: "optional",
+    note: "Cuenta antigua separada para Slow; no es alias de la clave JEV.", probe: openrouterSlow,
+  },
+  {
+    id: "meta-muse", label: "Meta Muse directo (Fast)", feature: "llm",
+    names: ["MUSE_API_KEY"], need: "optional",
+    note: "Endpoint/modelo/protocolo y Contributor se verifican con Meta; presencia no significa conexion.",
   },
   {
     id: "openai",

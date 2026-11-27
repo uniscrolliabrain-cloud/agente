@@ -1,3 +1,4 @@
+import { laneEnvironment } from "../apps/server/src/llm-config.ts";
 // SECRETS_CHECK_V1 - auditoria del contrato de secretos.
 //
 // El runner inyecta el entorno (GitHub-first, Doppler opcional); este script no lee almacenes ni
@@ -51,7 +52,16 @@ const SECRETS: Secret[] = [
   { name: "MODEL", need: "live", group: "llm", note: "'<provider>/<modelo>', p.ej. openai/gpt-4.1-mini" },
   { name: "OPENAI_API_KEY", need: "optional", group: "llm", note: "proveedor principal si MODEL empieza por openai/" },
   { name: "GEMINI_API_KEY", need: "optional", group: "llm", note: "proveedor google/" },
-  { name: "OPENROUTER_API_KEY", need: "optional", group: "llm", note: "fallback OpenAI-compatible; tambien permite modelos gratuitos" },
+  { name: "OPENROUTER_API_KEY", need: "optional", group: "jev", note: "cuenta nueva de JEV Decisions, nunca alias de Slow" },
+  { name: "JEV_OPENROUTER_API_KEY", need: "optional", group: "jev", note: "override dedicado para JEV" },
+  { name: "JEV_MODEL", need: "optional", group: "jev", note: "default typesafe/jev-1.14; versiones explicitas 1.14 o 1.13" },
+  { name: "OPEN_ROUTER_API_KEY", need: "optional", group: "kernel", note: "cuenta antigua para DeepSeek Slow" },
+  { name: "MUSE_API_KEY", need: "optional", group: "kernel", note: "Meta Muse directo; requiere endpoint/modelo/protocolo verificados" },
+  { name: "SUPABASE_SECRET_KEY", need: "optional", group: "auth", note: "servicio Supabase, alias GitHub SUPABASE_SECRET; no es un JWT signing secret" },
+  { name: "GRAFANA_URL", need: "optional", group: "observability", note: "URL de Grafana, no URL OTLP" },
+  { name: "GRAFANA_SERVICE_ACCOUNT_TOKEN", need: "optional", group: "observability", note: "token de servicio Grafana API" },
+  { name: "GRAFANA_CLOUD_TOKEN", need: "optional", group: "observability", note: "token Cloud, no intercambiable con token de servicio; requiere destino propio" },
+  { name: "SENTRY_DSN", need: "optional", group: "observability", note: "DSN de ingestion; presencia no prueba SDK ni entrega" },
   { name: "MODEL_FALLBACK", need: "optional", group: "llm", note: "segunda oportunidad cuando el primario falla antes de emitir texto" },
 
   // --- kernel de dos velocidades ------------------------------------------
@@ -88,7 +98,7 @@ const profiles: Record<string, string[]> = {
   "suite-verde": [], leads: ["leads"], "authz-tenant": ["auth", "bootstrap"],
   canales: ["google", "email", "whatsapp", "vapi"],
   "responder-lead": ["leads", "google", "email", "whatsapp", "vapi", "llm", "kernel"],
-  deploy: ["core", "auth", "bootstrap", "llm"], convergencia: ["kernel"],
+  deploy: ["core", "auth", "bootstrap", "llm"], convergencia: ["kernel", "jev"], observabilidad: ["observability"],
 };
 function usageError(): never {
   process.stderr.write("secrets:check: invalid mode, profile, group or option\n");
@@ -129,6 +139,7 @@ const ALIASES: Record<string, string[]> = {
   WHATSAPP_PHONE_ID: ["WHATSAPP_PHONE_NUMBER_ID"],
   WHATSAPP_BUSINESS_ACCOUNT_ID: ["WHATSAPP_WABA_ID"],
   GEMINI_API_KEY: ["GOOGLE_API_KEY"],
+  SUPABASE_SECRET_KEY: ["SUPABASE_SECRET"],
   EMAIL_FROM: ["RESEND_FROM", "RESEND_FROM_EMAIL"],
 };
 
@@ -208,7 +219,7 @@ if (includes("whatsapp") && present("WHATSAPP_APP_SECRET") && !present("WHATSAPP
 // vacio y el chat no responde. Nadie relacionaba una variable con la otra.
 const modelSpec = present("MODEL") ?? "";
 const modelProvider = modelSpec.split("/")[0]?.trim().toLowerCase() ?? "";
-const gatewayKey = present("OPENROUTER_API_KEY") ?? present("OPENAI_API_KEY");
+const gatewayKey = present("OPEN_ROUTER_API_KEY") ?? present("OPENAI_API_KEY");
 if (includes("llm") && modelProvider === "google" && !present("GEMINI_API_KEY") && !gatewayKey) {
   coherence.push(
     "MODEL configurado sin GEMINI_API_KEY ni pasarela OpenAI-compatible: el chat arranca sin motor.",
@@ -216,7 +227,7 @@ if (includes("llm") && modelProvider === "google" && !present("GEMINI_API_KEY") 
 }
 if (includes("llm") && modelProvider && modelProvider !== "google" && !gatewayKey) {
   coherence.push(
-    "MODEL configurado sin OPENAI_API_KEY ni OPENROUTER_API_KEY: el chat arranca sin motor.",
+    "MODEL configurado sin OPENAI_API_KEY ni OPEN_ROUTER_API_KEY: el chat arranca sin motor.",
   );
 }
 // The API destination is not necessarily the browser's Origin. Validate the URL
@@ -234,15 +245,20 @@ if (includes("core") && mode === "live" && publicApiUrl) {
 // Validate only enabled, implemented lane consumers. Candidate providers do
 // not become configured integrations merely by appearing in an environment.
 if (includes("kernel")) {
-  for (const lane of ["FAST", "SLOW"]) {
-    const names = [`${lane}_LLM_API_KEY`, `${lane}_LLM_PROVIDER`, `${lane}_LLM_MODEL`];
-    if (names.some(name => present(name))) {
-      if (!names.every(name => present(name))) coherence.push(`${lane}_LLM_PROFILE_INCOMPLETE`);
-      const provider = present(`${lane}_LLM_PROVIDER`);
-      if (provider && !["google", "openai", "openrouter", "anthropic"].includes(provider)) coherence.push(`${lane}_LLM_PROVIDER_INVALID`);
+  for (const lane of ["fast", "slow"] as const) {
+    const prefix = lane.toUpperCase(), profile = laneEnvironment(lane);
+    if (profile.provider || profile.model || profile.apiKey || (lane === "fast" && present("MUSE_API_KEY"))) {
+      if (!profile.provider || !profile.model || !profile.apiKey) coherence.push(`${prefix}_LLM_PROFILE_INCOMPLETE`);
+      if (profile.provider && !["google", "openai", "openrouter", "anthropic"].includes(profile.provider)) coherence.push(`${prefix}_LLM_PROVIDER_INVALID`);
     }
   }
 }
+if (includes("jev")) {
+  const model = present("JEV_MODEL");
+  if (model && !["typesafe/jev-1.14", "typesafe/jev-1.13"].includes(model)) coherence.push("JEV_MODEL_INVALID");
+  if (model && !present("JEV_OPENROUTER_API_KEY") && !present("OPENROUTER_API_KEY")) coherence.push("JEV_OPENROUTER_UNCONFIGURED");
+}
+if (includes("observability") && Boolean(present("GRAFANA_URL")) !== Boolean(present("GRAFANA_SERVICE_ACCOUNT_TOKEN"))) coherence.push("GRAFANA_API_PROFILE_INCOMPLETE");
 if (includes("core") && present("TOKEN_ENCRYPTION_KEY")) {
   const key = present("TOKEN_ENCRYPTION_KEY")!;
   if (!/^[A-Za-z0-9+/]{43}=$/.test(key) || Buffer.from(key, "base64").length !== 32) coherence.push("TOKEN_ENCRYPTION_KEY_INVALID");
