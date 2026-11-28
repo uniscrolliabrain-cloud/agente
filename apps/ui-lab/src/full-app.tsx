@@ -27,6 +27,9 @@ const LegalV1 = lazy(() => import("./legal/LegalV1"));
 const CompanyApp = lazy(() => import("./company-v2/CompanyApp"));
 // AGNTIA_CODE_V1 - plataforma de IA coding del clon, con su propio shell.
 const CodeApp = lazy(() => import("./code-v1/CodeApp"));
+// OBSERVABILITY_METAAPP_V1 - tercer clon abierto desde Ajustes: 18 workspaces
+// de observabilidad y ciberseguridad, de momento con relleno.
+const ObservabilityApp = lazy(() => import("./observability-v1/ObservabilityApp"));
 
 function View({ children }: { children: ReactNode }) {
   return (
@@ -114,6 +117,11 @@ createRoot(document.getElementById("root")!).render(
           codeArea={({ onClose }) => (
             <View>
               <CodeApp onClose={onClose} />
+            </View>
+          )}
+          observabilityArea={({ onClose }) => (
+            <View>
+              <ObservabilityApp onClose={onClose} />
             </View>
           )}
         />

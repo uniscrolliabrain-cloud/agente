@@ -103,18 +103,23 @@ type DemoView = ReactNode | ((nav: (view: AppView) => void) => ReactNode);
 type CompanyArea = (opts: { onClose: () => void }) => ReactNode;
 // AGNTIA_CODE_V1 - tercer clon: plataforma de IA coding, también solo demo.
 type CodeArea = (opts: { onClose: () => void }) => ReactNode;
+// OBSERVABILITY_METAAPP_V1 - cuarto clon: observabilidad y ciberseguridad con
+// 18 workspaces. Igual que los otros, solo se monta si el clon pasa el prop.
+type ObservabilityArea = (opts: { onClose: () => void }) => ReactNode;
 
 export default function App({
   demoViews,
   demoCommandCenterPresentation,
   companyArea,
   codeArea,
+  observabilityArea,
 }: {
   demoViews?: Partial<Record<AppView, DemoView>>;
   /** Presentación exclusiva del clon; no sustituye el loader ni los callbacks. */
   demoCommandCenterPresentation?: CommandCenterPresentation;
   companyArea?: CompanyArea;
   codeArea?: CodeArea;
+  observabilityArea?: ObservabilityArea;
 } = {}) {
   const auth = useAuth();
   const tasks = useTasks(3000, auth.isAuthenticated);
@@ -152,6 +157,8 @@ export default function App({
   const [companyOpen, setCompanyOpen] = useState(false);
   // AGNTIA_CODE_V1 - mismo patrón para el clon de código.
   const [codeOpen, setCodeOpen] = useState(false);
+  // OBSERVABILITY_METAAPP_V1 - la meta-app de observabilidad tapa el shell.
+  const [observabilityOpen, setObservabilityOpen] = useState(false);
   // SPLIT_PANE_V1 - arrastrar una entrada de la barra lateral al contenido abre
   // esa vista al lado de la actual: a la derecha en escritorio y arriba en móvil.
   // Solo el clon de demostración lo usa.
@@ -555,6 +562,7 @@ export default function App({
         onOpenProfile={() => setProfileOpen(true)}
         {...(companyArea ? { onOpenCompany: () => setCompanyOpen(true) } : {})}
         {...(codeArea ? { onOpenCode: () => setCodeOpen(true) } : {})}
+        {...(observabilityArea ? { onOpenObservability: () => setObservabilityOpen(true) } : {})}
         onExitDemo={() => { void auth.logout(); }}
         onLogout={() => { void auth.logout(); }}
       />
@@ -593,6 +601,7 @@ export default function App({
 
       {companyOpen && companyArea?.({ onClose: () => setCompanyOpen(false) })}
       {codeOpen && codeArea?.({ onClose: () => setCodeOpen(false) })}
+      {observabilityOpen && observabilityArea?.({ onClose: () => setObservabilityOpen(false) })}
     </>
   );
 }

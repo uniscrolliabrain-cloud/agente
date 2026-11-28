@@ -2,7 +2,7 @@
 // Antes el icono de engranaje no hacia nada y no habia forma de cerrar sesion
 // desde el panel: solo borrando el almacenamiento del navegador.
 import { useEffect } from "react";
-import { Building2, ChevronRight, Code2, Compass, LogOut, Sparkles, UserRound } from "lucide-react";
+import { Building2, ChevronRight, Code2, Compass, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { BrandLockup } from "./BrandMark";
 import { initialsOf } from "./team/data";
 
@@ -22,6 +22,9 @@ interface Props {
   /** AGNTIA_CODE_V1 - tercer clon del demo: plataforma de IA coding. Igual que
    *  Tu Empresa, solo se monta cuando el clon pasa el prop. */
   onOpenCode?: () => void;
+  /** OBSERVABILITY_METAAPP_V1 - cuarto clon del demo: observabilidad y
+   *  ciberseguridad con 18 workspaces. Sin el prop, producción no cambia. */
+  onOpenObservability?: () => void;
   onExitDemo: () => void;
   onLogout: () => void;
 }
@@ -37,6 +40,7 @@ export default function SettingsMenu({
   onOpenProfile,
   onOpenCompany,
   onOpenCode,
+  onOpenObservability,
   onExitDemo,
   onLogout,
 }: Props) {
@@ -103,6 +107,21 @@ export default function SettingsMenu({
             >
               <Code2 size={15} />
               <span>Agntia Code</span>
+              <small>Demo</small>
+              <ChevronRight size={14} className="settings-chevron" />
+            </button>
+          )}
+          {onOpenObservability && (
+            <button
+              type="button"
+              className="settings-item"
+              onClick={() => {
+                onClose();
+                onOpenObservability();
+              }}
+            >
+              <ShieldCheck size={15} />
+              <span>Observabilidad y Ciberseguridad</span>
               <small>Demo</small>
               <ChevronRight size={14} className="settings-chevron" />
             </button>
