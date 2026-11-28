@@ -36,6 +36,8 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import "../design-system/agntia-tokens.css";
+import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
 import {
   SmartCommandPalette,
@@ -105,6 +107,18 @@ const SECTIONS: Section[] = [
 
 const SECTION_IDS = SECTIONS.map((section) => section.id);
 
+/* ------------------------------------------------------------------ chats
+ * Igual que en Tu Empresa y Agntia Code, el rail lleva la lista de
+ * conversaciones del entorno. Aquí son investigaciones abiertas sobre trazas:
+ * ninguna se ejecuta, todas existen para validar el comportamiento del rail. */
+type ObsChat = { id: string; title: string; preview: string };
+
+const SEED_CHATS: ObsChat[] = [
+  { id: "q1", title: "Por qué el turno 4182 tardó 9 s", preview: "Sospecha del carril Fast, sin confirmar." },
+  { id: "q2", title: "JEV rechazó tres tarjetas seguidas", preview: "Comparar respuesta del clasificador con el recibo." },
+  { id: "q3", title: "Lectura cruzada entre dos tenants", preview: "Solo estructura: ninguna consulta real de datos." },
+];
+
 const LOREM_ROWS = [
   "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
   "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
@@ -144,32 +158,67 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
   });
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [chats, setChats] = useState<ObsChat[]>(SEED_CHATS);
+  const [chatId, setChatId] = useState<string | null>(null);
 
   const section = SECTIONS.find((entry) => entry.id === nav.sectionId) ?? SECTIONS[0];
   const { go, pins, isPinned, togglePin, collapsed, setCollapsed, openPalette, openShortcuts } = nav;
 
+  // Mismo contrato que los otros dos clones: la meta-app escucha en captura y
+  // corta la propagación para que el shell que queda debajo no abra a la vez su
+  // propia paleta ni intercepte Esc. Después, precedencia de capas al cerrar.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !nav.dialogOpen) {
-        if (drawer) setDrawer(false);
-        else onClose();
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target !== null &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          Boolean(target.isContentEditable));
+      const mod = event.metaKey || event.ctrlKey;
+      const key = event.key.toLowerCase();
+
+      if (mod && key === "k") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (nav.paletteOpen) nav.closePalette();
+        else openPalette();
         return;
       }
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      if (mod && key === "b") {
         event.preventDefault();
-        openPalette();
+        event.stopImmediatePropagation();
+        setCollapsed((value) => !value);
         return;
       }
-      if (event.key === "?" && !nav.dialogOpen) {
-        const tag = (event.target as HTMLElement | null)?.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (!mod && !typing && (event.key === "/" || event.key === "?")) {
         event.preventDefault();
-        openShortcuts();
+        event.stopImmediatePropagation();
+        if (event.key === "?") openShortcuts();
+        else openPalette();
+        return;
       }
+      if (event.key !== "Escape") return;
+      event.stopImmediatePropagation();
+      if (nav.paletteOpen) nav.closePalette();
+      else if (nav.shortcutsOpen) nav.closeShortcuts();
+      else if (drawer) setDrawer(false);
+      else onClose();
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawer, nav.dialogOpen, onClose, openPalette, openShortcuts]);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    drawer,
+    onClose,
+    openPalette,
+    openShortcuts,
+    setCollapsed,
+    nav.paletteOpen,
+    nav.closePalette,
+    nav.shortcutsOpen,
+    nav.closeShortcuts,
+  ]);
 
   const commands = useMemo<SmartCommand[]>(
     () =>
@@ -190,8 +239,10 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
 
   const shortcuts: SmartShortcut[] = [
     { keys: "⌘K", label: "Buscar workspace o acción", group: "Navegación" },
+    { keys: "/", label: "Abrir la búsqueda", group: "Navegación" },
+    { keys: "⌘B", label: "Plegar o expandir el menú", group: "Navegación" },
     { keys: "?", label: "Ver todos los atajos", group: "Navegación" },
-    { keys: "esc", label: "Cerrar panel o volver a la app", group: "Navegación" },
+    { keys: "esc", label: "Cerrar capas y volver a la app", group: "Navegación" },
     { keys: "doble clic", label: "Fijar o desfijar un acceso", group: "Accesos" },
     { keys: "alt + ↑↓", label: "Mover un acceso fijado", group: "Accesos" },
   ];
@@ -225,6 +276,27 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
             <X size={16} />
           </button>
         </div>
+
+        <MetaChats
+          namespace="agntia_obs"
+          items={chats}
+          active={chatId}
+          onSelect={(id) => {
+            setChatId(id);
+            setDrawer(false);
+          }}
+          onRename={(id, title) => setChats((list) => list.map((chat) => (chat.id === id ? { ...chat, title } : chat)))}
+          onNew={() =>
+            setChats((list) => [
+              {
+                id: `q${Date.now()}`,
+                title: "Nueva investigación",
+                preview: "Solo interfaz: aquí se abrirá una traza concreta.",
+              },
+              ...list,
+            ])
+          }
+        />
 
         <nav className="ob-nav" aria-label="Workspaces de observabilidad">
           {pins.length > 0 && (

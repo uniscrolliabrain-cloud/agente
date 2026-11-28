@@ -19,7 +19,11 @@
   inset: 0;
   z-index: 400;
   display: grid;
-  grid-template-columns: 58px var(--ob-rail-w, 264px) minmax(0, 1fr);
+  /* Igual que company.css y code.css: dos columnas. El dock espacial NO es una
+     columna propia; meta-dock.css lo coloca absoluto en el cauce de 58 px que
+     abre `.meta-dock-root { padding-left: 58px }` (46 px arriba en móvil).
+     Pisar esa regla era lo que rompía la tira horizontal en el móvil. */
+  grid-template-columns: var(--ob-rail-w, 264px) minmax(0, 1fr);
   background: var(--ob-paper);
   color: var(--ob-ink);
   font-family: Manrope, system-ui, sans-serif;
@@ -31,6 +35,12 @@
 
 .ob-root.is-collapsed {
   --ob-rail-w: 0px;
+}
+
+.ob-root.is-collapsed .ob-rail {
+  padding: 0;
+  border-right: 0;
+  overflow: hidden;
 }
 
 .ob-root *,
@@ -49,17 +59,6 @@
   font-family: Fraunces, Georgia, serif;
   font-weight: 400;
   letter-spacing: -0.01em;
-}
-
-/* El dock de smart-ux nace absoluto porque en Tu Empresa flota sobre el rail.
-   Aquí ocupa su propia columna: es la primera de las tres. */
-.ob-root.meta-dock-root .shell__dock {
-  position: relative;
-  inset: auto;
-  width: auto;
-  height: 100%;
-  border-right: 1px solid var(--ob-line);
-  background: linear-gradient(180deg, #f8f7f3 0%, #f2f1ec 100%);
 }
 
 /* ------------------------------------------------------------------- rail */
@@ -670,13 +669,13 @@
 
 @media (max-width: 900px) {
   .ob-root {
-    grid-template-columns: 58px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ob-rail {
     position: absolute;
     z-index: 6;
-    inset: 0 auto 0 58px;
+    inset: 0 auto 0 0;
     width: min(300px, 78vw);
     transform: translateX(-102%);
     transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
