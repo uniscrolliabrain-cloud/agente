@@ -6,6 +6,46 @@
     <meta name="robots" content="noindex,nofollow" />
     <title>AgntiaPro · Demo</title>
     <meta name="application-name" content="AgntiaPro" />
+    <!-- GitHub Pages sirve este HTML con max-age=600 y cada deploy renombra los
+         assets con hash. Si el navegador conserva un HTML viejo, sus <link>/<script>
+         apuntan a ficheros ya borrados y la vista queda sin CSS y sin JS, porque el
+         404 de Pages responde HTML. Aquí detectamos ese fallo una vez por sesión y
+         recargamos con una URL nueva para pedir el HTML del deploy actual. -->
+    <script>
+      (function () {
+        var KEY = "agente:stale-build-reload";
+        try {
+          if (window.sessionStorage.getItem(KEY)) return;
+        } catch (error) {
+          return;
+        }
+        window.addEventListener(
+          "error",
+          function (event) {
+            var target = event.target;
+            if (!target || target === window) return;
+            var tag = (target.tagName || "").toLowerCase();
+            if (tag !== "link" && tag !== "script") return;
+            var url;
+            try {
+              url = new URL(target.href || target.src || "", window.location.href);
+            } catch (error) {
+              return;
+            }
+            if (url.origin !== window.location.origin) return;
+            try {
+              window.sessionStorage.setItem(KEY, "1");
+            } catch (error) {
+              return;
+            }
+            var next = new URL(window.location.href);
+            next.searchParams.set("v", String(Date.now()));
+            window.location.replace(next.toString());
+          },
+          true
+        );
+      })();
+    </script>
     <link rel="icon" type="image/png" sizes="192x192" href="agntiapro-icon.png" />
     <link rel="apple-touch-icon" href="agntiapro-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
