@@ -96,6 +96,17 @@ export function cognitionV2Routes(runtime: CognitionV2Runtime) {
     const { presentCognitiveJourney } = await import("./engine/cognition/v2/presenter.ts");
     return c.json(await presentCognitiveJourney(runtime.context, await identity(c), c.req.query("after") ?? "0"));
   });
+  // C16_PROMPT_RUNTIME_V2 - el prompt exacto que recibio cada lane, por run.
+  // Es texto autorizado del actor: nunca sale por metricas ni por el bus.
+  app.get("/prompts", async (c) => {
+    const actor = await identity(c);
+    const runKey = z.string().min(1).max(200).parse(c.req.query("runKey"));
+    return c.json({ prompts: await runtime.prompts.list(actor, runKey) });
+  });
+  app.get("/prompts/:id", async (c) => {
+    const result = await runtime.prompts.resolve(await identity(c), c.req.param("id"));
+    return result ? c.json(result) : c.json({ error: "No disponible" }, 404);
+  });
   // Delivery ACK is deliberately internal to the verified consumer boundary.
   return app;
 }

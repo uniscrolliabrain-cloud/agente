@@ -98,6 +98,17 @@ const minimalPayload: Record<string, Record<string, unknown>> = {
     confidence: 0.8,
   },
   "cognition.card.injected": { cardIds: ["card-1"], threadId: "thread-1" },
+  // C16_PROMPT_RUNTIME_V2 - el payload solo lleva puntero y digest del prompt.
+  "cognition.v2.prompt.rendered": {
+    promptId: "prompt-1",
+    lane: "fast",
+    digest: "a".repeat(64),
+    tokens: 1,
+    snapshotId: "snapshot-1",
+    runKey: "run-key-1",
+    messageCount: 1,
+    segmentCount: 1,
+  },
   "context.assembled": {
     entityCount: 0,
     relationCount: 0,

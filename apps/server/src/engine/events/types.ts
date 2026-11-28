@@ -131,6 +131,7 @@ export const SYSTEM_EVENT_TYPES = [
   "cognition.v2.record.proposed",
   "cognition.v2.source.revoked",
   "cognition.v2.slow.status",
+  "cognition.v2.prompt.rendered",
   "cognition.card.created",
   "cognition.card.injected",
 ] as const;

@@ -52,6 +52,14 @@ export async function installCognitionV2(db: Store): Promise<void> {
     `CREATE TABLE IF NOT EXISTS cognition_v2_delivery_recoveries (tenant text NOT NULL,id text NOT NULL,actor text NOT NULL,data jsonb NOT NULL,PRIMARY KEY(tenant,id))`,
     `CREATE TABLE IF NOT EXISTS cognition_v2_snapshots (tenant text NOT NULL, id text NOT NULL, actor text NOT NULL,
       data jsonb NOT NULL, PRIMARY KEY(tenant,id))`,
+    // C16_PROMPT_RUNTIME_V2 - el prompt que recibe cada lane es un objeto
+    // durable y auditable, no una variable local del closure de chat.
+    `CREATE TABLE IF NOT EXISTS cognition_v2_prompts (tenant text NOT NULL, id text NOT NULL, actor text NOT NULL, lane text NOT NULL,
+      snapshot_id text NOT NULL, digest text NOT NULL, data jsonb NOT NULL, created_at timestamptz NOT NULL,
+      expires_at timestamptz NOT NULL, PRIMARY KEY(tenant,id))`,
+    `CREATE INDEX IF NOT EXISTS cognition_v2_prompts_run ON cognition_v2_prompts(tenant,actor,(data->>'runKey'))`,
+    `ALTER TABLE cognition_v2_chat_runs ADD COLUMN IF NOT EXISTS snapshot_id text`,
+    `ALTER TABLE cognition_v2_chat_runs ADD COLUMN IF NOT EXISTS prompt_id text`,
   ]) await db.rawQuery(sql);
 }
 export class DurableEventSink implements EventSink {

@@ -28,6 +28,18 @@ export const payloadSchemas: Record<SystemEventType, z.ZodTypeAny> = {
   "cognition.v2.record.proposed": z.strictObject({ record: cognitiveRecordSchema }),
   "cognition.v2.source.revoked": z.strictObject({ sourceId: z.string().min(1).max(200) }),
   "cognition.v2.slow.status": slowStatusPayloadSchema,
+  // C16_PROMPT_RUNTIME_V2 - puntero al prompt durable. El texto no viaja en el
+  // log: se resuelve por id contra la identidad que lo produjo.
+  "cognition.v2.prompt.rendered": z.strictObject({
+    promptId: z.string().min(1).max(200),
+    lane: z.enum(["fast", "slow"]),
+    digest: z.string().regex(/^[a-f0-9]{64}$/),
+    tokens: z.number().int().nonnegative(),
+    snapshotId: z.string().min(1).max(200),
+    runKey: z.string().min(1).max(200),
+    messageCount: z.number().int().nonnegative().max(100),
+    segmentCount: z.number().int().nonnegative().max(100),
+  }),
   "task.created": z.object({ ...base, title: z.string().max(200), kind: z.string().max(40) }),
   "task.status_changed": z.object({ ...base, from: z.string().max(40), to: z.string().max(40) }),
   "task.completed": z.object({ ...base, title: z.string().max(200), result: z.string().max(2000).optional() }),
