@@ -37,6 +37,7 @@ export const cognitiveRecordSchema = z.strictObject({
   memoryKind: memoryKindSchema.optional(),
   title: z.string().min(1).max(160), body: z.string().min(1).max(16000),
   epistemic: epistemicSchema, evidence: z.array(cognitiveRefSchema).min(1).max(100),
+  inferenceDependencies: z.array(cognitiveRefSchema).max(30).optional(),
   sourceEventId: id, sourceRevision: z.number().int().positive(),
   visibility: cognitiveVisibilitySchema, signals: attentionSignalsSchema,
   classification: classificationV2Schema.optional(),
@@ -45,7 +46,7 @@ export const cognitiveRecordSchema = z.strictObject({
   lifecycle: z.enum(["active", "superseded", "revoked", "expired"]),
   createdAt: time, expiresAt: time.optional(),
 }).superRefine((r, ctx) => {
-  if (r.visibility.tenantId !== r.tenantId || r.evidence.some((e) => e.tenantId !== r.tenantId))
+  if (r.visibility.tenantId !== r.tenantId || [...r.evidence, ...(r.inferenceDependencies ?? [])].some((e) => e.tenantId !== r.tenantId))
     ctx.addIssue({ code: "custom", message: "cross-tenant reference" });
   if ((r.kind === "memory") !== Boolean(r.memoryKind))
     ctx.addIssue({ code: "custom", message: "memoryKind only on memory" });
@@ -95,3 +96,14 @@ export const chromaticOntologyV2Schema = z.strictObject({
   dimensions: uniqueIds, approvalReceiptId: id.optional(),
 }).refine((o) => o.status !== "approved" || Boolean(o.approvalReceiptId), "approval receipt required")
   .refine((o) => new Set(o.axes.map((a) => a.id)).size === o.axes.length, "duplicate axes");
+
+/** Server-authenticated human input, information provenance only; never an action proposal. */
+export const cognitiveHumanTurnPayloadSchema = z.strictObject({
+  schemaVersion: z.literal("1.0"),
+  identity: cognitiveIdentitySchema,
+  threadId: id, runId: id, messageId: id,
+  text: z.string().min(1).max(24000),
+  inputDigest: z.string().regex(/^[a-f0-9]{64}$/),
+}).refine(value => value.identity.purpose === "chat" && value.identity.actorId === value.identity.owner,
+  "human chat provenance requires a self-owned authenticated chat identity");
+export type CognitiveHumanTurnPayload = z.infer<typeof cognitiveHumanTurnPayloadSchema>;

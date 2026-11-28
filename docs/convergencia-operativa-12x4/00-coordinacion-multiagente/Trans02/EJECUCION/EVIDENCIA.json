@@ -1,0 +1,82 @@
+{
+  "turno": "Trans02/T1-cognicion",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "5a7ea97a",
+  "state": "PARTIAL_LOCAL",
+  "git": { "branch": "converge/trans00-core", "dirty": 0 },
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=60000 --test-force-exit <tanda de suites>",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json"
+  },
+  "tests": {
+    "suites": 42,
+    "batches": 6,
+    "total": 116,
+    "pass": 106,
+    "fail": 0,
+    "skip": 10,
+    "todo": 0,
+    "newSuite": "tests/trans02-fast-text-only.test.ts",
+    "newSuiteTests": 2,
+    "corpusExpected": { "total": 114, "pass": 104, "skip": 10 },
+    "delta": "los 2 tests nuevos de Fast"
+  },
+  "batches": [
+    { "n": 1, "tests": 14, "pass": 14, "skip": 0, "exit": 0 },
+    { "n": 2, "tests": 32, "pass": 31, "skip": 1, "exit": 0 },
+    { "n": 3, "tests": 22, "pass": 19, "skip": 3, "exit": 0 },
+    { "n": 4, "tests": 22, "pass": 20, "skip": 2, "exit": 0 },
+    { "n": 5, "tests": 13, "pass": 11, "skip": 2, "exit": 0 },
+    { "n": 6, "tests": 13, "pass": 11, "skip": 2, "exit": 0 }
+  ],
+  "exitCodes": { "tests": 0, "typecheck": 0 },
+  "logs": {
+    "tests": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans02/EJECUCION/EVIDENCIA/logs/trans02-suites.log",
+      "sha256": "fac3bacb5dfd873ab883c343dcfb76fae30145ee9a25af414e20a2868d928dd0"
+    },
+    "typecheck": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans02/EJECUCION/EVIDENCIA/logs/trans02-tsc.log",
+      "sha256": "ba9ca352081fd3da94a667eeb05cfd0f70a27d6fc898aefb8ad3516963747005"
+    },
+    "exitCodes": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans02/EJECUCION/EVIDENCIA/logs/trans02-exit.log",
+      "sha256": "bcb1a61798abda8d8a3a775a1373725c955f1de0a18ef7e131bc06475bdc0f16"
+    }
+  },
+  "skips": {
+    "count": 10,
+    "cause": "PostgreSQL nativo o flag sintetico explicito; ninguno es funcionalidad ausente",
+    "titles": [
+      "Postgres human journal: two connections admit one run and rollback a failed capture",
+      "C01 native concurrent backfill journals one import across two connections",
+      "two Postgres connections cannot execute the same operation concurrently",
+      "C09 native Postgres workers reconcile one expired lease once under concurrent connections",
+      "C08 native concurrent workers admit one in-flight request and rollback quota with failed transaction",
+      "C02 native competing receipt workers commit one projection under tenant fence",
+      "restricted Postgres role isolates voice and cyber module records across tenants",
+      "C01 restricted Postgres role: RLS rejects cross-tenant reads and writes without relying on SQL filters",
+      "C02 real Postgres: pinned connections, concurrent rollback, atomic event ordering and kernel capture (requires explicit local synthetic flag)",
+      "separate Postgres worker publishes readiness and recovers events written while stopped"
+    ]
+  },
+  "done": {
+    "fastWithoutToolsInCode": true,
+    "fastToolCallRejected": true,
+    "ontologyVersionedWithExplicitRejection": true,
+    "attentionProvenanceAndTenantIsolation": true,
+    "jevSeparatedFromSlowAccount": true,
+    "focalSuitesGreen": true,
+    "ledgerPromoted": false,
+    "fullGate": false
+  },
+  "limitations": [
+    "El gate integral no se ejecuto: 116 pruebas focales no son 12 fases x 4 pasadas.",
+    "El ledger de Trans02 no se toca: sus 48 bloques siguen PENDING.",
+    "Fast, Slow y JEV se ejercen con transporte sintetico: LIVE_UNVERIFIED, ningun proveedor real.",
+    "Los 10 SKIP son de concurrencia con PostgreSQL nativo; no cuentan como PASS.",
+    "07.01-07.04 siguen NOT_RUN: sin autorizacion ni datos del owner.",
+    "La atencion se prueba sobre el almacen local del test, no sobre PostgreSQL real."
+  ],
+  "notes": "Cierra la frontera Fast/Slow con un test de codigo (no de prompt), contrasta la ontologia versionada y la procedencia de atencion, y confirma la separacion JEV/Slow. No demuestra gate, proveedor real ni concurrencia nativa."
+}

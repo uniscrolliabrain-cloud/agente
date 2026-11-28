@@ -12,6 +12,7 @@
 //   - MAX_THOUGHTS_PER_TURN evita que un bucle infinito infle el turno.
 
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { thoughtSchema, type Thought } from "./thought.ts";
 import { turnSchema, type Turn, type TurnCloseReason, type TurnClosedBy } from "./turn.ts";
@@ -126,12 +127,21 @@ export class StoreTurnStore implements TurnStore {
   async append(thought: Thought): Promise<Thought> {
     const parsed = thoughtSchema.parse(thought);
     return this.store.transaction(async (tx) => {
+      await tx.lockKey?.(parsed.tenantId, parsed.id);
+      await tx.lockKey?.(parsed.tenantId, parsed.turnId);
+      const existing = await tx.get(parsed.tenantId, THOUGHTS_KIND, parsed.id);
+      if (existing) {
+        const saved = thoughtSchema.parse(existing);
+        if (!isDeepStrictEqual(saved, parsed)) throw new AppError("Thought identity conflict", 409);
+        return saved;
+      }
       const raw = await tx.get(parsed.tenantId, TURNS_KIND, parsed.turnId);
       if (!raw) throw new AppError(`Turn not found: ${parsed.turnId}`, 404);
       const turn = turnSchema.parse(raw);
       if (turn.status !== "open") throw new AppError(`Turn is not open: ${parsed.turnId}`, 409);
       if (turn.tenantId !== parsed.tenantId)
         throw tenantMismatch(parsed.tenantId, turn.tenantId);
+      if (turn.owner !== parsed.owner) throw new AppError("Thought owner mismatch", 409);
       // KERNEL_STORE_MAX_THOUGHTS_HONOR_V1
       const maxForTenant = this.limitFor(parsed.tenantId); // FIX_8A_MAX_THOUGHTS_V1
       if (turn.thoughtIds.length >= maxForTenant)
@@ -217,31 +227,28 @@ export class StoreTurnStore implements TurnStore {
     reason: TurnCloseReason,
     closedBy: TurnClosedBy,
   ): Promise<Turn> {
-    // STORE_QUIESCENCE_MS_V1 - si reason es quiescence, esperar a que pase quiescenceMs desde quiescentAt.
-    if (reason === "quiescence") {
-      const rawTurn = await this.store.get(tenantId, TURNS_KIND, turnId);
-      if (rawTurn) {
-        const turnPre = turnSchema.parse(rawTurn);
-        if (turnPre.quiescentAt && turnPre.quiescenceMs > 0) {
-          const elapsed = Date.now() - Date.parse(turnPre.quiescentAt);
-          const wait = Math.min(turnPre.quiescenceMs - elapsed, 600_000);
-          if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+    for (;;) {
+      const result = await this.store.transaction(async (tx): Promise<{ turn?: Turn; waitMs?: number }> => {
+        await tx.lockKey?.(tenantId, turnId);
+        const raw = await tx.get(tenantId, TURNS_KIND, turnId);
+        if (!raw) throw new AppError(`Turn not found: ${turnId}`, 404);
+        const turn = turnSchema.parse(raw);
+        if (turn.tenantId !== tenantId) throw tenantMismatch(tenantId, turn.tenantId);
+        if (turn.status !== "open") return { turn };
+        if (reason === "quiescence" && turn.quiescentAt) {
+          const remaining = turn.quiescenceMs - (Date.now() - Date.parse(turn.quiescentAt));
+          if (remaining > 0) return { waitMs: Math.min(remaining, 60000) };
         }
-      }
+        turn.status = "closed";
+        turn.closedAt = new Date().toISOString();
+        turn.closeReason = reason;
+        turn.closedBy = closedBy;
+        await tx.put(tenantId, TURNS_KIND, turn.id, turn);
+        return { turn };
+      });
+      if (result.turn) return result.turn;
+      await new Promise((resolve) => setTimeout(resolve, result.waitMs));
     }
-    return this.store.transaction(async (tx) => {
-      const raw = await tx.get(tenantId, TURNS_KIND, turnId);
-      if (!raw) throw new AppError(`Turn not found: ${turnId}`, 404);
-      const turn = turnSchema.parse(raw);
-      if (turn.tenantId !== tenantId) throw tenantMismatch(tenantId, turn.tenantId);
-      if (turn.status !== "open") return turn;
-      turn.status = "closed";
-      turn.closedAt = new Date().toISOString();
-      turn.closeReason = reason;
-      turn.closedBy = closedBy;
-      await tx.put(tenantId, TURNS_KIND, turn.id, turn);
-      return turn;
-    });
   }
 
   /**

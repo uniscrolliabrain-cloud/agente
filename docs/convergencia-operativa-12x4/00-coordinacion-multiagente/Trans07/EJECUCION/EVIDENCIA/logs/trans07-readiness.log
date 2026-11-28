@@ -1,0 +1,552 @@
+{
+  "schemaVersion": 1,
+  "mode": "offline-contract",
+  "certifiesRuntime": false,
+  "registry": {
+    "source": "scripts/lib/connections.ts",
+    "names": 60,
+    "unregistered": []
+  },
+  "rows": [
+    {
+      "id": "db-runtime",
+      "campaigns": [
+        "Trans00",
+        "Trans01",
+        "Trans05",
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [
+        "DATABASE_URL",
+        "AGENTE_ACCESS_KEY",
+        "TOKEN_ENCRYPTION_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "db-migrations",
+      "campaigns": [
+        "Trans01",
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "DATABASE_MIGRATION_URL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "db-business",
+      "campaigns": [
+        "Trans01"
+      ],
+      "present": [],
+      "missing": [
+        "BUSINESS_DATABASE_URL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "tenant-fixtures",
+      "campaigns": [
+        "Trans01",
+        "Trans05",
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [
+        "TEST_TENANT_ID",
+        "TEST_OWNER_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "supabase-auth",
+      "campaigns": [
+        "Trans01"
+      ],
+      "present": [],
+      "missing": [
+        "SUPABASE_URL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "supabase-admin",
+      "campaigns": [
+        "Trans01"
+      ],
+      "present": [],
+      "missing": [
+        "SUPABASE_SECRET_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "fast-muse",
+      "campaigns": [
+        "Trans02",
+        "Trans05",
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [
+        "MUSE_API_KEY",
+        "FAST_LLM_MODEL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "slow-deepseek",
+      "campaigns": [
+        "Trans02",
+        "Trans05",
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [
+        "OPEN_ROUTER_API_KEY",
+        "SLOW_LLM_MODEL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "jev",
+      "campaigns": [
+        "Trans02",
+        "Trans05",
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [
+        "OPENROUTER_API_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "jev-service",
+      "campaigns": [
+        "Trans02"
+      ],
+      "present": [],
+      "missing": [
+        "JEV_API_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "embeddings",
+      "campaigns": [
+        "Trans02",
+        "Trans05",
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [
+        "EMBEDDINGS_LLM_PROVIDER",
+        "EMBEDDINGS_LLM_MODEL",
+        "EMBEDDINGS_LLM_API_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "google-workspace",
+      "campaigns": [
+        "Trans03",
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GOOGLE_REFRESH_TOKEN",
+        "GOOGLE_TEST_ACCOUNT_EMAIL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "google-docs",
+      "campaigns": [
+        "Trans03",
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [
+        "GOOGLE_TEST_DOCUMENT_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "google-sheets",
+      "campaigns": [
+        "Trans03",
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [
+        "GOOGLE_TEST_SPREADSHEET_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "google-slides",
+      "campaigns": [
+        "Trans03",
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [
+        "GOOGLE_TEST_PRESENTATION_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "google-places",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "GOOGLE_MAPS_API_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "gemini",
+      "campaigns": [
+        "Trans02",
+        "Trans03",
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [
+        "GEMINI_API_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "vertex-rag",
+      "campaigns": [
+        "Trans02",
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [
+        "GOOGLE_CLOUD_PROJECT",
+        "GOOGLE_CLOUD_LOCATION"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "whatsapp",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "WHATSAPP_TOKEN",
+        "WHATSAPP_PHONE_ID",
+        "WHATSAPP_BUSINESS_ACCOUNT_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "whatsapp-inbound",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "WHATSAPP_APP_SECRET",
+        "WHATSAPP_VERIFY_TOKEN",
+        "WHATSAPP_WEBHOOK_BINDINGS"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "resend",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "RESEND_API_KEY",
+        "EMAIL_FROM"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "vapi",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "VAPI_API_KEY",
+        "VAPI_ASSISTANT_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "vapi-inbound",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "VAPI_WEBHOOK_SECRET"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "vapi-outbound",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "VAPI_PHONE_NUMBER_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "anam",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "ANAM_API_KEY",
+        "ANAM_AVATAR_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "elevenlabs",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "ELEVENLABS_API_KEY",
+        "ELEVENLABS_VOICE_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "composio",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "COMPOSIO_API_KEY"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "apify",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [
+        "APIFY_TOKEN"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "facebook-pages",
+      "campaigns": [
+        "Trans03"
+      ],
+      "present": [],
+      "missing": [],
+      "issues": [],
+      "status": "stub_wiring_pending"
+    },
+    {
+      "id": "grafana-api",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "GRAFANA_URL",
+        "GRAFANA_SERVICE_ACCOUNT_TOKEN"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "grafana-cloud",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "GRAFANA_CLOUD_TOKEN"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "otlp",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_HEADERS"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "metrics",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "METRICS_TOKEN",
+        "PUBLIC_API_URL"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "sentry-dsn",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "SENTRY_DSN"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "sentry-release",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "alerts",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [],
+      "issues": [],
+      "status": "stub_wiring_pending"
+    },
+    {
+      "id": "fly",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "FLY_API_TOKEN",
+        "FLY_APP_NAME"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "vercel",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [
+        "VERCEL_TOKEN",
+        "VERCEL_ORG_ID",
+        "VERCEL_PROJECT_ID"
+      ],
+      "issues": [],
+      "status": "stub_missing_config"
+    },
+    {
+      "id": "backups",
+      "campaigns": [
+        "Trans04"
+      ],
+      "present": [],
+      "missing": [],
+      "issues": [],
+      "status": "stub_wiring_pending"
+    },
+    {
+      "id": "knowledge-sources",
+      "campaigns": [
+        "Trans05"
+      ],
+      "present": [],
+      "missing": [],
+      "issues": [],
+      "status": "stub_wiring_pending"
+    },
+    {
+      "id": "attention",
+      "campaigns": [
+        "Trans06"
+      ],
+      "present": [],
+      "missing": [],
+      "issues": [],
+      "status": "stub_wiring_pending"
+    },
+    {
+      "id": "convergence",
+      "campaigns": [
+        "Trans00"
+      ],
+      "present": [],
+      "missing": [],
+      "issues": [],
+      "status": "stub_wiring_pending"
+    }
+  ]
+}

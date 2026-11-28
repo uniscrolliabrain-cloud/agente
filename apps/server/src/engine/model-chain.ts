@@ -23,7 +23,7 @@ export interface ModelRun {
 /**
  * The runtime resolves openai, anthropic and google specs. An "openrouter/..."
  * spec is an OpenAI-compatible endpoint, so it is normalized to openai/... and
- * served by OPENROUTER_API_KEY (config.ts aliases OPENAI_API_KEY/BASE_URL when
+ * served by OPEN_ROUTER_API_KEY (config.ts aliases OPENAI_API_KEY/BASE_URL when
  * the OpenAI key is empty).
  */
 export function normalizeModelSpec(spec: string): string {
@@ -39,7 +39,8 @@ export function normalizeModelSpec(spec: string): string {
 export function envApiKeyFor(spec: string): string | undefined {
   const provider = normalizeModelSpec(spec).split("/")[0]?.toLowerCase();
   const read = (name: string) => process.env[name]?.trim() || undefined;
-  if (provider === "openai") return read("OPENAI_API_KEY") ?? read("OPENROUTER_API_KEY");
+  if (provider === "openai") return read("OPENAI_API_KEY") ?? read("OPEN_ROUTER_API_KEY");
+  if (provider === "meta") return read("MUSE_API_KEY");
   if (provider === "anthropic") return read("ANTHROPIC_API_KEY");
   if (provider === "google" || provider === "gemini") return read("GOOGLE_API_KEY") ?? read("GEMINI_API_KEY");
   if (provider === "minimax") return read("MINIMAX_API_KEY");
@@ -56,11 +57,11 @@ export function envApiKeyFor(spec: string): string | undefined {
 import type { TenantConfig } from "../kernel/config/tenant-config.ts";
 
 /** Per-spec API keys from a TenantConfig, keyed by the normalized spec. */
-export function chainApiKeys(chain: string[], tenant?: TenantConfig): Map<string, string> {
+export function chainApiKeys(chain: string[], tenant?: TenantConfig, mode?: "chat" | "task"): Map<string, string> {
   const keys = new Map<string, string>();
   for (const spec of chain) {
     const normalized = normalizeModelSpec(spec);
-    for (const candidate of [tenant?.slow, tenant?.fast]) {
+    for (const candidate of mode === "task" ? [tenant?.slow] : mode === "chat" ? [tenant?.fast] : [tenant?.slow, tenant?.fast]) {
       if (
         candidate?.apiKey &&
         candidate.model &&

@@ -4,7 +4,6 @@ import type { Subscription } from "rxjs";
 import type { CognitiveIdentity } from "../../../../../packages/domain/src/cognition-v2.ts";
 import type { CognitionV2Runtime } from "../cognition/v2/runtime.ts";
 import { runInTenantScope } from "../../tenant-scope.ts";
-import { digest } from "../cognition/v2/storage.ts";
 import type { SharedFastVoicePort } from "./contracts.ts";
 export class CognitionFastVoiceAdapter implements SharedFastVoicePort {
   constructor(readonly runtime: CognitionV2Runtime) {}
@@ -14,20 +13,34 @@ export class CognitionFastVoiceAdapter implements SharedFastVoicePort {
     if (!await this.runtime.context.readSnapshot(identity, input.contextSnapshotId)) throw Error("VOICE_CONTEXT_REVOKED");
     return new Promise((resolve, reject) => {
       let text = "", succeeded = false, ended = false;
+      let receiptId: string | undefined;
       let subscription: Subscription | undefined;
       let writes = Promise.resolve();
       const finish = (error?: Error) => {
         if (ended) return; ended = true; signal.removeEventListener("abort", abort);
         subscription?.unsubscribe();
         if (error) reject(error);
-        else void writes.then(() => resolve({ text, receiptId: digest([identity.tenantId, input.turnId, text]) }), reject);
+        else if (!receiptId) reject(Error("VOICE_FAST_INCOMPLETE"));
+        else {
+          const durableReceipt = receiptId;
+          void writes.then(() => resolve({ text, receiptId: durableReceipt }), reject);
+        }
       };
       const abort = () => finish(Error("VOICE_INTERRUPTED"));
       if (signal.aborted) { abort(); return; }
       signal.addEventListener("abort", abort, { once: true });
       subscription = runInTenantScope({ tenantId: identity.tenantId, actorId: identity.actorId }, () =>
         this.runtime.chat(identity.owner, { threadId: input.threadId, runId: input.turnId,
-          messages: [{ id: `${input.turnId}:user`, role: "user", content: input.text }], state: {}, tools: [], context: [], forwardedProps: {} })
+          messages: [{ id: `${input.turnId}:user`, role: "user", content: input.text }], state: {}, tools: [], context: [], forwardedProps: {} }, {
+          contextSnapshotId: input.contextSnapshotId,
+          onReceipt: (receipt) => {
+            if (receipt.contextSnapshotId !== input.contextSnapshotId || !receipt.id) {
+              finish(Error("VOICE_CONTEXT_MISMATCH"));
+              return;
+            }
+            receiptId = receipt.id;
+          },
+        })
           .subscribe({
             next: (event) => {
               if (event.type === EventType.TEXT_MESSAGE_CONTENT && "delta" in event && typeof event.delta === "string") {

@@ -1,0 +1,45 @@
+{
+  "testedCommit": "ca67a44214a4ad13bf5d7a684dca452dac4c2606",
+  "state": "PARTIAL_LOCAL",
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/trans04-*.test.ts tests/gate/gate-report.test.ts tests/alerts.test.ts tests/worker-metrics.test.ts tests/vertical-slice-bundle.test.ts tests/vertical-slice-provision.test.ts tests/backup-restore.test.ts",
+    "typecheck": "corepack pnpm typecheck"
+  },
+  "results": {
+    "tests": 54,
+    "pass": 54,
+    "fail": 0,
+    "skip": 0,
+    "rootAndWorkerTypecheck": 0
+  },
+  "logs": {
+    "clean-sha": {
+      "path": "/tmp/trans04-clean-sha.log",
+      "sha256": "280eb547221fdd73da275f852ec07e0e1533d5fc275e96af6cba161abb0f77bd"
+    },
+    "clean-typecheck": {
+      "path": "/tmp/trans04-clean-typecheck.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    "red-control": {
+      "path": "/tmp/trans04-red-control.log",
+      "sha256": "d8d8a7ec174a7983fbf7feed1c3d8feedde8ccb4ab2c5e5177da9afffc653588"
+    },
+    "c15-red": {
+      "path": "/tmp/trans04-c15-red.log",
+      "sha256": "aa960bca46fbc4fb42cb1cdc4e3874f303338abee16ff73493c9aa0d86fb1aa0"
+    },
+    "c15-green": {
+      "path": "/tmp/trans04-c15-green.log",
+      "sha256": "52f671f057a96364041673a246878d2cf099578abea8cf118a2682c78e51710f"
+    },
+    "smoke": {
+      "path": "/tmp/trans04-smoke.log",
+      "sha256": "85b23a5091ba7358d1582036ee21607f97b25924d103788984746db7d163a993"
+    },
+    "slice-empty": {
+      "path": "/tmp/trans04-slice-empty.log",
+      "sha256": "2889c343507b7d5de33c7449081debc04e63b845c5c52b449650c043a3517fa5"
+    }
+  }
+}

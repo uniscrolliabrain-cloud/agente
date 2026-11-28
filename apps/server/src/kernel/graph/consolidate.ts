@@ -53,10 +53,10 @@ function normalizeContent(content: Thought["content"]): string {
   return JSON.stringify(content);
 }
 
-function key(thought: Thought): string {
+export function thoughtContentKey(thought: Thought): string {
   const norm = normalizeContent(thought.content);
   return createHash("sha256")
-    .update(`${thought.role}:${thought.actor.kind}:${norm}`)
+    .update(JSON.stringify([thought.tenantId, thought.turnId, thought.owner, thought.role, thought.actor.kind, thought.actor.id, norm]))
     .digest("hex")
     .slice(0, 32);
 }
@@ -87,7 +87,7 @@ function normalizeContentString(s: string): string {
 }
 
 function isNegationPair(a: Thought, b: Thought): string | undefined {
-  if (a.role !== b.role) return undefined;
+  if (a.role !== b.role || a.owner !== b.owner || a.turnId !== b.turnId) return undefined;
   if (typeof a.content !== "string" || typeof b.content !== "string") return undefined;
   const ca = normalizeContentString(a.content);
   const cb = normalizeContentString(b.content);
@@ -129,7 +129,7 @@ export function consolidate(thoughts: Thought[]): ConsolidationResult {
     // Duplicados dentro del tenant.
     const byKey = new Map<string, Thought[]>();
     for (const t of tenantThoughts) {
-      const k = key(t);
+      const k = thoughtContentKey(t);
       const list = byKey.get(k) ?? [];
       list.push(t);
       byKey.set(k, list);

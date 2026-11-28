@@ -1,0 +1,27 @@
+{
+  "base": "3f6974f9f2096811a98d2239827d2c10d1f3fffc",
+  "commands": {
+    "main-typecheck": "corepack pnpm typecheck",
+    "i0-typecheck": "corepack pnpm typecheck",
+    "i0-focused": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=90000 tests/trans01-*.test.ts tests/trans02-*.test.ts tests/trans04-*.test.ts"
+  },
+  "exitCodes": {
+    "main-typecheck": 0,
+    "i0-typecheck": 0,
+    "i0-focused": 0
+  },
+  "logs": {
+    "main-typecheck": {
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157",
+      "log": "trans00-main-typecheck.log"
+    },
+    "i0-typecheck": {
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157",
+      "log": "trans00-i0-typecheck.log"
+    },
+    "i0-focused": {
+      "sha256": "e5857e480cc9363ba585a4a8d8e38639341ad35321a4227283146f5a41ba3aac",
+      "log": "trans00-i0-focused.log"
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": "2.0",
+  "kind": "gate-evidence",
+  "orchestrator": "scripts/gate-report.ts",
+  "command": "ALLOW_NETWORK=0 node --import tsx scripts/gate-report.ts",
+  "testedCommit": "ac6363b2a53c920156b33fd6f174722e1cd853b2",
+  "branch": "converge/trans00-core",
+  "dirty": 0,
+  "result": {
+    "ok": true,
+    "verdict": "GATE OK",
+    "stepsGreen": 10,
+    "stepsTotal": 10,
+    "durationMs": 306200
+  },
+  "steps": [
+    { "name": "typecheck", "ok": true, "duration": "10.0s" },
+    { "name": "typecheck:worker", "ok": true, "duration": "1.1s" },
+    {
+      "name": "test",
+      "ok": true,
+      "duration": "284.4s",
+      "totals": { "tests": 1193, "pass": 1163, "fail": 0, "cancelled": 0, "skipped": 25, "todo": 5 }
+    },
+    { "name": "audit:layers", "ok": true, "violaciones": 0 },
+    { "name": "audit:bridges", "ok": true, "wired": 16, "total": 16 },
+    { "name": "audit:console", "ok": true, "blocking": false, "ocurrencias": 24, "ficheros": 302 },
+    { "name": "audit:anchors", "ok": true },
+    { "name": "audit:contracts", "ok": true },
+    { "name": "audit:idempotency", "ok": true, "duplicadas": 222, "huerfanas": 0, "repetidas": 181 },
+    { "name": "audit:tenant-default", "ok": true, "permitidas": 161, "prohibidas": 0 }
+  ],
+  "logs": {
+    "dir": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/",
+    "report": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/report.json",
+      "sha256": "1a80e38a3d3769dbf84a9a06898a9c5f664be27aea711b8737cd1548224f85ad"
+    },
+    "summary": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/summary.txt",
+      "sha256": "5d74d6c20cf32d18d8ff821b2eef890cec0dd7a6b639d44b810d0f08134a4cc9"
+    },
+    "test": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/test.log",
+      "sha256": "ce42b1a6690a456d75ffb72068901deca5cc86198905dc4f35a16e590985e714"
+    },
+    "typecheck": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/typecheck.log",
+      "sha256": "b8ceca35defb5169936bc50d062a878a589213d1222b587e87fe192de2ac8de0"
+    },
+    "typecheckWorker": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/typecheck_worker.log",
+      "sha256": "c8dd773128582ff2bd936996222fc6ccf1f0853c9a8415b9d8182adeb5cf110e"
+    }
+  },
+  "previousRun": {
+    "note": "El primer gate orquestado fallo 1/10 (typecheck:worker) porque apps/worker/node_modules/typescript no existia: las dependencias se habian instalado con npm y no con pnpm workspaces. Se instalo con corepack pnpm install --frozen-lockfile (6.2 s) y el gate paso 10/10. No se relajo ningun check.",
+    "failedStep": "typecheck:worker",
+    "cause": "MODULE_NOT_FOUND apps/worker/node_modules/typescript/lib/tsc.js",
+    "fix": "corepack pnpm install --frozen-lockfile"
+  },
+  "comparison": {
+    "documentedAt9eb03fd5": { "tests": 1173, "pass": 1143, "fail": 0, "skip": 25, "todo": 5 },
+    "now": { "tests": 1193, "pass": 1163, "fail": 0, "skip": 25, "todo": 5 },
+    "delta": "20 pruebas mas, mismos 25 SKIP y 5 TODO, 0 FAIL"
+  },
+  "skips": "25 SKIP: concurrencia con PostgreSQL nativo y flag sintetico explicito. No se cuentan como PASS.",
+  "notCovered": [
+    "No hay instancia PostgreSQL 17: los 25 SKIP siguen sin ejecutarse.",
+    "El gate cubre el arbol, no produccion, escala ni coste.",
+    "Los proveedores externos siguen LIVE_UNVERIFIED: ningun test del gate contacta la red."
+  ]
+}

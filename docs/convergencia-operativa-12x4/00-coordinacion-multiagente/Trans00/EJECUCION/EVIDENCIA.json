@@ -1,0 +1,65 @@
+{
+  "turno": "Trans00/T1-trasplante-readiness",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "d8a8836b9463218b0937efba2f233e523577f615",
+  "state": "PARTIAL_LOCAL",
+  "git": {
+    "branch": "converge/trans00-core",
+    "head": "d8a8836b9463218b0937efba2f233e523577f615",
+    "dirty": 0
+  },
+  "commands": {
+    "tests": "node --experimental-strip-types --test tests/trans-provider-readiness.test.mjs",
+    "offline": "node --experimental-strip-types scripts/trans-provider-readiness.mjs",
+    "strict": "node --experimental-strip-types scripts/trans-provider-readiness.mjs --strict",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json"
+  },
+  "tests": {
+    "total": 12,
+    "pass": 12,
+    "fail": 0,
+    "skip": 0,
+    "todo": 0
+  },
+  "contract": {
+    "rows": 42,
+    "registryNames": 60,
+    "unregistered": [],
+    "rowStates": {
+      "stub_missing_config": 36,
+      "stub_wiring_pending": 6,
+      "probe_pass": 0
+    }
+  },
+  "exitCodes": {
+    "tests": 0,
+    "offline": 0,
+    "strict": 0,
+    "typecheck": 2
+  },
+  "logs": {
+    "tests": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans00/EJECUCION/EVIDENCIA/logs/trans00-readiness-tests.log",
+      "sha256": "ffe010cd20fbaa6a518dc0f8142085b06bec251aabe6e285d495191f7f6716b5"
+    },
+    "offline": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans00/EJECUCION/EVIDENCIA/logs/trans00-readiness-offline.json",
+      "sha256": "deb457ffbee710eed6b7a9770738b51cee2a2286e0cd2c404863c28f60ff5783"
+    },
+    "strict": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans00/EJECUCION/EVIDENCIA/logs/trans00-readiness-strict.json",
+      "sha256": "deb457ffbee710eed6b7a9770738b51cee2a2286e0cd2c404863c28f60ff5783"
+    },
+    "typecheck": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans00/EJECUCION/EVIDENCIA/logs/trans00-tsc.log",
+      "sha256": "cdb09a1c7b398d6a6ba7dd356b302ff41e2ff8a96835e192d887b59b25053d30"
+    }
+  },
+  "limitations": [
+    "El typecheck (exit 2) no es concluyente: 10 errores TS2307 por node_modules incompleto (react, playwright) en apps/web/src/hooks/useNow.ts y apps/worker/src/*. Ninguno cae en un fichero tocado por este turno.",
+    "No se ejecutaron el gate integral ni la suite completa; exceden el alcance de Trans00 y requieren dependencias instaladas.",
+    "Las pruebas que necesitan PostgreSQL nativo siguen sin ejecutarse (sin instancia en este entorno).",
+    "El modo --probe (sondas en vivo) no se ejecutó: no hay red autorizada hacia proveedores en este runner y no se declara ningun proveedor vivo."
+  ],
+  "notes": "Demuestra: el contrato offline carga sin node_modules, sus 12 pruebas pasan, 42 filas y 60 nombres con unregistered vacio, y --strict falla solo si queda un nombre sin registrar en modo contrato. No demuestra: que ningun proveedor responda, que el typecheck del repo este limpio, ni que el gate integral pase. env-resolver.ts queda intacto por la decision D1 (integration ya resuelve el slow lane en config.ts y model-chain.ts)."
+}

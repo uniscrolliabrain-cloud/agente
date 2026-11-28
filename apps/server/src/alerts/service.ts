@@ -8,6 +8,7 @@
 // docs/audits/02-observabilidad/roadmap.md §8 ("5 alertas definidas y probadas").
 
 import { logWarn } from "../log.ts";
+import type { Store } from "../db.ts";
 
 export interface AlertDefinition {
   id: string;
@@ -32,10 +33,12 @@ export class AlertService {
   private readonly definitions = new Map<string, AlertDefinition>();
   private readonly lastFired = new Map<string, number>();
   private timer?: ReturnType<typeof setInterval>;
+  private readonly evaluating = new Set<string>();
 
   constructor(
     private readonly handlers: AlertHandler[],
     private readonly intervalMs = 30_000,
+    private readonly stateStore?: Pick<Store, "rawQuery">,
   ) {}
 
   register(def: AlertDefinition): void {
@@ -48,37 +51,49 @@ export class AlertService {
 
   async evaluate(): Promise<AlertFired[]> {
     const fired: AlertFired[] = [];
-    const now = Date.now();
     for (const def of this.definitions.values()) {
-      const last = this.lastFired.get(def.id) ?? 0;
-      if (now - last < def.cooldownSec * 1000) continue;
-      let triggered = false;
+      const last = this.lastFired.get(def.id);
+      if (this.evaluating.has(def.id) || (last !== undefined && Date.now() - last < def.cooldownSec * 1000)) continue;
+      this.evaluating.add(def.id);
       try {
-        triggered = await def.condition();
-      } catch (error) {
-        logWarn("alert.condition_failed", {
-          alertId: def.id,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        continue;
+        let triggered: boolean;
+        try {
+          triggered = await def.condition();
+        } catch {
+          logWarn("alert.condition_failed", { alertId: def.id });
+          continue;
+        }
+        if (!triggered) continue;
+        if (this.stateStore) {
+          try {
+            const claimed = await this.stateStore.rawQuery(
+              `INSERT INTO records AS state(owner,kind,id,data)
+               VALUES('system','alert-fire-state',$1,jsonb_build_object('lastFiredAt',now()))
+               ON CONFLICT(owner,kind,id) DO UPDATE SET data=EXCLUDED.data,updated_at=now()
+               WHERE (state.data->>'lastFiredAt')::timestamptz <= now()-$2::double precision*interval '1 second'
+               RETURNING id`, [def.id, def.cooldownSec]);
+            if (!claimed.length) continue;
+          } catch {
+            logWarn("alert.claim_failed", { alertId: def.id });
+            continue;
+          }
+        }
+        const now = Date.now();
+        const alert: AlertFired = {
+          id: def.id,
+          description: def.description,
+          severity: def.severity,
+          firedAt: new Date(now).toISOString(),
+        };
+        this.lastFired.set(def.id, now);
+        for (const handler of this.handlers) {
+          try { await handler.fire(alert); }
+          catch { logWarn("alert.handler_failed", { alertId: def.id }); }
+        }
+        fired.push(alert);
+      } finally {
+        this.evaluating.delete(def.id);
       }
-      if (!triggered) continue;
-      const alert: AlertFired = {
-        id: def.id,
-        description: def.description,
-        severity: def.severity,
-        firedAt: new Date().toISOString(),
-      };
-      this.lastFired.set(def.id, now);
-      for (const handler of this.handlers) {
-        await handler.fire(alert).catch((error) => {
-          logWarn("alert.handler_failed", {
-            alertId: def.id,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        });
-      }
-      fired.push(alert);
     }
     return fired;
   }
@@ -86,7 +101,7 @@ export class AlertService {
   start(): void {
     if (this.timer) return;
     this.timer = setInterval(() => {
-      void this.evaluate();
+      void this.evaluate().catch(() => logWarn("alert.evaluation_failed", {}));
     }, this.intervalMs);
     this.timer.unref?.();
   }

@@ -144,6 +144,9 @@ export interface ActionProposal {
   taskId?: string;
   account?: string;
   connectionId?: string;
+  // APPROVAL_CAPABILITY_BINDING_V1 - capability que la aprobacion autoriza.
+  // El binding del runner la exige; ausente deniega.
+  capabilityId?: string;
   id: string;
   title: string;
   kind: ProposalInput["kind"];
@@ -166,6 +169,7 @@ export interface ActionProposal {
   createdAt: string;
   expiresAt: string;
   result?: string;
+  effectReceipt?: import("./execution-context.ts").WorkspaceExecutionEffect;
   error?: string;
   // ACTION_PROPOSAL_ATTEMPTS_SCHEMA_V1
   attempts?: number;

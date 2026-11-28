@@ -1,0 +1,58 @@
+{
+  "codeCommit": "3b982cf00e99e79a8934162431780c1035414949",
+  "runState": "LOCAL_WORKTREE_THEN_COMMITTED",
+  "certification": false,
+  "results": {
+    "cognition": {
+      "total": 102,
+      "pass": 92,
+      "fail": 0,
+      "skipped": 10
+    },
+    "postgresEnabledFiles": {
+      "total": 26,
+      "pass": 26,
+      "fail": 0,
+      "skipped": 0
+    },
+    "nativeJournalTwoConnections": {
+      "total": 1,
+      "pass": 1,
+      "fail": 0,
+      "skipped": 0
+    },
+    "typecheckRootAndWorker": 0,
+    "orphanContracts": 0
+  },
+  "note": "Suites overlap; do not add totals. Enabled PG files also contain embedded cases. Native journal case uses a privileged disposable migration/test role, not restricted-role runtime certification.",
+  "commands": {
+    "cognition": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=90000 tests/cognition-v2-*.test.ts tests/trans02-*.test.ts tests/trans03-voice-binding.test.ts",
+    "nativeJournal": "COGNITION_TEST_POSTGRES_URL=<local disposable socket DSN> ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-name-pattern=\"Postgres human journal\" --test-timeout=90000 tests/trans02-human-journal.test.ts"
+  },
+  "logs": [
+    {
+      "path": "/tmp/trans02-journal-cognition-final.log",
+      "sha256": "94a634485337329554e8b823fa66820f82d0d3c8a4f4090212dceb65fa69a585"
+    },
+    {
+      "path": "/tmp/trans02-journal-postgres-regression.log",
+      "sha256": "ec205debc95a32e40c2999fa4452a6cbe4046054c96ff74698509bd9c3c52160"
+    },
+    {
+      "path": "/tmp/trans02-human-journal-postgres-final.log",
+      "sha256": "f4647d3d982cf3d51edbd5a12823e3cd63a038037cb932861c4733424a9cdea4"
+    },
+    {
+      "path": "/tmp/trans02-journal-complete-tsc.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    {
+      "path": "/tmp/trans02-journal-contract-audit.log",
+      "sha256": "80a3742eae88107ba6196aeb67755359f46817467c8b031fcba995655517772c"
+    },
+    {
+      "path": "/tmp/trans02-journal-cognition.log",
+      "sha256": "30e5fb4e46201ab76d058e1336a00e7bcd09f65f60c6981b8eb69b7b46ad6e47"
+    }
+  ]
+}

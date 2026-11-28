@@ -1,0 +1,6 @@
+# /usr/local/bin/node --import tsx scripts/audits/bridges.ts
+# cwd: /workspace/chats/a30d6f47eb163b012630177f
+# exit: 0  (842 ms)
+
+[audit:bridges] 16/16 wired
+

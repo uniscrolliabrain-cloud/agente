@@ -6,7 +6,7 @@
 
 import { attentionVectorSchema, type AttentionVector, type IgnoredNode, type MatchedNode } from "./thought.ts";
 // NODE_REF_ATTENTION_V1 - comparacion canonica entre autores y capas.
-import { canonicalNode, sameNode } from "../../../../../packages/domain/src/node-ref.ts";
+import { canonicalNode, parseNodeRef } from "../../../../../packages/domain/src/node-ref.ts";
 
 export function topMatched(vector: AttentionVector, n = 3): MatchedNode[] {
   return vector.matched.slice().sort((a, b) => b.weight - a.weight).slice(0, n);
@@ -27,9 +27,34 @@ export function normalizedWeights(vector: AttentionVector): Record<string, numbe
   return out;
 }
 
+/** Resolve legacy aliases only when their ID has one unambiguous explicit kind. */
+function attentionKeys(nodes: readonly string[]) {
+  const kinds = new Map<string, Set<string>>();
+  for (const node of nodes) {
+    const ref = parseNodeRef(node);
+    if (ref.kind === "unknown") continue;
+    const known = kinds.get(ref.id) ?? new Set<string>();
+    known.add(ref.kind); kinds.set(ref.id, known);
+  }
+  return (node: string) => {
+    const ref = parseNodeRef(node), known = kinds.get(ref.id);
+    const kind = ref.kind === "unknown" && known?.size === 1 ? [...known][0] : ref.kind;
+    return JSON.stringify([kind, ref.id]);
+  };
+}
+
+function aggregateAttention(vector: AttentionVector, key: (node: string) => string) {
+  const weights = new Map<string, number>();
+  for (const item of vector.matched) {
+    const id = key(item.node);
+    weights.set(id, (weights.get(id) ?? 0) + item.weight);
+  }
+  return weights;
+}
+
 export function matchScore(vector: AttentionVector, node: string): number {
-  const found = vector.matched.find((m) => sameNode(m.node, node));
-  return found ? found.weight : 0;
+  const key = attentionKeys([...vector.matched.map(item => item.node), node]);
+  return Math.min(1, aggregateAttention(vector, key).get(key(node)) ?? 0);
 }
 
 export function isFocusedOn(vector: AttentionVector, node: string, threshold = 0.7): boolean {
@@ -37,23 +62,13 @@ export function isFocusedOn(vector: AttentionVector, node: string, threshold = 0
 }
 
 export function attentionOverlap(a: AttentionVector, b: AttentionVector): number {
-  // ATTENTION_OVERLAP_CANONICAL_V1 - antes comparaba claves de texto
-  // normalizadas: `entity:acme` y `ACME` producian claves distintas y dos
-  // autores hablando del mismo nodo parecian divergentes. Ahora empareja por
-  // sameNode (kind + id) y aplica Jaccard ponderado.
   if (a.matched.length === 0 || b.matched.length === 0) return 0;
-  const used = new Set<number>();
+  const key = attentionKeys([...a.matched, ...b.matched].map(item => item.node));
+  const left = aggregateAttention(a, key), right = aggregateAttention(b, key);
   let intersection = 0;
-  for (const left of a.matched) {
-    const index = b.matched.findIndex(
-      (right, position) => !used.has(position) && sameNode(left.node, right.node),
-    );
-    if (index < 0) continue;
-    used.add(index);
-    intersection += Math.min(left.weight, b.matched[index].weight);
-  }
+  for (const [id, weight] of left) intersection += Math.min(weight, right.get(id) ?? 0);
   const union = totalAttention(a) + totalAttention(b) - intersection;
-  return union > 0 ? intersection / union : 0;
+  return union > 0 ? Math.min(1, intersection / union) : 0;
 }
 
   // ATTENTION_PAIRS_EXPORT_V1

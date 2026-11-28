@@ -1,0 +1,65 @@
+{
+  "turno": "Trans05/T1-montaje",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "f3d62890c336e65aa756a8bf4fb298cbd0552eb2",
+  "state": "PARTIAL_LOCAL",
+  "git": {
+    "branch": "converge/trans00-core",
+    "head": "f3d62890c336e65aa756a8bf4fb298cbd0552eb2",
+    "dirty": 0
+  },
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=60000 --test-force-exit tests/trans05-*.test.ts",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json"
+  },
+  "tests": {
+    "total": 12,
+    "pass": 12,
+    "fail": 0,
+    "skip": 0,
+    "todo": 0,
+    "suites": 3,
+    "newSuite": "tests/trans05-longitudinal-mounted.test.ts"
+  },
+  "exitCodes": {
+    "tests": 0,
+    "typecheck": 0
+  },
+  "logs": {
+    "tests": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/EJECUCION/EVIDENCIA/logs/trans05-suites.log",
+      "sha256": "4113faeca3f51b1412ae0f9f937c90a41af1d56cc501e5dba853ecdf5fde3b9e"
+    },
+    "typecheck": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans05/EJECUCION/EVIDENCIA/logs/trans05-tsc.log",
+      "sha256": "7305c97c048851c8f9d4b6125662db37efdffa7c3d885c146abcd41c77fd237a"
+    }
+  },
+  "mount": {
+    "previousState": "UNMOUNTED",
+    "consumer": "apps/server/src/engine/cognition/v2/context.ts:longitudinalContext",
+    "store": "apps/server/src/engine/cognition/v2/longitudinal/memory.ts",
+    "tables": ["cognition_v2_longitudinal_segments"],
+    "idempotencyKey": "(tenant, source_event_id, segment_index)",
+    "conflictPolicy": "mismo contenido -> created=0; contenido distinto con la misma clave -> LONGITUDINAL_SEGMENT_CONFLICT (nunca sobrescribe)",
+    "tenantSource": "identidad autenticada; la API no acepta tenant como parametro",
+    "twoTenantsProven": true
+  },
+  "done": {
+    "consumerOutsideFolder": true,
+    "endToEndTraversal": true,
+    "idempotencyTested": true,
+    "tenantIsolationTwoTenants": true,
+    "retention": "deuda declarada: no existe ruta de borrado por tenant",
+    "ownerRealBlocks": "NOT_RUN",
+    "fullGate": false
+  },
+  "limitations": [
+    "El gate integral no se ejecuto: las 12 pruebas son de la campana y su prefijo, no el gate.",
+    "Retencion/borrado por tenant sin definir; se declara deuda con dueno pendiente de asignar.",
+    "07.01-07.04 siguen NOT_RUN: no hay autorizacion ni datos del owner.",
+    "El ledger de Trans05 no se modifica en este turno (01.02/01.03/12.02 siguen IN_PROGRESS): un turno no cubre las 12 fases x 4 pasadas.",
+    "Ningun proveedor externo fue contactado."
+  ],
+  "notes": "Demuestra que el modulo longitudinal ya tiene consumidor real, que el recorrido evento -> segmentos -> persistencia idempotente -> seleccion -> pack funciona de extremo a extremo y que dos tenants no se ven entre si. No demuestra el gate integral, ni retencion, ni el recorrido real del owner."
+}

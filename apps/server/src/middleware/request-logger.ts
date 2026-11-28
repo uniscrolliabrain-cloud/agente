@@ -6,6 +6,7 @@
 // Ver: docs/audits/02-observabilidad/miniaudit.md ("Sin traceId").
 
 import type { Context, Next } from "hono";
+import { matchedRoutes } from "hono/route";
 import { randomUUID } from "node:crypto";
 import { withLogContext, logInfo, logWarn, logContext } from "../log.ts";
 import { globalMetrics } from "../metrics/registry.ts";
@@ -54,8 +55,8 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
   return async (c: Context, next: Next) => {
     const correlationId = correlationIdFrom(c);
     const startedAt = performance.now();
-    const method = c.req.method;
-    const path = new URL(c.req.url).pathname;
+    const method = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "CONNECT", "TRACE"].includes(c.req.method) ? c.req.method : "OTHER";
+    const path = matchedRoutes(c).findLast((route) => route.method !== "ALL")?.path ?? "unmatched";
 
     // Cabecera de vuelta para que el cliente pueda trazar.
     c.header("X-Correlation-Id", correlationId);
@@ -72,10 +73,16 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
       { correlationId, ...(tenantId ? { tenantId } : {}), ...(preCtx?.owner ? { owner: preCtx.owner } : {}) },
       async () => {
         // METRICS_TENANT_LABEL_V1 — tenantId del logContext para logs y métricas.
-      const tenantIdForLabels = logContext.getStore()?.tenantId;
+      let tenantIdForLabels = logContext.getStore()?.tenantId;
       logInfo("http.request", { method, path, ...(tenantIdForLabels ? { tenantId: tenantIdForLabels } : {}) });
       try {
         await next();
+        // Auth middleware resolves ctx only after this middleware starts.
+        // Use the verified context, never an incoming tenant header.
+        const authenticated = c.get("ctx") as { tenantId?: unknown } | undefined;
+        if (typeof authenticated?.tenantId === "string" && authenticated.tenantId) {
+          tenantIdForLabels = authenticated.tenantId;
+        }
         const durationMs = Math.round(performance.now() - startedAt);
         const status = c.res.status;
         const level = status >= 500 ? "error" : status >= 400 ? "warn" : "info";
@@ -91,7 +98,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
           : {};
         globalMetrics.inc("agente_http_requests_total", {
           method,
-          path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+          path,
           status: String(status),
           ...tenantLabels,
         });
@@ -101,7 +108,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
         globalMetrics.observe(
           "agente_http_request_duration_ms",
           durationMs,
-          { method, path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"), status: String(status), ...tenantLabels },
+          { method, path, status: String(status), ...tenantLabels },
         );
         // HTTP_ERRORS_AND_HISTOGRAM_V1 - contador dedicado a errores por ruta.
         if (status >= 400) {
@@ -109,7 +116,7 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
           // METRICS_TENANT_LABEL_V1 — idem para errores por ruta.
           globalMetrics.inc("http_errors_by_route_total", {
             method,
-            path: path.replace(/\/[0-9a-f-]{8,}/gi, "/:id"),
+            path,
             status: String(status),
             ...tenantLabels,
           });
@@ -121,7 +128,6 @@ export function requestLogger(options: RequestLoggerOptions = {}) {
           path,
           durationMs,
           error: error instanceof Error ? error.name : "UnknownError",
-          message: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
         });
         throw error;
       }

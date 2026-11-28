@@ -78,18 +78,18 @@ test("chainApiKeys asigna la clave del tenant al spec normalizado", () => {
 
 test("envApiKeyFor resuelve la clave del proveedor real", () => {
   const previousOpenAI = process.env.OPENAI_API_KEY;
-  const previousOpenRouter = process.env.OPENROUTER_API_KEY;
+  const previousOpenRouter = process.env.OPEN_ROUTER_API_KEY;
   try {
     delete process.env.OPENAI_API_KEY;
-    process.env.OPENROUTER_API_KEY = "sk-or-test";
+    process.env.OPEN_ROUTER_API_KEY = "sk-or-test";
     assert.equal(envApiKeyFor("openrouter/google/gemini-2.5-flash"), "sk-or-test");
     process.env.OPENAI_API_KEY = "sk-openai-test";
     assert.equal(envApiKeyFor("openrouter/google/gemini-2.5-flash"), "sk-openai-test");
   } finally {
     if (previousOpenAI === undefined) delete process.env.OPENAI_API_KEY;
     else process.env.OPENAI_API_KEY = previousOpenAI;
-    if (previousOpenRouter === undefined) delete process.env.OPENROUTER_API_KEY;
-    else process.env.OPENROUTER_API_KEY = previousOpenRouter;
+    if (previousOpenRouter === undefined) delete process.env.OPEN_ROUTER_API_KEY;
+    else process.env.OPEN_ROUTER_API_KEY = previousOpenRouter;
   }
 });
 

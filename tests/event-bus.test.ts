@@ -9,9 +9,15 @@ import { createStore } from "../apps/server/src/db.ts";
 import { EventBus } from "../apps/server/src/engine/events/index.ts";
 import { SYSTEM_EVENT_TYPES } from "../apps/server/src/engine/events/types.ts";
 import { payloadSchemas } from "../apps/server/src/engine/events/schemas.ts";
+import { runInTenantScope } from "../apps/server/src/tenant-scope.ts";
 import { record } from "./fixtures/cognition-v2/record.ts";
 
 const minimalPayload: Record<string, Record<string, unknown>> = {
+  "cognition.v2.turn.admitted": {
+    schemaVersion: "1.0",
+    identity: { tenantId: "default", actorId: "owner", owner: "owner", purpose: "chat", policyRevision: "1" },
+    threadId: "thread", runId: "run", messageId: "message", text: "Synthetic input", inputDigest: "a".repeat(64),
+  },
   "cognition.v2.record.proposed": { record: record() },
   "cognition.v2.source.revoked": { sourceId: "source" },
   "cognition.v2.slow.status": { jobId: "job", state: "queued", receiptId: "receipt" },
@@ -124,7 +130,12 @@ test("EventBus.emit persiste todos los tipos del enum con payload valido", async
   try {
     const bus = new EventBus(db);
     for (const type of SYSTEM_EVENT_TYPES) {
-      const receipt = await bus.emit("owner", type, { kind: "system", id: "test" }, minimalPayload[type] ?? {});
+      const receipt = type === "cognition.v2.turn.admitted"
+        ? await runInTenantScope({ tenantId: "default", actorId: "owner" }, () =>
+            bus.emit("owner", type, { kind: "context", id: "thread" }, minimalPayload[type], {
+              tenantId: "default", actorId: "owner", correlationId: "run", causal: { kind: "root" },
+            }))
+        : await bus.emit("owner", type, { kind: "system", id: "test" }, minimalPayload[type] ?? {});
       assert.equal(receipt.persisted, true, `no se persistio ${type}: ${receipt.error ?? "sin error"}`);
     }
     const stored = await db.list("owner", "system-events");

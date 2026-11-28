@@ -1,0 +1,256 @@
+✔ an attention view cannot replace source epistemic state, scores or references (1205.562498ms)
+✔ recomputing a view ID does not authorize fabricated selected data (763.365405ms)
+✔ valid attention is rederived without returning private query text; malformed metadata fails closed (772.566034ms)
+✔ attention orders the same authorized records as prepared context for the same query (761.260474ms)
+✔ internal context binding serves the selected snapshot and returns its durable receipt (825.812701ms)
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] validado: 257 capabilities
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+[personas] tenant default: 12 cargadas, 0 fallidas
+{"ts":"2026-11-27T23:54:07.375Z","level":"info","event":"http.request","correlationId":"4590faae-c993-4f7c-8480-48a6ea155336","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-27T23:54:07.538Z","level":"info","event":"http.response","correlationId":"4590faae-c993-4f7c-8480-48a6ea155336","method":"POST","path":"/api/auth/login","status":200,"durationMs":163}
+{"ts":"2026-11-27T23:54:07.539Z","level":"info","event":"http.request","correlationId":"3b3d006b-4a49-40fa-a3c8-05a286a962b6","method":"POST","path":"/api/threads"}
+{"ts":"2026-11-27T23:54:07.544Z","level":"info","event":"http.response","correlationId":"3b3d006b-4a49-40fa-a3c8-05a286a962b6","method":"POST","path":"/api/threads","status":201,"durationMs":6}
+{"ts":"2026-11-27T23:54:07.545Z","level":"info","event":"http.request","correlationId":"4e2813f7-8827-4e28-985e-025bf061e026","method":"POST","path":"unmatched"}
+{"ts":"2026-11-27T23:54:07.565Z","level":"info","event":"http.response","correlationId":"4e2813f7-8827-4e28-985e-025bf061e026","method":"POST","path":"unmatched","status":200,"durationMs":20}
+[kernel/env-resolver] tenant tenant-a: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant tenant-a: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+✔ CopilotKit preserves sample V1 for opt-out (1168.32695ms)
+[ontology] validado: 257 capabilities
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+[personas] tenant default: 12 cargadas, 0 fallidas
+{"ts":"2026-11-27T23:54:08.343Z","level":"info","event":"http.request","correlationId":"2fd66355-599d-423f-a37d-6ef18cf29de4","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-27T23:54:08.445Z","level":"info","event":"http.response","correlationId":"2fd66355-599d-423f-a37d-6ef18cf29de4","method":"POST","path":"/api/auth/login","status":200,"durationMs":102}
+{"ts":"2026-11-27T23:54:08.446Z","level":"info","event":"http.request","correlationId":"663c4b07-4b4a-4969-a904-e28aac6da247","method":"POST","path":"/api/threads"}
+{"ts":"2026-11-27T23:54:08.451Z","level":"info","event":"http.response","correlationId":"663c4b07-4b4a-4969-a904-e28aac6da247","method":"POST","path":"/api/threads","status":201,"durationMs":5}
+{"ts":"2026-11-27T23:54:08.451Z","level":"info","event":"http.request","correlationId":"7d42579a-8904-4df1-8854-514d2db71f6b","method":"POST","path":"unmatched"}
+{"ts":"2026-11-27T23:54:08.458Z","level":"info","event":"http.response","correlationId":"7d42579a-8904-4df1-8854-514d2db71f6b","method":"POST","path":"unmatched","status":200,"durationMs":7}
+✔ CopilotKit preserves explicit AG-UI routing (811.455652ms)
+✔ C06 opted-in AG-UI adapter delegates only to Cognition V2 with the scoped owner (0.63833ms)
+✔ C06 CopilotKit callback dispatch preserves V2 runtime after run is extracted (0.30436ms)
+✔ C06 CopilotKit per-request clone retains scoped cognition runtime and owner (0.4486ms)
+✔ C06 independently cloned agents never switch the authorized owner (0.29899ms)
+✔ Fast drops provider output after revocation aborts the run and records no successful receipt (1280.086853ms)
+✔ the fast lane never forwards caller tools to the provider (15.13198ms)
+✔ a tool call emitted by the provider rejects the fast stream instead of becoming context (2.991459ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9319.424874
+BATCH1_EXIT=0
+✔ Fast admission captures a scoped human root before inference without operational authority (1239.046666ms)
+✔ journal failure rolls back both captured event and run claim before any provider call (828.559331ms)
+✔ concurrent replay of the same run produces one input event and one inference (778.266143ms)
+✔ private journal reads isolate actors and threads, verify payload binding and honor revocation (867.874509ms)
+✔ the admitted input snapshot survives caller mutation during identity lookup (746.902495ms)
+﹣ Postgres human journal: two connections admit one run and rollback a failed capture (0.14771ms) # SKIP
+✔ an empty request cannot fabricate a human input event or call inference (728.217077ms)
+✔ human turn provenance is strict information without operational authority (0.7185ms)
+✔ approved ontology cannot be substituted under another requested identity or version (747.758855ms)
+✔ persisted ontology is parsed before invoking approval authority (690.412679ms)
+✔ OpenRouter Decisions keeps the JEV contract, minimized source, canonical model and actual billed cost (19.455059ms)
+✔ old underscored OpenRouter key never silently funds JEV (1.8728ms)
+✔ cross-provider grant, model drift, refusal and invalid probabilities fail closed (3.755749ms)
+✔ revocation and HTTP 429 do not retry, and credentials cannot enter failure receipts (1.73122ms)
+✔ OpenRouter uses the existing durable gate and replay never bills the same operation twice (722.246807ms)
+✔ runtime composition invokes OpenRouter only through the supplied tenant consent policy (904.306266ms)
+✔ compact provider chunks become minimal public text events without private metadata (0.55156ms)
+✔ real CopilotKit SDK streaming returns visible Slow text instead of an empty response (16.347059ms)
+✔ direct projection writes invalidate prepared context and larger budgets receive a fresh snapshot (776.051594ms)
+✔ autobiographical revision changes generate a distinct id while replay stays idempotent (701.756308ms)
+{"ts":"2026-11-27T23:54:21.646Z","level":"warn","event":"circuit.open","circuit":"cognition-v2:fast:A"}
+✔ an open circuit spends no additional inference quota and cancellation stays neutral (692.666299ms)
+✔ snapshot reads reject forged rendered content even with a recomputed digest (677.43212ms)
+✔ query matches are selected before the candidate limit (730.090566ms)
+✔ graph traversal emits unique current-revision edges (763.920014ms)
+✔ an invalid Slow output becomes terminal without saving an invalid reusable output (656.553581ms)
+✔ a revoked input omitted from citations prevents Slow publication (743.953076ms)
+✔ revocation propagates through inference dependencies independently of citations (661.958751ms)
+✔ C06 observation enqueues durable slow work with an exact authorized revision and stable key (1.158129ms)
+✔ C06 observation rejects missing, speculative, contradicted or foreign evidence without enqueue (0.5535ms)
+✔ C06 observation refuses forged resolved revision, identity, source and empty prompt (0.35611ms)
+✔ C06 observation propagates queue conflict without changing identity or retrying (0.24976ms)
+✔ observation is dormant without a receipt verifier and excludes derived and foreign-owner records (0.25403ms)
+ℹ tests 32
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 16041.374564
+BATCH2_EXIT=0
+✔ C01 preview blocks unresolved references and filters source tenant before pagination (1222.819057ms)
+✔ C01 staged backfill preserves metadata, primary/additional thoughts and knowledge; applies idempotently through journal (758.083745ms)
+✔ C01 backfill rejects changed/expired plans and rolls back journal, receipts and plan state on a crash (1540.433218ms)
+﹣ C01 native concurrent backfill journals one import across two connections (0.20314ms) # SKIP
+✔ C01 backfill rejects stored plan tampering and evidence revoked after preview (706.932568ms)
+✔ V2 business read requires an explicit PDP decision and a current actor (715.028627ms)
+﹣ two Postgres connections cannot execute the same operation concurrently (0.14462ms) # SKIP
+✔ uncertain read outcome is recorded and never automatically retried (702.948749ms)
+✔ C10 prepared context is bound to query, policy and watermark rather than reusing an unrelated recent snapshot (833.76689ms)
+✔ C01 rejects authority injection, incompatible schema, cross-tenant evidence and false verification (1.18324ms)
+✔ C01 classifier has no authority fields; edges cannot cross tenants; ontology needs approval (1.55379ms)
+✔ C14 SDK real uses a governed server grant and strips raw fields; prompt cannot choose auth or target (20.171088ms)
+✔ C14 cross-tenant grant is rejected before SDK invocation, and partial never means complete coverage (0.97956ms)
+✔ C14 durable relay commits effect before ACK, recovers lost ACK, and deduplicates restart (700.359479ms)
+✔ C14 invalid hash/tenant is rejected without effect or ACK (644.695341ms)
+✔ C14 relay uses the real pinned SDK ACK method after local commit (644.531392ms)
+✔ C09 recovery fences abandoned deliveries, preserves purpose and knowledge, never synthesizes ACK (713.937727ms)
+✔ C09 worker persists scan progress across restart, isolates actors and invalidates expired snapshots (761.216455ms)
+﹣ C09 native Postgres workers reconcile one expired lease once under concurrent connections (0.09696ms) # SKIP
+✔ C09 explicit consumers have independent ACKs while retries retain one fenced delivery (723.837207ms)
+✔ C02 501 events replay through durable cursor; crash rolls back effects and fencing rejects stale worker (4288.790964ms)
+✔ C03/C04/C09/C10 restart, five memories, private isolation, replay revocation and durable ACK (1292.872853ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 16699.250825
+BATCH3_EXIT=0
+{"ts":"2026-11-27T23:54:44.376Z","level":"error","event":"background_failure","phase":"event notification system.maintenance","retryable":false,"error":"Error","message":"notification DB unavailable","stack":"Error: notification DB unavailable\n    at Object.insertIfAbsent (/workspace/chats/a30d6f47eb163b012630177f/tests/cognition-v2-event-receipts.test.ts:7:75)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:273:44)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:65:14)\n    at runInTenantScope (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/tenant-scope.ts:22:18)\n    at emitInTenant (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:132:9)\n    at notifyCommitted (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:273:17)\n    at async EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:302:7)"}
+✔ C02 post-commit notification failure does not negate a committed event (7.968779ms)
+✔ C02 commit ACK loss remains unknown and reconciles by the preserved event ID (1070.966366ms)
+✔ C15 late replay cannot recreate a revoked dependency chain; public context hides Thought content (757.822815ms)
+✔ C15 cancellation aborts active Slow provider; exhausted restart emits factual failed receipt (858.114969ms)
+✔ C02 nested emit is pending until outer commit; rollback never publishes or confirms (626.864813ms)
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] validado: 257 capabilities
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+[personas] tenant default: 12 cargadas, 0 fallidas
+{"ts":"2026-11-27T23:54:48.542Z","level":"info","event":"http.request","correlationId":"669be2e0-3c03-4642-a939-85549ff8c505","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-27T23:54:48.697Z","level":"info","event":"http.response","correlationId":"669be2e0-3c03-4642-a939-85549ff8c505","method":"POST","path":"/api/auth/login","status":200,"durationMs":156}
+{"ts":"2026-11-27T23:54:48.755Z","level":"info","event":"http.request","correlationId":"77dc45e9-da87-4b51-9aee-4d064a8e753c","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-27T23:54:48.839Z","level":"info","event":"http.response","correlationId":"77dc45e9-da87-4b51-9aee-4d064a8e753c","method":"POST","path":"/api/auth/login","status":200,"durationMs":84}
+{"ts":"2026-11-27T23:54:48.878Z","level":"info","event":"http.request","correlationId":"5634c20e-6177-44d4-887c-895b0e7d6f1f","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-27T23:54:48.978Z","level":"info","event":"http.response","correlationId":"5634c20e-6177-44d4-887c-895b0e7d6f1f","method":"POST","path":"/api/auth/login","status":200,"durationMs":99}
+{"ts":"2026-11-27T23:54:48.979Z","level":"info","event":"http.request","correlationId":"6f37499e-df3e-4c18-a527-4a90f1116d75","method":"POST","path":"/api/cognition-v2/snapshots"}
+{"ts":"2026-11-27T23:54:48.986Z","level":"warn","event":"http.response","correlationId":"6f37499e-df3e-4c18-a527-4a90f1116d75","method":"POST","path":"/api/cognition-v2/snapshots","status":422,"durationMs":8}
+{"ts":"2026-11-27T23:54:48.987Z","level":"info","event":"http.request","correlationId":"39955cfa-105d-461a-915b-bb45d9142029","method":"POST","path":"/api/cognition-v2/working"}
+{"ts":"2026-11-27T23:54:49.000Z","level":"info","event":"http.response","correlationId":"39955cfa-105d-461a-915b-bb45d9142029","method":"POST","path":"/api/cognition-v2/working","status":202,"durationMs":14}
+{"ts":"2026-11-27T23:54:49.021Z","level":"info","event":"http.request","correlationId":"2bd3c5a2-8baa-4c3e-be88-722573727366","method":"POST","path":"/api/cognition-v2/snapshots"}
+{"ts":"2026-11-27T23:54:49.049Z","level":"info","event":"http.response","correlationId":"2bd3c5a2-8baa-4c3e-be88-722573727366","method":"POST","path":"/api/cognition-v2/snapshots","status":200,"durationMs":28}
+{"ts":"2026-11-27T23:54:49.050Z","level":"info","event":"http.request","correlationId":"992ad41c-c0f2-4721-b411-4bb5770727fa","method":"GET","path":"/api/cognition-v2/snapshots/:id"}
+{"ts":"2026-11-27T23:54:49.058Z","level":"warn","event":"http.response","correlationId":"992ad41c-c0f2-4721-b411-4bb5770727fa","method":"GET","path":"/api/cognition-v2/snapshots/:id","status":404,"durationMs":8}
+{"ts":"2026-11-27T23:54:49.059Z","level":"info","event":"http.request","correlationId":"b560a6d3-fe7f-4c4b-8b58-771d85299c9a","method":"POST","path":"/api/cognition-v2/slow"}
+{"ts":"2026-11-27T23:54:49.097Z","level":"info","event":"http.response","correlationId":"b560a6d3-fe7f-4c4b-8b58-771d85299c9a","method":"POST","path":"/api/cognition-v2/slow","status":202,"durationMs":38}
+{"ts":"2026-11-27T23:54:49.208Z","level":"info","event":"http.request","correlationId":"d1e78321-8bb2-4edc-8b99-b3848ba0f818","method":"GET","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-27T23:54:49.228Z","level":"info","event":"http.response","correlationId":"d1e78321-8bb2-4edc-8b99-b3848ba0f818","method":"GET","path":"/api/cognition-v2/references/:id","status":200,"durationMs":20}
+{"ts":"2026-11-27T23:54:49.229Z","level":"info","event":"http.request","correlationId":"9d636339-d95c-439d-97d6-92681982dda9","method":"GET","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-27T23:54:49.237Z","level":"warn","event":"http.response","correlationId":"9d636339-d95c-439d-97d6-92681982dda9","method":"GET","path":"/api/cognition-v2/references/:id","status":404,"durationMs":8}
+{"ts":"2026-11-27T23:54:49.265Z","level":"info","event":"http.request","correlationId":"26408858-66bc-4465-a983-ca2cc820747b","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare"}
+{"ts":"2026-11-27T23:54:49.268Z","level":"warn","event":"http.response","correlationId":"26408858-66bc-4465-a983-ca2cc820747b","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare","status":422,"durationMs":3}
+{"ts":"2026-11-27T23:54:49.269Z","level":"info","event":"http.request","correlationId":"7ce49844-6df8-42c6-9b95-fb5ae78de624","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare"}
+{"ts":"2026-11-27T23:54:49.286Z","level":"info","event":"http.response","correlationId":"7ce49844-6df8-42c6-9b95-fb5ae78de624","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare","status":200,"durationMs":18}
+{"ts":"2026-11-27T23:54:49.287Z","level":"info","event":"http.request","correlationId":"bde75677-ca77-4ece-a8e7-598834d2f096","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-27T23:54:49.295Z","level":"warn","event":"http.response","correlationId":"bde75677-ca77-4ece-a8e7-598834d2f096","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":404,"durationMs":8}
+{"ts":"2026-11-27T23:54:49.295Z","level":"info","event":"http.request","correlationId":"9484883f-cdec-4774-b154-e37ec77455f1","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-27T23:54:49.303Z","level":"warn","event":"http.response","correlationId":"9484883f-cdec-4774-b154-e37ec77455f1","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":404,"durationMs":8}
+{"ts":"2026-11-27T23:54:49.304Z","level":"info","event":"http.request","correlationId":"32eb1df4-75a1-4675-9174-fa9b9f88fdfe","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-27T23:54:49.328Z","level":"info","event":"http.response","correlationId":"32eb1df4-75a1-4675-9174-fa9b9f88fdfe","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":202,"durationMs":24}
+{"ts":"2026-11-27T23:54:49.328Z","level":"info","event":"http.request","correlationId":"ee5fbb2b-3ddd-42f6-bb25-ba2ba7d93109","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-27T23:54:49.335Z","level":"info","event":"http.response","correlationId":"ee5fbb2b-3ddd-42f6-bb25-ba2ba7d93109","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":202,"durationMs":7}
+{"ts":"2026-11-27T23:54:49.348Z","level":"info","event":"http.request","correlationId":"b60ff991-916d-4d30-bf80-5cfdc6f0464d","method":"GET","path":"/api/cognition-v2/journey"}
+{"ts":"2026-11-27T23:54:49.359Z","level":"info","event":"http.response","correlationId":"b60ff991-916d-4d30-bf80-5cfdc6f0464d","method":"GET","path":"/api/cognition-v2/journey","status":200,"durationMs":10}
+{"ts":"2026-11-27T23:54:49.360Z","level":"info","event":"http.request","correlationId":"21597514-d8da-4b97-9120-feccbc0b5509","method":"DELETE","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-27T23:54:49.399Z","level":"info","event":"http.response","correlationId":"21597514-d8da-4b97-9120-feccbc0b5509","method":"DELETE","path":"/api/cognition-v2/references/:id","status":200,"durationMs":40}
+{"ts":"2026-11-27T23:54:49.400Z","level":"info","event":"http.request","correlationId":"beaf82e7-480b-4aad-bc25-99003ca141e1","method":"GET","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-27T23:54:49.411Z","level":"warn","event":"http.response","correlationId":"beaf82e7-480b-4aad-bc25-99003ca141e1","method":"GET","path":"/api/cognition-v2/references/:id","status":404,"durationMs":12}
+{"ts":"2026-11-27T23:54:49.413Z","level":"info","event":"http.request","correlationId":"cf4fb85d-1fa2-4612-b63b-fab0c0338cc2","method":"POST","path":"/api/cognition-v2/snapshots"}
+{"ts":"2026-11-27T23:54:49.417Z","level":"warn","event":"http.response","correlationId":"cf4fb85d-1fa2-4612-b63b-fab0c0338cc2","method":"POST","path":"/api/cognition-v2/snapshots","status":403,"durationMs":4}
+✔ C15 synthetic authenticated HTTP: working memory → snapshot → durable Slow → kernel Thought/card → revoke; cross-tenant denied (1741.499296ms)
+✔ C08 durable gateway reserves quota once, persists no private text, reconciles uncertain attempts across restart (784.142523ms)
+✔ C08 gateway checks actor/tenant, current evidence, consent, grant integrity and cancellation before any egress (659.450931ms)
+✔ C08 adapter consumes durable minimized grants and records usage without promoting factuality (721.778947ms)
+﹣ C08 native concurrent workers admit one in-flight request and rollback quota with failed transaction (0.1701ms) # SKIP
+✔ C08 cancellation bounds a stuck minimizer and revoked evidence invalidates a persisted grant (763.262924ms)
+✔ C08 verified REST contract minimizes egress, pins model and preserves proposed confidence and independent poles (7.88806ms)
+✔ C08 unknown is explicit and never converted into zero, certainty or permission (1.19491ms)
+✔ C08 denied tenant, stale policy grant and pre-aborted requests make no provider call (0.5585ms)
+✔ C08 malformed labels, probability distributions, version drift and oversized responses fail with audit (3.744799ms)
+✔ C08 cancellation, revocation and 429 do not retry or return a stale classification (11.59042ms)
+✔ C08 accounting uncertainty is explicit and never overwritten with a contradictory failure receipt (1.03083ms)
+✔ C08 documented adapter plugs into durable Slow without overriding hypotheses or concealing evaluator disagreement (765.386774ms)
+✔ C02 audit and notification effects rollback together with inbox, then recover from durable journal after restart (716.679557ms)
+﹣ C02 native competing receipt workers commit one projection under tenant fence (0.1061ms) # SKIP
+✔ C02 durable tenants bypass live-only callbacks while non-migrated tenants retain compatibility (749.069606ms)
+✔ C04 functional five-memory pipeline, TTL and C06 attention persistence/revocation (925.117174ms)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 12803.009576
+BATCH4_EXIT=0
+✔ C01 migration corpus: knowledge survives prior delivery, lifecycle and privacy remain conservative (12.825239ms)
+✔ C01 migration rejects scope substitution and malformed legacy data (2.01682ms)
+✔ C05 approved vocabulary has eight families, six independent nullable poles and ten typed dimensions (3.2959ms)
+✔ C05 approval is persisted and revocable; disagreement remains explicit and cannot mint outcomes or certainty (1221.884797ms)
+✔ C05 Slow produces durable annotated cards; replay is stable, context is compact and ontology revocation hides derivatives (1087.573945ms)
+✔ C12 provider reasoning/state/custom/tool events cannot cross the public text boundary (0.71858ms)
+✔ C04/C10 actual RAG registry is prepared off Fast; source revision/removal invalidates snapshot and derived memory (771.839724ms)
+✔ C04 RAG keeps same owner, source and connection IDs isolated across tenants (638.947392ms)
+﹣ restricted Postgres role isolates voice and cyber module records across tenants (0.13541ms) # SKIP
+﹣ C01 restricted Postgres role: RLS rejects cross-tenant reads and writes without relying on SQL filters (0.16627ms) # SKIP
+✔ C05 runtime outcome proves a scoped job result; model hypothesis and delivery ACK remain independent (993.662041ms)
+✔ C05 fabricated terminal events, copied outcomes and mutated runtime state never establish verified results (1469.648322ms)
+✔ C05 failed and cancelled jobs produce truthful scoped outcomes without claiming successful execution (736.241036ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 8169.489983
+BATCH5_EXIT=0
+﹣ C02 real Postgres: pinned connections, concurrent rollback, atomic event ordering and kernel capture (1.07703ms) # Requires explicit local synthetic COGNITION_TEST_POSTGRES_URL
+✔ C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipts match streamed response (2249.289416ms)
+✔ C14→C02→C10 partial child receipt becomes private context without asserting protection (767.292404ms)
+✔ C07/C08 Slow is durable, validates output/evidence and publishes a reusable private card (898.499917ms)
+✔ C11 saturated Slow and Slow failures never occupy Fast lane; timeout retains its uncertain lease until expiry (781.015553ms)
+✔ C02 concurrent transaction rollback cannot commit another call chain (751.415205ms)
+✔ C13 durable consent/session/final transcript survive restart; private scope and provider gate are enforced (1216.669498ms)
+✔ C13 concurrent renderer is fenced and late text after barge-in is rejected (715.596667ms)
+✔ C13 expiry/silence are recovered from durable timestamps, no timer or provider pricing assumption (696.334959ms)
+✔ C13 Fast voice adapter reuses the shared runtime and cancels subscription when output is rejected (3.313189ms)
+{"ts":"2026-11-27T23:55:14.308Z","level":"error","event":"background_failure","phase":"cognition v2 projection worker","retryable":false,"error":"Error","message":"synthetic failure","stack":"Error: synthetic failure\n    at Object.tick (/workspace/chats/a30d6f47eb163b012630177f/tests/cognition-v2-workers.test.ts:35:107)\n    at Object.projection (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:39:47)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:50:90)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:65:14)\n    at runInTenantScope (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/tenant-scope.ts:22:18)\n    at loop (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:50:15)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:73:99)"}
+✔ V2 worker retries failures per tenant, reports readiness and recovers durable receipts after restart (1764.427565ms)
+﹣ separate Postgres worker publishes readiness and recovers events written while stopped (0.10956ms) # SKIP
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] validado: 257 capabilities
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+{"ts":"2026-11-27T23:55:16.121Z","level":"info","event":"http.request","correlationId":"86998989-40dc-410c-a9b2-2f9ed605622e","method":"GET","path":"/api/health"}
+{"ts":"2026-11-27T23:55:16.130Z","level":"info","event":"http.response","correlationId":"86998989-40dc-410c-a9b2-2f9ed605622e","method":"GET","path":"/api/health","status":503,"durationMs":9}
+[personas] tenant default: 12 cargadas, 0 fallidas
+{"ts":"2026-11-27T23:55:16.195Z","level":"info","event":"http.request","correlationId":"533c0ad0-2ab4-4628-a242-9d892d24df8c","method":"GET","path":"/api/health"}
+{"ts":"2026-11-27T23:55:16.199Z","level":"info","event":"http.response","correlationId":"533c0ad0-2ab4-4628-a242-9d892d24df8c","method":"GET","path":"/api/health","status":200,"durationMs":4}
+✔ API health fails closed when opted-in V2 has no live worker (803.185102ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 12301.970677
+BATCH6_EXIT=0
+ALL_EXIT=0

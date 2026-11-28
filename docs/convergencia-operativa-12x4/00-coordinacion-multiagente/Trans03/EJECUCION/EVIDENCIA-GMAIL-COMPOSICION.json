@@ -1,0 +1,22 @@
+{
+  "codeCommit": "602f182e58217ae163f5352d97e6a4b56a04caea",
+  "runState": "LOCAL_WORKTREE_THEN_COMMITTED",
+  "tests": {
+    "total": 7,
+    "pass": 7,
+    "fail": 0,
+    "skip": 0
+  },
+  "typecheckRootAndWorker": 0,
+  "command": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test tests/vertical-slice-gmail.test.ts tests/trans03-workspace-cache.test.ts tests/trans01-effect-receipt.test.ts",
+  "logs": [
+    {
+      "path": "/tmp/trans03-gmail-composition.log",
+      "sha256": "0ad91fd8d1b77a72580ba5239b44a2a5352a6b9ed8e45a7bcfc4c0809cf9fc15"
+    },
+    {
+      "path": "/tmp/trans03-gmail-composition-tsc.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    }
+  ]
+}

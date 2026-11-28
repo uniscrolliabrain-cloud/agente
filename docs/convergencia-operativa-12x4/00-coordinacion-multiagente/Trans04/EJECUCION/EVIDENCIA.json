@@ -1,0 +1,88 @@
+{
+  "turno": "Trans04/T1-observabilidad",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "testedCommit": "498d8ddc",
+  "state": "PARTIAL_LOCAL",
+  "git": { "branch": "converge/trans00-core", "dirty": 0 },
+  "commands": {
+    "tests": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-isolation=none --test-timeout=60000 --test-force-exit tests/trans04-*.test.ts",
+    "typecheck": "npx --no-install tsc --noEmit -p tsconfig.json",
+    "secretsSample": "node --import tsx scripts/secrets-check.ts --json",
+    "secretsLive": "node --import tsx scripts/secrets-check.ts --mode=live --json"
+  },
+  "tests": { "suites": 12, "total": 43, "pass": 43, "fail": 0, "skip": 0, "todo": 0 },
+  "exitCodes": { "tests": 0, "typecheck": 0, "secretsSample": 0, "secretsLive": 1 },
+  "logs": {
+    "tests": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans04/EJECUCION/EVIDENCIA/logs/trans04-suites.log",
+      "sha256": "3d4324846cce53d594ffb718c2262140f04fcc3a52ad27b3e829ea68a29d56b2"
+    },
+    "secretsLive": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans04/EJECUCION/EVIDENCIA/logs/trans04-secrets-live.json",
+      "sha256": "c65dc593952da3e825a4aeed580e4852a7009047d535968ccb6372d12b0915c4"
+    },
+    "secretsSample": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans04/EJECUCION/EVIDENCIA/logs/trans04-secrets-sample.json",
+      "sha256": "de49d19d1cf94b6f3059dc136f6aca079f631cd2f29f9987ef4760b29ac4edca"
+    },
+    "exitCodes": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans04/EJECUCION/EVIDENCIA/logs/trans04-exit.log",
+      "sha256": "62cbb995776bfbe674060c0ece38f5195695bf56a26c484b8f28982ab1ae1333"
+    }
+  },
+  "metrics": {
+    "emissionPoints": [
+      "apps/server/src/middleware/request-logger.ts:99,108,117",
+      "apps/server/src/kernel/kernel.ts:50,54,58,106",
+      "apps/server/src/kernel/subscribers/metrics-consumer.ts:21,25",
+      "apps/server/src/engine/service.ts:2355,2359",
+      "apps/server/src/log.ts:181",
+      "apps/server/src/engine/observability/hooks.ts:72"
+    ],
+    "exportRoute": "apps/server/src/app.ts:836 (metricsRoutes -> /metrics)"
+  },
+  "alerts": {
+    "negativeCase": "fuente ausente o fallo de almacenamiento queda unavailable, no cero medido",
+    "deduplication": "evaluaciones solapadas -> una notificacion; cooldown durable sobrevive a nueva instancia",
+    "containment": "fallo sincrono de notificacion contenido"
+  },
+  "preflight": {
+    "sample": { "ok": true, "exit": 0, "rows": 53, "missingRequired": 0 },
+    "live": {
+      "ok": false,
+      "exit": 1,
+      "missingRequired": [
+        "DATABASE_URL",
+        "PUBLIC_API_URL",
+        "TOKEN_ENCRYPTION_KEY",
+        "AGENTE_ACCESS_KEY",
+        "ALLOWED_ORIGINS",
+        "AUTH_PROVIDER",
+        "SUPABASE_URL",
+        "ADMIN_EMAIL",
+        "ADMIN_PASSWORD",
+        "MODEL"
+      ]
+    },
+    "valuesPrinted": false,
+    "report": "solo nombre, grupo, presence y required"
+  },
+  "done": {
+    "metricsHaveEmissionPoint": true,
+    "alertNegativeCaseTested": true,
+    "preflightFailsClosed": true,
+    "noSecretValuesPrinted": true,
+    "gateEvidenceShapeTested": true,
+    "ledgerPromoted": false,
+    "fullGate": false
+  },
+  "limitations": [
+    "El gate integral no se ejecuto: 43 pruebas focales no son 12 fases x 4 pasadas.",
+    "El ledger de Trans04 no se toca: sus 48 bloques siguen PENDING.",
+    "Ninguna alerta se disparo por una condicion real: 07.01-07.04 siguen NOT_RUN.",
+    "No hay metricas de produccion ni latencias reales; todo es sintetico.",
+    "El preflight live falla por ausencia de secretos en este entorno: prueba el fallo cerrado, no que falten en el entorno del owner.",
+    "No se toca Doppler ni se rotan credenciales."
+  ],
+  "notes": "Verifica que las metricas tienen emision real, que las alertas distinguen no-disparo de cero medido y que el preflight falla cerrado sin imprimir valores. No demuestra gate, produccion ni alerta real."
+}

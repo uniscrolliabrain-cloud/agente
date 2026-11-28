@@ -127,6 +127,7 @@ export const SYSTEM_EVENT_TYPES = [
   // EVENTS_MESSAGE_EDITED_V1 - edicion de mensaje en chat.
   "message.edited",
   // COGNITION_CARD_EVENTS_V1 - tarjeta del slow creada e inyectada en contexto.
+  "cognition.v2.turn.admitted",
   "cognition.v2.record.proposed",
   "cognition.v2.source.revoked",
   "cognition.v2.slow.status",
@@ -154,6 +155,22 @@ export interface SystemEvent<T = Record<string, unknown>> {
   source: SystemEventSource;
   correlationId?: string;
   causationId?: string;
+  // EVENTS_CAUSAL_ENVELOPE_V1 - campos aditivos del perfil causal-1. Los
+  // lectores 1.0 anteriores los ignoran; `source.personaId` sigue siendo
+  // presentacion y nunca sustituye al actor autenticado.
+  actorId?: string;
+  // EVENTS_ACTOR_PROVENANCE_V1 - procedencia del actor: un principal humano
+  // autenticado o un principal de servicio con identidad propia. `personaId`
+  // sigue siendo presentacion y nunca se promueve a actor.
+  actorKind?: "human" | "service";
+  causalKind?: "root" | "derived";
+  /**
+   * EVENTS_COMMIT_SEQUENCE_V1 - posicion durable por tenant asignada en el
+   * append, bajo el lock del contador y en la misma transaccion que la fila.
+   * Es el cursor de replay: refleja orden de commit, no de inicio. Ausente solo
+   * en filas anteriores a la migracion (el store las numera al arrancar).
+   */
+  seq?: number;
   payload: T;
 }
 
@@ -180,4 +197,14 @@ export interface EventSink {
 export interface EventQuery {
   recent(owner: string, filter: EventFilter): Promise<SystemEvent[]>;
   aggregate(owner: string, hours: number): Promise<EventAggregate[]>;
+  /**
+   * EVENTS_PAGE_TENANT_V1 - pagina ascendente por tenant con filtros y cursor
+   * aplicados en el store ANTES del limite. Devuelve `null` si el backend no
+   * soporta la consulta, para conservar el camino historico.
+   */
+  pageTenant?(
+    tenantId: string,
+    filter: EventFilter,
+    limit: number,
+  ): Promise<SystemEvent[] | null>;
 }

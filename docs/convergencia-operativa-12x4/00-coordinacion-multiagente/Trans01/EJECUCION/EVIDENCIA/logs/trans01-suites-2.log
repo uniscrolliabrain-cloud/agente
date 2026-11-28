@@ -1,0 +1,37 @@
+✔ una conexion rotada tras el claim no llega al proveedor (3499.550741ms)
+✔ una cuenta cambiada tras el claim tampoco ejecuta (15.834489ms)
+✔ governed ActionService retains provider acceptance evidence without inventing delivery (684.66335ms)
+✔ an untyped or mismatched governed receipt becomes unknown and cannot be retried (1283.109943ms)
+✔ emit dentro de una transaccion queda pendiente hasta el commit (7.25481ms)
+✔ un rollback no publica el evento (3.897989ms)
+✔ el cursor recupera todos los eventos aunque la primera ventana se agote (487.370711ms)
+✔ el filtro de tipo se aplica antes del limite (65.565306ms)
+✔ un cursor de otro tenant deniega en vez de reiniciar (2.5077ms)
+✔ un cursor inexistente deniega (0.75597ms)
+✔ gobernado sin actor resuelto niega antes de ejecutar (0.79408ms)
+✔ gobernado sin PDP/governance niega antes de ejecutar (0.18254ms)
+✔ gobernado con efecto externo y sin store de claims niega (0.21751ms)
+✔ gobernado completo ejecuta una vez y deja el claim en done (5.36813ms)
+✔ un efecto externo sin principal se niega aunque el perfil sea legacy (0.21543ms)
+✔ un rol inactivo no autoriza el efecto (0.20462ms)
+✔ el perfil legacy conserva la ruta sin principal para una lectura (0.13203ms)
+{"ts":"2026-11-27T22:13:34.369Z","level":"error","event":"background_failure","phase":"event emit cognition.v2.turn.admitted","retryable":false,"error":"Error","message":"ACTOR_NOT_AUTHENTICATED","stack":"Error: ACTOR_NOT_AUTHENTICATED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:171:35)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-human-turn-envelope.test.ts:27:29)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+{"ts":"2026-11-27T22:13:34.373Z","level":"error","event":"background_failure","phase":"event emit cognition.v2.turn.admitted","retryable":false,"error":"Error","message":"HUMAN_TURN_ENVELOPE_DENIED","stack":"Error: HUMAN_TURN_ENVELOPE_DENIED\n    at EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:199:17)\n    at async TestContext.<anonymous> (/workspace/chats/a30d6f47eb163b012630177f/tests/trans01-human-turn-envelope.test.ts:30:24)\n    at async Test.run (node:internal/test_runner/test:1409:7)\n    at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)"}
+✔ human turn event requires an authenticated matching causal root envelope (733.578466ms)
+✔ kernel route binds authenticated actor and selected tenant instead of resolving a primary tenant (26.720458ms)
+✔ kernel read context keeps a user's actual role (1.11653ms)
+✔ metrics summary distinguishes missing measurements and overflow within the selected tenant (2.69832ms)
+✔ Slow selects DeepSeek on the old OpenRouter account and never takes JEV's key (0.40501ms)
+✔ Muse defaults to the documented direct Meta Contributor model and never lends its key to another provider (0.33008ms)
+✔ concurrent compatible endpoints use separate clients, credentials and model IDs (29.938728ms)
+✔ legacy normalized model selection preserves the matched provider endpoint (0.26528ms)
+[kernel/env-resolver] tenant synthetic: FAST_LLM_API_KEY vacia. Chat usara chain global.
+✔ legacy embeddings never inherit a Slow OpenRouter key under a Google profile (2.24232ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7474.851995

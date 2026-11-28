@@ -1,6 +1,7 @@
+import { laneEnvironment, requireLaneProfile } from "../apps/server/src/llm-config.ts";
 // SECRETS_CHECK_V1 - auditoria del contrato de secretos.
 //
-// Doppler inyecta el entorno en el proceso; este script no lee Doppler ni
+// El runner inyecta el entorno (GitHub-first, Doppler opcional); este script no lee almacenes ni
 // escribe nada: comprueba que lo que la app necesita para arrancar en un modo
 // concreto esta presente, y dice exactamente que falta y para que sirve.
 //
@@ -9,8 +10,9 @@
 //   pnpm secrets:check --mode=live
 //   pnpm secrets:check --only=auth,llm
 //
-// Sale con codigo 1 si falta algo obligatorio: es un gate de despliegue, no un
-// informe. Los opcionales se listan marcados como tal y nunca hacen fallar.
+// Sale con codigo 1 si falta algo obligatorio o falla una coherencia en estricto.
+// Sin --strict/perfil, conserva las coherencias como informacion local.
+// --json solo emite presencia y nombres; opciones invalidas salen con codigo 2.
 type Mode = "sample" | "live";
 
 interface Secret {
@@ -23,14 +25,14 @@ interface Secret {
 
 const SECRETS: Secret[] = [
   // --- nucleo -------------------------------------------------------------
-  { name: "DATABASE_URL", need: "live", group: "core", note: "Postgres durable (Neon). Sin esto cae a PGlite y las DB se corrompen al cortar el proceso" },
+  { name: "DATABASE_URL", need: "live", group: "core", note: "Postgres durable existente (incluye Supabase); conservar DSN y proveedor" },
   { name: "PUBLIC_API_URL", need: "live", group: "core", note: "origen publico del API; de aqui se deriva el redirect de Google" },
   { name: "TOKEN_ENCRYPTION_KEY", need: "live", group: "core", note: "32 bytes base64; cifra los tokens OAuth de Google en reposo" },
   { name: "AGENTE_ACCESS_KEY", need: "live", group: "core", note: ">=24 chars; live mode no arranca sin ella" },
   { name: "ALLOWED_ORIGINS", need: "live", group: "core", note: "CSV de origenes del panel (https://www.agntiapro.com)" },
   { name: "AUTH_PROVIDER", need: "live", group: "auth", note: "debe ser supabase para el modo multitenant con JWT" },
   { name: "DATA_DIR", need: "optional", group: "core", note: "directorio de datos (PGlite/backups); en Fly debe ser /data" },
-  { name: "BUSINESS_DATABASE_URL", need: "optional", group: "core", note: "base + rol read-only para query_business de las SOPs; sin ella las consultas corren contra la principal" },
+  { name: "BUSINESS_DATABASE_URL", need: "optional", group: "core", note: "DSN dedicado read-only para query_business; sin el se usa el dataset local del Store" },
   { name: "AGENTE_PROCESS_ROLE", need: "optional", group: "core", note: "all | api | worker; en Fly se separan en dos apps" },
   { name: "BACKUP_INTERVAL_HOURS", need: "optional", group: "core", note: "0 desactiva los backups automaticos" },
 
@@ -50,7 +52,16 @@ const SECRETS: Secret[] = [
   { name: "MODEL", need: "live", group: "llm", note: "'<provider>/<modelo>', p.ej. openai/gpt-4.1-mini" },
   { name: "OPENAI_API_KEY", need: "optional", group: "llm", note: "proveedor principal si MODEL empieza por openai/" },
   { name: "GEMINI_API_KEY", need: "optional", group: "llm", note: "proveedor google/" },
-  { name: "OPENROUTER_API_KEY", need: "optional", group: "llm", note: "fallback OpenAI-compatible; tambien permite modelos gratuitos" },
+  { name: "OPENROUTER_API_KEY", need: "optional", group: "jev", note: "cuenta nueva de JEV Decisions, nunca alias de Slow" },
+  { name: "JEV_OPENROUTER_API_KEY", need: "optional", group: "jev", note: "override dedicado para JEV" },
+  { name: "JEV_MODEL", need: "optional", group: "jev", note: "default typesafe/jev-1.14; versiones explicitas 1.14 o 1.13" },
+  { name: "OPEN_ROUTER_API_KEY", need: "optional", group: "kernel", note: "cuenta antigua para DeepSeek Slow" },
+  { name: "MUSE_API_KEY", need: "optional", group: "kernel", note: "Meta directo; default muse-spark-1.3-contributor en api.meta.ai" },
+  { name: "SUPABASE_SECRET_KEY", need: "optional", group: "auth", note: "servicio Supabase, alias GitHub SUPABASE_SECRET; no es un JWT signing secret" },
+  { name: "GRAFANA_URL", need: "optional", group: "observability", note: "URL de Grafana, no URL OTLP" },
+  { name: "GRAFANA_SERVICE_ACCOUNT_TOKEN", need: "optional", group: "observability", note: "token de servicio Grafana API" },
+  { name: "GRAFANA_CLOUD_TOKEN", need: "optional", group: "observability", note: "token Cloud, no intercambiable con token de servicio; requiere destino propio" },
+  { name: "SENTRY_DSN", need: "optional", group: "observability", note: "DSN de ingestion; presencia no prueba SDK ni entrega" },
   { name: "MODEL_FALLBACK", need: "optional", group: "llm", note: "segunda oportunidad cuando el primario falla antes de emitir texto" },
 
   // --- kernel de dos velocidades ------------------------------------------
@@ -60,6 +71,7 @@ const SECRETS: Secret[] = [
   { name: "SLOW_LLM_API_KEY", need: "optional", group: "kernel", note: "key de la velocidad 'razona en background'" },
   { name: "EMBEDDINGS_LLM_API_KEY", need: "optional", group: "kernel", note: "embeddings de RAG; si falta usa la fast" },
   { name: "WORKER_TOKEN", need: "optional", group: "worker", note: ">=32 chars; browser worker local" },
+  { name: "METRICS_TOKEN", need: "optional", group: "observability", note: "token del scraper de /metrics; sin el, la exposicion cae a solo-admin" },
   { name: "BROWSER_WORKER_URL", need: "optional", group: "worker", note: "debe ser loopback si el worker corre en el host" },
 
   // --- canales (campanas siguientes) --------------------------------------
@@ -83,23 +95,42 @@ const SECRETS: Secret[] = [
   { name: "GOOGLE_MAPS_API_KEY", need: "optional", group: "leads", note: "Google Places API: busqueda de negocios locales para leads" },
 ];
 
-const args = new Map(
-  process.argv.slice(2).map((arg) => {
-    const [key, value = "true"] = arg.replace(/^--/, "").split("=");
-    return [key, value] as const;
-  }),
-);
-
-// No se usa readConfig(): en live lanza si faltan claves, y este script existe
-// justo para decir CUALES faltan. Se lee el entorno en crudo.
-const mode: Mode =
-  (args.get("mode") ?? process.env.WORKSPACE_MODE ?? "sample").trim() === "live"
-    ? "live"
-    : "sample";
+const profiles: Record<string, string[]> = {
+  "suite-verde": [], leads: ["leads"], "authz-tenant": ["auth", "bootstrap"],
+  canales: ["google", "email", "whatsapp", "vapi"],
+  "responder-lead": ["leads", "google", "email", "whatsapp", "vapi", "llm", "kernel"],
+  deploy: ["core", "auth", "bootstrap", "llm"], convergencia: ["kernel", "jev"], observabilidad: ["observability"],
+};
+function usageError(): never {
+  process.stderr.write("secrets:check: invalid mode, profile, group or option\n");
+  process.exit(2);
+}
+const args = new Map<string, string>();
+for (const arg of process.argv.slice(2)) {
+  const match = /^--(mode|only|profile|strict|json)(?:=(.*))?$/.exec(arg);
+  if (!match || args.has(match[1])) usageError();
+  const [, key, value] = match;
+  if (key === "strict" || key === "json") {
+    if (value !== undefined && value !== "true") usageError();
+    args.set(key, "true");
+  } else {
+    if (!value?.trim()) usageError();
+    args.set(key, value.trim());
+  }
+}
+const profile = args.get("profile");
+if (profile && !Object.hasOwn(profiles, profile)) usageError();
+if (profile && args.has("only")) usageError();
+const requestedMode = args.get("mode") ?? process.env.WORKSPACE_MODE ?? (profile === "deploy" ? "live" : "sample");
+if (requestedMode !== "live" && requestedMode !== "sample") usageError();
+const mode: Mode = requestedMode;
+if (profile === "deploy" && mode !== "live") usageError();
+const strict = args.has("strict") || Boolean(profile);
 const authProvider = (process.env.AUTH_PROVIDER ?? "session").trim();
-const only = args.get("only")
-  ? new Set(args.get("only")!.split(",").map((g) => g.trim()).filter(Boolean))
-  : null;
+const only = profile ? new Set(profiles[profile]) : args.has("only") ? new Set(args.get("only")!.split(",").map(g => g.trim())) : null;
+const groups = new Set(SECRETS.map(secret => secret.group));
+if (only && [...only].some(group => !groups.has(group))) usageError();
+const includes = (group: string) => !only || only.has(group);
 
 // Doppler publica varios secretos con el nombre del proveedor. Estas son las
 // mismas equivalencias que normaliza apps/server/src/config.ts al arrancar; sin
@@ -109,6 +140,7 @@ const ALIASES: Record<string, string[]> = {
   WHATSAPP_PHONE_ID: ["WHATSAPP_PHONE_NUMBER_ID"],
   WHATSAPP_BUSINESS_ACCOUNT_ID: ["WHATSAPP_WABA_ID"],
   GEMINI_API_KEY: ["GOOGLE_API_KEY"],
+  SUPABASE_SECRET_KEY: ["SUPABASE_SECRET"],
   EMAIL_FROM: ["RESEND_FROM", "RESEND_FROM_EMAIL"],
 };
 
@@ -126,7 +158,8 @@ function requiredIn(secret: Secret): boolean {
   return false;
 }
 
-const rows: { ok: boolean; line: string }[] = [];
+const rows: { name: string; group: string; present: boolean; required: boolean; line: string }[] = [];
+const missing: string[] = [];
 let missingRequired = 0;
 
 for (const secret of SECRETS) {
@@ -134,56 +167,51 @@ for (const secret of SECRETS) {
   const value = present(secret.name);
   const required = requiredIn(secret);
   const ok = Boolean(value);
-  if (!ok && required) missingRequired += 1;
+  if (!ok && required) { missingRequired += 1; missing.push(secret.name); }
   const tag = ok ? "OK  " : required ? "FALTA" : "opcional";
-  // Nunca se imprime el valor: solo si existe y su longitud.
-  const detail = ok ? `${value!.length} chars` : secret.note;
-  rows.push({ ok, line: `${tag.padEnd(8)} ${secret.name.padEnd(26)} ${secret.group.padEnd(10)} ${detail}` });
+  // Presence only: values, lengths and hashes never leave this process.
+  const detail = ok ? "presente" : secret.note;
+  rows.push({ name: secret.name, group: secret.group, present: ok, required, line: `${tag.padEnd(8)} ${secret.name.padEnd(26)} ${secret.group.padEnd(10)} ${detail}` });
 }
 
 // --- coherencias entre variables (lo que ningun check por variable ve) -----
 const coherence: string[] = [];
-if (authProvider === "supabase") {
+if (includes("auth") && authProvider === "supabase") {
   if (!present("SUPABASE_URL") && !present("SUPABASE_JWT_SECRET")) {
     coherence.push(
       "AUTH_PROVIDER=supabase sin SUPABASE_URL ni SUPABASE_JWT_SECRET: todo /api/* responde 503 (fail-closed).",
     );
   }
 }
-if (present("AGENTE_ACCESS_KEY") && present("AGENTE_ACCESS_KEY")!.length < 24) {
+if (includes("core") && present("AGENTE_ACCESS_KEY") && present("AGENTE_ACCESS_KEY")!.length < 24) {
   coherence.push("AGENTE_ACCESS_KEY tiene menos de 24 caracteres: live mode no arranca.");
 }
-if (present("DATABASE_URL") && !present("BUSINESS_DATABASE_URL")) {
-  coherence.push(
-    "Sin BUSINESS_DATABASE_URL: query_business de las SOPs leera con el rol de escritura de la base principal.",
-  );
-}
-if (present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
+if (includes("core") && present("DATABASE_URL") && present("BUSINESS_DATABASE_URL")) {
   const main = present("DATABASE_URL")!;
   const business = present("BUSINESS_DATABASE_URL")!;
   if (main === business) {
     coherence.push(
-      "DATABASE_URL y BUSINESS_DATABASE_URL son la misma: el query_business de las SOPs leeria todas las filas de todos los owners. Usa una base y un rol read-only aparte.",
+      "DATABASE_URL y BUSINESS_DATABASE_URL coinciden: usar un DSN dedicado con rol read-only y permisos revisados.",
     );
   }
 }
 const googleId = present("GOOGLE_CLIENT_ID");
 const googleSecret = present("GOOGLE_CLIENT_SECRET");
-if (Boolean(googleId) !== Boolean(googleSecret)) {
+if (includes("google") && Boolean(googleId) !== Boolean(googleSecret)) {
   coherence.push("GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET deben ir juntas o ninguna.");
 }
 // El cliente de Resend exige key Y remitente: tener solo uno no envia nada.
-if (present("RESEND_API_KEY") && !present("EMAIL_FROM")) {
+if (includes("email") && present("RESEND_API_KEY") && !present("EMAIL_FROM")) {
   coherence.push(
     "RESEND_API_KEY sin EMAIL_FROM: el adaptador exige remitente y no enviara el email de verificacion.",
   );
 }
-if (present("WHATSAPP_TOKEN") && !present("WHATSAPP_APP_SECRET")) {
+if (includes("whatsapp") && present("WHATSAPP_TOKEN") && !present("WHATSAPP_APP_SECRET")) {
   coherence.push(
     "WHATSAPP_TOKEN sin WHATSAPP_APP_SECRET: el webhook no podria verificar X-Hub-Signature-256 y cualquiera podria inyectar mensajes.",
   );
 }
-if (present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
+if (includes("whatsapp") && present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
   coherence.push(
     "WHATSAPP_APP_SECRET sin WHATSAPP_VERIFY_TOKEN: Meta no podria completar el handshake del webhook y el numero no quedaria suscrito.",
   );
@@ -192,37 +220,74 @@ if (present("WHATSAPP_APP_SECRET") && !present("WHATSAPP_VERIFY_TOKEN")) {
 // vacio y el chat no responde. Nadie relacionaba una variable con la otra.
 const modelSpec = present("MODEL") ?? "";
 const modelProvider = modelSpec.split("/")[0]?.trim().toLowerCase() ?? "";
-const gatewayKey = present("OPENROUTER_API_KEY") ?? present("OPENAI_API_KEY");
-if (modelProvider === "google" && !present("GEMINI_API_KEY") && !gatewayKey) {
+const gatewayKey = present("OPEN_ROUTER_API_KEY") ?? present("OPENAI_API_KEY");
+if (includes("llm") && modelProvider === "google" && !present("GEMINI_API_KEY") && !gatewayKey) {
   coherence.push(
-    `MODEL=${modelSpec} sin GEMINI_API_KEY ni pasarela OpenAI-compatible: el chat arranca sin motor.`,
+    "MODEL configurado sin GEMINI_API_KEY ni pasarela OpenAI-compatible: el chat arranca sin motor.",
   );
 }
-if (modelProvider && modelProvider !== "google" && !gatewayKey) {
+if (includes("llm") && modelProvider && modelProvider !== "google" && !gatewayKey) {
   coherence.push(
-    `MODEL=${modelSpec} sin OPENAI_API_KEY ni OPENROUTER_API_KEY: el chat arranca sin motor.`,
+    "MODEL configurado sin OPENAI_API_KEY ni OPEN_ROUTER_API_KEY: el chat arranca sin motor.",
   );
 }
 // The API destination is not necessarily the browser's Origin. Validate the URL
 // without claiming a split-origin panel must include the API origin in CORS.
 const publicApiUrl = present("PUBLIC_API_URL");
-if (mode === "live" && publicApiUrl) {
+if (includes("core") && mode === "live" && publicApiUrl) {
   try {
-    new URL(publicApiUrl);
+    const url = new URL(publicApiUrl);
+    if (url.protocol !== "https:" || url.username || url.password) throw Error("INVALID_ORIGIN");
   } catch {
-    coherence.push(`PUBLIC_API_URL no es una URL valida: ${publicApiUrl}`);
+    coherence.push("PUBLIC_API_URL debe ser un origen HTTPS sin credenciales.");
   }
 }
 
-console.log(`\n[secrets:check] modo=${mode}${only ? ` grupos=${[...only].join(",")}` : ""}`);
-console.log("[secrets:check] (Doppler inyecta el entorno; este script no imprime valores)\n");
-for (const row of rows) console.log(row.line);
-if (coherence.length > 0) {
-  console.log("\n[secrets:check] incoherencias:");
-  for (const line of coherence) console.log(`  - ${line}`);
+// Validate only enabled, implemented lane consumers. Candidate providers do
+// not become configured integrations merely by appearing in an environment.
+if (includes("kernel")) {
+  for (const lane of ["fast", "slow"] as const) {
+    const prefix = lane.toUpperCase(), profile = laneEnvironment(lane);
+    if (profile.provider || profile.model || profile.apiKey || (lane === "fast" && present("MUSE_API_KEY"))) {
+      if (!profile.provider || !profile.model || !profile.apiKey) coherence.push(`${prefix}_LLM_PROFILE_INCOMPLETE`);
+      if (profile.provider && !["google", "openai", "openrouter", "anthropic", "meta"].includes(profile.provider)) coherence.push(`${prefix}_LLM_PROVIDER_INVALID`);
+      if (profile.provider === "meta" && profile.apiKey && profile.model) {
+        try { requireLaneProfile(lane); } catch { coherence.push(`${prefix}_META_PROFILE_INVALID`); }
+      }
+    }
+  }
 }
-console.log(
-  `\n[secrets:check] ${missingRequired === 0 ? "contrato cumplido" : `${missingRequired} obligatorias ausentes`}`,
-);
-// Una incoherencia no bloquea el arranque local, pero si el contrato obligatorio.
-process.exit(missingRequired > 0 ? 1 : 0);
+if (includes("jev")) {
+  const model = present("JEV_MODEL");
+  if (model && !["typesafe/jev-1.14", "typesafe/jev-1.13"].includes(model)) coherence.push("JEV_MODEL_INVALID");
+  if (model && !present("JEV_OPENROUTER_API_KEY") && !present("OPENROUTER_API_KEY")) coherence.push("JEV_OPENROUTER_UNCONFIGURED");
+}
+if (includes("observability") && Boolean(present("GRAFANA_URL")) !== Boolean(present("GRAFANA_SERVICE_ACCOUNT_TOKEN"))) coherence.push("GRAFANA_API_PROFILE_INCOMPLETE");
+if (includes("core") && present("TOKEN_ENCRYPTION_KEY")) {
+  const key = present("TOKEN_ENCRYPTION_KEY")!;
+  if (!/^[A-Za-z0-9+/]{43}=$/.test(key) || Buffer.from(key, "base64").length !== 32) coherence.push("TOKEN_ENCRYPTION_KEY_INVALID");
+}
+// SLOW_LANE_PROVIDER_V1 - con el provider en google, OPEN_ROUTER_API_KEY no se
+// usa: el kernel lento no tendria motor propio y nadie lo advertia.
+if ((present("SLOW_LLM_PROVIDER") ?? "").trim().toLowerCase() === "openrouter") {
+  if (!present("SLOW_LLM_API_KEY") && !present("OPEN_ROUTER_API_KEY")) {
+    coherence.push(
+      "SLOW_LLM_PROVIDER=openrouter sin SLOW_LLM_API_KEY ni OPEN_ROUTER_API_KEY: el kernel lento arranca sin motor propio.",
+    );
+  }
+}
+const ok = missingRequired === 0 && (!strict || coherence.length === 0);
+if (args.has("json")) {
+  process.stdout.write(JSON.stringify({ schemaVersion: "1.0", mode, profile: profile ?? null, strict, ok,
+    rows: rows.map(({ line, ...row }) => row), missingRequired: missing, issues: coherence }) + "\n");
+} else {
+  console.log(`\n[secrets:check] modo=${mode}${only ? ` grupos=${[...only].join(",")}` : ""}`);
+  console.log("[secrets:check] GitHub-first; entorno ya inyectado, Doppler opcional. Solo presencia.\n");
+  for (const row of rows) console.log(row.line);
+  if (coherence.length > 0) {
+    console.log("\n[secrets:check] incoherencias:");
+    for (const line of coherence) console.log(`  - ${line}`);
+  }
+  console.log(`\n[secrets:check] ${ok ? "contrato cumplido" : "contrato incumplido"}`);
+}
+process.exit(ok ? 0 : 1);

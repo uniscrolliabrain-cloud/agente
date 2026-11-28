@@ -1,0 +1,26 @@
+{
+  "red": {
+    "file": "/tmp/trans02-red.log",
+    "sha256": "e915256c4d58872da3b67e1b47023dcd96828dee4e8a7e055a2388af8e325df3"
+  },
+  "green": {
+    "file": "/tmp/trans02-green.log",
+    "sha256": "2b2459cde7cca98bc8b64373197d0de5ef195583f7be87bd310dfe1c135e5b94"
+  },
+  "dependencies-red": {
+    "file": "/tmp/trans02-dependencies-red.log",
+    "sha256": "4e52bd8dcdfc85d09809befa01c8dd899e4fe921700291f23888c87fd9e5a52f"
+  },
+  "dependencies": {
+    "file": "/tmp/trans02-dependencies.log",
+    "sha256": "07e4e3a591c1e4aead3065ab91b2ae0f3d69dba807c9935c74718ecfbace36ba"
+  },
+  "cognition-final": {
+    "file": "/tmp/trans02-cognition-final.log",
+    "sha256": "eaeecb12883a622eec7f9ff08db06bf463411932f735e4590a23ae37ab22dcaa"
+  },
+  "typecheck-final": {
+    "file": "/tmp/trans02-typecheck-final.log",
+    "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+  }
+}

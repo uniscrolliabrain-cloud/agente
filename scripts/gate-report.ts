@@ -25,8 +25,9 @@
 // `--only` no selecciona ningun step (barrera contra un gate que "pasa" porque
 // no corrio nada).
 import { spawnSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { join, resolve, relative, isAbsolute } from "node:path";
 
 import { AUDIT_CHECKS, AUDIT_REPORT_DIR_ENV } from "./audits/registry.ts";
 
@@ -67,6 +68,7 @@ export interface StepResult {
   /** Ultimas lineas no vacias de la salida: la evidencia en crudo. */
   tail: string[];
   logFile: string | null;
+  logSha256?: string;
 }
 
 export interface GateReport {
@@ -80,6 +82,7 @@ export interface GateReport {
   failed: string[];
   advisory: string[];
   steps: StepResult[];
+  runManifest?: { before: GateReport["git"]; lockSha256: string | null; nodeVersion: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -130,6 +133,8 @@ export function checkSteps(root = process.cwd()): StepSpec[] {
         "--import",
         "./tests/setup.ts",
         "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=2",
         // GATE_TEST_TIMEOUT_V1 - 10 s mataba tests legitimos: el primero de
         // tests/auth.test.ts tarda 13 s solo (hash de password) y bajo carga de
         // suite completa pasa de 10 s. El fallo se veia como "test timed out",
@@ -228,9 +233,8 @@ function gitInfo(root: string, spawn: typeof spawnSync): GateReport["git"] {
         error: (head.stderr || branch.stderr || "git no respondio").trim().slice(0, 200),
       };
     }
-    // `--untracked-files=no`: los informes de los audits van a artifacts/
-    // (ignorado) pero no queremos que el gate se cuente a si mismo.
-    const status = git(["status", "--porcelain", "--untracked-files=no"]);
+    // Ignored artifacts are excluded by Git; untracked source must count.
+    const status = git(["status", "--porcelain", "--untracked-files=all"]);
     const dirty =
       status.status === 0
         ? status.stdout.split(/\r?\n/).filter((l) => l.trim().length > 0).length
@@ -252,7 +256,7 @@ export function runGate(options: RunOptions = {}): GateReport {
   const now = options.now ?? (() => new Date());
 
   const available = allSteps(root);
-  const selected = options.only?.length
+  const selected = options.only !== undefined
     ? available.filter((s) => options.only!.includes(s.name))
     : available;
   if (selected.length === 0) {
@@ -262,6 +266,9 @@ export function runGate(options: RunOptions = {}): GateReport {
     );
   }
 
+  const before = gitInfo(root, spawn);
+  let lockSha256: string | null = null;
+  try { lockSha256 = sha256(readFileSync(join(root, "pnpm-lock.yaml"))); } catch { /* Incomplete evidence remains local-only. */ }
   const startedAt = now();
   const outDir = join(root, "artifacts", "gate");
   const auditDir = join(outDir, "audits");
@@ -292,12 +299,14 @@ export function runGate(options: RunOptions = {}): GateReport {
 
     const logName = `${spec.name.replace(/[:/\\]/g, "_")}.log`;
     const logFile = join(logsDir, logName);
+    let logSha256: string | undefined;
     try {
       writeFileSync(
         logFile,
         `# ${spec.command.join(" ")}\n# cwd: ${cwd}\n# exit: ${exitCode}  (${durationMs} ms)\n\n${combined}\n`,
         "utf8",
       );
+      logSha256 = sha256(readFileSync(logFile));
     } catch {
       // El log es evidencia, no el veredicto: si no se puede escribir, el
       // resultado del step sigue siendo valido y se refleja en `logFile: null`.
@@ -314,7 +323,8 @@ export function runGate(options: RunOptions = {}): GateReport {
       durationMs,
       counters: extractCounters(combined, spec.counters),
       tail: tailLines(combined),
-      logFile,
+      logFile: logSha256 ? logFile : null,
+      logSha256,
     });
   }
 
@@ -328,12 +338,64 @@ export function runGate(options: RunOptions = {}): GateReport {
     finishedAt: finishedAt.toISOString(),
     durationMs: finishedAt.getTime() - startedAt.getTime(),
     git: gitInfo(root, spawn),
+    runManifest: { before, lockSha256, nodeVersion: process.version },
     auditReportDir: auditDir,
     ok: failed.length === 0,
     failed,
     advisory,
     steps,
   };
+}
+
+function sha256(value: string | Uint8Array): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+/** Validate full local execution evidence. Integrity is not external attestation. */
+export function validateExecutedGate(source: unknown, root = process.cwd()): GateReport {
+  const fail = (reason: string): never => { throw new Error(`Invalid gate evidence: ${reason}`); };
+  if (!source || typeof source !== "object") fail("report shape");
+  const report = source as GateReport;
+  const current = gitInfo(root, spawnSync);
+  const before = report.runManifest?.before;
+  if (report.gate !== "GATE_SINGLE_ENTRYPOINT_V1" || !Array.isArray(report.steps)) fail("report shape");
+  if (!current.head || !/^[a-f0-9]{40}$/.test(current.head) || current.dirty !== 0 ||
+      report.git?.head !== current.head || report.git.dirty !== 0 ||
+      before?.head !== current.head || before.dirty !== 0) fail("stale or dirty checkout");
+  if (report.runManifest?.nodeVersion !== process.version ||
+      report.runManifest.lockSha256 !== sha256(readFileSync(join(root, "pnpm-lock.yaml")))) fail("runtime or lockfile changed");
+  const specs = allSteps(root);
+  if (report.steps.length !== specs.length || new Set(report.steps.map(s => s?.name)).size !== specs.length) fail("full unique step set required");
+  const logRoot = realpathSync(join(root, "artifacts/gate/logs"));
+  if (logRoot !== join(realpathSync(root), "artifacts", "gate", "logs")) fail("symlink evidence directory");
+  for (const spec of specs) {
+    const step = report.steps.find(s => s.name === spec.name);
+    if (!step || step.kind !== spec.kind || step.blocking !== spec.blocking ||
+        step.command !== spec.command.join(" ") || step.cwd !== resolve(root, spec.cwd ?? "") ||
+        !Number.isSafeInteger(step.durationMs) || step.durationMs < 0 ||
+        (step.exitCode !== null && !Number.isInteger(step.exitCode)) || step.ok !== (step.exitCode === 0)) return fail(`step contract ${spec.name}`);
+    if (!step.logFile || !step.logSha256) return fail(`missing log ${spec.name}`);
+    const logPath = realpathSync(step.logFile);
+    const rel = relative(logRoot, logPath);
+    if (!rel || rel.startsWith("..") || isAbsolute(rel)) fail(`log outside evidence directory ${spec.name}`);
+    const log = readFileSync(logPath, "utf8");
+    if (sha256(log) !== step.logSha256) fail(`log digest ${spec.name}`);
+    const header = `# ${step.command}\n# cwd: ${step.cwd}\n# exit: ${step.exitCode}  (${step.durationMs} ms)\n\n`;
+    if (!log.startsWith(header)) fail(`log header ${spec.name}`);
+    const counters = extractCounters(log.slice(header.length), spec.counters);
+    if (JSON.stringify(counters) !== JSON.stringify(step.counters)) fail(`counters ${spec.name}`);
+    if (spec.kind === "test") {
+      const keys = ["tests", "pass", "fail", "skipped", "cancelled", "todo"];
+      if (keys.some(k => !Number.isSafeInteger(counters[k]) || counters[k] < 0) || counters.tests <= 0 ||
+          counters.tests !== counters.pass + counters.fail + counters.skipped + counters.cancelled + counters.todo ||
+          (step.ok && (counters.fail !== 0 || counters.cancelled !== 0))) fail("no complete executed test counters");
+    }
+  }
+  const failed = report.steps.filter(s => !s.ok && s.blocking).map(s => s.name);
+  const advisory = report.steps.filter(s => !s.ok && !s.blocking).map(s => s.name);
+  if (report.ok !== (failed.length === 0) || JSON.stringify(failed) !== JSON.stringify(report.failed) ||
+      JSON.stringify(advisory) !== JSON.stringify(report.advisory)) fail("verdict mismatch");
+  return report;
 }
 
 // ---------------------------------------------------------------------------
@@ -371,7 +433,7 @@ export function renderSummary(report: GateReport): string {
   lines.push("");
   const verdict = report.ok ? "GATE OK" : "GATE FALLA";
   const total = report.steps.length;
-  lines.push(`${verdict} · ${total - report.failed.length}/${total} steps en verde · ${seconds(report.durationMs)}`);
+  lines.push(`${verdict} · ${report.steps.filter(step => step.ok).length}/${total} steps en verde · ${seconds(report.durationMs)}`);
   if (report.advisory.length > 0) {
     lines.push(`advisory en rojo (se publica, no bloquea): ${report.advisory.join(", ")}`);
   }

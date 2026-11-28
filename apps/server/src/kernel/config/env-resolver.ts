@@ -18,7 +18,9 @@ import type {
   TenantConfigResolver,
 } from "./tenant-config.ts";
 
-type Provider = "google" | "anthropic" | "openai" | "openrouter";
+import { laneEnvironment } from "../../llm-config.ts";
+
+type Provider = "google" | "anthropic" | "openai" | "openrouter" | "meta";
 
 function boolEnv(name: string, fallback: boolean): boolean {
   const raw = process.env[name];
@@ -35,7 +37,7 @@ function numEnv(name: string, fallback: number): number {
 
 function providerEnv(name: string, fallback: Provider): Provider {
   const raw = process.env[name]?.trim().toLowerCase();
-  if (raw === "google" || raw === "anthropic" || raw === "openai" || raw === "openrouter") {
+  if (raw === "google" || raw === "anthropic" || raw === "openai" || raw === "openrouter" || raw === "meta") {
     return raw;
   }
   return fallback;
@@ -56,8 +58,9 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
     const now = Date.now();
     const cached = this.cache.get(tenantId);
     if (cached && cached.expiresAt > now) return cached.config;
-    const fastKey = process.env.FAST_LLM_API_KEY?.trim() ?? "";
-    const slowKey = process.env.SLOW_LLM_API_KEY?.trim() ?? "";
+    const fastProfile = laneEnvironment("fast"), slowProfile = laneEnvironment("slow");
+    const fastKey = fastProfile.apiKey ?? "";
+    const slowKey = slowProfile.apiKey ?? "";
     // FIX_2_VALIDATE_KEYS_V1 - warn si las API keys estan vacias.
     if (!fastKey) {
       console.warn(`[kernel/env-resolver] tenant ${tenantId}: FAST_LLM_API_KEY vacia. Chat usara chain global.`);
@@ -65,8 +68,13 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
     if (!slowKey) {
       console.warn(`[kernel/env-resolver] tenant ${tenantId}: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.`);
     }
-    const embeddingsKey =
-      process.env.EMBEDDINGS_LLM_API_KEY?.trim() || fastKey || slowKey || "";
+    const embeddingProvider = providerEnv("EMBEDDINGS_LLM_PROVIDER", "google");
+    const embeddingBase = process.env.EMBEDDINGS_LLM_BASE_URL?.trim() || "";
+    const compatibleKey = (profile: ReturnType<typeof laneEnvironment>, key: string) =>
+      (profile.provider || "google") === embeddingProvider && (profile.baseUrl || "") === embeddingBase ? key : "";
+    const embeddingsKey = process.env.EMBEDDINGS_LLM_API_KEY?.trim() ||
+      compatibleKey(fastProfile, fastKey) || compatibleKey(slowProfile, slowKey) ||
+      (embeddingProvider === "google" && !embeddingBase ? process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() : "") || "";
 
     const capabilities: TenantCapabilities = {
       fastChain: boolEnv("FAST_CHAIN", true),
@@ -84,16 +92,16 @@ export class EnvTenantConfigResolver implements TenantConfigResolver {
     const candidate = {
       tenantId,
       fast: {
-        provider: providerEnv("FAST_LLM_PROVIDER", "google"),
-        model: process.env.FAST_LLM_MODEL?.trim() ?? "gemini-3.6-flash",
+        provider: fastProfile.provider ?? "google",
+        model: fastProfile.model ?? "gemini-3.6-flash",
         apiKey: fastKey,
-        ...(process.env.FAST_LLM_BASE_URL?.trim() ? { baseUrl: process.env.FAST_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1
+        ...(fastProfile.baseUrl ? { baseUrl: fastProfile.baseUrl } : {}), // FIX_7_BASEURL_TENANT_V1
       },
       slow: {
-        provider: providerEnv("SLOW_LLM_PROVIDER", "google"),
-        model: process.env.SLOW_LLM_MODEL?.trim() ?? "gemini-3.6-flash",
+        provider: slowProfile.provider ?? "google",
+        model: slowProfile.model ?? "gemini-3.6-flash",
         apiKey: slowKey,
-        ...(process.env.SLOW_LLM_BASE_URL?.trim() ? { baseUrl: process.env.SLOW_LLM_BASE_URL.trim() } : {}), // FIX_7_BASEURL_TENANT_V1
+        ...(slowProfile.baseUrl ? { baseUrl: slowProfile.baseUrl } : {}), // FIX_7_BASEURL_TENANT_V1
       },
       embeddings: {
         provider: providerEnv("EMBEDDINGS_LLM_PROVIDER", "google"),

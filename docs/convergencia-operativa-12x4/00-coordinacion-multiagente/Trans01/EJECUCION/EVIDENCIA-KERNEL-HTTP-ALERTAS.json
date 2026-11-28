@@ -1,0 +1,26 @@
+{
+  "codeCommit": "fdacd31bdf2c77bb4abd0295520e7e6389e615cc",
+  "runState": "LOCAL_WORKTREE_THEN_COMMITTED",
+  "tests": {
+    "total": 16,
+    "pass": 16,
+    "fail": 0,
+    "skip": 0
+  },
+  "rootAndWorkerTypecheck": 0,
+  "command": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/trans01-kernel-route-scope.test.ts tests/tenant-http-e2e.test.ts tests/trans04-alert-sources.test.ts tests/trans04-observability-contract.test.ts",
+  "logs": [
+    {
+      "path": "/tmp/trans01-kernel-route-red.log",
+      "sha256": "8c348c1b56860bb606b22567b86b72f2bf1b9b2916300f5ce330aac2a9590837"
+    },
+    {
+      "path": "/tmp/trans01-kernel-route-integration.log",
+      "sha256": "3a7e01625ce4cb2c6545c1812648e9ca90a37ebf239182d4993a32210574efee"
+    },
+    {
+      "path": "/tmp/trans01-kernel-route-tsc.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    }
+  ]
+}

@@ -21,9 +21,14 @@ export class ChromaticOntologyRegistry {
     return id;
   }
   async runtime(ontologyId: string, version: string): Promise<Ontology> {
-    const row = await this.db.get<{ ontology: Ontology }>("system", "chromatic-ontology-v2", digest([ontologyId, version]));
-    if (!row || row.ontology.status !== "approved") throw Error("CHROMATIC_BLOCKED_DECISION");
-    const o = row.ontology;
+    const requestedId = digest([ontologyId, version]);
+    const row = await this.db.get<{ id: string; ontology: unknown }>("system", "chromatic-ontology-v2", requestedId);
+    if (!row) throw Error("CHROMATIC_BLOCKED_DECISION");
+    const parsed = chromaticOntologyV2Schema.safeParse(row.ontology);
+    if (!parsed.success) throw Error("ONTOLOGY_STORED_INVALID");
+    const o = parsed.data;
+    if (row.id !== requestedId || o.ontologyId !== ontologyId || o.version !== version) throw Error("ONTOLOGY_BINDING_MISMATCH");
+    if (o.status !== "approved") throw Error("CHROMATIC_BLOCKED_DECISION");
     if (!await this.authority.verify(o.approvalReceiptId!, digest({ ...o, status: "draft", approvalReceiptId: undefined }))) throw Error("ONTOLOGY_APPROVAL_REVOKED");
     return o;
   }

@@ -7,6 +7,7 @@
 // y "cognitive-thoughts". La interfaz no cambia.
 
 import { randomUUID } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { thoughtSchema, type Thought } from "./thought.ts";
 import {
   turnSchema,
@@ -59,11 +60,17 @@ export class InMemoryTurnStore implements TurnStore {
 
   async append(thought: Thought): Promise<Thought> {
     const parsed = thoughtSchema.parse(thought);
+    const existing = this.thoughts.get(parsed.id);
+    if (existing) {
+      if (!isDeepStrictEqual(existing, parsed)) throw new Error("Thought identity conflict");
+      return existing;
+    }
     const turn = this.turns.get(parsed.turnId);
     if (!turn) throw new Error(`Turn not found: ${parsed.turnId}`);
     if (turn.status !== "open") throw new Error(`Turn is not open: ${parsed.turnId}`);
     if (turn.tenantId !== parsed.tenantId)
       throw new Error(`Tenant mismatch: ${parsed.tenantId} != ${turn.tenantId}`);
+    if (turn.owner !== parsed.owner) throw new Error("Thought owner mismatch");
     this.thoughts.set(parsed.id, parsed);
     turn.thoughtIds.push(parsed.id);
     turn.quiescentAt = new Date().toISOString();

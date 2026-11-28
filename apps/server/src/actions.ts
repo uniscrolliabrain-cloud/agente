@@ -27,6 +27,8 @@ import {
   type InboundFollowUpMessage,
 } from "./engine/leads.ts";
 import type { GoogleMapsClient } from "../../../packages/integrations/src/google-maps.ts";
+import { workspaceExecutionEffectSchema, type WorkspaceExecutionEffect } from "../../../packages/domain/src/execution-context.ts";
+import { classifyAdapterFailure } from "./engine/execution/outcome.ts";
 
 // ACTIONS_STORE_CONTRACT_V1 - ActionService solo usa estas cinco operaciones.
 // Declararlas aparte (en vez de pedir el Store completo) permite inyectar el
@@ -34,6 +36,7 @@ import type { GoogleMapsClient } from "../../../packages/integrations/src/google
 // el contrato que importa aqui: la accion se guarda con la misma clave de
 // tenant que leen el worker y las rutas de aprobacion.
 export interface ActionsStore {
+  transaction<T>(fn: (tx: Pick<ActionsStore, "claim" | "put">) => Promise<T>): Promise<T>;
   get<T = Record<string, unknown>>(owner: string, kind: string, id: string): Promise<T | null>;
   put<T extends { id: string }>(owner: string, kind: string, value: T): Promise<T>;
   insertIfAbsent<T extends { id: string }>(
@@ -48,7 +51,16 @@ export interface ActionsStore {
     expected: Record<string, unknown>,
     patch: Record<string, unknown>,
   ): Promise<T | null>;
-  claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null>;
+  // APPROVAL_HASH_CLAIM_V1 - el quinto argumento ata la reclamacion a la
+  // revision revisada. Sin el, editar entre la lectura y el claim aprobaba
+  // un contenido que el usuario nunca vio.
+  claim<T>(
+    owner: string,
+    id: string,
+    status: string,
+    now: string,
+    expectedHash?: string,
+  ): Promise<T | null>;
   // LEAD_FOLLOW_UP_V1 - la guarda del seguimiento necesita releer el hilo cuando
   // el store lo permite; el resto de acciones no depende de esta lectura.
   list?<T = Record<string, unknown>>(owner: string, kind: string): Promise<T[]>;
@@ -56,6 +68,30 @@ export interface ActionsStore {
   // Opcional: con un store crudo (tests de servicio) la aprobacion sigue siendo
   // owner-scoped y las rutas que la necesitan responden 404, no adivinan.
   scanByPrefix?<T>(kind: string, tenantId: string, limit?: number): Promise<{ owner: string; value: T }[]>;
+  // ACTION_DISPATCH_RECOVERY_V1 - el barrido de intenciones de despacho usa el
+  // scan por estado que el store ya expone; es opcional para stores de test.
+  scanByStatus?<T>(kind: string, statuses: string[], limit?: number): Promise<{ owner: string; value: T }[]>;
+}
+
+/**
+ * ACTION_DISPATCH_INTENT_V1 - intencion durable escrita en la MISMA
+ * transaccion que el claim. Si el proceso cae despues del commit y antes de
+ * auditar, emitir o persistir el receipt, esta fila es la evidencia de que la
+ * decision existio y de que el efecto pudo haberse despachado.
+ */
+export interface ActionDispatchIntent {
+  id: string;
+  actionId: string;
+  tenantId?: string | null;
+  status: "pending" | "settled" | "reconciled" | "orphaned";
+  hash?: string;
+  decidedBy?: string;
+  decidedAt?: string;
+  settledAt?: string;
+  reconciledAt?: string;
+  actionStatus?: string;
+  workerId?: string;
+  leaseExpiresAt?: string;
 }
 
 /**
@@ -99,7 +135,10 @@ interface Options {
     input: ProposalInput,
     connectionId?: string,
     targetVersion?: string,
-  ) => Promise<string>;
+  ) => Promise<string | WorkspaceExecutionEffect>;
+  /** Production composition requires the typed producer receipt. */
+  requireTypedEffect?: boolean;
+  expectedEffectMode?: "sample" | "live";
   prepare?: (
     owner: string,
     input: ProposalInput,
@@ -121,6 +160,8 @@ interface Options {
 // informal. En la proxima fase se envuelve como primitiva formal con
 // runtimeId + capabilityId + risk, sin cambiar la firma.
 export class ActionService {
+  private readonly workerId = randomUUID();
+  private readonly dispatchLeaseMs = 300000;
   private readonly now: () => number;
   private readonly bus?: EventBus;
   private readonly policy?: PolicyEngine;
@@ -303,6 +344,11 @@ export class ActionService {
       taskId,
       title,
       kind: input.kind,
+      // APPROVAL_CAPABILITY_BINDING_V1 - la aprobacion declara que capability
+      // autoriza, con la misma convencion que el recibo formal
+      // (`action:<kind>`). El runner exige ese vinculo en vez de omitirlo si
+      // falta, asi que la propuesta lo escribe al nacer.
+      capabilityId: `action:${input.kind}`,
       data: input.data,
       account: connection?.account,
       connectionId: connection?.id,
@@ -325,6 +371,10 @@ export class ActionService {
         this.now() + (Number(process.env.ACTION_EXPIRES_MS ?? "1800000") || 1800000),
       ).toISOString(),
       principal: ctx?.actor ?? owner,
+      // APPROVAL_TENANT_BINDING_V1 - el tenant autorizado viaja con la
+      // propuesta. Sin scope explicito no se inventa uno: el binding del
+      // runner exige tenant en la ruta gobernada.
+      ...(currentTenantScope()?.tenantId ? { tenantId: currentTenantScope()!.tenantId } : {}),
       provider: "google" as const,
       revision,
       ...(connection?.generation ? { connectionGeneration: connection.generation } : {}),
@@ -397,27 +447,7 @@ export class ActionService {
     }
     if (decision === "approve" && !(await this.options.connected(owner)))
       throw new AppError("Google is disconnected. Reconnect before approving this action.", 409);
-    if (decision === "approve" && this.options.connection) {
-      const connection = await this.options.connection(owner);
-      if (
-        !connection ||
-        connection.id !== proposal.connectionId ||
-        connection.account !== proposal.account
-      )
-        throw new AppError(
-          "Google account or connection changed. Prepare a new action for the connected account.",
-          409,
-        );
-      // APPROVAL_GENERATION_CHECK_V1 - reconectar rota la generacion: la
-      // revision anterior no puede ejecutarse contra la credencial nueva.
-      const proposedGeneration =
-        (proposal as { connectionGeneration?: string }).connectionGeneration ?? null;
-      if ((connection.generation ?? null) !== proposedGeneration)
-        throw new AppError(
-          "Google connection rotated. Review a fresh proposal for the current connection.",
-          409,
-        );
-    }
+    if (decision === "approve") await this.assertConnectionCurrent(owner, proposal);
     // POLICY_GATE_V1 Ã¢â‚¬â€ si la accion esta vinculada a una tarea con rol activo,
     // consultamos PolicyEngine antes de aprobar. Deny es siempre libre.
     if (decision === "approve" && this.policy && proposal.taskId) {
@@ -445,7 +475,7 @@ export class ActionService {
     const approvalStatus: ApprovalStatus = decision === "deny" ? "rejected" : "approved";
     const approval: ApprovalRequest = {
       id: proposal.id,
-      tenantId: owner,
+      tenantId: currentTenantScope()?.tenantId ?? owner,
       owner,
       ...(proposal.taskId ? { taskId: proposal.taskId } : {}),
       capabilityId: `action:${proposal.kind}`,
@@ -458,29 +488,56 @@ export class ActionService {
       decidedAt: new Date(this.now()).toISOString(),
       ...(userId ? { decidedBy: userId } : {}),
     };
-    await this.db.put(owner, "approval-requests", approval);
-    const claimed = await this.db.claim<ActionProposal>(
-      owner,
-      id,
-      decision === "deny" ? "denied" : "executing",
-      new Date(this.now()).toISOString(),
-    );
+    const claimed = await this.db.transaction(async (tx) => {
+      const winner = await tx.claim<ActionProposal>(
+        owner,
+        id,
+        decision === "deny" ? "denied" : "executing",
+        new Date(this.now()).toISOString(),
+        hash,
+      );
+      // APPROVAL_HASH_CLAIM_V1 - el recibo formal se construye desde el
+      // ganador del claim, no desde la copia leida antes de la transaccion.
+      if (winner) {
+        await tx.put(owner, "approval-requests", {
+          ...approval,
+          payload: { data: winner.data, hash: winner.hash, decision },
+        });
+        // ACTION_DECIDE_ATOMIC_V1 - auditoria, actividad e intencion de
+        // despacho se escriben en la misma transaccion que el claim. Antes,
+        // una caida justo despues del commit dejaba la accion `executing` sin
+        // rastro de la decision.
+        await this.recordIn(tx, owner, winner, decision === "deny" ? "Declined; no changes made" : "Approved; execution started");
+        await this.auditIn(tx, owner, winner, decision, decision === "deny" ? "Declined by user" : "Approved by user");
+        if (decision === "approve") {
+          await tx.put(owner, "action-dispatch", {
+            id: winner.id,
+            actionId: winner.id,
+            tenantId: currentTenantScope()?.tenantId ?? null,
+            status: "pending",
+            hash: winner.hash,
+            decidedBy: userId ?? owner,
+            decidedAt: new Date(this.now()).toISOString(),
+            workerId: this.workerId,
+            leaseExpiresAt: new Date(Date.now() + this.dispatchLeaseMs).toISOString(),
+          } as ActionDispatchIntent & { id: string });
+        }
+      }
+      return winner;
+    });
     if (!claimed) {
       const current = await this.db.get<ActionProposal>(owner, "actions", id);
       if (!current) throw new AppError("Action not found", 404);
+      // APPROVAL_HASH_RACE_V1 - si la revision cambio entre la lectura y el
+      // claim, decidir ejecutaria algo distinto de lo revisado. Mismo hash
+      // conserva APPROVAL_DECIDE_IDEMPOTENT_V1 (devolver estado actual).
+      if (current.hash !== hash)
+        throw new AppError(
+          "This proposal changed. Open its latest review before deciding.",
+          409,
+        );
       return current;
     }
-    await this.record(
-      owner,
-      claimed,
-      decision === "deny" ? "Declined; no changes made" : "Approved; execution started",
-    );
-    await this.audit(
-      owner,
-      claimed,
-      decision,
-      decision === "deny" ? "Declined by user" : "Approved by user",
-    );
     if (decision === "deny") {
       await this.bus?.emit(owner, "action.denied", { kind: "action", id: claimed.id }, {
         actionId: claimed.id,
@@ -534,6 +591,36 @@ export class ActionService {
   }
 
   /**
+   * EFFECT_BOUNDARY_AUTHZ_V1 - vinculo revision/conexion vigente. Se usa al
+   * decidir y otra vez inmediatamente antes de `options.execute`.
+   */
+  private async assertConnectionCurrent(
+    owner: string,
+    proposal: ActionProposal,
+  ): Promise<void> {
+    if (!this.options.connection) return;
+    const connection = await this.options.connection(owner);
+    if (
+      !connection ||
+      connection.id !== proposal.connectionId ||
+      connection.account !== proposal.account
+    )
+      throw new AppError(
+        "Google account or connection changed. Prepare a new action for the connected account.",
+        409,
+      );
+    // APPROVAL_GENERATION_CHECK_V1 - reconectar rota la generacion: la
+    // revision anterior no puede ejecutarse contra la credencial nueva.
+    const proposedGeneration =
+      (proposal as { connectionGeneration?: string }).connectionGeneration ?? null;
+    if ((connection.generation ?? null) !== proposedGeneration)
+      throw new AppError(
+        "Google connection rotated. Review a fresh proposal for the current connection.",
+        409,
+      );
+  }
+
+  /**
    * APPROVAL_RUN_V1 (campana 14) - la unica puerta al proveedor. Persiste el
    * proveedor, el recibo confirmado o la ambiguedad, y nunca reintenta solo.
    */
@@ -544,71 +631,113 @@ export class ActionService {
   ): Promise<ActionProposal> {
     const executedAt = new Date(this.now()).toISOString();
     let finished: ActionProposal;
+    // ACTION_DISPATCH_STARTED_V1 - distingue un rechazo confirmado antes de
+    // invocar al proveedor de un error posterior al despacho.
+    let dispatched = false;
+    const renew = () => this.db.compareAndSwap<ActionDispatchIntent>(
+      owner, "action-dispatch", claimed.id,
+      { status: "pending", workerId: this.workerId },
+      { leaseExpiresAt: new Date(Date.now() + this.dispatchLeaseMs).toISOString() },
+    );
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
     try {
+      if (!await renew()) throw new AppError("Dispatch lease unavailable", 409);
+      heartbeat = setInterval(() => { void renew().catch(() => null); }, 30000);
+      heartbeat.unref?.();
+      // EFFECT_BOUNDARY_AUTHZ_V1 - la autorizacion de conexion se revalida
+      // justo antes del efecto: una rotacion entre claim y despacho no puede
+      // ejecutarse con la credencial nueva. No promete atomicidad remota.
+      await this.assertConnectionCurrent(owner, claimed);
       const input = proposalSchema.parse({ kind: claimed.kind, data: claimed.data });
+      const live = await this.db.transaction(async () => {
+        const current = await this.db.compareAndSwap<ActionProposal>(
+          owner, "actions", claimed.id, { status: "executing", hash: claimed.hash }, {},
+        );
+        return current && await renew();
+      });
+      if (!live) throw new AppError("Dispatch authority expired", 409);
+      dispatched = true;
       const result = await this.options.execute(
         owner,
         input,
         claimed.connectionId,
         claimed.targetVersion,
       );
+      const parsedEffect = workspaceExecutionEffectSchema.safeParse(result);
+      if (!parsedEffect.success && (this.options.requireTypedEffect || typeof result !== "string"))
+        throw Object.assign(new AppError("Adapter returned no valid effect receipt; reconcile before retrying.", 502), { outcome: "unknown" });
+      const effect = parsedEffect.success ? parsedEffect.data : undefined;
+      if (effect && this.options.expectedEffectMode && effect.mode !== this.options.expectedEffectMode)
+        throw Object.assign(new AppError("Effect receipt mode mismatch; reconcile before retrying.", 502), { outcome: "unknown" });
+      if (effect?.mode === "live") {
+        const evidence = effect.evidence;
+        const family = input.kind === "email.send" ? "gmail" : input.kind.startsWith("calendar.") ? "calendar" : "drive";
+        const operation = input.kind.split(".")[1];
+        if (evidence.family !== family || (evidence.family !== "gmail" && evidence.operation !== operation) ||
+            (evidence.family === "drive" && "fileId" in input.data && evidence.fileId !== input.data.fileId) ||
+            (evidence.family === "calendar" && "eventId" in input.data && evidence.eventId !== input.data.eventId))
+          throw Object.assign(new AppError("Effect receipt does not match the reviewed operation; reconcile before retrying.", 502), { outcome: "unknown" });
+      }
+      const summary = effect?.summary ?? (typeof result === "string" ? result : "Unknown effect");
       finished = {
         ...claimed,
         status: "succeeded",
-        result,
+        result: summary,
+        ...(effect ? { effectReceipt: effect } : {}),
         provider: "google",
-        providerResult: result,
+        providerResult: summary,
         settledAt: new Date(this.now()).toISOString(),
         executedAt,
         ...(decidedBy ? { approvedBy: decidedBy } : {}),
       } as unknown as ActionProposal;
     } catch (error) {
-      const unknown =
-        error instanceof Error &&
-        (("outcomeUnknown" in error && error.outcomeUnknown === true) ||
-          ("code" in error && error.code === "outcome_unknown"));
-      // ERROR_KIND_V1 - distingue negocio de infra.
+      // ACTION_OUTCOME_EVIDENCE_V1 - solo un rechazo confirmado ANTES del
+      // despacho permite reintentar. Un error generico despues de invocar al
+      // proveedor no prueba ausencia de efecto: se conserva como ambiguo y
+      // exige conciliacion, nunca otro envio automatico.
       const message = error instanceof Error ? error.message : "Execution failed";
       const status = (error as { status?: number })?.status;
-      const errorKind = unknown
+      const failure = classifyAdapterFailure(error);
+      const rejectedBeforeDispatch =
+        !dispatched && typeof status === "number" && status >= 400 && status < 500;
+      const ambiguous = dispatched && !failure.retrySafe;
+      const errorKind = ambiguous
         ? "outcome_unknown"
-        : typeof status === "number" && status >= 400 && status < 500
+        : rejectedBeforeDispatch || failure.retrySafe
           ? "business"
           : "infra";
       finished = {
         ...claimed,
-        status: unknown ? "outcome_unknown" : "failed",
+        status: ambiguous ? "outcome_unknown" : "failed",
         error: message,
         provider: "google",
         executedAt,
         ...(decidedBy ? { approvedBy: decidedBy } : {}),
         // APPROVAL_AMBIGUOUS_V1 - un resultado incierto exige conciliacion
         // humana: no hay recibo y no se reenvia automaticamente.
-        ...(unknown
+        ...(ambiguous
           ? { reconciliationRequired: true, errorKind: "outcome_unknown" as const }
-          : errorKind !== "outcome_unknown"
-            ? { errorKind }
-            : {}),
+          : { errorKind }),
       } as unknown as ActionProposal;
     }
-    await this.db.put(owner, "actions", finished);
+    clearInterval(heartbeat);
+    await this.db.transaction(async () => {
+      await this.db.put(owner, "actions", finished);
+      await this.settleDispatch(owner, finished.id, finished.status);
+    });
     if (finished.status === "succeeded") await this.markFollowUpSent(owner, finished);
-    // APPROVAL_SYNC_V2 - reflejar el estado final en approval-requests.
-    const finalStatus =
-      finished.status === "succeeded"
-        ? "approved"
-        : finished.status === "failed" || finished.status === "outcome_unknown"
-          ? "rejected"
-          : "pending";
-    void this.db
+    // Preserve the human decision independently of the provider outcome.
+    const approval = await this.db.get<ApprovalRequest>(owner, "approval-requests", finished.id);
+    await this.db
       .put(owner, "approval-requests", {
-        ...((await this.db.get<Record<string, unknown>>(owner, "approval-requests", finished.id)) ?? {}),
+        ...approval,
         id: finished.id,
-        tenantId: owner,
+        tenantId: currentTenantScope()?.tenantId ?? approval?.tenantId ?? owner,
         owner,
-        status: finalStatus,
-        decidedAt: new Date().toISOString(),
-        decidedBy: owner,
+        status: approval?.status ?? "approved",
+        executionStatus: finished.status,
+        decidedAt: approval?.decidedAt ?? new Date().toISOString(),
+        decidedBy: approval?.decidedBy ?? owner,
         result: finished.result ?? finished.error ?? null,
       })
       .catch(() => {});
@@ -685,13 +814,20 @@ export class ActionService {
         return { executed: false, reason: "connection_changed" };
       }
     }
-    const claimed = await this.db.compareAndSwap<ActionProposal>(
-      owner,
-      "actions",
-      actionId,
-      { status: "scheduled" },
-      { status: "executing", executeAt: null },
-    );
+    const claimed = await this.db.transaction(async (tx) => {
+      const winner = await this.db.compareAndSwap<ActionProposal>(
+        owner, "actions", actionId,
+        { status: "scheduled", hash: proposal.hash },
+        { status: "executing", executeAt: null },
+      );
+      if (winner) await tx.put(owner, "action-dispatch", {
+        id: actionId, actionId, status: "pending", hash: winner.hash,
+        decidedAt: new Date(this.now()).toISOString(),
+        workerId: this.workerId,
+        leaseExpiresAt: new Date(Date.now() + this.dispatchLeaseMs).toISOString(),
+      } satisfies ActionDispatchIntent);
+      return winner;
+    });
     if (!claimed) return { executed: false, reason: "already_dispatched" };
     const finished = await this.run(owner, claimed);
     return finished.status === "succeeded"
@@ -826,8 +962,93 @@ export class ActionService {
     }
   }
 
+  /**
+   * ACTION_DISPATCH_RECONCILE_V1 - barrido de recuperacion postcommit.
+   *
+   * Una intencion `pending` que supera la ventana de despacho significa que el
+   * proceso pudo caer entre el commit de la decision y el receipt. Si la accion
+   * sigue `executing` no hay evidencia del resultado: se marca
+   * `outcome_unknown` para conciliacion humana y NUNCA se reenvia el efecto. Si
+   * la accion ya es terminal, la intencion se cierra como `settled`.
+   */
+  async reconcileDispatchIntents(limit = 50): Promise<number> {
+    if (typeof this.db.scanByStatus !== "function") return 0;
+    const rows = await this.db.scanByStatus<ActionDispatchIntent>("action-dispatch", ["pending"], limit);
+    const cutoff =
+      Date.now() - (Number(process.env.ACTION_DISPATCH_STUCK_MS ?? "300000") || 300000);
+    let reconciled = 0;
+    for (const { owner, value } of rows) {
+      await this.db.transaction(async () => {
+        if (Date.parse(value.leaseExpiresAt ?? "") > Date.now()) return;
+        const decidedAt = Date.parse(value.decidedAt ?? "");
+        if (!Number.isFinite(decidedAt) || decidedAt > cutoff) return;
+        const action = await this.db.get<ActionProposal>(owner, "actions", value.actionId);
+        if (!action) {
+          await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
+            status: "orphaned",
+            reconciledAt: new Date(this.now()).toISOString(),
+          });
+          return;
+        }
+        if (action.status !== "executing") {
+          await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
+            status: "settled",
+            actionStatus: action.status,
+            settledAt: new Date(this.now()).toISOString(),
+          });
+          return;
+        }
+        const moved = await this.db.compareAndSwap<ActionProposal>(
+          owner,
+          "actions",
+          action.id,
+          { status: "executing" },
+          {
+            status: "outcome_unknown",
+            error:
+              "Decision committed but no receipt was persisted. Check the provider before retrying.",
+            errorKind: "outcome_unknown",
+            reconciliationRequired: true,
+          },
+        );
+        if (!moved) return;
+        await this.db.compareAndSwap(owner, "action-dispatch", value.id, { status: "pending" }, {
+          status: "reconciled",
+          actionStatus: "outcome_unknown",
+          reconciledAt: new Date(this.now()).toISOString(),
+        });
+        if (moved) reconciled += 1;
+      });
+    }
+    return reconciled;
+  }
+
+  /** Cierra la intencion de despacho cuando la accion ya tiene receipt. */
+  private async settleDispatch(owner: string, actionId: string, status: string): Promise<void> {
+    const patch = {
+      status: "settled",
+      actionStatus: status,
+      settledAt: new Date(this.now()).toISOString(),
+    };
+    const settled = await this.db.compareAndSwap(owner, "action-dispatch", actionId, { status: "pending" }, patch);
+    if (!settled) {
+      await this.db.compareAndSwap(owner, "action-dispatch", actionId, { status: "reconciled" }, patch);
+    }
+  }
+
   private async audit(owner: string, action: ActionProposal, kind: string, detail: string, actorId?: string) {
-    await this.db.put(owner, "action-audit", {
+    await this.auditIn(this.db, owner, action, kind, detail, actorId);
+  }
+
+  private async auditIn(
+    store: Pick<ActionsStore, "put">,
+    owner: string,
+    action: ActionProposal,
+    kind: string,
+    detail: string,
+    actorId?: string,
+  ) {
+    await store.put(owner, "action-audit", {
       id: `audit-${action.id}-${Date.now()}`,
       actionId: action.id,
       taskId: action.taskId ?? null,
@@ -842,7 +1063,16 @@ export class ActionService {
   }
 
   private async record(owner: string, action: ActionProposal, detail: string) {
-    await this.db.put(owner, "activity", {
+    await this.recordIn(this.db, owner, action, detail);
+  }
+
+  private async recordIn(
+    store: Pick<ActionsStore, "put">,
+    owner: string,
+    action: ActionProposal,
+    detail: string,
+  ) {
+    await store.put(owner, "activity", {
       id: randomUUID(),
       actionId: action.id,
       title: action.title,

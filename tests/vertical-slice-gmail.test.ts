@@ -68,7 +68,10 @@ async function harness(t: TestContext) {
     encryptionKey: randomBytes(32).toString("base64"),
   });
   const tdb = new TenantScopedStore(db, async () => currentTenantScope()?.tenantId ?? "default");
-  const auth = new GoogleAuth(tdb, config, db);
+  const auth = new GoogleAuth(tdb, config, db, {
+    membership: async (actorId, tenantId) =>
+      [A, B].some(scope => scope.actorId === actorId && scope.tenantId === tenantId),
+  });
   const rag = new RagService(tdb);
   const files = new Files(tdb, config, {
     sign: (_owner: string, path: string) => path,
@@ -79,7 +82,9 @@ async function harness(t: TestContext) {
     connection: (owner) => workspace.connection(owner),
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     execute: (owner, input, connectionId, targetVersion) =>
-      workspace.execute(owner, input, connectionId, targetVersion),
+      workspace.executeEffect(owner, input, connectionId, targetVersion),
+    requireTypedEffect: true,
+    expectedEffectMode: "live",
   });
   return { db, config, tdb, auth, workspace, actions };
 }

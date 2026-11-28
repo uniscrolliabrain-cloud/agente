@@ -13,3 +13,10 @@ export { SchemaRegistry, type EventSchema } from "./schema-registry.ts";
 export { payloadSchemas } from "./schemas.ts";
 export { StoreSink, StoreQuery } from "./sinks/store.ts";
 export { EventBus, type EmitOptions, type EmitResult } from "./bus.ts";
+// SERVICE_PRINCIPAL_V1 - identidad de servicio autenticada por contexto.
+export {
+  currentServicePrincipal,
+  registerServicePrincipal,
+  runAsServicePrincipal,
+  type ServicePrincipal,
+} from "./service-principal.ts";

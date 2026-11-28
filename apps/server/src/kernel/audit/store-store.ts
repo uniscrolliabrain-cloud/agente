@@ -86,7 +86,7 @@ export class StoreAuditStore implements AuditStore {
    */
   // KERNEL_AUDIT_VERIFY_BEFORE_APPEND_WIRE_V1
   async verifyAndAppend(input: AuditAppendInput): Promise<AuditEntry> {
-    const valid = await this.verify(input.tenantId).catch(() => true);
+    const valid = await this.verify(input.tenantId);
     if (!valid) {
       throw new Error(
         `Audit chain corrupto en tenant ${input.tenantId}; append bloqueado para evitar más daño`,
@@ -96,6 +96,10 @@ export class StoreAuditStore implements AuditStore {
   }
 
   async append(input: AuditAppendInput): Promise<AuditEntry> {
+    return this.db.transaction(() => this.appendAtomic(input));
+  }
+
+  private async appendAtomic(input: AuditAppendInput): Promise<AuditEntry> {
     // AUDIT_APPEND_KERNEL_INDEX_V1
     // AUDIT_STORE_TENANT_V1
     if (process.env.MULTI_TENANT_SHARED === "true") {
@@ -140,8 +144,7 @@ export class StoreAuditStore implements AuditStore {
       // KERNEL_AUDIT_ANCHOR_ID_V1
       const anchorId = "__audit_anchor__";
       const anchor = await this.db
-        .get<{ hash: string }>(input.tenantId, KIND, anchorId)
-        .catch(() => null);
+        .get<{ hash: string }>(input.tenantId, KIND, anchorId);
       const anchorHash = anchor?.hash;
       if (anchorHash !== previousHash) {
         lastError = new Error(`Audit chain advanced during append (attempt ${attempt + 1})`);
@@ -183,8 +186,7 @@ export class StoreAuditStore implements AuditStore {
   // KERNEL_AUDIT_APPEND_LASTHASH_ANCHOR_V1
   async lastHash(tenantId: string): Promise<string | undefined> {
     const anchor = await this.db
-      .get<{ hash: string }>(tenantId, KIND, "__audit_anchor__")
-      .catch(() => null);
+      .get<{ hash: string }>(tenantId, KIND, "__audit_anchor__");
     if (anchor?.hash) return anchor.hash;
     const list = await this.db.list<AuditEntry>(tenantId, KIND, { limit: 1 });
     return list[0]?.hash;
@@ -219,47 +221,42 @@ export class StoreAuditStore implements AuditStore {
   // garantizar que la cadena entera este intacta.
   // KERNEL_AUDIT_VERIFY_INCOMPLETE_V1
   async verify(tenantId: string): Promise<boolean> {
-    // FIX_AUDIT_VERIFY_PAGINATED_V1 - antes topaba a maxList() y devolvia
-    // false al pasar 10.000 entradas aunque la cadena estuviera intacta.
-    // Ahora pagina por keyset (updated_at, id) en bloques de 1000 y verifica
-    // la cadena entera.
-    // KERNEL_AUDIT_VERIFY_CURSOR_V1
-    const PAGE = 1000;
-    let cursorUpdatedAt: string | undefined;
-    let cursorId: string | undefined;
-    let previous: string | undefined;
+    const entries = new Map<string, AuditEntry>();
+    let cursor = "";
     for (;;) {
-      const page = await this.db.listPaged<AuditEntry>(tenantId, KIND, {
-        limit: PAGE,
-        ...(cursorUpdatedAt && cursorId ? { cursorUpdatedAt, cursorId } : {}),
-      });
-      if (page.length === 0) break;
-      // listPaged ordena DESC. La cadena se construyo ASC, asi que la
-      // recorremos al reves dentro de cada pagina.
-      const entries = page
-        .map((row) => row.data)
-        .filter((entry) => entry.id !== "__audit_anchor__")
-        .reverse();
-      for (const entry of entries) {
-        if (previous !== undefined && entry.previousHash !== previous) return false;
-        const expected = computeHash({
-          id: entry.id,
-          tenantId: entry.tenantId,
-          owner: entry.owner,
-          action: entry.action,
-          actor: entry.actor,
-          payload: entry.payload,
-          timestamp: entry.timestamp,
-          ...(entry.previousHash !== undefined ? { previousHash: entry.previousHash } : {}),
-        });
-        if (expected !== entry.hash) return false;
-        previous = entry.hash;
+      // Immutable IDs provide a lossless cursor even when timestamps tie.
+      const page = await this.db.rawQuery<{ data: AuditEntry }>(
+        "SELECT data FROM records WHERE owner=$1 AND kind=$2 AND id>$3 AND id<>'__audit_anchor__' ORDER BY id LIMIT 1000",
+        [tenantId, KIND, cursor],
+      );
+      for (const row of page) {
+        const parsed = auditEntrySchema.safeParse(row.data);
+        if (!parsed.success || parsed.data.tenantId !== tenantId) return false;
+        const entry = parsed.data;
+        if (computeHash(entry) !== entry.hash || entries.has(entry.hash)) return false;
+        entries.set(entry.hash, entry);
       }
-      const last = page[page.length - 1];
-      cursorUpdatedAt = last.updatedAt;
-      cursorId = last.data.id;
-      if (page.length < PAGE) break;
+      if (page.length < 1000) break;
+      cursor = page[page.length - 1].data.id;
     }
-    return true;
+    const anchor = await this.db.get<{ hash: string }>(tenantId, KIND, "__audit_anchor__");
+    if (!entries.size) return !anchor;
+    let head = anchor?.hash;
+    if (!anchor) {
+      // Historical chains had no anchor. Their unique tail is authoritative.
+      const parents = new Set([...entries.values()].map((entry) => entry.previousHash));
+      const tails = [...entries.keys()].filter((hash) => !parents.has(hash));
+      if (tails.length !== 1) return false;
+      head = tails[0];
+    }
+    let visited = 0;
+    while (head !== undefined) {
+      const entry = entries.get(head);
+      if (!entry) return false;
+      entries.delete(head);
+      visited += 1;
+      head = entry.previousHash;
+    }
+    return visited > 0 && entries.size === 0;
   }
 }

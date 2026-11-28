@@ -259,20 +259,22 @@ export function detectFollowUpReply(
   messages: InboundFollowUpMessage[],
 ): InboundFollowUpMessage | undefined {
   const baseline = followUp.sentAt ?? followUp.createdAt;
-  return messages
+  const replies = messages
     .filter(
       (message) =>
         message.threadId === followUp.threadId &&
         normEmail(message.from) === normEmail(followUp.to) &&
         Date.parse(message.date) > Date.parse(baseline),
-    )
-    .sort((a, b) => b.date.localeCompare(a.date))[0];
+    );
+  const oppositions = replies.filter((message) => looksLikeOptOut(`${message.subject ?? ""} ${message.body ?? ""}`));
+  return (oppositions.length ? oppositions : replies)
+    .sort((a, b) => Date.parse(b.date) - Date.parse(a.date) || a.id.localeCompare(b.id))[0];
 }
 
 export function looksLikeOptOut(text: string): boolean {
-  return /\b(baja|dar de baja|date de baja|unsubscribe|dejar de escribir|no me escrib|remove me)\b/i.test(
-    text,
-  );
+  const normalized = text.toLowerCase().replace(/\bno\s+(?:quiero|deseo)\s+darme\s+de\s+baja\b/gu, "");
+  return normalized.trim() === "baja" ||
+    /\b(dar(?:me|nos)? de baja|date de baja|unsubscribe|dejar de escribir|no (?:me|nos) escrib\w*|remove me)\b/iu.test(normalized);
 }
 
 export class LeadsService {

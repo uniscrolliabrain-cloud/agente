@@ -34,6 +34,8 @@ export interface ConnectionSpec {
   feature: string;
   /** Nombres aceptados, en orden de preferencia. El primero es el documentado. */
   names: string[];
+  /** Nombres secundarios que la sonda lee y que NO son alternativas de `names`. */
+  companions?: string[];
   need: Requirement;
   note: string;
   probe?: Probe;
@@ -105,7 +107,7 @@ const database: Probe = async ({ read }) => {
 const supabaseJwks: Probe = async ({ read }) => {
   const base = read("SUPABASE_URL")!.replace(/\/+$/, "");
   const { status, body } = await httpJson(`${base}/auth/v1/.well-known/jwks.json`, {
-    headers: { apikey: read("SUPABASE_SECRET_KEY", "SUPABASE_ANON_KEY") ?? "" },
+    headers: { apikey: read("SUPABASE_SECRET_KEY", "SUPABASE_SECRET", "SUPABASE_ANON_KEY") ?? "" },
   });
   if (status !== 200) return { ok: false, detail: `jwks responde ${status}` };
   const keys = (body as { keys?: unknown[] } | null)?.keys;
@@ -257,17 +259,14 @@ const gemini: Probe = async ({ read }) => {
   return { ok: true, detail: `${models.length} modelos disponibles` };
 };
 
-const openrouter: Probe = async ({ read }) => {
-  const { status, body } = await httpJson("https://openrouter.ai/api/v1/key", {
-    headers: { Authorization: `Bearer ${read("OPENROUTER_API_KEY")}` },
+const openrouterKey = (...names: string[]): Probe => async ({ read }) => {
+  const { status } = await httpJson("https://openrouter.ai/api/v1/key", {
+    headers: { Authorization: `Bearer ${read(...names)}` },
   });
-  if (status !== 200) return { ok: false, detail: `api responde ${status}: ${text(body, 90)}` };
-  const row = (body as { data?: { limit?: number | null; usage?: number } } | null)?.data;
-  return {
-    ok: true,
-    detail: `uso ${row?.usage ?? 0}${row?.limit ? ` / limite ${row.limit}` : " (sin limite)"}`,
-  };
+  return { ok: status === 200, detail: status === 200 ? "credencial aceptada; no acredita inferencia" : `OpenRouter responde ${status}` };
 };
+const openrouter = openrouterKey("JEV_OPENROUTER_API_KEY", "OPENROUTER_API_KEY");
+const openrouterSlow = openrouterKey("OPEN_ROUTER_API_KEY");
 
 const openai: Probe = async ({ read }) => {
   const base = (read("OPENAI_BASE_URL") ?? "https://api.openai.com/v1").replace(/\/+$/, "");
@@ -320,18 +319,18 @@ const vercel: Probe = async ({ read }) => {
 
 const grafana: Probe = async ({ read }) => {
   const base = read("GRAFANA_URL")!.replace(/\/+$/, "");
-  const { status, body } = await httpJson(`${base}/api/health`);
-  if (status !== 200) return { ok: false, detail: `health responde ${status}` };
-  return { ok: true, detail: `version ${(body as { version?: string } | null)?.version ?? "?"}` };
+  const token = read("GRAFANA_SERVICE_ACCOUNT_TOKEN");
+  if (!token) return { ok: false, detail: "falta GRAFANA_SERVICE_ACCOUNT_TOKEN; health publico no valida autenticacion" };
+  const { status } = await httpJson(`${base}/api/org`, { headers: { Authorization: `Bearer ${token}` } });
+  return { ok: status === 200, detail: status === 200 ? "API Grafana autenticada" : `API Grafana responde ${status}` };
 };
 
 const sentryShape: Probe = async ({ read }) => {
-  const dsn = read("SENTRY_DSN")!;
-  const parsed = new URL(dsn);
-  return {
-    ok: Boolean(parsed.host && parsed.username && parsed.pathname.length > 1),
-    detail: `dsn para ${parsed.host}`,
-  };
+  try {
+    const parsed = new URL(read("SENTRY_DSN")!);
+    return { ok: Boolean(parsed.protocol === "https:" && parsed.host && parsed.username && parsed.pathname.length > 1),
+      detail: "Solo valida formato DSN; no acredita SDK instalado ni ingestion" };
+  } catch { return { ok: false, detail: "Formato DSN invalido; valor omitido" }; }
 };
 
 // --- la tabla -------------------------------------------------------------
@@ -402,6 +401,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Supabase (JWKS del JWT)",
     feature: "auth",
     names: ["SUPABASE_URL"],
+    companions: ["SUPABASE_SECRET_KEY", "SUPABASE_ANON_KEY"],
     need: "required-live",
     note: "Con AUTH_PROVIDER=supabase la firma se verifica contra esta JWKS.",
     probe: supabaseJwks,
@@ -435,18 +435,29 @@ export const CONNECTIONS: ConnectionSpec[] = [
   },
   {
     id: "openrouter",
-    label: "OpenRouter (fallback)",
+    label: "OpenRouter JEV (Decisions)",
     feature: "llm",
-    names: ["OPENROUTER_API_KEY"],
+    names: ["JEV_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"],
     need: "optional",
-    note: "Fallback OpenAI-compatible y modelos gratuitos.",
+    note: "Cuenta nueva de JEV; verificar clave no acredita inferencia ni egress autorizado.",
     probe: openrouter,
+  },
+  {
+    id: "openrouter-slow", label: "OpenRouter Slow (DeepSeek)", feature: "llm",
+    names: ["OPEN_ROUTER_API_KEY"], need: "optional",
+    note: "Cuenta antigua separada para Slow; no es alias de la clave JEV.", probe: openrouterSlow,
+  },
+  {
+    id: "meta-muse", label: "Meta Muse directo (Fast)", feature: "llm",
+    names: ["MUSE_API_KEY"], need: "optional",
+    note: "Meta directo api.meta.ai/v1; muse-spark-1.3-contributor. Presencia no acredita inferencia real.",
   },
   {
     id: "openai",
     label: "OpenAI o gateway compatible",
     feature: "llm",
     names: ["OPENAI_API_KEY"],
+    companions: ["OPENAI_BASE_URL"],
     need: "optional",
     note: "Alternativa nativa al fallback de OpenRouter.",
     probe: openai,
@@ -501,6 +512,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Google OAuth (Gmail/Calendar/Drive)",
     feature: "google",
     names: ["GOOGLE_CLIENT_ID"],
+    companions: ["GOOGLE_CLIENT_SECRET"],
     need: "optional",
     // GOOGLE_TWO_REDIRECTS_V1 - hay dos vueltas distintas y las dos tienen que
     // estar en el cliente OAuth; registrar solo una deja el otro flujo roto.
@@ -531,6 +543,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "WhatsApp Cloud API token",
     feature: "whatsapp",
     names: ["WHATSAPP_TOKEN", "WHATSAPP_ACCESS_TOKEN"],
+    companions: ["WHATSAPP_GRAPH_VERSION"],
     need: "optional",
     note: "Doppler lo publica como WHATSAPP_ACCESS_TOKEN; el repo lo lee como WHATSAPP_TOKEN.",
     probe: whatsapp,
@@ -649,6 +662,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Grafana",
     feature: "observability",
     names: ["GRAFANA_URL"],
+    companions: ["GRAFANA_SERVICE_ACCOUNT_TOKEN"],
     need: "optional",
     note: "Dashboards de metricas.",
     probe: grafana,
@@ -667,6 +681,7 @@ export const CONNECTIONS: ConnectionSpec[] = [
     label: "Fly.io",
     feature: "deploy",
     names: ["FLY_API_TOKEN"],
+    companions: ["FLY_APP_NAME"],
     need: "optional",
     note: "Host del API y del worker.",
     probe: fly,
@@ -688,6 +703,68 @@ export const CONNECTIONS: ConnectionSpec[] = [
     need: "optional",
     note: "Login de desarrolladores y automatizaciones.",
   },
+
+  // --- deltas de Trans00 (readiness) ---------------------------------------
+  // Añadidas por el trasplante selectivo de infra/trans00-provider-readiness.
+  // No se duplican las que integration ya tenia con otro id: openrouter-slow
+  // sigue siendo la spec de OPEN_ROUTER_API_KEY y meta-muse la de MUSE_API_KEY.
+  {
+    id: "migrations-db",
+    label: "Postgres de migraciones (rol DDL)",
+    feature: "core",
+    names: ["DATABASE_MIGRATION_URL"],
+    need: "optional",
+    note: "Rol distinto del runtime y DSN distinto de DATABASE_URL. Ningun runner lo lee todavia: es propuesta, no conexion.",
+  },
+  {
+    id: "whatsapp-bindings",
+    label: "Binding de canales WhatsApp",
+    feature: "whatsapp",
+    names: ["WHATSAPP_WEBHOOK_BINDINGS"],
+    need: "optional",
+    note: "Lo lee apps/server/src/engine/whatsapp-inbound.ts; sin el, el inbound no sabe a que tenant/owner/SOP enrutar.",
+  },
+  {
+    id: "vapi-phone",
+    label: "Vapi numero emisor",
+    feature: "voice",
+    names: ["VAPI_PHONE_NUMBER_ID"],
+    need: "optional",
+    note: "Lo lee apps/server/src/voice-routes.ts; sin el, Vapi usa el numero del asistente.",
+  },
+  {
+    id: "vapi-webhook",
+    label: "Vapi secreto del webhook de voz",
+    feature: "voice",
+    names: ["VAPI_WEBHOOK_SECRET"],
+    need: "optional",
+    note: "El contrato lo exige y secrets-check lo rastrea; no hay consumidor en apps/server todavia.",
+  },
+  {
+    id: "metrics-token",
+    label: "Token de scrapeo de metricas",
+    feature: "observability",
+    names: ["METRICS_TOKEN"],
+    need: "optional",
+    note: "apps/server/src/metrics-exporter.ts lo exige para servir /metrics fuera de admin; sin el, la exposicion cae a solo-admin.",
+  },
+  {
+    id: "worker-token",
+    label: "Token del browser worker",
+    feature: "worker",
+    names: ["WORKER_TOKEN"],
+    need: "optional",
+    note: ">=32 caracteres; lo leen el worker y sus rutas. Es generable, no aprovisionable.",
+  },
+];
+
+/**
+ * Todos los nombres que el registro conoce: alternativas y companeras.
+ * Es la fuente unica del contrato de campana (scripts/trans-provider-readiness.mjs);
+ * si un nombre nuevo no esta aqui ni en CAMPAIGN_ONLY, el contrato falla.
+ */
+export const CONNECTION_NAMES: string[] = [
+  ...new Set(CONNECTIONS.flatMap((spec) => [...spec.names, ...(spec.companions ?? [])])),
 ];
 
 export interface Resolution {

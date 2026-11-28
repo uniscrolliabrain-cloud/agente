@@ -21,7 +21,24 @@ export const executionContextSchema = z.object({
   // Si una ruta no tiene actor (health, system), usar owner como actor o systemContext.
   actorId: z.string().min(1).max(200),
   sessionId: z.string().max(200).optional(),
+  // APPROVAL_ID_CONTEXT_V1 - identificador explicito de la aprobacion que
+  // autoriza este paso. `sessionId` se conserva como fallback historico, pero
+  // una sesion no es una aprobacion y no debe confundirse con ella.
+  approvalId: z.string().max(200).optional(),
 });
 
 export type ExecutionRole = z.infer<typeof executionRoleSchema>;
 export type ExecutionContext = z.infer<typeof executionContextSchema>;
+// Producer contract delivered by Trans03; acceptance never means delivery.
+const receiptId = z.string().trim().min(1).max(2000);
+export const workspaceExecutionEffectSchema = z.discriminatedUnion("mode", [
+  z.strictObject({ mode: z.literal("sample"), state: z.literal("simulated"), summary: z.string().min(1).max(16000) }),
+  z.strictObject({ mode: z.literal("live"), state: z.literal("accepted"), summary: z.string().min(1).max(16000),
+    evidence: z.discriminatedUnion("family", [
+      z.strictObject({ family: z.literal("gmail"), messageId: receiptId, threadId: receiptId.optional() }),
+      z.strictObject({ family: z.literal("calendar"), calendarId: receiptId, eventId: receiptId, operation: z.enum(["create", "update", "delete"]) }),
+      z.strictObject({ family: z.literal("drive"), fileId: receiptId, operation: z.enum(["rename", "trash"]) }),
+    ]),
+  }),
+]);
+export type WorkspaceExecutionEffect = z.infer<typeof workspaceExecutionEffectSchema>;

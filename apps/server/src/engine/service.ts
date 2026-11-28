@@ -333,6 +333,12 @@ export class AgentService {
     // SERVICE_TOOL_EXECUTORS_V1 - executors reales.
     const toolExecutors = buildToolExecutors(this);
     // SERVICE_CAPABILITY_RUNNER_WIRE_V1 - inyecta governance + getAgentRole en CapabilityRunner.
+    // SERVICE_CAPABILITY_RUNNER_PROFILE_V1 - el perfil se elige de forma
+    // explicita y reversible. `governed_v2` exige autoridad tambien para
+    // lecturas; el valor por defecto conserva V1. Las capabilities con efecto
+    // externo o aprobacion ya son gobernadas en cualquier perfil.
+    const capabilityProfile =
+      process.env.CAPABILITY_RUNNER_PROFILE === "governed_v2" ? "governed_v2" : "legacy_v1";
     const capabilityRunner = new CapabilityRunner(
       this.capabilities,
       toolExecutors,
@@ -340,6 +346,18 @@ export class AgentService {
       (tid: string, rid: string) => this.db.get<import("../../../../packages/domain/src/agent.ts").AgentRole>(tid, "agent-roles", rid),
       // SERVICE_CAPABILITY_RUNNER_DB_V1 - db para idempotency claims.
       this.db,
+      capabilityProfile,
+      // KERNEL_CONNECTION_VERIFIER_V1 - la generacion aprobada se contrasta con
+      // la conexion VIVA del owner. Una rotacion entre la revision y el efecto
+      // invalida la aprobacion en vez de ejecutarse con la credencial nueva.
+      {
+        generationFor: async (ctx, approval) => {
+          const connection = await this.workspace.connection(ctx.owner).catch(() => null);
+          if (!connection) return null;
+          if (connection.id !== approval.connectionId) return null;
+          return (connection as { generation?: string | null }).generation ?? null;
+        },
+      },
     );
     this.executor = new Executor(capabilityRunner);
     this.learning = new LearningService(this.memory);
@@ -461,33 +479,13 @@ export class AgentService {
       await this.db.recoverInterruptedActions().catch((error) =>
         backgroundFailure("maintain recoverInterruptedActions", error),
       );
-      // STUCK_5MIN_V1 - baja de 10 a 5 min para reconciliar antes.
-      const STUCK_MS = Number(process.env.OUTCOME_UNKNOWN_STUCK_MS ?? "300000") || 300000;
-      const stuckCutoff = new Date(Date.now() - STUCK_MS).toISOString();
-      const stuckActions = await this.db.scanByStatus<{
-        id: string;
-        status: string;
-        updatedAt?: string;
-      }>("actions", ["executing"], 200);
-      for (const { owner, value } of stuckActions) {
-        const lastUpdate = value.updatedAt ? Date.parse(value.updatedAt) : 0;
-        if (lastUpdate && lastUpdate > Date.parse(stuckCutoff)) continue;
-        await this.db
-          .compareAndSwap(
-            owner,
-            "actions",
-            value.id,
-            { status: "executing" },
-            {
-              status: "outcome_unknown",
-              error:
-                "Action was executing for more than 10 minutes without resolution. " +
-                "Check the provider before retrying.",
-            },
-          )
-          .catch((error) => backgroundFailure("reconcile outcome_unknown", error));
-      }
-
+      // ACTION_DISPATCH_RECOVERY_V1 - una caida entre el commit de la decision
+      // y el receipt deja un intento durable pendiente. Se concilia aqui: si
+      // la accion sigue `executing` sin recibo, pasa a `outcome_unknown`; nunca
+      // se reenvia el efecto.
+      await this.actions
+        .reconcileDispatchIntents()
+        .catch((error) => backgroundFailure("maintain reconcileDispatchIntents", error));
       const nowIso = new Date().toISOString();
       const pendingActions = await this.db.scanByStatus<{ id: string; expiresAt: string }>("actions", ["awaiting_review"], 500);
       for (const { owner, value } of pendingActions) {
@@ -2619,60 +2617,36 @@ prompt: `Review the email, check my calendar, and propose a next step. Ask me ab
     destinations: { memory: string[]; businessGraph?: string[] },
     sourcePrefix: string,
   ): Promise<void> {
-    if (!this.kernel) return;
-    // PERSIST_GRAPH_DESTINATION_V1 - si el Promoter decidio que un thought
-    // va al business graph, lo creamos como entidad "artifact" para que el
-    // grafo se alimente tambien desde el chat, no solo desde finish().
-    if (destinations.businessGraph?.length && this.graph) {
+    if (!this.kernel || owner !== ctx.owner) return;
+    const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
+    const byId = new Map(thoughts.map(thought => [thought.id, thought]));
+    // Promotion describes information; a thought is not authority to create a business entity.
+    // Governed business writes must use the existing capability/action path.
+    for (const memoryId of new Set(destinations.memory)) {
+      const thought = byId.get(memoryId);
+      if (!thought || thought.tenantId !== ctx.tenantId || thought.owner !== owner || thought.turnId !== turnId ||
+          !["observation", "reflection"].includes(thought.role)) continue;
+      const memoryText = typeof thought.content === "string" ? thought.content : JSON.stringify(thought.content);
+      if (!memoryText.trim()) continue;
       try {
-        const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
-        for (const thoughtId of destinations.businessGraph) {
-          const thought = thoughts.find((th) => th.id === thoughtId);
-          if (!thought) continue;
-          const text =
-            typeof thought.content === "string"
-              ? thought.content
-              : JSON.stringify(thought.content);
-          if (!text.trim()) continue;
-          const entityId = `thought:${thought.id}`;
-          const found = await this.graph.getEntity(owner, entityId).catch(() => null);
-          if (found) continue;
-          await this.graph.createEntity(owner, {
-            id: entityId,
-            type: "artifact",
-            name: text.slice(0, 300),
-            status: "observed",
-            properties: { role: thought.role, turnId },
-            actor: `${sourcePrefix}:${thought.role}`,
-            source: sourcePrefix,
+        await this.db.transaction(async () => {
+          const receipt = await this.db.insertIfAbsent(owner, "kernel-promotion-receipts", {
+            id: thought.id, turnId, tenantId: ctx.tenantId,
+            // The legacy memory contract is capped at 500 chars. Preserve the immutable
+            // thought instead of publishing a truncated proposition as a curated memory.
+            state: memoryText.trim().length > 500 ? "deferred_oversize" : "memory_stored",
           });
-        }
-      } catch {
-        // KERNEL_NONFATAL_V1
+          if (!receipt || memoryText.trim().length > 500) return;
+          await this.memory.remember(owner, memoryText, {
+            source: `${sourcePrefix}:${turnId}:${thought.id}`, category: "proceso",
+          });
+        });
+      } catch (error) {
+        backgroundFailure("promotion memory persistence", error);
       }
-    }
-    if (destinations.memory.length === 0) return;
-    try {
-      const thoughts = await this.kernel.thoughtsOf(ctx, turnId);
-      for (const memoryId of destinations.memory) {
-        const thought = thoughts.find((th) => th.id === memoryId);
-        if (!thought) continue;
-        const memoryText =
-          typeof thought.content === "string"
-            ? thought.content
-            : JSON.stringify(thought.content);
-        if (!memoryText.trim()) continue;
-        await this.memory
-          .remember(owner, memoryText, {
-            source: `${sourcePrefix}:${thought.role}`,
-            category: "proceso",
-          })
-          .catch(() => {});
-      }
-    } catch {
-      // KERNEL_NONFATAL_V1 - no puede romper el finish.
     }
   }
+
   // MAINTAIN_TENANT_CURSOR_V1 - devuelve tenants activos.
   private async collectActiveTenants(): Promise<string[]> {
     // COLLECT_TENANTS_VIA_MEMBERSHIP_V1 - antes escaneaba agent-settings

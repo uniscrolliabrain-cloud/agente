@@ -1,0 +1,140 @@
+{
+  "turno": "Trans07/T1-convergencia",
+  "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
+  "mainSha": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
+  "testedCommit": "a843ddfc",
+  "state": "CONVERGED_LOCAL",
+  "published": false,
+  "merge": {
+    "commit": "ac6363b2a53c920156b33fd6f174722e1cd853b2",
+    "mainSha": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
+    "conflicts": 0,
+    "filesFromMain": 146,
+    "aheadOfMainAfterMerge": 103,
+    "behindMainAfterMerge": 0
+  },
+  "git": {
+    "branch": "converge/trans00-core",
+    "aheadOfMain": 100,
+    "behindMain": 32,
+    "dirty": 0
+  },
+  "environment": {
+    "node": "v24.22.1",
+    "pnpm": "11.19.0",
+    "lockfileSha256": "1c2851bc2ce1f0eab66ed1fd60b01018d3f56e73dc0124cbaf28e30543fdace0",
+    "postgres": "unavailable",
+    "docker": "unavailable",
+    "network": "blocked"
+  },
+  "mergeRehearsal": {
+    "method": "worktree desechable + git merge --no-commit --no-ff origin/main + abort",
+    "conflicts": 0,
+    "filesFromMain": 146,
+    "insertions": 6298,
+    "deletions": 1597,
+    "byArea": { "apps/ui-lab": 122, "apps/web": 23, ".github/workflows": 1 },
+    "typecheckMergedTree": 0,
+    "campaignSuitesMergedTree": { "total": 113, "pass": 113, "fail": 0, "skip": 0 },
+    "treeAfter": "clean"
+  },
+  "infra": {
+    "readinessStrict": 0,
+    "readinessTests": { "total": 12, "pass": 12, "fail": 0 },
+    "unregistered": []
+  },
+  "gate": {
+    "typecheckRoot": 0,
+    "typecheckWorker": 0,
+    "audits": {
+      "layers": { "exit": 0, "violaciones": 0 },
+      "bridges": { "exit": 0, "wired": "16/16" },
+      "console": { "exit": 0, "advisory": "24 ocurrencias en 302 ficheros" },
+      "anchors": { "exit": 0 },
+      "contracts": { "exit": 0, "ok": 318, "pending": 9, "huerfanos": 0 },
+      "idempotency": { "exit": 0, "duplicadas": 222, "huerfanas": 0, "repetidas": 181 },
+      "tenant-default": { "exit": 0, "permitidas": 161, "prohibidas": 0 }
+    },
+    "fullSuite": { "tests": 1193, "pass": 1163, "fail": 0, "cancelled": 0, "skipped": 25, "todo": 5, "durationMs": 273014, "exit": 0 },
+    "fullSuiteMethod": "orquestador scripts/gate-report.ts completo (10/10 pasos)",
+    "orchestrator": { "verdict": "GATE OK", "stepsGreen": 10, "stepsTotal": 10, "durationMs": 306200 },
+    "firstRun": "fallo typecheck:worker por dependencias npm en vez de pnpm; se instalo con --frozen-lockfile y paso 10/10 sin relajar checks",
+    "fullSuiteLog": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-gate-suite-intento.log",
+    "fullSuiteSha256": "03e8dbd87259fb3bc378ef45eccca08502a986757b1923e40e2dfc23cf302741"
+  },
+  "pullRequest": {
+    "number": 37,
+    "url": "https://github.com/uniscrolliabrain-cloud/agente/pull/37",
+    "base": "main",
+    "head": "converge/trans00-core @ 2a1ed160",
+    "changedFiles": 300,
+    "additions": 34314,
+    "deletions": 1147,
+    "commits": 104,
+    "merged": false
+  },
+  "certification": {
+    "criteriaMet": [1, 2, 4, 6, 7, 10],
+    "criteriaNotMet": [5, 9],
+    "criteriaDeclared": [3],
+    "criteriaPendingReview": [8],
+    "productState": "LIVE_UNVERIFIED",
+    "matrix": "Trans07/EJECUCION/MATRIZ-REQUISITOS.json",
+    "matrixSummary": { "total": 30, "INTEGRATED": 7, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 3, "NOT_RUN": 1 }
+  },
+  "exitCodes": {
+    "merge": 0,
+    "mergedTreeSuites": 0,
+    "mergedTreeTypecheck": 0,
+    "gateFullSuite": 0,
+    "readinessStrict": 0,
+    "readinessTests": 0,
+    "workerTypecheck": 0,
+    "audits": "7/7 exit 0"
+  },
+  "logs": {
+    "exitCodes": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-ensayo-exit.log",
+      "sha256": "06b540fcd955d2c00e42c683298f3caf0620285baacb499f747a62822abd3482"
+    },
+    "mergedTreeSuites": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-ensayo-suites.log",
+      "sha256": "93adb564829485d61f36db884a2bf9e3f17e4e223eb895654a3e1262de395243"
+    },
+    "readiness": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-readiness.log",
+      "sha256": "deb457ffbee710eed6b7a9770738b51cee2a2286e0cd2c404863c28f60ff5783"
+    },
+    "readinessTests": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-readiness-test.log",
+      "sha256": "4c742daca4968bff94ebe16720c413e0a4db7d9c39d653e17187c122e52e5316"
+    },
+    "workerTypecheck": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-worker-tsc.log",
+      "sha256": "fdedbbae81a3330be02058e27544a85e4db9604a04ad1dc0489674e4db4b31b0"
+    },
+    "audits": {
+      "path": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-audits.log",
+      "sha256": "951a7448d7581493599001d57fe4d1db82b425bf9f8021e352dbd0adebee79ca"
+    }
+  },
+  "notDone": {
+    "mergeToMain": "main incorporado en la rama (ac6363b2); merge del PR #37 pendiente de revision humana",
+    "pullRequest": "abierto (#37), sin mergear",
+    "tag": "no creado",
+    "deploy": "no realizado",
+    "postgres17": "sin instancia",
+    "ledger": "0/48 DONE, intacto",
+    "ownerReal": "NOT_RUN"
+  },
+  "limitations": [
+    "No se ha mergeado main: solo ensayado en worktree desechable (0 conflictos, tsc 0, 113 tests).",
+    "La suite completa del gate se ejecuto (1193 tests, 0 fail) pero el orquestador gate-report.ts no se lanzo como proceso unico; el log del typecheck raiz se reutiliza de Trans02.",
+    "Los 10 SKIP de PostgreSQL siguen sin resolver: no hay postgres ni docker en el entorno.",
+    "El ledger no se toca: 288 bloques, 0 DONE.",
+    "No hay PR, tag ni despliegue; main sigue en e496dd43.",
+    "El rollback esta documentado pero no ensayado: sin merge real no hay commit que revertir.",
+    "El workflow de CI que llega de main no se ha ejecutado."
+  ],
+  "notes": "Deja la convergencia ensayada y medida: merge limpio, tsc verde en el arbol fusionado, 113 pruebas de campana pasando sobre el, infra reverificada, siete audits verdes. No certifica ni publica: el gate completo, PostgreSQL 17 y el merge real siguen pendientes, y el merge requiere autorizacion."
+}

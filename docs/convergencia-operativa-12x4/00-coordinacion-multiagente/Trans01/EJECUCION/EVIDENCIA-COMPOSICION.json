@@ -1,0 +1,58 @@
+{
+  "codeCommit": "83d090656a361b45dda8a68c221179b5f6c57287",
+  "runState": "LOCAL_WORKTREE_THEN_COMMITTED",
+  "certification": false,
+  "commands": {
+    "composition": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/actions.test.ts tests/trans01-*.test.ts tests/trans06-kernel-regressions.test.ts tests/kernel.test.ts tests/tenant-http-e2e.test.ts tests/vertical-slice-calendar.test.ts tests/vertical-slice-drive.test.ts tests/trans03-workspace-cache.test.ts",
+    "claims": "ALLOW_NETWORK=0 node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=90000 tests/trans01-claim-scope.test.ts tests/trans01-claim-cas.test.ts tests/gate/idempotency-execution.test.ts tests/trans01-governed-runner.test.ts tests/trans01-approval-binding.test.ts tests/trans01-outcome-semantics.test.ts"
+  },
+  "results": {
+    "composition": {
+      "total": 160,
+      "pass": 158,
+      "fail": 0,
+      "skipped": 2
+    },
+    "claims": {
+      "total": 54,
+      "pass": 54,
+      "fail": 0,
+      "skipped": 0
+    },
+    "typecheckRootAndWorker": 0
+  },
+  "logs": [
+    {
+      "path": "/tmp/trans01-composition-regression.log",
+      "sha256": "afd7434001854ff85ac1cfddcf31e7ff3692a53d84652141cf4e1c83dfd40ac7"
+    },
+    {
+      "path": "/tmp/trans01-composition-final-tsc.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    {
+      "path": "/tmp/trans01-composition-red.log",
+      "sha256": "1f1f4f56e411b8b97c46820c351500f3035ac0bdc3b510b5340ee2af5cdddebe"
+    },
+    {
+      "path": "/tmp/trans01-claim-scope-red.log",
+      "sha256": "47ea68b4cc5119ba0953d866d4680c79255a55fb29f1911e414f44df9239c6be"
+    },
+    {
+      "path": "/tmp/trans01-claim-scope-verified2.log",
+      "sha256": "ac7808d97873098f63d10107c4fabd2d19939285aa356d01d5d897bcc3432671"
+    },
+    {
+      "path": "/tmp/trans01-claim-final-tsc.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    {
+      "path": "/tmp/trans01-proto-red.log",
+      "sha256": "4c7f72e460559db35a4823aa46ca46405565d58aa215619b25520d3df4fb62a1"
+    },
+    {
+      "path": "/tmp/trans01-proto-green.log",
+      "sha256": "01a42ac85dda8252d66f2a7f087e710562448aaa30602174bb956ad122013649"
+    }
+  ]
+}

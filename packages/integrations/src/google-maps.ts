@@ -75,6 +75,9 @@ export class GoogleMapsClient {
     if (query.length < 3 || query.length > 500) {
       throw new AppError("La busqueda necesita entre 3 y 500 caracteres", 422);
     }
+    if (input.limit !== undefined && !Number.isSafeInteger(input.limit)) {
+      throw new AppError("El limite de resultados debe ser un entero", 422);
+    }
     const limit = Math.min(Math.max(input.limit ?? PLACES_MAX_RESULTS, 1), PLACES_MAX_RESULTS);
 
     let response: Response;
@@ -105,20 +108,27 @@ export class GoogleMapsClient {
     if (!response.ok) {
       // El caso tipico es la API desactivada en el proyecto: el mensaje de
       // Google lo dice y ahorra media hora de busqueda.
-      const detail = payload?.error?.message ?? `HTTP ${response.status}`;
+      const detail = typeof payload?.error?.message === "string" ? payload.error.message : `HTTP ${response.status}`;
       throw new AppError(`Google Places rechazo la busqueda: ${detail.slice(0, 200)}`, 502);
     }
 
-    const places = Array.isArray(payload?.places) ? payload.places : [];
+    if (!payload || typeof payload !== "object" || Array.isArray(payload) ||
+        (payload.places !== undefined && !Array.isArray(payload.places)) || payload.error) {
+      throw new AppError("Google Places devolvio una respuesta invalida", 502);
+    }
+    const places = payload.places ?? [];
+    const seen = new Set<string>();
     return places.flatMap((raw) => {
       const row = (raw ?? {}) as Record<string, unknown>;
       if (typeof row.id !== "string" || !row.id.trim()) return [];
       const display = row.displayName as { text?: string } | undefined;
       const name = typeof display?.text === "string" ? display.text.trim() : "";
-      if (!name) return [];
+      const placeId = row.id.trim();
+      if (!name || seen.has(placeId)) return [];
+      seen.add(placeId);
       return [
         {
-          placeId: row.id,
+          placeId,
           name,
           address: typeof row.formattedAddress === "string" ? row.formattedAddress : "",
           ...(typeof row.internationalPhoneNumber === "string"

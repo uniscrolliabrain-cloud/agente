@@ -5,6 +5,7 @@ import { currentTenantScope } from "../tenant-scope.ts";
 import { AppError, OutcomeUnknownError } from "../../../../packages/domain/src/errors.ts";
 import { encryptSecret, decryptSecret } from "../../../../packages/integrations/src/vault.ts";
 import { WhatsAppClient, type WhatsAppSendResult } from "../../../../packages/integrations/src/stubs/whatsapp.ts";
+import { classifyAdapterFailure } from "./execution/outcome.ts";
 import { MetaWhatsAppClient } from "../../../../packages/integrations/src/meta-whatsapp.ts";
 
 // WHATSAPP_PROVIDERS_V1 - el webhook ya admitia Meta; la salida no. Una conexion
@@ -329,7 +330,9 @@ export class WhatsAppOutbound {
     }
     // From this point no retry may dispatch again, even after a crash or an overwritten draft.
     let status: OperationStatus, providerId: string | undefined, errorCode: string | undefined;
+    let dispatched = false;
     try {
+      if (this.now().getTime() >= Date.parse(draft.expiresAt)) throw new AppError("El borrador caduco antes del envio", 409);
       const latest = await this.connection(identity);
       if (!latest.enabled || latest.generation !== connection.generation || !latest.allowedRecipients.includes(draft.to)) {
         throw new AppError("La conexion cambio antes del envio", 409);
@@ -338,12 +341,15 @@ export class WhatsAppOutbound {
       const sender = this.options.sender?.(connection, apiKey) ?? (connection.provider === "meta"
         ? new MetaWhatsAppClient({ token: apiKey, phoneNumberId: connection.instance })
         : new WhatsAppClient({ apiKey, baseUrl: connection.baseUrl, instance: connection.instance }));
+      dispatched = true;
       const result: WhatsAppSendResult = await sender.sendText(operation.to, operation.text);
-      if (!result.accepted || !result.id) throw new OutcomeUnknownError();
-      status = "accepted"; providerId = result.id;
+      if (result.accepted !== true || typeof result.id !== "string" || !result.id.trim()) throw new OutcomeUnknownError();
+      status = "accepted"; providerId = result.id.trim();
     } catch (error) {
       // Unknown runtime failures are conservative: a failed response is not proof that no effect happened.
-      status = error instanceof AppError && error.status < 500 ? "failed" : "outcome_unknown";
+      const noEffect = classifyAdapterFailure(error).retrySafe ||
+        (!dispatched && error instanceof AppError && error.status < 500);
+      status = noEffect ? "failed" : "outcome_unknown";
       errorCode = status === "failed" ? "provider_rejected_or_connection_changed" : "provider_outcome_unknown";
     }
     const saved = await this.db.compareAndSwap<Operation>(identity.owner, OPERATIONS, id,

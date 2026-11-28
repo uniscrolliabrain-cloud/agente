@@ -1,0 +1,3 @@
+# Reserva — OpenRouter/JEV solicitada por el founder
+
+Trans02: jev-classifier.ts, jev-egress.ts, provider.ts y contrato semanticProviderEvidence de card-ontology.ts; tests propios. Se conserva TypeSafe directo y el mismo gate durable; se añade OpenRouter Decisions con su modelo/clave independientes. Referencia oficial OpenRouterTeam/docs `6b2906b9a76453c750faab9c8aa1cb0876ea62a7`, guides/community/jev.mdx y jev-tutorial.mdx; SDK `5f342ec8d9361124956f1de09ad4a10d8f794d28` decisionsresponse.ts. Sin llamadas pagadas ni lectura de valores secretos. Trans01 configuración de lanes y wiring; Trans04 secretos/workflows/conectores. MUSE_API_KEY reservado para Fast Meta directo, endpoint/modelo pendientes de verificación; no es una clave de OpenRouter.

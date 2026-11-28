@@ -30,6 +30,8 @@ export class CircuitBreaker {
   private failures = 0;
   private openedAt = 0;
   private halfOpenStartedAt = 0;
+  private probeInFlight = false;
+  private generation = 0;
 
   constructor(
     readonly name: string,
@@ -53,18 +55,28 @@ export class CircuitBreaker {
   }
 
   /** Llama al handler. Si el circuito estÃ¡ abierto, lanza sin ejecutar. */
-  async call<T>(operation: () => Promise<T>): Promise<T> {
+  async call<T>(
+    operation: () => Promise<T>,
+    options: { isFailure?: (error: unknown) => boolean } = {},
+  ): Promise<T> {
     const current = this.getState();
-    if (current === "open") {
+    if (current === "open" || (current === "half-open" && this.probeInFlight)) {
       throw new CircuitOpenError(this.name);
     }
+    const generation = this.generation;
+    const probe = current === "half-open";
+    if (probe) this.probeInFlight = true;
     try {
       const result = await operation();
-      this.onSuccess();
+      if (generation === this.generation) this.onSuccess();
       return result;
     } catch (error) {
-      this.onFailure();
+      if (generation === this.generation && (options.isFailure?.(error) ?? true)) {
+        this.recordFailure(error);
+      }
       throw error;
+    } finally {
+      if (probe && generation === this.generation) this.probeInFlight = false;
     }
   }
 
@@ -86,6 +98,8 @@ export class CircuitBreaker {
   }
 
   private open(): void {
+    this.generation += 1;
+    this.probeInFlight = false;
     this.state = "open";
     this.openedAt = Date.now();
     // CIRCUIT_ALERT_ON_OPEN_V1 - notifica al log cuando se abre.
@@ -110,6 +124,8 @@ export class CircuitBreaker {
   recordSuccess(): void { this.onSuccess(); }
 
   reset(): void {
+    this.generation += 1;
+    this.probeInFlight = false;
     this.state = "closed";
     this.failures = 0;
     this.openedAt = 0;

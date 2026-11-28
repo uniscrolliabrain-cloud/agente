@@ -1,0 +1,12 @@
+MERGE_EXIT=0
+SMOKE_EXIT=0
+READINESS_EXIT=0
+READINESS_TEST_EXIT=0
+WORKER_TSC_EXIT=0
+AUDIT_layers=0
+AUDIT_bridges=0
+AUDIT_no-console=0
+AUDIT_anchors=0
+AUDIT_contracts=0
+AUDIT_idempotency=0
+AUDIT_tenant-default=0

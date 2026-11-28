@@ -91,7 +91,11 @@ import { TenantService } from "./engine/tenant.ts";
 export async function createApp(
   db: Store,
   config: Config,
-  options: { docker?: DockerRunner } = {},
+  options: { docker?: DockerRunner;
+    // Trusted bootstrap policy; never populated from an HTTP body or model.
+    jevEgressPolicies?: ReadonlyMap<string, import("./engine/cognition/v2/jev-egress.ts").JevEgressPolicy>;
+    jevTransport?: typeof fetch;
+  } = {},
 ) {
   // SERVICE_TENANT_DB_V2
 // resto de servicios con tdb. Antes se constru
@@ -159,7 +163,8 @@ export async function createApp(
   // resuelve el tenant real del owner en vez de usar owner como tenant.
   const cognitionV2Tenants = new Set((process.env.COGNITION_V2_TENANTS ?? "").split(",").map((x) => x.trim()).filter(Boolean));
   const cognitionV2 = cognitionV2Tenants.size
-    ? await (await import("./engine/cognition/v2/runtime.ts")).CognitionV2Runtime.create(db, tdb, cognitionV2Tenants, tenantService, rag)
+    ? await (await import("./engine/cognition/v2/runtime.ts")).CognitionV2Runtime.create(db, tdb, cognitionV2Tenants, tenantService, rag,
+      options.jevEgressPolicies ? (await import("./engine/cognition/v2/jev-composition.ts")).openRouterJevFactory(options.jevEgressPolicies, process.env, options.jevTransport) : undefined)
     : undefined;
   const bus = new EventBus(tdb, cognitionV2?.sink, undefined, {
     tenantForOwner: (owner) => tenantService.tenantIdFor(owner),
@@ -173,7 +178,9 @@ export async function createApp(
   // encontraba nunca. Se unifica en tdb, que es la zona del resto del engine.
   const actions = new ActionService(tdb, {
     execute: (owner, input, connectionId, targetVersion) =>
-      workspace.execute(owner, input, connectionId, targetVersion),
+      workspace.executeEffect(owner, input, connectionId, targetVersion),
+    requireTypedEffect: true,
+    expectedEffectMode: config.mode,
     prepare: (owner, input, connectionId) => workspace.prepare(owner, input, connectionId),
     connected: (owner) => workspace.connected(owner),
     connection: (owner) => workspace.connection(owner),

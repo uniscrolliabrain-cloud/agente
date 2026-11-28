@@ -1,0 +1,35 @@
+{
+  "codeCommit": "c0f58b7f8a7fa6727a7be7c3cf4f61a296018b32",
+  "runState": "LOCAL_WORKTREE_THEN_COMMITTED",
+  "certification": false,
+  "results": {
+    "suite": {
+      "total": 42,
+      "pass": 42,
+      "fail": 0,
+      "skip": 0
+    },
+    "refinedSourceSuite": {
+      "total": 3,
+      "pass": 3,
+      "fail": 0,
+      "skip": 0
+    },
+    "rootAndWorkerTypecheck": 0
+  },
+  "note": "Source-suite overlaps the broad suite; do not add totals. Last singleflight refinement tested in source suite.",
+  "logs": [
+    {
+      "path": "/tmp/trans04-shared-verified.log",
+      "sha256": "b0184d8955d4bbe743daabd41552a9578975803dcae7a8db1d24f326bcef16d7"
+    },
+    {
+      "path": "/tmp/trans04-shared-typecheck.log",
+      "sha256": "70e3a96bba97cf3b4fe1c8b48a5d5bf1306e6d0019379eb382dede921d333157"
+    },
+    {
+      "path": "/tmp/trans04-alert-singleflight.log",
+      "sha256": "36105b4b297e0b493b398a7cfc08905fdf4e968524c0dca8d9c20575b1244643"
+    }
+  ]
+}

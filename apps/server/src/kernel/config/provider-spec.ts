@@ -10,7 +10,7 @@
 import { z } from "zod";
 
 export const providerSpecSchema = z.object({
-  provider: z.enum(["google", "anthropic", "openai", "openrouter"]),
+  provider: z.enum(["google", "anthropic", "openai", "openrouter", "meta"]),
   model: z.string().min(1).max(200),
   apiKey: z.string().max(2000),
   baseUrl: z.string().max(2000).optional(),

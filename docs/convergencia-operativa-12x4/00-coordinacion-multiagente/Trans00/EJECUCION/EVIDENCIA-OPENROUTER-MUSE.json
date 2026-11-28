@@ -1,0 +1,222 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-27T15:49:55.731Z",
+  "finishedAt": "2026-11-27T15:55:59.630Z",
+  "durationMs": 363899,
+  "git": {
+    "branch": "integration/trans00-core",
+    "head": "12a36277d817e9245eb8de308696883b33ceda2a",
+    "dirty": 0
+  },
+  "ok": true,
+  "failed": [],
+  "advisory": [],
+  "runManifest": {
+    "before": {
+      "branch": "integration/trans00-core",
+      "head": "12a36277d817e9245eb8de308696883b33ceda2a",
+      "dirty": 0
+    },
+    "lockSha256": "1c2851bc2ce1f0eab66ed1fd60b01018d3f56e73dc0124cbaf28e30543fdace0",
+    "nodeVersion": "v24.22.3"
+  },
+  "sourceReportSha256": "2cc06e71ae7e99b75f9d2f7075e2f93dc203e017ec57a2a50e51604f6242ea38",
+  "steps": [
+    {
+      "name": "typecheck",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 13305,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/typecheck.log",
+      "logSha256": "4ebaf73a012e8ac1e9fef93265fb1d74532a83004562a2cb2b6a03df873767e1"
+    },
+    {
+      "name": "typecheck:worker",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/apps/worker/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/trans00-core/apps/worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1286,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/typecheck_worker.log",
+      "logSha256": "6122adbd0b47d9a45437221f2720244acbafeedb0a67d7dc918debcd67be3e6d"
+    },
+    {
+      "name": "test",
+      "kind": "test",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/node_modules/tsx/dist/cli.mjs --import ./tests/setup.ts --test --test-reporter=tap --test-concurrency=2 --test-timeout=30000 --test-force-exit tests/**/*.test.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 337101,
+      "counters": {
+        "tests": 1171,
+        "pass": 1141,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 25,
+        "todo": 5
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/test.log",
+      "logSha256": "a7bf0f33aae67c22d01450d787c0639a04e26d8256192d6ec12eecb5011ba42f"
+    },
+    {
+      "name": "audit:layers",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/layers.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 174,
+      "counters": {
+        "violaciones": 0
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_layers.log",
+      "logSha256": "cbfd7612024fc90e390146b0d2803d60e48cdcb36d824a4db93bc62b00c341fa"
+    },
+    {
+      "name": "audit:bridges",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/bridges.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1023,
+      "counters": {
+        "wired": 16,
+        "total": 16
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_bridges.log",
+      "logSha256": "1415f685483b21e3f3e4d52ab901972f4570171fbc8ddc1e11a59c94a3f3b452"
+    },
+    {
+      "name": "audit:console",
+      "kind": "audit",
+      "blocking": false,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/no-console.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 141,
+      "counters": {
+        "ocurrencias": 24,
+        "ficheros": 301
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_console.log",
+      "logSha256": "b4756b337a5048f7d767f99fafc7c5255f00796160b54fe42ee19ab86e6b2fff"
+    },
+    {
+      "name": "audit:anchors",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/anchors.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 86,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_anchors.log",
+      "logSha256": "c180215b79715a352b2eb7b53e2e58b953589a3b4cf0b350cc24c171082c1422"
+    },
+    {
+      "name": "audit:contracts",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/contracts.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 10001,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_contracts.log",
+      "logSha256": "4faea9561a15e752566e6e7bbd2c2e20c149397dd7995690313cffbf17e08890"
+    },
+    {
+      "name": "audit:idempotency",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/idempotency.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 563,
+      "counters": {
+        "duplicadas": 222,
+        "huerfanas": 0,
+        "repetidas": 181
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_idempotency.log",
+      "logSha256": "7ec175604d9a9496da7b2474565722cab47614a5ed0be5df48496daec53a570d"
+    },
+    {
+      "name": "audit:tenant-default",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/tenant-default.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 205,
+      "counters": {
+        "permitidas": 161,
+        "prohibidas": 0
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_tenant-default.log",
+      "logSha256": "71cdeafbacfa8acdd317cc295f544d6a560ffd18555a0640a6dd829bcd24da9d"
+    }
+  ],
+  "request": "Separate new JEV OpenRouter account, old Slow DeepSeek account, direct Meta Muse Fast; map exact GitHub/Doppler connector names.",
+  "providers": {
+    "jev": {
+      "key": "OPENROUTER_API_KEY",
+      "model": "typesafe/jev-1.14",
+      "url": "https://openrouter.ai/api/alpha/decisions",
+      "status": "LOCAL_IMPLEMENTATION_PASS_POLICY_REQUIRED"
+    },
+    "slow": {
+      "key": "OPEN_ROUTER_API_KEY",
+      "model": "deepseek/deepseek-v3.2",
+      "url": "https://openrouter.ai/api/v1",
+      "status": "LOCAL_IMPLEMENTATION_PASS"
+    },
+    "fast": {
+      "key": "MUSE_API_KEY",
+      "provider": "Meta direct",
+      "status": "PENDING_MUSE_CONTRACT",
+      "missing": [
+        "official documentation or base URL",
+        "model identifier",
+        "protocol and Contributor selection"
+      ]
+    }
+  },
+  "liveConnectivityVerified": false,
+  "secretValuesReadFromStores": false,
+  "workflowExecutedAgainstRealServices": false,
+  "credentialNamesProvenance": "Supplied by founder; remote secret existence and values not independently verified.",
+  "postGateChanges": "Documentation only; actual tested commit retained explicitly.",
+  "acceptance": {
+    "repositoryGateOk": true,
+    "decision": "NO_GO",
+    "certification": "NOT_CERTIFIED",
+    "note": "Overall six-campaign certification remains open; local tests do not certify providers, RLS runtime or live telemetry."
+  },
+  "branchHeadsAtCheckpoint": {
+    "exec/Trans01": "dbebaa03053a8b9ada9e323e837f227126b46e7c",
+    "exec/Trans02": "12a36277d817e9245eb8de308696883b33ceda2a",
+    "exec/Trans03": "5e8b1272284624faf653e122268f66292b91ec82",
+    "exec/Trans04": "14f1d44d1c1f81f3b6c1a95b0d862ab26e16d443",
+    "exec/Trans05": "ba56896b23b926b1a4fe134af92e4b30e4ab3434",
+    "exec/Trans06": "7663df43e73ab8e116c39e105b8d1bb3475a9cf5"
+  }
+}

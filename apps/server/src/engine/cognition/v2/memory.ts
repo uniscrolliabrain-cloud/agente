@@ -53,7 +53,7 @@ export class FiveMemories {
       episodes.push(r);
     }
     episodes.sort((a, b) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id));
-    return this.propose(identity, "autobiographical", digest([identity.actorId, episodeIds.slice().sort()]),
+    return this.propose(identity, "autobiographical", digest(["autobiographical-v2", identity.actorId, identity.policyRevision, episodes.map((r) => ({id:r.id,revision:r.revision}))]),
       JSON.stringify(episodes.map((r) => ({ episodeId: r.id, at: r.createdAt, summary: r.body }))),
       episodes.map((r) => ({ tenantId: identity.tenantId, kind: "memory", id: r.id, revision: r.revision })), episodes.at(-1)!.createdAt);
   }
@@ -66,7 +66,7 @@ export class FiveMemories {
   }
   async recall(identity: CognitiveIdentity, kind: NonNullable<CognitiveRecord["memoryKind"]>) {
     await this.context.assertAuthorized(identity);
-    const rows = await this.context.projections.latest(identity.tenantId, 2000, identity.actorId);
+    const rows = await this.context.projections.latest(identity.tenantId, 2000, identity.actorId, {memoryKind:kind,policyRevision:identity.policyRevision,now:new Date(this.clock()).toISOString()});
     const hits = [];
     for (const row of rows) {
       if (row.kind !== "memory" || row.memoryKind !== kind) continue;

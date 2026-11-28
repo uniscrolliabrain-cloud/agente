@@ -194,6 +194,38 @@ export class Store {
     return (result.rows[0]?.data as T | undefined) ?? null;
   }
   /**
+   * DB_APPEND_SEQUENCE_V1 - posicion monotona por (scope, kind).
+   *
+   * El contador vive en una fila de `records` y se incrementa con un unico
+   * `INSERT ... ON CONFLICT DO UPDATE ... RETURNING`. Esa escritura toma el lock
+   * de fila y lo mantiene hasta el final de la transaccion del llamador, asi que
+   * dos escritores del mismo scope se serializan: la posicion asignada refleja
+   * el orden de commit, no el de inicio de la transaccion.
+   *
+   * Es la garantia que necesita un cursor de replay durable. `updated_at` usa
+   * `now()`, que en Postgres es la hora de INICIO de la transaccion: una
+   * transaccion que empieza antes y commitea despues deja una fila con posicion
+   * menor que otra ya visible, y un cursor que avanzo la pierde para siempre.
+   *
+   * La garantia vale mientras contador y fila compartan transaccion; el llamador
+   * que necesite orden de commit debe agruparlos con `transaction`.
+   */
+  async nextSequence(scope: string, kind: string): Promise<number> {
+    const result = await this.db.query(
+      `INSERT INTO records(owner,kind,id,data) VALUES($1,'sequences',$2,'{"value":1}'::jsonb)
+       ON CONFLICT(owner,kind,id) DO UPDATE
+         SET data = jsonb_set(records.data,'{value}',to_jsonb(COALESCE((records.data->>'value')::bigint,0)+1)),
+             updated_at = now()
+       RETURNING (data->>'value')::bigint AS value`,
+      [scope, kind],
+    );
+    const raw = (result.rows[0] as unknown as { value?: unknown } | undefined)?.value;
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value < 1) throw new Error(`SEQUENCE_UNAVAILABLE: ${kind}`);
+    return value;
+  }
+
+  /**
    * Scan de records por kind. `limit` opcional (default 1000, hard cap 50000):
    * antes no habia tope y un scan en maintain cargaba toda la tabla en memoria.
    */
@@ -354,23 +386,41 @@ export class Store {
   }
 
   // DB_CLAIM_SQL_V1
-  async claim<T>(owner: string, id: string, status: string, now: string): Promise<T | null> {
+  // DB_CLAIM_HASH_V1 - `expectedHash` opcional: el predicado corre en la misma
+  // escritura atomica que estado/expiry/tarea, asi que una edicion concurrente
+  // hace que el claim no devuelva fila en vez de aprobar otra revision.
+  async claim<T>(
+    owner: string,
+    id: string,
+    status: string,
+    now: string,
+    expectedHash?: string,
+  ): Promise<T | null> {
     const result = await this.db.query(
       `UPDATE records AS action SET data=jsonb_set(data,'\{status\}',$4::jsonb),updated_at=now()
        WHERE owner=$1 AND kind='actions' AND id=$2 AND data->>'status'='awaiting_review'
        AND (data->>'expiresAt')::timestamptz>$3::timestamptz
+       AND ($5::text IS NULL OR data->>'hash'=$5)
        AND ($4::jsonb <> '"executing"'::jsonb OR data->>'taskId' IS NULL OR EXISTS (
          SELECT 1 FROM records task WHERE task.owner=action.owner AND task.kind='tasks'
          AND task.id=action.data->>'taskId' AND task.data->>'status' IN ('running','waiting_approval')
        )) RETURNING data`,
-      [owner, id, now, JSON.stringify(status)],
+      [owner, id, now, JSON.stringify(status), expectedHash ?? null],
     );
     return (result.rows[0]?.data as T | undefined) ?? null;
   }
   // DB_RECOVER_INTERRUPTED_ACTIONS_V1
   async recoverInterruptedActions(): Promise<void> {
     await this.db.query(
-      `UPDATE records SET data=data || '{"status":"outcome_unknown","error":"Server restarted during execution. Check the provider before creating another action."}'::jsonb WHERE kind='actions' AND data->>'status'='executing'`,
+      `UPDATE records AS action SET data=action.data || '{"status":"outcome_unknown","reconciliationRequired":true,"errorKind":"outcome_unknown","error":"No active execution lease remains. Check the provider before creating another action."}'::jsonb
+       WHERE action.kind='actions' AND action.data->>'status'='executing'
+       AND NOT EXISTS (
+         SELECT 1 FROM records AS intent
+         WHERE intent.owner=action.owner AND intent.kind='action-dispatch' AND intent.id=action.id
+         AND intent.data->>'status'='pending'
+         AND (COALESCE(NULLIF(intent.data->>'leaseExpiresAt','')::timestamptz,
+                       intent.updated_at + interval '5 minutes')) > now()
+       )`,
     );
   }
   async take<T>(owner: string, kind: string, id: string): Promise<T | null> {
@@ -555,6 +605,43 @@ export async function createStore(
       pgvectorReady = false;
     }
   }
+  // DB_EVENT_SEQUENCE_BACKFILL_V1 - los eventos escritos antes del cursor por
+  // secuencia no tienen posicion durable. Se les asigna una de forma
+  // determinista, en el orden que ya tenian (updated_at, id), y se siembra el
+  // contador por encima del maximo. Solo corre si existen filas sin `seq`: no es
+  // una migracion recurrente ni una ventana temporal.
+  const unsequenced = await database.query(
+    "SELECT 1 AS pending FROM records WHERE kind='system-events' AND NOT (data ? 'seq') LIMIT 1",
+  );
+  if (unsequenced.rows.length > 0) {
+    await database.query(
+      `WITH numbered AS (
+         SELECT owner, kind, id,
+                row_number() OVER (PARTITION BY data->>'tenantId' ORDER BY updated_at, id) AS seq
+           FROM records
+          WHERE kind='system-events' AND NOT (data ? 'seq')
+       )
+       UPDATE records r
+          SET data = r.data || jsonb_build_object('seq', n.seq)
+         FROM numbered n
+        WHERE r.owner = n.owner AND r.kind = n.kind AND r.id = n.id`,
+    );
+    await database.query(
+      `INSERT INTO records(owner,kind,id,data)
+       SELECT data->>'tenantId','sequences','system-events',
+              jsonb_build_object('value', max((data->>'seq')::bigint))
+         FROM records
+        WHERE kind='system-events'
+        GROUP BY data->>'tenantId'
+       ON CONFLICT(owner,kind,id) DO UPDATE
+          SET data = jsonb_build_object('value',
+                GREATEST((records.data->>'value')::bigint, (EXCLUDED.data->>'value')::bigint)),
+              updated_at = now()`,
+    );
+  }
+  await database.query(
+    "CREATE INDEX IF NOT EXISTS records_system_events_seq_idx ON records(kind, ((data->>'seq')::bigint)) WHERE kind = 'system-events'",
+  );
   (database as { pgvectorReady?: boolean }).pgvectorReady = pgvectorReady;
   return new Store(database, options.databaseUrl ? "postgres" : "pglite");
 }

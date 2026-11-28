@@ -11,8 +11,18 @@
 type Labels = Record<string, string>;
 
 function labelKey(labels: Labels): string {
-  const entries = Object.entries(labels).sort(([a], [b]) => a.localeCompare(b));
-  return entries.map(([k, v]) => `${k}="${v}"`).join(",");
+  for (const [name, value] of Object.entries(labels)) {
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name) || typeof value !== "string") {
+      throw new TypeError("Invalid metric label");
+    }
+  }
+  return JSON.stringify(Object.entries(labels).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0));
+}
+
+function renderLabels(labels: Labels): string {
+  return Object.entries(labels).map(([name, value]) =>
+    `${name}="${value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/"/g, '\\"')}"`,
+  ).join(",");
 }
 
 interface Counter {
@@ -36,18 +46,36 @@ interface Histogram {
 }
 
 export class MetricsRegistry {
+  private droppedSeries = 0;
+
+  constructor(private readonly maxSeriesPerMetric = 1000) {
+    if (!Number.isSafeInteger(maxSeriesPerMetric) || maxSeriesPerMetric < 1) throw new RangeError("Invalid metric series limit");
+  }
+
+  private admit(samples: ReadonlyMap<string, unknown>, key: string): boolean {
+    if (samples.has(key) || samples.size < this.maxSeriesPerMetric) return true;
+    this.droppedSeries += 1;
+    return false;
+  }
+
+  private assertName(name: string): void {
+    if (!/^[a-zA-Z_:][a-zA-Z0-9_:]*$/.test(name)) throw new TypeError("Invalid metric name");
+  }
+
   private readonly counters = new Map<string, Counter>();
   private readonly gauges = new Map<string, Gauge>();
   // HISTOGRAM_FIELDS_V1 - histogramas con buckets default.
   private readonly histograms = new Map<string, Histogram>();
 
   counter(name: string, help: string): void {
+    this.assertName(name);
     if (!this.counters.has(name)) {
       this.counters.set(name, { name, help, samples: new Map() });
     }
   }
 
   gauge(name: string, help: string): void {
+    this.assertName(name);
     if (!this.gauges.has(name)) {
       this.gauges.set(name, { name, help, samples: new Map() });
     }
@@ -55,6 +83,10 @@ export class MetricsRegistry {
 
   // HISTOGRAM_METHODS_V1 - registrar y observar histogramas.
   histogram(name: string, help: string, buckets?: number[]): void {
+    this.assertName(name);
+    if (buckets && (!buckets.length || buckets.some((value) => !Number.isFinite(value)) || new Set(buckets).size !== buckets.length)) {
+      throw new TypeError("Invalid histogram buckets");
+    }
     if (!this.histograms.has(name)) {
       const defaultBuckets = buckets ?? [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
       this.histograms.set(name, {
@@ -68,12 +100,14 @@ export class MetricsRegistry {
 
   // HISTOGRAM_QUANTILE_V1 - calcula un cuantil (0..1) sobre el histograma.
   // METRICS_QUANTILE_P99_V1
-  quantile(name: string, q: number): number | undefined {
+  quantile(name: string, q: number, filter?: { tenant?: string }): number | undefined {
+    if (!Number.isFinite(q) || q < 0 || q > 1) throw new RangeError("Invalid quantile");
     const h = this.histograms.get(name);
     if (!h || h.samples.size === 0) return undefined;
     let total = 0;
     const rows: { le: number; cumulative: number }[] = [];
     for (const s of h.samples.values()) {
+      if (filter?.tenant && s.labels.tenant !== filter.tenant) continue;
       let cumulative = 0;
       for (let i = 0; i < h.buckets.length; i += 1) {
         cumulative += s.counts[i];
@@ -98,9 +132,11 @@ export class MetricsRegistry {
   observe(name: string, value: number, labels: Labels = {}): void {
     const h = this.histograms.get(name);
     if (!h) return;
+    if (!Number.isFinite(value) || "le" in labels) throw new TypeError("Invalid histogram observation");
     const key = labelKey(labels);
+    if (!this.admit(h.samples, key)) return;
     const sample = h.samples.get(key) ?? {
-      labels,
+      labels: { ...labels },
       counts: new Array(h.buckets.length + 1).fill(0),
       sum: 0,
       count: 0,
@@ -116,8 +152,10 @@ export class MetricsRegistry {
   inc(name: string, labels: Labels = {}, value = 1): void {
     const c = this.counters.get(name);
     if (!c) return;
+    if (!Number.isFinite(value) || value < 0) throw new TypeError("Invalid counter increment");
     const key = labelKey(labels);
-    const sample = c.samples.get(key) ?? { labels, value: 0 };
+    if (!this.admit(c.samples, key)) return;
+    const sample = c.samples.get(key) ?? { labels: { ...labels }, value: 0 };
     sample.value += value;
     c.samples.set(key, sample);
   }
@@ -125,11 +163,74 @@ export class MetricsRegistry {
   set(name: string, value: number, labels: Labels = {}): void {
     const g = this.gauges.get(name);
     if (!g) return;
-    g.samples.set(labelKey(labels), { labels, value });
+    if (!Number.isFinite(value)) throw new TypeError("Invalid gauge value");
+    const key = labelKey(labels);
+    if (!this.admit(g.samples, key)) return;
+    g.samples.set(key, { labels: { ...labels }, value });
   }
 
   // METRICS_EXPORTER_TENANT_V1 — filtro opcional por label tenant. Sin
   // filtro, comportamiento anterior (todas las métricas).
+  counterTotal(name: string, filter: Labels = {}): number | undefined {
+    const counter = this.counters.get(name);
+    if (!counter) return undefined;
+    let total = 0;
+    for (const sample of counter.samples.values()) {
+      if (Object.entries(filter).every(([key, value]) => sample.labels[key] === value)) total += sample.value;
+    }
+    return total;
+  }
+
+  /** External scrape: reviewed families only, no tenant or business labels. */
+  renderAggregate(filter?: { tenant?: string }): string {
+    const matches = (labels: Labels) => !filter?.tenant || labels.tenant === filter.tenant;
+    const counters = new Set([
+      "agente_event_failures_total", "agente_events_total", "agente_http_requests_total", "http_errors_by_route_total",
+      "agente_kernel_observations_total", "agente_kernel_telemetry_dropped_total", "agente_kernel_thoughts_appended_total",
+      "agente_kernel_thoughts_total", "agente_kernel_turns_closed_total", "agente_kernel_turns_opened_total", "agente_kernel_turns_total",
+      "agente_llm_calls_total", "agente_llm_latency_ms_count", "agente_llm_latency_ms_sum", "agente_llm_tokens_total",
+      "agente_task_duration_seconds_count", "agente_task_duration_seconds_sum", "agente_tasks_completed_total", "agente_tasks_created_total",
+    ]);
+    const lines: string[] = [];
+    const header = (name: string, type: string) => { lines.push(`# HELP ${name} Aggregated ${name}`, `# TYPE ${name} ${type}`); };
+    for (const counter of this.counters.values()) {
+      if (!counters.has(counter.name)) continue;
+      header(counter.name, "counter");
+      lines.push(`${counter.name} ${[...counter.samples.values()].filter(sample => matches(sample.labels)).reduce((sum, sample) => sum + sample.value, 0)}`);
+    }
+    const gaugePolicies: Record<string, "sum" | "single" | "min"> = {
+      agente_tasks_active: "sum", agente_tenants_total: "single", agente_worker_active: "single",
+      agente_worker_max_active: "single", agente_worker_running: "single", agente_alert_source_available: "min",
+    };
+    for (const gauge of this.gauges.values()) {
+      const policy = gaugePolicies[gauge.name], values = [...gauge.samples.values()].filter(sample => matches(sample.labels));
+      if (!policy || !values.length || (policy === "single" && (values.length !== 1 || Object.keys(values[0].labels).length))) continue;
+      const value = policy === "sum" ? values.reduce((sum, sample) => sum + sample.value, 0)
+        : policy === "min" ? Math.min(...values.map(sample => sample.value)) : values[0].value;
+      header(gauge.name, "gauge"); lines.push(`${gauge.name} ${value}`);
+    }
+    for (const histogram of this.histograms.values()) {
+      if (!["agente_http_request_duration_ms", "agente_kernel_stage_duration_ms"].includes(histogram.name)) continue;
+      header(histogram.name, "histogram");
+      const counts = new Array<number>(histogram.buckets.length + 1).fill(0);
+      let sum = 0, count = 0;
+      for (const sample of histogram.samples.values()) {
+        if (!matches(sample.labels)) continue;
+        for (let index = 0; index < counts.length; index++) counts[index] += sample.counts[index];
+        sum += sample.sum; count += sample.count;
+      }
+      let cumulative = 0;
+      for (let index = 0; index < counts.length; index++) {
+        cumulative += counts[index];
+        lines.push(`${histogram.name}_bucket{le="${index < histogram.buckets.length ? histogram.buckets[index] : "+Inf"}"} ${cumulative}`);
+      }
+      lines.push(`${histogram.name}_sum ${sum}`, `${histogram.name}_count ${count}`);
+    }
+    header("agente_metrics_dropped_series_total", "counter");
+    lines.push(`agente_metrics_dropped_series_total ${this.droppedSeries}`);
+    return lines.join("\n") + "\n";
+  }
+
   render(filter?: { tenant?: string }): string {
     const matchesTenant = (labels: Record<string, string>): boolean =>
       !filter?.tenant || labels.tenant === filter.tenant;
@@ -139,7 +240,7 @@ export class MetricsRegistry {
       lines.push(`# TYPE ${c.name} counter`);
       for (const s of c.samples.values()) {
         if (!matchesTenant(s.labels)) continue;
-        const lbl = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        const lbl = renderLabels(s.labels);
         lines.push(`${c.name}${lbl ? `{${lbl}}` : ""} ${s.value}`);
       }
     }
@@ -148,7 +249,7 @@ export class MetricsRegistry {
       lines.push(`# TYPE ${g.name} gauge`);
       for (const s of g.samples.values()) {
         if (!matchesTenant(s.labels)) continue;
-        const lbl = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        const lbl = renderLabels(s.labels);
         lines.push(`${g.name}${lbl ? `{${lbl}}` : ""} ${s.value}`);
       }
     }
@@ -159,7 +260,7 @@ export class MetricsRegistry {
       lines.push(`# TYPE ${h.name} histogram`);
       for (const s of h.samples.values()) {
         if (!matchesTenant(s.labels)) continue;
-        const baseLabels = Object.entries(s.labels).map(([k, v]) => `${k}="${v}"`).join(",");
+        const baseLabels = renderLabels(s.labels);
         let cumulative = 0;
         for (let i = 0; i < h.buckets.length; i += 1) {
           cumulative += s.counts[i];
@@ -175,6 +276,9 @@ export class MetricsRegistry {
         lines.push(`${h.name}_count${suffix} ${s.count}`);
       }
     }
+    lines.push("# HELP agente_metrics_dropped_series_total New-series observations rejected by the cardinality limit");
+    lines.push("# TYPE agente_metrics_dropped_series_total counter");
+    lines.push(`agente_metrics_dropped_series_total ${this.droppedSeries}`);
     return lines.join("\n") + "\n";
   }
 }
@@ -183,6 +287,7 @@ export const globalMetrics = new MetricsRegistry();
 
 // Registro de los contadores y gauges base.
 globalMetrics.counter("agente_http_requests_total", "Requests HTTP por mÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¾Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â©todo, ruta y status");
+globalMetrics.counter("http_errors_by_route_total", "HTTP errors by route and status");
 globalMetrics.counter("agente_tasks_created_total", "Tareas creadas por tenant y tipo");
 globalMetrics.counter("agente_tasks_completed_total", "Tareas completadas por tenant y estado");
 globalMetrics.counter("agente_llm_calls_total", "Llamadas al LLM por velocidad, modelo, source");

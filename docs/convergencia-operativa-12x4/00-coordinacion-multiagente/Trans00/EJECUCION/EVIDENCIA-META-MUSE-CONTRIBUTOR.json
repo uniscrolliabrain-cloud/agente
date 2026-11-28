@@ -1,0 +1,241 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-27T17:05:33.596Z",
+  "finishedAt": "2026-11-27T17:13:25.604Z",
+  "durationMs": 472008,
+  "git": {
+    "branch": "integration/trans00-core",
+    "head": "9eb03fd57b5200bf0b1b41a6107962c27de8d2d8",
+    "dirty": 0
+  },
+  "ok": true,
+  "failed": [],
+  "advisory": [],
+  "runManifest": {
+    "before": {
+      "branch": "integration/trans00-core",
+      "head": "9eb03fd57b5200bf0b1b41a6107962c27de8d2d8",
+      "dirty": 0
+    },
+    "lockSha256": "1c2851bc2ce1f0eab66ed1fd60b01018d3f56e73dc0124cbaf28e30543fdace0",
+    "nodeVersion": "v24.22.3"
+  },
+  "sourceReportSha256": "9579612147e0340af24cf5b1023b7e68ec0f94bac4ac5ca966927c9fff389aa8",
+  "steps": [
+    {
+      "name": "typecheck",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 13384,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/typecheck.log",
+      "logSha256": "3b634892653e7a16058cb34fc2cc6984fd9b301900470fe34eb1c9763093c70c"
+    },
+    {
+      "name": "typecheck:worker",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/apps/worker/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/trans00-core/apps/worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1033,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/typecheck_worker.log",
+      "logSha256": "20e94eab688c53a4946e55c449662f9539a00a33b1211e164546e774703e5069"
+    },
+    {
+      "name": "test",
+      "kind": "test",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node /workspace/trans00-core/node_modules/tsx/dist/cli.mjs --import ./tests/setup.ts --test --test-reporter=tap --test-concurrency=2 --test-timeout=30000 --test-force-exit tests/**/*.test.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 445360,
+      "counters": {
+        "tests": 1173,
+        "pass": 1143,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 25,
+        "todo": 5
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/test.log",
+      "logSha256": "f7c6ecd77d7049b0c957aaa60ad6f9174f0706e34f227539294fcd4cad2631d7"
+    },
+    {
+      "name": "audit:layers",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/layers.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 224,
+      "counters": {
+        "violaciones": 0
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_layers.log",
+      "logSha256": "31001c121d46ea50b790fa44c32ffe871e77271063801b950b317f544a448809"
+    },
+    {
+      "name": "audit:bridges",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/bridges.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1119,
+      "counters": {
+        "wired": 16,
+        "total": 16
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_bridges.log",
+      "logSha256": "aeeaf031953d7945e989235ed3495d32efbd3ce0b6eba0e06db4da1945c818d2"
+    },
+    {
+      "name": "audit:console",
+      "kind": "audit",
+      "blocking": false,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/no-console.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 215,
+      "counters": {
+        "ocurrencias": 24,
+        "ficheros": 301
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_console.log",
+      "logSha256": "d7f530a8653c360c5317ddac22e5aa2dc4ca85f5849e4a90f3e46089784e7dda"
+    },
+    {
+      "name": "audit:anchors",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/anchors.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 125,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_anchors.log",
+      "logSha256": "896889b996b8b2641160b26077c168339e21467475622eb46a6bddd426b04238"
+    },
+    {
+      "name": "audit:contracts",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/contracts.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 9899,
+      "counters": {},
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_contracts.log",
+      "logSha256": "2013757260c043bfa7e988c8177e327505f33ca365c33dafa080ce358c68049b"
+    },
+    {
+      "name": "audit:idempotency",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/idempotency.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 386,
+      "counters": {
+        "duplicadas": 222,
+        "huerfanas": 0,
+        "repetidas": 181
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_idempotency.log",
+      "logSha256": "14a4c4764785ddf26fbd291ae3cbca8ece9f54e2fdf532c807e08ef4eb470ea6"
+    },
+    {
+      "name": "audit:tenant-default",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/opt/codex/runtimes/codex-primary-runtime/dependencies/node/bin/node --import tsx scripts/audits/tenant-default.ts",
+      "cwd": "/workspace/trans00-core",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 247,
+      "counters": {
+        "permitidas": 161,
+        "prohibidas": 0
+      },
+      "logFile": "/workspace/trans00-core/artifacts/gate/logs/audit_tenant-default.log",
+      "logSha256": "805cb760d8669b749d751cb4e4c1a5795d7c8af8df05140a05c042c6aba2ab9f"
+    }
+  ],
+  "providers": {
+    "fast": {
+      "key": "MUSE_API_KEY",
+      "provider": "meta",
+      "model": "muse-spark-1.3-contributor",
+      "baseURL": "https://api.meta.ai/v1",
+      "status": "LOCAL_IMPLEMENTATION_PASS"
+    },
+    "slow": {
+      "key": "OPEN_ROUTER_API_KEY",
+      "model": "deepseek/deepseek-v3.2"
+    },
+    "jev": {
+      "key": "OPENROUTER_API_KEY",
+      "model": "typesafe/jev-1.14",
+      "policyRequired": true
+    }
+  },
+  "officialSources": {
+    "repository": "https://github.com/meta-models/meta-model-cookbook",
+    "commit": "281239ed357edbb1ecdb9e7e055d57bad51b1075",
+    "contributorExample": "04_muse_code/11_mcp_security_tooling/README.md",
+    "portal": "https://dev.meta.ai/docs",
+    "access": "Official GitHub content read; portal host blocked by environment egress."
+  },
+  "liveConnectivityVerified": false,
+  "secretValuesReadFromStores": false,
+  "workflowExecutedAgainstRealServices": false,
+  "localArchive": "/tmp/trans00-muse-final-gate",
+  "postGateChanges": "Documentation only; tested commit retained explicitly.",
+  "acceptance": {
+    "repositoryGateOk": true,
+    "decision": "NO_GO",
+    "certification": "NOT_CERTIFIED",
+    "productionReady": false,
+    "blockers": [
+      {
+        "campaign": "C05",
+        "status": "PARTIAL",
+        "reason": "Founder approved agntiapro.cards 1.0.0; implementation requires current integration, ablation and scale evidence"
+      },
+      {
+        "campaign": "C08",
+        "status": "BLOCKED_EXTERNAL",
+        "reason": "TypeSafe/JEV API contract verified and durable egress gateway tested locally; provider sandbox, DPA/consent configuration and real cost/calibration evidence remain unverified"
+      },
+      {
+        "campaign": "C13",
+        "status": "BLOCKED_EXTERNAL",
+        "reason": "Anam media, physical playback ACK/barge-in, consent operations and provider contract are not certified"
+      },
+      {
+        "campaign": "C14",
+        "status": "BLOCKED_CONFIGURATION",
+        "reason": "Real parent PDP, credential broker and human child delegations remain unconfigured; synthetic contracts only"
+      },
+      {
+        "campaign": "C15",
+        "status": "PARTIAL",
+        "reason": "Shared restricted-role RLS, provider costs/SLO, canary, complete legacy retirement and founder GO remain pending"
+      }
+    ]
+  }
+}

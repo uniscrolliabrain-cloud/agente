@@ -147,6 +147,11 @@ export async function enqueueIncoming(service: InboundService, binding: WhatsApp
   const inserted = await service.db.insertIfAbsent(binding.owner, "whatsapp-inbox", candidate);
   const inbox = inserted ?? await service.db.get<InboxRecord>(binding.owner, "whatsapp-inbox", id);
   if (!inbox) throw new AppError("No se pudo persistir el mensaje WhatsApp", 503);
+  if (inbox.tenantId !== binding.tenantId || inbox.owner !== binding.owner ||
+      inbox.provider !== message.provider || inbox.accountId !== message.accountId ||
+      inbox.providerMessageId !== message.id || inbox.from !== message.from || inbox.text !== message.text) {
+    throw new AppError("El identificador WhatsApp ya corresponde a otro contenido", 409);
+  }
   if (inbox.status === "queued" && inbox.taskId) return inbox.taskId;
   const task = await service.createTask(binding.owner, {
     kind: "sop",

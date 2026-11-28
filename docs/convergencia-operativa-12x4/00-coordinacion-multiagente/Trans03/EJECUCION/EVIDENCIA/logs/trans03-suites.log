@@ -1,0 +1,23 @@
+✔ a fresh attributed token revalidates both authorizer and caller (1167.462301ms)
+✔ refresh preserves the rotated refresh token and narrows the recorded grant (705.303438ms)
+✔ two refreshers cannot overwrite a winning credential and ambiguous rotation requires reconnection (790.445453ms)
+✔ 408, 429 and 5xx stay outcome-unknown: never a silent success and never a definite rejection (2.355459ms)
+✔ a transport failure or timeout is outcome-unknown, not a rejection (0.36427ms)
+✔ a 2xx without a message id is outcome-unknown instead of accepted (1.10551ms)
+✔ a definite rejection is visible, classified as failed without effect and never echoes the provider body (0.40029ms)
+✔ input validation rejects before any network call (0.28443ms)
+✔ markRead accepts only a bounded provider id and never invents one (0.56044ms)
+✔ Places rejects malformed responses and invalid limits while deduplicating valid results (1.67391ms)
+✔ Resend classifies a malformed success as unknown and handles non-string errors (1.27548ms)
+✔ opposition recognizes an explicit request and survives a later acknowledgement (0.82779ms)
+✔ voice serves its bound snapshot and returns the actual Fast receipt (902.190176ms)
+{"ts":"2026-11-27T23:55:23.414Z","level":"warn","event":"workspace.cache_degraded","provider":"google","operation":"calendar.delete"}
+✔ a failed Calendar cache deletion preserves the accepted provider response and never resends (639.163622ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5598.577516
