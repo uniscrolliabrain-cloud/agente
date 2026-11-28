@@ -71,16 +71,27 @@ export function useSmartNav<T extends string>({
   storageKey,
   ids,
   initial,
+  onDropOutside,
+  railSelector,
 }: {
   storageKey: string;
   ids: readonly T[];
   initial: T;
+  /** SPLIT_PANE_V1 - sacar una entrada de la barra abre esa sección al lado. */
+  onDropOutside?: (id: string) => void;
+  /** Selector de la barra donde vive el menú, para saber cuándo se sale. */
+  railSelector?: string;
 }) {
   const idsRef = useRef(ids);
   idsRef.current = ids;
   // ORDERED_LIST_V1 - el menú de la meta-app se reordena con el mismo gesto que
   // el menú y los chats de la app; el orden se guarda por meta-app.
-  const order = useOrderedList({ ids: ids as readonly string[], storageKey: `${storageKey}__order` });
+  const order = useOrderedList({
+    ids: ids as readonly string[],
+    storageKey: `${storageKey}__order`,
+    ...(onDropOutside ? { onDropOutside } : {}),
+    ...(railSelector ? { railSelector } : {}),
+  });
   const [state, setState] = useState<SmartState>(() => readState(storageKey, initial, ids));
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -148,6 +159,7 @@ export function useSmartNav<T extends string>({
     bindRow: order.bindRow,
     orderDrag: order.drag,
     orderAnnounce: order.announce,
+    orderOutside: order.outside,
   };
 }
 

@@ -40,6 +40,7 @@ import "../design-system/agntia-tokens.css";
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
 import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
+import SplitPane, { SplitDropHint } from "../smart-ux/SplitPane";
 import {
   SmartCommandPalette,
   SmartShortcuts,
@@ -151,19 +152,60 @@ function Block({ title, hint }: { title: string; hint: string }) {
   );
 }
 
+// SPLIT_PANE_V1 - el cuerpo de un workspace, extraído para poder pintar dos a
+// la vez sin duplicar contenido.
+function Workspace({ section }: { section: Section }) {
+  return (
+    <>
+      <article className="ob-hero">
+        <span className="ob-kicker">
+          {section.group} · workspace {String(SECTION_IDS.indexOf(section.id) + 1).padStart(2, "0")} de 18
+        </span>
+        <h1>{section.title}</h1>
+        <p>{section.lead}</p>
+        <div className="ob-hero-tags">
+          <span>Sin backend</span>
+          <span>Texto de relleno</span>
+          <span>Estructura validada</span>
+        </div>
+      </article>
+
+      <div className="ob-stats" aria-label="Indicadores de relleno">
+        {["Eventos", "Traza media", "Latencia p99", "Incidencias"].map((label, index) => (
+          <div className="ob-stat" key={label}>
+            <small>{label}</small>
+            <b>{LOREM_STATS[index]}</b>
+            <em>lorem ipsum</em>
+          </div>
+        ))}
+      </div>
+
+      <div className="ob-grid">
+        <Block title="Qué se imprimirá aquí" hint="Contrato de datos previsto" />
+        <Block title="Estado del contrato" hint="Lo que tiene que existir antes de conectar" />
+      </div>
+    </>
+  );
+}
+
 export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
   const nav = useSmartNav<ObservabilitySectionId>({
     storageKey: "agntia_obs_nav_v1",
     ids: SECTION_IDS,
     initial: "trazas",
+    onDropOutside: (id) => setSplitId(id as ObservabilitySectionId),
+    railSelector: ".ob-rail",
   });
+  // SPLIT_PANE_V1 - el workspace que se mira al lado.
+  const [splitId, setSplitId] = useState<ObservabilitySectionId | null>(null);
+  const splitSection = splitId ? (SECTIONS.find((entry) => entry.id === splitId) ?? null) : null;
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [chats, setChats] = useState<ObsChat[]>(SEED_CHATS);
   const [chatId, setChatId] = useState<string | null>(null);
 
   const section = SECTIONS.find((entry) => entry.id === nav.sectionId) ?? SECTIONS[0];
-  const { go, pins, isPinned, togglePin, collapsed, setCollapsed, openPalette, openShortcuts, sortSections, bindRow, orderDrag, orderAnnounce } = nav;
+  const { go, pins, isPinned, togglePin, collapsed, setCollapsed, openPalette, openShortcuts, sortSections, bindRow, orderDrag, orderAnnounce, orderOutside } = nav;
 
   // Mismo contrato que los otros dos clones: la meta-app escucha en captura y
   // corta la propagación para que el shell que queda debajo no abra a la vez su
@@ -258,6 +300,7 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
       <MetaDock entries={SECTIONS} activeView={section.id} onSelectView={go} namespace="agntia_obs" />
       <OrderGhost drag={orderDrag} />
       <OrderAnnounce text={orderAnnounce} />
+      <SplitDropHint active={orderOutside} />
       <button
         type="button"
         className={"ob-scrim" + (drawer ? " is-on" : "")}
@@ -449,31 +492,13 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
         </header>
 
         <div className="ob-scroll">
-          <article className="ob-hero">
-            <span className="ob-kicker">{section.group} · workspace {String(SECTION_IDS.indexOf(section.id) + 1).padStart(2, "0")} de 18</span>
-            <h1>{section.title}</h1>
-            <p>{section.lead}</p>
-            <div className="ob-hero-tags">
-              <span>Sin backend</span>
-              <span>Texto de relleno</span>
-              <span>Estructura validada</span>
-            </div>
-          </article>
-
-          <div className="ob-stats" aria-label="Indicadores de relleno">
-            {["Eventos", "Traza media", "Latencia p99", "Incidencias"].map((label, index) => (
-              <div className="ob-stat" key={label}>
-                <small>{label}</small>
-                <b>{LOREM_STATS[index]}</b>
-                <em>lorem ipsum</em>
-              </div>
-            ))}
-          </div>
-
-          <div className="ob-grid">
-            <Block title="Qué se imprimirá aquí" hint="Contrato de datos previsto" />
-            <Block title="Estado del contrato" hint="Lo que tiene que existir antes de conectar" />
-          </div>
+          <SplitPane
+            label={splitSection?.title ?? ""}
+            {...(splitSection ? { side: <Workspace section={splitSection} /> } : {})}
+            onClose={() => setSplitId(null)}
+          >
+            <Workspace section={section} />
+          </SplitPane>
 
           <footer className="ob-note">
             <b>Contenido de relleno.</b> Este workspace existe para validar navegación, densidad y comportamiento. Ningún texto ni

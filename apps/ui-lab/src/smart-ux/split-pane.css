@@ -1,0 +1,124 @@
+/* SPLIT_PANE_V1 - la misma lectura que en la app: una línea callada con un
+   tirador corto en el centro, y el panel secundario con su propio borde. Los
+   colores salen de los tokens de cada meta-app. */
+.meta-split[data-split="true"] {
+  display: grid;
+  align-items: stretch;
+  gap: 0;
+  min-height: 100%;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.meta-split-pane {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border-radius: 16px;
+}
+
+.meta-split[data-split="true"] .meta-split-pane[data-pane="side"] {
+  background: var(--v2-bg-card, #fff);
+  box-shadow: inset 0 0 0 1px var(--v2-border, #e6ded0);
+}
+
+.meta-split-handle {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.meta-split-handle > span {
+  width: 2px;
+  height: 30px;
+  border-radius: 2px;
+  background: var(--v2-border-strong, #cfc6b6);
+  transition: background 120ms ease;
+}
+
+.meta-split-handle:hover > span,
+.meta-split-handle:focus-visible > span {
+  background: var(--v2-purple, #6c4fe0);
+}
+
+.meta-split-handle:focus-visible {
+  outline: 2px solid var(--v2-purple, #6c4fe0);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.meta-split-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--v2-bg-card, #fff);
+  border-bottom: 1px solid var(--v2-border, #e6ded0);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--v2-text-3, #6b6459);
+}
+
+.meta-split-head > button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--v2-border, #e6ded0);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.meta-split-head > button:hover {
+  border-color: var(--v2-border-strong, #cfc6b6);
+  color: var(--v2-text, #111);
+}
+
+/* La zona de destino se marca solo mientras el arrastre está fuera de la barra. */
+.meta-split-hint {
+  position: fixed;
+  top: 50%;
+  right: 24px;
+  z-index: 94;
+  transform: translateY(-50%);
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 2px dashed var(--v2-purple, #6c4fe0);
+  background: rgba(108, 79, 224, 0.07);
+  color: var(--v2-purple, #6c4fe0);
+  font-size: 12.5px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .meta-split[data-split="true"] {
+    padding: 8px;
+  }
+
+  .meta-split-handle {
+    cursor: row-resize;
+  }
+
+  .meta-split-handle > span {
+    width: 30px;
+    height: 2px;
+  }
+
+  .meta-split-hint {
+    top: auto;
+    right: 50%;
+    bottom: 18px;
+    transform: translateX(50%);
+  }
+}

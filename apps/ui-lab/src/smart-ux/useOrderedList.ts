@@ -39,6 +39,10 @@ type Options = {
   /** CHATS_ORDER_V1 - triple clic sube la fila arriba. */
   tripleClickToTop?: boolean;
   onChange?: (next: string[]) => void;
+  /** SPLIT_PANE_V1 - soltar fuera de la barra devuelve el id que se abre al lado. */
+  onDropOutside?: (id: string) => void;
+  /** Selector de la barra: su borde derecho marca la zona de destino. */
+  railSelector?: string;
 };
 
 const TRIPLE_MS = 700;
@@ -69,6 +73,8 @@ export function useOrderedList({
   tolerance = 6,
   tripleClickToTop = false,
   onChange,
+  onDropOutside,
+  railSelector,
 }: Options) {
   const signature = ids.join("|");
   const [order, setOrder] = useState<string[]>([]);
@@ -76,6 +82,8 @@ export function useOrderedList({
   const [dropBefore, setDropBefore] = useState<string | null>(null);
   const [dropAtEnd, setDropAtEnd] = useState(false);
   const [announce, setAnnounce] = useState("");
+  /** El puntero está fuera de la barra: soltar abre el panel dividido. */
+  const [outside, setOutside] = useState(false);
   const rows = useRef(new Map<string, HTMLElement>());
   const labels = useRef(new Map<string, string>());
   const hold = useRef<number | null>(null);
@@ -85,11 +93,15 @@ export function useOrderedList({
   const suppress = useRef(0);
   const base = useRef<string[]>([]);
   const change = useRef(onChange);
+  const dropOut = useRef(onDropOutside);
+  const railBox = useRef<DOMRect | null>(null);
+  const isOutside = useRef(false);
   const clicks = useRef<{ id: string; count: number; at: number }>({ id: "", count: 0, at: 0 });
 
   useEffect(() => {
     change.current = onChange;
-  }, [onChange]);
+    dropOut.current = onDropOutside;
+  }, [onChange, onDropOutside]);
 
   // El orden guardado se respeta; lo nuevo que aún no estaba se añade al final.
   useEffect(() => {
@@ -135,6 +147,9 @@ export function useOrderedList({
   const beginDrag = useCallback(
     (id: string, label: string, el: HTMLElement, clientY: number) => {
       const rect = el.getBoundingClientRect();
+      railBox.current = railSelector ? (document.querySelector(railSelector)?.getBoundingClientRect() ?? null) : null;
+      isOutside.current = false;
+      setOutside(false);
       base.current = orderedIds;
       before.current = null;
       atEnd.current = false;
@@ -144,7 +159,7 @@ export function useOrderedList({
       press.current = null;
       setDrag({ id, label, y: clientY, left: rect.left, width: rect.width, height: rect.height, grab: clientY - rect.top });
     },
-    [orderedIds],
+    [orderedIds, railSelector],
   );
 
   // El gesto escucha en window desde que empieza: si solo escuchara en la fila,
@@ -155,6 +170,14 @@ export function useOrderedList({
     const label = drag.label;
     const onMove = (event: PointerEvent) => {
       setDrag((value) => (value ? { ...value, y: event.clientY } : value));
+      // SPLIT_PANE_V1 - fuera de la barra se ofrece el panel dividido y se deja
+      // de calcular el hueco de la lista.
+      const out = Boolean(dropOut.current && railBox.current && event.clientX > railBox.current.right + 8);
+      if (out !== isOutside.current) {
+        isOutside.current = out;
+        setOutside(out);
+      }
+      if (out) return;
       let target: string | null = null;
       for (const id of base.current) {
         if (id === moving) continue;
@@ -176,6 +199,19 @@ export function useOrderedList({
     };
     const finish = (commit: boolean) => {
       const next = base.current.filter((id) => id !== moving);
+      if (commit && isOutside.current) {
+        // SPLIT_PANE_V1 - soltar fuera de la barra: esa fila se abre al lado.
+        isOutside.current = false;
+        setOutside(false);
+        dropOut.current?.(moving);
+        suppress.current = performance.now() + 400;
+        before.current = null;
+        atEnd.current = false;
+        setDropBefore(null);
+        setDropAtEnd(false);
+        setDrag(null);
+        return;
+      }
       if (commit) {
         const at = before.current ? next.indexOf(before.current) : -1;
         if (at >= 0) next.splice(at, 0, moving);
@@ -311,6 +347,8 @@ export function useOrderedList({
     /** Ordena una lista de elementos con `id`. */
     sortList,
     drag,
+    /** Soltar ahora abre el panel dividido en vez de reordenar. */
+    outside,
     dropBefore,
     dropAtEnd,
     /** "before" / "after" / null para la fila indicada. */

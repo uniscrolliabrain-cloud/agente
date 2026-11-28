@@ -1,6 +1,7 @@
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
 import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
+import SplitPane, { SplitDropHint } from "../smart-ux/SplitPane";
 // AGNTIA_CODE_V1 - tercer clon del demo.
 // Plataforma de IA coding y bitácora conectada a GitHub, Vercel y Cloudflare.
 // Los datos vienen de los 17 repos reales de uniscrolliabrain-cloud, leídos de
@@ -1373,11 +1374,17 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
     bindRow,
     orderDrag,
     orderAnnounce,
+    orderOutside,
   } = useSmartNav<SectionId>({
     storageKey: "agntia_code_smart_v1",
     ids: SECTION_IDS,
     initial: "estudio",
+    onDropOutside: (id) => setSplitId(id as SectionId),
+    railSelector: ".ac-rail",
   });
+  // SPLIT_PANE_V1 - el workspace que se mira al lado; sin él no hay panel.
+  const [splitId, setSplitId] = useState<SectionId | null>(null);
+  const splitSection = splitId ? (SECTIONS.find((entry) => entry.id === splitId) ?? null) : null;
   const [repoName, setRepoName] = useState(() => {
     try {
       const stored = window.localStorage.getItem("agntia_code_repo");
@@ -1600,6 +1607,7 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
       <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_ac"/>
       <OrderGhost drag={orderDrag}/>
       <OrderAnnounce text={orderAnnounce}/>
+      <SplitDropHint active={orderOutside}/>
         <button
           type="button"
           className={"ac-scrim" + (drawer ? " is-on" : "")}
@@ -1808,6 +1816,11 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
           </header>
 
           <div className="ac-scroll" ref={scroller}>
+            <SplitPane
+              label={splitSection?.label ?? ""}
+              {...(splitSection ? { side: <div className="ac-body">{VARIANTS[splitSection.variant]}</div> } : {})}
+              onClose={() => setSplitId(null)}
+            >
             <main className="ac-page">
               <header className="ac-page-head">
                 <div>
@@ -1850,6 +1863,7 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
                 </span>
               </footer>
             </main>
+            </SplitPane>
           </div>
 
           <div className="ac-statusbar">

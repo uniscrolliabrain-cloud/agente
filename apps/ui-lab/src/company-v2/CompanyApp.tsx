@@ -1,6 +1,7 @@
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
 import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
+import SplitPane, { SplitDropHint } from "../smart-ux/SplitPane";
 // TU_EMPRESA_V1 - andamio de la meta-app.
 // Clon del shell de AgntiaPro abierto desde Ajustes → Tu Empresa. Todo el
 // contenido es día 90 a propósito: primero se valida la estructura y el
@@ -438,11 +439,17 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
     bindRow,
     orderDrag,
     orderAnnounce,
+    orderOutside,
   } = useSmartNav<SectionId>({
     storageKey: "agntia_company_smart_v1",
     ids: SECTION_IDS,
     initial: "estudio",
+    onDropOutside: (id) => setSplitId(id as SectionId),
+    railSelector: ".co-rail",
   });
+  // SPLIT_PANE_V1 - la sección que se mira al lado; sin ella no hay panel.
+  const [splitId, setSplitId] = useState<SectionId | null>(null);
+  const splitSection = splitId ? (SECTIONS.find((entry) => entry.id === splitId) ?? null) : null;
   const choose = (id: SectionId) => {
     go(id);
     setSelected(null);
@@ -691,6 +698,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
       <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_co"/>
       <OrderGhost drag={orderDrag}/>
       <OrderAnnounce text={orderAnnounce}/>
+      <SplitDropHint active={orderOutside}/>
       <button
         type="button"
         className={"co-scrim" + (drawer ? " is-on" : "")}
@@ -893,6 +901,11 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
               onToast={setNotice}
             />
           ) : (
+          <SplitPane
+            label={splitSection?.label ?? ""}
+            {...(splitSection ? { side: <Workspace key={splitSection.id} section={splitSection} onSelect={setSelected}/> } : {})}
+            onClose={() => setSplitId(null)}
+          >
           <main className="co-page">
             <header className="co-page-head">
               <div>
@@ -935,6 +948,7 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
               </span>
             </footer>
           </main>
+          </SplitPane>
           )}
         </div>
       </div>
