@@ -14,7 +14,7 @@ import DockRail from "./components/DockRail";
 import TopBarV2 from "./components/TopBarV2";
 import ChatPanel from "./components/ChatPanel";
 import CommandCenterView from "./components/CommandCenterView";
-import CommandCenterEditorialView from "./components/CommandCenterEditorialView";
+import CommandCenterEditorialView, { type CommandCenterPresentation } from "./components/CommandCenterEditorialView";
 import Login from "./components/Login";
 import LoginV3 from "./components/login-v3/LoginV3";
 import Landing from "./landing/Landing.jsx";
@@ -106,10 +106,13 @@ type CodeArea = (opts: { onClose: () => void }) => ReactNode;
 
 export default function App({
   demoViews,
+  demoCommandCenterPresentation,
   companyArea,
   codeArea,
 }: {
   demoViews?: Partial<Record<AppView, DemoView>>;
+  /** Presentación exclusiva del clon; no sustituye el loader ni los callbacks. */
+  demoCommandCenterPresentation?: CommandCenterPresentation;
   companyArea?: CompanyArea;
   codeArea?: CodeArea;
 } = {}) {
@@ -322,9 +325,10 @@ export default function App({
   // SPLIT_PANE_V1 - una sola descripción de vistas para los dos paneles, así el
   // panel dividido monta exactamente lo mismo que la vista principal.
   const renderViewContent = (current: AppView): ReactNode => {
-    if (current === "today" && USE_COMMAND_CENTER_V2) {
+    if (current === "today" && (USE_COMMAND_CENTER_V2 || (demoViews && demoCommandCenterPresentation))) {
       return (
         <CommandCenterEditorialView
+          {...(demoViews && demoCommandCenterPresentation ? { presentation: demoCommandCenterPresentation } : {})}
           onOpenTask={(id) => setOpenTaskId(id)}
           onReviewTask={(id) => setReviewTaskId(id)}
           onOpenTasksView={() => setView("tasks")}

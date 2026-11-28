@@ -2,6 +2,7 @@
 // (agentes, en marcha, aprobaciones, equipo, incidencias, actividad). El detalle
 // es inline en escritorio y hoja inferior en móvil; la acción solo existe si hay
 // callback real.
+import { ChangeMark } from "../PresentationChanges";
 import { useEffect, useState, type ReactNode } from "react";
 import { Activity, AlertTriangle, Bot, CheckCircle2, Play, Users } from "lucide-react";
 import type { CompanyOverview } from "../../../../web/src/api/company";
@@ -76,7 +77,7 @@ export function EditorialOperational({
       detail:
         waiting === 0
           ? "No hay tareas esperando tu autorización."
-          : `${waiting} tareas necesitan tu decisión. Se revisan desde «Requiere tu atención» o desde Tareas.`,
+          : `${waiting} tareas esperan una decisión o información. Se revisan desde «Requiere tu atención» o desde Tareas.`,
       ...(onOpenTasks ? { action: { label: "Ver pendientes", run: onOpenTasks } } : {}),
     },
     {
@@ -143,12 +144,13 @@ export function EditorialOperational({
               key={block.id}
               type="button"
               className="cce-block"
+              data-tone={block.id === "incidencias" && failed > 0 ? "failed" : block.id === "aprobaciones" && waiting > 0 ? "waiting" : undefined}
               aria-expanded={expanded}
               aria-controls={expanded ? "cce-block-detail" : undefined}
               onClick={() => setSelected(expanded ? null : block.id)}
             >
               <span className="cce-block-icon">{block.icon}</span>
-              <span className="cce-block-title">{block.title}</span>
+              <span className="cce-block-title">{block.title}<ChangeMark observation={`block:${block.id}`} /></span>
               <span className="cce-block-desc">{block.desc}</span>
               <span className="cce-block-num">{block.num}</span>
             </button>
@@ -164,7 +166,7 @@ export function EditorialOperational({
 
       {current && narrow && (
         <EditorialSheet title={`${current.title} · ${current.num}`} onClose={() => setSelected(null)}>
-          <div className="cce-block-detail" id="cce-block-detail" style={{ border: 0, padding: 0, background: "transparent" }}>
+          <div className="cce-block-detail cce-sheet-content" id="cce-block-detail" style={{ border: 0, padding: 0, background: "transparent" }}>
             <p>{current.detail}</p>
             {current.action && (
               <button

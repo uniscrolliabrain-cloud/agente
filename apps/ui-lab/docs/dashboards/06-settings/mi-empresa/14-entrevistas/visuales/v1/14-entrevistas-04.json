@@ -1,0 +1,11 @@
+{
+  "id": "14-entrevistas-04",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/14-entrevistas/visuales/v1/14-entrevistas-04.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "14-entrevistas — icono transcripción",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-5.json",
+  "status": "review-required"
+}

@@ -15,7 +15,7 @@ export function EditorialBriefing({ text, hasFinishedWork, onSeeWork, onOpenChat
     <section className="cce-briefing" aria-labelledby="cce-briefing-title">
       <div className="cce-briefing-head">
         <Sparkles size={14} aria-hidden="true" />
-        <span id="cce-briefing-title">Briefing de LAIA</span>
+        <h2 className="cce-briefing-heading" id="cce-briefing-title">Briefing de LAIA</h2>
       </div>
       <p className="cce-briefing-text">{text}</p>
       {(onOpenChat || hasFinishedWork) && (

@@ -1,5 +1,6 @@
 // Equipo y agentes: mismos datos, mismos permisos y mismos enlaces de salida
 // que la vista original. El alta solo aparece cuando `canManageMembers`.
+import { ChangeMark } from "../PresentationChanges";
 import { ArrowUpRight, Bot, Users } from "lucide-react";
 import type { CompanyAgent, CompanyMember } from "../../../../web/src/api/company";
 import { ROLE_LABEL } from "../../../../web/src/components/command-center/labels";
@@ -47,7 +48,7 @@ export function EditorialPanels({
                   {member.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="cce-row-body">
-                  <span className="cce-person-name">{member.name}</span>
+                  <span className="cce-person-name">{member.name}<ChangeMark observation={`member:${member.userId}`} /></span>
                   <span className="cce-person-meta">{member.email}</span>
                 </span>
                 <span className={`cce-tag ${member.role === "owner" ? "cce-tag--info" : ""}`.trim()}>
@@ -88,7 +89,7 @@ export function EditorialPanels({
                   {agent.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span className="cce-row-body">
-                  <span className="cce-person-name">{agent.name}</span>
+                  <span className="cce-person-name">{agent.name}<ChangeMark observation={`agent:${agent.id}`} /></span>
                   <span className="cce-person-meta">{agent.active ? "Activo" : "En pausa"}</span>
                 </span>
                 <span

@@ -1,0 +1,148 @@
+/*
+ * Centro de Mando · V2 / materialidad computacional.
+ * La profundidad comunica el tipo de superficie, no la importancia del dato.
+ * Una sola dirección de luz, derivada de la gramática cálida de Landing.
+ * Sin blur, glassmorphism, parallax ni cambios de geometría o de paleta.
+ * Importar DESPUÉS de command-center-editorial.css.
+ */
+.cce-root {
+  --cce-mat-light: rgba(255, 255, 255, .76);
+  --cce-mat-contact: 0 1px 2px rgba(36, 36, 33, .035);
+  --cce-mat-ambient: 0 7px 25px rgba(73, 57, 40, .024);
+  --cce-mat-raised: 0 2px 4px rgba(36, 36, 33, .055),
+    0 8px 20px rgba(52, 41, 25, .055);
+  --cce-mat-inset: inset 0 1px 2px rgba(52, 41, 25, .055);
+  --cce-mat-sheet: 0 -1px 2px rgba(36, 36, 33, .045),
+    0 -16px 48px -22px rgba(36, 36, 33, .28);
+  --cce-mat-edge: inset 0 1px 0 var(--cce-mat-light);
+  --cce-mat-bound: var(--cce-line);
+  --cce-mat-neutral-strong: #d5cdbf;
+  --cce-mat-paper: linear-gradient(155deg, var(--cce-paper), var(--cce-soft));
+  --cce-mat-button-shadow: var(--cce-mat-contact), var(--cce-mat-edge);
+}
+
+/* Papel editorial: la pieza de LAIA es un plano continuo, no una tarjeta flotante. */
+.cce-root :is(.cce-briefing, .cc-briefing) {
+  background-color: var(--cce-soft);
+  background-image: var(--cce-mat-paper);
+  border-color: var(--cce-mat-bound);
+  box-shadow: var(--cce-mat-edge), var(--cce-mat-contact);
+}
+.cce-root :is(.cce-briefing, .cc-briefing)::before {
+  background: var(--cce-gold);
+}
+
+/* Cifras y actividad abiertas: ni sombras ni cajas añadidas. */
+.cce-root :is(.cce-kpis, .cc-kpis, .cce-list, .cce-timeline, .cc-timeline) {
+  border-color: var(--cce-mat-bound);
+  box-shadow: none;
+}
+.cce-root :is(.cce-kpi, .cc-kpi):hover {
+  background: transparent;
+}
+.cce-root :is(.cce-kpi[aria-pressed="true"], .cc-kpi.active) {
+  background: transparent;
+}
+.cce-root .cc-kpi.active {
+  box-shadow: inset 0 -2px 0 var(--cce-violet);
+}
+.cce-root .cce-kpi[aria-pressed="true"]::after {
+  background: var(--cce-violet);
+}
+
+/* Planos informativos: blancos y quietos, con una única sombra ambiental.
+ * Una tarjeta de lectura no finge ser un botón al pasar el puntero. */
+.cce-root :is(.cce-card, .cc-card, .cce-panel) {
+  background: var(--cce-surface);
+  box-shadow: var(--cce-mat-contact), var(--cce-mat-ambient);
+}
+.cce-root :is(.cce-card, .cc-card):hover {
+  box-shadow: var(--cce-mat-contact), var(--cce-mat-ambient);
+  border-color: var(--cce-mat-bound);
+}
+.cce-root .cce-card--alert:hover {
+  border-inline-start-color: var(--cce-danger-text);
+}
+.cce-root :is(.cce-card, .cc-card, .cce-panel):focus-within {
+  border-color: var(--cce-mat-neutral-strong);
+}
+.cce-root .cce-card--alert:focus-within {
+  border-inline-start-color: var(--cce-danger-text);
+}
+
+/* Planos instrumentales: contacto físico perceptible y estado expandido estable. */
+.cce-root :is(.cce-block, .cc-block) {
+  background: var(--cce-surface);
+  box-shadow: var(--cce-mat-button-shadow);
+}
+.cce-root :is(.cce-block[aria-expanded="true"], .cc-block.selected) {
+  background: var(--cce-lilac);
+  border-color: var(--cce-violet);
+  box-shadow: var(--cce-mat-inset);
+}
+.cce-root :is(.cce-block-detail, .cc-block-detail) {
+  box-shadow: var(--cce-mat-inset);
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn) {
+  box-shadow: var(--cce-mat-button-shadow);
+}
+.cce-root :is(.cce-btn--primary, .cc-btn.primary) {
+  box-shadow: 0 2px 5px rgba(36, 36, 33, .10), inset 0 1px 0 rgba(255, 255, 255, .13);
+}
+.cce-root .cce-btn--quiet {
+  box-shadow: none;
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-block, .cc-block):active:not(:disabled) {
+  box-shadow: var(--cce-mat-inset);
+}
+.cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn):disabled {
+  box-shadow: none;
+}
+.cce-root .cce-btn--quiet:active:not(:disabled) {
+  box-shadow: none;
+}
+
+/* Identidad de actores: materiales mates sin simular retratos ni presencia. */
+.cce-root :is(.cce-avatar, .cc-timeline-avatar) {
+  box-shadow: inset 0 0 0 1px rgba(36, 36, 33, .045), var(--cce-mat-contact);
+}
+
+/* Superficies temporales: elevación reservada al plano que intercepta interacción. */
+.cce-root .cce-sheet {
+  box-shadow: var(--cce-mat-sheet);
+}
+.cce-root :is(.cce-notice, .cce-error, .cce-sample, .cce-empty) {
+  box-shadow: none;
+}
+
+/* Hover solo en dispositivos donde existe. No animar ni elevar información pasiva. */
+@media (hover: hover) and (pointer: fine) {
+  .cce-root :is(.cce-block, .cc-block):hover:not([aria-expanded="true"]):not(.selected) {
+    border-color: var(--cce-mat-neutral-strong);
+    box-shadow: var(--cce-mat-raised);
+  }
+  .cce-root :is(.cce-kpi, .cc-kpi):hover {
+    background: rgba(242, 239, 232, .55);
+  }
+  .cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn):hover:not(:disabled):not(.cce-btn--quiet) {
+    box-shadow: var(--cce-mat-raised);
+  }
+  .cce-root :is(.cce-btn, .cc-btn, .cce-icon-btn, .cce-block, .cc-block):active:not(:disabled) {
+    box-shadow: var(--cce-mat-inset);
+  }
+}
+@media (forced-colors: active) {
+  .cce-root :is(.cce-briefing, .cc-briefing) {
+    background-image: none;
+  }
+  .cce-root :is(.cce-kpi[aria-pressed="true"], .cc-kpi.active, .cce-block[aria-expanded="true"], .cc-block.selected) {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
+}
+@media print {
+  .cce-root :is(.cce-briefing, .cc-briefing, .cce-card, .cc-card, .cce-panel, .cce-block, .cc-block, .cce-btn, .cc-btn, .cce-avatar) {
+    box-shadow: none;
+    background-image: none;
+  }
+}

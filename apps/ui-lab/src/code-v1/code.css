@@ -200,6 +200,10 @@
   left: 0;
   right: 0;
   top: calc(100% + 5px);
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ac-line-strong) transparent;
   padding: 4px;
   border: 1px solid var(--ac-line-strong);
   border-radius: 9px;
@@ -224,6 +228,56 @@
 .ac-project-menu button:hover,
 .ac-project-menu button[aria-selected="true"] {
   background: var(--ac-soft);
+}
+
+.ac-project-menu button > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-project-menu button small {
+  color: var(--ac-muted);
+  font-size: 9px;
+}
+
+.ac-empty {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 10px 0;
+  padding: 14px;
+  border: 1px dashed var(--ac-line-strong);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ac-card) 70%, transparent);
+  color: var(--ac-ink-2);
+}
+
+.ac-empty > svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--ac-amber);
+}
+
+.ac-empty b {
+  display: block;
+  font-size: 12px;
+}
+
+.ac-empty p {
+  margin: 3px 0 0;
+  color: var(--ac-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.ac-empty code {
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--ac-soft);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 10.5px;
 }
 
 .ac-nav {
@@ -2893,5 +2947,134 @@
   .ac-root *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+/* --------------------------------------------------------------- SMART_UX_V1
+ * La misma capa de interacción que Tu Empresa, adaptada al tono de IDE:
+ * búsqueda con ⌘K, fijados persistentes, migas navegables y terminal con
+ * historial real. */
+
+.ac-search-btn {
+  display: none;
+}
+
+.ac-top-search {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 130ms ease, background 130ms ease, color 130ms ease;
+}
+
+.ac-top-search > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10.5px;
+  color: #a39a8c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ac-top-search:hover {
+  border-color: var(--ac-line-strong);
+  background: color-mix(in srgb, var(--ac-accent) 4%, var(--ac-card));
+  color: var(--ac-ink);
+}
+
+.ac-top-search kbd {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid var(--ac-line);
+  border-radius: 4px;
+  background: var(--ac-soft);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 8.5px;
+  line-height: 14px;
+  color: #8e8577;
+}
+
+.ac-crumb-root {
+  padding: 2px 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9c9385;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+  white-space: nowrap;
+}
+
+.ac-crumb-root:hover {
+  background: var(--ac-soft);
+  color: var(--ac-ink);
+}
+
+.ac-nav-group--pins {
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--ac-line);
+}
+
+.ac-nav-group--pins > small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ac-nav-pinmark {
+  flex: 0 0 auto !important;
+  width: 11px;
+  height: 11px;
+  color: color-mix(in srgb, var(--ac-accent) 58%, #968d7f) !important;
+  opacity: 0.9;
+}
+
+.ac-rail.is-collapsed .ac-nav-pinmark {
+  display: none;
+}
+
+.ac-term-kbd {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid var(--ac-line);
+  border-radius: 4px;
+  background: var(--ac-soft);
+  font-family: ui-monospace, monospace;
+  font-size: 8.5px;
+  line-height: 14px;
+  color: #8e8577;
+}
+
+.ac-top-search:focus-visible,
+.ac-crumb-root:focus-visible,
+.ac-nav-group > button:focus-visible,
+.ac-term-input input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ac-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.ac-term-input:focus-within {
+  border-color: color-mix(in srgb, var(--ac-accent) 34%, var(--ac-line-strong));
+}
+
+@media (max-width: 1180px) {
+  .ac-search-btn {
+    display: grid;
+  }
+}
+
+@media (max-width: 620px) {
+  .ac-crumb > .ac-crumb-root,
+  .ac-crumb > span {
+    display: none;
+  }
+
+  .ac-term-kbd {
+    display: none;
   }
 }

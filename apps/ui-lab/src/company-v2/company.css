@@ -2832,3 +2832,208 @@
     animation-duration: 0.01ms !important;
   }
 }
+/* --------------------------------------------------------------- SMART_UX_V1
+ * Detalles de interacción compartidos con Agntia Code: búsqueda de verdad,
+ * fijados, migas navegables y un chat que responde. Nada de esto cambia el
+ * aspecto general; solo aparece cuando se usa. */
+
+.co-search-btn {
+  display: none;
+}
+
+.co-top-search {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 130ms ease, background 130ms ease, color 130ms ease;
+}
+
+.co-top-search > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 11.5px;
+  color: #a39b8d;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.co-top-search:hover {
+  border-color: var(--co-line-strong);
+  background: color-mix(in srgb, var(--co-accent) 4%, var(--co-card));
+  color: var(--co-ink);
+}
+
+.co-top-search kbd {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid var(--co-line);
+  border-radius: 5px;
+  background: var(--co-soft);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 9px;
+  line-height: 15px;
+  color: #8f8678;
+}
+
+.co-crumb button {
+  padding: 2px 4px;
+  margin-left: -4px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  color: var(--co-muted);
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.co-crumb button:hover {
+  background: var(--co-soft);
+  color: var(--co-ink);
+}
+
+.co-nav-group--pins {
+  padding-bottom: 9px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--co-line);
+}
+
+.co-nav-group--pins > small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.co-nav-pinmark {
+  flex: 0 0 auto !important;
+  width: 11px;
+  height: 11px;
+  color: color-mix(in srgb, var(--co-accent) 58%, #948b7d) !important;
+  opacity: 0.9;
+}
+
+.co-rail.is-collapsed .co-nav-pinmark {
+  display: none;
+}
+
+.co-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 22px 18px;
+  border: 1px dashed var(--co-line-strong);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--co-accent) 2.5%, var(--co-card));
+}
+
+.co-chat-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 4px;
+  border: 1px solid color-mix(in srgb, var(--co-accent) 20%, var(--co-line));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--co-accent) 8%, var(--co-card));
+  color: var(--co-accent);
+}
+
+.co-chat-empty b {
+  font-family: Fraunces, Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+}
+
+.co-chat-empty p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--co-muted);
+}
+
+.co-msg--typing {
+  align-items: center;
+}
+
+.co-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 13px;
+  border-radius: 3px 11px 11px 11px;
+  background: var(--co-paper);
+}
+
+.co-typing i {
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--co-accent) 55%, #b4aa9a);
+  animation: co-typing 1.1s ease-in-out infinite;
+}
+
+.co-typing i:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.co-typing i:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+@keyframes co-typing {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.co-composer-hint {
+  flex: 0 0 auto;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #aaa093;
+}
+
+.co-composer button:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+.co-top-search:focus-visible,
+.co-crumb button:focus-visible,
+.co-nav-group > button:focus-visible,
+.co-composer button:focus-visible,
+.co-composer input:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--co-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.co-composer:focus-within {
+  border-color: color-mix(in srgb, var(--co-accent) 34%, var(--co-line-strong));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--co-accent) 8%, transparent);
+}
+
+@media (max-width: 1180px) {
+  .co-search-btn {
+    display: grid;
+  }
+}
+
+@media (max-width: 620px) {
+  .co-crumb > button,
+  .co-crumb > span {
+    display: none;
+  }
+
+  .co-composer-hint {
+    display: none;
+  }
+}

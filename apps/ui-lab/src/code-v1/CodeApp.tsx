@@ -1,9 +1,10 @@
+import MetaChats from "../smart-ux/MetaChats";
+import MetaDock from "../smart-ux/MetaDock";
 // AGNTIA_CODE_V1 - tercer clon del demo.
-// Plataforma de IA coding, vibe coding y bitácora de proyectos de software,
-// conectada a GitHub, Vercel y Cloudflare. Igual que Tu Empresa, es una capa
-// propia a pantalla completa que se abre desde Ajustes; todo el contenido es
-// lorem ipsum y los botones solo describen el gesto, sin backend real.
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+// Plataforma de IA coding y bitácora conectada a GitHub, Vercel y Cloudflare.
+// Los datos vienen de los 17 repos reales de uniscrolliabrain-cloud, leídos de
+// main el 26 nov 2026. No hay backend: nada se ejecuta ni se despliega aquí.
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Activity,
   ArrowLeft,
@@ -17,7 +18,6 @@ import {
   Clock3,
   Code2,
   Database,
-  ExternalLink,
   FileCode2,
   FlaskConical,
   FolderGit2,
@@ -28,12 +28,13 @@ import {
   Globe,
   GraduationCap,
   KeyRound,
-  Layers,
+  Keyboard,
   Lock,
   Menu,
   MessagesSquare,
   NotebookPen,
   PanelLeft,
+  Pin,
   Play,
   Plus,
   Rocket,
@@ -46,7 +47,27 @@ import {
   X,
 } from "lucide-react";
 import "../design-system/agntia-tokens.css";
+import {
+  SmartCommandPalette,
+  SmartShortcuts,
+  useSmartNav,
+  type SmartCommand,
+  type SmartShortcut,
+} from "../smart-ux/smart-ux";
 import "./code.css";
+import {
+  ACTIVITY,
+  JOURNAL,
+  ORG,
+  PUBLIC_COUNT,
+  READ_DATE,
+  REPOS,
+  SESSIONS,
+  STATE_TONE,
+  TOTAL_ISSUES,
+  TOTAL_TESTS,
+  type Repo,
+} from "./code-data";
 
 type Icon = typeof Code2;
 type SectionId =
@@ -89,119 +110,39 @@ type Variant =
   | "academy"
   | "journal";
 
-type Section = { id: SectionId; label: string; icon: Icon; group: string; variant: Variant; path: string };
+type Section = { id: SectionId; label: string; icon: Icon; group: string; variant: Variant };
 
 const GROUPS = ["Construir", "Integrar", "Publicar", "Aprender"] as const;
 
 const SECTIONS: Section[] = [
-  { id: "estudio", label: "Estudio de código", icon: Code2, group: "Construir", variant: "home", path: "~/lorem-app" },
-  { id: "proyectos", label: "Proyectos", icon: FolderGit2, group: "Construir", variant: "projects", path: "~/proyectos" },
-  { id: "chats", label: "Chats de construcción", icon: MessagesSquare, group: "Construir", variant: "chats", path: "~/chats" },
-  { id: "agente", label: "Agente de código", icon: Bot, group: "Construir", variant: "agent", path: "~/agente" },
-  { id: "editor", label: "Editor", icon: FileCode2, group: "Construir", variant: "editor", path: "~/lorem-app/src" },
-  { id: "terminal", label: "Terminal", icon: SquareTerminal, group: "Construir", variant: "terminal", path: "~/lorem-app" },
-  { id: "repositorios", label: "Repositorios", icon: Github, group: "Integrar", variant: "repos", path: "github.com/lorem" },
-  { id: "ramas", label: "Ramas y Pull Requests", icon: GitPullRequest, group: "Integrar", variant: "pulls", path: "github.com/lorem/pulls" },
-  { id: "revisiones", label: "Revisiones", icon: GitBranch, group: "Integrar", variant: "review", path: "github.com/lorem/pull/42" },
-  { id: "despliegues", label: "Despliegues", icon: Rocket, group: "Publicar", variant: "deploys", path: "vercel.com/lorem" },
-  { id: "infraestructura", label: "Infraestructura", icon: Server, group: "Publicar", variant: "infra", path: "cloudflare.com/lorem" },
-  { id: "dominios", label: "Dominios y DNS", icon: Globe, group: "Publicar", variant: "domains", path: "dominios" },
-  { id: "datos", label: "Datos", icon: Database, group: "Publicar", variant: "data", path: "~/datos" },
-  { id: "entornos", label: "Entornos y secretos", icon: KeyRound, group: "Publicar", variant: "env", path: "~/entornos" },
-  { id: "pruebas", label: "Pruebas y calidad", icon: FlaskConical, group: "Aprender", variant: "tests", path: "~/pruebas" },
-  { id: "observabilidad", label: "Observabilidad", icon: Activity, group: "Aprender", variant: "logs", path: "~/logs" },
-  { id: "academia", label: "Academia", icon: GraduationCap, group: "Aprender", variant: "academy", path: "~/academia" },
-  { id: "bitacora", label: "Bitácora", icon: NotebookPen, group: "Aprender", variant: "journal", path: "~/bitacora" },
+  { id: "estudio", label: "Estudio de código", icon: Code2, group: "Construir", variant: "home" },
+  { id: "proyectos", label: "Proyectos", icon: FolderGit2, group: "Construir", variant: "projects" },
+  { id: "chats", label: "Chats de construcción", icon: MessagesSquare, group: "Construir", variant: "chats" },
+  { id: "agente", label: "Agente de código", icon: Bot, group: "Construir", variant: "agent" },
+  { id: "editor", label: "Editor", icon: FileCode2, group: "Construir", variant: "editor" },
+  { id: "terminal", label: "Terminal", icon: SquareTerminal, group: "Construir", variant: "terminal" },
+  { id: "repositorios", label: "Repositorios", icon: Github, group: "Integrar", variant: "repos" },
+  { id: "ramas", label: "Ramas y Pull Requests", icon: GitPullRequest, group: "Integrar", variant: "pulls" },
+  { id: "revisiones", label: "Revisiones", icon: GitBranch, group: "Integrar", variant: "review" },
+  { id: "despliegues", label: "Despliegues", icon: Rocket, group: "Publicar", variant: "deploys" },
+  { id: "infraestructura", label: "Infraestructura", icon: Server, group: "Publicar", variant: "infra" },
+  { id: "dominios", label: "Dominios y DNS", icon: Globe, group: "Publicar", variant: "domains" },
+  { id: "datos", label: "Datos", icon: Database, group: "Publicar", variant: "data" },
+  { id: "entornos", label: "Entornos y secretos", icon: KeyRound, group: "Publicar", variant: "env" },
+  { id: "pruebas", label: "Pruebas y calidad", icon: FlaskConical, group: "Aprender", variant: "tests" },
+  { id: "observabilidad", label: "Observabilidad", icon: Activity, group: "Aprender", variant: "logs" },
+  { id: "academia", label: "Academia", icon: GraduationCap, group: "Aprender", variant: "academy" },
+  { id: "bitacora", label: "Bitácora", icon: NotebookPen, group: "Aprender", variant: "journal" },
 ];
 
-const LOREM =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Cras mattis consectetur purus sit amet fermentum.";
-const SHORT = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-const TINY = "Lorem ipsum dolor sit amet.";
+const SECTION_IDS = SECTIONS.map((section) => section.id);
 
-const PROJECTS = [
-  { name: "lorem-app", stack: ["Next.js", "D1", "Workers"], state: "Producción" },
-  { name: "ipsum-api", stack: ["Hono", "D1"], state: "Preview" },
-  { name: "dolor-landing", stack: ["Astro", "R2"], state: "Producción" },
-];
-
-const CODE: { txt: string; c?: "key" | "fn" | "str" | "com" | "num" }[][] = [
-  [
-    { txt: "import", c: "key" },
-    { txt: " { lorem, ipsum } " },
-    { txt: "from", c: "key" },
-    { txt: " \"@/lib/dolor\"", c: "str" },
-    { txt: ";" },
-  ],
-  [{ txt: "" }],
-  [{ txt: "// Lorem ipsum dolor sit amet, consectetur", c: "com" }],
-  [
-    { txt: "export const", c: "key" },
-    { txt: " sit " },
-    { txt: "=", c: "key" },
-    { txt: " " },
-    { txt: "amet", c: "fn" },
-    { txt: "({" },
-  ],
-  [
-    { txt: "  consectetur" },
-    { txt: ":" },
-    { txt: " string", c: "key" },
-    { txt: "," },
-  ],
-  [
-    { txt: "  adipiscing" },
-    { txt: ":" },
-    { txt: " number", c: "key" },
-    { txt: "," },
-  ],
-  [{ txt: "}) " }, { txt: "=>", c: "key" }, { txt: " {" }],
-  [
-    { txt: "  const", c: "key" },
-    { txt: " lorem " },
-    { txt: "=", c: "key" },
-    { txt: " " },
-    { txt: "await", c: "key" },
-    { txt: " " },
-    { txt: "ipsum", c: "fn" },
-    { txt: "({" },
-  ],
-  [{ txt: "    dolor" }, { txt: ":" }, { txt: " true", c: "num" }, { txt: "," }],
-  [{ txt: "    tempor" }, { txt: ":" }, { txt: " 42", c: "num" }, { txt: "," }],
-  [{ txt: "  });" }],
-  [{ txt: "" }],
-  [
-    { txt: "  return", c: "key" },
-    { txt: " {" },
-  ],
-  [{ txt: "    ...lorem," }],
-  [{ txt: "    adipiscing" }, { txt: ":" }, { txt: " lorem.length", c: "num" }, { txt: "," }],
-  [{ txt: "  };" }],
-  [{ txt: "};" }],
-];
-
-const FILES = [
-  "src/app/page.tsx",
-  "src/app/layout.tsx",
-  "src/lib/dolor.ts",
-  "src/lib/ipsum.ts",
-  "src/components/hero.tsx",
-  "wrangler.jsonc",
-  "package.json",
-  "README.md",
-];
+const RepoCtx = createContext<Repo>(REPOS[0]);
+const useRepo = () => useContext(RepoCtx);
 
 const initials = (value: string) => value.slice(0, 2).toUpperCase();
 
 /* ------------------------------------------------------------------- piezas */
-
-function Img({ label = "imagen · lorem" }: { label?: string }) {
-  return (
-    <div className="ac-img" aria-label="Imagen de ejemplo">
-      <span>{label}</span>
-    </div>
-  );
-}
 
 function Panel({
   title,
@@ -263,6 +204,18 @@ function Table({ cols, rows }: { cols: string[]; rows: string[][] }) {
   );
 }
 
+function Empty({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="ac-empty">
+      <CircleAlert size={16} />
+      <div>
+        <b>{title}</b>
+        <p>{children}</p>
+      </div>
+    </div>
+  );
+}
+
 function Bars({ n = 9 }: { n?: number }) {
   const values = [38, 52, 44, 66, 58, 74, 69, 86, 78, 92];
   return (
@@ -307,22 +260,24 @@ function Row({ icon: Icon, title, meta, tag }: { icon: Icon; title: string; meta
 /* ---------------------------------------------------------------- variantes */
 
 function Home() {
+  const repo = useRepo();
   return (
     <>
       <section className="ac-prompt">
         <div className="ac-prompt-top">
           <span className="ac-mono">
-            <FolderGit2 size={12} /> lorem-app · main
+            <FolderGit2 size={12} /> {ORG}/{repo.name} · main · {repo.sha}
           </span>
-          <Tag tone="info">Preview</Tag>
+          <Tag tone={STATE_TONE[repo.state]}>{repo.stateLabel}</Tag>
         </div>
         <textarea
           placeholder="Describe lo que quieres construir, cambiar o arreglar…"
           aria-label="Describir qué construir"
+          defaultValue=""
         />
         <div className="ac-prompt-foot">
           <div className="ac-chips">
-            {["Adjuntar archivo", "Elegir repositorio", "Modelo lorem"].map((c) => (
+            {["Adjuntar archivo", repo.project, repo.language].map((c) => (
               <button type="button" key={c} className="ac-chip">
                 {c}
               </button>
@@ -336,10 +291,10 @@ function Home() {
 
       <div className="ac-stats">
         {[
-          ["Proyectos activos", "0", "Lorem ipsum dolor"],
-          ["Despliegues hoy", "00", "Consectetur adipiscing"],
-          ["Cobertura de pruebas", "00 %", "Integer posuere erat"],
-          ["Latencia media", "000 ms", "Cras mattis consectetur"],
+          ["Repos leídos", String(REPOS.length), `${PUBLIC_COUNT} públicos · 2 privados`],
+          ["Pruebas declaradas", String(TOTAL_TESTS), "en 6 repos; no ejecutadas aquí"],
+          ["Desplegados", "0", "ningún vertical en producción"],
+          ["Issues abiertas", String(TOTAL_ISSUES), "11 en agente · 1 en gestoría"],
         ].map(([label, value, note]) => (
           <div className="ac-stat" key={label}>
             <small>{label}</small>
@@ -350,33 +305,26 @@ function Home() {
       </div>
 
       <div className="ac-cols">
-        <Panel title="Proyectos recientes" meta={SHORT} action="Ver todos">
-          {PROJECTS.map((p) => (
+        <Panel title="Proyectos recientes" meta={`Leídos el ${READ_DATE}`} action="Ver todos">
+          {REPOS.slice(0, 5).map((p) => (
             <button type="button" className="ac-project-row" key={p.name}>
               <span className="ac-repo-mark">
                 <Github size={15} />
               </span>
               <span className="ac-project-body">
                 <b>{p.name}</b>
-                <small>{TINY}</small>
+                <small>{p.summary}</small>
               </span>
               <span className="ac-stack">
-                {p.stack.map((s) => (
-                  <em key={s}>{s}</em>
-                ))}
+                <em>{p.language}</em>
               </span>
-              <Tag tone={p.state === "Producción" ? "ok" : "info"}>{p.state}</Tag>
+              <Tag tone={STATE_TONE[p.state]}>{p.state}</Tag>
             </button>
           ))}
         </Panel>
-        <Panel title="Actividad del agente" meta={SHORT}>
-          {[
-            ["Lorem ipsum dolor", "read_file · 00:12"],
-            ["Consectetur adipiscing", "edit_file · 00:48"],
-            ["Integer posuere", "run_tests · 01:20"],
-            ["Cras mattis consectetur", "deploy · 02:04"],
-          ].map(([title, meta]) => (
-            <Row icon={Bot} title={title} meta={meta} tag="Lorem" key={title} />
+        <Panel title="Actividad real" meta="Sin backend: lo que sí ocurrió">
+          {ACTIVITY.map(([title, meta, when]) => (
+            <Row icon={GitCommitHorizontal} title={title} meta={`${meta} · ${when}`} tag="Hecho" key={title} />
           ))}
         </Panel>
       </div>
@@ -400,10 +348,10 @@ function Projects() {
         </button>
       </div>
       <div className="ac-grid ac-grid--3">
-        {[...PROJECTS, { name: "sit-amet-lab", stack: ["Vite", "Hono"], state: "Borrador" }].map((p, i) => (
+        {REPOS.map((p, i) => (
           <article className="ac-card" key={p.name}>
             <div className="ac-card-cover">
-              <span className="ac-mono">0{i + 1}</span>
+              <span className="ac-mono">{String(i + 1).padStart(2, "0")}</span>
               <div className="ac-cover-glyph">
                 <Braces size={22} />
               </div>
@@ -411,17 +359,17 @@ function Projects() {
             <div className="ac-card-body">
               <header>
                 <h3>{p.name}</h3>
-                <Tag tone={p.state === "Producción" ? "ok" : p.state === "Borrador" ? "off" : "info"}>{p.state}</Tag>
+                <Tag tone={STATE_TONE[p.state]}>{p.state}</Tag>
               </header>
-              <p>{SHORT}</p>
+              <p>{p.summary}</p>
               <div className="ac-stack">
-                {p.stack.map((s) => (
-                  <em key={s}>{s}</em>
-                ))}
+                <em>{p.language}</em>
+                {p.tests !== null && <em>{p.tests} pruebas</em>}
+                <em>{p.license}</em>
               </div>
               <footer>
                 <span className="ac-mono">
-                  <GitBranch size={12} /> main
+                  <GitBranch size={12} /> main · {p.sha}
                 </span>
                 <button type="button" aria-label="Abrir proyecto">
                   <ArrowUpRight size={15} />
@@ -432,8 +380,8 @@ function Projects() {
         ))}
         <button type="button" className="ac-card ac-card--new">
           <Plus size={20} />
-          <b>Lorem ipsum</b>
-          <span>Consectetur adipiscing elit</span>
+          <b>Importar otro repo</b>
+          <span>La cuenta tiene 17; este clon los muestra todos.</span>
         </button>
       </div>
     </>
@@ -441,6 +389,7 @@ function Projects() {
 }
 
 function Chats() {
+  const repo = useRepo();
   return (
     <>
       <div className="ac-composer">
@@ -451,39 +400,38 @@ function Chats() {
         </button>
       </div>
       <div className="ac-chat-list">
-        {[
-          ["Lorem ipsum dolor sit", "lorem-app", "Con cambios", "Hace 2 h"],
-          ["Consectetur adipiscing", "lorem-app", "Explorando", "Ayer"],
-          ["Integer posuere erat", "ipsum-api", "Con cambios", "Ayer"],
-          ["Cras mattis consectetur", "dolor-landing", "Aparcada", "12 nov"],
-        ].map(([title, repo, state, when]) => (
+        {SESSIONS.map(([title, repoName, state, when]) => (
           <button type="button" className="ac-chat-card" key={title}>
             <span className="ac-chat-icon">
               <MessagesSquare size={16} />
             </span>
             <span className="ac-chat-body">
               <b>{title}</b>
-              <small>{LOREM}</small>
+              <small>
+                {repoName === "agente" ? "Lectura de 15 README, 2 privados y manifiestos; sin ejecutar código." : repo.summary}
+              </small>
               <span className="ac-chat-meta">
                 <em className="ac-mono">
-                  <FolderGit2 size={11} /> {repo}
+                  <FolderGit2 size={11} /> {repoName}
                 </em>
                 <em>{when}</em>
               </span>
             </span>
-            <Tag tone={state === "Aparcada" ? "off" : state === "Con cambios" ? "ok" : "info"}>{state}</Tag>
+            <Tag tone={state === "Leída" ? "info" : "ok"}>{state}</Tag>
             <ChevronRight size={15} />
           </button>
         ))}
       </div>
-      <Panel title="Contexto de la conversación" meta={SHORT}>
+      <Panel title="Contexto de la conversación" meta={`${repo.name} · main`}>
         <div className="ac-context">
-          {["src/app/page.tsx", "src/lib/dolor.ts", "wrangler.jsonc"].map((f) => (
+          {repo.docs.slice(0, 3).map((f) => (
             <span key={f} className="ac-file-chip">
               <FileCode2 size={13} /> {f}
             </span>
           ))}
-          <span className="ac-mono ac-context-note">Lorem ipsum · 0 archivos adjuntos</span>
+          <span className="ac-mono ac-context-note">
+            {repo.files ?? "—"} archivos · {Math.round(repo.sizeKb / 1024)} MB
+          </span>
         </div>
       </Panel>
     </>
@@ -491,105 +439,119 @@ function Chats() {
 }
 
 function Agent() {
+  const repo = useRepo();
   return (
     <>
       <div className="ac-agent-head">
         <div>
-          <span className="ac-mono">run · lorem-0000</span>
-          <h3>Lorem ipsum dolor sit amet</h3>
-          <p>{SHORT}</p>
+          <span className="ac-mono">run · fichas-17</span>
+          <h3>Leer los 17 repos y escribir una ficha por cada uno</h3>
+          <p>Sin clonar ni ejecutar: README, manifiestos, variables y commit de main.</p>
         </div>
         <div className="ac-agent-actions">
-          <Tag tone="info">En curso</Tag>
+          <Tag tone="ok">Completado</Tag>
           <button type="button" className="ac-btn ac-btn--ghost">
-            <Play size={13} /> Reanudar
+            <Play size={13} /> Repetir
           </button>
         </div>
       </div>
       <ol className="ac-steps">
         {[
-          ["Leer el repositorio", "read_file", "00:12", "done"],
-          ["Proponer cambios", "edit_file", "00:48", "done"],
-          ["Ejecutar pruebas", "run_tests", "01:20", "done"],
-          ["Abrir pull request", "create_pr", "—", "wait"],
+          ["Leer 15 README públicos y 2 privados", "raw.githubusercontent", "00:12", "done"],
+          ["Extraer manifiestos y variables", "package.json · pyproject · .env.example", "00:48", "done"],
+          ["Escribir 18 fichas", "write_file", "01:20", "done"],
+          ["Verificar enlaces y estados", "python: BROKEN none", "00:06", "done"],
+          ["Commit y push a main", "cloud_git · e0993982", "00:04", "done"],
         ].map(([title, tool, time, state], i) => (
-          <li key={title} className={state === "wait" ? "is-wait" : ""}>
-            <span className="ac-step-dot">{state === "done" ? <Check size={12} /> : i + 1}</span>
+          <li key={title}>
+            <span className="ac-step-dot">
+              {state === "done" ? <Check size={12} /> : i + 1}
+            </span>
             <div>
               <b>{title}</b>
               <small>
                 <em className="ac-mono">{tool}</em> · {time}
               </small>
             </div>
-            <Tag tone={state === "done" ? "ok" : "off"}>{state === "done" ? "Hecho" : "Pendiente"}</Tag>
+            <Tag tone="ok">Hecho</Tag>
           </li>
         ))}
       </ol>
-      <Panel title="Cambios propuestos" meta={SHORT} action="Ver diff">
+      <Panel title="Cambios de la sesión" meta="docs(agntia-code): fichas de los 17 repos" action="Ver diff">
         <div className="ac-diff-summary">
           <div>
-            <b>0 archivos</b>
-            <small>+000 / −000 líneas</small>
+            <b>18 archivos</b>
+            <small>+1 039 / −0 líneas</small>
           </div>
           <div className="ac-diff-files">
-            {["src/app/page.tsx", "src/lib/dolor.ts", "src/components/hero.tsx"].map((f) => (
+            {["fichas/README.md", "fichas/agente.md", "fichas/agntia-video.md"].map((f) => (
               <span key={f} className="ac-file-chip">
-                <FileCode2 size={13} /> {f} <em className="ac-add">+00</em>
+                <FileCode2 size={13} /> {f} <em className="ac-add">+62</em>
               </span>
             ))}
           </div>
           <button type="button" className="ac-btn ac-btn--solid">
-            <GitCommitHorizontal size={13} /> Aprobar y commit
+            <GitCommitHorizontal size={13} /> Ya en main
           </button>
         </div>
+        <Empty title={`${repo.name} sigue sin cambios de producto`}>
+          Esta sesión solo añadió documentación. El código del repo no se ha tocado ni ejecutado.
+        </Empty>
       </Panel>
     </>
   );
 }
 
 function Editor() {
-  const [file, setFile] = useState(FILES[0]);
+  const repo = useRepo();
+  const files = ["README.md", ...repo.docs, repo.language.includes("Python") ? "pyproject.toml" : "package.json"];
+  const [file, setFile] = useState(files[0]);
+  const snippet = [
+    repo.language.includes("Python") ? `# ${repo.name} · main@${repo.sha}` : `// ${repo.name} · main@${repo.sha}`,
+    ...(repo.commands.length ? ["# comandos declarados", ...repo.commands] : ["# sin código ejecutable: solo documentación"]),
+    ...(repo.env.length ? ["", "# variables (solo nombres)", ...repo.env.slice(0, 4)] : []),
+    "",
+    `// ${repo.summary}`,
+  ];
   return (
     <div className="ac-ide">
       <aside className="ac-tree" aria-label="Archivos del proyecto">
-        <span className="ac-mono ac-tree-head">lorem-app</span>
-        {FILES.map((f) => (
+        <span className="ac-mono ac-tree-head">{repo.name}</span>
+        {files.map((f) => (
           <button type="button" key={f} className={f === file ? "is-active" : ""} onClick={() => setFile(f)}>
-            {f.endsWith(".jsonc") || f.endsWith(".json") ? <Braces size={13} /> : <FileCode2 size={13} />}
-            <span>{f.split("/").pop()}</span>
+            {f.endsWith(".json") || f.endsWith(".toml") ? <Braces size={13} /> : <FileCode2 size={13} />}
+            <span>{f.split("/").filter(Boolean).pop()}</span>
           </button>
         ))}
       </aside>
       <div className="ac-code">
         <div className="ac-tabs">
           <span className="ac-tab is-active">
-            <FileCode2 size={12} /> {file.split("/").pop()}
+            <FileCode2 size={12} /> {file.split("/").filter(Boolean).pop()}
             <X size={11} />
           </span>
           <span className="ac-tab">
-            <FileCode2 size={12} /> layout.tsx
+            <FileCode2 size={12} /> README.md
           </span>
           <span className="ac-tab-spacer" />
-          <span className="ac-mono ac-tabs-meta">TypeScript · UTF-8</span>
+          <span className="ac-mono ac-tabs-meta">Solo lectura · {repo.language}</span>
         </div>
         <div className="ac-code-body">
-          {CODE.map((line, i) => (
+          {snippet.map((line, i) => (
             <div className="ac-code-line" key={i}>
               <span className="ac-ln">{String(i + 1).padStart(2, "0")}</span>
               <code>
-                {line.map((token, j) => (
-                  <span key={j} className={token.c ? `ac-${token.c}` : undefined}>
-                    {token.txt}
-                  </span>
-                ))}
+                <span className={line.startsWith("#") || line.startsWith("//") ? "ac-com" : undefined}>{line}</span>
               </code>
             </div>
           ))}
         </div>
         <div className="ac-editor-foot">
-          <span className="ac-mono">Ln 01, Col 01</span>
-          <span className="ac-mono">Spaces: 2</span>
-          <span className="ac-mono">lorem-app · main</span>
+          <span className="ac-mono">Solo lectura</span>
+          <span className="ac-mono">{repo.state}</span>
+          <span className="ac-mono">
+            {repo.name} · main · {repo.sha}
+          </span>
         </div>
       </div>
     </div>
@@ -597,18 +559,30 @@ function Editor() {
 }
 
 function TerminalView() {
+  const repo = useRepo();
   const [lines, setLines] = useState<string[]>([
-    "$ lorem build --preview",
-    "◇ ipsum dolor sit amet",
-    "◇ consectetur adipiscing elit",
-    "✓ integer posuere erat (00.0s)",
+    `$ git log -1 --oneline`,
+    `${repo.sha} ${repo.commitTitle}`,
+    repo.commands.length ? `$ ${repo.commands[0]}` : "# este repo no tiene comandos: solo documentación",
+    repo.commands.length ? "demo: no se ejecuta nada, no hay backend" : "# nada que ejecutar",
     "$ ",
   ]);
   const [value, setValue] = useState("");
+  const [history, setHistory] = useState<string[]>([]);
+  const [cursor, setCursor] = useState(-1);
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
   }, [lines]);
+
+  const submit = () => {
+    const command = value.trim();
+    if (!command) return;
+    setLines((list) => [...list, `$ ${command}`, "◇ la demo no ejecuta comandos", "$ "]);
+    setHistory((list) => [...list, command]);
+    setCursor(-1);
+    setValue("");
+  };
   return (
     <>
       <div className="ac-term">
@@ -618,9 +592,9 @@ function TerminalView() {
             <i />
             <i />
           </span>
-          <span className="ac-mono">lorem-app — zsh</span>
+          <span className="ac-mono">{repo.name} — solo lectura</span>
           <span className="ac-term-actions">
-            <Tag tone="ok">Conectado</Tag>
+            <Tag tone="info">Demo</Tag>
           </span>
         </div>
         <div className="ac-term-body" ref={scroller}>
@@ -634,29 +608,68 @@ function TerminalView() {
           className="ac-term-input"
           onSubmit={(event) => {
             event.preventDefault();
-            if (!value.trim()) return;
-            setLines((list) => [...list, `$ ${value.trim()}`, "◇ lorem ipsum dolor sit amet", "$ "]);
-            setValue("");
+            submit();
           }}
         >
           <span className="ac-mono">$</span>
-          <input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Escribe un comando…" aria-label="Comando" />
+          <input
+            value={value}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setCursor(-1);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                if (!history.length) return;
+                const next = cursor < 0 ? history.length - 1 : Math.max(0, cursor - 1);
+                setCursor(next);
+                setValue(history[next]);
+              } else if (event.key === "ArrowDown") {
+                event.preventDefault();
+                if (cursor < 0) return;
+                const next = cursor + 1;
+                if (next >= history.length) {
+                  setCursor(-1);
+                  setValue("");
+                } else {
+                  setCursor(next);
+                  setValue(history[next]);
+                }
+              }
+            }}
+            placeholder="Escribe un comando…"
+            aria-label="Comando"
+            title="↑ y ↓ recorren el historial"
+            autoComplete="off"
+            spellCheck={false}
+          />
+          <kbd className="ac-term-kbd">↵</kbd>
         </form>
       </div>
       <div className="ac-cols">
-        <Panel title="Comandos frecuentes" meta={SHORT}>
-          {["npm run dev", "npm test", "npx wrangler deploy", "git status"].map((c) => (
-            <button type="button" className="ac-cmd" key={c} onClick={() => setLines((list) => [...list, `$ ${c}`, "◇ lorem ipsum"])}>
-              <span className="ac-mono">{c}</span>
-              <Play size={13} />
-            </button>
-          ))}
+        <Panel title="Comandos del repo" meta="Leídos del manifiesto">
+          {repo.commands.length ? (
+            repo.commands.map((c) => (
+              <button
+                type="button"
+                className="ac-cmd"
+                key={c}
+                onClick={() => setLines((list) => [...list, `$ ${c}`, "◇ la demo no ejecuta comandos"])}
+              >
+                <span className="ac-mono">{c}</span>
+                <Play size={13} />
+              </button>
+            ))
+          ) : (
+            <Empty title="Sin comandos">Este repo solo contiene documentación.</Empty>
+          )}
         </Panel>
-        <Panel title="Estado del entorno" meta={SHORT}>
+        <Panel title="Estado verificado" meta={`main@${repo.sha}`}>
           <div className="ac-progress-list">
-            <Progress label="Lorem ipsum" value={72} />
-            <Progress label="Dolor sit amet" value={46} />
-            <Progress label="Consectetur" value={88} />
+            <Progress label="Documentación" value={repo.docs.length ? 100 : 0} />
+            <Progress label="Pruebas declaradas" value={repo.tests === null ? 0 : 100} />
+            <Progress label="Despliegue" value={0} />
           </div>
         </Panel>
       </div>
@@ -673,29 +686,27 @@ function Repos() {
           <input placeholder="Buscar repositorio…" aria-label="Buscar repositorio" />
         </label>
         <Tag tone="ok">
-          <Github size={12} /> Conectado
+          <Github size={12} /> {REPOS.length} repos · lectura
         </Tag>
       </div>
-      <Panel title="github.com/lorem" meta={SHORT} action="Sincronizar">
+      <Panel title={`github.com/${ORG}`} meta={`Inventario leído el ${READ_DATE}`} action="Sincronizar">
         <Table
-          cols={["Repositorio", "Stack", "Visibilidad", "Último commit", "Estado"]}
-          rows={[
-            ["lorem-app", "Next.js · Workers", "Privado", "hace 2 h", "Sincronizado"],
-            ["ipsum-api", "Hono · D1", "Privado", "hace 6 h", "Sincronizado"],
-            ["dolor-landing", "Astro · R2", "Público", "ayer", "Sincronizado"],
-            ["sit-amet-lab", "Vite · Hono", "Privado", "12 nov", "Pendiente"],
-            ["consectetur-ui", "React · Tailwind", "Público", "9 nov", "Sincronizado"],
-            ["adipiscing-docs", "MDX", "Público", "4 nov", "Archivado"],
-          ]}
+          cols={["Repositorio", "Proyecto", "Estado", "Commit"]}
+          rows={REPOS.map((r) => [
+            `${r.name}${r.visibility === "Privado" ? " · privado" : ""}`,
+            r.project,
+            r.stateLabel,
+            `${r.sha} · ${READ_DATE}`,
+          ])}
         />
       </Panel>
       <div className="ac-cols">
-        <Panel title="Conexión" meta={SHORT}>
+        <Panel title="Conexión" meta="Solo lectura, sin escritura">
           {[
-            [Github, "GitHub", "lorem-ipsum"],
-            [Rocket, "Vercel", "lorem-team"],
-            [Server, "Cloudflare", "lorem-zone"],
-          ].map(([Icon, name, handle]) => {
+            [Github, "GitHub", ORG, "Lectura"],
+            [Rocket, "Vercel", "sin conectar", "—"],
+            [Server, "Cloudflare", "sin conectar", "—"],
+          ].map(([Icon, name, handle, state]) => {
             const I = Icon as Icon;
             return (
               <div className="ac-conn" key={String(name)}>
@@ -706,17 +717,15 @@ function Repos() {
                   <b>{String(name)}</b>
                   <small className="ac-mono">{String(handle)}</small>
                 </span>
-                <Tag tone="ok">Activo</Tag>
+                <Tag tone={state === "Lectura" ? "info" : "off"}>{String(state)}</Tag>
               </div>
             );
           })}
         </Panel>
-        <Panel title="Actividad" meta={SHORT}>
-          {[["Lorem ipsum", "push · main"], ["Consectetur", "pull_request · #00"], ["Integer posuere", "deploy · preview"]].map(
-            ([title, meta]) => (
-              <Row icon={GitCommitHorizontal} title={title} meta={meta} tag="Lorem" key={title} />
-            ),
-          )}
+        <Panel title="Actividad" meta="Commits y documentación de hoy">
+          {ACTIVITY.map(([title, meta]) => (
+            <Row icon={GitCommitHorizontal} title={title} meta={meta} tag="main" key={title} />
+          ))}
         </Panel>
       </div>
     </>
@@ -724,12 +733,13 @@ function Repos() {
 }
 
 function Pulls() {
+  const repo = useRepo();
   return (
     <>
       <div className="ac-tabs-row">
         {["Abiertas", "En revisión", "Cerradas"].map((t, i) => (
           <button type="button" key={t} className={i === 0 ? "is-active" : ""}>
-            {t} <em>0{i + 1}</em>
+            {t} <em>0</em>
           </button>
         ))}
         <span className="ac-tabs-spacer" />
@@ -737,40 +747,14 @@ function Pulls() {
           <GitPullRequest size={14} /> Nuevo pull request
         </button>
       </div>
-      <div className="ac-pr-list">
-        {[
-          ["Lorem ipsum dolor sit amet", "#00 · main ← lorem/ipsum", "Checks 3/3", "ok"],
-          ["Consectetur adipiscing elit", "#00 · main ← lorem/dolor", "Checks 2/3", "warn"],
-          ["Integer posuere erat a ante", "#00 · main ← lorem/sit", "Borrador", "off"],
-        ].map(([title, meta, checks, tone]) => (
-          <button type="button" className="ac-pr" key={title}>
-            <span className="ac-pr-icon">
-              <GitPullRequest size={15} />
-            </span>
-            <span className="ac-pr-body">
-              <b>{title}</b>
-              <small className="ac-mono">{meta}</small>
-            </span>
-            <span className="ac-checks">
-              <span className="ac-checks-bar">
-                <i style={{ width: tone === "ok" ? "100%" : tone === "warn" ? "66%" : "20%" }} />
-              </span>
-              <em>{checks}</em>
-            </span>
-            <Tag tone={tone === "ok" ? "ok" : tone === "warn" ? "warn" : "off"}>{tone === "ok" ? "Listo" : tone === "warn" ? "Revisar" : "Borrador"}</Tag>
-            <ChevronRight size={15} />
-          </button>
-        ))}
-      </div>
-      <Panel title="Ramas activas" meta={SHORT} action="Ver todas">
+      <Empty title="0 pull requests abiertos en toda la cuenta">
+        La auditoría no encontró PRs abiertos. Lo que sí hay son {TOTAL_ISSUES} issues: 11 en <code>agente</code> y 1 en{" "}
+        <code>agntia-gestoria</code>.
+      </Empty>
+      <Panel title={`Ramas de ${repo.name}`} meta="Lo que declara el repo, no lo que hace GitHub" action="Ver todas">
         <Table
-          cols={["Rama", "Autor", "Commits", "Última actividad"]}
-          rows={[
-            ["lorem/ipsum", "Lorem", "0", "hace 2 h"],
-            ["lorem/dolor", "Ipsum", "0", "hace 5 h"],
-            ["lorem/sit", "Dolor", "0", "ayer"],
-            ["lorem/amet", "Sit", "0", "12 nov"],
-          ]}
+          cols={["Rama", "Nota", "Commits", "Última actividad"]}
+          rows={repo.branches.map((b) => [b.name, b.note, b.name === "main" ? "—" : "sin dato", READ_DATE])}
         />
       </Panel>
     </>
@@ -778,23 +762,29 @@ function Pulls() {
 }
 
 function Review() {
+  const repo = useRepo();
+  const lines = [
+    ["ctx", "# Fichas de repositorio · Agntia Code", ""],
+    ["add", "+", "Una ficha por repo de la cuenta `uniscrolliabrain-cloud`."],
+    ["add", "+", "Leída de README, manifiestos y `.env.example`; sin ejecutar."],
+    ["ctx", "", "| Repo | Estado | main@ |"],
+    ["add", "+", `| \`${repo.name}\` | ${repo.state} | \`${repo.sha}\` |`],
+  ];
   return (
     <div className="ac-review">
       <div className="ac-review-main">
+        <Empty title="Sin PR que revisar">
+          Esta revisión muestra el commit de documentación que sí está en <code>main</code>; no hay propuesta de código abierta.
+        </Empty>
         <div className="ac-diff-card">
           <header>
-            <span className="ac-mono">src/lib/dolor.ts</span>
-            <Tag tone="warn">+00 −00</Tag>
+            <span className="ac-mono">fichas/{repo.name}.md</span>
+            <Tag tone="ok">+62 −0</Tag>
           </header>
           <div className="ac-diff">
-            {[
-              ["ctx", "  const", " lorem = interpretar(ipsum);"],
-              ["del", "− const", " dolor = await sit({ amet: true });"],
-              ["add", "+ const", " dolor = await sit({ amet: false, tempor: 0 });"],
-              ["ctx", "  return", " { lorem, dolor };"],
-            ].map(([kind, a, b], i) => (
+            {lines.map(([kind, a, b], i) => (
               <div className={`ac-diff-line ac-diff-line--${kind}`} key={i}>
-                <span className="ac-ln">{String(12 + i).padStart(2, "0")}</span>
+                <span className="ac-ln">{String(1 + i).padStart(2, "0")}</span>
                 <code>
                   <span className="ac-key">{a}</span>
                   {b}
@@ -804,11 +794,11 @@ function Review() {
           </div>
         </div>
         {[
-          ["Lorem ipsum dolor sit amet", "Consectetur adipiscing elit, sed do eiusmod tempor incididunt."],
-          ["Integer posuere erat a ante", "Lorem ipsum dolor sit amet, consectetur adipiscing elit."],
+          ["Estado sin redondear", `Se conserva ${repo.state}: ${repo.testsLabel}.`],
+          ["Nada ejecutado", "La ficha dice explícitamente que no se ha clonado ni ejecutado el repo."],
         ].map(([title, body]) => (
           <article className="ac-comment" key={title}>
-            <span className="ac-avatar">LO</span>
+            <span className="ac-avatar">AG</span>
             <div>
               <header>
                 <b>{title}</b>
@@ -826,23 +816,27 @@ function Review() {
         ))}
       </div>
       <aside className="ac-review-side">
-        <Panel title="Revisión" meta={SHORT}>
+        <Panel title="Revisión" meta="Documentación, no código">
           <div className="ac-progress-list">
-            <Progress label="Lorem ipsum" value={66} />
-            <Progress label="Dolor sit amet" value={33} />
+            <Progress label="Enlaces relativos" value={100} />
+            <Progress label="Estados revisados" value={100} />
           </div>
           <button type="button" className="ac-btn ac-btn--solid ac-wide">
-            <Check size={13} /> Aprobar cambios
+            <Check size={13} /> Aprobado y en main
           </button>
           <button type="button" className="ac-btn ac-btn--ghost ac-wide">
             Solicitar cambios
           </button>
         </Panel>
-        <Panel title="Comprobaciones" meta={SHORT}>
-          {["build", "test", "lint"].map((c, i) => (
+        <Panel title="Comprobaciones" meta="Ejecutadas hoy">
+          {[
+            ["enlaces", "OK"],
+            ["typecheck", "OK"],
+            ["build", "OK"],
+          ].map(([c, state]) => (
             <div className="ac-check-row" key={c}>
               <span className="ac-mono">{c}</span>
-              <Tag tone={i === 2 ? "warn" : "ok"}>{i === 2 ? "Aviso" : "OK"}</Tag>
+              <Tag tone="ok">{state}</Tag>
             </div>
           ))}
         </Panel>
@@ -852,14 +846,15 @@ function Review() {
 }
 
 function Deploys() {
+  const deployables = REPOS.filter((r) => r.deploy !== "Sin desplegar");
   return (
     <>
-      <Panel title="Último despliegue" meta={SHORT}>
+      <Panel title="Último despliegue" meta="Ningún vertical está en producción">
         <div className="ac-pipeline">
           {[
             ["Commit", GitCommitHorizontal, "ok"],
-            ["Build", Braces, "ok"],
-            ["Preview", Globe, "ok"],
+            ["Build", Braces, "wait"],
+            ["Preview", Globe, "wait"],
             ["Producción", Rocket, "wait"],
           ].map(([label, Icon, state], i) => {
             const I = Icon as Icon;
@@ -875,48 +870,46 @@ function Deploys() {
           })}
         </div>
         <div className="ac-deploy-meta">
-          <span className="ac-mono">lorem-app · main · a1b2c3d</span>
-          <Tag tone="info">Preview lista</Tag>
+          <span className="ac-mono">main · {READ_DATE}</span>
+          <Tag tone="off">0 de 17 desplegados</Tag>
           <button type="button" className="ac-btn ac-btn--solid">
             <Rocket size={13} /> Promover a producción
           </button>
         </div>
+        <Empty title="El despliegue está deshabilitado a propósito">
+          Ningún repo declara un entorno de producción verificado. Marketing, legal y ciberseguridad tienen código; gestoría y
+          vídeo son producto local.
+        </Empty>
       </Panel>
-      <Panel title="Historial" meta={SHORT} action="Ver todos">
+      <Panel title="Lo que sí corre" meta="Local o Pages, sin dominio propio" action="Ver todos">
         <Table
-          cols={["Entorno", "Commit", "Autor", "Duración", "Estado"]}
-          rows={[
-            ["Producción", "a1b2c3d", "Lorem", "00:00", "Activo"],
-            ["Preview", "e4f5g6h", "Ipsum", "00:00", "Listo"],
-            ["Preview", "i7j8k9l", "Dolor", "00:00", "Listo"],
-            ["Producción", "m0n1o2p", "Sit", "00:00", "Reemplazado"],
-            ["Preview", "q3r4s5t", "Amet", "00:00", "Error"],
-          ]}
+          cols={["Repo", "Dónde", "Commit", "Estado"]}
+          rows={deployables.map((r) => [r.name, r.deploy, r.sha, r.deploy.includes("Pages") ? "Publicado" : "Local"])}
         />
       </Panel>
       <div className="ac-cols">
-        <Panel title="Vercel" meta={SHORT}>
+        <Panel title="Vercel" meta="Sin proyecto vinculado">
           <div className="ac-conn">
             <span className="ac-conn-icon">
               <Rocket size={15} />
             </span>
             <span>
-              <b>lorem-team</b>
-              <small className="ac-mono">3 proyectos</small>
+              <b>sin conectar</b>
+              <small className="ac-mono">0 proyectos</small>
             </span>
-            <Tag tone="ok">Conectado</Tag>
+            <Tag tone="off">—</Tag>
           </div>
         </Panel>
-        <Panel title="Cloudflare" meta={SHORT}>
+        <Panel title="Cloudflare" meta="Sin recursos">
           <div className="ac-conn">
             <span className="ac-conn-icon">
               <Server size={15} />
             </span>
             <span>
-              <b>lorem-zone</b>
-              <small className="ac-mono">Workers · R2 · D1</small>
+              <b>sin conectar</b>
+              <small className="ac-mono">0 Workers · 0 D1 · 0 R2</small>
             </span>
-            <Tag tone="ok">Conectado</Tag>
+            <Tag tone="off">—</Tag>
           </div>
         </Panel>
       </div>
@@ -925,47 +918,44 @@ function Deploys() {
 }
 
 function Infra() {
+  const cards: [string, string, string, "ok" | "warn" | "off"][] = [
+    ["github-repo", "17 repos", "lectura", "ok"],
+    ["github-pages", "demo UI Lab", "agente", "ok"],
+    ["postgres-local", "marketing · clientes", "sin instancia", "warn"],
+    ["sqlite", "gestoría · vídeo · iadev", "local", "ok"],
+    ["ffmpeg", "render de vídeo", "local", "ok"],
+    ["workers", "Cloudflare", "sin conectar", "off"],
+  ];
   return (
     <>
       <div className="ac-grid ac-grid--3">
-        {[
-          ["lorem-worker", "Workers", "00.0 ms", "ok"],
-          ["ipsum-functions", "Functions", "00.0 ms", "ok"],
-          ["dolor-db", "D1", "00.0 ms", "ok"],
-          ["sit-bucket", "R2", "00.0 ms", "ok"],
-          ["amet-cache", "KV", "00.0 ms", "warn"],
-          ["consectetur-queue", "Queues", "00.0 ms", "ok"],
-        ].map(([name, kind, latency, tone]) => (
+        {cards.map(([name, kind, latency, tone]) => (
           <article className="ac-infra" key={name}>
             <header>
               <span className="ac-conn-icon">
                 <Server size={15} />
               </span>
-              <Tag tone={tone === "ok" ? "ok" : "warn"}>{tone === "ok" ? "Activo" : "Revisar"}</Tag>
+              <Tag tone={tone === "ok" ? "ok" : tone === "warn" ? "warn" : "off"}>
+                {tone === "ok" ? "Declarado" : tone === "warn" ? "Sin verificar" : "Sin conectar"}
+              </Tag>
             </header>
             <h3>{name}</h3>
             <p className="ac-mono">{kind}</p>
             <div className="ac-infra-meta">
               <span>
-                Latencia <b>{latency}</b>
+                Dónde <b>{latency}</b>
               </span>
               <span>
-                Región <b>auto</b>
+                Región <b>local</b>
               </span>
             </div>
           </article>
         ))}
       </div>
-      <Panel title="Recursos" meta={SHORT} action="Ver consola">
+      <Panel title="Almacén por repo" meta="Lo que cada README declara" action="Ver consola">
         <Table
-          cols={["Recurso", "Tipo", "Región", "Uso", "Estado"]}
-          rows={[
-            ["lorem-worker", "Worker", "global", "00 %", "Activo"],
-            ["ipsum-api", "Pages Function", "global", "00 %", "Activo"],
-            ["dolor-db", "D1", "eu-west", "00 %", "Activo"],
-            ["sit-bucket", "R2", "eu-west", "00 %", "Activo"],
-            ["amet-cache", "KV", "global", "00 %", "Ampliando"],
-          ]}
+          cols={["Repo", "Almacén", "Estado"]}
+          rows={REPOS.filter((r) => r.storage !== "Ninguna").map((r) => [r.name, r.storage, r.state])}
         />
       </Panel>
     </>
@@ -984,39 +974,32 @@ function Domains() {
           <Plus size={14} /> Añadir dominio
         </button>
       </div>
-      <Panel title="Dominios" meta={SHORT} action="Ver DNS">
+      <Empty title="Ningún dominio propio verificado">
+        Los 17 repos no declaran DNS ni certificados propios. Solo existe el host de GitHub Pages del demo y la homepage de
+        <code> agente</code>.
+      </Empty>
+      <Panel title="Hosts conocidos" meta="Leídos de GitHub" action="Ver DNS">
         <Table
-          cols={["Dominio", "Proyecto", "Tipo", "SSL", "Estado"]}
+          cols={["Host", "Proyecto", "Tipo", "SSL", "Estado"]}
           rows={[
-            ["lorem.app", "lorem-app", "Producción", "Válido", "Activo"],
-            ["www.lorem.app", "lorem-app", "Redirección", "Válido", "Activo"],
-            ["ipsum.dev", "ipsum-api", "Producción", "Válido", "Activo"],
-            ["preview.lorem.app", "lorem-app", "Preview", "Válido", "Activo"],
-            ["dolor.studio", "dolor-landing", "Producción", "Pendiente", "Configurando"],
+            ["uniscrolliabrain-cloud.github.io/agente", "agente", "GitHub Pages", "Válido", "Activo"],
+            ["agentiapro-ui-lab.vercel.app", "agente", "Homepage", "Válido", "Externo"],
           ]}
         />
       </Panel>
       <div className="ac-cols">
-        <Panel title="Registros DNS" meta={SHORT}>
-          <Table
-            cols={["Tipo", "Nombre", "Valor"]}
-            rows={[
-              ["CNAME", "@", "lorem.vercel.app"],
-              ["CNAME", "www", "lorem.vercel.app"],
-              ["TXT", "_lorem", "lorem-ipsum-dolor"],
-              ["MX", "@", "lorem.mail"],
-            ]}
-          />
+        <Panel title="Registros DNS" meta="Sin zona gestionada">
+          <Table cols={["Tipo", "Nombre", "Valor"]} rows={[["—", "—", "sin registros en esta demo"]]} />
         </Panel>
-        <Panel title="Certificados" meta={SHORT}>
-          {["lorem.app", "ipsum.dev", "preview.lorem.app"].map((d) => (
+        <Panel title="Certificados" meta="Solo los del host">
+          {["github.io/agente", "agentiapro-ui-lab.vercel.app"].map((d) => (
             <div className="ac-conn" key={d}>
               <span className="ac-conn-icon">
                 <Lock size={14} />
               </span>
               <span>
                 <b>{d}</b>
-                <small className="ac-mono">Let's Encrypt · 00 días</small>
+                <small className="ac-mono">gestionado por el host</small>
               </span>
               <Tag tone="ok">Válido</Tag>
             </div>
@@ -1027,46 +1010,49 @@ function Domains() {
   );
 }
 
-function Data() {
+function DataView() {
+  const repo = useRepo();
   return (
     <>
       <div className="ac-query">
         <div className="ac-query-top">
           <span className="ac-mono">
-            <Database size={12} /> lorem-db · eu-west
+            <Database size={12} /> {repo.name} · {repo.state}
           </span>
-          <Tag tone="ok">Conectada</Tag>
+          <Tag tone={repo.storage === "Ninguna" ? "off" : "warn"}>Sin conexión</Tag>
         </div>
         <pre className="ac-query-code">
-          <span className="ac-key">select</span> id, lorem, ipsum, created_at{"\n"}
-          <span className="ac-key">from</span> dolor{"\n"}
-          <span className="ac-key">where</span> sit = <span className="ac-str">'amet'</span>{"\n"}
-          <span className="ac-key">limit</span> 50;
+          <span className="ac-key">--</span> {repo.storage}
+          {"\n"}
+          <span className="ac-key">select</span> * <span className="ac-key">from</span> tablas
+          <span className="ac-key"> limit</span> 50;
         </pre>
         <div className="ac-query-foot">
-          <span className="ac-mono">0 filas · 00 ms</span>
+          <span className="ac-mono">0 filas · sin motor conectado</span>
           <button type="button" className="ac-btn ac-btn--solid">
             <Play size={13} /> Ejecutar
           </button>
         </div>
       </div>
       <div className="ac-cols">
-        <Panel title="Tablas" meta={SHORT}>
-          {["dolor", "lorem", "ipsum", "tempor", "adipiscing"].map((t) => (
-            <button type="button" className="ac-cmd" key={t}>
-              <span className="ac-mono">{t}</span>
-              <Tag>00 filas</Tag>
-            </button>
-          ))}
+        <Panel title="Almacén declarado" meta={repo.name}>
+          <div className="ac-context">
+            <span className="ac-file-chip">
+              <Database size={13} /> {repo.storage}
+            </span>
+          </div>
+          <p className="ac-context-note">
+            La demo no abre bases de datos: muestra lo que el repo declara. Los datos fiscales de gestoría y el material de
+            vídeo viven en local y nunca se suben.
+          </p>
         </Panel>
-        <Panel title="Resultado" meta={SHORT}>
+        <Panel title="Repos con persistencia" meta="Según README">
           <Table
-            cols={["id", "lorem", "ipsum", "created_at"]}
-            rows={[
-              ["0000", "Lorem ipsum", "dolor", "00/00/0000"],
-              ["0000", "Consectetur", "adipiscing", "00/00/0000"],
-              ["0000", "Integer posuere", "erat", "00/00/0000"],
-            ]}
+            cols={["Repo", "Almacén"]}
+            rows={REPOS.filter((r) => r.storage !== "Ninguna" && r.storage !== "Ninguna: solo contratos de ingesta").map((r) => [
+              r.name,
+              r.storage,
+            ])}
           />
         </Panel>
       </div>
@@ -1075,6 +1061,7 @@ function Data() {
 }
 
 function Env() {
+  const repo = useRepo();
   return (
     <>
       <div className="ac-env-tabs">
@@ -1088,31 +1075,36 @@ function Env() {
           <Plus size={14} /> Añadir variable
         </button>
       </div>
-      <Panel title="Variables de entorno" meta={SHORT} action="Sincronizar">
-        <Table
-          cols={["Clave", "Entorno", "Valor", "Actualizada", "Estado"]}
-          rows={[
-            ["LOREM_API_KEY", "Producción", "••••••••••••", "hace 2 h", "Activa"],
-            ["IPSUM_TOKEN", "Producción", "••••••••••••", "ayer", "Activa"],
-            ["DOLOR_DB_URL", "Producción", "••••••••••••", "12 nov", "Activa"],
-            ["SIT_WEBHOOK", "Preview", "••••••••••••", "9 nov", "Activa"],
-            ["AMET_LEGACY", "Desarrollo", "••••••••••••", "4 nov", "Sin uso"],
-          ]}
-        />
+      <Panel title={`Variables de ${repo.name}`} meta="Solo nombres: ningún valor vive en la demo" action="Sincronizar">
+        {repo.env.length ? (
+          <Table
+            cols={["Clave", "Entorno", "Valor", "Actualizada", "Estado"]}
+            rows={repo.env.map((k) => [k, "Producción", "••••••••", READ_DATE, "Sin valor"])}
+          />
+        ) : (
+          <Empty title="Este repo no declara variables">
+            No hay <code>.env.example</code> en la raíz. No se inventan claves para rellenar la tabla.
+          </Empty>
+        )}
       </Panel>
       <div className="ac-cols">
-        <Panel title="Buenas prácticas" meta={SHORT}>
-          {["Lorem ipsum dolor sit amet", "Consectetur adipiscing elit", "Integer posuere erat"].map((l, i) => (
+        <Panel title="Buenas prácticas" meta="Sobre los nombres leídos">
+          {[
+            ["Secretos fuera del navegador", "ok"],
+            ["Ningún valor en la demo", "ok"],
+            ["Revisar claves de proveedor antes de desplegar", "warn"],
+          ].map(([l, tone]) => (
             <div className="ac-check-row" key={l}>
               <span>{l}</span>
-              <Tag tone={i === 1 ? "warn" : "ok"}>{i === 1 ? "Revisar" : "OK"}</Tag>
+              <Tag tone={tone as "ok" | "warn"}>{tone === "ok" ? "OK" : "Revisar"}</Tag>
             </div>
           ))}
         </Panel>
-        <Panel title="Últimos cambios" meta={SHORT}>
-          {["LOREM_API_KEY", "DOLOR_DB_URL", "SIT_WEBHOOK"].map((k) => (
-            <Row icon={KeyRound} title={k} meta="Lorem ipsum · hace 2 h" tag="Rotada" key={k} />
+        <Panel title="Últimos cambios" meta="Hoy">
+          {repo.env.slice(0, 3).map((k) => (
+            <Row icon={KeyRound} title={k} meta={`${repo.name} · leída de .env.example`} tag="Nombre" key={k} />
           ))}
+          {!repo.env.length && <Empty title="Nada que listar">Sin variables declaradas.</Empty>}
         </Panel>
       </div>
     </>
@@ -1120,13 +1112,14 @@ function Env() {
 }
 
 function Tests() {
+  const counted = REPOS.filter((r) => r.tests !== null);
   return (
     <>
       <div className="ac-stats ac-stats--3">
         {[
-          ["Cobertura", "00 %", "Lorem ipsum"],
-          ["Pruebas", "000", "Consectetur"],
-          ["Fallos", "00", "Adipiscing"],
+          ["Pruebas declaradas", String(TOTAL_TESTS), "suma de 6 repos"],
+          ["Repos con recuento", String(counted.length), "el resto no lo declara"],
+          ["Ejecutadas aquí", "0", "esta demo no ejecuta tests"],
         ].map(([label, value, note]) => (
           <div className="ac-stat" key={label}>
             <small>{label}</small>
@@ -1136,34 +1129,36 @@ function Tests() {
         ))}
       </div>
       <div className="ac-cols">
-        <Panel title="Cobertura por área" meta={SHORT}>
+        <Panel title="Evidencia por repo" meta="Lo que dice el README">
           <div className="ac-progress-list">
-            {["Lorem", "Ipsum", "Dolor", "Sit amet", "Consectetur"].map((l, i) => (
-              <Progress key={l} label={l} value={[92, 78, 64, 48, 31][i]} />
+            {[
+              ["Marketing · 169", 100],
+              ["Legal · 221", 100],
+              ["Ciberseguridad · 311", 100],
+              ["Branding · 131", 100],
+              ["Clientes · 114", 100],
+              ["Finanzas · 41", 100],
+            ].map(([label, value]) => (
+              <Progress key={String(label)} label={String(label)} value={Number(value)} />
             ))}
           </div>
         </Panel>
-        <Panel title="Ejecuciones" meta={SHORT}>
+        <Panel title="Ejecuciones" meta="Sin runners conectados">
           <Bars n={7} />
           <div className="ac-legend">
             <span>
-              <i /> Lorem
+              <i /> declaradas
             </span>
             <span>
-              <i data-v="1" /> Ipsum
+              <i data-v="1" /> ejecutadas
             </span>
           </div>
         </Panel>
       </div>
-      <Panel title="Suites" meta={SHORT} action="Ejecutar todas">
+      <Panel title="Suites" meta="Recuento declarado, no reproducido" action="Ejecutar todas">
         <Table
-          cols={["Suite", "Pruebas", "Duración", "Estado"]}
-          rows={[
-            ["lorem.test.ts", "00", "0.0 s", "OK"],
-            ["ipsum.test.ts", "00", "0.0 s", "OK"],
-            ["dolor.test.ts", "00", "0.0 s", "Aviso"],
-            ["sit.test.ts", "00", "0.0 s", "OK"],
-          ]}
+          cols={["Repo", "Pruebas", "Estado", "Fuente"]}
+          rows={REPOS.map((r) => [r.name, r.tests === null ? "—" : String(r.tests), r.stateLabel, r.testsLabel])}
         />
       </Panel>
     </>
@@ -1174,34 +1169,34 @@ function Logs() {
   return (
     <>
       <div className="ac-cols ac-cols--wide">
-        <Panel title="Errores por hora" meta={SHORT} action="Ver trazas">
+        <Panel title="Sin runtime desplegado" meta="No hay métricas reales que mostrar" action="Ver trazas">
           <Bars n={9} />
           <div className="ac-legend">
             <span>
-              <i /> Lorem
+              <i /> solicitudes
             </span>
             <span>
-              <i data-v="1" /> Ipsum
+              <i data-v="1" /> errores
             </span>
           </div>
         </Panel>
-        <Panel title="Salud" meta={SHORT}>
+        <Panel title="Salud" meta="Del build del demo, no de los repos">
           <div className="ac-progress-list">
-            <Progress label="Disponibilidad" value={99} />
-            <Progress label="Latencia p95" value={42} />
-            <Progress label="Errores" value={3} />
+            <Progress label="Typecheck ui-lab" value={100} />
+            <Progress label="Build UI Lab" value={100} />
+            <Progress label="Despliegues" value={0} />
           </div>
         </Panel>
       </div>
-      <Panel title="Flujo de eventos" meta="lorem-worker · producción" action="Pausar">
+      <Panel title="Flujo de la última verificación" meta="Hoy · 26 nov 2026" action="Pausar">
         <div className="ac-log">
           {[
-            ["00:00:00", "info", "lorem ipsum dolor sit amet"],
-            ["00:00:01", "info", "consectetur adipiscing elit"],
-            ["00:00:02", "warn", "integer posuere erat a ante"],
-            ["00:00:03", "info", "cras mattis consectetur purus"],
-            ["00:00:04", "error", "lorem ipsum: dolor no encontrado"],
-            ["00:00:05", "info", "sit amet fermentum"],
+            ["00:00:00", "info", "fichas: 18 · líneas: 1039"],
+            ["00:00:01", "info", "BROKEN none"],
+            ["00:00:02", "info", "typecheck ui-lab: 0 errores"],
+            ["00:00:03", "info", "build UI Lab: 0 errores"],
+            ["00:00:04", "info", "push main: b213071c..e0993982"],
+            ["00:00:05", "warn", "0 repos desplegados: no hay métricas que leer"],
           ].map(([time, level, msg]) => (
             <div className={"ac-log-line ac-log--" + level} key={time}>
               <span className="ac-mono">{time}</span>
@@ -1223,45 +1218,53 @@ function Academy() {
           <Search size={15} />
           <input placeholder="Buscar lección, tema o herramienta…" aria-label="Buscar lección" />
         </label>
-        <Tag tone="info">00 lecciones · demo</Tag>
+        <Tag tone="info">6 rutas · migración real</Tag>
       </div>
       <div className="ac-grid ac-grid--3">
         {[
-          ["Construir con lenguaje natural", "00 %"],
-          ["Del prompt al despliegue", "00 %"],
-          ["Datos y estado en Workers", "00 %"],
-          ["Revisar código generado", "00 %"],
-          ["Dominios y certificados", "00 %"],
-          ["Bitácora de decisiones", "00 %"],
-        ].map(([title, progressText], i) => (
-          <article className="ac-course" key={title}>
-            <Img label={`lección 0${i + 1}`} />
+          ["Leer un repo sin clonarlo", 100],
+          ["Clasificar el estado sin inflarlo", 100],
+          ["Documentar variables sin valores", 100],
+          ["De esqueleto a implementación", 60],
+          ["Producto local a servicio", 40],
+          ["Licencia y propiedad", 25],
+        ].map(([title, progress], i) => (
+          <article className="ac-course" key={String(title)}>
+            <div className="ac-card-cover">
+              <span className="ac-mono">Ruta 0{i + 1}</span>
+              <div className="ac-cover-glyph">
+                <GraduationCap size={22} />
+              </div>
+            </div>
             <div>
-              <span className="ac-mono">Módulo 0{i + 1} · lorem</span>
-              <h3>{title}</h3>
-              <p>{SHORT}</p>
+              <span className="ac-mono">Módulo 0{i + 1} · Agntia Code</span>
+              <h3>{String(title)}</h3>
               <div className="ac-progress">
                 <div>
                   <span>Progreso</span>
-                  <b>{progressText}</b>
+                  <b>{progress} %</b>
                 </div>
                 <span className="ac-track">
-                  <i style={{ width: "0%" }} />
+                  <i style={{ width: `${progress}%` }} />
                 </span>
               </div>
             </div>
           </article>
         ))}
       </div>
-      <Panel title="Rutas" meta={SHORT} action="Ver academia">
-        {["Lorem ipsum dolor", "Consectetur adipiscing", "Integer posuere erat"].map((r, i) => (
+      <Panel title="Rutas" meta="Desde la auditoría a la migración" action="Ver academia">
+        {[
+          ["Auditar los 17 repos", "Inventario, tamaños, licencias e issues"],
+          ["Escribir la ficha", "Estado, comandos, variables y límites"],
+          ["Abrir el proyecto en Agntia Code", "Repositorios, ramas y entornos"],
+        ].map(([r, note], i) => (
           <button type="button" className="ac-route" key={r}>
             <span className="ac-route-index">0{i + 1}</span>
             <span>
               <b>{r}</b>
-              <small>{TINY}</small>
+              <small>{note}</small>
             </span>
-            <Tag>{i === 0 ? "Empezar" : "Continuar"}</Tag>
+            <Tag>{i === 0 ? "Hecho" : "Continuar"}</Tag>
             <ArrowUpRight size={14} />
           </button>
         ))}
@@ -1274,30 +1277,28 @@ function Journal() {
   return (
     <>
       <div className="ac-cols ac-cols--wide">
-        <Panel title="Entradas recientes" meta={SHORT} action="Nueva entrada">
+        <Panel title="Entradas recientes" meta="Lo que pasó de verdad en el repo" action="Nueva entrada">
           <ol className="ac-timeline">
-            {[
-              ["Hoy", "Lorem ipsum dolor sit amet", "Decisión", "ok"],
-              ["Ayer", "Consectetur adipiscing elit", "Despliegue", "info"],
-              ["12 nov", "Integer posuere erat a ante", "Incidencia", "warn"],
-              ["9 nov", "Cras mattis consectetur purus", "Aprendizaje", "off"],
-            ].map(([when, title, tag, tone]) => (
+            {JOURNAL.map(([when, title, tag, tone]) => (
               <li key={title}>
                 <span className="ac-timeline-dot" />
                 <div>
                   <small className="ac-mono">{when}</small>
                   <b>{title}</b>
-                  <p>{SHORT}</p>
                   <Tag tone={tone as "ok" | "info" | "warn" | "off"}>{tag}</Tag>
                 </div>
               </li>
             ))}
           </ol>
         </Panel>
-        <Panel title="Decisiones abiertas" meta={SHORT}>
-          {["Lorem ipsum dolor sit amet", "Consectetur adipiscing elit"].map((d) => (
+        <Panel title="Decisiones abiertas" meta="Pendientes del propietario">
+          {[
+            ["Licencia para 14 de los 17 repos", "Sin licencia no se puede reutilizar con claridad."],
+            ["README real para agntia-iadev", "Hoy la puerta de entrada tiene 14 bytes."],
+          ].map(([d, note]) => (
             <div className="ac-decision" key={d}>
-              <p>{d}</p>
+              <b>{d}</b>
+              <p>{note}</p>
               <div>
                 <button type="button" className="ac-mini">
                   <Check size={12} /> Cerrar
@@ -1308,14 +1309,18 @@ function Journal() {
           ))}
         </Panel>
       </div>
-      <Panel title="Qué ha cambiado" meta={SHORT}>
+      <Panel title="Qué ha cambiado" meta="Del lorem a los datos reales">
         <div className="ac-grid ac-grid--3">
-          {["Modelo de datos", "Interfaz", "Despliegue"].map((t, i) => (
+          {[
+            ["17 repos", "Con estado, SHA, comandos y variables"],
+            ["18 fichas", "1 039 líneas, enlaces verificados"],
+            ["0 despliegues", "Ningún vertical en producción"],
+          ].map(([t, note], i) => (
             <div className="ac-change" key={t}>
               <span className="ac-mono">0{i + 1}</span>
               <b>{t}</b>
-              <p>{TINY}</p>
-              <Tag>{["+00", "+00", "+00"][i]}</Tag>
+              <p>{note}</p>
+              <Tag>{["+17", "+18", "0"][i]}</Tag>
             </div>
           ))}
         </div>
@@ -1337,7 +1342,7 @@ const VARIANTS: Record<Variant, ReactNode> = {
   deploys: <Deploys />,
   infra: <Infra />,
   domains: <Domains />,
-  data: <Data />,
+  data: <DataView />,
   env: <Env />,
   tests: <Tests />,
   logs: <Logs />,
@@ -1348,30 +1353,64 @@ const VARIANTS: Record<Variant, ReactNode> = {
 /* -------------------------------------------------------------------- shell */
 
 export default function CodeApp({ onClose }: { onClose: () => void }) {
-  const [sectionId, setSectionId] = useState<SectionId>("estudio");
-  const [project, setProject] = useState("lorem-app");
+  const {
+    sectionId,
+    go,
+    recents,
+    pins,
+    collapsed,
+    isPinned,
+    togglePin,
+    setCollapsed,
+    paletteOpen,
+    openPalette,
+    closePalette,
+    shortcutsOpen,
+    openShortcuts,
+    closeShortcuts,
+  } = useSmartNav<SectionId>({
+    storageKey: "agntia_code_smart_v1",
+    ids: SECTION_IDS,
+    initial: "estudio",
+  });
+  const [repoName, setRepoName] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem("agntia_code_repo");
+      return stored && REPOS.some((entry) => entry.name === stored) ? stored : "agente";
+    } catch {
+      return "agente";
+    }
+  });
   const [projectOpen, setProjectOpen] = useState(false);
-  const [env, setEnv] = useState("Preview");
-  const [collapsed, setCollapsed] = useState(false);
+  const [sessionId,setSessionId]=useState<string|null>(null);
+  const [sessionTitles,setSessionTitles]=useState<Record<string,string>>({});
+  const sessionItems=SESSIONS.map(([title,repoName],index)=>({id:String(index),title:sessionTitles[String(index)]??title,preview:repoName}));
+  const [env, setEnv] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem("agntia_code_env");
+      return stored === "Producción" ? "Producción" : "Preview";
+    } catch {
+      return "Preview";
+    }
+  });
   const [drawer, setDrawer] = useState(false);
   const [notice, setNotice] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
   const section = SECTIONS.find((s) => s.id === sectionId) ?? SECTIONS[0];
+  const repo = REPOS.find((r) => r.name === repoName) ?? REPOS[0];
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: 0 });
   }, [sectionId]);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      if (drawer) setDrawer(false);
-      else if (projectOpen) setProjectOpen(false);
-      else onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawer, projectOpen, onClose]);
+    try {
+      window.localStorage.setItem("agntia_code_repo", repoName);
+      window.localStorage.setItem("agntia_code_env", env);
+    } catch {
+      // La demo sigue funcionando sin memoria de preferencias.
+    }
+  }, [repoName, env]);
 
   useEffect(() => {
     if (!notice) return;
@@ -1380,222 +1419,479 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
   }, [notice]);
 
   const choose = (id: SectionId) => {
-    setSectionId(id);
+    go(id);
     setDrawer(false);
   };
 
   const run = (message: string) => setNotice(message);
 
+  const shortcuts: SmartShortcut[] = [
+    { group: "Navegación", keys: "⌘ K", label: "Buscar workspaces y acciones" },
+    { group: "Navegación", keys: "/", label: "Abrir la búsqueda" },
+    { group: "Navegación", keys: "⌘ J", label: "Abrir la terminal" },
+    { group: "Navegación", keys: "⌘ B", label: "Plegar o expandir el menú" },
+    { group: "Navegación", keys: "Esc", label: "Cerrar capas y volver" },
+    { group: "General", keys: "?", label: "Mostrar esta ayuda" },
+  ];
+
+  const paletteCommands: SmartCommand[] = [
+    ...SECTIONS.map((entry): SmartCommand => {
+      const Icon = entry.icon;
+      return {
+        id: entry.id,
+        label: entry.label,
+        group: entry.group,
+        hint: `${entry.group} · ${entry.variant}`,
+        keywords: `${entry.variant} ${entry.id}`,
+        icon: <Icon size={15} />,
+        canPin: true,
+        run: () => choose(entry.id),
+      };
+    }),
+    ...REPOS.map((entry): SmartCommand => ({
+      id: `repo-${entry.name}`,
+      label: entry.name,
+      group: "Proyectos",
+      hint: `${entry.state} · ${entry.language}`,
+      keywords: `${entry.summary} ${entry.project}`,
+      icon: <FolderGit2 size={15} />,
+      run: () => {
+        setRepoName(entry.name);
+        choose("estudio");
+      },
+    })),
+    {
+      id: "action-project",
+      label: "Nuevo proyecto",
+      group: "Acciones",
+      hint: "Crea un proyecto de ejemplo",
+      icon: <Plus size={15} />,
+      run: () => run("Nuevo proyecto de ejemplo. En la demo no se crea nada real."),
+    },
+    {
+      id: "action-sync",
+      label: "Sincronizar con GitHub",
+      group: "Acciones",
+      hint: `Repositorio ${repo.name}`,
+      icon: <Github size={15} />,
+      run: () => run("Sincronización simulada: datos de main del 26 nov."),
+    },
+    {
+      id: "action-deploy",
+      label: "Desplegar a producción",
+      group: "Acciones",
+      hint: `Entorno actual: ${env}`,
+      icon: <Rocket size={15} />,
+      run: () => run("Despliegue simulado: no hay backend conectado."),
+    },
+    {
+      id: "action-env",
+      label: `Cambiar entorno a ${env === "Preview" ? "Producción" : "Preview"}`,
+      group: "Acciones",
+      icon: <Globe size={15} />,
+      run: () => setEnv(env === "Preview" ? "Producción" : "Preview"),
+    },
+    {
+      id: "action-terminal",
+      label: "Abrir terminal",
+      group: "Acciones",
+      shortcut: "⌘ J",
+      icon: <SquareTerminal size={15} />,
+      run: () => choose("terminal"),
+    },
+    {
+      id: "action-rail",
+      label: collapsed ? "Expandir menú" : "Plegar menú",
+      group: "Acciones",
+      shortcut: "⌘ B",
+      icon: <PanelLeft size={15} />,
+      run: () => setCollapsed((value) => !value),
+    },
+    {
+      id: "action-shortcuts",
+      label: "Atajos del teclado",
+      group: "Acciones",
+      shortcut: "?",
+      icon: <Keyboard size={15} />,
+      run: openShortcuts,
+    },
+    {
+      id: "action-exit",
+      label: "Volver a la app",
+      group: "Sesión",
+      icon: <ArrowLeft size={15} />,
+      run: onClose,
+    },
+  ];
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const typing =
+        target !== null &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          Boolean(target.isContentEditable));
+      const mod = event.metaKey || event.ctrlKey;
+      const key = event.key.toLowerCase();
+
+      if (mod && key === "k") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (paletteOpen) closePalette();
+        else openPalette();
+        return;
+      }
+      if (mod && key === "b") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setCollapsed((value) => !value);
+        return;
+      }
+      if (mod && key === "j") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        go("terminal");
+        setDrawer(false);
+        return;
+      }
+      if (!mod && !typing && (event.key === "/" || event.key === "?")) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.key === "?") openShortcuts();
+        else openPalette();
+        return;
+      }
+      if (event.key !== "Escape") return;
+      event.stopImmediatePropagation();
+      if (paletteOpen) closePalette();
+      else if (shortcutsOpen) closeShortcuts();
+      else if (drawer) setDrawer(false);
+      else if (projectOpen) setProjectOpen(false);
+      else onClose();
+    };
+    // Captura: la meta-app tiene prioridad sobre los atajos del shell que queda
+    // debajo, para que ⌘K no abra dos paletas a la vez.
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [
+    paletteOpen,
+    shortcutsOpen,
+    drawer,
+    projectOpen,
+    onClose,
+    openPalette,
+    closePalette,
+    openShortcuts,
+    closeShortcuts,
+    setCollapsed,
+    go,
+  ]);
+
   return (
-    <div className="ac-root" role="dialog" aria-modal="true" aria-label="Agntia Code">
-      <button
-        type="button"
-        className={"ac-scrim" + (drawer ? " is-on" : "")}
-        aria-label="Cerrar menú"
-        onClick={() => setDrawer(false)}
-      />
+    <RepoCtx.Provider value={repo}>
+      <div className="ac-root meta-dock-root" role="dialog" aria-modal="true" aria-label="Agntia Code">
+      <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_ac"/>
+        <button
+          type="button"
+          className={"ac-scrim" + (drawer ? " is-on" : "")}
+          aria-label="Cerrar menú"
+          onClick={() => setDrawer(false)}
+        />
 
-      <aside className={"ac-rail" + (collapsed ? " is-collapsed" : "") + (drawer ? " is-open" : "")}>
-        <div className="ac-brand">
-          <div className="ac-brand-mark" aria-hidden="true">
-            <Code2 size={17} />
-          </div>
-          <div className="ac-brand-text">
-            <small>AgntiaPro</small>
-            <strong>Agntia Code</strong>
-            <em>Construir con lenguaje natural</em>
-          </div>
-          <button type="button" className="ac-rail-close" aria-label="Cerrar menú" onClick={() => setDrawer(false)}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="ac-project">
-          <button type="button" onClick={() => setProjectOpen((v) => !v)} aria-expanded={projectOpen}>
-            <span className="ac-project-mark">
-              <Github size={13} />
-            </span>
-            <span>
-              <b>{project}</b>
-              <small className="ac-mono">
-                <GitBranch size={10} /> main
-              </small>
-            </span>
-            <ChevronDown size={13} />
-          </button>
-          {projectOpen && (
-            <div className="ac-project-menu" role="listbox" aria-label="Proyecto">
-              {[...PROJECTS.map((p) => p.name), "sit-amet-lab"].map((name) => (
-                <button
-                  type="button"
-                  key={name}
-                  role="option"
-                  aria-selected={name === project}
-                  onClick={() => {
-                    setProject(name);
-                    setProjectOpen(false);
-                  }}
-                >
-                  {name}
-                  {name === project && <Check size={13} />}
-                </button>
-              ))}
+        <aside className={"ac-rail" + (collapsed ? " is-collapsed" : "") + (drawer ? " is-open" : "")}>
+          <div className="ac-brand">
+            <div className="ac-brand-mark" aria-hidden="true">
+              <Code2 size={17} />
             </div>
-          )}
-        </div>
-
-        <nav className="ac-nav" aria-label="Workspaces de Agntia Code">
-          {GROUPS.map((group) => (
-            <div className="ac-nav-group" key={group}>
-              <small>{group}</small>
-              {SECTIONS.filter((s) => s.group === group).map(({ id, label, icon: Icon }) => (
-                <button
-                  type="button"
-                  key={id}
-                  className={id === sectionId ? "is-active" : ""}
-                  aria-current={id === sectionId ? "page" : undefined}
-                  title={label}
-                  onClick={() => choose(id)}
-                >
-                  <Icon size={15} />
-                  <span>{label}</span>
-                  {id === "ramas" && <em className="ac-nav-badge">3</em>}
-                </button>
-              ))}
+            <div className="ac-brand-text">
+              <small>AgntiaPro</small>
+              <strong>Agntia Code</strong>
+              <em>Construir con lenguaje natural</em>
             </div>
-          ))}
-        </nav>
-
-        <div className="ac-rail-foot">
-          <div className="ac-agent-card">
-            <div className="ac-agent-status">
-              <span className="ac-pulse" />
-              <b>Agente en reposo</b>
-            </div>
-            <small>Lorem ipsum · 0 tareas en cola</small>
-            <button type="button" className="ac-btn ac-btn--ghost" onClick={() => run("Sesión de agente iniciada en la demo.")}>
-              <Sparkles size={13} /> Abrir sesión
+            <button type="button" className="ac-rail-close" aria-label="Cerrar menú" onClick={() => setDrawer(false)}>
+              <X size={16} />
             </button>
           </div>
-          <button type="button" className="ac-back" onClick={onClose}>
-            <ArrowLeft size={15} /> Volver a la app
-          </button>
-          <div className="ac-user">
-            <span className="ac-avatar">AF</span>
-            <div>
-              <b>Lorem ipsum</b>
-              <small>Desarrollador · demo</small>
-            </div>
-            <Wifi size={14} />
-          </div>
-        </div>
-      </aside>
 
-      <div className="ac-stage">
-        <header className="ac-top">
-          <div className="ac-top-left">
-            <button type="button" className="ac-icon-btn ac-only-mobile" aria-label="Abrir menú" onClick={() => setDrawer(true)}>
-              <Menu size={16} />
-            </button>
-            <button
-              type="button"
-              className="ac-icon-btn ac-only-desktop"
-              aria-label={collapsed ? "Expandir menú" : "Plegar menú"}
-              onClick={() => setCollapsed((v) => !v)}
-            >
-              <PanelLeft size={16} />
-            </button>
-            <nav className="ac-crumb" aria-label="Ruta">
-              <span className="ac-mono">agntia code</span>
-              <ChevronRight size={12} />
-              <b>{section.label}</b>
-            </nav>
-          </div>
-          <div className="ac-top-right">
-            <span className="ac-env">
-              {["Preview", "Producción"].map((e) => (
-                <button type="button" key={e} className={env === e ? "is-active" : ""} onClick={() => setEnv(e)}>
-                  {e}
-                </button>
-              ))}
-            </span>
-            <label className="ac-top-search">
-              <Search size={13} />
-              <input placeholder="Buscar en el código…" aria-label="Buscar en el código" />
-            </label>
-            <button type="button" className="ac-icon-btn" aria-label="Abrir GitHub" onClick={() => run("GitHub: integración de ejemplo, sin conexión real.")}>
-              <Github size={15} />
-            </button>
-            <button type="button" className="ac-btn ac-btn--solid" onClick={() => run("Nueva conversación de construcción en la demo.")}>
-              <Sparkles size={14} /> Construir
-            </button>
-            <span className="ac-avatar ac-avatar--sm">AF</span>
-          </div>
-        </header>
-
-        <div className="ac-scroll" ref={scroller}>
-          <main className="ac-page">
-            <header className="ac-page-head">
-              <div>
-                <span className="ac-mono ac-path">
-                  <SquareTerminal size={11} /> {section.path}
-                </span>
-                <h1>{section.label}</h1>
-                <p>{LOREM}</p>
-              </div>
-              <div className="ac-head-actions">
-                <span className="ac-live">
-                  <span /> {env}
-                </span>
-                <button type="button" className="ac-btn ac-btn--ghost" onClick={() => run("Sincronización con GitHub simulada.")}>
-                  <Github size={14} /> Sincronizar
-                </button>
-                <button type="button" className="ac-btn ac-btn--solid" onClick={() => run("Despliegue simulado: no hay backend conectado.")}>
-                  <Rocket size={14} /> Desplegar
-                </button>
-              </div>
-            </header>
-
-            <div className="ac-body">{VARIANTS[section.variant]}</div>
-
-            <footer className="ac-page-foot">
-              <span>AGNTIAPRO · AGNTIA CODE · DEMO</span>
-              <span>Lorem ipsum dolor sit amet · contenido de ejemplo</span>
-              <span className="ac-foot-links">
-                <em>GitHub</em>
-                <em>Vercel</em>
-                <em>Cloudflare</em>
+          <div className="ac-project">
+            <button type="button" onClick={() => setProjectOpen((v) => !v)} aria-expanded={projectOpen}>
+              <span className="ac-project-mark">
+                <Github size={13} />
               </span>
-            </footer>
-          </main>
+              <span>
+                <b>{repo.name}</b>
+                <small className="ac-mono">
+                  <GitBranch size={10} /> main · {repo.sha}
+                </small>
+              </span>
+              <ChevronDown size={13} />
+            </button>
+            {projectOpen && (
+              <div className="ac-project-menu" role="listbox" aria-label="Proyecto">
+                {REPOS.map((p) => (
+                  <button
+                    type="button"
+                    key={p.name}
+                    role="option"
+                    aria-selected={p.name === repoName}
+                    onClick={() => {
+                      setRepoName(p.name);
+                      setProjectOpen(false);
+                    }}
+                  >
+                    <span>
+                      {p.name}
+                      <small className="ac-mono"> · {p.state}</small>
+                    </span>
+                    {p.name === repoName && <Check size={13} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <MetaChats namespace="agntia_code" items={sessionItems} active={sessionId} onSelect={id=>{setSessionId(id);const session=SESSIONS[Number(id)];if(session&&REPOS.some(r=>r.name===session[1]))setRepoName(session[1]);choose("chats")}} onRename={(id,title)=>setSessionTitles(prev=>({...prev,[id]:title}))}/>
+          <nav className="ac-nav" aria-label="Workspaces de Agntia Code">
+            {pins.length > 0 && (
+              <div className="ac-nav-group ac-nav-group--pins">
+                <small>
+                  <Pin size={10} aria-hidden="true" /> Fijados
+                </small>
+                {pins.map((id) => {
+                  const pinned = SECTIONS.find((entry) => entry.id === id);
+                  if (!pinned) return null;
+                  const Icon = pinned.icon;
+                  return (
+                    <button
+                      type="button"
+                      key={`pin-${id}`}
+                      className={id === sectionId ? "is-active" : ""}
+                      aria-current={id === sectionId ? "page" : undefined}
+                      title={`${pinned.label} · fijada`}
+                      onClick={() => choose(pinned.id)}
+                    >
+                      <Icon size={15} />
+                      <span>{pinned.label}</span>
+                      <Pin size={11} className="ac-nav-pinmark" aria-hidden="true" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {GROUPS.map((group) => (
+              <div className="ac-nav-group" key={group}>
+                <small>{group}</small>
+                {SECTIONS.filter((s) => s.group === group).map(({ id, label, icon: Icon }) => (
+                  <button
+                    type="button"
+                    key={id}
+                    className={id === sectionId ? "is-active" : ""}
+                    aria-current={id === sectionId ? "page" : undefined}
+                    title={label}
+                    onClick={() => choose(id)}
+                  >
+                    <Icon size={15} />
+                    <span>{label}</span>
+                    {isPinned(id) && <Pin size={11} className="ac-nav-pinmark" aria-hidden="true" />}
+                    {id === "ramas" && <em className="ac-nav-badge">0</em>}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </nav>
+
+          <div className="ac-rail-foot">
+            <div className="ac-agent-card">
+              <div className="ac-agent-status">
+                <span className="ac-pulse" />
+                <b>Agente en reposo</b>
+              </div>
+              <small>{REPOS.length} repos · 0 tareas en cola</small>
+              <button
+                type="button"
+                className="ac-btn ac-btn--ghost"
+                onClick={() => run("Sesión de agente simulada: la demo no ejecuta código.")}
+              >
+                <Sparkles size={13} /> Abrir sesión
+              </button>
+            </div>
+            <button type="button" className="ac-back" onClick={onClose}>
+              <ArrowLeft size={15} /> Volver a la app
+            </button>
+            <div className="ac-user">
+              <span className="ac-avatar">{initials(repo.name)}</span>
+              <div>
+                <b>{repo.project}</b>
+                <small>{repo.language}</small>
+              </div>
+              <Wifi size={14} />
+            </div>
+          </div>
+        </aside>
+
+        <div className="ac-stage">
+          <header className="ac-top">
+            <div className="ac-top-left">
+              <button type="button" className="ac-icon-btn ac-only-mobile" aria-label="Abrir menú" onClick={() => setDrawer(true)}>
+                <Menu size={16} />
+              </button>
+              <button
+                type="button"
+                className="ac-icon-btn ac-only-desktop"
+                aria-label={collapsed ? "Expandir menú" : "Plegar menú"}
+                onClick={() => setCollapsed((v) => !v)}
+              >
+                <PanelLeft size={16} />
+              </button>
+              <nav className="ac-crumb" aria-label="Ruta">
+                <button type="button" className="ac-crumb-root" onClick={() => choose("estudio")}>
+                  agntia code
+                </button>
+                <ChevronRight size={12} />
+                <span>{section.group}</span>
+                <ChevronRight size={12} />
+                <b aria-current="page">{section.label}</b>
+              </nav>
+            </div>
+            <div className="ac-top-right">
+              <button
+                type="button"
+                className="ac-icon-btn ac-search-btn"
+                aria-label="Buscar en el código"
+                aria-haspopup="dialog"
+                onClick={openPalette}
+              >
+                <Search size={15} />
+              </button>
+              <span className="ac-env">
+                {["Preview", "Producción"].map((e) => (
+                  <button type="button" key={e} className={env === e ? "is-active" : ""} onClick={() => setEnv(e)}>
+                    {e}
+                  </button>
+                ))}
+              </span>
+              <button
+                type="button"
+                className="ac-top-search"
+                onClick={openPalette}
+                aria-haspopup="dialog"
+                aria-keyshortcuts="Meta+K Control+K"
+                title="Buscar workspaces y acciones (⌘K)"
+              >
+                <Search size={13} />
+                <span>Buscar en el código…</span>
+                <kbd>⌘K</kbd>
+              </button>
+              <button
+                type="button"
+                className="ac-icon-btn"
+                aria-label="Abrir GitHub"
+                onClick={() => run("GitHub en solo lectura: los datos se leyeron el 26 nov 2026.")}
+              >
+                <Github size={15} />
+              </button>
+              <button type="button" className="ac-btn ac-btn--solid" onClick={() => run("Conversación de construcción simulada.")}>
+                <Sparkles size={14} /> Construir
+              </button>
+              <span className="ac-avatar ac-avatar--sm">AG</span>
+            </div>
+          </header>
+
+          <div className="ac-scroll" ref={scroller}>
+            <main className="ac-page">
+              <header className="ac-page-head">
+                <div>
+                  <span className="ac-mono ac-path">
+                    <SquareTerminal size={11} /> {ORG}/{repo.name} · main@{repo.sha}
+                  </span>
+                  <h1>{section.label}</h1>
+                  <p>{repo.summary}</p>
+                </div>
+                <div className="ac-head-actions">
+                  <span className="ac-live">
+                    <span /> {env}
+                  </span>
+                  <button type="button" className="ac-btn ac-btn--ghost" onClick={() => run("Sincronización simulada: datos de main del 26 nov.")}>
+                    <Github size={14} /> Sincronizar
+                  </button>
+                  <button
+                    type="button"
+                    className="ac-btn ac-btn--solid"
+                    onClick={() => run("Despliegue deshabilitado: 0 de 17 repos están desplegados.")}
+                  >
+                    <Rocket size={14} /> Desplegar
+                  </button>
+                </div>
+              </header>
+
+              <div className="ac-body" key={`${repo.name}-${section.id}`}>
+                {VARIANTS[section.variant]}
+              </div>
+
+              <footer className="ac-page-foot">
+                <span>AGNTIAPRO · AGNTIA CODE · DEMO</span>
+                <span>
+                  {repo.name} · {repo.state} · leído el {READ_DATE}
+                </span>
+                <span className="ac-foot-links">
+                  <em>GitHub</em>
+                  <em>Vercel</em>
+                  <em>Cloudflare</em>
+                </span>
+              </footer>
+            </main>
+          </div>
+
+          <div className="ac-statusbar">
+            <span className="ac-mono">
+              <GitBranch size={11} /> main
+            </span>
+            <span className="ac-mono">
+              <GitCommitHorizontal size={11} /> {repo.sha}
+            </span>
+            <span className="ac-mono">
+              <FolderGit2 size={11} /> {repo.name}
+            </span>
+            <span className="ac-status-spacer" />
+            <span className="ac-mono">
+              <CircleAlert size={11} /> {repo.issues}
+            </span>
+            <span className="ac-mono">
+              <Wifi size={11} /> GitHub lectura
+            </span>
+            <span className="ac-mono">{repo.language}</span>
+          </div>
         </div>
 
-        <div className="ac-statusbar">
-          <span className="ac-mono">
-            <GitBranch size={11} /> main
-          </span>
-          <span className="ac-mono">
-            <GitCommitHorizontal size={11} /> a1b2c3d
-          </span>
-          <span className="ac-mono">
-            <FolderGit2 size={11} /> {project}
-          </span>
-          <span className="ac-status-spacer" />
-          <span className="ac-mono">
-            <CircleAlert size={11} /> 0
-          </span>
-          <span className="ac-mono">
-            <Wifi size={11} /> Conectado
-          </span>
-          <span className="ac-mono">TypeScript · UTF-8</span>
-        </div>
+        <SmartCommandPalette
+          open={paletteOpen}
+          tone="code"
+          title="Buscar en Agntia Code"
+          subtitle={`${SECTIONS.length} workspaces · ${REPOS.length} repos`}
+          placeholder="Buscar workspaces, repos o acciones…"
+          commands={paletteCommands}
+          recents={recents}
+          pins={pins}
+          onTogglePin={togglePin}
+          onClose={closePalette}
+          onShowShortcuts={openShortcuts}
+        />
+        <SmartShortcuts
+          open={shortcutsOpen}
+          tone="code"
+          title="Atajos de Agntia Code"
+          shortcuts={shortcuts}
+          onClose={closeShortcuts}
+        />
+
+        {notice && (
+          <div className="ac-toast" role="status">
+            <Check size={14} /> {notice}
+          </div>
+        )}
       </div>
-
-      {notice && (
-        <div className="ac-toast" role="status">
-          <Check size={14} /> {notice}
-        </div>
-      )}
-    </div>
+    </RepoCtx.Provider>
   );
 }

@@ -1,0 +1,484 @@
+/* SMART_UX_V1 - paleta de comandos y hoja de atajos.
+ * Vive dentro de cada meta-app, así que hereda su papel, su tinta y su acento.
+ * Sin animaciones largas ni ruido: la interacción aparece solo cuando se pide. */
+
+.sux {
+  --sux-paper: #f7f4ed;
+  --sux-card: #fffdf9;
+  --sux-line: #e5dfd3;
+  --sux-line-strong: #d6cec0;
+  --sux-ink: #1b1a17;
+  --sux-muted: #736d62;
+  --sux-soft: #efe9dd;
+  --sux-accent: var(--themed-accent, #6550dd);
+  position: fixed;
+  inset: 0;
+  z-index: 480;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 11vh 20px 28px;
+  color: var(--sux-ink);
+  font-family: Manrope, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sux--company {
+  --sux-paper: var(--co-paper, #f7f4ed);
+  --sux-card: var(--co-card, #fffdf9);
+  --sux-line: var(--co-line, #e5dfd3);
+  --sux-line-strong: var(--co-line-strong, #d6cec0);
+  --sux-ink: var(--co-ink, #1b1a17);
+  --sux-muted: var(--co-muted, #736d62);
+  --sux-soft: var(--co-soft, #efe9dd);
+  --sux-accent: var(--co-accent, #6550dd);
+}
+
+.sux--code {
+  --sux-paper: var(--ac-paper, #f6f4ee);
+  --sux-card: var(--ac-card, #fffefa);
+  --sux-line: var(--ac-line, #e4dfd3);
+  --sux-line-strong: var(--ac-line-strong, #d3ccbd);
+  --sux-ink: var(--ac-ink, #1b1a17);
+  --sux-muted: var(--ac-muted, #6f6a5f);
+  --sux-soft: var(--ac-soft, #efeae0);
+  --sux-accent: var(--ac-accent, #6550dd);
+  font-size: 12.5px;
+}
+
+.sux *,
+.sux *::before,
+.sux *::after {
+  box-sizing: border-box;
+}
+
+.sux button {
+  font: inherit;
+  color: inherit;
+}
+
+.sux-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(24, 23, 20, 0.36);
+  backdrop-filter: blur(3px);
+}
+
+.sux-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(620px, 100%);
+  max-height: min(74vh, 660px);
+  border: 1px solid var(--sux-line-strong);
+  border-radius: 16px;
+  background: var(--sux-card);
+  box-shadow:
+    0 34px 80px rgba(24, 23, 20, 0.28),
+    0 2px 8px rgba(24, 23, 20, 0.08);
+  overflow: hidden;
+  animation: sux-panel-in 150ms ease-out;
+}
+
+.sux--company .sux-panel {
+  border-radius: 18px;
+}
+
+.sux-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--sux-line);
+  background: color-mix(in srgb, var(--sux-card) 86%, var(--sux-soft));
+  color: var(--sux-muted);
+}
+
+.sux-head input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--sux-ink);
+}
+
+.sux-head input::placeholder {
+  color: color-mix(in srgb, var(--sux-muted) 72%, transparent);
+}
+
+.sux-head--static {
+  justify-content: space-between;
+  padding: 16px 16px 14px;
+}
+
+.sux-head-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sux-head-copy b {
+  font-family: Fraunces, Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--sux-ink);
+  letter-spacing: -0.01em;
+}
+
+.sux--code .sux-head-copy b {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.sux-head-copy span {
+  font-size: 10.5px;
+  color: var(--sux-muted);
+}
+
+.sux-close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--sux-muted);
+  cursor: pointer;
+  transition: background 130ms ease, color 130ms ease;
+}
+
+.sux-close:hover {
+  background: var(--sux-soft);
+  color: var(--sux-ink);
+}
+
+.sux-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border: 1px solid var(--sux-line);
+  border-bottom-color: var(--sux-line-strong);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--sux-card) 70%, var(--sux-soft));
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--sux-muted);
+  white-space: nowrap;
+}
+
+.sux-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 8px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sux-line-strong) transparent;
+  overscroll-behavior: contain;
+}
+
+.sux-group {
+  padding: 4px 0;
+}
+
+.sux-group h3 {
+  margin: 0;
+  padding: 7px 10px 4px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sux-muted) 84%, transparent);
+}
+
+.sux-row {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-radius: 9px;
+  transition: background 110ms ease;
+}
+
+.sux-row[data-active="true"] {
+  background: color-mix(in srgb, var(--sux-accent) 8%, transparent);
+  box-shadow: inset 2px 0 0 var(--sux-accent);
+}
+
+.sux-row-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sux-row-main:focus-visible,
+.sux-pin:focus-visible,
+.sux-shortcuts-link:focus-visible,
+.sux-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--sux-accent) 68%, transparent);
+  outline-offset: 1px;
+}
+
+.sux-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--sux-line);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--sux-card) 60%, var(--sux-soft));
+  color: color-mix(in srgb, var(--sux-accent) 62%, var(--sux-ink));
+}
+
+.sux-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.sux-copy b {
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--sux-ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sux-copy small {
+  overflow: hidden;
+  font-size: 10px;
+  color: var(--sux-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sux-enter {
+  color: color-mix(in srgb, var(--sux-muted) 40%, transparent);
+  opacity: 0;
+  transition: opacity 110ms ease;
+}
+
+.sux-row[data-active="true"] .sux-enter {
+  opacity: 1;
+}
+
+.sux-pin {
+  flex: 0 0 auto;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-right: 4px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sux-muted) 62%, transparent);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 110ms ease, background 110ms ease, color 110ms ease;
+}
+
+.sux-row:hover .sux-pin,
+.sux-row[data-active="true"] .sux-pin,
+.sux-pin:focus-visible,
+.sux-pin[aria-pressed="true"] {
+  opacity: 1;
+}
+
+.sux-pin:hover {
+  background: var(--sux-soft);
+  color: var(--sux-ink);
+}
+
+.sux-pin[aria-pressed="true"] {
+  color: var(--sux-accent);
+}
+
+.sux-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 34px 18px;
+  text-align: center;
+  color: var(--sux-muted);
+}
+
+.sux-empty b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--sux-ink);
+}
+
+.sux-empty span {
+  font-size: 11px;
+}
+
+.sux-body--shortcuts {
+  padding: 10px 14px 14px;
+}
+
+.sux-shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 8px 4px;
+  border-bottom: 1px solid color-mix(in srgb, var(--sux-line) 62%, transparent);
+  font-size: 12px;
+}
+
+.sux-shortcut:last-child {
+  border-bottom: 0;
+}
+
+.sux-shortcut span {
+  color: var(--sux-ink);
+}
+
+.sux-panel--shortcuts {
+  width: min(490px, 100%);
+  max-height: min(78vh, 560px);
+}
+
+.sux-foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 13px;
+  border-top: 1px solid var(--sux-line);
+  background: color-mix(in srgb, var(--sux-card) 70%, var(--sux-soft));
+  font-size: 9.5px;
+  color: var(--sux-muted);
+}
+
+.sux-hints {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sux-hints > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.sux-count {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.88;
+}
+
+.sux-shortcuts-link {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 5px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 9.5px;
+  color: var(--sux-muted);
+  cursor: pointer;
+}
+
+.sux-shortcuts-link:hover {
+  color: var(--sux-ink);
+}
+
+@keyframes sux-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .sux {
+    padding: 0;
+  }
+
+  .sux-panel,
+  .sux--company .sux-panel,
+  .sux-panel--shortcuts {
+    width: 100%;
+    max-height: none;
+    height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    animation: none;
+  }
+
+  .sux-head {
+    padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
+  }
+
+  .sux-row-main {
+    grid-template-columns: 26px minmax(0, 1fr) auto;
+    padding-block: 10px;
+  }
+
+  .sux-enter {
+    display: none;
+  }
+
+  .sux-pin {
+    opacity: 1;
+  }
+
+  .sux-foot {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .sux-hints .sux-count {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sux-panel {
+    animation: none;
+  }
+
+  .sux *,
+  .sux *::before,
+  .sux *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

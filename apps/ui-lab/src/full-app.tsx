@@ -15,6 +15,8 @@ import "./clone-views.css";
 // DEMO_VIEWS_V1 - los workspaces nuevos (UI Lab V1/V3/V4) entran en el clon por
 // el mapa `demoViews` de App. Producción no los recibe: allí el prop va vacío.
 const RealApp = lazy(() => import("../../web/src/App"));
+// La demo completa debe montar la misma presentación V5 que today-editorial.
+const CommandCenterV5 = lazy(() => import("./command-center-editorial/CommandCenterEditorial"));
 const KnowledgeWorkspace = lazy(() => import("./knowledge-v1/KnowledgeWorkspace"));
 const DocumentsExplorer = lazy(() => import("./documents-explorer/DocumentsExplorer"));
 const ComunicacionesWorkspace = lazy(() => import("./comunicaciones/ComunicacionesWorkspace"));
@@ -103,6 +105,7 @@ createRoot(document.getElementById("root")!).render(
       ) : (
         <RealApp
           demoViews={demoViews}
+          demoCommandCenterPresentation={CommandCenterV5}
           companyArea={({ onClose }) => (
             <View>
               <CompanyApp onClose={onClose} />

@@ -1,0 +1,11 @@
+{
+  "id": "17-versiones-04",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/17-versiones/visuales/v1/17-versiones-04.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "17-versiones — icono publicación",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-6.json",
+  "status": "review-required"
+}

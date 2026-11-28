@@ -44,19 +44,19 @@
    y avatares lavanda. Se leían como bloques sueltos y rompían el papel del
    resto de puestos. Todas las etiquetas pasan a una sola familia lavanda; el
    estado lo dice el texto (Completado, Pendiente, Factura vencida), no el
-   relleno. Cubre las dos variantes: cc-tag (contenido de ejemplo) y cce-tag
+   relleno. Cubre las dos variantes: cc-tag (contenido de ejemplo) y cce-legacy-tag
    (datos reales). */
-.v2-content .cce-root .cc-tag,
-.v2-content .cce-root .cc-tag.warn,
-.v2-content .cce-root .cc-tag.live,
-.v2-content .cce-root .cc-tag.danger,
-.v2-content .cce-root .cc-tag.ok,
-.v2-content .cce-root .cce-tag,
-.v2-content .cce-root .cce-tag--warn,
-.v2-content .cce-root .cce-tag--danger,
-.v2-content .cce-root .cce-tag--ok,
-.v2-content .cce-root .cce-tag--info,
-.v2-content .cce-root .cce-tag--live {
+.v2-content .cce-legacy-root .cc-tag,
+.v2-content .cce-legacy-root .cc-tag.warn,
+.v2-content .cce-legacy-root .cc-tag.live,
+.v2-content .cce-legacy-root .cc-tag.danger,
+.v2-content .cce-legacy-root .cc-tag.ok,
+.v2-content .cce-legacy-root .cce-legacy-tag,
+.v2-content .cce-legacy-root .cce-legacy-tag--warn,
+.v2-content .cce-legacy-root .cce-legacy-tag--danger,
+.v2-content .cce-legacy-root .cce-legacy-tag--ok,
+.v2-content .cce-legacy-root .cce-legacy-tag--info,
+.v2-content .cce-legacy-root .cce-legacy-tag--live {
   background: color-mix(in srgb, var(--themed-accent) 6%, #ffffff);
   border-color: color-mix(in srgb, var(--themed-accent) 14%, #ffffff);
   color: color-mix(in srgb, var(--themed-accent) 58%, #4a4742);
@@ -64,8 +64,8 @@
 
 /* La tarjeta de un asunto fallido marcaba el borde en rojo: único resto de
    color frío en la vista. Pasa al oro editorial, que ya señala atención. */
-.v2-content .cce-root .cce-card--alert {
-  border-left-color: var(--cce-gold);
+.v2-content .cce-legacy-root .cce-legacy-card--alert {
+  border-left-color: var(--cce-legacy-gold);
 }
 
 /* Los workspaces del UI Lab se diseñaron a pantalla completa (100dvh). Dentro
@@ -218,6 +218,12 @@ html[data-accent] .cce-root {
   --cce-violet-deep: var(--themed-deep);
   --cce-lilac: var(--themed-soft);
   --cce-focus: var(--themed-accent);
+}
+html[data-accent] .cce-legacy-root {
+  --cce-legacy-violet: var(--themed-accent);
+  --cce-legacy-violet-deep: var(--themed-deep);
+  --cce-legacy-lilac: var(--themed-soft);
+  --cce-legacy-focus: var(--themed-accent);
 }
 
 html[data-accent] .dx-root {

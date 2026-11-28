@@ -38,7 +38,7 @@ export function EditorialHero({
             <span className="cce-chip" title={`Empresa · ${tenantName}`}>
               Empresa · {tenantName}
             </span>
-            <span className="cce-chip cce-chip--active">Centro de mando</span>
+            <span className="cce-chip cce-chip--active" aria-current="page">Centro de mando</span>
             {role && <span className="cce-chip">{ROLE_LABEL[role]}</span>}
           </div>
         </div>
@@ -57,9 +57,10 @@ export function EditorialHero({
           <button
             type="button"
             className="cce-icon-btn"
-            onClick={onRefresh}
-            aria-label="Actualizar"
-            title="Actualizar"
+            onClick={() => { if (!refreshing) onRefresh(); }}
+            aria-label={refreshing ? "Actualizando" : "Actualizar"}
+            aria-disabled={refreshing}
+            title={refreshing ? "Actualizando" : "Actualizar"}
           >
             <RefreshCw size={16} className={refreshing ? "cce-spin" : undefined} aria-hidden="true" />
           </button>
@@ -73,7 +74,7 @@ export function EditorialHero({
           {updatedAt ? (
             <>
               <span className="cce-dot">·</span>
-              <span aria-live="polite">
+              <span className="cce-updated-label">
                 Actualizado {updatedLabel === "ahora" ? "ahora" : `hace ${updatedLabel}`}
               </span>
             </>

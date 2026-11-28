@@ -1,12 +1,15 @@
 // COMMAND_CENTER_EDITORIAL_VIEW_V1 - misma carga y contratos que
 // CommandCenterView, con la composición editorial aprobada en UI Lab.
 // Se puede revertir con VITE_COMMAND_CENTER_V2=false.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { isDemoSession } from "../api/client";
 import { getCompanyOverview, type CompanyOverview } from "../api/company";
-import CommandCenterEditorial from "./command-center-editorial/CommandCenterEditorial";
+import CommandCenterEditorial, { type CommandCenterEditorialProps } from "./command-center-editorial-legacy/CommandCenterEditorial";
+
+export type CommandCenterPresentation = ComponentType<CommandCenterEditorialProps>;
 
 interface Props {
+  presentation?: CommandCenterPresentation;
   onOpenTask?: (taskId: string) => void;
   onReviewTask?: (taskId: string) => void;
   onOpenTasksView?: () => void;
@@ -16,6 +19,7 @@ interface Props {
 }
 
 export default function CommandCenterEditorialView({
+  presentation: Presentation = CommandCenterEditorial,
   onOpenTask,
   onReviewTask,
   onOpenTasksView,
@@ -51,7 +55,7 @@ export default function CommandCenterEditorialView({
   }, [load]);
 
   return (
-    <CommandCenterEditorial
+    <Presentation
       overview={overview}
       loading={loading}
       refreshing={refreshing}

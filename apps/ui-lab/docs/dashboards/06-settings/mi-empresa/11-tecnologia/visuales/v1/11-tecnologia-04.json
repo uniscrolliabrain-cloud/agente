@@ -1,0 +1,11 @@
+{
+  "id": "11-tecnologia-04",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/11-tecnologia/visuales/v1/11-tecnologia-04.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "11-tecnologia — icono interruptor",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-4.json",
+  "status": "review-required"
+}

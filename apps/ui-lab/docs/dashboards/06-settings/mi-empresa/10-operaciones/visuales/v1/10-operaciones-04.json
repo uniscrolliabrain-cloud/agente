@@ -1,0 +1,11 @@
+{
+  "id": "10-operaciones-04",
+  "courseId": null,
+  "path": "apps/ui-lab/docs/dashboards/06-settings/mi-empresa/10-operaciones/visuales/v1/10-operaciones-04.webp",
+  "width": 1024,
+  "height": 1024,
+  "alt": "10-operaciones — icono control de calidad",
+  "model": "openai/gpt-image-2",
+  "sourceJob": "tools/image-pipeline/jobs/mi-empresa-v1-lote-4.json",
+  "status": "review-required"
+}

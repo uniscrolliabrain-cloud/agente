@@ -54,26 +54,29 @@ export function SampleBanner({
     <div className="cce-sample" role="status">
       <Sparkles size={15} aria-hidden="true" />
       <p>
-        <b>Datos de ejemplo.</b>{" "}
-        {demoSession
-          ? "Tenant demo · Interfaz."
-          : `Todavía no hay actividad en ${tenantName}.`}{" "}
-        Así se verá el centro de mando cuando los agentes empiecen a trabajar.
+        {showingSample ? (
+          <><b>Ejemplo histórico (legacy).</b> Contenido de demostración estático, no procede del estado de la empresa.</>
+        ) : demoSession ? (
+          <><b>Datos de demo.</b> {tenantName} · escenario sintético conectado a la vista actual.</>
+        ) : (
+          <><b>Todavía no hay actividad en {tenantName}.</b> El resumen se actualizará cuando haya tareas registradas.</>
+        )}
       </p>
       <button type="button" className="cce-btn cce-btn--small" onClick={onToggle}>
-        {showingSample ? "Ver datos reales" : "Ver ejemplo"}
+        {showingSample ? (demoSession ? "Volver a la demo actual" : "Ver datos reales") : "Ver ejemplo legacy"}
       </button>
     </div>
   );
 }
 
-export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+export function ErrorState({ message, onRetry, retainingData = false }: { message: string; onRetry: () => void; retainingData?: boolean }) {
   return (
     <div className="cce-error" role="alert">
       <p style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <AlertTriangle size={16} aria-hidden="true" />
         {message}
       </p>
+      {retainingData && <p className="cce-retained-data">Se muestran los últimos datos disponibles; no se han podido actualizar.</p>}
       <button type="button" className="cce-btn cce-btn--primary" onClick={onRetry}>
         <RefreshCw size={14} aria-hidden="true" /> Reintentar
       </button>
@@ -95,7 +98,7 @@ export function LoadingState() {
           <div key={index} className="cce-skeleton-bar cce-skeleton-block" style={{ height: 78 }} />
         ))}
       </div>
-      <div className="cce-skeleton-grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))" }}>
+      <div className="cce-skeleton-grid cce-skeleton-grid--work">
         {[0, 1, 2].map((index) => (
           <div key={index} className="cce-skeleton-bar cce-skeleton-block" style={{ height: 132 }} />
         ))}

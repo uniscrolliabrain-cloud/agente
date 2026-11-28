@@ -1,0 +1,42 @@
+/* V3 · inteligencia perceptiva. Estado del producto, no prioridad inventada.
+ * Color localizado en etiquetas/valores; la selección mantiene su subrayado.
+ * El punto temporal no representa urgencia ni ejecución. No hay animación.
+ */
+.cce-root .cce-change-mark {
+  display: inline-block;
+  inline-size: 6px;
+  block-size: 6px;
+  margin-inline-start: 6px;
+  border-radius: 50%;
+  vertical-align: .14em;
+  background: var(--cce-gold);
+  box-shadow: 0 0 0 1px var(--cce-ink);
+  visibility: hidden;
+}
+.cce-root .cce-change-mark[data-visible="true"] { visibility: visible; }
+.cce-root .cce-kpi[data-tone="waiting"] .cce-kpi-value,
+.cce-root .cce-block[data-tone="waiting"] .cce-block-num {
+  color: var(--cce-warn-text);
+}
+.cce-root .cce-kpi[data-tone="failed"] .cce-kpi-value,
+.cce-root .cce-block[data-tone="failed"] .cce-block-num {
+  color: var(--cce-danger-text);
+}
+/* Selected remains readable and signaled independently of business status. */
+.cce-root .cce-kpi[aria-pressed="true"]::after { background: var(--cce-violet); }
+.cce-root .cce-card-top .cce-row-meta {
+  font-variant-numeric: tabular-nums;
+}
+.cce-root .cce-retained-data {
+  font-weight: 650;
+  max-inline-size: 68ch;
+}
+.cce-root .cc-tag.warn { color: var(--cce-warn-text); background: var(--cce-warn-bg); }
+.cce-root .cc-tag.danger { color: var(--cce-danger-text); background: var(--cce-danger-bg); }
+.cce-root .cc-tag.ok { color: var(--cce-ok-text); background: var(--cce-ok-bg); }
+@media (forced-colors: active) {
+  .cce-root .cce-change-mark[data-visible="true"] {
+    background: CanvasText;
+    outline: 1px solid CanvasText;
+  }
+}

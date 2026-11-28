@@ -4,15 +4,17 @@
 // mismos callbacks que `apps/web/src/components/command-center/CommandCenterView`.
 // Lo que cambia es la composición, la tipografía, el ritmo y el movimiento.
 // No toca el shell, ni el workspace 35, ni ControlCenterView, ni el backend.
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEditorialEntrance } from "./editorial-motion";
 import type { CompanyOverview, CompanyTask } from "../../../web/src/api/company";
 import AgentCreateModal from "../../../web/src/components/AgentCreateModal";
 import { AddMemberModal } from "../../../web/src/components/command-center/AddMemberModal";
 import { briefingText } from "../../../web/src/components/command-center/BriefingCard";
-import SampleDashboard from "../../../web/src/components/command-center/SampleDashboard";
+import SampleDashboardLegacy from "../../../web/src/components/command-center/SampleDashboardLegacy";
 import { ROLE_LABEL, isAttention, type CommandFilter } from "../../../web/src/components/command-center/labels";
 import { relativeTime } from "../../../web/src/lib/format";
 import { EditorialFrame } from "./EditorialFrame";
+import { PresentationChanges } from "./PresentationChanges";
 import { EditorialAttention } from "./components/EditorialAttention";
 import { EditorialBriefing } from "./components/EditorialBriefing";
 import { EditorialFeed } from "./components/EditorialFeed";
@@ -68,7 +70,8 @@ export function CommandCenterEditorial({
   labNavigation = false,
 }: CommandCenterEditorialProps) {
   const [filter, setFilter] = useState<CommandFilter>("todo");
-  const [sampleHidden, setSampleHidden] = useState(false);
+  // La presentación V5 es la normal, también con la API sintética.
+  const [sampleHidden, setSampleHidden] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
   const [agentModal, setAgentModal] = useState(false);
   const [memberModal, setMemberModal] = useState(false);
@@ -100,8 +103,7 @@ export function CommandCenterEditorial({
     .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
     .slice(0, 6);
 
-  // El ejemplo solo aparece cuando el tenant demo lo pide o cuando la empresa aún
-  // no tiene ninguna tarea registrada, exactamente como en la vista original.
+  // El ejemplo histórico es opt-in y no sustituye por defecto al CompanyOverview.
   const sampleAvailable = overview !== null && (demoSession || overview.tasks.total === 0);
   const showSample = sampleAvailable && !sampleHidden;
 
@@ -125,13 +127,11 @@ export function CommandCenterEditorial({
     };
   };
 
+  const [workRequest, setWorkRequest] = useState(0);
+  const handledWork = useRef(0);
   const goToWork = () => {
     setFilter("todo");
-    window.setTimeout(() => {
-      const target = document.getElementById("cce-timeline");
-      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      target?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
-    }, 60);
+    setWorkRequest((request) => request + 1);
   };
 
   /**
@@ -159,10 +159,24 @@ export function CommandCenterEditorial({
         };
 
   const updatedLabel = updatedAt ? relativeTime(updatedAt) : "";
+  const viewRef = useRef<HTMLDivElement>(null);
+  useEditorialEntrance(viewRef, overview !== null);
+  // Después del commit de React, no un retraso arbitrario. Limitar búsqueda
+  // a la instancia actual (dos centros pueden convivir en el laboratorio).
+  useLayoutEffect(() => {
+    if (workRequest === handledWork.current || filter !== "todo") return;
+    handledWork.current = workRequest;
+    const target = viewRef.current?.querySelector<HTMLElement>("[data-cce-work-target]");
+    if (!target) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+  }, [workRequest, filter]);
 
   return (
     <EditorialFrame>
-      <div className="cce-view">
+      <PresentationChanges overview={!showSample && !error ? overview : null}>
+      <div className="cce-view" ref={viewRef}>
         <EditorialHero
           tenantName={overview?.tenant.name ?? "tu empresa"}
           role={overview?.role ?? null}
@@ -177,9 +191,10 @@ export function CommandCenterEditorial({
 
         {notice && <Notice text={notice} onClose={() => setNotice(null)} />}
 
-        {error && (
+        {error && overview && (
           <ErrorState
             message={error}
+            retainingData
             onRetry={() => {
               setNotice(null);
               onRefresh();
@@ -204,7 +219,7 @@ export function CommandCenterEditorial({
             onRetry={onRefresh}
           />
         ) : showSample ? (
-          <SampleDashboard {...(onOpenChat || labNavigation ? { onOpenChat: action("Abrir LAIA", onOpenChat) } : {})} />
+          <SampleDashboardLegacy {...(onOpenChat || labNavigation ? { onOpenChat: action("Abrir LAIA", onOpenChat) } : {})} />
         ) : (
           <>
             <EditorialBriefing
@@ -231,6 +246,7 @@ export function CommandCenterEditorial({
             {show.attention && (
               <EditorialAttention
                 tasks={attention}
+                totalAttention={overview.tasks.waiting + overview.tasks.failed}
                 whoFor={whoFor}
                 onOpenTask={openTask}
                 onReviewTask={reviewTask}
@@ -267,6 +283,7 @@ export function CommandCenterEditorial({
           </>
         )}
       </div>
+      </PresentationChanges>
 
       {agentModal && (
         <AgentCreateModal
