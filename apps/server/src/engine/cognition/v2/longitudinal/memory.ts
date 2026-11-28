@@ -38,6 +38,21 @@ export interface LongitudinalIngestResult {
   sourceDigest: string;
 }
 
+export interface LongitudinalPurge {
+  /** Retencion por antiguedad: borra lo anterior a N dias. */
+  olderThanDays?: number;
+  /** Supresion de un evento concreto (todas sus filas del tenant). */
+  sourceEventId?: string;
+  /** Supresion total de la memoria del tenant. */
+  everything?: boolean;
+}
+
+export interface LongitudinalPurgeResult {
+  deleted: number;
+  scope: "older_than" | "source_event" | "tenant";
+  cutoff?: string;
+}
+
 export interface LongitudinalQuery {
   query?: string;
   limit?: number;
@@ -136,6 +151,58 @@ export class LongitudinalMemory {
         throw Error("LONGITUDINAL_SEGMENT_CONFLICT");
     }
     return { segments: segments.length, created, sourceDigest };
+  }
+
+  /**
+   * Borrado por tenant: retencion por antiguedad y supresion (evento o tenant).
+   * Siempre acotado a la identidad autenticada; no existe variante sin tenant.
+   * Exige exactamente un criterio: un DELETE sin criterio se rechaza en vez de
+   * vaciar la tabla por error.
+   */
+  async purge(identity: LongitudinalIdentity, criteria: LongitudinalPurge): Promise<LongitudinalPurgeResult> {
+    assertIdentity(identity);
+    const selected = [
+      criteria?.olderThanDays !== undefined,
+      criteria?.sourceEventId !== undefined,
+      criteria?.everything !== undefined,
+    ].filter(Boolean).length;
+    if (selected !== 1) throw Error("LONGITUDINAL_PURGE_INVALID");
+
+    if (criteria.olderThanDays !== undefined) {
+      const days = criteria.olderThanDays;
+      if (!Number.isSafeInteger(days) || days < 1 || days > 36_500) throw Error("LONGITUDINAL_PURGE_INVALID");
+      const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+      const removed = await this.db.rawQuery<{ segment_index: number }>(
+        `DELETE FROM cognition_v2_longitudinal_segments
+         WHERE tenant=$1 AND created_at < $2::timestamptz
+         RETURNING segment_index`,
+        [identity.tenantId, cutoff],
+      );
+      return { deleted: removed.length, scope: "older_than", cutoff };
+    }
+
+    if (criteria.sourceEventId !== undefined) {
+      if (
+        typeof criteria.sourceEventId !== "string" ||
+        criteria.sourceEventId.length === 0 ||
+        criteria.sourceEventId.length > 200
+      )
+        throw Error("LONGITUDINAL_PURGE_INVALID");
+      const removed = await this.db.rawQuery<{ segment_index: number }>(
+        `DELETE FROM cognition_v2_longitudinal_segments
+         WHERE tenant=$1 AND source_event_id=$2
+         RETURNING segment_index`,
+        [identity.tenantId, criteria.sourceEventId],
+      );
+      return { deleted: removed.length, scope: "source_event" };
+    }
+
+    if (criteria.everything !== true) throw Error("LONGITUDINAL_PURGE_INVALID");
+    const removed = await this.db.rawQuery<{ segment_index: number }>(
+      `DELETE FROM cognition_v2_longitudinal_segments WHERE tenant=$1 RETURNING segment_index`,
+      [identity.tenantId],
+    );
+    return { deleted: removed.length, scope: "tenant" };
   }
 
   /** Segmentos del tenant, del mas reciente al mas antiguo, filtrados por consulta. */
