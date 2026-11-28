@@ -1,0 +1,34 @@
+=== layers
+[audit:layers] 0 violaciones
+AUDIT_layers=0
+=== bridges
+[audit:bridges] 16/16 wired
+AUDIT_bridges=0
+=== no-console
+[audit:console] 24 ocurrencias en 302 ficheros
+AUDIT_no-console=0
+=== anchors
+[audit:anchors] No hay bloques para revisar.
+AUDIT_anchors=0
+=== contracts
+[audit:contracts] Recorriendo dominios...
+[audit:contracts] Cargando implementaciones y harness...
+[audit:contracts] Ficheros de codigo: 993   de tests/scripts: 333
+[audit:contracts] Contratos encontrados: 392
+[audit:contracts] Informe escrito en /tmp/gate-audits/AUDIT_CONTRACTS.md
+[audit:contracts] OK: 318   MODULO: 64   HARNESS: 1   PENDING: 9   ALLOWLIST: 0   HUERFANOS: 0
+AUDIT_contracts=0
+=== idempotency
+[audit:idempotency] Recorriendo ficheros...
+[audit:idempotency] Ficheros: 1024
+[audit:idempotency] Marcas encontradas: 2528
+[audit:idempotency] Informe escrito en /tmp/gate-audits/AUDIT_IDEMPOTENCY.md
+[audit:idempotency] DUPLICADAS: 222   HUERFANAS: 0   REPETIDAS: 181
+[audit:idempotency] PEGADAS_DOS_VECES: 0
+AUDIT_idempotency=0
+=== tenant-default
+[audit:tenant-default] Recorriendo ficheros...
+[audit:tenant-default] Ficheros: 678
+[audit:tenant-default] Informe en /tmp/gate-audits/AUDIT_TENANT_DEFAULT.md
+[audit:tenant-default] PERMITIDAS: 161   PROHIBIDAS: 0
+AUDIT_tenant-default=0
