@@ -52,10 +52,16 @@ El trasplante de readiness ya está en la rama y se reverifica aquí, no de memo
 | `tsc --noEmit` worker | exit 0 |
 | Siete auditorías (`AUDIT_CHECKS`) | **7/7 exit 0** · layers 0 violaciones · bridges 16/16 · anchors 0 rotos · contracts 318 OK / 9 pending / 0 huérfanos · idempotency 222 duplicadas / 0 huérfanas / 181 repetidas · tenant-default 0 prohibidas · console **24 ocurrencias** (advisory) |
 | Suites focales de campaña | 142 (T01) + 116 (T02) + 14 (T03) + 43 (T04) + 12 (T05) + 36 (T06) + 12 (readiness) |
-| **Suite completa del gate (≈1.173 pruebas)** | **NO EJECUTADA**: el lote excede el límite de 5 min del runner |
+| **Suite completa del gate** | **1.193 tests, 1.163 PASS, 0 FAIL, 25 SKIP, 5 TODO**, 273 s, exit 0 |
 
-El criterio #2 de certificación exige gate integral reproducible con log versionado. **No se cumple**,
-y por eso este informe **no certifica** la convergencia: la deja preparada.
+La suite completa se ejecutó con los mismos flags del gate sobre `tests/**/*.test.ts`, en 273 s (por
+poco no cupo en la primera estimación y sí en el runner). Frente a lo documentado en `9eb03fd5`
+(1.173/1.143/0/25/5) hay **20 pruebas más y 0 fallos**: es el trabajo de la campaña, no una regresión.
+
+Evidencia: [`EVIDENCIA-GATE-FINAL.json`](../Trans00/EJECUCION/EVIDENCIA-GATE-FINAL.json) con el log
+de la suite versionado y su sha256. **Matiz:** el orquestador `scripts/gate-report.ts` no se lanzó como
+proceso único; se ejecutaron sus pasos con los mismos comandos y flags, y el log del typecheck raíz se
+reutiliza del turno de Trans02 (mismo código, árbol limpio).
 
 ---
 
@@ -69,8 +75,8 @@ presentan como PASS. Criterio #3: **no cumplido**.
 
 ## 6. Matriz y ledger
 
-[`MATRIZ-REQUISITOS.json`](MATRIZ-REQUISITOS.json): **29 requisitos** → 5 `INTEGRATED`,
-17 `IMPLEMENTED_TESTED`, 1 `DOCUMENTED_ONLY`, 1 `LIVE_UNVERIFIED`, 3 `BLOCKED`, 2 `NOT_RUN`.
+[`MATRIZ-REQUISITOS.json`](MATRIZ-REQUISITOS.json): **29 requisitos** → 6 `INTEGRATED`,
+17 `IMPLEMENTED_TESTED`, 1 `DOCUMENTED_ONLY`, 1 `LIVE_UNVERIFIED`, 3 `BLOCKED`, 1 `NOT_RUN`.
 
 El ledger **no se toca**: sigue 288 bloques con **0 `DONE`**. La matriz manda sobre el ledger; no se
 promueve ningún bloque porque un turno no cubre 12 fases × 4 pasadas.
@@ -82,7 +88,7 @@ promueve ningún bloque porque un turno no cubre 12 fases × 4 pasadas.
 | # | Criterio | Estado |
 |---|---|---|
 | 1 | `main` incorporado sin divergencia | **no**: ensayado, no mergeado (falta autorización) |
-| 2 | Gate integral verde y reproducible | **no**: suite completa no ejecutada |
+| 2 | Gate integral verde y reproducible | **sí, con matiz**: suite completa 1.193/1.163/0/25/5 + typecheck + 7 audits, evidencia versionada; el orquestador único no se lanzó |
 | 3 | SKIP PostgreSQL resueltos o declarados | **declarados**, no resueltos |
 | 4 | Matriz de requisitos completa | **sí** (29 requisitos) |
 | 5 | Ledger coherente | **pendiente**: 0/48 DONE intacto |
@@ -121,8 +127,8 @@ No se puede ensayar en seco sin un merge real: declarado como criterio #9 no cum
 
 1. Autorizar el merge de `origin/main` en `converge/trans00-core` (merge commit; 0 conflictos
    previstos, 146 archivos).
-2. Ejecutar el gate integral en un runner con tiempo suficiente (o por tandas versionadas) y publicar
-   `EVIDENCIA-GATE-FINAL.json` con log y sha256.
+2. Re-ejecutar `corepack pnpm gate` como orquestador único (los pasos ya están verdes por separado) para
+   que la evidencia quede generada por el propio script.
 3. Abrir **un** PR de convergencia a `main` con la matriz, los informes y el rollback. No reutilizar
    #32/#34 (rama superada) ni #33/#35/#36 (cerrados sin merge).
 

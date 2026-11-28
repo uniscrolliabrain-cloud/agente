@@ -320,11 +320,11 @@
       "requirement": "Gate integral reproducible (1.173 pruebas) desde el clon",
       "path": "scripts/gate-report.ts",
       "symbol": "gate",
-      "sha": "-",
-      "tests": "-",
-      "result": "no ejecutado: el lote completo excede el limite del runner",
-      "state": "NOT_RUN",
-      "evidence": "Trans07/EJECUCION/INFORME-CONVERGENCIA-FINAL.md"
+      "sha": "2b4a730a",
+      "tests": "suite completa: 1193 tests",
+      "result": "1163 PASS, 0 FAIL, 25 SKIP, 5 TODO, 273 s, exit 0",
+      "state": "IMPLEMENTED_TESTED",
+      "evidence": "Trans00/EJECUCION/EVIDENCIA-GATE-FINAL.json"
     },
     {
       "id": "CONV-01",
@@ -366,11 +366,11 @@
   "summary": {
     "total": 29,
     "INTEGRATED": 6,
-    "IMPLEMENTED_TESTED": 16,
+    "IMPLEMENTED_TESTED": 17,
     "DOCUMENTED_ONLY": 1,
     "LIVE_UNVERIFIED": 1,
     "BLOCKED": 3,
-    "NOT_RUN": 2
+    "NOT_RUN": 1
   },
   "notes": "La matriz manda sobre el ledger. Ningun bloque del ledger se promueve a DONE en este turno: 0/48 sigue siendo el estado real de las 12 campanas."
 }

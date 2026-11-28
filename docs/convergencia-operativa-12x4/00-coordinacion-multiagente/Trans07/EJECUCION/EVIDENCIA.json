@@ -47,21 +47,24 @@
       "idempotency": { "exit": 0, "duplicadas": 222, "huerfanas": 0, "repetidas": 181 },
       "tenant-default": { "exit": 0, "permitidas": 161, "prohibidas": 0 }
     },
-    "fullSuite": "NOT_RUN",
-    "fullSuiteReason": "el lote completo excede el limite de 5 min del runner"
+    "fullSuite": { "tests": 1193, "pass": 1163, "fail": 0, "cancelled": 0, "skipped": 25, "todo": 5, "durationMs": 273014, "exit": 0 },
+    "fullSuiteMethod": "mismos comandos y flags de gate-report.ts sobre tests/**/*.test.ts; el orquestador no se lanzo como proceso unico",
+    "fullSuiteLog": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-gate-suite-intento.log",
+    "fullSuiteSha256": "03e8dbd87259fb3bc378ef45eccca08502a986757b1923e40e2dfc23cf302741"
   },
   "certification": {
-    "criteriaMet": [4, 6, 7, 10],
-    "criteriaNotMet": [1, 2, 5, 8, 9],
+    "criteriaMet": [2, 4, 6, 7, 10],
+    "criteriaNotMet": [1, 5, 8, 9],
     "criteriaDeclared": [3],
     "productState": "LIVE_UNVERIFIED",
     "matrix": "Trans07/EJECUCION/MATRIZ-REQUISITOS.json",
-    "matrixSummary": { "total": 29, "INTEGRATED": 5, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 3, "NOT_RUN": 2 }
+    "matrixSummary": { "total": 29, "INTEGRATED": 6, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 3, "NOT_RUN": 1 }
   },
   "exitCodes": {
     "merge": 0,
     "mergedTreeSuites": 0,
     "mergedTreeTypecheck": 0,
+    "gateFullSuite": 0,
     "readinessStrict": 0,
     "readinessTests": 0,
     "workerTypecheck": 0,
@@ -104,7 +107,7 @@
   },
   "limitations": [
     "No se ha mergeado main: solo ensayado en worktree desechable (0 conflictos, tsc 0, 113 tests).",
-    "El gate integral no se ejecuto: el lote completo excede el limite del runner; publicarlo seria una certificacion falsa.",
+    "La suite completa del gate se ejecuto (1193 tests, 0 fail) pero el orquestador gate-report.ts no se lanzo como proceso unico; el log del typecheck raiz se reutiliza de Trans02.",
     "Los 10 SKIP de PostgreSQL siguen sin resolver: no hay postgres ni docker en el entorno.",
     "El ledger no se toca: 288 bloques, 0 DONE.",
     "No hay PR, tag ni despliegue; main sigue en e496dd43.",

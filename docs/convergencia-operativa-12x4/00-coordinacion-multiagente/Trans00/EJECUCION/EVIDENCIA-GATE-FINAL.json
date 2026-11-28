@@ -1,0 +1,56 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "gate-evidence",
+  "testedCommit": "2b4a730a",
+  "branch": "converge/trans00-core",
+  "dirty": 0,
+  "network": "blocked",
+  "method": "pasos de scripts/gate-report.ts ejecutados por separado, con los mismos comandos y flags; el orquestador no se ejecuto como proceso unico",
+  "steps": [
+    {
+      "name": "typecheck",
+      "command": "tsc --noEmit",
+      "exit": 0,
+      "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans02-tsc.log",
+      "sha256": "ba9ca352081fd3da94a667eeb05cfd0f70a27d6fc898aefb8ad3516963747005"
+    },
+    {
+      "name": "typecheck:worker",
+      "command": "npm --prefix apps/worker run typecheck",
+      "exit": 0,
+      "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-worker-tsc.log",
+      "sha256": "fdedbbae81a3330be02058e27544a85e4db9604a04ad1dc0489674e4db4b31b0"
+    },
+    {
+      "name": "test",
+      "command": "node --import tsx --import ./tests/setup.ts --test --test-concurrency=2 --test-timeout=30000 --test-force-exit 'tests/**/*.test.ts'",
+      "exit": 0,
+      "durationMs": 273014.887587,
+      "totals": { "tests": 1193, "pass": 1163, "fail": 0, "cancelled": 0, "skipped": 25, "todo": 5 },
+      "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-gate-suite-intento.log",
+      "sha256": "03e8dbd87259fb3bc378ef45eccca08502a986757b1923e40e2dfc23cf302741"
+    },
+    { "name": "audit:layers", "exit": 0, "violaciones": 0 },
+    { "name": "audit:bridges", "exit": 0, "wired": "16/16" },
+    { "name": "audit:console", "exit": 0, "blocking": false, "occurrences": 24 },
+    { "name": "audit:anchors", "exit": 0, "rotos": 0 },
+    { "name": "audit:contracts", "exit": 0, "ok": 318, "pending": 9, "huerfanos": 0 },
+    { "name": "audit:idempotency", "exit": 0, "duplicadas": 222, "huerfanas": 0, "repetidas": 181 },
+    { "name": "audit:tenant-default", "exit": 0, "permitidas": 161, "prohibidas": 0 }
+  ],
+  "auditsLog": {
+    "path": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-audits.log",
+    "sha256": "951a7448d7581493599001d57fe4d1db82b425bf9f8021e352dbd0adebee79ca"
+  },
+  "comparison": {
+    "documentedAt9eb03fd5": { "tests": 1173, "pass": 1143, "fail": 0, "skip": 25, "todo": 5 },
+    "now": { "tests": 1193, "pass": 1163, "fail": 0, "skip": 25, "todo": 5 },
+    "delta": "20 pruebas mas, mismos 25 SKIP y 5 TODO, 0 FAIL: el trabajo de la campana"
+  },
+  "skips": "25 SKIP declarados: concurrencia con PostgreSQL nativo y flag sintetico explicito; no se cuentan como PASS",
+  "notCovered": [
+    "El orquestador scripts/gate-report.ts no se ejecuto como proceso unico; se ejecutaron sus pasos con los mismos comandos y flags.",
+    "No hay instancia PostgreSQL 17: los SKIP de concurrencia siguen sin resolverse.",
+    "El log del typecheck raiz se reutiliza del turno de Trans02 (mismo commit de codigo, arbol limpio); no se re-ejecuto en este commit."
+  ]
+}
