@@ -37,20 +37,5 @@
 .kw-nav>button.kw-new{color:#fff;background:#111}
 .kw-nav>button.kw-new svg{color:#fff}
 
-/* KW_GENERAL_SHEET_V1 - el menú general deja de ser un panel suelto: hoja con
-   scrim, cabecera con cierre y las mismas filas que el menú de la app. La barra
-   de ancho pierde el dorado y desaparece en móvil, donde no hay nada que
-   arrastrar. */
-.kw-general{width:264px;padding:16px 12px;background:var(--v2-bg,#F3F0EB);border-right:1px solid var(--v2-border,#EDE8E0);font-family:"Instrument Sans",system-ui,sans-serif}
-.kw-general-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px;margin:0 0 12px}
-.kw-general-head small{margin:0;padding:0;font:700 10px/1.2 "Instrument Sans",system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--v2-text-3,#8A857E)}
-.kw-general-head button{width:28px;height:28px;padding:0!important;display:grid;place-items:center;border-radius:999px;border:1px solid var(--v2-border,#EDE8E0);background:#fff;color:var(--v2-text-3,#8A857E)}
-.kw-general button{width:100%;display:flex;text-align:left;gap:12px;padding:10px 12px;border-radius:12px;font:500 13.5px/20px "Instrument Sans",system-ui,sans-serif;color:var(--v2-text-2,#6B6B6B)}
-.kw-general button:hover{background:#EFE8DC;color:#111}
-.kw-general [aria-current=page]{background:var(--ag-lilac);color:var(--ag-violet)}
-.kw-general button:disabled{opacity:.4;background:transparent}
 .kw-grip{background:var(--v2-purple,#6550dd)!important;width:8px!important;border-radius:999px}
-@container(max-width:700px){
-  .kw-grip{display:none!important}
-  .kw-general{width:min(300px,82vw);padding:14px 12px;box-shadow:0 16px 44px #0000001c}
-}
+@container(max-width:700px){.kw-grip{display:none!important}}
