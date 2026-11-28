@@ -22,6 +22,8 @@ import {
   UserCog,
   Users,
 } from "lucide-react";
+import { useOrderedList } from "../ux/useOrderedList";
+import { OrderGhost } from "../ux/OrderGhost";
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import type { Thread } from "../api/threads";
 // SIDEBAR_THREADS_V2 - filas compactas con menu por conversacion.
@@ -87,19 +89,7 @@ const LEGACY_VIEWS: AppView[] = ["control-center", "operations", "workspace"];
 
 // SIDEBAR_ORDER_V1 - orden manual del menú, guardado en el navegador.
 type NavEntry = { id: AppView; label: string; icon: typeof MessageSquareText };
-type NavDrag = { id: AppView; y: number; left: number; width: number; height: number; grab: number };
 const NAV_ORDER_KEY = "agntia_sidebar_order_v1";
-const NAV_HOLD_MS = 260;
-const NAV_MOVE_TOLERANCE = 6;
-function readNavOrder(): AppView[] {
-  try {
-    const raw = localStorage.getItem(NAV_ORDER_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : null;
-    return Array.isArray(parsed) ? parsed.filter((value): value is AppView => typeof value === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 // CHATS_PANEL_V1 - altura del panel de Chats y conversaciones fijadas.
 const CHATS_HEIGHT_KEY = "agntia_chats_panel_height_v1";
@@ -194,197 +184,26 @@ export default function SidebarV2({
     ...primary.slice(2),
   ];
 
-  // SIDEBAR_ORDER_V1 - pulsación larga y arrastre para reordenar. El gesto no
-  // añade ajustes ni botones: al coger un elemento aparece el hueco con la línea
-  // y al soltarlo se queda ahí.
+  // SIDEBAR_ORDER_V1 - el gesto completo vive en apps/web/src/ux/useOrderedList:
+  // la app y las meta-apps comparten una única implementación y aquí solo se
+  // conecta con el menú. El orden guardado se lee y se escribe igual que antes.
   const navSignature = navItems.map((item) => item.id).join("|");
-  const [navOrder, setNavOrder] = useState<AppView[]>([]);
-  const [navDrag, setNavDrag] = useState<NavDrag | null>(null);
-  const [navDrop, setNavDrop] = useState(0);
-  const [navAnnounce, setNavAnnounce] = useState("");
-  const navRows = useRef(new Map<AppView, HTMLButtonElement>());
-  const navHold = useRef<number | null>(null);
-  const navPress = useRef<{ id: AppView; x: number; y: number; el: HTMLButtonElement } | null>(null);
-  const navInsert = useRef(0);
-  const navSuppress = useRef(0);
-  const navBase = useRef<AppView[]>([]);
-  // SPLIT_PANE_V1 - al sacar la entrada de la barra se ofrece la vista dividida.
   const asideEl = useRef<HTMLElement>(null);
   const asideBox = useRef<DOMRect | null>(null);
-  const navOutside = useRef(false);
-  const [navOver, setNavOver] = useState(false);
   const [chatsOver, setChatsOver] = useState(false);
-  const splitDrop = useRef(onSplitDrop);
+  const navOrder = useOrderedList({
+    ids: navSignature.split("|").filter(Boolean),
+    storageKey: NAV_ORDER_KEY,
+    enabled: reorderableNav,
+    railSelector: ".v2-sidebar",
+    ...(onSplitDrop ? { onDropOutside: (id) => onSplitDrop({ kind: "view" as const, id }) } : {}),
+  });
+  const orderedNav: NavEntry[] = reorderableNav ? navOrder.sortList(navItems) : navItems;
+  const navDrag = navOrder.drag;
+  const navDrop = navOrder.dropBefore;
+  // SPLIT_PANE_V1 - la pista de destino se enciende cuando el puntero sale de la barra.
+  const navOver = navOrder.outside && Boolean(onSplitDrop);
 
-  useEffect(() => {
-    splitDrop.current = onSplitDrop;
-  }, [onSplitDrop]);
-
-  useEffect(() => {
-    if (!reorderableNav) return;
-    const ids = navSignature.split("|").filter(Boolean) as AppView[];
-    const stored = readNavOrder();
-    setNavOrder([...stored.filter((id) => ids.includes(id)), ...ids.filter((id) => !stored.includes(id))]);
-  }, [reorderableNav, navSignature]);
-
-  const saveNavOrder = (ids: AppView[]) => {
-    setNavOrder(ids);
-    try {
-      localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(ids));
-    } catch {
-      // Sin almacenamiento, el orden dura la sesión.
-    }
-  };
-
-  const navRank = (id: AppView) => {
-    const at = navOrder.indexOf(id);
-    return at < 0 ? Number.MAX_SAFE_INTEGER : at;
-  };
-  const orderedNav: NavEntry[] = reorderableNav && navOrder.length ? [...navItems].sort((a, b) => navRank(a.id) - navRank(b.id)) : navItems;
-
-  const clearNavHold = () => {
-    if (navHold.current) {
-      window.clearTimeout(navHold.current);
-      navHold.current = null;
-    }
-    navPress.current = null;
-  };
-
-  const beginNavDrag = (entry: NavEntry, el: HTMLButtonElement, clientY: number) => {
-    const rect = el.getBoundingClientRect();
-    asideBox.current = asideEl.current?.getBoundingClientRect() ?? null;
-    navOutside.current = false;
-    navBase.current = orderedNav.map((item) => item.id);
-    const index = navBase.current.indexOf(entry.id);
-    navInsert.current = index < 0 ? 0 : index;
-    navSuppress.current = Number.POSITIVE_INFINITY;
-    setNavDrop(navInsert.current);
-    setNavDrag({ id: entry.id, y: clientY, left: rect.left, width: rect.width, height: rect.height, grab: clientY - rect.top });
-  };
-
-  useEffect(() => {
-    if (!navDrag) return;
-    const moving = navDrag.id;
-    const onMove = (event: PointerEvent) => {
-      setNavDrag((value) => (value ? { ...value, y: event.clientY } : value));
-      const outside = Boolean(splitDrop.current && asideBox.current && event.clientX > asideBox.current.right + 8);
-      if (outside !== navOutside.current) {
-        navOutside.current = outside;
-        setNavOver(outside);
-      }
-      if (outside) return;
-      let index = 0;
-      for (const id of navBase.current) {
-        if (id === moving) continue;
-        const el = navRows.current.get(id);
-        if (!el) continue;
-        const rect = el.getBoundingClientRect();
-        if (event.clientY > rect.top + rect.height / 2) index += 1;
-      }
-      if (index !== navInsert.current) {
-        navInsert.current = index;
-        setNavDrop(index);
-      }
-    };
-    const onUp = () => {
-      if (navOutside.current) {
-        // SPLIT_PANE_V1 - soltar fuera de la barra: la entrada abre el otro panel.
-        navOutside.current = false;
-        setNavOver(false);
-        splitDrop.current?.({ kind: "view", id: moving });
-        navSuppress.current = performance.now() + 400;
-        setNavDrag(null);
-        return;
-      }
-      const without = navBase.current.filter((id) => id !== moving);
-      without.splice(Math.min(navInsert.current, without.length), 0, moving);
-      saveNavOrder(without);
-      const entry = navItems.find((item) => item.id === moving);
-      setNavAnnounce(`${entry?.label ?? moving}, posición ${Math.min(navInsert.current + 1, without.length)} de ${without.length}`);
-      navSuppress.current = performance.now() + 400;
-      setNavDrag(null);
-    };
-    const onCancel = () => {
-      navSuppress.current = performance.now() + 200;
-      navOutside.current = false;
-      setNavOver(false);
-      setNavDrag(null);
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
-    };
-    const stopTouch = (event: TouchEvent) => event.preventDefault();
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    window.addEventListener("pointercancel", onCancel);
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("touchmove", stopTouch, { passive: false });
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onCancel);
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("touchmove", stopTouch);
-    };
-  }, [navDrag?.id, navSignature]);
-
-  const onNavPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (!reorderableNav) return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    const id = event.currentTarget.dataset.navId as AppView | undefined;
-    const entry = id ? navItems.find((item) => item.id === id) : undefined;
-    if (!id || !entry) return;
-    const el = event.currentTarget;
-    navPress.current = { id, x: event.clientX, y: event.clientY, el };
-    if (navHold.current) window.clearTimeout(navHold.current);
-    navHold.current = window.setTimeout(() => {
-      navHold.current = null;
-      const held = navPress.current;
-      if (held) beginNavDrag(entry, held.el, held.y);
-    }, NAV_HOLD_MS);
-  };
-
-  const onNavPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (navDrag) return;
-    const held = navPress.current;
-    if (!held) return;
-    const moved =
-      Math.abs(event.clientX - held.x) > NAV_MOVE_TOLERANCE || Math.abs(event.clientY - held.y) > NAV_MOVE_TOLERANCE;
-    if (!moved) return;
-    // SPLIT_PANE_V1 - con ratón el arrastre empieza al moverse, sin esperar la
-    // pulsación larga: quien coge la entrada y tira hacia el contenido ve el
-    // gesto al instante. En táctil se mantiene la pulsación larga para no
-    // robar el scroll.
-    if (event.pointerType !== "touch") {
-      const entry = navItems.find((item) => item.id === held.id);
-      const el = held.el;
-      clearNavHold();
-      if (entry) beginNavDrag(entry, el, event.clientY);
-      return;
-    }
-    clearNavHold();
-  };
-
-  const onNavKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>, id: AppView) => {
-    if (!reorderableNav || !event.altKey) return;
-    const direction = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-    if (!direction) return;
-    event.preventDefault();
-    const ids = orderedNav.map((item) => item.id);
-    const from = ids.indexOf(id);
-    const to = from + direction;
-    if (from < 0) return;
-    if (to < 0 || to >= ids.length) {
-      setNavAnnounce("Extremo del menú");
-      return;
-    }
-    const next = [...ids];
-    next.splice(from, 1);
-    next.splice(to, 0, id);
-    saveNavOrder(next);
-    const entry = navItems.find((item) => item.id === id);
-    setNavAnnounce(`${entry?.label ?? id}, posición ${to + 1} de ${next.length}`);
-  };
   // CHATS_PANEL_V1 - el panel de Chats se arrastra desde su separador: crece
   // hasta quedarse con toda la barra y, si solo sube un poco, el menú sigue
   // desplazándose por separado. Los fijados van primero.
@@ -427,6 +246,8 @@ export default function SidebarV2({
   const startChatsDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!chatsPanel) return;
     event.preventDefault();
+    // SPLIT_PANE_V1 - la pista de destino se mide desde el borde de la barra.
+    asideBox.current = asideEl.current?.getBoundingClientRect() ?? null;
     const startY = event.clientY;
     const startHeight = chatsHeight;
     chatsMax.current = measureChatsMax();
@@ -600,24 +421,20 @@ export default function SidebarV2({
           aria-label="Principal"
           aria-describedby={reorderableNav ? "v2-nav-order-help" : undefined}
         >
-          {orderedNav.map((item, index) => {
+          {orderedNav.map((item) => {
             const Icon = item.icon;
             const active = activeView === item.id;
             return (
               <Fragment key={item.id}>
-                {navDrag && navDrop === index && (
+                {navDrag && navDrop === item.id && (
                   <span className="v2-nav-slot" style={{ height: navDrag.height }} aria-hidden="true" />
                 )}
                 <button
                   type="button"
                   data-nav-id={item.id}
-                  ref={(node) => {
-                    if (node) navRows.current.set(item.id, node);
-                    else navRows.current.delete(item.id);
-                  }}
                   className={`v2-nav-item ${active ? "active" : ""}`}
                   onClick={(event) => {
-                    if (performance.now() < navSuppress.current) return;
+                    if (navOrder.onRowClick(item.id)) return;
                     if (collapsed) {
                       pinTip(item.label, event.currentTarget);
                       return;
@@ -627,20 +444,14 @@ export default function SidebarV2({
                   onDoubleClick={() => {
                     if (collapsed) openFromRail(item.id);
                   }}
-                  onPointerDown={onNavPointerDown}
-                  onPointerMove={onNavPointerMove}
-                  onPointerUp={clearNavHold}
-                  onPointerCancel={clearNavHold}
-                  onPointerLeave={() => {
-                    if (!navDrag) clearNavHold();
-                  }}
+                  {...navOrder.bindRow(item.id, item.label)}
                   onKeyDown={(event) => {
                     if (collapsed && (event.key === "Enter" || event.key === " ")) {
                       event.preventDefault();
                       openFromRail(item.id);
                       return;
                     }
-                    onNavKeyDown(event, item.id);
+                    navOrder.bindRow(item.id, item.label).onKeyDown(event);
                   }}
                   onMouseEnter={showTip(item.label)}
                   onMouseLeave={hideTip}
@@ -655,7 +466,7 @@ export default function SidebarV2({
               </Fragment>
             );
           })}
-          {reorderableNav && navDrag && navDrop === orderedNav.length && (
+          {reorderableNav && navDrag && navOrder.dropAtEnd && (
             <span className="v2-nav-slot" style={{ height: navDrag.height }} aria-hidden="true" />
           )}
           {isAdmin && !hideLegacyViews && (
@@ -792,20 +603,7 @@ export default function SidebarV2({
           {railTip.label}
         </span>
       )}
-      {navDrag && (() => {
-        const entry = orderedNav.find((item) => item.id === navDrag.id);
-        const Icon = entry?.icon ?? MessageSquareText;
-        return (
-          <span
-            className="v2-nav-ghost"
-            style={{ left: navDrag.left, top: navDrag.y - navDrag.grab, width: navDrag.width, height: navDrag.height }}
-            aria-hidden="true"
-          >
-            <Icon className="v2-nav-icon" />
-            {!collapsed && <span>{entry?.label}</span>}
-          </span>
-        );
-      })()}
+      <OrderGhost drag={navDrag} />
 
       {reorderableNav && (
         <>
@@ -813,7 +611,7 @@ export default function SidebarV2({
             Mantén pulsado un elemento del menú y arrástralo para reordenarlo. Con teclado, Alt y flechas arriba o abajo.
           </span>
           <span className="sr-only" role="status" aria-live="polite">
-            {navAnnounce}
+            {navOrder.announce}
           </span>
         </>
       )}

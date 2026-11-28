@@ -13,12 +13,12 @@ import {
   type ReactNode,
 } from "react";
 import { CornerDownLeft, Pin, PinOff, Search, X } from "lucide-react";
-import { useOrderedList } from "./useOrderedList";
+import { useOrderedList } from "../../../web/src/ux/useOrderedList";
 import "./smart-ux.css";
 
 // ORDERED_LIST_V1 - el fantasma y el anuncio del gesto de orden son iguales en
 // las tres meta-apps, así que se exponen desde aquí y cada una los monta una vez.
-export { OrderAnnounce, OrderGhost } from "./OrderGhost";
+export { OrderAnnounce, OrderGhost } from "../../../web/src/ux/OrderGhost";
 
 export type SmartTone = "company" | "code";
 

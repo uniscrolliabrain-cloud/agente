@@ -1,7 +1,7 @@
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
-import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
-import SplitPane, { SplitDropHint } from "../smart-ux/SplitPane";
+import { OrderAnnounce, OrderGhost } from "../../../web/src/ux/OrderGhost";
+import SplitPane, { SplitDropHint } from "../../../web/src/ux/SplitPane";
 // AGNTIA_CODE_V1 - tercer clon del demo.
 // Plataforma de IA coding y bitácora conectada a GitHub, Vercel y Cloudflare.
 // Los datos vienen de los 17 repos reales de uniscrolliabrain-cloud, leídos de

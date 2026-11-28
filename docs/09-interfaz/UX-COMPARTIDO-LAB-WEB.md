@@ -1,6 +1,6 @@
 # UX compartido: del lab a la web sin fricción y sin pérdida
 
-Estado: **paso 1 hecho** en `0a6f7652` (menú y chats de las tres meta-apps con el gesto compartido) y **panel dividido hecho** (`SplitPane` + soltar fuera de la barra en las tres). Pendiente: que `apps/web` importe los hooks en lugar de su copia interna.
+Estado: **origen único hecho**. El gesto de orden vive en `apps/web/src/ux/useOrderedList.ts`; lo usan el menú y los chats de la app y las tres meta-apps. El panel dividido vive en `apps/web/src/ux/SplitPane.tsx` y lo usan las tres meta-apps. Queda fuera, a propósito, el panel dividido de `App.tsx`, que conserva su marcado `v2-*` de producción: cambiarlo altera el aspecto y no se hace a ciegas.
 
 Base: `36ee89ec`. Línea base verde medida: `WEB_TSC=0`, `LAB_TSC=0`.
 
@@ -44,9 +44,9 @@ Verificado en el código, no supuesto.
 | Capacidad | App (`apps/web`) | Meta-apps | Destino |
 |---|---|---|---|
 | Dock: arrastrar para reordenar, fijar | `DockRail` (`DOCK_RAIL_V1`) | **Sí**: `MetaDock`, por `namespace` | Compartido; el dock ya está resuelto |
-| Menú: reordenar y `Alt+↑↓` | `SidebarV2` (`SIDEBAR_ORDER_V1`, `agntia_sidebar_order_v1`) | **Hecho**: `useOrderedList` en `useSmartNav`, una por meta-app | Compartido en el lab; falta que la app importe el hook |
-| Chats: reordenar y triple clic arriba | `SidebarThreads` (`CHATS_ORDER_V1`) | **Hecho**: `useOrderedList` en `MetaChats` | Compartido en el lab; falta que la app importe el hook |
-| Sacar una fila y duplicar pantalla | `App` + `SidebarV2` + `SidebarThreads` (`SPLIT_PANE_V1`) | **Hecho**: soltar fuera de la barra abre `SplitPane` (`company-v2`, `code-v1`, `observability-v1`) | `SplitPane` compartido; falta que la app lo importe |
+| Menú: reordenar y `Alt+↑↓` | **Hecho**: `useOrderedList` en `SidebarV2`, misma clave `agntia_sidebar_order_v1` | **Hecho**: `useOrderedList` en `useSmartNav` | Una sola implementación |
+| Chats: reordenar y triple clic arriba | **Hecho**: `useOrderedList` en `SidebarThreads` | **Hecho**: `useOrderedList` en `MetaChats` | Una sola implementación |
+| Sacar una fila y duplicar pantalla | `App` + `SidebarV2` + `SidebarThreads` (`SPLIT_PANE_V1`), con su marcado `v2-*` | **Hecho**: soltar fuera de la barra abre `SplitPane` en las tres | El gesto es el mismo hook; el panel de la app conserva su capa visual |
 | Plegar menú, paleta ⌘K, atajos, recientes | Sí | **Sí**: `useSmartNav`, `SmartCommandPalette`, `SmartShortcuts` | Ya compartido |
 
 ## 5. Protocolo por paso

@@ -1,7 +1,7 @@
 import {useEffect,useRef,useState,type PointerEvent as RP} from "react";
 import {ChevronDown,MessageSquare,MoreHorizontal,Pin} from "lucide-react";
-import {useOrderedList} from "./useOrderedList";
-import {OrderAnnounce,OrderGhost} from "./OrderGhost";
+import {useOrderedList} from "../../../web/src/ux/useOrderedList";
+import {OrderAnnounce,OrderGhost} from "../../../web/src/ux/OrderGhost";
 import "./meta-chats.css";
 export type MetaChat={id:string;title:string;preview?:string};
 type Props={namespace:string;items:MetaChat[];active:string|null;onSelect:(id:string)=>void;onRename:(id:string,title:string)=>void;onNew?:()=>void};

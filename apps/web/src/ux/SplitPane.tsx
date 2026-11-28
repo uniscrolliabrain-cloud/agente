@@ -4,7 +4,7 @@
 // meta-app sin dividir se pinta exactamente igual que antes.
 import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { X } from "lucide-react";
-import { useMediaQuery } from "../../../web/src/hooks/useMediaQuery";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import "./split-pane.css";
 
 type Props = {

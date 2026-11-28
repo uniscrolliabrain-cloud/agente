@@ -39,8 +39,8 @@ import {
 import "../design-system/agntia-tokens.css";
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
-import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
-import SplitPane, { SplitDropHint } from "../smart-ux/SplitPane";
+import { OrderAnnounce, OrderGhost } from "../../../web/src/ux/OrderGhost";
+import SplitPane, { SplitDropHint } from "../../../web/src/ux/SplitPane";
 import {
   SmartCommandPalette,
   SmartShortcuts,

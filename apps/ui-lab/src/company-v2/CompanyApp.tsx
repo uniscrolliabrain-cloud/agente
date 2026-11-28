@@ -1,7 +1,7 @@
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
-import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
-import SplitPane, { SplitDropHint } from "../smart-ux/SplitPane";
+import { OrderAnnounce, OrderGhost } from "../../../web/src/ux/OrderGhost";
+import SplitPane, { SplitDropHint } from "../../../web/src/ux/SplitPane";
 // TU_EMPRESA_V1 - andamio de la meta-app.
 // Clon del shell de AgntiaPro abierto desde Ajustes → Tu Empresa. Todo el
 // contenido es día 90 a propósito: primero se valida la estructura y el
