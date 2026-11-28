@@ -31,3 +31,7 @@
 .kw-tree-row>button:last-child svg{flex:0 0 18px;width:18px;height:18px}
 .kw-tree-row>button:last-child span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kw-tree-row>button:hover{background:#EFE8DC}
+.kw-nav small{white-space:nowrap}
+.kw-nav>button:not(.kw-grip){line-height:20px}
+.kw-nav>button.kw-new{color:#fff;background:#111}
+.kw-nav>button.kw-new svg{color:#fff}
