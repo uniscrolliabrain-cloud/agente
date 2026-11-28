@@ -110,6 +110,8 @@ las 36 conexiones `stub_missing_config` + 6 `stub_wiring_pending` cableadas.
 
 ## 5. Secuencia recomendada (8 pasos)
 
+0. **PostgreSQL 17 fijo en CI** (§5 bis): servicio `postgres:17` en el job `integration`. Salida:
+   `pnpm test` en `main` con 0 SKIP de Postgres, sin depender de una máquina local.
 1. **Sondas en vivo controladas** (vertical A): un número de prueba de Meta, un dominio de
    test de Resend, una clave OpenRouter de test. Salida: `LIVE_VERIFIED` por proveedor con
    log y sha256.
@@ -129,6 +131,45 @@ las 36 conexiones `stub_missing_config` + 6 `stub_wiring_pending` cableadas.
    cliente que la exija por contrato. No antes: no bloquea vender.
 
 ---
+
+## 5 bis. Reproducir PostgreSQL 17 sin root (y dejarlo fijo en CI)
+
+El cierre del criterio #3 se hizo en el sandbox con binarios embebidos, sin `sudo`:
+
+```bash
+mkdir -p /tmp/pg && cd /tmp/pg && npm init -y
+npm i embedded-postgres@17.12.0-beta.19 @embedded-postgres/linux-x64@17.12.0-beta.19
+cd node_modules/@embedded-postgres/linux-x64/native
+export PATH="$PWD/bin:$PATH" LD_LIBRARY_PATH="$PWD/lib"
+initdb -D /tmp/pgdata -U postgres --auth=trust -E UTF8
+pg_ctl -D /tmp/pgdata -l /tmp/pg.log -o "-p 55432 -k /tmp -c listen_addresses=127.0.0.1" start
+# base: cognition_test · URL: postgres://postgres@127.0.0.1:55432/cognition_test
+```
+
+Eso sirve para una máquina de desarrollo. Para que **no vuelva a haber SKIP en CI**, el job
+`integration` de `.github/workflows/ci.yml` (hoy corre `pnpm test` con `ALLOW_NETWORK=1` y sin
+base) necesita un servicio y dos variables:
+
+```yaml
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cognition_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+# ...y en el step `pnpm test`:
+        env:
+          ALLOW_NETWORK: "1"
+          COGNITION_TEST_POSTGRES_URL: postgres://postgres:postgres@localhost:5432/cognition_test
+          TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/cognition_test
+```
+
+No se aplicó en este turno: un workflow sólo se puede verificar ejecutándolo en `main`, y no se
+empuja a `main` sin autorización. Queda como primer paso de la secuencia.
 
 ## 6. Qué NO prometer todavía
 

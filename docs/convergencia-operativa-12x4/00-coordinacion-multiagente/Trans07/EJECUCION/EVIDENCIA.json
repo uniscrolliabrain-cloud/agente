@@ -50,6 +50,7 @@
     "env": ["COGNITION_TEST_POSTGRES_URL", "TEST_DATABASE_URL"],
     "suites": { "tests": 85, "pass": 85, "fail": 0, "skipped": 0 },
     "detail": "83/83 en las 12 suites con puerta PostgreSQL + 2/2 en trans01-replay-concurrency",
+    "reproduce": "sin root: npm i embedded-postgres@17.12.0-beta.19 @embedded-postgres/linux-x64@17.12.0-beta.19; initdb -D /tmp/pgdata -U postgres --auth=trust; pg_ctl -o '-p 55432' start; export COGNITION_TEST_POSTGRES_URL y TEST_DATABASE_URL",
     "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-postgres17-suites.log",
     "sha256": "e06647df311de6237b7cdd8dc97a5b15f85ff0636d2c624db52f95af2259fa1b"
   },
