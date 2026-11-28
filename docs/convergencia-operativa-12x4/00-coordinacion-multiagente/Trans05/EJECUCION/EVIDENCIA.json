@@ -50,13 +50,13 @@
     "endToEndTraversal": true,
     "idempotencyTested": true,
     "tenantIsolationTwoTenants": true,
-    "retention": "deuda declarada: no existe ruta de borrado por tenant",
+    "retention": "hecho 2026-11-28: LongitudinalMemory.purge (retencion por antiguedad, supresion por evento y total), siempre acotado a la identidad; 13/13 en trans05-*",
     "ownerRealBlocks": "NOT_RUN",
     "fullGate": false
   },
   "limitations": [
     "El gate integral no se ejecuto: las 12 pruebas son de la campana y su prefijo, no el gate.",
-    "Retencion/borrado por tenant sin definir; se declara deuda con dueno pendiente de asignar.",
+    "Retencion/borrado implementado a nivel de memoria (purge) y probado; no hay aun job programado ni ruta HTTP que lo invoque.",
     "07.01-07.04 siguen NOT_RUN: no hay autorizacion ni datos del owner.",
     "El ledger de Trans05 no se modifica en este turno (01.02/01.03/12.02 siguen IN_PROGRESS): un turno no cubre las 12 fases x 4 pasadas.",
     "Ningun proveedor externo fue contactado."

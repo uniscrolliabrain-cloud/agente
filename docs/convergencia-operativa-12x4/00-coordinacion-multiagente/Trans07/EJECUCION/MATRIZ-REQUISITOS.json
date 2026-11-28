@@ -141,10 +141,10 @@
       "path": "tests/cognition-v2-postgres.test.ts",
       "symbol": "-",
       "sha": "5a7ea97a",
-      "tests": "10 SKIP",
-      "result": "sin instancia PostgreSQL en el runner",
-      "state": "BLOCKED",
-      "evidence": "Trans02/EJECUCION/EVIDENCIA.json (skips)"
+      "tests": "10 SKIP -> 0 SKIP con COGNITION_TEST_POSTGRES_URL",
+      "result": "83/83 PASS, 0 SKIP, 0 FAIL contra PostgreSQL 17.12 nativo (2026-11-28)",
+      "state": "INTEGRATED",
+      "evidence": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-postgres17-suites.log (sha256 e06647df)"
     },
     {
       "id": "T03-01",
@@ -247,12 +247,12 @@
       "campaign": "Trans05",
       "requirement": "Retencion y borrado por tenant de segmentos longitudinales",
       "path": "apps/server/src/engine/cognition/v2/longitudinal/memory.ts",
-      "symbol": "-",
-      "sha": "f3d62890",
-      "tests": "-",
-      "result": "deuda declarada sin dueno asignado",
-      "state": "BLOCKED",
-      "evidence": "Trans05/EJECUCION/EVIDENCIA.json (retention)"
+      "symbol": "LongitudinalMemory.purge (olderThanDays | sourceEventId | everything)",
+      "sha": "511cfeb1+",
+      "tests": "tests/trans05-longitudinal-retention.test.ts (1 test, 13/13 en trans05-*)",
+      "result": "retencion por antiguedad, supresion por evento y supresion total, siempre por tenant; criterio obligatorio",
+      "state": "IMPLEMENTED_TESTED",
+      "evidence": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-trans05-retention.log (sha256 48289417)"
     },
     {
       "id": "T06-01",
@@ -377,12 +377,12 @@
   ],
   "summary": {
     "total": 30,
-    "INTEGRATED": 8,
-    "IMPLEMENTED_TESTED": 17,
+    "INTEGRATED": 9,
+    "IMPLEMENTED_TESTED": 18,
     "DOCUMENTED_ONLY": 1,
     "LIVE_UNVERIFIED": 1,
-    "BLOCKED": 2,
+    "BLOCKED": 0,
     "NOT_RUN": 1
   },
-  "notes": "La matriz manda sobre el ledger. Ningun bloque del ledger se promueve a DONE en este turno: 0/48 sigue siendo el estado real de las 12 campanas."
+  "notes": "La matriz manda sobre el ledger. Ningun bloque del ledger se promueve a DONE en este turno: 0/48 sigue siendo el estado real de las 12 campanas. Actualizado 2026-11-28 con PostgreSQL 17.12 nativo (T02-05) y la retencion longitudinal (T05-02); quedan LIVE_UNVERIFIED (T03-04) y NOT_RUN (OWNER-REAL)."
 }

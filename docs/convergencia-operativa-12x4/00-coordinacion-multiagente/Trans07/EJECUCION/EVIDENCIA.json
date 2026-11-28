@@ -27,9 +27,9 @@
     "node": "v24.22.1",
     "pnpm": "11.19.0",
     "lockfileSha256": "1c2851bc2ce1f0eab66ed1fd60b01018d3f56e73dc0124cbaf28e30543fdace0",
-    "postgres": "unavailable",
+    "postgres": "17.12 nativo (binarios embebidos en el sandbox, puerto 55432)",
     "docker": "unavailable",
-    "network": "blocked"
+    "network": "disponible en el sandbox de este turno (instalacion via npm)"
   },
   "mergeRehearsal": {
     "method": "worktree desechable + git merge --no-commit --no-ff origin/main + abort",
@@ -41,6 +41,30 @@
     "typecheckMergedTree": 0,
     "campaignSuitesMergedTree": { "total": 113, "pass": 113, "fail": 0, "skip": 0 },
     "treeAfter": "clean"
+  },
+  "postgres17": {
+    "server": "PostgreSQL 17.12 on x86_64-pc-linux-gnu (binarios de @embedded-postgres/linux-x64 17.12.0-beta.19)",
+    "host": "127.0.0.1",
+    "port": 55432,
+    "database": "cognition_test",
+    "env": ["COGNITION_TEST_POSTGRES_URL", "TEST_DATABASE_URL"],
+    "suites": { "tests": 85, "pass": 85, "fail": 0, "skipped": 0 },
+    "detail": "83/83 en las 12 suites con puerta PostgreSQL + 2/2 en trans01-replay-concurrency",
+    "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-postgres17-suites.log",
+    "sha256": "e06647df311de6237b7cdd8dc97a5b15f85ff0636d2c624db52f95af2259fa1b"
+  },
+  "rollbackRehearsal": {
+    "method": "worktree desechable sobre 6df1cb56 + git revert -m 1 --no-commit + abort + remove",
+    "conflicts": 0,
+    "files": 300,
+    "insertions": 1147,
+    "deletions": 34357,
+    "revertedTree": "f1029256d8248d910378927fe2ec60dbea8ebf3e",
+    "parent1Tree": "f1029256d8248d910378927fe2ec60dbea8ebf3e",
+    "identicalToParent1": true,
+    "pushed": false,
+    "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-rollback-dryrun.log",
+    "sha256": "208e1bb3d78a24875660ceaaee8a4fc82e3c74dfcb5f10cf04be8b766983890c"
   },
   "infra": {
     "readinessStrict": 0,
@@ -59,12 +83,13 @@
       "idempotency": { "exit": 0, "duplicadas": 222, "huerfanas": 0, "repetidas": 181 },
       "tenant-default": { "exit": 0, "permitidas": 161, "prohibidas": 0 }
     },
-    "fullSuite": { "tests": 1193, "pass": 1163, "fail": 0, "cancelled": 0, "skipped": 25, "todo": 5, "durationMs": 273014, "exit": 0 },
-    "fullSuiteMethod": "orquestador scripts/gate-report.ts completo (10/10 pasos)",
-    "orchestrator": { "verdict": "GATE OK", "stepsGreen": 10, "stepsTotal": 10, "durationMs": 306200 },
+    "fullSuite": { "tests": 1194, "pass": 1177, "fail": 0, "cancelled": 0, "skipped": 12, "todo": 5, "durationMs": 294400, "exit": 0 },
+    "fullSuiteMethod": "orquestador scripts/gate-report.ts completo (10/10 pasos) con COGNITION_TEST_POSTGRES_URL y TEST_DATABASE_URL apuntando a PostgreSQL 17.12 nativo",
+    "previousRun": { "commit": "ac6363b2", "tests": 1193, "pass": 1163, "fail": 0, "skipped": 25, "todo": 5, "durationMs": 273014 },
+    "orchestrator": { "verdict": "GATE OK", "stepsGreen": 10, "stepsTotal": 10, "durationMs": 319500, "commit": "9340cbc4" },
     "firstRun": "fallo typecheck:worker por dependencias npm en vez de pnpm; se instalo con --frozen-lockfile y paso 10/10 sin relajar checks",
-    "fullSuiteLog": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-gate-suite-intento.log",
-    "fullSuiteSha256": "03e8dbd87259fb3bc378ef45eccca08502a986757b1923e40e2dfc23cf302741"
+    "fullSuiteLog": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/report-final.log",
+    "fullSuiteSha256": "261400287ddd79bd8717c1388c30bdab3411972e662682e08f29c9f684b921b0"
   },
   "pullRequest": {
     "number": 37,
@@ -81,12 +106,12 @@
     "checks": { "unit": "success", "web": "success", "worker": "success", "vercel": "success", "integration": "skipped (main only)", "releaseGate": "skipped (main only)" }
   },
   "certification": {
-    "criteriaMet": [1, 2, 4, 6, 7, 8, 10],
-    "criteriaNotMet": [5, 9],
-    "criteriaDeclared": [3],
+    "criteriaMet": [1, 2, 3, 4, 6, 7, 8, 9, 10],
+    "criteriaNotMet": [5],
+    "criteriaDeclared": [],
     "productState": "LIVE_UNVERIFIED",
     "matrix": "Trans07/EJECUCION/MATRIZ-REQUISITOS.json",
-    "matrixSummary": { "total": 30, "INTEGRATED": 8, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 2, "NOT_RUN": 1 }
+    "matrixSummary": { "total": 30, "INTEGRATED": 9, "IMPLEMENTED_TESTED": 18, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 0, "NOT_RUN": 1 }
   },
   "exitCodes": {
     "merge": 0,
@@ -129,18 +154,19 @@
     "pullRequest": "mergeado (#37)",
     "tag": "no creado",
     "deploy": "no realizado",
-    "postgres17": "sin instancia",
+    "postgres17": "cumplido: PostgreSQL 17.12 nativo, 85/85 PASS, 0 SKIP",
     "ledger": "0/48 DONE, intacto",
-    "ownerReal": "NOT_RUN"
+    "ownerReal": "NOT_RUN",
+    "retentionT05_02": "hecho: LongitudinalMemory.purge por tenant (antiguedad, evento, total)"
   },
   "limitations": [
     "El merge se ensayo antes de ejecutarlo (worktree desechable, 0 conflictos, tsc 0, 113 tests) y despues se ejecuto el merge real y el PR se mergeo en main.",
-    "La suite completa del gate se ejecuto (1193 tests, 0 fail) pero el orquestador gate-report.ts no se lanzo como proceso unico; el log del typecheck raiz se reutiliza de Trans02.",
-    "Los 10 SKIP de PostgreSQL siguen sin resolver: no hay postgres ni docker en el entorno.",
+    "El gate final se ejecuto como proceso unico sobre 9340cbc4 con PostgreSQL 17.12 nativo activo: 10/10 pasos, 1194 tests, 1177 PASS, 0 FAIL, 12 SKIP, 5 TODO. El arbol tenia cambios de documentacion sin commitear durante la ejecucion; el codigo evaluado es 9340cbc4.",
+    "De los 25 SKIP originales se resolvieron 13: 10 de concurrencia con PostgreSQL 17 (Trans02) y 2 de cursor de replay (Trans01). Quedan 12: 11 e2e de campana 3 marcados TODO por fixtures de modelo y kernel, y 1 computer_command que requiere ComputerService. Ninguno es infraestructura ausente ni se presenta como PASS.",
     "El ledger no se toca: 288 bloques, 0 DONE.",
-    "No hay tag ni despliegue. main ya no esta en e496dd43: el merge del PR lo dejo en 6df1cb56.",
-    "El rollback esta documentado pero no ensayado: el commit a revertir es el merge del PR en main (6df1cb56).",
-    "El workflow de CI que llega de main si se ejecuto en el PR (unit, web y worker en verde); el release gate de main corre sobre el commit de merge."
+    "No hay tag ni despliegue. main ya no esta en e496dd43: el merge del PR lo dejo en 6df1cb56 y su release gate salio en verde.",
+    "El rollback esta documentado Y ensayado en seco: git revert -m 1 6df1cb56 restaura exactamente e496dd43, 0 conflictos, sin push ni force-push.",
+    "Los proveedores externos siguen LIVE_UNVERIFIED y 07-owner-real sigue NOT_RUN: ningun vertical es vendible sin esas dos pasadas."
   ],
-  "notes": "Deja la convergencia ensayada, medida y mergeada: merge limpio, tsc verde en el arbol fusionado, 113 pruebas de campana sobre el, infra reverificada, gate orquestado 10/10 y PR #37 mergeado en main como 6df1cb56 con el CI del PR en verde. No publica ni despliega nada: PostgreSQL 17, el ledger y el rollback en seco siguen pendientes, y el producto sigue LIVE_UNVERIFIED."
+  "notes": "Deja la convergencia ensayada, medida y mergeada, y cierra los dos huecos que eran codigo o infraestructura local: retencion/borrado longitudinal por tenant (T05-02) y concurrencia contra PostgreSQL 17 nativo (T02-05, 85/85 PASS, 0 SKIP), mas el rollback ensayado en seco. De 10 criterios, 9 estan cumplidos; solo el ledger (288 bloques, 0 DONE) queda abierto, y no se promueve porque un turno no cubre 12 fases x 4 pasadas. El producto sigue LIVE_UNVERIFIED: sin sondas vivas ni recorrido del owner no hay venta."
 }

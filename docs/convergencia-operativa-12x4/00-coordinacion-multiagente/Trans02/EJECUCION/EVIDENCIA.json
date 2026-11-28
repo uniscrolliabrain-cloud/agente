@@ -70,11 +70,19 @@
     "ledgerPromoted": false,
     "fullGate": false
   },
+  "skipsResolved": {
+    "date": "2026-11-28",
+    "postgres": "17.12 nativo (binarios embebidos en el sandbox, puerto 55432)",
+    "env": "COGNITION_TEST_POSTGRES_URL",
+    "result": "83/83 PASS, 0 SKIP, 0 FAIL en las 12 suites con puerta PostgreSQL",
+    "log": "Trans07/EJECUCION/EVIDENCIA/logs/trans07-postgres17-suites.log",
+    "sha256": "e06647df311de6237b7cdd8dc97a5b15f85ff0636d2c624db52f95af2259fa1b"
+  },
   "limitations": [
     "El gate integral no se ejecuto: 116 pruebas focales no son 12 fases x 4 pasadas.",
     "El ledger de Trans02 no se toca: sus 48 bloques siguen PENDING.",
     "Fast, Slow y JEV se ejercen con transporte sintetico: LIVE_UNVERIFIED, ningun proveedor real.",
-    "Los 10 SKIP son de concurrencia con PostgreSQL nativo; no cuentan como PASS.",
+    "Los 10 SKIP eran de concurrencia con PostgreSQL nativo; se resolvieron el 2026-11-28 contra PostgreSQL 17.12 (ver skipsResolved), no en el turno original.",
     "07.01-07.04 siguen NOT_RUN: sin autorizacion ni datos del owner.",
     "La atencion se prueba sobre el almacen local del test, no sobre PostgreSQL real."
   ],

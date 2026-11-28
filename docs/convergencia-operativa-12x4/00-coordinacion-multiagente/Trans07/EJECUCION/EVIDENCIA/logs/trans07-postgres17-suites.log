@@ -1,0 +1,168 @@
+✔ C01 preview blocks unresolved references and filters source tenant before pagination (2099.946565ms)
+✔ C01 staged backfill preserves metadata, primary/additional thoughts and knowledge; applies idempotently through journal (766.568574ms)
+✔ C01 backfill rejects changed/expired plans and rolls back journal, receipts and plan state on a crash (1419.932756ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ C01 native concurrent backfill journals one import across two connections (109.039243ms)
+✔ C01 backfill rejects stored plan tampering and evidence revoked after preview (799.594262ms)
+✔ V2 business read requires an explicit PDP decision and a current actor (597.386225ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ two Postgres connections cannot execute the same operation concurrently (30.792918ms)
+✔ uncertain read outcome is recorded and never automatically retried (639.068672ms)
+✔ C10 prepared context is bound to query, policy and watermark rather than reusing an unrelated recent snapshot (746.791895ms)
+✔ C01 rejects authority injection, incompatible schema, cross-tenant evidence and false verification (1.1269ms)
+✔ C01 classifier has no authority fields; edges cannot cross tenants; ontology needs approval (1.53286ms)
+✔ C14 SDK real uses a governed server grant and strips raw fields; prompt cannot choose auth or target (5.04013ms)
+✔ C14 cross-tenant grant is rejected before SDK invocation, and partial never means complete coverage (0.96327ms)
+✔ C14 durable relay commits effect before ACK, recovers lost ACK, and deduplicates restart (610.459913ms)
+✔ C14 invalid hash/tenant is rejected without effect or ACK (778.266074ms)
+✔ C14 relay uses the real pinned SDK ACK method after local commit (711.312878ms)
+✔ C09 recovery fences abandoned deliveries, preserves purpose and knowledge, never synthesizes ACK (780.788373ms)
+✔ C09 worker persists scan progress across restart, isolates actors and invalidates expired snapshots (672.75887ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ C09 native Postgres workers reconcile one expired lease once under concurrent connections (64.664316ms)
+✔ C09 explicit consumers have independent ACKs while retries retain one fenced delivery (757.959305ms)
+✔ C02 501 events replay through durable cursor; crash rolls back effects and fencing rejects stale worker (3757.104686ms)
+✔ C03/C04/C09/C10 restart, five memories, private isolation, replay revocation and durable ACK (1567.682186ms)
+{"ts":"2026-11-28T02:53:30.298Z","level":"error","event":"background_failure","phase":"event notification system.maintenance","retryable":false,"error":"Error","message":"notification DB unavailable","stack":"Error: notification DB unavailable\n    at Object.insertIfAbsent (/workspace/chats/a30d6f47eb163b012630177f/tests/cognition-v2-event-receipts.test.ts:7:75)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:273:44)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:65:14)\n    at runInTenantScope (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/tenant-scope.ts:22:18)\n    at emitInTenant (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:132:9)\n    at notifyCommitted (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:273:17)\n    at async EventBus.emit (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/events/bus.ts:302:7)"}
+✔ C02 post-commit notification failure does not negate a committed event (7.01854ms)
+✔ C02 commit ACK loss remains unknown and reconciles by the preserved event ID (800.021982ms)
+✔ C15 late replay cannot recreate a revoked dependency chain; public context hides Thought content (830.618151ms)
+✔ C15 cancellation aborts active Slow provider; exhausted restart emits factual failed receipt (1056.414457ms)
+✔ C02 nested emit is pending until outer commit; rollback never publishes or confirms (768.049604ms)
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] validado: 257 capabilities
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+[personas] tenant default: 12 cargadas, 0 fallidas
+{"ts":"2026-11-28T02:53:34.740Z","level":"info","event":"http.request","correlationId":"f7b1bcbe-b9e7-439b-80ea-d6988c93b6d3","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-28T02:53:35.044Z","level":"info","event":"http.response","correlationId":"f7b1bcbe-b9e7-439b-80ea-d6988c93b6d3","method":"POST","path":"/api/auth/login","status":200,"durationMs":305}
+{"ts":"2026-11-28T02:53:35.095Z","level":"info","event":"http.request","correlationId":"81dc69e2-8034-428a-8690-a71772a210fe","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-28T02:53:35.206Z","level":"info","event":"http.response","correlationId":"81dc69e2-8034-428a-8690-a71772a210fe","method":"POST","path":"/api/auth/login","status":200,"durationMs":112}
+{"ts":"2026-11-28T02:53:35.252Z","level":"info","event":"http.request","correlationId":"fa1d974a-f830-41be-bfa7-f94e1de5f18c","method":"POST","path":"/api/auth/login"}
+{"ts":"2026-11-28T02:53:35.335Z","level":"info","event":"http.response","correlationId":"fa1d974a-f830-41be-bfa7-f94e1de5f18c","method":"POST","path":"/api/auth/login","status":200,"durationMs":83}
+{"ts":"2026-11-28T02:53:35.336Z","level":"info","event":"http.request","correlationId":"b788a3e7-dc8b-46dc-a06c-1f8ead0cd755","method":"POST","path":"/api/cognition-v2/snapshots"}
+{"ts":"2026-11-28T02:53:35.344Z","level":"warn","event":"http.response","correlationId":"b788a3e7-dc8b-46dc-a06c-1f8ead0cd755","method":"POST","path":"/api/cognition-v2/snapshots","status":422,"durationMs":7}
+{"ts":"2026-11-28T02:53:35.344Z","level":"info","event":"http.request","correlationId":"7045c5ae-5177-469d-9315-cde5ee22f6d2","method":"POST","path":"/api/cognition-v2/working"}
+{"ts":"2026-11-28T02:53:35.357Z","level":"info","event":"http.response","correlationId":"7045c5ae-5177-469d-9315-cde5ee22f6d2","method":"POST","path":"/api/cognition-v2/working","status":202,"durationMs":13}
+{"ts":"2026-11-28T02:53:35.402Z","level":"info","event":"http.request","correlationId":"0494f5bd-b968-4337-bef1-9fcd8a012978","method":"POST","path":"/api/cognition-v2/snapshots"}
+{"ts":"2026-11-28T02:53:35.434Z","level":"info","event":"http.response","correlationId":"0494f5bd-b968-4337-bef1-9fcd8a012978","method":"POST","path":"/api/cognition-v2/snapshots","status":200,"durationMs":32}
+{"ts":"2026-11-28T02:53:35.435Z","level":"info","event":"http.request","correlationId":"801430d2-9aed-457d-8f07-65cef3e3d7cc","method":"GET","path":"/api/cognition-v2/snapshots/:id"}
+{"ts":"2026-11-28T02:53:35.451Z","level":"warn","event":"http.response","correlationId":"801430d2-9aed-457d-8f07-65cef3e3d7cc","method":"GET","path":"/api/cognition-v2/snapshots/:id","status":404,"durationMs":17}
+{"ts":"2026-11-28T02:53:35.451Z","level":"info","event":"http.request","correlationId":"6b98d443-b611-4a12-9e75-0d82fbedb620","method":"POST","path":"/api/cognition-v2/slow"}
+{"ts":"2026-11-28T02:53:35.510Z","level":"info","event":"http.response","correlationId":"6b98d443-b611-4a12-9e75-0d82fbedb620","method":"POST","path":"/api/cognition-v2/slow","status":202,"durationMs":59}
+{"ts":"2026-11-28T02:53:35.604Z","level":"info","event":"http.request","correlationId":"9773f3d3-60ed-4e68-894e-e37e23f63176","method":"GET","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-28T02:53:35.641Z","level":"info","event":"http.response","correlationId":"9773f3d3-60ed-4e68-894e-e37e23f63176","method":"GET","path":"/api/cognition-v2/references/:id","status":200,"durationMs":37}
+{"ts":"2026-11-28T02:53:35.641Z","level":"info","event":"http.request","correlationId":"50fa8628-4294-42a5-bc19-a1f1ac35a624","method":"GET","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-28T02:53:35.668Z","level":"warn","event":"http.response","correlationId":"50fa8628-4294-42a5-bc19-a1f1ac35a624","method":"GET","path":"/api/cognition-v2/references/:id","status":404,"durationMs":27}
+{"ts":"2026-11-28T02:53:35.692Z","level":"info","event":"http.request","correlationId":"b268d1d0-3359-444f-9958-3c96059a5ae0","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare"}
+{"ts":"2026-11-28T02:53:35.696Z","level":"warn","event":"http.response","correlationId":"b268d1d0-3359-444f-9958-3c96059a5ae0","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare","status":422,"durationMs":4}
+{"ts":"2026-11-28T02:53:35.696Z","level":"info","event":"http.request","correlationId":"fb0ead3d-dd44-473a-a2cf-93a604c4d184","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare"}
+{"ts":"2026-11-28T02:53:35.710Z","level":"info","event":"http.response","correlationId":"fb0ead3d-dd44-473a-a2cf-93a604c4d184","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/prepare","status":200,"durationMs":14}
+{"ts":"2026-11-28T02:53:35.710Z","level":"info","event":"http.request","correlationId":"d155a2c0-e194-41d5-89a3-e7d2d37e94f8","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-28T02:53:35.718Z","level":"warn","event":"http.response","correlationId":"d155a2c0-e194-41d5-89a3-e7d2d37e94f8","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":404,"durationMs":7}
+{"ts":"2026-11-28T02:53:35.718Z","level":"info","event":"http.request","correlationId":"eb2f6beb-2bb2-4c98-b44d-f9a2dc6d4e94","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-28T02:53:35.725Z","level":"warn","event":"http.response","correlationId":"eb2f6beb-2bb2-4c98-b44d-f9a2dc6d4e94","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":404,"durationMs":7}
+{"ts":"2026-11-28T02:53:35.726Z","level":"info","event":"http.request","correlationId":"d544fc15-8193-4776-be1a-12ed4562f9f3","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-28T02:53:35.744Z","level":"info","event":"http.response","correlationId":"d544fc15-8193-4776-be1a-12ed4562f9f3","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":202,"durationMs":19}
+{"ts":"2026-11-28T02:53:35.745Z","level":"info","event":"http.request","correlationId":"f0fd5cb5-dfa8-4e58-8e64-c0e00e32e5b4","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply"}
+{"ts":"2026-11-28T02:53:35.752Z","level":"info","event":"http.response","correlationId":"f0fd5cb5-dfa8-4e58-8e64-c0e00e32e5b4","method":"POST","path":"/api/cognition-v2/migration/legacy-cards/:id/apply","status":202,"durationMs":7}
+{"ts":"2026-11-28T02:53:35.763Z","level":"info","event":"http.request","correlationId":"c989c37a-720b-4118-990a-a2127c488e95","method":"GET","path":"/api/cognition-v2/journey"}
+{"ts":"2026-11-28T02:53:35.774Z","level":"info","event":"http.response","correlationId":"c989c37a-720b-4118-990a-a2127c488e95","method":"GET","path":"/api/cognition-v2/journey","status":200,"durationMs":11}
+{"ts":"2026-11-28T02:53:35.774Z","level":"info","event":"http.request","correlationId":"5ee6fe83-75ae-4d5e-881c-0e92c849c69f","method":"DELETE","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-28T02:53:35.807Z","level":"info","event":"http.response","correlationId":"5ee6fe83-75ae-4d5e-881c-0e92c849c69f","method":"DELETE","path":"/api/cognition-v2/references/:id","status":200,"durationMs":33}
+{"ts":"2026-11-28T02:53:35.807Z","level":"info","event":"http.request","correlationId":"f4107a44-166c-414e-8dcc-59e9ee6f8f68","method":"GET","path":"/api/cognition-v2/references/:id"}
+{"ts":"2026-11-28T02:53:35.817Z","level":"warn","event":"http.response","correlationId":"f4107a44-166c-414e-8dcc-59e9ee6f8f68","method":"GET","path":"/api/cognition-v2/references/:id","status":404,"durationMs":10}
+{"ts":"2026-11-28T02:53:35.819Z","level":"info","event":"http.request","correlationId":"9036e092-da43-469c-8df6-4acb37ae7cf9","method":"POST","path":"/api/cognition-v2/snapshots"}
+{"ts":"2026-11-28T02:53:35.823Z","level":"warn","event":"http.response","correlationId":"9036e092-da43-469c-8df6-4acb37ae7cf9","method":"POST","path":"/api/cognition-v2/snapshots","status":403,"durationMs":4}
+✔ C15 synthetic authenticated HTTP: working memory → snapshot → durable Slow → kernel Thought/card → revoke; cross-tenant denied (2074.177456ms)
+✔ C08 durable gateway reserves quota once, persists no private text, reconciles uncertain attempts across restart (678.88816ms)
+✔ C08 gateway checks actor/tenant, current evidence, consent, grant integrity and cancellation before any egress (663.14296ms)
+✔ C08 adapter consumes durable minimized grants and records usage without promoting factuality (694.191059ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ C08 native concurrent workers admit one in-flight request and rollback quota with failed transaction (86.376285ms)
+✔ C08 cancellation bounds a stuck minimizer and revoked evidence invalidates a persisted grant (754.167705ms)
+✔ C08 verified REST contract minimizes egress, pins model and preserves proposed confidence and independent poles (8.961139ms)
+✔ C08 unknown is explicit and never converted into zero, certainty or permission (1.49958ms)
+✔ C08 denied tenant, stale policy grant and pre-aborted requests make no provider call (0.71219ms)
+✔ C08 malformed labels, probability distributions, version drift and oversized responses fail with audit (3.15641ms)
+✔ C08 cancellation, revocation and 429 do not retry or return a stale classification (11.909629ms)
+✔ C08 accounting uncertainty is explicit and never overwritten with a contradictory failure receipt (1.09827ms)
+✔ C08 documented adapter plugs into durable Slow without overriding hypotheses or concealing evaluator disagreement (850.438089ms)
+✔ C02 audit and notification effects rollback together with inbox, then recover from durable journal after restart (802.714063ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ C02 native competing receipt workers commit one projection under tenant fence (50.985807ms)
+✔ C02 durable tenants bypass live-only callbacks while non-migrated tenants retain compatibility (805.034322ms)
+✔ C04 functional five-memory pipeline, TTL and C06 attention persistence/revocation (1059.886076ms)
+✔ C01 migration corpus: knowledge survives prior delivery, lifecycle and privacy remain conservative (2.40014ms)
+✔ C01 migration rejects scope substitution and malformed legacy data (1.95109ms)
+✔ C05 approved vocabulary has eight families, six independent nullable poles and ten typed dimensions (1.41782ms)
+✔ C05 approval is persisted and revocable; disagreement remains explicit and cannot mint outcomes or certainty (730.803806ms)
+✔ C05 Slow produces durable annotated cards; replay is stable, context is compact and ontology revocation hides derivatives (1121.746554ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ C02 real Postgres: pinned connections, concurrent rollback, atomic event ordering and kernel capture (226.418896ms)
+✔ C12 provider reasoning/state/custom/tool events cannot cross the public text boundary (0.44389ms)
+✔ C04/C10 actual RAG registry is prepared off Fast; source revision/removal invalidates snapshot and derived memory (720.053517ms)
+✔ C04 RAG keeps same owner, source and connection IDs isolated across tenants (690.176359ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ restricted Postgres role isolates voice and cyber module records across tenants (147.600301ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ C01 restricted Postgres role: RLS rejects cross-tenant reads and writes without relying on SQL filters (80.484825ms)
+✔ C05 runtime outcome proves a scoped job result; model hypothesis and delivery ACK remain independent (1107.891104ms)
+✔ C05 fabricated terminal events, copied outcomes and mutated runtime state never establish verified results (1496.143871ms)
+✔ C05 failed and cancelled jobs produce truthful scoped outcomes without claiming successful execution (970.742782ms)
+✔ C10/C11/C12 Fast path uses authorized snapshot while Slow is busy; receipts match streamed response (2466.257133ms)
+✔ C14→C02→C10 partial child receipt becomes private context without asserting protection (1009.77863ms)
+✔ C07/C08 Slow is durable, validates output/evidence and publishes a reusable private card (935.948164ms)
+✔ C11 saturated Slow and Slow failures never occupy Fast lane; timeout retains its uncertain lease until expiry (1031.644679ms)
+✔ C02 concurrent transaction rollback cannot commit another call chain (985.702071ms)
+✔ C13 durable consent/session/final transcript survive restart; private scope and provider gate are enforced (1610.194004ms)
+✔ C13 concurrent renderer is fenced and late text after barge-in is rejected (937.907754ms)
+✔ C13 expiry/silence are recovered from durable timestamps, no timer or provider pricing assumption (794.733173ms)
+✔ C13 Fast voice adapter reuses the shared runtime and cancels subscription when output is rejected (3.581009ms)
+{"ts":"2026-11-28T02:54:00.158Z","level":"error","event":"background_failure","phase":"cognition v2 projection worker","retryable":false,"error":"Error","message":"synthetic failure","stack":"Error: synthetic failure\n    at Object.tick (/workspace/chats/a30d6f47eb163b012630177f/tests/cognition-v2-workers.test.ts:35:107)\n    at Object.projection (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:39:47)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:50:90)\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:65:14)\n    at runInTenantScope (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/tenant-scope.ts:22:18)\n    at loop (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:50:15)\n    at <anonymous> (/workspace/chats/a30d6f47eb163b012630177f/apps/server/src/engine/cognition/v2/workers.ts:73:99)"}
+✔ V2 worker retries failures per tenant, reports readiness and recovers durable receipts after restart (1907.260397ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ separate Postgres worker publishes readiness and recovers events written while stopped (96.772764ms)
+[ontology] validado: 257 capabilities
+[kernel/env-resolver] tenant health: FAST_LLM_API_KEY vacia. Chat usara chain global.
+[kernel/env-resolver] tenant health: SLOW_LLM_API_KEY vacia. Tareas usaran chain global.
+[ontology] bundle cargado: 6 entidades
+[Laia] No hay usuarios en la DB y faltan ADMIN_EMAIL/ADMIN_PASSWORD: POST /api/auth/login devolvera 401. Rellena ADMIN_EMAIL, ADMIN_PASSWORD y ADMIN_NAME en .env, o ejecuta `pnpm admin:create -- --email tu@empresa.com --password "..."`.
+{"ts":"2026-11-28T02:54:02.148Z","level":"info","event":"http.request","correlationId":"e156539a-57c5-4e57-a648-cfd03ff1c53e","method":"GET","path":"/api/health"}
+{"ts":"2026-11-28T02:54:02.154Z","level":"info","event":"http.response","correlationId":"e156539a-57c5-4e57-a648-cfd03ff1c53e","method":"GET","path":"/api/health","status":503,"durationMs":7}
+[personas] tenant default: 12 cargadas, 0 fallidas
+{"ts":"2026-11-28T02:54:02.225Z","level":"info","event":"http.request","correlationId":"29b034ef-9f20-4997-9a1f-6aaeade7ef91","method":"GET","path":"/api/health"}
+{"ts":"2026-11-28T02:54:02.238Z","level":"info","event":"http.response","correlationId":"29b034ef-9f20-4997-9a1f-6aaeade7ef91","method":"GET","path":"/api/health","status":200,"durationMs":14}
+✔ API health fails closed when opted-in V2 has no live worker (861.399079ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ normal Store bootstrap rejects a restricted runtime login without schema privileges (321.79368ms)
+✔ Fast admission captures a scoped human root before inference without operational authority (854.689059ms)
+✔ journal failure rolls back both captured event and run claim before any provider call (891.116517ms)
+✔ concurrent replay of the same run produces one input event and one inference (809.411532ms)
+✔ private journal reads isolate actors and threads, verify payload binding and honor revocation (793.906233ms)
+✔ the admitted input snapshot survives caller mutation during identity lookup (707.085738ms)
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ Postgres human journal: two connections admit one run and rollback a failed capture (86.585114ms)
+✔ an empty request cannot fabricate a human input event or call inference (685.99097ms)
+✔ sin BUSINESS_DATABASE_URL, query_business no toca la base de la app (2.104399ms)
+✔ el dataset local no se sale del owner que consulta (1.6686ms)
+✔ SQL de escritura sigue rechazado antes de tocar nada (0.27316ms)
+✔ el SSE muestra lo propio y oculta lo de otro actor del mismo tenant (0.24125ms)
+✔ el tenant manda: una notificación de B no se sirve a A (0.12203ms)
+ℹ tests 83
+ℹ suites 0
+ℹ pass 83
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55773.089536

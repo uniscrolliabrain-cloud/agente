@@ -1,0 +1,21 @@
+✔ recorrido montado: evento, segmentos, persistencia idempotente, seleccion y contexto con dos tenants (1241.266666ms)
+✔ retencion y borrado por tenant: acotado a la identidad, con criterio obligatorio (788.080263ms)
+✔ authorized synthetic transcript produces only a draft with exact immutable source provenance (10.193709ms)
+✔ source revision, grant, section, role and factual evidence cannot be invented by extraction (4.38239ms)
+✔ quotes must match original UTF16 spans even when a segment digest is recomputed (2.63295ms)
+✔ model output cannot publish, choose authority or relabel a briefing as external evidence (1.67867ms)
+✔ expired, unanchored runtime conditions and oversized drafts fail without truncating negation (1.79817ms)
+✔ catalog has twelve information skills and one bounded composite; correction precedes scoring (2.03719ms)
+✔ selector preserves null, validates bounds and rejects duplicate IDs (1.16274ms)
+✔ source segmentation preserves exact UTF16 offsets, Unicode and complete coverage (0.587389ms)
+✔ packing counts full JSON overhead, retains whole clauses and reports missing mandatory anchors (0.72195ms)
+✔ model proposal cannot change bindings, invent evidence, cross threads or supersede a user premise (3.37255ms)
+✔ strict sidecars reject cross-tenant refs and model publication assertions (0.65157ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2469.707173

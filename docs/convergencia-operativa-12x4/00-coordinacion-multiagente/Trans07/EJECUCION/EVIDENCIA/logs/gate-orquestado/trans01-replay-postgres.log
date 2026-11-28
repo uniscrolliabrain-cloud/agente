@@ -1,0 +1,11 @@
+[Laia] DB: Postgres (127.0.0.1:55432:55432/cognition_test) - backend: postgres
+✔ una transaccion que empieza antes y commitea despues no se pierde (42.888567ms)
+✔ un append no puede adelantar el commit de otro del mismo tenant (305.730782ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 706.438428

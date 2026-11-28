@@ -1,0 +1,21 @@
+# Trans07 - ensayo en seco del rollback (criterio #9)
+fecha: 2026-11-28
+objetivo: deshacer el merge del PR #37 en main (6df1cb56) sin force-push
+
+1) worktree desechable sobre el commit de merge
+   git worktree add --detach /tmp/rb 6df1cb56      -> exit 0
+2) revert del merge commit tomando el padre 1 (e496dd43, main previo al PR)
+   git revert -m 1 --no-commit 6df1cb56            -> exit 0
+   conflictos (git diff --diff-filter=U)           -> 0
+   ficheros afectados                              -> 300 (+1147 / -34357), inverso exacto del merge
+3) comprobacion de fidelidad del arbol revertido
+   git write-tree                                  -> f1029256d8248d910378927fe2ec60dbea8ebf3e
+   git rev-parse 6df1cb56^1^{tree}                 -> f1029256d8248d910378927fe2ec60dbea8ebf3e
+   IDENTICO_AL_PADRE_1=si  (el revert restaura exactamente main @ e496dd43)
+4) limpieza
+   git revert --abort                              -> exit 0, arbol limpio (0 ficheros)
+   git worktree remove --force /tmp/rb             -> exit 0
+
+Alcance: ensayo textual y de arbol. No se ejecutaron typecheck ni suites sobre el arbol
+revertido: ese arbol es main @ e496dd43, que ya estaba verde en CI antes del merge, y el
+worktree desechable no tiene node_modules. No hubo push ni force-push.
