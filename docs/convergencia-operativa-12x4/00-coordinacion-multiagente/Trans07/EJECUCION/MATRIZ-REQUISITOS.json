@@ -341,14 +341,26 @@
     {
       "id": "CONV-02",
       "campaign": "Convergencia",
-      "requirement": "Merge real de main y PR de convergencia",
-      "path": "-",
-      "symbol": "-",
-      "sha": "-",
-      "tests": "-",
-      "result": "requiere autorizacion explicita del operador",
+      "requirement": "main incorporado en la rama con merge commit",
+      "path": "converge/trans00-core",
+      "symbol": "git merge --no-ff origin/main",
+      "sha": "ac6363b2",
+      "tests": "146 archivos, 0 conflictos",
+      "result": "rama 103 delante / 0 detras de main",
+      "state": "INTEGRATED",
+      "evidence": "Trans07/EJECUCION/INFORME-CONVERGENCIA-FINAL.md seccion 1"
+    },
+    {
+      "id": "CONV-03",
+      "campaign": "Convergencia",
+      "requirement": "PR de convergencia abierto y merge a main",
+      "path": "https://github.com/uniscrolliabrain-cloud/agente/pull/37",
+      "symbol": "PR #37",
+      "sha": "2a1ed160",
+      "tests": "300 archivos, +34314 / -1147, 104 commits",
+      "result": "PR abierto; merge a main pendiente de revision humana",
       "state": "BLOCKED",
-      "evidence": "Trans07/EJECUCION/INFORME-CONVERGENCIA-FINAL.md"
+      "evidence": "https://github.com/uniscrolliabrain-cloud/agente/pull/37"
     },
     {
       "id": "OWNER-REAL",
@@ -364,8 +376,8 @@
     }
   ],
   "summary": {
-    "total": 29,
-    "INTEGRATED": 6,
+    "total": 30,
+    "INTEGRATED": 7,
     "IMPLEMENTED_TESTED": 17,
     "DOCUMENTED_ONLY": 1,
     "LIVE_UNVERIFIED": 1,

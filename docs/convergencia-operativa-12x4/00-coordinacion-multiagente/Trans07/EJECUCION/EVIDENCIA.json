@@ -62,13 +62,25 @@
     "fullSuiteLog": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-gate-suite-intento.log",
     "fullSuiteSha256": "03e8dbd87259fb3bc378ef45eccca08502a986757b1923e40e2dfc23cf302741"
   },
+  "pullRequest": {
+    "number": 37,
+    "url": "https://github.com/uniscrolliabrain-cloud/agente/pull/37",
+    "base": "main",
+    "head": "converge/trans00-core @ 2a1ed160",
+    "changedFiles": 300,
+    "additions": 34314,
+    "deletions": 1147,
+    "commits": 104,
+    "merged": false
+  },
   "certification": {
-    "criteriaMet": [2, 4, 6, 7, 10],
-    "criteriaNotMet": [1, 5, 8, 9],
+    "criteriaMet": [1, 2, 4, 6, 7, 10],
+    "criteriaNotMet": [5, 9],
     "criteriaDeclared": [3],
+    "criteriaPendingReview": [8],
     "productState": "LIVE_UNVERIFIED",
     "matrix": "Trans07/EJECUCION/MATRIZ-REQUISITOS.json",
-    "matrixSummary": { "total": 29, "INTEGRATED": 6, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 3, "NOT_RUN": 1 }
+    "matrixSummary": { "total": 30, "INTEGRATED": 7, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 3, "NOT_RUN": 1 }
   },
   "exitCodes": {
     "merge": 0,
@@ -107,8 +119,8 @@
     }
   },
   "notDone": {
-    "mergeToMain": "requiere autorizacion explicita",
-    "pullRequest": "no creado",
+    "mergeToMain": "main incorporado en la rama (ac6363b2); merge del PR #37 pendiente de revision humana",
+    "pullRequest": "abierto (#37), sin mergear",
     "tag": "no creado",
     "deploy": "no realizado",
     "postgres17": "sin instancia",

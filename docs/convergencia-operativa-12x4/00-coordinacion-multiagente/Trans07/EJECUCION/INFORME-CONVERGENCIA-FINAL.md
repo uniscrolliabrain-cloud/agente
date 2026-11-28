@@ -1,17 +1,21 @@
 # Informe de convergencia final — Trans00–Trans06 en una rama
 
-**Fecha:** 2026-11-28 · **Rama:** `converge/trans00-core` @ `a843ddfc` · **Estado:** preparado, **no publicado**.
+**Fecha:** 2026-11-28 · **Rama:** `converge/trans00-core` @ `2a1ed160` · **Estado:** convergido, PR abierto.
 
-> No se ha hecho merge a `main`, ni PR, ni tag, ni despliegue. Trans07 § Autorización exige permiso
-> explícito del operador para publicar; sin él, este turno prepara y entrega.
+> `main` está incorporado en la rama (merge commit `ac6363b2`, 0 conflictos) y el PR **#37** está abierto
+> contra `main`. El gate orquestado pasó **10/10**. No hay merge a `main`, ni tag, ni despliegue: eso
+> queda en manos de la revisión humana del PR.
 
 ---
 
 ## 1. Congelación
 
 [`ACTA-CONGELACION.md`](../Trans00/EJECUCION/ACTA-CONGELACION.md): base `892061c9`, `main` `e496dd43`,
-HEAD `a843ddfc` → **100 adelante / 32 detrás**. Node `v24.22.1`, pnpm `11.19.0`, lockfile
-`1c2851bc…`. Sin PostgreSQL ni Docker en el runner.
+HEAD `a843ddfc` → **100 adelante / 32 detrás** (antes del merge). Node `v24.22.1`, pnpm `11.19.0`,
+lockfile `1c2851bc…`. Sin PostgreSQL ni Docker en el runner.
+
+**Merge ejecutado:** `ac6363b2` incorpora los 32 commits de `main` (`e496dd43`) en la rama: 146 archivos,
+**0 conflictos**. Tras el merge la rama queda **103 delante / 0 detrás** de `main`.
 
 ---
 
@@ -48,28 +52,32 @@ El trasplante de readiness ya está en la rama y se reverifica aquí, no de memo
 
 | Componente | Estado |
 |---|---|
-| `tsc --noEmit` raíz | exit 0 |
-| `tsc --noEmit` worker | exit 0 |
+| **Orquestador `scripts/gate-report.ts`** | **GATE OK · 10/10 steps · 306 s** en `ac6363b2` |
+| `typecheck` raíz / `typecheck:worker` | OK 10.0 s / OK 1.1 s |
 | Siete auditorías (`AUDIT_CHECKS`) | **7/7 exit 0** · layers 0 violaciones · bridges 16/16 · anchors 0 rotos · contracts 318 OK / 9 pending / 0 huérfanos · idempotency 222 duplicadas / 0 huérfanas / 181 repetidas · tenant-default 0 prohibidas · console **24 ocurrencias** (advisory) |
 | Suites focales de campaña | 142 (T01) + 116 (T02) + 14 (T03) + 43 (T04) + 12 (T05) + 36 (T06) + 12 (readiness) |
 | **Suite completa del gate** | **1.193 tests, 1.163 PASS, 0 FAIL, 25 SKIP, 5 TODO**, 273 s, exit 0 |
 
-La suite completa se ejecutó con los mismos flags del gate sobre `tests/**/*.test.ts`, en 273 s (por
-poco no cupo en la primera estimación y sí en el runner). Frente a lo documentado en `9eb03fd5`
-(1.173/1.143/0/25/5) hay **20 pruebas más y 0 fallos**: es el trabajo de la campaña, no una regresión.
+La suite completa la ejecutó el gate orquestado sobre `tests/**/*.test.ts`: **1.193 tests, 1.163 PASS,
+0 FAIL, 25 SKIP, 5 TODO, 284.4 s**, exit 0. Frente a lo documentado en `9eb03fd5` (1.173/1.143/0/25/5)
+hay **20 pruebas más y 0 fallos**: es el trabajo de la campaña, no una regresión.
 
-Evidencia: [`EVIDENCIA-GATE-FINAL.json`](../Trans00/EJECUCION/EVIDENCIA-GATE-FINAL.json) con el log
-de la suite versionado y su sha256. **Matiz:** el orquestador `scripts/gate-report.ts` no se lanzó como
-proceso único; se ejecutaron sus pasos con los mismos comandos y flags, y el log del typecheck raíz se
-reutiliza del turno de Trans02 (mismo código, árbol limpio).
+El primer intento del gate orquestado falló **1/10** en `typecheck:worker`: `apps/worker/node_modules/
+typescript` no existía porque las dependencias se habían instalado con npm y no con pnpm workspaces. Se
+resolvió con `corepack pnpm install --frozen-lockfile` (6.2 s) y el gate pasó 10/10 **sin relajar ningún
+check**.
+
+Evidencia: [`EVIDENCIA-GATE-FINAL.json`](../Trans00/EJECUCION/EVIDENCIA-GATE-FINAL.json) y los logs del
+gate en `Trans07/EJECUCION/EVIDENCIA/logs/gate-orquestado/` (`report.json`, `summary.txt`, `test.log`,
+`typecheck*.log`) con sus sha256.
 
 ---
 
 ## 5. PostgreSQL 17
 
-`postgres` y `docker` no existen en el runner. Los **10 SKIP** de Trans02 (journal humano, workers
-concurrentes, RLS, backfill concurrente, VOICE/cyber por rol restringido) siguen siendo SKIP. No se
-presentan como PASS. Criterio #3: **no cumplido**.
+`postgres` y `docker` no existen en el runner. Los **25 SKIP** del gate (10 concentrados en Trans02:
+journal humano, workers concurrentes, RLS, backfill concurrente, VOICE/cyber por rol restringido) siguen
+siendo SKIP. No se presentan como PASS. Criterio #3: **declarado, no cumplido**.
 
 ---
 
@@ -87,15 +95,15 @@ promueve ningún bloque porque un turno no cubre 12 fases × 4 pasadas.
 
 | # | Criterio | Estado |
 |---|---|---|
-| 1 | `main` incorporado sin divergencia | **no**: ensayado, no mergeado (falta autorización) |
-| 2 | Gate integral verde y reproducible | **sí, con matiz**: suite completa 1.193/1.163/0/25/5 + typecheck + 7 audits, evidencia versionada; el orquestador único no se lanzó |
+| 1 | `main` incorporado sin divergencia | **sí**: merge `ac6363b2`, 146 archivos, 0 conflictos, 0 detrás |
+| 2 | Gate integral verde y reproducible | **sí**: GATE OK 10/10 en 306 s, con log y sha256 versionados |
 | 3 | SKIP PostgreSQL resueltos o declarados | **declarados**, no resueltos |
 | 4 | Matriz de requisitos completa | **sí** (29 requisitos) |
 | 5 | Ledger coherente | **pendiente**: 0/48 DONE intacto |
 | 6 | Proveedores con estado explícito | **sí**: `LIVE_UNVERIFIED` |
 | 7 | Secretos fuera del repo y de logs | **sí**: preflight con nombres, 0 valores |
-| 8 | PR revisado y autorizado | **no**: no creado |
-| 9 | Rollback probado en seco | **no**: sin merge no hay commit que revertir |
+| 8 | PR revisado y autorizado | **abierto**: [#37](https://github.com/uniscrolliabrain-cloud/agente/pull/37); revisión y merge pendientes |
+| 9 | Rollback probado en seco | **no**: ya hay merge commit que revertir, pero no se ha ensayado |
 | 10 | Documentación de límites | **sí**: este informe |
 
 Sin los diez, el estado de producto es `LIVE_UNVERIFIED` aunque todo lo focal esté verde.
@@ -119,17 +127,28 @@ Sin los diez, el estado de producto es `LIVE_UNVERIFIED` aunque todo lo focal es
 git revert -m 1 <merge_commit>
 ```
 
-No se puede ensayar en seco sin un merge real: declarado como criterio #9 no cumplido.
+Ya existe un merge commit real (`ac6363b2`) que se revertiría con `git revert -m 1 ac6363b2` en una rama
+de reversión, nunca con force-push. **No se ha ensayado**: criterio #9 sigue no cumplido.
 
 ---
 
-## 10. Siguiente acción que requiere autorización
+## 10. Estado y siguiente acción
 
-1. Autorizar el merge de `origin/main` en `converge/trans00-core` (merge commit; 0 conflictos
-   previstos, 146 archivos).
-2. Re-ejecutar `corepack pnpm gate` como orquestador único (los pasos ya están verdes por separado) para
-   que la evidencia quede generada por el propio script.
-3. Abrir **un** PR de convergencia a `main` con la matriz, los informes y el rollback. No reutilizar
-   #32/#34 (rama superada) ni #33/#35/#36 (cerrados sin merge).
+Hecho en este turno, con tu autorización:
 
-Nada de esto se ha hecho por iniciativa propia.
+1. **Merge de `main`** en `converge/trans00-core`: `ac6363b2`, 146 archivos, 0 conflictos, rama **0 detrás**.
+2. **Gate orquestado** `node --import tsx scripts/gate-report.ts`: **GATE OK · 10/10 · 306 s**, evidencia
+   versionada.
+3. **PR abierto**: [#37](https://github.com/uniscrolliabrain-cloud/agente/pull/37) — 300 archivos,
+   +34.314 / −1.147, 104 commits. No se han reutilizado #32/#34 (rama superada) ni #33/#35/#36 (cerrados
+   sin merge).
+
+Lo que queda y sigue sin hacerse:
+
+- **Merge del PR #37**: requiere la revisión humana y el botón de merge; no lo ejecuto por iniciativa
+  propia. El PR no toca producción ni despliega nada.
+- **Criterio #5 (ledger)**: 288 bloques siguen con **0 `DONE`**; reconciliarlos exige 12 fases × 4 pasadas,
+  no un pase de suites.
+- **Criterio #3 (PostgreSQL 17)**: los 25 SKIP necesitan una instancia que este entorno no tiene.
+- **Criterio #9 (rollback en seco)**: el procedimiento está escrito y ya existe el merge commit, pero no
+  se ha ensayado una reversión.
