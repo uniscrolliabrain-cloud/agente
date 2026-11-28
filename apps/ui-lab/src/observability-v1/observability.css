@@ -715,3 +715,38 @@
     transition: none;
   }
 }
+
+/* Barra superior en anchos medios: el buscador largo y la acción secundaria no
+   caben y empujaban el botón de fijar fuera del viewport. Se conserva el icono
+   de búsqueda (abre la misma paleta) y se retira el texto, como en los hermanos. */
+.ob-top-left {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+.ob-top-right {
+  flex: 0 0 auto;
+}
+
+.ob-top-search {
+  flex: 0 1 240px;
+  min-width: 0;
+}
+
+.ob-top-search span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ob-crumb {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 1280px) {
+  .ob-top-search,
+  .ob-btn--ghost {
+    display: none;
+  }
+}
