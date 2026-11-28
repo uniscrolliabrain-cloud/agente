@@ -1,10 +1,10 @@
 # Informe de convergencia final — Trans00–Trans06 en una rama
 
-**Fecha:** 2026-11-28 · **Rama:** `converge/trans00-core` @ `2a1ed160` · **Estado:** convergido, PR abierto.
+**Fecha:** 2026-11-28 · **Rama:** `converge/trans00-core` @ `44b68808` · **Estado:** convergido y mergeado en `main` @ `6df1cb56`.
 
-> `main` está incorporado en la rama (merge commit `ac6363b2`, 0 conflictos) y el PR **#37** está abierto
-> contra `main`. El gate orquestado pasó **10/10**. No hay merge a `main`, ni tag, ni despliegue: eso
-> queda en manos de la revisión humana del PR.
+> `main` está incorporado en la rama (merge commit `ac6363b2`, 0 conflictos), el gate orquestado pasó
+> **10/10** y el PR **#37** se mergeó en `main` con el merge commit `6df1cb56`. No hay tag ni despliegue:
+> nada de esto publica ni toca producción.
 
 ---
 
@@ -102,7 +102,7 @@ promueve ningún bloque porque un turno no cubre 12 fases × 4 pasadas.
 | 5 | Ledger coherente | **pendiente**: 0/48 DONE intacto |
 | 6 | Proveedores con estado explícito | **sí**: `LIVE_UNVERIFIED` |
 | 7 | Secretos fuera del repo y de logs | **sí**: preflight con nombres, 0 valores |
-| 8 | PR revisado y autorizado | **abierto**: [#37](https://github.com/uniscrolliabrain-cloud/agente/pull/37); revisión y merge pendientes |
+| 8 | PR revisado y autorizado | **hecho**: [#37](https://github.com/uniscrolliabrain-cloud/agente/pull/37) mergeado en `main` como `6df1cb56`, con el CI del PR en verde (`unit`, `web`, `worker`, Vercel) |
 | 9 | Rollback probado en seco | **no**: ya hay merge commit que revertir, pero no se ha ensayado |
 | 10 | Documentación de límites | **sí**: este informe |
 
@@ -115,7 +115,7 @@ Sin los diez, el estado de producto es `LIVE_UNVERIFIED` aunque todo lo focal es
 | Riesgo | Severidad | Mitigación ya preparada |
 |---|---|---|
 | Workflow de CI que llega de `main` | Media | revisión humana del único archivo `.github/workflows` antes de mergear |
-| Gate rojo tras el merge | Alta | ejecutar gate **después** del merge, no antes |
+| Gate rojo tras el merge | Alta | gate **antes** del merge (10/10) y CI del PR en verde; el workflow `release gate (main only)` corre en `main` sobre el commit de merge |
 | PR gigante sin revisión real | Media | matriz por requisito + informes por campaña ya publicados |
 | Pérdida de trabajo de `main` | Alta | merge commit, **nunca** rebase de rama publicada |
 | SKIP leídos como cobertura | Alta | 10 SKIP listados con motivo en cada evidencia |
@@ -127,8 +127,9 @@ Sin los diez, el estado de producto es `LIVE_UNVERIFIED` aunque todo lo focal es
 git revert -m 1 <merge_commit>
 ```
 
-Ya existe un merge commit real (`ac6363b2`) que se revertiría con `git revert -m 1 ac6363b2` en una rama
-de reversión, nunca con force-push. **No se ha ensayado**: criterio #9 sigue no cumplido.
+Hay dos merges que se pueden revertir: `ac6363b2` (dentro de la rama) y `6df1cb56` (el merge del PR en
+`main`). Para deshacer lo que ya está en `main`, el objetivo es `git revert -m 1 6df1cb56` en una rama de
+reversión, nunca con force-push. **No se ha ensayado**: criterio #9 sigue no cumplido.
 
 ---
 
@@ -140,13 +141,15 @@ Hecho en este turno, con tu autorización:
 2. **Gate orquestado** `node --import tsx scripts/gate-report.ts`: **GATE OK · 10/10 · 306 s**, evidencia
    versionada.
 3. **PR abierto**: [#37](https://github.com/uniscrolliabrain-cloud/agente/pull/37) — 300 archivos,
-   +34.314 / −1.147, 104 commits. No se han reutilizado #32/#34 (rama superada) ni #33/#35/#36 (cerrados
+   +34.357 / −1.147, 105 commits. No se han reutilizado #32/#34 (rama superada) ni #33/#35/#36 (cerrados
    sin merge).
+4. **Merge del PR**, autorizado: #37 mergeado en `main` como `6df1cb56` (`merged_by` la cuenta
+   propietaria) tras el CI del PR en verde. `main` ya contiene la convergencia completa.
 
 Lo que queda y sigue sin hacerse:
 
-- **Merge del PR #37**: requiere la revisión humana y el botón de merge; no lo ejecuto por iniciativa
-  propia. El PR no toca producción ni despliega nada.
+- **`main` verde tras el merge**: el workflow `release gate (main only)` corre en `main` sobre el commit
+  de merge; comprobar su resultado es lo único que falta del lado de CI.
 - **Criterio #5 (ledger)**: 288 bloques siguen con **0 `DONE`**; reconciliarlos exige 12 fases × 4 pasadas,
   no un pase de suites.
 - **Criterio #3 (PostgreSQL 17)**: los 25 SKIP necesitan una instancia que este entorno no tiene.

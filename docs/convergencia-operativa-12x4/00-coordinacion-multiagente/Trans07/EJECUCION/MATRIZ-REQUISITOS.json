@@ -356,10 +356,10 @@
       "requirement": "PR de convergencia abierto y merge a main",
       "path": "https://github.com/uniscrolliabrain-cloud/agente/pull/37",
       "symbol": "PR #37",
-      "sha": "2a1ed160",
-      "tests": "300 archivos, +34314 / -1147, 104 commits",
-      "result": "PR abierto; merge a main pendiente de revision humana",
-      "state": "BLOCKED",
+      "sha": "6df1cb56",
+      "tests": "CI del PR en verde: unit, web, worker, Vercel",
+      "result": "mergeado en main como 6df1cb56 (300 archivos, +34357 / -1147)",
+      "state": "INTEGRATED",
       "evidence": "https://github.com/uniscrolliabrain-cloud/agente/pull/37"
     },
     {
@@ -377,11 +377,11 @@
   ],
   "summary": {
     "total": 30,
-    "INTEGRATED": 7,
+    "INTEGRATED": 8,
     "IMPLEMENTED_TESTED": 17,
     "DOCUMENTED_ONLY": 1,
     "LIVE_UNVERIFIED": 1,
-    "BLOCKED": 3,
+    "BLOCKED": 2,
     "NOT_RUN": 1
   },
   "notes": "La matriz manda sobre el ledger. Ningun bloque del ledger se promueve a DONE en este turno: 0/48 sigue siendo el estado real de las 12 campanas."

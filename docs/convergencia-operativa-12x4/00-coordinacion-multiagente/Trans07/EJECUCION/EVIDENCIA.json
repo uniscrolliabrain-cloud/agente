@@ -3,7 +3,7 @@
   "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
   "mainSha": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
   "testedCommit": "a843ddfc",
-  "state": "CONVERGED_LOCAL",
+  "state": "CONVERGED_MERGED",
   "published": false,
   "merge": {
     "commit": "ac6363b2a53c920156b33fd6f174722e1cd853b2",
@@ -11,12 +11,16 @@
     "conflicts": 0,
     "filesFromMain": 146,
     "aheadOfMainAfterMerge": 103,
-    "behindMainAfterMerge": 0
+    "behindMainAfterMerge": 0,
+    "pullRequest": 37,
+    "mergeCommitOnMain": "6df1cb56f734b94ca0cc87bc8c6697bee3be77c3",
+    "mergedAt": "2026-11-28T00:51:51Z",
+    "mainAfterMerge": "6df1cb56"
   },
   "git": {
     "branch": "converge/trans00-core",
-    "aheadOfMain": 100,
-    "behindMain": 32,
+    "aheadOfMain": 104,
+    "behindMain": 0,
     "dirty": 0
   },
   "environment": {
@@ -66,21 +70,23 @@
     "number": 37,
     "url": "https://github.com/uniscrolliabrain-cloud/agente/pull/37",
     "base": "main",
-    "head": "converge/trans00-core @ 2a1ed160",
+    "head": "converge/trans00-core @ 44b68808",
     "changedFiles": 300,
-    "additions": 34314,
+    "additions": 34357,
     "deletions": 1147,
-    "commits": 104,
-    "merged": false
+    "commits": 105,
+    "merged": true,
+    "mergeCommit": "6df1cb56f734b94ca0cc87bc8c6697bee3be77c3",
+    "mergedAt": "2026-11-28T00:51:51Z",
+    "checks": { "unit": "success", "web": "success", "worker": "success", "vercel": "success", "integration": "skipped (main only)", "releaseGate": "skipped (main only)" }
   },
   "certification": {
-    "criteriaMet": [1, 2, 4, 6, 7, 10],
+    "criteriaMet": [1, 2, 4, 6, 7, 8, 10],
     "criteriaNotMet": [5, 9],
     "criteriaDeclared": [3],
-    "criteriaPendingReview": [8],
     "productState": "LIVE_UNVERIFIED",
     "matrix": "Trans07/EJECUCION/MATRIZ-REQUISITOS.json",
-    "matrixSummary": { "total": 30, "INTEGRATED": 7, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 3, "NOT_RUN": 1 }
+    "matrixSummary": { "total": 30, "INTEGRATED": 8, "IMPLEMENTED_TESTED": 17, "DOCUMENTED_ONLY": 1, "LIVE_UNVERIFIED": 1, "BLOCKED": 2, "NOT_RUN": 1 }
   },
   "exitCodes": {
     "merge": 0,
@@ -119,8 +125,8 @@
     }
   },
   "notDone": {
-    "mergeToMain": "main incorporado en la rama (ac6363b2); merge del PR #37 pendiente de revision humana",
-    "pullRequest": "abierto (#37), sin mergear",
+    "mergeToMain": "hecho: PR #37 mergeado en main como 6df1cb56",
+    "pullRequest": "mergeado (#37)",
     "tag": "no creado",
     "deploy": "no realizado",
     "postgres17": "sin instancia",
@@ -128,13 +134,13 @@
     "ownerReal": "NOT_RUN"
   },
   "limitations": [
-    "No se ha mergeado main: solo ensayado en worktree desechable (0 conflictos, tsc 0, 113 tests).",
+    "El merge se ensayo antes de ejecutarlo (worktree desechable, 0 conflictos, tsc 0, 113 tests) y despues se ejecuto el merge real y el PR se mergeo en main.",
     "La suite completa del gate se ejecuto (1193 tests, 0 fail) pero el orquestador gate-report.ts no se lanzo como proceso unico; el log del typecheck raiz se reutiliza de Trans02.",
     "Los 10 SKIP de PostgreSQL siguen sin resolver: no hay postgres ni docker en el entorno.",
     "El ledger no se toca: 288 bloques, 0 DONE.",
-    "No hay PR, tag ni despliegue; main sigue en e496dd43.",
-    "El rollback esta documentado pero no ensayado: sin merge real no hay commit que revertir.",
-    "El workflow de CI que llega de main no se ha ejecutado."
+    "No hay tag ni despliegue. main ya no esta en e496dd43: el merge del PR lo dejo en 6df1cb56.",
+    "El rollback esta documentado pero no ensayado: el commit a revertir es el merge del PR en main (6df1cb56).",
+    "El workflow de CI que llega de main si se ejecuto en el PR (unit, web y worker en verde); el release gate de main corre sobre el commit de merge."
   ],
-  "notes": "Deja la convergencia ensayada y medida: merge limpio, tsc verde en el arbol fusionado, 113 pruebas de campana pasando sobre el, infra reverificada, siete audits verdes. No certifica ni publica: el gate completo, PostgreSQL 17 y el merge real siguen pendientes, y el merge requiere autorizacion."
+  "notes": "Deja la convergencia ensayada, medida y mergeada: merge limpio, tsc verde en el arbol fusionado, 113 pruebas de campana sobre el, infra reverificada, gate orquestado 10/10 y PR #37 mergeado en main como 6df1cb56 con el CI del PR en verde. No publica ni despliega nada: PostgreSQL 17, el ledger y el rollback en seco siguen pendientes, y el producto sigue LIVE_UNVERIFIED."
 }
