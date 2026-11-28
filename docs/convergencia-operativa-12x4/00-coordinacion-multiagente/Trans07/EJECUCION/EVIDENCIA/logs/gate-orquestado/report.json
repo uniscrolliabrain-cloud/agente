@@ -1,0 +1,224 @@
+{
+  "gate": "GATE_SINGLE_ENTRYPOINT_V1",
+  "startedAt": "2026-11-28T00:35:08.010Z",
+  "finishedAt": "2026-11-28T00:40:14.187Z",
+  "durationMs": 306177,
+  "git": {
+    "branch": "converge/trans00-core",
+    "head": "ac6363b2a53c920156b33fd6f174722e1cd853b2",
+    "dirty": 0
+  },
+  "runManifest": {
+    "before": {
+      "branch": "converge/trans00-core",
+      "head": "ac6363b2a53c920156b33fd6f174722e1cd853b2",
+      "dirty": 0
+    },
+    "lockSha256": "1c2851bc2ce1f0eab66ed1fd60b01018d3f56e73dc0124cbaf28e30543fdace0",
+    "nodeVersion": "v24.22.1"
+  },
+  "auditReportDir": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits",
+  "ok": true,
+  "failed": [],
+  "advisory": [],
+  "steps": [
+    {
+      "name": "typecheck",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/usr/local/bin/node /workspace/chats/a30d6f47eb163b012630177f/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 10020,
+      "counters": {},
+      "tail": [],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/typecheck.log",
+      "logSha256": "b8ceca35defb5169936bc50d062a878a589213d1222b587e87fe192de2ac8de0"
+    },
+    {
+      "name": "typecheck:worker",
+      "kind": "typecheck",
+      "blocking": true,
+      "command": "/usr/local/bin/node /workspace/chats/a30d6f47eb163b012630177f/apps/worker/node_modules/typescript/lib/tsc.js --noEmit",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f/apps/worker",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 1148,
+      "counters": {},
+      "tail": [],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/typecheck_worker.log",
+      "logSha256": "c8dd773128582ff2bd936996222fc6ccf1f0853c9a8415b9d8182adeb5cf110e"
+    },
+    {
+      "name": "test",
+      "kind": "test",
+      "blocking": true,
+      "command": "/usr/local/bin/node /workspace/chats/a30d6f47eb163b012630177f/node_modules/tsx/dist/cli.mjs --import ./tests/setup.ts --test --test-reporter=tap --test-concurrency=2 --test-timeout=30000 --test-force-exit tests/**/*.test.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 284447,
+      "counters": {
+        "tests": 1193,
+        "pass": 1163,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 25,
+        "todo": 5
+      },
+      "tail": [
+        "# tests 1193",
+        "# suites 13",
+        "# pass 1163",
+        "# fail 0",
+        "# cancelled 0",
+        "# skipped 25",
+        "# todo 5",
+        "# duration_ms 284344.412382"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/test.log",
+      "logSha256": "ce42b1a6690a456d75ffb72068901deca5cc86198905dc4f35a16e590985e714"
+    },
+    {
+      "name": "audit:layers",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/layers.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 134,
+      "counters": {
+        "violaciones": 0
+      },
+      "tail": [
+        "[audit:layers] 0 violaciones"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_layers.log",
+      "logSha256": "ef246cdf6dadd0095878aa99831a5c24d8259545f7602e55c608f6a2565d986f"
+    },
+    {
+      "name": "audit:bridges",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/bridges.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 842,
+      "counters": {
+        "wired": 16,
+        "total": 16
+      },
+      "tail": [
+        "[audit:bridges] 16/16 wired"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_bridges.log",
+      "logSha256": "c9bca05b73fa65a875fdece9c8c50eb78d1b4069d7fc889de02832e8c55142ea"
+    },
+    {
+      "name": "audit:console",
+      "kind": "audit",
+      "blocking": false,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/no-console.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 114,
+      "counters": {
+        "ocurrencias": 24,
+        "ficheros": 302
+      },
+      "tail": [
+        "[audit:console] 24 ocurrencias en 302 ficheros"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_console.log",
+      "logSha256": "fa1d22011989b5e9678e24bc10b5b15762a5129425e72dfbfb224b7ccf774953"
+    },
+    {
+      "name": "audit:anchors",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/anchors.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 68,
+      "counters": {},
+      "tail": [
+        "[audit:anchors] No hay bloques para revisar."
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_anchors.log",
+      "logSha256": "7e5e5a116057e9d6cb67036c3f8419e9c26caaaef4c0ef74ab52e95ee7460f61"
+    },
+    {
+      "name": "audit:contracts",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/contracts.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 8956,
+      "counters": {},
+      "tail": [
+        "[audit:contracts] Recorriendo dominios...",
+        "[audit:contracts] Cargando implementaciones y harness...",
+        "[audit:contracts] Ficheros de codigo: 993   de tests/scripts: 333",
+        "[audit:contracts] Contratos encontrados: 392",
+        "[audit:contracts] Informe escrito en /workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits/AUDIT_CONTRACTS.md",
+        "[audit:contracts] OK: 318   MODULO: 64   HARNESS: 1   PENDING: 9   ALLOWLIST: 0   HUERFANOS: 0"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_contracts.log",
+      "logSha256": "87ff5a6cc1520ec891cdbb5f234c0baba42b29bd2b7796ad2ddc36163a4b5cea"
+    },
+    {
+      "name": "audit:idempotency",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/idempotency.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 303,
+      "counters": {
+        "duplicadas": 222,
+        "huerfanas": 0,
+        "repetidas": 181
+      },
+      "tail": [
+        "[audit:idempotency] Recorriendo ficheros...",
+        "[audit:idempotency] Ficheros: 1024",
+        "[audit:idempotency] Marcas encontradas: 2528",
+        "[audit:idempotency] Informe escrito en /workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits/AUDIT_IDEMPOTENCY.md",
+        "[audit:idempotency] DUPLICADAS: 222   HUERFANAS: 0   REPETIDAS: 181",
+        "[audit:idempotency] PEGADAS_DOS_VECES: 0"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_idempotency.log",
+      "logSha256": "934d457e58c1c2a21e4839e86259e37196ecec445b268d727f6e3188dd3e0740"
+    },
+    {
+      "name": "audit:tenant-default",
+      "kind": "audit",
+      "blocking": true,
+      "command": "/usr/local/bin/node --import tsx scripts/audits/tenant-default.ts",
+      "cwd": "/workspace/chats/a30d6f47eb163b012630177f",
+      "exitCode": 0,
+      "ok": true,
+      "durationMs": 139,
+      "counters": {
+        "permitidas": 161,
+        "prohibidas": 0
+      },
+      "tail": [
+        "[audit:tenant-default] Recorriendo ficheros...",
+        "[audit:tenant-default] Ficheros: 678",
+        "[audit:tenant-default] Informe en /workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits/AUDIT_TENANT_DEFAULT.md",
+        "[audit:tenant-default] PERMITIDAS: 161   PROHIBIDAS: 0"
+      ],
+      "logFile": "/workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/logs/audit_tenant-default.log",
+      "logSha256": "aeec6bcec84698ba00145983c7ece8c87f52bded8f9c8b13b526b89ae17ddf3d"
+    }
+  ]
+}

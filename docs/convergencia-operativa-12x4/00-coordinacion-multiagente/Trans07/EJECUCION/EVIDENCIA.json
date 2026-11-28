@@ -3,8 +3,16 @@
   "baseSha": "892061c98f21c371739c16c781a7ad8d9bbe4c61",
   "mainSha": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
   "testedCommit": "a843ddfc",
-  "state": "PARTIAL_LOCAL",
+  "state": "CONVERGED_LOCAL",
   "published": false,
+  "merge": {
+    "commit": "ac6363b2a53c920156b33fd6f174722e1cd853b2",
+    "mainSha": "e496dd43338107f07d48d62d3e0ea03c0e0c6c89",
+    "conflicts": 0,
+    "filesFromMain": 146,
+    "aheadOfMainAfterMerge": 103,
+    "behindMainAfterMerge": 0
+  },
   "git": {
     "branch": "converge/trans00-core",
     "aheadOfMain": 100,
@@ -48,7 +56,9 @@
       "tenant-default": { "exit": 0, "permitidas": 161, "prohibidas": 0 }
     },
     "fullSuite": { "tests": 1193, "pass": 1163, "fail": 0, "cancelled": 0, "skipped": 25, "todo": 5, "durationMs": 273014, "exit": 0 },
-    "fullSuiteMethod": "mismos comandos y flags de gate-report.ts sobre tests/**/*.test.ts; el orquestador no se lanzo como proceso unico",
+    "fullSuiteMethod": "orquestador scripts/gate-report.ts completo (10/10 pasos)",
+    "orchestrator": { "verdict": "GATE OK", "stepsGreen": 10, "stepsTotal": 10, "durationMs": 306200 },
+    "firstRun": "fallo typecheck:worker por dependencias npm en vez de pnpm; se instalo con --frozen-lockfile y paso 10/10 sin relajar checks",
     "fullSuiteLog": "docs/convergencia-operativa-12x4/00-coordinacion-multiagente/Trans07/EJECUCION/EVIDENCIA/logs/trans07-gate-suite-intento.log",
     "fullSuiteSha256": "03e8dbd87259fb3bc378ef45eccca08502a986757b1923e40e2dfc23cf302741"
   },

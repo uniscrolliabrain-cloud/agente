@@ -1,0 +1,11 @@
+# /usr/local/bin/node --import tsx scripts/audits/contracts.ts
+# cwd: /workspace/chats/a30d6f47eb163b012630177f
+# exit: 0  (8956 ms)
+
+[audit:contracts] Recorriendo dominios...
+[audit:contracts] Cargando implementaciones y harness...
+[audit:contracts] Ficheros de codigo: 993   de tests/scripts: 333
+[audit:contracts] Contratos encontrados: 392
+[audit:contracts] Informe escrito en /workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits/AUDIT_CONTRACTS.md
+[audit:contracts] OK: 318   MODULO: 64   HARNESS: 1   PENDING: 9   ALLOWLIST: 0   HUERFANOS: 0
+

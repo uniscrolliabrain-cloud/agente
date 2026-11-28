@@ -1,0 +1,9 @@
+# /usr/local/bin/node --import tsx scripts/audits/tenant-default.ts
+# cwd: /workspace/chats/a30d6f47eb163b012630177f
+# exit: 0  (139 ms)
+
+[audit:tenant-default] Recorriendo ficheros...
+[audit:tenant-default] Ficheros: 678
+[audit:tenant-default] Informe en /workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits/AUDIT_TENANT_DEFAULT.md
+[audit:tenant-default] PERMITIDAS: 161   PROHIBIDAS: 0
+

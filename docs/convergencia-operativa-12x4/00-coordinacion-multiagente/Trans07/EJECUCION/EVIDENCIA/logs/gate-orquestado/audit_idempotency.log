@@ -1,0 +1,11 @@
+# /usr/local/bin/node --import tsx scripts/audits/idempotency.ts
+# cwd: /workspace/chats/a30d6f47eb163b012630177f
+# exit: 0  (303 ms)
+
+[audit:idempotency] Recorriendo ficheros...
+[audit:idempotency] Ficheros: 1024
+[audit:idempotency] Marcas encontradas: 2528
+[audit:idempotency] Informe escrito en /workspace/chats/a30d6f47eb163b012630177f/artifacts/gate/audits/AUDIT_IDEMPOTENCY.md
+[audit:idempotency] DUPLICADAS: 222   HUERFANAS: 0   REPETIDAS: 181
+[audit:idempotency] PEGADAS_DOS_VECES: 0
+

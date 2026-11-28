@@ -1,0 +1,6 @@
+# /usr/local/bin/node --import tsx scripts/audits/layers.ts
+# cwd: /workspace/chats/a30d6f47eb163b012630177f
+# exit: 0  (134 ms)
+
+[audit:layers] 0 violaciones
+

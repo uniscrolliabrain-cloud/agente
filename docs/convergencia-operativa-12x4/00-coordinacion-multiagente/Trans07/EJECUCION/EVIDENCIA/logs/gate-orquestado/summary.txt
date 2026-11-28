@@ -1,0 +1,15 @@
+GATE · ac6363b2 (converge/trans00-core) · 2026-11-28T00:35:08.010Z
+OK   typecheck             10.0s
+OK   typecheck:worker      1.1s
+OK   test                  284.4s  tests=1193 pass=1163 fail=0 cancelled=0 skipped=25 todo=5
+OK   audit:layers          0.1s  violaciones=0
+OK   audit:bridges         0.8s  wired=16 total=16
+OK   audit:console         0.1s  ocurrencias=24 ficheros=302
+OK   audit:anchors         0.1s
+OK   audit:contracts       9.0s
+OK   audit:idempotency     0.3s  duplicadas=222 huerfanas=0 repetidas=181
+OK   audit:tenant-default  0.1s  permitidas=161 prohibidas=0
+
+GATE OK · 10/10 steps en verde · 306.2s
+informe: artifacts/gate/report.json
+logs:    artifacts/gate/logs/    informes de audits: artifacts/gate/audits/

@@ -1,0 +1,6 @@
+# /usr/local/bin/node --import tsx scripts/audits/no-console.ts
+# cwd: /workspace/chats/a30d6f47eb163b012630177f
+# exit: 0  (114 ms)
+
+[audit:console] 24 ocurrencias en 302 ficheros
+
