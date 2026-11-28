@@ -1,6 +1,8 @@
 # UX compartido: del lab a la web sin fricción y sin pérdida
 
-Propuesta de trabajo. Base: `36ee89ec`. Línea base verde medida: `WEB_TSC=0`, `LAB_TSC=0`.
+Estado: **paso 1 hecho** en `0a6f7652` (menú y chats de las tres meta-apps con el gesto compartido, verificado en Pages). Pendiente: el panel dividido y el soltar fuera de la barra.
+
+Base: `36ee89ec`. Línea base verde medida: `WEB_TSC=0`, `LAB_TSC=0`.
 
 ## 1. Regla de oro
 
@@ -42,8 +44,8 @@ Verificado en el código, no supuesto.
 | Capacidad | App (`apps/web`) | Meta-apps | Destino |
 |---|---|---|---|
 | Dock: arrastrar para reordenar, fijar | `DockRail` (`DOCK_RAIL_V1`) | **Sí**: `MetaDock`, por `namespace` | Compartido; el dock ya está resuelto |
-| Menú: reordenar y `Alt+↑↓` | `SidebarV2` (`SIDEBAR_ORDER_V1`, `agntia_sidebar_order_v1`) | No | `useOrderedList` |
-| Chats: reordenar y triple clic arriba | `SidebarThreads` (`CHATS_ORDER_V1`) | No: `MetaChats` solo fija | `useOrderedList` |
+| Menú: reordenar y `Alt+↑↓` | `SidebarV2` (`SIDEBAR_ORDER_V1`, `agntia_sidebar_order_v1`) | **Hecho**: `useOrderedList` en `useSmartNav`, una por meta-app | Compartido en el lab; falta que la app importe el hook |
+| Chats: reordenar y triple clic arriba | `SidebarThreads` (`CHATS_ORDER_V1`) | **Hecho**: `useOrderedList` en `MetaChats` | Compartido en el lab; falta que la app importe el hook |
 | Sacar una fila y duplicar pantalla | `App` + `SidebarV2` + `SidebarThreads` (`SPLIT_PANE_V1`) | No | `useSplitDrop` + capa de dos paneles |
 | Plegar menú, paleta ⌘K, atajos, recientes | Sí | **Sí**: `useSmartNav`, `SmartCommandPalette`, `SmartShortcuts` | Ya compartido |
 
