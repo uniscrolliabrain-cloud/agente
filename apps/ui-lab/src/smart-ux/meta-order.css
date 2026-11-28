@@ -1,0 +1,57 @@
+/* ORDERED_LIST_V1 - la misma lectura que en la app: la pieza que sigue al
+   puntero y una línea callada en la fila donde va a caer. Sin marcos nuevos ni
+   colores propios: usa los tokens que ya definen las meta-apps. */
+.meta-order-ghost {
+  position: fixed;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--v2-border-strong, #cfc6b6);
+  background: var(--v2-bg-card, #fff);
+  color: var(--v2-text, #111);
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
+  pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.meta-order-ghost > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* La marca va por dentro de la fila: no mueve nada ni cambia el alto. */
+[data-order-drop="before"] {
+  box-shadow: inset 0 2px 0 var(--v2-purple, #6c4fe0);
+}
+
+[data-order-drop="after"] {
+  box-shadow: inset 0 -2px 0 var(--v2-purple, #6c4fe0);
+}
+
+/* Mientras se arrastra, el texto de la lista no se selecciona por accidente. */
+[data-order-drop],
+.meta-chat-select,
+.co-nav button,
+.ac-nav button,
+.ob-nav button {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.meta-order-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

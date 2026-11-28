@@ -13,7 +13,12 @@ import {
   type ReactNode,
 } from "react";
 import { CornerDownLeft, Pin, PinOff, Search, X } from "lucide-react";
+import { useOrderedList } from "./useOrderedList";
 import "./smart-ux.css";
+
+// ORDERED_LIST_V1 - el fantasma y el anuncio del gesto de orden son iguales en
+// las tres meta-apps, así que se exponen desde aquí y cada una los monta una vez.
+export { OrderAnnounce, OrderGhost } from "./OrderGhost";
 
 export type SmartTone = "company" | "code";
 
@@ -73,6 +78,9 @@ export function useSmartNav<T extends string>({
 }) {
   const idsRef = useRef(ids);
   idsRef.current = ids;
+  // ORDERED_LIST_V1 - el menú de la meta-app se reordena con el mismo gesto que
+  // el menú y los chats de la app; el orden se guarda por meta-app.
+  const order = useOrderedList({ ids: ids as readonly string[], storageKey: `${storageKey}__order` });
   const [state, setState] = useState<SmartState>(() => readState(storageKey, initial, ids));
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -134,6 +142,12 @@ export function useSmartNav<T extends string>({
     openShortcuts,
     closeShortcuts,
     dialogOpen: paletteOpen || shortcutsOpen,
+    /** ORDERED_LIST_V1 - orden guardado del menú y sus gestos. */
+    orderIds: order.orderedIds,
+    sortSections: order.sortList,
+    bindRow: order.bindRow,
+    orderDrag: order.drag,
+    orderAnnounce: order.announce,
   };
 }
 

@@ -1,5 +1,6 @@
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
+import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
 // TU_EMPRESA_V1 - andamio de la meta-app.
 // Clon del shell de AgntiaPro abierto desde Ajustes → Tu Empresa. Todo el
 // contenido es día 90 a propósito: primero se valida la estructura y el
@@ -433,6 +434,10 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
     shortcutsOpen,
     openShortcuts,
     closeShortcuts,
+    sortSections,
+    bindRow,
+    orderDrag,
+    orderAnnounce,
   } = useSmartNav<SectionId>({
     storageKey: "agntia_company_smart_v1",
     ids: SECTION_IDS,
@@ -684,6 +689,8 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
   return (
     <div className="co-root meta-dock-root" role="dialog" aria-modal="true" aria-label="Tu Empresa · estudio de compilación">
       <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_co"/>
+      <OrderGhost drag={orderDrag}/>
+      <OrderAnnounce text={orderAnnounce}/>
       <button
         type="button"
         className={"co-scrim" + (drawer ? " is-on" : "")}
@@ -768,10 +775,11 @@ export default function CompanyApp({ onClose }: { onClose: () => void }) {
           {GROUPS.map((group) => (
             <div className="co-nav-group" key={group}>
               <small>{group}</small>
-              {SECTIONS.filter((s) => s.group === group).map(({ id, label, icon: Icon }) => (
+              {sortSections(SECTIONS.filter((s) => s.group === group)).map(({ id, label, icon: Icon }) => (
                 <button
                   type="button"
                   key={id}
+                  {...bindRow(id, label)}
                   className={id === sectionId ? "is-active" : ""}
                   aria-current={id === sectionId ? "page" : undefined}
                   title={label}

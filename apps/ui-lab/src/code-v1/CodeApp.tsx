@@ -1,5 +1,6 @@
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
+import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
 // AGNTIA_CODE_V1 - tercer clon del demo.
 // Plataforma de IA coding y bitácora conectada a GitHub, Vercel y Cloudflare.
 // Los datos vienen de los 17 repos reales de uniscrolliabrain-cloud, leídos de
@@ -1368,6 +1369,10 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
     shortcutsOpen,
     openShortcuts,
     closeShortcuts,
+    sortSections,
+    bindRow,
+    orderDrag,
+    orderAnnounce,
   } = useSmartNav<SectionId>({
     storageKey: "agntia_code_smart_v1",
     ids: SECTION_IDS,
@@ -1593,6 +1598,8 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
     <RepoCtx.Provider value={repo}>
       <div className="ac-root meta-dock-root" role="dialog" aria-modal="true" aria-label="Agntia Code">
       <MetaDock entries={SECTIONS} activeView={sectionId} onSelectView={choose} namespace="agntia_ac"/>
+      <OrderGhost drag={orderDrag}/>
+      <OrderAnnounce text={orderAnnounce}/>
         <button
           type="button"
           className={"ac-scrim" + (drawer ? " is-on" : "")}
@@ -1683,10 +1690,11 @@ export default function CodeApp({ onClose }: { onClose: () => void }) {
             {GROUPS.map((group) => (
               <div className="ac-nav-group" key={group}>
                 <small>{group}</small>
-                {SECTIONS.filter((s) => s.group === group).map(({ id, label, icon: Icon }) => (
+                {sortSections(SECTIONS.filter((s) => s.group === group)).map(({ id, label, icon: Icon }) => (
                   <button
                     type="button"
                     key={id}
+                    {...bindRow(id, label)}
                     className={id === sectionId ? "is-active" : ""}
                     aria-current={id === sectionId ? "page" : undefined}
                     title={label}

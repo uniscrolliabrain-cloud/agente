@@ -39,6 +39,7 @@ import {
 import "../design-system/agntia-tokens.css";
 import MetaChats from "../smart-ux/MetaChats";
 import MetaDock from "../smart-ux/MetaDock";
+import { OrderAnnounce, OrderGhost } from "../smart-ux/OrderGhost";
 import {
   SmartCommandPalette,
   SmartShortcuts,
@@ -162,7 +163,7 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
   const [chatId, setChatId] = useState<string | null>(null);
 
   const section = SECTIONS.find((entry) => entry.id === nav.sectionId) ?? SECTIONS[0];
-  const { go, pins, isPinned, togglePin, collapsed, setCollapsed, openPalette, openShortcuts } = nav;
+  const { go, pins, isPinned, togglePin, collapsed, setCollapsed, openPalette, openShortcuts, sortSections, bindRow, orderDrag, orderAnnounce } = nav;
 
   // Mismo contrato que los otros dos clones: la meta-app escucha en captura y
   // corta la propagación para que el shell que queda debajo no abra a la vez su
@@ -255,6 +256,8 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
       aria-label="Observabilidad y Ciberseguridad · meta-app de laboratorio"
     >
       <MetaDock entries={SECTIONS} activeView={section.id} onSelectView={go} namespace="agntia_obs" />
+      <OrderGhost drag={orderDrag} />
+      <OrderAnnounce text={orderAnnounce} />
       <button
         type="button"
         className={"ob-scrim" + (drawer ? " is-on" : "")}
@@ -330,10 +333,11 @@ export default function ObservabilityApp({ onClose }: { onClose: () => void }) {
           {GROUPS.map((group) => (
             <div className="ob-nav-group" key={group}>
               <small>{group}</small>
-              {SECTIONS.filter((entry) => entry.group === group).map(({ id, label, icon: Icon }) => (
+              {sortSections(SECTIONS.filter((entry) => entry.group === group)).map(({ id, label, icon: Icon }) => (
                 <button
                   type="button"
                   key={id}
+                  {...bindRow(id, label)}
                   className={id === section.id ? "is-active" : ""}
                   aria-current={id === section.id ? "page" : undefined}
                   title={label}
